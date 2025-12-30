@@ -1,0 +1,4 @@
+:80 {
+  reverse_proxy ui:3000
+}
+
