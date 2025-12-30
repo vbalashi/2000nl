@@ -1157,7 +1157,7 @@ export function TrainingScreen({ user }: Props) {
 
   return (
     <div className="flex h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
-      <header className="flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+      <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
             <p className="truncate text-3xl md:text-[36px] leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-75 dark:opacity-80">
@@ -1251,7 +1251,7 @@ export function TrainingScreen({ user }: Props) {
             <span className="absolute inset-0 rounded-full" />
           </div>
 
-          <div ref={accountMenuRef} className="relative">
+          <div ref={accountMenuRef} className="relative z-50">
             <button
               type="button"
               title="Account"
@@ -1287,7 +1287,7 @@ export function TrainingScreen({ user }: Props) {
               <div
                 role="menu"
                 aria-label="Account menu"
-                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 backdrop-blur dark:border-slate-800 dark:bg-slate-900"
+                className="absolute right-0 mt-2 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 backdrop-blur dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="px-3 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
