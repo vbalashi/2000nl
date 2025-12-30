@@ -1,0 +1,35 @@
+name: Deploy to nuc
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-nuc
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /srv/2000nl-ui
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Rebuild and restart
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /srv/2000nl-ui
+          docker compose up -d --build
+
+      - name: Cleanup old images
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker image prune -f
+
