@@ -3,7 +3,10 @@
 import React from "react";
 
 import type { TrainingMode } from "@/lib/types";
-import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
+import type {
+  TranslationOverlay,
+  WordEntryTranslationStatus,
+} from "@/lib/types";
 import {
   buildSegments,
   getAllMeanings,
@@ -93,39 +96,45 @@ export function TrainingCard({
     setTranslationHovering(false);
   }, [word?.id, translationLang]);
 
-  const fetchTranslation = React.useCallback(async (opts?: { force?: boolean }) => {
-    if (!word?.id || !translationLang) return;
-    if (translationLoadingRef.current) return;
-    if (!opts?.force && translationStatus === "ready" && translationOverlay) return;
+  const fetchTranslation = React.useCallback(
+    async (opts?: { force?: boolean }) => {
+      if (!word?.id || !translationLang) return;
+      if (translationLoadingRef.current) return;
+      if (!opts?.force && translationStatus === "ready" && translationOverlay)
+        return;
 
-    translationLoadingRef.current = true;
-    try {
-      if (opts?.force) {
-        setTranslationStatus("pending");
-        setTranslationOverlay(null);
-        setTranslationError(null);
+      translationLoadingRef.current = true;
+      try {
+        if (opts?.force) {
+          setTranslationStatus("pending");
+          setTranslationOverlay(null);
+          setTranslationError(null);
+        }
+        const res = await fetch(
+          `/api/translation?word_id=${encodeURIComponent(
+            word.id
+          )}&lang=${encodeURIComponent(translationLang)}${
+            opts?.force ? "&force=1" : ""
+          }`,
+          { cache: "no-store" }
+        );
+        const data = (await res.json()) as {
+          status?: WordEntryTranslationStatus;
+          overlay?: TranslationOverlay;
+          error?: string;
+        };
+        setTranslationStatus(data.status ?? null);
+        setTranslationOverlay(data.overlay ?? null);
+        setTranslationError(data.error ?? null);
+      } catch (e: any) {
+        setTranslationStatus("failed");
+        setTranslationError(String(e?.message ?? e ?? "Unknown error"));
+      } finally {
+        translationLoadingRef.current = false;
       }
-      const res = await fetch(
-        `/api/translation?word_id=${encodeURIComponent(
-          word.id
-        )}&lang=${encodeURIComponent(translationLang)}${opts?.force ? "&force=1" : ""}`,
-        { cache: "no-store" }
-      );
-      const data = (await res.json()) as {
-        status?: WordEntryTranslationStatus;
-        overlay?: TranslationOverlay;
-        error?: string;
-      };
-      setTranslationStatus(data.status ?? null);
-      setTranslationOverlay(data.overlay ?? null);
-      setTranslationError(data.error ?? null);
-    } catch (e: any) {
-      setTranslationStatus("failed");
-      setTranslationError(String(e?.message ?? e ?? "Unknown error"));
-    } finally {
-      translationLoadingRef.current = false;
-    }
-  }, [translationLang, translationOverlay, translationStatus, word?.id]);
+    },
+    [translationLang, translationOverlay, translationStatus, word?.id]
+  );
 
   React.useEffect(() => {
     if (!translationTooltipOpen) return;
@@ -234,7 +243,8 @@ export function TrainingCard({
             Geen woorden beschikbaar.
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Voeg woorden toe aan de lijst of kies een andere lijst in Instellingen.
+            Voeg woorden toe aan de lijst of kies een andere lijst in
+            Instellingen.
           </p>
         </div>
       </div>
@@ -254,8 +264,12 @@ export function TrainingCard({
   const primaryIdiom = primaryMeaning.idioms?.[0];
   const hasPrimaryDefinitionText = Boolean(primaryMeaning.definition?.trim());
   const isIdiomOnlyMeaning = !hasPrimaryDefinitionText && Boolean(primaryIdiom);
-  const hasPrimaryIdiomExplanationText = Boolean(primaryIdiom?.explanation?.trim());
-  const hasPrimaryIdiomExpressionText = Boolean(primaryIdiom?.expression?.trim());
+  const hasPrimaryIdiomExplanationText = Boolean(
+    primaryIdiom?.explanation?.trim()
+  );
+  const hasPrimaryIdiomExpressionText = Boolean(
+    primaryIdiom?.expression?.trim()
+  );
   const idiomExpressionSegments = primaryIdiom
     ? buildSegments(primaryIdiom.expression, primaryMeaning.links)
     : null;
@@ -265,8 +279,8 @@ export function TrainingCard({
   const idiomPromptSegments = hasPrimaryIdiomExplanationText
     ? idiomExplanationSegments
     : hasPrimaryIdiomExpressionText
-      ? idiomExpressionSegments
-      : null;
+    ? idiomExpressionSegments
+    : null;
 
   // If we used the idiom explanation as the "question" prompt, avoid repeating it under the idiom on reveal.
   const hidePrimaryIdiomExplanationOnReveal =
@@ -336,7 +350,11 @@ export function TrainingCard({
         }
         if (primaryMeaning.examples?.length) {
           primaryMeaning.examples.forEach((_, i) => {
-            add(`ex-${i}`, `Voorbeeld ${i + 1}`, getTranslated(0, { exampleIndex: i }));
+            add(
+              `ex-${i}`,
+              `Voorbeeld ${i + 1}`,
+              getTranslated(0, { exampleIndex: i })
+            );
           });
         }
       }
@@ -388,24 +406,28 @@ export function TrainingCard({
       }
       if (primaryMeaning.examples?.length) {
         primaryMeaning.examples.forEach((_, i) => {
-          add(`ex-${i}`, `Voorbeeld ${i + 1}`, getTranslated(0, { exampleIndex: i }));
+          add(
+            `ex-${i}`,
+            `Voorbeeld ${i + 1}`,
+            getTranslated(0, { exampleIndex: i })
+          );
         });
       }
     }
 
     // Only show fields that exist on the card (avoid noise).
-    return blocks.filter((b) => b.text != null && String(b.text).trim().length > 0);
+    return blocks.filter(
+      (b) => b.text != null && String(b.text).trim().length > 0
+    );
   };
 
   return (
-    <div
-      className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-card-light p-8 shadow-[0_20px_45px_rgba(15,23,42,0.15)] dark:border-slate-800 dark:bg-card-dark transition-all duration-300"
-    >
+    <div className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-card-light p-5 md:p-8 shadow-[0_20px_45px_rgba(15,23,42,0.15)] dark:border-slate-800 dark:bg-card-dark transition-all duration-300">
       {/* Part of Speech Badge + Info Icon - Top Right Corner (Always Visible) */}
-      <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
         {word.part_of_speech && (
           <span
-            className={`select-none rounded-lg border px-3 py-1.5 text-xs font-semibold tracking-wide ${posColor}`}
+            className={`select-none rounded-lg border px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide ${posColor}`}
           >
             {posFullName}
           </span>
@@ -439,7 +461,7 @@ export function TrainingCard({
       {/* Translate (single button + overlay tooltip) */}
       {translationUiEnabled && (
         <div
-          className="absolute top-6 left-6 z-20"
+          className="absolute top-4 left-4 md:top-6 md:left-6 z-20"
           onMouseEnter={() => {
             setTranslationHovering(true);
             void fetchTranslation();
@@ -468,25 +490,25 @@ export function TrainingCard({
                     <p className="text-sm font-semibold text-slate-600 dark:text-slate-200">
                       {translationStatusText}
                     </p>
-              <button
-                type="button"
-                onClick={() => void fetchTranslation({ force: true })}
-                className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
-              >
-                Opnieuw
-              </button>
+                    <button
+                      type="button"
+                      onClick={() => void fetchTranslation({ force: true })}
+                      className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
+                    >
+                      Opnieuw
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-              <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={() => void fetchTranslation({ force: true })}
-                  className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
-                >
-                  Opnieuw
-                </button>
-              </div>
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => void fetchTranslation({ force: true })}
+                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
+                      >
+                        Opnieuw
+                      </button>
+                    </div>
                     {buildTranslationBlocks().length === 0 ? (
                       <p className="text-sm text-slate-600 dark:text-slate-200">
                         Geen vertalingen beschikbaar.
@@ -521,7 +543,7 @@ export function TrainingCard({
         </div>
       </div>
       {/* Main Content Area - Reduced Top Padding */}
-      <div className="flex flex-col items-center w-full h-full pt-8 md:pt-12 px-4 overflow-y-auto scrollbar-hide">
+      <div className="flex flex-col items-center w-full h-full pt-10 md:pt-12 px-1 md:px-4 overflow-y-auto scrollbar-hide">
         {/* Header: Headword + POS Badge (Always Visible) */}
         <div className="flex-none mb-8 text-center bg-transparent z-0">
           {isWordToDefinition ? (
@@ -531,7 +553,7 @@ export function TrainingCard({
                   {word.gender}
                 </span>
               )}
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {word.headword}
               </h1>
             </div>
@@ -555,7 +577,7 @@ export function TrainingCard({
 
                   <div className="text-center">
                     {hasPrimaryDefinitionText ? (
-                      <div className="text-2xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                      <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
                           segments={definitionSegments}
                           highlightedWord={highlightedWord}
@@ -564,7 +586,7 @@ export function TrainingCard({
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
                       <div className="flex items-center justify-center gap-3 flex-wrap">
-                        <span className="text-2xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                        <span className="text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
                           <InteractiveText
                             segments={idiomPromptSegments}
                             highlightedWord={highlightedWord}
@@ -582,7 +604,7 @@ export function TrainingCard({
                         )}
                       </div>
                     ) : (
-                      <div className="text-2xl md:text-3xl leading-relaxed font-medium text-slate-400 dark:text-slate-500">
+                      <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-400 dark:text-slate-500">
                         Definitie niet beschikbaar.
                       </div>
                     )}
@@ -608,28 +630,32 @@ export function TrainingCard({
                   </div>
                 )}
                 {/* Example */}
-                {primaryMeaning.examples && primaryMeaning.examples.length > 0 && (
-                  <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
-                    {primaryMeaning.examples.map((ex, i) => {
-                      const exSegments = buildSegments(ex, primaryMeaning.links);
-                      return (
-                        <p
-                          key={i}
-                          className="flex items-start text-lg italic leading-relaxed text-slate-600 dark:text-slate-400"
-                        >
-                          <span className="flex-1">
-                            <InteractiveText
-                              segments={exSegments}
-                              highlightedWord={highlightedWord}
-                              onWordClick={onWordClick}
-                              excludeWord={word.headword}
-                            />
-                          </span>
-                        </p>
-                      );
-                    })}
-                  </div>
-                )}
+                {primaryMeaning.examples &&
+                  primaryMeaning.examples.length > 0 && (
+                    <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                      {primaryMeaning.examples.map((ex, i) => {
+                        const exSegments = buildSegments(
+                          ex,
+                          primaryMeaning.links
+                        );
+                        return (
+                          <p
+                            key={i}
+                            className="flex items-start text-lg italic leading-relaxed text-slate-600 dark:text-slate-400"
+                          >
+                            <span className="flex-1">
+                              <InteractiveText
+                                segments={exSegments}
+                                highlightedWord={highlightedWord}
+                                onWordClick={onWordClick}
+                                excludeWord={word.headword}
+                              />
+                            </span>
+                          </p>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -660,7 +686,13 @@ export function TrainingCard({
                       {/* Number Badge - Left Side */}
                       {showNumber && (
                         <div className="flex-shrink-0 pt-1">
-                          <div className={`w-7 h-7 flex items-center justify-center ${badgeNumber === globalCount ? 'rounded-md' : 'rounded-full'} bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}>
+                          <div
+                            className={`w-7 h-7 flex items-center justify-center ${
+                              badgeNumber === globalCount
+                                ? "rounded-md"
+                                : "rounded-full"
+                            } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
+                          >
                             {badgeNumber}
                           </div>
                         </div>
@@ -745,7 +777,7 @@ export function TrainingCard({
                   word.headword,
                   word.gender,
                   word.part_of_speech,
-                  "text-4xl md:text-5xl"
+                  "text-3xl md:text-4xl lg:text-5xl"
                 )}
                 {/* Context - shown with the answer */}
                 {primaryMeaning.context && (
@@ -782,54 +814,59 @@ export function TrainingCard({
                             </span>
                           </div>
                           {idiom.explanation?.trim() &&
-                            !(hidePrimaryIdiomExplanationOnReveal && i === 0) && (
-                            <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
-                              <span className="text-slate-400 dark:text-slate-500 mr-2">
-                                |
-                              </span>
-                              <span className="flex-1 text-center">
-                                <InteractiveText
-                                  segments={explanationSegments}
-                                  highlightedWord={highlightedWord}
-                                  onWordClick={onWordClick}
-                                  excludeWord={word.headword}
-                                />
-                              </span>
-                            </div>
-                          )}
+                            !(
+                              hidePrimaryIdiomExplanationOnReveal && i === 0
+                            ) && (
+                              <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
+                                <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                  |
+                                </span>
+                                <span className="flex-1 text-center">
+                                  <InteractiveText
+                                    segments={explanationSegments}
+                                    highlightedWord={highlightedWord}
+                                    onWordClick={onWordClick}
+                                    excludeWord={word.headword}
+                                  />
+                                </span>
+                              </div>
+                            )}
                         </div>
                       );
                     })}
                   </div>
                 )}
                 {/* Examples */}
-                {primaryMeaning.examples && primaryMeaning.examples.length > 0 && (
-                  <div className="flex flex-col gap-1.5 mt-6 mx-auto max-w-2xl">
-                    {primaryMeaning.examples.map((ex, i) => {
-                      const exSegments = buildSegments(ex, primaryMeaning.links);
-                      return (
-                        <p
-                          key={i}
-                          className="text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
-                        >
-                          <span className="flex-1">
-                            <InteractiveText
-                              segments={exSegments}
-                              highlightedWord={highlightedWord}
-                              onWordClick={onWordClick}
-                              excludeWord={word.headword}
-                            />
-                          </span>
-                        </p>
-                      );
-                    })}
-                  </div>
-                )}
+                {primaryMeaning.examples &&
+                  primaryMeaning.examples.length > 0 && (
+                    <div className="flex flex-col gap-1.5 mt-6 mx-auto max-w-2xl">
+                      {primaryMeaning.examples.map((ex, i) => {
+                        const exSegments = buildSegments(
+                          ex,
+                          primaryMeaning.links
+                        );
+                        return (
+                          <p
+                            key={i}
+                            className="text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
+                          >
+                            <span className="flex-1">
+                              <InteractiveText
+                                segments={exSegments}
+                                highlightedWord={highlightedWord}
+                                onWordClick={onWordClick}
+                                excludeWord={word.headword}
+                              />
+                            </span>
+                          </p>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             )}
           </div>
         )}
-
 
         {/* Debug Stats (Footer - Color Coded) */}
         {word.debugStats && (
@@ -843,7 +880,9 @@ export function TrainingCard({
               <span className="text-blue-500 dark:text-blue-400">
                 int:
                 {typeof word.debugStats.previousInterval === "number"
-                  ? `${word.debugStats.previousInterval.toFixed(2)}→${word.debugStats.interval.toFixed(2)}d`
+                  ? `${word.debugStats.previousInterval.toFixed(
+                      2
+                    )}→${word.debugStats.interval.toFixed(2)}d`
                   : `${word.debugStats.interval.toFixed(2)}d`}
               </span>
             )}
@@ -851,7 +890,9 @@ export function TrainingCard({
               <span className="text-yellow-500 dark:text-yellow-400">
                 S:
                 {typeof word.debugStats.previousStability === "number"
-                  ? `${word.debugStats.previousStability.toFixed(2)}→${word.debugStats.ef.toFixed(2)}`
+                  ? `${word.debugStats.previousStability.toFixed(
+                      2
+                    )}→${word.debugStats.ef.toFixed(2)}`
                   : word.debugStats.ef.toFixed(2)}
               </span>
             )}

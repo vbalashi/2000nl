@@ -46,7 +46,11 @@ type Props = {
 
 const ACTION_LABELS: Record<
   ReviewResult,
-  { label: string; keyHint: string; tone: "fail" | "hard" | "success" | "easy" | "neutral" }
+  {
+    label: string;
+    keyHint: string;
+    tone: "fail" | "hard" | "success" | "easy" | "neutral";
+  }
 > = {
   fail: { label: "Opnieuw", keyHint: "H", tone: "fail" },
   hard: { label: "Moeilijk", keyHint: "J", tone: "hard" },
@@ -60,14 +64,11 @@ const buttonStyles: Record<
   "fail" | "hard" | "success" | "easy" | "neutral",
   string
 > = {
-  fail:
-    "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/45",
-  hard:
-    "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/45",
+  fail: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/45",
+  hard: "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/45",
   success:
     "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/45",
-  easy:
-    "bg-green-200 text-green-800 hover:bg-green-300 dark:bg-green-900/40 dark:text-green-200 dark:hover:bg-green-900/55",
+  easy: "bg-green-200 text-green-800 hover:bg-green-300 dark:bg-green-900/40 dark:text-green-200 dark:hover:bg-green-900/55",
   neutral:
     "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70",
 };
@@ -79,7 +80,9 @@ export function TrainingScreen({ user }: Props) {
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [enabledModes, setEnabledModesState] = useState<TrainingMode[]>(["word-to-definition"]);
+  const [enabledModes, setEnabledModesState] = useState<TrainingMode[]>([
+    "word-to-definition",
+  ]);
   const [cardFilter, setCardFilterState] = useState<CardFilter>("both");
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null
@@ -124,7 +127,8 @@ export function TrainingScreen({ user }: Props) {
   const [newReviewRatio, setNewReviewRatioState] = useState(2);
 
   // Scenario-based training
-  const [activeScenario, setActiveScenarioState] = useState<string>("understanding");
+  const [activeScenario, setActiveScenarioState] =
+    useState<string>("understanding");
 
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
@@ -134,7 +138,8 @@ export function TrainingScreen({ user }: Props) {
   const forcedNextWordIdRef = useRef<string | null>(null);
 
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
-  const currentMode: TrainingMode = currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
+  const currentMode: TrainingMode =
+    currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
 
   const refreshAvailableLists = useCallback(async () => {
     if (!user?.id) return;
@@ -162,72 +167,114 @@ export function TrainingScreen({ user }: Props) {
   }, [user?.id]);
 
   // Wrapper to persist enabled modes to Supabase
-  const setEnabledModes = useCallback((newModes: TrainingMode[]) => {
-    console.log("[Settings] Saving modes to Supabase:", newModes);
-    setEnabledModesState(newModes);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, modesEnabled: newModes });
-    }
-  }, [user?.id]);
+  const setEnabledModes = useCallback(
+    (newModes: TrainingMode[]) => {
+      console.log("[Settings] Saving modes to Supabase:", newModes);
+      setEnabledModesState(newModes);
+      if (user?.id) {
+        void updateUserPreferences({ userId: user.id, modesEnabled: newModes });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist card filter to Supabase
-  const setCardFilter = useCallback((newFilter: CardFilter) => {
-    console.log("[Settings] Saving card filter to Supabase:", newFilter);
-    setCardFilterState(newFilter);
-    // Reset queue rotation when switching to 'both' to start interleave cycle
-    if (newFilter === "both") {
-      setQueueTurn("new");
-      setReviewCounter(0);
-    }
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, cardFilter: newFilter });
-    }
-  }, [user?.id]);
+  const setCardFilter = useCallback(
+    (newFilter: CardFilter) => {
+      console.log("[Settings] Saving card filter to Supabase:", newFilter);
+      setCardFilterState(newFilter);
+      // Reset queue rotation when switching to 'both' to start interleave cycle
+      if (newFilter === "both") {
+        setQueueTurn("new");
+        setReviewCounter(0);
+      }
+      if (user?.id) {
+        void updateUserPreferences({ userId: user.id, cardFilter: newFilter });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist language to Supabase
-  const setLanguage = useCallback((newLanguage: string) => {
-    console.log("[Settings] Saving language to Supabase:", newLanguage);
-    setLanguageState(newLanguage);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, languageCode: newLanguage });
-    }
-  }, [user?.id]);
+  const setLanguage = useCallback(
+    (newLanguage: string) => {
+      console.log("[Settings] Saving language to Supabase:", newLanguage);
+      setLanguageState(newLanguage);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          languageCode: newLanguage,
+        });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist theme to Supabase
-  const setTheme = useCallback((newTheme: ThemePreference) => {
-    console.log("[Settings] Saving theme to Supabase:", newTheme);
-    setThemePreference(newTheme);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, themePreference: newTheme });
-    }
-  }, [user?.id]);
+  const setTheme = useCallback(
+    (newTheme: ThemePreference) => {
+      console.log("[Settings] Saving theme to Supabase:", newTheme);
+      setThemePreference(newTheme);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          themePreference: newTheme,
+        });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist new/review ratio to Supabase
-  const setNewReviewRatio = useCallback((newRatio: number) => {
-    console.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
-    setNewReviewRatioState(newRatio);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, newReviewRatio: newRatio });
-    }
-  }, [user?.id]);
+  const setNewReviewRatio = useCallback(
+    (newRatio: number) => {
+      console.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
+      setNewReviewRatioState(newRatio);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          newReviewRatio: newRatio,
+        });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist translation language preference to Supabase
-  const setTranslationLang = useCallback((newLang: string | null) => {
-    console.log("[Settings] Saving translation language to Supabase:", newLang);
-    setTranslationLangState(newLang);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, translationLang: newLang });
-    }
-  }, [user?.id]);
+  const setTranslationLang = useCallback(
+    (newLang: string | null) => {
+      console.log(
+        "[Settings] Saving translation language to Supabase:",
+        newLang
+      );
+      setTranslationLangState(newLang);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          translationLang: newLang,
+        });
+      }
+    },
+    [user?.id]
+  );
 
   // Wrapper to persist active scenario to Supabase
-  const setActiveScenario = useCallback((newScenario: string) => {
-    console.log("[Settings] Saving active scenario to Supabase:", newScenario);
-    setActiveScenarioState(newScenario);
-    if (user?.id) {
-      void updateUserPreferences({ userId: user.id, activeScenario: newScenario });
-    }
-  }, [user?.id]);
+  const setActiveScenario = useCallback(
+    (newScenario: string) => {
+      console.log(
+        "[Settings] Saving active scenario to Supabase:",
+        newScenario
+      );
+      setActiveScenarioState(newScenario);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          activeScenario: newScenario,
+        });
+      }
+    },
+    [user?.id]
+  );
 
   // Advance queue turn for round-robin between new and review
   const advanceQueueTurn = useCallback(() => {
@@ -296,7 +343,11 @@ export function TrainingScreen({ user }: Props) {
 
         if (!resolved) {
           // list no longer exists (or not accessible) → will auto-select primary via effect
-          await updateActiveList({ userId: user.id, listId: null, listType: null });
+          await updateActiveList({
+            userId: user.id,
+            listId: null,
+            listType: null,
+          });
           setWordListId(null);
           setWordListType(null);
           setWordListLabel("");
@@ -333,27 +384,39 @@ export function TrainingScreen({ user }: Props) {
   }, [listHydrated, wordListId, availableLists]);
 
   const loadStats = useCallback(
-    async (scope?: { listId?: string | null; listType?: WordListType | null }, logContext?: string, isInitialLoad?: boolean) => {
-    if (!user?.id) {
-      return;
-    }
-    const effectiveListId = scope?.listId ?? wordListId;
-    const effectiveListType = scope?.listType ?? wordListType;
-    const fresh = await fetchStats(user.id, enabledModes, {
-      listId: effectiveListId ?? undefined,
-      listType: effectiveListType ?? undefined,
-    }, logContext);
-    
-    // On initial load, capture the fixed Y value for HERHALING
-    // This should not change during the session
-    if (isInitialLoad || initialReviewDue === null) {
-      const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
-      setInitialReviewDue(totalReviewDue);
-      console.log(`%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`, "color: #f59e0b; font-weight: bold;");
-    }
-    
-    setStats(fresh);
-  },
+    async (
+      scope?: { listId?: string | null; listType?: WordListType | null },
+      logContext?: string,
+      isInitialLoad?: boolean
+    ) => {
+      if (!user?.id) {
+        return;
+      }
+      const effectiveListId = scope?.listId ?? wordListId;
+      const effectiveListType = scope?.listType ?? wordListType;
+      const fresh = await fetchStats(
+        user.id,
+        enabledModes,
+        {
+          listId: effectiveListId ?? undefined,
+          listType: effectiveListType ?? undefined,
+        },
+        logContext
+      );
+
+      // On initial load, capture the fixed Y value for HERHALING
+      // This should not change during the session
+      if (isInitialLoad || initialReviewDue === null) {
+        const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
+        setInitialReviewDue(totalReviewDue);
+        console.log(
+          `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
+          "color: #f59e0b; font-weight: bold;"
+        );
+      }
+
+      setStats(fresh);
+    },
     [user?.id, enabledModes, wordListId, wordListType, initialReviewDue]
   );
 
@@ -377,7 +440,10 @@ export function TrainingScreen({ user }: Props) {
 
       // Prevent concurrent calls - if already loading, skip this call
       if (loadingInProgress.current) {
-        console.log("%c loadNextWord skipped (already loading)", "color: #f59e0b");
+        console.log(
+          "%c loadNextWord skipped (already loading)",
+          "color: #f59e0b"
+        );
         return;
       }
       loadingInProgress.current = true;
@@ -421,7 +487,11 @@ export function TrainingScreen({ user }: Props) {
           // Fire and forget view recording, or await if we want strict consistency
           // Use the mode from the fetched word (or fallback to first enabled mode)
           const wordMode = nextWord.mode ?? enabledModes[0];
-          void recordWordView({ userId: user.id, wordId: nextWord.id, mode: wordMode });
+          void recordWordView({
+            userId: user.id,
+            wordId: nextWord.id,
+            mode: wordMode,
+          });
           setCurrentWord(nextWord);
         } else {
           setCurrentWord(null);
@@ -431,14 +501,24 @@ export function TrainingScreen({ user }: Props) {
         setLoadingWord(false);
       }
     },
-    [activeScenario, enabledModes, cardFilter, queueTurn, user?.id, wordListId, wordListType]
+    [
+      activeScenario,
+      enabledModes,
+      cardFilter,
+      queueTurn,
+      user?.id,
+      wordListId,
+      wordListType,
+    ]
   );
 
   const handleTrainWord = useCallback(
     (wordId: string) => {
       forcedNextWordIdRef.current = wordId;
       setShowSettings(false);
-      void loadNextWord([currentWord?.id].filter((x): x is string => Boolean(x)));
+      void loadNextWord(
+        [currentWord?.id].filter((x): x is string => Boolean(x))
+      );
     },
     [currentWord?.id, loadNextWord]
   );
@@ -466,7 +546,9 @@ export function TrainingScreen({ user }: Props) {
         `%c 📊 Stats [BEFORE ${currentWord.headword}]:`,
         "color: #8b5cf6; font-weight: bold;",
         `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
-        `| HERHALING: ${stats.reviewCardsDone}/${stats.reviewCardsDone + stats.reviewCardsDue}`,
+        `| HERHALING: ${stats.reviewCardsDone}/${
+          stats.reviewCardsDone + stats.reviewCardsDue
+        }`,
         `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`
       );
 
@@ -479,11 +561,18 @@ export function TrainingScreen({ user }: Props) {
       });
 
       // Log interval/stability changes to console
-      if (updatedStatus && ["fail", "hard", "success", "easy"].includes(result)) {
+      if (
+        updatedStatus &&
+        ["fail", "hard", "success", "easy"].includes(result)
+      ) {
         const afterInterval = updatedStatus.interval;
         const afterStability = updatedStatus.stability;
-        
-        const formatDelta = (before: number | undefined, after: number | null | undefined, suffix = "") => {
+
+        const formatDelta = (
+          before: number | undefined,
+          after: number | null | undefined,
+          suffix = ""
+        ) => {
           if (before == null && after == null) return null;
           if (before == null) return `→${after?.toFixed(2)}${suffix}`;
           if (after == null) return `${before.toFixed(2)}${suffix}→?`;
@@ -497,9 +586,10 @@ export function TrainingScreen({ user }: Props) {
         const wasNew = cardSource === "new";
         const wasLearning = cardSource === "learning";
         const isGraduated = (afterInterval ?? 0) >= 1.0;
-        const graduationNote = (wasNew || wasLearning) && isGraduated 
-          ? ` → GRADUATED to review queue` 
-          : "";
+        const graduationNote =
+          (wasNew || wasLearning) && isGraduated
+            ? ` → GRADUATED to review queue`
+            : "";
 
         console.log(
           `%c ✓ Review: ${currentWord.headword} (${cardSource} → ${result})`,
@@ -517,9 +607,16 @@ export function TrainingScreen({ user }: Props) {
         });
         const meta = debug?.metadata ?? null;
         if (meta) {
-          const r = typeof meta.retrievability === "number" ? meta.retrievability : undefined;
-          const elapsed = typeof meta.elapsed_days === "number" ? meta.elapsed_days : undefined;
-          const sameDay = typeof meta.same_day === "boolean" ? meta.same_day : undefined;
+          const r =
+            typeof meta.retrievability === "number"
+              ? meta.retrievability
+              : undefined;
+          const elapsed =
+            typeof meta.elapsed_days === "number"
+              ? meta.elapsed_days
+              : undefined;
+          const sameDay =
+            typeof meta.same_day === "boolean" ? meta.same_day : undefined;
           console.log(
             `%c   ↳ FSRS debug:`,
             "color: #6b7280;",
@@ -530,7 +627,7 @@ export function TrainingScreen({ user }: Props) {
             debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : ""
           );
         }
-        
+
         // Explain what should happen to stats
         if (wasNew) {
           console.log(
@@ -555,11 +652,18 @@ export function TrainingScreen({ user }: Props) {
         setRecentEntries((prev) => {
           // Compute interval: use FSRS interval, or calculate from learning_due_at for learning phase
           let displayInterval = updatedStatus?.interval ?? undefined;
-          if (displayInterval == null && updatedStatus?.in_learning && updatedStatus?.learning_due_at) {
+          if (
+            displayInterval == null &&
+            updatedStatus?.in_learning &&
+            updatedStatus?.learning_due_at
+          ) {
             // Calculate interval in days from now to learning_due_at
             const dueAt = new Date(updatedStatus.learning_due_at).getTime();
             const now = Date.now();
-            displayInterval = Math.max(0, (dueAt - now) / (1000 * 60 * 60 * 24));
+            displayInterval = Math.max(
+              0,
+              (dueAt - now) / (1000 * 60 * 60 * 24)
+            );
           }
 
           // Preserve the original source from the card (new/learning/review/practice/fallback)
@@ -577,7 +681,8 @@ export function TrainingScreen({ user }: Props) {
             is_nt2_2000: currentWord.is_nt2_2000,
             meanings_count: currentWord.meanings_count,
             stats: {
-              click_count: updatedStatus?.clicks ?? currentWord.debugStats?.clicks ?? 0,
+              click_count:
+                updatedStatus?.clicks ?? currentWord.debugStats?.clicks ?? 0,
               last_seen_at: new Date().toISOString(),
             },
             debugStats: {
@@ -587,7 +692,10 @@ export function TrainingScreen({ user }: Props) {
               reps: updatedStatus?.reps ?? undefined,
               ef: updatedStatus?.stability ?? undefined,
               clicks: updatedStatus?.clicks ?? undefined,
-              next_review: updatedStatus?.next_review ?? updatedStatus?.learning_due_at ?? undefined,
+              next_review:
+                updatedStatus?.next_review ??
+                updatedStatus?.learning_due_at ??
+                undefined,
               // Include before values for delta display in sidebar
               previousInterval: beforeInterval,
               previousStability: beforeStability,
@@ -605,7 +713,15 @@ export function TrainingScreen({ user }: Props) {
       await loadNextWord([currentWord.id]);
       setActionLoading(false);
     },
-    [advanceQueueTurn, currentWord, enabledModes, loadNextWord, loadStats, stats, user?.id]
+    [
+      advanceQueueTurn,
+      currentWord,
+      enabledModes,
+      loadNextWord,
+      loadStats,
+      stats,
+      user?.id,
+    ]
   );
 
   useEffect(() => {
@@ -623,7 +739,7 @@ export function TrainingScreen({ user }: Props) {
     }
     initialLoadDone.current = true;
     loadNextWord();
-    loadStats(undefined, "INITIAL LOAD", true);  // isInitialLoad = true to set fixed Y
+    loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, listHydrated]);
@@ -710,7 +826,12 @@ export function TrainingScreen({ user }: Props) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleAction, handleShowCurrentWordDetails, revealed, translationTooltipOpen]);
+  }, [
+    handleAction,
+    handleShowCurrentWordDetails,
+    revealed,
+    translationTooltipOpen,
+  ]);
 
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
@@ -762,7 +883,11 @@ export function TrainingScreen({ user }: Props) {
 
         return [historyItem, ...prev].slice(0, 50);
       });
-      await recordDefinitionClick({ userId: user.id, wordId: entry.id, mode: clickMode });
+      await recordDefinitionClick({
+        userId: user.id,
+        wordId: entry.id,
+        mode: clickMode,
+      });
     },
     [currentWord?.mode, enabledModes, user?.id]
   );
@@ -791,8 +916,8 @@ export function TrainingScreen({ user }: Props) {
   const activeListValue = wordListId
     ? `${wordListType ?? "curated"}:${wordListId}`
     : availableLists[0]
-      ? `${availableLists[0].type}:${availableLists[0].id}`
-      : "";
+    ? `${availableLists[0].type}:${availableLists[0].id}`
+    : "";
 
   const listOptions = availableLists.map((list) => ({
     value: `${list.type}:${list.id}`,
@@ -840,7 +965,11 @@ export function TrainingScreen({ user }: Props) {
     // No active list or list was deleted - select primary list
     const primary = lists[0];
     if (primary) {
-      await updateActiveList({ userId: user.id, listId: primary.id, listType: primary.type });
+      await updateActiveList({
+        userId: user.id,
+        listId: primary.id,
+        listType: primary.type,
+      });
       setWordListId(primary.id);
       setWordListType(primary.type);
       setWordListLabel(primary.name);
@@ -853,29 +982,43 @@ export function TrainingScreen({ user }: Props) {
     setSelectedEntry(entry);
   };
 
-  const handleModesChange = useCallback((newModes: TrainingMode[]) => {
-    setRevealed(false);
-    setEnabledModes(newModes);
-  }, [setEnabledModes]);
+  const handleModesChange = useCallback(
+    (newModes: TrainingMode[]) => {
+      setRevealed(false);
+      setEnabledModes(newModes);
+    },
+    [setEnabledModes]
+  );
 
-  const handleScenarioChange = useCallback((newScenario: string) => {
-    console.log("[Settings] Changing scenario to:", newScenario);
-    setRevealed(false);
-    setActiveScenario(newScenario);
-    // Load next word with the new scenario
-    void loadNextWord([], { listId: wordListId, listType: wordListType });
-  }, [setActiveScenario, loadNextWord, wordListId, wordListType]);
+  const handleScenarioChange = useCallback(
+    (newScenario: string) => {
+      console.log("[Settings] Changing scenario to:", newScenario);
+      setRevealed(false);
+      setActiveScenario(newScenario);
+      // Load next word with the new scenario
+      void loadNextWord([], { listId: wordListId, listType: wordListType });
+    },
+    [setActiveScenario, loadNextWord, wordListId, wordListType]
+  );
 
-  const handleCardFilterChange = useCallback((newFilter: CardFilter) => {
-    setCardFilter(newFilter);
-  }, [setCardFilter]);
+  const handleCardFilterChange = useCallback(
+    (newFilter: CardFilter) => {
+      setCardFilter(newFilter);
+    },
+    [setCardFilter]
+  );
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
   const cycleThemePreference = () => {
-    const next = themePreference === "light" ? "dark" : themePreference === "dark" ? "system" : "light";
+    const next =
+      themePreference === "light"
+        ? "dark"
+        : themePreference === "dark"
+        ? "system"
+        : "light";
     setTheme(next);
   };
 
@@ -967,28 +1110,28 @@ export function TrainingScreen({ user }: Props) {
 
   return (
     <div className="flex h-screen flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
-      <header className="flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 md:px-6 md:py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+        <div className="flex items-center gap-2 md:gap-3">
           <div>
-            <p className="text-[13px] font-bold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500 dark:text-slate-400">
               NT2 Training
             </p>
-            <p className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+            <p className="text-base md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
               {currentMode === "word-to-definition"
                 ? "Woord → Definitie"
                 : "Definitie → Woord"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-300">
+        <div className="flex items-center gap-2 md:gap-3 text-sm text-slate-500 dark:text-slate-300">
           <div
             role="button"
             tabIndex={0}
             title={themeTitle}
             aria-label={themeTitle}
-            className="relative z-10 flex shrink-0 items-center justify-center h-10 w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             onClick={cycleThemePreference}
-            onKeyDown={(e) => e.key === 'Enter' && cycleThemePreference()}
+            onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
           >
             {renderThemeIcon()}
             <span className="absolute inset-0 rounded-full" />
@@ -999,9 +1142,9 @@ export function TrainingScreen({ user }: Props) {
             tabIndex={0}
             title="Instellingen"
             aria-label="Instellingen"
-            className="relative z-10 flex shrink-0 items-center justify-center h-10 w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             onClick={() => setShowSettings(true)}
-            onKeyDown={(e) => e.key === 'Enter' && setShowSettings(true)}
+            onKeyDown={(e) => e.key === "Enter" && setShowSettings(true)}
           >
             <svg
               className="w-5 h-5"
@@ -1030,9 +1173,9 @@ export function TrainingScreen({ user }: Props) {
             tabIndex={0}
             title="Hotkeys"
             aria-label="Hotkeys"
-            className="relative z-10 flex shrink-0 items-center justify-center h-10 w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             onClick={() => setShowHotkeys(true)}
-            onKeyDown={(e) => e.key === 'Enter' && setShowHotkeys(true)}
+            onKeyDown={(e) => e.key === "Enter" && setShowHotkeys(true)}
           >
             <span className="text-base font-semibold">?</span>
             <span className="absolute inset-0 rounded-full" />
@@ -1053,15 +1196,15 @@ export function TrainingScreen({ user }: Props) {
       <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
         {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
         {/* Adjusted max-width and gap to keep things tight and focused */}
-        <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-4 px-4 py-6 lg:gap-6 lg:px-6">
+        <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-2 py-4 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
           {/* Left/Main Column: Constrained to max-w-2xl to match Card width exactly */}
           <section className="flex flex-1 w-full max-w-2xl flex-col h-full overflow-hidden rounded-3xl bg-transparent">
             {/* 1. Scrollable Card Area */}
             <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col">
               {/* Card Container */}
-              <div className="flex min-h-full flex-col justify-center py-4">
-                {/* 16/10 Aspect Ratio Card */}
-                <div className="mx-auto w-full aspect-[16/10] min-h-[400px]">
+              <div className="flex min-h-full flex-col justify-center py-2 md:py-4">
+                {/* 16/10 Aspect Ratio Card on desktop, auto on mobile */}
+                <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px]">
                   <TrainingCard
                     word={currentWord}
                     mode={currentMode}
@@ -1087,27 +1230,27 @@ export function TrainingScreen({ user }: Props) {
                 {revealed ? (
                   <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {/* Primary Actions Only (Thinner) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
-                      {(["fail", "hard", "success", "easy"] as ReviewResult[]).map(
-                        (actionKey) => {
-                          const { label, keyHint, tone } =
-                            ACTION_LABELS[actionKey];
-                          return (
-                            <button
-                              key={actionKey}
-                              type="button"
-                              disabled={actionLoading}
-                              onClick={() => handleAction(actionKey)}
-                              className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]}`}
-                            >
-                              <span>{label}</span>
-                              <span className="text-[10px] md:text-xs font-normal opacity-70">
-                                ({keyHint})
-                              </span>
-                            </button>
-                          );
-                        }
-                      )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
+                      {(
+                        ["fail", "hard", "success", "easy"] as ReviewResult[]
+                      ).map((actionKey) => {
+                        const { label, keyHint, tone } =
+                          ACTION_LABELS[actionKey];
+                        return (
+                          <button
+                            key={actionKey}
+                            type="button"
+                            disabled={actionLoading}
+                            onClick={() => handleAction(actionKey)}
+                            className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]}`}
+                          >
+                            <span>{label}</span>
+                            <span className="text-[10px] md:text-xs font-normal opacity-70">
+                              ({keyHint})
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -1162,10 +1305,13 @@ export function TrainingScreen({ user }: Props) {
         onListChange={handleFooterListChange}
         onOpenSettings={() => setShowSettings(true)}
         activeScenarioName={
-          activeScenario === "understanding" ? "Begrip" :
-          activeScenario === "listening" ? "Luisteren" :
-          activeScenario === "conjugation" ? "Vervoegingen" :
-          activeScenario
+          activeScenario === "understanding"
+            ? "Begrip"
+            : activeScenario === "listening"
+            ? "Luisteren"
+            : activeScenario === "conjugation"
+            ? "Vervoegingen"
+            : activeScenario
         }
         initialReviewDue={initialReviewDue}
       />
