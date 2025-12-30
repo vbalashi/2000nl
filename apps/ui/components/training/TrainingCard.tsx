@@ -103,27 +103,45 @@ export function TrainingCard({
 
       translationLoadingRef.current = true;
       try {
-        if (opts?.force) {
-          setTranslationStatus("pending");
-          setTranslationOverlay(null);
-          setTranslationError(null);
-        }
+        // Immediately mark as pending so the UI reflects that we're working,
+        // especially on mobile where the request can take noticeable time.
+        setTranslationStatus("pending");
+        setTranslationOverlay(null);
+        setTranslationError(null);
+
         const res = await fetch(
           `/api/translation?word_id=${encodeURIComponent(
             word.id
           )}&lang=${encodeURIComponent(translationLang)}${
             opts?.force ? "&force=1" : ""
           }`,
-          { cache: "no-store" }
+          {
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          }
         );
-        const data = (await res.json()) as {
-          status?: WordEntryTranslationStatus;
-          overlay?: TranslationOverlay;
-          error?: string;
-        };
-        setTranslationStatus(data.status ?? null);
-        setTranslationOverlay(data.overlay ?? null);
-        setTranslationError(data.error ?? null);
+
+        // Some deployments / proxies can return HTML or empty bodies on errors.
+        // Handle non-2xx explicitly so we can show a useful message.
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(
+            `Translation API ${res.status}: ${text || res.statusText}`
+          );
+        }
+
+        const data = (await res.json().catch(() => null)) as
+          | {
+              status?: WordEntryTranslationStatus;
+              overlay?: TranslationOverlay;
+              error?: string;
+            }
+          | null;
+
+        setTranslationStatus(data?.status ?? null);
+        setTranslationOverlay(data?.overlay ?? null);
+        setTranslationError(data?.error ?? null);
       } catch (e: any) {
         setTranslationStatus("failed");
         setTranslationError(String(e?.message ?? e ?? "Unknown error"));
@@ -335,11 +353,13 @@ export function TrainingCard({
           // Absolute overlay: does NOT affect layout / flow.
           // Stretch full width so wrapping isn't constrained (esp. on mobile).
           "pointer-events-none select-none absolute left-0 right-0",
-          // Position in the “gap” above the baseline.
-          // Keep it close to the source text (less “stuck” to the line above).
-          "-top-2 md:-top-3",
+          // Anchor ABOVE the line so multi-line translations expand upward
+          // (avoids overlapping the original line).
+          "bottom-full translate-y-[2px] md:translate-y-[3px]",
           // Style
           "text-[11px] md:text-xs leading-none font-semibold tracking-wide text-slate-400 dark:text-slate-500",
+          // Desktop: keep overlays to a single line to reduce collisions with nearby lines.
+          "md:truncate",
           // No background highlight (can obscure underlying text in dense layouts).
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
@@ -430,16 +450,21 @@ export function TrainingCard({
         {/* Header: Headword + POS Badge (Always Visible) */}
         <div className="flex-none mb-8 text-center bg-transparent z-0">
           {isWordToDefinition ? (
-            <div className="relative inline-flex items-baseline justify-center gap-3 flex-wrap">
-              {word.gender && (
-                <span className="text-4xl md:text-5xl font-medium text-slate-400 opacity-60">
-                  {word.gender}
-                </span>
-              )}
+            // IMPORTANT: make the translation overlay use the full card width.
+            // If we keep the relative container as `inline-flex`, the absolute overlay
+            // becomes constrained to the (often short) word width and truncates early.
+            <div className="relative w-full">
               <InlineTranslation text={getHeadwordTranslated()} />
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {word.headword}
-              </h1>
+              <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
+                {word.gender && (
+                  <span className="text-4xl md:text-5xl font-medium text-slate-400 opacity-60">
+                    {word.gender}
+                  </span>
+                )}
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {word.headword}
+                </h1>
+              </div>
             </div>
           ) : (
             /* Definition -> Word mode: Question is Definition (context hidden until revealed) */

@@ -122,32 +122,45 @@ export function WordDetailPanel({
 
       translationLoadingRef.current = true;
       try {
-        if (opts?.force) {
-          setTranslationStatus("pending");
-          setTranslationOverlay(null);
-          setTranslationError(null);
-        }
+        // Immediately mark as pending so slow mobile browsers show progress.
+        setTranslationStatus("pending");
+        setTranslationOverlay(null);
+        setTranslationError(null);
+
         const res = await fetch(
           `/api/translation?word_id=${encodeURIComponent(
             entry.id
           )}&lang=${encodeURIComponent(translationLang)}${
             opts?.force ? "&force=1" : ""
           }`,
-          { cache: "no-store" }
+          {
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          }
         );
-        const data = (await res.json()) as {
-          status?: WordEntryTranslationStatus;
-          overlay?: TranslationOverlay;
-          error?: string;
-        };
-        setTranslationStatus(data.status ?? null);
-        setTranslationOverlay(data.overlay ?? null);
-        setTranslationError(data.error ?? null);
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(
+            `Translation API ${res.status}: ${text || res.statusText}`
+          );
+        }
+
+        const data = (await res.json().catch(() => null)) as
+          | {
+              status?: WordEntryTranslationStatus;
+              overlay?: TranslationOverlay;
+              error?: string;
+            }
+          | null;
+
+        setTranslationStatus(data?.status ?? null);
+        setTranslationOverlay(data?.overlay ?? null);
+        setTranslationError(data?.error ?? null);
       } catch (e: unknown) {
         setTranslationStatus("failed");
-        const errorMessage =
-          e instanceof Error ? e.message : String(e ?? "Unknown error");
-        setTranslationError(errorMessage);
+        setTranslationError(e instanceof Error ? e.message : String(e ?? "Unknown error"));
       } finally {
         translationLoadingRef.current = false;
       }
