@@ -39,13 +39,15 @@ function ProgressStat({
   barColorClass: string;
 }) {
   const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
-  
+
   return (
     <div className="flex items-center gap-2">
-      <span className={`text-[10px] font-bold uppercase tracking-widest ${colorClass}`}>
+      <span
+        className={`text-[10px] font-bold uppercase tracking-widest ${colorClass}`}
+      >
         {label}
       </span>
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+      <div className="h-1.5 w-8 md:w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
         <div
           className={`h-full rounded-full transition-all ${barColorClass}`}
           style={{ width: `${progress}%` }}
@@ -82,7 +84,8 @@ export function FooterStats({
   } = stats;
 
   // Use fixed Y value from session start, or fall back to current stats
-  const reviewTotal = initialReviewDue ?? (reviewCardsDone + stats.reviewCardsDue);
+  const reviewTotal =
+    initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue;
 
   const languageOptions = [
     { value: "nl", label: "Nederlands" },
@@ -101,8 +104,8 @@ export function FooterStats({
     <footer className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75">
       <div className="mx-auto flex w-full max-w-[1200px] justify-center px-4 lg:px-6">
         <div className="flex w-full max-w-2xl flex-col gap-3 rounded-2xl border border-white/30 bg-white/60 p-4 shadow-lg backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/70">
-          {/* Stats Row - Three progress indicators */}
-          <div className="flex flex-col gap-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          {/* Stats Row - Horizontal grid on mobile, flex on desktop */}
+          <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
             {/* New cards today */}
             <ProgressStat
               label="Nieuw"
@@ -133,13 +136,16 @@ export function FooterStats({
 
           {/* Controls Row */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs dark:border-slate-800/60">
-            <div className="flex flex-wrap items-center gap-2">
-              <DropUpSelect
-                label="Taal"
-                value={language}
-                options={languageOptions}
-                onChange={onLanguageChange}
-              />
+            <div className="flex flex-wrap items-center gap-2 justify-center w-full sm:justify-start sm:w-auto">
+              {/* Hide Language on mobile, show on desktop */}
+              <div className="hidden sm:block">
+                <DropUpSelect
+                  label="Taal"
+                  value={language}
+                  options={languageOptions}
+                  onChange={onLanguageChange}
+                />
+              </div>
               {listOptions?.length && activeListValue && onListChange ? (
                 <DropUpSelect
                   label="Lijst"
@@ -166,11 +172,13 @@ export function FooterStats({
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="flex items-center gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+                className="flex items-center gap-2 rounded-full bg-slate-100/70 px-2 py-1.5 md:px-3 md:py-2 text-[10px] md:text-[11px] uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
                 title="Wijzig scenario in Instellingen"
                 aria-label="Wijzig scenario in Instellingen"
               >
-                <span className="text-slate-500 dark:text-slate-300">Scenario:</span>
+                <span className="text-slate-500 dark:text-slate-300 hidden xs:inline">
+                  Scenario:
+                </span>
                 <span className="font-semibold text-slate-800 dark:text-white">
                   {activeScenarioName ?? "Begrip"}
                 </span>
