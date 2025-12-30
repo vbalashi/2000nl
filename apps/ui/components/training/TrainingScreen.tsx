@@ -1042,9 +1042,33 @@ export function TrainingScreen({ user }: Props) {
       }
     }
 
-    // Always clear local session so the UI updates.
+    // Always clear local session so the UI updates. In practice, Supabase can
+    // still reply `session_not_found` here as well; ensure we clear storage
+    // regardless.
     const { error: localError } = await supabase.auth.signOut({ scope: "local" });
-    if (localError) console.warn("[Auth] signOut(local) failed:", localError);
+    if (localError) {
+      const code = (localError as unknown as { code?: string }).code;
+      if (code !== "session_not_found") {
+        console.warn("[Auth] signOut(local) failed:", localError);
+      }
+    }
+
+    // Fallback: nuke any persisted Supabase auth tokens so we never get stuck
+    // "logged in" client-side due to a missing server session record.
+    if (typeof window !== "undefined") {
+      try {
+        for (const k of Object.keys(window.localStorage)) {
+          if (k.startsWith("sb-") && k.includes("-auth-token")) {
+            window.localStorage.removeItem(k);
+          }
+        }
+      } catch (e) {
+        console.warn("[Auth] failed clearing localStorage tokens:", e);
+      }
+
+      // Kick the app to a clean state after logout.
+      window.location.assign("/");
+    }
   };
 
   useEffect(() => {
