@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://2000nl.app/schemas/nl/note.schema.json",
+  "title": "Dutch Dictionary Note",
+  "type": "object",
+  "required": ["headword", "meanings"],
+  "properties": {
+    "headword": {"type": "string"},
+    "pronunciation": {"type": "string"},
+    "pronunciation_with_stress": {"type": "string"},
+    "gender": {"type": "string"},
+    "part_of_speech": {"type": "string"},
+    "plural": {"type": "string"},
+    "diminutive": {"type": "string"},
+    "verb_forms": {
+      "oneOf": [
+        {"type": "string"},
+        {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      ]
+    },
+    "conjugation_table": {
+      "description": "Optional structured conjugation data if available",
+      "type": ["object", "null"]
+    },
+    "inflected_form": {"type": "string"},
+    "comparative": {"type": "string"},
+    "superlative": {"type": "string"},
+    "derivations": {"type": "string"},
+    "alternate_headwords": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "cross_reference": {"type": ["string", "null"]},
+    "is_nt2_2000": {"type": "boolean", "default": false},
+    "meanings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["definition"],
+        "properties": {
+          "definition": {"type": "string"},
+          "context": {"type": "string"},
+          "examples": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "idioms": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {"type": "string"},
+                {
+                  "type": "object",
+                  "properties": {
+                    "expression": {"type": "string"},
+                    "explanation": {"type": "string"}
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "audio_links": {
+      "type": "object",
+      "properties": {
+        "nl": {"type": "string"},
+        "be": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "images": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "_metadata": {
+      "type": "object",
+      "properties": {
+        "search_term": {"type": "string"},
+        "headword_raw": {"type": "string"},
+        "index": {"type": "integer"},
+        "dictionaryId": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "meaning_id": {"type": ["integer", "null"]}
+  },
+  "additionalProperties": true
+}

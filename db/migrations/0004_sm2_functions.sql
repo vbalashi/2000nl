@@ -1,0 +1,240 @@
+-- Function: Handle Review (SM2 Logic)
+create or replace function handle_review(
+    p_user_id uuid,
+    p_word_id uuid,
+    p_mode text,
+    p_result text -- 'success', 'fail', 'freeze', 'hide'
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+    v_n int;
+    v_ef float;
+    v_interval int;
+    v_status user_word_status%rowtype;
+    v_new_interval int;
+    v_new_n int;
+    v_new_ef float;
+    v_next_review timestamptz;
+begin
+    -- 1. Fetch existing status or default
+    select * into v_status from user_word_status 
+    where user_id = p_user_id and word_id = p_word_id and mode = p_mode;
+    
+    if not found then
+        v_n := 0;
+        v_ef := 2.5;
+        v_interval := 0;
+    else
+        v_n := v_status.sm2_n;
+        v_ef := v_status.sm2_ef;
+        v_interval := v_status.sm2_interval;
+    end if;
+
+    -- 2. Handle simple states
+    if p_result = 'hide' then
+        insert into user_word_status (user_id, word_id, mode, hidden, last_result, last_seen_at)
+        values (p_user_id, p_word_id, p_mode, true, 'hide', now())
+        on conflict (user_id, word_id, mode) do update
+        set hidden = true, last_result = 'hide', last_seen_at = now();
+        
+        insert into user_events (user_id, word_id, mode, event_type)
+        values (p_user_id, p_word_id, p_mode, 'hide');
+        return;
+    end if;
+
+    if p_result = 'freeze' then
+        insert into user_word_status (user_id, word_id, mode, frozen_until, last_result, last_seen_at)
+        values (p_user_id, p_word_id, p_mode, now() + interval '1 day', 'freeze', now())
+        on conflict (user_id, word_id, mode) do update
+        set frozen_until = now() + interval '1 day', last_result = 'freeze', last_seen_at = now();
+        
+        insert into user_events (user_id, word_id, mode, event_type)
+        values (p_user_id, p_word_id, p_mode, 'freeze');
+        return;
+    end if;
+
+    -- 3. SM2 Algorithm
+    -- Quality: success=5 (perfect), fail=0 (blackout) or maybe success=4/fail=1.
+    -- standard SM2: q=0-5. 
+    -- Simplification: 
+    --   Success: Quality 4 or 5. Let's say 4.
+    --   Fail: Quality 1.
+    
+    if p_result = 'success' then
+        if v_n = 0 then
+            v_new_interval := 1;
+        elseif v_n = 1 then
+            v_new_interval := 6;
+        else
+            v_new_interval := ceil(v_interval * v_ef);
+        end if;
+        v_new_n := v_n + 1;
+        -- EF not changed significantly on simple binary success in some variants,
+        -- but officially EF' = EF + (0.1 - (5-q)*(0.08+(5-q)*0.02)). 
+        -- If q=4: 5-4=1. EF' = EF + (0.1 - 1*(0.08+0.02)) = EF + (0.1 - 0.1) = EF. 
+        -- So EF stays same for "Good".
+        v_new_ef := v_ef; 
+    else -- fail
+        v_new_n := 0;
+        v_new_interval := 1; -- Reset to 1 day
+        -- If q=1: 5-1=4. EF' = EF + (0.1 - 4*(0.08+0.08)) = EF + (0.1 - 0.64) = EF - 0.54.
+        -- We can penalize EF.
+        v_new_ef := greatest(1.3, v_status.sm2_ef - 0.2); -- Simplify penalty
+    end if;
+
+    v_next_review := now() + (v_new_interval || ' days')::interval;
+
+    -- 4. Upsert Status
+    insert into user_word_status (
+        user_id, word_id, mode, 
+        sm2_n, sm2_ef, sm2_interval, next_review_at, 
+        last_result, last_seen_at, success_count
+    )
+    values (
+        p_user_id, p_word_id, p_mode,
+        v_new_n, v_new_ef, v_new_interval, v_next_review,
+        p_result, now(), 
+        case when p_result = 'success' then 1 else 0 end
+    )
+    on conflict (user_id, word_id, mode) do update
+    set sm2_n = excluded.sm2_n,
+        sm2_ef = excluded.sm2_ef,
+        sm2_interval = excluded.sm2_interval,
+        next_review_at = excluded.next_review_at,
+        last_result = excluded.last_result,
+        last_seen_at = excluded.last_seen_at,
+        success_count = user_word_status.success_count + (case when p_result = 'success' then 1 else 0 end);
+
+    -- 5. Log Event
+    insert into user_events (user_id, word_id, mode, event_type)
+    values (p_user_id, p_word_id, p_mode, 'review_' || p_result);
+end;
+$$;
+
+
+-- Function: Handle Click (Implicit "Forgot")
+create or replace function handle_click(
+    p_user_id uuid,
+    p_word_id uuid,
+    p_mode text
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+    v_status user_word_status%rowtype;
+    v_new_ef float;
+begin
+    -- Record click event
+    insert into user_events (user_id, word_id, mode, event_type)
+    values (p_user_id, p_word_id, p_mode, 'definition_click');
+
+    -- Update status
+    -- Clicking means the user doesn't know the word efficiently.
+    -- We should treat this as a "lapse" or at least prioritize it.
+    -- Strategy: Reset interval to small, reduce EF slightly, set next_review to NOW.
+    
+    select * into v_status from user_word_status 
+    where user_id = p_user_id and word_id = p_word_id and mode = p_mode;
+
+    if not found then
+        -- First time seeing/interacting -> just initialize high priority
+        insert into user_word_status (
+            user_id, word_id, mode, 
+            click_count, next_review_at, sm2_interval, sm2_n, sm2_ef
+        ) values (
+            p_user_id, p_word_id, p_mode, 
+            1, now(), 0, 0, 2.5
+        );
+    else
+        v_new_ef := greatest(1.3, v_status.sm2_ef - 0.15); -- Penalize EF
+        
+        update user_word_status
+        set click_count = click_count + 1,
+            next_review_at = now(), -- Review immediately!
+            sm2_interval = 0,       -- Reset interval
+            sm2_n = 0,              -- Reset reps
+            sm2_ef = v_new_ef
+        where user_id = p_user_id and word_id = p_word_id and mode = p_mode;
+    end if;
+end;
+$$;
+
+
+-- Function: Get Next Word
+create or replace function get_next_word(
+    p_user_id uuid,
+    p_mode text,
+    p_exclude_ids uuid[] default array[]::uuid[]
+)
+returns setof jsonb
+language plpgsql
+security definer
+as $$
+declare
+    v_word_id uuid;
+    v_source text;
+begin
+    -- Priority 1: Overdue reviews (including clicked words set to now())
+    select word_id, 'review' into v_word_id, v_source
+    from user_word_status
+    where user_id = p_user_id 
+      and mode = p_mode
+      and next_review_at <= now()
+      and (frozen_until is null or frozen_until <= now())
+      and hidden = false
+      and not (word_id = any(p_exclude_ids))
+    order by next_review_at asc -- The most overdue first
+    limit 1;
+
+    -- Priority 2: If no overdue, pick a "New" word that is important
+    -- We want random NT2 word that user hasn't started learning yet.
+    if v_word_id is null then
+        select id, 'new' into v_word_id, v_source
+        from word_entries w
+        where w.is_nt2_2000 = true
+          and not exists (
+              select 1 from user_word_status s 
+              where s.word_id = w.id 
+                and s.user_id = p_user_id 
+                and s.mode = p_mode
+                -- If it exists but is just 'seen' without clicks/reviews? 
+                -- Ideally we exclude anything in status unless it's very old?
+                -- For now: exclude anything in status table.
+          )
+          and not (w.id = any(p_exclude_ids))
+        order by random() -- efficient enough for 2000 rows, maybe optimize later
+        limit 1;
+    end if;
+
+    -- If found, return joined data
+    if v_word_id is not null then
+        return query
+        select jsonb_build_object(
+            'id', w.id,
+            'headword', w.headword,
+            'part_of_speech', w.part_of_speech,
+            'gender', w.gender,
+            'raw', w.raw,
+            'vandaleId', w.vandale_id,
+            'stats', jsonb_build_object(
+                'source', v_source,
+                'next_review', s.next_review_at,
+                'interval', s.sm2_interval,
+                'reps', s.sm2_n,
+                'ef', s.sm2_ef,
+                'clicks', s.click_count
+            )
+        )
+        from word_entries w
+        left join user_word_status s on s.word_id = w.id and s.user_id = p_user_id and s.mode = p_mode
+        where w.id = v_word_id;
+    end if;
+    
+    return;
+end;
+$$;

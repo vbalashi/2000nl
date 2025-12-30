@@ -1,0 +1,26 @@
+node_modules
+.next
+*/*/.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+coverage
+playwright-report
+__pycache__/
+.pytest_cache/
+.venv/
+.DS_Store
+.idea/
+.vscode/
+
+# Never commit runtime secrets; commit `.env.example` only.
+.env
+.env.*
+!.env.example
+
+packages/ingestion/data/raw/
+packages/ingestion/.env
+
+# Large + sensitive dictionary data (keep local / out of git)
+packages/ingestion/nl/
+db/data/

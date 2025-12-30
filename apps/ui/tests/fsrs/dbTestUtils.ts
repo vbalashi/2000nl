@@ -1,0 +1,109 @@
+import fs from "fs";
+import path from "path";
+import { Pool, PoolClient } from "pg";
+
+export const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export const getDbUrl = () =>
+  process.env.FSRS_TEST_DB_URL || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+
+export async function ensureAuthSchema(pool: Pool) {
+  await pool.query(`
+    create schema if not exists auth;
+    create table if not exists auth.users (
+      id uuid primary key,
+      email text,
+      created_at timestamptz default now()
+    );
+  `);
+}
+
+export async function runMigrations(pool: Pool) {
+  await ensureAuthSchema(pool);
+  const migrationsDir = path.resolve(process.cwd(), "..", "..", "db", "migrations");
+  const migrationFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+  for (const file of migrationFiles) {
+    const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
+    await pool.query(sql);
+  }
+}
+
+export async function withTransaction<T>(
+  pool: Pool,
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("ROLLBACK"); // keep DB clean across tests
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function ensureUserWithSettings(
+  client: PoolClient,
+  userId: string,
+  settings?: { daily_new_limit?: number; daily_review_limit?: number; target_retention?: number }
+) {
+  await client.query(
+    `insert into auth.users (id, email) values ($1, $2)
+     on conflict (id) do nothing`,
+    [userId, `${userId}@test.local`]
+  );
+
+  await client.query(
+    `insert into user_settings (user_id, daily_new_limit, daily_review_limit, target_retention, mix_mode)
+     values ($1, $2, $3, coalesce($4, 0.9), 'mixed')
+     on conflict (user_id) do update
+       set daily_new_limit = excluded.daily_new_limit,
+           daily_review_limit = excluded.daily_review_limit,
+           target_retention = excluded.target_retention`,
+    [userId, settings?.daily_new_limit ?? 10, settings?.daily_review_limit ?? 40, settings?.target_retention]
+  );
+}
+
+export async function ensureLanguage(client: PoolClient, code = "nl") {
+  await client.query(
+    `insert into languages (code, name) values ($1, $2)
+     on conflict (code) do nothing`,
+    [code, "Dutch"]
+  );
+}
+
+export async function insertWord(
+  client: PoolClient,
+  headword: string,
+  opts?: { is_nt2_2000?: boolean }
+): Promise<string> {
+  await ensureLanguage(client);
+  const { rows } = await client.query(
+    `insert into word_entries (language_code, headword, part_of_speech, gender, is_nt2_2000, raw)
+     values ('nl', $1, 'noun', 'n', coalesce($2, true), '{}'::jsonb)
+     returning id`,
+    [headword, opts?.is_nt2_2000 ?? true]
+  );
+  return rows[0].id as string;
+}
+
+export async function callGetNextWord(
+  client: PoolClient,
+  userId: string,
+  mode: string,
+  exclude: string[] = []
+) {
+  const { rows } = await client.query(
+    `select get_next_word($1, $2, $3::uuid[]) as item`,
+    [userId, mode, exclude]
+  );
+  return rows[0]?.item as any | undefined;
+}

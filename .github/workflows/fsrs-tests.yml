@@ -1,0 +1,58 @@
+name: FSRS parity and RPC tests
+
+on:
+  pull_request:
+    paths:
+      - "apps/ui/lib/fsrsMath.ts"
+      - "apps/ui/tests/fsrs/**"
+      - "db/migrations/**"
+      - "apps/ui/package.json"
+      - "apps/ui/package-lock.json"
+      - ".github/workflows/fsrs-tests.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "apps/ui/lib/fsrsMath.ts"
+      - "apps/ui/tests/fsrs/**"
+      - "db/migrations/**"
+      - "apps/ui/package.json"
+      - "apps/ui/package-lock.json"
+      - ".github/workflows/fsrs-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  fsrs-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fsrs_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      FSRS_TEST_DB_URL: postgres://postgres:postgres@localhost:5432/fsrs_test
+      CI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: apps/ui
+
+      - name: Run FSRS parity and RPC tests
+        run: npm test -- tests/fsrs/*.test.ts
+        working-directory: apps/ui

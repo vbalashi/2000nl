@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+## Running psql against Supabase
+
+1. Obtain your Supabase connection string from the project settings (Database > Connection string > psql).
+2. Export it as an environment variable (or paste directly when prompted):
+   ```
+   export SUPABASE_DB_URL="postgresql://USER:PASSWORD@HOST:PORT/postgres?sslmode=require"
+   ```
+3. Connect with `psql`:
+   ```
+   psql "$SUPABASE_DB_URL"
+   ```
+4. Quick validation queries:
+   - Count entries: `select count(*) from word_entries;`
+   - Inspect a headword: `select headword, part_of_speech, is_nt2_2000 from word_entries limit 5;`
+   - Lists: `select name, count(*) from word_list_items join word_lists using (id) group by name;`
+   - Progress: `select count(*) from user_events;`
+
+Tip: if using a local `.env.local`, you can store `SUPABASE_DB_URL` there and run `psql "$(grep SUPABASE_DB_URL .env.local | cut -d= -f2-)"`.
+
+Local copy: `db/.env.local` (same SUPABASE_DB_URL). Keep it out of git.
+
+## Project structure (touch only what’s needed)
+- Monorepo root: `/home/khrustal/dev/2000nl-ui`
+  - `apps/ui` — Next.js frontend; run dev/build/test here; env in `apps/ui/.env.local` (needs `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+  - `apps/api` — API placeholder (no changes unless adding backend).
+  - `packages/ingestion` — data validation/loaders; scripts in `packages/ingestion/scripts`; source in `packages/ingestion/src`; data (if present) in `packages/ingestion/data/words_content` (large data stays out of git).
+  - `packages/scraper` — scraping adapters (includes Vandale parser).
+  - `packages/shared` — JSON schemas, card-type registry, shared types.
+  - `packages/docs` — architecture/data-model/pipelines/card-types docs.
+  - `db` — SQL migrations/seeds.
+  - `ops` — CI/infra placeholders.
+- Script reference: `packages/ingestion/SCRIPTS.md` (purposes and timestamps).
+
+## FSRS (training)
+- FSRS-6 lives in `db/migrations/0010+` with RPCs `handle_review`, `handle_click`, and `get_next_word`.
+- Defaults: 10 new cards/day, unlimited reviews; grades: again/hard/good/easy (plus freeze/hide).
+- Clicks count as lapses (grade=again). UI hotkeys: K again, H hard, J good, L easy, F freeze, X hide, Space reveal.

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html class="light" lang="nl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hoofd Trainingsscherm - Verfijnd</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2e2bee",
+              "background-light": "#F5F7FB", // Custom background from prompt
+              "background-dark": "#111827", // Using near-black as a dark theme base
+              "card-light": "#EFF2F7", // Custom main card bg from prompt
+              "card-dark": "#1f2937",
+              "text-light": "#111827",
+              "text-dark": "#f3f4f6",
+              "success": "#10B981",
+              "danger": "#EF4444",
+              "secondary": "#4B5563"
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+<div class="relative flex h-screen min-h-screen w-full flex-col group/design-root overflow-hidden">
+<header class="flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-card-dark/50 px-4 sm:px-6 lg:px-8">
+<button class="flex items-center justify-center rounded-full p-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">person</span>
+<span class="text-sm font-medium">Gebruiker</span>
+</div>
+<button class="flex items-center justify-center rounded-full p-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined dark:hidden">light_mode</span>
+<span class="material-symbols-outlined hidden dark:inline">dark_mode</span>
+</button>
+</div>
+</header>
+<div class="flex h-full grow p-4 sm:p-6 lg:p-8">
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full">
+<main class="lg:col-span-3 flex flex-col h-full">
+<div class="flex-grow flex items-center justify-center p-4">
+<div class="w-full max-w-2xl bg-white dark:bg-card-dark rounded-xl p-8 lg:p-12 shadow-sm border border-slate-200 dark:border-slate-700">
+<div class="flex flex-col items-center justify-center text-center gap-8">
+<h1 class="text-4xl md:text-5xl font-medium leading-tight tracking-tighter text-text-light dark:text-text-dark">veroorzaken</h1>
+<div aria-hidden="true" class="flex flex-col gap-6 text-lg md:text-xl text-slate-600 dark:text-slate-400 opacity-0">
+<div class="flex flex-col gap-1">
+<p class="font-medium text-slate-800 dark:text-slate-200">de oorzaak zijn van iets</p>
+<p class="text-base font-light text-slate-500 dark:text-slate-400">iemand of iets veroorzaakt iets</p>
+</div>
+<p class="italic text-slate-500 dark:text-slate-400">de politieke discussie veroorzaakte veel <a class="text-primary dark:text-sky-400 font-semibold underline decoration-dotted underline-offset-4 hover:text-primary/80 dark:hover:text-sky-300" href="#">onrust</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center pb-16">
+<div class="flex flex-col gap-3 w-full max-w-md">
+<div class="grid grid-cols-2 gap-3">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-success text-white text-base font-bold leading-normal tracking-wide shadow-sm hover:bg-opacity-90 transition-colors">
+<span class="truncate">Onthouden (Space)</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-danger text-white text-base font-bold leading-normal tracking-wide shadow-sm hover:bg-opacity-90 transition-colors">
+<span class="truncate">Vergeten (N)</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-slate-400 text-white text-base font-bold leading-normal tracking-wide shadow-sm hover:bg-opacity-90 transition-colors">
+<span class="truncate">Bevriezen (F)</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-slate-400 text-white text-base font-bold leading-normal tracking-wide shadow-sm hover:bg-opacity-90 transition-colors">
+<span class="truncate">Niet meer tonen (X)</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<aside class="lg:col-span-2 flex flex-col bg-white/50 dark:bg-card-dark/50 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+<div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+<h3 class="text-lg font-bold leading-tight tracking-tight text-text-light dark:text-text-dark">Recent Opgezocht</h3>
+</div>
+<div class="flex-grow overflow-y-auto p-2">
+<div class="flex flex-col gap-2">
+<div class="p-4 @container bg-white dark:bg-slate-800 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-none border border-transparent dark:border-slate-700">
+<div class="flex flex-col items-stretch justify-start">
+<div class="flex w-full grow flex-col items-stretch justify-center gap-1">
+<p class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-tight">onrust</p>
+<div class="flex items-end gap-3 justify-between">
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">de situatie dat het niet rustig is</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 @container bg-white dark:bg-slate-800 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-none">
+<div class="flex flex-col items-stretch justify-start">
+<div class="flex w-full grow flex-col items-stretch justify-center gap-1">
+<p class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-tight">discussie</p>
+<div class="flex items-end gap-3 justify-between">
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">een gesprek waarin iedereen zijn mening geeft</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 @container bg-white dark:bg-slate-800 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-none">
+<div class="flex flex-col items-stretch justify-start">
+<div class="flex w-full grow flex-col items-stretch justify-center gap-1">
+<p class="text-text-light dark:text-text-dark text-lg font-bold leading-tight tracking-tight">politiek</p>
+<div class="flex items-end gap-3 justify-between">
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">alles wat te maken heeft met het besturen van een land</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<footer class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8 flex items-center justify-between z-10">
+<div class="flex items-center gap-6 w-full max-w-sm">
+<div class="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+<span>Vandaag: <strong>23</strong></span>
+<span>Totaal: <strong>420 / 2000</strong></span>
+</div>
+<div class="flex-grow h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-success rounded-full" style="width: 21%;"></div>
+</div>
+</div>
+<div class="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base">swap_horiz</span>
+<span>Show word -&gt; Guess definition</span>
+</div>
+<button class="flex items-center gap-1.5 rounded-md px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="font-bold text-slate-600 dark:text-slate-300">?</span>
+<span>Hotkeys</span>
+</button>
+</div>
+</footer>
+</div>
+</body></html>
