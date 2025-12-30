@@ -26,8 +26,6 @@ export type WordDetailPanelProps = {
   showHeader?: boolean;
   /** Whether to show the actions section (add to list, mark learned, train). Defaults to true. */
   showActions?: boolean;
-  /** Optional callback when close is requested (for embedded use cases) */
-  onClose?: () => void;
 };
 
 const POS_COLORS: Record<string, string> = {
@@ -73,7 +71,6 @@ export function WordDetailPanel({
   onTrainWord,
   showHeader = true,
   showActions = true,
-  onClose,
 }: WordDetailPanelProps) {
   const [translationStatus, setTranslationStatus] =
     React.useState<WordEntryTranslationStatus | null>(null);
@@ -235,7 +232,7 @@ export function WordDetailPanel({
               </span>
               {entry.is_nt2_2000 ? (
                 <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
-                  NT2 2k
+                  VanDale 2k
                 </span>
               ) : null}
             </div>
@@ -249,28 +246,6 @@ export function WordDetailPanel({
               </div>
             ) : null}
           </div>
-
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="ml-3 h-9 w-9 rounded-full border border-slate-200 text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <span className="sr-only">Sluit</span>
-              <svg
-                className="mx-auto h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
         </div>
       )}
 

@@ -9,6 +9,9 @@ type Props = {
   options: Option[];
   onChange: (value: string) => void;
   align?: "left" | "right";
+  showLabel?: boolean;
+  uppercase?: boolean;
+  buttonClassName?: string;
 };
 
 /**
@@ -21,6 +24,9 @@ export function DropUpSelect({
   options,
   onChange,
   align = "left",
+  showLabel = true,
+  uppercase = true,
+  buttonClassName,
 }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,9 +52,15 @@ export function DropUpSelect({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+        className={[
+          "flex items-center gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80",
+          uppercase ? "uppercase" : "",
+          buttonClassName ?? "",
+        ].join(" ")}
       >
-        <span className="text-slate-500 dark:text-slate-300">{label}:</span>
+        {showLabel ? (
+          <span className="text-slate-500 dark:text-slate-300">{label}:</span>
+        ) : null}
         <span className="font-semibold text-slate-800 dark:text-white">
           {selectedLabel ?? value}
         </span>

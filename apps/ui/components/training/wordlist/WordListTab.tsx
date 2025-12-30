@@ -527,7 +527,7 @@ export function WordListTab({
                           <th className="w-12 px-4 py-3 text-center">Kies</th>
                           <th className="px-4 py-3">Hoofdwoord</th>
                           <th className="px-4 py-3">Woordsoort</th>
-                          <th className="w-20 px-4 py-3 text-center">NT2 2k</th>
+                          <th className="w-28 px-4 py-3 text-center">VanDale 2k</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

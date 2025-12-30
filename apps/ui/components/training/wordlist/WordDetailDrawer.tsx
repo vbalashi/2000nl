@@ -55,7 +55,6 @@ export function WordDetailDrawer({
           userLists={userLists}
           onListsUpdated={onListsUpdated}
           onTrainWord={onTrainWord}
-          onClose={onClose}
           showHeader={true}
           showActions={true}
         />

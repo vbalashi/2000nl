@@ -101,9 +101,9 @@ export function FooterStats({
   ];
 
   return (
-    <footer className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75">
-      <div className="mx-auto flex w-full max-w-[1200px] justify-center px-4 lg:px-6">
-        <div className="flex w-full max-w-2xl flex-col gap-3 rounded-2xl border border-white/30 bg-white/60 p-4 shadow-lg backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/70">
+    <footer className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 sm:py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75">
+      <div className="mx-auto flex w-full max-w-[1200px] justify-center px-2 sm:px-4 lg:px-6">
+        <div className="flex w-full max-w-2xl flex-col gap-2 rounded-2xl border border-white/30 bg-white/60 p-3 sm:p-3 shadow-lg backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/70">
           {/* Stats Row - Horizontal grid on mobile, flex on desktop */}
           <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
             {/* New cards today */}
@@ -135,20 +135,23 @@ export function FooterStats({
           </div>
 
           {/* Controls Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs dark:border-slate-800/60">
-            <div className="flex flex-wrap items-center gap-2 justify-center w-full sm:justify-start sm:w-auto">
-              {/* Hide Language on mobile, show on desktop */}
-              <div className="hidden sm:block">
-                <DropUpSelect
-                  label="Taal"
-                  value={language}
-                  options={languageOptions}
-                  onChange={onLanguageChange}
-                />
-              </div>
+          <div className="hidden sm:flex items-center justify-between gap-3 border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+              <DropUpSelect
+                label="Taal"
+                showLabel={false}
+                uppercase={false}
+                buttonClassName="px-2.5 py-1.5"
+                value={language}
+                options={languageOptions}
+                onChange={onLanguageChange}
+              />
               {listOptions?.length && activeListValue && onListChange ? (
                 <DropUpSelect
                   label="Lijst"
+                  showLabel={false}
+                  uppercase={false}
+                  buttonClassName="px-2.5 py-1.5"
                   value={activeListValue}
                   options={listOptions}
                   onChange={onListChange}
@@ -161,30 +164,27 @@ export function FooterStats({
                   title="Wijzig lijst in Instellingen"
                   aria-label="Wijzig lijst in Instellingen"
                 >
-                  <span className="text-slate-500 dark:text-slate-400">
-                    Lijst:
-                  </span>
                   <span className="text-slate-800 dark:text-white">
-                    {activeListName ?? "NT2 2K"}
+                    {activeListName ?? "VanDale 2k"}
                   </span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="flex items-center gap-2 rounded-full bg-slate-100/70 px-2 py-1.5 md:px-3 md:py-2 text-[10px] md:text-[11px] uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+                className="flex items-center gap-2 rounded-full bg-slate-100/70 px-2.5 py-1.5 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
                 title="Wijzig scenario in Instellingen"
                 aria-label="Wijzig scenario in Instellingen"
               >
-                <span className="text-slate-500 dark:text-slate-300 hidden xs:inline">
-                  Scenario:
-                </span>
                 <span className="font-semibold text-slate-800 dark:text-white">
                   {activeScenarioName ?? "Begrip"}
                 </span>
               </button>
               <DropUpSelect
                 label="Kaarten"
+                showLabel={false}
+                uppercase={false}
+                buttonClassName="px-2.5 py-1.5"
                 value={cardFilter}
                 options={cardFilterOptions}
                 onChange={(value) => onCardFilterChange(value as CardFilter)}

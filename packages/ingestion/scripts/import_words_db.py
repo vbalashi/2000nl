@@ -56,7 +56,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--list-name",
-        default="NT2 – 2000 woorden",
+        default="VanDale 2k",
         help="Name used for the NT2 word list.",
     )
     parser.add_argument(

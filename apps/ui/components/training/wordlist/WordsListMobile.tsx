@@ -43,7 +43,7 @@ export function WordsListMobile({
                     {word.headword}
                   </div>
                   <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {word.is_nt2_2000 ? "NT2 2k" : ""}
+                    {word.is_nt2_2000 ? "VanDale 2k" : ""}
                   </div>
                 </div>
                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">

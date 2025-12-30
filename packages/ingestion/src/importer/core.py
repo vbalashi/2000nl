@@ -38,7 +38,7 @@ def import_entries(
     language_code: str = "nl",
     language_name: str = "Dutch",
     nt2_slug: str = "nt2-2000",
-    nt2_name: str = "NT2 – 2000 woorden",
+    nt2_name: str = "VanDale 2k",
     nt2_description: Optional[str] = "Core 2000 woorden voor NT2",
 ) -> ImportStats:
     path = Path(data_dir)

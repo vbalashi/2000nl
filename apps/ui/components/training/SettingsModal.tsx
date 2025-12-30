@@ -93,7 +93,7 @@ export function SettingsModal({
     if (found) return found.name;
     if (selectedListId && wordListType === "user") return "Eigen lijst";
     if (selectedListId && wordListType === "curated") return "Curated lijst";
-    return "NT2 2K";
+    return "VanDale 2k";
   }, [lists, selectedListId, wordListType]);
 
   useEffect(() => {

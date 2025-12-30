@@ -17,7 +17,7 @@
       - word_entries columns you can use directly: id, language_code, headword, part_of_speech, gender, is_nt2_2000, frequency_rank, raw, created_at.
       - All other per-entry data (meanings, audio links, idioms, conjugation tables, derivations, etc.) lives inside raw (JSON). You can query specific fields in SQL with
         raw->>'field' or raw->'meanings'. If the UI needs filtering/searching on nested fields, we can add generated columns or indexes later.
-      - word_lists/word_list_items expose curated lists (like the NT2 2000 words). Join word_entries with word_list_items by word_id to get list membership rank.
+      - word_lists/word_list_items expose curated lists (like VanDale 2k). Join word_entries with word_list_items by word_id to get list membership rank.
   - Steps for your frontend engineer
       1. Run the migrations locally (psql -f migrations/0001_create_schema.sql).
       2. Run the importer (DATABASE_URL=postgresql://postgres:postgres@localhost:5432/dictionary python scripts/import_words.py --data-dir data/words_content). This is idempotent;

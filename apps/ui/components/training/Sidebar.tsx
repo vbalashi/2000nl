@@ -108,7 +108,6 @@ export function Sidebar({
                 onTrainWord={onTrainWord}
                 showHeader={true}
                 showActions={true}
-                onClose={() => onTabChange("recent")}
               />
             ) : (
               <div className="flex h-full items-center justify-center p-4">

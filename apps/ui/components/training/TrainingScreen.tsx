@@ -36,6 +36,7 @@ import type {
 } from "@/lib/types";
 import { TrainingCard } from "./TrainingCard";
 import { Sidebar, SidebarTab } from "./Sidebar";
+import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
@@ -90,6 +91,8 @@ export function TrainingScreen({ user }: Props) {
   const [recentEntries, setRecentEntries] = useState<SidebarHistoryItem[]>([]);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
+  // Mobile drawer for sidebar (recent/details). Desktop uses the inline sidebar.
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Entry to show in the details tab (can be current word or a sidebar card)
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
@@ -115,11 +118,13 @@ export function TrainingScreen({ user }: Props) {
   const [actionLoading, setActionLoading] = useState(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null
   );
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
@@ -748,6 +753,7 @@ export function TrainingScreen({ user }: Props) {
   const handleShowDetails = useCallback((entry: DictionaryEntry) => {
     setDetailEntry(entry);
     setSidebarTab("details");
+    setMobileSidebarOpen(true);
   }, []);
 
   // Show details for the current training word
@@ -765,6 +771,20 @@ export function TrainingScreen({ user }: Props) {
     };
     handleShowDetails(entry);
   }, [currentWord, handleShowDetails]);
+
+  const openMobileRecent = useCallback(() => {
+    setSidebarTab("recent");
+    setMobileSidebarOpen(true);
+  }, []);
+
+  const openMobileSidebarTab = useCallback((tab: SidebarTab) => {
+    if (typeof window === "undefined") return;
+    // Only auto-open drawer on mobile/tablet where the sidebar is hidden (< lg).
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    if (isDesktop) return;
+    setSidebarTab(tab);
+    setMobileSidebarOpen(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -857,6 +877,8 @@ export function TrainingScreen({ user }: Props) {
 
       console.log("✅ Found entry:", entry.headword);
       setSelectedEntry(entry);
+      // On mobile, open the Recent drawer so the user sees that something happened.
+      openMobileSidebarTab("recent");
       setRecentEntries((prev) => {
         const historyItem: SidebarHistoryItem = {
           ...entry,
@@ -889,7 +911,7 @@ export function TrainingScreen({ user }: Props) {
         mode: clickMode,
       });
     },
-    [currentWord?.mode, enabledModes, user?.id]
+    [currentWord?.mode, enabledModes, openMobileSidebarTab, user?.id]
   );
 
   const handleListChange = useCallback(
@@ -921,7 +943,7 @@ export function TrainingScreen({ user }: Props) {
 
   const listOptions = availableLists.map((list) => ({
     value: `${list.type}:${list.id}`,
-    label: `${list.type === "user" ? "Mijn" : "Curated"}: ${list.name}`,
+    label: list.name,
   }));
 
   const handleFooterListChange = useCallback(
@@ -1011,6 +1033,31 @@ export function TrainingScreen({ user }: Props) {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (!accountMenuRef.current) return;
+      if (accountMenuRef.current.contains(target)) return;
+      setAccountMenuOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("touchstart", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("touchstart", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountMenuOpen]);
 
   const cycleThemePreference = () => {
     const next =
@@ -1109,21 +1156,17 @@ export function TrainingScreen({ user }: Props) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
-      <header className="flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 md:px-6 md:py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div>
-            <p className="text-[10px] md:text-[13px] font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              NT2 Training
-            </p>
-            <p className="text-base md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-              {currentMode === "word-to-definition"
-                ? "Woord → Definitie"
-                : "Definitie → Woord"}
+    <div className="flex h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
+      <header className="flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
+            <p className="truncate text-3xl md:text-[36px] leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-75 dark:opacity-80">
+              2000
+              <span className="text-blue-600 dark:text-blue-400">nl</span>
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-3 text-sm text-slate-500 dark:text-slate-300">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
           <div
             role="button"
             tabIndex={0}
@@ -1181,28 +1224,110 @@ export function TrainingScreen({ user }: Props) {
             <span className="absolute inset-0 rounded-full" />
           </div>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-2" />
-
-          <span className="hidden sm:inline-block">{user.email}</span>
-          <button
-            onClick={handleSignOut}
-            className="text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-red-500 transition-colors"
+          {/* Mobile-only: open Recent/Details drawer */}
+          <div
+            role="button"
+            tabIndex={0}
+            title="Recent"
+            aria-label="Recent"
+            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden"
+            onClick={openMobileRecent}
+            onKeyDown={(e) => e.key === "Enter" && openMobileRecent()}
           >
-            Afmelden
-          </button>
+            <svg
+              className="h-5 w-5 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 2"
+              />
+              <circle cx="12" cy="12" r="10" strokeWidth="2" />
+            </svg>
+            <span className="absolute inset-0 rounded-full" />
+          </div>
+
+          <div ref={accountMenuRef} className="relative">
+            <button
+              type="button"
+              title="Account"
+              aria-label="Account"
+              aria-haspopup="menu"
+              aria-expanded={accountMenuOpen}
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={() => setAccountMenuOpen((v) => !v)}
+            >
+              <svg
+                className="h-5 w-5 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 21a9 9 0 110-18 9 9 0 010 18z"
+                />
+              </svg>
+              <span className="absolute inset-0 rounded-full" />
+            </button>
+
+            {accountMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Account menu"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 backdrop-blur dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                    Ingelogd als
+                  </p>
+                  <p className="mt-0.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {user.email}
+                  </p>
+                </div>
+                <div className="border-t border-slate-100 dark:border-slate-800" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={async () => {
+                    setAccountMenuOpen(false);
+                    await handleSignOut();
+                  }}
+                  className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+                >
+                  Afmelden
+                  <span className="text-xs font-bold uppercase tracking-wide opacity-60">
+                    ↵
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
         {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
         {/* Adjusted max-width and gap to keep things tight and focused */}
-        <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-2 py-4 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
+        <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
           {/* Left/Main Column: Constrained to max-w-2xl to match Card width exactly */}
           <section className="flex flex-1 w-full max-w-2xl flex-col h-full overflow-hidden rounded-3xl bg-transparent">
             {/* 1. Scrollable Card Area */}
             <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col">
               {/* Card Container */}
-              <div className="flex min-h-full flex-col justify-center py-2 md:py-4">
+              <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
                 {/* 16/10 Aspect Ratio Card on desktop, auto on mobile */}
                 <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px]">
                   <TrainingCard
@@ -1315,6 +1440,33 @@ export function TrainingScreen({ user }: Props) {
         }
         initialReviewDue={initialReviewDue}
       />
+
+      <TrainingSidebarDrawer
+        open={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+        title={sidebarTab === "recent" ? "Recent" : "Details"}
+      >
+        <Sidebar
+          selectedEntry={selectedEntry}
+          recentEntries={recentEntries}
+          onSelectEntry={(entry) => {
+            // On mobile: tapping a recent item should actually open its details,
+            // otherwise it looks like "nothing happens".
+            setSelectedEntry(entry);
+            handleShowDetails(entry);
+          }}
+          onWordClick={handleDefinitionClick}
+          detailEntry={detailEntry}
+          onShowDetails={handleShowDetails}
+          activeTab={sidebarTab}
+          onTabChange={setSidebarTab}
+          userId={user.id}
+          translationLang={translationLang}
+          userLists={availableLists.filter((l) => l.type === "user")}
+          onListsUpdated={handleListsUpdated}
+          onTrainWord={handleTrainWord}
+        />
+      </TrainingSidebarDrawer>
 
       {showHotkeys && <HotkeyDialog onClose={() => setShowHotkeys(false)} />}
       {showSettings && (
