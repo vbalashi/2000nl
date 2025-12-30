@@ -1031,7 +1031,20 @@ export function TrainingScreen({ user }: Props) {
   );
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // Supabase can return `session_not_found` if the JWT refers to a session
+    // that was already revoked/expired server-side. Treat that as a successful
+    // sign out and still clear local auth state.
+    const { error } = await supabase.auth.signOut({ scope: "global" });
+    if (error) {
+      const code = (error as unknown as { code?: string }).code;
+      if (code !== "session_not_found") {
+        console.warn("[Auth] signOut(global) failed:", error);
+      }
+    }
+
+    // Always clear local session so the UI updates.
+    const { error: localError } = await supabase.auth.signOut({ scope: "local" });
+    if (localError) console.warn("[Auth] signOut(local) failed:", localError);
   };
 
   useEffect(() => {
