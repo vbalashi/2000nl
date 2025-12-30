@@ -6,6 +6,13 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    # IMPORTANT:
+    # Next.js inlines NEXT_PUBLIC_* at build time, but server routes (e.g. /api/translation)
+    # still require runtime secrets (Supabase service key, DeepL API key, etc.).
+    #
+    # On `nuc` we keep these values in `/srv/2000nl-ui/.env` (see saved_notes/deploy_on_nuc_guide.md).
+    env_file:
+      - .env
     restart: unless-stopped
     expose:
       - "3000"

@@ -243,17 +243,24 @@ export async function GET(req: NextRequest) {
   const dbLang = normalizeLangForDb(lang);
   const targetLang = normalizeLang(lang);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   // Supabase is transitioning away from legacy JWT keys.
   // Prefer the new "secret key (default)" (store it as SUPABASE_SECRET_KEY),
   // but keep legacy env var name as fallback for existing setups.
   const serviceKey =
-    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json(
       {
         error: "Server is not configured",
+        missing: {
+          supabaseUrl: !supabaseUrl,
+          serviceKey: !serviceKey,
+        },
         ...(debug
           ? {
               debug: {
