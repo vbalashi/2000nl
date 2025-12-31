@@ -7,6 +7,7 @@ import type {
   TranslationOverlay,
   WordEntryTranslationStatus,
 } from "@/lib/types";
+import { getGenericBadgeTooltip, getPosBadgeTooltip } from "@/lib/badgeTooltips";
 import {
   buildSegments,
   getAllMeanings,
@@ -83,6 +84,34 @@ export function TrainingCard({
   );
   const translationLoadingRef = React.useRef(false);
   const translationPollTimeoutRef = React.useRef<number | null>(null);
+
+  const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [scrollFades, setScrollFades] = React.useState(() => ({
+    canScroll: false,
+    atTop: true,
+    atBottom: true,
+  }));
+
+  const updateScrollFades = React.useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScrollTop = el.scrollHeight - el.clientHeight;
+    const canScroll = maxScrollTop > 1;
+    const atTop = el.scrollTop <= 1;
+    const atBottom = el.scrollTop >= maxScrollTop - 1;
+
+    setScrollFades((prev) => {
+      if (
+        prev.canScroll === canScroll &&
+        prev.atTop === atTop &&
+        prev.atBottom === atBottom
+      ) {
+        return prev;
+      }
+      return { canScroll, atTop, atBottom };
+    });
+  }, []);
 
   // New card (or language) => clear cached translation state so we don't show
   // the previous card's overlay and we refetch when user opens/hovers.
@@ -190,6 +219,21 @@ export function TrainingCard({
     translationStatus,
     fetchTranslation,
   ]);
+
+  // Keep fade hints in sync when content changes (new word, reveal, mode switch).
+  React.useEffect(() => {
+    const raf = window.requestAnimationFrame(() => {
+      updateScrollFades();
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [updateScrollFades, word?.id, revealed, hintRevealed, mode]);
+
+  // Also update on resize (viewport changes / responsive layout).
+  React.useEffect(() => {
+    const onResize = () => updateScrollFades();
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, [updateScrollFades]);
 
   const getTranslated = React.useCallback(
     (
@@ -341,6 +385,10 @@ export function TrainingCard({
   const safePos = word.part_of_speech?.toLowerCase() ?? "";
   const posColor = POS_COLORS[safePos] ?? POS_COLORS.default;
   const posFullName = POS_NAMES[safePos] ?? word.part_of_speech;
+  const posTooltip = getPosBadgeTooltip({
+    posCode: safePos,
+    translationLang,
+  });
 
   const isInteractiveTarget = (target: EventTarget | null) => {
     if (!(target instanceof Element)) return false;
@@ -406,10 +454,11 @@ export function TrainingCard({
       aria-label="Training card"
     >
       {/* Part of Speech Badge + Info Icon - Top Right Corner (Always Visible) */}
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-30 flex items-center gap-2">
         {word.part_of_speech && (
           <span
             className={`select-none rounded-lg border px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide ${posColor}`}
+            title={posTooltip}
           >
             {posFullName}
           </span>
@@ -442,7 +491,7 @@ export function TrainingCard({
 
       {/* Translate (button + inline translations on card) */}
       {translationUiEnabled && (
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20">
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30">
           <button
             type="button"
             onClick={() => {
@@ -490,9 +539,14 @@ export function TrainingCard({
       )}
 
       {/* Main Content Area - Reduced Top Padding */}
-      <div className="flex flex-col items-center w-full h-full pt-10 md:pt-12 px-1 md:px-4 overflow-y-auto scrollbar-hide">
-        {/* Header: Headword + POS Badge (Always Visible) */}
-        <div className="flex-none mb-8 text-center bg-transparent z-0">
+      <div className="relative flex w-full h-full pt-10 md:pt-12 px-1 md:px-4">
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollFades}
+          className="flex flex-col items-center w-full h-full overflow-y-auto scrollbar-hide"
+        >
+          {/* Header: Headword + POS Badge (Always Visible) */}
+          <div className="flex-none mb-8 text-center bg-transparent z-0">
           {isWordToDefinition ? (
             // IMPORTANT: make the translation overlay use the full card width.
             // If we keep the relative container as `inline-flex`, the absolute overlay
@@ -528,12 +582,24 @@ export function TrainingCard({
                         </div>
                         {isIdiomOnlyMeaning && idiomPromptSegments ? (
                           hasPrimaryIdiomExplanationText ? (
-                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none">
+                            <span
+                              className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
+                              title={getGenericBadgeTooltip({
+                                key: "idiom_definition",
+                                translationLang,
+                              })}
+                            >
                               <span>idioom</span>
                               <span>definitie</span>
                             </span>
                           ) : (
-                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
+                            <span
+                              className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
+                              title={getGenericBadgeTooltip({
+                                key: "idiom",
+                                translationLang,
+                              })}
+                            >
                               <span>idioom</span>
                             </span>
                           )
@@ -576,12 +642,24 @@ export function TrainingCard({
                         </span>
                         {!showNumber &&
                           (hasPrimaryIdiomExplanationText ? (
-                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none">
+                            <span
+                              className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
+                              title={getGenericBadgeTooltip({
+                                key: "idiom_definition",
+                                translationLang,
+                              })}
+                            >
                               <span>idioom</span>
                               <span>definitie</span>
                             </span>
                           ) : (
-                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
+                            <span
+                              className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
+                              title={getGenericBadgeTooltip({
+                                key: "idiom",
+                                translationLang,
+                              })}
+                            >
                               <span>idioom</span>
                             </span>
                           ))}
@@ -596,163 +674,269 @@ export function TrainingCard({
               </div>
             </div>
           )}
-        </div>
+          </div>
 
-        {/* W->D Hint Section: Context + Example (shown via 'i' hotkey or when revealed) */}
-        {isWordToDefinition && (hintRevealed || revealed) && (
-          <div className="flex-none w-full max-w-3xl text-left mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-start gap-6">
-              {/* Spacer to align with number badge in definition section (only if badge will be shown) */}
-              {showNumber && <div className="flex-shrink-0 w-7" />}
-              {/* Content - aligned with definition text */}
-              <div className="flex-1 flex flex-col gap-3">
-                {/* Context */}
-                {primaryMeaning.context && (
-                  <div className="relative flex items-center text-base text-slate-500 dark:text-slate-400 font-medium">
-                    <InlineTranslation align="left" text={getTranslated(0, "context")} />
-                    <span>[{primaryMeaning.context}]</span>
-                  </div>
-                )}
-                {/* Example */}
-                {primaryMeaning.examples &&
-                  primaryMeaning.examples.length > 0 && (
-                    <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
-                      {primaryMeaning.examples.map((ex, i) => {
-                        const exSegments = buildSegments(
-                          ex,
-                          primaryMeaning.links
-                        );
-                        return (
-                          <p
-                            key={i}
-                            className="relative flex items-start text-lg italic leading-relaxed text-slate-600 dark:text-slate-400"
-                          >
-                            <InlineTranslation
-                              align="left"
-                              text={getTranslated(0, { exampleIndex: i })}
-                            />
-                            <span className="flex-1">
-                              <InteractiveText
-                                segments={exSegments}
-                                highlightedWord={highlightedWord}
-                                onWordClick={onWordClick}
-                                excludeWord={word.headword}
-                              />
-                            </span>
-                          </p>
-                        );
-                      })}
+          {/* W->D Hint Section: Context + Example (shown via 'i' hotkey or when revealed) */}
+          {isWordToDefinition && (hintRevealed || revealed) && (
+            <div className="flex-none w-full max-w-3xl text-left mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-start gap-6">
+                {/* Spacer to align with number badge in definition section (only if badge will be shown) */}
+                {showNumber && <div className="flex-shrink-0 w-7" />}
+                {/* Content - aligned with definition text */}
+                <div className="flex-1 flex flex-col gap-3">
+                  {/* Context */}
+                  {primaryMeaning.context && (
+                    <div className="relative flex items-center text-base text-slate-500 dark:text-slate-400 font-medium">
+                      <InlineTranslation
+                        align="left"
+                        text={getTranslated(0, "context")}
+                      />
+                      <span>[{primaryMeaning.context}]</span>
                     </div>
                   )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Revealed Content (Definition/Word) */}
-        {revealed && (
-          <div className="flex-none w-full max-w-3xl text-left animate-in fade-in slide-in-from-bottom-2 duration-300 pb-6">
-            {/* If Word->Def mode: Show Definition (context/example already shown in hint section above) */}
-            {isWordToDefinition && (
-              <div className="flex flex-col gap-8">
-                {allMeanings.map((meaning, index) => {
-                  const defSegments = buildSegments(
-                    meaning.definition,
-                    meaning.links
-                  );
-
-                  // If we have a specific meaning_id, display it.
-                  // Otherwise use index + 1
-                  const badgeNumber =
-                    typeof meaningIdFromRaw === "number" &&
-                    allMeanings.length === 1
-                      ? meaningIdFromRaw
-                      : index + 1;
-
-                  return (
-                    <div key={index} className="flex items-start gap-6">
-                      {/* Number Badge - Left Side */}
-                      {showNumber && (
-                        <div className="flex-shrink-0 pt-1">
-                          <div
-                            className={`w-7 h-7 flex items-center justify-center ${
-                              badgeNumber === globalCount
-                                ? "rounded-md"
-                                : "rounded-full"
-                            } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
-                          >
-                            {badgeNumber}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Content - Right Side: Definition only (context/example shown above) */}
-                      <div className="flex-1 flex flex-col gap-3">
-                        {/* Definition Line */}
-                        {meaning.definition ? (
-                          <div className="flex items-start text-xl md:text-2xl leading-relaxed font-medium text-slate-800 dark:text-slate-100">
-                            <span className="relative flex-1">
+                  {/* Example */}
+                  {primaryMeaning.examples &&
+                    primaryMeaning.examples.length > 0 && (
+                      <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                        {primaryMeaning.examples.map((ex, i) => {
+                          const exSegments = buildSegments(
+                            ex,
+                            primaryMeaning.links
+                          );
+                          return (
+                            <p
+                              key={i}
+                              className="relative flex items-start text-lg italic leading-relaxed text-slate-600 dark:text-slate-400"
+                            >
                               <InlineTranslation
                                 align="left"
-                                text={getTranslated(index, "definition")}
+                                text={getTranslated(0, { exampleIndex: i })}
                               />
-                              <InteractiveText
-                                segments={defSegments}
-                                highlightedWord={highlightedWord}
-                                onWordClick={onWordClick}
-                                excludeWord={word.headword}
-                              />
-                            </span>
+                              <span className="flex-1">
+                                <InteractiveText
+                                  segments={exSegments}
+                                  highlightedWord={highlightedWord}
+                                  onWordClick={onWordClick}
+                                  excludeWord={word.headword}
+                                />
+                              </span>
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Revealed Content (Definition/Word) */}
+          {revealed && (
+            <div className="flex-none w-full max-w-3xl text-left animate-in fade-in slide-in-from-bottom-2 duration-300 pb-6">
+              {/* If Word->Def mode: Show Definition (context/example already shown in hint section above) */}
+              {isWordToDefinition && (
+                <div className="flex flex-col gap-8">
+                  {allMeanings.map((meaning, index) => {
+                    const defSegments = buildSegments(
+                      meaning.definition,
+                      meaning.links
+                    );
+
+                    // If we have a specific meaning_id, display it.
+                    // Otherwise use index + 1
+                    const badgeNumber =
+                      typeof meaningIdFromRaw === "number" &&
+                      allMeanings.length === 1
+                        ? meaningIdFromRaw
+                        : index + 1;
+
+                    return (
+                      <div key={index} className="flex items-start gap-6">
+                        {/* Number Badge - Left Side */}
+                        {showNumber && (
+                          <div className="flex-shrink-0 pt-1">
+                            <div
+                              className={`w-7 h-7 flex items-center justify-center ${
+                                badgeNumber === globalCount
+                                  ? "rounded-md"
+                                  : "rounded-full"
+                              } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
+                            >
+                              {badgeNumber}
+                            </div>
                           </div>
-                        ) : null}
+                        )}
 
-                        {/* Idioms - Horizontal Layout */}
-                        {meaning.idioms && meaning.idioms.length > 0 && (
-                          <div className="flex flex-col gap-3 mt-2">
-                            {meaning.idioms.map((idiom, i) => {
-                              // Build segments for idiom expression and explanation
-                              const expressionSegments = buildSegments(
-                                idiom.expression,
-                                meaning.links
-                              );
-                              const explanationSegments = buildSegments(
-                                idiom.explanation,
-                                meaning.links
-                              );
+                        {/* Content - Right Side: Definition only (context/example shown above) */}
+                        <div className="flex-1 flex flex-col gap-3">
+                          {/* Definition Line */}
+                          {meaning.definition ? (
+                            <div className="flex items-start text-xl md:text-2xl leading-relaxed font-medium text-slate-800 dark:text-slate-100">
+                              <span className="relative flex-1">
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(index, "definition")}
+                                />
+                                <InteractiveText
+                                  segments={defSegments}
+                                  highlightedWord={highlightedWord}
+                                  onWordClick={onWordClick}
+                                  excludeWord={word.headword}
+                                />
+                              </span>
+                            </div>
+                          ) : null}
 
-                              return (
-                                <div key={i} className="flex flex-col gap-1">
-                                  {/* Expression with inline idiom badge */}
-                                  <div className="flex items-center gap-3 flex-wrap">
-                                    <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
-                                      <InlineTranslation
-                                        align="left"
-                                        text={getTranslated(index, {
-                                          idiomIndex: i,
-                                          idiomField: "expression",
-                                        })}
-                                      />
-                                      <InteractiveText
-                                        segments={expressionSegments}
-                                        highlightedWord={highlightedWord}
-                                        onWordClick={onWordClick}
-                                        excludeWord={word.headword}
-                                      />
-                                    </span>
-                                    <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
-                                      idioom
-                                    </span>
-                                  </div>
-                                  {/* Explanation with separator */}
-                                  <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
-                                    <span className="text-slate-400 dark:text-slate-500 mr-2">
-                                      |
-                                    </span>
-                                    <span className="flex-1">
-                                      <span className="relative block">
+                          {/* Idioms - Horizontal Layout */}
+                          {meaning.idioms && meaning.idioms.length > 0 && (
+                            <div className="flex flex-col gap-3 mt-2">
+                              {meaning.idioms.map((idiom, i) => {
+                                // Build segments for idiom expression and explanation
+                                const expressionSegments = buildSegments(
+                                  idiom.expression,
+                                  meaning.links
+                                );
+                                const explanationSegments = buildSegments(
+                                  idiom.explanation,
+                                  meaning.links
+                                );
+
+                                return (
+                                  <div key={i} className="flex flex-col gap-1">
+                                    {/* Expression with inline idiom badge */}
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
                                         <InlineTranslation
                                           align="left"
                                           text={getTranslated(index, {
+                                            idiomIndex: i,
+                                            idiomField: "expression",
+                                          })}
+                                        />
+                                        <InteractiveText
+                                          segments={expressionSegments}
+                                          highlightedWord={highlightedWord}
+                                          onWordClick={onWordClick}
+                                          excludeWord={word.headword}
+                                        />
+                                      </span>
+                                      <span
+                                        className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
+                                        title={getGenericBadgeTooltip({
+                                          key: "idiom",
+                                          translationLang,
+                                        })}
+                                      >
+                                        idioom
+                                      </span>
+                                    </div>
+                                    {/* Explanation with separator */}
+                                    <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
+                                      <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                        |
+                                      </span>
+                                      <span className="flex-1">
+                                        <span className="relative block">
+                                          <InlineTranslation
+                                            align="left"
+                                            text={getTranslated(index, {
+                                              idiomIndex: i,
+                                              idiomField: "explanation",
+                                            })}
+                                          />
+                                        </span>
+                                        <InteractiveText
+                                          segments={explanationSegments}
+                                          highlightedWord={highlightedWord}
+                                          onWordClick={onWordClick}
+                                          excludeWord={word.headword}
+                                        />
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* If Def->Word mode: Show Headword (Answer) */}
+              {!isWordToDefinition && (
+                <div className="relative mt-4 text-center">
+                  <InlineTranslation text={getHeadwordTranslated()} />
+                  {renderWordWithDecoration(
+                    word.headword,
+                    word.gender,
+                    word.part_of_speech,
+                    "text-3xl md:text-4xl lg:text-5xl"
+                  )}
+                  {/* Context - shown with the answer */}
+                  {primaryMeaning.context && (
+                    <p className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center">
+                      <span className="relative inline-block">
+                        <InlineTranslation text={getTranslated(0, "context")} />
+                        <span>[{primaryMeaning.context}]</span>
+                      </span>
+                    </p>
+                  )}
+                  {/* Idioms (revealed): show idiom before examples */}
+                  {primaryMeaning.idioms &&
+                    primaryMeaning.idioms.length > 0 && (
+                      <div className="mt-6 mx-auto max-w-2xl flex flex-col gap-3">
+                        {primaryMeaning.idioms.map((idiom, i) => {
+                          const expressionSegments = buildSegments(
+                            idiom.expression,
+                            primaryMeaning.links
+                          );
+                          const explanationSegments = buildSegments(
+                            idiom.explanation,
+                            primaryMeaning.links
+                          );
+
+                          return (
+                            <div key={i} className="flex flex-col gap-1">
+                              <div className="flex items-center justify-center gap-3 flex-wrap">
+                                <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
+                                  <InlineTranslation
+                                    text={getTranslated(0, {
+                                      idiomIndex: i,
+                                      idiomField: "expression",
+                                    })}
+                                  />
+                                  <InteractiveText
+                                    segments={expressionSegments}
+                                    highlightedWord={highlightedWord}
+                                    onWordClick={onWordClick}
+                                    excludeWord={word.headword}
+                                  />
+                                </span>
+                                <span
+                                  className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
+                                  title={getGenericBadgeTooltip({
+                                    key: "idiom",
+                                    translationLang,
+                                  })}
+                                >
+                                  idioom
+                                </span>
+                              </div>
+                              {idiom.explanation?.trim() &&
+                                !(
+                                  hidePrimaryIdiomExplanationOnReveal && i === 0
+                                ) && (
+                                  <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
+                                    <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                      |
+                                    </span>
+                                    <span className="flex-1 text-center">
+                                      <span className="relative block">
+                                        <InlineTranslation
+                                          text={getTranslated(0, {
                                             idiomIndex: i,
                                             idiomField: "explanation",
                                           })}
@@ -766,176 +950,101 @@ export function TrainingCard({
                                       />
                                     </span>
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                                )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* If Def->Word mode: Show Headword (Answer) */}
-            {!isWordToDefinition && (
-              <div className="relative mt-4 text-center">
-                <InlineTranslation text={getHeadwordTranslated()} />
-                {renderWordWithDecoration(
-                  word.headword,
-                  word.gender,
-                  word.part_of_speech,
-                  "text-3xl md:text-4xl lg:text-5xl"
-                )}
-                {/* Context - shown with the answer */}
-                {primaryMeaning.context && (
-                  <p className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center">
-                    <span className="relative inline-block">
-                      <InlineTranslation text={getTranslated(0, "context")} />
-                      <span>[{primaryMeaning.context}]</span>
-                    </span>
-                  </p>
-                )}
-                {/* Idioms (revealed): show idiom before examples */}
-                {primaryMeaning.idioms && primaryMeaning.idioms.length > 0 && (
-                  <div className="mt-6 mx-auto max-w-2xl flex flex-col gap-3">
-                    {primaryMeaning.idioms.map((idiom, i) => {
-                      const expressionSegments = buildSegments(
-                        idiom.expression,
-                        primaryMeaning.links
-                      );
-                      const explanationSegments = buildSegments(
-                        idiom.explanation,
-                        primaryMeaning.links
-                      );
-
-                      return (
-                        <div key={i} className="flex flex-col gap-1">
-                          <div className="flex items-center justify-center gap-3 flex-wrap">
-                            <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
+                    )}
+                  {/* Examples */}
+                  {primaryMeaning.examples &&
+                    primaryMeaning.examples.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-6 mx-auto max-w-2xl">
+                        {primaryMeaning.examples.map((ex, i) => {
+                          const exSegments = buildSegments(
+                            ex,
+                            primaryMeaning.links
+                          );
+                          return (
+                            <p
+                              key={i}
+                              className="relative text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
+                            >
                               <InlineTranslation
-                                text={getTranslated(0, {
-                                  idiomIndex: i,
-                                  idiomField: "expression",
-                                })}
+                                text={getTranslated(0, { exampleIndex: i })}
                               />
-                              <InteractiveText
-                                segments={expressionSegments}
-                                highlightedWord={highlightedWord}
-                                onWordClick={onWordClick}
-                                excludeWord={word.headword}
-                              />
-                            </span>
-                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
-                              idioom
-                            </span>
-                          </div>
-                          {idiom.explanation?.trim() &&
-                            !(
-                              hidePrimaryIdiomExplanationOnReveal && i === 0
-                            ) && (
-                              <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
-                                <span className="text-slate-400 dark:text-slate-500 mr-2">
-                                  |
-                                </span>
-                                <span className="flex-1 text-center">
-                                  <span className="relative block">
-                                    <InlineTranslation
-                                      text={getTranslated(0, {
-                                        idiomIndex: i,
-                                        idiomField: "explanation",
-                                      })}
-                                    />
-                                  </span>
-                                  <InteractiveText
-                                    segments={explanationSegments}
-                                    highlightedWord={highlightedWord}
-                                    onWordClick={onWordClick}
-                                    excludeWord={word.headword}
-                                  />
-                                </span>
-                              </div>
-                            )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* Examples */}
-                {primaryMeaning.examples &&
-                  primaryMeaning.examples.length > 0 && (
-                    <div className="flex flex-col gap-1.5 mt-6 mx-auto max-w-2xl">
-                      {primaryMeaning.examples.map((ex, i) => {
-                        const exSegments = buildSegments(
-                          ex,
-                          primaryMeaning.links
-                        );
-                        return (
-                          <p
-                            key={i}
-                            className="relative text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
-                          >
-                            <InlineTranslation
-                              text={getTranslated(0, { exampleIndex: i })}
-                            />
-                            <span className="flex-1">
-                              <InteractiveText
-                                segments={exSegments}
-                                highlightedWord={highlightedWord}
-                                onWordClick={onWordClick}
-                                excludeWord={word.headword}
-                              />
-                            </span>
-                          </p>
-                        );
-                      })}
-                    </div>
-                  )}
-              </div>
-            )}
-          </div>
-        )}
+                              <span className="flex-1">
+                                <InteractiveText
+                                  segments={exSegments}
+                                  highlightedWord={highlightedWord}
+                                  onWordClick={onWordClick}
+                                  excludeWord={word.headword}
+                                />
+                              </span>
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Debug Stats (Footer - Color Coded) */}
-        {word.debugStats && (
-          <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 border-t border-slate-100 pt-4 dark:border-slate-800 w-full opacity-70 hover:opacity-100 transition-opacity">
-            {word.debugStats.source && (
-              <span className="text-slate-400 dark:text-slate-500">
-                src:{word.debugStats.source}
-              </span>
-            )}
-            {typeof word.debugStats.interval === "number" && (
-              <span className="text-blue-500 dark:text-blue-400">
-                int:
-                {typeof word.debugStats.previousInterval === "number"
-                  ? `${word.debugStats.previousInterval.toFixed(
-                      2
-                    )}→${word.debugStats.interval.toFixed(2)}d`
-                  : `${word.debugStats.interval.toFixed(2)}d`}
-              </span>
-            )}
-            {typeof word.debugStats.ef === "number" && (
-              <span className="text-yellow-500 dark:text-yellow-400">
-                S:
-                {typeof word.debugStats.previousStability === "number"
-                  ? `${word.debugStats.previousStability.toFixed(
-                      2
-                    )}→${word.debugStats.ef.toFixed(2)}`
-                  : word.debugStats.ef.toFixed(2)}
-              </span>
-            )}
-            {typeof word.debugStats.clicks === "number" && (
-              <span className="text-pink-500 dark:text-pink-400">
-                clicks:{word.debugStats.clicks}
-              </span>
-            )}
-            {typeof word.debugStats.overdue_count === "number" && (
-              <span className="text-purple-500 dark:text-purple-400">
-                queue:{word.debugStats.overdue_count}
-              </span>
-            )}
-          </div>
+          {/* Debug Stats (Footer - Color Coded) */}
+          {word.debugStats && (
+            <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 border-t border-slate-100 pt-4 dark:border-slate-800 w-full opacity-70 hover:opacity-100 transition-opacity">
+              {word.debugStats.source && (
+                <span className="text-slate-400 dark:text-slate-500">
+                  src:{word.debugStats.source}
+                </span>
+              )}
+              {typeof word.debugStats.interval === "number" && (
+                <span className="text-blue-500 dark:text-blue-400">
+                  int:
+                  {typeof word.debugStats.previousInterval === "number"
+                    ? `${word.debugStats.previousInterval.toFixed(
+                        2
+                      )}→${word.debugStats.interval.toFixed(2)}d`
+                    : `${word.debugStats.interval.toFixed(2)}d`}
+                </span>
+              )}
+              {typeof word.debugStats.ef === "number" && (
+                <span className="text-yellow-500 dark:text-yellow-400">
+                  S:
+                  {typeof word.debugStats.previousStability === "number"
+                    ? `${word.debugStats.previousStability.toFixed(
+                        2
+                      )}→${word.debugStats.ef.toFixed(2)}`
+                    : word.debugStats.ef.toFixed(2)}
+                </span>
+              )}
+              {typeof word.debugStats.clicks === "number" && (
+                <span className="text-pink-500 dark:text-pink-400">
+                  clicks:{word.debugStats.clicks}
+                </span>
+              )}
+              {typeof word.debugStats.overdue_count === "number" && (
+                <span className="text-purple-500 dark:text-purple-400">
+                  queue:{word.debugStats.overdue_count}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Scroll hint fades (only when overflow exists) */}
+        {scrollFades.canScroll && !scrollFades.atTop && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-card-light/95 via-card-light/60 to-transparent dark:from-card-dark/95 dark:via-card-dark/60 z-10"
+          />
+        )}
+        {scrollFades.canScroll && !scrollFades.atBottom && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card-light/95 via-card-light/60 to-transparent dark:from-card-dark/95 dark:via-card-dark/60 z-10"
+          />
         )}
       </div>
     </div>
