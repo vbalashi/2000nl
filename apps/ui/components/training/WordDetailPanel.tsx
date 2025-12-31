@@ -115,7 +115,7 @@ export function WordDetailPanel({
 
   const fetchTranslation = React.useCallback(
     async (opts?: { force?: boolean }) => {
-      if (!entry?.id || !translationLang) return;
+      if (!entry?.id || !translationLang || translationLang === "off") return;
       if (translationLoadingRef.current) return;
       if (!opts?.force && translationStatus === "ready" && translationOverlay)
         return;
@@ -170,13 +170,13 @@ export function WordDetailPanel({
 
   // Auto-fetch translation when component mounts or entry changes
   React.useEffect(() => {
-    if (!translationLang) return;
+    if (!translationLang || translationLang === "off") return;
     void fetchTranslation();
   }, [translationLang, fetchTranslation]);
 
   // Poll for pending translations
   React.useEffect(() => {
-    if (!translationLang) return;
+    if (!translationLang || translationLang === "off") return;
     if (!entry?.id) return;
 
     if (translationPollTimeoutRef.current != null) {
@@ -330,7 +330,7 @@ export function WordDetailPanel({
             )}
           </section>
 
-          {translationLang ? (
+          {translationLang && translationLang !== "off" ? (
             <section className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Vertaling ({langLabel(translationLang)})

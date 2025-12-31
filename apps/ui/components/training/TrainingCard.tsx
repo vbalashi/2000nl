@@ -96,7 +96,7 @@ export function TrainingCard({
 
   const fetchTranslation = React.useCallback(
     async (opts?: { force?: boolean }) => {
-      if (!word?.id || !translationLang) return;
+      if (!word?.id || !translationLang || translationLang === "off") return;
       if (translationLoadingRef.current) return;
       if (!opts?.force && translationStatus === "ready" && translationOverlay)
         return;
@@ -160,7 +160,7 @@ export function TrainingCard({
   // Poll while translation is open and pending.
   React.useEffect(() => {
     if (!translationTooltipOpen) return;
-    if (!translationLang) return;
+    if (!translationLang || translationLang === "off") return;
     if (!word?.id) return;
 
     if (translationPollTimeoutRef.current != null) {
@@ -226,7 +226,8 @@ export function TrainingCard({
     return translationOverlay?.headword;
   }, [translationOverlay?.headword]);
 
-  const translationUiEnabled = Boolean(translationLang) && revealed;
+  const translationUiEnabled =
+    Boolean(translationLang) && translationLang !== "off" && revealed;
   const isTranslationOpen = translationUiEnabled ? translationTooltipOpen : false;
 
   const translationStatusText =

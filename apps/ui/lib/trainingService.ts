@@ -1224,6 +1224,12 @@ export async function fetchUserPreferences(
     console.error("Error fetching user preferences", error);
   }
 
+  // Translations:
+  // - Default to English ("en") when unset/legacy NULL.
+  // - Allow explicit "off" via sentinel value stored in DB.
+  const translationLang =
+    data?.translation_lang === "off" ? "off" : data?.translation_lang ?? "en";
+
   // Support both new modes_enabled array and legacy training_mode
   let modesEnabled: TrainingMode[] = data?.modes_enabled ?? [];
   if (modesEnabled.length === 0 && data?.training_mode) {
@@ -1240,7 +1246,7 @@ export async function fetchUserPreferences(
     languageCode: data?.language_code ?? "nl",
     newReviewRatio: data?.new_review_ratio ?? 2,
     activeScenario: data?.active_scenario ?? "understanding",
-    translationLang: data?.translation_lang ?? null,
+    translationLang,
     trainingMode: modesEnabled[0],
   };
 }

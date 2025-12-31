@@ -186,7 +186,8 @@ export function SettingsModal({
   ];
 
   const translationLangOptions: { value: string; label: string }[] = [
-    { value: "", label: "Uit (geen vertaling)" },
+    // Use an explicit sentinel so we can distinguish "off" from legacy NULLs.
+    { value: "off", label: "Uit (geen vertaling)" },
     { value: "ru", label: "Русский" },
     { value: "en", label: "English" },
     { value: "de", label: "Deutsch" },
@@ -409,10 +410,10 @@ export function SettingsModal({
                     <div className="flex flex-wrap gap-3">
                       <DropUpSelect
                         label="Vertaling"
-                        value={translationLang ?? ""}
+                        value={translationLang ?? "en"}
                         options={translationLangOptions}
                         onChange={(value) =>
-                          onTranslationLangChange(value ? value : null)
+                          onTranslationLangChange(value === "off" ? "off" : value)
                         }
                       />
                       <DropUpSelect

@@ -239,6 +239,12 @@ export async function GET(req: NextRequest) {
       { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
+  if (normalizeLangForDb(lang) === "off") {
+    return NextResponse.json(
+      { error: "Translation is disabled." },
+      { status: 400, headers: { "Cache-Control": "no-store" } }
+    );
+  }
 
   const dbLang = normalizeLangForDb(lang);
   const targetLang = normalizeLang(lang);
