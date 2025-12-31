@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import { TrainingCard } from "@/components/training/TrainingCard";
 
@@ -39,4 +39,25 @@ test("renders headword and definition segments", () => {
     "Het grote huis aan de gracht staat al eeuwen."
   );
   expect(screen.getByRole("button", { name: /gracht/i })).toBeInTheDocument();
+});
+
+test("tap/clicking card requests reveal when not revealed", () => {
+  const onWordClick = vi.fn();
+  const onRequestReveal = vi.fn();
+
+  render(
+    <TrainingCard
+      word={word as any}
+      mode="word-to-definition"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+      onRequestReveal={onRequestReveal}
+    />
+  );
+
+  fireEvent.click(screen.getByRole("heading", { name: "huis" }));
+  expect(onRequestReveal).toHaveBeenCalledTimes(1);
 });

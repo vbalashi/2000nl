@@ -147,6 +147,11 @@ export function TrainingScreen({ user }: Props) {
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
 
+  const revealAnswer = useCallback(() => {
+    setTranslationTooltipOpen(false);
+    setRevealed(true);
+  }, []);
+
   const refreshAvailableLists = useCallback(async () => {
     if (!user?.id) return;
     const lists = await fetchAvailableLists(user.id, language);
@@ -1358,13 +1363,13 @@ export function TrainingScreen({ user }: Props) {
         {/* Adjusted max-width and gap to keep things tight and focused */}
         <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
           {/* Left/Main Column: Constrained to max-w-2xl to match Card width exactly */}
-          <section className="flex flex-1 w-full max-w-2xl flex-col h-full overflow-hidden rounded-3xl bg-transparent">
+          <section className="flex flex-1 w-full max-w-2xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
             {/* 1. Scrollable Card Area */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col">
+            <div className="flex-1 overflow-y-auto overflow-x-visible scrollbar-hide flex flex-col px-2 md:px-4">
               {/* Card Container */}
               <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
                 {/* 16/10 Aspect Ratio Card on desktop, auto on mobile */}
-                <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px]">
+                <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8">
                   <TrainingCard
                     word={currentWord}
                     mode={currentMode}
@@ -1377,6 +1382,7 @@ export function TrainingScreen({ user }: Props) {
                     translationLang={translationLang}
                     translationTooltipOpen={translationTooltipOpen}
                     onTranslationTooltipOpenChange={setTranslationTooltipOpen}
+                    onRequestReveal={revealAnswer}
                     onShowDetails={handleShowCurrentWordDetails}
                   />
                 </div>
@@ -1418,8 +1424,7 @@ export function TrainingScreen({ user }: Props) {
                   <button
                     type="button"
                     onClick={() => {
-                      setTranslationTooltipOpen(false);
-                      setRevealed(true);
+                      revealAnswer();
                     }}
                     className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
                   >
@@ -1446,6 +1451,9 @@ export function TrainingScreen({ user }: Props) {
               userLists={availableLists.filter((l) => l.type === "user")}
               onListsUpdated={handleListsUpdated}
               onTrainWord={handleTrainWord}
+              currentTrainingEntryId={currentWord?.id ?? null}
+              onTrainingAction={(result) => void handleAction(result)}
+              trainingActionDisabled={!revealed || actionLoading}
             />
           </aside>
         </div>
@@ -1500,6 +1508,9 @@ export function TrainingScreen({ user }: Props) {
           userLists={availableLists.filter((l) => l.type === "user")}
           onListsUpdated={handleListsUpdated}
           onTrainWord={handleTrainWord}
+          currentTrainingEntryId={currentWord?.id ?? null}
+          onTrainingAction={(result) => void handleAction(result)}
+          trainingActionDisabled={!revealed || actionLoading}
         />
       </TrainingSidebarDrawer>
 

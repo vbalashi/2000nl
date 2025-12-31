@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { SidebarHistoryItem, DictionaryEntry, WordListSummary } from "@/lib/types";
+import type { ReviewResult } from "@/lib/trainingService";
 import { SidebarCard } from "./SidebarCard";
 import { WordDetailPanel } from "./WordDetailPanel";
 
@@ -26,6 +27,12 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
+  /** Current training card ID (used to show training-only actions in Details). */
+  currentTrainingEntryId?: string | null;
+  /** Run a training action (freeze/hide) for the current card. */
+  onTrainingAction?: (result: ReviewResult) => void;
+  /** Disable training action buttons (e.g. until revealed / while saving). */
+  trainingActionDisabled?: boolean;
 };
 
 export function Sidebar({
@@ -42,6 +49,9 @@ export function Sidebar({
   userLists,
   onListsUpdated,
   onTrainWord,
+  currentTrainingEntryId,
+  onTrainingAction,
+  trainingActionDisabled,
 }: Props) {
   return (
     <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white/80 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-card-dark">
@@ -108,6 +118,9 @@ export function Sidebar({
                 onTrainWord={onTrainWord}
                 showHeader={true}
                 showActions={true}
+                currentTrainingEntryId={currentTrainingEntryId ?? null}
+                onTrainingAction={onTrainingAction}
+                trainingActionDisabled={trainingActionDisabled}
               />
             ) : (
               <div className="flex h-full items-center justify-center p-4">

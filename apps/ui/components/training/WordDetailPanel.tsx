@@ -8,6 +8,7 @@ import type {
   WordEntryTranslationStatus,
   WordListSummary,
 } from "@/lib/types";
+import type { ReviewResult } from "@/lib/trainingService";
 import {
   addWordsToUserList,
   createUserList,
@@ -26,6 +27,12 @@ export type WordDetailPanelProps = {
   showHeader?: boolean;
   /** Whether to show the actions section (add to list, mark learned, train). Defaults to true. */
   showActions?: boolean;
+  /** Current training card ID (to show training-only actions in Details). */
+  currentTrainingEntryId?: string | null;
+  /** Training-only action handler for the current card (freeze/hide). */
+  onTrainingAction?: (result: ReviewResult) => void;
+  /** Disable training-only actions (e.g. until revealed / while saving). */
+  trainingActionDisabled?: boolean;
 };
 
 const POS_COLORS: Record<string, string> = {
@@ -71,6 +78,9 @@ export function WordDetailPanel({
   onTrainWord,
   showHeader = true,
   showActions = true,
+  currentTrainingEntryId = null,
+  onTrainingAction,
+  trainingActionDisabled = false,
 }: WordDetailPanelProps) {
   const [translationStatus, setTranslationStatus] =
     React.useState<WordEntryTranslationStatus | null>(null);
@@ -229,6 +239,11 @@ export function WordDetailPanel({
       ? Boolean(targetListId)
       : Boolean(newListName.trim()));
 
+  const showTrainingActions =
+    Boolean(onTrainingAction) &&
+    Boolean(currentTrainingEntryId) &&
+    entry?.id === currentTrainingEntryId;
+
   return (
     <div className="flex h-full flex-col">
       {showHeader && (
@@ -381,6 +396,44 @@ export function WordDetailPanel({
 
               <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="grid gap-2">
+                  {showTrainingActions ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                        Training
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          disabled={trainingActionDisabled}
+                          onClick={() => onTrainingAction?.("freeze")}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                          title="Bevriezen (F)"
+                        >
+                          Bevriezen
+                          <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                            (F)
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={trainingActionDisabled}
+                          onClick={() => onTrainingAction?.("hide")}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                          title="Niet meer tonen (X)"
+                        >
+                          Niet meer tonen
+                          <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                            (X)
+                          </span>
+                        </button>
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Tip: je kunt ook hotkeys gebruiken (F / X).
+                      </div>
+                      <div className="border-t border-slate-200/70 pt-2 dark:border-slate-800/80" />
+                    </div>
+                  ) : null}
+
                   <div className="flex flex-wrap gap-2">
                     <select
                       value={addMode === "new" ? "__new__" : targetListId}

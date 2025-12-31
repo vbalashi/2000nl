@@ -27,6 +27,8 @@ type Props = {
   translationLang: string | null;
   translationTooltipOpen?: boolean;
   onTranslationTooltipOpenChange?: (open: boolean) => void;
+  /** Request revealing the answer (used for tap-to-reveal on mobile). */
+  onRequestReveal?: () => void;
   /** Callback when user clicks the info icon to see word details */
   onShowDetails?: () => void;
 };
@@ -66,6 +68,7 @@ export function TrainingCard({
   translationLang,
   translationTooltipOpen = false,
   onTranslationTooltipOpenChange,
+  onRequestReveal,
   onShowDetails,
 }: Props) {
   // NOTE:
@@ -339,6 +342,17 @@ export function TrainingCard({
   const posColor = POS_COLORS[safePos] ?? POS_COLORS.default;
   const posFullName = POS_NAMES[safePos] ?? word.part_of_speech;
 
+  const isInteractiveTarget = (target: EventTarget | null) => {
+    if (!(target instanceof Element)) return false;
+    // Ignore clicks on interactive controls inside the card (buttons, links, inputs),
+    // including the clickable words rendered by <InteractiveText />.
+    return Boolean(
+      target.closest(
+        "button, a, input, textarea, select, [role='button'], [role='link'], [data-no-reveal]"
+      )
+    );
+  };
+
   const InlineTranslation = ({
     text,
     align = "center",
@@ -372,7 +386,25 @@ export function TrainingCard({
   };
 
   return (
-    <div className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-card-light p-5 md:p-8 shadow-[0_20px_45px_rgba(15,23,42,0.15)] dark:border-slate-800 dark:bg-card-dark transition-all duration-300">
+    <div
+      className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-card-light p-5 md:p-8 shadow-lg shadow-slate-900/10 dark:border-slate-800 dark:bg-card-dark dark:shadow-slate-950/35 transition-all duration-300"
+      onClick={(e) => {
+        // Mobile UX: allow tapping the "empty" card area to reveal.
+        if (revealed) return;
+        if (!onRequestReveal) return;
+        if (e.defaultPrevented) return;
+        if (isInteractiveTarget(e.target)) return;
+
+        // If user is selecting text (desktop), don't hijack the click.
+        const sel =
+          typeof window !== "undefined" ? window.getSelection?.() : null;
+        if (sel && !sel.isCollapsed) return;
+
+        onRequestReveal();
+      }}
+      role="group"
+      aria-label="Training card"
+    >
       {/* Part of Speech Badge + Info Icon - Top Right Corner (Always Visible) */}
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
         {word.part_of_speech && (
@@ -465,13 +497,27 @@ export function TrainingCard({
                 <div className="inline-flex items-start gap-4">
                   {showNumber && (
                     <div className="flex-shrink-0 pt-1">
-                      <div
-                        className={`w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
-                      >
-                        {typeof meaningIdFromRaw === "number" &&
-                        allMeanings.length === 1
-                          ? meaningIdFromRaw
-                          : 1}
+                      <div className="flex flex-col items-center gap-1">
+                        <div
+                          className={`w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
+                        >
+                          {typeof meaningIdFromRaw === "number" &&
+                          allMeanings.length === 1
+                            ? meaningIdFromRaw
+                            : 1}
+                        </div>
+                        {isIdiomOnlyMeaning && idiomPromptSegments ? (
+                          hasPrimaryIdiomExplanationText ? (
+                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none">
+                              <span>idioom</span>
+                              <span>definitie</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
+                              <span>idioom</span>
+                            </span>
+                          )
+                        ) : null}
                       </div>
                     </div>
                   )}
@@ -508,15 +554,17 @@ export function TrainingCard({
                             onWordClick={onWordClick}
                           />
                         </span>
-                        {hasPrimaryIdiomExplanationText ? (
-                          <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-purple-100/60 text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70">
-                            idioom definitie
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                            idioom
-                          </span>
-                        )}
+                        {!showNumber &&
+                          (hasPrimaryIdiomExplanationText ? (
+                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none">
+                              <span>idioom</span>
+                              <span>definitie</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
+                              <span>idioom</span>
+                            </span>
+                          ))}
                       </div>
                     ) : (
                       <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-400 dark:text-slate-500">
@@ -671,7 +719,7 @@ export function TrainingCard({
                                         excludeWord={word.headword}
                                       />
                                     </span>
-                                    <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                                    <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
                                       idioom
                                     </span>
                                   </div>
@@ -759,7 +807,7 @@ export function TrainingCard({
                                 excludeWord={word.headword}
                               />
                             </span>
-                            <span className="text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                            <span className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
                               idioom
                             </span>
                           </div>
