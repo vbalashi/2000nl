@@ -34,15 +34,15 @@ type Props = {
 };
 
 const POS_COLORS: Record<string, string> = {
-  zn: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  ww: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-  bn: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-  bw: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
-  vz: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-  lidw: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  zn: "bg-blue-100/60 text-blue-700/55 border-blue-200/60 dark:bg-blue-900/20 dark:text-blue-300/45 dark:border-blue-800/60",
+  ww: "bg-red-100/60 text-red-700/55 border-red-200/60 dark:bg-red-900/20 dark:text-red-300/45 dark:border-red-800/60",
+  bn: "bg-green-100/60 text-green-700/55 border-green-200/60 dark:bg-green-900/20 dark:text-green-300/45 dark:border-green-800/60",
+  bw: "bg-orange-100/60 text-orange-700/55 border-orange-200/60 dark:bg-orange-900/20 dark:text-orange-300/45 dark:border-orange-800/60",
+  vz: "bg-purple-100/60 text-purple-700/55 border-purple-200/60 dark:bg-purple-900/20 dark:text-purple-300/45 dark:border-purple-800/60",
+  lidw: "bg-slate-100/60 text-slate-700/55 border-slate-200/60 dark:bg-slate-800/50 dark:text-slate-300/40 dark:border-slate-700/70",
   // fallback
   default:
-    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    "bg-slate-100/60 text-slate-700/55 border-slate-200/60 dark:bg-slate-800/50 dark:text-slate-300/40 dark:border-slate-700/70",
 };
 
 const POS_NAMES: Record<string, string> = {
@@ -449,12 +449,32 @@ export function TrainingCard({
               void fetchTranslation();
               onTranslationTooltipOpenChange?.(!translationTooltipOpen);
             }}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
             aria-pressed={translationTooltipOpen}
-            aria-label="Translate"
+            aria-label="Translate (T)"
+            title="Translate (T)"
           >
-            translate
-            <span className="text-[10px] font-semibold opacity-60">(t)</span>
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {/* "Translate" glyph similar to 文/A icon */}
+              {/* Left: simplified 文 */}
+              <path d="M3.5 6h10" />
+              <path d="M8.5 6v2" />
+              <path d="M8.5 8l4 4" />
+              <path d="M8.5 8l-4 6" />
+              <path d="M5.5 12h6" />
+              {/* Right: simplified A */}
+              <path d="M14.5 20l3.5-16 3.5 16" />
+              <path d="M16.2 14h3.6" />
+            </svg>
           </button>
 
           {isTranslationOpen && (
