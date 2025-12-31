@@ -19,16 +19,39 @@ export async function ensureAuthSchema(pool: Pool) {
 }
 
 export async function runMigrations(pool: Pool) {
-  await ensureAuthSchema(pool);
-  const migrationsDir = path.resolve(process.cwd(), "..", "..", "db", "migrations");
-  const migrationFiles = fs
-    .readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+  // Vitest runs files in parallel in CI, but our workflow uses a single shared
+  // postgres DB service. Use a DB-level lock + migration table so migrations
+  // are applied exactly once and cannot race.
+  await pool.query(`select pg_advisory_lock(hashtext('2000nl_fsrs_test_migrations'))`);
+  try {
+    await ensureAuthSchema(pool);
 
-  for (const file of migrationFiles) {
-    const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
-    await pool.query(sql);
+    await pool.query(`
+      create table if not exists public.__fsrs_test_migrations (
+        filename text primary key,
+        applied_at timestamptz not null default now()
+      );
+    `);
+
+    const migrationsDir = path.resolve(process.cwd(), "..", "..", "db", "migrations");
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+
+    for (const file of migrationFiles) {
+      const { rowCount } = await pool.query(
+        `select 1 from public.__fsrs_test_migrations where filename = $1`,
+        [file]
+      );
+      if (rowCount && rowCount > 0) continue;
+
+      const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
+      await pool.query(sql);
+      await pool.query(`insert into public.__fsrs_test_migrations (filename) values ($1)`, [file]);
+    }
+  } finally {
+    await pool.query(`select pg_advisory_unlock(hashtext('2000nl_fsrs_test_migrations'))`);
   }
 }
 
