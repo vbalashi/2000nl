@@ -30,6 +30,7 @@ export function DropUpSelect({
 }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInteractive = options.length > 1;
 
   useEffect(() => {
     if (!open) return;
@@ -51,9 +52,14 @@ export function DropUpSelect({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        disabled={!isInteractive}
+        aria-disabled={!isInteractive}
+        onClick={() => (isInteractive ? setOpen((prev) => !prev) : undefined)}
         className={[
           "flex items-center gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80",
+          !isInteractive
+            ? "cursor-default opacity-95 hover:bg-slate-100/70 dark:hover:bg-slate-800/70"
+            : "",
           uppercase ? "uppercase" : "",
           buttonClassName ?? "",
         ].join(" ")}
@@ -64,22 +70,24 @@ export function DropUpSelect({
         <span className="min-w-0 truncate font-semibold text-slate-800 dark:text-white">
           {selectedLabel ?? value}
         </span>
-        <svg
-          className={`h-3 w-3 shrink-0 text-slate-500 transition-transform dark:text-slate-300 ${
-            open ? "rotate-180" : ""
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m18 15-6-6-6 6" />
-        </svg>
+        {isInteractive ? (
+          <svg
+            className={`h-3 w-3 shrink-0 text-slate-500 transition-transform dark:text-slate-300 ${
+              open ? "rotate-180" : ""
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m18 15-6-6-6 6" />
+          </svg>
+        ) : null}
       </button>
 
-      {open ? (
+      {isInteractive && open ? (
         <div
           className={`absolute bottom-[calc(100%+8px)] ${
             align === "right" ? "right-0" : "left-0"

@@ -89,9 +89,6 @@ export function FooterStats({
 
   const languageOptions = [
     { value: "nl", label: "Nederlands" },
-    { value: "en", label: "English" },
-    { value: "de", label: "Deutsch" },
-    { value: "fr", label: "Français" },
   ];
 
   const cardFilterOptions: { value: CardFilter; label: string }[] = [
