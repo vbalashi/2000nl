@@ -13,6 +13,7 @@ import {
   getAllMeanings,
   getPrimaryMeaning,
 } from "@/lib/wordUtils";
+import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
 import type { TrainingWord } from "@/lib/types";
 
@@ -28,6 +29,8 @@ type Props = {
   translationLang: string | null;
   translationTooltipOpen?: boolean;
   onTranslationTooltipOpenChange?: (open: boolean) => void;
+  /** Toggle W->D hint (context + example). Matches the 'i' hotkey. */
+  onToggleHint?: () => void;
   /** Request revealing the answer (used for tap-to-reveal on mobile). */
   onRequestReveal?: () => void;
   /** Callback when user clicks the info icon to see word details */
@@ -69,6 +72,7 @@ export function TrainingCard({
   translationLang,
   translationTooltipOpen = false,
   onTranslationTooltipOpenChange,
+  onToggleHint,
   onRequestReveal,
   onShowDetails,
 }: Props) {
@@ -348,6 +352,10 @@ export function TrainingCard({
     isIdiomOnlyMeaning && hasPrimaryIdiomExplanationText;
 
   const isWordToDefinition = mode === "word-to-definition";
+  const hasHintExample =
+    isWordToDefinition && (primaryMeaning.examples?.length ?? 0) > 0;
+  const hintVisible = isWordToDefinition && (hintRevealed || revealed);
+  const showTipButton = hasHintExample && !revealed;
 
   // Compute whether to show number badge (used for alignment in both hint and definition sections)
   const globalCount = word.meanings_count ?? allMeanings.length ?? 1;
@@ -416,11 +424,16 @@ export function TrainingCard({
           // Absolute overlay: does NOT affect layout / flow.
           // Stretch full width so wrapping isn't constrained (esp. on mobile).
           "pointer-events-none select-none absolute left-0 right-0",
+          // Ensure overlay stays above scroll fade gradients (z-10) but below
+          // top controls (z-30), so it doesn't get visually "cut off".
+          "z-20",
           // Anchor ABOVE the line so multi-line translations expand upward
           // (avoids overlapping the original line).
           "bottom-full translate-y-[2px] md:translate-y-[3px]",
           // Style
-          "text-[11px] md:text-xs leading-none font-semibold tracking-wide text-slate-400 dark:text-slate-500",
+          // Use a slightly looser line-height to avoid glyph clipping on some fonts
+          // (e.g. Cyrillic ascenders).
+          "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-400 dark:text-slate-500",
           // Desktop: keep overlays to a single line to reduce collisions with nearby lines.
           "md:truncate",
           // No background highlight (can obscure underlying text in dense layouts).
@@ -456,85 +469,119 @@ export function TrainingCard({
       {/* Part of Speech Badge + Info Icon - Top Right Corner (Always Visible) */}
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-30 flex items-center gap-2">
         {word.part_of_speech && (
-          <span
-            className={`select-none rounded-lg border px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide ${posColor}`}
-            title={posTooltip}
-          >
-            {posFullName}
-          </span>
+          <Tooltip content={posTooltip} side="bottom" focusable>
+            <span
+              className={`select-none rounded-lg border px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide ${posColor}`}
+            >
+              {posFullName}
+            </span>
+          </Tooltip>
         )}
         {onShowDetails && (
-          <button
-            type="button"
-            onClick={onShowDetails}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            title="Bekijk details (i)"
-            aria-label="Bekijk details"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <Tooltip content="Bekijk details (i)" side="bottom">
+            <button
+              type="button"
+              onClick={onShowDetails}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              aria-label="Bekijk details"
             >
-              <circle cx="12" cy="12" r="10" strokeWidth="2" />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 16v-4m0-4h.01"
-              />
-            </svg>
-          </button>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 16v-4m0-4h.01"
+                />
+              </svg>
+            </button>
+          </Tooltip>
         )}
       </div>
 
-      {/* Translate (button + inline translations on card) */}
-      {translationUiEnabled && (
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30">
-          <button
-            type="button"
-            onClick={() => {
-              void fetchTranslation();
-              onTranslationTooltipOpenChange?.(!translationTooltipOpen);
-            }}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
-            aria-pressed={translationTooltipOpen}
-            aria-label="Translate (T)"
-            title="Translate (T)"
-          >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              {/* "Translate" glyph similar to 文/A icon */}
-              {/* Left: simplified 文 */}
-              <path d="M3.5 6h10" />
-              <path d="M8.5 6v2" />
-              <path d="M8.5 8l4 4" />
-              <path d="M8.5 8l-4 6" />
-              <path d="M5.5 12h6" />
-              {/* Right: simplified A */}
-              <path d="M14.5 20l3.5-16 3.5 16" />
-              <path d="M16.2 14h3.6" />
-            </svg>
-          </button>
+      {/* Top-left controls:
+          - Tip: only for W->D before reveal (shows context + example via 'i')
+          - Translate: only after reveal (and only if translation UI is enabled) */}
+      {(showTipButton || translationUiEnabled) && (
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start">
+          <div className="flex items-center gap-2">
+            {showTipButton && (
+              <Tooltip content="Tip (I)" side="bottom">
+                <button
+                  type="button"
+                  onClick={() => onToggleHint?.()}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-amber-100/70 text-amber-700 shadow-sm backdrop-blur-sm opacity-80 transition hover:opacity-100 hover:bg-amber-100/90 dark:border-slate-700 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30 select-none"
+                  aria-pressed={hintVisible}
+                  aria-label="Tip (I)"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M9 18h6" />
+                    <path d="M10 22h4" />
+                    <path d="M8.5 14.5c-1.3-1.1-2.5-2.3-2.5-4.6A6 6 0 0 1 18 10c0 2.3-1.2 3.5-2.5 4.6-.8.7-1.5 1.3-1.5 2.5h-4c0-1.2-.7-1.8-1.5-2.6z" />
+                  </svg>
+                </button>
+              </Tooltip>
+            )}
 
-          {isTranslationOpen && (
-            translationStatusText ? (
-              <div className="mt-2">
-                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
-                  {translationStatusText}
-                </p>
-              </div>
-            ) : null
-          )}
+            {translationUiEnabled && (
+              <Tooltip content="Translate (T)" side="bottom">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void fetchTranslation();
+                    onTranslationTooltipOpenChange?.(!translationTooltipOpen);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
+                  aria-pressed={translationTooltipOpen}
+                  aria-label="Translate (T)"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    {/* "Translate" glyph similar to 文/A icon */}
+                    {/* Left: simplified 文 */}
+                    <path d="M3.5 6h10" />
+                    <path d="M8.5 6v2" />
+                    <path d="M8.5 8l4 4" />
+                    <path d="M8.5 8l-4 6" />
+                    <path d="M5.5 12h6" />
+                    {/* Right: simplified A */}
+                    <path d="M14.5 20l3.5-16 3.5 16" />
+                    <path d="M16.2 14h3.6" />
+                  </svg>
+                </button>
+              </Tooltip>
+            )}
+          </div>
+
+          {isTranslationOpen && translationStatusText ? (
+            <div className="mt-2">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
+                {translationStatusText}
+              </p>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -546,7 +593,10 @@ export function TrainingCard({
           className="flex flex-col items-center w-full h-full overflow-y-auto scrollbar-hide"
         >
           {/* Header: Headword + POS Badge (Always Visible) */}
-          <div className="flex-none mb-8 text-center bg-transparent z-0">
+          {/* When translations are visible, add top padding so the first line's
+              overlay (positioned with bottom-full) doesn't get clipped by the
+              scroll container's overflow-y-auto. */}
+          <div className={`flex-none mb-8 text-center bg-transparent z-0 ${isTranslationOpen ? 'pt-5' : ''}`}>
           {isWordToDefinition ? (
             // IMPORTANT: make the translation overlay use the full card width.
             // If we keep the relative container as `inline-flex`, the absolute overlay
@@ -584,23 +634,33 @@ export function TrainingCard({
                           hasPrimaryIdiomExplanationText ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
-                              title={getGenericBadgeTooltip({
-                                key: "idiom_definition",
-                                translationLang,
-                              })}
                             >
-                              <span>idioom</span>
-                              <span>definitie</span>
+                              <Tooltip
+                                content={getGenericBadgeTooltip({
+                                  key: "idiom_definition",
+                                  translationLang,
+                                })}
+                                side="top"
+                              >
+                                <span className="inline-flex flex-col items-center">
+                                  <span>idioom</span>
+                                  <span>definitie</span>
+                                </span>
+                              </Tooltip>
                             </span>
                           ) : (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
-                              title={getGenericBadgeTooltip({
-                                key: "idiom",
-                                translationLang,
-                              })}
                             >
-                              <span>idioom</span>
+                              <Tooltip
+                                content={getGenericBadgeTooltip({
+                                  key: "idiom",
+                                  translationLang,
+                                })}
+                                side="top"
+                              >
+                                <span>idioom</span>
+                              </Tooltip>
                             </span>
                           )
                         ) : null}
@@ -644,23 +704,33 @@ export function TrainingCard({
                           (hasPrimaryIdiomExplanationText ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
-                              title={getGenericBadgeTooltip({
-                                key: "idiom_definition",
-                                translationLang,
-                              })}
                             >
-                              <span>idioom</span>
-                              <span>definitie</span>
+                              <Tooltip
+                                content={getGenericBadgeTooltip({
+                                  key: "idiom_definition",
+                                  translationLang,
+                                })}
+                                side="top"
+                              >
+                                <span className="inline-flex flex-col items-center">
+                                  <span>idioom</span>
+                                  <span>definitie</span>
+                                </span>
+                              </Tooltip>
                             </span>
                           ) : (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
-                              title={getGenericBadgeTooltip({
-                                key: "idiom",
-                                translationLang,
-                              })}
                             >
-                              <span>idioom</span>
+                              <Tooltip
+                                content={getGenericBadgeTooltip({
+                                  key: "idiom",
+                                  translationLang,
+                                })}
+                                side="top"
+                              >
+                                <span>idioom</span>
+                              </Tooltip>
                             </span>
                           ))}
                       </div>
@@ -754,7 +824,7 @@ export function TrainingCard({
                       <div key={index} className="flex items-start gap-6">
                         {/* Number Badge - Left Side */}
                         {showNumber && (
-                          <div className="flex-shrink-0 pt-1">
+                          <div className="flex-shrink-0 pt-1 w-7 flex flex-col items-center overflow-visible">
                             <div
                               className={`w-7 h-7 flex items-center justify-center ${
                                 badgeNumber === globalCount
@@ -764,6 +834,21 @@ export function TrainingCard({
                             >
                               {badgeNumber}
                             </div>
+
+                            {/* Idiom badge: keep styling, render under number without shifting layout */}
+                            {meaning.idioms && meaning.idioms.length > 0 && (
+                              <span className="mt-1 inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none">
+                                <Tooltip
+                                  content={getGenericBadgeTooltip({
+                                    key: "idiom",
+                                    translationLang,
+                                  })}
+                                  side="top"
+                                >
+                                  <span>idioom</span>
+                                </Tooltip>
+                              </span>
+                            )}
                           </div>
                         )}
 
@@ -819,15 +904,6 @@ export function TrainingCard({
                                           onWordClick={onWordClick}
                                           excludeWord={word.headword}
                                         />
-                                      </span>
-                                      <span
-                                        className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
-                                        title={getGenericBadgeTooltip({
-                                          key: "idiom",
-                                          translationLang,
-                                        })}
-                                      >
-                                        idioom
                                       </span>
                                     </div>
                                     {/* Explanation with separator */}
@@ -917,12 +993,16 @@ export function TrainingCard({
                                 </span>
                                 <span
                                   className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
-                                  title={getGenericBadgeTooltip({
-                                    key: "idiom",
-                                    translationLang,
-                                  })}
                                 >
-                                  idioom
+                                  <Tooltip
+                                    content={getGenericBadgeTooltip({
+                                      key: "idiom",
+                                      translationLang,
+                                    })}
+                                    side="top"
+                                  >
+                                    <span>idioom</span>
+                                  </Tooltip>
                                 </span>
                               </div>
                               {idiom.explanation?.trim() &&

@@ -127,6 +127,10 @@ export function TrainingScreen({ user }: Props) {
   );
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const toggleHint = useCallback(() => {
+    setHintRevealed((prev) => !prev);
+  }, []);
+
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
@@ -840,7 +844,7 @@ export function TrainingScreen({ user }: Props) {
         handleShowCurrentWordDetails();
       } else if (normalized === "i") {
         // Lowercase i: Toggle hint for W->D mode (shows context + example)
-        setHintRevealed((prev) => !prev);
+        toggleHint();
       } else if (normalized === " ") {
         // Space key toggles reveal
         event.preventDefault();
@@ -856,6 +860,7 @@ export function TrainingScreen({ user }: Props) {
     handleAction,
     handleShowCurrentWordDetails,
     revealed,
+    toggleHint,
     translationTooltipOpen,
   ]);
 
@@ -1382,6 +1387,7 @@ export function TrainingScreen({ user }: Props) {
                     translationLang={translationLang}
                     translationTooltipOpen={translationTooltipOpen}
                     onTranslationTooltipOpenChange={setTranslationTooltipOpen}
+                    onToggleHint={toggleHint}
                     onRequestReveal={revealAnswer}
                     onShowDetails={handleShowCurrentWordDetails}
                   />
