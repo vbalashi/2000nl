@@ -61,11 +61,11 @@ export function DropUpSelect({
         {showLabel ? (
           <span className="text-slate-500 dark:text-slate-300">{label}:</span>
         ) : null}
-        <span className="font-semibold text-slate-800 dark:text-white">
+        <span className="min-w-0 truncate font-semibold text-slate-800 dark:text-white">
           {selectedLabel ?? value}
         </span>
         <svg
-          className={`h-3 w-3 text-slate-500 transition-transform dark:text-slate-300 ${
+          className={`h-3 w-3 shrink-0 text-slate-500 transition-transform dark:text-slate-300 ${
             open ? "rotate-180" : ""
           }`}
           viewBox="0 0 24 24"

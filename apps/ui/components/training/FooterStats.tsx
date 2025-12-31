@@ -103,7 +103,7 @@ export function FooterStats({
   return (
     <footer className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 sm:py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75">
       <div className="mx-auto flex w-full max-w-[1200px] justify-center px-2 sm:px-4 lg:px-6">
-        <div className="flex w-full max-w-2xl flex-col gap-2 rounded-2xl border border-white/30 bg-white/60 p-3 sm:p-3 shadow-lg backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/70">
+        <div className="flex w-full max-w-2xl flex-col gap-2 p-3 sm:p-3">
           {/* Stats Row - Horizontal grid on mobile, flex on desktop */}
           <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
             {/* New cards today */}
@@ -135,13 +135,13 @@ export function FooterStats({
           </div>
 
           {/* Controls Row */}
-          <div className="hidden sm:flex items-center justify-between gap-3 border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+          <div className="hidden sm:block border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60">
+            <div className="grid w-full grid-cols-4 gap-2">
               <DropUpSelect
                 label="Taal"
                 showLabel={false}
                 uppercase={false}
-                buttonClassName="px-2.5 py-1.5"
+                buttonClassName="w-full justify-between px-3 py-2"
                 value={language}
                 options={languageOptions}
                 onChange={onLanguageChange}
@@ -151,7 +151,7 @@ export function FooterStats({
                   label="Lijst"
                   showLabel={false}
                   uppercase={false}
-                  buttonClassName="px-2.5 py-1.5"
+                  buttonClassName="w-full justify-between px-3 py-2"
                   value={activeListValue}
                   options={listOptions}
                   onChange={onListChange}
@@ -160,7 +160,7 @@ export function FooterStats({
                 <button
                   type="button"
                   onClick={onOpenSettings}
-                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
+                  className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
                   title="Wijzig lijst in Instellingen"
                   aria-label="Wijzig lijst in Instellingen"
                 >
@@ -172,7 +172,7 @@ export function FooterStats({
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="flex items-center gap-2 rounded-full bg-slate-100/70 px-2.5 py-1.5 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+                className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
                 title="Wijzig scenario in Instellingen"
                 aria-label="Wijzig scenario in Instellingen"
               >
@@ -184,7 +184,7 @@ export function FooterStats({
                 label="Kaarten"
                 showLabel={false}
                 uppercase={false}
-                buttonClassName="px-2.5 py-1.5"
+                buttonClassName="w-full justify-between px-3 py-2"
                 value={cardFilter}
                 options={cardFilterOptions}
                 onChange={(value) => onCardFilterChange(value as CardFilter)}
