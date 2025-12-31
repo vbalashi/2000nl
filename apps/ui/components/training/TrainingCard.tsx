@@ -605,7 +605,7 @@ export function TrainingCard({
               <InlineTranslation text={getHeadwordTranslated()} />
               <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
                 {word.gender && (
-                  <span className="text-4xl md:text-5xl font-medium text-slate-400 opacity-60">
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-400 opacity-60">
                     {word.gender}
                   </span>
                 )}
@@ -767,22 +767,26 @@ export function TrainingCard({
                   {/* Example */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                      <div className="flex flex-col gap-2">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,
                             primaryMeaning.links
                           );
                           return (
-                            <p
+                            <div
                               key={i}
-                              className="relative flex items-start text-lg italic leading-relaxed text-slate-600 dark:text-slate-400"
+                              className="flex items-start gap-3"
                             >
+                              <span
+                                aria-hidden="true"
+                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
+                              />
                               <InlineTranslation
                                 align="left"
                                 text={getTranslated(0, { exampleIndex: i })}
                               />
-                              <span className="flex-1">
+                              <span className="relative flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
@@ -790,7 +794,7 @@ export function TrainingCard({
                                   excludeWord={word.headword}
                                 />
                               </span>
-                            </p>
+                            </div>
                           );
                         })}
                       </div>
@@ -1073,7 +1077,7 @@ export function TrainingCard({
 
           {/* Debug Stats (Footer - Color Coded) */}
           {word.debugStats && (
-            <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 border-t border-slate-100 pt-4 dark:border-slate-800 w-full opacity-70 hover:opacity-100 transition-opacity">
+            <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 pt-4 w-full opacity-70 hover:opacity-100 transition-opacity">
               {word.debugStats.source && (
                 <span className="text-slate-400 dark:text-slate-500">
                   src:{word.debugStats.source}
@@ -1117,14 +1121,25 @@ export function TrainingCard({
         {scrollFades.canScroll && !scrollFades.atTop && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-0 left-0 right-0 h-14 bg-gradient-to-b from-card-light/95 via-card-light/60 to-transparent dark:from-card-dark/95 dark:via-card-dark/60 z-10"
+            className="pointer-events-none absolute top-0 left-0 right-0 z-10 h-16 bg-gradient-to-b from-card-light via-card-light/70 via-40% to-transparent dark:from-card-dark dark:via-card-dark/70"
           />
         )}
         {scrollFades.canScroll && !scrollFades.atBottom && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card-light/95 via-card-light/60 to-transparent dark:from-card-dark/95 dark:via-card-dark/60 z-10"
-          />
+            className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-20 bg-gradient-to-t from-card-light via-card-light/70 via-40% to-transparent dark:from-card-dark dark:via-card-dark/70"
+          >
+            {/* Small chevron hint */}
+            <svg
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400/60 dark:text-slate-500/60 animate-pulse"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         )}
       </div>
     </div>
