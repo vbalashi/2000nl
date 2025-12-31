@@ -34,6 +34,7 @@ import type {
   WordListSummary,
   WordListType,
 } from "@/lib/types";
+import { BrandLogo } from "@/components/BrandLogo";
 import { TrainingCard } from "./TrainingCard";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -1197,10 +1198,7 @@ export function TrainingScreen({ user }: Props) {
       <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
-            <p className="truncate text-3xl md:text-[36px] leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-75 dark:opacity-80">
-              2000
-              <span className="text-blue-600 dark:text-blue-400">nl</span>
-            </p>
+            <BrandLogo />
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">

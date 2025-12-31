@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { BrandLogo } from "@/components/BrandLogo";
 
 type AuthMode = "signin" | "signup" | "reset";
 
@@ -55,11 +56,12 @@ export function AuthScreen() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-white/90 px-8 py-10 shadow-xl shadow-slate-900/10 backdrop-blur dark:bg-slate-900/70">
         <div>
-          <h1 className="text-center text-3xl font-bold text-slate-900 dark:text-white">
-            NT2 Training
-          </h1>
+          <div className="flex justify-center">
+            <BrandLogo className="text-4xl leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-80 dark:opacity-85" />
+          </div>
           <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-            Log in met je Supabase-account om te beginnen.
+            Log in om te beginnen met het leren van de 2000 meest voorkomende
+            Nederlandse woorden.
           </p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
