@@ -437,15 +437,6 @@ export function TrainingCard({
         </div>
       )}
 
-      {/* Top Metadata (Absolute) */}
-      <div className="absolute top-8 right-8 left-8 flex items-center justify-between opacity-0 hover:opacity-100 transition-opacity z-10">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-          VanDale 2k
-        </p>
-        <div className="text-right text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mr-32">
-          #{word.vandaleId ?? "?"}
-        </div>
-      </div>
       {/* Main Content Area - Reduced Top Padding */}
       <div className="flex flex-col items-center w-full h-full pt-10 md:pt-12 px-1 md:px-4 overflow-y-auto scrollbar-hide">
         {/* Header: Headword + POS Badge (Always Visible) */}
