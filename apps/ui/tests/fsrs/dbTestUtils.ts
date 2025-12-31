@@ -15,6 +15,17 @@ export async function ensureAuthSchema(pool: Pool) {
       email text,
       created_at timestamptz default now()
     );
+
+    -- Supabase compatibility: many migrations reference auth.uid() in RLS policies.
+    -- In Supabase, this reads the user id from JWT claims; in tests we just need
+    -- the function to exist so migrations compile on plain Postgres.
+    create or replace function auth.uid()
+    returns uuid
+    language sql
+    stable
+    as $$
+      select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+    $$;
   `);
 }
 
