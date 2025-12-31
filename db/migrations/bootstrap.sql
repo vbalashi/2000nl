@@ -1,15 +1,22 @@
--- Apply all migrations in order for a fresh deploy.
+-- Bootstrap: Apply all migrations in order for a fresh deploy.
+-- Generated: 2025-12-31
+--
 -- Run from repo root:
---   PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/bootstrap.sql
+--   PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
 
 \set ON_ERROR_STOP on
 
-\i migrations/0001_create_schema.sql
-\i migrations/0002_rename_frequency_rank.sql
-\i migrations/0003_add_user_tracking.sql
-\i migrations/0004_sm2_functions.sql
-\i migrations/0005_stats_functions.sql
-\i migrations/0006_word_forms.sql
-\i migrations/0007_add_meaning_id.sql
-\i migrations/0008_enable_rls.sql
-\i migrations/0009_set_search_path.sql
+-- Core schema: tables, indexes, extensions
+\i db/migrations/001_core_schema.sql
+
+-- FSRS-6 engine: algorithm and review handlers
+\i db/migrations/002_fsrs_engine.sql
+
+-- Queue & training: card selection, statistics
+\i db/migrations/003_queue_training.sql
+
+-- User features: settings, lists, translations, notes
+\i db/migrations/004_user_features.sql
+
+-- Security: RLS policies
+\i db/migrations/005_security.sql
