@@ -48,6 +48,9 @@ export async function runMigrations(pool: Pool) {
     const migrationFiles = fs
       .readdirSync(migrationsDir)
       .filter((f) => f.endsWith(".sql"))
+      // bootstrap.sql contains psql meta-commands (\set, \i) and can't be run
+      // through the node pg driver.
+      .filter((f) => f !== "bootstrap.sql")
       .sort();
 
     for (const file of migrationFiles) {
