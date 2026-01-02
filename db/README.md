@@ -6,14 +6,23 @@ Holds SQL migrations for the canonical schema. This folder contains consolidated
 
 ```
 db/migrations/
-├── 001_core_schema.sql      # Tables, indexes, extensions
-├── 002_fsrs_engine.sql      # FSRS-6 algorithm, handle_review, handle_click
-├── 003_queue_training.sql   # get_next_word, training stats, scenarios
-├── 004_user_features.sql    # User settings, lists, translations, notes
-├── 005_security.sql         # RLS policies
-├── bootstrap.sql            # Master script that runs all migrations
-└── archive/                 # Historical individual migrations (reference only)
+├── 001_core_schema.sql       # Tables, indexes, extensions
+├── 002_fsrs_engine.sql       # FSRS-6 algorithm, handle_review, handle_click
+├── 003_queue_training.sql    # get_next_word, training stats, scenarios
+├── 004_user_features.sql     # User settings, lists, translations, notes
+├── 005_security.sql          # RLS policies
+├── 0038_subscription_tier.sql    # [delta] Subscription tiers, gated word access
+├── 0039_add_vandale_all_list.sql # [delta] VanDale (full) word list
+├── bootstrap.sql             # Master script that runs all migrations
+└── archive/                  # Historical individual migrations (reference only)
 ```
+
+### Baseline vs Delta Migrations
+
+- **001-005**: Consolidated baseline capturing schema state as of 2025-12-31
+- **0038+**: Delta migrations for new features after consolidation
+
+When adding new features, create new delta files (0040_*, 0041_*, etc.) and add them to `bootstrap.sql`.
 
 ## Fresh Deploy
 
@@ -28,7 +37,7 @@ PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstra
 Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your environment (or falls back to the repo `.env.local`):
 
 - Query: `db/scripts/psql_supabase.sh -c "select now();"`
-- File: `db/scripts/psql_supabase.sh -f db/migrations/001_core_schema.sql`
+- File: `db/scripts/psql_supabase.sh -f db/migrations/0038_subscription_tier.sql`
 
 ## Schema Overview
 
@@ -47,7 +56,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 
 ### User Features
 
-- `user_settings` - User preferences (limits, modes, theme)
+- `user_settings` - User preferences (limits, modes, theme, subscription tier)
 - `user_word_lists` / `user_word_list_items` - User-created lists
 - `word_entry_translations` - Shared translations per word
 - `user_word_notes` - Per-user notes on words
@@ -64,6 +73,9 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 | `get_training_stats()` | Basic session statistics |
 | `get_detailed_training_stats()` | Detailed counters for footer |
 | `get_scenario_stats()` | Stats aggregated by scenario |
+| `get_user_tier()` | Get user subscription tier |
+| `search_word_entries_gated()` | Gated word search (free tier limit) |
+| `fetch_words_for_list_gated()` | Gated list fetch (free tier limit) |
 
 ## Archive
 

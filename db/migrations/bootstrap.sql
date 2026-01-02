@@ -6,6 +6,10 @@
 
 \set ON_ERROR_STOP on
 
+-- =============================================================================
+-- CONSOLIDATED BASELINE (captures schema state as of 2025-12-31)
+-- =============================================================================
+
 -- Core schema: tables, indexes, extensions
 \i db/migrations/001_core_schema.sql
 
@@ -20,3 +24,13 @@
 
 -- Security: RLS policies
 \i db/migrations/005_security.sql
+
+-- =============================================================================
+-- DELTA MIGRATIONS (new features after consolidation)
+-- =============================================================================
+
+-- Subscription tiers with gated word access
+\i db/migrations/0038_subscription_tier.sql
+
+-- VanDale (full) word list
+\i db/migrations/0039_add_vandale_all_list.sql
