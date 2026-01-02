@@ -58,6 +58,8 @@ type WordSearchFilters = {
   query?: string;
   partOfSpeech?: string;
   isNt2?: boolean;
+  filterFrozen?: boolean;
+  filterHidden?: boolean;
   page?: number;
   pageSize?: number;
 };
@@ -899,19 +901,44 @@ export const fetchRecentHistory = async (
 export async function fetchCuratedLists(
   languageCode?: string
 ): Promise<WordListSummary[]> {
-  let query = supabase
-    .from("word_lists")
-    .select("id, name, description, language_code, is_primary, word_list_items(count)")
-    .order("is_primary", { ascending: false })
-    .order("name", { ascending: true });
+  const baseSelect =
+    "id, name, description, language_code, is_primary, word_list_items(count)";
 
-  if (languageCode) {
-    query = query.eq("language_code", languageCode);
+  // Prefer sort_order when available (migration 0039), but gracefully
+  // fall back for older DBs where the column doesn't exist.
+  const run = async (withSortOrder: boolean) => {
+    let query = supabase
+      .from("word_lists")
+      .select(
+        withSortOrder ? `${baseSelect}, sort_order` : baseSelect
+      )
+      .order(withSortOrder ? "sort_order" : "is_primary", {
+        ascending: withSortOrder ? true : false,
+        nullsFirst: withSortOrder ? false : undefined,
+      })
+      .order("is_primary", { ascending: false })
+      .order("name", { ascending: true });
+
+    if (languageCode) {
+      query = query.eq("language_code", languageCode);
+    }
+
+    return await query;
+  };
+
+  const first = await run(true);
+  if (!first.error && first.data) {
+    return first.data.map(mapCuratedListSummary);
   }
 
-  const { data, error } = await query;
-  if (error || !data) return [];
-  return data.map(mapCuratedListSummary);
+  // Retry without sort_order if the first query failed (e.g. missing column).
+  if (first.error) {
+    console.warn("fetchCuratedLists: falling back without sort_order", first.error);
+  }
+
+  const fallback = await run(false);
+  if (fallback.error || !fallback.data) return [];
+  return fallback.data.map(mapCuratedListSummary);
 }
 
 export async function fetchUserLists(
@@ -951,17 +978,97 @@ export async function searchWordEntries(
 ): Promise<WordEntrySearchResult> {
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = filters.pageSize ?? 50;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+
+  // Use gated RPC that enforces subscription tier limits (migration 0038).
+  // If the RPC isn't deployed yet, fall back to a direct query.
+  const { data, error } = await supabase.rpc("search_word_entries_gated", {
+    p_query: filters.query || null,
+    p_part_of_speech: filters.partOfSpeech || null,
+    p_is_nt2: typeof filters.isNt2 === "boolean" ? filters.isNt2 : null,
+    p_filter_frozen:
+      typeof filters.filterFrozen === "boolean" ? filters.filterFrozen : null,
+    p_filter_hidden:
+      typeof filters.filterHidden === "boolean" ? filters.filterHidden : null,
+    p_page: page,
+    p_page_size: pageSize,
+  });
+
+  if (!error && data) {
+    // RPC returns { items, total, is_locked, max_allowed }
+    const result = data as {
+      items: any[];
+      total: number;
+      is_locked: boolean;
+      max_allowed: number | null;
+    };
+
+    return {
+      items: (result.items || []).map(mapDictionaryEntry),
+      total: result.total ?? 0,
+      isLocked: result.is_locked,
+      maxAllowed: result.max_allowed,
+    };
+  }
+
+  if (error) {
+    console.warn("searchWordEntries: falling back without gated RPC", error);
+  }
+
+  const offset = (page - 1) * pageSize;
+  const limitEnd = offset + pageSize - 1;
+
+  // If we need user-specific filters, we need the authed user id.
+  let authedUserId: string | null = null;
+  if (filters.filterHidden || filters.filterFrozen) {
+    const { data: userData } = await supabase.auth.getUser();
+    authedUserId = userData?.user?.id ?? null;
+  }
+
+  let allowedIds: string[] | null = null;
+  if ((filters.filterHidden || filters.filterFrozen) && authedUserId) {
+    const idSets: Array<Set<string>> = [];
+
+    if (filters.filterHidden) {
+      const { data: hiddenRows } = await supabase
+        .from("user_word_status")
+        .select("word_id")
+        .eq("user_id", authedUserId)
+        .eq("hidden", true);
+      idSets.push(new Set((hiddenRows ?? []).map((r: any) => r.word_id).filter(Boolean)));
+    }
+
+    if (filters.filterFrozen) {
+      const { data: frozenRows } = await supabase
+        .from("user_word_status")
+        .select("word_id")
+        .eq("user_id", authedUserId)
+        .gt("frozen_until", new Date().toISOString());
+      idSets.push(new Set((frozenRows ?? []).map((r: any) => r.word_id).filter(Boolean)));
+    }
+
+    if (idSets.length > 0) {
+      // Intersect all sets
+      let acc = idSets[0];
+      for (let i = 1; i < idSets.length; i++) {
+        const next = new Set<string>();
+        for (const id of acc) {
+          if (idSets[i].has(id)) next.add(id);
+        }
+        acc = next;
+      }
+      allowedIds = Array.from(acc);
+      if (allowedIds.length === 0) {
+        return { items: [], total: 0 };
+      }
+    }
+  }
 
   let query = supabase
     .from("word_entries")
-    .select(
-      "id, headword, part_of_speech, gender, raw, is_nt2_2000",
-      { count: "exact" }
-    )
-    .order("headword", { ascending: true })
-    .range(from, to);
+    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000", {
+      count: "exact",
+    })
+    .order("headword", { ascending: true });
 
   if (filters.query) {
     query = query.ilike("headword", `%${filters.query}%`);
@@ -972,61 +1079,193 @@ export async function searchWordEntries(
   if (typeof filters.isNt2 === "boolean") {
     query = query.eq("is_nt2_2000", filters.isNt2);
   }
+  if (allowedIds) {
+    query = query.in("id", allowedIds);
+  }
 
-  const { data, count, error } = await query;
-  if (error || !data) {
-    console.error("Error searching word entries", error);
+  const { data: rows, count, error: qError } = await query.range(offset, limitEnd);
+  if (qError || !rows) {
+    console.error("Error searching word entries (fallback)", qError);
     return { items: [], total: 0 };
   }
 
   return {
-    items: data.map(mapDictionaryEntry),
-    total: count ?? data.length,
+    items: rows.map(mapDictionaryEntry),
+    total: count ?? rows.length,
+    isLocked: false,
+    maxAllowed: null,
   };
 }
 
 export async function fetchWordsForList(
   listId: string,
   listType: WordListType,
-  filters: Omit<WordSearchFilters, "isNt2"> = {}
+  filters: WordSearchFilters = {}
 ): Promise<WordEntrySearchResult> {
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = filters.pageSize ?? 50;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
-  const joinKey =
-    listType === "user" ? "user_word_list_items!inner(list_id)" : "word_list_items!inner(list_id)";
-  let query = supabase
-    .from("word_entries")
-    .select(
-      `id, headword, part_of_speech, gender, raw, is_nt2_2000, ${joinKey}`,
-      { count: "exact" }
-    )
-    .order("headword", { ascending: true })
-    .range(from, to);
+  // Use gated RPC that enforces subscription tier limits (migration 0038).
+  // If the RPC isn't deployed yet, fall back to a direct join query.
+  const { data, error } = await supabase.rpc("fetch_words_for_list_gated", {
+    p_list_id: listId,
+    p_list_type: listType,
+    p_query: filters.query || null,
+    p_part_of_speech: filters.partOfSpeech || null,
+    p_is_nt2: typeof filters.isNt2 === "boolean" ? filters.isNt2 : null,
+    p_filter_frozen:
+      typeof filters.filterFrozen === "boolean" ? filters.filterFrozen : null,
+    p_filter_hidden:
+      typeof filters.filterHidden === "boolean" ? filters.filterHidden : null,
+    p_page: page,
+    p_page_size: pageSize,
+  });
 
-  const filterKey =
-    listType === "user" ? "user_word_list_items.list_id" : "word_list_items.list_id";
-  query = query.eq(filterKey, listId);
+  if (!error && data) {
+    const result = data as {
+      items: any[];
+      total: number;
+      is_locked: boolean;
+      max_allowed: number | null;
+    };
 
-  if (filters.query) {
-    query = query.ilike("headword", `%${filters.query}%`);
+    return {
+      items: (result.items || []).map(mapDictionaryEntry),
+      total: result.total ?? 0,
+      isLocked: result.is_locked,
+      maxAllowed: result.max_allowed,
+    };
   }
-  if (filters.partOfSpeech) {
-    query = query.eq("part_of_speech", filters.partOfSpeech);
+
+  if (error) {
+    console.warn("fetchWordsForList: falling back without gated RPC", error);
   }
 
-  const { data, count, error } = await query;
-  if (error || !data) {
-    console.error("Error fetching words for list", error);
+  const offset = (page - 1) * pageSize;
+  const limitEnd = offset + pageSize - 1;
+
+  // Determine user id for user-specific filters (hidden/frozen) and ownership checks.
+  let authedUserId: string | null = null;
+  if (listType === "user" || filters.filterHidden || filters.filterFrozen) {
+    const { data: userData } = await supabase.auth.getUser();
+    authedUserId = userData?.user?.id ?? null;
+  }
+
+  // If we're querying a user list but can't resolve the authed user, return empty.
+  if (listType === "user" && !authedUserId) {
     return { items: [], total: 0 };
   }
 
-  return {
-    items: data.map(mapDictionaryEntry),
-    total: count ?? data.length,
-  };
+  // Use PostgREST joins so filters apply to word_entries server-side.
+  if (listType === "curated") {
+    let q = supabase
+      .from("word_list_items")
+      .select(
+        "rank, word_entries!inner(id, headword, part_of_speech, gender, raw, is_nt2_2000)",
+        { count: "exact" }
+      )
+      .eq("list_id", listId)
+      .order("rank", { ascending: true, nullsFirst: false })
+      .order("word_entries.headword", { ascending: true });
+
+    if (filters.query) {
+      q = q.ilike("word_entries.headword", `%${filters.query}%`);
+    }
+    if (filters.partOfSpeech) {
+      q = q.eq("word_entries.part_of_speech", filters.partOfSpeech);
+    }
+    if (typeof filters.isNt2 === "boolean") {
+      q = q.eq("word_entries.is_nt2_2000", filters.isNt2);
+    }
+
+    const { data: rows, count, error: qError } = await q.range(offset, limitEnd);
+    if (qError || !rows) {
+      console.error("Error fetching words for curated list (fallback)", qError);
+      return { items: [], total: 0 };
+    }
+
+    const items = rows
+      .map((row: any) => row?.word_entries)
+      .filter(Boolean)
+      .map(mapDictionaryEntry);
+
+    return { items, total: count ?? items.length, isLocked: false, maxAllowed: null };
+  }
+
+  // listType === "user"
+  let q = supabase
+    .from("user_word_list_items")
+    .select(
+      "added_at, word_entries!inner(id, headword, part_of_speech, gender, raw, is_nt2_2000)",
+      { count: "exact" }
+    )
+    .eq("list_id", listId)
+    .order("added_at", { ascending: false })
+    .order("word_entries.headword", { ascending: true });
+
+  if (filters.query) {
+    q = q.ilike("word_entries.headword", `%${filters.query}%`);
+  }
+  if (filters.partOfSpeech) {
+    q = q.eq("word_entries.part_of_speech", filters.partOfSpeech);
+  }
+  if (typeof filters.isNt2 === "boolean") {
+    q = q.eq("word_entries.is_nt2_2000", filters.isNt2);
+  }
+
+  // Hidden/frozen filters require user_word_status; do a client-side filter if requested.
+  // This is only used when the gated RPC is unavailable.
+  let allowedIds: Set<string> | null = null;
+  if ((filters.filterHidden || filters.filterFrozen) && authedUserId) {
+    const idSets: Array<Set<string>> = [];
+
+    if (filters.filterHidden) {
+      const { data: hiddenRows } = await supabase
+        .from("user_word_status")
+        .select("word_id")
+        .eq("user_id", authedUserId)
+        .eq("hidden", true);
+      idSets.push(new Set((hiddenRows ?? []).map((r: any) => r.word_id).filter(Boolean)));
+    }
+
+    if (filters.filterFrozen) {
+      const { data: frozenRows } = await supabase
+        .from("user_word_status")
+        .select("word_id")
+        .eq("user_id", authedUserId)
+        .gt("frozen_until", new Date().toISOString());
+      idSets.push(new Set((frozenRows ?? []).map((r: any) => r.word_id).filter(Boolean)));
+    }
+
+    if (idSets.length > 0) {
+      let acc = idSets[0];
+      for (let i = 1; i < idSets.length; i++) {
+        const next = new Set<string>();
+        for (const id of acc) {
+          if (idSets[i].has(id)) next.add(id);
+        }
+        acc = next;
+      }
+      allowedIds = acc;
+    }
+  }
+
+  const { data: rows, count, error: qError } = await q.range(offset, limitEnd);
+  if (qError || !rows) {
+    console.error("Error fetching words for user list (fallback)", qError);
+    return { items: [], total: 0 };
+  }
+
+  const filtered = allowedIds
+    ? rows.filter((row: any) => allowedIds!.has(row?.word_entries?.id))
+    : rows;
+
+  const items = filtered
+    .map((row: any) => row?.word_entries)
+    .filter(Boolean)
+    .map(mapDictionaryEntry);
+
+  return { items, total: count ?? items.length, isLocked: false, maxAllowed: null };
 }
 
 export async function removeWordsFromUserList(
@@ -1111,6 +1350,34 @@ export async function addWordsToUserList(
     console.error("Error adding words to list", error);
   }
   return { error };
+}
+
+/**
+ * Fetch which of the given wordIds are already in a user list.
+ * Returns a Set of word_ids that are present in the list.
+ */
+export async function fetchUserListMembership(
+  listId: string,
+  wordIds: string[]
+): Promise<Set<string>> {
+  if (!wordIds.length) return new Set();
+
+  const { data, error } = await supabase
+    .from("user_word_list_items")
+    .select("word_id")
+    .eq("list_id", listId)
+    .in("word_id", wordIds);
+
+  if (error) {
+    console.error("Error fetching user list membership", error);
+    return new Set();
+  }
+
+  const ids = (data ?? [])
+    .map((row: any) => row?.word_id)
+    .filter((id: any): id is string => typeof id === "string" && id.length > 0);
+
+  return new Set(ids);
 }
 
 export async function fetchActiveList(

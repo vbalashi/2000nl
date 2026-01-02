@@ -7,6 +7,7 @@ import { getDbUrl, runMigrations, ONE_DAY_MS, withTransaction } from "./dbTestUt
 type TsState = {
   stability: number | null;
   difficulty: number | null;
+  interval: number | null;
   lastReview?: number;
   reps?: number;
   lapses?: number;
@@ -32,6 +33,7 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
     let state: TsState = {
       stability: null,
       difficulty: null,
+      interval: null,
       reps: 0,
       lapses: 0,
     };
@@ -86,7 +88,7 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
 
       expect(dbResult.reps).toBe(tsResult.reps);
       expect(dbResult.lapses).toBe(tsResult.lapses);
-      expect(dbResult.interval!).toBeCloseTo(tsResult.interval, 6);
+      expect(dbResult.interval!).toBeCloseTo(tsResult.interval!, 6);
       expect(dbResult.stability!).toBeCloseTo(tsResult.stability!, 6);
       expect(dbResult.difficulty!).toBeCloseTo(tsResult.difficulty!, 6);
     }

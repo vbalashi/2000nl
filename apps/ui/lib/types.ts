@@ -97,6 +97,10 @@ export type WordListSummary = {
 export type WordEntrySearchResult = {
   items: DictionaryEntry[];
   total: number;
+  /** True if results are capped due to subscription tier (free = 100 words) */
+  isLocked?: boolean;
+  /** Maximum words allowed for current tier (null = unlimited) */
+  maxAllowed?: number | null;
 };
 
 export type DetailedStats = {

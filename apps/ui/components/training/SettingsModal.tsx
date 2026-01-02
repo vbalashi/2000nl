@@ -95,12 +95,8 @@ export function SettingsModal({
     [lists, selectedListId]
   );
   const selectedListName = useMemo(() => {
-    const found = lists.find((list) => list.id === selectedListId);
-    if (found) return found.name;
-    if (selectedListId && wordListType === "user") return "Eigen lijst";
-    if (selectedListId && wordListType === "curated") return "Curated lijst";
-    return "VanDale 2k";
-  }, [lists, selectedListId, wordListType]);
+    return selectedList?.name ?? "VanDale 2k";
+  }, [selectedList]);
 
   useEffect(() => {
     if (!open) return;
@@ -207,46 +203,50 @@ export function SettingsModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center">
+    <div className="fixed inset-0 z-40">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
+      {/* Modal container: full overlay on desktop, centered card on mobile */}
       <div
-        className="relative z-50 flex h-[90vh] w-[96%] max-w-[1600px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900"
+        className="absolute inset-0 z-50 flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 md:inset-6 lg:inset-8"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-200/80 bg-white/70 px-6 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-          <div>
-            <p className="text-[12px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Instellingen & Beheer
-            </p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
-              {userEmail}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-10 w-10 rounded-full border border-slate-200 text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <span className="sr-only">Sluit</span>
-            <svg
-              className="mx-auto h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        {/* Sticky header + tabs */}
+        <div className="sticky top-0 z-10 flex-shrink-0 bg-white dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-4 md:px-8 dark:border-slate-800">
+            <div>
+              <p className="text-[12px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Instellingen & Beheer
+              </p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                {userEmail}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 w-10 rounded-full border border-slate-200 text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+              <span className="sr-only">Sluit</span>
+              <svg
+                className="mx-auto h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
-        <div className="flex items-center gap-4 border-b border-slate-100 px-6 pt-2 text-sm font-semibold text-slate-500 dark:border-slate-800 dark:text-slate-300">
+          <div className="flex items-center gap-4 border-b border-slate-100 px-6 pt-2 text-sm font-semibold text-slate-500 md:px-8 dark:border-slate-800 dark:text-slate-300">
           {(["woordenlijst", "statistieken", "instellingen"] as TabKey[]).map(
             (tab) => (
               <button
@@ -267,9 +267,11 @@ export function SettingsModal({
               </button>
             )
           )}
+          </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 overflow-hidden px-6 py-6">
+        {/* Content area */}
+        <div className="flex min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-6 md:px-8">
           <div className="h-full w-full overflow-hidden">
             {activeTab === "woordenlijst" ? (
               <WordListTab
