@@ -2,7 +2,7 @@
 
 This repository hosts the full stack for the 2000nl project. Scheduling for training now uses an FSRS-6 implementation that lives in Postgres (see `db/migrations/0010+`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and unlimited reviews.
 
-Deployed locally on `nuc` via Docker Compose + Caddy.
+Deployed locally on `nuc` via Docker Compose. Caddy is a separate stack in `/srv/caddy` and proxies this app at `http://2000.nuc`.
 
 - `apps/ui/` – Next.js web client (moved from the original @2000nl-ui project).
 - `apps/api/` – API service placeholder.

@@ -511,7 +511,7 @@ export function TrainingCard({
         <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start">
           <div className="flex items-center gap-2">
             {showTipButton && (
-              <Tooltip content="Tip (I)" side="bottom">
+              <Tooltip content="Tip (I)" side="bottom" showOnFocus={false}>
                 <button
                   type="button"
                   onClick={() => onToggleHint?.()}
@@ -538,7 +538,7 @@ export function TrainingCard({
             )}
 
             {translationUiEnabled && (
-              <Tooltip content="Translate (T)" side="bottom">
+              <Tooltip content="Translate (T)" side="bottom" showOnFocus={false}>
                 <button
                   type="button"
                   onClick={() => {
@@ -782,11 +782,11 @@ export function TrainingCard({
                                 aria-hidden="true"
                                 className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <InlineTranslation
-                                align="left"
-                                text={getTranslated(0, { exampleIndex: i })}
-                              />
                               <span className="relative flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(0, { exampleIndex: i })}
+                                />
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}

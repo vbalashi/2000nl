@@ -223,6 +223,59 @@ export function WordDetailPanel({
   const translatedDefinition = translationOverlay?.meanings?.[0]?.definition;
   const translatedContext = translationOverlay?.meanings?.[0]?.context;
   const translatedExamples = translationOverlay?.meanings?.[0]?.examples ?? [];
+  const translatedMeanings = translationOverlay?.meanings ?? [];
+
+  // Idioms: render as "Idioom" section in Details.
+  // Raw idioms are objects; translated idioms can be strings or objects.
+  type DisplayIdiom = {
+    meaningIndex: number;
+    idiomIndex: number;
+    expression: string;
+    explanation?: string;
+    translatedExpression?: string;
+    translatedExplanation?: string;
+  };
+
+  const idioms: DisplayIdiom[] = meanings.flatMap(
+    (m: { idioms?: unknown }, meaningIndex: number) => {
+      const rawIdioms = Array.isArray((m as any)?.idioms) ? (m as any).idioms : [];
+      if (rawIdioms.length === 0) return [];
+
+      const translated = translatedMeanings?.[meaningIndex]?.idioms;
+      const translatedIdioms = Array.isArray(translated) ? translated : [];
+
+      return rawIdioms
+        .map((raw: any, idiomIndex: number): DisplayIdiom | null => {
+          const expression =
+            typeof raw?.expression === "string" ? raw.expression.trim() : "";
+          const explanation =
+            typeof raw?.explanation === "string" ? raw.explanation.trim() : "";
+
+          const t = translatedIdioms?.[idiomIndex];
+          const translatedExpression =
+            typeof t === "string"
+              ? t.trim()
+              : typeof t?.expression === "string"
+                ? t.expression.trim()
+                : undefined;
+          const translatedExplanation =
+            typeof t === "object" && t && typeof t.explanation === "string"
+              ? t.explanation.trim()
+              : undefined;
+
+          if (!expression && !explanation) return null;
+          return {
+            meaningIndex,
+            idiomIndex,
+            expression: expression || "—",
+            explanation: explanation || undefined,
+            translatedExpression: translatedExpression || undefined,
+            translatedExplanation: translatedExplanation || undefined,
+          };
+        })
+        .filter((x: DisplayIdiom | null): x is DisplayIdiom => Boolean(x));
+    }
+  );
 
   const translationStatusText =
     translationStatus === null
@@ -317,6 +370,42 @@ export function WordDetailPanel({
               </div>
             )}
           </section>
+
+          {idioms.length ? (
+            <section className="space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Idioom
+              </div>
+              <div className="space-y-2">
+                {idioms.map((it) => (
+                  <div
+                    key={`${it.meaningIndex}-${it.idiomIndex}`}
+                    className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200"
+                  >
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {it.expression}
+                    </div>
+                    {it.translatedExpression ? (
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {it.translatedExpression}
+                      </div>
+                    ) : null}
+
+                    {it.explanation ? (
+                      <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                        {it.explanation}
+                        {it.translatedExplanation ? (
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {it.translatedExplanation}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

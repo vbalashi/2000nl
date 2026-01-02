@@ -13,6 +13,12 @@ type Props = {
    * keyboard users can discover the tooltip.
    */
   focusable?: boolean;
+  /**
+   * If false, the tooltip will NOT show on focus (only on hover).
+   * Useful for buttons that keep focus after click, which can make tooltips
+   * feel "sticky".
+   */
+  showOnFocus?: boolean;
 };
 
 function getPositionClasses(side: Side) {
@@ -45,6 +51,7 @@ export function Tooltip({
   children,
   side = "top",
   focusable = false,
+  showOnFocus = true,
 }: Props) {
   const id = React.useId();
 
@@ -87,7 +94,9 @@ export function Tooltip({
           // Motion / visibility
           "origin-top opacity-0 scale-95 transition duration-150",
           "group-hover:opacity-100 group-hover:scale-100",
-          "group-focus-within:opacity-100 group-focus-within:scale-100",
+          showOnFocus
+            ? "group-focus-within:opacity-100 group-focus-within:scale-100"
+            : "",
         ].join(" ")}
       >
         {content}
