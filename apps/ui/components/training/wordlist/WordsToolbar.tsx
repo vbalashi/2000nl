@@ -1,4 +1,5 @@
 import type { WordListSummary } from "@/lib/types";
+import { useEffect, useRef } from "react";
 
 type Props = {
   viewMode: "list" | "search";
@@ -9,6 +10,7 @@ type Props = {
   partOfSpeech: string;
   nt2Only: boolean;
   selectedList: WordListSummary | null;
+  autoFocusQuery?: boolean;
   onQueryChange: (value: string) => void;
   onPartOfSpeechChange: (value: string) => void;
   onNt2OnlyChange: (value: boolean) => void;
@@ -34,12 +36,27 @@ export function WordsToolbar({
   partOfSpeech,
   nt2Only,
   selectedList,
+  autoFocusQuery,
   onQueryChange,
   onPartOfSpeechChange,
   onNt2OnlyChange,
   onNewSearch,
   onBackToList,
 }: Props) {
+  const queryInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!autoFocusQuery) return;
+    const el = queryInputRef.current;
+    if (!el) return;
+    // Defer to ensure the modal/tab layout has painted (avoids scroll jumps).
+    const raf = window.requestAnimationFrame(() => {
+      el.focus();
+      el.select();
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [autoFocusQuery]);
+
   const title =
     viewMode === "list"
       ? `Toon woorden in: ${selectedListName}`
@@ -98,6 +115,7 @@ export function WordsToolbar({
 
       <div className="mt-3">
         <input
+          ref={queryInputRef}
           type="text"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}

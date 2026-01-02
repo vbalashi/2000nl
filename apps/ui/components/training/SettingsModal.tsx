@@ -14,6 +14,10 @@ type TabKey = "woordenlijst" | "statistieken" | "instellingen";
 type Props = {
   open: boolean;
   onClose: () => void;
+  /** Which tab to show when the modal is opened. Defaults to "instellingen". */
+  initialTab?: TabKey;
+  /** When opening on "woordenlijst", focus the query/search input. */
+  autoFocusWordSearch?: boolean;
   onListsUpdated?: () => void;
   themePreference: ThemePreference;
   onThemeChange: (pref: ThemePreference) => void;
@@ -43,6 +47,8 @@ type Props = {
 export function SettingsModal({
   open,
   onClose,
+  initialTab,
+  autoFocusWordSearch,
   onListsUpdated,
   themePreference,
   onThemeChange,
@@ -112,6 +118,11 @@ export function SettingsModal({
       setActiveTab("instellingen");
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveTab(initialTab ?? "instellingen");
+  }, [open, initialTab]);
 
   const loadLists = useCallback(async () => {
     try {
@@ -280,6 +291,7 @@ export function SettingsModal({
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
                 onTrainWord={onTrainWord}
+                autoFocusQuery={Boolean(autoFocusWordSearch)}
               />
             ) : null}
 

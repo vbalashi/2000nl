@@ -119,6 +119,11 @@ export function TrainingScreen({ user }: Props) {
   const [actionLoading, setActionLoading] = useState(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<
+    "woordenlijst" | "statistieken" | "instellingen"
+  >("instellingen");
+  const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
+    useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
@@ -1228,11 +1233,54 @@ export function TrainingScreen({ user }: Props) {
           <div
             role="button"
             tabIndex={0}
+            title="Zoeken"
+            aria-label="Zoeken"
+            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            onClick={() => {
+              setSettingsInitialTab("woordenlijst");
+              setSettingsAutoFocusWordSearch(true);
+              setShowSettings(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              setSettingsInitialTab("woordenlijst");
+              setSettingsAutoFocusWordSearch(true);
+              setShowSettings(true);
+            }}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <span className="absolute inset-0 rounded-full" />
+          </div>
+
+          <div
+            role="button"
+            tabIndex={0}
             title="Instellingen"
             aria-label="Instellingen"
             className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={() => setShowSettings(true)}
-            onKeyDown={(e) => e.key === "Enter" && setShowSettings(true)}
+            onClick={() => {
+              setSettingsInitialTab("instellingen");
+              setSettingsAutoFocusWordSearch(false);
+              setShowSettings(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              setSettingsInitialTab("instellingen");
+              setSettingsAutoFocusWordSearch(false);
+              setShowSettings(true);
+            }}
           >
             <svg
               className="w-5 h-5"
@@ -1524,7 +1572,13 @@ export function TrainingScreen({ user }: Props) {
       {showSettings && (
         <SettingsModal
           open={showSettings}
-          onClose={() => setShowSettings(false)}
+          onClose={() => {
+            setShowSettings(false);
+            setSettingsInitialTab("instellingen");
+            setSettingsAutoFocusWordSearch(false);
+          }}
+          initialTab={settingsInitialTab}
+          autoFocusWordSearch={settingsAutoFocusWordSearch}
           onListsUpdated={handleListsUpdated}
           themePreference={themePreference}
           onThemeChange={setTheme}

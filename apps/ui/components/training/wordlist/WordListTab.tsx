@@ -33,6 +33,8 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onTrainWord?: (wordId: string) => void;
+  /** Focus the search field when the tab mounts. */
+  autoFocusQuery?: boolean;
 };
 
 export function WordListTab({
@@ -54,6 +56,7 @@ export function WordListTab({
   reloadLists,
   notifyListsUpdated,
   onTrainWord,
+  autoFocusQuery,
 }: Props) {
   const [query, setQuery] = useState("");
   const [partOfSpeech, setPartOfSpeech] = useState("");
@@ -412,6 +415,7 @@ export function WordListTab({
             partOfSpeech={partOfSpeech}
             nt2Only={nt2Only}
             selectedList={selectedList}
+            autoFocusQuery={autoFocusQuery}
             onQueryChange={(value) => {
               setQuery(value);
               setPage(1);
