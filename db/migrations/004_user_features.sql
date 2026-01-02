@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
     -- Translation preferences (default 'en' for new users)
     translation_lang text DEFAULT 'en',
     
+    -- Subscription tier (free = 100 word limit, premium/admin = full access)
+    subscription_tier text DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium', 'admin')),
+    
     updated_at timestamptz DEFAULT now()
 );
 
@@ -125,3 +128,235 @@ CREATE TABLE IF NOT EXISTS user_word_notes (
 
 CREATE INDEX IF NOT EXISTS user_word_notes_user_idx
     ON user_word_notes(user_id, word_entry_id);
+
+-- =============================================================================
+-- SUBSCRIPTION TIER FUNCTIONS (gated word access for free users)
+-- =============================================================================
+
+-- Helper function to get user subscription tier
+CREATE OR REPLACE FUNCTION get_user_tier(p_user_id uuid)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+DECLARE
+    v_tier text;
+BEGIN
+    SELECT COALESCE(subscription_tier, 'free')
+    INTO v_tier
+    FROM user_settings
+    WHERE user_id = p_user_id;
+    
+    RETURN COALESCE(v_tier, 'free');
+END;
+$$;
+
+-- Gated word search (global search with 100 word limit for free users)
+CREATE OR REPLACE FUNCTION search_word_entries_gated(
+    p_query text DEFAULT NULL,
+    p_part_of_speech text DEFAULT NULL,
+    p_is_nt2 boolean DEFAULT NULL,
+    p_filter_frozen boolean DEFAULT NULL,
+    p_filter_hidden boolean DEFAULT NULL,
+    p_page int DEFAULT 1,
+    p_page_size int DEFAULT 20
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+DECLARE
+    v_user_id uuid;
+    v_tier text;
+    v_offset int;
+    v_limit int;
+    v_total int;
+    v_max_allowed int;
+    v_is_locked boolean;
+    v_items jsonb;
+BEGIN
+    v_user_id := auth.uid();
+    IF v_user_id IS NULL THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0, 'is_locked', true, 'max_allowed', 0);
+    END IF;
+    
+    v_tier := get_user_tier(v_user_id);
+    v_max_allowed := CASE WHEN v_tier IN ('premium', 'admin') THEN NULL ELSE 100 END;
+    v_offset := (p_page - 1) * p_page_size;
+    v_limit := p_page_size;
+    
+    SELECT COUNT(*) INTO v_total
+    FROM word_entries w
+    WHERE (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+      AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+      AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+      AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+           OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+      AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+           OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()));
+    
+    v_is_locked := v_max_allowed IS NOT NULL AND (v_offset >= v_max_allowed);
+    
+    IF v_is_locked THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', v_total, 'is_locked', true, 'max_allowed', v_max_allowed);
+    END IF;
+    
+    IF v_max_allowed IS NOT NULL AND (v_offset + v_limit) > v_max_allowed THEN
+        v_limit := v_max_allowed - v_offset;
+    END IF;
+    
+    SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb) INTO v_items
+    FROM (
+        SELECT w.id, w.headword, w.part_of_speech, w.gender, w.raw, w.is_nt2_2000
+        FROM word_entries w
+        WHERE (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+          AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+          AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+          AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+          AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()))
+        ORDER BY w.headword ASC
+        OFFSET v_offset LIMIT v_limit
+    ) t;
+    
+    RETURN jsonb_build_object(
+        'items', v_items,
+        'total', v_total,
+        'is_locked', v_max_allowed IS NOT NULL AND v_total > v_max_allowed,
+        'max_allowed', v_max_allowed
+    );
+END;
+$$;
+
+-- Gated fetch for curated/user lists (100 word limit by rank for free users)
+CREATE OR REPLACE FUNCTION fetch_words_for_list_gated(
+    p_list_id uuid,
+    p_list_type text DEFAULT 'curated',
+    p_query text DEFAULT NULL,
+    p_part_of_speech text DEFAULT NULL,
+    p_is_nt2 boolean DEFAULT NULL,
+    p_filter_frozen boolean DEFAULT NULL,
+    p_filter_hidden boolean DEFAULT NULL,
+    p_page int DEFAULT 1,
+    p_page_size int DEFAULT 20
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+DECLARE
+    v_user_id uuid;
+    v_tier text;
+    v_offset int;
+    v_limit int;
+    v_total int;
+    v_max_allowed int;
+    v_is_locked boolean;
+    v_items jsonb;
+BEGIN
+    v_user_id := auth.uid();
+    IF v_user_id IS NULL THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0, 'is_locked', true, 'max_allowed', 0);
+    END IF;
+    
+    v_tier := get_user_tier(v_user_id);
+    v_max_allowed := CASE WHEN v_tier IN ('premium', 'admin') THEN NULL ELSE 100 END;
+    v_offset := (p_page - 1) * p_page_size;
+    v_limit := p_page_size;
+    
+    IF p_list_type = 'curated' THEN
+        SELECT COUNT(*) INTO v_total
+        FROM word_entries w
+        JOIN word_list_items li ON li.word_id = w.id
+        WHERE li.list_id = p_list_id
+          AND (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+          AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+          AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+          AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+          AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()));
+    ELSE
+        IF NOT EXISTS (SELECT 1 FROM user_word_lists WHERE id = p_list_id AND user_id = v_user_id) THEN
+            RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0, 'is_locked', false, 'max_allowed', v_max_allowed);
+        END IF;
+        
+        SELECT COUNT(*) INTO v_total
+        FROM word_entries w
+        JOIN user_word_list_items li ON li.word_id = w.id
+        WHERE li.list_id = p_list_id
+          AND (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+          AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+          AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+          AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+          AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+               OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()));
+    END IF;
+    
+    v_is_locked := v_max_allowed IS NOT NULL AND (v_offset >= v_max_allowed);
+    
+    IF v_is_locked THEN
+        RETURN jsonb_build_object('items', '[]'::jsonb, 'total', v_total, 'is_locked', true, 'max_allowed', v_max_allowed);
+    END IF;
+    
+    IF v_max_allowed IS NOT NULL AND (v_offset + v_limit) > v_max_allowed THEN
+        v_limit := v_max_allowed - v_offset;
+    END IF;
+    
+    IF p_list_type = 'curated' THEN
+        SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb ORDER BY t.sort_rank, t.headword), '[]'::jsonb) INTO v_items
+        FROM (
+            SELECT w.id, w.headword, w.part_of_speech, w.gender, w.raw, w.is_nt2_2000, COALESCE(li.rank, 999999) AS sort_rank
+            FROM word_entries w
+            JOIN word_list_items li ON li.word_id = w.id
+            WHERE li.list_id = p_list_id
+              AND (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+              AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+              AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+              AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+                   OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+              AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+                   OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()))
+            ORDER BY COALESCE(li.rank, 999999) ASC, w.headword ASC
+            OFFSET v_offset LIMIT v_limit
+        ) t;
+    ELSE
+        SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb) INTO v_items
+        FROM (
+            SELECT w.id, w.headword, w.part_of_speech, w.gender, w.raw, w.is_nt2_2000
+            FROM word_entries w
+            JOIN user_word_list_items li ON li.word_id = w.id
+            WHERE li.list_id = p_list_id
+              AND (p_query IS NULL OR w.headword ILIKE '%' || p_query || '%')
+              AND (p_part_of_speech IS NULL OR w.part_of_speech = p_part_of_speech)
+              AND (p_is_nt2 IS NULL OR w.is_nt2_2000 = p_is_nt2)
+              AND (p_filter_hidden IS NULL OR p_filter_hidden = false
+                   OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND COALESCE(s.hidden, false) = true))
+              AND (p_filter_frozen IS NULL OR p_filter_frozen = false
+                   OR EXISTS (SELECT 1 FROM user_word_status s WHERE s.user_id = v_user_id AND s.word_id = w.id AND s.frozen_until IS NOT NULL AND s.frozen_until > now()))
+            ORDER BY li.added_at DESC, w.headword ASC
+            OFFSET v_offset LIMIT v_limit
+        ) t;
+    END IF;
+    
+    RETURN jsonb_build_object(
+        'items', v_items,
+        'total', v_total,
+        'is_locked', v_max_allowed IS NOT NULL AND v_total > v_max_allowed,
+        'max_allowed', v_max_allowed
+    );
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION get_user_tier(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION search_word_entries_gated(text, text, boolean, boolean, boolean, int, int) TO authenticated;
+GRANT EXECUTE ON FUNCTION fetch_words_for_list_gated(uuid, text, text, text, boolean, boolean, boolean, int, int) TO authenticated;

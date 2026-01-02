@@ -6,23 +6,14 @@ Holds SQL migrations for the canonical schema. This folder contains consolidated
 
 ```
 db/migrations/
-├── 001_core_schema.sql       # Tables, indexes, extensions
+├── 001_core_schema.sql       # Tables, indexes, extensions, curated lists
 ├── 002_fsrs_engine.sql       # FSRS-6 algorithm, handle_review, handle_click
 ├── 003_queue_training.sql    # get_next_word, training stats, scenarios
-├── 004_user_features.sql     # User settings, lists, translations, notes
+├── 004_user_features.sql     # User settings, lists, translations, notes, subscription tiers
 ├── 005_security.sql          # RLS policies
-├── 0038_subscription_tier.sql    # [delta] Subscription tiers, gated word access
-├── 0039_add_vandale_all_list.sql # [delta] VanDale (full) word list
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
-
-### Baseline vs Delta Migrations
-
-- **001-005**: Consolidated baseline capturing schema state as of 2025-12-31
-- **0038+**: Delta migrations for new features after consolidation
-
-When adding new features, create new delta files (0040_*, 0041_*, etc.) and add them to `bootstrap.sql`.
 
 ## Fresh Deploy
 
@@ -32,12 +23,20 @@ For a new database, run the bootstrap script:
 PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
 ```
 
+## Adding New Features
+
+When adding new features:
+1. Add schema changes to the appropriate consolidated file (001-005)
+2. Commit the changes
+
+For temporary development migrations, you can create delta files (0040_*, etc.) and add them to `bootstrap.sql`, then merge them into the consolidated files before final commit.
+
 ## Running ad-hoc SQL against Supabase
 
 Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your environment (or falls back to the repo `.env.local`):
 
 - Query: `db/scripts/psql_supabase.sh -c "select now();"`
-- File: `db/scripts/psql_supabase.sh -f db/migrations/0038_subscription_tier.sql`
+- File: `db/scripts/psql_supabase.sh -f db/migrations/001_core_schema.sql`
 
 ## Schema Overview
 
@@ -45,7 +44,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 
 - `languages` - Supported languages
 - `word_entries` - Dictionary entries with raw JSON data
-- `word_lists` / `word_list_items` - Curated word lists
+- `word_lists` / `word_list_items` - Curated word lists (VanDale, VanDale 2k)
 - `word_forms` - Inflections and conjugations
 
 ### FSRS State
@@ -79,4 +78,4 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 
 ## Archive
 
-The `archive/` folder contains the original 37 individual migrations that were consolidated. These are kept for reference and git history but are not used for fresh deploys.
+The `archive/` folder contains the original individual migrations that were consolidated. These are kept for reference and git history but are not used for fresh deploys.

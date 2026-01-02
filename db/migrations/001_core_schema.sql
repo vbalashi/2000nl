@@ -39,8 +39,22 @@ CREATE TABLE IF NOT EXISTS word_lists (
     name text NOT NULL,
     description text,
     is_primary boolean DEFAULT false,
+    sort_order int DEFAULT 100, -- Display order in UI (lower = higher priority)
     UNIQUE(language_code, slug)
 );
+
+-- Seed curated word lists
+-- VanDale (full) - all dictionary entries
+INSERT INTO word_lists (language_code, slug, name, description, is_primary, sort_order)
+VALUES ('nl', 'vandale-all', 'VanDale', 'Volledige VanDale woordenboek (alle woorden)', false, 10)
+ON CONFLICT (language_code, slug) DO UPDATE
+SET name = 'VanDale', description = 'Volledige VanDale woordenboek (alle woorden)', sort_order = 10;
+
+-- VanDale 2k - NT2 essential 2000 words
+INSERT INTO word_lists (language_code, slug, name, description, is_primary, sort_order)
+VALUES ('nl', 'nt2-2000', 'VanDale 2k', 'Belangrijkste 2000 woorden voor NT2', true, 20)
+ON CONFLICT (language_code, slug) DO UPDATE
+SET name = 'VanDale 2k', sort_order = 20;
 
 CREATE TABLE IF NOT EXISTS word_list_items (
     list_id uuid NOT NULL REFERENCES word_lists(id) ON DELETE CASCADE,
@@ -200,3 +214,39 @@ VALUES
            'verb-past-singular', 'verb-past-plural'], 
      21, false, 3)
 ON CONFLICT (id) DO NOTHING;
+
+-- =============================================================================
+-- POPULATE VANDALE (FULL) LIST
+-- This runs on fresh deploy; if no words exist yet, ingestion will populate later.
+-- =============================================================================
+
+DO $$
+DECLARE
+    v_list_id uuid;
+    v_inserted int;
+BEGIN
+    -- Get the VanDale (full) list ID
+    SELECT id INTO v_list_id
+    FROM word_lists
+    WHERE slug = 'vandale-all' AND language_code = 'nl';
+    
+    IF v_list_id IS NULL THEN
+        RAISE NOTICE 'VanDale (full) list not found, skipping population';
+        RETURN;
+    END IF;
+    
+    -- Insert all NL word entries that aren't already in the list
+    INSERT INTO word_list_items (list_id, word_id, rank)
+    SELECT 
+        v_list_id,
+        w.id,
+        ROW_NUMBER() OVER (ORDER BY w.headword ASC)
+    FROM word_entries w
+    WHERE w.language_code = 'nl'
+    ON CONFLICT (list_id, word_id) DO NOTHING;
+    
+    GET DIAGNOSTICS v_inserted = ROW_COUNT;
+    IF v_inserted > 0 THEN
+        RAISE NOTICE 'Inserted % words into VanDale (full) list', v_inserted;
+    END IF;
+END $$;

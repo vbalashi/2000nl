@@ -7,10 +7,10 @@
 \set ON_ERROR_STOP on
 
 -- =============================================================================
--- CONSOLIDATED BASELINE (captures schema state as of 2025-12-31)
+-- CONSOLIDATED SCHEMA (captures full state as of 2025-12-31)
 -- =============================================================================
 
--- Core schema: tables, indexes, extensions
+-- Core schema: tables, indexes, extensions, curated lists
 \i db/migrations/001_core_schema.sql
 
 -- FSRS-6 engine: algorithm and review handlers
@@ -19,18 +19,8 @@
 -- Queue & training: card selection, statistics
 \i db/migrations/003_queue_training.sql
 
--- User features: settings, lists, translations, notes
+-- User features: settings, lists, translations, notes, subscription tiers
 \i db/migrations/004_user_features.sql
 
 -- Security: RLS policies
 \i db/migrations/005_security.sql
-
--- =============================================================================
--- DELTA MIGRATIONS (new features after consolidation)
--- =============================================================================
-
--- Subscription tiers with gated word access
-\i db/migrations/0038_subscription_tier.sql
-
--- VanDale (full) word list
-\i db/migrations/0039_add_vandale_all_list.sql
