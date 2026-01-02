@@ -585,12 +585,15 @@ export function TrainingCard({
         </div>
       )}
 
-      {/* Main Content Area - Reduced Top Padding */}
-      <div className="relative flex w-full h-full pt-10 md:pt-12 px-1 md:px-4">
+      {/* Main Content Area */}
+      <div className="relative flex w-full h-full px-1 md:px-4">
         <div
           ref={scrollRef}
           onScroll={updateScrollFades}
-          className="flex flex-col items-center w-full h-full overflow-y-auto scrollbar-hide"
+          // Important: keep the scroll container flush to the top of this region so
+          // the top fade overlay can soften the clipping edge. We add "safe"
+          // padding *inside* the scroll container to avoid overlapping top controls.
+          className="flex flex-col items-center w-full h-full overflow-y-auto scrollbar-hide pt-10 md:pt-12 pb-10"
         >
           {/* Header: Headword + POS Badge (Always Visible) */}
           {/* When translations are visible, add top padding so the first line's
@@ -1122,7 +1125,22 @@ export function TrainingCard({
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-0 left-0 right-0 z-10 h-16 bg-gradient-to-b from-card-light via-card-light/70 via-40% to-transparent dark:from-card-dark dark:via-card-dark/70"
-          />
+          >
+            {/* Small chevron hint (scroll up) */}
+            <svg
+              className="absolute top-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400/60 dark:text-slate-500/60 animate-pulse"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 15l7-7 7 7"
+              />
+            </svg>
+          </div>
         )}
         {scrollFades.canScroll && !scrollFades.atBottom && (
           <div
