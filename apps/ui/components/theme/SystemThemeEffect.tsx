@@ -6,6 +6,10 @@ export function SystemThemeEffect() {
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const storedThemePreference =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("themePreference")
+        : null;
 
     const apply = () => {
       root.classList.toggle("dark", mediaQuery.matches);
@@ -24,6 +28,7 @@ export function SystemThemeEffect() {
         data: {
           pathname: window.location.pathname,
           mediaMatches: mediaQuery.matches,
+          storedThemePreference,
           hadDarkClass: root.classList.contains("dark"),
           styleSheets: document.styleSheets?.length ?? null,
         },
@@ -47,6 +52,7 @@ export function SystemThemeEffect() {
         data: {
           pathname: window.location.pathname,
           mediaMatches: mediaQuery.matches,
+          storedThemePreference,
           hasDarkClass: root.classList.contains("dark"),
           bodyBg: window.getComputedStyle(document.body).backgroundColor,
         },

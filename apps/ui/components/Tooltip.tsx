@@ -9,6 +9,11 @@ type Props = {
   children: React.ReactNode;
   side?: Side;
   /**
+   * If true, the tooltip bubble is hidden on small screens (shown from `md` up).
+   * Useful for mobile where "hover" tooltips can feel noisy / sticky.
+   */
+  hideOnMobile?: boolean;
+  /**
    * If true and the child isn't focusable, the wrapper becomes focusable so
    * keyboard users can discover the tooltip.
    */
@@ -50,6 +55,7 @@ export function Tooltip({
   content,
   children,
   side = "top",
+  hideOnMobile = false,
   focusable = false,
   showOnFocus = true,
 }: Props) {
@@ -82,6 +88,7 @@ export function Tooltip({
         id={id}
         role="tooltip"
         className={[
+          hideOnMobile ? "hidden md:block" : "",
           "pointer-events-none absolute z-50",
           getPositionClasses(side),
           // Bubble

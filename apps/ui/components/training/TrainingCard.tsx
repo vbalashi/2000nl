@@ -511,7 +511,12 @@ export function TrainingCard({
         <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start">
           <div className="flex items-center gap-2">
             {showTipButton && (
-              <Tooltip content="Tip (I)" side="bottom" showOnFocus={false}>
+              <Tooltip
+                content="Tip (I)"
+                side="bottom"
+                showOnFocus={false}
+                hideOnMobile
+              >
                 <button
                   type="button"
                   onClick={() => onToggleHint?.()}
@@ -538,7 +543,12 @@ export function TrainingCard({
             )}
 
             {translationUiEnabled && (
-              <Tooltip content="Translate (T)" side="bottom" showOnFocus={false}>
+              <Tooltip
+                content="Translate (T)"
+                side="bottom"
+                showOnFocus={false}
+                hideOnMobile
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -754,7 +764,7 @@ export function TrainingCard({
             <div className="flex-none w-full max-w-3xl text-left mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex items-start gap-6">
                 {/* Spacer to align with number badge in definition section (only if badge will be shown) */}
-                {showNumber && <div className="flex-shrink-0 w-7" />}
+                {showNumber && <div className="flex-shrink-0 w-14" />}
                 {/* Content - aligned with definition text */}
                 <div className="flex-1 flex flex-col gap-3">
                   {/* Context */}
@@ -831,7 +841,7 @@ export function TrainingCard({
                       <div key={index} className="flex items-start gap-6">
                         {/* Number Badge - Left Side */}
                         {showNumber && (
-                          <div className="flex-shrink-0 pt-1 w-7 flex flex-col items-center overflow-visible">
+                          <div className="flex-shrink-0 pt-1 w-14 flex flex-col items-center overflow-visible">
                             <div
                               className={`w-7 h-7 flex items-center justify-center ${
                                 badgeNumber === globalCount

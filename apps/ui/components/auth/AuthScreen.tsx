@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 type AuthMode = "signin" | "signup" | "reset";
 
 export function AuthScreen() {
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +17,14 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const card = cardRef.current;
+    const cardBg = card ? window.getComputedStyle(card).backgroundColor : null;
+    const cardText = card ? window.getComputedStyle(card).color : null;
+    const storedThemePreference =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("themePreference")
+        : null;
+
     // #region agent log
     fetch("http://127.0.0.1:7242/ingest/a5e2db1f-40e6-4b7f-aa6f-678a92a187d8", {
       method: "POST",
@@ -29,8 +38,11 @@ export function AuthScreen() {
         data: {
           pathname: window.location.pathname,
           hasDarkClass: document.documentElement.classList.contains("dark"),
+          storedThemePreference,
           styleSheets: document.styleSheets?.length ?? null,
           bodyBg: window.getComputedStyle(document.body).backgroundColor,
+          cardBg,
+          cardText,
         },
         timestamp: Date.now(),
       }),
@@ -77,7 +89,10 @@ export function AuthScreen() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md space-y-6 rounded-2xl bg-white/90 px-8 py-10 shadow-xl shadow-slate-900/10 backdrop-blur dark:bg-slate-900/70">
+      <div
+        ref={cardRef}
+        className="w-full max-w-md space-y-6 rounded-2xl bg-white/90 px-8 py-10 shadow-xl shadow-slate-900/10 backdrop-blur dark:bg-slate-900/70"
+      >
         <div>
           <div className="flex justify-center">
             <BrandLogo className="text-4xl leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-80 dark:opacity-85" />
