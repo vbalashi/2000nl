@@ -6,6 +6,8 @@ type Props = {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** When true, the drawer can appear on desktop too (>= lg). */
+  showOnDesktop?: boolean;
   children: React.ReactNode;
 };
 
@@ -13,6 +15,7 @@ export function TrainingSidebarDrawer({
   open,
   onClose,
   title = "Recent & details",
+  showOnDesktop = false,
   children,
 }: Props) {
   React.useEffect(() => {
@@ -27,7 +30,7 @@ export function TrainingSidebarDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 lg:hidden">
+    <div className={`fixed inset-0 z-40${showOnDesktop ? "" : " lg:hidden"}`}>
       <div
         className="absolute inset-0 bg-black/30"
         onClick={onClose}
@@ -37,9 +40,11 @@ export function TrainingSidebarDrawer({
       <div className="absolute inset-y-0 right-0 w-full max-w-full sm:w-[460px]">
         <div className="relative h-full bg-white shadow-2xl dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-            <div className="text-sm font-semibold text-slate-800 dark:text-white">
-              {title}
-            </div>
+            {/* Title is intentionally not shown (tabs already label content). */}
+            <span className="sr-only">{title}</span>
+            {/* Spacer so the close button sits on the right (sr-only is absolute). */}
+            <div className="flex-1" />
+
             <button
               type="button"
               onClick={onClose}

@@ -92,8 +92,9 @@ export function TrainingScreen({ user }: Props) {
   const [recentEntries, setRecentEntries] = useState<SidebarHistoryItem[]>([]);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
-  // Mobile drawer for sidebar (recent/details). Desktop uses the inline sidebar.
+  // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [trainingSidebarPinned, setTrainingSidebarPinnedState] = useState(false);
   // Entry to show in the details tab (can be current word or a sidebar card)
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
@@ -181,10 +182,61 @@ export function TrainingScreen({ user }: Props) {
       setNewReviewRatioState(prefs.newReviewRatio);
       setActiveScenarioState(prefs.activeScenario);
       setTranslationLangState(prefs.translationLang);
+      setTrainingSidebarPinnedState(Boolean(prefs.trainingSidebarPinned));
     };
 
     void loadPreferences();
   }, [user?.id]);
+
+  const setTrainingSidebarPinned = useCallback(
+    (pinned: boolean) => {
+      setTrainingSidebarPinnedState(pinned);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          trainingSidebarPinned: pinned,
+        });
+      }
+    },
+    [user?.id]
+  );
+
+  const toggleTrainingSidebarPinned = useCallback(() => {
+    setTrainingSidebarPinnedState((prev) => {
+      const next = !prev;
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          trainingSidebarPinned: next,
+        });
+      }
+      return next;
+    });
+
+    if (typeof window !== "undefined") {
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+      // Switching pin state should close the drawer to avoid double UI.
+      if (isDesktop) {
+        setMobileSidebarOpen(false);
+      }
+    }
+  }, [user?.id]);
+
+  const toggleRecentPanel = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+    if (isDesktop) {
+      // Desktop: toggle the pinned sidebar on/off (persisted).
+      setSidebarTab("recent");
+      toggleTrainingSidebarPinned();
+      return;
+    }
+
+    // Mobile/tablet: toggle the drawer open/closed (not persisted).
+    setSidebarTab("recent");
+    setMobileSidebarOpen((prev) => !prev);
+  }, [toggleTrainingSidebarPinned]);
 
   // Wrapper to persist enabled modes to Supabase
   const setEnabledModes = useCallback(
@@ -788,18 +840,18 @@ export function TrainingScreen({ user }: Props) {
   }, [currentWord, handleShowDetails]);
 
   const openMobileRecent = useCallback(() => {
-    setSidebarTab("recent");
-    setMobileSidebarOpen(true);
-  }, []);
+    // Kept for backwards compatibility with existing handlers.
+    toggleRecentPanel();
+  }, [toggleRecentPanel]);
 
   const openMobileSidebarTab = useCallback((tab: SidebarTab) => {
     if (typeof window === "undefined") return;
-    // Only auto-open drawer on mobile/tablet where the sidebar is hidden (< lg).
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-    if (isDesktop) return;
+    // On desktop, only open the drawer when the sidebar is NOT pinned.
+    if (isDesktop && trainingSidebarPinned) return;
     setSidebarTab(tab);
     setMobileSidebarOpen(true);
-  }, []);
+  }, [trainingSidebarPinned]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -816,6 +868,15 @@ export function TrainingScreen({ user }: Props) {
         if (!revealed) return;
         event.preventDefault();
         setTranslationTooltipOpen((prev) => !prev);
+        return;
+      }
+
+      if (normalized === "r") {
+        // Toggle Recent panel:
+        // - Desktop: show/hide sidebar (persisted)
+        // - Tablet/mobile: open/close drawer
+        event.preventDefault();
+        toggleRecentPanel();
         return;
       }
 
@@ -1321,11 +1382,15 @@ export function TrainingScreen({ user }: Props) {
           <div
             role="button"
             tabIndex={0}
-            title="Recent"
-            aria-label="Recent"
-            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden"
-            onClick={openMobileRecent}
-            onKeyDown={(e) => e.key === "Enter" && openMobileRecent()}
+            title={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+            aria-label={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+            className={`relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border shadow-sm cursor-pointer transition ${
+              trainingSidebarPinned
+                ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            }`}
+            onClick={toggleRecentPanel}
+            onKeyDown={(e) => e.key === "Enter" && toggleRecentPanel()}
           >
             <svg
               className="h-5 w-5 pointer-events-none"
@@ -1490,26 +1555,28 @@ export function TrainingScreen({ user }: Props) {
           </section>
 
           {/* Sidebar Section: Fixed Width, adjacent to Main */}
-          <aside className="hidden h-full w-[300px] shrink-0 flex-col lg:flex xl:w-[350px]">
-            <Sidebar
-              selectedEntry={selectedEntry}
-              recentEntries={recentEntries}
-              onSelectEntry={handleRecentSelect}
-              onWordClick={handleDefinitionClick}
-              detailEntry={detailEntry}
-              onShowDetails={handleShowDetails}
-              activeTab={sidebarTab}
-              onTabChange={setSidebarTab}
-              userId={user.id}
-              translationLang={translationLang}
-              userLists={availableLists.filter((l) => l.type === "user")}
-              onListsUpdated={handleListsUpdated}
-              onTrainWord={handleTrainWord}
-              currentTrainingEntryId={currentWord?.id ?? null}
-              onTrainingAction={(result) => void handleAction(result)}
-              trainingActionDisabled={!revealed || actionLoading}
-            />
-          </aside>
+          {trainingSidebarPinned && (
+            <aside className="hidden h-full w-[300px] shrink-0 flex-col lg:flex xl:w-[350px]">
+              <Sidebar
+                selectedEntry={selectedEntry}
+                recentEntries={recentEntries}
+                onSelectEntry={handleRecentSelect}
+                onWordClick={handleDefinitionClick}
+                detailEntry={detailEntry}
+                onShowDetails={handleShowDetails}
+                activeTab={sidebarTab}
+                onTabChange={setSidebarTab}
+                userId={user.id}
+                translationLang={translationLang}
+                userLists={availableLists.filter((l) => l.type === "user")}
+                onListsUpdated={handleListsUpdated}
+                onTrainWord={handleTrainWord}
+                currentTrainingEntryId={currentWord?.id ?? null}
+                onTrainingAction={(result) => void handleAction(result)}
+                trainingActionDisabled={!revealed || actionLoading}
+              />
+            </aside>
+          )}
         </div>
       </main>
 
@@ -1542,6 +1609,7 @@ export function TrainingScreen({ user }: Props) {
         open={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
         title={sidebarTab === "recent" ? "Recent" : "Details"}
+        showOnDesktop={!trainingSidebarPinned}
       >
         <Sidebar
           selectedEntry={selectedEntry}

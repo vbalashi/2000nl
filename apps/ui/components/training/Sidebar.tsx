@@ -57,31 +57,33 @@ export function Sidebar({
     <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white/80 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-card-dark">
       {/* Tab Header */}
       <div className="flex items-center border-b border-slate-100 dark:border-slate-700">
-        <button
-          type="button"
-          onClick={() => onTabChange("recent")}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-            activeTab === "recent"
-              ? "border-b-2 border-primary text-slate-900 dark:text-white"
-              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          }`}
-        >
-          Recent
-        </button>
-        <button
-          type="button"
-          onClick={() => onTabChange("details")}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
-            activeTab === "details"
-              ? "border-b-2 border-primary text-slate-900 dark:text-white"
-              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          }`}
-        >
-          Details
-          {detailEntry && (
-            <span className="ml-1.5 inline-flex h-2 w-2 rounded-full bg-primary" />
-          )}
-        </button>
+        <div className="flex flex-1 items-center">
+          <button
+            type="button"
+            onClick={() => onTabChange("recent")}
+            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "recent"
+                ? "border-b-2 border-primary text-slate-900 dark:text-white"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            Recent
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange("details")}
+            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "details"
+                ? "border-b-2 border-primary text-slate-900 dark:text-white"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            }`}
+          >
+            Details
+            {detailEntry && (
+              <span className="ml-1.5 inline-flex h-2 w-2 rounded-full bg-primary" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Tab Content */}

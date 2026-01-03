@@ -1472,6 +1472,8 @@ export type UserPreferences = {
   activeScenario: string;
   /** Target language for dictionary tooltips (null = disabled) */
   translationLang: string | null;
+  /** Whether the training sidebar is pinned open on desktop */
+  trainingSidebarPinned: boolean;
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
 };
@@ -1482,7 +1484,7 @@ export async function fetchUserPreferences(
   const { data, error } = await supabase
     .from("user_settings")
     .select(
-      "theme_preference, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang"
+      "theme_preference, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang, training_sidebar_pinned"
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -1514,6 +1516,7 @@ export async function fetchUserPreferences(
     newReviewRatio: data?.new_review_ratio ?? 2,
     activeScenario: data?.active_scenario ?? "understanding",
     translationLang,
+    trainingSidebarPinned: Boolean(data?.training_sidebar_pinned ?? false),
     trainingMode: modesEnabled[0],
   };
 }
@@ -1527,6 +1530,7 @@ export async function updateUserPreferences(params: {
   newReviewRatio?: number;
   activeScenario?: string;
   translationLang?: string | null;
+  trainingSidebarPinned?: boolean;
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
 }): Promise<{ error: any }> {
@@ -1556,6 +1560,9 @@ export async function updateUserPreferences(params: {
   }
   if (params.translationLang !== undefined) {
     updates.translation_lang = params.translationLang;
+  }
+  if (params.trainingSidebarPinned !== undefined) {
+    updates.training_sidebar_pinned = params.trainingSidebarPinned;
   }
   // Handle legacy trainingMode parameter
   if (params.trainingMode !== undefined && params.modesEnabled === undefined) {

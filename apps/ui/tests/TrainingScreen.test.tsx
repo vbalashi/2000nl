@@ -43,6 +43,7 @@ const fetchUserPreferences = vi.fn().mockResolvedValue({
   newReviewRatio: 2,
   activeScenario: "understanding",
   translationLang: null,
+  trainingSidebarPinned: false,
 });
 const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
 
