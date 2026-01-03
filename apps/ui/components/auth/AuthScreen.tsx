@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -14,6 +14,29 @@ export function AuthScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/a5e2db1f-40e6-4b7f-aa6f-678a92a187d8", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "debug-session",
+        runId: "baseline",
+        hypothesisId: "H2",
+        location: "components/auth/AuthScreen.tsx:21",
+        message: "AuthScreen mounted; check theme + styles",
+        data: {
+          pathname: window.location.pathname,
+          hasDarkClass: document.documentElement.classList.contains("dark"),
+          styleSheets: document.styleSheets?.length ?? null,
+          bodyBg: window.getComputedStyle(document.body).backgroundColor,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion agent log
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

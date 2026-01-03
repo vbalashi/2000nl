@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
+import { SystemThemeEffect } from "@/components/theme/SystemThemeEffect";
 
 export const metadata = {
   title: "NT2 Training",
@@ -10,6 +11,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="nl">
       <body className="min-h-screen bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
+        <SystemThemeEffect />
         {children}
       </body>
     </html>
