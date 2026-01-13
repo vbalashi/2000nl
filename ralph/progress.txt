@@ -1,0 +1,22 @@
+## Codebase Patterns
+- UI components are in `apps/ui/components/training/`
+- Types are defined in `apps/ui/lib/types.ts`
+- Training service functions are in `apps/ui/lib/trainingService.ts`
+- Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
+- SidebarHistoryItem type is used for recent history entries and includes an `id` field that can be used to identify special entries
+- Use `npx tsc --noEmit` from apps/ui directory for type checking
+- Use `npx vitest run` for running tests
+
+---
+
+## 2026-01-13 - US-001
+- Implemented unknown word tap feedback feature
+- Files changed:
+  - `apps/ui/components/training/TrainingScreen.tsx`: Modified `handleDefinitionClick` to add unknown words to sidebar with a special "not-found-" prefixed ID
+  - `apps/ui/components/training/SidebarCard.tsx`: Added detection for "not found" entries and display of "geen definitie gevonden" message
+- **Learnings for future iterations:**
+  - When a word is clicked but not found in the dictionary, the entry is created with an ID starting with "not-found-" followed by the clicked word and timestamp
+  - The `SidebarCard` component checks `entry.id.startsWith("not-found-")` to determine if a "geen definitie gevonden" message should be shown instead of the definition
+  - The `raw: {}` empty object is passed for not-found entries, so `getPrimaryMeaning` will return "Definitie niet beschikbaar." but we override this display with our custom message
+  - Deduplication logic prevents adding the same not-found word if it's already at the top of the recent entries
+---

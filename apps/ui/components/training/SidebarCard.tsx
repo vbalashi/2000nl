@@ -18,8 +18,13 @@ export function SidebarCard({
   onSelect,
   onShowDetails,
 }: Props) {
+  // Check if this is a "not found" entry (word clicked but not in dictionary)
+  const isNotFound = entry.id.startsWith("not-found-");
+
   const meaning = getPrimaryMeaning(entry.raw);
-  const segments = buildSegments(meaning.definition, meaning.links);
+  const segments = isNotFound
+    ? [{ text: "", link: null }]
+    : buildSegments(meaning.definition, meaning.links);
 
   // Background styles based on review result to mirror button tones
   const toneStyles: Record<
@@ -135,16 +140,24 @@ export function SidebarCard({
         </div>
 
         <div className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          <InteractiveText
-            segments={segments}
-            highlightedWord={highlightedWord}
-            onWordClick={onWordClick}
-            excludeWord={entry.headword}
-          />
-          {meaning.context && (
-            <span className="block mt-0.5 text-xs text-slate-400 font-normal">
-              [{meaning.context}]
+          {isNotFound ? (
+            <span className="italic text-slate-400 dark:text-slate-500">
+              geen definitie gevonden
             </span>
+          ) : (
+            <>
+              <InteractiveText
+                segments={segments}
+                highlightedWord={highlightedWord}
+                onWordClick={onWordClick}
+                excludeWord={entry.headword}
+              />
+              {meaning.context && (
+                <span className="block mt-0.5 text-xs text-slate-400 font-normal">
+                  [{meaning.context}]
+                </span>
+              )}
+            </>
           )}
         </div>
 

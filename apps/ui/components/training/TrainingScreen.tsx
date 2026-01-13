@@ -853,6 +853,22 @@ export function TrainingScreen({ user }: Props) {
     setMobileSidebarOpen(true);
   }, [trainingSidebarPinned]);
 
+  const openSearch = useCallback(() => {
+    setSettingsInitialTab("woordenlijst");
+    setSettingsAutoFocusWordSearch(true);
+    setShowSettings(true);
+  }, []);
+
+  const cycleThemePreference = useCallback(() => {
+    const next =
+      themePreference === "light"
+        ? "dark"
+        : themePreference === "dark"
+        ? "system"
+        : "light";
+    setTheme(next);
+  }, [setTheme, themePreference]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -890,6 +906,12 @@ export function TrainingScreen({ user }: Props) {
         setTranslationTooltipOpen(false);
       }
 
+      if (normalized === "s") {
+        event.preventDefault();
+        openSearch();
+        return;
+      }
+
       if (normalized === "h") {
         void handleAction("fail"); // Again
       } else if (normalized === "j") {
@@ -925,6 +947,7 @@ export function TrainingScreen({ user }: Props) {
   }, [
     handleAction,
     handleShowCurrentWordDetails,
+    openSearch,
     revealed,
     toggleHint,
     translationTooltipOpen,
@@ -940,17 +963,46 @@ export function TrainingScreen({ user }: Props) {
         return;
       }
 
+      // Use the current card's mode for the click
+      const clickMode = currentWord?.mode ?? enabledModes[0];
+
       // 1. Try exact match
       const entry = await fetchDictionaryEntry(clickedWord, user.id);
 
       if (!entry) {
-        // Fallback? ensure we don't spam if not found.
+        // Word not found in dictionary - still add to sidebar with "not found" indicator
         console.log("No dictionary entry found for:", clickedWord);
+
+        // On mobile, open the Recent drawer so the user sees that something happened.
+        openMobileSidebarTab("recent");
+
+        // Add a placeholder entry to the sidebar showing the word wasn't found
+        setRecentEntries((prev) => {
+          const notFoundItem: SidebarHistoryItem = {
+            id: `not-found-${clickedWord}-${Date.now()}`,
+            headword: clickedWord,
+            raw: {},
+            source: "click",
+            clickedWord: clickedWord,
+            debugStats: {
+              source: "click",
+              mode: clickMode,
+            },
+          };
+
+          // Dedup: avoid adding the same not-found word if it's already at the top
+          if (
+            prev.length > 0 &&
+            prev[0].headword.toLowerCase() === clickedWord.toLowerCase() &&
+            prev[0].id.startsWith("not-found-")
+          ) {
+            return prev;
+          }
+
+          return [notFoundItem, ...prev].slice(0, 50);
+        });
         return;
       }
-
-      // Use the current card's mode for the click
-      const clickMode = currentWord?.mode ?? enabledModes[0];
 
       console.log("✅ Found entry:", entry.headword);
       setSelectedEntry(entry);
@@ -1173,16 +1225,6 @@ export function TrainingScreen({ user }: Props) {
     };
   }, [accountMenuOpen]);
 
-  const cycleThemePreference = () => {
-    const next =
-      themePreference === "light"
-        ? "dark"
-        : themePreference === "dark"
-        ? "system"
-        : "light";
-    setTheme(next);
-  };
-
   const themeTitle =
     themePreference === "light"
       ? "Thema: Licht"
@@ -1274,6 +1316,18 @@ export function TrainingScreen({ user }: Props) {
       <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
+            <div
+              role="button"
+              tabIndex={0}
+              title={themeTitle}
+              aria-label={themeTitle}
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={cycleThemePreference}
+              onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
+            >
+              {renderThemeIcon()}
+              <span className="absolute inset-0 rounded-full" />
+            </div>
             <BrandLogo />
           </div>
         </div>
@@ -1281,32 +1335,13 @@ export function TrainingScreen({ user }: Props) {
           <div
             role="button"
             tabIndex={0}
-            title={themeTitle}
-            aria-label={themeTitle}
-            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={cycleThemePreference}
-            onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
-          >
-            {renderThemeIcon()}
-            <span className="absolute inset-0 rounded-full" />
-          </div>
-
-          <div
-            role="button"
-            tabIndex={0}
             title="Zoeken"
             aria-label="Zoeken"
             className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={() => {
-              setSettingsInitialTab("woordenlijst");
-              setSettingsAutoFocusWordSearch(true);
-              setShowSettings(true);
-            }}
+            onClick={openSearch}
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
-              setSettingsInitialTab("woordenlijst");
-              setSettingsAutoFocusWordSearch(true);
-              setShowSettings(true);
+              openSearch();
             }}
           >
             <svg
@@ -1330,7 +1365,7 @@ export function TrainingScreen({ user }: Props) {
             tabIndex={0}
             title="Instellingen"
             aria-label="Instellingen"
-            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             onClick={() => {
               setSettingsInitialTab("instellingen");
               setSettingsAutoFocusWordSearch(false);
