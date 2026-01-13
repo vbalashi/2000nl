@@ -434,8 +434,9 @@ export function TrainingCard({
           // Use a slightly looser line-height to avoid glyph clipping on some fonts
           // (e.g. Cyrillic ascenders).
           "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-400 dark:text-slate-500",
-          // Desktop: keep overlays to a single line to reduce collisions with nearby lines.
-          "md:truncate",
+          // Keep overlays to a single line on all devices to prevent overlap with adjacent lines.
+          // Mobile previously allowed wrapping which caused text to stack/overlap.
+          "truncate",
           // No background highlight (can obscure underlying text in dense layouts).
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
