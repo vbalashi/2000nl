@@ -63,3 +63,11 @@
   - Gotchas encountered: none
   - Useful context: first-encounter status is still derived from `stats.source === "new"`
 ---
+## 2026-01-14 16:52 - US-030.5
+- Attempted dev-browser verification; dev-browser connection refused on port 9222 so UI check was skipped
+- Files changed: ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: dev-browser can fail to connect on port 9222 even when the app server is running; log the skip in progress.txt
+  - Gotchas encountered: none
+  - Useful context: Next dev server started on port 3001 because 3000 was occupied
+---
