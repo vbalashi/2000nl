@@ -38,6 +38,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { Tooltip } from "@/components/Tooltip";
 import { useCardParams } from "@/lib/cardParams";
 import { TrainingCard } from "./TrainingCard";
+import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
 import { FooterStats } from "./FooterStats";
@@ -118,6 +119,9 @@ export function TrainingScreen({ user }: Props) {
   const [wordListType, setWordListType] = useState<WordListType | null>(null);
   const [wordListLabel, setWordListLabel] = useState<string>("");
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
+  const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
+  const handleFirstTimeStart = useCallback(() => {}, []);
+  const handleFirstTimeAlreadyKnow = useCallback(() => {}, []);
   const [loadingWord, setLoadingWord] = useState(true);
   const [listHydrated, setListHydrated] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -1579,29 +1583,36 @@ export function TrainingScreen({ user }: Props) {
               <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
                 {revealed ? (
                   <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {/* Primary Actions Only (Thinner) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
-                      {(
-                        ["fail", "hard", "success", "easy"] as ReviewResult[]
-                      ).map((actionKey) => {
-                        const { label, keyHint, tone } =
-                          ACTION_LABELS[actionKey];
-                        return (
-                          <button
-                            key={actionKey}
-                            type="button"
-                            disabled={actionLoading}
-                            onClick={() => handleAction(actionKey)}
-                            className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]}`}
-                          >
-                            <span>{label}</span>
-                            <span className="text-[10px] md:text-xs font-normal opacity-70">
-                              ({keyHint})
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {showFirstTimeButtons ? (
+                      <FirstTimeButtonGroup
+                        onStartLearning={handleFirstTimeStart}
+                        onAlreadyKnow={handleFirstTimeAlreadyKnow}
+                        disabled={actionLoading}
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
+                        {(
+                          ["fail", "hard", "success", "easy"] as ReviewResult[]
+                        ).map((actionKey) => {
+                          const { label, keyHint, tone } =
+                            ACTION_LABELS[actionKey];
+                          return (
+                            <button
+                              key={actionKey}
+                              type="button"
+                              disabled={actionLoading}
+                              onClick={() => handleAction(actionKey)}
+                              className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]}`}
+                            >
+                              <span>{label}</span>
+                              <span className="text-[10px] md:text-xs font-normal opacity-70">
+                                ({keyHint})
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* Show Answer Button - Wide, colored, distinct */

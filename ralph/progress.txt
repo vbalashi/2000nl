@@ -2,6 +2,7 @@
 - UI components are in `apps/ui/components/training/`
 - Types are defined in `apps/ui/lib/types.ts`
 - Training service functions are in `apps/ui/lib/trainingService.ts`
+- First-time button UI is in `apps/ui/components/training/FirstTimeButtonGroup.tsx` and rendered from `apps/ui/components/training/TrainingScreen.tsx`
 - First-encounter detection uses `TrainingWord.isFirstEncounter` derived from `stats.source === "new"` in `apps/ui/lib/trainingService.ts`
 - Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
 - URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
@@ -70,4 +71,12 @@
   - Patterns discovered: dev-browser can fail to connect on port 9222 even when the app server is running; log the skip in progress.txt
   - Gotchas encountered: none
   - Useful context: Next dev server started on port 3001 because 3000 was occupied
+---
+## 2026-01-14 16:55 - US-030.2
+- Added FirstTimeButtonGroup component and render it for first-encounter cards to replace the standard 4-button group
+- Files changed: apps/ui/components/training/FirstTimeButtonGroup.tsx, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: First-time action buttons are encapsulated in `apps/ui/components/training/FirstTimeButtonGroup.tsx`
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
+  - Useful context: TrainingScreen switches to FirstTimeButtonGroup when `currentWord.isFirstEncounter` is true
 ---
