@@ -4,6 +4,8 @@ Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase f
 
 ## Setup
 
+Requires Node 20+.
+
 1. Copy Supabase credentials into `.env.local` (or set environment variables):
    ```
    NEXT_PUBLIC_SUPABASE_URL=your-project-url
@@ -61,4 +63,3 @@ Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase f
 - F: Freeze (until tomorrow)
 - X: Hide
 - ?: Hotkey help
-
