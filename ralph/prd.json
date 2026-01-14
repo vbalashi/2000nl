@@ -35,7 +35,7 @@
         "Verify on mobile device or mobile viewport using Chrome DevTools MCP"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Files to modify: apps/ui/components/training/TrainingScreen.tsx (swipe handlers), apps/ui/components/training/ButtonGroup.tsx or similar (button layout), CSS/styles for mobile-specific layout. Use React hooks for touch events. Animation: card slides with finger, snaps back on cancel, slides out on commit. Consider haptic feedback if browser supports it."
     }
   ],

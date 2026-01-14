@@ -78,6 +78,19 @@ const buttonStyles: Record<
     "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70",
 };
 
+const swipeIndicatorStyles: Record<"left" | "right", string> = {
+  left: "border-red-200/70 bg-red-100/80 text-red-700 dark:border-red-900/40 dark:bg-red-900/40 dark:text-red-200",
+  right:
+    "border-emerald-200/70 bg-emerald-100/80 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/40 dark:text-emerald-200",
+};
+
+const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
+  fail: "order-1 md:order-1",
+  success: "order-2 md:order-3",
+  hard: "order-3 md:order-2",
+  easy: "order-4 md:order-4",
+};
+
 export type ThemePreference = "light" | "dark" | "system";
 
 export function TrainingScreen({ user }: Props) {
@@ -137,6 +150,15 @@ export function TrainingScreen({ user }: Props) {
     null
   );
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const cardSwipeRef = useRef<HTMLDivElement | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const swipeTrackingRef = useRef(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<
+    "left" | "right" | null
+  >(null);
+  const [swipeAnimating, setSwipeAnimating] = useState(false);
+  const [swipeActive, setSwipeActive] = useState(false);
 
   useEffect(() => {
     if (devMode) {
@@ -179,6 +201,15 @@ export function TrainingScreen({ user }: Props) {
   const revealAnswer = useCallback(() => {
     setTranslationTooltipOpen(false);
     setRevealed(true);
+  }, []);
+
+  const resetSwipe = useCallback(() => {
+    swipeStartRef.current = null;
+    swipeTrackingRef.current = false;
+    setSwipeOffset(0);
+    setSwipeDirection(null);
+    setSwipeAnimating(false);
+    setSwipeActive(false);
   }, []);
 
   const refreshAvailableLists = useCallback(async () => {
@@ -1189,6 +1220,98 @@ export function TrainingScreen({ user }: Props) {
     [setCardFilter]
   );
 
+  const canSwipe =
+    revealed &&
+    !showFirstTimeButtons &&
+    !actionLoading &&
+    !loadingWord &&
+    Boolean(currentWord);
+
+  const handleCardTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+      swipeTrackingRef.current = false;
+      setSwipeAnimating(false);
+    },
+    []
+  );
+
+  const handleCardTouchMove = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const start = swipeStartRef.current;
+      if (!start) return;
+
+      const touch = event.touches[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      if (!swipeTrackingRef.current) {
+        if (absX < 6 && absY < 6) return;
+        if (absX <= absY) return;
+        if (!canSwipe) {
+          swipeStartRef.current = null;
+          return;
+        }
+
+        swipeTrackingRef.current = true;
+        setSwipeActive(true);
+      }
+
+      if (!swipeTrackingRef.current) return;
+      event.preventDefault();
+
+      const cardWidth = cardSwipeRef.current?.offsetWidth ?? 0;
+      const maxOffset = cardWidth * 0.6;
+      const clamped = Math.max(-maxOffset, Math.min(maxOffset, dx));
+      setSwipeOffset(clamped);
+      setSwipeDirection(clamped >= 0 ? "right" : "left");
+    },
+    [canSwipe]
+  );
+
+  const handleCardTouchEnd = useCallback(() => {
+    const cardWidth = cardSwipeRef.current?.offsetWidth ?? 0;
+    const threshold = cardWidth * 0.35;
+
+    if (
+      swipeTrackingRef.current &&
+      cardWidth > 0 &&
+      Math.abs(swipeOffset) >= threshold &&
+      canSwipe
+    ) {
+      const direction = swipeOffset >= 0 ? "right" : "left";
+      const result: ReviewResult = direction === "right" ? "success" : "fail";
+
+      setSwipeAnimating(true);
+      setSwipeOffset((direction === "right" ? 1 : -1) * cardWidth * 1.1);
+      setSwipeDirection(direction);
+      setSwipeActive(false);
+      swipeTrackingRef.current = false;
+      swipeStartRef.current = null;
+
+      void handleAction(result);
+      return;
+    }
+
+    setSwipeAnimating(true);
+    setSwipeOffset(0);
+    setSwipeDirection(null);
+    setSwipeActive(false);
+    swipeTrackingRef.current = false;
+    swipeStartRef.current = null;
+  }, [canSwipe, handleAction, swipeOffset]);
+
+  useEffect(() => {
+    resetSwipe();
+  }, [currentWord?.id, resetSwipe]);
+
   const handleSignOut = async () => {
     // Supabase can return `session_not_found` if the JWT refers to a session
     // that was already revoked/expired server-side. Treat that as a successful
@@ -1339,6 +1462,23 @@ export function TrainingScreen({ user }: Props) {
         />
       </svg>
     );
+  };
+
+  const swipeIndicator =
+    swipeDirection === "left"
+      ? { label: ACTION_LABELS.fail.label, direction: "left" as const }
+      : swipeDirection === "right"
+      ? { label: ACTION_LABELS.success.label, direction: "right" as const }
+      : null;
+  const swipeThreshold = (cardSwipeRef.current?.offsetWidth ?? 0) * 0.35;
+  const swipeIndicatorOpacity =
+    swipeActive && swipeThreshold > 0
+      ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold)
+      : 0;
+  const swipeCardStyle: React.CSSProperties = {
+    transform: `translateX(${swipeOffset}px) rotate(${swipeOffset / 40}deg)`,
+    transition: swipeAnimating ? "transform 200ms ease" : "none",
+    touchAction: "pan-y",
   };
 
   return (
@@ -1563,22 +1703,42 @@ export function TrainingScreen({ user }: Props) {
               <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
                 {/* 16/10 Aspect Ratio Card on desktop, auto on mobile */}
                 <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8">
-                  <TrainingCard
-                    word={currentWord}
-                    mode={currentMode}
-                    revealed={revealed}
-                    hintRevealed={hintRevealed}
-                    loading={loadingWord}
-                    highlightedWord={selectedEntry?.headword}
-                    onWordClick={handleDefinitionClick}
-                    userId={user.id}
-                    translationLang={translationLang}
-                    translationTooltipOpen={translationTooltipOpen}
-                    onTranslationTooltipOpenChange={setTranslationTooltipOpen}
-                    onToggleHint={toggleHint}
-                    onRequestReveal={revealAnswer}
-                    onShowDetails={handleShowCurrentWordDetails}
-                  />
+                  <div
+                    ref={cardSwipeRef}
+                    className="relative h-full"
+                    style={swipeCardStyle}
+                    onTouchStart={handleCardTouchStart}
+                    onTouchMove={handleCardTouchMove}
+                    onTouchEnd={handleCardTouchEnd}
+                    onTouchCancel={handleCardTouchEnd}
+                  >
+                    {swipeIndicator && (
+                      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                        <div
+                          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicatorStyles[swipeIndicator.direction]}`}
+                          style={{ opacity: swipeIndicatorOpacity }}
+                        >
+                          {swipeIndicator.label}
+                        </div>
+                      </div>
+                    )}
+                    <TrainingCard
+                      word={currentWord}
+                      mode={currentMode}
+                      revealed={revealed}
+                      hintRevealed={hintRevealed}
+                      loading={loadingWord}
+                      highlightedWord={selectedEntry?.headword}
+                      onWordClick={handleDefinitionClick}
+                      userId={user.id}
+                      translationLang={translationLang}
+                      translationTooltipOpen={translationTooltipOpen}
+                      onTranslationTooltipOpenChange={setTranslationTooltipOpen}
+                      onToggleHint={toggleHint}
+                      onRequestReveal={revealAnswer}
+                      onShowDetails={handleShowCurrentWordDetails}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1608,7 +1768,7 @@ export function TrainingScreen({ user }: Props) {
                               type="button"
                               disabled={actionLoading}
                               onClick={() => handleAction(actionKey)}
-                              className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]}`}
+                              className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
                             >
                               <span>{label}</span>
                               <span className="text-[10px] md:text-xs font-normal opacity-70">

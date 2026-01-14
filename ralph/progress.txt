@@ -12,3 +12,11 @@ Started: wo 14 jan 2026 19:08:08 CET
   - Training queue selection is handled in `apps/ui/lib/trainingService.ts` via `get_next_word` RPC with list fallback.
   - Cross-reference-only words are identified by `cross_reference` with empty `meanings`.
 ---
+## 2026-01-14 19:23:55 - US-031
+- Added mobile swipe gestures (left=opnieuw, right=goed) with threshold, slide animation, and action indicator on the training card.
+- Reordered mobile action buttons into two rows while preserving desktop order.
+- Verified mobile layout via dev-browser (screenshot: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-031-mobile.png).
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, prd.json, progress.txt
+- **Learnings for future iterations:**
+  - Training card swipe interactions are implemented in `apps/ui/components/training/TrainingScreen.tsx` via touch handlers on the card wrapper.
+---
