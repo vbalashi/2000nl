@@ -29,6 +29,24 @@ type Props = {
 const EDGE_PADDING = 8;
 const TOOLTIP_GAP = 8;
 
+function getFixedPositionRoot(element: HTMLElement | null): HTMLElement | null {
+  let current = element?.parentElement ?? null;
+  while (current && current !== document.body) {
+    const style = window.getComputedStyle(current);
+    if (
+      style.transform !== "none" ||
+      style.filter !== "none" ||
+      style.perspective !== "none" ||
+      style.contain.includes("paint") ||
+      style.willChange.includes("transform")
+    ) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
 function mergeAriaDescribedBy(
   existing: unknown,
   nextId: string
@@ -76,6 +94,10 @@ export function Tooltip({
 
     const anchor = wrapper.getBoundingClientRect();
     const tip = tooltip.getBoundingClientRect();
+    const fixedRoot = getFixedPositionRoot(wrapper);
+    const rootRect = fixedRoot
+      ? fixedRoot.getBoundingClientRect()
+      : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
 
     let top = 0;
     let left = 0;
@@ -100,11 +122,19 @@ export function Tooltip({
         break;
     }
 
-    const maxLeft = window.innerWidth - EDGE_PADDING - tip.width;
-    const maxTop = window.innerHeight - EDGE_PADDING - tip.height;
+    const relativeLeft = left - rootRect.left;
+    const relativeTop = top - rootRect.top;
+    const maxLeft = rootRect.width - EDGE_PADDING - tip.width;
+    const maxTop = rootRect.height - EDGE_PADDING - tip.height;
 
-    const nextLeft = Math.min(Math.max(left, EDGE_PADDING), Math.max(EDGE_PADDING, maxLeft));
-    const nextTop = Math.min(Math.max(top, EDGE_PADDING), Math.max(EDGE_PADDING, maxTop));
+    const nextLeft = Math.min(
+      Math.max(relativeLeft, EDGE_PADDING),
+      Math.max(EDGE_PADDING, maxLeft)
+    );
+    const nextTop = Math.min(
+      Math.max(relativeTop, EDGE_PADDING),
+      Math.max(EDGE_PADDING, maxTop)
+    );
 
     setPosition((prev) => {
       if (!prev) return { top: nextTop, left: nextLeft };
