@@ -4,6 +4,8 @@ This repository hosts the full stack for the 2000nl project. Scheduling for trai
 
 Deployed locally on `nuc` via Docker Compose. Caddy is a separate stack in `/srv/caddy` and proxies this app at `http://2000.nuc`.
 
+- Local UI builds/linting require Node 20+ (some dependencies declare `node >= 20`). The Docker build uses `node:22-bookworm-slim`.
+
 - `apps/ui/` – Next.js web client (moved from the original @2000nl-ui project).
 - `apps/api/` – API service placeholder.
 - `packages/ingestion/` – data validation and loaders (from @2000nl-db importer).

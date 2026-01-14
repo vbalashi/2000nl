@@ -72,10 +72,7 @@ export function Tooltip({
     null
   );
   const id = React.useId();
-
-  if (content == null || String(content).trim().length === 0) {
-    return <>{children}</>;
-  }
+  const hasContent = content != null && String(content).trim().length > 0;
 
   const child =
     React.isValidElement(children) && typeof children.type !== "symbol"
@@ -146,10 +143,12 @@ export function Tooltip({
   }, [side]);
 
   React.useLayoutEffect(() => {
+    if (!hasContent) return;
     updatePosition();
-  }, [updatePosition, content]);
+  }, [updatePosition, hasContent]);
 
   React.useEffect(() => {
+    if (!hasContent) return;
     const handleScroll = () => updatePosition();
     window.addEventListener("resize", updatePosition, { passive: true });
     window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
@@ -157,7 +156,11 @@ export function Tooltip({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [updatePosition]);
+  }, [updatePosition, hasContent]);
+
+  if (!hasContent) {
+    return <>{children}</>;
+  }
 
   return (
     <span

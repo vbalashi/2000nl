@@ -1010,6 +1010,7 @@ export function TrainingScreen({ user }: Props) {
     handleShowCurrentWordDetails,
     openSearch,
     revealed,
+    toggleRecentPanel,
     toggleHint,
     translationTooltipOpen,
   ]);
