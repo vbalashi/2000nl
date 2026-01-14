@@ -58,6 +58,20 @@
 
 ## Features
 
+### Cross-Reference-Only Word Filtering
+**Added:** 2026-01-14 (Sprint: Data Quality & Mobile UX)
+**User Story:** US-020
+
+**Behavior:**
+Words that only point to another entry (cross_reference set with an empty meanings array) are filtered out before entering the learning queue. This prevents placeholder entries like "bereid (werkwoord)" from appearing in training sessions. Filtering is applied in the training word selection pipeline so these cross-reference-only items never reach the UI.
+
+### Mobile Swipe Gestures for Training Cards
+**Added:** 2026-01-14 (Sprint: Data Quality & Mobile UX)
+**User Story:** US-031
+
+**Behavior:**
+On mobile, users can swipe left for "opniew" (again) and right for "goed" (correct), with the card following the finger and snapping back on canceled swipes. The swipe must pass a 30-40% width threshold to commit the action. Mobile action buttons are arranged in two rows (opniew/goed, then moeilijk/makkelijk) while the desktop button layout remains unchanged.
+
 ### First-Time Learning UX
 **Added:** 2026-01-14 (Sprint: Learning UX & Testing Tools)
 **User Stories:** US-030.1 through US-030.5
