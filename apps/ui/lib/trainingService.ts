@@ -282,6 +282,11 @@ export const fetchNextTrainingWord = async (
   console.log("Full Entry:", item);
   console.groupEnd();
 
+  const isFirstEncounter = stats.source === "new";
+  const resolvedMode = isFirstEncounter
+    ? "word-to-definition"
+    : item.mode || stats.mode;
+
   return {
     id: item.id,
     headword: item.headword,
@@ -296,8 +301,8 @@ export const fetchNextTrainingWord = async (
     },
     is_nt2_2000: item.is_nt2_2000,
     meanings_count: item.meanings_count,
-    isFirstEncounter: stats.source === "new",
-    mode: item.mode || stats.mode,
+    isFirstEncounter,
+    mode: resolvedMode,
   };
 };
 
@@ -460,6 +465,11 @@ export const fetchNextTrainingWordByScenario = async (
   console.log("Full Entry:", item);
   console.groupEnd();
 
+  const isFirstEncounter = stats.source === "new";
+  const resolvedMode = isFirstEncounter
+    ? "word-to-definition"
+    : item.mode || stats.mode;
+
   return {
     id: item.id,
     headword: item.headword,
@@ -474,8 +484,8 @@ export const fetchNextTrainingWordByScenario = async (
     },
     is_nt2_2000: item.is_nt2_2000,
     meanings_count: item.meanings_count,
-    isFirstEncounter: stats.source === "new",
-    mode: item.mode || stats.mode,
+    isFirstEncounter,
+    mode: resolvedMode,
   };
 };
 

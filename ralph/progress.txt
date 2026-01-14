@@ -55,3 +55,11 @@
   - Gotchas encountered: TrainingWord mocks in tests need isFirstEncounter when the type becomes required
   - Useful context: TrainingScreen logs the first-encounter flag when a new word is loaded
 ---
+## 2026-01-14 16:49 - US-030.5
+- Forced first-encounter cards to use word-to-definition mode regardless of RPC-selected layout
+- Files changed: apps/ui/lib/trainingService.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: training word mapping in `apps/ui/lib/trainingService.ts` is the right place to override card mode for first-encounter behavior
+  - Gotchas encountered: none
+  - Useful context: first-encounter status is still derived from `stats.source === "new"`
+---
