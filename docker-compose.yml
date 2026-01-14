@@ -19,18 +19,6 @@ services:
     networks:
       - nuc_default
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    depends_on:
-      - ui
-    networks:
-      - nuc_default
-
 networks:
   nuc_default:
     external: true
