@@ -7,6 +7,7 @@ const mockWord = {
   id: "word-1",
   headword: "huis",
   mode: "word-to-definition",
+  isFirstEncounter: false,
   raw: {
     meanings: [{ definition: "Een gebouw", links: [] }]
   }

@@ -126,6 +126,7 @@ export const fetchTrainingWordById = async (
     gender: data.gender ?? undefined,
     raw: normalizeRaw(data.raw),
     is_nt2_2000: data.is_nt2_2000,
+    isFirstEncounter: false,
   };
 };
 
@@ -163,6 +164,7 @@ export const fetchTrainingWordByLookup = async (
     gender: data.gender ?? undefined,
     raw: normalizeRaw(data.raw),
     is_nt2_2000: data.is_nt2_2000,
+    isFirstEncounter: false,
   };
 };
 
@@ -222,6 +224,7 @@ export const fetchNextTrainingWord = async (
           meanings_count: pick.meanings_count,
           mode: fallbackMode,
           debugStats: { source: "fallback", mode: fallbackMode },
+          isFirstEncounter: false,
         };
       }
     }
@@ -293,6 +296,7 @@ export const fetchNextTrainingWord = async (
     },
     is_nt2_2000: item.is_nt2_2000,
     meanings_count: item.meanings_count,
+    isFirstEncounter: stats.source === "new",
     mode: item.mode || stats.mode,
   };
 };
@@ -470,6 +474,7 @@ export const fetchNextTrainingWordByScenario = async (
     },
     is_nt2_2000: item.is_nt2_2000,
     meanings_count: item.meanings_count,
+    isFirstEncounter: stats.source === "new",
     mode: item.mode || stats.mode,
   };
 };

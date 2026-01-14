@@ -142,6 +142,14 @@ export function TrainingScreen({ user }: Props) {
     }
   }, [devMode]);
 
+  useEffect(() => {
+    if (!currentWord) return;
+    console.log(
+      `[Training] First encounter: ${currentWord.headword}`,
+      currentWord.isFirstEncounter
+    );
+  }, [currentWord, currentWord?.id]);
+
   const toggleHint = useCallback(() => {
     setHintRevealed((prev) => !prev);
   }, []);

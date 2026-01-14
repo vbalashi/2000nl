@@ -2,6 +2,7 @@
 - UI components are in `apps/ui/components/training/`
 - Types are defined in `apps/ui/lib/types.ts`
 - Training service functions are in `apps/ui/lib/trainingService.ts`
+- First-encounter detection uses `TrainingWord.isFirstEncounter` derived from `stats.source === "new"` in `apps/ui/lib/trainingService.ts`
 - Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
 - URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
 - URL param-based training overrides are gated in `apps/ui/lib/cardParams.ts` via devMode flag or `NEXT_PUBLIC_DEV_MODE`
@@ -45,4 +46,12 @@
   - Patterns discovered: dev-only card params are enabled when devMode URL flag is set or NEXT_PUBLIC_DEV_MODE is truthy
   - Gotchas encountered: dev-browser connection refused (port 9222) so browser verification was skipped
   - Useful context: TrainingScreen logs when dev mode is active for easier debugging
+---
+## 2026-01-14 16:47 - US-030.1
+- Added TrainingWord.isFirstEncounter flag derived from RPC source and logged it when loading cards
+- Files changed: apps/ui/lib/types.ts, apps/ui/lib/trainingService.ts, apps/ui/components/training/TrainingScreen.tsx, apps/ui/tests/TrainingScreen.test.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: First-encounter state comes from RPC stats.source and is exposed as TrainingWord.isFirstEncounter
+  - Gotchas encountered: TrainingWord mocks in tests need isFirstEncounter when the type becomes required
+  - Useful context: TrainingScreen logs the first-encounter flag when a new word is loaded
 ---

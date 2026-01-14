@@ -53,6 +53,7 @@ export type TrainingWord = {
   debugStats?: DebugStats;
   is_nt2_2000?: boolean;
   meanings_count?: number;
+  isFirstEncounter: boolean;
   /** The mode this card should be trained in (returned by RPC for multi-mode training) */
   mode?: TrainingMode;
 };
