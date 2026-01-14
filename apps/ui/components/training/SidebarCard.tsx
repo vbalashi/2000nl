@@ -1,5 +1,6 @@
 import React from "react";
 import { SidebarHistoryItem } from "@/lib/types";
+import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
 import { buildSegments, getPrimaryMeaning } from "@/lib/wordUtils";
 
@@ -77,12 +78,20 @@ export function SidebarCard({
               </span>
             )}
             {entry.debugStats?.mode && (
-              <span
-                className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
-                title={entry.debugStats.mode === "word-to-definition" ? "Woord → Definitie" : "Definitie → Woord"}
+              <Tooltip
+                content={
+                  entry.debugStats.mode === "word-to-definition"
+                    ? "Woord → Definitie"
+                    : "Definitie → Woord"
+                }
+                side="top"
               >
-                {entry.debugStats.mode === "word-to-definition" ? "W→D" : "D→W"}
-              </span>
+                <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                  {entry.debugStats.mode === "word-to-definition"
+                    ? "W→D"
+                    : "D→W"}
+                </span>
+              </Tooltip>
             )}
             {/* Show definition number if there are multiple meanings */}
             {(() => {
@@ -93,13 +102,16 @@ export function SidebarCard({
               // - meaning_id > 1 (implies there's at least meaning #1 and this one)
               const hasMultipleMeanings = meaningsCount > 1 || (typeof meaningId === "number" && meaningId > 1);
               if (hasMultipleMeanings && typeof meaningId === "number") {
+                const tooltipText =
+                  meaningsCount > 1
+                    ? `Definitie ${meaningId} van ${meaningsCount}`
+                    : `Definitie ${meaningId}`;
                 return (
-                  <span
-                    className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                    title={meaningsCount > 1 ? `Definitie ${meaningId} van ${meaningsCount}` : `Definitie ${meaningId}`}
-                  >
-                    #{meaningId}
-                  </span>
+                  <Tooltip content={tooltipText} side="top">
+                    <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                      #{meaningId}
+                    </span>
+                  </Tooltip>
                 );
               }
               return null;

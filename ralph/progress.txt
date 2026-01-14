@@ -6,6 +6,7 @@
 - SidebarHistoryItem type is used for recent history entries and includes an `id` field that can be used to identify special entries
 - Use `npx tsc --noEmit` from apps/ui directory for type checking
 - Use `npx vitest run` for running tests
+- Use `Tooltip` from `apps/ui/components/Tooltip.tsx` for styled hover popups instead of `title` attributes
 
 ---
 
@@ -39,4 +40,12 @@
 - **Learnings for future iterations:**
   - The main definition number badge is rendered in `TrainingCard.tsx` inside the word-to-definition revealed section, alongside idiom badges
   - Browser verification was skipped because dev-browser failed to connect (CDP timeout)
+---
+## 2026-01-14 14:58 - US-004
+- Standardized sidebar badge popups to use the styled Tooltip component for mode and definition number badges
+- Files changed:
+  - `apps/ui/components/training/SidebarCard.tsx`
+- **Learnings for future iterations:**
+  - Sidebar badges can wrap `Tooltip` directly to match main card popup styling
+  - Browser verification was skipped because dev-browser failed to connect (ECONNREFUSED)
 ---

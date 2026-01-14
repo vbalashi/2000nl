@@ -60,7 +60,7 @@
       ],
       "storyPoints": 1,
       "type": "enhancement",
-      "passes": false
+      "passes": true
     }
   ],
   "technicalNotes": {
