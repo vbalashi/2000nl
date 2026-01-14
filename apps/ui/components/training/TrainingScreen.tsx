@@ -35,6 +35,7 @@ import type {
   WordListType,
 } from "@/lib/types";
 import { BrandLogo } from "@/components/BrandLogo";
+import { Tooltip } from "@/components/Tooltip";
 import { TrainingCard } from "./TrainingCard";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -1316,143 +1317,124 @@ export function TrainingScreen({ user }: Props) {
       <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
-            <div
-              role="button"
-              tabIndex={0}
-              title={themeTitle}
-              aria-label={themeTitle}
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              onClick={cycleThemePreference}
-              onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
-            >
-              {renderThemeIcon()}
-              <span className="absolute inset-0 rounded-full" />
-            </div>
+            <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={themeTitle}
+                className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                onClick={cycleThemePreference}
+                onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
+              >
+                {renderThemeIcon()}
+                <span className="absolute inset-0 rounded-full" />
+              </div>
+            </Tooltip>
             <BrandLogo />
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
-          <div
-            role="button"
-            tabIndex={0}
-            title="Zoeken"
-            aria-label="Zoeken"
-            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={openSearch}
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              openSearch();
-            }}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <Tooltip content="Zoeken" side="bottom" showOnFocus={false}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Zoeken"
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={openSearch}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                openSearch();
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <span className="absolute inset-0 rounded-full" />
-          </div>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <span className="absolute inset-0 rounded-full" />
+            </div>
+          </Tooltip>
 
-          <div
-            role="button"
-            tabIndex={0}
-            title="Instellingen"
-            aria-label="Instellingen"
-            className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={() => {
-              setSettingsInitialTab("instellingen");
-              setSettingsAutoFocusWordSearch(false);
-              setShowSettings(true);
-            }}
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              setSettingsInitialTab("instellingen");
-              setSettingsAutoFocusWordSearch(false);
-              setShowSettings(true);
-            }}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <Tooltip content="Instellingen" side="bottom" showOnFocus={false}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Instellingen"
+              className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={() => {
+                setSettingsInitialTab("instellingen");
+                setSettingsAutoFocusWordSearch(false);
+                setShowSettings(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                setSettingsInitialTab("instellingen");
+                setSettingsAutoFocusWordSearch(false);
+                setShowSettings(true);
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            <span className="absolute inset-0 rounded-full" />
-          </div>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <span className="absolute inset-0 rounded-full" />
+            </div>
+          </Tooltip>
 
-          <div
-            role="button"
-            tabIndex={0}
-            title="Hotkeys"
-            aria-label="Hotkeys"
-            className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            onClick={() => setShowHotkeys(true)}
-            onKeyDown={(e) => e.key === "Enter" && setShowHotkeys(true)}
-          >
-            <span className="text-base font-semibold">?</span>
-            <span className="absolute inset-0 rounded-full" />
-          </div>
+          <Tooltip content="Hotkeys" side="bottom" showOnFocus={false}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Hotkeys"
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={() => setShowHotkeys(true)}
+              onKeyDown={(e) => e.key === "Enter" && setShowHotkeys(true)}
+            >
+              <span className="text-base font-semibold">?</span>
+              <span className="absolute inset-0 rounded-full" />
+            </div>
+          </Tooltip>
 
           {/* Mobile-only: open Recent/Details drawer */}
-          <div
-            role="button"
-            tabIndex={0}
-            title={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
-            aria-label={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
-            className={`relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border shadow-sm cursor-pointer transition ${
-              trainingSidebarPinned
-                ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-            onClick={toggleRecentPanel}
-            onKeyDown={(e) => e.key === "Enter" && toggleRecentPanel()}
+          <Tooltip
+            content={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+            side="bottom"
+            showOnFocus={false}
           >
-            <svg
-              className="h-5 w-5 pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 2"
-              />
-              <circle cx="12" cy="12" r="10" strokeWidth="2" />
-            </svg>
-            <span className="absolute inset-0 rounded-full" />
-          </div>
-
-          <div ref={accountMenuRef} className="relative z-50">
-            <button
-              type="button"
-              title="Account"
-              aria-label="Account"
-              aria-haspopup="menu"
-              aria-expanded={accountMenuOpen}
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              onClick={() => setAccountMenuOpen((v) => !v)}
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+              className={`relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border shadow-sm cursor-pointer transition ${
+                trainingSidebarPinned
+                  ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              }`}
+              onClick={toggleRecentPanel}
+              onKeyDown={(e) => e.key === "Enter" && toggleRecentPanel()}
             >
               <svg
                 className="h-5 w-5 pointer-events-none"
@@ -1464,17 +1446,46 @@ export function TrainingScreen({ user }: Props) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                  d="M12 8v4l3 2"
                 />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 21a9 9 0 110-18 9 9 0 010 18z"
-                />
+                <circle cx="12" cy="12" r="10" strokeWidth="2" />
               </svg>
               <span className="absolute inset-0 rounded-full" />
-            </button>
+            </div>
+          </Tooltip>
+
+          <div ref={accountMenuRef} className="relative z-50">
+            <Tooltip content="Account" side="bottom" showOnFocus={false}>
+              <button
+                type="button"
+                aria-label="Account"
+                aria-haspopup="menu"
+                aria-expanded={accountMenuOpen}
+                className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                onClick={() => setAccountMenuOpen((v) => !v)}
+              >
+                <svg
+                  className="h-5 w-5 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 21a9 9 0 110-18 9 9 0 010 18z"
+                  />
+                </svg>
+                <span className="absolute inset-0 rounded-full" />
+              </button>
+            </Tooltip>
 
             {accountMenuOpen && (
               <div

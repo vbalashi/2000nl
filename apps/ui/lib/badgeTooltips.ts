@@ -89,7 +89,7 @@ const GENERIC_BADGE_TOOLTIPS: Record<
     en: "idiom",
     de: "Redewendung",
     fr: "idiome",
-    ru: "идиома",
+    ru: "идиома или устойчивое выражение",
     uk: "ідіома",
   },
   idiom_definition: {
@@ -131,4 +131,3 @@ export function getGenericBadgeTooltip(opts: {
   if (!lang) return undefined;
   return GENERIC_BADGE_TOOLTIPS[opts.key][lang];
 }
-

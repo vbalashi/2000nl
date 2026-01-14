@@ -26,19 +26,8 @@ type Props = {
   showOnFocus?: boolean;
 };
 
-function getPositionClasses(side: Side) {
-  switch (side) {
-    case "bottom":
-      return "top-full mt-2 left-1/2 -translate-x-1/2";
-    case "left":
-      return "right-full mr-2 top-1/2 -translate-y-1/2";
-    case "right":
-      return "left-full ml-2 top-1/2 -translate-y-1/2";
-    case "top":
-    default:
-      return "bottom-full mb-2 left-1/2 -translate-x-1/2";
-  }
-}
+const EDGE_PADDING = 8;
+const TOOLTIP_GAP = 8;
 
 function mergeAriaDescribedBy(
   existing: unknown,
@@ -59,6 +48,11 @@ export function Tooltip({
   focusable = false,
   showOnFocus = true,
 }: Props) {
+  const wrapperRef = React.useRef<HTMLSpanElement | null>(null);
+  const tooltipRef = React.useRef<HTMLSpanElement | null>(null);
+  const [position, setPosition] = React.useState<{ top: number; left: number } | null>(
+    null
+  );
   const id = React.useId();
 
   if (content == null || String(content).trim().length === 0) {
@@ -75,6 +69,66 @@ export function Tooltip({
         })
       : children;
 
+  const updatePosition = React.useCallback(() => {
+    const wrapper = wrapperRef.current;
+    const tooltip = tooltipRef.current;
+    if (!wrapper || !tooltip) return;
+
+    const anchor = wrapper.getBoundingClientRect();
+    const tip = tooltip.getBoundingClientRect();
+
+    let top = 0;
+    let left = 0;
+
+    switch (side) {
+      case "bottom":
+        top = anchor.bottom + TOOLTIP_GAP;
+        left = anchor.left + anchor.width / 2 - tip.width / 2;
+        break;
+      case "left":
+        top = anchor.top + anchor.height / 2 - tip.height / 2;
+        left = anchor.left - TOOLTIP_GAP - tip.width;
+        break;
+      case "right":
+        top = anchor.top + anchor.height / 2 - tip.height / 2;
+        left = anchor.right + TOOLTIP_GAP;
+        break;
+      case "top":
+      default:
+        top = anchor.top - TOOLTIP_GAP - tip.height;
+        left = anchor.left + anchor.width / 2 - tip.width / 2;
+        break;
+    }
+
+    const maxLeft = window.innerWidth - EDGE_PADDING - tip.width;
+    const maxTop = window.innerHeight - EDGE_PADDING - tip.height;
+
+    const nextLeft = Math.min(Math.max(left, EDGE_PADDING), Math.max(EDGE_PADDING, maxLeft));
+    const nextTop = Math.min(Math.max(top, EDGE_PADDING), Math.max(EDGE_PADDING, maxTop));
+
+    setPosition((prev) => {
+      if (!prev) return { top: nextTop, left: nextLeft };
+      if (Math.abs(prev.top - nextTop) < 0.5 && Math.abs(prev.left - nextLeft) < 0.5) {
+        return prev;
+      }
+      return { top: nextTop, left: nextLeft };
+    });
+  }, [side]);
+
+  React.useLayoutEffect(() => {
+    updatePosition();
+  }, [updatePosition, content]);
+
+  React.useEffect(() => {
+    const handleScroll = () => updatePosition();
+    window.addEventListener("resize", updatePosition, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [updatePosition]);
+
   return (
     <span
       className="group relative inline-flex"
@@ -82,6 +136,9 @@ export function Tooltip({
       data-no-reveal
       tabIndex={focusable ? 0 : undefined}
       aria-describedby={focusable ? id : undefined}
+      ref={wrapperRef}
+      onMouseEnter={updatePosition}
+      onFocus={updatePosition}
     >
       {child}
       <span
@@ -89,13 +146,12 @@ export function Tooltip({
         role="tooltip"
         className={[
           hideOnMobile ? "hidden md:block" : "",
-          "pointer-events-none absolute z-50",
-          getPositionClasses(side),
+          "pointer-events-none fixed z-50",
           // Bubble
           // Keep tooltips single-line to match the app’s visual language.
           // Truncate long strings instead of wrapping.
           "max-w-[min(360px,calc(100vw-2rem))] truncate rounded-lg border border-slate-200 bg-white/95 px-2 py-1",
-          "text-[11px] font-semibold leading-snug text-slate-700 shadow-lg shadow-slate-900/10",
+          "text-[11px] font-semibold leading-snug text-slate-700 shadow-lg shadow-slate-900/10 normal-case",
           "backdrop-blur-sm",
           "dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200 dark:shadow-slate-950/35",
           // Motion / visibility
@@ -105,10 +161,11 @@ export function Tooltip({
             ? "group-focus-within:opacity-100 group-focus-within:scale-100"
             : "",
         ].join(" ")}
+        ref={tooltipRef}
+        style={position ? { top: position.top, left: position.left } : undefined}
       >
         {content}
       </span>
     </span>
   );
 }
-

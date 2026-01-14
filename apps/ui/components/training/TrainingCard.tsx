@@ -847,16 +847,17 @@ export function TrainingCard({
                         {/* Number Badge - Left Side */}
                         {showNumber && (
                           <div className="flex-shrink-0 pt-1 w-14 flex flex-col items-center overflow-visible">
-                            <div
-                              className={`w-7 h-7 flex items-center justify-center ${
-                                badgeNumber === globalCount
-                                  ? "rounded-md"
-                                  : "rounded-full"
-                              } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
-                              title={badgeTitle}
-                            >
-                              {badgeNumber}
-                            </div>
+                            <Tooltip content={badgeTitle} side="top">
+                              <div
+                                className={`w-7 h-7 flex items-center justify-center ${
+                                  badgeNumber === globalCount
+                                    ? "rounded-md"
+                                    : "rounded-full"
+                                } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
+                              >
+                                {badgeNumber}
+                              </div>
+                            </Tooltip>
 
                             {/* Idiom badge: keep styling, render under number without shifting layout */}
                             {meaning.idioms && meaning.idioms.length > 0 && (

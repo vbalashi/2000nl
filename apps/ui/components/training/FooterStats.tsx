@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import type { CardFilter, DetailedStats, TrainingMode } from "@/lib/types";
+import { Tooltip } from "@/components/Tooltip";
 import { DropUpSelect } from "./DropUpSelect";
 
 type Props = {
@@ -154,29 +155,31 @@ export function FooterStats({
                   onChange={onListChange}
                 />
               ) : (
+                <Tooltip content="Wijzig lijst in Instellingen" side="top">
+                  <button
+                    type="button"
+                    onClick={onOpenSettings}
+                    className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
+                    aria-label="Wijzig lijst in Instellingen"
+                  >
+                    <span className="text-slate-800 dark:text-white">
+                      {activeListName ?? "VanDale 2k"}
+                    </span>
+                  </button>
+                </Tooltip>
+              )}
+              <Tooltip content="Wijzig scenario in Instellingen" side="top">
                 <button
                   type="button"
                   onClick={onOpenSettings}
-                  className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
-                  title="Wijzig lijst in Instellingen"
-                  aria-label="Wijzig lijst in Instellingen"
+                  className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+                  aria-label="Wijzig scenario in Instellingen"
                 >
-                  <span className="text-slate-800 dark:text-white">
-                    {activeListName ?? "VanDale 2k"}
+                  <span className="font-semibold text-slate-800 dark:text-white">
+                    {activeScenarioName ?? "Begrip"}
                   </span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
-                title="Wijzig scenario in Instellingen"
-                aria-label="Wijzig scenario in Instellingen"
-              >
-                <span className="font-semibold text-slate-800 dark:text-white">
-                  {activeScenarioName ?? "Begrip"}
-                </span>
-              </button>
+              </Tooltip>
               <DropUpSelect
                 label="Kaarten"
                 showLabel={false}

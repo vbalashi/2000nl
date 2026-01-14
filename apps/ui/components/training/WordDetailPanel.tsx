@@ -14,6 +14,7 @@ import {
   createUserList,
   recordReview,
 } from "@/lib/trainingService";
+import { Tooltip } from "@/components/Tooltip";
 
 export type WordDetailPanelProps = {
   entry: DictionaryEntry;
@@ -491,30 +492,32 @@ export function WordDetailPanel({
                         Training
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          disabled={trainingActionDisabled}
-                          onClick={() => onTrainingAction?.("freeze")}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                          title="Bevriezen (F)"
-                        >
-                          Bevriezen
-                          <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
-                            (F)
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          disabled={trainingActionDisabled}
-                          onClick={() => onTrainingAction?.("hide")}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                          title="Niet meer tonen (X)"
-                        >
-                          Niet meer tonen
-                          <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
-                            (X)
-                          </span>
-                        </button>
+                        <Tooltip content="Bevriezen (F)" side="top">
+                          <button
+                            type="button"
+                            disabled={trainingActionDisabled}
+                            onClick={() => onTrainingAction?.("freeze")}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                          >
+                            Bevriezen
+                            <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                              (F)
+                            </span>
+                          </button>
+                        </Tooltip>
+                        <Tooltip content="Niet meer tonen (X)" side="top">
+                          <button
+                            type="button"
+                            disabled={trainingActionDisabled}
+                            onClick={() => onTrainingAction?.("hide")}
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                          >
+                            Niet meer tonen
+                            <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                              (X)
+                            </span>
+                          </button>
+                        </Tooltip>
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
                         Tip: je kunt ook hotkeys gebruiken (F / X).

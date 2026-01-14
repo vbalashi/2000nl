@@ -122,31 +122,32 @@ export function SidebarCard({
               {entry.part_of_speech ?? "—"}
             </span>
             {onShowDetails && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowDetails();
-                }}
-                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                title="Bekijk details (i)"
-                aria-label="Bekijk details"
-              >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <Tooltip content="Bekijk details (i)" side="top">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowDetails();
+                  }}
+                  className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  aria-label="Bekijk details"
                 >
-                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 16v-4m0-4h.01"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 16v-4m0-4h.01"
+                    />
+                  </svg>
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>
