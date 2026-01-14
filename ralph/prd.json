@@ -147,7 +147,7 @@
         "Verify in browser using Chrome DevTools MCP: click 'I know it already', word disappears from queue"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ],

@@ -89,3 +89,11 @@
   - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
   - Useful context: first-time button handlers live alongside other TrainingScreen action callbacks
 ---
+## 2026-01-14 17:01 - US-030.4
+- Wired first-time "Ik ken dit al" button to hide the current word via the existing training action handler
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: first-time "I know it already" behavior can reuse the standard `handleAction("hide")` flow
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
+  - Useful context: the first-time button callbacks live near other TrainingScreen action handlers
+---

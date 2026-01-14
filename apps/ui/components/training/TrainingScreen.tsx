@@ -819,7 +819,9 @@ export function TrainingScreen({ user }: Props) {
     void handleAction("fail");
   }, [handleAction]);
 
-  const handleFirstTimeAlreadyKnow = useCallback(() => {}, []);
+  const handleFirstTimeAlreadyKnow = useCallback(() => {
+    void handleAction("hide");
+  }, [handleAction]);
 
   useEffect(() => {
     // New card => close translation overlay.
