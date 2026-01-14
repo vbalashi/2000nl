@@ -3,6 +3,7 @@
 - Types are defined in `apps/ui/lib/types.ts`
 - Training service functions are in `apps/ui/lib/trainingService.ts`
 - Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
+- URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
 - Use `npx tsc --noEmit` from apps/ui directory for type checking
 - Use `npx vitest run` for running tests
 - Use `Tooltip` from `apps/ui/components/Tooltip.tsx` for styled hover popups instead of `title` attributes
@@ -18,4 +19,12 @@
   - Patterns discovered: user review audit data lives in `user_review_log` with `grade` and `interval_after` fields for SRS debugging
   - Gotchas encountered: `grade` values map to again/hard/good/easy (1-4), but `review_type` can include `click`
   - Useful context: word lookup can be resolved via `word_entries.headword` or `word_forms.form` for word text filters
+---
+## 2026-01-14 16:36 - US-027.1
+- Added useCardParams hook and parseCardParams helper for URL-based card params (wordId/layout/devMode)
+- Files changed: apps/ui/lib/cardParams.ts, apps/ui/tests/cardParams.test.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: URL param parsing helpers belong in `apps/ui/lib/cardParams.ts` and are unit-tested in `apps/ui/tests/cardParams.test.ts`
+  - Gotchas encountered: `devMode` should treat a bare flag (no value) as enabled
+  - Useful context: layout shorthands map `w2d` -> word-to-definition and `d2w` -> definition-to-word
 ---
