@@ -80,3 +80,11 @@
   - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
   - Useful context: TrainingScreen switches to FirstTimeButtonGroup when `currentWord.isFirstEncounter` is true
 ---
+## 2026-01-14 16:58 - US-030.3
+- Wired the first-time "Start learning" button to trigger the standard fail/again review action
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: first-time "Start learning" should call `handleAction("fail")` to enter the learning queue
+  - Gotchas encountered: the first-time callbacks must be declared after `handleAction` to avoid TDZ issues with hook dependencies
+  - Useful context: first-time button handlers live alongside other TrainingScreen action callbacks
+---

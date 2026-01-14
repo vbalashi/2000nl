@@ -131,7 +131,7 @@
         "Verify in browser using Chrome DevTools MCP: click 'Start learning', word appears again in queue"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

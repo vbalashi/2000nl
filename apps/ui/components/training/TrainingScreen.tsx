@@ -120,8 +120,6 @@ export function TrainingScreen({ user }: Props) {
   const [wordListLabel, setWordListLabel] = useState<string>("");
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
-  const handleFirstTimeStart = useCallback(() => {}, []);
-  const handleFirstTimeAlreadyKnow = useCallback(() => {}, []);
   const [loadingWord, setLoadingWord] = useState(true);
   const [listHydrated, setListHydrated] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -816,6 +814,12 @@ export function TrainingScreen({ user }: Props) {
       user?.id,
     ]
   );
+
+  const handleFirstTimeStart = useCallback(() => {
+    void handleAction("fail");
+  }, [handleAction]);
+
+  const handleFirstTimeAlreadyKnow = useCallback(() => {}, []);
 
   useEffect(() => {
     // New card => close translation overlay.
