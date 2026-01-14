@@ -63,7 +63,10 @@ export const useCardParams = (): CardParams => {
   const searchParams = useSearchParams();
 
   return useMemo(
-    () => parseCardParams(new URLSearchParams(searchParams.toString())),
+    () =>
+      parseCardParams(
+        new URLSearchParams(searchParams?.toString() ?? "")
+      ),
     [searchParams]
   );
 };

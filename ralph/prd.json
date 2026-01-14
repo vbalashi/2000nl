@@ -52,7 +52,7 @@
         "Verify in browser using Chrome DevTools MCP: load /?wordId=fiets shows fiets card"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

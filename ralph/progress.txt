@@ -4,6 +4,7 @@
 - Training service functions are in `apps/ui/lib/trainingService.ts`
 - Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
 - URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
+- When using `useSearchParams`, guard against null in tests (JSDOM can return null) before calling `.toString()`
 - Use `npx tsc --noEmit` from apps/ui directory for type checking
 - Use `npx vitest run` for running tests
 - Use `Tooltip` from `apps/ui/components/Tooltip.tsx` for styled hover popups instead of `title` attributes
@@ -27,4 +28,12 @@
   - Patterns discovered: URL param parsing helpers belong in `apps/ui/lib/cardParams.ts` and are unit-tested in `apps/ui/tests/cardParams.test.ts`
   - Gotchas encountered: `devMode` should treat a bare flag (no value) as enabled
   - Useful context: layout shorthands map `w2d` -> word-to-definition and `d2w` -> definition-to-word
+---
+## 2026-01-14 16:41 - US-027.2
+- Implemented URL word loading by seeding `forcedNextWordIdRef` and resolving wordId/headword via a new training service lookup helper.
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, apps/ui/lib/trainingService.ts, apps/ui/lib/cardParams.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: `fetchTrainingWordByLookup` can resolve either word ID or headword for forced card loads.
+  - Gotchas encountered: `useSearchParams()` may be null in tests; guard before calling `.toString()`.
+  - Useful context: URL-based forced loads are wired through `forcedNextWordIdRef` in `TrainingScreen`.
 ---

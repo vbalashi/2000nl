@@ -129,6 +129,43 @@ export const fetchTrainingWordById = async (
   };
 };
 
+export const fetchTrainingWordByLookup = async (
+  lookup: string
+): Promise<TrainingWord | null> => {
+  const normalized = lookup.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const byId = await fetchTrainingWordById(normalized);
+  if (byId) {
+    return byId;
+  }
+
+  const { data, error } = await supabase
+    .from("word_entries")
+    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000")
+    .ilike("headword", normalized)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) {
+      console.error("Unable to fetch training word by headword", error);
+    }
+    return null;
+  }
+
+  return {
+    id: data.id,
+    headword: data.headword,
+    part_of_speech: data.part_of_speech ?? undefined,
+    gender: data.gender ?? undefined,
+    raw: normalizeRaw(data.raw),
+    is_nt2_2000: data.is_nt2_2000,
+  };
+};
+
 export const fetchNextTrainingWord = async (
   userId: string,
   modes: TrainingMode[],

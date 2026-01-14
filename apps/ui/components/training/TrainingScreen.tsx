@@ -8,7 +8,7 @@ import {
   fetchDictionaryEntry,
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
-  fetchTrainingWordById,
+  fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
   fetchActiveList,
@@ -36,6 +36,7 @@ import type {
 } from "@/lib/types";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Tooltip } from "@/components/Tooltip";
+import { useCardParams } from "@/lib/cardParams";
 import { TrainingCard } from "./TrainingCard";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -79,6 +80,7 @@ const buttonStyles: Record<
 export type ThemePreference = "light" | "dark" | "system";
 
 export function TrainingScreen({ user }: Props) {
+  const { wordId } = useCardParams();
   const [revealed, setRevealed] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
@@ -530,7 +532,7 @@ export function TrainingScreen({ user }: Props) {
         const forcedId = forcedNextWordIdRef.current;
         if (forcedId) {
           forcedNextWordIdRef.current = null;
-          const forced = await fetchTrainingWordById(forcedId);
+          const forced = await fetchTrainingWordByLookup(forcedId);
           if (forced) {
             const mode = enabledModes[0] ?? "word-to-definition";
             void recordWordView({ userId: user.id, wordId: forced.id, mode });
@@ -811,11 +813,14 @@ export function TrainingScreen({ user }: Props) {
       return;
     }
     initialLoadDone.current = true;
+    if (wordId) {
+      forcedNextWordIdRef.current = wordId;
+    }
     loadNextWord();
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, listHydrated]);
+  }, [user?.id, listHydrated, wordId]);
 
   // Show word details in sidebar (or bottom sheet on mobile)
   const handleShowDetails = useCallback((entry: DictionaryEntry) => {
