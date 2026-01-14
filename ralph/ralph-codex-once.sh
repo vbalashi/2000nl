@@ -4,6 +4,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
+PRD_FILE="$SCRIPT_DIR/prd.json"
 BASE_CMD=""
 
 select_base_command() {
@@ -31,4 +32,22 @@ echo ""
 select_base_command
 echo "Using base command: $BASE_CMD"
 
+previous_passes=""
+if [ -f "$PRD_FILE" ]; then
+  previous_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
+fi
+
 "$BASE_CMD" --dangerously-bypass-approvals-and-sandbox "$(cat "$SCRIPT_DIR/prompt.md")"
+
+# Update app-behavior.md with completed feature
+if [ -f "$PRD_FILE" ]; then
+  current_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
+  new_passes=$(comm -13 <(printf '%s\n' "$previous_passes") <(printf '%s\n' "$current_passes") | sed '/^$/d')
+  if [ -n "$new_passes" ]; then
+    while IFS= read -r story_id; do
+      [ -z "$story_id" ] && continue
+      echo "Updating docs/app-behavior.md..."
+      "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+    done <<< "$new_passes"
+  fi
+fi

@@ -122,9 +122,27 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS"
   echo "═══════════════════════════════════════════════════════"
 
+  previous_passes=""
+  if [ -f "$PRD_FILE" ]; then
+    previous_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
+  fi
+
   # Run claude with the ralph prompt
   # Using print mode (-p) for non-interactive execution
   OUTPUT=$("$BASE_CMD" --dangerously-skip-permissions -p "$(cat "$SCRIPT_DIR/prompt.md")" 2>&1 | tee /dev/stderr) || true
+
+  # Update app-behavior.md with completed feature
+  if [ -f "$PRD_FILE" ]; then
+    current_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
+    new_passes=$(comm -13 <(printf '%s\n' "$previous_passes") <(printf '%s\n' "$current_passes") | sed '/^$/d')
+    if [ -n "$new_passes" ]; then
+      while IFS= read -r story_id; do
+        [ -z "$story_id" ] && continue
+        echo "Updating docs/app-behavior.md..."
+        "$BASE_CMD" "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+      done <<< "$new_passes"
+    fi
+  fi
 
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then

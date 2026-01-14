@@ -1,0 +1,51 @@
+## Codebase Patterns
+- UI components are in `apps/ui/components/training/`
+- Types are defined in `apps/ui/lib/types.ts`
+- Training service functions are in `apps/ui/lib/trainingService.ts`
+- Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
+- SidebarHistoryItem type is used for recent history entries and includes an `id` field that can be used to identify special entries
+- Use `npx tsc --noEmit` from apps/ui directory for type checking
+- Use `npx vitest run` for running tests
+- Use `Tooltip` from `apps/ui/components/Tooltip.tsx` for styled hover popups instead of `title` attributes
+
+---
+
+## 2026-01-13 - US-001
+- Implemented unknown word tap feedback feature
+- Files changed:
+  - `apps/ui/components/training/TrainingScreen.tsx`: Modified `handleDefinitionClick` to add unknown words to sidebar with a special "not-found-" prefixed ID
+  - `apps/ui/components/training/SidebarCard.tsx`: Added detection for "not found" entries and display of "geen definitie gevonden" message
+- **Learnings for future iterations:**
+  - When a word is clicked but not found in the dictionary, the entry is created with an ID starting with "not-found-" followed by the clicked word and timestamp
+  - The `SidebarCard` component checks `entry.id.startsWith("not-found-")` to determine if a "geen definitie gevonden" message should be shown instead of the definition
+  - The `raw: {}` empty object is passed for not-found entries, so `getPrimaryMeaning` will return "Definitie niet beschikbaar." but we override this display with our custom message
+  - Deduplication logic prevents adding the same not-found word if it's already at the top of the recent entries
+---
+
+## 2026-01-13 - US-002
+- Fixed translation overlay overlap on mobile devices
+- Files changed:
+  - `apps/ui/components/training/TrainingCard.tsx`: Changed `InlineTranslation` component to use `truncate` class on all screen sizes instead of only `md:truncate`
+- **Learnings for future iterations:**
+  - The `InlineTranslation` component is defined inline within `TrainingCard.tsx` (around line 412) and renders translation text as an absolute overlay positioned above the original text line
+  - Previously used `md:truncate` which allowed text to wrap on mobile, causing overlap with adjacent lines when translations were long
+  - The fix applies `truncate` universally so translations stay on one line with ellipsis, preventing overlap on all device sizes
+  - Translation overlays use `absolute left-0 right-0 bottom-full` positioning with `z-20` - they don't affect layout flow
+  - Browser verification was skipped (Chrome DevTools MCP not available)
+---
+## 2026-01-14 14:51 - US-003
+- Added a definition number tooltip on the main training card badge using the same "Definitie X van Y" pattern as the sidebar history card
+- Files changed:
+  - `apps/ui/components/training/TrainingCard.tsx`
+- **Learnings for future iterations:**
+  - The main definition number badge is rendered in `TrainingCard.tsx` inside the word-to-definition revealed section, alongside idiom badges
+  - Browser verification was skipped because dev-browser failed to connect (CDP timeout)
+---
+## 2026-01-14 14:58 - US-004
+- Standardized sidebar badge popups to use the styled Tooltip component for mode and definition number badges
+- Files changed:
+  - `apps/ui/components/training/SidebarCard.tsx`
+- **Learnings for future iterations:**
+  - Sidebar badges can wrap `Tooltip` directly to match main card popup styling
+  - Browser verification was skipped because dev-browser failed to connect (ECONNREFUSED)
+---

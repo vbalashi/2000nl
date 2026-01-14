@@ -1,0 +1,100 @@
+## Codebase Patterns
+- **App behavior reference:** Read `/docs/app-behavior.md` FIRST before exploring code - contains feature descriptions, usage docs, and expected behavior
+- UI components are in `apps/ui/components/training/`
+- Types are defined in `apps/ui/lib/types.ts`
+- Training service functions are in `apps/ui/lib/trainingService.ts`
+- First-time button UI is in `apps/ui/components/training/FirstTimeButtonGroup.tsx` and rendered from `apps/ui/components/training/TrainingScreen.tsx`
+- First-encounter detection uses `TrainingWord.isFirstEncounter` derived from `stats.source === "new"` in `apps/ui/lib/trainingService.ts`
+- Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
+- URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
+- URL param-based training overrides are gated in `apps/ui/lib/cardParams.ts` via devMode flag or `NEXT_PUBLIC_DEV_MODE`
+- When using `useSearchParams`, guard against null in tests (JSDOM can return null) before calling `.toString()`
+- Use `npx tsc --noEmit` from apps/ui directory for type checking
+- Use `npx vitest run` for running tests
+- Use `Tooltip` from `apps/ui/components/Tooltip.tsx` for styled hover popups instead of `title` attributes
+- Database: `user_word_status` table tracks user progress with FSRS fields (stability, difficulty, last_interval)
+- Backend returns `source="new"` for unseen words
+- DB scripts can use `db/scripts/psql_supabase.sh` to connect via SUPABASE_DB_URL or DATABASE_URL
+
+---
+## 2026-01-14 16:33 - US-029
+- Added SRS history analysis script with user/word filters and anomaly flag for repeated cards after good/easy answers
+- Files changed: db/scripts/srs_history.sh, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: user review audit data lives in `user_review_log` with `grade` and `interval_after` fields for SRS debugging
+  - Gotchas encountered: `grade` values map to again/hard/good/easy (1-4), but `review_type` can include `click`
+  - Useful context: word lookup can be resolved via `word_entries.headword` or `word_forms.form` for word text filters
+---
+## 2026-01-14 16:36 - US-027.1
+- Added useCardParams hook and parseCardParams helper for URL-based card params (wordId/layout/devMode)
+- Files changed: apps/ui/lib/cardParams.ts, apps/ui/tests/cardParams.test.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: URL param parsing helpers belong in `apps/ui/lib/cardParams.ts` and are unit-tested in `apps/ui/tests/cardParams.test.ts`
+  - Gotchas encountered: `devMode` should treat a bare flag (no value) as enabled
+  - Useful context: layout shorthands map `w2d` -> word-to-definition and `d2w` -> definition-to-word
+---
+## 2026-01-14 16:41 - US-027.2
+- Implemented URL word loading by seeding `forcedNextWordIdRef` and resolving wordId/headword via a new training service lookup helper.
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, apps/ui/lib/trainingService.ts, apps/ui/lib/cardParams.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: `fetchTrainingWordByLookup` can resolve either word ID or headword for forced card loads.
+  - Gotchas encountered: `useSearchParams()` may be null in tests; guard before calling `.toString()`.
+  - Useful context: URL-based forced loads are wired through `forcedNextWordIdRef` in `TrainingScreen`.
+---
+## 2026-01-14 16:45 - US-027.3
+- Gated URL-based card params behind dev mode or NEXT_PUBLIC_DEV_MODE and added a dev-mode console note
+- Files changed: apps/ui/lib/cardParams.ts, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: dev-only card params are enabled when devMode URL flag is set or NEXT_PUBLIC_DEV_MODE is truthy
+  - Gotchas encountered: dev-browser connection refused (port 9222) so browser verification was skipped
+  - Useful context: TrainingScreen logs when dev mode is active for easier debugging
+---
+## 2026-01-14 16:47 - US-030.1
+- Added TrainingWord.isFirstEncounter flag derived from RPC source and logged it when loading cards
+- Files changed: apps/ui/lib/types.ts, apps/ui/lib/trainingService.ts, apps/ui/components/training/TrainingScreen.tsx, apps/ui/tests/TrainingScreen.test.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: First-encounter state comes from RPC stats.source and is exposed as TrainingWord.isFirstEncounter
+  - Gotchas encountered: TrainingWord mocks in tests need isFirstEncounter when the type becomes required
+  - Useful context: TrainingScreen logs the first-encounter flag when a new word is loaded
+---
+## 2026-01-14 16:49 - US-030.5
+- Forced first-encounter cards to use word-to-definition mode regardless of RPC-selected layout
+- Files changed: apps/ui/lib/trainingService.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: training word mapping in `apps/ui/lib/trainingService.ts` is the right place to override card mode for first-encounter behavior
+  - Gotchas encountered: none
+  - Useful context: first-encounter status is still derived from `stats.source === "new"`
+---
+## 2026-01-14 16:52 - US-030.5
+- Attempted dev-browser verification; dev-browser connection refused on port 9222 so UI check was skipped
+- Files changed: ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: dev-browser can fail to connect on port 9222 even when the app server is running; log the skip in progress.txt
+  - Gotchas encountered: none
+  - Useful context: Next dev server started on port 3001 because 3000 was occupied
+---
+## 2026-01-14 16:55 - US-030.2
+- Added FirstTimeButtonGroup component and render it for first-encounter cards to replace the standard 4-button group
+- Files changed: apps/ui/components/training/FirstTimeButtonGroup.tsx, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: First-time action buttons are encapsulated in `apps/ui/components/training/FirstTimeButtonGroup.tsx`
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
+  - Useful context: TrainingScreen switches to FirstTimeButtonGroup when `currentWord.isFirstEncounter` is true
+---
+## 2026-01-14 16:58 - US-030.3
+- Wired the first-time "Start learning" button to trigger the standard fail/again review action
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: first-time "Start learning" should call `handleAction("fail")` to enter the learning queue
+  - Gotchas encountered: the first-time callbacks must be declared after `handleAction` to avoid TDZ issues with hook dependencies
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
+  - Useful context: first-time button handlers live alongside other TrainingScreen action callbacks
+---
+## 2026-01-14 17:01 - US-030.4
+- Wired first-time "Ik ken dit al" button to hide the current word via the existing training action handler
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: first-time "I know it already" behavior can reuse the standard `handleAction("hide")` flow
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
+  - Useful context: the first-time button callbacks live near other TrainingScreen action handlers
+---

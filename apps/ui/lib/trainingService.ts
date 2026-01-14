@@ -24,6 +24,7 @@ const EVENT_MAP: Record<ReviewResult, string> = {
   freeze: "freeze",
   hide: "hide",
 };
+const MAX_CROSS_REFERENCE_SKIPS = 5;
 
 export { type ReviewResult } from "./types";
 
@@ -41,6 +42,14 @@ const normalizeRaw = (raw: unknown): WordRaw => {
   }
 
   return raw as WordRaw;
+};
+
+const isCrossReferenceOnly = (raw: WordRaw): boolean => {
+  return (
+    Boolean(raw?.cross_reference) &&
+    Array.isArray(raw.meanings) &&
+    raw.meanings.length === 0
+  );
 };
 
 const parseEntry = (entry: any): WordRaw => normalizeRaw(entry?.raw ?? {});
@@ -189,121 +198,164 @@ export const fetchNextTrainingWord = async (
     rpcPayload.p_list_type = listScope.listType ?? "curated";
   }
 
-  // Call the Database RPC to get the next best word
-  const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+  const excludedIds = new Set(excludeWordIds);
 
-  if (error || !data || data.length === 0) {
-    if (error) {
-      console.error("Error fetching next word via RPC", error);
-    }
-    // Fallback for small lists / quota reached: pick a word from the selected list
-    // while honoring excludeWordIds to prevent immediate repeats.
-    if (listScope?.listId) {
-      const fallback = await fetchWordsForList(
-        listScope.listId,
-        listScope.listType ?? "curated",
-        { page: 1, pageSize: 50 }
-      );
-      const candidates = fallback.items.filter(
-        (w) => !excludeWordIds.includes(w.id)
-      );
-      const pick =
-        candidates.length > 0
-          ? candidates[Math.floor(Math.random() * candidates.length)]
-          : fallback.items[0];
-      if (pick) {
-        // Pick a random mode from enabled modes for fallback
-        const fallbackMode = modes[Math.floor(Math.random() * modes.length)];
-        return {
-          id: pick.id,
-          headword: pick.headword,
-          part_of_speech: pick.part_of_speech ?? undefined,
-          gender: pick.gender ?? undefined,
-          raw: normalizeRaw(pick.raw),
-          is_nt2_2000: pick.is_nt2_2000,
-          meanings_count: pick.meanings_count,
-          mode: fallbackMode,
-          debugStats: { source: "fallback", mode: fallbackMode },
-          isFirstEncounter: false,
-        };
+  for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
+    rpcPayload.p_exclude_ids = Array.from(excludedIds);
+
+    // Call the Database RPC to get the next best word
+    const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+
+    if (error || !data || data.length === 0) {
+      if (error) {
+        console.error("Error fetching next word via RPC", error);
       }
+      // Fallback for small lists / quota reached: pick a word from the selected list
+      // while honoring excludeWordIds to prevent immediate repeats.
+      if (listScope?.listId) {
+        const fallback = await fetchWordsForList(
+          listScope.listId,
+          listScope.listType ?? "curated",
+          { page: 1, pageSize: 50 }
+        );
+        const candidates = fallback.items.filter(
+          (w) => !excludedIds.has(w.id) && !isCrossReferenceOnly(w.raw)
+        );
+        const pick =
+          candidates.length > 0
+            ? candidates[Math.floor(Math.random() * candidates.length)]
+            : null;
+        if (pick) {
+          // Pick a random mode from enabled modes for fallback
+          const fallbackMode = modes[Math.floor(Math.random() * modes.length)];
+          return {
+            id: pick.id,
+            headword: pick.headword,
+            part_of_speech: pick.part_of_speech ?? undefined,
+            gender: pick.gender ?? undefined,
+            raw: normalizeRaw(pick.raw),
+            is_nt2_2000: pick.is_nt2_2000,
+            meanings_count: pick.meanings_count,
+            mode: fallbackMode,
+            debugStats: { source: "fallback", mode: fallbackMode },
+            isFirstEncounter: false,
+          };
+        }
+      }
+      return null;
     }
-    return null;
+
+    // data is returned as SetOf JSONB, so it might be an array of one object or just one object depending on how Supabase client parses it.
+    // Usually .rpc returns data directly. If 'setof jsonb', it returns array of objects.
+    const item = Array.isArray(data) ? data[0] : data;
+
+    if (!item) return null;
+
+    const rawData = normalizeRaw(item.raw);
+    if (isCrossReferenceOnly(rawData)) {
+      excludedIds.add(item.id);
+      continue;
+    }
+
+    // Debug Logging for "Why this word?" and Queue Size
+    const stats = item.stats || {};
+    const meaningId = rawData.meaning_id;
+    const meaningLabel = typeof meaningId === "number" ? ` #${meaningId}` : "";
+
+    // Format interval for display
+    const formatInterval = (interval: number | null | undefined): string => {
+      if (interval === null || interval === undefined) return "new";
+      if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
+      if (interval < 7) return `${interval.toFixed(2)}d`;
+      return `${(interval / 7).toFixed(1)}w`;
+    };
+
+    console.groupCollapsed(
+      `%c Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
+      "color: #10b981; font-weight: bold;"
+    );
+    console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown");
+    console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
+    if (typeof meaningId === "number") {
+      console.log(`%c Meaning ID:`, "font-weight: bold", meaningId);
+    }
+    console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
+    console.log(
+      `%c New Pool:`,
+      "font-weight: bold",
+      `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} today, ${stats.new_pool_size ?? "?"} available`
+    );
+    console.log(
+      `%c Learning Due:`,
+      "font-weight: bold",
+      stats.learning_due_count ?? "?"
+    );
+    console.log(
+      `%c Review Pool:`,
+      "font-weight: bold",
+      stats.review_pool_size ?? "?"
+    );
+    console.log(`%c Interval:`, "font-weight: bold", formatInterval(stats.interval));
+    console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "new");
+    console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "new");
+    console.log("Full Entry:", item);
+    console.groupEnd();
+
+    const isFirstEncounter = stats.source === "new";
+    const resolvedMode = isFirstEncounter
+      ? "word-to-definition"
+      : item.mode || stats.mode;
+
+    return {
+      id: item.id,
+      headword: item.headword,
+      part_of_speech: item.part_of_speech ?? undefined,
+      gender: item.gender ?? undefined,
+      raw: rawData,
+      vandaleId: item.vandaleId,
+      debugStats: {
+        ...item.stats,
+        // Map RPC's 'stability' to DebugStats 'ef' for backward compatibility
+        ef: item.stats?.stability ?? undefined,
+      },
+      is_nt2_2000: item.is_nt2_2000,
+      meanings_count: item.meanings_count,
+      isFirstEncounter,
+      mode: resolvedMode,
+    };
   }
 
-  // data is returned as SetOf JSONB, so it might be an array of one object or just one object depending on how Supabase client parses it.
-  // Usually .rpc returns data directly. If 'setof jsonb', it returns array of objects.
-  const item = Array.isArray(data) ? data[0] : data;
-
-  if (!item) return null;
-
-  // Debug Logging for "Why this word?" and Queue Size
-  const stats = item.stats || {};
-  const rawData = normalizeRaw(item.raw);
-  const meaningId = rawData.meaning_id;
-  const meaningLabel = typeof meaningId === "number" ? ` #${meaningId}` : "";
-  
-  // Format interval for display
-  const formatInterval = (interval: number | null | undefined): string => {
-    if (interval === null || interval === undefined) return "new";
-    if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
-    if (interval < 7) return `${interval.toFixed(2)}d`;
-    return `${(interval / 7).toFixed(1)}w`;
-  };
-
-  console.groupCollapsed(
-    `%c Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
-    "color: #10b981; font-weight: bold;"
-  );
-  console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown");
-  console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
-  if (typeof meaningId === "number") {
-    console.log(`%c Meaning ID:`, "font-weight: bold", meaningId);
+  if (listScope?.listId) {
+    const fallback = await fetchWordsForList(
+      listScope.listId,
+      listScope.listType ?? "curated",
+      { page: 1, pageSize: 50 }
+    );
+    const candidates = fallback.items.filter(
+      (w) => !excludedIds.has(w.id) && !isCrossReferenceOnly(w.raw)
+    );
+    const pick =
+      candidates.length > 0
+        ? candidates[Math.floor(Math.random() * candidates.length)]
+        : null;
+    if (pick) {
+      const fallbackMode = modes[Math.floor(Math.random() * modes.length)];
+      return {
+        id: pick.id,
+        headword: pick.headword,
+        part_of_speech: pick.part_of_speech ?? undefined,
+        gender: pick.gender ?? undefined,
+        raw: normalizeRaw(pick.raw),
+        is_nt2_2000: pick.is_nt2_2000,
+        meanings_count: pick.meanings_count,
+        mode: fallbackMode,
+        debugStats: { source: "fallback", mode: fallbackMode },
+        isFirstEncounter: false,
+      };
+    }
   }
-  console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
-  console.log(
-    `%c New Pool:`,
-    "font-weight: bold",
-    `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} today, ${stats.new_pool_size ?? "?"} available`
-  );
-  console.log(
-    `%c Learning Due:`,
-    "font-weight: bold",
-    stats.learning_due_count ?? "?"
-  );
-  console.log(
-    `%c Review Pool:`,
-    "font-weight: bold",
-    stats.review_pool_size ?? "?"
-  );
-  console.log(`%c Interval:`, "font-weight: bold", formatInterval(stats.interval));
-  console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "new");
-  console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "new");
-  console.log("Full Entry:", item);
-  console.groupEnd();
 
-  const isFirstEncounter = stats.source === "new";
-  const resolvedMode = isFirstEncounter
-    ? "word-to-definition"
-    : item.mode || stats.mode;
-
-  return {
-    id: item.id,
-    headword: item.headword,
-    part_of_speech: item.part_of_speech ?? undefined,
-    gender: item.gender ?? undefined,
-    raw: normalizeRaw(item.raw),
-    vandaleId: item.vandaleId,
-    debugStats: {
-      ...item.stats,
-      // Map RPC's 'stability' to DebugStats 'ef' for backward compatibility
-      ef: item.stats?.stability ?? undefined,
-    },
-    is_nt2_2000: item.is_nt2_2000,
-    meanings_count: item.meanings_count,
-    isFirstEncounter,
-    mode: resolvedMode,
-  };
+  return null;
 };
 
 // No longer needed: fetchUserWordStatusRow (RPC handles it)
@@ -397,96 +449,109 @@ export const fetchNextTrainingWordByScenario = async (
     rpcPayload.p_list_type = listScope.listType ?? "curated";
   }
 
-  const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+  const excludedIds = new Set(excludeWordIds);
 
-  if (error || !data || data.length === 0) {
-    if (error) {
-      console.error("Error fetching next word via scenario RPC:", error);
+  for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
+    rpcPayload.p_exclude_ids = Array.from(excludedIds);
+
+    const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+
+    if (error || !data || data.length === 0) {
+      if (error) {
+        console.error("Error fetching next word via scenario RPC:", error);
+      }
+      return null;
     }
-    return null;
+
+    const item = Array.isArray(data) ? data[0] : data;
+    if (!item) return null;
+
+    const stats = item.stats || {};
+    const rawData = normalizeRaw(item.raw);
+    if (isCrossReferenceOnly(rawData)) {
+      excludedIds.add(item.id);
+      continue;
+    }
+
+    const meaningId = rawData.meaning_id;
+    const meaningLabel = typeof meaningId === "number" ? ` #${meaningId}` : "";
+
+    // Format interval for display
+    const formatInterval = (interval: number | null | undefined): string => {
+      if (interval === null || interval === undefined) return "new";
+      if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
+      if (interval < 7) return `${interval.toFixed(2)}d`;
+      return `${(interval / 7).toFixed(1)}w`;
+    };
+
+    // Determine what this card means for the counters
+    const sourceExplanationMap: Record<string, string> = {
+      new: "First time seeing this word → will count toward NIEUW",
+      learning: "Still learning (interval < 1 day) → counts toward HERHALING when reviewed",
+      review: "Graduated card due for review → counts toward HERHALING when reviewed",
+      practice: "Practice mode (no card due) → no counter change",
+      fallback: "Fallback selection → depends on card state",
+    };
+    const sourceKey = typeof stats.source === "string" ? stats.source : "unknown";
+    const sourceExplanation = sourceExplanationMap[sourceKey] || "Unknown source";
+
+    console.groupCollapsed(
+      `%c 📚 Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
+      "color: #10b981; font-weight: bold;"
+    );
+    console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown", `- ${sourceExplanation}`);
+    console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
+    console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
+    console.log(
+      `%c New Cards Today:`,
+      "font-weight: bold",
+      `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} (${stats.new_pool_size ?? "?"} unseen words available)`
+    );
+    console.log(
+      `%c Learning Due:`,
+      "font-weight: bold",
+      `${stats.learning_due_count ?? "?"} cards in learning phase ready for review`
+    );
+    console.log(
+      `%c Review Pool:`,
+      "font-weight: bold",
+      `${stats.review_pool_size ?? "?"} graduated cards in rotation`
+    );
+    if (stats.interval != null) {
+      console.log(`%c Current Interval:`, "font-weight: bold", formatInterval(stats.interval), `(${stats.interval >= 1 ? "graduated" : "in learning"})`);
+      console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "n/a");
+      console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "n/a");
+    } else {
+      console.log(`%c Status:`, "font-weight: bold", "Brand new card - no previous review data");
+    }
+    console.log("Full Entry:", item);
+    console.groupEnd();
+
+    const isFirstEncounter = stats.source === "new";
+    const resolvedMode = isFirstEncounter
+      ? "word-to-definition"
+      : item.mode || stats.mode;
+
+    return {
+      id: item.id,
+      headword: item.headword,
+      part_of_speech: item.part_of_speech ?? undefined,
+      gender: item.gender ?? undefined,
+      raw: rawData,
+      vandaleId: item.vandaleId,
+      debugStats: {
+        ...item.stats,
+        // Map RPC's 'stability' to DebugStats 'ef' for backward compatibility
+        ef: item.stats?.stability ?? undefined,
+      },
+      is_nt2_2000: item.is_nt2_2000,
+      meanings_count: item.meanings_count,
+      isFirstEncounter,
+      mode: resolvedMode,
+    };
   }
 
-  const item = Array.isArray(data) ? data[0] : data;
-  if (!item) return null;
-
-  const stats = item.stats || {};
-  const rawData = normalizeRaw(item.raw);
-  const meaningId = rawData.meaning_id;
-  const meaningLabel = typeof meaningId === "number" ? ` #${meaningId}` : "";
-
-  // Format interval for display
-  const formatInterval = (interval: number | null | undefined): string => {
-    if (interval === null || interval === undefined) return "new";
-    if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
-    if (interval < 7) return `${interval.toFixed(2)}d`;
-    return `${(interval / 7).toFixed(1)}w`;
-  };
-
-  // Determine what this card means for the counters
-  const sourceExplanationMap: Record<string, string> = {
-    new: "First time seeing this word → will count toward NIEUW",
-    learning: "Still learning (interval < 1 day) → counts toward HERHALING when reviewed",
-    review: "Graduated card due for review → counts toward HERHALING when reviewed",
-    practice: "Practice mode (no card due) → no counter change",
-    fallback: "Fallback selection → depends on card state",
-  };
-  const sourceKey = typeof stats.source === "string" ? stats.source : "unknown";
-  const sourceExplanation = sourceExplanationMap[sourceKey] || "Unknown source";
-
-  console.groupCollapsed(
-    `%c 📚 Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
-    "color: #10b981; font-weight: bold;"
-  );
-  console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown", `- ${sourceExplanation}`);
-  console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
-  console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
-  console.log(
-    `%c New Cards Today:`,
-    "font-weight: bold",
-    `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} (${stats.new_pool_size ?? "?"} unseen words available)`
-  );
-  console.log(
-    `%c Learning Due:`,
-    "font-weight: bold",
-    `${stats.learning_due_count ?? "?"} cards in learning phase ready for review`
-  );
-  console.log(
-    `%c Review Pool:`,
-    "font-weight: bold",
-    `${stats.review_pool_size ?? "?"} graduated cards in rotation`
-  );
-  if (stats.interval != null) {
-    console.log(`%c Current Interval:`, "font-weight: bold", formatInterval(stats.interval), `(${stats.interval >= 1 ? "graduated" : "in learning"})`);
-    console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "n/a");
-    console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "n/a");
-  } else {
-    console.log(`%c Status:`, "font-weight: bold", "Brand new card - no previous review data");
-  }
-  console.log("Full Entry:", item);
-  console.groupEnd();
-
-  const isFirstEncounter = stats.source === "new";
-  const resolvedMode = isFirstEncounter
-    ? "word-to-definition"
-    : item.mode || stats.mode;
-
-  return {
-    id: item.id,
-    headword: item.headword,
-    part_of_speech: item.part_of_speech ?? undefined,
-    gender: item.gender ?? undefined,
-    raw: normalizeRaw(item.raw),
-    vandaleId: item.vandaleId,
-    debugStats: {
-      ...item.stats,
-      // Map RPC's 'stability' to DebugStats 'ef' for backward compatibility
-      ef: item.stats?.stability ?? undefined,
-    },
-    is_nt2_2000: item.is_nt2_2000,
-    meanings_count: item.meanings_count,
-    isFirstEncounter,
-    mode: resolvedMode,
-  };
+  return null;
 };
 
 export const recordWordView = async (params: {

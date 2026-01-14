@@ -4,6 +4,7 @@ export type QueueTurn = "new" | "review" | "auto";
 
 export type WordRaw = {
   headword?: string;
+  cross_reference?: string;
   meanings?: Array<{
     definition?: string;
     context?: string;

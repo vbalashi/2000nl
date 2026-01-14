@@ -1,0 +1,72 @@
+{
+  "name": "UI Polish Sprint",
+  "description": "Sprint containing 4 backlog items focused on UI polish and mobile UX improvements. Total story points: 7.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Unknown word tap feedback",
+      "backlogRef": "2000NL-001",
+      "description": "When a user clicks/taps on a word that doesn't exist in the dictionary, show the word in 'recent opgezocht' with a 'no definition found' message on the side card.",
+      "acceptanceCriteria": [
+        "Clicking unknown word shows it in 'recent opgezocht'",
+        "Side card displays 'no definition found' for words not in dictionary",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "storyPoints": 2,
+      "type": "bug",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Fix translation overlay overlap on mobile",
+      "backlogRef": "2000NL-003",
+      "description": "The translation display has a layout issue where text lines overlap/stack incorrectly on mobile devices. Fix the CSS/layout for the translation component.",
+      "acceptanceCriteria": [
+        "Translation text displays correctly without overlap on mobile",
+        "Consistent behavior between desktop and mobile",
+        "Typecheck passes",
+        "Verify fix on mobile viewport using Chrome DevTools MCP"
+      ],
+      "storyPoints": 3,
+      "type": "bug",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Definition badge tooltip on main card",
+      "backlogRef": "2000NL-022",
+      "description": "Add tooltip showing 'X of Y' when hovering over the definition number badge on main card. Reuse implementation from 'recent opgezocht' card.",
+      "acceptanceCriteria": [
+        "Tooltip 'X of Y' appears on hover over definition badge",
+        "Consistent with 'recent opgezocht' implementation",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "storyPoints": 1,
+      "type": "enhancement",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Standardize badge popup styling",
+      "backlogRef": "2000NL-023",
+      "description": "The popups when hovering over badges in 'recent opgezocht' card use default browser tooltip style. Make them consistent with the styled popups on the main card.",
+      "acceptanceCriteria": [
+        "Badge hover popups in 'recent opgezocht' use same style as main card",
+        "Consistent look and feel across the app",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "storyPoints": 1,
+      "type": "enhancement",
+      "passes": true
+    }
+  ],
+  "technicalNotes": {
+    "codebasePath": "/home/khrustal/dev/2000nl-ui/",
+    "verification": "Use Chrome DevTools MCP for visual verification",
+    "buildCheck": "Run typecheck before marking complete"
+  },
+  "totalStoryPoints": 7
+}
