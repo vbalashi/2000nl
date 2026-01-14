@@ -86,5 +86,6 @@
 - **Learnings for future iterations:**
   - Patterns discovered: first-time "Start learning" should call `handleAction("fail")` to enter the learning queue
   - Gotchas encountered: the first-time callbacks must be declared after `handleAction` to avoid TDZ issues with hook dependencies
+  - Gotchas encountered: dev-browser connection refused on port 9222 so browser verification was skipped
   - Useful context: first-time button handlers live alongside other TrainingScreen action callbacks
 ---
