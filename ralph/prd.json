@@ -67,7 +67,7 @@
         "Verify in browser using Chrome DevTools MCP: params ignored without devMode flag"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -4,6 +4,7 @@
 - Training service functions are in `apps/ui/lib/trainingService.ts`
 - Word utility functions (getPrimaryMeaning, buildSegments) are in `apps/ui/lib/wordUtils.ts`
 - URL testing params are parsed in `apps/ui/lib/cardParams.ts` via `useCardParams` and `parseCardParams`
+- URL param-based training overrides are gated in `apps/ui/lib/cardParams.ts` via devMode flag or `NEXT_PUBLIC_DEV_MODE`
 - When using `useSearchParams`, guard against null in tests (JSDOM can return null) before calling `.toString()`
 - Use `npx tsc --noEmit` from apps/ui directory for type checking
 - Use `npx vitest run` for running tests
@@ -36,4 +37,12 @@
   - Patterns discovered: `fetchTrainingWordByLookup` can resolve either word ID or headword for forced card loads.
   - Gotchas encountered: `useSearchParams()` may be null in tests; guard before calling `.toString()`.
   - Useful context: URL-based forced loads are wired through `forcedNextWordIdRef` in `TrainingScreen`.
+---
+## 2026-01-14 16:45 - US-027.3
+- Gated URL-based card params behind dev mode or NEXT_PUBLIC_DEV_MODE and added a dev-mode console note
+- Files changed: apps/ui/lib/cardParams.ts, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Patterns discovered: dev-only card params are enabled when devMode URL flag is set or NEXT_PUBLIC_DEV_MODE is truthy
+  - Gotchas encountered: dev-browser connection refused (port 9222) so browser verification was skipped
+  - Useful context: TrainingScreen logs when dev mode is active for easier debugging
 ---

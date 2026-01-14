@@ -80,7 +80,7 @@ const buttonStyles: Record<
 export type ThemePreference = "light" | "dark" | "system";
 
 export function TrainingScreen({ user }: Props) {
-  const { wordId } = useCardParams();
+  const { wordId, devMode } = useCardParams();
   const [revealed, setRevealed] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
@@ -135,6 +135,12 @@ export function TrainingScreen({ user }: Props) {
     null
   );
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (devMode) {
+      console.log("[Training] Dev mode enabled: URL params are active.");
+    }
+  }, [devMode]);
 
   const toggleHint = useCallback(() => {
     setHintRevealed((prev) => !prev);

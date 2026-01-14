@@ -48,6 +48,8 @@ const parseDevMode = (value: string | null): boolean => {
   return truthyFlags.has(normalized);
 };
 
+const envDevMode = parseDevMode(process.env.NEXT_PUBLIC_DEV_MODE ?? null);
+
 export const parseCardParams = (params: URLSearchParams): CardParams => {
   const rawWordId = params.get("wordId");
   const wordId = rawWordId?.trim() || undefined;
@@ -64,9 +66,21 @@ export const useCardParams = (): CardParams => {
 
   return useMemo(
     () =>
-      parseCardParams(
-        new URLSearchParams(searchParams?.toString() ?? "")
-      ),
+      (() => {
+        const parsed = parseCardParams(
+          new URLSearchParams(searchParams?.toString() ?? "")
+        );
+        const devMode = parsed.devMode || envDevMode;
+
+        if (!devMode) {
+          return { devMode: false };
+        }
+
+        return {
+          ...parsed,
+          devMode,
+        };
+      })(),
     [searchParams]
   );
 };
