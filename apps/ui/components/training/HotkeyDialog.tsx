@@ -11,6 +11,7 @@ const HOTKEYS = [
   { key: "I", description: "Hint (context + voorbeeld)" },
   { key: "Shift+I", description: "Woorddetails in sidebar" },
   { key: "T", description: "Toon / verberg vertaling (inline)" },
+  { key: "S", description: "Zoeken" },
   { key: "Esc", description: "Sluit vertaling" },
   { key: "H", description: "Opnieuw" },
   { key: "J", description: "Moeilijk" },

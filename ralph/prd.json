@@ -30,7 +30,7 @@
       ],
       "storyPoints": 3,
       "type": "bug",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
@@ -45,7 +45,7 @@
       ],
       "storyPoints": 1,
       "type": "enhancement",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-004",

@@ -82,18 +82,78 @@ Before committing, check if any edited files have learnings worth preserving in 
 - Keep changes focused and minimal
 - Follow existing code patterns
 
-## Browser Testing (If Chrome DevTools MCP Available)
+### Fixing Related Files is OK
 
-For any story that changes UI, verify it works in the browser using Chrome DevTools MCP if available:
+If typecheck or tests require changes to other files (e.g., updating imports, fixing types in related components), **make those changes**. This is NOT scope creep - it's maintaining a working codebase.
 
-1. Ensure the dev server is running (`cd apps/ui && npm run dev`)
-2. Use `mcp__chrome-devtools__open_page` to navigate to the relevant page
-3. Use `mcp__chrome-devtools__screenshot` to capture current state
-4. Interact with UI using click/type tools as needed
-5. Verify the UI changes work as expected
-6. Take a screenshot to confirm if helpful
+### Common Gotchas
 
-**If Chrome DevTools MCP is not available:** Note in progress.txt that browser verification was skipped. The story can still be marked complete if type checks and tests pass.
+**Idempotent migrations** - When writing SQL migrations:
+```sql
+ADD COLUMN IF NOT EXISTS email TEXT;
+```
+
+**Interactive prompts** - For commands that might prompt for input:
+```bash
+echo -e "\n\n\n" | npm run db:generate
+```
+
+**Schema changes** - After editing database schema or types, check:
+- Server actions
+- UI components
+- API routes
+- Related type definitions
+
+## Browser Testing with Dev Browser
+
+For any story that changes UI, verify it works in the browser using dev-browser.
+
+### Setup (once per Ralph session)
+The ralph.sh script starts the dev-browser server automatically. If running manually:
+```bash
+/home/khrustal/dev/github/dev-browser/skills/dev-browser/server.sh &
+# Wait for "Ready" message before running scripts
+```
+
+### Writing Browser Scripts
+Run scripts from the dev-browser directory using heredocs:
+```bash
+cd /home/khrustal/dev/github/dev-browser/skills/dev-browser && npx tsx <<'EOF'
+import { connect, waitForPageLoad } from "@/client.js";
+
+const client = await connect();
+const page = await client.page("2000nl");  // Named page persists between scripts
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.goto("http://localhost:3000");
+await waitForPageLoad(page);
+await page.screenshot({ path: "tmp/screenshot.png" });
+console.log({ title: await page.title(), url: page.url() });
+await client.disconnect();
+EOF
+```
+
+### Key Commands
+- **Screenshot**: `await page.screenshot({ path: "tmp/screenshot.png" });`
+- **Full page**: `await page.screenshot({ path: "tmp/full.png", fullPage: true });`
+- **Mobile viewport**: `await page.setViewportSize({ width: 375, height: 667 });`
+- **Click element**: `await page.click('button[data-testid="submit"]');`
+- **Fill input**: `await page.fill('input[name="email"]', 'test@example.com');`
+- **Wait for element**: `await page.waitForSelector('.results');`
+- **Get AI snapshot** (discover elements): `const snapshot = await client.getAISnapshot("2000nl");`
+- **Click by snapshot ref**: `const el = await client.selectSnapshotRef("2000nl", "e5"); await el.click();`
+
+### Workflow
+1. Ensure dev server is running: `cd apps/ui && npm run dev`
+2. Dev-browser server should already be running (started by ralph.sh)
+3. Write small, focused scripts - one action per script when exploring
+4. Pages persist between scripts - reuse the same page name ("2000nl")
+5. Take screenshots to verify changes
+
+### Reading Screenshots
+Screenshots are saved to `/home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/`.
+Use the Read tool to view them (Claude can see images directly).
+
+**Fallback:** If dev-browser is unavailable, note in progress.txt that browser verification was skipped. The story can still be marked complete if type checks and tests pass.
 
 ## Stop Condition
 

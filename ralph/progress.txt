@@ -20,3 +20,23 @@
   - The `raw: {}` empty object is passed for not-found entries, so `getPrimaryMeaning` will return "Definitie niet beschikbaar." but we override this display with our custom message
   - Deduplication logic prevents adding the same not-found word if it's already at the top of the recent entries
 ---
+
+## 2026-01-13 - US-002
+- Fixed translation overlay overlap on mobile devices
+- Files changed:
+  - `apps/ui/components/training/TrainingCard.tsx`: Changed `InlineTranslation` component to use `truncate` class on all screen sizes instead of only `md:truncate`
+- **Learnings for future iterations:**
+  - The `InlineTranslation` component is defined inline within `TrainingCard.tsx` (around line 412) and renders translation text as an absolute overlay positioned above the original text line
+  - Previously used `md:truncate` which allowed text to wrap on mobile, causing overlap with adjacent lines when translations were long
+  - The fix applies `truncate` universally so translations stay on one line with ellipsis, preventing overlap on all device sizes
+  - Translation overlays use `absolute left-0 right-0 bottom-full` positioning with `z-20` - they don't affect layout flow
+  - Browser verification was skipped (Chrome DevTools MCP not available)
+---
+## 2026-01-14 14:51 - US-003
+- Added a definition number tooltip on the main training card badge using the same "Definitie X van Y" pattern as the sidebar history card
+- Files changed:
+  - `apps/ui/components/training/TrainingCard.tsx`
+- **Learnings for future iterations:**
+  - The main definition number badge is rendered in `TrainingCard.tsx` inside the word-to-definition revealed section, alongside idiom badges
+  - Browser verification was skipped because dev-browser failed to connect (CDP timeout)
+---

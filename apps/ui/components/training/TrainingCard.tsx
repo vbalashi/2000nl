@@ -837,6 +837,10 @@ export function TrainingCard({
                       allMeanings.length === 1
                         ? meaningIdFromRaw
                         : index + 1;
+                    const badgeTitle =
+                      globalCount > 1
+                        ? `Definitie ${badgeNumber} van ${globalCount}`
+                        : `Definitie ${badgeNumber}`;
 
                     return (
                       <div key={index} className="flex items-start gap-6">
@@ -849,6 +853,7 @@ export function TrainingCard({
                                   ? "rounded-md"
                                   : "rounded-full"
                               } bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
+                              title={badgeTitle}
                             >
                               {badgeNumber}
                             </div>

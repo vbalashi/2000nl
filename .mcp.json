@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "gemini-vision": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/home/khrustal/Obsidian/claudesidian/.claude/mcp-servers/gemini-vision.mjs"
+      ],
+      "env": {}
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    }
+  },
+  "devBrowserPath": "/home/khrustal/dev/github/dev-browser/skills/dev-browser"
+}
