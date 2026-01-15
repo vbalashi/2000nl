@@ -2,6 +2,7 @@
 ## Codebase Patterns
 - Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
 - Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
+- Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
