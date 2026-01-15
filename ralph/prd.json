@@ -1,14 +1,28 @@
 {
-  "sprint_name": "Audio Pronunciation",
-  "story_points": 5,
+  "sprint_name": "Audio Pronunciation (CORRECTED)",
+  "story_points": 12,
   "created": "2026-01-15",
-  "status": "In Progress (US-006.1 Complete)",
+  "updated": "2026-01-15",
+  "status": "Blocked - US-006.2 and US-006.3 marked complete with bugs, reverted",
   "codebase_path": "/home/khrustal/dev/2000nl-ui",
-  "introduction": "This sprint implements audio pronunciation for Dutch words in the 2000nl app. Users will be able to hear how words are pronounced by clicking them in Audio Mode. US-006.1 (audio download) is already completed with 4,330 MP3 files downloaded. This PRD covers the remaining infrastructure (US-006.2) and frontend implementation (US-006.3).",
+  "introduction": "This sprint implements audio pronunciation for Dutch words in the 2000nl app. US-006.1 (audio download) completed successfully with 4,330 MP3 files. HOWEVER, bugs were discovered: audio files are not accessible via HTTP, and the audio mode behavior specification was incorrect. This updated PRD adds the blocker issue (US-006.2-BLOCKER) and corrects the behavior for US-006.3. US-006.2 and US-006.3 have been REVERTED to incomplete status.",
+  "bug_report": {
+    "discovered": "2026-01-15",
+    "issues": [
+      "Audio files downloaded to /db/audio/ but not accessible via HTTP - app requests http://spraak/... which doesn't exist",
+      "Audio mode behavior was incorrectly specified - headword should ALWAYS play audio (both modes), and audio mode ON should play ENTIRE SENTENCE (not just word)",
+      "No nl/be pronunciation preference - should default to nl-only for MVP"
+    ],
+    "new_stories_added": [
+      "US-006.2-BLOCKER (2000NL-039) - Fix audio file serving configuration",
+      "US-006.4 (2000NL-040) - Google TTS integration for sentence pronunciation"
+    ]
+  },
   "completed_stories": [
     {
       "id": "US-006.1",
       "title": "Audio Download Script",
+      "backlog_reference": "2000NL-006.1",
       "story_points": 3,
       "status": "completed",
       "completion_date": "2026-01-15",
@@ -17,44 +31,86 @@
   ],
   "user_stories": [
     {
+      "id": "US-006.2-BLOCKER",
+      "title": "Audio File Serving Configuration (BLOCKER)",
+      "passes": true,
+      "backlog_reference": "2000NL-039",
+      "story_points": 2,
+      "type": "Bug/Infrastructure",
+      "priority": "HIGH - BLOCKER for US-006.2 and US-006.3",
+      "dependencies": [
+        "US-006.1 (completed)"
+      ],
+      "description": "Fix audio file serving - app is looking for files at http://spraak/nl/k/... but files are stored at /home/khrustal/dev/2000nl-ui/db/audio/nl/k/. Configure proper static file serving with relative paths that work in both development and production.",
+      "problem": {
+        "current_state": "Audio files downloaded to /home/khrustal/dev/2000nl-ui/db/audio/nl/k/",
+        "app_requesting": "http://spraak/nl/k/eJRz6U5cOlp9GpSRDkquUg",
+        "result": "404 errors, audio cannot be played",
+        "root_cause": "Word data contains placeholder URLs from scraping, no static serving configured"
+      },
+      "technical_approach": [
+        "Create symlink: apps/ui/public/audio -> ../../db/audio",
+        "Update all word JSON files to transform URLs: http://spraak/nl/k/hash -> /audio/nl/k/hash.mp3",
+        "Create script: scripts/update-audio-urls.py to process all ~18k word files",
+        "Verify audio accessible at /audio/nl/[letter]/[hash].mp3"
+      ],
+      "acceptance_criteria": [
+        "Audio files accessible via HTTP in development (e.g., http://localhost:3000/audio/nl/k/hash.mp3)",
+        "Symlink created: apps/ui/public/audio points to db/audio",
+        "Script created: scripts/update-audio-urls.py",
+        "Word data updated with correct URLs (all ~18,000 files in db/data/words_content/)",
+        "Test audio playback in browser (manually access URL and verify it plays)",
+        "Solution is portable (works when deployed to production NUC - no hardcoded absolute paths)",
+        "Documentation updated with audio URL format",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
+      ],
+      "implementation_notes": {
+        "symlink_command": "cd /home/khrustal/dev/2000nl-ui/apps/ui/public && ln -s ../../db/audio audio",
+        "url_update_script": "Python script to read all JSON files in db/data/words_content/, transform audio_links field (http://spraak/ -> /audio/), add .mp3 extension, save updated JSON",
+        "nl_only_for_mvp": "Frontend will use nl audio only. Belgian (be) pronunciation choice deferred to future enhancement.",
+        "example_transformation": "http://spraak/nl/k/hash -> /audio/nl/k/hash.mp3"
+      },
+      "testing_checklist": [
+        "Access sample audio file via browser: http://localhost:3000/audio/nl/v/[hash].mp3",
+        "Verify audio file downloads/plays in browser",
+        "Check multiple files (nl variant)",
+        "Verify symlink persists after server restart",
+        "Check sample word JSON has updated URL format",
+        "Verify all ~18k word files processed by update script"
+      ],
+      "notes": "This is a BLOCKER for US-006.2 and US-006.3. Must be completed first. Should have been caught during US-006.1 completion."
+    },
+    {
       "id": "US-006.2",
       "title": "Audio Storage on NUC",
-      "passes": true,
+      "passes": false,
       "backlog_reference": "2000NL-006.2",
       "story_points": 2,
       "type": "Infrastructure",
       "dependencies": [
-        "US-006.1 (completed)"
+        "US-006.2-BLOCKER (must complete first)"
       ],
-      "description": "Configure NUC to serve downloaded audio files as static assets accessible to the 2000nl frontend application. Audio files are already downloaded to /home/khrustal/dev/2000nl-ui/db/audio/ and need to be made accessible via HTTP.",
+      "description": "Verify and document audio file serving setup. This is mostly completed by US-006.2-BLOCKER, but needs verification that the solution works across environments.",
       "context": {
         "audio_location": "/home/khrustal/dev/2000nl-ui/db/audio/",
         "downloaded_files": 4330,
         "storage_used": "109 MB",
         "file_structure": "db/audio/nl/ and db/audio/be/ with subdirectories by letter",
-        "approach": "Next.js public folder with symlink (recommended)"
+        "approach": "Next.js public folder with symlink",
+        "nl_only_for_mvp": "Frontend will use nl audio only. Belgian (be) audio choice deferred to future enhancement."
       },
-      "technical_requirements": [
-        "Create /home/khrustal/dev/2000nl-ui/apps/ui/public/audio/ directory",
-        "Symlink downloaded audio files to public folder",
-        "Files accessible via /audio/[path] in frontend",
-        "Update word data JSON files to replace http://spraak/ placeholders with /audio/ URLs",
-        "Add .mp3 extension to URLs"
-      ],
       "acceptance_criteria": [
-        "Audio files symlinked to Next.js public folder",
-        "Audio files accessible via HTTP (e.g., http://localhost:3000/audio/nl/v/hash.mp3)",
-        "Test accessing sample audio file from browser (should download/play)",
-        "Word data updated with actual /audio/ URLs (all ~18k files in db/data/words_content/)",
-        "Script created to update word JSON files: scripts/update-audio-urls.py or similar",
+        "Verify audio files accessible via HTTP (e.g., http://localhost:3000/audio/nl/v/hash.mp3)",
+        "Verify symlink works after app restart",
+        "Test with multiple audio files (nl variant)",
+        "Verify word data has updated URLs",
         "Works in both development and production environments",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
-        "Documentation updated with audio URL format"
+        "Documentation created/updated with audio URL format and nl-only approach",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
       ],
       "implementation_notes": {
-        "symlink_command": "cd /home/khrustal/dev/2000nl-ui/apps/ui/public && ln -s /home/khrustal/dev/2000nl-ui/db/audio audio",
-        "url_transformation": "http://spraak/nl/v/hash -> /audio/nl/v/hash.mp3",
-        "data_update_script": "Create Python script to read all JSON files in db/data/words_content/, update audio_links field, save updated JSON",
+        "mostly_done_by_blocker": "US-006.2-BLOCKER handles the actual implementation. This story is for verification and documentation.",
+        "nl_only": "Use word.audio_links?.nl only. Do not fallback to be. Belgian pronunciation will be added later as user preference.",
         "example_updated_data": {
           "headword": "vertrekken",
           "audio_links": {
@@ -66,44 +122,46 @@
       "testing_checklist": [
         "Access audio via browser: http://localhost:3000/audio/nl/v/[sample-hash].mp3",
         "Verify file downloads/plays correctly",
-        "Test with multiple audio files (nl and be variants)",
+        "Test with multiple audio files",
         "Verify symlink persists after app restart",
-        "Check sample word data has updated URLs",
-        "Verify all ~18k word files processed by update script"
+        "Check sample word data has updated URLs"
       ]
     },
     {
       "id": "US-006.3",
       "title": "Audio Mode and Playback UI",
-      "passes": true,
+      "passes": false,
       "backlog_reference": "2000NL-006.3",
       "story_points": 3,
       "type": "Feature",
       "dependencies": [
-        "US-006.2"
+        "US-006.2 (audio files must be accessible)"
       ],
-      "description": "Implement Audio Mode toggle button that changes click behavior for words. When enabled, clicking any word plays its pronunciation instead of showing translation overlay.",
-      "ux_design": {
+      "description": "Implement Audio Mode toggle button. IMPORTANT: Headword ALWAYS plays audio (both modes). Audio mode OFF = translation overlay for words in examples. Audio mode ON = play entire sentence TTS (stub out for now if US-006.4 not done).",
+      "ux_design_corrected": {
         "toggle_location": "Top left of training screen, after hint/translation buttons",
         "button_states": {
-          "off": "Muted speaker icon \ud83d\udd07 - Regular translation mode",
-          "on": "Active speaker icon \ud83d\udd0a (colored/filled) - Pronunciation mode"
+          "off": "Muted speaker icon 🔇 - Regular translation mode",
+          "on": "Active speaker icon 🔊 (colored/filled) - Sentence pronunciation mode"
         },
         "persistence": "Audio mode state persists across cards (localStorage)",
         "click_behavior": {
-          "audio_off": "Click word in definition/example shows translation overlay (current behavior)",
-          "audio_on": "Click any word (including headword) plays pronunciation",
-          "headword": "Always plays audio (both modes, since no translation exists)"
+          "headword": "ALWAYS plays word audio (both modes) - this is critical",
+          "audio_off_word_in_example": "Click word in definition/example shows translation overlay (current behavior)",
+          "audio_on_word_in_example": "Click any word in sentence plays ENTIRE SENTENCE TTS (requires US-006.4, can stub out)",
+          "audio_on_headword": "Headword still plays word audio (single word, not in sentence context)"
         },
         "visual_indicators": {
-          "audio_off_cursor": "Help cursor (?)",
-          "audio_on_cursor": "Speaker cursor (\ud83d\udd0a)"
+          "audio_off_cursor": "Help cursor (?) on hover over words in examples",
+          "audio_on_cursor": "Speaker cursor (🔊) on hover over words in examples",
+          "sentence_highlight": "Slight highlight on sentence being played (low priority)",
+          "radiowave_animation": "Animated radiowave/audio icon while sentence plays (low priority)"
         }
       },
       "technical_implementation": {
         "files_to_modify": [
           "apps/ui/components/training/TrainingScreen.tsx - Add audio mode state and toggle",
-          "apps/ui/components/training/TrainingCard.tsx - Modify word click handler"
+          "apps/ui/components/training/TrainingCard.tsx - Modify word click handler with context (headword vs sentence)"
         ],
         "files_to_create": [
           "apps/ui/components/training/AudioModeToggle.tsx - New toggle button component"
@@ -112,50 +170,135 @@
           "state": "const [audioModeEnabled, setAudioModeEnabled] = useState(() => localStorage.getItem('audioModeEnabled') === 'true');",
           "persistence": "useEffect(() => { localStorage.setItem('audioModeEnabled', audioModeEnabled.toString()); }, [audioModeEnabled]);"
         },
-        "word_click_handler": "function handleWordClick(word: string, audioUrl?: string) { if (audioModeEnabled && audioUrl) { const audio = new Audio(audioUrl); audio.play().catch(err => console.error('Audio playback failed:', err)); } else if (!audioModeEnabled) { showTranslation(word); } }",
-        "audio_url_resolution": "const audioUrl = word.audio_links?.nl || word.audio_links?.be; // Default to Dutch, fallback to Belgian"
+        "word_click_handler_corrected": "function handleWordClick(word: string, context: 'headword' | 'sentence', audioUrl?: string, sentence?: string) { if (context === 'headword' && audioUrl) { playAudio(audioUrl); /* Headword ALWAYS plays audio */ } else if (context === 'sentence') { if (audioModeEnabled && sentence) { playSentenceTTS(sentence); /* Requires US-006.4, stub out if not done */ } else if (!audioModeEnabled) { showTranslation(word); /* Translation overlay */ } } }",
+        "audio_url_resolution_nl_only": "const audioUrl = word.audio_links?.nl; // Dutch only for MVP, no fallback to be",
+        "sentence_tts_stub": "If US-006.4 not completed, show console.log('Sentence TTS not yet implemented') or toast notification 'Coming soon'"
       },
       "acceptance_criteria": [
         "Audio mode toggle button visible in top left (after hint/translation buttons)",
-        "Button shows clear visual state (OFF = muted icon, ON = active icon with color)",
-        "Clicking toggle switches between audio and translation modes",
+        "Button shows clear visual state (OFF = muted icon, ON = active speaker icon)",
+        "Clicking toggle switches between modes",
         "Audio mode state persists across cards (localStorage)",
         "Audio mode state persists across page reloads",
-        "In audio mode: clicking any word plays its pronunciation",
-        "In non-audio mode: clicking word shows translation overlay (current behavior preserved)",
-        "Headword click always plays audio (both modes, since no translation exists)",
+        "HEADWORD: Always plays word audio on click (both modes) - CRITICAL",
+        "Audio mode OFF: Clicking word in example/definition shows translation overlay (current behavior)",
+        "Audio mode ON: Clicking word in example/definition plays entire sentence TTS (stub out if US-006.4 not done)",
+        "Cursor changes on hover to indicate mode (speaker icon in audio mode, help icon otherwise)",
+        "Word audio (headword) plays correctly using VanDale MP3 files (nl variant only)",
+        "Dutch (nl) audio only - no fallback to Belgian (be)",
+        "Error handling for missing/failed audio (graceful fallback, no crashes)",
         "Audio playback works on desktop",
         "Audio playback works on mobile",
-        "Error handling for missing/failed audio (console error + graceful failure)",
-        "Cursor changes on hover to indicate mode (speaker vs help icon)",
         "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
         "Verify in browser using Chrome DevTools MCP"
       ],
       "component_code_examples": {
-        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '\ud83d\udd0a' : '\ud83d\udd07'} <span>Audio</span> </button> ); }",
+        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '🔊' : '🔇'} <span>Audio</span> </button> ); }",
         "integration": "const [audioModeEnabled, setAudioModeEnabled] = useState(/* ... */); <div className=\"top-controls\"> <HintButton /> <TranslationButton /> <AudioModeToggle enabled={audioModeEnabled} onToggle={() => setAudioModeEnabled(!audioModeEnabled)} /> </div>"
       },
       "styling_notes": [
         "Active state: Different background color or border",
         "Icon size: Match other top buttons",
-        "Touch-friendly: Minimum 44\u00d744px tap target (mobile)"
+        "Touch-friendly: Minimum 44×44px tap target (mobile)"
       ],
       "testing_checklist": [
         "Toggle button appears and is clickable",
         "State persists when navigating to next card",
         "State persists after page reload",
-        "Audio plays when clicking word in audio mode",
-        "Translation shows when clicking word in translation mode",
-        "Headword always plays audio",
+        "Headword ALWAYS plays audio (both modes)",
+        "Audio mode OFF: word click shows translation",
+        "Audio mode ON: word click plays sentence TTS (or shows stub message)",
         "Works on mobile viewport",
-        "Error doesn't crash app if audio fails to load"
+        "Error doesn't crash app if audio fails to load",
+        "Only nl audio is used (no be fallback)"
       ],
-      "future_enhancements": [
-        "TTS integration for sentence pronunciation",
-        "User preference for nl vs be pronunciation",
-        "Playback speed control",
-        "Repeat audio button"
-      ]
+      "notes": "Sentence TTS requires US-006.4 (Google TTS integration). Can stub out with console.log or 'Coming soon' message if US-006.4 not completed. Headword audio behavior is ALWAYS enabled - this is critical UX requirement."
+    },
+    {
+      "id": "US-006.4",
+      "title": "Google TTS Integration for Sentences (Optional)",
+      "passes": false,
+      "backlog_reference": "2000NL-040",
+      "story_points": 5,
+      "type": "Feature/Backend",
+      "priority": "Medium (enhances US-006.3, but not required for MVP)",
+      "dependencies": [
+        "US-006.3 (UI must be in place)"
+      ],
+      "description": "Integrate Google Cloud Text-to-Speech (Chirp 3: HD voices) to generate audio for sentence pronunciation. When user clicks a word in a sentence (in Audio Mode), the entire sentence should be read aloud. Audio files are cached after first generation.",
+      "context": {
+        "service": "Google Cloud Text-to-Speech",
+        "voices": "Chirp 3: HD voices (high quality, natural-sounding)",
+        "language": "Dutch (nl-NL)",
+        "documentation": "https://cloud.google.com/text-to-speech/docs/apis",
+        "example_code": "/home/khrustal/dev/2000nl-ui/docs/google-tts-snippets.md",
+        "api_key": "User will provide later"
+      },
+      "technical_requirements": [
+        "Google Cloud project with Text-to-Speech API enabled",
+        "API key or service account configured (environment variable)",
+        "Create backend API route: /api/tts/generate",
+        "Implement cache-first logic (check cache before API call)",
+        "Cache directory: db/audio/tts/ with subdirectories by hash",
+        "Cache key: SHA-256 hash of sentence text (first 16 chars)",
+        "Symlink TTS cache to public folder for frontend access"
+      ],
+      "implementation_flow": [
+        "1. Frontend calls /api/tts/generate with sentence text",
+        "2. Backend checks cache: db/audio/tts/[hash].mp3",
+        "3. If cached: return URL immediately",
+        "4. If not cached: request from Google TTS API, save to cache, return URL",
+        "5. Frontend shows loading indicator during first generation",
+        "6. Frontend plays audio from returned URL"
+      ],
+      "acceptance_criteria": [
+        "Google Cloud TTS API integrated and authenticated",
+        "Backend API endpoint created: /api/tts/generate",
+        "TTS generates Dutch audio for sentences",
+        "Audio files cached after first generation (db/audio/tts/)",
+        "Subsequent requests use cached files (no API calls)",
+        "Cache key generation is deterministic (same sentence = same file)",
+        "Loading indicator shown during first TTS generation",
+        "Audio plays successfully from cache on subsequent requests",
+        "Error handling for TTS failures (show user-friendly message)",
+        "No crashes if TTS API is unavailable",
+        "First TTS generation completes in <3 seconds (typical)",
+        "Cached audio plays immediately (<500ms)",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
+      ],
+      "implementation_notes": {
+        "npm_package": "@google-cloud/text-to-speech",
+        "voice_config": {
+          "languageCode": "nl-NL",
+          "name": "nl-NL-Wavenet-E",
+          "ssmlGender": "FEMALE",
+          "audioEncoding": "MP3"
+        },
+        "cache_location": "/home/khrustal/dev/2000nl-ui/db/audio/tts/",
+        "visual_indicators": [
+          "Loading state: Animated wave/spinner on sentence (low priority)",
+          "Playing state: Slight highlight on sentence (low priority)",
+          "Radiowave animation during playback (low priority)"
+        ]
+      },
+      "testing_checklist": [
+        "TTS API authentication works",
+        "Generate audio for sample sentence successfully",
+        "Verify audio file is valid (plays in browser)",
+        "Cache file created in correct location",
+        "Second request uses cached file (check logs/network tab)",
+        "Loading indicator appears during first generation",
+        "Audio plays immediately from cache",
+        "Error handling works (disconnect internet, test graceful failure)"
+      ],
+      "cost_estimation": {
+        "pricing": "WaveNet voices: $16 per 1M characters",
+        "average_sentence": "~50 characters",
+        "unique_sentences": "~20,000-30,000",
+        "first_time_cost": "$0.80-$1.20 (one-time)",
+        "mitigation": "Caching reduces API calls to once per unique sentence"
+      },
+      "notes": "This story is OPTIONAL for US-006.3 completion. US-006.3 can be completed with stubbed sentence TTS ('Coming soon' message). This story enhances the audio mode experience but is not required for MVP."
     }
   ],
   "technical_environment": {
@@ -172,15 +315,29 @@
   },
   "execution_order": [
     {
+      "story": "US-006.2-BLOCKER",
+      "must_complete_before": "US-006.2, US-006.3",
+      "reason": "Audio files must be accessible via HTTP before any frontend implementation"
+    },
+    {
       "story": "US-006.2",
       "must_complete_before": "US-006.3",
       "reason": "Frontend needs audio files accessible via HTTP"
+    },
+    {
+      "story": "US-006.3",
+      "can_be_done_without": "US-006.4",
+      "reason": "Sentence TTS is optional, can stub out for MVP"
     }
   ],
   "success_metrics": [
     "Audio files accessible via HTTP on NUC",
-    "Users can toggle Audio Mode and hear word pronunciations",
+    "Users can toggle Audio Mode",
+    "Headword audio plays on click (both modes)",
+    "Translation overlay works in audio mode OFF",
+    "Sentence TTS works (if US-006.4 completed) or stub message shown",
     "No errors in browser console during audio playback",
-    "Feature works on mobile and desktop"
+    "Feature works on mobile and desktop",
+    "Dutch (nl) audio only - Belgian choice deferred"
   ]
 }
