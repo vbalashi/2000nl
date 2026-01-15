@@ -1,6 +1,7 @@
 # Arch Migration Progress Log
 ## Codebase Patterns
 - Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
+- Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
@@ -19,4 +20,13 @@ Started: wo 14 jan 2026 19:08:08 CET
 - Files changed: apps/ui/components/training/TrainingScreen.tsx, prd.json, progress.txt
 - **Learnings for future iterations:**
   - Training card swipe interactions are implemented in `apps/ui/components/training/TrainingScreen.tsx` via touch handlers on the card wrapper.
+---
+## 2026-01-15 13:49:40 - US-006.2
+- Added public audio symlink, update script, and refreshed word data audio URLs to use /audio paths.
+- Updated audio download documentation with the UI URL format.
+- Files changed: apps/ui/public/audio, db/data/words_content/*.json, docs/audio-download.md, ralph/prd.json, ralph/progress.txt, scripts/update-audio-urls.py
+- **Learnings for future iterations:**
+  - Audio URLs are served from the Next.js public symlink at `apps/ui/public/audio` and should use `/audio/<lang>/<letter>/<hash>.mp3`.
+  - The word JSON files include embedded audio URLs in `_raw_html`, so bulk updates should replace those strings too.
+  - Browser verification of audio playback was skipped (dev server not running).
 ---

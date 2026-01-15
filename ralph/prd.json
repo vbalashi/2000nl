@@ -1,75 +1,182 @@
 {
-  "project": "2000nl",
-  "branchName": "ralph/data-quality-mobile-ux",
-  "description": "Data Quality & Mobile UX Sprint - Filter cross-reference-only words and add mobile swipe gestures for improved learning experience",
-  "userStories": [
+  "sprint_name": "Audio Pronunciation",
+  "story_points": 5,
+  "created": "2026-01-15",
+  "status": "In Progress (US-006.1 Complete)",
+  "codebase_path": "/home/khrustal/dev/2000nl-ui",
+  "introduction": "This sprint implements audio pronunciation for Dutch words in the 2000nl app. Users will be able to hear how words are pronounced by clicking them in Audio Mode. US-006.1 (audio download) is already completed with 4,330 MP3 files downloaded. This PRD covers the remaining infrastructure (US-006.2) and frontend implementation (US-006.3).",
+  "completed_stories": [
     {
-      "id": "US-020",
-      "title": "Exclude words with only cross-reference",
-      "description": "Words like 'bereid (werkwoord)' appear in the learning list but contain no actual definition—only a cross-reference to another word ('bereiden'). These should be detected and excluded from the learning queue. Detection pattern: cross_reference field is set (non-null) AND meanings array is empty.",
-      "acceptanceCriteria": [
-        "Words with cross_reference set AND meanings: [] empty are excluded from learning queue",
-        "Filtering logic added to word selection/queue generation service",
-        "No cross-reference-only words appear in training sessions",
-        "Typecheck passes (npm run typecheck)",
-        "Verify in browser using Chrome DevTools MCP that excluded words don't appear"
-      ],
-      "priority": 1,
-      "passes": true,
-      "notes": "Example: word 'bereid' has cross_reference: 'bereiden' and meanings: []. Data location: /home/khrustal/dev/2000nl-ui/db/data/words_content/ (~18,000 JSON files). Add filter in trainingService.ts or similar. Option to resolve cross-reference to target word is future enhancement."
-    },
-    {
-      "id": "US-031",
-      "title": "Mobile swipe gestures for cards",
-      "description": "Add intuitive swipe gestures on mobile devices for quick card responses. Left swipe → 'opniew' (again), Right swipe → 'goed' (correct). Reorganize buttons on mobile into 2 rows: Row 1 (opniew, goed) matching swipe directions, Row 2 (moeilijk, makkelijk). Desktop layout unchanged.",
-      "acceptanceCriteria": [
-        "Left swipe on card triggers 'opniew' (again) action",
-        "Right swipe on card triggers 'goed' (correct) action",
-        "Visual feedback during swipe (card follows finger, shows action indicator)",
-        "Swipe must reach threshold (~30-40% of card width) to trigger (partial swipes cancel and return card to position)",
-        "Mobile button layout: Row 1 (opniew, goed), Row 2 (moeilijk, makkelijk)",
-        "Desktop layout unchanged (single row, 4 buttons)",
-        "Buttons remain fully functional alongside swipe gestures",
-        "Swipe sensitivity feels natural (not too easy or too hard to trigger)",
-        "Typecheck passes (npm run typecheck)",
-        "Verify on mobile device or mobile viewport using Chrome DevTools MCP"
-      ],
-      "priority": 2,
-      "passes": true,
-      "notes": "Files to modify: apps/ui/components/training/TrainingScreen.tsx (swipe handlers), apps/ui/components/training/ButtonGroup.tsx or similar (button layout), CSS/styles for mobile-specific layout. Use React hooks for touch events. Animation: card slides with finger, snaps back on cancel, slides out on commit. Consider haptic feedback if browser supports it."
+      "id": "US-006.1",
+      "title": "Audio Download Script",
+      "story_points": 3,
+      "status": "completed",
+      "completion_date": "2026-01-15",
+      "summary": "Downloaded 4,330 MP3 files (2,078 nl + 2,252 be) totaling 109 MB with 99.8% success rate. Script and documentation available at /scripts/download-audio.py and /docs/audio-download.md."
     }
   ],
-  "technicalNotes": {
-    "codebasePath": "/home/khrustal/dev/2000nl-ui/",
-    "componentsPath": "apps/ui/components/training/",
-    "servicePath": "apps/ui/lib/trainingService.ts",
-    "dataPath": "/home/khrustal/dev/2000nl-ui/db/data/words_content/",
-    "patterns": [
-      "Type checking: npm run typecheck from apps/ui/ directory",
-      "Use Chrome DevTools MCP for verification",
-      "Mobile detection: viewport width or touch capability check",
-      "Swipe threshold: ~30-40% of card width for activation"
-    ],
-    "crossReferencePattern": {
-      "description": "Words with only cross-reference have cross_reference field set AND meanings: []",
-      "example": "bereid (ww) → cross_reference: 'bereiden', meanings: []"
-    },
-    "mobileUx": {
-      "swipeDirections": {
-        "left": "opniew (again)",
-        "right": "goed (correct)"
+  "user_stories": [
+    {
+      "id": "US-006.2",
+      "title": "Audio Storage on NUC",
+      "passes": true,
+      "backlog_reference": "2000NL-006.2",
+      "story_points": 2,
+      "type": "Infrastructure",
+      "dependencies": ["US-006.1 (completed)"],
+      "description": "Configure NUC to serve downloaded audio files as static assets accessible to the 2000nl frontend application. Audio files are already downloaded to /home/khrustal/dev/2000nl-ui/db/audio/ and need to be made accessible via HTTP.",
+      "context": {
+        "audio_location": "/home/khrustal/dev/2000nl-ui/db/audio/",
+        "downloaded_files": 4330,
+        "storage_used": "109 MB",
+        "file_structure": "db/audio/nl/ and db/audio/be/ with subdirectories by letter",
+        "approach": "Next.js public folder with symlink (recommended)"
       },
-      "buttonLayout": {
-        "mobile": "2 rows - Row 1: opniew, goed | Row 2: moeilijk, makkelijk",
-        "desktop": "1 row - all 4 buttons horizontal"
-      }
+      "technical_requirements": [
+        "Create /home/khrustal/dev/2000nl-ui/apps/ui/public/audio/ directory",
+        "Symlink downloaded audio files to public folder",
+        "Files accessible via /audio/[path] in frontend",
+        "Update word data JSON files to replace http://spraak/ placeholders with /audio/ URLs",
+        "Add .mp3 extension to URLs"
+      ],
+      "acceptance_criteria": [
+        "Audio files symlinked to Next.js public folder",
+        "Audio files accessible via HTTP (e.g., http://localhost:3000/audio/nl/v/hash.mp3)",
+        "Test accessing sample audio file from browser (should download/play)",
+        "Word data updated with actual /audio/ URLs (all ~18k files in db/data/words_content/)",
+        "Script created to update word JSON files: scripts/update-audio-urls.py or similar",
+        "Works in both development and production environments",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Documentation updated with audio URL format"
+      ],
+      "implementation_notes": {
+        "symlink_command": "cd /home/khrustal/dev/2000nl-ui/apps/ui/public && ln -s /home/khrustal/dev/2000nl-ui/db/audio audio",
+        "url_transformation": "http://spraak/nl/v/hash -> /audio/nl/v/hash.mp3",
+        "data_update_script": "Create Python script to read all JSON files in db/data/words_content/, update audio_links field, save updated JSON",
+        "example_updated_data": {
+          "headword": "vertrekken",
+          "audio_links": {
+            "nl": "/audio/nl/v/XSnYshTZU+ruTokh+miJeQ.mp3",
+            "be": "/audio/be/v/t4J0nkM-gmzD6t6baXHTxg.mp3"
+          }
+        }
+      },
+      "testing_checklist": [
+        "Access audio via browser: http://localhost:3000/audio/nl/v/[sample-hash].mp3",
+        "Verify file downloads/plays correctly",
+        "Test with multiple audio files (nl and be variants)",
+        "Verify symlink persists after app restart",
+        "Check sample word data has updated URLs",
+        "Verify all ~18k word files processed by update script"
+      ]
+    },
+    {
+      "id": "US-006.3",
+      "title": "Audio Mode and Playback UI",
+      "passes": false,
+      "backlog_reference": "2000NL-006.3",
+      "story_points": 3,
+      "type": "Feature",
+      "dependencies": ["US-006.2"],
+      "description": "Implement Audio Mode toggle button that changes click behavior for words. When enabled, clicking any word plays its pronunciation instead of showing translation overlay.",
+      "ux_design": {
+        "toggle_location": "Top left of training screen, after hint/translation buttons",
+        "button_states": {
+          "off": "Muted speaker icon 🔇 - Regular translation mode",
+          "on": "Active speaker icon 🔊 (colored/filled) - Pronunciation mode"
+        },
+        "persistence": "Audio mode state persists across cards (localStorage)",
+        "click_behavior": {
+          "audio_off": "Click word in definition/example shows translation overlay (current behavior)",
+          "audio_on": "Click any word (including headword) plays pronunciation",
+          "headword": "Always plays audio (both modes, since no translation exists)"
+        },
+        "visual_indicators": {
+          "audio_off_cursor": "Help cursor (?)",
+          "audio_on_cursor": "Speaker cursor (🔊)"
+        }
+      },
+      "technical_implementation": {
+        "files_to_modify": [
+          "apps/ui/components/training/TrainingScreen.tsx - Add audio mode state and toggle",
+          "apps/ui/components/training/TrainingCard.tsx - Modify word click handler"
+        ],
+        "files_to_create": [
+          "apps/ui/components/training/AudioModeToggle.tsx - New toggle button component"
+        ],
+        "state_management": {
+          "state": "const [audioModeEnabled, setAudioModeEnabled] = useState(() => localStorage.getItem('audioModeEnabled') === 'true');",
+          "persistence": "useEffect(() => { localStorage.setItem('audioModeEnabled', audioModeEnabled.toString()); }, [audioModeEnabled]);"
+        },
+        "word_click_handler": "function handleWordClick(word: string, audioUrl?: string) { if (audioModeEnabled && audioUrl) { const audio = new Audio(audioUrl); audio.play().catch(err => console.error('Audio playback failed:', err)); } else if (!audioModeEnabled) { showTranslation(word); } }",
+        "audio_url_resolution": "const audioUrl = word.audio_links?.nl || word.audio_links?.be; // Default to Dutch, fallback to Belgian"
+      },
+      "acceptance_criteria": [
+        "Audio mode toggle button visible in top left (after hint/translation buttons)",
+        "Button shows clear visual state (OFF = muted icon, ON = active icon with color)",
+        "Clicking toggle switches between audio and translation modes",
+        "Audio mode state persists across cards (localStorage)",
+        "Audio mode state persists across page reloads",
+        "In audio mode: clicking any word plays its pronunciation",
+        "In non-audio mode: clicking word shows translation overlay (current behavior preserved)",
+        "Headword click always plays audio (both modes, since no translation exists)",
+        "Audio playback works on desktop",
+        "Audio playback works on mobile",
+        "Error handling for missing/failed audio (console error + graceful failure)",
+        "Cursor changes on hover to indicate mode (speaker vs help icon)",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "component_code_examples": {
+        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '🔊' : '🔇'} <span>Audio</span> </button> ); }",
+        "integration": "const [audioModeEnabled, setAudioModeEnabled] = useState(/* ... */); <div className=\"top-controls\"> <HintButton /> <TranslationButton /> <AudioModeToggle enabled={audioModeEnabled} onToggle={() => setAudioModeEnabled(!audioModeEnabled)} /> </div>"
+      },
+      "styling_notes": [
+        "Active state: Different background color or border",
+        "Icon size: Match other top buttons",
+        "Touch-friendly: Minimum 44×44px tap target (mobile)"
+      ],
+      "testing_checklist": [
+        "Toggle button appears and is clickable",
+        "State persists when navigating to next card",
+        "State persists after page reload",
+        "Audio plays when clicking word in audio mode",
+        "Translation shows when clicking word in translation mode",
+        "Headword always plays audio",
+        "Works on mobile viewport",
+        "Error doesn't crash app if audio fails to load"
+      ],
+      "future_enhancements": [
+        "TTS integration for sentence pronunciation",
+        "User preference for nl vs be pronunciation",
+        "Playback speed control",
+        "Repeat audio button"
+      ]
     }
+  ],
+  "technical_environment": {
+    "codebase": "/home/khrustal/dev/2000nl-ui/",
+    "data": "/home/khrustal/dev/2000nl-ui/db/data/",
+    "audio_storage": "/home/khrustal/dev/2000nl-ui/db/audio/",
+    "ui_framework": "Next.js (App Router), TypeScript, React",
+    "testing": {
+      "typecheck": "npx tsc --noEmit from apps/ui/ directory",
+      "manual": "Chrome DevTools MCP for UI changes",
+      "browser": "Audio playback on desktop and mobile viewport"
+    },
+    "reference_docs": "/home/khrustal/dev/2000nl-ui/docs/app-behavior.md"
   },
-  "totalStoryPoints": 6,
-  "nonGoals": [
-    "No changes to SRS algorithm",
-    "No resolution of cross-references to target words (future enhancement)",
-    "No keyboard navigation for swipe gestures",
-    "Haptic feedback is optional enhancement"
+  "execution_order": [
+    {
+      "story": "US-006.2",
+      "must_complete_before": "US-006.3",
+      "reason": "Frontend needs audio files accessible via HTTP"
+    }
+  ],
+  "success_metrics": [
+    "Audio files accessible via HTTP on NUC",
+    "Users can toggle Audio Mode and hear word pronunciations",
+    "No errors in browser console during audio playback",
+    "Feature works on mobile and desktop"
   ]
 }
