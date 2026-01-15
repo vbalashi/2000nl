@@ -30,3 +30,13 @@ Started: wo 14 jan 2026 19:08:08 CET
   - The word JSON files include embedded audio URLs in `_raw_html`, so bulk updates should replace those strings too.
   - Browser verification of audio playback was skipped (dev server not running).
 ---
+## 2026-01-15 14:04:41 - US-006.3
+- Added audio mode toggle with localStorage persistence and audio playback routing for word clicks (headword always plays audio).
+- Added speaker/help cursor styling for clickable words and integrated the toggle into the training card controls.
+- Updated TrainingCard tests for the new headword behavior.
+- Browser verification skipped: dev-browser server not running (ECONNREFUSED on port 9222).
+- Files changed: apps/ui/components/training/AudioModeToggle.tsx, apps/ui/components/training/TrainingCard.tsx, apps/ui/components/training/TrainingScreen.tsx, apps/ui/components/training/InteractiveText.tsx, apps/ui/lib/types.ts, apps/ui/tests/TrainingCard.test.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Audio links are available on `word.raw.audio_links` (prefer nl, fallback be).
+  - Guard localStorage access with try/catch to keep jsdom tests green.
+---

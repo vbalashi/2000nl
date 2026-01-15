@@ -15,6 +15,7 @@ import {
 } from "@/lib/wordUtils";
 import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
+import { AudioModeToggle } from "./AudioModeToggle";
 import type { TrainingWord } from "@/lib/types";
 
 type Props = {
@@ -24,7 +25,7 @@ type Props = {
   revealed?: boolean;
   hintRevealed?: boolean;
   highlightedWord?: string;
-  onWordClick: (headword: string) => void;
+  onWordClick: (headword: string, options?: { forceAudio?: boolean }) => void;
   userId: string;
   translationLang: string | null;
   translationTooltipOpen?: boolean;
@@ -35,6 +36,8 @@ type Props = {
   onRequestReveal?: () => void;
   /** Callback when user clicks the info icon to see word details */
   onShowDetails?: () => void;
+  audioModeEnabled?: boolean;
+  onToggleAudioMode?: () => void;
 };
 
 const POS_COLORS: Record<string, string> = {
@@ -75,6 +78,8 @@ export function TrainingCard({
   onToggleHint,
   onRequestReveal,
   onShowDetails,
+  audioModeEnabled = false,
+  onToggleAudioMode,
 }: Props) {
   // NOTE:
   // Hooks must run on every render. Do NOT early-return before hooks
@@ -289,6 +294,23 @@ export function TrainingCard({
       : translationStatus === "failed"
       ? translationError ?? "Vertaling mislukt"
       : null;
+  const speakerCursor =
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/><path d='M15.54 8.46a5 5 0 0 1 0 7.07'/><path d='M19.07 4.93a10 10 0 0 1 0 14.14'/></svg>\") 12 12, auto";
+  const wordCursorStyle = React.useMemo(
+    () => ({
+      cursor: audioModeEnabled ? speakerCursor : "help",
+    }),
+    [audioModeEnabled, speakerCursor]
+  );
+  const handleHeadwordClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!word?.headword) return;
+      onWordClick(word.headword, { forceAudio: true });
+    },
+    [onWordClick, word?.headword]
+  );
 
   if (loading) {
     return (
@@ -384,7 +406,15 @@ export function TrainingCard({
         <h1
           className={`${sizeClass} font-bold tracking-tight text-slate-900 dark:text-white`}
         >
-          {text}
+          <button
+            type="button"
+            data-no-reveal
+            onClick={handleHeadwordClick}
+            className="inline-flex items-center gap-2"
+            style={{ cursor: speakerCursor }}
+          >
+            {text}
+          </button>
         </h1>
       </div>
     );
@@ -508,7 +538,7 @@ export function TrainingCard({
       {/* Top-left controls:
           - Tip: only for W->D before reveal (shows context + example via 'i')
           - Translate: only after reveal (and only if translation UI is enabled) */}
-      {(showTipButton || translationUiEnabled) && (
+      {(showTipButton || translationUiEnabled || onToggleAudioMode) && (
         <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start">
           <div className="flex items-center gap-2">
             {showTipButton && (
@@ -584,6 +614,13 @@ export function TrainingCard({
                 </button>
               </Tooltip>
             )}
+
+            {onToggleAudioMode && (
+              <AudioModeToggle
+                enabled={audioModeEnabled}
+                onToggle={onToggleAudioMode}
+              />
+            )}
           </div>
 
           {isTranslationOpen && translationStatusText ? (
@@ -624,7 +661,15 @@ export function TrainingCard({
                   </span>
                 )}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {word.headword}
+                  <button
+                    type="button"
+                    data-no-reveal
+                    onClick={handleHeadwordClick}
+                    className="inline-flex items-center gap-2"
+                    style={{ cursor: speakerCursor }}
+                  >
+                    {word.headword}
+                  </button>
                 </h1>
               </div>
             </div>
@@ -690,6 +735,7 @@ export function TrainingCard({
                           segments={definitionSegments}
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
+                          cursorStyle={wordCursorStyle}
                         />
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
@@ -712,6 +758,7 @@ export function TrainingCard({
                             segments={idiomPromptSegments}
                             highlightedWord={highlightedWord}
                             onWordClick={onWordClick}
+                            cursorStyle={wordCursorStyle}
                           />
                         </span>
                         {!showNumber &&
@@ -805,6 +852,7 @@ export function TrainingCard({
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
                                   onWordClick={onWordClick}
+                                  cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
                                 />
                               </span>
@@ -890,6 +938,7 @@ export function TrainingCard({
                                   segments={defSegments}
                                   highlightedWord={highlightedWord}
                                   onWordClick={onWordClick}
+                                  cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
                                 />
                               </span>
@@ -926,6 +975,7 @@ export function TrainingCard({
                                           segments={expressionSegments}
                                           highlightedWord={highlightedWord}
                                           onWordClick={onWordClick}
+                                          cursorStyle={wordCursorStyle}
                                           excludeWord={word.headword}
                                         />
                                       </span>
@@ -949,6 +999,7 @@ export function TrainingCard({
                                           segments={explanationSegments}
                                           highlightedWord={highlightedWord}
                                           onWordClick={onWordClick}
+                                          cursorStyle={wordCursorStyle}
                                           excludeWord={word.headword}
                                         />
                                       </span>
@@ -1012,6 +1063,7 @@ export function TrainingCard({
                                     segments={expressionSegments}
                                     highlightedWord={highlightedWord}
                                     onWordClick={onWordClick}
+                                    cursorStyle={wordCursorStyle}
                                     excludeWord={word.headword}
                                   />
                                 </span>
@@ -1050,6 +1102,7 @@ export function TrainingCard({
                                         segments={explanationSegments}
                                         highlightedWord={highlightedWord}
                                         onWordClick={onWordClick}
+                                        cursorStyle={wordCursorStyle}
                                         excludeWord={word.headword}
                                       />
                                     </span>
@@ -1082,6 +1135,7 @@ export function TrainingCard({
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
                                   onWordClick={onWordClick}
+                                  cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
                                 />
                               </span>

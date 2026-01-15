@@ -4,9 +4,10 @@ import { buildSegments } from "@/lib/wordUtils";
 type Props = {
   segments: ReturnType<typeof buildSegments>;
   highlightedWord?: string;
-  onWordClick: (word: string) => void;
+  onWordClick: (word: string, options?: { forceAudio?: boolean }) => void;
   excludeWord?: string; // Word to ignore clicks for (e.g. current answer)
   className?: string;
+  cursorStyle?: React.CSSProperties;
 };
 
 export function InteractiveText({
@@ -15,6 +16,7 @@ export function InteractiveText({
   onWordClick,
   excludeWord,
   className = "",
+  cursorStyle,
 }: Props) {
   const handleWordClick = (
     event: MouseEvent<HTMLButtonElement | HTMLSpanElement>,
@@ -61,6 +63,7 @@ export function InteractiveText({
                   ? "bg-secondary/30 text-secondary-dark font-semibold"
                   : "text-primary underline decoration-dotted underline-offset-4 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
+              style={cursorStyle}
               onClick={(e) =>
                 handleWordClick(e, segment.link?.headword ?? segment.text, true)
               }
@@ -93,6 +96,7 @@ export function InteractiveText({
                       ? "bg-secondary/30 text-secondary-dark font-semibold"
                       : "hover:bg-slate-200/50 dark:hover:bg-slate-800"
                   }`}
+                  style={cursorStyle}
                   onClick={(e) => handleWordClick(e, cleanPart)}
                 >
                   {part}

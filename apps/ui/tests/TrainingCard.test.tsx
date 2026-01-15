@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { vi } from "vitest";
 import { TrainingCard } from "@/components/training/TrainingCard";
 
@@ -41,6 +41,25 @@ test("renders headword and definition segments", () => {
   expect(screen.getByRole("button", { name: /gracht/i })).toBeInTheDocument();
 });
 
+test("headword click requests audio playback", () => {
+  const onWordClick = vi.fn();
+  render(
+    <TrainingCard
+      word={word as any}
+      mode="word-to-definition"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  const heading = screen.getByRole("heading", { name: "huis" });
+  fireEvent.click(within(heading).getByRole("button", { name: "huis" }));
+  expect(onWordClick).toHaveBeenCalledWith("huis", { forceAudio: true });
+});
+
 test("tap/clicking card requests reveal when not revealed", () => {
   const onWordClick = vi.fn();
   const onRequestReveal = vi.fn();
@@ -58,6 +77,6 @@ test("tap/clicking card requests reveal when not revealed", () => {
     />
   );
 
-  fireEvent.click(screen.getByRole("heading", { name: "huis" }));
+  fireEvent.click(screen.getByRole("group", { name: "Training card" }));
   expect(onRequestReveal).toHaveBeenCalledTimes(1);
 });

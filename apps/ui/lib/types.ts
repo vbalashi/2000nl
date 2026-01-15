@@ -5,6 +5,10 @@ export type QueueTurn = "new" | "review" | "auto";
 export type WordRaw = {
   headword?: string;
   cross_reference?: string;
+  audio_links?: {
+    nl?: string | null;
+    be?: string | null;
+  };
   meanings?: Array<{
     definition?: string;
     context?: string;

@@ -23,7 +23,9 @@
       "backlog_reference": "2000NL-006.2",
       "story_points": 2,
       "type": "Infrastructure",
-      "dependencies": ["US-006.1 (completed)"],
+      "dependencies": [
+        "US-006.1 (completed)"
+      ],
       "description": "Configure NUC to serve downloaded audio files as static assets accessible to the 2000nl frontend application. Audio files are already downloaded to /home/khrustal/dev/2000nl-ui/db/audio/ and need to be made accessible via HTTP.",
       "context": {
         "audio_location": "/home/khrustal/dev/2000nl-ui/db/audio/",
@@ -73,17 +75,19 @@
     {
       "id": "US-006.3",
       "title": "Audio Mode and Playback UI",
-      "passes": false,
+      "passes": true,
       "backlog_reference": "2000NL-006.3",
       "story_points": 3,
       "type": "Feature",
-      "dependencies": ["US-006.2"],
+      "dependencies": [
+        "US-006.2"
+      ],
       "description": "Implement Audio Mode toggle button that changes click behavior for words. When enabled, clicking any word plays its pronunciation instead of showing translation overlay.",
       "ux_design": {
         "toggle_location": "Top left of training screen, after hint/translation buttons",
         "button_states": {
-          "off": "Muted speaker icon 🔇 - Regular translation mode",
-          "on": "Active speaker icon 🔊 (colored/filled) - Pronunciation mode"
+          "off": "Muted speaker icon \ud83d\udd07 - Regular translation mode",
+          "on": "Active speaker icon \ud83d\udd0a (colored/filled) - Pronunciation mode"
         },
         "persistence": "Audio mode state persists across cards (localStorage)",
         "click_behavior": {
@@ -93,7 +97,7 @@
         },
         "visual_indicators": {
           "audio_off_cursor": "Help cursor (?)",
-          "audio_on_cursor": "Speaker cursor (🔊)"
+          "audio_on_cursor": "Speaker cursor (\ud83d\udd0a)"
         }
       },
       "technical_implementation": {
@@ -128,13 +132,13 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "component_code_examples": {
-        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '🔊' : '🔇'} <span>Audio</span> </button> ); }",
+        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '\ud83d\udd0a' : '\ud83d\udd07'} <span>Audio</span> </button> ); }",
         "integration": "const [audioModeEnabled, setAudioModeEnabled] = useState(/* ... */); <div className=\"top-controls\"> <HintButton /> <TranslationButton /> <AudioModeToggle enabled={audioModeEnabled} onToggle={() => setAudioModeEnabled(!audioModeEnabled)} /> </div>"
       },
       "styling_notes": [
         "Active state: Different background color or border",
         "Icon size: Match other top buttons",
-        "Touch-friendly: Minimum 44×44px tap target (mobile)"
+        "Touch-friendly: Minimum 44\u00d744px tap target (mobile)"
       ],
       "testing_checklist": [
         "Toggle button appears and is clickable",

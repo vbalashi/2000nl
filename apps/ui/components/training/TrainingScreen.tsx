@@ -149,6 +149,14 @@ export function TrainingScreen({ user }: Props) {
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null
   );
+  const [audioModeEnabled, setAudioModeEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("audioModeEnabled") === "true";
+    } catch {
+      return false;
+    }
+  });
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const cardSwipeRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -165,6 +173,18 @@ export function TrainingScreen({ user }: Props) {
       console.log("[Training] Dev mode enabled: URL params are active.");
     }
   }, [devMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        "audioModeEnabled",
+        audioModeEnabled.toString()
+      );
+    } catch {
+      // Ignore storage errors (e.g. tests without localStorage support).
+    }
+  }, [audioModeEnabled]);
 
   useEffect(() => {
     if (!currentWord) return;
@@ -1015,6 +1035,23 @@ export function TrainingScreen({ user }: Props) {
     translationTooltipOpen,
   ]);
 
+  const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
+    if (!raw) return undefined;
+    return raw.audio_links?.nl || raw.audio_links?.be || undefined;
+  }, []);
+
+  const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {
+    if (!audioUrl) {
+      console.error("[Audio] Missing audio URL for:", wordLabel);
+      return;
+    }
+
+    const audio = new Audio(audioUrl);
+    audio.play().catch((err) => {
+      console.error("[Audio] Audio playback failed:", err);
+    });
+  }, []);
+
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
       console.log("🔍 Word clicked:", clickedWord);
@@ -1103,6 +1140,49 @@ export function TrainingScreen({ user }: Props) {
       });
     },
     [currentWord?.mode, enabledModes, openMobileSidebarTab, user?.id]
+  );
+
+  const handleTrainingWordClick = useCallback(
+    async (clickedWord: string, options?: { forceAudio?: boolean }) => {
+      const shouldPlayAudio = options?.forceAudio || audioModeEnabled;
+      if (!shouldPlayAudio) {
+        await handleDefinitionClick(clickedWord);
+        return;
+      }
+
+      let audioUrl: string | undefined;
+      if (
+        currentWord &&
+        clickedWord.toLowerCase() === currentWord.headword.toLowerCase()
+      ) {
+        audioUrl = resolveAudioUrl(currentWord.raw);
+      }
+
+      if (!audioUrl) {
+        if (!user?.id) {
+          console.error("[Audio] Missing user id for:", clickedWord);
+          return;
+        }
+
+        const entry = await fetchDictionaryEntry(clickedWord, user.id);
+        audioUrl = resolveAudioUrl(entry?.raw ?? null);
+      }
+
+      if (!audioUrl) {
+        console.error("[Audio] No audio link available for:", clickedWord);
+        return;
+      }
+
+      playAudio(audioUrl, clickedWord);
+    },
+    [
+      audioModeEnabled,
+      currentWord,
+      handleDefinitionClick,
+      playAudio,
+      resolveAudioUrl,
+      user?.id,
+    ]
   );
 
   const handleListChange = useCallback(
@@ -1730,7 +1810,7 @@ export function TrainingScreen({ user }: Props) {
                       hintRevealed={hintRevealed}
                       loading={loadingWord}
                       highlightedWord={selectedEntry?.headword}
-                      onWordClick={handleDefinitionClick}
+                      onWordClick={handleTrainingWordClick}
                       userId={user.id}
                       translationLang={translationLang}
                       translationTooltipOpen={translationTooltipOpen}
@@ -1738,6 +1818,10 @@ export function TrainingScreen({ user }: Props) {
                       onToggleHint={toggleHint}
                       onRequestReveal={revealAnswer}
                       onShowDetails={handleShowCurrentWordDetails}
+                      audioModeEnabled={audioModeEnabled}
+                      onToggleAudioMode={() =>
+                        setAudioModeEnabled((prev) => !prev)
+                      }
                     />
                   </div>
                 </div>
