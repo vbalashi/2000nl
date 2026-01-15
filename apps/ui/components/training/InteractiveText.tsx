@@ -4,10 +4,11 @@ import { buildSegments } from "@/lib/wordUtils";
 type Props = {
   segments: ReturnType<typeof buildSegments>;
   highlightedWord?: string;
-  onWordClick: (word: string, options?: { forceAudio?: boolean }) => void;
+  onWordClick: (word: string, options?: { forceAudio?: boolean; sentence?: string }) => void;
   excludeWord?: string; // Word to ignore clicks for (e.g. current answer)
   className?: string;
   cursorStyle?: React.CSSProperties;
+  sentence?: string; // Full sentence text for TTS generation
 };
 
 export function InteractiveText({
@@ -17,6 +18,7 @@ export function InteractiveText({
   excludeWord,
   className = "",
   cursorStyle,
+  sentence,
 }: Props) {
   const handleWordClick = (
     event: MouseEvent<HTMLButtonElement | HTMLSpanElement>,
@@ -46,8 +48,8 @@ export function InteractiveText({
       return;
     }
 
-    console.log("✅ Calling onWordClick with:", cleanBox);
-    onWordClick(cleanBox);
+    console.log("✅ Calling onWordClick with:", cleanBox, "sentence:", sentence);
+    onWordClick(cleanBox, { sentence });
   };
 
   return (

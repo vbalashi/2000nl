@@ -854,6 +854,7 @@ export function TrainingCard({
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
+                                  sentence={ex}
                                 />
                               </span>
                             </div>
@@ -1137,6 +1138,7 @@ export function TrainingCard({
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
+                                  sentence={ex}
                                 />
                               </span>
                             </p>

@@ -217,7 +217,7 @@
     {
       "id": "US-006.4",
       "title": "Google TTS Integration for Sentences (Optional)",
-      "passes": false,
+      "passes": true,
       "backlog_reference": "2000NL-040",
       "story_points": 5,
       "type": "Feature/Backend",

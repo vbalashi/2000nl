@@ -157,6 +157,7 @@ export function TrainingScreen({ user }: Props) {
       return false;
     }
   });
+  const [ttsLoading, setTtsLoading] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const cardSwipeRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -1053,6 +1054,42 @@ export function TrainingScreen({ user }: Props) {
     });
   }, []);
 
+  const playSentenceTTS = useCallback(async (sentence: string) => {
+    if (!sentence.trim()) {
+      console.error("[TTS] Empty sentence");
+      return;
+    }
+
+    setTtsLoading(true);
+    try {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: sentence.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("[TTS] API error:", error);
+
+        // Show user-friendly error message
+        if (!error.configured) {
+          console.log("[TTS] Google TTS is not configured. Sentence pronunciation unavailable.");
+        }
+        return;
+      }
+
+      const data = await response.json();
+      if (data.url) {
+        playAudio(data.url, sentence.slice(0, 50));
+      }
+    } catch (err) {
+      console.error("[TTS] Request failed:", err);
+    } finally {
+      setTtsLoading(false);
+    }
+  }, [playAudio]);
+
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
       console.log("🔍 Word clicked:", clickedWord);
@@ -1144,13 +1181,23 @@ export function TrainingScreen({ user }: Props) {
   );
 
   const handleTrainingWordClick = useCallback(
-    async (clickedWord: string, options?: { forceAudio?: boolean }) => {
-      const shouldPlayAudio = options?.forceAudio || audioModeEnabled;
-      if (!shouldPlayAudio) {
+    async (clickedWord: string, options?: { forceAudio?: boolean; sentence?: string }) => {
+      // Headword always plays audio (forceAudio is set for headword clicks)
+      const isHeadwordClick = options?.forceAudio;
+
+      // For non-headword clicks: audio mode ON = play sentence TTS, audio mode OFF = show translation
+      if (!isHeadwordClick && !audioModeEnabled) {
         await handleDefinitionClick(clickedWord);
         return;
       }
 
+      // If clicking a word in a sentence context AND audio mode is enabled, play sentence TTS
+      if (!isHeadwordClick && options?.sentence && audioModeEnabled) {
+        await playSentenceTTS(options.sentence);
+        return;
+      }
+
+      // Otherwise, play word audio (headword or clicked word)
       let audioUrl: string | undefined;
       if (
         currentWord &&
@@ -1181,6 +1228,7 @@ export function TrainingScreen({ user }: Props) {
       currentWord,
       handleDefinitionClick,
       playAudio,
+      playSentenceTTS,
       resolveAudioUrl,
       user?.id,
     ]
