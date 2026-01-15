@@ -83,7 +83,7 @@
     {
       "id": "US-006.2",
       "title": "Audio Storage on NUC",
-      "passes": false,
+      "passes": true,
       "backlog_reference": "2000NL-006.2",
       "story_points": 2,
       "type": "Infrastructure",
