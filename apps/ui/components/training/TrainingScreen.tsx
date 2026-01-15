@@ -1037,7 +1037,8 @@ export function TrainingScreen({ user }: Props) {
 
   const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
     if (!raw) return undefined;
-    return raw.audio_links?.nl || raw.audio_links?.be || undefined;
+    // Dutch (nl) pronunciation only for MVP - no fallback to Belgian (be)
+    return raw.audio_links?.nl || undefined;
   }, []);
 
   const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {

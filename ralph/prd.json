@@ -130,7 +130,7 @@
     {
       "id": "US-006.3",
       "title": "Audio Mode and Playback UI",
-      "passes": false,
+      "passes": true,
       "backlog_reference": "2000NL-006.3",
       "story_points": 3,
       "type": "Feature",
