@@ -141,8 +141,8 @@
       "ux_design_corrected": {
         "toggle_location": "Top left of training screen, after hint/translation buttons",
         "button_states": {
-          "off": "Muted speaker icon 🔇 - Regular translation mode",
-          "on": "Active speaker icon 🔊 (colored/filled) - Sentence pronunciation mode"
+          "off": "Muted speaker icon \ud83d\udd07 - Regular translation mode",
+          "on": "Active speaker icon \ud83d\udd0a (colored/filled) - Sentence pronunciation mode"
         },
         "persistence": "Audio mode state persists across cards (localStorage)",
         "click_behavior": {
@@ -153,7 +153,7 @@
         },
         "visual_indicators": {
           "audio_off_cursor": "Help cursor (?) on hover over words in examples",
-          "audio_on_cursor": "Speaker cursor (🔊) on hover over words in examples",
+          "audio_on_cursor": "Speaker cursor (\ud83d\udd0a) on hover over words in examples",
           "sentence_highlight": "Slight highlight on sentence being played (low priority)",
           "radiowave_animation": "Animated radiowave/audio icon while sentence plays (low priority)"
         }
@@ -193,13 +193,13 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "component_code_examples": {
-        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '🔊' : '🔇'} <span>Audio</span> </button> ); }",
+        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '\ud83d\udd0a' : '\ud83d\udd07'} <span>Audio</span> </button> ); }",
         "integration": "const [audioModeEnabled, setAudioModeEnabled] = useState(/* ... */); <div className=\"top-controls\"> <HintButton /> <TranslationButton /> <AudioModeToggle enabled={audioModeEnabled} onToggle={() => setAudioModeEnabled(!audioModeEnabled)} /> </div>"
       },
       "styling_notes": [
         "Active state: Different background color or border",
         "Icon size: Match other top buttons",
-        "Touch-friendly: Minimum 44×44px tap target (mobile)"
+        "Touch-friendly: Minimum 44\u00d744px tap target (mobile)"
       ],
       "testing_checklist": [
         "Toggle button appears and is clickable",

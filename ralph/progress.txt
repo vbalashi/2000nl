@@ -1,5 +1,6 @@
 # Arch Migration Progress Log
 ## Codebase Patterns
+- Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
 - Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
 - Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
 - Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
@@ -40,4 +41,12 @@ Started: wo 14 jan 2026 19:08:08 CET
 - **Learnings for future iterations:**
   - Audio links are available on `word.raw.audio_links` (prefer nl, fallback be).
   - Guard localStorage access with try/catch to keep jsdom tests green.
+---
+
+## 2026-01-16 15:18:21 - US-034
+- Refactored translation rendering to flow layout so translations sit directly beneath their sentence across headword, definitions, idioms, context, and examples.
+- Removed absolute overlay positioning and adjusted layout wrappers to align translations with sentence width.
+- Verified translation anchoring in dev-browser (desktop + mobile screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-before-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-after-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-translation-open-mobile.png).
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
 ---
