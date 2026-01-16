@@ -1682,7 +1682,7 @@ export function TrainingScreen({ user }: Props) {
               role="button"
               tabIndex={0}
               aria-label="Instellingen"
-              className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               onClick={() => {
                 setSettingsInitialTab("instellingen");
                 setSettingsAutoFocusWordSearch(false);
@@ -1723,7 +1723,7 @@ export function TrainingScreen({ user }: Props) {
               role="button"
               tabIndex={0}
               aria-label="Hotkeys"
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               onClick={() => setShowHotkeys(true)}
               onKeyDown={(e) => e.key === "Enter" && setShowHotkeys(true)}
             >
