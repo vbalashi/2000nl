@@ -217,6 +217,15 @@ On mobile, users can swipe left for "opniew" (again) and right for "goed" (corre
 
 ---
 
+### Mobile Header Layout Fix
+**Added:** 2026-01-16 (Sprint: Mobile & UX Polish)
+**User Story:** US-042
+
+**Behavior:**
+The header layout now works correctly in mobile view with proper positioning of the theme switcher and settings button. The help '?' button is hidden on mobile to reduce clutter and provide a cleaner interface. These changes ensure the header is fully accessible and functional across all mobile viewport sizes while maintaining consistency with desktop behavior.
+
+---
+
 ## Data Model
 
 ### Key Tables
