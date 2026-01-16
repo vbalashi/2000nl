@@ -109,7 +109,7 @@
         "Summary of findings ready for next sprint planning"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "technicalContext": {
         "files": ["apps/ui/components/training/TrainingCard.tsx"],

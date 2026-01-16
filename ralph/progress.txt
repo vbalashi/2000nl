@@ -3,6 +3,7 @@
 - Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
 - Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
 - Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
+- Translation overlays are fetched via `/api/translation` and rendered in `apps/ui/components/training/TrainingCard.tsx` as absolutely positioned InlineTranslation spans; translation language is stored in user preferences.
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
@@ -150,4 +151,21 @@ Started: wo 14 jan 2026 19:08:08 CET
 - Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
 - **Learnings for future iterations:**
   - Example marker styling uses an absolutely positioned 2px bar with a slight negative left offset to keep text aligned.
+---
+## 2026-01-16 14:46:38 - US-EXPLORE
+- Translation System Exploration:
+  - Data flow: TrainingScreen state (translationLang + tooltip) -> TrainingCard fetches `/api/translation` -> Supabase `word_entry_translations` -> overlay rendered per line via InlineTranslation.
+  - Positioning: InlineTranslation is `absolute` with `bottom-full` inside `relative` wrappers; overlays do not affect layout flow and are anchored to the wrapper, not to the actual wrapped line.
+  - Anchoring issues: multi-line definitions/examples can show overlay detached from the intended line because the absolute overlay is tied to the container bounds rather than the text line.
+  - Wrapping/clipping: overlay text is forced to a single line (`truncate`) so long translations ellipsize; overlays can clip near the top of the scroll container (padding added only for the header block).
+  - Files involved: apps/ui/components/training/TrainingCard.tsx, apps/ui/components/training/TrainingScreen.tsx, apps/ui/components/training/SettingsModal.tsx, apps/ui/app/api/translation/route.ts, apps/ui/lib/trainingService.ts, apps/ui/lib/types.ts.
+  - Toggle + persistence: Settings -> Instellingen -> Vertaling writes `translation_lang` via `updateUserPreferences` (default `null` disables UI until set).
+  - Refactor estimates: US-034 anchoring = medium/high (needs line/word-level anchoring or flow layout), US-036 wrapping = medium (allow multi-line overlay with layout-aware spacing).
+- Browser verification: dev-browser on http://localhost:3001; translation overlay visible after enabling translation language and revealing answer.
+- Annotated screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/translation-overlay-visible-annotated.png (overlay visible), /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/translation-annotated.png (system notes).
+- Files changed: ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Translation UI is hidden until both `revealed` is true and `translationLang` is set (non-null and not "off").
+  - The overlay uses absolute positioning (`bottom-full`) + `truncate`, which is the root of anchoring and wrapping constraints.
+  - `/api/translation` only translates `meanings[0]` fields and caches via `source_fingerprint` in `word_entry_translations`.
 ---
