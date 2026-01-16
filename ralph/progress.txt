@@ -184,3 +184,15 @@ Started: wo 14 jan 2026 19:08:08 CET
 - **Learnings for future iterations:**
   - Translation text wrapping is controlled by the InlineTranslation classes in `apps/ui/components/training/TrainingCard.tsx`.
 ---
+## 2026-01-16 23:38:28 CET - US-042
+- Fixed mobile header layout to properly display theme switcher, settings button, and hide help button.
+- Removed `hidden md:flex` from Settings button, making it visible on all screen sizes including mobile.
+- Added `hidden md:flex` to Help '?' button, hiding it on mobile screens.
+- Verified on mobile (375px) and tablet (768px) viewports using dev-browser.
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Header layout is in `apps/ui/components/training/TrainingScreen.tsx` around lines 1630-1770.
+  - Use `hidden md:flex` to hide elements on mobile while showing on desktop (md breakpoint is 768px).
+  - Use `flex` alone to show on all screen sizes.
+  - Mobile viewport testing with dev-browser requires setting viewport size (375x667 for mobile, 768x1024 for tablet).
+---
