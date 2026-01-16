@@ -1,343 +1,142 @@
 {
-  "sprint_name": "Audio Pronunciation (CORRECTED)",
-  "story_points": 12,
-  "created": "2026-01-15",
-  "updated": "2026-01-15",
-  "status": "Blocked - US-006.2 and US-006.3 marked complete with bugs, reverted",
-  "codebase_path": "/home/khrustal/dev/2000nl-ui",
-  "introduction": "This sprint implements audio pronunciation for Dutch words in the 2000nl app. US-006.1 (audio download) completed successfully with 4,330 MP3 files. HOWEVER, bugs were discovered: audio files are not accessible via HTTP, and the audio mode behavior specification was incorrect. This updated PRD adds the blocker issue (US-006.2-BLOCKER) and corrects the behavior for US-006.3. US-006.2 and US-006.3 have been REVERTED to incomplete status.",
-  "bug_report": {
-    "discovered": "2026-01-15",
-    "issues": [
-      "Audio files downloaded to /db/audio/ but not accessible via HTTP - app requests http://spraak/... which doesn't exist",
-      "Audio mode behavior was incorrectly specified - headword should ALWAYS play audio (both modes), and audio mode ON should play ENTIRE SENTENCE (not just word)",
-      "No nl/be pronunciation preference - should default to nl-only for MVP"
-    ],
-    "new_stories_added": [
-      "US-006.2-BLOCKER (2000NL-039) - Fix audio file serving configuration",
-      "US-006.4 (2000NL-040) - Google TTS integration for sentence pronunciation"
-    ]
-  },
-  "completed_stories": [
+  "project": "2000nl",
+  "branchName": "ralph/layout-polish-translation-discovery",
+  "description": "Layout Polish & Translation Discovery - Mobile layout optimization, example alignment consistency, sidebar UX improvements, and translation system exploration for next sprint",
+  "userStories": [
     {
-      "id": "US-006.1",
-      "title": "Audio Download Script",
-      "backlog_reference": "2000NL-006.1",
-      "story_points": 3,
-      "status": "completed",
-      "completion_date": "2026-01-15",
-      "summary": "Downloaded 4,330 MP3 files (2,078 nl + 2,252 be) totaling 109 MB with 99.8% success rate. Script and documentation available at /scripts/download-audio.py and /docs/audio-download.md."
-    }
-  ],
-  "user_stories": [
-    {
-      "id": "US-006.2-BLOCKER",
-      "title": "Audio File Serving Configuration (BLOCKER)",
-      "passes": true,
-      "backlog_reference": "2000NL-039",
-      "story_points": 2,
-      "type": "Bug/Infrastructure",
-      "priority": "HIGH - BLOCKER for US-006.2 and US-006.3",
-      "dependencies": [
-        "US-006.1 (completed)"
-      ],
-      "description": "Fix audio file serving - app is looking for files at http://spraak/nl/k/... but files are stored at /home/khrustal/dev/2000nl-ui/db/audio/nl/k/. Configure proper static file serving with relative paths that work in both development and production.",
-      "problem": {
-        "current_state": "Audio files downloaded to /home/khrustal/dev/2000nl-ui/db/audio/nl/k/",
-        "app_requesting": "http://spraak/nl/k/eJRz6U5cOlp9GpSRDkquUg",
-        "result": "404 errors, audio cannot be played",
-        "root_cause": "Word data contains placeholder URLs from scraping, no static serving configured"
-      },
-      "technical_approach": [
-        "Create symlink: apps/ui/public/audio -> ../../db/audio",
-        "Update all word JSON files to transform URLs: http://spraak/nl/k/hash -> /audio/nl/k/hash.mp3",
-        "Create script: scripts/update-audio-urls.py to process all ~18k word files",
-        "Verify audio accessible at /audio/nl/[letter]/[hash].mp3"
-      ],
-      "acceptance_criteria": [
-        "Audio files accessible via HTTP in development (e.g., http://localhost:3000/audio/nl/k/hash.mp3)",
-        "Symlink created: apps/ui/public/audio points to db/audio",
-        "Script created: scripts/update-audio-urls.py",
-        "Word data updated with correct URLs (all ~18,000 files in db/data/words_content/)",
-        "Test audio playback in browser (manually access URL and verify it plays)",
-        "Solution is portable (works when deployed to production NUC - no hardcoded absolute paths)",
-        "Documentation updated with audio URL format",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
-      ],
-      "implementation_notes": {
-        "symlink_command": "cd /home/khrustal/dev/2000nl-ui/apps/ui/public && ln -s ../../db/audio audio",
-        "url_update_script": "Python script to read all JSON files in db/data/words_content/, transform audio_links field (http://spraak/ -> /audio/), add .mp3 extension, save updated JSON",
-        "nl_only_for_mvp": "Frontend will use nl audio only. Belgian (be) pronunciation choice deferred to future enhancement.",
-        "example_transformation": "http://spraak/nl/k/hash -> /audio/nl/k/hash.mp3"
-      },
-      "testing_checklist": [
-        "Access sample audio file via browser: http://localhost:3000/audio/nl/v/[hash].mp3",
-        "Verify audio file downloads/plays in browser",
-        "Check multiple files (nl variant)",
-        "Verify symlink persists after server restart",
-        "Check sample word JSON has updated URL format",
-        "Verify all ~18k word files processed by update script"
-      ],
-      "notes": "This is a BLOCKER for US-006.2 and US-006.3. Must be completed first. Should have been caught during US-006.1 completion."
-    },
-    {
-      "id": "US-006.2",
-      "title": "Audio Storage on NUC",
-      "passes": true,
-      "backlog_reference": "2000NL-006.2",
-      "story_points": 2,
-      "type": "Infrastructure",
-      "dependencies": [
-        "US-006.2-BLOCKER (must complete first)"
-      ],
-      "description": "Verify and document audio file serving setup. This is mostly completed by US-006.2-BLOCKER, but needs verification that the solution works across environments.",
-      "context": {
-        "audio_location": "/home/khrustal/dev/2000nl-ui/db/audio/",
-        "downloaded_files": 4330,
-        "storage_used": "109 MB",
-        "file_structure": "db/audio/nl/ and db/audio/be/ with subdirectories by letter",
-        "approach": "Next.js public folder with symlink",
-        "nl_only_for_mvp": "Frontend will use nl audio only. Belgian (be) audio choice deferred to future enhancement."
-      },
-      "acceptance_criteria": [
-        "Verify audio files accessible via HTTP (e.g., http://localhost:3000/audio/nl/v/hash.mp3)",
-        "Verify symlink works after app restart",
-        "Test with multiple audio files (nl variant)",
-        "Verify word data has updated URLs",
-        "Works in both development and production environments",
-        "Documentation created/updated with audio URL format and nl-only approach",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
-      ],
-      "implementation_notes": {
-        "mostly_done_by_blocker": "US-006.2-BLOCKER handles the actual implementation. This story is for verification and documentation.",
-        "nl_only": "Use word.audio_links?.nl only. Do not fallback to be. Belgian pronunciation will be added later as user preference.",
-        "example_updated_data": {
-          "headword": "vertrekken",
-          "audio_links": {
-            "nl": "/audio/nl/v/XSnYshTZU+ruTokh+miJeQ.mp3",
-            "be": "/audio/be/v/t4J0nkM-gmzD6t6baXHTxg.mp3"
-          }
-        }
-      },
-      "testing_checklist": [
-        "Access audio via browser: http://localhost:3000/audio/nl/v/[sample-hash].mp3",
-        "Verify file downloads/plays correctly",
-        "Test with multiple audio files",
-        "Verify symlink persists after app restart",
-        "Check sample word data has updated URLs"
-      ]
-    },
-    {
-      "id": "US-006.3",
-      "title": "Audio Mode and Playback UI",
-      "passes": true,
-      "backlog_reference": "2000NL-006.3",
-      "story_points": 3,
-      "type": "Feature",
-      "dependencies": [
-        "US-006.2 (audio files must be accessible)"
-      ],
-      "description": "Implement Audio Mode toggle button. IMPORTANT: Headword ALWAYS plays audio (both modes). Audio mode OFF = translation overlay for words in examples. Audio mode ON = play entire sentence TTS (stub out for now if US-006.4 not done).",
-      "ux_design_corrected": {
-        "toggle_location": "Top left of training screen, after hint/translation buttons",
-        "button_states": {
-          "off": "Muted speaker icon 🔇 - Regular translation mode",
-          "on": "Active speaker icon 🔊 (colored/filled) - Sentence pronunciation mode"
-        },
-        "persistence": "Audio mode state persists across cards (localStorage)",
-        "click_behavior": {
-          "headword": "ALWAYS plays word audio (both modes) - this is critical",
-          "audio_off_word_in_example": "Click word in definition/example shows translation overlay (current behavior)",
-          "audio_on_word_in_example": "Click any word in sentence plays ENTIRE SENTENCE TTS (requires US-006.4, can stub out)",
-          "audio_on_headword": "Headword still plays word audio (single word, not in sentence context)"
-        },
-        "visual_indicators": {
-          "audio_off_cursor": "Help cursor (?) on hover over words in examples",
-          "audio_on_cursor": "Speaker cursor (🔊) on hover over words in examples",
-          "sentence_highlight": "Slight highlight on sentence being played (low priority)",
-          "radiowave_animation": "Animated radiowave/audio icon while sentence plays (low priority)"
-        }
-      },
-      "technical_implementation": {
-        "files_to_modify": [
-          "apps/ui/components/training/TrainingScreen.tsx - Add audio mode state and toggle",
-          "apps/ui/components/training/TrainingCard.tsx - Modify word click handler with context (headword vs sentence)"
-        ],
-        "files_to_create": [
-          "apps/ui/components/training/AudioModeToggle.tsx - New toggle button component"
-        ],
-        "state_management": {
-          "state": "const [audioModeEnabled, setAudioModeEnabled] = useState(() => localStorage.getItem('audioModeEnabled') === 'true');",
-          "persistence": "useEffect(() => { localStorage.setItem('audioModeEnabled', audioModeEnabled.toString()); }, [audioModeEnabled]);"
-        },
-        "word_click_handler_corrected": "function handleWordClick(word: string, context: 'headword' | 'sentence', audioUrl?: string, sentence?: string) { if (context === 'headword' && audioUrl) { playAudio(audioUrl); /* Headword ALWAYS plays audio */ } else if (context === 'sentence') { if (audioModeEnabled && sentence) { playSentenceTTS(sentence); /* Requires US-006.4, stub out if not done */ } else if (!audioModeEnabled) { showTranslation(word); /* Translation overlay */ } } }",
-        "audio_url_resolution_nl_only": "const audioUrl = word.audio_links?.nl; // Dutch only for MVP, no fallback to be",
-        "sentence_tts_stub": "If US-006.4 not completed, show console.log('Sentence TTS not yet implemented') or toast notification 'Coming soon'"
-      },
-      "acceptance_criteria": [
-        "Audio mode toggle button visible in top left (after hint/translation buttons)",
-        "Button shows clear visual state (OFF = muted icon, ON = active speaker icon)",
-        "Clicking toggle switches between modes",
-        "Audio mode state persists across cards (localStorage)",
-        "Audio mode state persists across page reloads",
-        "HEADWORD: Always plays word audio on click (both modes) - CRITICAL",
-        "Audio mode OFF: Clicking word in example/definition shows translation overlay (current behavior)",
-        "Audio mode ON: Clicking word in example/definition plays entire sentence TTS (stub out if US-006.4 not done)",
-        "Cursor changes on hover to indicate mode (speaker icon in audio mode, help icon otherwise)",
-        "Word audio (headword) plays correctly using VanDale MP3 files (nl variant only)",
-        "Dutch (nl) audio only - no fallback to Belgian (be)",
-        "Error handling for missing/failed audio (graceful fallback, no crashes)",
-        "Audio playback works on desktop",
-        "Audio playback works on mobile",
+      "id": "US-037",
+      "title": "Mobile Left Gutter Width Optimization",
+      "description": "Reduce excessive left gutter width on mobile to maximize reading space and improve line length for better readability. Badge column takes up disproportionate horizontal space, forcing text column to be unnecessarily narrow.",
+      "acceptanceCriteria": [
+        "Left gutter width reduced on mobile (viewport < 768px)",
+        "Text column starts closer to left edge",
+        "Badge column width minimized (e.g., 2-3rem instead of 4-5rem)",
+        "Desktop layout unchanged",
+        "Line length increased by at least 20-30%",
+        "Verify on actual mobile device or DevTools mobile viewport",
         "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
         "Verify in browser using Chrome DevTools MCP"
       ],
-      "component_code_examples": {
-        "AudioModeToggle": "interface AudioModeToggleProps { enabled: boolean; onToggle: () => void; } export function AudioModeToggle({ enabled, onToggle }: AudioModeToggleProps) { return ( <button onClick={onToggle} aria-label=\"Toggle audio mode\" className={`audio-mode-toggle ${enabled ? 'active' : ''}`}> {enabled ? '🔊' : '🔇'} <span>Audio</span> </button> ); }",
-        "integration": "const [audioModeEnabled, setAudioModeEnabled] = useState(/* ... */); <div className=\"top-controls\"> <HintButton /> <TranslationButton /> <AudioModeToggle enabled={audioModeEnabled} onToggle={() => setAudioModeEnabled(!audioModeEnabled)} /> </div>"
-      },
-      "styling_notes": [
-        "Active state: Different background color or border",
-        "Icon size: Match other top buttons",
-        "Touch-friendly: Minimum 44×44px tap target (mobile)"
-      ],
-      "testing_checklist": [
-        "Toggle button appears and is clickable",
-        "State persists when navigating to next card",
-        "State persists after page reload",
-        "Headword ALWAYS plays audio (both modes)",
-        "Audio mode OFF: word click shows translation",
-        "Audio mode ON: word click plays sentence TTS (or shows stub message)",
-        "Works on mobile viewport",
-        "Error doesn't crash app if audio fails to load",
-        "Only nl audio is used (no be fallback)"
-      ],
-      "notes": "Sentence TTS requires US-006.4 (Google TTS integration). Can stub out with console.log or 'Coming soon' message if US-006.4 not completed. Headword audio behavior is ALWAYS enabled - this is critical UX requirement."
-    },
-    {
-      "id": "US-006.4",
-      "title": "Google TTS Integration for Sentences (Optional)",
+      "priority": 1,
       "passes": true,
-      "backlog_reference": "2000NL-040",
-      "story_points": 5,
-      "type": "Feature/Backend",
-      "priority": "Medium (enhances US-006.3, but not required for MVP)",
-      "dependencies": [
-        "US-006.3 (UI must be in place)"
+      "notes": "",
+      "technicalContext": {
+        "files": ["apps/ui/components/training/TrainingCard.tsx"],
+        "approach": "Add mobile-specific CSS/Tailwind width adjustments using responsive breakpoints (max-width: 768px). Reduce padding/margin in badge column for mobile.",
+        "importance": "First story in sprint - establishes mobile layout foundation for all subsequent work"
+      }
+    },
+    {
+      "id": "US-021",
+      "title": "Recent Tab Focus on Word Click",
+      "description": "When the details panel is open on 'recent opgezocht' tab, clicking a word on the main card should switch focus to the 'recent' tab. Currently the word is added to the list but focus doesn't switch, causing user confusion.",
+      "acceptanceCriteria": [
+        "Clicking word on main card switches focus to 'recent' tab when details panel is open",
+        "Word appears in 'recent' list as expected",
+        "No focus switch when details panel is closed",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Verify in browser using Chrome DevTools MCP"
       ],
-      "description": "Integrate Google Cloud Text-to-Speech (Chirp 3: HD voices) to generate audio for sentence pronunciation. When user clicks a word in a sentence (in Audio Mode), the entire sentence should be read aloud. Audio files are cached after first generation.",
-      "context": {
-        "service": "Google Cloud Text-to-Speech",
-        "voices": "Chirp 3: HD voices (high quality, natural-sounding)",
-        "language": "Dutch (nl-NL)",
-        "documentation": "https://cloud.google.com/text-to-speech/docs/apis",
-        "example_code": "/home/khrustal/dev/2000nl-ui/docs/google-tts-snippets.md",
-        "api_key": "User will provide later"
-      },
-      "technical_requirements": [
-        "Google Cloud project with Text-to-Speech API enabled",
-        "API key or service account configured (environment variable)",
-        "Create backend API route: /api/tts/generate",
-        "Implement cache-first logic (check cache before API call)",
-        "Cache directory: db/audio/tts/ with subdirectories by hash",
-        "Cache key: SHA-256 hash of sentence text (first 16 chars)",
-        "Symlink TTS cache to public folder for frontend access"
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "technicalContext": {
+        "files": ["apps/ui/components/training/TrainingScreen.tsx"],
+        "approach": "Modify word click handler to add tab switching logic when word is clicked and details panel is open. Detect current tab state and switch to 'recent' if needed.",
+        "importance": "Independent story, can run in parallel with US-037. Simple UX improvement, low risk."
+      }
+    },
+    {
+      "id": "US-035",
+      "title": "Example Text Alignment with Vertical Bar",
+      "description": "Fix example sentence alignment so text aligns with the main content column, not with the vertical bar marker (|). Currently, example sentences are aligned to the bar instead of the main text, causing visual misalignment and breaking vertical rhythm.",
+      "acceptanceCriteria": [
+        "Example sentences align with main text above them",
+        "Vertical bar (|) is positioned to the left as a marker",
+        "Bar does not affect text alignment",
+        "Consistent alignment on mobile and desktop",
+        "Screenshots show before/after comparison",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Verify in browser using Chrome DevTools MCP"
       ],
-      "implementation_flow": [
-        "1. Frontend calls /api/tts/generate with sentence text",
-        "2. Backend checks cache: db/audio/tts/[hash].mp3",
-        "3. If cached: return URL immediately",
-        "4. If not cached: request from Google TTS API, save to cache, return URL",
-        "5. Frontend shows loading indicator during first generation",
-        "6. Frontend plays audio from returned URL"
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "technicalContext": {
+        "files": ["apps/ui/components/training/TrainingCard.tsx"],
+        "approach": "Use CSS margin/padding or pseudo-element for the bar. Example: padding-left for text, ::before for bar positioned in the padding area. Or use negative margin on the bar itself.",
+        "cssPattern": ".example { padding-left: 1.5em; position: relative; } .example::before { content: '|'; position: absolute; left: 0.5em; }",
+        "importance": "Establishes pattern for US-038. Simple CSS/layout adjustment."
+      }
+    },
+    {
+      "id": "US-038",
+      "title": "Example Cards Left-Alignment and Markers",
+      "description": "Fix example sentences shown between cards to use consistent left-alignment and vertical bar markers, matching the visual language of in-card examples. Currently, examples between cards are center-aligned with no vertical marker, making it unclear if text is one multi-line example or multiple examples.",
+      "acceptanceCriteria": [
+        "Example sentences between cards are left-aligned",
+        "Each example has vertical bar (|) marker",
+        "Multiple examples clearly separated as distinct items",
+        "Consistent styling with in-card examples",
+        "Works on mobile and desktop",
+        "Screenshots show before/after comparison",
+        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Verify in browser using Chrome DevTools MCP"
       ],
-      "acceptance_criteria": [
-        "Google Cloud TTS API integrated and authenticated",
-        "Backend API endpoint created: /api/tts/generate",
-        "TTS generates Dutch audio for sentences",
-        "Audio files cached after first generation (db/audio/tts/)",
-        "Subsequent requests use cached files (no API calls)",
-        "Cache key generation is deterministic (same sentence = same file)",
-        "Loading indicator shown during first TTS generation",
-        "Audio plays successfully from cache on subsequent requests",
-        "Error handling for TTS failures (show user-friendly message)",
-        "No crashes if TTS API is unavailable",
-        "First TTS generation completes in <3 seconds (typical)",
-        "Cached audio plays immediately (<500ms)",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)"
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "technicalContext": {
+        "files": ["apps/ui/components/training/TrainingScreen.tsx"],
+        "approach": "Modify example display in TrainingScreen.tsx or separate example component. Change text-align: center to text-align: left. Add vertical bar marker using same pattern as in-card examples (from US-035).",
+        "componentPattern": "{examples.map(example => (<div className=\"example-item\"><span className=\"marker\">|</span><span className=\"example-text\">{example}</span></div>))}",
+        "importance": "Must be done after US-035 to apply same pattern consistently. Ensures visual consistency across entire app."
+      }
+    },
+    {
+      "id": "US-EXPLORE",
+      "title": "Translation System Architecture Exploration",
+      "description": "Explore and document the current translation overlay implementation to inform the next sprint's translation refactoring work (US-034: Translation Anchoring, US-036: Translation Wrapping). This is intentionally placed LAST in the sprint so Ralph can document findings for planning the next sprint.",
+      "acceptanceCriteria": [
+        "Document current translation positioning mechanism (absolute/relative/flow?)",
+        "Identify specific CSS/layout causing anchoring issues",
+        "Identify specific constraints causing wrapping/clipping",
+        "Map component structure for translation rendering",
+        "Recommend refactoring approach for next sprint",
+        "Estimate complexity for US-034/US-036: low/medium/high",
+        "Create detailed exploration notes in progress.txt",
+        "Screenshots of current behavior with technical annotations",
+        "Summary of findings ready for next sprint planning"
       ],
-      "implementation_notes": {
-        "npm_package": "@google-cloud/text-to-speech",
-        "voice_config": {
-          "languageCode": "nl-NL",
-          "name": "nl-NL-Wavenet-E",
-          "ssmlGender": "FEMALE",
-          "audioEncoding": "MP3"
-        },
-        "cache_location": "/home/khrustal/dev/2000nl-ui/db/audio/tts/",
-        "visual_indicators": [
-          "Loading state: Animated wave/spinner on sentence (low priority)",
-          "Playing state: Slight highlight on sentence (low priority)",
-          "Radiowave animation during playback (low priority)"
-        ]
-      },
-      "testing_checklist": [
-        "TTS API authentication works",
-        "Generate audio for sample sentence successfully",
-        "Verify audio file is valid (plays in browser)",
-        "Cache file created in correct location",
-        "Second request uses cached file (check logs/network tab)",
-        "Loading indicator appears during first generation",
-        "Audio plays immediately from cache",
-        "Error handling works (disconnect internet, test graceful failure)"
-      ],
-      "cost_estimation": {
-        "pricing": "WaveNet voices: $16 per 1M characters",
-        "average_sentence": "~50 characters",
-        "unique_sentences": "~20,000-30,000",
-        "first_time_cost": "$0.80-$1.20 (one-time)",
-        "mitigation": "Caching reduces API calls to once per unique sentence"
-      },
-      "notes": "This story is OPTIONAL for US-006.3 completion. US-006.3 can be completed with stubbed sentence TTS ('Coming soon' message). This story enhances the audio mode experience but is not required for MVP."
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "technicalContext": {
+        "files": ["apps/ui/components/training/TrainingCard.tsx"],
+        "approach": "Read and analyze TrainingCard.tsx, search for translation-related components/logic. Use Chrome DevTools MCP to inspect current translation rendering. Take screenshots with annotations showing current issues. Document findings in ralph/progress.txt.",
+        "deliverable": "A clear technical summary in ralph/progress.txt under section 'Translation System Exploration' that will inform US-034 and US-036 implementation in the next sprint.",
+        "explorationGoals": [
+          "How are translations currently positioned? (absolute, relative, flow layout?)",
+          "What CSS/layout approach is used?",
+          "Where is the translation rendering logic in the codebase?",
+          "What causes the current anchoring issues (translations appearing attached to wrong line)?",
+          "What causes the current wrapping/clipping issues?",
+          "Map the component tree for translation display",
+          "Identify all files involved in translation rendering",
+          "Document data flow (how translation text reaches the UI)",
+          "Find where translation toggle state is managed",
+          "Are translations using absolute positioning?",
+          "Are there overflow/height constraints causing clipping?",
+          "How does the current implementation handle long translations?",
+          "What happens when multiple translations are shown?",
+          "Recommend positioning strategy (flexbox, grid, flow layout?)",
+          "Identify what needs to change for proper anchoring",
+          "Identify what needs to change for proper wrapping",
+          "Estimate refactoring scope: low/medium/high complexity",
+          "Flag any unexpected dependencies or edge cases"
+        ],
+        "importance": "INTENTIONALLY LAST STORY - Informs next sprint planning. No code changes required, pure exploration. Findings will de-risk US-034 and US-036 (next sprint). May discover that translation work is simpler OR more complex than estimated."
+      }
     }
-  ],
-  "technical_environment": {
-    "codebase": "/home/khrustal/dev/2000nl-ui/",
-    "data": "/home/khrustal/dev/2000nl-ui/db/data/",
-    "audio_storage": "/home/khrustal/dev/2000nl-ui/db/audio/",
-    "ui_framework": "Next.js (App Router), TypeScript, React",
-    "testing": {
-      "typecheck": "npx tsc --noEmit from apps/ui/ directory",
-      "manual": "Chrome DevTools MCP for UI changes",
-      "browser": "Audio playback on desktop and mobile viewport"
-    },
-    "reference_docs": "/home/khrustal/dev/2000nl-ui/docs/app-behavior.md"
-  },
-  "execution_order": [
-    {
-      "story": "US-006.2-BLOCKER",
-      "must_complete_before": "US-006.2, US-006.3",
-      "reason": "Audio files must be accessible via HTTP before any frontend implementation"
-    },
-    {
-      "story": "US-006.2",
-      "must_complete_before": "US-006.3",
-      "reason": "Frontend needs audio files accessible via HTTP"
-    },
-    {
-      "story": "US-006.3",
-      "can_be_done_without": "US-006.4",
-      "reason": "Sentence TTS is optional, can stub out for MVP"
-    }
-  ],
-  "success_metrics": [
-    "Audio files accessible via HTTP on NUC",
-    "Users can toggle Audio Mode",
-    "Headword audio plays on click (both modes)",
-    "Translation overlay works in audio mode OFF",
-    "Sentence TTS works (if US-006.4 completed) or stub message shown",
-    "No errors in browser console during audio playback",
-    "Feature works on mobile and desktop",
-    "Dutch (nl) audio only - Belgian choice deferred"
   ]
 }

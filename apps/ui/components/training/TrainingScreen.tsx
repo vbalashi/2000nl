@@ -1095,6 +1095,13 @@ export function TrainingScreen({ user }: Props) {
       console.log("🔍 Word clicked:", clickedWord);
       setTranslationTooltipOpen(false);
 
+      if (
+        sidebarTab === "details" &&
+        (trainingSidebarPinned || mobileSidebarOpen)
+      ) {
+        setSidebarTab("recent");
+      }
+
       if (!user?.id) {
         console.log("❌ No user ID");
         return;
@@ -1177,7 +1184,15 @@ export function TrainingScreen({ user }: Props) {
         mode: clickMode,
       });
     },
-    [currentWord?.mode, enabledModes, openMobileSidebarTab, user?.id]
+    [
+      currentWord?.mode,
+      enabledModes,
+      mobileSidebarOpen,
+      openMobileSidebarTab,
+      sidebarTab,
+      trainingSidebarPinned,
+      user?.id,
+    ]
   );
 
   const handleTrainingWordClick = useCallback(
