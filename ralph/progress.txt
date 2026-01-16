@@ -1,52 +1,14 @@
-# Arch Migration Progress Log
+# Ralph Progress Log
 ## Codebase Patterns
 - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
-- Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
-- Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
-- Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
-
-Started: wo 14 jan 2026 19:08:08 CET
----
-## 2026-01-14 19:16:37 - US-020
-- Filtered cross-reference-only entries out of training queue selection and fallback picks.
-- Verified training UI via dev-browser at `/` (bereid not present in page text).
-- Files changed: apps/ui/lib/trainingService.ts, apps/ui/lib/types.ts, prd.json, progress.txt
-- **Learnings for future iterations:**
-  - Training queue selection is handled in `apps/ui/lib/trainingService.ts` via `get_next_word` RPC with list fallback.
-  - Cross-reference-only words are identified by `cross_reference` with empty `meanings`.
----
-## 2026-01-14 19:23:55 - US-031
-- Added mobile swipe gestures (left=opnieuw, right=goed) with threshold, slide animation, and action indicator on the training card.
-- Reordered mobile action buttons into two rows while preserving desktop order.
-- Verified mobile layout via dev-browser (screenshot: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-031-mobile.png).
-- Files changed: apps/ui/components/training/TrainingScreen.tsx, prd.json, progress.txt
-- **Learnings for future iterations:**
-  - Training card swipe interactions are implemented in `apps/ui/components/training/TrainingScreen.tsx` via touch handlers on the card wrapper.
----
-## 2026-01-15 13:49:40 - US-006.2
-- Added public audio symlink, update script, and refreshed word data audio URLs to use /audio paths.
-- Updated audio download documentation with the UI URL format.
-- Files changed: apps/ui/public/audio, db/data/words_content/*.json, docs/audio-download.md, ralph/prd.json, ralph/progress.txt, scripts/update-audio-urls.py
-- **Learnings for future iterations:**
-  - Audio URLs are served from the Next.js public symlink at `apps/ui/public/audio` and should use `/audio/<lang>/<letter>/<hash>.mp3`.
-  - The word JSON files include embedded audio URLs in `_raw_html`, so bulk updates should replace those strings too.
-  - Browser verification of audio playback was skipped (dev server not running).
----
-## 2026-01-15 14:04:41 - US-006.3
-- Added audio mode toggle with localStorage persistence and audio playback routing for word clicks (headword always plays audio).
-- Added speaker/help cursor styling for clickable words and integrated the toggle into the training card controls.
-- Updated TrainingCard tests for the new headword behavior.
-- Browser verification skipped: dev-browser server not running (ECONNREFUSED on port 9222).
-- Files changed: apps/ui/components/training/AudioModeToggle.tsx, apps/ui/components/training/TrainingCard.tsx, apps/ui/components/training/TrainingScreen.tsx, apps/ui/components/training/InteractiveText.tsx, apps/ui/lib/types.ts, apps/ui/tests/TrainingCard.test.tsx, ralph/prd.json, ralph/progress.txt
-- **Learnings for future iterations:**
-  - Audio links are available on `word.raw.audio_links` (prefer nl, fallback be).
-  - Guard localStorage access with try/catch to keep jsdom tests green.
+Started: vr 16 jan 2026 15:03:47 CET
 ---
 
-## 2026-01-16 15:18:21 - US-034
+## 2026-01-16 15:20:27 - US-034
 - Refactored translation rendering to flow layout so translations sit directly beneath their sentence across headword, definitions, idioms, context, and examples.
 - Removed absolute overlay positioning and adjusted layout wrappers to align translations with sentence width.
 - Verified translation anchoring in dev-browser (desktop + mobile screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-before-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-after-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-translation-open-mobile.png).
 - Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
 - **Learnings for future iterations:**
+  - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
 ---
