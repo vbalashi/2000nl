@@ -810,9 +810,9 @@ export function TrainingCard({
           {/* W->D Hint Section: Context + Example (shown via 'i' hotkey or when revealed) */}
           {isWordToDefinition && (hintRevealed || revealed) && (
             <div className="flex-none w-full max-w-3xl text-left mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex items-start gap-6">
+            <div className="flex items-start gap-4 md:gap-6">
                 {/* Spacer to align with number badge in definition section (only if badge will be shown) */}
-                {showNumber && <div className="flex-shrink-0 w-14" />}
+                {showNumber && <div className="flex-shrink-0 w-10 md:w-14" />}
                 {/* Content - aligned with definition text */}
                 <div className="flex-1 flex flex-col gap-3">
                   {/* Context */}
@@ -837,13 +837,13 @@ export function TrainingCard({
                           return (
                             <div
                               key={i}
-                              className="flex items-start gap-3"
+                              className="relative"
                             >
                               <span
                                 aria-hidden="true"
-                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
+                                className="absolute -left-3 md:-left-4 top-[0.6em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <span className="relative flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
+                              <span className="relative block text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
                                 <InlineTranslation
                                   align="left"
                                   text={getTranslated(0, { exampleIndex: i })}
@@ -892,10 +892,10 @@ export function TrainingCard({
                         : `Definitie ${badgeNumber}`;
 
                     return (
-                      <div key={index} className="flex items-start gap-6">
+                      <div key={index} className="flex items-start gap-4 md:gap-6">
                         {/* Number Badge - Left Side */}
                         {showNumber && (
-                          <div className="flex-shrink-0 pt-1 w-14 flex flex-col items-center overflow-visible">
+                          <div className="flex-shrink-0 pt-1 w-10 md:w-14 flex flex-col items-center overflow-visible">
                             <Tooltip content={badgeTitle} side="top">
                               <div
                                 className={`w-7 h-7 flex items-center justify-center ${
@@ -1117,21 +1117,23 @@ export function TrainingCard({
                   {/* Examples */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-1.5 mt-6 mx-auto max-w-2xl">
+                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-2xl text-left">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,
                             primaryMeaning.links
                           );
                           return (
-                            <p
-                              key={i}
-                              className="relative text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
-                            >
-                              <InlineTranslation
-                                text={getTranslated(0, { exampleIndex: i })}
+                            <div key={i} className="relative">
+                              <span
+                                aria-hidden="true"
+                                className="absolute -left-3 md:-left-4 top-[0.6em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <span className="flex-1">
+                              <span className="relative block text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(0, { exampleIndex: i })}
+                                />
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
@@ -1141,7 +1143,7 @@ export function TrainingCard({
                                   sentence={ex}
                                 />
                               </span>
-                            </p>
+                            </div>
                           );
                         })}
                       </div>

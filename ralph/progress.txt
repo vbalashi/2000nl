@@ -137,3 +137,17 @@ Started: wo 14 jan 2026 19:08:08 CET
 - **Learnings for future iterations:**
   - Dev server may fall back to port 3001 if 3000 is in use; dev-browser should target the active port.
 ---
+## 2026-01-16 14:26:43 - US-035
+- Repositioned in-card example markers to sit outside the text column so example lines align with main content.
+- Verified in dev-browser on mobile and desktop (screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-035-mobile.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-035-desktop.png).
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Example markers should be absolutely positioned to avoid shifting text alignment within the definition column.
+---
+## 2026-01-16 14:30:27 - US-038
+- Left-aligned def->word examples and added vertical bar markers to match in-card example styling.
+- Verified in dev-browser on desktop and mobile (screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-038-examples-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-038-examples-mobile.png).
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Example marker styling uses an absolutely positioned 2px bar with a slight negative left offset to keep text aligned.
+---

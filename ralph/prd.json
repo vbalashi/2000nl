@@ -60,7 +60,7 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "technicalContext": {
         "files": ["apps/ui/components/training/TrainingCard.tsx"],
@@ -84,7 +84,7 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "technicalContext": {
         "files": ["apps/ui/components/training/TrainingScreen.tsx"],
