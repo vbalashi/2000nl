@@ -12,3 +12,10 @@ Started: vr 16 jan 2026 15:03:47 CET
 - **Learnings for future iterations:**
   - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
 ---
+
+## 2026-01-16 15:26:36 CET - US-036
+- Removed translation truncation so translated text wraps and expands with content.
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Translation text wrapping is controlled by the InlineTranslation classes in `apps/ui/components/training/TrainingCard.tsx`.
+---

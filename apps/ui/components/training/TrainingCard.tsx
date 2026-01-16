@@ -453,7 +453,7 @@ export function TrainingCard({
         className={[
           "pointer-events-none select-none mt-1 w-full",
           "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-400 dark:text-slate-500",
-          "truncate",
+          "whitespace-normal break-words",
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
         ].join(" ")}
