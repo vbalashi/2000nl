@@ -449,31 +449,17 @@ export function TrainingCard({
     if (!isTranslationOpen) return null;
     if (text == null || String(text).trim().length === 0) return null;
     return (
-      <span
+      <div
         className={[
-          // Absolute overlay: does NOT affect layout / flow.
-          // Stretch full width so wrapping isn't constrained (esp. on mobile).
-          "pointer-events-none select-none absolute left-0 right-0",
-          // Ensure overlay stays above scroll fade gradients (z-10) but below
-          // top controls (z-30), so it doesn't get visually "cut off".
-          "z-20",
-          // Anchor ABOVE the line so multi-line translations expand upward
-          // (avoids overlapping the original line).
-          "bottom-full translate-y-[2px] md:translate-y-[3px]",
-          // Style
-          // Use a slightly looser line-height to avoid glyph clipping on some fonts
-          // (e.g. Cyrillic ascenders).
+          "pointer-events-none select-none mt-1 w-full",
           "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-400 dark:text-slate-500",
-          // Keep overlays to a single line on all devices to prevent overlap with adjacent lines.
-          // Mobile previously allowed wrapping which caused text to stack/overlap.
           "truncate",
-          // No background highlight (can obscure underlying text in dense layouts).
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
         ].join(" ")}
       >
         {text}
-      </span>
+      </div>
     );
   };
 
@@ -644,16 +630,10 @@ export function TrainingCard({
           className="flex flex-col items-center w-full h-full overflow-y-auto scrollbar-hide pt-10 md:pt-12 pb-10"
         >
           {/* Header: Headword + POS Badge (Always Visible) */}
-          {/* When translations are visible, add top padding so the first line's
-              overlay (positioned with bottom-full) doesn't get clipped by the
-              scroll container's overflow-y-auto. */}
-          <div className={`flex-none mb-8 text-center bg-transparent z-0 ${isTranslationOpen ? 'pt-5' : ''}`}>
+          <div className="flex-none mb-8 text-center bg-transparent z-0">
           {isWordToDefinition ? (
-            // IMPORTANT: make the translation overlay use the full card width.
-            // If we keep the relative container as `inline-flex`, the absolute overlay
-            // becomes constrained to the (often short) word width and truncates early.
-            <div className="relative w-full">
-              <InlineTranslation text={getHeadwordTranslated()} />
+            // Keep this full-width so translations align with the sentence width.
+            <div className="w-full flex flex-col items-center">
               <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
                 {word.gender && (
                   <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-400 opacity-60">
@@ -672,6 +652,7 @@ export function TrainingCard({
                   </button>
                 </h1>
               </div>
+              <InlineTranslation text={getHeadwordTranslated()} />
             </div>
           ) : (
             /* Definition -> Word mode: Question is Definition (context hidden until revealed) */
@@ -727,20 +708,26 @@ export function TrainingCard({
                     </div>
                   )}
 
-                  <div className="relative text-center">
+                  <div className="text-center">
                     {hasPrimaryDefinitionText ? (
-                      <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
-                        <InlineTranslation text={getTranslated(0, "definition")} />
+                      <div className="flex flex-col items-center text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
                           segments={definitionSegments}
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
                           cursorStyle={wordCursorStyle}
                         />
+                        <InlineTranslation text={getTranslated(0, "definition")} />
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
-                      <div className="relative flex items-center justify-center gap-3 flex-wrap">
-                        <span className="text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                      <div className="flex items-start justify-center gap-3 flex-wrap">
+                        <div className="flex flex-col items-center text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                          <InteractiveText
+                            segments={idiomPromptSegments}
+                            highlightedWord={highlightedWord}
+                            onWordClick={onWordClick}
+                            cursorStyle={wordCursorStyle}
+                          />
                           <InlineTranslation
                             text={
                               hasPrimaryIdiomExplanationText
@@ -754,13 +741,7 @@ export function TrainingCard({
                                   })
                             }
                           />
-                          <InteractiveText
-                            segments={idiomPromptSegments}
-                            highlightedWord={highlightedWord}
-                            onWordClick={onWordClick}
-                            cursorStyle={wordCursorStyle}
-                          />
-                        </span>
+                        </div>
                         {!showNumber &&
                           (hasPrimaryIdiomExplanationText ? (
                             <span
@@ -817,12 +798,12 @@ export function TrainingCard({
                 <div className="flex-1 flex flex-col gap-3">
                   {/* Context */}
                   {primaryMeaning.context && (
-                    <div className="relative flex items-center text-base text-slate-500 dark:text-slate-400 font-medium">
+                    <div className="flex flex-col items-start text-base text-slate-500 dark:text-slate-400 font-medium">
+                      <span>[{primaryMeaning.context}]</span>
                       <InlineTranslation
                         align="left"
                         text={getTranslated(0, "context")}
                       />
-                      <span>[{primaryMeaning.context}]</span>
                     </div>
                   )}
                   {/* Example */}
@@ -835,19 +816,12 @@ export function TrainingCard({
                             primaryMeaning.links
                           );
                           return (
-                            <div
-                              key={i}
-                              className="flex items-start gap-3"
-                            >
+                            <div key={i} className="flex items-start gap-3">
                               <span
                                 aria-hidden="true"
                                 className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <span className="relative flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
-                                <InlineTranslation
-                                  align="left"
-                                  text={getTranslated(0, { exampleIndex: i })}
-                                />
+                              <div className="flex flex-col flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
@@ -856,7 +830,11 @@ export function TrainingCard({
                                   excludeWord={word.headword}
                                   sentence={ex}
                                 />
-                              </span>
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(0, { exampleIndex: i })}
+                                />
+                              </div>
                             </div>
                           );
                         })}
@@ -930,11 +908,7 @@ export function TrainingCard({
                           {/* Definition Line */}
                           {meaning.definition ? (
                             <div className="flex items-start text-xl md:text-2xl leading-relaxed font-medium text-slate-800 dark:text-slate-100">
-                              <span className="relative flex-1">
-                                <InlineTranslation
-                                  align="left"
-                                  text={getTranslated(index, "definition")}
-                                />
+                              <div className="flex flex-col flex-1">
                                 <InteractiveText
                                   segments={defSegments}
                                   highlightedWord={highlightedWord}
@@ -942,7 +916,11 @@ export function TrainingCard({
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
                                 />
-                              </span>
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(index, "definition")}
+                                />
+                              </div>
                             </div>
                           ) : null}
 
@@ -964,14 +942,7 @@ export function TrainingCard({
                                   <div key={i} className="flex flex-col gap-1">
                                     {/* Expression with inline idiom badge */}
                                     <div className="flex items-center gap-3 flex-wrap">
-                                      <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
-                                        <InlineTranslation
-                                          align="left"
-                                          text={getTranslated(index, {
-                                            idiomIndex: i,
-                                            idiomField: "expression",
-                                          })}
-                                        />
+                                      <div className="flex flex-col text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100">
                                         <InteractiveText
                                           segments={expressionSegments}
                                           highlightedWord={highlightedWord}
@@ -979,23 +950,21 @@ export function TrainingCard({
                                           cursorStyle={wordCursorStyle}
                                           excludeWord={word.headword}
                                         />
-                                      </span>
+                                        <InlineTranslation
+                                          align="left"
+                                          text={getTranslated(index, {
+                                            idiomIndex: i,
+                                            idiomField: "expression",
+                                          })}
+                                        />
+                                      </div>
                                     </div>
                                     {/* Explanation with separator */}
                                     <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
                                       <span className="text-slate-400 dark:text-slate-500 mr-2">
                                         |
                                       </span>
-                                      <span className="flex-1">
-                                        <span className="relative block">
-                                          <InlineTranslation
-                                            align="left"
-                                            text={getTranslated(index, {
-                                              idiomIndex: i,
-                                              idiomField: "explanation",
-                                            })}
-                                          />
-                                        </span>
+                                      <div className="flex flex-col flex-1">
                                         <InteractiveText
                                           segments={explanationSegments}
                                           highlightedWord={highlightedWord}
@@ -1003,7 +972,14 @@ export function TrainingCard({
                                           cursorStyle={wordCursorStyle}
                                           excludeWord={word.headword}
                                         />
-                                      </span>
+                                        <InlineTranslation
+                                          align="left"
+                                          text={getTranslated(index, {
+                                            idiomIndex: i,
+                                            idiomField: "explanation",
+                                          })}
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 );
@@ -1019,22 +995,20 @@ export function TrainingCard({
 
               {/* If Def->Word mode: Show Headword (Answer) */}
               {!isWordToDefinition && (
-                <div className="relative mt-4 text-center">
-                  <InlineTranslation text={getHeadwordTranslated()} />
+                <div className="mt-4 text-center flex flex-col items-center">
                   {renderWordWithDecoration(
                     word.headword,
                     word.gender,
                     word.part_of_speech,
                     "text-3xl md:text-4xl lg:text-5xl"
                   )}
+                  <InlineTranslation text={getHeadwordTranslated()} />
                   {/* Context - shown with the answer */}
                   {primaryMeaning.context && (
-                    <p className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center">
-                      <span className="relative inline-block">
-                        <InlineTranslation text={getTranslated(0, "context")} />
-                        <span>[{primaryMeaning.context}]</span>
-                      </span>
-                    </p>
+                    <div className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex flex-col items-center justify-center">
+                      <span>[{primaryMeaning.context}]</span>
+                      <InlineTranslation text={getTranslated(0, "context")} />
+                    </div>
                   )}
                   {/* Idioms (revealed): show idiom before examples */}
                   {primaryMeaning.idioms &&
@@ -1052,14 +1026,8 @@ export function TrainingCard({
 
                           return (
                             <div key={i} className="flex flex-col gap-1">
-                              <div className="flex items-center justify-center gap-3 flex-wrap">
-                                <span className="relative text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100 flex items-center">
-                                  <InlineTranslation
-                                    text={getTranslated(0, {
-                                      idiomIndex: i,
-                                      idiomField: "expression",
-                                    })}
-                                  />
+                              <div className="flex items-start justify-center gap-3 flex-wrap">
+                                <div className="flex flex-col items-center text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100">
                                   <InteractiveText
                                     segments={expressionSegments}
                                     highlightedWord={highlightedWord}
@@ -1067,7 +1035,13 @@ export function TrainingCard({
                                     cursorStyle={wordCursorStyle}
                                     excludeWord={word.headword}
                                   />
-                                </span>
+                                  <InlineTranslation
+                                    text={getTranslated(0, {
+                                      idiomIndex: i,
+                                      idiomField: "expression",
+                                    })}
+                                  />
+                                </div>
                                 <span
                                   className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
                                 >
@@ -1090,15 +1064,7 @@ export function TrainingCard({
                                     <span className="text-slate-400 dark:text-slate-500 mr-2">
                                       |
                                     </span>
-                                    <span className="flex-1 text-center">
-                                      <span className="relative block">
-                                        <InlineTranslation
-                                          text={getTranslated(0, {
-                                            idiomIndex: i,
-                                            idiomField: "explanation",
-                                          })}
-                                        />
-                                      </span>
+                                    <div className="flex flex-col items-center flex-1 text-center">
                                       <InteractiveText
                                         segments={explanationSegments}
                                         highlightedWord={highlightedWord}
@@ -1106,7 +1072,13 @@ export function TrainingCard({
                                         cursorStyle={wordCursorStyle}
                                         excludeWord={word.headword}
                                       />
-                                    </span>
+                                      <InlineTranslation
+                                        text={getTranslated(0, {
+                                          idiomIndex: i,
+                                          idiomField: "explanation",
+                                        })}
+                                      />
+                                    </div>
                                   </div>
                                 )}
                             </div>
@@ -1124,13 +1096,10 @@ export function TrainingCard({
                             primaryMeaning.links
                           );
                           return (
-                            <p
+                            <div
                               key={i}
-                              className="relative text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center"
+                              className="text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center"
                             >
-                              <InlineTranslation
-                                text={getTranslated(0, { exampleIndex: i })}
-                              />
                               <span className="flex-1">
                                 <InteractiveText
                                   segments={exSegments}
@@ -1141,7 +1110,10 @@ export function TrainingCard({
                                   sentence={ex}
                                 />
                               </span>
-                            </p>
+                              <InlineTranslation
+                                text={getTranslated(0, { exampleIndex: i })}
+                              />
+                            </div>
                           );
                         })}
                       </div>
