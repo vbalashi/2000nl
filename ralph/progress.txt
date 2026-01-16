@@ -4,6 +4,7 @@
 - Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
 - Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
 - Translation overlays are fetched via `/api/translation` and rendered in `apps/ui/components/training/TrainingCard.tsx` as absolutely positioned InlineTranslation spans; translation language is stored in user preferences.
+- Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
@@ -168,4 +169,18 @@ Started: wo 14 jan 2026 19:08:08 CET
   - Translation UI is hidden until both `revealed` is true and `translationLang` is set (non-null and not "off").
   - The overlay uses absolute positioning (`bottom-full`) + `truncate`, which is the root of anchoring and wrapping constraints.
   - `/api/translation` only translates `meanings[0]` fields and caches via `source_fingerprint` in `word_entry_translations`.
+---
+## 2026-01-16 15:20:27 - US-034
+- Refactored translation rendering to flow layout so translations sit directly beneath their sentence across headword, definitions, idioms, context, and examples.
+- Removed absolute overlay positioning and adjusted layout wrappers to align translations with sentence width.
+- Verified translation anchoring in dev-browser (desktop + mobile screenshots: /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-before-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-after-desktop.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-034-translation-open-mobile.png).
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
+---
+## 2026-01-16 15:26:36 CET - US-036
+- Removed translation truncation so translated text wraps and expands with content.
+- Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Translation text wrapping is controlled by the InlineTranslation classes in `apps/ui/components/training/TrainingCard.tsx`.
 ---

@@ -1,19 +1,23 @@
 {
   "project": "2000nl",
-  "branchName": "ralph/layout-polish-translation-discovery",
-  "description": "Layout Polish & Translation Discovery - Mobile layout optimization, example alignment consistency, sidebar UX improvements, and translation system exploration for next sprint",
+  "branchName": "ralph/translation-system-refactoring",
+  "description": "Translation System Refactoring - Fix translation overlay anchoring and wrapping based on US-EXPLORE findings. Refactor from absolute positioning to flow layout.",
   "userStories": [
     {
-      "id": "US-037",
-      "title": "Mobile Left Gutter Width Optimization",
-      "description": "Reduce excessive left gutter width on mobile to maximize reading space and improve line length for better readability. Badge column takes up disproportionate horizontal space, forcing text column to be unnecessarily narrow.",
+      "id": "US-034",
+      "title": "Translation Overlay Anchoring",
+      "description": "Refactor translation overlay positioning so translations are visually anchored to their original sentence, not floating or appearing attached to the wrong line. Currently uses absolute positioning tied to container bounds instead of text lines, causing visual confusion.",
       "acceptanceCriteria": [
-        "Left gutter width reduced on mobile (viewport < 768px)",
-        "Text column starts closer to left edge",
-        "Badge column width minimized (e.g., 2-3rem instead of 4-5rem)",
-        "Desktop layout unchanged",
-        "Line length increased by at least 20-30%",
-        "Verify on actual mobile device or DevTools mobile viewport",
+        "Translations positioned directly below their original sentence",
+        "Spacing to translation is smaller than spacing between sentences",
+        "No visual collisions or overlaps",
+        "Layout expands vertically when translation enabled",
+        "Works on both mobile and desktop",
+        "Works with both short and long sentences",
+        "All existing translation features still work (toggle, language selection)",
+        "Screenshots show before/after comparison with clear visual grouping",
+        "Test with single-line and multi-line definitions",
+        "Test with multiple translations visible at once",
         "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
         "Verify in browser using Chrome DevTools MCP"
       ],
@@ -21,19 +25,43 @@
       "passes": true,
       "notes": "",
       "technicalContext": {
-        "files": ["apps/ui/components/training/TrainingCard.tsx"],
-        "approach": "Add mobile-specific CSS/Tailwind width adjustments using responsive breakpoints (max-width: 768px). Reduce padding/margin in badge column for mobile.",
-        "importance": "First story in sprint - establishes mobile layout foundation for all subsequent work"
+        "complexity": "Medium/High",
+        "explorationFindings": "From US-EXPLORE (2026-01-16): InlineTranslation uses absolute positioning (bottom-full) tied to container bounds, not text line. Multi-line definitions show overlay detached from intended line.",
+        "rootCause": "absolute positioning with bottom-full inside relative wrappers",
+        "recommendedApproach": "Flow Layout - Remove absolute positioning from InlineTranslation, wrap each sentence+translation pair in container, use normal flow layout with margin/padding for spacing",
+        "files": [
+          "apps/ui/components/training/TrainingCard.tsx"
+        ],
+        "mayCreateComponent": "TranslatedSentence.tsx for wrapping pattern",
+        "implementationSteps": [
+          "Refactor InlineTranslation to use relative/flow positioning instead of absolute",
+          "Wrap each sentence+translation pair in a container div",
+          "Use flexbox or grid to control spacing between sentences",
+          "Ensure translation sits directly below its source line with smaller gap",
+          "Add larger gap between sentence groups"
+        ],
+        "mustCompleteBefore": "US-036",
+        "visualReference": [
+          "assets/screenshots/2000NL-034-036-translation-overlay-annotated.png (before)",
+          "assets/screenshots/2000NL-034-036-translation-system-annotated.png (architecture)"
+        ],
+        "explorationReference": "ralph/progress.txt (2026-01-16 US-EXPLORE section)"
       }
     },
     {
-      "id": "US-021",
-      "title": "Recent Tab Focus on Word Click",
-      "description": "When the details panel is open on 'recent opgezocht' tab, clicking a word on the main card should switch focus to the 'recent' tab. Currently the word is added to the list but focus doesn't switch, causing user confusion.",
+      "id": "US-036",
+      "title": "Translation Text Wrapping and Clipping",
+      "description": "Fix long translations being cut off instead of wrapping. After US-034 establishes proper flow layout, enable translations to wrap to multiple lines and take as much vertical space as needed. Critical for long sentences where translation is needed most.",
       "acceptanceCriteria": [
-        "Clicking word on main card switches focus to 'recent' tab when details panel is open",
-        "Word appears in 'recent' list as expected",
-        "No focus switch when details panel is closed",
+        "Long translations wrap to multiple lines (no clipping)",
+        "Translation takes full vertical space needed",
+        "Original sentence positioned correctly relative to translation",
+        "No text overflow or fade effects",
+        "Proper spacing maintained between translation and surrounding content",
+        "Works on mobile and desktop",
+        "Test with translations of varying lengths (short: 10 chars, medium: 30 chars, long: 80+ chars)",
+        "Screenshots show before/after with long translations",
+        "Mobile viewport shows proper wrapping without horizontal scroll",
         "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
         "Verify in browser using Chrome DevTools MCP"
       ],
@@ -41,101 +69,25 @@
       "passes": true,
       "notes": "",
       "technicalContext": {
-        "files": ["apps/ui/components/training/TrainingScreen.tsx"],
-        "approach": "Modify word click handler to add tab switching logic when word is clicked and details panel is open. Detect current tab state and switch to 'recent' if needed.",
-        "importance": "Independent story, can run in parallel with US-037. Simple UX improvement, low risk."
-      }
-    },
-    {
-      "id": "US-035",
-      "title": "Example Text Alignment with Vertical Bar",
-      "description": "Fix example sentence alignment so text aligns with the main content column, not with the vertical bar marker (|). Currently, example sentences are aligned to the bar instead of the main text, causing visual misalignment and breaking vertical rhythm.",
-      "acceptanceCriteria": [
-        "Example sentences align with main text above them",
-        "Vertical bar (|) is positioned to the left as a marker",
-        "Bar does not affect text alignment",
-        "Consistent alignment on mobile and desktop",
-        "Screenshots show before/after comparison",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
-        "Verify in browser using Chrome DevTools MCP"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": "",
-      "technicalContext": {
-        "files": ["apps/ui/components/training/TrainingCard.tsx"],
-        "approach": "Use CSS margin/padding or pseudo-element for the bar. Example: padding-left for text, ::before for bar positioned in the padding area. Or use negative margin on the bar itself.",
-        "cssPattern": ".example { padding-left: 1.5em; position: relative; } .example::before { content: '|'; position: absolute; left: 0.5em; }",
-        "importance": "Establishes pattern for US-038. Simple CSS/layout adjustment."
-      }
-    },
-    {
-      "id": "US-038",
-      "title": "Example Cards Left-Alignment and Markers",
-      "description": "Fix example sentences shown between cards to use consistent left-alignment and vertical bar markers, matching the visual language of in-card examples. Currently, examples between cards are center-aligned with no vertical marker, making it unclear if text is one multi-line example or multiple examples.",
-      "acceptanceCriteria": [
-        "Example sentences between cards are left-aligned",
-        "Each example has vertical bar (|) marker",
-        "Multiple examples clearly separated as distinct items",
-        "Consistent styling with in-card examples",
-        "Works on mobile and desktop",
-        "Screenshots show before/after comparison",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
-        "Verify in browser using Chrome DevTools MCP"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": "",
-      "technicalContext": {
-        "files": ["apps/ui/components/training/TrainingScreen.tsx"],
-        "approach": "Modify example display in TrainingScreen.tsx or separate example component. Change text-align: center to text-align: left. Add vertical bar marker using same pattern as in-card examples (from US-035).",
-        "componentPattern": "{examples.map(example => (<div className=\"example-item\"><span className=\"marker\">|</span><span className=\"example-text\">{example}</span></div>))}",
-        "importance": "Must be done after US-035 to apply same pattern consistently. Ensures visual consistency across entire app."
-      }
-    },
-    {
-      "id": "US-EXPLORE",
-      "title": "Translation System Architecture Exploration",
-      "description": "Explore and document the current translation overlay implementation to inform the next sprint's translation refactoring work (US-034: Translation Anchoring, US-036: Translation Wrapping). This is intentionally placed LAST in the sprint so Ralph can document findings for planning the next sprint.",
-      "acceptanceCriteria": [
-        "Document current translation positioning mechanism (absolute/relative/flow?)",
-        "Identify specific CSS/layout causing anchoring issues",
-        "Identify specific constraints causing wrapping/clipping",
-        "Map component structure for translation rendering",
-        "Recommend refactoring approach for next sprint",
-        "Estimate complexity for US-034/US-036: low/medium/high",
-        "Create detailed exploration notes in progress.txt",
-        "Screenshots of current behavior with technical annotations",
-        "Summary of findings ready for next sprint planning"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": "",
-      "technicalContext": {
-        "files": ["apps/ui/components/training/TrainingCard.tsx"],
-        "approach": "Read and analyze TrainingCard.tsx, search for translation-related components/logic. Use Chrome DevTools MCP to inspect current translation rendering. Take screenshots with annotations showing current issues. Document findings in ralph/progress.txt.",
-        "deliverable": "A clear technical summary in ralph/progress.txt under section 'Translation System Exploration' that will inform US-034 and US-036 implementation in the next sprint.",
-        "explorationGoals": [
-          "How are translations currently positioned? (absolute, relative, flow layout?)",
-          "What CSS/layout approach is used?",
-          "Where is the translation rendering logic in the codebase?",
-          "What causes the current anchoring issues (translations appearing attached to wrong line)?",
-          "What causes the current wrapping/clipping issues?",
-          "Map the component tree for translation display",
-          "Identify all files involved in translation rendering",
-          "Document data flow (how translation text reaches the UI)",
-          "Find where translation toggle state is managed",
-          "Are translations using absolute positioning?",
-          "Are there overflow/height constraints causing clipping?",
-          "How does the current implementation handle long translations?",
-          "What happens when multiple translations are shown?",
-          "Recommend positioning strategy (flexbox, grid, flow layout?)",
-          "Identify what needs to change for proper anchoring",
-          "Identify what needs to change for proper wrapping",
-          "Estimate refactoring scope: low/medium/high complexity",
-          "Flag any unexpected dependencies or edge cases"
+        "complexity": "Medium",
+        "explorationFindings": "From US-EXPLORE (2026-01-16): Overlay text forced to single line with truncate class. Long translations ellipsize instead of wrapping. No layout space reserved (absolute positioned).",
+        "rootCause": "truncate class forces single line, overflow:hidden constraints",
+        "dependsOn": "US-034",
+        "criticalDependency": "CANNOT START until US-034 completes - anchoring establishes flow layout foundation",
+        "files": [
+          "apps/ui/components/training/TrainingCard.tsx"
         ],
-        "importance": "INTENTIONALLY LAST STORY - Informs next sprint planning. No code changes required, pure exploration. Findings will de-risk US-034 and US-036 (next sprint). May discover that translation work is simpler OR more complex than estimated."
+        "implementationSteps": [
+          "Remove truncate class from translation text",
+          "Remove any overflow: hidden, text-overflow: ellipsis, or fixed height constraints",
+          "Set white-space: normal and word-wrap: break-word on translation text",
+          "Ensure sentence+translation container expands to fit content",
+          "Test with very long translations (50+ characters)"
+        ],
+        "testingFocus": "Mobile viewport especially (narrower width = more wrapping). Test edge cases: very long words, multiple long translations.",
+        "visualReference": [
+          "assets/screenshots/2000NL-034-036-translation-overlay-annotated.png (shows truncation)"
+        ]
       }
     }
   ]
