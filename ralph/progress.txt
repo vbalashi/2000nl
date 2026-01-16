@@ -196,3 +196,16 @@ Started: wo 14 jan 2026 19:08:08 CET
   - Use `flex` alone to show on all screen sizes.
   - Mobile viewport testing with dev-browser requires setting viewport size (375x667 for mobile, 768x1024 for tablet).
 ---
+## 2026-01-17 00:10:00 CET - US-044
+- Fixed translation overlay persistence when scrolling with arrow keys
+- Root cause: Arrow keys were treated as "other hotkeys" and triggered the close-translation logic (lines 987-989 in TrainingScreen.tsx)
+- Solution: Added explicit check to exclude arrow keys (ArrowUp, ArrowDown, ArrowLeft, ArrowRight) from the close-translation logic
+- Tested on desktop viewport (1280x900) and mobile viewport (375x667)
+- Verified translation overlay persists through multiple arrow key presses in both viewports
+- Files changed: apps/ui/components/training/TrainingScreen.tsx
+- **Learnings for future iterations:**
+  - Keyboard event handling in TrainingScreen.tsx has a "close translation on any other hotkey" pattern at lines ~997-999
+  - Arrow keys are used for scrolling and should not trigger UI state changes like closing overlays
+  - When adding new hotkeys, ensure they don't conflict with browser navigation keys (arrows, page up/down, home/end)
+  - Browser verification critical for keyboard interaction bugs - arrow key scrolling behavior is hard to catch without visual testing
+---
