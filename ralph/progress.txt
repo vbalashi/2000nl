@@ -209,3 +209,24 @@ Started: wo 14 jan 2026 19:08:08 CET
   - When adding new hotkeys, ensure they don't conflict with browser navigation keys (arrows, page up/down, home/end)
   - Browser verification critical for keyboard interaction bugs - arrow key scrolling behavior is hard to catch without visual testing
 ---
+## 2026-01-17 08:20:00 CET - US-047
+- Redesigned audio mode toggle button for better UX and clarity
+- Generated and evaluated 5 distinct solution approaches (text+icon, segmented control, toggle switch, improved icons, badge indicator)
+- Selected Solution 4: Icon-only with clearer state indicators
+- Implementation changes:
+  - Icons: 🎧 (headphones) for audio mode ON, 💬 (speech bubble) for reading mode OFF
+  - Colors: Blue theme when ON (instead of green), neutral gray when OFF
+  - Removed opacity-70 on OFF state for clearer visual presentation
+  - Updated tooltips: "Luistermodus actief" / "Leesmodus actief"
+- Verified on desktop (1280x900) and mobile (375x667) viewports using dev-browser
+- All tests pass (14 passed | 7 skipped), typecheck passes
+- Files changed: apps/ui/components/training/AudioModeToggle.tsx, ralph/us-047-solution-analysis.md
+- **Learnings for future iterations:**
+  - Audio mode toggle UX issues: green color suggests "play" action, speaker icon suggests "click to play"
+  - Headphones icon (🎧) more clearly represents "listening mode" vs speaker icon
+  - Blue color better for "active mode" indication vs green which suggests "go/play"
+  - Speech bubble (💬) works well for translation/reading mode representation
+  - Icon-only approach maintains consistency with other card controls (hint, translation)
+  - Solution analysis with 5 alternatives documented for future reference in ralph/us-047-solution-analysis.md
+  - Key decision factors: mobile space constraints, UI consistency, self-explanatory icons
+---
