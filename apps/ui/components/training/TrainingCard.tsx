@@ -1096,11 +1096,12 @@ export function TrainingCard({
                             primaryMeaning.links
                           );
                           return (
-                            <div
-                              key={i}
-                              className="text-lg italic leading-relaxed text-slate-500 dark:text-slate-400 flex flex-col items-center justify-center"
-                            >
-                              <span className="flex-1">
+                            <div key={i} className="flex items-start gap-3">
+                              <span
+                                aria-hidden="true"
+                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
+                              />
+                              <div className="flex flex-col flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
@@ -1109,10 +1110,11 @@ export function TrainingCard({
                                   excludeWord={word.headword}
                                   sentence={ex}
                                 />
-                              </span>
-                              <InlineTranslation
-                                text={getTranslated(0, { exampleIndex: i })}
-                              />
+                                <InlineTranslation
+                                  align="left"
+                                  text={getTranslated(0, { exampleIndex: i })}
+                                />
+                              </div>
                             </div>
                           );
                         })}
