@@ -3,6 +3,7 @@
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import {
   fetchDictionaryEntry,
@@ -93,6 +94,48 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
 
 export type ThemePreference = "light" | "dark" | "system";
 
+const ONBOARDING_STORAGE_KEY = "onboarding_completed";
+const JOYRIDE_STEPS: Step[] = [
+  {
+    target: "body",
+    placement: "center",
+    title: "Welkom bij 2000NL",
+    content:
+      "Klaar om te starten? In 6 korte stappen ontdek je hoe je woorden leert.",
+  },
+  {
+    target: "[data-tour='training-card']",
+    placement: "bottom",
+    title: "Onthul het woord",
+    content: "Tik op de kaart of druk op “Antwoord tonen” om te onthullen.",
+  },
+  {
+    target: "[data-tour='rating-buttons']",
+    placement: "top",
+    title: "Beoordeel je kennis",
+    content:
+      "Kies hoe goed je het woord kent zodat het juiste herhaalschema volgt.",
+  },
+  {
+    target: "[data-tour='card-toolbar']",
+    placement: "right",
+    title: "Audio & vertaling",
+    content: "Gebruik audio en vertaling om uitspraak en betekenis te oefenen.",
+  },
+  {
+    target: "[data-tour='sidebar-toggle']",
+    placement: "left",
+    title: "Recent & details",
+    content: "Bekijk recente woorden en open details via de sidebar.",
+  },
+  {
+    target: "[data-tour='search-button']",
+    placement: "left",
+    title: "Zoeken & instellingen",
+    content: "Zoek woorden op en pas voorkeuren aan in Instellingen.",
+  },
+];
+
 export function TrainingScreen({ user }: Props) {
   const { wordId, devMode } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -168,6 +211,40 @@ export function TrainingScreen({ user }: Props) {
   >(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [swipeActive, setSwipeActive] = useState(false);
+
+  // Joyride tour state
+  const [runTour, setRunTour] = useState(false);
+
+  // Check localStorage on mount to see if tour should run
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const completed = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!completed) {
+        // Tour has never been completed, run it
+        setRunTour(true);
+      }
+    } catch (e) {
+      console.error("[Onboarding] Failed to read localStorage:", e);
+    }
+  }, []);
+
+  const handleJoyrideCallback = useCallback((data: CallBackProps) => {
+    const { status, type } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(status)) {
+      // Tour finished or skipped - save to localStorage and stop tour
+      setRunTour(false);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+        } catch (e) {
+          console.error("[Onboarding] Failed to save completion to localStorage:", e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (devMode) {
@@ -2085,6 +2162,29 @@ export function TrainingScreen({ user }: Props) {
           onTrainWord={handleTrainWord}
         />
       )}
+
+      {/* Onboarding Tour */}
+      <Joyride
+        steps={JOYRIDE_STEPS}
+        run={runTour}
+        continuous
+        showProgress
+        showSkipButton
+        callback={handleJoyrideCallback}
+        locale={{
+          back: "Terug",
+          close: "Sluiten",
+          last: "Afronden",
+          next: "Volgende",
+          skip: "Overslaan",
+        }}
+        styles={{
+          options: {
+            primaryColor: "#3b82f6",
+            zIndex: 10000,
+          },
+        }}
+      />
     </div>
   );
 }
