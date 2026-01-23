@@ -710,7 +710,7 @@ export function TrainingCard({
 
                   <div className="text-center">
                     {hasPrimaryDefinitionText ? (
-                      <div className="flex flex-col items-center text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                      <div className="flex flex-col items-center text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
                           segments={definitionSegments}
                           highlightedWord={highlightedWord}
@@ -721,7 +721,7 @@ export function TrainingCard({
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
                       <div className="flex items-start justify-center gap-3 flex-wrap">
-                        <div className="flex flex-col items-center text-xl md:text-3xl leading-relaxed font-medium text-slate-700 dark:text-slate-200">
+                        <div className="flex flex-col items-center text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                           <InteractiveText
                             segments={idiomPromptSegments}
                             highlightedWord={highlightedWord}
@@ -809,7 +809,7 @@ export function TrainingCard({
                   {/* Example */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-5">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,
@@ -821,7 +821,7 @@ export function TrainingCard({
                                 aria-hidden="true"
                                 className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <div className="flex flex-col flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
+                              <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
@@ -907,7 +907,7 @@ export function TrainingCard({
                         <div className="flex-1 flex flex-col gap-3">
                           {/* Definition Line */}
                           {meaning.definition ? (
-                            <div className="flex items-start text-xl md:text-2xl leading-relaxed font-medium text-slate-800 dark:text-slate-100">
+                            <div className="flex items-start text-xl md:text-2xl leading-[1.4] font-medium text-slate-800 dark:text-slate-100">
                               <div className="flex flex-col flex-1">
                                 <InteractiveText
                                   segments={defSegments}
@@ -942,7 +942,7 @@ export function TrainingCard({
                                   <div key={i} className="flex flex-col gap-1">
                                     {/* Expression with inline idiom badge */}
                                     <div className="flex items-center gap-3 flex-wrap">
-                                      <div className="flex flex-col text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100">
+                                      <div className="flex flex-col text-xl md:text-2xl leading-[1.4] font-medium text-slate-900 dark:text-slate-100">
                                         <InteractiveText
                                           segments={expressionSegments}
                                           highlightedWord={highlightedWord}
@@ -960,7 +960,7 @@ export function TrainingCard({
                                       </div>
                                     </div>
                                     {/* Explanation with separator */}
-                                    <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
+                                    <div className="text-lg leading-[1.4] text-slate-500 dark:text-slate-400 flex items-start">
                                       <span className="text-slate-400 dark:text-slate-500 mr-2">
                                         |
                                       </span>
@@ -1027,7 +1027,7 @@ export function TrainingCard({
                           return (
                             <div key={i} className="flex flex-col gap-1">
                               <div className="flex items-start justify-center gap-3 flex-wrap">
-                                <div className="flex flex-col items-center text-xl md:text-2xl leading-relaxed font-medium text-slate-900 dark:text-slate-100">
+                                <div className="flex flex-col items-center text-xl md:text-2xl leading-[1.4] font-medium text-slate-900 dark:text-slate-100">
                                   <InteractiveText
                                     segments={expressionSegments}
                                     highlightedWord={highlightedWord}
@@ -1060,7 +1060,7 @@ export function TrainingCard({
                                 !(
                                   hidePrimaryIdiomExplanationOnReveal && i === 0
                                 ) && (
-                                  <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
+                                  <div className="text-lg leading-[1.4] text-slate-500 dark:text-slate-400 flex items-start justify-center">
                                     <span className="text-slate-400 dark:text-slate-500 mr-2">
                                       |
                                     </span>
@@ -1089,7 +1089,7 @@ export function TrainingCard({
                   {/* Examples */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-2xl text-left">
+                      <div className="flex flex-col gap-5 mt-6 mx-auto max-w-2xl text-left">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,
@@ -1101,7 +1101,7 @@ export function TrainingCard({
                                 aria-hidden="true"
                                 className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
                               />
-                              <div className="flex flex-col flex-1 text-lg italic leading-relaxed text-slate-600 dark:text-slate-400">
+                              <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
                                 <InteractiveText
                                   segments={exSegments}
                                   highlightedWord={highlightedWord}
