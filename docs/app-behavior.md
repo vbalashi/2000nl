@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-01-14
+**Last updated:** 2026-01-23
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -57,6 +57,48 @@
 ---
 
 ## Features
+
+### Audio Path Investigation Notes
+**Added:** 2026-01-23
+**User Story:** US-041-1
+
+**Behavior:**
+Documented where audio files live on the dev machine (`/home/khrustal/dev/2000nl-ui/public/audio/`) and how audio URLs are assembled in the UI. Path generation for word audio is in `apps/ui/components/training/TrainingScreen.tsx` (line ~1052) and sentence audio is in `apps/ui/components/training/InteractiveText.tsx`, with relative vs absolute patterns noted for environment differences. Findings highlight that word audio failed on localhost while sentence (TTS) audio failed on the NUC, guiding the next fix step.
+
+### NUC Docker Audio Volume Verification
+**Added:** 2026-01-23
+**User Story:** US-041-2
+
+**Behavior:**
+Verified NUC Docker volume mounts for the Next.js service and checked audio files inside the running container at `/app/public/audio/`. Confirmed presence (or absence) of both word audio (`/app/public/audio/nl/`) and sentence TTS audio (`/app/public/audio/tts/`) to identify mismatches between host and container paths. This was an investigation-only step with no code changes on the NUC.
+
+### Dev vs Prod Static File Serving Comparison
+**Added:** 2026-01-23
+**User Story:** US-041-3
+
+**Behavior:**
+Documented how Next.js serves `public/` assets in `next dev` versus `next build` + `next start`, and how that interacts with the NUC's nginx proxying for `/audio/` routes. The notes capture differences between localhost and NUC serving behavior and which audio types worked in each environment, clarifying why word audio failed on localhost while sentence audio failed on the NUC. This establishes the expected static-file path assumptions before applying any fixes.
+
+### Audio Path Fix for Word + Sentence Playback
+**Added:** 2026-01-23
+**User Story:** US-041-4
+
+**Behavior:**
+Audio URL generation is now aligned across word and sentence playback so both resolve to the correct `/audio/` paths in dev and on the NUC. Configuration and path constants were updated so the UI no longer mixes relative and absolute patterns that caused 404s. Word and TTS audio are expected to load without errors in both environments after the fix.
+
+### PWA Implementation Complexity Assessment
+**Added:** 2026-01-23
+**User Story:** US-PWA-RESEARCH
+
+**Behavior:**
+Assessed the requirements and complexity for adding PWA support, including manifest/service worker fundamentals, App Router compatibility for `next-pwa`, and 2000nl-specific offline needs. The assessment documents an offline caching strategy for word training, an effort breakdown with story points by phase, and risks/blockers (auth, API structure, browser support) with a proceed/defer recommendation.
+
+### Training Card Line Spacing Hierarchy
+**Added:** 2026-01-23
+**User Story:** US-033
+
+**Behavior:**
+Training cards now use a clear line-spacing hierarchy: tight line-height for soft wraps within a sentence, a small gap between source text and its translation, and a larger gap between separate sentences/examples. This makes sentence boundaries and source-to-translation groupings visually distinct on both mobile and desktop. The spacing changes only affect layout/typography, not the content or queue logic.
 
 ### Cross-Reference-Only Word Filtering
 **Added:** 2026-01-14 (Sprint: Data Quality & Mobile UX)
@@ -214,6 +256,33 @@ On mobile, users can swipe left for "opniew" (again) and right for "goed" (corre
 - Main card: `apps/ui/components/training/TrainingCard.tsx`
 - Sidebar: `apps/ui/components/training/SidebarCard.tsx`
 - Component: `apps/ui/components/Tooltip.tsx`
+
+---
+
+### Mobile Header Layout Fix
+**Added:** 2026-01-16 (Sprint: Mobile & UX Polish)
+**User Story:** US-042
+
+**Behavior:**
+The header layout now works correctly in mobile view with proper positioning of the theme switcher and settings button. The help '?' button is hidden on mobile to reduce clutter and provide a cleaner interface. These changes ensure the header is fully accessible and functional across all mobile viewport sizes while maintaining consistency with desktop behavior.
+
+---
+
+### Translation Overlay Persistence During Scrolling
+**Added:** 2026-01-16 (Sprint: Mobile & UX Polish)
+**User Story:** US-044
+
+**Behavior:**
+Translation overlays now persist when users scroll through card text using arrow keys, allowing learners to maintain reference to word meanings while reading. Previously, scrolling would cause translation popups to disappear, interrupting the learning flow. This fix ensures smooth scrolling behavior that doesn't interfere with active translations.
+
+---
+
+### Audio Mode Button UX Improvements
+**Added:** 2026-01-16 (Sprint: Mobile & UX Polish)
+**User Story:** US-047
+
+**Behavior:**
+The audio mode button has been redesigned to be self-explanatory and remove confusion between the 'play audio' action and the 'mode toggle' functionality. The button now uses clearer visual states that avoid negative visual cues (previously used red prohibition symbol for disabled state), making the purpose immediately apparent without requiring explanation. The improved design works seamlessly across both mobile and desktop views.
 
 ---
 

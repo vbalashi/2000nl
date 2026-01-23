@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 PRD_FILE="$SCRIPT_DIR/prd.json"
 BASE_CMD=""
+RUN_MODE=""
 
 select_base_command() {
   if [ -n "$RALPH_CMD" ]; then
@@ -22,6 +23,18 @@ select_base_command() {
     echo "Set RALPH_CMD or install the command and try again."
     exit 1
   fi
+
+  case "$(basename "$BASE_CMD")" in
+    codex)
+      RUN_MODE="codex"
+      ;;
+    claude)
+      RUN_MODE="claude"
+      ;;
+    *)
+      RUN_MODE="generic"
+      ;;
+  esac
 }
 
 cd "$PROJECT_DIR"
@@ -38,8 +51,18 @@ if [ -f "$PRD_FILE" ]; then
   previous_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
 fi
 
-# Run claude interactively with the ralph prompt
-"$BASE_CMD" --dangerously-skip-permissions "$(cat "$SCRIPT_DIR/prompt.md")"
+# Run agent interactively with the ralph prompt
+case "$RUN_MODE" in
+  codex)
+    "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "$(cat "$SCRIPT_DIR/prompt.md")"
+    ;;
+  claude)
+    "$BASE_CMD" --dangerously-skip-permissions "$(cat "$SCRIPT_DIR/prompt.md")"
+    ;;
+  *)
+    "$BASE_CMD" "$(cat "$SCRIPT_DIR/prompt.md")"
+    ;;
+esac
 
 # Update app-behavior.md with completed feature
 if [ -f "$PRD_FILE" ]; then
@@ -49,7 +72,14 @@ if [ -f "$PRD_FILE" ]; then
     while IFS= read -r story_id; do
       [ -z "$story_id" ] && continue
       echo "Updating docs/app-behavior.md..."
-      "$BASE_CMD" "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+      case "$RUN_MODE" in
+        codex)
+          "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+          ;;
+        *)
+          "$BASE_CMD" "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+          ;;
+      esac
     done <<< "$new_passes"
   fi
 fi
