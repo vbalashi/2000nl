@@ -1049,7 +1049,15 @@ export function TrainingScreen({ user }: Props) {
   const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
     if (!raw) return undefined;
     // Dutch (nl) pronunciation only for MVP - no fallback to Belgian (be)
-    return raw.audio_links?.nl || undefined;
+    const link = raw.audio_links?.nl;
+    if (!link) return undefined;
+
+    if (/^https?:\/\//i.test(link)) return link;
+
+    const baseUrl = process.env.NEXT_PUBLIC_AUDIO_BASE_URL?.replace(/\/$/, "");
+    if (!baseUrl) return link;
+
+    return link.startsWith("/") ? `${baseUrl}${link}` : `${baseUrl}/${link}`;
   }, []);
 
   const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {
