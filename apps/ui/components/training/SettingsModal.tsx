@@ -471,6 +471,25 @@ export function SettingsModal({
                     Een woord is geleerd wanneer alle kaarten in het scenario stabiel genoeg zijn.
                   </p>
                 </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Tutorial
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    De introductie-tour laat je de belangrijkste functies zien bij je eerste bezoek.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem("onboarding_completed");
+                      alert("Tutorial gereset! Ververs de pagina om de rondleiding opnieuw te starten.");
+                    }}
+                    className="mt-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  >
+                    Tutorial opnieuw starten
+                  </button>
+                </div>
                 </div>
               </div>
             ) : null}
