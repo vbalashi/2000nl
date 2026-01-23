@@ -14,3 +14,12 @@ Started: vr 23 jan 2026 18:35:10 CET
   - Gotchas encountered: the UI container on NUC currently has a broken `/app/public/audio` symlink because the host path is not mounted.
   - Useful context: word audio URLs come from `raw.audio_links?.nl` in `apps/ui/components/training/TrainingScreen.tsx` while sentence audio uses `/api/tts`.
 ---
+
+## 2026-01-23 18:52:20 CET - US-041-2
+- Verified NUC container mounts and audio paths; documented broken `/app/public/audio` symlink and missing volume mounts
+- Files changed: `ralph/us-041-2-docker-volume-investigation.md`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: the NUC `2000nl-ui` Docker container currently has no volume mounts (confirmed via `docker inspect`), while `/app/public/audio` is a symlink to `/home/khrustal/dev/2000nl-ui/db/audio` that does not exist in-container.
+  - Gotchas encountered: audio files live on the host at `/srv/2000nl-ui/db/audio`, but the UI container cannot see them without an explicit mount or updated symlink target.
+  - Useful context: `docker exec 2000nl-ui-ui-1` is the active container name; `docker inspect 2000nl-ui-ui-1` shows empty mounts list.
+---

@@ -39,7 +39,7 @@
         "CRITICAL: Investigation only - do NOT modify any code on NUC"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
