@@ -1,94 +1,88 @@
 {
   "project": "2000nl",
-  "branchName": "ralph/translation-system-refactoring",
-  "description": "Translation System Refactoring - Fix translation overlay anchoring and wrapping based on US-EXPLORE findings. Refactor from absolute positioning to flow layout.",
+  "branchName": "ralph/pwa-and-polish",
+  "description": "PWA + Polish - Enable PWA installation with app icon and fullscreen mode, evaluate desktop card width, and achieve WCAG AA color accessibility compliance",
   "userStories": [
     {
-      "id": "US-034",
-      "title": "Translation Overlay Anchoring",
-      "description": "Refactor translation overlay positioning so translations are visually anchored to their original sentence, not floating or appearing attached to the wrong line. Currently uses absolute positioning tied to container bounds instead of text lines, causing visual confusion.",
+      "id": "US-032",
+      "title": "PWA Support - Icon + Fullscreen",
+      "description": "As a mobile user, I want to install 2000nl to my home screen and use it in fullscreen mode so that I have an app-like experience without browser chrome. Offline functionality is explicitly out of scope - when offline, the app shows 'Please connect' message.",
       "acceptanceCriteria": [
-        "Translations positioned directly below their original sentence",
-        "Spacing to translation is smaller than spacing between sentences",
-        "No visual collisions or overlaps",
-        "Layout expands vertically when translation enabled",
-        "Works on both mobile and desktop",
-        "Works with both short and long sentences",
-        "All existing translation features still work (toggle, language selection)",
-        "Screenshots show before/after comparison with clear visual grouping",
-        "Test with single-line and multi-line definitions",
-        "Test with multiple translations visible at once",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Create manifest.json with app metadata (name, short_name, description, start_url, display: standalone, theme_color, background_color, icons)",
+        "Generate icon assets: 192x192, 512x512 (Android), 180x180 (Apple touch icon)",
+        "Add manifest link to apps/ui/app/layout.tsx",
+        "Add meta tags: theme-color, mobile-web-app-capable, apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, apple-mobile-web-app-title",
+        "Add offline detection banner with message: You're offline. Please connect to continue",
+        "Test installation on iOS Safari (Add to Home Screen)",
+        "Test installation on Android Chrome (Install app prompt)",
+        "Test installation on desktop Chrome/Edge",
+        "Verify app opens in standalone/fullscreen mode (no browser UI)",
+        "App icon appears correctly on home screen",
+        "Lighthouse PWA installability checks pass",
+        "Screenshots showing: install prompt, home screen icon, fullscreen mode",
+        "Typecheck passes: npx tsc --noEmit",
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "",
-      "technicalContext": {
-        "complexity": "Medium/High",
-        "explorationFindings": "From US-EXPLORE (2026-01-16): InlineTranslation uses absolute positioning (bottom-full) tied to container bounds, not text line. Multi-line definitions show overlay detached from intended line.",
-        "rootCause": "absolute positioning with bottom-full inside relative wrappers",
-        "recommendedApproach": "Flow Layout - Remove absolute positioning from InlineTranslation, wrap each sentence+translation pair in container, use normal flow layout with margin/padding for spacing",
-        "files": [
-          "apps/ui/components/training/TrainingCard.tsx"
-        ],
-        "mayCreateComponent": "TranslatedSentence.tsx for wrapping pattern",
-        "implementationSteps": [
-          "Refactor InlineTranslation to use relative/flow positioning instead of absolute",
-          "Wrap each sentence+translation pair in a container div",
-          "Use flexbox or grid to control spacing between sentences",
-          "Ensure translation sits directly below its source line with smaller gap",
-          "Add larger gap between sentence groups"
-        ],
-        "mustCompleteBefore": "US-036",
-        "visualReference": [
-          "assets/screenshots/2000NL-034-036-translation-overlay-annotated.png (before)",
-          "assets/screenshots/2000NL-034-036-translation-system-annotated.png (architecture)"
-        ],
-        "explorationReference": "ralph/progress.txt (2026-01-16 US-EXPLORE section)"
-      }
+      "notes": ""
     },
     {
-      "id": "US-036",
-      "title": "Translation Text Wrapping and Clipping",
-      "description": "Fix long translations being cut off instead of wrapping. After US-034 establishes proper flow layout, enable translations to wrap to multiple lines and take as much vertical space as needed. Critical for long sentences where translation is needed most.",
+      "id": "US-045",
+      "title": "Desktop Card Width Evaluation",
+      "description": "As a developer, I want to evaluate whether desktop cards should expand width when text doesn't fit (like mobile) or maintain fixed width with scrolling, so that we choose the approach with best readability and user experience.",
       "acceptanceCriteria": [
-        "Long translations wrap to multiple lines (no clipping)",
-        "Translation takes full vertical space needed",
-        "Original sentence positioned correctly relative to translation",
-        "No text overflow or fade effects",
-        "Proper spacing maintained between translation and surrounding content",
-        "Works on mobile and desktop",
-        "Test with translations of varying lengths (short: 10 chars, medium: 30 chars, long: 80+ chars)",
-        "Screenshots show before/after with long translations",
-        "Mobile viewport shows proper wrapping without horizontal scroll",
-        "Typecheck passes (npx tsc --noEmit from apps/ui/ directory)",
+        "Use Chrome DevTools MCP to test current fixed-width behavior with long content",
+        "Measure current line length in characters",
+        "Screenshot current behavior showing scrolling with long content",
+        "Temporarily test expansion approach (modify width classes)",
+        "Screenshot expanded behavior",
+        "Measure line length in expanded approach",
+        "Research typography best practices for optimal line length (50-75 characters)",
+        "Document pros/cons of both approaches",
+        "Make decision: fixed width, expand with max-width, or full expansion",
+        "Document decision with clear reasoning in progress notes",
+        "If implementing change: Update card width classes in TrainingCard.tsx",
+        "If implementing change: Test on multiple desktop viewports (1280px, 1440px, 1920px)",
+        "If implementing change: Verify no horizontal scroll on standard viewports",
+        "If implementing change: Verify line length within optimal range",
+        "Screenshots documenting comparison and final decision",
+        "Typecheck passes: npx tsc --noEmit",
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "",
-      "technicalContext": {
-        "complexity": "Medium",
-        "explorationFindings": "From US-EXPLORE (2026-01-16): Overlay text forced to single line with truncate class. Long translations ellipsize instead of wrapping. No layout space reserved (absolute positioned).",
-        "rootCause": "truncate class forces single line, overflow:hidden constraints",
-        "dependsOn": "US-034",
-        "criticalDependency": "CANNOT START until US-034 completes - anchoring establishes flow layout foundation",
-        "files": [
-          "apps/ui/components/training/TrainingCard.tsx"
-        ],
-        "implementationSteps": [
-          "Remove truncate class from translation text",
-          "Remove any overflow: hidden, text-overflow: ellipsis, or fixed height constraints",
-          "Set white-space: normal and word-wrap: break-word on translation text",
-          "Ensure sentence+translation container expands to fit content",
-          "Test with very long translations (50+ characters)"
-        ],
-        "testingFocus": "Mobile viewport especially (narrower width = more wrapping). Test edge cases: very long words, multiple long translations.",
-        "visualReference": [
-          "assets/screenshots/2000NL-034-036-translation-overlay-annotated.png (shows truncation)"
-        ]
-      }
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-052",
+      "title": "Color Accessibility Improvements",
+      "description": "As a user with visual impairments or color-blindness, I want the app to meet WCAG AA accessibility standards so that I can effectively use all features regardless of my vision capabilities.",
+      "acceptanceCriteria": [
+        "Read Tailwind config and extract all colors with hex values",
+        "Document all color usage contexts (primary, secondary, background, text, badges, buttons, etc.)",
+        "Map all text/background color combinations used in app",
+        "Calculate contrast ratios for all combinations using WebAIM Contrast Checker",
+        "Create matrix of failing combinations (those below 4.5:1 for normal text or 3:1 for large text)",
+        "Generate alternative colors for failing pairs using Tanaguru Contrast-Finder",
+        "Test color scheme with color-blindness simulators (protanopia, deuteranopia, tritanopia, achromatopsia)",
+        "Verify semantic colors remain distinguishable (success vs error vs warning)",
+        "Update Tailwind config with WCAG AA compliant colors",
+        "Preserve brand identity by adjusting saturation/lightness, not hue",
+        "Test changes in browser using Chrome DevTools MCP",
+        "Screenshot before/after comparisons of key components",
+        "Visual regression testing on cards, navbar, buttons, badges",
+        "Run Lighthouse accessibility audit",
+        "Lighthouse accessibility score > 90",
+        "Document color usage guidelines in apps/ui/docs/accessibility-colors.md",
+        "All text meets 4.5:1 contrast ratio (normal text) or 3:1 (large text ≥18pt)",
+        "No visual regressions or unexpected color changes",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

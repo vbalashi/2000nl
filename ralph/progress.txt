@@ -5,6 +5,7 @@
 - Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
 - Translation overlays are fetched via `/api/translation` and rendered in `apps/ui/components/training/TrainingCard.tsx` as absolutely positioned InlineTranslation spans; translation language is stored in user preferences.
 - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
+- PWA assets live under `apps/ui/public/` (manifest at `apps/ui/public/manifest.json`, icons in `apps/ui/public/icons/`).
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
@@ -183,4 +184,12 @@ Started: wo 14 jan 2026 19:08:08 CET
 - Files changed: apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
 - **Learnings for future iterations:**
   - Translation text wrapping is controlled by the InlineTranslation classes in `apps/ui/components/training/TrainingCard.tsx`.
+---
+## 2026-01-23 23:04:12 CET - US-032
+- Added PWA manifest, icons, and platform meta tags for installability and standalone display.
+- Added offline detection banner with "You're offline. Please connect to continue" message.
+- Browser verification skipped: dev-browser server not running.
+- Files changed: apps/ui/app/layout.tsx, apps/ui/components/system/OfflineBanner.tsx, apps/ui/public/manifest.json, apps/ui/public/icons/icon-192.png, apps/ui/public/icons/icon-512.png, apps/ui/public/icons/apple-touch-icon.png, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - PWA metadata is centralized in `apps/ui/app/layout.tsx` with manifest + mobile meta tags.
 ---
