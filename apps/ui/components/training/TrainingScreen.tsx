@@ -3,6 +3,7 @@
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import {
   fetchDictionaryEntry,
@@ -93,6 +94,48 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
 
 export type ThemePreference = "light" | "dark" | "system";
 
+const ONBOARDING_STORAGE_KEY = "onboarding_completed";
+const JOYRIDE_STEPS: Step[] = [
+  {
+    target: "body",
+    placement: "center",
+    title: "Welkom bij 2000NL",
+    content:
+      "Klaar om te starten? In 6 korte stappen ontdek je hoe je woorden leert.",
+  },
+  {
+    target: "[data-tour='training-card']",
+    placement: "bottom",
+    title: "Onthul het woord",
+    content: "Tik op de kaart of druk op “Antwoord tonen” om te onthullen.",
+  },
+  {
+    target: "[data-tour='rating-buttons']",
+    placement: "top",
+    title: "Beoordeel je kennis",
+    content:
+      "Kies hoe goed je het woord kent zodat het juiste herhaalschema volgt.",
+  },
+  {
+    target: "[data-tour='card-toolbar']",
+    placement: "right",
+    title: "Audio & vertaling",
+    content: "Gebruik audio en vertaling om uitspraak en betekenis te oefenen.",
+  },
+  {
+    target: "[data-tour='sidebar-toggle']",
+    placement: "left",
+    title: "Recent & details",
+    content: "Bekijk recente woorden en open details via de sidebar.",
+  },
+  {
+    target: "[data-tour='search-button']",
+    placement: "left",
+    title: "Zoeken & instellingen",
+    content: "Zoek woorden op en pas voorkeuren aan in Instellingen.",
+  },
+];
+
 export function TrainingScreen({ user }: Props) {
   const { wordId, devMode } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -168,6 +211,40 @@ export function TrainingScreen({ user }: Props) {
   >(null);
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [swipeActive, setSwipeActive] = useState(false);
+
+  // Joyride tour state
+  const [runTour, setRunTour] = useState(false);
+
+  // Check localStorage on mount to see if tour should run
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const completed = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!completed) {
+        // Tour has never been completed, run it
+        setRunTour(true);
+      }
+    } catch (e) {
+      console.error("[Onboarding] Failed to read localStorage:", e);
+    }
+  }, []);
+
+  const handleJoyrideCallback = useCallback((data: CallBackProps) => {
+    const { status, type } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(status)) {
+      // Tour finished or skipped - save to localStorage and stop tour
+      setRunTour(false);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+        } catch (e) {
+          console.error("[Onboarding] Failed to save completion to localStorage:", e);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (devMode) {
@@ -1672,6 +1749,7 @@ export function TrainingScreen({ user }: Props) {
               tabIndex={0}
               aria-label="Zoeken"
               className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              data-tour="search-button"
               onClick={openSearch}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
@@ -1701,6 +1779,7 @@ export function TrainingScreen({ user }: Props) {
               tabIndex={0}
               aria-label="Instellingen"
               className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              data-tour="settings-button"
               onClick={() => {
                 setSettingsInitialTab("instellingen");
                 setSettingsAutoFocusWordSearch(false);
@@ -1765,6 +1844,7 @@ export function TrainingScreen({ user }: Props) {
                   ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               }`}
+              data-tour="sidebar-toggle"
               onClick={toggleRecentPanel}
               onKeyDown={(e) => e.key === "Enter" && toggleRecentPanel()}
             >
@@ -1914,51 +1994,53 @@ export function TrainingScreen({ user }: Props) {
             <div className="flex-none pt-4 pb-2 z-10">
               {/* Translucent container for buttons */}
               <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
-                {revealed ? (
-                  <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {showFirstTimeButtons ? (
-                      <FirstTimeButtonGroup
-                        onStartLearning={handleFirstTimeStart}
-                        onAlreadyKnow={handleFirstTimeAlreadyKnow}
-                        disabled={actionLoading}
-                      />
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
-                        {(
-                          ["fail", "hard", "success", "easy"] as ReviewResult[]
-                        ).map((actionKey) => {
-                          const { label, keyHint, tone } =
-                            ACTION_LABELS[actionKey];
-                          return (
-                            <button
-                              key={actionKey}
-                              type="button"
-                              disabled={actionLoading}
-                              onClick={() => handleAction(actionKey)}
-                              className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
-                            >
-                              <span>{label}</span>
-                              <span className="text-[10px] md:text-xs font-normal opacity-70">
-                                ({keyHint})
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Show Answer Button - Wide, colored, distinct */
-                  <button
-                    type="button"
-                    onClick={() => {
-                      revealAnswer();
-                    }}
-                    className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
-                  >
-                    Antwoord Tonen
-                  </button>
-                )}
+                <div data-tour="rating-buttons">
+                  {revealed ? (
+                    <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {showFirstTimeButtons ? (
+                        <FirstTimeButtonGroup
+                          onStartLearning={handleFirstTimeStart}
+                          onAlreadyKnow={handleFirstTimeAlreadyKnow}
+                          disabled={actionLoading}
+                        />
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
+                          {(
+                            ["fail", "hard", "success", "easy"] as ReviewResult[]
+                          ).map((actionKey) => {
+                            const { label, keyHint, tone } =
+                              ACTION_LABELS[actionKey];
+                            return (
+                              <button
+                                key={actionKey}
+                                type="button"
+                                disabled={actionLoading}
+                                onClick={() => handleAction(actionKey)}
+                                className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
+                              >
+                                <span>{label}</span>
+                                <span className="text-[10px] md:text-xs font-normal opacity-70">
+                                  ({keyHint})
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Show Answer Button - Wide, colored, distinct */
+                    <button
+                      type="button"
+                      onClick={() => {
+                        revealAnswer();
+                      }}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
+                    >
+                      Antwoord Tonen
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </section>
@@ -2080,6 +2162,29 @@ export function TrainingScreen({ user }: Props) {
           onTrainWord={handleTrainWord}
         />
       )}
+
+      {/* Onboarding Tour */}
+      <Joyride
+        steps={JOYRIDE_STEPS}
+        run={runTour}
+        continuous
+        showProgress
+        showSkipButton
+        callback={handleJoyrideCallback}
+        locale={{
+          back: "Terug",
+          close: "Sluiten",
+          last: "Afronden",
+          next: "Volgende",
+          skip: "Overslaan",
+        }}
+        styles={{
+          options: {
+            primaryColor: "#3b82f6",
+            zIndex: 10000,
+          },
+        }}
+      />
     </div>
   );
 }
