@@ -1,0 +1,83 @@
+{
+  "project": "2000nl",
+  "branchName": "ralph/mobile-ux-polish",
+  "description": "Mobile & UX Polish Sprint - Fix mobile header layout, improve translation overlay behavior, polish example sentence spacing, and redesign audio mode button for better UX",
+  "userStories": [
+    {
+      "id": "US-042",
+      "title": "Mobile header layout broken",
+      "description": "As a mobile user, I want the header layout to work correctly so that I can access theme switcher, settings, and have a clean interface without the help button cluttering the view.",
+      "acceptanceCriteria": [
+        "Theme switcher positioned correctly in mobile view",
+        "Settings button accessible in mobile view",
+        "Help '?' button hidden in mobile view",
+        "Header layout consistent with desktop behavior where appropriate",
+        "Test on multiple mobile viewport sizes",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP (mobile viewport)"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "Translation disappears when scrolling with arrows",
+      "description": "As a user learning vocabulary, I want translation overlays to persist when I scroll through card text with arrow keys so that I can keep reference to word meanings while reading.",
+      "acceptanceCriteria": [
+        "Translation overlay persists when scrolling with arrow keys",
+        "Scrolling behavior is smooth and doesn't interfere with translation",
+        "Alternative solution acceptable: Translation gracefully hides/shows based on scroll state",
+        "Test with keyboard arrow keys in both mobile and desktop views",
+        "Test with translation mode enabled on cards with scrollable text",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-047",
+      "title": "Audio mode button UX improvements",
+      "description": "As a user, I want the audio mode button to be self-explanatory so that I understand what it does without requiring explanation or documentation.",
+      "acceptanceCriteria": [
+        "STEP 1: Generate 5 distinct solution approaches with visual design, interaction pattern, pros/cons, and implementation complexity",
+        "STEP 2: Evaluate each solution against: self-explanatory, clear visual states, consistent with UI patterns, mobile-friendly, implementation effort",
+        "STEP 3: Select best solution and document reasoning for choice and why alternatives were rejected",
+        "Button purpose is self-explanatory without explanation",
+        "Icon states are clear and not visually overwhelming",
+        "Avoid red color for disabled state (current issue: red prohibition symbol creates negative feeling)",
+        "Remove confusion between 'play audio' button vs 'mode toggle' (current issue: users think green speaker = play)",
+        "Consider solutions: different label/icon, toggle with clear states, tooltips, icon+label, mode selector UI",
+        "Document all 5 solutions and selection reasoning in implementation notes",
+        "Test both active (audio mode ON) and inactive (translation mode ON) states",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP (mobile and desktop)"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "title": "Example spacing edge cases in D→W cards",
+      "description": "As a learner, I want consistent spacing and visual markers for example sentences so that I can easily identify and read examples regardless of text length.",
+      "acceptanceCriteria": [
+        "Consistent spacing for example sentences in all card layouts (D→W, W→D, etc.)",
+        "Vertical pipe marker present for all examples (currently missing in D→W layout)",
+        "Adequate margin/padding on both sides (fix: first line narrow ~7%, second line excessive ~60%)",
+        "Visual consistency with other card types (reference: 2000NL-038 completed work)",
+        "Multi-line wrapped examples have balanced spacing (not ragged)",
+        "Single-line examples maintain current acceptable appearance",
+        "Test with both short and long example sentences",
+        "Test specifically in Definition→Word (D→W) card layout",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}

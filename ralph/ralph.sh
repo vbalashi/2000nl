@@ -15,6 +15,8 @@ LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
 DEV_BROWSER_DIR="/home/khrustal/dev/github/dev-browser/skills/dev-browser"
 DEV_BROWSER_PID=""
 BASE_CMD=""
+LAST_MESSAGE_FILE="$ARCHIVE_DIR/last-message.txt"
+RUN_MODE=""
 
 select_base_command() {
   if [ -n "$RALPH_CMD" ]; then
@@ -30,6 +32,18 @@ select_base_command() {
     echo "Set RALPH_CMD or install the command and try again."
     exit 1
   fi
+
+  case "$(basename "$BASE_CMD")" in
+    codex)
+      RUN_MODE="codex"
+      ;;
+    claude)
+      RUN_MODE="claude"
+      ;;
+    *)
+      RUN_MODE="generic"
+      ;;
+  esac
 }
 
 # Start dev-browser server
@@ -60,6 +74,45 @@ start_dev_browser() {
     echo "Warning: dev-browser not found at $DEV_BROWSER_DIR"
     echo "Browser testing will be skipped"
   fi
+}
+
+run_agent_prompt() {
+  local prompt_file="$1"
+  local output_file="$2"
+
+  case "$RUN_MODE" in
+    codex)
+      if [ -n "$output_file" ]; then
+        : > "$output_file"
+        "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -o "$output_file" "$(cat "$prompt_file")"
+      else
+        "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "$(cat "$prompt_file")"
+      fi
+      ;;
+    claude)
+      [ -n "$output_file" ] && : > "$output_file"
+      "$BASE_CMD" --dangerously-skip-permissions -p "$(cat "$prompt_file")"
+      ;;
+    *)
+      [ -n "$output_file" ] && : > "$output_file"
+      "$BASE_CMD" "$(cat "$prompt_file")"
+      ;;
+  esac
+}
+
+run_agent_task() {
+  local task_prompt="$1"
+  case "$RUN_MODE" in
+    codex)
+      "$BASE_CMD" exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "$task_prompt"
+      ;;
+    claude)
+      "$BASE_CMD" "$task_prompt"
+      ;;
+    *)
+      "$BASE_CMD" "$task_prompt"
+      ;;
+  esac
 }
 
 # Cleanup function
@@ -106,6 +159,8 @@ if [ ! -f "$PROGRESS_FILE" ]; then
   echo "---" >> "$PROGRESS_FILE"
 fi
 
+mkdir -p "$ARCHIVE_DIR"
+
 echo "Starting Ralph - Max iterations: $MAX_ITERATIONS"
 echo "Project directory: $PROJECT_DIR"
 select_base_command
@@ -127,9 +182,8 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     previous_passes=$(jq -r '.userStories[]? | select(.passes == true) | .id' "$PRD_FILE" 2>/dev/null | sort -u)
   fi
 
-  # Run claude with the ralph prompt
-  # Using print mode (-p) for non-interactive execution
-  OUTPUT=$("$BASE_CMD" --dangerously-skip-permissions -p "$(cat "$SCRIPT_DIR/prompt.md")" 2>&1 | tee /dev/stderr) || true
+  # Run agent with the ralph prompt
+  OUTPUT=$(run_agent_prompt "$SCRIPT_DIR/prompt.md" "$LAST_MESSAGE_FILE" 2>&1 | tee /dev/stderr) || true
 
   # Update app-behavior.md with completed feature
   if [ -f "$PRD_FILE" ]; then
@@ -139,13 +193,14 @@ for i in $(seq 1 $MAX_ITERATIONS); do
       while IFS= read -r story_id; do
         [ -z "$story_id" ] && continue
         echo "Updating docs/app-behavior.md..."
-        "$BASE_CMD" "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
+        run_agent_task "Read ralph/prd.json story $story_id and docs/app-behavior.md. Add a brief feature entry (2-4 sentences) documenting what changed." || true
       done <<< "$new_passes"
     fi
   fi
 
   # Check for completion signal
-  if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+  if { [ -n "$LAST_MESSAGE_FILE" ] && [ -s "$LAST_MESSAGE_FILE" ] && grep -q "<promise>COMPLETE</promise>" "$LAST_MESSAGE_FILE"; } \
+    || echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"

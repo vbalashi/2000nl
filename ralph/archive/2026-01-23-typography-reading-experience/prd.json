@@ -1,7 +1,7 @@
 {
   "project": "2000nl",
   "branchName": "ralph/audio-fix-pwa-onboarding-prep",
-  "description": "Sprint 09: Fix critical audio 404 errors on localhost and NUC, research PWA implementation complexity, and plan user onboarding feature. CRITICAL: Code changes ONLY on dev machine, NUC is for Docker/nginx config investigation only.",
+  "description": "Sprint 09: Fix critical audio 404 errors on localhost and NUC, research PWA implementation complexity, and plan user onboarding feature",
   "userStories": [
     {
       "id": "US-041-1",
@@ -9,9 +9,7 @@
       "description": "As a developer, I need to understand where audio files are located and how paths are generated in the codebase so that I can identify the root cause of 404 errors.",
       "acceptanceCriteria": [
         "Document audio file locations on localhost dev machine (/home/khrustal/dev/2000nl-ui/public/audio/)",
-        "SSH to NUC and check Docker services in /srv/ (actual running containers)",
-        "Check /home/khrustal/dev/nuc/ for configs and AGENTS.md (service overview)",
-        "Document audio file locations on NUC (inside Docker container)",
+        "SSH to NUC and document audio file locations (ssh nuc, check /home/khrustal/dev/nuc/ services)",
         "Identify where audio paths are generated in TrainingScreen.tsx:1052-1053",
         "Identify where audio paths are generated in InteractiveText.tsx",
         "Document path generation patterns (relative vs absolute, domain prefixes)",
@@ -19,24 +17,22 @@
         "Create investigation notes document with findings"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-041-2",
       "title": "Verify Docker volume configuration on NUC",
-      "description": "As a developer, I need to verify Docker volume mounts are correctly configured on the NUC server so that audio files are accessible to the Next.js container. This is investigation ONLY - no code changes on NUC.",
+      "description": "As a developer, I need to verify Docker volume mounts are correctly configured on the NUC server so that audio files are accessible to the Next.js container.",
       "acceptanceCriteria": [
         "SSH to NUC using 'ssh nuc' (key-based auth)",
-        "Check AGENTS.md in /home/khrustal/dev/nuc/ for service overview",
-        "Find 2000nl service configuration in /home/khrustal/dev/nuc/ directory structure",
-        "Check actual running Docker containers in /srv/ (use 'docker ps | grep 2000nl')",
-        "Read docker-compose.yml for volume mount configuration",
+        "Find 2000nl docker-compose.yml in /home/khrustal/dev/nuc/ directory",
+        "Check volume mounts configuration for audio directories",
+        "Verify audio files exist in mounted locations",
+        "Use 'docker ps | grep 2000nl' to find container",
         "Use 'docker exec -it [container] ls -la /app/public/audio/' to verify files inside container",
-        "Check if word audio directory (/app/public/audio/nl/) exists and has files in container",
-        "Check if sentence (TTS) audio directory (/app/public/audio/tts/) exists and has files in container",
-        "Document volume mount configuration and any mismatches between host and container",
-        "CRITICAL: Investigation only - do NOT modify any code on NUC"
+        "Document volume mount configuration and any mismatches",
+        "Check if sentence (TTS) audio directory is properly mounted"
       ],
       "priority": 2,
       "passes": false,
@@ -47,14 +43,13 @@
       "title": "Compare static file serving between dev and prod",
       "description": "As a developer, I need to understand how Next.js serves static files in development vs production so that I can identify why audio works inconsistently.",
       "acceptanceCriteria": [
-        "Check next.config.js on dev machine for static file serving configuration",
+        "Check next.config.js for static file serving configuration",
         "Document public directory serving in dev mode (next dev)",
         "Document public directory serving in prod mode (next build + next start)",
         "Check if nginx is proxying requests on NUC (/etc/nginx/sites-available/2000nl)",
         "Document nginx location blocks for /audio/ paths if applicable",
         "Identify differences between localhost:3000 serving and NUC serving",
-        "Document findings on what works where (word audio works on NUC, sentence audio works on localhost)",
-        "Typecheck passes"
+        "Document findings on what works where (word audio works on NUC, sentence audio works on localhost)"
       ],
       "priority": 3,
       "passes": false,
@@ -63,20 +58,18 @@
     {
       "id": "US-041-4",
       "title": "Fix audio path generation and configuration",
-      "description": "As a developer, I need to fix the identified audio serving issues so that both word and sentence audio play correctly in all environments. Code changes ONLY on dev machine.",
+      "description": "As a developer, I need to fix the identified audio serving issues so that both word and sentence audio play correctly in all environments.",
       "acceptanceCriteria": [
         "Apply fix based on investigation findings (Docker volumes, static paths, or nginx config)",
-        "If Docker volume issue: Update docker-compose.yml on NUC with correct mounts (config only, no code)",
-        "If path generation issue: Fix path constants in TrainingScreen.tsx and InteractiveText.tsx on DEV MACHINE ONLY",
-        "If nginx issue: Update nginx configuration on NUC for /audio/ location block (config only, no code)",
-        "CRITICAL: All TypeScript/React code changes happen on /home/khrustal/dev/2000nl-ui/ only",
-        "Restart services after configuration changes if needed",
+        "If Docker volume issue: Update docker-compose.yml with correct mounts",
+        "If path generation issue: Fix path constants in TrainingScreen.tsx and InteractiveText.tsx",
+        "If nginx issue: Update nginx configuration for /audio/ location block",
+        "Restart services after configuration changes",
         "Test word audio on localhost:3000 using Chrome DevTools MCP",
         "Test sentence audio on http://2000.nuc using Chrome DevTools MCP",
         "Verify no 404 errors in browser console for audio requests",
         "Test with multiple words and sentences in both environments",
-        "Document root cause and fix applied in investigation notes",
-        "Typecheck passes"
+        "Document root cause and fix applied in investigation notes"
       ],
       "priority": 4,
       "passes": false,
