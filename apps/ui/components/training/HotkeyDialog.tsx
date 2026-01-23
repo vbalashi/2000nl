@@ -44,7 +44,7 @@ export function HotkeyDialog({ onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700"
+            className="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400 dark:hover:border-primary-light dark:hover:text-primary-light"
           >
             Sluiten
           </button>

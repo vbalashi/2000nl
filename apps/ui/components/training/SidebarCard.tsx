@@ -60,7 +60,7 @@ export function SidebarCard({
                 <span className="rounded bg-pink-100 px-1.5 py-0.5 text-base font-semibold text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
                   {entry.clickedWord}
                 </span>
-                <span className="text-slate-400">→</span>
+                <span className="text-slate-500">→</span>
               </>
             )}
             <span
@@ -154,7 +154,7 @@ export function SidebarCard({
 
         <div className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
           {isNotFound ? (
-            <span className="italic text-slate-400 dark:text-slate-500">
+            <span className="italic text-slate-500 dark:text-slate-400">
               geen definitie gevonden
             </span>
           ) : (
@@ -166,7 +166,7 @@ export function SidebarCard({
                 excludeWord={entry.headword}
               />
               {meaning.context && (
-                <span className="block mt-0.5 text-xs text-slate-400 font-normal">
+                <span className="block mt-0.5 text-xs text-slate-500 font-normal">
                   [{meaning.context}]
                 </span>
               )}
@@ -176,7 +176,7 @@ export function SidebarCard({
 
         {/* Stats Row */}
         {(entry.stats || entry.debugStats) && (
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-dashed border-slate-100 pt-2 text-[10px] font-medium text-slate-400 dark:border-slate-800">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-dashed border-slate-100 pt-2 text-[10px] font-medium text-slate-500 dark:border-slate-800">
             {entry.debugStats?.source && (
               <span>
                 src:{" "}

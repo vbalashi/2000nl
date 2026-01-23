@@ -129,7 +129,7 @@ export function Sidebar({
                 <div className="text-center">
                   <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                     <svg
-                      className="h-6 w-6 text-slate-400"
+                      className="h-6 w-6 text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

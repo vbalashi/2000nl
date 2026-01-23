@@ -108,7 +108,7 @@ export function ModeCheckboxGroup({
           } min-w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white/95 text-sm shadow-xl dark:border-slate-700 dark:bg-slate-900/95`}
         >
           <div className="p-2">
-            <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Trainingsrichtingen
             </p>
             <div className="space-y-1">
@@ -129,11 +129,11 @@ export function ModeCheckboxGroup({
                       checked={isEnabled}
                       disabled={isOnlyOne}
                       onChange={() => handleToggle(option.value)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed dark:border-slate-600"
+                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed dark:border-slate-600 dark:text-primary-light"
                     />
                     <span className="flex-1 font-medium">{option.label}</span>
                     {isEnabled && (
-                      <span className="text-[10px] font-semibold uppercase text-primary">
+                      <span className="text-[10px] font-semibold uppercase text-primary dark:text-primary-light">
                         actief
                       </span>
                     )}
@@ -141,7 +141,7 @@ export function ModeCheckboxGroup({
                 );
               })}
             </div>
-            <p className="mt-2 px-2 text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="mt-2 px-2 text-[10px] text-slate-500 dark:text-slate-400">
               Elke richting heeft een eigen voortgang
             </p>
           </div>

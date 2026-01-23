@@ -153,7 +153,7 @@ export function AuthScreen() {
             <button
               type="button"
               onClick={() => setMode("reset")}
-              className="block w-full font-semibold text-primary hover:underline"
+              className="block w-full font-semibold text-primary hover:underline dark:text-primary-light"
             >
               Wachtwoord vergeten?
             </button>
@@ -161,7 +161,7 @@ export function AuthScreen() {
           <button
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="font-semibold text-primary hover:underline"
+            className="font-semibold text-primary hover:underline dark:text-primary-light"
           >
             {mode === "signin"
               ? "Nog geen account? Maak er een aan"

@@ -105,7 +105,7 @@ export function MobileListPickerSheet({
                     <div className="flex items-center justify-between text-sm font-semibold">
                       <span>{list.name}</span>
                       {isActive ? (
-                        <span className="text-[10px] uppercase text-primary">
+                        <span className="text-[10px] uppercase text-primary dark:text-primary-light">
                           actief
                         </span>
                       ) : null}
@@ -148,7 +148,7 @@ export function MobileListPickerSheet({
                     <div className="flex items-center justify-between text-sm font-semibold">
                       <span>{list.name}</span>
                       {isActive ? (
-                        <span className="text-[10px] uppercase text-primary">
+                        <span className="text-[10px] uppercase text-primary dark:text-primary-light">
                           actief
                         </span>
                       ) : null}
@@ -171,4 +171,3 @@ export function MobileListPickerSheet({
     </div>
   );
 }
-
