@@ -122,7 +122,7 @@
         "Sprint 10 ready-to-implement checklist prepared"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]

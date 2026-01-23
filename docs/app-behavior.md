@@ -58,6 +58,41 @@
 
 ## Features
 
+### Audio Path Investigation Notes
+**Added:** 2026-01-23
+**User Story:** US-041-1
+
+**Behavior:**
+Documented where audio files live on the dev machine (`/home/khrustal/dev/2000nl-ui/public/audio/`) and how audio URLs are assembled in the UI. Path generation for word audio is in `apps/ui/components/training/TrainingScreen.tsx` (line ~1052) and sentence audio is in `apps/ui/components/training/InteractiveText.tsx`, with relative vs absolute patterns noted for environment differences. Findings highlight that word audio failed on localhost while sentence (TTS) audio failed on the NUC, guiding the next fix step.
+
+### NUC Docker Audio Volume Verification
+**Added:** 2026-01-23
+**User Story:** US-041-2
+
+**Behavior:**
+Verified NUC Docker volume mounts for the Next.js service and checked audio files inside the running container at `/app/public/audio/`. Confirmed presence (or absence) of both word audio (`/app/public/audio/nl/`) and sentence TTS audio (`/app/public/audio/tts/`) to identify mismatches between host and container paths. This was an investigation-only step with no code changes on the NUC.
+
+### Dev vs Prod Static File Serving Comparison
+**Added:** 2026-01-23
+**User Story:** US-041-3
+
+**Behavior:**
+Documented how Next.js serves `public/` assets in `next dev` versus `next build` + `next start`, and how that interacts with the NUC's nginx proxying for `/audio/` routes. The notes capture differences between localhost and NUC serving behavior and which audio types worked in each environment, clarifying why word audio failed on localhost while sentence audio failed on the NUC. This establishes the expected static-file path assumptions before applying any fixes.
+
+### Audio Path Fix for Word + Sentence Playback
+**Added:** 2026-01-23
+**User Story:** US-041-4
+
+**Behavior:**
+Audio URL generation is now aligned across word and sentence playback so both resolve to the correct `/audio/` paths in dev and on the NUC. Configuration and path constants were updated so the UI no longer mixes relative and absolute patterns that caused 404s. Word and TTS audio are expected to load without errors in both environments after the fix.
+
+### PWA Implementation Complexity Assessment
+**Added:** 2026-01-23
+**User Story:** US-PWA-RESEARCH
+
+**Behavior:**
+Assessed the requirements and complexity for adding PWA support, including manifest/service worker fundamentals, App Router compatibility for `next-pwa`, and 2000nl-specific offline needs. The assessment documents an offline caching strategy for word training, an effort breakdown with story points by phase, and risks/blockers (auth, API structure, browser support) with a proceed/defer recommendation.
+
 ### Training Card Line Spacing Hierarchy
 **Added:** 2026-01-23
 **User Story:** US-033

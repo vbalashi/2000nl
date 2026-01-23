@@ -6,6 +6,7 @@ Started: vr 23 jan 2026 18:35:10 CET
 - TTS audio is cached by `apps/ui/app/api/tts/route.ts` under `db/audio/tts` and served as `/audio/tts/<hash>.mp3`.
 - Word audio links can be prefixed via `NEXT_PUBLIC_AUDIO_BASE_URL` when audio is hosted on a different origin.
 - Training data and word lists are fetched from Supabase via `apps/ui/lib/trainingService.ts`, while translations/TTS are served via `apps/ui/app/api/translation` and `apps/ui/app/api/tts`.
+- Word search uses the Settings modal’s “Woordenlijst” tab (no dedicated search route); the search icon in `TrainingScreen` opens that tab with auto-focus.
 ---
 
 ## 2026-01-23 18:45:32 CET - US-041-1
@@ -49,4 +50,12 @@ Started: vr 23 jan 2026 18:35:10 CET
   - Patterns discovered: None (research-only story)
   - Gotchas encountered: Next.js App Router needs explicit service worker tooling; installability alone does not provide offline.
   - Useful context: 2000nl training relies on Supabase + /api/translation + /api/tts, which are network-dependent and drive offline complexity.
+---
+## 2026-01-23 19:09:52 CET - US-048-PREP
+- Wrote onboarding UX flow, library evaluation, full copy, and implementation plan for Sprint 10
+- Files changed: `01_Projects/10_2000nl/01_10_10_Development/Onboarding-Implementation-Plan.md`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: the search entry point in the header opens the Settings modal’s word list tab with auto-focus.
+  - Gotchas encountered: onboarding steps should avoid targets hidden on mobile (sidebar/hotkeys).
+  - Useful context: `TrainingScreen` owns the header controls and the main training card layout, making it the best integration point for onboarding tours.
 ---

@@ -198,9 +198,19 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     fi
   fi
 
-  # Check for completion signal
+  # Check for completion signal + no remaining failing stories
+  has_completion=0
   if { [ -n "$LAST_MESSAGE_FILE" ] && [ -s "$LAST_MESSAGE_FILE" ] && grep -q "<promise>COMPLETE</promise>" "$LAST_MESSAGE_FILE"; } \
     || echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+    has_completion=1
+  fi
+
+  remaining_fails=""
+  if [ -f "$PRD_FILE" ]; then
+    remaining_fails=$(jq -r '.userStories[]? | select(.passes != true) | .id' "$PRD_FILE" 2>/dev/null | sed '/^$/d')
+  fi
+
+  if [ "$has_completion" -eq 1 ] && [ -z "$remaining_fails" ]; then
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
