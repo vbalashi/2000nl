@@ -44,7 +44,7 @@ export function WordsListMobile({
                 type="checkbox"
                 checked={checked}
                 onChange={() => onToggleSelected(word.id)}
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
+                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600 dark:text-primary-light"
               />
               <button
                 type="button"
@@ -62,7 +62,7 @@ export function WordsListMobile({
                       </span>
                     ) : null}
                     {word.is_nt2_2000 ? (
-                      <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary dark:text-primary-light">
                         2k
                       </span>
                     ) : null}
@@ -76,4 +76,3 @@ export function WordsListMobile({
     </div>
   );
 }
-

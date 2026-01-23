@@ -281,7 +281,7 @@ export function WordListTab({
                             {list.name}
                           </span>
                           {isActive ? (
-                            <span className="text-[10px] uppercase text-primary">
+                            <span className="text-[10px] uppercase text-primary dark:text-primary-light">
                               actief
                             </span>
                           ) : null}
@@ -316,7 +316,7 @@ export function WordListTab({
                         setCopyTargetListId(null);
                         setCopyDialogOpen(true);
                       }}
-                      className="text-xs font-semibold text-primary hover:underline"
+                      className="text-xs font-semibold text-primary hover:underline dark:text-primary-light"
                     >
                       Nieuwe lijst
                     </button>
@@ -375,7 +375,7 @@ export function WordListTab({
                         <div className="flex items-center justify-between text-sm font-semibold">
                           <span>{list.name}</span>
                           {isActive ? (
-                            <span className="text-[10px] uppercase text-primary">
+                            <span className="text-[10px] uppercase text-primary dark:text-primary-light">
                               actief
                             </span>
                           ) : null}
@@ -607,7 +607,7 @@ export function WordListTab({
                           setCopyTargetListId(null);
                           setCopyDialogOpen(true);
                         }}
-                        className="text-xs font-semibold text-primary hover:underline"
+                        className="text-xs font-semibold text-primary hover:underline dark:text-primary-light"
                       >
                         Nieuwe lijst
                       </button>
@@ -934,7 +934,7 @@ export function WordListTab({
                                   type="checkbox"
                                   checked={checked}
                                   onChange={() => toggleSelected(word.id)}
-                                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
+                                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600 dark:text-primary-light"
                                 />
                               </td>
                               <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">
@@ -1192,4 +1192,3 @@ export function WordListTab({
     </div>
   );
 }
-

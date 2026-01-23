@@ -1808,7 +1808,7 @@ export function TrainingScreen({ user }: Props) {
                 className="absolute right-0 mt-2 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 backdrop-blur dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                     Ingelogd als
                   </p>
                   <p className="mt-0.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">

@@ -234,7 +234,7 @@ export function WordsToolbar({
           >
             <span className="flex items-center gap-2">
               <svg
-                className="h-4 w-4 text-slate-400"
+                className="h-4 w-4 text-slate-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -249,7 +249,7 @@ export function WordsToolbar({
                 : "Selecteer filters..."}
             </span>
             <svg
-              className={`h-4 w-4 text-slate-400 transition-transform ${
+              className={`h-4 w-4 text-slate-500 transition-transform ${
                 filterPopoverOpen ? "rotate-180" : ""
               }`}
               viewBox="0 0 24 24"
@@ -278,13 +278,13 @@ export function WordsToolbar({
                       checked={attributeFilters.includes(option.id)}
                       disabled={!option.available}
                       onChange={() => toggleAttributeFilter(option.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:opacity-50 dark:border-slate-600"
+                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:opacity-50 dark:border-slate-600 dark:text-primary-light"
                     />
                     <span className="flex-1 text-slate-700 dark:text-slate-200">
                       {option.label}
                     </span>
                     {!option.available && (
-                      <span className="text-[10px] uppercase text-slate-400">
+                      <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400">
                         Binnenkort
                       </span>
                     )}

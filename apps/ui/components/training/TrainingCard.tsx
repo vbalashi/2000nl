@@ -398,7 +398,7 @@ export function TrainingCard({
       <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
         {gender && (
           <span
-            className={`${sizeClass} font-medium text-slate-400 opacity-60`}
+            className={`${sizeClass} font-medium text-slate-500 opacity-60`}
           >
             {gender}
           </span>
@@ -452,7 +452,7 @@ export function TrainingCard({
       <div
         className={[
           "pointer-events-none select-none mt-1 w-full",
-          "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-400 dark:text-slate-500",
+          "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-500 dark:text-slate-400",
           "whitespace-normal break-words",
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
@@ -636,7 +636,7 @@ export function TrainingCard({
             <div className="w-full flex flex-col items-center">
               <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
                 {word.gender && (
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-400 opacity-60">
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-500 opacity-60">
                     {word.gender}
                   </span>
                 )}
@@ -777,7 +777,7 @@ export function TrainingCard({
                           ))}
                       </div>
                     ) : (
-                      <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-400 dark:text-slate-500">
+                      <div className="text-xl md:text-3xl leading-relaxed font-medium text-slate-500 dark:text-slate-400">
                         Definitie niet beschikbaar.
                       </div>
                     )}
@@ -961,7 +961,7 @@ export function TrainingCard({
                                     </div>
                                     {/* Explanation with separator */}
                                     <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
-                                      <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                      <span className="text-slate-500 dark:text-slate-400 mr-2">
                                         |
                                       </span>
                                       <div className="flex flex-col flex-1">
@@ -1061,7 +1061,7 @@ export function TrainingCard({
                                   hidePrimaryIdiomExplanationOnReveal && i === 0
                                 ) && (
                                   <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
-                                    <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                    <span className="text-slate-500 dark:text-slate-400 mr-2">
                                       |
                                     </span>
                                     <div className="flex flex-col items-center flex-1 text-center">
@@ -1127,7 +1127,7 @@ export function TrainingCard({
           {word.debugStats && (
             <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 pt-4 w-full opacity-70 hover:opacity-100 transition-opacity">
               {word.debugStats.source && (
-                <span className="text-slate-400 dark:text-slate-500">
+                <span className="text-slate-500 dark:text-slate-400">
                   src:{word.debugStats.source}
                 </span>
               )}
@@ -1173,7 +1173,7 @@ export function TrainingCard({
           >
             {/* Small chevron hint (scroll up) */}
             <svg
-              className="absolute top-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400/60 dark:text-slate-500/60 animate-pulse"
+              className="absolute top-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-500/60 dark:text-slate-400/60 animate-pulse"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -1194,7 +1194,7 @@ export function TrainingCard({
           >
             {/* Small chevron hint */}
             <svg
-              className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400/60 dark:text-slate-500/60 animate-pulse"
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-500/60 dark:text-slate-400/60 animate-pulse"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"

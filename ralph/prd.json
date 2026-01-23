@@ -75,13 +75,13 @@
         "Run Lighthouse accessibility audit",
         "Lighthouse accessibility score > 90",
         "Document color usage guidelines in apps/ui/docs/accessibility-colors.md",
-        "All text meets 4.5:1 contrast ratio (normal text) or 3:1 (large text ≥18pt)",
+        "All text meets 4.5:1 contrast ratio (normal text) or 3:1 (large text \u226518pt)",
         "No visual regressions or unexpected color changes",
         "Typecheck passes: npx tsc --noEmit",
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]

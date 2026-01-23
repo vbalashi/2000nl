@@ -404,7 +404,7 @@ export function SettingsModal({
                                 >
                                   {scenario.nameNl || scenario.nameEn}
                                   {isActive && (
-                                    <span className="ml-2 text-[10px] uppercase text-primary">
+                                    <span className="ml-2 text-[10px] uppercase text-primary dark:text-primary-light">
                                       actief
                                     </span>
                                   )}

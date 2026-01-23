@@ -9,12 +9,13 @@ module.exports = {
       },
       colors: {
         primary: "#2e2bee",
-        "background-light": "#F5F7FB",
+        "primary-light": "#8b89f6",
+        "background-light": "#F8FAFF",
         "background-dark": "#0f172a",
         "card-light": "#FFFFFF",
         "card-dark": "#1f2937",
-        success: "#10B981",
-        danger: "#EF4444"
+        success: "#047857",
+        danger: "#dc2626"
       },
       borderRadius: {
         DEFAULT: "0.5rem",

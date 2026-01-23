@@ -63,7 +63,7 @@ export function InteractiveText({
                 highlightedWord === segment.link.headword ||
                 highlightedWord === segment.text
                   ? "bg-secondary/30 text-secondary-dark font-semibold"
-                  : "text-primary underline decoration-dotted underline-offset-4 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  : "text-primary underline decoration-dotted underline-offset-4 hover:bg-slate-100 dark:text-primary-light dark:hover:bg-slate-800"
               }`}
               style={cursorStyle}
               onClick={(e) =>

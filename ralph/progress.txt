@@ -1,5 +1,7 @@
 # Arch Migration Progress Log
 ## Codebase Patterns
+- Primary accents use `text-primary` on light surfaces and `dark:text-primary-light` on dark surfaces.
+- Supporting text is `text-slate-500` on light surfaces and `dark:text-slate-400` on dark surfaces for AA contrast.
 - Training UI lives at `/` via `apps/ui/app/page.tsx` (no `/training` route).
 - Audio files are served via `apps/ui/public/audio` symlink to `db/audio` and referenced as `/audio/<lang>/<letter>/<hash>.mp3`.
 - Word audio URLs live in `word.raw.audio_links` with `nl`/`be` keys.
@@ -204,4 +206,16 @@ Started: wo 14 jan 2026 19:08:08 CET
 - **Learnings for future iterations:**
   - The training definition line length is limited by both the main column max width and inner max width wrappers.
   - For large (24px) definition text, ~40–45 chars/line is a reasonable compromise between readability and layout balance with the sidebar.
+---## 2026-01-23 23:28:19 CET - US-052
+- Updated color palette for WCAG AA: added primary-light for dark mode, lightened background-light, darkened success/danger.
+- Promoted light-mode supporting text from slate-400 to slate-500 and aligned dark-mode supporting text to slate-400.
+- Added dark-mode primary accents (`dark:text-primary-light`) across links, tags, and checkbox accents.
+- Documented color palette, contrast ratios, failing pairs, and color-blind simulations in apps/ui/docs/accessibility-colors.md.
+- Ran Lighthouse accessibility audit (score 100) and captured dev-browser screenshots (desktop + dark mode).
+- Files changed: apps/ui/tailwind.config.js, apps/ui/components/**, apps/ui/docs/accessibility-colors.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Use `primary-light` for primary text accents in dark mode; `text-primary` is for light surfaces only.
+  - Supporting text should be `text-slate-500` on light surfaces and `dark:text-slate-400` on dark surfaces to meet AA.
+  - Lighthouse accessibility can be run via `npx lighthouse http://localhost:3000 --only-categories=accessibility`.
+  - Dev-browser screenshots saved at /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-052-colors-desktop.png and us-052-colors-dark.png.
 ---
