@@ -1,61 +1,13 @@
 # Ralph Progress Log
-Started: vr 23 jan 2026 18:35:10 CET
+Started: vr 23 jan 2026 20:36:56 CET
+---
 
 ## Codebase Patterns
-- `apps/ui/public/audio` is a symlink to `db/audio` for serving static audio assets.
-- TTS audio is cached by `apps/ui/app/api/tts/route.ts` under `db/audio/tts` and served as `/audio/tts/<hash>.mp3`.
-- Word audio links can be prefixed via `NEXT_PUBLIC_AUDIO_BASE_URL` when audio is hosted on a different origin.
-- Training data and word lists are fetched from Supabase via `apps/ui/lib/trainingService.ts`, while translations/TTS are served via `apps/ui/app/api/translation` and `apps/ui/app/api/tts`.
-- Word search uses the Settings modal’s “Woordenlijst” tab (no dedicated search route); the search icon in `TrainingScreen` opens that tab with auto-focus.
----
-
-## 2026-01-23 18:45:32 CET - US-041-1
-- Documented local and NUC audio paths, container symlink behavior, and audio URL generation points
-- Files changed: `ralph/us-041-1-audio-investigation.md`, `ralph/progress.txt`
+- Training UI tour anchors live on `TrainingScreen` (header/buttons) and `TrainingCard` (card/toolbar) via `data-tour` attributes.
+## 2026-01-23 20:41 - US-048-1
+- Added stable data-tour anchors for training card, toolbar, rating buttons, sidebar toggle, search, and settings.
+- Files changed: apps/ui/components/training/TrainingCard.tsx, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json
 - **Learnings for future iterations:**
-  - Patterns discovered: `apps/ui/public/audio` is a symlink to `db/audio`, and TTS caching returns `/audio/tts/<hash>.mp3`.
-  - Gotchas encountered: the UI container on NUC currently has a broken `/app/public/audio` symlink because the host path is not mounted.
-  - Useful context: word audio URLs come from `raw.audio_links?.nl` in `apps/ui/components/training/TrainingScreen.tsx` while sentence audio uses `/api/tts`.
----
-
-## 2026-01-23 18:52:20 CET - US-041-2
-- Verified NUC container mounts and audio paths; documented broken `/app/public/audio` symlink and missing volume mounts
-- Files changed: `ralph/us-041-2-docker-volume-investigation.md`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Patterns discovered: the NUC `2000nl-ui` Docker container currently has no volume mounts (confirmed via `docker inspect`), while `/app/public/audio` is a symlink to `/home/khrustal/dev/2000nl-ui/db/audio` that does not exist in-container.
-  - Gotchas encountered: audio files live on the host at `/srv/2000nl-ui/db/audio`, but the UI container cannot see them without an explicit mount or updated symlink target.
-  - Useful context: `docker exec 2000nl-ui-ui-1` is the active container name; `docker inspect 2000nl-ui-ui-1` shows empty mounts list.
----
-## 2026-01-23 19:22:01 CET - US-041-3
-- Documented dev/prod static serving behavior and NUC nginx config absence findings
-- Files changed: `ralph/us-041-3-static-serving.md`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Patterns discovered: `next.config.js` uses `output: 'standalone'` with no custom static handling; public assets are served at site root in both dev and prod.
-  - Gotchas encountered: NUC host has running nginx processes but no `/etc/nginx` or `nginx` binary; config likely lives inside a container or custom service, making `/audio` location blocks non-obvious.
-  - Useful context: In prod, the standalone server still requires the `public/` directory to be present alongside `.next/` assets; missing `public/` can cause static 404s.
----
-## 2026-01-23 19:00:26 CET - US-041-4
-- Added optional audio base URL prefixing for word audio links via NEXT_PUBLIC_AUDIO_BASE_URL
-- Documented optional audio base URL env var in .env.example
-- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `.env.example`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Patterns discovered: use NEXT_PUBLIC_AUDIO_BASE_URL to serve /audio assets from a different origin when local static audio is unavailable.
-  - Gotchas encountered: dev-browser server was not running (UND_ERR_SOCKET on port 9222), so UI verification was skipped.
-  - Useful context: word audio links in word data are stored as relative /audio paths, so they can be prefixed safely when needed.
----
-## 2026-01-23 19:04:35 CET - US-PWA-RESEARCH
-- Created PWA implementation assessment document with tooling evaluation, offline strategy, risks, and estimates
-- Files changed: `01_Projects/10_2000nl/01_10_10_Development/PWA-Implementation-Assessment.md`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Patterns discovered: None (research-only story)
-  - Gotchas encountered: Next.js App Router needs explicit service worker tooling; installability alone does not provide offline.
-  - Useful context: 2000nl training relies on Supabase + /api/translation + /api/tts, which are network-dependent and drive offline complexity.
----
-## 2026-01-23 19:09:52 CET - US-048-PREP
-- Wrote onboarding UX flow, library evaluation, full copy, and implementation plan for Sprint 10
-- Files changed: `01_Projects/10_2000nl/01_10_10_Development/Onboarding-Implementation-Plan.md`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Patterns discovered: the search entry point in the header opens the Settings modal’s word list tab with auto-focus.
-  - Gotchas encountered: onboarding steps should avoid targets hidden on mobile (sidebar/hotkeys).
-  - Useful context: `TrainingScreen` owns the header controls and the main training card layout, making it the best integration point for onboarding tours.
+  - Tour targets in the training UI are best anchored on always-rendered wrappers to avoid conditional rendering gaps.
+  - Chrome DevTools MCP was unavailable (transport closed); used dev-browser for visual verification and logged the issue.
 ---

@@ -463,9 +463,13 @@ export function TrainingCard({
     );
   };
 
+  const showCardToolbar =
+    showTipButton || translationUiEnabled || Boolean(onToggleAudioMode);
+
   return (
     <div
       className="relative flex h-full flex-col rounded-3xl border border-slate-200 bg-card-light p-5 md:p-8 shadow-lg shadow-slate-900/10 dark:border-slate-800 dark:bg-card-dark dark:shadow-slate-950/35 transition-all duration-300"
+      data-tour="training-card"
       onClick={(e) => {
         // Mobile UX: allow tapping the "empty" card area to reveal.
         if (revealed) return;
@@ -524,100 +528,106 @@ export function TrainingCard({
       {/* Top-left controls:
           - Tip: only for W->D before reveal (shows context + example via 'i')
           - Translate: only after reveal (and only if translation UI is enabled) */}
-      {(showTipButton || translationUiEnabled || onToggleAudioMode) && (
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start">
-          <div className="flex items-center gap-2">
-            {showTipButton && (
-              <Tooltip
-                content="Tip (I)"
-                side="bottom"
-                showOnFocus={false}
-                hideOnMobile
-              >
-                <button
-                  type="button"
-                  onClick={() => onToggleHint?.()}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-amber-100/70 text-amber-700 shadow-sm backdrop-blur-sm opacity-80 transition hover:opacity-100 hover:bg-amber-100/90 dark:border-slate-700 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30 select-none"
-                  aria-pressed={hintVisible}
-                  aria-label="Tip (I)"
+      <div
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-30 flex flex-col items-start"
+        data-tour="card-toolbar"
+        aria-hidden={!showCardToolbar}
+      >
+        {showCardToolbar ? (
+          <>
+            <div className="flex items-center gap-2">
+              {showTipButton && (
+                <Tooltip
+                  content="Tip (I)"
+                  side="bottom"
+                  showOnFocus={false}
+                  hideOnMobile
                 >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    onClick={() => onToggleHint?.()}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-amber-100/70 text-amber-700 shadow-sm backdrop-blur-sm opacity-80 transition hover:opacity-100 hover:bg-amber-100/90 dark:border-slate-700 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30 select-none"
+                    aria-pressed={hintVisible}
+                    aria-label="Tip (I)"
                   >
-                    <path d="M9 18h6" />
-                    <path d="M10 22h4" />
-                    <path d="M8.5 14.5c-1.3-1.1-2.5-2.3-2.5-4.6A6 6 0 0 1 18 10c0 2.3-1.2 3.5-2.5 4.6-.8.7-1.5 1.3-1.5 2.5h-4c0-1.2-.7-1.8-1.5-2.6z" />
-                  </svg>
-                </button>
-              </Tooltip>
-            )}
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 18h6" />
+                      <path d="M10 22h4" />
+                      <path d="M8.5 14.5c-1.3-1.1-2.5-2.3-2.5-4.6A6 6 0 0 1 18 10c0 2.3-1.2 3.5-2.5 4.6-.8.7-1.5 1.3-1.5 2.5h-4c0-1.2-.7-1.8-1.5-2.6z" />
+                    </svg>
+                  </button>
+                </Tooltip>
+              )}
 
-            {translationUiEnabled && (
-              <Tooltip
-                content="Translate (T)"
-                side="bottom"
-                showOnFocus={false}
-                hideOnMobile
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    void fetchTranslation();
-                    onTranslationTooltipOpenChange?.(!translationTooltipOpen);
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
-                  aria-pressed={translationTooltipOpen}
-                  aria-label="Translate (T)"
+              {translationUiEnabled && (
+                <Tooltip
+                  content="Translate (T)"
+                  side="bottom"
+                  showOnFocus={false}
+                  hideOnMobile
                 >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void fetchTranslation();
+                      onTranslationTooltipOpenChange?.(!translationTooltipOpen);
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
+                    aria-pressed={translationTooltipOpen}
+                    aria-label="Translate (T)"
                   >
-                    {/* "Translate" glyph similar to 文/A icon */}
-                    {/* Left: simplified 文 */}
-                    <path d="M3.5 6h10" />
-                    <path d="M8.5 6v2" />
-                    <path d="M8.5 8l4 4" />
-                    <path d="M8.5 8l-4 6" />
-                    <path d="M5.5 12h6" />
-                    {/* Right: simplified A */}
-                    <path d="M14.5 20l3.5-16 3.5 16" />
-                    <path d="M16.2 14h3.6" />
-                  </svg>
-                </button>
-              </Tooltip>
-            )}
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      {/* "Translate" glyph similar to 文/A icon */}
+                      {/* Left: simplified 文 */}
+                      <path d="M3.5 6h10" />
+                      <path d="M8.5 6v2" />
+                      <path d="M8.5 8l4 4" />
+                      <path d="M8.5 8l-4 6" />
+                      <path d="M5.5 12h6" />
+                      {/* Right: simplified A */}
+                      <path d="M14.5 20l3.5-16 3.5 16" />
+                      <path d="M16.2 14h3.6" />
+                    </svg>
+                  </button>
+                </Tooltip>
+              )}
 
-            {onToggleAudioMode && (
-              <AudioModeToggle
-                enabled={audioModeEnabled}
-                onToggle={onToggleAudioMode}
-              />
-            )}
-          </div>
-
-          {isTranslationOpen && translationStatusText ? (
-            <div className="mt-2">
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
-                {translationStatusText}
-              </p>
+              {onToggleAudioMode && (
+                <AudioModeToggle
+                  enabled={audioModeEnabled}
+                  onToggle={onToggleAudioMode}
+                />
+              )}
             </div>
-          ) : null}
-        </div>
-      )}
+
+            {isTranslationOpen && translationStatusText ? (
+              <div className="mt-2">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
+                  {translationStatusText}
+                </p>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       {/* Main Content Area */}
       <div className="relative flex w-full h-full px-1 md:px-4">
