@@ -1840,8 +1840,8 @@ export function TrainingScreen({ user }: Props) {
         {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
         {/* Adjusted max-width and gap to keep things tight and focused */}
         <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
-          {/* Left/Main Column: Constrained to max-w-2xl to match Card width exactly */}
-          <section className="flex flex-1 w-full max-w-2xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
+          {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
+          <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
             {/* 1. Scrollable Card Area */}
             <div className="flex-1 overflow-y-auto overflow-x-visible scrollbar-hide flex flex-col px-2 md:px-4">
               {/* Card Container */}

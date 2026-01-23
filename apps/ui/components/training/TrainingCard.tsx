@@ -1013,7 +1013,7 @@ export function TrainingCard({
                   {/* Idioms (revealed): show idiom before examples */}
                   {primaryMeaning.idioms &&
                     primaryMeaning.idioms.length > 0 && (
-                      <div className="mt-6 mx-auto max-w-2xl flex flex-col gap-3">
+                      <div className="mt-6 mx-auto max-w-3xl flex flex-col gap-3">
                         {primaryMeaning.idioms.map((idiom, i) => {
                           const expressionSegments = buildSegments(
                             idiom.expression,
@@ -1089,7 +1089,7 @@ export function TrainingCard({
                   {/* Examples */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-2xl text-left">
+                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-3xl text-left">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,

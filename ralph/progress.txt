@@ -6,6 +6,7 @@
 - Translation overlays are fetched via `/api/translation` and rendered in `apps/ui/components/training/TrainingCard.tsx` as absolutely positioned InlineTranslation spans; translation language is stored in user preferences.
 - Translation overlay layout is controlled in `apps/ui/components/training/TrainingCard.tsx` via `InlineTranslation` placement and wrapper layout.
 - PWA assets live under `apps/ui/public/` (manifest at `apps/ui/public/manifest.json`, icons in `apps/ui/public/icons/`).
+- Training card width is constrained by the main column `max-w-*` in `apps/ui/components/training/TrainingScreen.tsx` and the inner content `max-w-*` wrappers in `apps/ui/components/training/TrainingCard.tsx`.
 
 Started: wo 14 jan 2026 19:08:08 CET
 ---
@@ -192,4 +193,15 @@ Started: wo 14 jan 2026 19:08:08 CET
 - Files changed: apps/ui/app/layout.tsx, apps/ui/components/system/OfflineBanner.tsx, apps/ui/public/manifest.json, apps/ui/public/icons/icon-192.png, apps/ui/public/icons/icon-512.png, apps/ui/public/icons/apple-touch-icon.png, ralph/prd.json, ralph/progress.txt
 - **Learnings for future iterations:**
   - PWA metadata is centralized in `apps/ui/app/layout.tsx` with manifest + mobile meta tags.
+---
+## 2026-01-23 23:14:38 CET - US-045
+- Evaluated desktop card width: fixed width (~462px content) estimated ~33 chars/line; expanded width (~560-623px content) estimated ~40-44 chars/line at 1280/1440/1920.
+- Tested fixed-width behavior and captured screenshots (before): /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-045-fixed-1280.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-045-fixed-1280-revealed.png.
+- Tested expanded-width behavior and captured screenshots (after): /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-045-expanded-1280-3.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-045-expanded-1440-3.png, /home/khrustal/dev/github/dev-browser/skills/dev-browser/tmp/us-045-expanded-1920-3.png.
+- Typography guidance: common readability guidance suggests ~50–75 characters/line for body text; larger display text can read comfortably at slightly shorter lengths (~35–50).
+- Decision: expand card width to max-w-3xl for the main column and content to improve readability while keeping layout balanced with sidebar; no horizontal scrolling observed on standard desktop widths.
+- Files changed: apps/ui/components/training/TrainingScreen.tsx, apps/ui/components/training/TrainingCard.tsx, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - The training definition line length is limited by both the main column max width and inner max width wrappers.
+  - For large (24px) definition text, ~40–45 chars/line is a reasonable compromise between readability and layout balance with the sidebar.
 ---
