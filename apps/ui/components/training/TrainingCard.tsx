@@ -829,7 +829,7 @@ export function TrainingCard({
                             <div key={i} className="flex items-start gap-3">
                               <span
                                 aria-hidden="true"
-                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
+                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-400 dark:bg-slate-500"
                               />
                               <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
                                 <InteractiveText
@@ -1109,7 +1109,7 @@ export function TrainingCard({
                             <div key={i} className="flex items-start gap-3">
                               <span
                                 aria-hidden="true"
-                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-200 dark:bg-slate-700"
+                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-400 dark:bg-slate-500"
                               />
                               <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
                                 <InteractiveText
