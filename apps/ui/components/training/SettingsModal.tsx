@@ -8,6 +8,7 @@ import type { TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "./TrainingScreen";
 import { DropUpSelect } from "./DropUpSelect";
 import { WordListTab } from "./wordlist/WordListTab";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
 type TabKey = "woordenlijst" | "statistieken" | "instellingen";
 
@@ -21,6 +22,8 @@ type Props = {
   onListsUpdated?: () => void;
   themePreference: ThemePreference;
   onThemeChange: (pref: ThemePreference) => void;
+  onboardingLanguage: OnboardingLanguage;
+  onOnboardingLanguageChange: (lang: OnboardingLanguage) => void;
   language: string;
   onLanguageChange: (value: string) => void;
   translationLang: string | null;
@@ -52,6 +55,8 @@ export function SettingsModal({
   onListsUpdated,
   themePreference,
   onThemeChange,
+  onboardingLanguage,
+  onOnboardingLanguageChange,
   language,
   onLanguageChange,
   translationLang,
@@ -363,6 +368,32 @@ export function SettingsModal({
                         onClick={() => onThemeChange(option.value)}
                         className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                           themePreference === option.value
+                            ? "border-primary bg-primary/10 text-slate-900 dark:text-white"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Taal instructies
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[
+                      { value: "en" as OnboardingLanguage, label: "English" },
+                      { value: "ru" as OnboardingLanguage, label: "Русский" },
+                      { value: "nl" as OnboardingLanguage, label: "Nederlands" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onOnboardingLanguageChange(option.value)}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                          onboardingLanguage === option.value
                             ? "border-primary bg-primary/10 text-slate-900 dark:text-white"
                             : "border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         }`}

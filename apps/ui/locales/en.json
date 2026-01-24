@@ -1,0 +1,44 @@
+{
+  "onboarding": {
+    "steps": [
+      {
+        "title": "Welcome to 2000NL",
+        "content": "Ready to start? In 6 short steps you'll discover how to learn words."
+      },
+      {
+        "title": "Reveal the word",
+        "content": "Tap the card or press \"Show Answer\" to reveal."
+      },
+      {
+        "title": "Rate your knowledge",
+        "content": "Choose how well you know the word so the right review schedule follows."
+      },
+      {
+        "title": "Audio & translation",
+        "content": "Use audio and translation to practice pronunciation and meaning."
+      },
+      {
+        "title": "Recent & details",
+        "content": "View recent words and open details via the sidebar."
+      },
+      {
+        "title": "Search & settings",
+        "content": "Search for words and adjust preferences in Settings."
+      }
+    ],
+    "buttons": {
+      "back": "Back",
+      "close": "Close",
+      "last": "Finish",
+      "next": "Next",
+      "skip": "Skip"
+    },
+    "languageSelection": {
+      "title": "Choose your language",
+      "subtitle": "Select the language for instructions",
+      "english": "English",
+      "russian": "Русский",
+      "dutch": "Nederlands"
+    }
+  }
+}

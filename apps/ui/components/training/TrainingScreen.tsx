@@ -45,6 +45,13 @@ import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
+import { LanguageSelectionModal } from "./LanguageSelectionModal";
+import {
+  getOnboardingLanguage,
+  setOnboardingLanguage,
+  getOnboardingTranslation,
+  type OnboardingLanguage,
+} from "@/lib/onboardingI18n";
 
 type Props = {
   user: User;
@@ -95,46 +102,28 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
 export type ThemePreference = "light" | "dark" | "system";
 
 const ONBOARDING_STORAGE_KEY = "onboarding_completed";
-const JOYRIDE_STEPS: Step[] = [
-  {
-    target: "body",
-    placement: "center",
-    title: "Welkom bij 2000NL",
-    content:
-      "Klaar om te starten? In 6 korte stappen ontdek je hoe je woorden leert.",
-  },
-  {
-    target: "[data-tour='training-card']",
-    placement: "bottom",
-    title: "Onthul het woord",
-    content: "Tik op de kaart of druk op “Antwoord tonen” om te onthullen.",
-  },
-  {
-    target: "[data-tour='rating-buttons']",
-    placement: "top",
-    title: "Beoordeel je kennis",
-    content:
-      "Kies hoe goed je het woord kent zodat het juiste herhaalschema volgt.",
-  },
-  {
-    target: "[data-tour='card-toolbar']",
-    placement: "right",
-    title: "Audio & vertaling",
-    content: "Gebruik audio en vertaling om uitspraak en betekenis te oefenen.",
-  },
-  {
-    target: "[data-tour='sidebar-toggle']",
-    placement: "left",
-    title: "Recent & details",
-    content: "Bekijk recente woorden en open details via de sidebar.",
-  },
-  {
-    target: "[data-tour='search-button']",
-    placement: "left",
-    title: "Zoeken & instellingen",
-    content: "Zoek woorden op en pas voorkeuren aan in Instellingen.",
-  },
+
+const STEP_TARGETS: Array<{
+  target: string;
+  placement: "center" | "bottom" | "top" | "right" | "left";
+}> = [
+  { target: "body", placement: "center" },
+  { target: "[data-tour='training-card']", placement: "bottom" },
+  { target: "[data-tour='rating-buttons']", placement: "top" },
+  { target: "[data-tour='card-toolbar']", placement: "right" },
+  { target: "[data-tour='sidebar-toggle']", placement: "left" },
+  { target: "[data-tour='search-button']", placement: "left" },
 ];
+
+function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
+  const t = getOnboardingTranslation(lang);
+  return STEP_TARGETS.map((config, i) => ({
+    target: config.target,
+    placement: config.placement,
+    title: t.onboarding.steps[i].title,
+    content: t.onboarding.steps[i].content,
+  }));
+}
 
 export function TrainingScreen({ user }: Props) {
   const { wordId, devMode } = useCardParams();
@@ -215,15 +204,20 @@ export function TrainingScreen({ user }: Props) {
   // Joyride tour state
   const [runTour, setRunTour] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLanguageSelection, setShowLanguageSelection] = useState(false);
+  const [onboardingLang, setOnboardingLang] = useState<OnboardingLanguage>("en");
 
   // Check localStorage on mount to see if tour should run
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const completed = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      const savedLang = getOnboardingLanguage();
+      setOnboardingLang(savedLang);
+
       if (!completed) {
-        // Tour has never been completed, run it
-        setRunTour(true);
+        // Tour has never been completed, show language selection first
+        setShowLanguageSelection(true);
       }
     } catch (e) {
       console.error("[Onboarding] Failed to read localStorage:", e);
@@ -249,6 +243,14 @@ export function TrainingScreen({ user }: Props) {
     });
 
     return () => observer.disconnect();
+  }, []);
+
+  const handleLanguageSelect = useCallback((lang: OnboardingLanguage) => {
+    setOnboardingLang(lang);
+    setOnboardingLanguage(lang);
+    setShowLanguageSelection(false);
+    // Start the tour after language selection
+    setRunTour(true);
   }, []);
 
   const handleJoyrideCallback = useCallback((data: CallBackProps) => {
@@ -2164,6 +2166,11 @@ export function TrainingScreen({ user }: Props) {
           onListsUpdated={handleListsUpdated}
           themePreference={themePreference}
           onThemeChange={setTheme}
+          onboardingLanguage={onboardingLang}
+          onOnboardingLanguageChange={(lang) => {
+            setOnboardingLang(lang);
+            setOnboardingLanguage(lang);
+          }}
           language={language}
           onLanguageChange={setLanguage}
           translationLang={translationLang}
@@ -2186,21 +2193,21 @@ export function TrainingScreen({ user }: Props) {
         />
       )}
 
+      {/* Language Selection Modal */}
+      <LanguageSelectionModal
+        open={showLanguageSelection}
+        onSelectLanguage={handleLanguageSelect}
+      />
+
       {/* Onboarding Tour */}
       <Joyride
-        steps={JOYRIDE_STEPS}
+        steps={buildJoyrideSteps(onboardingLang)}
         run={runTour}
         continuous
         showProgress
         showSkipButton
         callback={handleJoyrideCallback}
-        locale={{
-          back: "Terug",
-          close: "Sluiten",
-          last: "Afronden",
-          next: "Volgende",
-          skip: "Overslaan",
-        }}
+        locale={getOnboardingTranslation(onboardingLang).onboarding.buttons}
         styles={{
           options: {
             primaryColor: "#3b82f6",

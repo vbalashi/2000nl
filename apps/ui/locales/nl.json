@@ -1,0 +1,44 @@
+{
+  "onboarding": {
+    "steps": [
+      {
+        "title": "Welkom bij 2000NL",
+        "content": "Klaar om te starten? In 6 korte stappen ontdek je hoe je woorden leert."
+      },
+      {
+        "title": "Onthul het woord",
+        "content": "Tik op de kaart of druk op \"Antwoord tonen\" om te onthullen."
+      },
+      {
+        "title": "Beoordeel je kennis",
+        "content": "Kies hoe goed je het woord kent zodat het juiste herhaalschema volgt."
+      },
+      {
+        "title": "Audio & vertaling",
+        "content": "Gebruik audio en vertaling om uitspraak en betekenis te oefenen."
+      },
+      {
+        "title": "Recent & details",
+        "content": "Bekijk recente woorden en open details via de sidebar."
+      },
+      {
+        "title": "Zoeken & instellingen",
+        "content": "Zoek woorden op en pas voorkeuren aan in Instellingen."
+      }
+    ],
+    "buttons": {
+      "back": "Terug",
+      "close": "Sluiten",
+      "last": "Afronden",
+      "next": "Volgende",
+      "skip": "Overslaan"
+    },
+    "languageSelection": {
+      "title": "Kies je taal",
+      "subtitle": "Selecteer de taal voor de instructies",
+      "english": "English",
+      "russian": "Русский",
+      "dutch": "Nederlands"
+    }
+  }
+}
