@@ -16,6 +16,8 @@ services:
     restart: unless-stopped
     expose:
       - "3000"
+    volumes:
+      - /srv/2000nl-ui/db/audio:/db/audio
     networks:
       - nuc_default
 

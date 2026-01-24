@@ -30,3 +30,6 @@ db/data/
 
 # Cursor noise
 .cursor/debug.log
+
+# 2000nl runtime audio cache
+/db/audio/
