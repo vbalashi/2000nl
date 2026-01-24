@@ -5,18 +5,45 @@ import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
 
-type AuthMode = "signin" | "signup" | "reset";
+type AuthMode = "signin";
+type Language = "nl" | "en";
+
+const translations = {
+  nl: {
+    title: "Log in om te beginnen met het leren van de 2000 meest voorkomende Nederlandse woorden.",
+    emailLabel: "E-mailadres",
+    emailPlaceholder: "jouw@email.nl",
+    submitButton: "Stuur Inlogcode",
+    submitLoading: "Versturen...",
+    successMessage: "Check je inbox! We hebben een inlogcode naar je verstuurd.",
+    infoText: "Geen wachtwoord nodig! We sturen een beveiligde code naar je e-mail.",
+  },
+  en: {
+    title: "Log in to start learning the 2000 most common Dutch words.",
+    emailLabel: "Email address",
+    emailPlaceholder: "your@email.com",
+    submitButton: "Send Login Code",
+    submitLoading: "Sending...",
+    successMessage: "Check your inbox! We've sent you a login code.",
+    infoText: "No password needed! We'll send a secure code to your email.",
+  },
+};
 
 export function AuthScreen() {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
+  const [lang, setLang] = useState<Language>("nl");
 
   useEffect(() => {
+    // Detect user's system language
+    const browserLang = navigator.language || navigator.languages?.[0] || "nl";
+    const detectedLang = browserLang.toLowerCase().startsWith("nl") ? "nl" : "en";
+    setLang(detectedLang);
+
     const card = cardRef.current;
     const cardBg = card ? window.getComputedStyle(card).backgroundColor : null;
     const cardText = card ? window.getComputedStyle(card).color : null;
@@ -43,6 +70,8 @@ export function AuthScreen() {
           bodyBg: window.getComputedStyle(document.body).backgroundColor,
           cardBg,
           cardText,
+          detectedLang,
+          browserLang,
         },
         timestamp: Date.now(),
       }),
@@ -55,37 +84,27 @@ export function AuthScreen() {
     setMessage(null);
     setLoading(true);
 
-    if (mode === "reset") {
-      // Password reset flow
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
+    // OTP-only authentication (passwordless)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/callback`,
+      },
+    });
 
-      if (error) {
-        setMessageType("error");
-        setMessage(error.message);
-      } else {
-        setMessageType("success");
-        setMessage("Check your email for a password reset link!");
-      }
+    if (error) {
+      setMessageType("error");
+      setMessage(error.message);
     } else {
-      // Sign in or sign up flow
-      const payload =
-        mode === "signin"
-          ? await supabase.auth.signInWithPassword({ email, password })
-          : await supabase.auth.signUp({ email, password });
-
-      if (payload.error) {
-        setMessageType("error");
-        setMessage(payload.error.message);
-      } else {
-        setMessageType("success");
-        setMessage("Check your inbox for a confirmation link if needed.");
-      }
+      setMessageType("success");
+      setMessage(translations[lang].successMessage);
     }
 
     setLoading(false);
   };
+
+  const t = translations[lang];
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
@@ -98,33 +117,21 @@ export function AuthScreen() {
             <BrandLogo className="text-4xl leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-80 dark:opacity-85" />
           </div>
           <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-            Log in om te beginnen met het leren van de 2000 meest voorkomende
-            Nederlandse woorden.
+            {t.title}
           </p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-            E-mailadres
+            {t.emailLabel}
             <input
               type="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder={t.emailPlaceholder}
             />
           </label>
-          {mode !== "reset" && (
-            <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-              Wachtwoord
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </label>
-          )}
           {message && (
             <p
               className={`text-sm text-center ${
@@ -141,34 +148,11 @@ export function AuthScreen() {
             disabled={loading}
             className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90 disabled:opacity-60"
           >
-            {mode === "signin"
-              ? "Inloggen"
-              : mode === "signup"
-              ? "Aanmelden"
-              : "Reset Link Versturen"}
+            {loading ? t.submitLoading : t.submitButton}
           </button>
         </form>
         <div className="space-y-2 text-center text-sm text-slate-500 dark:text-slate-400">
-          {mode !== "reset" && (
-            <button
-              type="button"
-              onClick={() => setMode("reset")}
-              className="block w-full font-semibold text-primary hover:underline dark:text-primary-light"
-            >
-              Wachtwoord vergeten?
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="font-semibold text-primary hover:underline dark:text-primary-light"
-          >
-            {mode === "signin"
-              ? "Nog geen account? Maak er een aan"
-              : mode === "signup"
-              ? "Al een account? Log in"
-              : "Terug naar inloggen"}
-          </button>
+          <p>{t.infoText}</p>
         </div>
       </div>
     </div>
