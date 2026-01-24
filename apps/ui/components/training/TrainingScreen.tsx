@@ -1726,23 +1726,24 @@ export function TrainingScreen({ user }: Props) {
       <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
-            <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label={themeTitle}
-                className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                onClick={cycleThemePreference}
-                onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
-              >
-                {renderThemeIcon()}
-                <span className="absolute inset-0 rounded-full" />
-              </div>
-            </Tooltip>
             <BrandLogo />
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+          <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={themeTitle}
+              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={cycleThemePreference}
+              onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
+            >
+              {renderThemeIcon()}
+              <span className="absolute inset-0 rounded-full" />
+            </div>
+          </Tooltip>
+
           <Tooltip content="Zoeken" side="bottom" showOnFocus={false}>
             <div
               role="button"
