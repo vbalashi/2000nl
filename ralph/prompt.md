@@ -6,7 +6,27 @@ You are an autonomous coding agent working on 2000nl-ui, a Dutch word learning a
 
 1. Read the PRD at `ralph/prd.json`
 2. Read the progress log at `ralph/progress.txt` (check Codebase Patterns section first)
-3. Check you're on the correct branch from PRD `branchName` (if present). If not specified, work on `main`.
+3. **CRITICAL: Verify branch safety before starting**
+   - Check if you're on the correct branch from PRD `branchName` (if not specified, work on `main`)
+   - **Before starting work, verify all previous Ralph branches are merged:**
+     ```bash
+     cd /home/khrustal/dev/2000nl-ui
+     # Check for unmerged ralph/* branches (excluding current branch)
+     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+     UNMERGED=$(git branch --no-merged main | grep 'ralph/' | grep -v "$CURRENT_BRANCH" || true)
+     if [ -n "$UNMERGED" ]; then
+       echo "ERROR: Found unmerged Ralph branches that must be merged first:"
+       echo "$UNMERGED"
+       echo "These branches contain work that will be lost if you proceed."
+       echo "Please merge these branches to main before starting new work."
+       exit 1
+     fi
+     ```
+   - If unmerged branches found, **STOP IMMEDIATELY** and report to user:
+     - List the unmerged branches
+     - Explain the risk (work will be lost/overwritten)
+     - Instruct user to merge branches first, then restart Ralph
+   - Only proceed if all previous ralph/* branches are merged or current branch is the only unmerged one
 4. Pick the **highest priority** user story where `passes: false`
 5. Implement that single user story
 6. Run quality checks: `cd apps/ui && npx tsc --noEmit && npx vitest run`
