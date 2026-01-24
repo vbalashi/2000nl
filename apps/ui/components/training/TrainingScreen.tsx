@@ -214,6 +214,7 @@ export function TrainingScreen({ user }: Props) {
 
   // Joyride tour state
   const [runTour, setRunTour] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Check localStorage on mount to see if tour should run
   useEffect(() => {
@@ -227,6 +228,27 @@ export function TrainingScreen({ user }: Props) {
     } catch (e) {
       console.error("[Onboarding] Failed to read localStorage:", e);
     }
+  }, []);
+
+  // Track dark mode for Joyride styling
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+
+    // Initial check
+    updateDarkMode();
+
+    // Watch for class changes on documentElement
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const handleJoyrideCallback = useCallback((data: CallBackProps) => {
@@ -2183,6 +2205,30 @@ export function TrainingScreen({ user }: Props) {
           options: {
             primaryColor: "#3b82f6",
             zIndex: 10000,
+            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+            textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
+            arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
+          },
+          tooltip: {
+            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+            color: isDarkMode ? "#e2e8f0" : "#1f2937",
+            borderRadius: 8,
+          },
+          tooltipTitle: {
+            color: isDarkMode ? "#f1f5f9" : "#111827",
+          },
+          tooltipContent: {
+            color: isDarkMode ? "#e2e8f0" : "#374151",
+          },
+          buttonNext: {
+            backgroundColor: "#3b82f6",
+            color: "#ffffff",
+          },
+          buttonBack: {
+            color: isDarkMode ? "#94a3b8" : "#6b7280",
+          },
+          buttonSkip: {
+            color: isDarkMode ? "#94a3b8" : "#6b7280",
           },
         }}
       />
