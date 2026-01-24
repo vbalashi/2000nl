@@ -206,23 +206,45 @@ export function TrainingScreen({ user }: Props) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
   const [onboardingLang, setOnboardingLang] = useState<OnboardingLanguage>("en");
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
-  // Check localStorage on mount to see if tour should run
+  // Initialize onboarding language from DB preferences (auto-detect, don't auto-start tour)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const completed = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
-      const savedLang = getOnboardingLanguage();
-      setOnboardingLang(savedLang);
+    if (!user?.id) return;
 
-      if (!completed) {
-        // Tour has never been completed, show language selection first
-        setShowLanguageSelection(true);
+    const loadOnboardingPrefs = async () => {
+      try {
+        const prefs = await fetchUserPreferences(user.id);
+        const { onboardingCompleted, onboardingLanguage } = prefs.preferences;
+
+        setOnboardingCompleted(Boolean(onboardingCompleted));
+
+        // Auto-detect language if not already set
+        if (!onboardingLanguage) {
+          const { detectOnboardingLanguage } = await import("@/lib/onboardingI18n");
+          const detected = detectOnboardingLanguage(translationLang);
+          setOnboardingLang(detected);
+
+          // Save detected language to DB
+          await updateUserPreferences({
+            userId: user.id,
+            preferences: {
+              ...prefs.preferences,
+              onboardingLanguage: detected
+            },
+          });
+        } else {
+          setOnboardingLang(onboardingLanguage as OnboardingLanguage);
+        }
+
+        // DON'T auto-start onboarding - user must start it manually from settings
+      } catch (e) {
+        console.error("[Onboarding] Failed to load preferences:", e);
       }
-    } catch (e) {
-      console.error("[Onboarding] Failed to read localStorage:", e);
-    }
-  }, []);
+    };
+
+    void loadOnboardingPrefs();
+  }, [user?.id, translationLang]);
 
   // Track dark mode for Joyride styling
   useEffect(() => {
@@ -245,30 +267,60 @@ export function TrainingScreen({ user }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const handleLanguageSelect = useCallback((lang: OnboardingLanguage) => {
+  const handleLanguageSelect = useCallback(async (lang: OnboardingLanguage) => {
     setOnboardingLang(lang);
     setOnboardingLanguage(lang);
     setShowLanguageSelection(false);
+
+    // Save language to DB
+    if (user?.id) {
+      try {
+        const prefs = await fetchUserPreferences(user.id);
+        await updateUserPreferences({
+          userId: user.id,
+          preferences: {
+            ...prefs.preferences,
+            onboardingLanguage: lang,
+          },
+        });
+      } catch (e) {
+        console.error("[Onboarding] Failed to save language:", e);
+      }
+    }
+
     // Start the tour after language selection
+    setRunTour(true);
+  }, [user?.id]);
+
+  // Method to manually start onboarding (called from settings)
+  const startOnboarding = useCallback(() => {
     setRunTour(true);
   }, []);
 
-  const handleJoyrideCallback = useCallback((data: CallBackProps) => {
+  const handleJoyrideCallback = useCallback(async (data: CallBackProps) => {
     const { status, type } = data;
     const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-    if (finishedStatuses.includes(status)) {
-      // Tour finished or skipped - save to localStorage and stop tour
+    if (finishedStatuses.includes(status) && user?.id) {
+      // Tour finished or skipped - save to DB and stop tour
       setRunTour(false);
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
-        } catch (e) {
-          console.error("[Onboarding] Failed to save completion to localStorage:", e);
-        }
+      setOnboardingCompleted(true);
+
+      try {
+        const prefs = await fetchUserPreferences(user.id);
+        await updateUserPreferences({
+          userId: user.id,
+          preferences: {
+            ...prefs.preferences,
+            onboardingCompleted: true,
+          },
+        });
+        console.log("[Onboarding] Marked as completed in DB");
+      } catch (e) {
+        console.error("[Onboarding] Failed to save completion:", e);
       }
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (devMode) {

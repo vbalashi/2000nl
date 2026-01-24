@@ -49,6 +49,30 @@ export function getOnboardingLanguage(): OnboardingLanguage {
   return "en"; // Default to English
 }
 
+// Auto-detect onboarding language from system/user preferences
+export function detectOnboardingLanguage(
+  translationLang?: string | null
+): OnboardingLanguage {
+  if (typeof window === "undefined") return "en";
+
+  // 1. Try translation language setting
+  if (translationLang === "ru" || translationLang === "nl") {
+    return translationLang;
+  }
+
+  // 2. Try system language
+  try {
+    const systemLang = navigator.language.toLowerCase();
+    if (systemLang.startsWith("ru")) return "ru";
+    if (systemLang.startsWith("nl")) return "nl";
+  } catch {
+    // Ignore errors
+  }
+
+  // 3. Fall back to English
+  return "en";
+}
+
 export function setOnboardingLanguage(lang: OnboardingLanguage): void {
   if (typeof window === "undefined") return;
   try {

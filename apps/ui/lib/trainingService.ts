@@ -1591,6 +1591,12 @@ export type UserPreferences = {
   translationLang: string | null;
   /** Whether the training sidebar is pinned open on desktop */
   trainingSidebarPinned: boolean;
+  /** Flexible JSON preferences for features that don't need dedicated columns */
+  preferences: {
+    onboardingCompleted?: boolean;
+    onboardingLanguage?: "en" | "ru" | "nl";
+    [key: string]: any; // Allow arbitrary preferences
+  };
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
 };
@@ -1601,7 +1607,7 @@ export async function fetchUserPreferences(
   const { data, error } = await supabase
     .from("user_settings")
     .select(
-      "theme_preference, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang, training_sidebar_pinned"
+      "theme_preference, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang, training_sidebar_pinned, preferences"
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -1625,6 +1631,9 @@ export async function fetchUserPreferences(
     modesEnabled = ["word-to-definition"];
   }
 
+  // Parse preferences JSONB field (with fallback to empty object)
+  const preferences = data?.preferences ?? {};
+
   return {
     themePreference: data?.theme_preference ?? "system",
     modesEnabled,
@@ -1634,6 +1643,7 @@ export async function fetchUserPreferences(
     activeScenario: data?.active_scenario ?? "understanding",
     translationLang,
     trainingSidebarPinned: Boolean(data?.training_sidebar_pinned ?? false),
+    preferences,
     trainingMode: modesEnabled[0],
   };
 }
@@ -1648,6 +1658,7 @@ export async function updateUserPreferences(params: {
   activeScenario?: string;
   translationLang?: string | null;
   trainingSidebarPinned?: boolean;
+  preferences?: Record<string, any>;
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
 }): Promise<{ error: any }> {
@@ -1680,6 +1691,10 @@ export async function updateUserPreferences(params: {
   }
   if (params.trainingSidebarPinned !== undefined) {
     updates.training_sidebar_pinned = params.trainingSidebarPinned;
+  }
+  // Handle preferences JSONB field
+  if (params.preferences !== undefined) {
+    updates.preferences = params.preferences;
   }
   // Handle legacy trainingMode parameter
   if (params.trainingMode !== undefined && params.modesEnabled === undefined) {
