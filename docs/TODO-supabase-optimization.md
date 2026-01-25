@@ -434,9 +434,9 @@ const { data } = await supabase
 - [ ] **P2.1:** Audit all SECURITY DEFINER functions
 - [ ] **P2.2:** Create private schema for internal functions
 - [ ] **P2.3:** Document public API functions
-- [ ] **P3.1:** Add pre-commit hook for migrations
-- [ ] **P3.2:** Document migration workflow
-- [ ] **P3.3:** Add CI drift check
+- [x] **P3.1:** Add pre-commit hook for migrations ✅ 2026-01-25
+- [x] **P3.2:** Document migration workflow ✅ 2026-01-25
+- [x] **P3.3:** Add CI drift check ✅ 2026-01-25
 
 ### Nice to Have (Future)
 - [ ] **P4.1:** Optimize complex EXISTS policies
@@ -458,8 +458,8 @@ const { data } = await supabase
 
 ### Process Goals
 - [x] Zero migration drift (all policies in version control) ✅ 2026-01-25
-- [ ] Pre-commit hook prevents manual changes
-- [ ] CI fails on detected drift
+- [x] Pre-commit hook prevents manual changes ✅ 2026-01-25
+- [x] CI fails on detected drift ✅ 2026-01-25
 
 ---
 
@@ -517,4 +517,29 @@ const { data } = await supabase
 **Next Steps:**
 - Benchmark performance improvements (expected 99% faster)
 - Deploy migrations to production
-- Continue with P2 (security audit) and P3 (process improvements)
+- Continue with P2 (security audit)
+
+### 2026-01-25 - P3 Completed ✅
+
+**Process Improvements Deployed:**
+1. **.githooks/pre-commit** - Checks migrations before commit:
+   - Detects auth.uid() anti-patterns
+   - Warns about TO public (should be TO authenticated)
+   - Reminds to test in staging
+   - Installation: `.githooks/install.sh`
+
+2. **db/README.md** - Migration workflow documentation:
+   - Comprehensive migration creation guide
+   - Idempotent patterns (DO $$ blocks)
+   - RLS performance best practices
+   - Drift checking procedures
+   - Never/Always checklists
+
+3. **.github/workflows/db-drift-check.yml** - CI validation:
+   - Checks migration anti-patterns on PRs
+   - Validates file naming conventions
+   - Optional live DB drift check
+
+**Commit:** ee3fca0f
+
+**Next:** P2 (Security audit of 15 SECURITY DEFINER functions)
