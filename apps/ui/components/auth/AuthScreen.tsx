@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
+import { sendAgentLog } from "@/lib/agentLog";
 
 type AuthMode = "signin";
 type Language = "nl" | "en";
@@ -67,29 +68,25 @@ export function AuthScreen() {
         : null;
 
     // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/a5e2db1f-40e6-4b7f-aa6f-678a92a187d8", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId: "debug-session",
-        runId: "baseline",
-        hypothesisId: "H2",
-        location: "components/auth/AuthScreen.tsx:21",
-        message: "AuthScreen mounted; check theme + styles",
-        data: {
-          pathname: window.location.pathname,
-          hasDarkClass: document.documentElement.classList.contains("dark"),
-          storedThemePreference,
-          styleSheets: document.styleSheets?.length ?? null,
-          bodyBg: window.getComputedStyle(document.body).backgroundColor,
-          cardBg,
-          cardText,
-          detectedLang,
-          browserLang,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
+    sendAgentLog({
+      sessionId: "debug-session",
+      runId: "baseline",
+      hypothesisId: "H2",
+      location: "components/auth/AuthScreen.tsx:21",
+      message: "AuthScreen mounted; check theme + styles",
+      data: {
+        pathname: window.location.pathname,
+        hasDarkClass: document.documentElement.classList.contains("dark"),
+        storedThemePreference,
+        styleSheets: document.styleSheets?.length ?? null,
+        bodyBg: window.getComputedStyle(document.body).backgroundColor,
+        cardBg,
+        cardText,
+        detectedLang,
+        browserLang,
+      },
+      timestamp: Date.now(),
+    });
     // #endregion agent log
   }, []);
 
