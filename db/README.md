@@ -31,6 +31,124 @@ When adding new features:
 
 For temporary development migrations, you can create delta files (0040_*, etc.) and add them to `bootstrap.sql`, then merge them into the consolidated files before final commit.
 
+## Migration Workflow
+
+### Creating New Migrations
+
+**IMPORTANT:** All schema changes MUST go through migration files. Never make manual changes in Supabase Dashboard or via adhoc SQL.
+
+1. **Create migration file:**
+   ```bash
+   # Use sequential numbering: 006, 007, 008, etc.
+   touch db/migrations/XXX_descriptive_name.sql
+   ```
+
+2. **Make migrations idempotent:**
+   Use `DO $$` blocks or `IF NOT EXISTS` clauses:
+   ```sql
+   -- Good: Idempotent policy creation
+   DO $$
+   BEGIN
+       IF NOT EXISTS (
+           SELECT 1 FROM pg_policies
+           WHERE tablename = 'my_table' AND policyname = 'my_policy'
+       ) THEN
+           CREATE POLICY my_policy ON my_table FOR SELECT USING (true);
+       END IF;
+   END $$;
+
+   -- Good: Idempotent table creation
+   CREATE TABLE IF NOT EXISTS my_table (...);
+
+   -- Good: Idempotent column addition
+   DO $$
+   BEGIN
+       IF NOT EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_name = 'my_table' AND column_name = 'my_column'
+       ) THEN
+           ALTER TABLE my_table ADD COLUMN my_column TEXT;
+       END IF;
+   END $$;
+   ```
+
+3. **Test locally/staging:**
+   ```bash
+   db/scripts/psql_supabase.sh -f db/migrations/XXX_descriptive_name.sql
+   ```
+
+4. **Verify migration worked:**
+   ```bash
+   # Check policies
+   db/scripts/psql_supabase.sh -c "SELECT * FROM pg_policies WHERE tablename = 'my_table';"
+
+   # Check columns
+   db/scripts/psql_supabase.sh -c "\d my_table"
+   ```
+
+5. **Commit to git:**
+   ```bash
+   git add db/migrations/XXX_descriptive_name.sql
+   git commit -m "feat: Add migration for <feature>"
+   ```
+
+### ❌ Never Do These
+
+- **Don't** create policies in Supabase Dashboard
+- **Don't** run adhoc SQL in production without a migration file
+- **Don't** modify schema manually and "fix it later"
+- **Don't** skip testing migrations in staging first
+- **Don't** forget to make migrations idempotent
+
+### ✅ Always Do These
+
+- **Always** create migration files for schema changes
+- **Always** test migrations in staging before production
+- **Always** use idempotent patterns (IF NOT EXISTS, DO $$ blocks)
+- **Always** commit migrations to version control
+- **Always** document why the migration was needed
+
+### Checking for Drift
+
+Before starting new work, check if production DB has drifted from migrations:
+
+```bash
+# Export current production schema
+db/scripts/psql_supabase.sh -c "
+SELECT tablename, policyname
+FROM pg_policies
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
+" > /tmp/prod_policies.txt
+
+# Compare with what's in migrations
+# If you see policies not in your migrations, capture them!
+```
+
+### RLS Performance Best Practices
+
+When creating RLS policies, follow these patterns for optimal performance:
+
+```sql
+-- ❌ SLOW: auth.uid() called per-row
+CREATE POLICY my_policy ON my_table
+FOR SELECT
+USING (auth.uid() = user_id);
+
+-- ✅ FAST: auth.uid() cached per-query (99% faster)
+CREATE POLICY my_policy ON my_table
+FOR SELECT
+TO authenticated
+USING ((select auth.uid()) = user_id);
+```
+
+**Key optimizations:**
+1. Wrap `auth.uid()` with subquery: `(select auth.uid())`
+2. Specify role: `TO authenticated` (not `TO public`)
+3. Both changes force query planner to use InitPlan caching
+
+Reference: [Supabase RLS Performance Guide](https://supabase.com/docs/guides/database/database-advisors?lint=0003_auth_rls_initplan)
+
 ## Running ad-hoc SQL against Supabase
 
 Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your environment (or falls back to the repo `.env.local`):

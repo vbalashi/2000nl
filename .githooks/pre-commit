@@ -1,0 +1,76 @@
+#!/bin/bash
+# Pre-commit hook to prevent migration drift
+# Installation: cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# Check if any migration files are being committed
+migration_files=$(git diff --cached --name-only --diff-filter=ACM | grep '^db/migrations/.*\.sql$' || true)
+
+if [ -n "$migration_files" ]; then
+    echo -e "${GREEN}✓ Migration files detected:${NC}"
+    echo "$migration_files" | sed 's/^/  - /'
+    echo ""
+    echo -e "${YELLOW}⚠️  MIGRATION CHECKLIST:${NC}"
+    echo "  1. Did you test this migration in staging?"
+    echo "  2. Is the migration idempotent (DO \$\$ blocks)?"
+    echo "  3. Does it use optimized RLS patterns?"
+    echo "     - (select auth.uid()) not auth.uid()"
+    echo "     - TO authenticated not TO public"
+    echo ""
+    echo -e "${GREEN}If yes to all, proceed with commit.${NC}"
+    echo ""
+fi
+
+# Check for SQL files outside migrations directory
+other_sql=$(git diff --cached --name-only --diff-filter=ACM | grep '\.sql$' | grep -v '^db/migrations/' || true)
+
+if [ -n "$other_sql" ]; then
+    echo -e "${YELLOW}⚠️  WARNING: SQL files modified outside db/migrations/:${NC}"
+    echo "$other_sql" | sed 's/^/  - /'
+    echo ""
+    echo -e "${YELLOW}If these are schema changes, they should be in db/migrations/!${NC}"
+    echo ""
+fi
+
+# Check for common migration anti-patterns in staged files
+if [ -n "$migration_files" ]; then
+    bad_patterns_found=false
+
+    while IFS= read -r file; do
+        # Check for non-wrapped auth.uid()
+        if git diff --cached "$file" | grep -E '^\+.*auth\.uid\(\)' | grep -v '(select auth.uid())' | grep -q .; then
+            if [ "$bad_patterns_found" = false ]; then
+                echo -e "${RED}❌ MIGRATION ANTI-PATTERNS DETECTED:${NC}"
+                bad_patterns_found=true
+            fi
+            echo -e "${RED}  - $file: Contains non-optimized auth.uid()${NC}"
+            echo "    Use: (select auth.uid()) for 99% faster queries"
+        fi
+
+        # Check for TO public in policies
+        if git diff --cached "$file" | grep -E '^\+.*TO public' | grep -q .; then
+            if [ "$bad_patterns_found" = false ]; then
+                echo -e "${RED}❌ MIGRATION ANTI-PATTERNS DETECTED:${NC}"
+                bad_patterns_found=true
+            fi
+            echo -e "${RED}  - $file: Contains 'TO public' in policy${NC}"
+            echo "    Use: TO authenticated for better performance"
+        fi
+    done <<< "$migration_files"
+
+    if [ "$bad_patterns_found" = true ]; then
+        echo ""
+        echo -e "${YELLOW}Consider fixing these before committing.${NC}"
+        echo -e "${YELLOW}Or commit with: git commit --no-verify${NC}"
+        echo ""
+    fi
+fi
+
+exit 0

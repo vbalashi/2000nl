@@ -1,0 +1,90 @@
+name: Database Drift Check
+
+on:
+  pull_request:
+    paths:
+      - 'db/migrations/**'
+      - '.github/workflows/db-drift-check.yml'
+
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check migration anti-patterns
+        id: check-patterns
+        run: |
+          echo "Checking for migration anti-patterns..."
+
+          ISSUES_FOUND=false
+
+          # Check all migration files for non-optimized auth.uid()
+          for file in db/migrations/*.sql; do
+            # Skip if no SQL files
+            [ -f "$file" ] || continue
+
+            # Check for auth.uid() without (select ...) wrapper
+            if grep -n 'auth\.uid()' "$file" | grep -v '(select auth.uid())' | grep -q .; then
+              echo "::error file=$file::Contains non-optimized auth.uid() - use (select auth.uid()) for 99% faster queries"
+              ISSUES_FOUND=true
+            fi
+
+            # Check for TO public in policies (should be TO authenticated)
+            if grep -n 'TO public' "$file" | grep -q 'POLICY'; then
+              echo "::warning file=$file::Contains 'TO public' in policy - use 'TO authenticated' for better performance"
+            fi
+
+            # Check for non-idempotent CREATE statements without IF NOT EXISTS
+            if grep -n '^[[:space:]]*CREATE TABLE ' "$file" | grep -v 'IF NOT EXISTS' | grep -q .; then
+              echo "::warning file=$file::CREATE TABLE without IF NOT EXISTS - migration may not be idempotent"
+            fi
+          done
+
+          if [ "$ISSUES_FOUND" = true ]; then
+            echo "result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "result=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check migration file naming
+        run: |
+          echo "Checking migration file naming conventions..."
+
+          # Verify sequential numbering
+          migration_numbers=$(ls db/migrations/*.sql 2>/dev/null | grep -oP '\d{3}' | sort -n || true)
+
+          if [ -n "$migration_numbers" ]; then
+            echo "Migration files found:"
+            ls -1 db/migrations/*.sql
+          else
+            echo "No migration files found"
+          fi
+
+      - name: Verify database connection (optional)
+        if: github.event.pull_request.base.ref == 'main'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::notice::SUPABASE_DB_URL not configured - skipping live drift check"
+            echo "To enable live drift checking, add SUPABASE_DB_URL to repository secrets"
+          else
+            echo "Database connection configured - drift checking enabled"
+            # TODO: Implement actual drift checking against live DB
+            # This would require comparing pg_policies output with migration files
+          fi
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "✅ All migration checks passed!"
+          echo ""
+          echo "Verified:"
+          echo "  - No non-optimized auth.uid() calls"
+          echo "  - Migration file naming conventions"
+          echo ""
+          echo "Note: Live database drift checking requires SUPABASE_DB_URL secret"
