@@ -31,6 +31,11 @@ DECLARE
     v_learning_due_count int;
     v_review_pool_limit int := 10;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     -- Validate modes array
     IF p_modes IS NULL OR array_length(p_modes, 1) IS NULL THEN
         p_modes := ARRAY['word-to-definition'];
@@ -542,6 +547,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     RETURN QUERY SELECT * FROM get_next_word(
         p_user_id, ARRAY[p_mode], p_exclude_ids, p_list_id, p_list_type, 'both', 'auto'
     );
@@ -565,6 +575,11 @@ AS $$
 DECLARE
     v_card_modes text[];
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     SELECT card_modes INTO v_card_modes
     FROM training_scenarios
     WHERE id = p_scenario_id AND enabled = true;
@@ -693,6 +708,11 @@ DECLARE
     v_total_words_learned INT;
     v_total_words_in_list INT;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     IF p_modes IS NULL OR array_length(p_modes, 1) IS NULL THEN
         p_modes := ARRAY['word-to-definition'];
     END IF;
@@ -864,6 +884,11 @@ DECLARE
     v_card_modes text[];
     v_result jsonb;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     SELECT card_modes INTO v_card_modes
     FROM training_scenarios WHERE id = p_scenario_id;
     
@@ -913,6 +938,11 @@ DECLARE
     v_in_progress int;
     v_new int;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     SELECT card_modes, graduation_threshold 
     INTO v_card_modes, v_graduation_threshold
     FROM training_scenarios WHERE id = p_scenario_id;
