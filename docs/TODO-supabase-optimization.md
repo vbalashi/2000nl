@@ -431,7 +431,8 @@ const { data } = await supabase
 - [ ] **P1.4:** Deploy to production (migrations 008, 009, 010 ready)
 
 ### Should Do (High Value)
-- [ ] **P2.1:** Audit all SECURITY DEFINER functions
+- [x] **P2.1:** Audit all SECURITY DEFINER functions ✅ 2026-01-25
+- [x] **P2.1.1:** Add auth checks to 9 functions (migration 011) ✅ 2026-01-25
 - [ ] **P2.2:** Create private schema for internal functions
 - [ ] **P2.3:** Document public API functions
 - [x] **P3.1:** Add pre-commit hook for migrations ✅ 2026-01-25
@@ -542,4 +543,38 @@ const { data } = await supabase
 
 **Commit:** ee3fca0f
 
-**Next:** P2 (Security audit of 15 SECURITY DEFINER functions)
+**Next:** P2.2-P2.3 (Private schema + API documentation)
+
+### 2026-01-25 - P2.1 Security Audit Complete ✅
+
+**Audit Results:**
+- 12 SECURITY DEFINER functions reviewed (15 including overloads)
+- 9 functions missing auth checks (CRITICAL)
+- 3 functions already secure
+
+**Security Fixes Applied:**
+1. **Migration 011** - Added auth checks to handle_review, handle_click, get_user_tier
+2. **Updated 003_queue_training.sql** - Added auth checks to:
+   - get_next_word + 2 overloads (3 total)
+   - get_detailed_training_stats
+   - get_scenario_word_stats
+   - get_scenario_stats
+
+**Auth Pattern:**
+```sql
+IF p_user_id != (select auth.uid()) THEN
+    RAISE EXCEPTION 'unauthorized';
+END IF;
+```
+
+**Verified Secure:**
+- fetch_words_for_list_gated (has auth.uid() check)
+- search_word_entries_gated (has auth.uid() check)
+- set_default_user_settings (trigger function)
+- get_training_scenarios (static data, no user_id)
+
+**Report:** reports/security-definer-audit.md
+
+**Commit:** b26bdeab
+
+**Next:** P2.2 (create private schema for debug functions)
