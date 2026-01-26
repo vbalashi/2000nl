@@ -558,41 +558,9 @@ BEGIN
 END;
 $$;
 
--- Scenario-based overload
-CREATE OR REPLACE FUNCTION get_next_word(
-    p_user_id uuid,
-    p_scenario_id text,
-    p_exclude_ids uuid[] DEFAULT ARRAY[]::uuid[],
-    p_list_id uuid DEFAULT NULL,
-    p_list_type text DEFAULT 'curated',
-    p_card_filter text DEFAULT 'both',
-    p_queue_turn text DEFAULT 'auto'
-)
-RETURNS SETOF jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-    v_card_modes text[];
-BEGIN
-    -- AUTH CHECK: Verify caller owns this user_id
-    IF p_user_id != (select auth.uid()) THEN
-        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
-    END IF;
-
-    SELECT card_modes INTO v_card_modes
-    FROM training_scenarios
-    WHERE id = p_scenario_id AND enabled = true;
-    
-    IF v_card_modes IS NULL THEN
-        v_card_modes := ARRAY['word-to-definition'];
-    END IF;
-    
-    RETURN QUERY SELECT * FROM get_next_word(
-        p_user_id, v_card_modes, p_exclude_ids, p_list_id, p_list_type, p_card_filter, p_queue_turn
-    );
-END;
-$$;
+-- Scenario-based overload REMOVED due to signature ambiguity with single-mode overload.
+-- Both had (uuid, text, uuid[]) as first 3 params, causing Postgres function resolution errors.
+-- If needed, re-add with different signature (e.g., different param order or types).
 
 -- =============================================================================
 -- TRAINING STATS
