@@ -31,3 +31,4 @@ See `packages/docs/README.md` for documentation pointers.
 Helper docs:
 - `packages/ingestion/SCRIPTS.md` – ingestion script purposes and timestamps.
 - `agents.md` – how to connect with `psql` to Supabase for validating data.
+- `reports/telegram-notifications-setup.md` – step-by-step Telegram deploy notification setup.
