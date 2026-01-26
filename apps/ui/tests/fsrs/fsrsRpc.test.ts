@@ -27,8 +27,8 @@ describeIfDb("FSRS RPC integration", () => {
   });
 
   test("handle_review creates then updates card state", async () => {
+    const userId = randomUUID();
     await withTransaction(pool, async (client) => {
-      const userId = randomUUID();
       const wordId = await insertWord(client, `fsrs-review-${Date.now()}`);
 
       await ensureUserWithSettings(client, userId, { target_retention: 0.9 });
@@ -68,12 +68,12 @@ describeIfDb("FSRS RPC integration", () => {
       expect(second[0].fsrs_lapses).toBe(1);
       expect(second[0].last_result).toBe("fail");
       expect(second[0].fsrs_last_grade).toBe(1);
-    });
+    }, userId);
   });
 
   test("handle_click counts as lapse", async () => {
+    const userId = randomUUID();
     await withTransaction(pool, async (client) => {
-      const userId = randomUUID();
       const wordId = await insertWord(client, `fsrs-click-${Date.now()}`);
       await ensureUserWithSettings(client, userId);
 
@@ -103,12 +103,12 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, wordId]
       );
       expect(logRows.some((r) => r.review_type === "click")).toBe(true);
-    });
+    }, userId);
   });
 
   test("get_next_word honors overdue order and daily caps", async () => {
+    const userId = randomUUID();
     await withTransaction(pool, async (client) => {
-      const userId = randomUUID();
       await ensureUserWithSettings(client, userId, { daily_new_limit: 1, daily_review_limit: 2 });
 
       const overdueId = await insertWord(client, `fsrs-overdue-${Date.now()}`);
@@ -147,7 +147,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const none = await callGetNextWord(client, userId, mode);
       expect(none).toBeUndefined();
-    });
+    }, userId);
   });
 });
 

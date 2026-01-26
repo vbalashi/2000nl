@@ -88,11 +88,16 @@ export async function runMigrations(pool: Pool) {
 
 export async function withTransaction<T>(
   pool: Pool,
-  fn: (client: PoolClient) => Promise<T>
+  fn: (client: PoolClient) => Promise<T>,
+  userId?: string
 ): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // Set auth.uid() for the transaction if userId provided
+    if (userId) {
+      await client.query(`SELECT set_config('request.jwt.claim.sub', $1, true)`, [userId]);
+    }
     const result = await fn(client);
     await client.query("ROLLBACK"); // keep DB clean across tests
     return result;
