@@ -33,7 +33,7 @@
         "Test endpoint with curl"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -51,7 +51,7 @@
         "Document bot setup in README"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -11,27 +11,48 @@ concurrency:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DEPLOY_SERVER_NAME: NUC (2000.dilum.io)
     steps:
-      - name: Pull latest code
+      - name: Deploy with Telegram notifications
         shell: bash
         run: |
           set -euo pipefail
+
+          send_telegram() {
+            local message="$1"
+            if [[ -z "${TELEGRAM_BOT_TOKEN:-}" || -z "${TELEGRAM_CHAT_ID:-}" ]]; then
+              echo "Telegram env not set; skipping notification."
+              return 0
+            fi
+
+            curl -fsSL -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=${message}" \
+              --data-urlencode "disable_web_page_preview=true" >/dev/null || true
+          }
+
+          DEPLOY_START=$(date +%s)
+
           cd /srv/2000nl-ui
           git fetch origin main
+
+          VERSION=$(git show origin/main:apps/ui/package.json | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
+          COMMIT=$(git rev-parse --short origin/main)
+
+          send_telegram "🚀 Deployment started\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}"
+
+          trap 'status=$?; duration=$(( $(date +%s) - DEPLOY_START )); send_telegram "❌ Deployment failed\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}\nDuration: ${duration}s\nError: exit ${status} while running: ${BASH_COMMAND}"; exit ${status}' ERR
+
           git reset --hard origin/main
 
-      - name: Rebuild and restart
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd /srv/2000nl-ui
           # The runner service may start without updated supplementary groups.
           # `sg docker` ensures access to /var/run/docker.sock via the docker group.
           sg docker -c 'docker compose up -d --build'
-
-      - name: Cleanup old images
-        shell: bash
-        run: |
-          set -euo pipefail
           sg docker -c 'docker image prune -f'
 
+          trap - ERR
+          duration=$(( $(date +%s) - DEPLOY_START ))
+          send_telegram "✅ Deployment succeeded\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}\nDuration: ${duration}s"

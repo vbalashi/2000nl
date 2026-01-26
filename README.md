@@ -6,6 +6,17 @@ Deployed locally on `nuc` via Docker Compose. Caddy is a separate stack in `/srv
 
 - Local UI builds/linting require Node 20+ (some dependencies declare `node >= 20`). The Docker build uses `node:22-bookworm-slim`.
 
+## Deployment notifications (Telegram)
+
+The `deploy-nuc` GitHub Actions workflow can send Telegram notifications on deploy start/success/failure.
+
+Setup:
+- Create a bot with BotFather and copy the bot token.
+- Add GitHub Actions secrets:
+  - `TELEGRAM_BOT_TOKEN` (bot token)
+  - `TELEGRAM_CHAT_ID` (chat/channel ID that receives notifications)
+- (Optional) Update `.github/workflows/deploy-nuc.yml` if the server name changes.
+
 - `apps/ui/` – Next.js web client (moved from the original @2000nl-ui project).
 - `apps/api/` – API service placeholder.
 - `packages/ingestion/` – data validation and loaders (from @2000nl-db importer).
