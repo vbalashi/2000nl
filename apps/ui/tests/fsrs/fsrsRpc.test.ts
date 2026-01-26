@@ -123,7 +123,21 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
+      // DEBUG: Check what words exist for this user
+      const { rows: debugWords } = await client.query(
+        `select w.id, w.headword, s.next_review_at, s.fsrs_reps, s.mode
+         from word_entries w
+         left join user_word_status s on s.word_id = w.id and s.user_id = $1
+         where w.is_nt2_2000 = true
+         order by s.next_review_at asc nulls last`,
+        [userId]
+      );
+      console.log('DEBUG: All NT2 words for user:', JSON.stringify(debugWords, null, 2));
+      console.log('DEBUG: Expected overdueId:', overdueId);
+      console.log('DEBUG: UserId:', userId);
+
       const first = await callGetNextWord(client, userId, mode);
+      console.log('DEBUG: First result:', JSON.stringify(first, null, 2));
       expect(first?.id).toBe(overdueId);
       expect(first?.stats?.source).toBe("review");
 
