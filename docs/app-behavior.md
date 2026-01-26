@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-01-23
+**Last updated:** 2026-01-26
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -57,6 +57,27 @@
 ---
 
 ## Features
+
+### Version Display in Settings
+**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
+**User Story:** US-078.1
+
+**Behavior:**
+The Settings page now shows the app version from `package.json`, the build commit hash, and the build timestamp in a single line (e.g., "Version 1.2.3 (build abc123ef, 2026-01-26 14:30)"). A matching version string also appears in the footer/about area for quick reference without opening Settings.
+
+### Health Monitoring Endpoint
+**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
+**User Story:** US-078.2
+
+**Behavior:**
+The app now exposes a public `/api/health` endpoint for monitoring and uptime checks. It returns JSON with `version`, `uptime`, `status`, `timestamp`, and `commit`, and responds with HTTP 200 when the service is healthy. This endpoint is unauthenticated so external monitors can poll it without a session.
+
+### Telegram Deployment Notifications
+**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
+**User Story:** US-078.3
+
+**Behavior:**
+Deployments now send Telegram notifications on start, success, and failure to the configured chat. Messages include the version, commit hash, server name, and (on success) the deployment duration, with failures also including error details. This is wired through the deployment script using a bot token stored in the environment.
 
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)

@@ -1,6 +1,7 @@
 node_modules
 .tsbuildinfo
 apps/ui/tsconfig.tsbuildinfo
+ralph/
 .next
 .env.local
 **/.env.local
