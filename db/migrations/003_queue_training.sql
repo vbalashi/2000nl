@@ -473,9 +473,14 @@ BEGIN
     -- =========================================================================
     -- Fallback F: Practice mode - any word from pool
     -- =========================================================================
-    IF v_word_id IS NULL THEN
+    IF v_word_id IS NULL AND NOT (
+        -- Skip if both limits hit and card_filter='both'
+        p_card_filter = 'both'
+        AND v_new_today >= v_settings.daily_new_limit
+        AND v_reviews_today >= v_settings.daily_review_limit
+    ) THEN
         v_selected_mode := p_modes[1 + floor(random() * array_length(p_modes, 1))::int];
-        
+
         SELECT w.id, 'practice' INTO v_word_id, v_source
         FROM word_entries w
         LEFT JOIN user_word_status s
