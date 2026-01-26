@@ -3,6 +3,7 @@ import React from "react";
 import type { CardFilter, DetailedStats, TrainingMode } from "@/lib/types";
 import { Tooltip } from "@/components/Tooltip";
 import { DropUpSelect } from "./DropUpSelect";
+import { appVersionInfo } from "@/lib/appVersion";
 
 type Props = {
   stats: DetailedStats;
@@ -76,6 +77,7 @@ export function FooterStats({
   activeScenarioName,
   initialReviewDue,
 }: Props) {
+  const versionInfo = appVersionInfo();
   const {
     newCardsToday,
     dailyNewLimit,
@@ -190,6 +192,10 @@ export function FooterStats({
                 onChange={(value) => onCardFilterChange(value as CardFilter)}
               />
             </div>
+          </div>
+
+          <div className="text-center text-[10px] text-slate-400 sm:text-right dark:text-slate-500">
+            {versionInfo.display}
           </div>
         </div>
       </div>

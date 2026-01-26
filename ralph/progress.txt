@@ -1,6 +1,9 @@
 # Ralph Progress Log
 Started: za 24 jan 2026 12:37:06 CET
 ---
+## Codebase Patterns
+- App version/build metadata is provided via NEXT_PUBLIC_APP_VERSION, NEXT_PUBLIC_APP_COMMIT, and NEXT_PUBLIC_BUILD_TIMESTAMP (see `apps/ui/next.config.js`) and surfaced with `apps/ui/lib/appVersion.ts`.
+
 ## 2026-01-24 13:32 - US-056
 - Fixed theme toggle icon position from top left to top right header
 - Moved theme toggle component in TrainingScreen.tsx from left section (before BrandLogo) to right section (first control in toolbar)
@@ -10,4 +13,14 @@ Started: za 24 jan 2026 12:37:06 CET
   - Theme toggle component located in TrainingScreen.tsx lines 1728-1745
   - All header controls use same circular button styling pattern
   - TypeScript and tests both pass with this layout change
+---
+## 2026-01-26 19:48 - US-078.1
+- Added app version/build metadata helper and surfaced version info in Settings (About card) and footer.
+- Injected build-time version, commit, and timestamp into Next config and Docker build args.
+- Added test cleanup hook for vitest to prevent DOM bleed between tests.
+- Files changed: apps/ui/next.config.js, apps/ui/components/training/SettingsModal.tsx, apps/ui/components/training/FooterStats.tsx, apps/ui/lib/appVersion.ts, apps/ui/Dockerfile, apps/ui/vitest.setup.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Use NEXT_PUBLIC_APP_VERSION/NEXT_PUBLIC_APP_COMMIT/NEXT_PUBLIC_BUILD_TIMESTAMP for build metadata in UI.
+  - Add RTL cleanup in vitest setup to avoid duplicate DOM nodes across tests.
+  - Settings modal cards accept small informational blocks well for lightweight metadata.
 ---

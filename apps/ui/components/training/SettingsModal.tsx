@@ -9,6 +9,7 @@ import type { ThemePreference } from "./TrainingScreen";
 import { DropUpSelect } from "./DropUpSelect";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { appVersionInfo } from "@/lib/appVersion";
 
 type TabKey = "woordenlijst" | "statistieken" | "instellingen";
 
@@ -86,6 +87,7 @@ export function SettingsModal({
   );
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosLoading, setScenariosLoading] = useState(false);
+  const versionInfo = useMemo(() => appVersionInfo(), []);
 
   const curatedLists = useMemo(
     () => lists.filter((list) => list.type === "curated"),
@@ -520,6 +522,15 @@ export function SettingsModal({
                   >
                     Tutorial opnieuw starten
                   </button>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Over 2000nl
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {versionInfo.display}
+                  </p>
                 </div>
                 </div>
               </div>
