@@ -207,6 +207,11 @@ DECLARE
     v_interval numeric;
     v_meta jsonb;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     IF p_result = 'hide' THEN
         INSERT INTO user_word_status (user_id, word_id, mode, hidden, last_result, last_seen_at)
         VALUES (p_user_id, p_word_id, p_mode, true, 'hide', now())
@@ -351,6 +356,11 @@ DECLARE
     v_interval numeric;
     v_meta jsonb;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     INSERT INTO user_events (user_id, word_id, mode, event_type)
     VALUES (p_user_id, p_word_id, p_mode, 'definition_click');
 
@@ -448,20 +458,28 @@ END;
 $$;
 
 -- =============================================================================
--- DEBUG HELPER: Get last review metadata
+-- DEBUG HELPER: Get last review metadata (PRIVATE SCHEMA)
 -- =============================================================================
+-- This function is internal/debug only and moved to private schema
+-- to prevent exposure via PostgREST API.
 
-CREATE OR REPLACE FUNCTION get_last_review_debug(
+CREATE OR REPLACE FUNCTION private.get_last_review_debug(
     p_user_id uuid,
     p_word_id uuid,
     p_mode text
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, private
 AS $$
 DECLARE
     v_row user_review_log%rowtype;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     SELECT *
     INTO v_row
     FROM user_review_log

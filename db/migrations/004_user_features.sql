@@ -144,6 +144,11 @@ AS $$
 DECLARE
     v_tier text;
 BEGIN
+    -- AUTH CHECK: Verify caller owns this user_id
+    IF p_user_id != (select auth.uid()) THEN
+        RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
+    END IF;
+
     SELECT COALESCE(subscription_tier, 'free')
     INTO v_tier
     FROM user_settings
