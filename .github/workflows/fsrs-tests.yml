@@ -53,13 +53,6 @@ jobs:
         run: npm ci
         working-directory: apps/ui
 
-      - name: Apply database migrations
-        run: |
-          for migration in db/migrations/*.sql; do
-            echo "Applying $migration..."
-            psql "$FSRS_TEST_DB_URL" -f "$migration"
-          done
-
       - name: Run FSRS parity and RPC tests
         run: npm test -- tests/fsrs/*.test.ts
         working-directory: apps/ui

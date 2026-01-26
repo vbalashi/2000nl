@@ -9,12 +9,29 @@ export const getDbUrl = () =>
 
 export async function ensureAuthSchema(pool: Pool) {
   await pool.query(`
+    -- Create Supabase-compatible roles
+    do $$ begin
+      create role anon nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    do $$ begin
+      create role authenticated nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
+    -- Create auth schema
     create schema if not exists auth;
     create table if not exists auth.users (
       id uuid primary key,
       email text,
       created_at timestamptz default now()
     );
+
+    -- Create private schema
+    create schema if not exists private;
 
     -- Supabase compatibility: many migrations reference auth.uid() in RLS policies.
     -- In Supabase, this reads the user id from JWT claims; in tests we just need
