@@ -25,6 +25,7 @@ DECLARE
     v_source text;
     v_settings record;
     v_new_today int;
+    v_reviews_today int;
     v_list_valid boolean := true;
     v_new_pool_size int;
     v_review_pool_size int;
@@ -69,6 +70,7 @@ BEGIN
     WHERE user_id = p_user_id;
 
     v_settings.daily_new_limit := COALESCE(v_settings.daily_new_limit, 10);
+    v_settings.daily_review_limit := COALESCE(v_settings.daily_review_limit, 200);
 
     -- Count new cards introduced today
     SELECT COUNT(DISTINCT word_id) INTO v_new_today
@@ -76,6 +78,14 @@ BEGIN
     WHERE user_id = p_user_id
       AND mode = ANY(p_modes)
       AND review_type = 'new'
+      AND reviewed_at::date = current_date;
+
+    -- Count reviews done today
+    SELECT COUNT(*) INTO v_reviews_today
+    FROM user_review_log
+    WHERE user_id = p_user_id
+      AND mode = ANY(p_modes)
+      AND review_type = 'review'
       AND reviewed_at::date = current_date;
 
     -- Count learning cards due
@@ -250,32 +260,34 @@ BEGIN
     -- Priority C: queueTurn='review' OR card_filter='review'
     -- =========================================================================
     IF v_word_id IS NULL AND (p_queue_turn = 'review' OR p_card_filter = 'review') AND p_card_filter != 'new' THEN
-        -- C1: Due reviews first
-        SELECT s.word_id, s.mode, 'review' INTO v_word_id, v_selected_mode, v_source
-        FROM user_word_status s
-        JOIN word_entries w ON w.id = s.word_id
-        WHERE s.user_id = p_user_id 
-          AND s.mode = ANY(p_modes)
-          AND s.fsrs_last_interval >= 1.0
-          AND s.next_review_at <= now()
-          AND (s.frozen_until IS NULL OR s.frozen_until <= now())
-          AND s.hidden = false
-          AND s.fsrs_enabled = true
-          AND NOT (s.word_id = ANY(p_exclude_ids))
-          AND (
-                (p_list_id IS NULL AND w.is_nt2_2000 = true)
-             OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
-                    SELECT 1 FROM word_list_items li
-                    WHERE li.list_id = p_list_id AND li.word_id = w.id
-                ))
-             OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
-                    SELECT 1 FROM user_word_list_items li
-                    JOIN user_word_lists l ON l.id = li.list_id
-                    WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
-                ))
-          )
-        ORDER BY s.next_review_at ASC
-        LIMIT 1;
+        -- C1: Due reviews first (only if daily limit not reached)
+        IF v_reviews_today < v_settings.daily_review_limit THEN
+            SELECT s.word_id, s.mode, 'review' INTO v_word_id, v_selected_mode, v_source
+            FROM user_word_status s
+            JOIN word_entries w ON w.id = s.word_id
+            WHERE s.user_id = p_user_id
+              AND s.mode = ANY(p_modes)
+              AND s.fsrs_last_interval >= 1.0
+              AND s.next_review_at <= now()
+              AND (s.frozen_until IS NULL OR s.frozen_until <= now())
+              AND s.hidden = false
+              AND s.fsrs_enabled = true
+              AND NOT (s.word_id = ANY(p_exclude_ids))
+              AND (
+                    (p_list_id IS NULL AND w.is_nt2_2000 = true)
+                 OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
+                        SELECT 1 FROM word_list_items li
+                        WHERE li.list_id = p_list_id AND li.word_id = w.id
+                    ))
+                 OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
+                        SELECT 1 FROM user_word_list_items li
+                        JOIN user_word_lists l ON l.id = li.list_id
+                        WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
+                    ))
+              )
+            ORDER BY s.next_review_at ASC
+            LIMIT 1;
+        END IF;
         
         -- C2: Try learning if card_filter='both'
         IF v_word_id IS NULL AND p_card_filter = 'both' AND v_learning_due_count > 0 THEN
@@ -340,32 +352,34 @@ BEGIN
     -- Priority D: Auto mode (queueTurn='auto' with card_filter='both')
     -- =========================================================================
     IF v_word_id IS NULL AND p_queue_turn = 'auto' AND p_card_filter = 'both' THEN
-        -- D1: Due reviews first
-        SELECT s.word_id, s.mode, 'review' INTO v_word_id, v_selected_mode, v_source
-        FROM user_word_status s
-        JOIN word_entries w ON w.id = s.word_id
-        WHERE s.user_id = p_user_id 
-          AND s.mode = ANY(p_modes)
-          AND s.fsrs_last_interval >= 1.0
-          AND s.next_review_at <= now()
-          AND (s.frozen_until IS NULL OR s.frozen_until <= now())
-          AND s.hidden = false
-          AND s.fsrs_enabled = true
-          AND NOT (s.word_id = ANY(p_exclude_ids))
-          AND (
-                (p_list_id IS NULL AND w.is_nt2_2000 = true)
-             OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
-                    SELECT 1 FROM word_list_items li
-                    WHERE li.list_id = p_list_id AND li.word_id = w.id
-                ))
-             OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
-                    SELECT 1 FROM user_word_list_items li
-                    JOIN user_word_lists l ON l.id = li.list_id
-                    WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
-                ))
-          )
-        ORDER BY s.next_review_at ASC
-        LIMIT 1;
+        -- D1: Due reviews first (only if daily limit not reached)
+        IF v_reviews_today < v_settings.daily_review_limit THEN
+            SELECT s.word_id, s.mode, 'review' INTO v_word_id, v_selected_mode, v_source
+            FROM user_word_status s
+            JOIN word_entries w ON w.id = s.word_id
+            WHERE s.user_id = p_user_id
+              AND s.mode = ANY(p_modes)
+              AND s.fsrs_last_interval >= 1.0
+              AND s.next_review_at <= now()
+              AND (s.frozen_until IS NULL OR s.frozen_until <= now())
+              AND s.hidden = false
+              AND s.fsrs_enabled = true
+              AND NOT (s.word_id = ANY(p_exclude_ids))
+              AND (
+                    (p_list_id IS NULL AND w.is_nt2_2000 = true)
+                 OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
+                        SELECT 1 FROM word_list_items li
+                        WHERE li.list_id = p_list_id AND li.word_id = w.id
+                    ))
+                 OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
+                        SELECT 1 FROM user_word_list_items li
+                        JOIN user_word_lists l ON l.id = li.list_id
+                        WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
+                    ))
+              )
+            ORDER BY s.next_review_at ASC
+            LIMIT 1;
+        END IF;
 
         -- D2: Learning due
         IF v_word_id IS NULL AND v_learning_due_count > 0 THEN
@@ -429,11 +443,11 @@ BEGIN
     -- =========================================================================
     -- Fallback E: Future-due review practice
     -- =========================================================================
-    IF v_word_id IS NULL AND p_card_filter != 'new' THEN
+    IF v_word_id IS NULL AND p_card_filter != 'new' AND v_reviews_today < v_settings.daily_review_limit THEN
         SELECT s.word_id, s.mode, 'review' INTO v_word_id, v_selected_mode, v_source
         FROM user_word_status s
         JOIN word_entries w ON w.id = s.word_id
-        WHERE s.user_id = p_user_id 
+        WHERE s.user_id = p_user_id
           AND s.mode = ANY(p_modes)
           AND s.fsrs_last_interval >= 1.0
           AND (s.frozen_until IS NULL OR s.frozen_until <= now())
