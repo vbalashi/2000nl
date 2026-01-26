@@ -1,0 +1,90 @@
+{
+  "project": "2000nl",
+  "branchName": "ralph/user-onboarding",
+  "description": "User Onboarding Implementation - 6-step interactive tour using React Joyride to guide new users through core features in 60-90 seconds",
+  "userStories": [
+    {
+      "id": "US-048-1",
+      "title": "Add Tour Targets to UI",
+      "description": "As a developer, I want to add data-tour attributes to key UI elements so that the onboarding tour can highlight them during the walkthrough.",
+      "acceptanceCriteria": [
+        "All 6 tour targets have data-tour attributes: training-card, rating-buttons, card-toolbar, sidebar-toggle, search-button, settings-button",
+        "Attributes are on stable elements (not conditionally rendered)",
+        "No duplicate IDs or conflicting selectors",
+        "Verify attributes in browser using Chrome DevTools MCP",
+        "Screenshot showing data attributes in DevTools inspector",
+        "Typecheck passes: npx tsc --noEmit"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-048-2",
+      "title": "Implement Joyride Tour Flow",
+      "description": "As a new user, I want an interactive 6-step onboarding tour so that I can learn the app's core features (cards, reveal, rating, audio/translation, sidebar, search/settings) in 60-90 seconds.",
+      "acceptanceCriteria": [
+        "React Joyride installed (check package.json)",
+        "6 steps defined with correct targets and Dutch copy (Welcome, Reveal Card, Rate Knowledge, Audio & Translation, Recent & Details, Search & Settings)",
+        "Welcome step appears as center modal with title 'Welkom bij 2000NL'",
+        "Tour highlights correct elements in sequence using data-tour selectors",
+        "Start button begins tour, Overslaan button skips entire tour",
+        "Skip button available on all steps",
+        "Progress indicator shows (e.g., 2/6)",
+        "Completing tour sets onboarding_completed localStorage flag",
+        "Skipping tour also sets localStorage flag",
+        "Tour doesn't show on subsequent visits (checks localStorage)",
+        "Works on both mobile (375px) and desktop (1280px+) viewports",
+        "Spotlight overlay doesn't block card interactions",
+        "Screenshots of all 6 steps (mobile and desktop)",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048-3",
+      "title": "Settings Reset Tutorial Option",
+      "description": "As a user, I want a 'Reset Tutorial' button in Settings so that I can replay the onboarding tour if I skipped it or need a refresher.",
+      "acceptanceCriteria": [
+        "Reset Tutorial button appears in Settings modal",
+        "Button is clearly labeled and discoverable",
+        "Clicking button removes onboarding_completed localStorage key",
+        "User feedback shown (toast or alert) confirming reset",
+        "After reset, refreshing page triggers tour again",
+        "Button works on both mobile and desktop",
+        "Screenshot showing settings button placement",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048-4",
+      "title": "Polish and QA",
+      "description": "As a user, I want the onboarding tour to be polished, mobile-friendly, and handle edge cases gracefully so that it feels helpful and professional.",
+      "acceptanceCriteria": [
+        "All mobile tests pass (375px viewport): tooltips don't overflow, text readable, spotlight correct, touch works, sidebar toggle shows mobile version",
+        "All desktop tests pass (1280px viewport): positioning correct, keyboard navigation works, sidebar shows appropriate target",
+        "Edge cases handled: missing targets skip gracefully, clicks outside don't break tour, localStorage works across tabs",
+        "Copy is clear, concise, and typo-free (max 2 sentences per step)",
+        "Visual polish complete: spotlight opacity appropriate, tooltips match theme, animations smooth",
+        "Tour feels helpful (not annoying or overwhelming)",
+        "Skip button always accessible",
+        "localStorage behavior verified (persists correctly)",
+        "Screenshots document final tour flow (mobile + desktop)",
+        "No console errors during tour",
+        "Tour doesn't interfere with normal app usage",
+        "Typecheck passes: npx tsc --noEmit",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

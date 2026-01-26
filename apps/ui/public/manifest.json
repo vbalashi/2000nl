@@ -3,6 +3,7 @@
   "short_name": "2000nl",
   "description": "Leer de NT2 woorden met een Supabase-gestuurde training.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#0f172a",
   "background_color": "#F5F7FB",

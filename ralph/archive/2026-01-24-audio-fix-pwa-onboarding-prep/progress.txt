@@ -1,0 +1,13 @@
+# Ralph Progress Log
+Started: vr 23 jan 2026 20:36:56 CET
+---
+
+## Codebase Patterns
+- Training UI tour anchors live on `TrainingScreen` (header/buttons) and `TrainingCard` (card/toolbar) via `data-tour` attributes.
+## 2026-01-23 20:41 - US-048-1
+- Added stable data-tour anchors for training card, toolbar, rating buttons, sidebar toggle, search, and settings.
+- Files changed: apps/ui/components/training/TrainingCard.tsx, apps/ui/components/training/TrainingScreen.tsx, ralph/prd.json
+- **Learnings for future iterations:**
+  - Tour targets in the training UI are best anchored on always-rendered wrappers to avoid conditional rendering gaps.
+  - Chrome DevTools MCP was unavailable (transport closed); used dev-browser for visual verification and logged the issue.
+---
