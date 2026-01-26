@@ -148,7 +148,17 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
+      // DEBUG: Check review count
+      const { rows: reviewCount } = await client.query(
+        `select count(*) as cnt from user_review_log
+         where user_id = $1 and mode = $2 and review_type = 'review' and reviewed_at::date = current_date`,
+        [userId, mode]
+      );
+      console.log('DEBUG: Review count today:', reviewCount[0].cnt, '/ limit:', 2);
+      console.log('DEBUG: Expected newId:', newId);
+
       const second = await callGetNextWord(client, userId, mode);
+      console.log('DEBUG: Second result:', JSON.stringify(second, null, 2));
       expect(second?.id).toBe(newId);
       expect(second?.stats?.source).toBe("new");
 

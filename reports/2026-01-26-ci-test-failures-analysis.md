@@ -71,29 +71,48 @@ expect(dbResult.stability!).toBeCloseTo(tsResult.stability!, 5);
 
 ---
 
-### Fourth Failure (Run #22-24) - CURRENT ISSUE
+### Fourth Failure (Run #22-25) - CURRENT ISSUE
 **Error**: UUID mismatch in `get_next_word honors overdue order and daily caps` test
 ```
-AssertionError: expected 'b054540c-8089-42b5-88c8-2c8757ab4b05'
-                to be 'b977a4bd-f86d-49c3-94cb-5df2cbd29a17'
+AssertionError: expected 'e4e624b0-067a-47b3-8027-c0fc0cf0d052'
+                to be '1f547e3c-8d03-43a9-be4c-3c7df7b96616'
+At line 152 - SECOND call to get_next_word
 ```
 
-**What We Know**:
-- Test creates specific `overdueId` word with `next_review_at = now() - interval '1 day'`
-- Expects `get_next_word()` to return that specific word
-- Instead gets a different UUID
-- Happens consistently in CI, NOT locally
+**BREAKTHROUGH** (Run #25 debug logs):
+- **First call** (line 140): ✅ Returns `overdueId` correctly
+- Test inserts 2 review_log entries to hit `daily_review_limit=2`
+- **Second call** (line 151): ❌ Returns `overdueId` AGAIN instead of `newId`
+
+**ROOT CAUSE IDENTIFIED** 🎯:
+`get_next_word` function in `003_queue_training.sql` **NEVER CHECKS `daily_review_limit`**
+
+**Evidence**:
+- Line 27: Declares `v_new_today int` - counts new cards done today ✅
+- Line 74-79: Counts new cards from `user_review_log WHERE review_type='new'` ✅
+- Line 158: Checks `IF v_new_today < v_settings.daily_new_limit` ✅
+- **MISSING**: No variable or query to count reviews done today ❌
+- **MISSING**: No check against `v_settings.daily_review_limit` ❌
+
+Result: Function returns review cards even after daily limit reached.
+
+**Why Test Passes Locally**: Tests skip without DB URL set
 
 **Fixes Attempted**: ❌ Did not resolve
-1. Sequential test execution (commit 58e5d25d) - No effect
-2. Set `auth.uid()` in transactions (commit b438d6c2) - No effect
+1. Sequential test execution (commit 58e5d25d) - Not the issue
+2. Set `auth.uid()` in transactions (commit b438d6c2) - Not the issue
 
-**Debug Logging Added**: (Latest commit b438d6c2)
+**Debug Logging Added**: (commit c25e366c + pending)
 ```typescript
-// Logs all NT2 words for user, expected overdueId, and actual result
+// First call logs
 console.log('DEBUG: All NT2 words for user:', debugWords);
 console.log('DEBUG: Expected overdueId:', overdueId);
 console.log('DEBUG: First result:', first);
+
+// Second call logs (pending commit)
+console.log('DEBUG: Review count today:', count, '/ limit:', 2);
+console.log('DEBUG: Expected newId:', newId);
+console.log('DEBUG: Second result:', second);
 ```
 
 ---
