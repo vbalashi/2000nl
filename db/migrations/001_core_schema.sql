@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS languages (
     name text NOT NULL
 );
 
+-- Seed languages
+INSERT INTO languages (code, name) VALUES ('nl', 'Nederlands')
+ON CONFLICT (code) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS word_entries (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     language_code text NOT NULL REFERENCES languages(code),
