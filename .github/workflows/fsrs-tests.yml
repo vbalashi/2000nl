@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/ui/lib/fsrsMath.ts"
       - "apps/ui/tests/fsrs/**"
+      - "apps/ui/vitest.config.ts"
       - "db/migrations/**"
       - "apps/ui/package.json"
       - "apps/ui/package-lock.json"
@@ -14,6 +15,7 @@ on:
     paths:
       - "apps/ui/lib/fsrsMath.ts"
       - "apps/ui/tests/fsrs/**"
+      - "apps/ui/vitest.config.ts"
       - "db/migrations/**"
       - "apps/ui/package.json"
       - "apps/ui/package-lock.json"
