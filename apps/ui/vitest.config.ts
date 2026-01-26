@@ -8,7 +8,13 @@ export default defineConfig({
     environment: "jsdom",
     environmentMatchGlobs: [["tests/fsrs/**", "node"]],
     globals: true,
-    setupFiles: "./vitest.setup.ts"
+    setupFiles: "./vitest.setup.ts",
+    // Run FSRS tests sequentially to avoid DB contention
+    poolOptions: {
+      threads: {
+        singleThread: true
+      }
+    }
   },
   resolve: {
     alias: {
