@@ -5,6 +5,7 @@ Started: za 24 jan 2026 12:37:06 CET
 - App version/build metadata is provided via NEXT_PUBLIC_APP_VERSION, NEXT_PUBLIC_APP_COMMIT, and NEXT_PUBLIC_BUILD_TIMESTAMP (see `apps/ui/next.config.js`) and surfaced with `apps/ui/lib/appVersion.ts`.
 - App Router API endpoints live under `apps/ui/app/api/<route>/route.ts` and can opt out of caching via `dynamic = "force-dynamic"` and `Cache-Control: no-store`.
 - Deploy notifications are sent via Telegram in `.github/workflows/deploy-nuc.yml` using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` secrets.
+- Supabase Auth URL configuration (Site URL + Redirect URLs) is documented in `apps/ui/README.md` and controls production email links.
 
 ## 2026-01-24 13:32 - US-056
 - Fixed theme toggle icon position from top left to top right header
@@ -41,4 +42,10 @@ Started: za 24 jan 2026 12:37:06 CET
 - **Learnings for future iterations:**
   - Deploy notifications rely on TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID GitHub secrets and a configurable server name in the workflow.
   - Using a single deploy step with a bash trap captures failure details and still sends the failure notification.
+---
+## 2026-01-29 14:38 - US-067.1
+- Documented Supabase Auth URL configuration steps to ensure production email links use https://2000.dilum.io
+- Files changed: apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Supabase Site URL drives auth email links; Redirect URLs must include production + localhost callback paths
 ---

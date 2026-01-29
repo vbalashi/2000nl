@@ -49,6 +49,23 @@ Requires Node 20+.
   - `user_events` (review and click events)
 - Auth flows via Supabase Auth; provide `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` at runtime.
 
+### Supabase Auth URL configuration (production)
+
+Configure these in the Supabase dashboard to ensure auth emails point to production and callbacks succeed:
+
+1. Supabase Dashboard → Authentication → URL Configuration
+2. Set **Site URL** to `https://2000.dilum.io`
+3. Add **Redirect URLs** (one per line):
+   - `https://2000.dilum.io/auth/callback`
+   - `https://2000.dilum.io`
+   - `http://localhost:3000/auth/callback` (dev)
+   - `http://localhost:3000` (dev)
+4. Verify the domain is reachable over HTTPS (valid certificate and redirects configured)
+
+Notes:
+- Supabase uses **Site URL** to construct email links (magic link/OTP). If it stays on localhost, production users will receive broken links.
+- Keep localhost entries for local testing; production email links will still use the Site URL.
+
 ## Scripts
 
 - `apps/ui/scripts/import_words.py` (last modified 2025-12-02) — legacy helper to import dictionary JSON into Postgres; prefer `packages/ingestion/scripts/import_words_db.py` for current ingestion.
