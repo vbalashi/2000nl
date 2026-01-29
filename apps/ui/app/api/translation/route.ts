@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
 import crypto from "crypto";
+import {
+  createTranslator,
+  loadTranslationConfigFromEnv,
+} from "@/lib/translation/translationProvider";
+import type { ITranslator } from "@/lib/translation/ITranslator";
+import type { TranslationProviderName } from "@/lib/translation/types";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -30,11 +36,6 @@ function isFresh(updatedAt: string | null | undefined, freshForMs: number) {
   const ts = Date.parse(updatedAt);
   if (!Number.isFinite(ts)) return false;
   return Date.now() - ts < freshForMs;
-}
-
-function normalizeLang(lang: string) {
-  // DeepL expects upper-case language codes like RU, EN, EN-GB
-  return lang.trim().replace("_", "-").toUpperCase();
 }
 
 function normalizeLangForDb(lang: string) {
@@ -125,99 +126,9 @@ function buildOverlay(items: ExtractedItem[], translated: string[]): Translation
 }
 
 function computeFingerprint(items: ExtractedItem[]) {
-  // Stable hash of what we sent to DeepL (paths + texts)
+  // Stable hash of what we sent to the translation provider (paths + texts)
   const payload = items.map((it) => ({ path: it.path, text: it.text }));
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-}
-
-function escapeXml(text: string) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function unescapeXml(text: string) {
-  return text
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&gt;/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&amp;/g, "&");
-}
-
-function buildContextXml(texts: string[]) {
-  // One XML "document" so DeepL can use cross-field context.
-  // Tags remain stable via tag_handling=xml; we parse translations by id.
-  const body = texts
-    .map((t, i) => `<t id="${i}">${escapeXml(t)}</t>`)
-    .join("");
-  return `<translations>${body}</translations>`;
-}
-
-function parseContextXml(xml: string, expectedCount: number) {
-  const out: Array<string | undefined> = new Array(expectedCount).fill(undefined);
-  const re = /<t\b[^>]*\bid="(\d+)"[^>]*>([\s\S]*?)<\/t>/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(xml))) {
-    const idx = Number(match[1]);
-    if (!Number.isFinite(idx) || idx < 0 || idx >= expectedCount) continue;
-    const raw = match[2] ?? "";
-    out[idx] = unescapeXml(raw.trim());
-  }
-
-  const missing = out.findIndex((v) => typeof v !== "string");
-  if (missing !== -1) {
-    throw new Error(
-      `DeepL returned incomplete XML translation (missing index ${missing})`
-    );
-  }
-
-  return out as string[];
-}
-
-async function deeplTranslate(texts: string[], targetLang: string) {
-  const authKey = process.env.DEEPL_API_KEY;
-  if (!authKey) {
-    throw new Error("DEEPL_API_KEY is not configured");
-  }
-
-  const url = process.env.DEEPL_API_URL ?? "https://api-free.deepl.com/v2/translate";
-
-  const params = new URLSearchParams();
-  params.set("target_lang", targetLang);
-  // Send all whitelisted fields as ONE "document" to improve contextual translation.
-  // This avoids translating each field in isolation (which often yields wrong sense
-  // for the headword when an idiom/explanation is present).
-  params.set("tag_handling", "xml");
-  params.set("preserve_formatting", "1");
-  params.append("text", buildContextXml(texts));
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      // DeepL docs (2025): authenticate via Authorization header
-      // (auth_key in query/body is deprecated and will stop working)
-      Authorization: `DeepL-Auth-Key ${authKey}`,
-    },
-    body: params.toString(),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`DeepL error ${res.status}: ${body || res.statusText}`);
-  }
-
-  const data = (await res.json()) as { translations?: Array<{ text: string }> };
-  const translatedXml = data.translations?.[0]?.text ?? "";
-  if (!translatedXml.trim()) {
-    throw new Error("DeepL returned an empty translation");
-  }
-
-  return parseContextXml(translatedXml, texts.length);
 }
 
 export async function GET(req: NextRequest) {
@@ -247,7 +158,23 @@ export async function GET(req: NextRequest) {
   }
 
   const dbLang = normalizeLangForDb(lang);
-  const targetLang = normalizeLang(lang);
+  const targetLang = lang.trim();
+  let provider: TranslationProviderName;
+  let translator: ITranslator;
+  try {
+    const resolved = createTranslator(loadTranslationConfigFromEnv());
+    provider = resolved.provider;
+    translator = resolved.translator;
+  } catch (err: any) {
+    const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
+    return NextResponse.json(
+      {
+        error: message,
+        ...(debug ? { debug: { dbLang, targetLang } } : null),
+      },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
+  }
 
   const supabaseUrl =
     process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -303,7 +230,7 @@ export async function GET(req: NextRequest) {
       )
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
-      .eq("provider", "deepl")
+      .eq("provider", provider)
       .maybeSingle();
 
   const { data: existing, error: existingError } = await lookup();
@@ -316,6 +243,7 @@ export async function GET(req: NextRequest) {
               debug: {
                 dbLang,
                 targetLang,
+                provider,
                 supabaseProject,
                 serviceKeyPrefix,
               },
@@ -347,14 +275,15 @@ export async function GET(req: NextRequest) {
         status: existing.status,
         ...(debug
           ? {
-              debug: {
-                branch: "fresh_pending",
-                dbLang,
-                targetLang,
-                existingUpdatedAt: existing.updated_at,
-                pendingFreshForMs,
-                supabaseProject,
-                serviceKeyPrefix,
+                debug: {
+                  branch: "fresh_pending",
+                  dbLang,
+                  targetLang,
+                  provider,
+                  existingUpdatedAt: existing.updated_at,
+                  pendingFreshForMs,
+                  supabaseProject,
+                  serviceKeyPrefix,
               },
             }
           : null),
@@ -377,7 +306,7 @@ export async function GET(req: NextRequest) {
       .update({ status: "failed", error_message: message, updated_at: new Date().toISOString() })
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
-      .eq("provider", "deepl");
+      .eq("provider", provider);
 
     return NextResponse.json(
       { status: "failed" as const, error: message },
@@ -404,13 +333,14 @@ export async function GET(req: NextRequest) {
         overlay: existing.overlay,
         ...(debug
           ? {
-              debug: {
-                branch: "fast_ready_fingerprint_match",
-                dbLang,
-                targetLang,
-                existingUpdatedAt: existing.updated_at,
-                supabaseProject,
-                serviceKeyPrefix,
+                debug: {
+                  branch: "fast_ready_fingerprint_match",
+                  dbLang,
+                  targetLang,
+                  provider,
+                  existingUpdatedAt: existing.updated_at,
+                  supabaseProject,
+                  serviceKeyPrefix,
               },
             }
           : null),
@@ -427,7 +357,7 @@ export async function GET(req: NextRequest) {
         {
           word_entry_id: wordEntryId,
           target_lang: dbLang,
-          provider: "deepl",
+          provider,
           status: "pending",
           overlay: null,
           source_fingerprint: null,
@@ -448,6 +378,7 @@ export async function GET(req: NextRequest) {
                   branch: "insert_error",
                   dbLang,
                   targetLang,
+                  provider,
                   supabaseProject,
                   serviceKeyPrefix,
                 },
@@ -468,14 +399,15 @@ export async function GET(req: NextRequest) {
             ...(debug
               ? {
                   debug: {
-                    branch: "lookup_after_insert_error",
-                    dbLang,
-                    targetLang,
-                    supabaseProject,
-                    serviceKeyPrefix,
-                  },
-                }
-              : null),
+                  branch: "lookup_after_insert_error",
+                  dbLang,
+                  targetLang,
+                  provider,
+                  supabaseProject,
+                  serviceKeyPrefix,
+                },
+              }
+            : null),
           },
           { status: 500, headers: { "Cache-Control": "no-store" } }
         );
@@ -489,11 +421,12 @@ export async function GET(req: NextRequest) {
             ...(debug
               ? {
                   debug: {
-                    branch: "lost_race_return_existing",
-                    dbLang,
-                    targetLang,
-                    existingUpdatedAt: existingAfter.updated_at,
-                    overlayHasHeadword:
+                  branch: "lost_race_return_existing",
+                  dbLang,
+                  targetLang,
+                  provider,
+                  existingUpdatedAt: existingAfter.updated_at,
+                  overlayHasHeadword:
                       Boolean(existingAfter.overlay) &&
                       "headword" in ((existingAfter.overlay ?? {}) as any),
                     supabaseProject,
@@ -515,6 +448,7 @@ export async function GET(req: NextRequest) {
                   branch: "lost_race_no_row",
                   dbLang,
                   targetLang,
+                  provider,
                   supabaseProject,
                   serviceKeyPrefix,
                 },
@@ -548,7 +482,7 @@ export async function GET(req: NextRequest) {
         })
         .eq("word_entry_id", wordEntryId)
         .eq("target_lang", dbLang)
-        .eq("provider", "deepl")
+        .eq("provider", provider)
         .eq("updated_at", (existing as TranslationRow).updated_at ?? null)
         .select("word_entry_id")
         .maybeSingle();
@@ -593,7 +527,7 @@ export async function GET(req: NextRequest) {
       })
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
-      .eq("provider", "deepl");
+      .eq("provider", provider);
 
     return NextResponse.json(
       { status: "ready" as const, overlay },
@@ -602,7 +536,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const translatedTexts = await deeplTranslate(
+    const translatedTexts = await translator.translate(
       items.map((i) => i.text),
       targetLang
     );
@@ -620,7 +554,7 @@ export async function GET(req: NextRequest) {
       })
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
-      .eq("provider", "deepl");
+      .eq("provider", provider);
 
     if (updateError) {
       return NextResponse.json(
@@ -641,7 +575,7 @@ export async function GET(req: NextRequest) {
       .update({ status: "failed", error_message: message, updated_at: new Date().toISOString() })
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
-      .eq("provider", "deepl");
+      .eq("provider", provider);
 
     return NextResponse.json(
       { status: "failed" as const, error: message },

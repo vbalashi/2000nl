@@ -1,5 +1,6 @@
 # Ralph Progress Log
 ## Codebase Patterns
+- Translation providers live in `apps/ui/lib/translation/` and are selected via `TRANSLATION_PROVIDER` using `createTranslator`.
 - Use `scripts/update-supabase-email-templates.sh` with `SUPABASE_ACCESS_TOKEN` to brand Supabase auth emails (confirmation, recovery, magic link/OTP).
 Started: do 29 jan 2026 15:40:36 CET
 ---
@@ -10,4 +11,13 @@ Started: do 29 jan 2026 15:40:36 CET
 - **Learnings for future iterations:**
   - Supabase email templates are updated via the Management API with `mailer_subjects_*` and `mailer_templates_*_content` fields
   - OTP emails use the magic link template, so keep that template aligned with OTP copy
+---
+## 2026-01-29 15:52:45 - US-050.1
+- Added translation abstraction layer with ITranslator, DeepL wrapper, and provider factory with env-config selection
+- Updated translation API route to use the provider factory and dynamic provider keys
+- Added unit tests for provider selection and DeepL translator behavior
+- Files changed: `apps/ui/app/api/translation/route.ts`, `apps/ui/lib/translation/ITranslator.ts`, `apps/ui/lib/translation/deeplTranslator.ts`, `apps/ui/lib/translation/translationProvider.ts`, `apps/ui/lib/translation/types.ts`, `apps/ui/tests/translationProvider.test.ts`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Translation providers are resolved via `loadTranslationConfigFromEnv()` + `createTranslator()` and stored in `word_entry_translations.provider`
+  - DeepL translations use XML tag handling to preserve field boundaries (see `DeepLTranslator`)
 ---

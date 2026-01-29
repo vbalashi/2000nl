@@ -58,6 +58,34 @@
 
 ## Features
 
+### Google OAuth Authentication
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.2
+
+**Behavior:**
+Google OAuth is now the primary authentication method, with Supabase configured for Google client credentials and redirect URIs for web and PWA. The auth UI includes a Google sign-in button and the OAuth flow is verified in browser and PWA contexts, including iOS Safari standalone where token persistence is now reliable.
+
+### Supabase Site URL and Redirect Configuration
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.1
+
+**Behavior:**
+Supabase auth settings now point to the production domain (`https://2000.dilum.io`) as the site URL, with redirect URLs configured for auth callbacks. Email auth links are generated against the production domain instead of localhost, preventing broken or unsafe links in user emails. Configuration steps live in the Supabase dashboard (Auth > URL Configuration) and should be verified after changes.
+
+### Email OTP Authentication (No Passwords)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.3
+
+**Behavior:**
+Password-based auth is disabled in Supabase, and email OTP is the required sign-in method. The app now validates OTP codes against the configured length (matching Supabase) to avoid 6-digit/8-digit mismatches during login. OTP emails are expected to arrive quickly and expire per Supabase defaults, so failed attempts should prompt a resend.
+
+### Branded Email Templates (Supabase)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.4
+
+**Behavior:**
+Supabase auth emails now use 2000nl-branded templates with the product logo, brand colors, and a clear call-to-action. The templates cover registration, magic link, and OTP flows (password reset only if enabled), with copy tuned for a professional tone and accessible contrast. Appearance is validated in Gmail, Outlook, and iOS Mail to ensure rendering consistency.
+
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)
 **User Story:** US-032
