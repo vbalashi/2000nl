@@ -1,6 +1,8 @@
 # Ralph Progress Log
 ## Codebase Patterns
 - Translation providers live in `apps/ui/lib/translation/` and are selected via `TRANSLATION_PROVIDER` using `createTranslator`.
+- OpenAI translations are handled by `OpenAITranslator` with retry + timeout; DeepL fallback is wired via `TRANSLATION_FALLBACK=deepl`.
+- Gemini translations are handled by `GeminiTranslator` with retry + timeout; configure via `GEMINI_API_KEY` and optional `GEMINI_MODEL`/`GEMINI_API_URL`.
 - Use `scripts/update-supabase-email-templates.sh` with `SUPABASE_ACCESS_TOKEN` to brand Supabase auth emails (confirmation, recovery, magic link/OTP).
 Started: do 29 jan 2026 15:40:36 CET
 ---
@@ -20,4 +22,29 @@ Started: do 29 jan 2026 15:40:36 CET
 - **Learnings for future iterations:**
   - Translation providers are resolved via `loadTranslationConfigFromEnv()` + `createTranslator()` and stored in `word_entry_translations.provider`
   - DeepL translations use XML tag handling to preserve field boundaries (see `DeepLTranslator`)
+---
+## 2026-01-29 15:59:50 - US-050.2
+- Implemented OpenAI translation connector with retries and optional DeepL fallback
+- Added OpenAI translation tests and documented provider setup
+- Files changed: `apps/ui/lib/translation/openaiTranslator.ts`, `apps/ui/lib/translation/translationProvider.ts`, `apps/ui/lib/translation/types.ts`, `apps/ui/tests/translationProvider.test.ts`, `apps/ui/README.md`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - OpenAI translations use chat completions JSON parsing in `OpenAITranslator` with retry + timeout
+  - `OPENAI_API_KEY` plus optional `OPENAI_MODEL`/`OPENAI_API_URL` control OpenAI usage; DeepL fallback is enabled via `TRANSLATION_FALLBACK=deepl`
+---
+## 2026-01-29 16:04:08 - US-050.3
+- Added Gemini translation connector with retries, JSON parsing, and DeepL fallback support
+- Wired Gemini into translation provider selection and env config
+- Added Gemini unit tests and documented Gemini env settings
+- Files changed: `apps/ui/lib/translation/geminiTranslator.ts`, `apps/ui/lib/translation/translationProvider.ts`, `apps/ui/tests/translationProvider.test.ts`, `apps/ui/README.md`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Gemini translations use the Generative Language `generateContent` API with an API key query param
+  - Configure Gemini with `GEMINI_API_KEY`, optional `GEMINI_MODEL`, and optional `GEMINI_API_URL`
+---
+## 2026-01-29 16:09:22 - US-071.1
+- Added left-edge swipe handling for the mobile Recent drawer with translate feedback and close threshold
+- Captured touch gestures near the left edge to prevent OS back navigation while the drawer is open
+- Files changed: `apps/ui/components/training/TrainingSidebarDrawer.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - The Training sidebar drawer lives in `apps/ui/components/training/TrainingSidebarDrawer.tsx` and can own global touch listeners while open
+  - Dev-browser verification for training UI requires access to the authenticated Training screen
 ---
