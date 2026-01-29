@@ -56,3 +56,17 @@ Started: do 29 jan 2026 15:40:36 CET
   - Sentence-level TTS in audio mode is triggered by passing `sentence` through `InteractiveText` to `handleTrainingWordClick`
   - Definition/example InteractiveText usage lives in `apps/ui/components/training/TrainingCard.tsx` and Sidebar definitions in `apps/ui/components/training/SidebarCard.tsx`
 ---
+## 2026-01-29 16:21:46 CET - US-063.1
+- Standardized example sentence line-height in TrainingCard for W→D hint and D→W example lists
+- Files changed: `apps/ui/components/training/TrainingCard.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Dev-browser verification requires the dev server running at http://localhost:3000 (connection refused when not running)
+---
+## 2026-01-29 16:27:59 CET - US-073.1
+- Masked target headword in D→W definition prompts before reveal, preserving compounds and inflections via regex placeholder
+- Updated TrainingCard definition prompt rendering to use masked text when unrevealed
+- Dev-browser check: /training returned 404; captured homepage at / instead
+- Files changed: `apps/ui/components/training/TrainingCard.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Training screen route is not available at `/training` in dev; homepage is `/`
+---

@@ -233,7 +233,7 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -251,7 +251,7 @@
         "Verify in browser using Chrome DevTools MCP"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
