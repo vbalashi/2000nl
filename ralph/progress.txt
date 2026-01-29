@@ -6,6 +6,8 @@ Started: za 24 jan 2026 12:37:06 CET
 - App Router API endpoints live under `apps/ui/app/api/<route>/route.ts` and can opt out of caching via `dynamic = "force-dynamic"` and `Cache-Control: no-store`.
 - Deploy notifications are sent via Telegram in `.github/workflows/deploy-nuc.yml` using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` secrets.
 - Supabase Auth URL configuration (Site URL + Redirect URLs) is documented in `apps/ui/README.md` and controls production email links.
+- OTP length is enforced in `AuthScreen` via a shared constant; keep it in sync with the Supabase Email OTP length setting.
+- Supabase OAuth uses PKCE + persisted storage configuration in `apps/ui/lib/supabaseClient.ts` for PWA session stability.
 
 ## 2026-01-24 13:32 - US-056
 - Fixed theme toggle icon position from top left to top right header
@@ -48,4 +50,21 @@ Started: za 24 jan 2026 12:37:06 CET
 - Files changed: apps/ui/README.md, ralph/prd.json, ralph/progress.txt
 - **Learnings for future iterations:**
   - Supabase Site URL drives auth email links; Redirect URLs must include production + localhost callback paths
+---
+## 2026-01-29 15:31 - US-067.3
+- Enforced numeric OTP input with shared 6-digit length constant to match Supabase Email OTP configuration.
+- Documented Supabase OTP/passwordless auth setup in apps/ui README.
+- Files changed: apps/ui/components/auth/AuthScreen.tsx, apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - AuthScreen validates OTP length and numeric-only input; update OTP_LENGTH when Supabase settings change.
+  - Dev-browser connection refused on port 9222; UI verification skipped.
+---
+## 2026-01-29 15:38 - US-067.2
+- Added Google OAuth sign-in button and PKCE session exchange handling in auth callback.
+- Configured Supabase client for PKCE + persistent storage and documented Google OAuth setup steps.
+- Files changed: apps/ui/components/auth/AuthScreen.tsx, apps/ui/app/auth/callback/page.tsx, apps/ui/lib/supabaseClient.ts, apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Google OAuth uses `signInWithOAuth` + `/auth/callback` with `exchangeCodeForSession` for PKCE.
+  - Supabase client auth config (PKCE + storage) lives in `apps/ui/lib/supabaseClient.ts`.
+  - Dev-browser connection refused on port 9222 while installing dependencies; UI verification skipped.
 ---

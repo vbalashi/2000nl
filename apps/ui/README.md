@@ -10,6 +10,7 @@ Requires Node 20+.
    ```
    NEXT_PUBLIC_SUPABASE_URL=your-project-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 2. Install dependencies:
    ```
@@ -65,6 +66,37 @@ Configure these in the Supabase dashboard to ensure auth emails point to product
 Notes:
 - Supabase uses **Site URL** to construct email links (magic link/OTP). If it stays on localhost, production users will receive broken links.
 - Keep localhost entries for local testing; production email links will still use the Site URL.
+
+### Supabase Auth OTP configuration (passwordless)
+
+Configure OTP sign-in and disable password auth to match the UI:
+
+1. Supabase Dashboard → Authentication → Providers → Email
+2. Disable **Password** (turn off password-based auth)
+3. Enable **Email OTP** (one-time passcode)
+4. Set **OTP length** to `6` digits
+5. Save changes and test sign-in from the app
+
+Notes:
+- The UI enforces a 6-digit numeric OTP and will reject non-numeric input.
+- OTP delivery time and expiration are controlled by Supabase; verify codes arrive within 30 seconds and expire appropriately.
+
+### Supabase Google OAuth configuration
+
+Enable Google as the primary auth provider for browser + PWA:
+
+1. Google Cloud Console → APIs & Services → Credentials
+2. Create OAuth client (Web application) and add the **Authorized redirect URI**:
+   - `https://<your-project-ref>.supabase.co/auth/v1/callback`
+3. Supabase Dashboard → Authentication → Providers → Google
+4. Enable Google and paste the Client ID + Secret
+5. Supabase Dashboard → Authentication → URL Configuration
+   - Ensure `https://2000.dilum.io/auth/callback` and `https://2000.dilum.io` are included in Redirect URLs
+   - Keep localhost entries for dev
+
+Notes:
+- The UI uses the PKCE auth flow for OAuth to improve session persistence on iOS PWA.
+- `NEXT_PUBLIC_SITE_URL` should match the current origin so OAuth redirects to `/auth/callback` on the same domain.
 
 ## Scripts
 
