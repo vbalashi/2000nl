@@ -46,7 +46,7 @@
         "Deployment script sends notification on start",
         "Notification on success with duration",
         "Notification on failure with error details",
-        "Message format: '🚀 Deployment started\\nVersion: 1.2.3\\nCommit: abc123ef\\nServer: NUC (2000.dilum.io)'",
+        "Message format: '\ud83d\ude80 Deployment started\\nVersion: 1.2.3\\nCommit: abc123ef\\nServer: NUC (2000.dilum.io)'",
         "Test with actual deployment",
         "Document bot setup in README"
       ],
@@ -121,7 +121,7 @@
         "Document template customization process"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -226,7 +226,7 @@
         "Measure line-height values in word examples and definition examples",
         "Standardize line-height to consistent value (match tighter spacing)",
         "Check Tailwind leading-* classes applied",
-        "Verify consistency in W→D and D→W card types",
+        "Verify consistency in W\u2192D and D\u2192W card types",
         "Tested on mobile (375px) and desktop (1280px+)",
         "Screenshots showing before/after comparison",
         "Typecheck passes",
@@ -239,7 +239,7 @@
     {
       "id": "US-073.1",
       "title": "Hide Target Word in Definitions",
-      "description": "If target word appears in its own Dutch definition on D→W cards, replace with placeholder (...) to avoid giving away the answer.",
+      "description": "If target word appears in its own Dutch definition on D\u2192W cards, replace with placeholder (...) to avoid giving away the answer.",
       "acceptanceCriteria": [
         "Detect if target word appears in definition text",
         "Replace target word with placeholder: ... or ___",

@@ -80,6 +80,21 @@ Configure OTP sign-in and disable password auth to match the UI:
 Notes:
 - The UI enforces a 6-digit numeric OTP and will reject non-numeric input.
 - OTP delivery time and expiration are controlled by Supabase; verify codes arrive within 30 seconds and expire appropriately.
+- OTP emails use the magic link template, so keep that template in sync with OTP copy and branding.
+
+### Supabase Auth email template branding
+
+Customize Supabase email templates with 2000nl branding (logo wordmark, primary color, and professional Dutch copy):
+
+1. Export a personal access token from Supabase: https://supabase.com/dashboard/account/tokens
+2. Run the template update script:
+   ```
+   SUPABASE_ACCESS_TOKEN=your-token \
+     /home/khrustal/dev/2000nl-ui/scripts/update-supabase-email-templates.sh
+   ```
+3. Supabase Dashboard → Authentication → Email Templates
+4. Verify confirmation (registration), recovery (password reset), and magic link (OTP) templates render correctly.
+5. Send test emails to Gmail, Outlook, and iOS Mail and confirm branding/CTA buttons render well.
 
 ### Supabase Google OAuth configuration
 
