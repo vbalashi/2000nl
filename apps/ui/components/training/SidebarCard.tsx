@@ -164,6 +164,7 @@ export function SidebarCard({
                 highlightedWord={highlightedWord}
                 onWordClick={onWordClick}
                 excludeWord={entry.headword}
+                sentence={meaning.definition}
               />
               {meaning.context && (
                 <span className="block mt-0.5 text-xs text-slate-500 font-normal">

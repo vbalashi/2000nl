@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-01-23
+**Last updated:** 2026-01-29
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -85,6 +85,35 @@ Password-based auth is disabled in Supabase, and email OTP is the required sign-
 
 **Behavior:**
 Supabase auth emails now use 2000nl-branded templates with the product logo, brand colors, and a clear call-to-action. The templates cover registration, magic link, and OTP flows (password reset only if enabled), with copy tuned for a professional tone and accessible contrast. Appearance is validated in Gmail, Outlook, and iOS Mail to ensure rendering consistency.
+
+### Translation Abstraction Layer (Multi-Provider)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.1
+
+**Behavior:**
+Translations now route through a shared `ITranslator` interface with a factory that selects the provider by config (DeepL, OpenAI, or Gemini) and supports a fallback provider when the primary fails. Existing translation calls remain unchanged but are now provider-agnostic, making it easier to swap APIs or add new translation backends without touching feature code.
+
+### OpenAI Translation Connector
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.2
+
+**Behavior:**
+An OpenAI-backed translator now implements the shared `ITranslator` interface and can be selected via configuration, using an API key from environment variables. The connector is tuned for Dutch→English and English→Russian output with an optimized GPT prompt (defaulting to a cost‑efficient model like `gpt-4o-mini`), includes retries on failure, and falls back to DeepL if the OpenAI call fails.
+
+### Gemini Translation Connector
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.3
+
+**Behavior:**
+A Gemini-backed translator now implements the shared `ITranslator` interface and can be selected via configuration, using a Gemini API key from environment variables. It targets Dutch→English and English→Russian translations with a fast model like `gemini-1.5-flash`, applies retry handling for API errors, and falls back to DeepL when the Gemini call fails.
+
+
+### Left-Edge Swipe Navigation (Recent Opgezocht)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-071.1
+
+**Behavior:**
+A left-edge swipe gesture now closes the Recent opgezocht list instead of triggering the browser or OS back navigation. The app detects swipes that start near the left edge, prevents the native back gesture, and slides the panel away with visual feedback as the swipe progresses. This works in both browser and PWA standalone modes on mobile.
 
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)

@@ -48,3 +48,11 @@ Started: do 29 jan 2026 15:40:36 CET
   - The Training sidebar drawer lives in `apps/ui/components/training/TrainingSidebarDrawer.tsx` and can own global touch listeners while open
   - Dev-browser verification for training UI requires access to the authenticated Training screen
 ---
+## 2026-01-29 16:15:50 - US-055.1
+- Passed definition text into InteractiveText so audio mode plays full definition/idiom sentences via TTS
+- Ensured sidebar definition clicks also carry sentence context for audio mode
+- Files changed: `apps/ui/components/training/TrainingCard.tsx`, `apps/ui/components/training/SidebarCard.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Sentence-level TTS in audio mode is triggered by passing `sentence` through `InteractiveText` to `handleTrainingWordClick`
+  - Definition/example InteractiveText usage lives in `apps/ui/components/training/TrainingCard.tsx` and Sidebar definitions in `apps/ui/components/training/SidebarCard.tsx`
+---

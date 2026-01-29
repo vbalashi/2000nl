@@ -726,6 +726,7 @@ export function TrainingCard({
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
                           cursorStyle={wordCursorStyle}
+                          sentence={primaryMeaning.definition}
                         />
                         <InlineTranslation text={getTranslated(0, "definition")} />
                       </div>
@@ -925,6 +926,7 @@ export function TrainingCard({
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
+                                  sentence={meaning.definition}
                                 />
                                 <InlineTranslation
                                   align="left"

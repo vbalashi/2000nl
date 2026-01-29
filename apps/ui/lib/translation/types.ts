@@ -13,4 +13,8 @@ export type TranslationConfig = {
     openai?: string;
     gemini?: string;
   };
+  models?: {
+    openai?: string;
+    gemini?: string;
+  };
 };

@@ -21,6 +21,29 @@ Requires Node 20+.
    npm run dev
    ```
 
+## Translation providers
+
+Translations are provided by a selectable backend. Configure these env vars in `.env.local` or deployment settings:
+
+```
+TRANSLATION_PROVIDER=deepl
+TRANSLATION_FALLBACK=deepl
+DEEPL_API_KEY=your-deepl-key
+OPENAI_API_KEY=your-openai-key
+OPENAI_MODEL=gpt-4o-mini
+GEMINI_API_KEY=your-gemini-key
+GEMINI_MODEL=gemini-1.5-flash
+```
+
+Notes:
+- Supported providers: `deepl`, `openai`, `gemini` (when implemented).
+- Set `TRANSLATION_PROVIDER=openai` to route translations through OpenAI; `TRANSLATION_FALLBACK=deepl` enables automatic fallback if OpenAI fails.
+- Set `TRANSLATION_PROVIDER=gemini` to route translations through Gemini; `TRANSLATION_FALLBACK=deepl` enables automatic fallback if Gemini fails.
+- `OPENAI_MODEL` is optional; defaults to `gpt-4o-mini`.
+- `OPENAI_API_URL` is optional; defaults to `https://api.openai.com/v1/chat/completions`.
+- `GEMINI_MODEL` is optional; defaults to `gemini-1.5-flash`.
+- `GEMINI_API_URL` is optional; defaults to `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`.
+
 ## Testing
 
 - Component tests (React Testing Library + Vitest):
