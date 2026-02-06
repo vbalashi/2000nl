@@ -74,7 +74,7 @@ For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps t
 Notes:
 - The UI login flow is OTP-only, but automated tests can bypass the UI by installing a Supabase session in `localStorage`.
 - For local development / browser automation that needs a *real* Supabase session without typing an OTP, use the dev-only helper page:
-  - `http://localhost:3000/__dev__/test-login` (requires `SUPABASE_SERVICE_ROLE_KEY` and `TEST_USER_EMAIL` on the server)
+  - `http://localhost:3000/dev/test-login` (requires `SUPABASE_SERVICE_ROLE_KEY` and `TEST_USER_EMAIL` on the server)
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
 
 - FSRS parity + RPC tests (need a Postgres URL; runs DB migrations, so point at a disposable/non-prod DB):
