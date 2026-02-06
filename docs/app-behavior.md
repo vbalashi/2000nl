@@ -129,6 +129,13 @@ When audio mode is enabled, tapping a definition now plays the full definition v
 **Behavior:**
 Example sentence line spacing is now consistent across word examples and definition examples, using the tighter shared line-height. Tailwind `leading-*` classes were aligned so W→D and D→W card types render matching spacing for example text.
 
+### PWA Icon and iOS Splash Screens
+**Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
+**User Stories:** US-085.1, US-085.2
+
+**Behavior:**
+The PWA manifest now includes both any-purpose icons and a maskable icon for Android. iOS launch splash screens are configured via `apple-touch-startup-image` link tags for common iPhone and iPad portrait sizes, using a branded background and centered wordmark.
+
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)
 **User Story:** US-032
