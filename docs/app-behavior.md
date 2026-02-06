@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-01-26
+**Last updated:** 2026-01-29
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -58,26 +58,83 @@
 
 ## Features
 
-### Version Display in Settings
-**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
-**User Story:** US-078.1
+### Google OAuth Authentication
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.2
 
 **Behavior:**
-The Settings page now shows the app version from `package.json`, the build commit hash, and the build timestamp in a single line (e.g., "Version 1.2.3 (build abc123ef, 2026-01-26 14:30)"). A matching version string also appears in the footer/about area for quick reference without opening Settings.
+Google OAuth is now the primary authentication method, with Supabase configured for Google client credentials and redirect URIs for web and PWA. The auth UI includes a Google sign-in button and the OAuth flow is verified in browser and PWA contexts, including iOS Safari standalone where token persistence is now reliable.
 
-### Health Monitoring Endpoint
-**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
-**User Story:** US-078.2
-
-**Behavior:**
-The app now exposes a public `/api/health` endpoint for monitoring and uptime checks. It returns JSON with `version`, `uptime`, `status`, `timestamp`, and `commit`, and responds with HTTP 200 when the service is healthy. This endpoint is unauthenticated so external monitors can poll it without a session.
-
-### Telegram Deployment Notifications
-**Added:** 2026-01-26 (Sprint: Production Readiness & Polish)
-**User Story:** US-078.3
+### Supabase Site URL and Redirect Configuration
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.1
 
 **Behavior:**
-Deployments now send Telegram notifications on start, success, and failure to the configured chat. Messages include the version, commit hash, server name, and (on success) the deployment duration, with failures also including error details. This is wired through the deployment script using a bot token stored in the environment.
+Supabase auth settings now point to the production domain (`https://2000.dilum.io`) as the site URL, with redirect URLs configured for auth callbacks. Email auth links are generated against the production domain instead of localhost, preventing broken or unsafe links in user emails. Configuration steps live in the Supabase dashboard (Auth > URL Configuration) and should be verified after changes.
+
+### Email OTP Authentication (No Passwords)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.3
+
+**Behavior:**
+Password-based auth is disabled in Supabase, and email OTP is the required sign-in method. The app now validates OTP codes against the configured length (matching Supabase) to avoid 6-digit/8-digit mismatches during login. OTP emails are expected to arrive quickly and expire per Supabase defaults, so failed attempts should prompt a resend.
+
+### Branded Email Templates (Supabase)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-067.4
+
+**Behavior:**
+Supabase auth emails now use 2000nl-branded templates with the product logo, brand colors, and a clear call-to-action. The templates cover registration, magic link, and OTP flows (password reset only if enabled), with copy tuned for a professional tone and accessible contrast. Appearance is validated in Gmail, Outlook, and iOS Mail to ensure rendering consistency.
+
+### Translation Abstraction Layer (Multi-Provider)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.1
+
+**Behavior:**
+Translations now route through a shared `ITranslator` interface with a factory that selects the provider by config (DeepL, OpenAI, or Gemini) and supports a fallback provider when the primary fails. Existing translation calls remain unchanged but are now provider-agnostic, making it easier to swap APIs or add new translation backends without touching feature code.
+
+### OpenAI Translation Connector
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.2
+
+**Behavior:**
+An OpenAI-backed translator now implements the shared `ITranslator` interface and can be selected via configuration, using an API key from environment variables. The connector is tuned for Dutch→English and English→Russian output with an optimized GPT prompt (defaulting to a cost‑efficient model like `gpt-4o-mini`), includes retries on failure, and falls back to DeepL if the OpenAI call fails.
+
+### Gemini Translation Connector
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-050.3
+
+**Behavior:**
+A Gemini-backed translator now implements the shared `ITranslator` interface and can be selected via configuration, using a Gemini API key from environment variables. It targets Dutch→English and English→Russian translations with a fast model like `gemini-1.5-flash`, applies retry handling for API errors, and falls back to DeepL when the Gemini call fails.
+
+
+### Left-Edge Swipe Navigation (Recent Opgezocht)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-071.1
+
+**Behavior:**
+A left-edge swipe gesture now closes the Recent opgezocht list instead of triggering the browser or OS back navigation. The app detects swipes that start near the left edge, prevents the native back gesture, and slides the panel away with visual feedback as the swipe progresses. This works in both browser and PWA standalone modes on mobile.
+
+### Audio Mode Definition Playback
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-055.1
+
+**Behavior:**
+When audio mode is enabled, tapping a definition now plays the full definition via TTS rather than a single word. Tapping an example sentence likewise plays the full example, keeping word-level audio available through the existing non-definition interaction.
+
+### Line Spacing Consistency (Examples)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-063.1
+
+**Behavior:**
+Example sentence line spacing is now consistent across word examples and definition examples, using the tighter shared line-height. Tailwind `leading-*` classes were aligned so W→D and D→W card types render matching spacing for example text.
+
+### PWA Icon and iOS Splash Screens
+**Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
+**User Stories:** US-085.1, US-085.2
+
+**Behavior:**
+The PWA manifest now includes both any-purpose icons and a maskable icon for Android. iOS launch splash screens are configured via `apple-touch-startup-image` link tags for common iPhone and iPad portrait sizes, using a branded background and centered wordmark.
 
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)

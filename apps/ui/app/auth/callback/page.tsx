@@ -9,15 +9,36 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const authError = params.get("error");
+      const authErrorDescription = params.get("error_description");
+      const code = params.get("code");
+
+      if (authError) {
+        console.error("Auth callback error:", authError, authErrorDescription);
+        router.push("/?error=auth_failed");
+        return;
+      }
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error("Auth callback exchange error:", exchangeError);
+          router.push("/?error=auth_failed");
+          return;
+        }
+      }
+
       const { error } = await supabase.auth.getSession();
 
       if (error) {
         console.error("Auth callback error:", error);
         router.push("/?error=auth_failed");
-      } else {
-        // Successfully authenticated, redirect to main app
-        router.push("/");
+        return;
       }
+
+      // Successfully authenticated, redirect to main app
+      router.push("/");
     };
 
     handleCallback();

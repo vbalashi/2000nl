@@ -1,0 +1,70 @@
+# Ralph Progress Log
+Started: za 24 jan 2026 12:37:06 CET
+---
+## Codebase Patterns
+- App version/build metadata is provided via NEXT_PUBLIC_APP_VERSION, NEXT_PUBLIC_APP_COMMIT, and NEXT_PUBLIC_BUILD_TIMESTAMP (see `apps/ui/next.config.js`) and surfaced with `apps/ui/lib/appVersion.ts`.
+- App Router API endpoints live under `apps/ui/app/api/<route>/route.ts` and can opt out of caching via `dynamic = "force-dynamic"` and `Cache-Control: no-store`.
+- Deploy notifications are sent via Telegram in `.github/workflows/deploy-nuc.yml` using `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` secrets.
+- Supabase Auth URL configuration (Site URL + Redirect URLs) is documented in `apps/ui/README.md` and controls production email links.
+- OTP length is enforced in `AuthScreen` via a shared constant; keep it in sync with the Supabase Email OTP length setting.
+- Supabase OAuth uses PKCE + persisted storage configuration in `apps/ui/lib/supabaseClient.ts` for PWA session stability.
+
+## 2026-01-24 13:32 - US-056
+- Fixed theme toggle icon position from top left to top right header
+- Moved theme toggle component in TrainingScreen.tsx from left section (before BrandLogo) to right section (first control in toolbar)
+- Files changed: apps/ui/components/training/TrainingScreen.tsx
+- **Learnings for future iterations:**
+  - Header structure: Left = BrandLogo, Right = Controls (Theme → Search → Settings → Hotkeys → Sidebar → Account)
+  - Theme toggle component located in TrainingScreen.tsx lines 1728-1745
+  - All header controls use same circular button styling pattern
+  - TypeScript and tests both pass with this layout change
+---
+## 2026-01-26 19:48 - US-078.1
+- Added app version/build metadata helper and surfaced version info in Settings (About card) and footer.
+- Injected build-time version, commit, and timestamp into Next config and Docker build args.
+- Added test cleanup hook for vitest to prevent DOM bleed between tests.
+- Files changed: apps/ui/next.config.js, apps/ui/components/training/SettingsModal.tsx, apps/ui/components/training/FooterStats.tsx, apps/ui/lib/appVersion.ts, apps/ui/Dockerfile, apps/ui/vitest.setup.ts, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Use NEXT_PUBLIC_APP_VERSION/NEXT_PUBLIC_APP_COMMIT/NEXT_PUBLIC_BUILD_TIMESTAMP for build metadata in UI.
+  - Add RTL cleanup in vitest setup to avoid duplicate DOM nodes across tests.
+  - Settings modal cards accept small informational blocks well for lightweight metadata.
+---
+## 2026-01-26 19:52 - US-078.2
+- Added /api/health endpoint returning version, commit, uptime, status, and timestamp
+- Verified endpoint via curl on localhost
+- Files changed: apps/ui/app/api/health/route.ts, ralph/prd.json
+- **Learnings for future iterations:**
+  - Next.js app router API endpoints live under `apps/ui/app/api/*/route.ts` and can use `force-dynamic` with `Cache-Control: no-store` for monitoring endpoints
+  - Version/commit metadata is accessible via `appVersionInfo()` from `apps/ui/lib/appVersion.ts`
+---
+## 2026-01-26 19:58 - US-078.3
+- Added Telegram start/success/failure notifications to the deploy-nuc workflow with duration and error details.
+- Documented Telegram bot setup requirements in the root README.
+- Files changed: .github/workflows/deploy-nuc.yml, README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Deploy notifications rely on TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID GitHub secrets and a configurable server name in the workflow.
+  - Using a single deploy step with a bash trap captures failure details and still sends the failure notification.
+---
+## 2026-01-29 14:38 - US-067.1
+- Documented Supabase Auth URL configuration steps to ensure production email links use https://2000.dilum.io
+- Files changed: apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Supabase Site URL drives auth email links; Redirect URLs must include production + localhost callback paths
+---
+## 2026-01-29 15:31 - US-067.3
+- Enforced numeric OTP input with shared 6-digit length constant to match Supabase Email OTP configuration.
+- Documented Supabase OTP/passwordless auth setup in apps/ui README.
+- Files changed: apps/ui/components/auth/AuthScreen.tsx, apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - AuthScreen validates OTP length and numeric-only input; update OTP_LENGTH when Supabase settings change.
+  - Dev-browser connection refused on port 9222; UI verification skipped.
+---
+## 2026-01-29 15:38 - US-067.2
+- Added Google OAuth sign-in button and PKCE session exchange handling in auth callback.
+- Configured Supabase client for PKCE + persistent storage and documented Google OAuth setup steps.
+- Files changed: apps/ui/components/auth/AuthScreen.tsx, apps/ui/app/auth/callback/page.tsx, apps/ui/lib/supabaseClient.ts, apps/ui/README.md, ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Google OAuth uses `signInWithOAuth` + `/auth/callback` with `exchangeCodeForSession` for PKCE.
+  - Supabase client auth config (PKCE + storage) lives in `apps/ui/lib/supabaseClient.ts`.
+  - Dev-browser connection refused on port 9222 while installing dependencies; UI verification skipped.
+---

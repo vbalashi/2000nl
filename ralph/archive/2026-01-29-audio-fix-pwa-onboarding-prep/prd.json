@@ -1,0 +1,298 @@
+{
+  "project": "2000nl",
+  "branchName": "ralph/production-readiness-polish",
+  "description": "Sprint 13 - Production Readiness & Polish: Deploy robust authentication, monitoring infrastructure, LLM-based translation system, and polish mobile UX and visual consistency.",
+  "userStories": [
+    {
+      "id": "US-078.1",
+      "title": "Version Display in Settings",
+      "description": "Display app version, git commit hash, and build timestamp in Settings page. Version read from package.json at build time.",
+      "acceptanceCriteria": [
+        "Version read from package.json (semantic versioning)",
+        "Git commit hash injected at build time (env var)",
+        "Build timestamp included",
+        "Displayed in Settings page: 'Version 1.2.3 (build abc123ef, 2026-01-26 14:30)'",
+        "Footer or about section also shows version",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-078.2",
+      "title": "Health Monitoring Endpoint",
+      "description": "Create /api/health endpoint returning version, uptime, and status for monitoring.",
+      "acceptanceCriteria": [
+        "/api/health endpoint created",
+        "Returns JSON: { version, uptime, status, timestamp, commit }",
+        "Status 200 when healthy",
+        "Accessible without authentication",
+        "Typecheck passes",
+        "Test endpoint with curl"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-078.3",
+      "title": "Telegram Deployment Notifications",
+      "description": "Send Telegram notifications on deployment start, success, and failure. Include version, commit hash, server name, and duration.",
+      "acceptanceCriteria": [
+        "Telegram bot created (BotFather)",
+        "Bot token stored in environment variable",
+        "Deployment script sends notification on start",
+        "Notification on success with duration",
+        "Notification on failure with error details",
+        "Message format: '🚀 Deployment started\\nVersion: 1.2.3\\nCommit: abc123ef\\nServer: NUC (2000.dilum.io)'",
+        "Test with actual deployment",
+        "Document bot setup in README"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-067.1",
+      "title": "Supabase Site URL Configuration",
+      "description": "Configure Supabase site URL to https://2000.dilum.io and add redirect URLs for auth callbacks. Fix localhost links in emails.",
+      "acceptanceCriteria": [
+        "Supabase site URL set to https://2000.dilum.io",
+        "Redirect URLs configured in Supabase dashboard",
+        "DNS/domain verified accessible over HTTPS",
+        "Test email links point to production domain (not localhost)",
+        "Document configuration steps"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-067.3",
+      "title": "Email OTP Authentication",
+      "description": "Enable email OTP (one-time password) authentication and disable password-based auth. Fix OTP code length mismatch (8 digits vs 6 digits expected).",
+      "acceptanceCriteria": [
+        "Password authentication disabled in Supabase",
+        "Email OTP enabled in Supabase",
+        "OTP code length configured (verify 6-digit or 8-digit)",
+        "App validation matches Supabase OTP length",
+        "Test email OTP flow end-to-end",
+        "OTP code delivered within 30 seconds",
+        "Code expires appropriately",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-067.2",
+      "title": "Google OAuth Integration",
+      "description": "Enable Google OAuth as primary authentication method. Solve PWA token persistence issues on iOS with OAuth.",
+      "acceptanceCriteria": [
+        "Google OAuth configured in Supabase (Client ID, Secret)",
+        "OAuth redirect URIs set for web and PWA",
+        "Google sign-in button in auth UI",
+        "OAuth flow tested in browser",
+        "OAuth flow tested in PWA (iOS Safari standalone)",
+        "OAuth flow tested in PWA (Android Chrome)",
+        "Token persistence verified on iOS PWA",
+        "Typecheck passes",
+        "Document OAuth setup"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-067.4",
+      "title": "Branded Email Templates",
+      "description": "Customize Supabase email templates with 2000nl branding (logo, colors, professional copy).",
+      "acceptanceCriteria": [
+        "Email templates customized in Supabase dashboard",
+        "2000nl logo included in emails",
+        "Brand colors applied (verify WCAG contrast)",
+        "Professional email copy (clear call-to-action)",
+        "Templates for: registration, password reset (if kept), magic link, OTP",
+        "Test email appearance in Gmail, Outlook, iOS Mail",
+        "Emails not marked as spam",
+        "Document template customization process"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-050.1",
+      "title": "Translation Abstraction Layer",
+      "description": "Create ITranslator interface and factory pattern to support multiple translation providers (DeepL, OpenAI, Gemini).",
+      "acceptanceCriteria": [
+        "ITranslator interface defined with translate(text, targetLang) method",
+        "Existing DeepL implementation wrapped in interface",
+        "TranslationProvider factory created",
+        "Config-based provider selection (env var or config file)",
+        "Config format: { provider: 'deepl' | 'openai' | 'gemini', apiKeys: {...}, fallback: 'deepl' }",
+        "Existing translation calls work with new abstraction",
+        "Typecheck passes",
+        "Unit tests for factory and interface"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-050.2",
+      "title": "OpenAI Translation Connector",
+      "description": "Implement OpenAI-based translator using GPT models. Support Dutch-to-English and English-to-Russian translations.",
+      "acceptanceCriteria": [
+        "OpenAI translator implements ITranslator interface",
+        "API key from environment variable",
+        "Uses appropriate GPT model (e.g., gpt-4o-mini for cost)",
+        "Prompt optimized for accurate, natural translations",
+        "Error handling and retries",
+        "Fallback to DeepL on API failure",
+        "Test translations match or exceed DeepL quality",
+        "Typecheck passes",
+        "Document API setup and usage"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-050.3",
+      "title": "Gemini Translation Connector",
+      "description": "Implement Gemini-based translator using Google's Gemini API. Support Dutch-to-English and English-to-Russian translations.",
+      "acceptanceCriteria": [
+        "Gemini translator implements ITranslator interface",
+        "API key from environment variable",
+        "Uses appropriate Gemini model (e.g., gemini-1.5-flash for speed)",
+        "Prompt optimized for accurate, natural translations",
+        "Error handling and retries",
+        "Fallback to DeepL on API failure",
+        "Test translations match or exceed DeepL quality",
+        "Typecheck passes",
+        "Document API setup and usage"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-071.1",
+      "title": "Left-Edge Swipe Navigation",
+      "description": "Capture left-edge swipe gesture to close Recent opgezocht list instead of triggering browser/OS back navigation.",
+      "acceptanceCriteria": [
+        "Detect touchstart near left edge (< 20-30px from left)",
+        "Track touchmove direction (swiping right from left edge)",
+        "preventDefault() on touch events to block OS gesture",
+        "Close Recent opgezocht when swipe detected",
+        "Visual feedback during swipe (slide animation)",
+        "Works in browser and PWA standalone mode",
+        "Tested on iOS Safari (browser and PWA)",
+        "Tested on Android Chrome (browser and PWA)",
+        "OS back gesture only triggers when no in-app back action available",
+        "Typecheck passes",
+        "Verify in Chrome DevTools MCP (device emulation)"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-055.1",
+      "title": "Audio Mode Definition Playback",
+      "description": "When audio mode enabled and user clicks a word in a definition, play the entire definition (TTS) instead of just the single word.",
+      "acceptanceCriteria": [
+        "Identify click handler in InteractiveText component",
+        "When audio mode ON + definition clicked: play full definition TTS",
+        "When audio mode ON + example clicked: play full example TTS",
+        "Word-level audio still accessible (consider alt interaction or toggle)",
+        "Tested on mobile and desktop",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-063.1",
+      "title": "Line Spacing Consistency",
+      "description": "Align line spacing for example sentences across different card sections (word examples vs definition examples). Currently inconsistent.",
+      "acceptanceCriteria": [
+        "Measure line-height values in word examples and definition examples",
+        "Standardize line-height to consistent value (match tighter spacing)",
+        "Check Tailwind leading-* classes applied",
+        "Verify consistency in W→D and D→W card types",
+        "Tested on mobile (375px) and desktop (1280px+)",
+        "Screenshots showing before/after comparison",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-073.1",
+      "title": "Hide Target Word in Definitions",
+      "description": "If target word appears in its own Dutch definition on D→W cards, replace with placeholder (...) to avoid giving away the answer.",
+      "acceptanceCriteria": [
+        "Detect if target word appears in definition text",
+        "Replace target word with placeholder: ... or ___",
+        "Handle different inflections (case-insensitive)",
+        "Don't break compound words (e.g., politieagent contains agent)",
+        "Replace all occurrences if multiple",
+        "Tested across multiple words/cards",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-085.1",
+      "title": "PWA Icon Design and Configuration",
+      "description": "Design high-quality PWA app icon (512x512px) and configure multiple sizes for iOS and Android. Include maskable icon variant.",
+      "acceptanceCriteria": [
+        "High-quality app icon designed (512x512px PNG)",
+        "Icon simple, recognizable, works at small sizes (48px+)",
+        "Brand colors used consistently",
+        "Icon sizes generated: 192px, 512px",
+        "Maskable icon created (512x512px with safe zone)",
+        "manifest.json updated with icon entries",
+        "Tested installation on iOS (Safari PWA)",
+        "Tested installation on Android (Chrome PWA)",
+        "Icon looks good in app drawer/home screen",
+        "Consider using PWA Asset Generator tool",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-085.2",
+      "title": "PWA Splash Screen Configuration",
+      "description": "Configure branded splash screen for PWA launch. Use brand colors and logo for professional appearance.",
+      "acceptanceCriteria": [
+        "Splash screen background color set in manifest.json",
+        "Theme color configured",
+        "iOS splash images configured (apple-touch-startup-image)",
+        "Splash screen shows logo/brand mark centered",
+        "Tested on iOS PWA launch",
+        "Tested on Android PWA launch",
+        "Fast loading, no flash of unstyled content",
+        "Consider using PWA Asset Generator for iOS splash variants",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

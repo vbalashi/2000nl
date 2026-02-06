@@ -1,13 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
 import { sendAgentLog } from "@/lib/agentLog";
 
 type AuthMode = "signin";
 type Language = "nl" | "en";
+
+const DEFAULT_OTP_LENGTH = 8;
+const OTP_LENGTH = (() => {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_OTP_LENGTH;
+  if (!raw) {
+    return DEFAULT_OTP_LENGTH;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_OTP_LENGTH;
+  }
+  return parsed;
+})();
+const OTP_PLACEHOLDER = Array.from({ length: OTP_LENGTH }, (_, i) =>
+  String((i + 1) % 10)
+).join("");
 
 const translations = {
   nl: {
@@ -16,10 +32,13 @@ const translations = {
     emailPlaceholder: "jouw@email.nl",
     submitButton: "Stuur Inlogcode",
     submitLoading: "Versturen...",
+    googleButton: "Doorgaan met Google",
+    googleError: "Kon Google-aanmelding niet starten. Probeer opnieuw.",
     successMessage: "Check je inbox! We hebben een inlogcode naar je verstuurd.",
     infoText: "Geen wachtwoord nodig! We sturen een beveiligde code naar je e-mail.",
+    orDivider: "of",
     otpLabel: "Voer je code in",
-    otpPlaceholder: "123456",
+    otpPlaceholder: OTP_PLACEHOLDER,
     verifyButton: "Verifieer Code",
     verifyLoading: "Verifiëren...",
     resendButton: "Code opnieuw versturen",
@@ -31,10 +50,13 @@ const translations = {
     emailPlaceholder: "your@email.com",
     submitButton: "Send Login Code",
     submitLoading: "Sending...",
+    googleButton: "Continue with Google",
+    googleError: "Unable to start Google sign-in. Please try again.",
     successMessage: "Check your inbox! We've sent you a login code.",
     infoText: "No password needed! We'll send a secure code to your email.",
+    orDivider: "or",
     otpLabel: "Enter your code",
-    otpPlaceholder: "123456",
+    otpPlaceholder: OTP_PLACEHOLDER,
     verifyButton: "Verify Code",
     verifyLoading: "Verifying...",
     resendButton: "Resend code",
@@ -163,6 +185,40 @@ export function AuthScreen() {
     setLoading(false);
   };
 
+  const handleGoogleSignIn = async () => {
+    setMessage(null);
+    setLoading(true);
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      setMessageType("error");
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data?.url) {
+      window.location.assign(data.url);
+      return;
+    }
+
+    setMessageType("error");
+    setMessage(t.googleError);
+    setLoading(false);
+  };
+
   const handleChangeEmail = () => {
     setOtpSent(false);
     setOtp("");
@@ -170,6 +226,10 @@ export function AuthScreen() {
   };
 
   const t = translations[lang];
+  const handleOtpChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = event.target.value.replace(/\D/g, "");
+    setOtp(digitsOnly.slice(0, OTP_LENGTH));
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8">
@@ -221,6 +281,19 @@ export function AuthScreen() {
             <div className="space-y-2 text-center text-sm text-slate-500 dark:text-slate-400">
               <p>{t.infoText}</p>
             </div>
+            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+              <span>{t.orDivider}</span>
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600"
+            >
+              {t.googleButton}
+            </button>
           </>
         ) : (
           <>
@@ -239,10 +312,11 @@ export function AuthScreen() {
                   type="text"
                   required
                   value={otp}
-                  onChange={(event) => setOtp(event.target.value)}
+                  onChange={handleOtpChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 text-center tracking-widest font-mono text-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   placeholder={t.otpPlaceholder}
-                  maxLength={6}
+                  maxLength={OTP_LENGTH}
+                  inputMode="numeric"
                   autoComplete="one-time-code"
                   autoFocus
                 />

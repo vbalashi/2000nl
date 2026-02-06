@@ -63,6 +63,26 @@ const POS_NAMES: Record<string, string> = {
   tw: "telwoord",
 };
 
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const maskTargetWordInDefinition = (
+  text: string,
+  headword: string,
+  placeholder = "..."
+) => {
+  const trimmedHeadword = headword.trim();
+  if (!text || !trimmedHeadword) return text;
+
+  const escaped = escapeRegExp(trimmedHeadword);
+  const pattern = new RegExp(
+    `(^|[^\\p{L}])(${escaped})(?:[’'’-]?[\\p{L}]{0,6})?(?!\\p{L})`,
+    "giu"
+  );
+
+  return text.replace(pattern, (_match, prefix) => `${prefix}${placeholder}`);
+};
+
 export function TrainingCard({
   word,
   mode,
@@ -340,11 +360,18 @@ export function TrainingCard({
 
   const allMeanings = getAllMeanings(word.raw);
   const primaryMeaning = allMeanings[0];
+  const isWordToDefinition = mode === "word-to-definition";
 
   // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
   // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
+  const definitionPromptText = (() => {
+    if (!primaryMeaning.definition) return primaryMeaning.definition;
+    if (isWordToDefinition || revealed) return primaryMeaning.definition;
+    return maskTargetWordInDefinition(primaryMeaning.definition, word.headword);
+  })();
+
   const definitionSegments = buildSegments(
-    primaryMeaning.definition,
+    definitionPromptText ?? "",
     primaryMeaning.links
   );
 
@@ -373,7 +400,6 @@ export function TrainingCard({
   const hidePrimaryIdiomExplanationOnReveal =
     isIdiomOnlyMeaning && hasPrimaryIdiomExplanationText;
 
-  const isWordToDefinition = mode === "word-to-definition";
   const hasHintExample =
     isWordToDefinition && (primaryMeaning.examples?.length ?? 0) > 0;
   const hintVisible = isWordToDefinition && (hintRevealed || revealed);
@@ -726,6 +752,7 @@ export function TrainingCard({
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
                           cursorStyle={wordCursorStyle}
+                          sentence={definitionPromptText ?? ""}
                         />
                         <InlineTranslation text={getTranslated(0, "definition")} />
                       </div>
@@ -925,6 +952,7 @@ export function TrainingCard({
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
+                                  sentence={meaning.definition}
                                 />
                                 <InlineTranslation
                                   align="left"
