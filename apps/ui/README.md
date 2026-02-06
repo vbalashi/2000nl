@@ -97,11 +97,12 @@ Configure OTP sign-in and disable password auth to match the UI:
 1. Supabase Dashboard → Authentication → Providers → Email
 2. Disable **Password** (turn off password-based auth)
 3. Enable **Email OTP** (one-time passcode)
-4. Set **OTP length** to `6` digits
+4. Set **OTP length** to `6` or `8` digits (match the UI)
 5. Save changes and test sign-in from the app
 
 Notes:
-- The UI enforces a 6-digit numeric OTP and will reject non-numeric input.
+- The UI accepts numeric OTPs up to the configured length; set `NEXT_PUBLIC_SUPABASE_OTP_LENGTH` to match the Supabase setting (6 or 8).
+- If `NEXT_PUBLIC_SUPABASE_OTP_LENGTH` is unset, the UI defaults to 8 digits to avoid truncating 8-digit codes.
 - OTP delivery time and expiration are controlled by Supabase; verify codes arrive within 30 seconds and expire appropriately.
 - OTP emails use the magic link template, so keep that template in sync with OTP copy and branding.
 

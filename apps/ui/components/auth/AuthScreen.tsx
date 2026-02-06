@@ -9,8 +9,21 @@ import { sendAgentLog } from "@/lib/agentLog";
 type AuthMode = "signin";
 type Language = "nl" | "en";
 
-const OTP_LENGTH = 6;
-const OTP_PLACEHOLDER = "123456";
+const DEFAULT_OTP_LENGTH = 8;
+const OTP_LENGTH = (() => {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_OTP_LENGTH;
+  if (!raw) {
+    return DEFAULT_OTP_LENGTH;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_OTP_LENGTH;
+  }
+  return parsed;
+})();
+const OTP_PLACEHOLDER = Array.from({ length: OTP_LENGTH }, (_, i) =>
+  String((i + 1) % 10)
+).join("");
 
 const translations = {
   nl: {

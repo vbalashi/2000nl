@@ -115,6 +115,20 @@ A Gemini-backed translator now implements the shared `ITranslator` interface and
 **Behavior:**
 A left-edge swipe gesture now closes the Recent opgezocht list instead of triggering the browser or OS back navigation. The app detects swipes that start near the left edge, prevents the native back gesture, and slides the panel away with visual feedback as the swipe progresses. This works in both browser and PWA standalone modes on mobile.
 
+### Audio Mode Definition Playback
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-055.1
+
+**Behavior:**
+When audio mode is enabled, tapping a definition now plays the full definition via TTS rather than a single word. Tapping an example sentence likewise plays the full example, keeping word-level audio available through the existing non-definition interaction.
+
+### Line Spacing Consistency (Examples)
+**Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
+**User Story:** US-063.1
+
+**Behavior:**
+Example sentence line spacing is now consistent across word examples and definition examples, using the tighter shared line-height. Tailwind `leading-*` classes were aligned so W→D and D→W card types render matching spacing for example text.
+
 ### PWA Install Support (Icon + Fullscreen)
 **Added:** 2026-01-23 (Sprint: PWA + Polish)
 **User Story:** US-032
