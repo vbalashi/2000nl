@@ -238,3 +238,55 @@ test("uses prefetched next card for instant transition on answer", async () => {
     )
   );
 });
+
+test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", async () => {
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+
+  // TrainingScreen currently calls fetchUserPreferences from 2 different effects:
+  // - onboarding init expects `prefs.preferences.*`
+  // - settings load expects flat fields (themePreference, translationLang, etc.)
+  // Return a shape that supports both.
+  fetchUserPreferences.mockReset();
+  fetchUserPreferences.mockImplementation(async () => ({
+    themePreference: "system",
+    modesEnabled: ["word-to-definition"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: "en",
+    trainingSidebarPinned: false,
+    preferences: {
+      onboardingCompleted: false,
+      onboardingLanguage: null,
+    },
+  }));
+
+  render(<TrainingScreen user={user} />);
+
+  await waitFor(() => expect(fetchNextTrainingWordByScenario).toHaveBeenCalled());
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Reveal answer (Space) so translation UI becomes available.
+  fireEvent.keyDown(window, { key: " " });
+
+  const translateBtn = await screen.findByRole("button", {
+    name: /translate \(t\)/i,
+  });
+
+  // Open via hotkey.
+  fireEvent.keyDown(window, { key: "t" });
+  await waitFor(() => expect(translateBtn).toHaveAttribute("aria-pressed", "true"));
+
+  // Should not dismiss.
+  fireEvent.keyDown(window, { key: "Escape" });
+  await waitFor(() => expect(translateBtn).toHaveAttribute("aria-pressed", "true"));
+
+  fireEvent.keyDown(window, { key: "Tab", ctrlKey: true });
+  await waitFor(() => expect(translateBtn).toHaveAttribute("aria-pressed", "true"));
+
+  // Only T toggles it off.
+  fireEvent.keyDown(window, { key: "t" });
+  await waitFor(() => expect(translateBtn).toHaveAttribute("aria-pressed", "false"));
+});

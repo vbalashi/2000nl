@@ -971,8 +971,6 @@ export function TrainingScreen({ user }: Props) {
 
   const handleAction = useCallback(
     async (result: ReviewResult) => {
-      // Any action (button or hotkey) should close the translation overlay.
-      setTranslationTooltipOpen(false);
       if (!user?.id || !currentWord) {
         return;
       }
@@ -1314,11 +1312,6 @@ export function TrainingScreen({ user }: Props) {
         return;
       }
 
-      if (normalized === "escape") {
-        setTranslationTooltipOpen(false);
-        return;
-      }
-
       // Arrow keys should not close translation overlay (they're used for scrolling)
       if (
         event.key === "ArrowUp" ||
@@ -1327,11 +1320,6 @@ export function TrainingScreen({ user }: Props) {
         event.key === "ArrowRight"
       ) {
         return;
-      }
-
-      // Any other hotkey closes translation overlay.
-      if (translationTooltipOpen) {
-        setTranslationTooltipOpen(false);
       }
 
       if (normalized === "s") {
@@ -1379,7 +1367,6 @@ export function TrainingScreen({ user }: Props) {
     revealed,
     toggleRecentPanel,
     toggleHint,
-    translationTooltipOpen,
   ]);
 
   const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {
