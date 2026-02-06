@@ -136,12 +136,26 @@ Example sentence line spacing is now consistent across word examples and definit
 **Behavior:**
 Translation overlay text is now larger and easier to scan, with a clear visual hierarchy: the main word translation is significantly more prominent than secondary translations (definitions/examples/alternatives). Line-height is adjusted proportionally so the bigger type stays readable without feeling cramped, across both mobile (375px) and desktop (1280px+) layouts.
 
+### Preload Next Card for Speed
+**Added:** 2026-02-06 (Sprint: UX Polish & Performance)
+**User Story:** US-075.1
+
+**Behavior:**
+While the user is viewing the current card, the app prefetches the next card's word and translation data in the background so advancing feels instant. When audio mode is enabled, upcoming audio is preloaded as well, without blocking current-card rendering or interaction. If prefetch fails (e.g. network error), the app falls back silently to on-demand loading, and any pending prefetch work is canceled on unmount or navigation.
+
 ### Swipe Gesture Visual Feedback (Training Cards)
 **Added:** 2026-02-06 (Sprint: UX Polish & Performance)
 **User Story:** US-068.1
 
 **Behavior:**
 While swiping a training card, the UI now provides real-time feedback by tinting the card in the swipe direction color and highlighting the corresponding action button (right = good/green, left = again/red). The feedback intensity scales with swipe distance so partial swipes show partial tint/highlight, keeping the gesture readable without committing an action.
+
+### Swipe Gestures for First-Encounter Choice
+**Added:** 2026-02-06 (Sprint: UX Polish & Performance)
+**User Story:** US-069.1
+
+**Behavior:**
+On the first-encounter card screen, users can now swipe right to trigger "Start learning" (`handleAction("fail")`) and swipe left to trigger "I already know" (`handleAction("hide")`). The swipe threshold matches training cards (roughly 30-40% of card width) and uses the same in-gesture visual feedback (button highlight + card tint). The existing tap/click buttons remain supported.
 
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
