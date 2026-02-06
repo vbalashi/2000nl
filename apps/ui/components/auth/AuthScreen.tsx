@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -8,6 +8,8 @@ import { sendAgentLog } from "@/lib/agentLog";
 
 type AuthMode = "signin";
 type Language = "nl" | "en";
+
+const PENDING_OTP_STORAGE_KEY = "auth:pendingOtpEmail";
 
 const DEFAULT_OTP_LENGTH = 8;
 const OTP_LENGTH = (() => {
@@ -43,6 +45,11 @@ const translations = {
     verifyLoading: "Verifiëren...",
     resendButton: "Code opnieuw versturen",
     changeEmail: "Ander e-mailadres gebruiken",
+    haveCodeToggle: "Heb je al een code?",
+    hideCodeToggle: "Code invoer verbergen",
+    otpHelp:
+      "Werkt de e-mail link niet (bijv. opent hij in de verkeerde browser)? Kopieer de code uit de e-mail en plak hem hier.",
+    loginSuccess: "Inloggen succesvol!",
   },
   en: {
     title: "Log in to start learning the 2000 most common Dutch words.",
@@ -61,6 +68,11 @@ const translations = {
     verifyLoading: "Verifying...",
     resendButton: "Resend code",
     changeEmail: "Use different email",
+    haveCodeToggle: "Already have a code?",
+    hideCodeToggle: "Hide code entry",
+    otpHelp:
+      "If the email link doesn't work (for example it opens in the wrong browser), copy the code from the email and paste it here.",
+    loginSuccess: "Signed in successfully!",
   },
 };
 
@@ -70,6 +82,7 @@ export function AuthScreen() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [showOtpEntry, setShowOtpEntry] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
@@ -110,6 +123,17 @@ export function AuthScreen() {
       timestamp: Date.now(),
     });
     // #endregion agent log
+
+    // Restore OTP flow state after refresh or when returning from mail app.
+    try {
+      const storedEmail = window.localStorage.getItem(PENDING_OTP_STORAGE_KEY);
+      if (storedEmail) {
+        setEmail(storedEmail);
+        setOtpSent(true);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const handleSendOtp = async (event: FormEvent<HTMLFormElement>) => {
@@ -133,6 +157,11 @@ export function AuthScreen() {
       setMessageType("success");
       setMessage(translations[lang].successMessage);
       setOtpSent(true);
+      try {
+        window.localStorage.setItem(PENDING_OTP_STORAGE_KEY, email);
+      } catch {
+        // ignore
+      }
     }
 
     setLoading(false);
@@ -146,7 +175,7 @@ export function AuthScreen() {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
-      type: 'email',
+      type: "email",
     });
 
     if (error) {
@@ -154,7 +183,12 @@ export function AuthScreen() {
       setMessage(error.message);
     } else {
       setMessageType("success");
-      setMessage("Inloggen succesvol!");
+      setMessage(translations[lang].loginSuccess);
+      try {
+        window.localStorage.removeItem(PENDING_OTP_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
       // Session is set, user will be redirected by the app
     }
 
@@ -188,6 +222,11 @@ export function AuthScreen() {
   const handleGoogleSignIn = async () => {
     setMessage(null);
     setLoading(true);
+    try {
+      window.localStorage.removeItem(PENDING_OTP_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -222,7 +261,13 @@ export function AuthScreen() {
   const handleChangeEmail = () => {
     setOtpSent(false);
     setOtp("");
+    setShowOtpEntry(false);
     setMessage(null);
+    try {
+      window.localStorage.removeItem(PENDING_OTP_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   };
 
   const t = translations[lang];
@@ -281,6 +326,45 @@ export function AuthScreen() {
             <div className="space-y-2 text-center text-sm text-slate-500 dark:text-slate-400">
               <p>{t.infoText}</p>
             </div>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowOtpEntry((prev) => !prev)}
+                className="text-xs font-semibold text-primary hover:underline dark:text-primary-light"
+              >
+                {showOtpEntry ? t.hideCodeToggle : t.haveCodeToggle}
+              </button>
+            </div>
+            {showOtpEntry ? (
+              <div className="space-y-3">
+                <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+                  {t.otpHelp}
+                </p>
+                <form className="space-y-4" onSubmit={handleVerifyOtp}>
+                  <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                    {t.otpLabel}
+                    <input
+                      type="text"
+                      required
+                      value={otp}
+                      onChange={handleOtpChange}
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 text-center tracking-widest font-mono text-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      placeholder={t.otpPlaceholder}
+                      maxLength={OTP_LENGTH}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={loading || !email}
+                    className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {loading ? t.verifyLoading : t.verifyButton}
+                  </button>
+                </form>
+              </div>
+            ) : null}
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
               <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
               <span>{t.orDivider}</span>
@@ -305,6 +389,9 @@ export function AuthScreen() {
                 {email}
               </p>
             </div>
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+              {t.otpHelp}
+            </p>
             <form className="space-y-4" onSubmit={handleVerifyOtp}>
               <label className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                 {t.otpLabel}
