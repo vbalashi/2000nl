@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type DevSessionResponse = {
@@ -9,12 +9,10 @@ type DevSessionResponse = {
   error?: string;
 };
 
+export const dynamic = "force-dynamic";
+
 export default function DevTestLoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = useMemo(() => searchParams.get("redirectTo") ?? "/", [
-    searchParams,
-  ]);
 
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
@@ -34,6 +32,11 @@ export default function DevTestLoginPage() {
 
       setStatus("loading");
       setMessage("Creating a dev session...");
+
+      const redirectTo =
+        (typeof window !== "undefined"
+          ? new URL(window.location.href).searchParams.get("redirectTo")
+          : null) ?? "/";
 
       const res = await fetch("/api/dev/test-session", { cache: "no-store" });
       const json = (await res.json()) as DevSessionResponse;
@@ -69,7 +72,7 @@ export default function DevTestLoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [redirectTo, router]);
+  }, [router]);
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-xl flex-col justify-center gap-4 px-6">
@@ -93,4 +96,3 @@ export default function DevTestLoginPage() {
     </main>
   );
 }
-

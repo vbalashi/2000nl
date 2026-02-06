@@ -672,7 +672,18 @@ export const fetchLastReviewDebug = async (params: {
   });
 
   if (error) {
-    console.warn("Could not fetch last review debug:", error.message);
+    // In most environments this function is intentionally not exposed publicly
+    // (it may live in `private` schema or not exist at all). Avoid polluting
+    // automation runs with noisy warnings for an optional debug feature.
+    const msg = error.message ?? "";
+    const code = (error as any)?.code as string | undefined;
+    const isMissingFn =
+      code === "PGRST202" ||
+      msg.includes("Could not find the function") ||
+      msg.includes("schema cache");
+    if (!isMissingFn) {
+      console.warn("Could not fetch last review debug:", msg);
+    }
     return null;
   }
 

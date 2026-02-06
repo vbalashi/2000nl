@@ -75,6 +75,7 @@ Notes:
 - The UI login flow is OTP-only, but automated tests can bypass the UI by installing a Supabase session in `localStorage`.
 - For local development / browser automation that needs a *real* Supabase session without typing an OTP, use the dev-only helper page:
   - `http://localhost:3000/dev/test-login` (requires `SUPABASE_SERVICE_ROLE_KEY` and `TEST_USER_EMAIL` on the server)
+- For `agent-browser` examples (desktop + mobile) and how to persist sessions across runs, see `apps/ui/docs/automation-agent-browser.md`.
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
 
 - FSRS parity + RPC tests (need a Postgres URL; runs DB migrations, so point at a disposable/non-prod DB):
