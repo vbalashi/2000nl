@@ -8,8 +8,6 @@
 --
 -- Idempotent: only updates/inserts when headword is missing/blank.
 
-\set ON_ERROR_STOP on
-
 INSERT INTO word_entry_translations (
     word_entry_id,
     target_lang,
