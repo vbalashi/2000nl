@@ -12,7 +12,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test-account": "node scripts/test-account.js"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",

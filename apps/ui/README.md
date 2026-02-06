@@ -54,6 +54,27 @@ Notes:
   ```
   npm run test:e2e
   ```
+
+### Test Account (Automation)
+
+For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps to have a dedicated test user.
+
+1. Put credentials in `.env.local` (gitignored) or your CI secrets:
+   - `TEST_USER_EMAIL`
+   - `TEST_USER_PASSWORD`
+2. (Optional, recommended) Provision the user + seed predictable data via Supabase Admin API:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=... \
+   SUPABASE_SERVICE_ROLE_KEY=... \
+   TEST_USER_EMAIL=test@2000nl.test \
+   TEST_USER_PASSWORD=test-password-123 \
+   node scripts/test-account.js create+seed
+   ```
+
+Notes:
+- The UI login flow is OTP-only, but automated tests can bypass the UI by installing a Supabase session in `localStorage`.
+- `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
+
 - FSRS parity + RPC tests (need a Postgres URL; runs DB migrations, so point at a disposable/non-prod DB):
   ```
   # preferred: Supabase psql URL in env, e.g. in db/.env.local or apps/ui/.env.local

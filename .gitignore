@@ -10,6 +10,7 @@ ralph/
 .env.production.local
 coverage
 playwright-report
+test-results
 __pycache__/
 .pytest_cache/
 .venv/
