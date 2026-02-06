@@ -57,25 +57,35 @@ export async function GET(): Promise<NextResponse> {
 
   if (linkRes.error || !linkRes.data?.properties?.email_otp) {
     return NextResponse.json(
-      { error: linkRes.error?.message ?? "Failed to generate OTP." },
+      {
+        step: "generateLink",
+        error: linkRes.error?.message ?? "Failed to generate OTP.",
+        status: (linkRes.error as any)?.status ?? null,
+      },
       { status: 500 }
     );
   }
 
-  // 2) Exchange the OTP for a real Supabase session (valid JWT).
+  // 2) Exchange the generated link token for a real Supabase session (valid JWT).
   const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false },
   });
 
+  // The UI uses OTP verification with `type: "email"`.
+  // Admin generateLink returns a raw `email_otp` which we can exchange for a session.
   const verifyRes = await publicClient.auth.verifyOtp({
     email: testUserEmail,
     token: linkRes.data.properties.email_otp,
-    type: "magiclink",
+    type: "email",
   });
 
   if (verifyRes.error || !verifyRes.data?.session) {
     return NextResponse.json(
-      { error: verifyRes.error?.message ?? "Failed to verify OTP." },
+      {
+        step: "verifyOtp",
+        error: verifyRes.error?.message ?? "Failed to verify OTP.",
+        status: (verifyRes.error as any)?.status ?? null,
+      },
       { status: 500 }
     );
   }
@@ -87,4 +97,3 @@ export async function GET(): Promise<NextResponse> {
   res.headers.set("cache-control", "no-store, max-age=0");
   return res;
 }
-
