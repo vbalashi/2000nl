@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import crypto from "crypto";
-import fsSync from "fs";
 import fs from "fs/promises";
 import path from "path";
+import { resolveUiPublicDir } from "@/lib/resolveUiPublicDir";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-export function resolveUiPublicDir(cwd: string): string {
-  // `process.cwd()` depends on how the dev server is launched (repo root vs `apps/ui`).
-  // We want a path that is actually served at `/` by Next.js: the app's `public/` dir.
-  const direct = path.join(cwd, "public");
-  if (fsSync.existsSync(direct)) return direct;
-
-  const monorepo = path.join(cwd, "apps", "ui", "public");
-  if (fsSync.existsSync(monorepo)) return monorepo;
-
-  // Fall back to the most likely shape; callers will fail loudly if it's wrong.
-  return direct;
-}
 
 // Cache directory for TTS audio files (must live under `public/` to be served as `/audio/tts/...`).
 const CACHE_DIR =

@@ -45,12 +45,12 @@ afterEach(async () => {
 });
 
 test("resolves UI public dir when cwd is apps/ui", async () => {
-  const { resolveUiPublicDir } = await import("../app/api/tts/route");
+  const { resolveUiPublicDir } = await import("../lib/resolveUiPublicDir");
   expect(resolveUiPublicDir(uiDir)).toBe(path.join(uiDir, "public"));
 });
 
 test("resolves UI public dir when cwd is repo root", async () => {
-  const { resolveUiPublicDir } = await import("../app/api/tts/route");
+  const { resolveUiPublicDir } = await import("../lib/resolveUiPublicDir");
   expect(resolveUiPublicDir(repoRoot)).toBe(path.join(repoRoot, "apps", "ui", "public"));
 });
 
