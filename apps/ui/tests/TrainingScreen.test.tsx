@@ -193,3 +193,48 @@ test("first encounter: swipe left triggers I already know (hide)", async () => {
     }
   }
 });
+
+test("uses prefetched next card for instant transition on answer", async () => {
+  const word1 = {
+    ...mockWord,
+    id: "word-1",
+    headword: "huis",
+  };
+  const word2 = {
+    ...mockWord,
+    id: "word-2",
+    headword: "boom",
+  };
+
+  // First call = initial card. Subsequent calls = prefetch (and any retries).
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValueOnce(word1).mockResolvedValue(word2);
+
+  recordReview.mockReset();
+  // Keep the review in-flight to prove the UI switches without waiting for it.
+  recordReview.mockImplementation(() => new Promise(() => {}));
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Wait for the background prefetch to at least start and resolve.
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(2)
+  );
+
+  // Reveal answer then grade.
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+
+  fireEvent.keyDown(window, { key: "k" });
+
+  // The UI should advance to the prefetched next card without waiting for recordReview.
+  await screen.findByRole("heading", { name: "boom" });
+
+  await waitFor(() =>
+    expect(recordReview).toHaveBeenCalledWith(
+      expect.objectContaining({ result: "success" })
+    )
+  );
+});

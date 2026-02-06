@@ -125,6 +125,26 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
   }));
 }
 
+function predictNextQueueTurn(params: {
+  cardFilter: CardFilter;
+  queueTurn: QueueTurn;
+  reviewCounter: number;
+  newReviewRatio: number;
+}): QueueTurn {
+  // Round-robin is only used when card filter is 'both'.
+  if (params.cardFilter !== "both") return "auto";
+
+  if (params.queueTurn === "new") {
+    // After a new card, switch to review queue.
+    return "review";
+  }
+
+  // After a review card, count up and potentially switch to new.
+  const nextCount = params.reviewCounter + 1;
+  if (nextCount >= params.newReviewRatio) return "new";
+  return "review";
+}
+
 export function TrainingScreen({ user }: Props) {
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -368,6 +388,14 @@ export function TrainingScreen({ user }: Props) {
   // Ref: when set, force this word as the *next* card once.
   const forcedNextWordIdRef = useRef<string | null>(null);
 
+  // Next-card prefetch state (kept in refs so it never blocks rendering).
+  const nextWordPrefetchTokenRef = useRef(0);
+  const nextWordPrefetchRef = useRef<{
+    forWordId: string;
+    queueTurn: QueueTurn;
+    word: TrainingWord | null;
+  } | null>(null);
+
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
@@ -577,21 +605,24 @@ export function TrainingScreen({ user }: Props) {
     // Only use round-robin when card filter is 'both'
     if (cardFilter !== "both") {
       setQueueTurn("auto");
-      return;
+      return "auto" as const;
     }
 
     if (queueTurn === "new") {
       // After a new card, switch to review queue
       setQueueTurn("review");
       setReviewCounter(0);
+      return "review" as const;
     } else {
       // After a review card, count up and potentially switch to new
       const nextCount = reviewCounter + 1;
       if (nextCount >= newReviewRatio) {
         setQueueTurn("new");
         setReviewCounter(0);
+        return "new" as const;
       } else {
         setReviewCounter(nextCount);
+        return "review" as const;
       }
     }
   }, [cardFilter, queueTurn, reviewCounter, newReviewRatio]);
@@ -812,6 +843,119 @@ export function TrainingScreen({ user }: Props) {
     ]
   );
 
+  const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
+    if (!raw) return undefined;
+    // Dutch (nl) pronunciation only for MVP - no fallback to Belgian (be)
+    const link = raw.audio_links?.nl;
+    if (!link) return undefined;
+
+    if (/^https?:\/\//i.test(link)) return link;
+
+    const baseUrl = process.env.NEXT_PUBLIC_AUDIO_BASE_URL?.replace(/\/$/, "");
+    if (!baseUrl) return link;
+
+    return link.startsWith("/") ? `${baseUrl}${link}` : `${baseUrl}/${link}`;
+  }, []);
+
+  const preloadAudioForWord = useCallback(
+    (word: TrainingWord) => {
+      if (typeof window === "undefined") return;
+      if (typeof Audio === "undefined") return;
+      const url = resolveAudioUrl(word.raw);
+      if (!url) return;
+
+      try {
+        const audio = new Audio(url);
+        audio.preload = "auto";
+        audio.load();
+      } catch {
+        // Ignore preload errors (e.g. tests, restricted environments).
+      }
+    },
+    [resolveAudioUrl]
+  );
+
+  // Background prefetch of the next card while the user is viewing the current card.
+  // This is best-effort: any failures fall back to on-demand fetch in handleAction/loadNextWord.
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!currentWord?.id) return;
+
+    const forWordId = currentWord.id;
+    const predictedQueueTurn = predictNextQueueTurn({
+      cardFilter,
+      queueTurn,
+      reviewCounter,
+      newReviewRatio,
+    });
+
+    // Invalidate any prior prefetch work.
+    const token = (nextWordPrefetchTokenRef.current += 1);
+    nextWordPrefetchRef.current = {
+      forWordId,
+      queueTurn: predictedQueueTurn,
+      word: null,
+    };
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const next = await fetchNextTrainingWordByScenario(
+          user.id,
+          activeScenario,
+          [forWordId],
+          {
+            listId: wordListId ?? undefined,
+            listType: wordListType ?? undefined,
+          },
+          cardFilter,
+          predictedQueueTurn
+        );
+
+        if (cancelled) return;
+        if (nextWordPrefetchTokenRef.current !== token) return;
+
+        nextWordPrefetchRef.current = {
+          forWordId,
+          queueTurn: predictedQueueTurn,
+          word: next,
+        };
+
+        if (audioModeEnabled && next) {
+          preloadAudioForWord(next);
+        }
+      } catch {
+        // Silent fallback: prefetch isn't critical, loadNextWord will still work.
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      // Cancel pending prefetch on unmount/navigation by invalidating the token.
+      if (nextWordPrefetchTokenRef.current === token) {
+        nextWordPrefetchTokenRef.current += 1;
+      }
+      if (nextWordPrefetchRef.current?.forWordId === forWordId) {
+        nextWordPrefetchRef.current = null;
+      }
+    };
+  }, [
+    activeScenario,
+    audioModeEnabled,
+    cardFilter,
+    currentWord?.id,
+    newReviewRatio,
+    preloadAudioForWord,
+    queueTurn,
+    reviewCounter,
+    user?.id,
+    wordListId,
+    wordListType,
+  ]);
+
   const handleTrainWord = useCallback(
     (wordId: string) => {
       forcedNextWordIdRef.current = wordId;
@@ -835,6 +979,38 @@ export function TrainingScreen({ user }: Props) {
 
       // Use the mode from the current word (which was set when the word was fetched)
       const wordMode = currentWord.mode ?? enabledModes[0];
+
+      // Compute the next queue turn up front (and persist it) so our on-demand fetch
+      // doesn't read stale `queueTurn` inside this async callback.
+      const nextQueueTurn = advanceQueueTurn();
+
+      // If the prefetch for the current word is ready, switch immediately to the
+      // next card for "instant" transitions. Review recording continues below.
+      const prefetched = (() => {
+        const p = nextWordPrefetchRef.current;
+        if (!p) return null;
+        if (p.forWordId !== currentWord.id) return null;
+        if (!p.word) return null;
+        nextWordPrefetchRef.current = null;
+        return p.word;
+      })();
+
+      if (prefetched) {
+        setLoadingWord(false);
+        setRevealed(false);
+        setHintRevealed(false);
+        setCurrentWord(prefetched);
+        const nextMode = prefetched.mode ?? enabledModes[0] ?? "word-to-definition";
+        void recordWordView({
+          userId: user.id,
+          wordId: prefetched.id,
+          mode: nextMode,
+        });
+
+        if (audioModeEnabled) {
+          preloadAudioForWord(prefetched);
+        }
+      }
 
       // Capture BEFORE values from current word's debugStats
       const beforeInterval = currentWord.debugStats?.interval;
@@ -1006,19 +1182,22 @@ export function TrainingScreen({ user }: Props) {
         });
       }
 
-      // Advance the queue turn for round-robin
-      advanceQueueTurn();
-
       await loadStats(undefined, `AFTER ${currentWord.headword} (${result})`);
-      await loadNextWord([currentWord.id]);
+
+      // If we didn't have a prefetched card ready, fall back to on-demand fetch.
+      if (!prefetched) {
+        await loadNextWord([currentWord.id], undefined, nextQueueTurn);
+      }
       setActionLoading(false);
     },
     [
       advanceQueueTurn,
+      audioModeEnabled,
       currentWord,
       enabledModes,
       loadNextWord,
       loadStats,
+      preloadAudioForWord,
       stats,
       user?.id,
     ]
@@ -1202,20 +1381,6 @@ export function TrainingScreen({ user }: Props) {
     toggleHint,
     translationTooltipOpen,
   ]);
-
-  const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
-    if (!raw) return undefined;
-    // Dutch (nl) pronunciation only for MVP - no fallback to Belgian (be)
-    const link = raw.audio_links?.nl;
-    if (!link) return undefined;
-
-    if (/^https?:\/\//i.test(link)) return link;
-
-    const baseUrl = process.env.NEXT_PUBLIC_AUDIO_BASE_URL?.replace(/\/$/, "");
-    if (!baseUrl) return link;
-
-    return link.startsWith("/") ? `${baseUrl}${link}` : `${baseUrl}/${link}`;
-  }, []);
 
   const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {
     if (!audioUrl) {
