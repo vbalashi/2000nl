@@ -136,6 +136,13 @@ Example sentence line spacing is now consistent across word examples and definit
 **Behavior:**
 Translation overlay text is now larger and easier to scan, with a clear visual hierarchy: the main word translation is significantly more prominent than secondary translations (definitions/examples/alternatives). Line-height is adjusted proportionally so the bigger type stays readable without feeling cramped, across both mobile (375px) and desktop (1280px+) layouts.
 
+### Translation Overlay Not Dismissed by Unrelated Keypresses
+**Added:** 2026-02-06 (Sprint: Bug Fix Blitz)
+**User Story:** US-087.1
+
+**Behavior:**
+When the translation overlay is open, pressing unrelated keys (including `Escape`, `Ctrl+Tab`, and other non-translation shortcuts) no longer dismisses it. Only the `T` hotkey and the on-screen translation button toggle the overlay, and arrow-key scrolling behavior remains unchanged.
+
 ### Preload Next Card for Speed
 **Added:** 2026-02-06 (Sprint: UX Polish & Performance)
 **User Story:** US-075.1
