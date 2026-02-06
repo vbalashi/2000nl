@@ -95,3 +95,101 @@ test("hotkey triggers recordReview like button click", async () => {
     )
   );
 });
+
+test("first encounter: swipe right triggers Start learning (fail)", async () => {
+  const original = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "offsetWidth"
+  );
+  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get() {
+      return 1000;
+    },
+  });
+
+  try {
+    fetchNextTrainingWordByScenario.mockResolvedValueOnce({
+      ...mockWord,
+      isFirstEncounter: true,
+    });
+
+    render(<TrainingScreen user={user} />);
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled()
+    );
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.keyDown(window, { key: " " });
+    await screen.findByRole("button", { name: /begin met leren/i });
+
+    recordReview.mockClear();
+    const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+    fireEvent.touchStart(wrapper, {
+      touches: [{ clientX: 0, clientY: 0 }],
+    });
+    fireEvent.touchMove(wrapper, {
+      touches: [{ clientX: 500, clientY: 0 }],
+    });
+    fireEvent.touchEnd(wrapper);
+
+    await waitFor(() =>
+      expect(recordReview).toHaveBeenCalledWith(
+        expect.objectContaining({ result: "fail" })
+      )
+    );
+  } finally {
+    if (original) {
+      Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+    }
+  }
+});
+
+test("first encounter: swipe left triggers I already know (hide)", async () => {
+  const original = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "offsetWidth"
+  );
+  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get() {
+      return 1000;
+    },
+  });
+
+  try {
+    fetchNextTrainingWordByScenario.mockResolvedValueOnce({
+      ...mockWord,
+      isFirstEncounter: true,
+    });
+
+    render(<TrainingScreen user={user} />);
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled()
+    );
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.keyDown(window, { key: " " });
+    await screen.findByRole("button", { name: /ik ken dit al/i });
+
+    recordReview.mockClear();
+    const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+    fireEvent.touchStart(wrapper, {
+      touches: [{ clientX: 600, clientY: 0 }],
+    });
+    fireEvent.touchMove(wrapper, {
+      touches: [{ clientX: 100, clientY: 0 }],
+    });
+    fireEvent.touchEnd(wrapper);
+
+    await waitFor(() =>
+      expect(recordReview).toHaveBeenCalledWith(
+        expect.objectContaining({ result: "hide" })
+      )
+    );
+  } finally {
+    if (original) {
+      Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+    }
+  }
+});

@@ -126,7 +126,7 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 }
 
 export function TrainingScreen({ user }: Props) {
-  const { wordId, devMode } = useCardParams();
+  const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
@@ -759,6 +759,9 @@ export function TrainingScreen({ user }: Props) {
             void recordWordView({ userId: user.id, wordId: forced.id, mode });
             setCurrentWord({
               ...forced,
+              ...(typeof firstEncounter === "boolean"
+                ? { isFirstEncounter: firstEncounter }
+                : {}),
               mode,
               debugStats: { source: "forced", mode },
             });
@@ -801,6 +804,7 @@ export function TrainingScreen({ user }: Props) {
       activeScenario,
       enabledModes,
       cardFilter,
+      firstEncounter,
       queueTurn,
       user?.id,
       wordListId,
@@ -1538,7 +1542,6 @@ export function TrainingScreen({ user }: Props) {
 
   const canSwipe =
     revealed &&
-    !showFirstTimeButtons &&
     !actionLoading &&
     !loadingWord &&
     Boolean(currentWord);
@@ -1603,7 +1606,13 @@ export function TrainingScreen({ user }: Props) {
       canSwipe
     ) {
       const direction = swipeOffset >= 0 ? "right" : "left";
-      const result: ReviewResult = direction === "right" ? "success" : "fail";
+      const result: ReviewResult = showFirstTimeButtons
+        ? direction === "right"
+          ? "fail"
+          : "hide"
+        : direction === "right"
+        ? "success"
+        : "fail";
 
       setSwipeAnimating(true);
       setSwipeOffset((direction === "right" ? 1 : -1) * cardWidth * 1.1);
@@ -1622,7 +1631,7 @@ export function TrainingScreen({ user }: Props) {
     setSwipeActive(false);
     swipeTrackingRef.current = false;
     swipeStartRef.current = null;
-  }, [canSwipe, handleAction, swipeOffset]);
+  }, [canSwipe, handleAction, showFirstTimeButtons, swipeOffset]);
 
   useEffect(() => {
     resetSwipe();
@@ -1780,11 +1789,38 @@ export function TrainingScreen({ user }: Props) {
     );
   };
 
+  const swipeUi = showFirstTimeButtons
+    ? {
+        left: {
+          label: "Ik ken dit al",
+          indicatorClass:
+            "border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-200",
+          tintColor: "rgb(100 116 139)", // slate-500
+        },
+        right: {
+          label: "Begin met leren",
+          indicatorClass: swipeIndicatorStyles.right,
+          tintColor: "rgb(16 185 129)", // emerald-500
+        },
+      }
+    : {
+        left: {
+          label: ACTION_LABELS.fail.label,
+          indicatorClass: swipeIndicatorStyles.left,
+          tintColor: "rgb(239 68 68)", // red-500
+        },
+        right: {
+          label: ACTION_LABELS.success.label,
+          indicatorClass: swipeIndicatorStyles.right,
+          tintColor: "rgb(16 185 129)", // emerald-500
+        },
+      };
+
   const swipeIndicator =
     swipeDirection === "left"
-      ? { label: ACTION_LABELS.fail.label, direction: "left" as const }
+      ? { direction: "left" as const, ...swipeUi.left }
       : swipeDirection === "right"
-      ? { label: ACTION_LABELS.success.label, direction: "right" as const }
+      ? { direction: "right" as const, ...swipeUi.right }
       : null;
   const swipeThreshold = (cardSwipeRef.current?.offsetWidth ?? 0) * 0.35;
   const swipeProgress =
@@ -1794,12 +1830,7 @@ export function TrainingScreen({ user }: Props) {
   const swipeFeedbackIntensity =
     swipeIndicator && (swipeActive || swipeAnimating) ? swipeProgress : 0;
   const swipeIndicatorOpacity = swipeFeedbackIntensity;
-  const swipeTintColor =
-    swipeDirection === "left"
-      ? "rgb(239 68 68)" // red-500
-      : swipeDirection === "right"
-      ? "rgb(16 185 129)" // emerald-500
-      : null;
+  const swipeTintColor = swipeIndicator?.tintColor ?? null;
   const swipeTintOpacity = swipeFeedbackIntensity * 0.14;
   const swipeCardStyle: React.CSSProperties = {
     transform: `translateX(${swipeOffset}px) rotate(${swipeOffset / 40}deg)`,
@@ -2035,6 +2066,7 @@ export function TrainingScreen({ user }: Props) {
                 <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8">
                   <div
                     ref={cardSwipeRef}
+                    data-testid="training-card-swipe-wrapper"
                     className="relative h-full"
                     style={swipeCardStyle}
                     onTouchStart={handleCardTouchStart}
@@ -2054,7 +2086,7 @@ export function TrainingScreen({ user }: Props) {
                     {swipeIndicator && (
                       <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
                         <div
-                          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicatorStyles[swipeIndicator.direction]}`}
+                          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicator.indicatorClass}`}
                           style={{ opacity: swipeIndicatorOpacity }}
                         >
                           {swipeIndicator.label}
@@ -2098,6 +2130,8 @@ export function TrainingScreen({ user }: Props) {
                           onStartLearning={handleFirstTimeStart}
                           onAlreadyKnow={handleFirstTimeAlreadyKnow}
                           disabled={actionLoading}
+                          swipeDirection={swipeDirection}
+                          swipeIntensity={swipeFeedbackIntensity}
                         />
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">

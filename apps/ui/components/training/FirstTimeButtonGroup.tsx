@@ -6,6 +6,8 @@ type Props = {
   onStartLearning: () => void;
   onAlreadyKnow: () => void;
   disabled?: boolean;
+  swipeDirection?: "left" | "right" | null;
+  swipeIntensity?: number; // 0..1 (distance-scaled)
 };
 
 const buttonBase =
@@ -21,13 +23,29 @@ export function FirstTimeButtonGroup({
   onStartLearning,
   onAlreadyKnow,
   disabled,
+  swipeDirection,
+  swipeIntensity = 0,
 }: Props) {
+  const intensity = Math.max(0, Math.min(1, swipeIntensity));
+  const startLearningHighlight =
+    swipeDirection === "right" ? intensity : 0;
+  const alreadyKnowHighlight =
+    swipeDirection === "left" ? intensity : 0;
+
   return (
     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 w-full">
       <button
         type="button"
         disabled={disabled}
         onClick={onStartLearning}
+        style={
+          startLearningHighlight > 0
+            ? {
+                outline: `2px solid rgba(16, 185, 129, ${0.65 * startLearningHighlight})`, // emerald-500
+                outlineOffset: 2,
+              }
+            : undefined
+        }
         className={`${buttonBase} ${startLearningStyle}`}
       >
         Begin met leren
@@ -36,6 +54,14 @@ export function FirstTimeButtonGroup({
         type="button"
         disabled={disabled}
         onClick={onAlreadyKnow}
+        style={
+          alreadyKnowHighlight > 0
+            ? {
+                outline: `2px solid rgba(100, 116, 139, ${0.65 * alreadyKnowHighlight})`, // slate-500
+                outlineOffset: 2,
+              }
+            : undefined
+        }
         className={`${buttonBase} ${alreadyKnowStyle}`}
       >
         Ik ken dit al

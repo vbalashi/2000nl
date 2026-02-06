@@ -15,6 +15,18 @@ describe("parseCardParams", () => {
     });
   });
 
+  it("parses firstEncounter flag", () => {
+    expect(parseCardParams(makeParams("firstEncounter")).firstEncounter).toBe(
+      true
+    );
+    expect(
+      parseCardParams(makeParams("firstEncounter=true")).firstEncounter
+    ).toBe(true);
+    expect(
+      parseCardParams(makeParams("firstEncounter=0")).firstEncounter
+    ).toBe(false);
+  });
+
   it("trims wordId and ignores empty values", () => {
     const withWhitespace = parseCardParams(makeParams("wordId=%20fiets%20"));
     expect(withWhitespace.wordId).toBe("fiets");

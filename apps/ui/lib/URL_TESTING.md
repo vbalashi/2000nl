@@ -79,7 +79,7 @@ The URL word loading is wired through `forcedNextWordIdRef` in `TrainingScreen.t
 URL parameters are especially useful for testing first-time card behavior:
 
 ```
-http://localhost:3000/?wordId=nieuwe-woord&devMode=true
+http://localhost:3000/?wordId=nieuwe-woord&devMode=true&firstEncounter=true
 ```
 
 This loads a specific word, allowing you to:
@@ -87,6 +87,8 @@ This loads a specific word, allowing you to:
 - Test "Start learning" and "I know it already" buttons
 - Check W→D direction forcing
 - Take screenshots for documentation
+
+Note: `firstEncounter=true` only takes effect when `devMode=true` is enabled.
 
 ---
 

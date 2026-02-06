@@ -8,6 +8,7 @@ export type CardParams = {
   wordId?: string;
   layout?: TrainingMode;
   devMode: boolean;
+  firstEncounter?: boolean;
 };
 
 const truthyFlags = new Set(["1", "true", "yes", "on"]);
@@ -48,16 +49,26 @@ const parseDevMode = (value: string | null): boolean => {
   return truthyFlags.has(normalized);
 };
 
+const parseOptionalFlag = (value: string | null): boolean | undefined => {
+  if (value === null) {
+    return undefined;
+  }
+
+  return parseDevMode(value);
+};
+
 const envDevMode = parseDevMode(process.env.NEXT_PUBLIC_DEV_MODE ?? null);
 
 export const parseCardParams = (params: URLSearchParams): CardParams => {
   const rawWordId = params.get("wordId");
   const wordId = rawWordId?.trim() || undefined;
+  const firstEncounter = parseOptionalFlag(params.get("firstEncounter"));
 
   return {
     wordId,
     layout: parseLayout(params.get("layout")),
-    devMode: parseDevMode(params.get("devMode"))
+    devMode: parseDevMode(params.get("devMode")),
+    ...(firstEncounter === undefined ? {} : { firstEncounter }),
   };
 };
 
