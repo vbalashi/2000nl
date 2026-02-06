@@ -146,3 +146,174 @@ test("hides perfect participle in auxiliary metadata (D->W prompt)", () => {
   expect(document.body).toHaveTextContent("( is ... ) weggelopen");
   expect(document.body).not.toHaveTextContent("vertrokken");
 });
+
+test("D->W prompt uses fixed-width badge gutter so badge doesn't crowd prompt text", () => {
+  const onWordClick = vi.fn();
+  const wordWithMultipleMeanings = {
+    id: "4",
+    headword: "toe",
+    part_of_speech: "bw",
+    meanings_count: 2,
+    raw: {
+      meanings: [
+        {
+          definition: "tot",
+          examples: ["Ik ga toe naar huis."],
+          links: []
+        },
+        {
+          definition: "erbij",
+          examples: [],
+          links: []
+        }
+      ]
+    }
+  };
+
+  render(
+    <TrainingCard
+      word={wordWithMultipleMeanings as any}
+      mode="definition-to-word"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  // Badge "1" exists in the prompt in D->W mode. Its wrapper should have a fixed width.
+  const badge = screen.getByText("1");
+  const badgeColumn = badge.closest("div.w-12");
+  expect(badgeColumn).toBeTruthy();
+  expect(badgeColumn).toHaveClass("w-12");
+});
+
+test("W->D headword layout allows wrapping without misaligning gender/article", () => {
+  const onWordClick = vi.fn();
+  const articleWord = {
+    id: "5",
+    headword: "rekening",
+    part_of_speech: "zn",
+    gender: "de",
+    raw: {
+      meanings: [
+        {
+          definition: "factuur",
+          examples: [],
+          links: [],
+        },
+      ],
+    },
+  };
+
+  render(
+    <TrainingCard
+      word={articleWord as any}
+      mode="word-to-definition"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  const heading = screen.getByRole("heading", { name: "rekening" });
+  expect(heading).toHaveClass("min-w-0");
+  expect(within(heading).getByRole("button", { name: "rekening" })).toHaveClass(
+    "min-w-0"
+  );
+
+  const headerRow = heading.closest("div.inline-flex");
+  expect(headerRow).toBeTruthy();
+  expect(within(headerRow as HTMLElement).getByText("de")).toHaveClass(
+    "flex-shrink-0"
+  );
+});
+
+test("D->W revealed examples include left padding so text doesn't hug the edge", () => {
+  const onWordClick = vi.fn();
+  const toeWord = {
+    id: "6",
+    headword: "toe",
+    part_of_speech: "bw",
+    meanings_count: 2,
+    raw: {
+      meanings: [
+        {
+          definition: "tot",
+          examples: ["Ik ga toe naar huis."],
+          links: [],
+        },
+        {
+          definition: "erbij",
+          examples: [],
+          links: [],
+        },
+      ],
+    },
+  };
+
+  render(
+    <TrainingCard
+      word={toeWord as any}
+      mode="definition-to-word"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  const examplesSection = screen.getByText((_content, node) => {
+    if (!(node instanceof HTMLElement)) return false;
+    if (!node.className.includes("px-2")) return false;
+    return node.textContent?.includes("Ik ga toe naar huis.") ?? false;
+  });
+  expect(examplesSection).toHaveClass("px-2");
+});
+
+test("W->D hint examples include left padding so text doesn't hug the edge", () => {
+  const onWordClick = vi.fn();
+  const wordWithExample = {
+    id: "7",
+    headword: "toe",
+    part_of_speech: "bw",
+    meanings_count: 2,
+    raw: {
+      meanings: [
+        {
+          definition: "tot",
+          examples: ["Ik ga toe naar huis."],
+          links: [],
+        },
+        {
+          definition: "erbij",
+          examples: [],
+          links: [],
+        },
+      ],
+    },
+  };
+
+  render(
+    <TrainingCard
+      word={wordWithExample as any}
+      mode="word-to-definition"
+      revealed={false}
+      hintRevealed
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  const hintSection = screen.getByText((_content, node) => {
+    if (!(node instanceof HTMLElement)) return false;
+    if (!node.className.includes("px-2")) return false;
+    return node.textContent?.includes("Ik ga toe naar huis.") ?? false;
+  });
+  expect(hintSection).toHaveClass("px-2");
+});

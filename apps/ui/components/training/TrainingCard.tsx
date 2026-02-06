@@ -416,29 +416,44 @@ export function TrainingCard({
     globalCount > 1 ||
     typeof meaningIdFromRaw === "number";
 
+  const safeWordGender =
+    word.gender &&
+    word.headword
+      .trim()
+      .toLowerCase()
+      .startsWith(`${word.gender.trim().toLowerCase()} `)
+      ? undefined
+      : word.gender;
+
   const renderWordWithDecoration = (
     text: string,
     gender?: string,
     _pos?: string,
     sizeClass = "text-5xl"
   ) => {
+    const safeGender =
+      gender &&
+      text.trim().toLowerCase().startsWith(`${gender.trim().toLowerCase()} `)
+        ? undefined
+        : gender;
+
     return (
-      <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
-        {gender && (
+      <div className="inline-flex items-baseline justify-center gap-3">
+        {safeGender && (
           <span
-            className={`${sizeClass} font-medium text-slate-500 opacity-60`}
+            className={`${sizeClass} font-medium text-slate-500 opacity-60 flex-shrink-0`}
           >
-            {gender}
+            {safeGender}
           </span>
         )}
         <h1
-          className={`${sizeClass} font-bold tracking-tight text-slate-900 dark:text-white`}
+          className={`${sizeClass} font-bold tracking-tight text-slate-900 dark:text-white min-w-0`}
         >
           <button
             type="button"
             data-no-reveal
             onClick={handleHeadwordClick}
-            className="inline-flex items-center gap-2"
+            className="inline-block max-w-full min-w-0 whitespace-normal break-words"
             style={{ cursor: speakerCursor }}
           >
             {text}
@@ -668,7 +683,7 @@ export function TrainingCard({
       </div>
 
       {/* Main Content Area */}
-      <div className="relative flex w-full h-full px-1 md:px-4">
+      <div className="relative flex w-full h-full px-3 md:px-4">
         <div
           ref={scrollRef}
           onScroll={updateScrollFades}
@@ -682,18 +697,18 @@ export function TrainingCard({
           {isWordToDefinition ? (
             // Keep this full-width so translations align with the sentence width.
             <div className="w-full flex flex-col items-center">
-              <div className="inline-flex items-baseline justify-center gap-3 flex-wrap">
-                {word.gender && (
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-500 opacity-60">
-                    {word.gender}
+              <div className="inline-flex items-baseline justify-center gap-3">
+                {safeWordGender && (
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-medium text-slate-500 opacity-60 flex-shrink-0">
+                    {safeWordGender}
                   </span>
                 )}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white min-w-0">
                   <button
                     type="button"
                     data-no-reveal
                     onClick={handleHeadwordClick}
-                    className="inline-flex items-center gap-2"
+                    className="inline-block max-w-full min-w-0 whitespace-normal break-words"
                     style={{ cursor: speakerCursor }}
                   >
                     {word.headword}
@@ -706,9 +721,9 @@ export function TrainingCard({
             /* Definition -> Word mode: Question is Definition (context hidden until revealed) */
             <div className="mx-auto w-full max-w-3xl">
               <div className="flex justify-center">
-                <div className="inline-flex items-start gap-4">
+                <div className="flex items-start gap-5 md:gap-6 w-full">
                   {showNumber && (
-                    <div className="flex-shrink-0 pt-1">
+                    <div className="flex-shrink-0 pt-1 w-12 md:w-14 flex flex-col items-center overflow-visible">
                       <div className="flex flex-col items-center gap-1">
                         <div
                           className={`w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
@@ -756,7 +771,7 @@ export function TrainingCard({
                     </div>
                   )}
 
-                  <div className="text-center">
+                  <div className="text-center flex-1">
                     {hasPrimaryDefinitionText ? (
                       <div className="flex flex-col items-center text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
@@ -843,10 +858,10 @@ export function TrainingCard({
 
           {/* W->D Hint Section: Context + Example (shown via 'i' hotkey or when revealed) */}
           {isWordToDefinition && (hintRevealed || revealed) && (
-            <div className="flex-none w-full max-w-3xl text-left mb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex-none w-full max-w-3xl text-left mb-4 px-2 md:px-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-start gap-4 md:gap-6">
                 {/* Spacer to align with number badge in definition section (only if badge will be shown) */}
-                {showNumber && <div className="flex-shrink-0 w-10 md:w-14" />}
+                {showNumber && <div className="flex-shrink-0 w-12 md:w-14" />}
                 {/* Content - aligned with definition text */}
                 <div className="flex-1 flex flex-col gap-3">
                   {/* Context */}
@@ -929,7 +944,7 @@ export function TrainingCard({
                       <div key={index} className="flex items-start gap-4 md:gap-6">
                         {/* Number Badge - Left Side */}
                         {showNumber && (
-                          <div className="flex-shrink-0 pt-1 w-10 md:w-14 flex flex-col items-center overflow-visible">
+                          <div className="flex-shrink-0 pt-1 w-12 md:w-14 flex flex-col items-center overflow-visible">
                             <Tooltip content={badgeTitle} side="top">
                               <div
                                 className={`w-7 h-7 flex items-center justify-center ${
@@ -1150,7 +1165,7 @@ export function TrainingCard({
                   {/* Examples */}
                   {primaryMeaning.examples &&
                     primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-3xl text-left">
+                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-3xl text-left px-2 md:px-0">
                         {primaryMeaning.examples.map((ex, i) => {
                           const exSegments = buildSegments(
                             ex,
