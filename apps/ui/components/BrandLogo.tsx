@@ -11,9 +11,9 @@ export function BrandLogo({
 }: Props) {
   return (
     <p className={className} aria-label="2000nl">
-      2000
-      <span className={accentClassName}>nl</span>
+      <span className="whitespace-nowrap">
+        2000<span className={accentClassName}>nl</span>
+      </span>
     </p>
   );
 }
-
