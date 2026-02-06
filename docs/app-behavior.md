@@ -136,6 +136,13 @@ Example sentence line spacing is now consistent across word examples and definit
 **Behavior:**
 Translation overlay text is now larger and easier to scan, with a clear visual hierarchy: the main word translation is significantly more prominent than secondary translations (definitions/examples/alternatives). Line-height is adjusted proportionally so the bigger type stays readable without feeling cramped, across both mobile (375px) and desktop (1280px+) layouts.
 
+### Swipe Gesture Visual Feedback (Training Cards)
+**Added:** 2026-02-06 (Sprint: UX Polish & Performance)
+**User Story:** US-068.1
+
+**Behavior:**
+While swiping a training card, the UI now provides real-time feedback by tinting the card in the swipe direction color and highlighting the corresponding action button (right = good/green, left = again/red). The feedback intensity scales with swipe distance so partial swipes show partial tint/highlight, keeping the gesture readable without committing an action.
+
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
 **User Stories:** US-085.1, US-085.2
