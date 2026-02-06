@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import type { Session } from "@supabase/supabase-js";
 import type { Page } from "@playwright/test";
 
@@ -61,15 +60,13 @@ export function getSupabaseStorageKey(params?: {
     params?.supabaseUrl ??
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
     "http://localhost:54321";
-  const supabaseAnonKey =
-    params?.supabaseAnonKey ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    "test-anon-key";
 
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: true },
-  });
-  return client.auth.storageKey;
+  // Supabase JS derives the storage key from the URL hostname:
+  // `sb-${projectRef}-auth-token`, where projectRef is the first hostname segment.
+  // We avoid accessing client.auth.storageKey directly because the type is protected.
+  const hostname = new URL(supabaseUrl).hostname;
+  const projectRef = hostname.split(".")[0] ?? hostname;
+  return `sb-${projectRef}-auth-token`;
 }
 
 export async function installSupabaseSession(
