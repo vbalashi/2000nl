@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-01-29
+**Last updated:** 2026-02-06
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -128,6 +128,13 @@ When audio mode is enabled, tapping a definition now plays the full definition v
 
 **Behavior:**
 Example sentence line spacing is now consistent across word examples and definition examples, using the tighter shared line-height. Tailwind `leading-*` classes were aligned so W→D and D→W card types render matching spacing for example text.
+
+### Translation Overlay Font Size Increases
+**Added:** 2026-02-06 (Sprint: UX Polish & Performance)
+**User Story:** US-082.1
+
+**Behavior:**
+Translation overlay text is now larger and easier to scan, with a clear visual hierarchy: the main word translation is significantly more prominent than secondary translations (definitions/examples/alternatives). Line-height is adjusted proportionally so the bigger type stays readable without feeling cramped, across both mobile (375px) and desktop (1280px+) layouts.
 
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)

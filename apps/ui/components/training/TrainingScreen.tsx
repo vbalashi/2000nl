@@ -1787,10 +1787,20 @@ export function TrainingScreen({ user }: Props) {
       ? { label: ACTION_LABELS.success.label, direction: "right" as const }
       : null;
   const swipeThreshold = (cardSwipeRef.current?.offsetWidth ?? 0) * 0.35;
-  const swipeIndicatorOpacity =
-    swipeActive && swipeThreshold > 0
-      ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold)
-      : 0;
+  const swipeProgress =
+    swipeThreshold > 0 ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold) : 0;
+  // Use swipe distance (scaled by threshold) as the single "intensity" signal
+  // for all swipe feedback (indicator, card tint, and button highlight).
+  const swipeFeedbackIntensity =
+    swipeIndicator && (swipeActive || swipeAnimating) ? swipeProgress : 0;
+  const swipeIndicatorOpacity = swipeFeedbackIntensity;
+  const swipeTintColor =
+    swipeDirection === "left"
+      ? "rgb(239 68 68)" // red-500
+      : swipeDirection === "right"
+      ? "rgb(16 185 129)" // emerald-500
+      : null;
+  const swipeTintOpacity = swipeFeedbackIntensity * 0.14;
   const swipeCardStyle: React.CSSProperties = {
     transform: `translateX(${swipeOffset}px) rotate(${swipeOffset / 40}deg)`,
     transition: swipeAnimating ? "transform 200ms ease" : "none",
@@ -2032,6 +2042,15 @@ export function TrainingScreen({ user }: Props) {
                     onTouchEnd={handleCardTouchEnd}
                     onTouchCancel={handleCardTouchEnd}
                   >
+                    {swipeTintColor && swipeTintOpacity > 0 && (
+                      <div
+                        className="pointer-events-none absolute inset-0 z-10 rounded-3xl"
+                        style={{
+                          backgroundColor: swipeTintColor,
+                          opacity: swipeTintOpacity,
+                        }}
+                      />
+                    )}
                     {swipeIndicator && (
                       <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
                         <div
@@ -2087,16 +2106,50 @@ export function TrainingScreen({ user }: Props) {
                           ).map((actionKey) => {
                             const { label, keyHint, tone } =
                               ACTION_LABELS[actionKey];
+                            const swipeButtonHighlight =
+                              actionKey === "fail" && swipeDirection === "left"
+                                ? swipeFeedbackIntensity
+                                : actionKey === "success" &&
+                                  swipeDirection === "right"
+                                ? swipeFeedbackIntensity
+                                : 0;
+                            const swipeButtonRgb =
+                              actionKey === "fail"
+                                ? "239, 68, 68" // red-500
+                                : "16, 185, 129"; // emerald-500
+                            const swipeButtonColor =
+                              actionKey === "fail"
+                                ? "rgb(239 68 68)" // red-500
+                                : "rgb(16 185 129)"; // emerald-500
                             return (
                               <button
                                 key={actionKey}
                                 type="button"
                                 disabled={actionLoading}
                                 onClick={() => handleAction(actionKey)}
-                                className={`flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
+                                style={
+                                  swipeButtonHighlight > 0
+                                    ? {
+                                        outline: `2px solid rgba(${swipeButtonRgb}, ${0.65 * swipeButtonHighlight})`,
+                                        outlineOffset: 2,
+                                      }
+                                    : undefined
+                                }
+                                className={`relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
                               >
-                                <span>{label}</span>
-                                <span className="text-[10px] md:text-xs font-normal opacity-70">
+                                {(actionKey === "fail" ||
+                                  actionKey === "success") && (
+                                  <span
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-0 rounded-xl"
+                                    style={{
+                                      backgroundColor: swipeButtonColor,
+                                      opacity: 0.22 * swipeButtonHighlight,
+                                    }}
+                                  />
+                                )}
+                                <span className="relative z-10">{label}</span>
+                                <span className="relative z-10 text-[10px] md:text-xs font-normal opacity-70">
                                   ({keyHint})
                                 </span>
                               </button>
