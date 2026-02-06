@@ -86,6 +86,13 @@ Password-based auth is disabled in Supabase, and email OTP is the required sign-
 **Behavior:**
 Supabase auth emails now use 2000nl-branded templates with the product logo, brand colors, and a clear call-to-action. The templates cover registration, magic link, and OTP flows (password reset only if enabled), with copy tuned for a professional tone and accessible contrast. Appearance is validated in Gmail, Outlook, and iOS Mail to ensure rendering consistency.
 
+### PWA OAuth Verification + Manual OTP Fallback
+**Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
+**User Story:** US-072.1
+
+**Behavior:**
+Google OAuth is verified to work in PWA standalone mode on iOS Safari and Android Chrome. When an email-link auth flow opens in the wrong browser context, the auth page provides a manual OTP code entry fallback so users can copy the code from their email and paste it into the app, with brief guidance explaining when to use it.
+
 ### Translation Abstraction Layer (Multi-Provider)
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
 **User Story:** US-050.1
