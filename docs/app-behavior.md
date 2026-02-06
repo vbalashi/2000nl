@@ -164,6 +164,27 @@ While swiping a training card, the UI now provides real-time feedback by tinting
 **Behavior:**
 On the first-encounter card screen, users can now swipe right to trigger "Start learning" (`handleAction("fail")`) and swipe left to trigger "I already know" (`handleAction("hide")`). The swipe threshold matches training cards (roughly 30-40% of card width) and uses the same in-gesture visual feedback (button highlight + card tint). The existing tap/click buttons remain supported.
 
+### Hide Past Perfect Participle in Definitions
+**Added:** 2026-02-06 (Sprint: UX Polish & Performance)
+**User Story:** US-026.1
+
+**Behavior:**
+When a verb definition contains a perfect tense hint like `(heeft vertrokken)` or `(is vertrokken)`, the card renderer now hides the participle and shows only the auxiliary as `(heeft ...)` or `(is ...)`. This prevents the definition from giving away the answer while still preserving the grammatical cue. Applied consistently in both W→D and D→W card directions.
+
+### Mobile Card Height Hybrid Approach
+**Added:** 2026-02-06 (Sprint: Bug Fix Blitz)
+**User Story:** US-065.1
+
+**Behavior:**
+On mobile, the training card now uses a hybrid height strategy with a minimum height (to avoid tiny cards) and a maximum height (to prevent excessive growth). When content exceeds the max height, the card content scrolls internally while the action buttons stay in a stable position. Desktop layout is unchanged.
+
+### Training Card Layout Fixes for Edge-Case Words
+**Added:** 2026-02-06 (Sprint: Bug Fix Blitz)
+**User Story:** US-084.1
+
+**Behavior:**
+Card layout spacing is now consistent for edge-case words like "toe", "dezelfde", and "de rekening". The number badge no longer crowds the word, and example text has proper left padding so it does not touch the card edge. This applies across card types so similar words render reliably.
+
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
 **User Stories:** US-085.1, US-085.2
