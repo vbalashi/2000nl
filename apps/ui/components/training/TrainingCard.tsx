@@ -8,6 +8,7 @@ import type {
   WordEntryTranslationStatus,
 } from "@/lib/types";
 import { getGenericBadgeTooltip, getPosBadgeTooltip } from "@/lib/badgeTooltips";
+import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import {
   buildSegments,
   getAllMeanings,
@@ -365,9 +366,10 @@ export function TrainingCard({
   // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
   // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
   const definitionPromptText = (() => {
-    if (!primaryMeaning.definition) return primaryMeaning.definition;
-    if (isWordToDefinition || revealed) return primaryMeaning.definition;
-    return maskTargetWordInDefinition(primaryMeaning.definition, word.headword);
+    const primaryDefinition = hidePerfectParticiple(primaryMeaning.definition);
+    if (!primaryDefinition) return primaryDefinition;
+    if (isWordToDefinition || revealed) return primaryDefinition;
+    return maskTargetWordInDefinition(primaryDefinition, word.headword);
   })();
 
   const definitionSegments = buildSegments(
@@ -903,8 +905,11 @@ export function TrainingCard({
               {isWordToDefinition && (
                 <div className="flex flex-col gap-8">
                   {allMeanings.map((meaning, index) => {
+                    const definitionText = hidePerfectParticiple(
+                      meaning.definition
+                    );
                     const defSegments = buildSegments(
-                      meaning.definition,
+                      definitionText ?? "",
                       meaning.links
                     );
 
@@ -957,7 +962,7 @@ export function TrainingCard({
                         {/* Content - Right Side: Definition only (context/example shown above) */}
                         <div className="flex-1 flex flex-col gap-3">
                           {/* Definition Line */}
-                          {meaning.definition ? (
+                          {definitionText ? (
                             <div className="flex items-start text-xl md:text-2xl leading-[1.4] font-medium text-slate-800 dark:text-slate-100">
                               <div className="flex flex-col flex-1">
                                 <InteractiveText
@@ -966,7 +971,7 @@ export function TrainingCard({
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
                                   excludeWord={word.headword}
-                                  sentence={meaning.definition}
+                                  sentence={definitionText}
                                 />
                                 <InlineTranslation
                                   align="left"

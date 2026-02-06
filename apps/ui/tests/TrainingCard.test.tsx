@@ -80,3 +80,69 @@ test("tap/clicking card requests reveal when not revealed", () => {
   fireEvent.click(screen.getByRole("group", { name: "Training card" }));
   expect(onRequestReveal).toHaveBeenCalledTimes(1);
 });
+
+test("hides perfect participle in auxiliary metadata (W->D revealed)", () => {
+  const onWordClick = vi.fn();
+  const verbWord = {
+    id: "2",
+    headword: "vertrekken",
+    part_of_speech: "ww",
+    raw: {
+      meanings: [
+        {
+          definition: "( heeft vertrokken ) weggaan",
+          examples: [],
+          links: []
+        }
+      ]
+    }
+  };
+
+  render(
+    <TrainingCard
+      word={verbWord as any}
+      mode="word-to-definition"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  expect(document.body).toHaveTextContent("( heeft ... ) weggaan");
+  expect(document.body).not.toHaveTextContent("vertrokken");
+});
+
+test("hides perfect participle in auxiliary metadata (D->W prompt)", () => {
+  const onWordClick = vi.fn();
+  const verbWord = {
+    id: "3",
+    headword: "vertrekken",
+    part_of_speech: "ww",
+    raw: {
+      meanings: [
+        {
+          definition: "( is vertrokken ) weggelopen",
+          examples: [],
+          links: []
+        }
+      ]
+    }
+  };
+
+  render(
+    <TrainingCard
+      word={verbWord as any}
+      mode="definition-to-word"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  expect(document.body).toHaveTextContent("( is ... ) weggelopen");
+  expect(document.body).not.toHaveTextContent("vertrokken");
+});

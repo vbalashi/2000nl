@@ -15,6 +15,7 @@ import {
   recordReview,
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
+import { hidePerfectParticiple } from "@/lib/definitionFormat";
 
 export type WordDetailPanelProps = {
   entry: DictionaryEntry;
@@ -345,7 +346,10 @@ export function WordDetailPanel({
                     className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200"
                   >
                     <div className="font-semibold text-slate-900 dark:text-white">
-                      {m?.definition?.trim?.() ? m.definition : "—"}
+                      {(() => {
+                        const def = hidePerfectParticiple(m?.definition);
+                        return def?.trim?.() ? def : "—";
+                      })()}
                     </div>
                     {idx === 0 && translatedDefinition ? (
                       <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
