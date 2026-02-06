@@ -24,3 +24,6 @@
 
 -- Security: RLS policies
 \i db/migrations/005_security.sql
+
+-- Data fixes
+\i db/migrations/006_fix_omgekeerd_translation_ru.sql
