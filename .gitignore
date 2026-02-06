@@ -35,3 +35,6 @@ db/data/
 
 # 2000nl runtime audio cache
 /db/audio/
+
+# Visual testing screenshots & agent-browser temp files
+tmp/

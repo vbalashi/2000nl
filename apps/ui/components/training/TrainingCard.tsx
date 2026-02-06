@@ -468,17 +468,27 @@ export function TrainingCard({
   const InlineTranslation = ({
     text,
     align = "center",
+    variant = "supporting",
   }: {
     text: string | null | undefined;
     align?: "left" | "center";
+    variant?: "headword" | "definition" | "supporting";
   }) => {
     if (!isTranslationOpen) return null;
     if (text == null || String(text).trim().length === 0) return null;
+
+    const variantClass =
+      variant === "headword"
+        ? "text-[17px] md:text-[19px] leading-[1.25] font-semibold tracking-tight text-slate-600 dark:text-slate-300"
+        : variant === "definition"
+          ? "text-[15px] md:text-[17px] leading-[1.3] font-semibold tracking-wide text-slate-500 dark:text-slate-400"
+          : "text-[14px] md:text-[15px] leading-[1.4] font-medium tracking-wide text-slate-500 dark:text-slate-400";
+
     return (
       <div
         className={[
           "pointer-events-none select-none mt-1 w-full",
-          "text-[11px] md:text-xs leading-tight font-semibold tracking-wide text-slate-500 dark:text-slate-400",
+          variantClass,
           "whitespace-normal break-words",
           "bg-transparent drop-shadow-sm px-1",
           align === "left" ? "text-left" : "text-center",
@@ -688,7 +698,7 @@ export function TrainingCard({
                   </button>
                 </h1>
               </div>
-              <InlineTranslation text={getHeadwordTranslated()} />
+              <InlineTranslation variant="headword" text={getHeadwordTranslated()} />
             </div>
           ) : (
             /* Definition -> Word mode: Question is Definition (context hidden until revealed) */
@@ -754,7 +764,10 @@ export function TrainingCard({
                           cursorStyle={wordCursorStyle}
                           sentence={definitionPromptText ?? ""}
                         />
-                        <InlineTranslation text={getTranslated(0, "definition")} />
+                        <InlineTranslation
+                          variant="definition"
+                          text={getTranslated(0, "definition")}
+                        />
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
                       <div className="flex items-start justify-center gap-3 flex-wrap">
@@ -766,6 +779,7 @@ export function TrainingCard({
                             cursorStyle={wordCursorStyle}
                           />
                           <InlineTranslation
+                            variant="definition"
                             text={
                               hasPrimaryIdiomExplanationText
                                 ? getTranslated(0, {
@@ -956,6 +970,7 @@ export function TrainingCard({
                                 />
                                 <InlineTranslation
                                   align="left"
+                                  variant="definition"
                                   text={getTranslated(index, "definition")}
                                 />
                               </div>
@@ -1040,7 +1055,10 @@ export function TrainingCard({
                     word.part_of_speech,
                     "text-3xl md:text-4xl lg:text-5xl"
                   )}
-                  <InlineTranslation text={getHeadwordTranslated()} />
+                  <InlineTranslation
+                    variant="headword"
+                    text={getHeadwordTranslated()}
+                  />
                   {/* Context - shown with the answer */}
                   {primaryMeaning.context && (
                     <div className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex flex-col items-center justify-center">
