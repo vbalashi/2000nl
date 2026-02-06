@@ -96,6 +96,20 @@ test("hotkey triggers recordReview like button click", async () => {
   );
 });
 
+test("mobile card uses hybrid height so content can scroll within the card", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  const frame = screen.getByTestId("training-card-frame");
+  expect(frame.className).toContain("min-h-[360px]");
+  expect(frame.className).toContain("h-[clamp(360px,55dvh,520px)]");
+  expect(frame.className).toContain("max-h-[520px]");
+  // Desktop behavior remains aspect-ratio driven.
+  expect(frame.className).toContain("md:aspect-[16/10]");
+  expect(frame.className).toContain("md:h-auto");
+});
+
 test("first encounter: swipe right triggers Start learning (fail)", async () => {
   const original = Object.getOwnPropertyDescriptor(
     HTMLElement.prototype,

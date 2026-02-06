@@ -2214,8 +2214,12 @@ export function TrainingScreen({ user }: Props) {
             <div className="flex-1 overflow-y-auto overflow-x-visible scrollbar-hide flex flex-col px-2 md:px-4">
               {/* Card Container */}
               <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
-                {/* 16/10 Aspect Ratio Card on desktop, auto on mobile */}
-                <div className="mx-auto w-full h-auto min-h-[350px] md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8">
+                {/* Desktop: 16/10 aspect-ratio.
+                   Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
+                <div
+                  data-testid="training-card-frame"
+                  className="mx-auto w-full min-h-[360px] h-[clamp(360px,55dvh,520px)] max-h-[520px] md:h-auto md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8 transition-[height] duration-200"
+                >
                   <div
                     ref={cardSwipeRef}
                     data-testid="training-card-swipe-wrapper"
