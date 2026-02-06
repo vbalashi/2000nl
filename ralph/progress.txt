@@ -1,5 +1,6 @@
 # Ralph Progress Log
 ## Codebase Patterns
+- PWA assets live under `apps/ui/public/`; update `apps/ui/public/manifest.json` for Android/Chromium icons (including `purpose: maskable`), and add iOS splash screens via `apple-touch-startup-image` link tags in `apps/ui/app/layout.tsx`.
 - Translation providers live in `apps/ui/lib/translation/` and are selected via `TRANSLATION_PROVIDER` using `createTranslator`.
 - OpenAI translations are handled by `OpenAITranslator` with retry + timeout; DeepL fallback is wired via `TRANSLATION_FALLBACK=deepl`.
 - Gemini translations are handled by `GeminiTranslator` with retry + timeout; configure via `GEMINI_API_KEY` and optional `GEMINI_MODEL`/`GEMINI_API_URL`.
@@ -69,4 +70,14 @@ Started: do 29 jan 2026 15:40:36 CET
 - Files changed: `apps/ui/components/training/TrainingCard.tsx`, `ralph/prd.json`, `ralph/progress.txt`
 - **Learnings for future iterations:**
   - Training screen route is not available at `/training` in dev; homepage is `/`
+---
+## 2026-02-06 13:08:09 CET - US-085.1
+- Generated new PWA icons (192, 512) and added a 512px maskable icon; updated the web manifest accordingly.
+- Added iOS splash screen images and wired them via `apple-touch-startup-image` link tags in the root layout.
+- Verified in dev-browser that `/manifest.json` exposes the new icon entries and that startup-image link tags are present.
+- Files changed: `apps/ui/public/manifest.json`, `apps/ui/public/icons/*`, `apps/ui/public/splash/*`, `apps/ui/app/layout.tsx`, `docs/app-behavior.md`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - PWA manifest lives at `apps/ui/public/manifest.json`; Next App Router points to it via `metadata.manifest` in `apps/ui/app/layout.tsx`.
+  - iOS splash screens require explicit `link rel=\"apple-touch-startup-image\"` entries with device-specific media queries; they are not handled by the web manifest.
+  - Icons/splashes are static assets under `apps/ui/public/` and can be validated quickly via `/manifest.json` and DOM inspection in dev-browser.
 ---
