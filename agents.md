@@ -28,3 +28,7 @@ Tip: if using a local `.env.local`, you can store `SUPABASE_DB_URL` there and ru
 - FSRS-6 is implemented in Postgres functions (`db/migrations/0010+`), with RPCs `handle_review`, `handle_click`, and `get_next_word`.
 - Defaults: 10 new cards/day, unlimited reviews; 4 grades (again/hard/good/easy) plus freeze/hide.
 - Clicks are treated as lapses (grade=again).
+
+## Production Debugging
+- Prod login techniques (including token/session injection for `agent-browser`): `docs/production-login.md`
+- Sentence audio (TTS) testing and troubleshooting: `docs/audio-tts-testing.md`

@@ -21,10 +21,18 @@ async function callTtsApi(text: string) {
   return POST(req);
 }
 
+async function callTtsGet(cacheKey: string) {
+  const { GET } = await import("../app/api/tts/route");
+  const req = new NextRequest(
+    new Request(`http://localhost/api/tts?key=${cacheKey}`, { method: "GET" })
+  );
+  return GET(req);
+}
+
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const uiDir = path.resolve(testsDir, "..");
 const repoRoot = path.resolve(uiDir, "..", "..");
-const publicTtsDir = path.join(uiDir, "public", "audio", "tts");
+const ttsCacheDir = path.join(repoRoot, "tmp", "tts-test-cache");
 
 const originalCreds = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const originalApiKey = process.env.GOOGLE_TTS_API_KEY;
@@ -54,14 +62,14 @@ test("resolves UI public dir when cwd is repo root", async () => {
   expect(resolveUiPublicDir(repoRoot)).toBe(path.join(repoRoot, "apps", "ui", "public"));
 });
 
-test("TTS cache hit returns a /audio/tts URL for playback on localhost", async () => {
-  process.env.TTS_CACHE_DIR = publicTtsDir;
+test("TTS cache hit returns an /api/tts?key= URL for playback", async () => {
+  process.env.TTS_CACHE_DIR = ttsCacheDir;
   vi.resetModules();
 
   const text = "Dit is een testzin.";
   const cacheKey = getCacheKey(text);
-  const filePath = path.join(publicTtsDir, `${cacheKey}.mp3`);
-  await fs.mkdir(publicTtsDir, { recursive: true });
+  const filePath = path.join(ttsCacheDir, `${cacheKey}.mp3`);
+  await fs.mkdir(ttsCacheDir, { recursive: true });
   await fs.writeFile(filePath, Buffer.from("mp3"));
 
   try {
@@ -69,10 +77,14 @@ test("TTS cache hit returns a /audio/tts URL for playback on localhost", async (
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({
-      url: `/audio/tts/${cacheKey}.mp3`,
+      url: `/api/tts?key=${cacheKey}`,
       cached: true,
       cacheKey,
     });
+
+    const audioRes = await callTtsGet(cacheKey);
+    expect(audioRes.status).toBe(200);
+    expect(audioRes.headers.get("content-type")).toBe("audio/mpeg");
   } finally {
     await fs.unlink(filePath).catch(() => {});
   }

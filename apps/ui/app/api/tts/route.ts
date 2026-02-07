@@ -3,16 +3,27 @@ import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
-import { resolveUiPublicDir } from "@/lib/resolveUiPublicDir";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Cache directory for TTS audio files (must live under `public/` to be served as `/audio/tts/...`).
+// Cache directory for generated TTS audio files.
+//
+// Note: writing to `public/` works in local dev, but production deployments often run on a read-only
+// filesystem (or with a `public` path that isn't a real directory). Default to `/tmp` and serve the
+// cached audio via this API route's GET handler instead.
 const CACHE_DIR =
   process.env.TTS_CACHE_DIR ||
-  path.join(resolveUiPublicDir(process.cwd()), "audio", "tts");
+  path.join(process.env.TMPDIR || "/tmp", "2000nl-tts-cache");
+
+function getCacheFilePath(cacheKey: string): string {
+  return path.join(CACHE_DIR, `${cacheKey}.mp3`);
+}
+
+function getCacheUrl(cacheKey: string): string {
+  return `/api/tts?key=${cacheKey}`;
+}
 
 /**
  * Generate a deterministic cache key from sentence text
@@ -25,10 +36,10 @@ function getCacheKey(text: string): string {
  * Check if cached audio file exists
  */
 async function getCachedAudio(cacheKey: string): Promise<string | null> {
-  const filePath = path.join(CACHE_DIR, `${cacheKey}.mp3`);
+  const filePath = getCacheFilePath(cacheKey);
   try {
     await fs.access(filePath);
-    return `/audio/tts/${cacheKey}.mp3`;
+    return getCacheUrl(cacheKey);
   } catch {
     return null;
   }
@@ -103,10 +114,39 @@ async function generateTTS(text: string, cacheKey: string): Promise<string> {
   await fs.mkdir(CACHE_DIR, { recursive: true });
 
   // Save to cache
-  const filePath = path.join(CACHE_DIR, `${cacheKey}.mp3`);
+  const filePath = getCacheFilePath(cacheKey);
   await fs.writeFile(filePath, audioContent);
 
-  return `/audio/tts/${cacheKey}.mp3`;
+  return getCacheUrl(cacheKey);
+}
+
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const key = url.searchParams.get("key");
+
+  if (!key || !/^[0-9a-f]{16}$/.test(key)) {
+    return NextResponse.json(
+      { error: "Missing or invalid 'key' parameter" },
+      { status: 400, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const filePath = getCacheFilePath(key);
+  try {
+    const audio = await fs.readFile(filePath);
+    return new NextResponse(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Not found" },
+      { status: 404, headers: { "Cache-Control": "no-store" } }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {

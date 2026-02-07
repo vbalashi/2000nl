@@ -47,7 +47,8 @@ export async function GET(): Promise<NextResponse> {
 
   // 1) Generate an OTP (server-side) without sending an email.
   const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    // This route is a one-shot helper; never start background refresh timers.
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
   const linkRes = await admin.auth.admin.generateLink({
@@ -68,11 +69,14 @@ export async function GET(): Promise<NextResponse> {
 
   // 2) Exchange the generated link token for a real Supabase session (valid JWT).
   const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false },
+    // Important: don't auto-refresh in the background, otherwise the freshly-issued
+    // refresh token can get rotated/consumed before the caller stores it.
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
-  // The UI uses OTP verification with `type: "email"`.
-  // Admin generateLink returns a raw `email_otp` which we can exchange for a session.
+  // Admin `generateLink({ type: "magiclink" })` also returns a short `email_otp`.
+  // In Supabase "Email OTP" mode, that OTP is verified with `type: "email"` to mint
+  // a real session (valid JWT + refresh token).
   const verifyRes = await publicClient.auth.verifyOtp({
     email: testUserEmail,
     token: linkRes.data.properties.email_otp,
