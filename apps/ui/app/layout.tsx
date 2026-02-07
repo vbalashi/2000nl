@@ -5,7 +5,8 @@ import { OfflineBanner } from "@/components/system/OfflineBanner";
 
 export const metadata = {
   title: "NT2 Training",
-  description: "Leer de NT2 woorden met een Supabase-gestuurde training.",
+  description:
+    "Leer de NT2 woorden met een Supabase-gestuurde training. Zet Luistermodus (🎧) aan en tik op een woord in een voorbeeldzin om uitspraak te horen.",
   manifest: "/manifest.json"
 };
 
