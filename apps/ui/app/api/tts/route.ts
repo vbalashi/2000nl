@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
+import { createAudioProvider } from "@/lib/audio/audioProviderFactory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,77 +45,20 @@ async function getCachedAudio(cacheKey: string): Promise<string | null> {
   }
 }
 
-/**
- * Generate TTS audio using Google Cloud Text-to-Speech
- */
 async function generateTTS(text: string, cacheKey: string): Promise<string> {
-  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const envApiKey = process.env.GOOGLE_TTS_API_KEY;
-  const looksLikeApiKey = Boolean(credentialsPath && /^AIza[0-9A-Za-z_-]{20,}$/.test(credentialsPath));
-  const apiKey = envApiKey || (looksLikeApiKey ? credentialsPath : undefined);
+  // The "user setting" will be persisted and read server-side in US-053.3.
+  // For now we keep behavior stable by defaulting to the free provider unless
+  // deployment config opts into premium.
+  const provider = createAudioProvider();
 
-  if (!apiKey && !credentialsPath) {
-    throw new Error(
-      "Google TTS is not configured. Set GOOGLE_APPLICATION_CREDENTIALS to a service account JSON path or GOOGLE_TTS_API_KEY to an API key."
-    );
-  }
-
-  // Configure request
-  const request = {
-    input: { text },
-    voice: {
-      languageCode: "nl-NL",
-      name: "nl-NL-Wavenet-E", // High-quality Dutch female voice
-      ssmlGender: "FEMALE" as const,
-    },
-    audioConfig: {
-      audioEncoding: "MP3" as const,
-    },
-  };
-
-  let audioContent: Buffer;
-
-  if (apiKey) {
-    const response = await fetch(
-      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Google TTS API error: ${response.status} ${errorText}`);
-    }
-
-    const json = (await response.json()) as { audioContent?: string };
-    if (!json.audioContent) {
-      throw new Error("No audio content returned from Google TTS");
-    }
-    audioContent = Buffer.from(json.audioContent, "base64");
-  } else {
-    // Initialize client using Application Default Credentials
-    const client = new TextToSpeechClient();
-    const [response] = await client.synthesizeSpeech(request);
-
-    if (!response.audioContent) {
-      throw new Error("No audio content returned from Google TTS");
-    }
-    const rawAudio = response.audioContent as string | Uint8Array;
-    audioContent =
-      typeof rawAudio === "string"
-        ? Buffer.from(rawAudio, "base64")
-        : Buffer.from(rawAudio);
-  }
+  const { audioMp3 } = await provider.generateAudio(text);
 
   // Ensure cache directory exists
   await fs.mkdir(CACHE_DIR, { recursive: true });
 
   // Save to cache
   const filePath = getCacheFilePath(cacheKey);
-  await fs.writeFile(filePath, audioContent);
+  await fs.writeFile(filePath, audioMp3);
 
   return getCacheUrl(cacheKey);
 }

@@ -122,6 +122,13 @@ DeepL remains available only as an automatic code-level fallback if OpenAI fails
 **Behavior:**
 The translation response now includes an optional `note` field (1-2 sentences) where the LLM briefly explains the word's most common meaning vs its meaning in the specific example when they differ. This note is stored in the database alongside the translation for future use in card details, with no current card UI changes.
 
+### Bulk Re-translation Cleanup
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-024.3
+
+**Behavior:**
+A maintenance script can now bulk re-translate existing saved translations using the current OpenAI pipeline (GPT-5.2 + POS + optional `note`). It runs in batches with retries and progress logging to respect rate limits and make long runs observable, and produces a summary report (successes, failures, sample comparisons) for quality review.
+
 ### Gemini Translation Connector
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
 **User Story:** US-050.3
