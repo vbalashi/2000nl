@@ -2,6 +2,7 @@ import type { AudioQuality, PremiumAudioProviderId } from "./types";
 import type { IAudioProvider } from "./audioProvider";
 import { FreeAudioProvider } from "./providers/freeAudioProvider";
 import { GoogleCloudTtsProvider } from "./providers/googleCloudTtsProvider";
+import { AzureTtsProvider } from "./providers/azureTtsProvider";
 
 export type AudioProviderSelection = {
   /**
@@ -29,10 +30,12 @@ export function createAudioProvider(selection: AudioProviderSelection = {}): IAu
       return new GoogleCloudTtsProvider();
     }
 
-    // Azure provider is implemented in US-053.2.
-    throw new Error(`Premium audio provider not implemented: ${providerId}`);
+    if (providerId === "azure") {
+      return new AzureTtsProvider();
+    }
+
+    throw new Error(`Unknown premium audio provider: ${providerId}`);
   }
 
   return new FreeAudioProvider();
 }
-

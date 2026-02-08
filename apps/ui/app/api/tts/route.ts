@@ -135,13 +135,18 @@ export async function POST(req: NextRequest) {
     const message = String(err?.message ?? err ?? "Unknown error");
     console.error("[TTS API] Error:", message);
 
+    const hasGoogle = Boolean(
+      process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_TTS_API_KEY
+    );
+    const hasAzure = Boolean(
+      (process.env.AZURE_SPEECH_KEY || process.env.AZURE_TTS_API_KEY) &&
+        (process.env.AZURE_SPEECH_REGION || process.env.AZURE_TTS_ENDPOINT)
+    );
+
     return NextResponse.json(
       {
         error: message,
-        configured: Boolean(
-          process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-          process.env.GOOGLE_TTS_API_KEY
-        )
+        configured: hasGoogle || hasAzure,
       },
       { status: 500, headers: { "Cache-Control": "no-store" } }
     );

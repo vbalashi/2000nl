@@ -129,6 +129,19 @@ The translation response now includes an optional `note` field (1-2 sentences) w
 **Behavior:**
 A maintenance script can now bulk re-translate existing saved translations using the current OpenAI pipeline (GPT-5.2 + POS + optional `note`). It runs in batches with retries and progress logging to respect rate limits and make long runs observable, and produces a summary report (successes, failures, sample comparisons) for quality review.
 
+### Audio Provider Abstraction + Google Cloud TTS (Premium)
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-053.1
+
+**Behavior:**
+Audio generation now routes through an `IAudioProvider` interface selected by an `AudioProviderFactory`, mirroring the translation provider pattern. The existing TTS implementation is wrapped as `FreeAudioProvider` (default). Premium providers can be enabled via config and include Google Cloud TTS and Azure Speech TTS. Premium audio output remains compatible with the current playback pipeline (mp3).
+
+Config notes:
+- `AUDIO_QUALITY_DEFAULT=premium` enables premium audio by default (until the DB-backed user setting exists).
+- `PREMIUM_AUDIO_PROVIDER=google|azure` selects which premium provider to use.
+- Google premium: set `GOOGLE_APPLICATION_CREDENTIALS` (service account JSON path) or `GOOGLE_TTS_API_KEY`.
+- Azure premium: set `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` (or `AZURE_TTS_ENDPOINT`).
+
 ### Gemini Translation Connector
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
 **User Story:** US-050.3
