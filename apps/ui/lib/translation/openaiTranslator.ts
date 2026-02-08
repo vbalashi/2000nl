@@ -9,6 +9,11 @@ type OpenAITranslatorOptions = {
   timeoutMs?: number;
 };
 
+export type OpenAITranslationContext = {
+  partOfSpeech?: string | null;
+  partOfSpeechCode?: string | null;
+};
+
 type OpenAIChatResponse = {
   choices?: Array<{
     message?: {
@@ -21,7 +26,8 @@ type OpenAIChatResponse = {
 };
 
 const DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions";
-const DEFAULT_MODEL = "gpt-4o-mini";
+// Verified via OpenAI Platform docs (Context7): "gpt-5.2"
+const DEFAULT_MODEL = "gpt-5.2";
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_MAX_RETRIES = 2;
 
@@ -42,18 +48,23 @@ function targetLanguageLabel(targetLang: string) {
   return LANGUAGE_LABELS[normalized] ?? targetLang.trim();
 }
 
-function buildMessages(texts: string[], targetLang: string) {
+function buildMessages(texts: string[], targetLang: string, context?: OpenAITranslationContext) {
   const label = targetLanguageLabel(targetLang);
+  const pos = context?.partOfSpeech?.trim() || null;
+  const posCode = context?.partOfSpeechCode?.trim() || null;
+
   return [
     {
       role: "system",
       content:
-        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting.",
+        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense.",
     },
     {
       role: "user",
       content: JSON.stringify({
         targetLanguage: label,
+        partOfSpeech: pos,
+        partOfSpeechCode: posCode,
         texts,
         responseFormat: {
           translations: ["string"],
@@ -107,9 +118,21 @@ export class OpenAITranslator implements ITranslator {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
-  async translate(text: string, targetLang: string): Promise<string>;
-  async translate(texts: string[], targetLang: string): Promise<string[]>;
-  async translate(textOrTexts: string | string[], targetLang: string) {
+  async translateWithContext(
+    text: string,
+    targetLang: string,
+    context?: OpenAITranslationContext
+  ): Promise<string>;
+  async translateWithContext(
+    texts: string[],
+    targetLang: string,
+    context?: OpenAITranslationContext
+  ): Promise<string[]>;
+  async translateWithContext(
+    textOrTexts: string | string[],
+    targetLang: string,
+    context: OpenAITranslationContext = {}
+  ) {
     const texts = Array.isArray(textOrTexts) ? textOrTexts : [textOrTexts];
     if (texts.length === 0) return Array.isArray(textOrTexts) ? [] : "";
     if (!this.apiKey) {
@@ -121,17 +144,23 @@ export class OpenAITranslator implements ITranslator {
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
       try {
+        const body: Record<string, any> = {
+          model: this.model,
+          temperature: 0,
+          messages: buildMessages(texts, targetLang, context),
+        };
+        // GPT-5.x supports reasoning_effort; keep it off for translation.
+        if (this.model.startsWith("gpt-5")) {
+          body.reasoning_effort = "none";
+        }
+
         const res = await fetch(this.apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.apiKey}`,
           },
-          body: JSON.stringify({
-            model: this.model,
-            temperature: 0,
-            messages: buildMessages(texts, targetLang),
-          }),
+          body: JSON.stringify(body),
           signal: controller.signal,
         });
 
@@ -184,5 +213,14 @@ export class OpenAITranslator implements ITranslator {
     }
 
     throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  async translate(text: string, targetLang: string): Promise<string>;
+  async translate(texts: string[], targetLang: string): Promise<string[]>;
+  async translate(
+    textOrTexts: string | string[],
+    targetLang: string
+  ): Promise<string | string[]> {
+    return this.translateWithContext(textOrTexts as any, targetLang);
   }
 }

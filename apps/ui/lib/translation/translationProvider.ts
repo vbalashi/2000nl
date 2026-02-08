@@ -101,8 +101,10 @@ export function createTranslator(config: TranslationConfig): TranslationProvider
 }
 
 export function loadTranslationConfigFromEnv(): TranslationConfig {
-  const provider = normalizeProvider(process.env.TRANSLATION_PROVIDER) ?? "deepl";
-  const fallback = normalizeProvider(process.env.TRANSLATION_FALLBACK) ?? undefined;
+  const provider = normalizeProvider(process.env.TRANSLATION_PROVIDER) ?? "openai";
+  const fallback =
+    normalizeProvider(process.env.TRANSLATION_FALLBACK) ??
+    (provider === "openai" || provider === "gemini" ? "deepl" : undefined);
 
   return {
     provider,

@@ -131,6 +131,26 @@ function computeFingerprint(items: ExtractedItem[]) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
+const POS_DUTCH_LABELS: Record<string, string> = {
+  zn: "zelfstandig naamwoord",
+  ww: "werkwoord",
+  bn: "bijvoeglijk naamwoord",
+  bw: "bijwoord",
+  vz: "voorzetsel",
+  lidw: "lidwoord",
+  vnw: "voornaamwoord",
+  tw: "telwoord",
+};
+
+function normalizePosCode(pos: unknown) {
+  if (typeof pos !== "string") return "";
+  return pos.trim().toLowerCase();
+}
+
+function posDutchLabelFromCode(posCode: string) {
+  return POS_DUTCH_LABELS[posCode] ?? "";
+}
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const wordEntryId = url.searchParams.get("word_id") ?? "";
@@ -295,7 +315,7 @@ export async function GET(req: NextRequest) {
   // Fetch source word fields (also used to compute the fingerprint).
   const { data: word, error: wordError } = await supabase
     .from("word_entries")
-    .select("headword,gender,raw")
+    .select("headword,gender,part_of_speech,raw")
     .eq("id", wordEntryId)
     .maybeSingle();
 
@@ -315,7 +335,12 @@ export async function GET(req: NextRequest) {
   }
 
   const items = extractTranslatableTexts(word);
-  const fingerprint = computeFingerprint(items);
+  // Include POS in the fingerprint so changes to word_entries.part_of_speech retrigger translation.
+  const posCode = normalizePosCode((word as any)?.part_of_speech);
+  const fingerprint = computeFingerprint([
+    ...items,
+    { path: ["__part_of_speech__"], text: posCode || "" },
+  ]);
 
   // Fast-path: return cached overlay only if it matches the current fingerprint.
   if (
@@ -536,10 +561,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const translatedTexts = await translator.translate(
-      items.map((i) => i.text),
-      targetLang
-    );
+    const texts = items.map((i) => i.text);
+    const posLabel = posDutchLabelFromCode(posCode);
+    const hasContextTranslate =
+      typeof (translator as any)?.translateWithContext === "function";
+
+    const translatedTexts = hasContextTranslate
+      ? await (translator as any).translateWithContext(texts, targetLang, {
+          partOfSpeech: posLabel || null,
+          partOfSpeechCode: posCode || null,
+        })
+      : await translator.translate(texts, targetLang);
 
     const overlay = buildOverlay(items, translatedTexts);
 
