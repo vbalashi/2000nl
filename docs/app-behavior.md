@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-02-06
+**Last updated:** 2026-02-08
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -114,6 +114,13 @@ An OpenAI-backed translator implements the shared `ITranslator` interface and ca
 **Behavior:**
 OpenAI is now the default translation provider, using `gpt-5.2` and including part-of-speech context from word data to improve translation quality and sense disambiguation.
 DeepL remains available only as an automatic code-level fallback if OpenAI fails (no UI toggle), and existing translation call sites remain unchanged via the `ITranslator` factory routing.
+
+### Translation Note Field (Common vs Context Meaning)
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-024.2
+
+**Behavior:**
+The translation response now includes an optional `note` field (1-2 sentences) where the LLM briefly explains the word's most common meaning vs its meaning in the specific example when they differ. This note is stored in the database alongside the translation for future use in card details, with no current card UI changes.
 
 ### Gemini Translation Connector
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
