@@ -15,6 +15,7 @@ import {
   WordListSummary,
   WordListType,
 } from "./types";
+import type { AudioQuality } from "./audio/types";
 
 const EVENT_MAP: Record<ReviewResult, string> = {
   fail: "review_fail",
@@ -1592,6 +1593,7 @@ export async function updateActiveList(params: {
 
 export type UserPreferences = {
   themePreference: "light" | "dark" | "system";
+  audioQuality: AudioQuality;
   modesEnabled: TrainingMode[];
   cardFilter: CardFilter;
   languageCode: string;
@@ -1618,7 +1620,7 @@ export async function fetchUserPreferences(
   const { data, error } = await supabase
     .from("user_settings")
     .select(
-      "theme_preference, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang, training_sidebar_pinned, preferences"
+      "theme_preference, audio_quality, training_mode, modes_enabled, card_filter, language_code, new_review_ratio, active_scenario, translation_lang, training_sidebar_pinned, preferences"
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -1645,8 +1647,12 @@ export async function fetchUserPreferences(
   // Parse preferences JSONB field (with fallback to empty object)
   const preferences = data?.preferences ?? {};
 
+  const audioQuality: AudioQuality =
+    data?.audio_quality === "premium" ? "premium" : "free";
+
   return {
     themePreference: data?.theme_preference ?? "system",
+    audioQuality,
     modesEnabled,
     cardFilter: (data?.card_filter as CardFilter) ?? "both",
     languageCode: data?.language_code ?? "nl",
@@ -1662,6 +1668,7 @@ export async function fetchUserPreferences(
 export async function updateUserPreferences(params: {
   userId: string;
   themePreference?: "light" | "dark" | "system";
+  audioQuality?: AudioQuality;
   modesEnabled?: TrainingMode[];
   cardFilter?: CardFilter;
   languageCode?: string;
@@ -1679,6 +1686,9 @@ export async function updateUserPreferences(params: {
 
   if (params.themePreference !== undefined) {
     updates.theme_preference = params.themePreference;
+  }
+  if (params.audioQuality !== undefined) {
+    updates.audio_quality = params.audioQuality;
   }
   if (params.modesEnabled !== undefined) {
     updates.modes_enabled = params.modesEnabled;

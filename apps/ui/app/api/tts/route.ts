@@ -3,6 +3,7 @@ import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import { createAudioProvider } from "@/lib/audio/audioProviderFactory";
+import type { AudioQuality, PremiumAudioProviderId } from "@/lib/audio/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,10 +27,18 @@ function getCacheUrl(cacheKey: string): string {
 }
 
 /**
- * Generate a deterministic cache key from sentence text
+ * Generate a deterministic cache key from sentence text + provider selection.
+ *
+ * This avoids serving "free" audio to a premium user (or vice versa) because the
+ * text hash matches.
  */
-function getCacheKey(text: string): string {
-  return crypto.createHash("sha256").update(text.trim()).digest("hex").slice(0, 16);
+function getCacheKey(params: {
+  text: string;
+  quality: AudioQuality;
+  providerId: "free" | PremiumAudioProviderId;
+}): string {
+  const input = `${params.quality}:${params.providerId}:${params.text.trim()}`;
+  return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
 }
 
 /**
@@ -45,11 +54,12 @@ async function getCachedAudio(cacheKey: string): Promise<string | null> {
   }
 }
 
-async function generateTTS(text: string, cacheKey: string): Promise<string> {
-  // The "user setting" will be persisted and read server-side in US-053.3.
-  // For now we keep behavior stable by defaulting to the free provider unless
-  // deployment config opts into premium.
-  const provider = createAudioProvider();
+async function generateTTS(
+  text: string,
+  cacheKey: string,
+  selection: { quality: AudioQuality }
+): Promise<string> {
+  const provider = createAudioProvider({ quality: selection.quality });
 
   const { audioMp3 } = await provider.generateAudio(text);
 
@@ -96,6 +106,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const text = body.text as string | undefined;
+    const qualityRaw = body.quality as unknown;
 
     if (!text || typeof text !== "string" || !text.trim()) {
       return NextResponse.json(
@@ -104,8 +115,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let requestedQuality: AudioQuality | null = null;
+    if (qualityRaw !== undefined && qualityRaw !== null) {
+      if (qualityRaw === "free" || qualityRaw === "premium") {
+        requestedQuality = qualityRaw;
+      } else {
+        return NextResponse.json(
+          { error: "Invalid 'quality' parameter (expected 'free' or 'premium')" },
+          { status: 400, headers: { "Cache-Control": "no-store" } }
+        );
+      }
+    }
+
     const trimmedText = text.trim();
-    const cacheKey = getCacheKey(trimmedText);
+    const effectiveQuality: AudioQuality =
+      requestedQuality ||
+      (process.env.AUDIO_QUALITY_DEFAULT as AudioQuality) ||
+      "free";
+    const effectiveProviderId: "free" | PremiumAudioProviderId =
+      effectiveQuality === "premium"
+        ? ((process.env.PREMIUM_AUDIO_PROVIDER as PremiumAudioProviderId) || "google")
+        : "free";
+
+    const cacheKey = getCacheKey({
+      text: trimmedText,
+      quality: effectiveQuality,
+      providerId: effectiveProviderId,
+    });
 
     // Check cache first
     const cachedUrl = await getCachedAudio(cacheKey);
@@ -114,20 +150,22 @@ export async function POST(req: NextRequest) {
         {
           url: cachedUrl,
           cached: true,
-          cacheKey
+          cacheKey,
         },
         { status: 200, headers: { "Cache-Control": "no-store" } }
       );
     }
 
     // Generate new audio
-    const url = await generateTTS(trimmedText, cacheKey);
+    const url = await generateTTS(trimmedText, cacheKey, {
+      quality: effectiveQuality,
+    });
 
     return NextResponse.json(
       {
         url,
         cached: false,
-        cacheKey
+        cacheKey,
       },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );

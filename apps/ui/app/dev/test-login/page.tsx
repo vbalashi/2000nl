@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type DevSessionResponse = {
-  session?: { access_token: string; refresh_token: string };
+  // Supabase session (shape can evolve; treat as opaque).
+  session?: any;
   error?: string;
 };
 
@@ -49,18 +50,34 @@ export default function DevTestLoginPage() {
         return;
       }
 
-      const { error } = await supabase.auth.setSession({
-        access_token: json.session.access_token,
-        refresh_token: json.session.refresh_token,
-      });
+      // Ensure we don't have an in-memory session already running with
+      // auto-refresh timers that could race token rotation during setSession().
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        // ignore
+      }
+
+      // Supabase's public `setSession()` performs a refresh-token exchange, which can
+      // fail in some dev environments with "Refresh Token: Already Used". For local
+      // dev automation, it's sufficient to persist the minted session as-is.
+      const saveSession = (supabase.auth as any)?._saveSession as unknown;
+      if (typeof saveSession === "function") {
+        // Call as a method to preserve `this` binding.
+        await (supabase.auth as any)._saveSession(json.session);
+      } else {
+        const { error } = await supabase.auth.setSession({
+          access_token: json.session.access_token,
+          refresh_token: json.session.refresh_token,
+        });
+        if (error) {
+          setStatus("error");
+          setMessage(error.message);
+          return;
+        }
+      }
 
       if (cancelled) return;
-
-      if (error) {
-        setStatus("error");
-        setMessage(error.message);
-        return;
-      }
 
       setStatus("success");
       setMessage("Signed in. Redirecting...");

@@ -10,6 +10,7 @@ import { DropUpSelect } from "./DropUpSelect";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { appVersionInfo } from "@/lib/appVersion";
+import type { AudioQuality } from "@/lib/audio/types";
 
 type TabKey = "woordenlijst" | "statistieken" | "instellingen";
 
@@ -23,6 +24,8 @@ type Props = {
   onListsUpdated?: () => void;
   themePreference: ThemePreference;
   onThemeChange: (pref: ThemePreference) => void;
+  audioQuality: AudioQuality;
+  onAudioQualityChange: (quality: AudioQuality) => void;
   onboardingLanguage: OnboardingLanguage;
   onOnboardingLanguageChange: (lang: OnboardingLanguage) => void;
   language: string;
@@ -56,6 +59,8 @@ export function SettingsModal({
   onListsUpdated,
   themePreference,
   onThemeChange,
+  audioQuality,
+  onAudioQualityChange,
   onboardingLanguage,
   onOnboardingLanguageChange,
   language,
@@ -191,6 +196,10 @@ export function SettingsModal({
     { value: "light", label: "Licht" },
     { value: "dark", label: "Donker" },
     { value: "system", label: "Systeem" },
+  ];
+  const audioQualityOptions: { value: AudioQuality; label: string }[] = [
+    { value: "free", label: "Gratis" },
+    { value: "premium", label: "Premium" },
   ];
 
   const cardFilterOptions: { value: CardFilter; label: string }[] = [
@@ -375,6 +384,36 @@ export function SettingsModal({
                         }`}
                       >
                         {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Audio kwaliteit
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Premium gebruikt de geconfigureerde premium TTS-provider voor zinsuitspraak.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {audioQualityOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onAudioQualityChange(option.value)}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                          audioQuality === option.value
+                            ? "border-primary bg-primary/10 text-slate-900 dark:text-white"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {option.label}
+                        {audioQuality === option.value ? (
+                          <span className="ml-2 text-[10px] uppercase text-primary dark:text-primary-light">
+                            actief
+                          </span>
+                        ) : null}
                       </button>
                     ))}
                   </div>

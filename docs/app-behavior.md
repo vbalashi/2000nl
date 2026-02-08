@@ -134,13 +134,27 @@ A maintenance script can now bulk re-translate existing saved translations using
 **User Story:** US-053.1
 
 **Behavior:**
-Audio generation now routes through an `IAudioProvider` interface selected by an `AudioProviderFactory`, mirroring the translation provider pattern. The existing TTS implementation is wrapped as `FreeAudioProvider` (default). Premium providers can be enabled via config and include Google Cloud TTS and Azure Speech TTS. Premium audio output remains compatible with the current playback pipeline (mp3).
+Audio generation now routes through an `IAudioProvider` interface selected by an `AudioProviderFactory`, mirroring the translation provider pattern. The existing TTS implementation is wrapped as `FreeAudioProvider` (default). Premium providers can be enabled via config (Google Cloud TTS and Azure Speech TTS), and premium audio output remains compatible with the current playback pipeline (mp3).
 
 Config notes:
 - `AUDIO_QUALITY_DEFAULT=premium` enables premium audio by default (until the DB-backed user setting exists).
 - `PREMIUM_AUDIO_PROVIDER=google|azure` selects which premium provider to use.
 - Google premium: set `GOOGLE_APPLICATION_CREDENTIALS` (service account JSON path) or `GOOGLE_TTS_API_KEY`.
-- Azure premium: set `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` (or `AZURE_TTS_ENDPOINT`).
+- Azure premium: set `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION` (or `AZURE_TTS_ENDPOINT`).
+
+### Azure Speech TTS Connector (Premium)
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-053.2
+
+**Behavior:**
+An Azure Speech Services TTS connector now implements the same `IAudioProvider` interface as the other audio backends and can be selected via `PREMIUM_AUDIO_PROVIDER=azure`. It uses Azure credentials from environment variables (`AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`, or `AZURE_TTS_ENDPOINT`) and targets high-quality Dutch neural voices. Output stays mp3 and plugs into the existing `/api/tts` caching and playback pipeline without UI changes.
+
+### User Setting for Audio Quality (Free vs Premium)
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-053.3
+
+**Behavior:**
+Users can now choose an **Audio kwaliteit** setting (Gratis/Premium). The choice is stored in `user_settings.audio_quality` and persists across sessions. When premium is selected, sentence TTS requests are routed to the configured premium provider (Google or Azure) and the `/api/tts` cache key includes the provider selection so free and premium audio do not collide.
 
 ### Gemini Translation Connector
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)

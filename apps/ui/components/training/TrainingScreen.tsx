@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
+import type { AudioQuality } from "@/lib/audio/types";
 import {
   fetchDictionaryEntry,
   fetchNextTrainingWord,
@@ -198,6 +199,7 @@ export function TrainingScreen({ user }: Props) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
+  const [audioQuality, setAudioQualityState] = useState<AudioQuality>("free");
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null
   );
@@ -428,6 +430,7 @@ export function TrainingScreen({ user }: Props) {
       const prefs = await fetchUserPreferences(user.id);
       console.log("[Settings] Loaded preferences from Supabase:", prefs);
       setThemePreference(prefs.themePreference);
+      setAudioQualityState(prefs.audioQuality);
       setEnabledModesState(prefs.modesEnabled);
       setCardFilterState(prefs.cardFilter);
       setLanguageState(prefs.languageCode);
@@ -543,6 +546,20 @@ export function TrainingScreen({ user }: Props) {
         void updateUserPreferences({
           userId: user.id,
           themePreference: newTheme,
+        });
+      }
+    },
+    [user?.id]
+  );
+
+  const setAudioQuality = useCallback(
+    (quality: AudioQuality) => {
+      console.log("[Settings] Saving audio quality to Supabase:", quality);
+      setAudioQualityState(quality);
+      if (user?.id) {
+        void updateUserPreferences({
+          userId: user.id,
+          audioQuality: quality,
         });
       }
     },
@@ -1392,7 +1409,7 @@ export function TrainingScreen({ user }: Props) {
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sentence.trim() }),
+        body: JSON.stringify({ text: sentence.trim(), quality: audioQuality }),
       });
 
       if (!response.ok) {
@@ -1415,7 +1432,7 @@ export function TrainingScreen({ user }: Props) {
     } finally {
       setTtsLoading(false);
     }
-  }, [playAudio]);
+  }, [audioQuality, playAudio]);
 
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
@@ -1999,6 +2016,12 @@ export function TrainingScreen({ user }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+          {audioQuality === "premium" ? (
+            <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200 md:text-[11px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-300" />
+              Premium audio
+            </div>
+          ) : null}
           <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
             <div
               role="button"
@@ -2461,6 +2484,8 @@ export function TrainingScreen({ user }: Props) {
           onListsUpdated={handleListsUpdated}
           themePreference={themePreference}
           onThemeChange={setTheme}
+          audioQuality={audioQuality}
+          onAudioQualityChange={setAudioQuality}
           onboardingLanguage={onboardingLang}
           onOnboardingLanguageChange={(lang) => {
             setOnboardingLang(lang);
