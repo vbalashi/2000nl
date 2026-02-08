@@ -34,6 +34,10 @@ async function callTtsGet(cacheKey: string) {
   return GET(req);
 }
 
+function getNestedCachePath(cacheDir: string, cacheKey: string): string {
+  return path.join(cacheDir, cacheKey.slice(0, 2), `${cacheKey}.mp3`);
+}
+
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const uiDir = path.resolve(testsDir, "..");
 const repoRoot = path.resolve(uiDir, "..", "..");
@@ -80,9 +84,11 @@ test("TTS cache hit returns an /api/tts?key= URL for playback", async () => {
 
   const text = "Dit is een testzin.";
   const cacheKey = getCacheKey({ text, quality: "free", providerId: "free" });
-  const filePath = path.join(ttsCacheDir, `${cacheKey}.mp3`);
+  // Write legacy flat cache file to verify backward compatibility + lazy migration.
+  const legacyPath = path.join(ttsCacheDir, `${cacheKey}.mp3`);
+  const nestedPath = getNestedCachePath(ttsCacheDir, cacheKey);
   await fs.mkdir(ttsCacheDir, { recursive: true });
-  await fs.writeFile(filePath, Buffer.from("mp3"));
+  await fs.writeFile(legacyPath, Buffer.from("mp3"));
 
   try {
     const res = await callTtsApi(text);
@@ -94,11 +100,15 @@ test("TTS cache hit returns an /api/tts?key= URL for playback", async () => {
       cacheKey,
     });
 
+    // Cache should be migrated into hash-based subfolder on access.
+    await expect(fs.access(nestedPath)).resolves.toBeUndefined();
+
     const audioRes = await callTtsGet(cacheKey);
     expect(audioRes.status).toBe(200);
     expect(audioRes.headers.get("content-type")).toBe("audio/mpeg");
   } finally {
-    await fs.unlink(filePath).catch(() => {});
+    await fs.unlink(legacyPath).catch(() => {});
+    await fs.unlink(nestedPath).catch(() => {});
   }
 });
 
@@ -112,9 +122,10 @@ test("TTS cache key includes requested audio quality (free vs premium)", async (
   const freeKey = getCacheKey({ text, quality: "free", providerId: "free" });
   const premiumKey = getCacheKey({ text, quality: "premium", providerId: "google" });
 
-  await fs.mkdir(ttsCacheDir, { recursive: true });
-  const freePath = path.join(ttsCacheDir, `${freeKey}.mp3`);
-  const premiumPath = path.join(ttsCacheDir, `${premiumKey}.mp3`);
+  const freePath = getNestedCachePath(ttsCacheDir, freeKey);
+  const premiumPath = getNestedCachePath(ttsCacheDir, premiumKey);
+  await fs.mkdir(path.dirname(freePath), { recursive: true });
+  await fs.mkdir(path.dirname(premiumPath), { recursive: true });
   await fs.writeFile(freePath, Buffer.from("mp3-free"));
   await fs.writeFile(premiumPath, Buffer.from("mp3-premium"));
 

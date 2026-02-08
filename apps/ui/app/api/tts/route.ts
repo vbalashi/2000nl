@@ -18,8 +18,19 @@ const CACHE_DIR =
   process.env.TTS_CACHE_DIR ||
   path.join(process.env.TMPDIR || "/tmp", "2000nl-tts-cache");
 
-function getCacheFilePath(cacheKey: string): string {
-  return path.join(CACHE_DIR, `${cacheKey}.mp3`);
+function getCachePaths(cacheKey: string): {
+  nestedDir: string;
+  nestedPath: string;
+  legacyPath: string;
+} {
+  const fileName = `${cacheKey}.mp3`;
+  const prefix = cacheKey.slice(0, 2);
+  const nestedDir = path.join(CACHE_DIR, prefix);
+  return {
+    nestedDir,
+    nestedPath: path.join(nestedDir, fileName),
+    legacyPath: path.join(CACHE_DIR, fileName),
+  };
 }
 
 function getCacheUrl(cacheKey: string): string {
@@ -45,12 +56,26 @@ function getCacheKey(params: {
  * Check if cached audio file exists
  */
 async function getCachedAudio(cacheKey: string): Promise<string | null> {
-  const filePath = getCacheFilePath(cacheKey);
+  const { nestedPath, legacyPath, nestedDir } = getCachePaths(cacheKey);
   try {
-    await fs.access(filePath);
+    await fs.access(nestedPath);
     return getCacheUrl(cacheKey);
   } catch {
-    return null;
+    // Backward compatibility for older flat cache layout: `CACHE_DIR/<key>.mp3`.
+    try {
+      await fs.access(legacyPath);
+      // Migrate lazily on cache hit.
+      await fs.mkdir(nestedDir, { recursive: true });
+      await fs
+        .rename(legacyPath, nestedPath)
+        .catch(async () => {
+          // If another process migrated first, best-effort cleanup.
+          await fs.unlink(legacyPath).catch(() => {});
+        });
+      return getCacheUrl(cacheKey);
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -63,12 +88,12 @@ async function generateTTS(
 
   const { audioMp3 } = await provider.generateAudio(text);
 
-  // Ensure cache directory exists
-  await fs.mkdir(CACHE_DIR, { recursive: true });
+  const { nestedDir, nestedPath } = getCachePaths(cacheKey);
+  // Ensure cache directory exists (hash subfolder).
+  await fs.mkdir(nestedDir, { recursive: true });
 
   // Save to cache
-  const filePath = getCacheFilePath(cacheKey);
-  await fs.writeFile(filePath, audioMp3);
+  await fs.writeFile(nestedPath, audioMp3);
 
   return getCacheUrl(cacheKey);
 }
@@ -84,9 +109,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const filePath = getCacheFilePath(key);
+  const { nestedPath, legacyPath, nestedDir } = getCachePaths(key);
   try {
-    const audio = await fs.readFile(filePath);
+    const audio = await fs.readFile(nestedPath);
     return new NextResponse(audio, {
       status: 200,
       headers: {
@@ -95,10 +120,31 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json(
-      { error: "Not found" },
-      { status: 404, headers: { "Cache-Control": "no-store" } }
-    );
+    // Backward compatibility for older flat cache layout: `CACHE_DIR/<key>.mp3`.
+    try {
+      const audio = await fs.readFile(legacyPath);
+      // Best-effort lazy migration on read.
+      await fs.mkdir(nestedDir, { recursive: true });
+      await fs
+        .rename(legacyPath, nestedPath)
+        .catch(async () => {
+          // If another process migrated first, best-effort cleanup.
+          await fs.unlink(legacyPath).catch(() => {});
+        });
+
+      return new NextResponse(audio, {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Not found" },
+        { status: 404, headers: { "Cache-Control": "no-store" } }
+      );
+    }
   }
 }
 

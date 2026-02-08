@@ -1,0 +1,128 @@
+{
+  "project": "2000nl",
+  "branchName": "ralph/translation-quality-premium-audio",
+  "description": "Sprint 16 - Translation Quality, Premium Audio & TTS Cache: Switch to OpenAI GPT-5.2 with POS context, add translation note field, bulk re-translate, add Google Cloud TTS and Azure TTS premium connectors with user setting, organize TTS cache into subfolders.",
+  "userStories": [
+    {
+      "id": "US-024.1",
+      "title": "Switch to OpenAI GPT-5.2 with POS Context",
+      "description": "Update the OpenAI translation connector to use GPT-5.2 (latest model). Update the translation prompt to accept and include part of speech (noun, verb, adjective, etc.) from word data so the LLM can disambiguate translations. Make OpenAI the default provider in config. DeepL remains available as a code-level fallback only (no UI toggle). Use Context7 MCP (resolve-library-id for 'openai') to verify correct model identifier and API usage.",
+      "acceptanceCriteria": [
+        "OpenAI connector updated to use GPT-5.2 model (use Context7 MCP to verify correct model identifier)",
+        "Translation prompt includes part of speech parameter (e.g., werkwoord, zelfstandig naamwoord, bijvoeglijk naamwoord)",
+        "POS is sourced from word entry data (word_entries or word_forms table)",
+        "OpenAI is the default translation provider in config",
+        "DeepL connector remains functional as fallback (code-level switch only)",
+        "Existing translation calls continue to work unchanged",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-024.2",
+      "title": "Add Translation Note Field",
+      "description": "Add a 'note' field to the translation response/schema where the LLM returns a brief (1-2 sentence max) contextual note about the most common/usual meaning of the word vs its meaning in the specific example. Store in database. No card template changes — this data will be exposed in card details later.",
+      "acceptanceCriteria": [
+        "Translation response type includes 'note' field (string, nullable)",
+        "OpenAI prompt updated to request brief contextual note",
+        "Note describes common meaning vs example-specific meaning (when different)",
+        "Note is brief — 1-2 sentences max, not verbose",
+        "Note stored in database alongside translation",
+        "No card UI changes (field saved for future use)",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-024.3",
+      "title": "Bulk Re-translation Cleanup",
+      "description": "Create a script to re-translate all existing translations using the new LLM-based pipeline (OpenAI GPT-5.2 with POS context). Handle batching and rate limits. Log results for quality review.",
+      "acceptanceCriteria": [
+        "Script re-translates all existing word translations via OpenAI",
+        "Batching implemented to respect API rate limits",
+        "POS included in each translation request",
+        "Notes generated for each translation",
+        "Progress logging (X of Y completed)",
+        "Error handling with retry for failed translations",
+        "Summary report: total translated, failures, sample comparisons",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-053.1",
+      "title": "Audio Provider Abstraction + Google Cloud TTS",
+      "description": "Create an audio provider abstraction layer (IAudioProvider interface + factory) similar to the translation system. Wrap the current TTS implementation as the 'free' provider. Add a Google Cloud TTS connector as a premium provider. Use Context7 MCP (resolve-library-id for 'google cloud tts') to look up correct API usage and available Dutch voices.",
+      "acceptanceCriteria": [
+        "IAudioProvider interface created with generateAudio(), getQuality() methods",
+        "AudioProviderFactory selects provider based on user setting",
+        "Current TTS wrapped as FreeAudioProvider (default)",
+        "Google Cloud TTS connector implemented as PremiumAudioProvider (use Context7 MCP for API docs)",
+        "Google TTS API key configurable via environment variable",
+        "Dutch language voices selected (best available quality)",
+        "Audio output compatible with existing playback pipeline (mp3)",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-053.2",
+      "title": "Azure/Microsoft TTS Connector",
+      "description": "Add an Azure Cognitive Services TTS connector as a second premium audio provider implementing the same IAudioProvider interface. Use Context7 MCP (resolve-library-id for 'azure cognitive services') for correct API usage and Dutch voice options. Both Google and Azure are available in code — user will evaluate and choose later.",
+      "acceptanceCriteria": [
+        "Azure TTS connector implements IAudioProvider interface",
+        "Azure Speech Services API key configurable via environment variable",
+        "Dutch neural voices selected (best available quality)",
+        "Audio output compatible with existing playback pipeline (mp3)",
+        "Provider selectable via config (google/azure/free)",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-053.3",
+      "title": "User Setting for Audio Quality",
+      "description": "Add 'Audio Quality' setting in user profile/settings with options: Free (default) and Premium. When premium is selected, use the configured premium provider. No provider choice UI yet — premium provider is set in config. Show a small indicator when premium audio is active.",
+      "acceptanceCriteria": [
+        "Audio quality setting added to user profile (database field)",
+        "Settings UI shows Free/Premium toggle",
+        "Free is default for all users",
+        "Premium selection routes TTS through configured premium provider",
+        "Small indicator visible when premium audio is active",
+        "Setting persists across sessions",
+        "Typecheck passes",
+        "Verify in browser using Chrome DevTools MCP"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-054.1",
+      "title": "TTS Cache Subfolder Organization",
+      "description": "Organize TTS audio cache into hash-based subfolders (first 2 chars of hash) for better filesystem performance. Update path generation in TTS API route. Migrate existing files.",
+      "acceptanceCriteria": [
+        "TTS cache uses subfolder structure: cache_dir/ab/abcdef1234.mp3",
+        "Subfolder based on first 2 characters of file hash",
+        "TTS API route updated to use new path structure",
+        "Existing cached files migrated to new structure",
+        "Backward-compatible: handles both old flat and new nested paths during transition",
+        "Cache lookup performance unchanged or improved",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}
