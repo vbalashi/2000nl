@@ -35,16 +35,47 @@ jobs:
           }
 
           DEPLOY_START=$(date +%s)
+          START_TS_HUMAN=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          START_TS_ISO=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
           cd /srv/2000nl-ui
           git fetch origin main
 
           VERSION=$(git show origin/main:apps/ui/package.json | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")
           COMMIT=$(git rev-parse --short origin/main)
+          COMMIT_FULL=$(git rev-parse origin/main)
 
-          send_telegram "🚀 Deployment started\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}"
+          # Provide build metadata to the Docker build so the UI and /api/health can show it.
+          export NEXT_PUBLIC_APP_COMMIT="${COMMIT_FULL}"
+          export NEXT_PUBLIC_BUILD_TIMESTAMP="${START_TS_ISO}"
+          BUILD_ID=$(date -u '+%Y%m%dT%H%M%SZ')
+          export NEXT_PUBLIC_APP_VERSION="${VERSION}+${BUILD_ID}.${COMMIT}"
 
-          trap 'status=$?; duration=$(( $(date +%s) - DEPLOY_START )); send_telegram "❌ Deployment failed\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}\nDuration: ${duration}s\nError: exit ${status} while running: ${BASH_COMMAND}"; exit ${status}' ERR
+          send_telegram "$(printf '%s\nTime: %s\nVersion: %s\nCommit: %s\nServer: %s' \
+            '🚀 Deployment started' \
+            "${START_TS_HUMAN}" \
+            "${NEXT_PUBLIC_APP_VERSION}" \
+            "${COMMIT}" \
+            "${DEPLOY_SERVER_NAME}")"
+
+          on_err() {
+            local status=$?
+            local duration=$(( $(date +%s) - DEPLOY_START ))
+            local end_ts_human
+            end_ts_human=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+            send_telegram "$(printf '%s\nTime: %s\nVersion: %s\nCommit: %s\nServer: %s\nDuration: %ss\nError: exit %s while running: %s' \
+              '❌ Deployment failed' \
+              "${end_ts_human}" \
+              "${NEXT_PUBLIC_APP_VERSION}" \
+              "${COMMIT}" \
+              "${DEPLOY_SERVER_NAME}" \
+              "${duration}" \
+              "${status}" \
+              "${BASH_COMMAND}")"
+            exit "${status}"
+          }
+          trap on_err ERR
 
           git reset --hard origin/main
 
@@ -55,4 +86,11 @@ jobs:
 
           trap - ERR
           duration=$(( $(date +%s) - DEPLOY_START ))
-          send_telegram "✅ Deployment succeeded\nVersion: ${VERSION}\nCommit: ${COMMIT}\nServer: ${DEPLOY_SERVER_NAME}\nDuration: ${duration}s"
+          END_TS_HUMAN=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          send_telegram "$(printf '%s\nTime: %s\nVersion: %s\nCommit: %s\nServer: %s\nDuration: %ss' \
+            '✅ Deployment succeeded' \
+            "${END_TS_HUMAN}" \
+            "${NEXT_PUBLIC_APP_VERSION}" \
+            "${COMMIT}" \
+            "${DEPLOY_SERVER_NAME}" \
+            "${duration}")"

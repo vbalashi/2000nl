@@ -6,6 +6,10 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        # Provided by CI/CD (see .github/workflows/deploy-nuc.yml). Optional for local dev.
+        NEXT_PUBLIC_APP_COMMIT: ${NEXT_PUBLIC_APP_COMMIT:-}
+        NEXT_PUBLIC_BUILD_TIMESTAMP: ${NEXT_PUBLIC_BUILD_TIMESTAMP:-}
+        NEXT_PUBLIC_APP_VERSION: ${NEXT_PUBLIC_APP_VERSION:-}
     # IMPORTANT:
     # Next.js inlines NEXT_PUBLIC_* at build time, but server routes (e.g. /api/translation)
     # still require runtime secrets (Supabase service key, DeepL API key, etc.).
