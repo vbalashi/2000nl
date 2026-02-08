@@ -14,6 +14,11 @@ export type OpenAITranslationContext = {
   partOfSpeechCode?: string | null;
 };
 
+export type OpenAITranslationResult = {
+  translations: string[];
+  note: string | null;
+};
+
 type OpenAIChatResponse = {
   choices?: Array<{
     message?: {
@@ -57,7 +62,7 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
     {
       role: "system",
       content:
-        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense.",
+        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.",
     },
     {
       role: "user",
@@ -68,15 +73,16 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
         texts,
         responseFormat: {
           translations: ["string"],
+          note: "string | null",
         },
         instructions:
-          "Return only valid JSON with a top-level 'translations' array aligned to the input order.",
+          "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.",
       }),
     },
   ];
 }
 
-function parseTranslations(content: string, expectedCount: number) {
+function parseTranslationResult(content: string, expectedCount: number): OpenAITranslationResult {
   let payload: any = null;
   try {
     payload = JSON.parse(content);
@@ -94,7 +100,16 @@ function parseTranslations(content: string, expectedCount: number) {
     );
   }
 
-  return translations.map((item) => (typeof item === "string" ? item : String(item)));
+  const noteRaw = payload?.note;
+  const note =
+    typeof noteRaw === "string" ? noteRaw.trim().slice(0, 800) : null;
+
+  return {
+    translations: translations.map((item) =>
+      typeof item === "string" ? item : String(item)
+    ),
+    note: note && note.length > 0 ? note : null,
+  };
 }
 
 async function delay(ms: number) {
@@ -135,6 +150,16 @@ export class OpenAITranslator implements ITranslator {
   ) {
     const texts = Array.isArray(textOrTexts) ? textOrTexts : [textOrTexts];
     if (texts.length === 0) return Array.isArray(textOrTexts) ? [] : "";
+    const result = await this.translateWithContextAndNote(texts, targetLang, context);
+    return Array.isArray(textOrTexts) ? result.translations : result.translations[0] ?? "";
+  }
+
+  async translateWithContextAndNote(
+    texts: string[],
+    targetLang: string,
+    context: OpenAITranslationContext = {}
+  ): Promise<OpenAITranslationResult> {
+    if (texts.length === 0) return { translations: [], note: null };
     if (!this.apiKey) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
@@ -179,7 +204,7 @@ export class OpenAITranslator implements ITranslator {
           throw new Error("OpenAI returned an empty translation");
         }
 
-        return parseTranslations(content, texts.length);
+        return parseTranslationResult(content, texts.length);
       } finally {
         clearTimeout(timeout);
       }
@@ -188,8 +213,7 @@ export class OpenAITranslator implements ITranslator {
     let lastError: unknown = null;
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        const translated = await attemptTranslate();
-        return Array.isArray(textOrTexts) ? translated : translated[0] ?? "";
+        return await attemptTranslate();
       } catch (err) {
         lastError = err;
         if (attempt < this.maxRetries) {
@@ -202,7 +226,10 @@ export class OpenAITranslator implements ITranslator {
     if (this.fallback) {
       try {
         const fallbackResult = await this.fallback.translate(texts, targetLang);
-        return Array.isArray(textOrTexts) ? fallbackResult : fallbackResult[0] ?? "";
+        return {
+          translations: fallbackResult,
+          note: null,
+        };
       } catch (fallbackErr) {
         throw new Error(
           `OpenAI failed (${String(lastError)}) and fallback failed (${String(

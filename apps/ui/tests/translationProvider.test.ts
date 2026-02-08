@@ -144,7 +144,7 @@ describe("OpenAITranslator", () => {
         choices: [
           {
             message: {
-              content: JSON.stringify({ translations: ["Hallo"] }),
+              content: JSON.stringify({ translations: ["Hallo"], note: null }),
             },
           },
         ],
@@ -158,6 +158,37 @@ describe("OpenAITranslator", () => {
 
     const [, init] = fetchMock.mock.calls[0] as [string, any];
     expect(init.headers.Authorization).toBe("Bearer key");
+  });
+
+  it("extracts a contextual note when provided", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                translations: ["Hallo"],
+                note: "Usually means X, but here it means Y.",
+              }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({ apiKey: "key" });
+    const result = await translator.translateWithContextAndNote(["hello"], "en", {
+      partOfSpeech: null,
+      partOfSpeechCode: null,
+    });
+    expect(result).toEqual({
+      translations: ["Hallo"],
+      note: "Usually means X, but here it means Y.",
+    });
   });
 
   it("falls back when OpenAI fails", async () => {

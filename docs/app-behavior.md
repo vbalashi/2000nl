@@ -107,6 +107,14 @@ Translations now route through a shared `ITranslator` interface with a factory t
 **Behavior:**
 An OpenAI-backed translator implements the shared `ITranslator` interface and can be selected via configuration, using an API key from environment variables. The connector uses `gpt-5.2` by default, includes part-of-speech (POS) context from `word_entries.part_of_speech` to improve disambiguation, includes retries on failure, and falls back to DeepL if the OpenAI call fails.
 
+### OpenAI as Default Translation Provider (GPT-5.2 + POS)
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-024.1
+
+**Behavior:**
+OpenAI is now the default translation provider, using `gpt-5.2` and including part-of-speech context from word data to improve translation quality and sense disambiguation.
+DeepL remains available only as an automatic code-level fallback if OpenAI fails (no UI toggle), and existing translation call sites remain unchanged via the `ITranslator` factory routing.
+
 ### Gemini Translation Connector
 **Added:** 2026-01-29 (Sprint: Production Readiness & Polish)
 **User Story:** US-050.3

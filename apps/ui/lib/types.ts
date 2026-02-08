@@ -167,6 +167,7 @@ export type WordEntryTranslation = {
   provider: string;
   status: WordEntryTranslationStatus;
   overlay: TranslationOverlay | null;
+  note: string | null;
   source_fingerprint: string | null;
   error_message: string | null;
   created_at?: string;

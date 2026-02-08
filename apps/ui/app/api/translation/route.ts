@@ -20,6 +20,7 @@ type TranslationRow = {
   provider: string;
   status: WordEntryTranslationStatus;
   overlay: TranslationOverlay | null;
+  note: string | null;
   source_fingerprint: string | null;
   error_message: string | null;
   updated_at: string | null;
@@ -130,6 +131,9 @@ function computeFingerprint(items: ExtractedItem[]) {
   const payload = items.map((it) => ({ path: it.path, text: it.text }));
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
+
+// Bump when the translation prompt/outputs change in a way that should invalidate cache.
+const TRANSLATION_PIPELINE_VERSION = "note_v1";
 
 const POS_DUTCH_LABELS: Record<string, string> = {
   zn: "zelfstandig naamwoord",
@@ -246,7 +250,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("word_entry_translations")
       .select(
-        "word_entry_id,target_lang,provider,status,overlay,source_fingerprint,error_message,updated_at"
+        "word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message,updated_at"
       )
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
@@ -340,6 +344,7 @@ export async function GET(req: NextRequest) {
   const fingerprint = computeFingerprint([
     ...items,
     { path: ["__part_of_speech__"], text: posCode || "" },
+    { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
   ]);
 
   // Fast-path: return cached overlay only if it matches the current fingerprint.
@@ -356,6 +361,7 @@ export async function GET(req: NextRequest) {
       {
         status: existing.status,
         overlay: existing.overlay,
+        note: (existing as TranslationRow).note ?? null,
         ...(debug
           ? {
                 debug: {
@@ -385,6 +391,7 @@ export async function GET(req: NextRequest) {
           provider,
           status: "pending",
           overlay: null,
+          note: null,
           source_fingerprint: null,
           error_message: null,
         },
@@ -442,6 +449,7 @@ export async function GET(req: NextRequest) {
           {
             status: existingAfter.status,
             overlay: existingAfter.overlay,
+            note: (existingAfter as TranslationRow).note ?? null,
             error: existingAfter.error_message,
             ...(debug
               ? {
@@ -503,6 +511,7 @@ export async function GET(req: NextRequest) {
         .update({
           status: "pending",
           error_message: null,
+          note: null,
           updated_at: nowIso,
         })
         .eq("word_entry_id", wordEntryId)
@@ -532,6 +541,7 @@ export async function GET(req: NextRequest) {
           {
             status: existingAfter?.status ?? ("pending" as const),
             overlay: existingAfter?.overlay ?? null,
+            note: (existingAfter as any)?.note ?? null,
             error: existingAfter?.error_message ?? null,
           },
           { status: 200, headers: { "Cache-Control": "no-store" } }
@@ -546,6 +556,7 @@ export async function GET(req: NextRequest) {
       .update({
         status: "ready",
         overlay,
+        note: null,
         source_fingerprint: fingerprint,
         error_message: null,
         updated_at: new Date().toISOString(),
@@ -555,7 +566,7 @@ export async function GET(req: NextRequest) {
       .eq("provider", provider);
 
     return NextResponse.json(
-      { status: "ready" as const, overlay },
+      { status: "ready" as const, overlay, note: null },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   }
@@ -565,13 +576,31 @@ export async function GET(req: NextRequest) {
     const posLabel = posDutchLabelFromCode(posCode);
     const hasContextTranslate =
       typeof (translator as any)?.translateWithContext === "function";
+    const hasContextTranslateAndNote =
+      typeof (translator as any)?.translateWithContextAndNote === "function";
 
-    const translatedTexts = hasContextTranslate
-      ? await (translator as any).translateWithContext(texts, targetLang, {
-          partOfSpeech: posLabel || null,
-          partOfSpeechCode: posCode || null,
-        })
-      : await translator.translate(texts, targetLang);
+    const context = {
+      partOfSpeech: posLabel || null,
+      partOfSpeechCode: posCode || null,
+    };
+
+    let translatedTexts: string[] = [];
+    let note: string | null = null;
+
+    if (hasContextTranslateAndNote) {
+      const result = await (translator as any).translateWithContextAndNote(
+        texts,
+        targetLang,
+        context
+      );
+      translatedTexts = result?.translations ?? [];
+      note = typeof result?.note === "string" ? result.note : null;
+    } else {
+      translatedTexts = hasContextTranslate
+        ? await (translator as any).translateWithContext(texts, targetLang, context)
+        : await translator.translate(texts, targetLang);
+      note = null;
+    }
 
     const overlay = buildOverlay(items, translatedTexts);
 
@@ -580,6 +609,7 @@ export async function GET(req: NextRequest) {
       .update({
         status: "ready",
         overlay,
+        note,
         source_fingerprint: fingerprint,
         error_message: null,
         updated_at: new Date().toISOString(),
@@ -596,7 +626,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { status: "ready" as const, overlay },
+      { status: "ready" as const, overlay, note },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (err: any) {
