@@ -63,7 +63,7 @@ Mark onboardingCompleted: true in DB
 
 ### Database Schema
 
-**Migration**: `007_user_preferences_jsonb.sql`
+**Schema**: `db/migrations/004_user_features.sql` (consolidated)
 
 ```sql
 ALTER TABLE public.user_settings

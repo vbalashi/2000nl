@@ -1,5 +1,5 @@
 -- User Features: Settings, lists, translations, and notes
--- Generated: 2025-12-31
+-- Generated: 2026-02-09
 -- This file contains user settings, user-created word lists, and word overlays.
 
 -- =============================================================================
@@ -36,9 +36,61 @@ CREATE TABLE IF NOT EXISTS user_settings (
     
     -- Subscription tier (free = 100 word limit, premium/admin = full access)
     subscription_tier text DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium', 'admin')),
+
+    -- UI preferences
+    training_sidebar_pinned boolean DEFAULT false,
+
+    -- Flexible JSON preferences (onboarding, feature flags, etc.)
+    preferences jsonb DEFAULT '{}'::jsonb,
+
+    -- Premium audio toggle
+    audio_quality text DEFAULT 'free',
     
-    updated_at timestamptz DEFAULT now()
+    updated_at timestamptz DEFAULT now(),
+
+    CONSTRAINT user_settings_audio_quality_check
+        CHECK (audio_quality IN ('free', 'premium'))
 );
+
+-- Ensure newer columns exist when applying this consolidated file to an existing DB.
+-- (CREATE TABLE IF NOT EXISTS will not modify existing tables.)
+
+ALTER TABLE IF EXISTS public.user_settings
+    ADD COLUMN IF NOT EXISTS training_sidebar_pinned boolean DEFAULT false;
+
+UPDATE public.user_settings
+SET training_sidebar_pinned = false
+WHERE training_sidebar_pinned IS NULL;
+
+ALTER TABLE IF EXISTS public.user_settings
+    ADD COLUMN IF NOT EXISTS preferences jsonb DEFAULT '{}'::jsonb;
+
+CREATE INDEX IF NOT EXISTS user_settings_preferences_idx
+    ON public.user_settings USING gin(preferences);
+
+ALTER TABLE IF EXISTS public.user_settings
+    ADD COLUMN IF NOT EXISTS audio_quality text;
+
+UPDATE public.user_settings
+SET audio_quality = 'free'
+WHERE audio_quality IS NULL;
+
+ALTER TABLE IF EXISTS public.user_settings
+    ALTER COLUMN audio_quality SET DEFAULT 'free';
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'public.user_settings'::regclass
+          AND conname = 'user_settings_audio_quality_check'
+    ) THEN
+        ALTER TABLE public.user_settings
+            ADD CONSTRAINT user_settings_audio_quality_check
+            CHECK (audio_quality IN ('free', 'premium'));
+    END IF;
+END $$;
 
 -- Trigger to auto-create user_settings on signup
 CREATE OR REPLACE FUNCTION public.set_default_user_settings()
@@ -103,6 +155,7 @@ CREATE TABLE IF NOT EXISTS word_entry_translations (
     status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ready', 'failed')),
     overlay jsonb,
     source_fingerprint text,
+    note text,
     error_message text,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now(),
@@ -111,6 +164,9 @@ CREATE TABLE IF NOT EXISTS word_entry_translations (
 
 CREATE INDEX IF NOT EXISTS word_entry_translations_lookup_idx
     ON word_entry_translations(word_entry_id, target_lang);
+
+ALTER TABLE IF EXISTS public.word_entry_translations
+    ADD COLUMN IF NOT EXISTS note text;
 
 -- =============================================================================
 -- USER WORD NOTES (per-user notes per word entry)

@@ -56,7 +56,7 @@ Mapping is in `POS_DUTCH_LABELS` in the translation route.
 
 The OpenAI prompt requests a brief contextual `note` (1-2 sentences) about common meaning vs example-specific meaning. Stored in `word_entry_translations.note`. Not displayed in card UI yet — saved for future use.
 
-**Migration:** `db/migrations/008_translation_note.sql` (adds `note text` column)
+**Schema:** `db/migrations/004_user_features.sql` (consolidated; includes `word_entry_translations.note`)
 
 ### Troubleshooting translations
 
@@ -147,7 +147,7 @@ Default voice: `nl-NL-FennaNeural`. Fallback voices: `nl-NL-MaartenNeural`, `nl-
 
 Users toggle audio quality in Settings UI ("Audio kwaliteit": Free / Premium). Stored in `user_settings.audio_quality` (`free` or `premium`).
 
-**Migration:** `db/migrations/009_audio_quality_setting.sql`
+**Schema:** `db/migrations/004_user_features.sql` (consolidated; includes `user_settings.audio_quality`)
 
 The `/api/tts` route receives `quality` parameter from the client. Cache keys include quality + provider ID so free and premium audio never collide.
 
@@ -197,7 +197,7 @@ update user_settings set audio_quality = 'premium' where user_id = '<uuid>';
 | Google TTS provider | `apps/ui/lib/audio/providers/googleCloudTtsProvider.ts` |
 | Azure TTS provider | `apps/ui/lib/audio/providers/azureTtsProvider.ts` |
 | Settings UI (audio toggle) | `apps/ui/components/training/SettingsModal.tsx` |
-| Migration: translation note | `db/migrations/008_translation_note.sql` |
-| Migration: audio quality | `db/migrations/009_audio_quality_setting.sql` |
+| Migration: translation note | `db/migrations/004_user_features.sql` |
+| Migration: audio quality | `db/migrations/004_user_features.sql` |
 | Bulk TTS cache migrator | `apps/ui/scripts/migrate-tts-cache.js` |
 | Bulk re-translate script | `apps/ui/scripts/retranslate-translations.js` |

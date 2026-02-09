@@ -1,5 +1,5 @@
 -- Bootstrap: Apply all migrations in order for a fresh deploy.
--- Generated: 2025-12-31
+-- Generated: 2026-02-09
 --
 -- Run from repo root:
 --   PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
@@ -7,7 +7,7 @@
 \set ON_ERROR_STOP on
 
 -- =============================================================================
--- CONSOLIDATED SCHEMA (captures full state as of 2025-12-31)
+-- CONSOLIDATED SCHEMA (captures full state as of 2026-02-09)
 -- =============================================================================
 
 -- Core schema: tables, indexes, extensions, curated lists
