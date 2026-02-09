@@ -23,10 +23,19 @@ const formatBuildTimestamp = (value: string): string => {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
+const formatShortDate = (value: string): string => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[date.getMonth()]} ${date.getDate()}`;
+};
+
 export const appVersionInfo = (): AppVersionInfo => {
   const commitShort = rawCommit === "dev" ? "dev" : rawCommit.slice(0, 8);
   const formattedBuildTimestamp = formatBuildTimestamp(rawBuildTimestamp);
-  const display = `Version ${rawVersion} (build ${commitShort}, ${formattedBuildTimestamp})`;
+  const shortDate = formatShortDate(rawBuildTimestamp);
+  const display = shortDate ? `v${rawVersion} · ${shortDate}` : `v${rawVersion}`;
 
   return {
     version: rawVersion,

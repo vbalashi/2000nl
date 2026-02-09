@@ -15,20 +15,20 @@ const commitHash =
   envNonEmpty(process.env.VERCEL_GIT_COMMIT_SHA) ??
   "dev";
 
-const normalizeForSemverMetadata = (value) =>
-  String(value ?? "").replace(/[^0-9A-Za-z]+/g, "");
-
-const commitShort = commitHash === "dev" ? "dev" : commitHash.slice(0, 8);
-const buildId = normalizeForSemverMetadata(buildTimestamp) || "unknown";
-
-// If the deploy pipeline provides an explicit version, use it.
-// Otherwise, keep package.json's base version but make it change per build/deploy
-// via semver build metadata: `0.1.0+<buildId>.<commitShort>`.
-const computedAppVersion = `${baseVersion}+${buildId}.${commitShort}`;
+// Version is derived from git tags by deploy pipeline (e.g. 0.16.3).
+// For local dev, fall back to package.json version.
 const appVersion =
   envNonEmpty(process.env.NEXT_PUBLIC_APP_VERSION) ??
   envNonEmpty(process.env.APP_VERSION) ??
-  computedAppVersion;
+  baseVersion;
+
+// Keep server-wide audio defaults available to the client UI.
+// This is not sensitive, and avoids the UI hard-defaulting to "free" when the
+// server is configured with `AUDIO_QUALITY_DEFAULT=premium`.
+const audioQualityDefault =
+  envNonEmpty(process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT) ??
+  envNonEmpty(process.env.AUDIO_QUALITY_DEFAULT) ??
+  "free";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -41,6 +41,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_APP_COMMIT: commitHash,
     NEXT_PUBLIC_BUILD_TIMESTAMP: buildTimestamp,
+    NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT: audioQualityDefault,
   },
 };
 
