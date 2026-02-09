@@ -1092,33 +1092,41 @@ export function TrainingScreen({ user }: Props) {
           graduationNote
         );
 
-        // FSRS debug: elapsed days, retrievability R, same-day flag (from DB log metadata)
-        const debug = await fetchLastReviewDebug({
-          userId: user.id,
-          wordId: currentWord.id,
-          mode: wordMode,
-        });
-        const meta = debug?.metadata ?? null;
-        if (meta) {
-          const r =
-            typeof meta.retrievability === "number"
-              ? meta.retrievability
-              : undefined;
-          const elapsed =
-            typeof meta.elapsed_days === "number"
-              ? meta.elapsed_days
-              : undefined;
-          const sameDay =
-            typeof meta.same_day === "boolean" ? meta.same_day : undefined;
-          console.log(
-            `%c   ↳ FSRS debug:`,
-            "color: #6b7280;",
-            elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
-            r != null ? `R=${r.toFixed(4)}` : "",
-            sameDay != null ? `same_day=${sameDay}` : "",
-            debug?.scheduled_at ? `scheduled_at=${debug.scheduled_at}` : "",
-            debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : ""
-          );
+        // Optional FSRS debug: only enabled when explicitly requested.
+        // This hits an optional RPC (`get_last_review_debug`) that is not exposed in
+        // most environments; calling it unconditionally creates noisy 404s in the
+        // browser console and in automation runs.
+        const enableFsrsDebug =
+          process.env.NODE_ENV !== "production" &&
+          process.env.NEXT_PUBLIC_ENABLE_FSRS_DEBUG === "1";
+        if (enableFsrsDebug) {
+          const debug = await fetchLastReviewDebug({
+            userId: user.id,
+            wordId: currentWord.id,
+            mode: wordMode,
+          });
+          const meta = debug?.metadata ?? null;
+          if (meta) {
+            const r =
+              typeof meta.retrievability === "number"
+                ? meta.retrievability
+                : undefined;
+            const elapsed =
+              typeof meta.elapsed_days === "number"
+                ? meta.elapsed_days
+                : undefined;
+            const sameDay =
+              typeof meta.same_day === "boolean" ? meta.same_day : undefined;
+            console.log(
+              `%c   ↳ FSRS debug:`,
+              "color: #6b7280;",
+              elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
+              r != null ? `R=${r.toFixed(4)}` : "",
+              sameDay != null ? `same_day=${sameDay}` : "",
+              debug?.scheduled_at ? `scheduled_at=${debug.scheduled_at}` : "",
+              debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : ""
+            );
+          }
         }
 
         // Explain what should happen to stats
