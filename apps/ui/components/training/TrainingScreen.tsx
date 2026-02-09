@@ -189,6 +189,9 @@ export function TrainingScreen({ user }: Props) {
   const [loadingWord, setLoadingWord] = useState(true);
   const [listHydrated, setListHydrated] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  // `actionLoading` is React state (async to update). Keep a ref for immediate,
+  // synchronous guards against double-submit from rapid keypresses/touches.
+  const actionLoadingRef = useRef(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
@@ -994,6 +997,10 @@ export function TrainingScreen({ user }: Props) {
         return;
       }
 
+      if (actionLoadingRef.current) return;
+      actionLoadingRef.current = true;
+      setActionLoading(true);
+      try {
       // Use the mode from the current word (which was set when the word was fetched)
       const wordMode = currentWord.mode ?? enabledModes[0];
 
@@ -1045,7 +1052,6 @@ export function TrainingScreen({ user }: Props) {
         `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`
       );
 
-      setActionLoading(true);
       const updatedStatus = await recordReview({
         userId: user.id,
         wordId: currentWord.id,
@@ -1213,7 +1219,10 @@ export function TrainingScreen({ user }: Props) {
       if (!prefetched) {
         await loadNextWord([currentWord.id], undefined, nextQueueTurn);
       }
-      setActionLoading(false);
+      } finally {
+        actionLoadingRef.current = false;
+        setActionLoading(false);
+      }
     },
     [
       advanceQueueTurn,
@@ -1320,6 +1329,8 @@ export function TrainingScreen({ user }: Props) {
       ) {
         return;
       }
+
+      if (actionLoadingRef.current) return;
 
       const normalized = event.key.toLowerCase();
 
@@ -1775,6 +1786,11 @@ export function TrainingScreen({ user }: Props) {
   );
 
   const handleCardTouchEnd = useCallback(() => {
+    if (actionLoadingRef.current) {
+      resetSwipe();
+      return;
+    }
+
     const cardWidth = cardSwipeRef.current?.offsetWidth ?? 0;
     const threshold = cardWidth * 0.35;
 
@@ -1810,7 +1826,7 @@ export function TrainingScreen({ user }: Props) {
     setSwipeActive(false);
     swipeTrackingRef.current = false;
     swipeStartRef.current = null;
-  }, [canSwipe, handleAction, showFirstTimeButtons, swipeOffset]);
+  }, [canSwipe, handleAction, resetSwipe, showFirstTimeButtons, swipeOffset]);
 
   useEffect(() => {
     resetSwipe();

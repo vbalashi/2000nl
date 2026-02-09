@@ -13,7 +13,7 @@
         "Normal single keypress still works correctly",
         "Typecheck passes"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
