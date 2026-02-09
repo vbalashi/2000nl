@@ -21,17 +21,20 @@ Requires `SUPABASE_DB_URL` or `DATABASE_URL` environment variable.
 
 ```bash
 # Analyze all reviews for a user
-./db/scripts/srs_history.sh <user_id>
+./db/scripts/srs_history.sh --user-id <user_id>
 
 # Analyze specific word for a user
-./db/scripts/srs_history.sh <user_id> <word_id>
+./db/scripts/srs_history.sh --user-id <user_id> --word-id <word_id>
+
+# CSV output
+./db/scripts/srs_history.sh --user-id <user_id> --format csv > out.csv
 ```
 
 ### Example
 
 ```bash
-./db/scripts/srs_history.sh abc-123-def-456
-./db/scripts/srs_history.sh abc-123-def-456 789
+./db/scripts/srs_history.sh --user-id abc-123-def-456
+./db/scripts/srs_history.sh --user-id abc-123-def-456 --word-id 789
 ```
 
 ### Output
@@ -58,6 +61,18 @@ The script shows chronological review history including:
 - `word_forms.form`: Word form variations
 
 **Note:** The script filters out `review_type='click'` events (sidebar word lookups) to focus on actual reviews.
+
+---
+
+## REST Export (When Postgres Is Unreachable)
+
+**Script:** `srs_history_rest.sh`
+**Purpose:** Export the same history via Supabase REST API (HTTPS), useful when direct Postgres connections are blocked.
+
+```bash
+./db/scripts/srs_history_rest.sh --user-email you@example.com --format csv > out.csv
+./db/scripts/srs_history_rest.sh --user-id <user_id> --format json > out.json
+```
 
 ---
 
