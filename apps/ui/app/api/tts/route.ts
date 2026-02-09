@@ -197,6 +197,8 @@ export async function POST(req: NextRequest) {
           url: cachedUrl,
           cached: true,
           cacheKey,
+          quality: effectiveQuality,
+          providerId: effectiveProviderId,
         },
         { status: 200, headers: { "Cache-Control": "no-store" } }
       );
@@ -212,6 +214,8 @@ export async function POST(req: NextRequest) {
         url,
         cached: false,
         cacheKey,
+        quality: effectiveQuality,
+        providerId: effectiveProviderId,
       },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );

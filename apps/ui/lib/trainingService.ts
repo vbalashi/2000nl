@@ -1647,8 +1647,14 @@ export async function fetchUserPreferences(
   // Parse preferences JSONB field (with fallback to empty object)
   const preferences = data?.preferences ?? {};
 
+  const audioQualityDefault =
+    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free";
   const audioQuality: AudioQuality =
-    data?.audio_quality === "premium" ? "premium" : "free";
+    data?.audio_quality === "premium"
+      ? "premium"
+      : data?.audio_quality === "free"
+        ? "free"
+        : audioQualityDefault;
 
   return {
     themePreference: data?.theme_preference ?? "system",
@@ -1683,6 +1689,24 @@ export async function updateUserPreferences(params: {
   const updates: Record<string, any> = {
     user_id: params.userId,
   };
+
+  // If we're inserting a new `user_settings` row and `audioQuality` is not
+  // provided, avoid silently falling back to the DB default ("free") when the
+  // app is configured with a different default (e.g. `AUDIO_QUALITY_DEFAULT=premium`).
+  //
+  // We only do this for new rows to avoid overwriting explicit user choices.
+  if (params.audioQuality === undefined) {
+    const { data: existing } = await supabase
+      .from("user_settings")
+      .select("user_id")
+      .eq("user_id", params.userId)
+      .maybeSingle();
+
+    if (!existing) {
+      updates.audio_quality =
+        (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free";
+    }
+  }
 
   if (params.themePreference !== undefined) {
     updates.theme_preference = params.themePreference;

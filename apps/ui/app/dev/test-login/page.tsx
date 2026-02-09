@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 
 type DevSessionResponse = {
   // Supabase session (shape can evolve; treat as opaque).
@@ -34,6 +33,20 @@ export default function DevTestLoginPage() {
       setStatus("loading");
       setMessage("Creating a dev session...");
 
+      // In React Strict Mode, effects can run twice in dev.
+      // Make this helper idempotent within a tab: if we've already completed once,
+      // just redirect.
+      const markerKey = "__dev_test_login_done_v1";
+      try {
+        if (window.sessionStorage?.getItem(markerKey) === "1") {
+          router.replace("/");
+          router.refresh();
+          return;
+        }
+      } catch {
+        // ignore
+      }
+
       const redirectTo =
         (typeof window !== "undefined"
           ? new URL(window.location.href).searchParams.get("redirectTo")
@@ -41,7 +54,6 @@ export default function DevTestLoginPage() {
 
       const res = await fetch("/api/dev/test-session", { cache: "no-store" });
       const json = (await res.json()) as DevSessionResponse;
-
       if (cancelled) return;
 
       if (!res.ok || json.error || !json.session) {
@@ -50,39 +62,38 @@ export default function DevTestLoginPage() {
         return;
       }
 
-      // Ensure we don't have an in-memory session already running with
-      // auto-refresh timers that could race token rotation during setSession().
-      try {
-        await supabase.auth.signOut({ scope: "local" });
-      } catch {
-        // ignore
-      }
-
-      // Supabase's public `setSession()` performs a refresh-token exchange, which can
-      // fail in some dev environments with "Refresh Token: Already Used". For local
-      // dev automation, it's sufficient to persist the minted session as-is.
-      const saveSession = (supabase.auth as any)?._saveSession as unknown;
-      if (typeof saveSession === "function") {
-        // Call as a method to preserve `this` binding.
-        await (supabase.auth as any)._saveSession(json.session);
-      } else {
-        const { error } = await supabase.auth.setSession({
-          access_token: json.session.access_token,
-          refresh_token: json.session.refresh_token,
-        });
-        if (error) {
-          setStatus("error");
-          setMessage(error.message);
-          return;
+      const resolveProjectRef = (supabaseUrl) => {
+        try {
+          const u = new URL(String(supabaseUrl || ""));
+          const host = u.hostname || "";
+          // Expected: <ref>.supabase.co
+          const ref = host.split(".")[0];
+          return ref || null;
+        } catch {
+          return null;
         }
+      };
+
+      const projectRef = resolveProjectRef(process.env.NEXT_PUBLIC_SUPABASE_URL) || "lliwdcpuuzjmxyzrjtoz";
+      const storageKey = `sb-${projectRef}-auth-token`;
+      try {
+        for (const k of Object.keys(localStorage)) {
+          if (k.startsWith("sb-")) localStorage.removeItem(k);
+        }
+        localStorage.setItem(storageKey, JSON.stringify(json.session));
+        window.sessionStorage?.setItem(markerKey, "1");
+      } catch (err: any) {
+        setStatus("error");
+        setMessage(String(err?.message ?? err ?? "Failed to write localStorage."));
+        return;
       }
 
       if (cancelled) return;
 
       setStatus("success");
       setMessage("Signed in. Redirecting...");
-      router.replace(redirectTo);
-      router.refresh();
+      // Use a hard navigation so the root page bootstraps with the stored session.
+      window.location.replace(redirectTo);
     };
 
     void run();
@@ -97,7 +108,7 @@ export default function DevTestLoginPage() {
       <p className="text-sm text-neutral-600">
         Uses a server-only Supabase Admin API call to mint an OTP for{" "}
         <code>TEST_USER_EMAIL</code>, then exchanges it for a session and stores
-        it via <code>supabase.auth.setSession()</code>.
+        the session JSON in <code>localStorage</code> (Supabase format).
       </p>
 
       <div className="rounded-md border border-neutral-200 bg-white p-4">

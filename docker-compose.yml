@@ -6,6 +6,10 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        # Next.js inlines NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT at build time via next.config.js,
+        # which reads AUDIO_QUALITY_DEFAULT. Pass it as a build arg so production builds (nuc)
+        # don't hard-default the client to "free" when the server is configured for premium.
+        AUDIO_QUALITY_DEFAULT: ${AUDIO_QUALITY_DEFAULT:-}
         # Provided by CI/CD (see .github/workflows/deploy-nuc.yml). Optional for local dev.
         NEXT_PUBLIC_APP_COMMIT: ${NEXT_PUBLIC_APP_COMMIT:-}
         NEXT_PUBLIC_BUILD_TIMESTAMP: ${NEXT_PUBLIC_BUILD_TIMESTAMP:-}

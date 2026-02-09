@@ -199,7 +199,9 @@ export function TrainingScreen({ user }: Props) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
-  const [audioQuality, setAudioQualityState] = useState<AudioQuality>("free");
+  const [audioQuality, setAudioQualityState] = useState<AudioQuality>(
+    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free"
+  );
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null
   );
