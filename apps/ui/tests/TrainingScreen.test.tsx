@@ -96,6 +96,34 @@ test("hotkey triggers recordReview like button click", async () => {
   );
 });
 
+test("rapid hotkeys while review is in-flight trigger only one review (US-093.5)", async () => {
+  // Keep the review in-flight so the sync guard stays active.
+  recordReview.mockReset();
+  recordReview.mockImplementation(() => new Promise(() => {}));
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+
+    // Reveal answer so grade hotkeys are available.
+    fireEvent.keyDown(window, { key: " " });
+    await screen.findByRole("button", { name: /opnieuw/i });
+
+    // Two rapid grades should only submit once.
+    fireEvent.keyDown(window, { key: "k" });
+    fireEvent.keyDown(window, { key: "h" });
+
+    await waitFor(() => expect(recordReview).toHaveBeenCalledTimes(1));
+    expect(recordReview).toHaveBeenCalledWith(
+      expect.objectContaining({ result: "success" })
+    );
+  } finally {
+    recordReview.mockReset();
+    recordReview.mockResolvedValue(null);
+  }
+});
+
 test("mobile card uses hybrid height so content can scroll within the card", async () => {
   render(<TrainingScreen user={user} />);
 
@@ -209,48 +237,67 @@ test("first encounter: swipe left triggers I already know (hide)", async () => {
 });
 
 test("uses prefetched next card for instant transition on answer", async () => {
-  const word1 = {
-    ...mockWord,
-    id: "word-1",
-    headword: "huis",
-  };
-  const word2 = {
-    ...mockWord,
-    id: "word-2",
-    headword: "boom",
-  };
+  const randomUUID = vi
+    .fn()
+    .mockReturnValueOnce("turn-1")
+    .mockReturnValueOnce("turn-2")
+    .mockReturnValueOnce("turn-3");
+  vi.stubGlobal("crypto", { randomUUID } as unknown as Crypto);
 
-  // First call = initial card. Subsequent calls = prefetch (and any retries).
-  fetchNextTrainingWordByScenario.mockReset();
-  fetchNextTrainingWordByScenario.mockResolvedValueOnce(word1).mockResolvedValue(word2);
+  try {
+    const word1 = {
+      ...mockWord,
+      id: "word-1",
+      headword: "huis",
+    };
+    const word2 = {
+      ...mockWord,
+      id: "word-2",
+      headword: "boom",
+    };
 
-  recordReview.mockReset();
-  // Keep the review in-flight to prove the UI switches without waiting for it.
-  recordReview.mockImplementation(() => new Promise(() => {}));
+    // First call = initial card. Subsequent calls = prefetch (and any retries).
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario
+      .mockResolvedValueOnce(word1)
+      .mockResolvedValue(word2);
 
-  render(<TrainingScreen user={user} />);
+    recordReview.mockReset();
+    // Keep the review in-flight to prove the UI switches without waiting for it.
+    recordReview.mockImplementation(() => new Promise(() => {}));
 
-  await screen.findByRole("heading", { name: "huis" });
+    render(<TrainingScreen user={user} />);
 
-  // Wait for the background prefetch to at least start and resolve.
-  await waitFor(() =>
-    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(2)
-  );
+    await screen.findByRole("heading", { name: "huis" });
 
-  // Reveal answer then grade.
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
+    // Wait for the background prefetch to at least start and resolve.
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(
+        2
+      )
+    );
 
-  fireEvent.keyDown(window, { key: "k" });
+    // Reveal answer then grade.
+    fireEvent.keyDown(window, { key: " " });
+    await screen.findByRole("button", { name: /opnieuw/i });
 
-  // The UI should advance to the prefetched next card without waiting for recordReview.
-  await screen.findByRole("heading", { name: "boom" });
+    fireEvent.keyDown(window, { key: "k" });
 
-  await waitFor(() =>
-    expect(recordReview).toHaveBeenCalledWith(
-      expect.objectContaining({ result: "success" })
-    )
-  );
+    // The UI should advance to the prefetched next card without waiting for recordReview.
+    await screen.findByRole("heading", { name: "boom" });
+
+    await waitFor(() =>
+      expect(recordReview).toHaveBeenCalledWith(
+        expect.objectContaining({ result: "success", turnId: "turn-1" })
+      )
+    );
+  } finally {
+    recordReview.mockReset();
+    recordReview.mockResolvedValue(null);
+    if (typeof (vi as any).unstubAllGlobals === "function") {
+      (vi as any).unstubAllGlobals();
+    }
+  }
 });
 
 test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", async () => {

@@ -4,6 +4,7 @@ Started: ma  9 feb 2026 22:22:30 CET
 ## Codebase Patterns
 - For async guards that must be synchronous (prevent rapid double-submits), use a `useRef` boolean instead of relying only on React state.
 - For per-card/session IDs that must persist across retries, store them in a `useRef` and set them in one place when a new card is presented (e.g., a `presentWord(...)` helper).
+- If the UI can swap to a prefetched “next card” before an async submit finishes, capture any per-card refs (like `turnId`) into a local variable before triggering the swap so the backend call uses the reviewed card’s ID.
 - For backend idempotency of RPCs, add an optional `p_turn_id` UUID, persist it (nullable) in `user_review_log.turn_id`, enforce with a partial unique index, and guard at the start of the function (optionally with an advisory lock to avoid races).
 - For legacy clients without an idempotency token, a backend temporal guard (e.g., skip if `last_reviewed_at` is within 10s) can reduce damage from accidental double-submits.
 ---
@@ -43,4 +44,13 @@ Started: ma  9 feb 2026 22:22:30 CET
 - **Learnings for future iterations:**
   - Put the temporal guard after loading `user_word_status` so it naturally no-ops for brand new cards (no `last_reviewed_at`).
   - Ensure the temporal guard only applies when `p_turn_id` is absent so the idempotency-token path remains authoritative.
+---
+
+## 2026-02-09 22:59:42 CET - US-093.5
+- Added regression tests covering: (1) rapid hotkeys while a review is in-flight only submit once, (2) turnId is attached to review submissions even when the UI advances to a prefetched next card, (3) `recordReview` forwards `turnId` via `p_turn_id` and falls back to legacy RPC signature when needed.
+- Fixed a subtle bug where `turnId` could be taken from the *next* prefetched card instead of the reviewed card by capturing it before swapping UI state.
+- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
+- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `apps/ui/tests/TrainingScreen.test.tsx`, `apps/ui/tests/trainingService.recordReview.test.ts`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - For instant UI transitions (prefetch swap), don’t read mutable refs after swapping state; capture them before the swap.
 ---

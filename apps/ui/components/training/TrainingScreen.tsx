@@ -1028,6 +1028,10 @@ export function TrainingScreen({ user }: Props) {
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
+      // Capture the turnId for the card being reviewed *before* we potentially
+      // swap the UI to a prefetched next card (which generates a new turnId).
+      const turnIdForReview = currentTurnIdRef.current;
+
       // Use the mode from the current word (which was set when the word was fetched)
       const wordMode = currentWord.mode ?? enabledModes[0];
 
@@ -1084,7 +1088,7 @@ export function TrainingScreen({ user }: Props) {
         wordId: currentWord.id,
         mode: wordMode,
         result,
-        turnId: currentTurnIdRef.current,
+        turnId: turnIdForReview,
       });
 
       // Log interval/stability changes to console

@@ -69,7 +69,7 @@
         "Typecheck passes",
         "npx vitest run passes"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]

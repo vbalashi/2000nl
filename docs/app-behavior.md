@@ -290,7 +290,7 @@ The Supabase RPC `handle_review` now accepts an optional `p_turn_id` and silentl
 **User Story:** US-093.4
 
 **Behavior:**
-When `p_turn_id` is not provided, `handle_review` silently no-ops if the same (user, word, mode) was reviewed within the last 10 seconds. This is a fallback for older clients that can't send turn IDs.
+When `p_turn_id` is not provided, `handle_review` silently no-ops if the same (user, word, mode) was reviewed within the last 10 seconds. This guard only applies to legacy clients that cannot send a turn ID; reviews that include a new `turnId` are not blocked by this check. The intent is defense-in-depth against accidental double-reviews from rapid retries/double-submits.
 
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
