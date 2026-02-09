@@ -1,6 +1,6 @@
 # 2000nl App Behavior Reference
 
-**Last updated:** 2026-02-08
+**Last updated:** 2026-02-09
 **Purpose:** Living documentation of app features, behavior, and developer tools. Read this FIRST before code exploration to understand expected behavior and existing functionality.
 
 ---
@@ -270,6 +270,13 @@ The cache is stored in hash-based subfolders for filesystem performance:
 
 **Behavior:**
 TTS cache files are now stored under a 2-character hash prefix directory (for example: `TTS_CACHE_DIR/ab/<cacheKey>.mp3`) to avoid large flat directories and improve filesystem performance. The TTS API route is backward-compatible during rollout: it can read both the legacy flat layout and the new nested layout, and it will migrate legacy files as they are accessed.
+
+### Client-Side Review Turn ID (Idempotency)
+**Added:** 2026-02-09
+**User Story:** US-093.2
+
+**Behavior:**
+When a training card is presented, the client generates a unique `turnId` (UUID) and includes it with every review submission for that card. If a submission is retried (for example after a transient network error), the same `turnId` is reused so the backend can treat it as the same review turn rather than a second review. Each newly presented card generates a new `turnId`.
 
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
