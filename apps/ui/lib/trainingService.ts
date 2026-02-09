@@ -614,21 +614,52 @@ export type LastReviewDebug = {
   } | null;
 } | null;
 
-export const recordReview = async (params: {
+export type RecordReviewParams = {
   userId: string;
   wordId: string;
   mode: TrainingMode;
   result: ReviewResult;
-}): Promise<WordStatusAfterReview | null> => {
-  const { error } = await supabase.rpc("handle_review", {
+  // Unique ID for the user's "turn" on a presented card. Used for backend idempotency.
+  // Nullable for backward compatibility and to support older deployments.
+  turnId?: string | null;
+};
+
+export const recordReview = async (
+  params: RecordReviewParams
+): Promise<WordStatusAfterReview | null> => {
+  const argsBase = {
     p_user_id: params.userId,
     p_word_id: params.wordId,
     p_mode: params.mode,
     p_result: params.result,
-  });
+  } as const;
 
-  if (error) {
-    console.error("Error recording review via RPC", error);
+  // Prefer sending turnId for idempotency, but fall back to the legacy signature
+  // if the backend hasn't been migrated yet.
+  const tryWithTurnId = async () =>
+    supabase.rpc("handle_review", {
+      ...argsBase,
+      p_turn_id: params.turnId ?? null,
+    });
+
+  const tryLegacy = async () => supabase.rpc("handle_review", argsBase);
+
+  let rpc = params.turnId ? await tryWithTurnId() : await tryLegacy();
+  if (rpc.error && params.turnId) {
+    const msg = rpc.error.message ?? "";
+    const code = (rpc.error as any)?.code as string | undefined;
+    const looksLikeLegacySignature =
+      code === "PGRST202" ||
+      msg.includes("Could not find the function") ||
+      msg.includes("p_turn_id") ||
+      msg.includes("handle_review");
+    if (looksLikeLegacySignature) {
+      rpc = await tryLegacy();
+    }
+  }
+
+  if (rpc.error) {
+    console.error("Error recording review via RPC", rpc.error);
     return null;
   }
 

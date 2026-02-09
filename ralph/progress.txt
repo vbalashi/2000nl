@@ -3,6 +3,7 @@ Started: ma  9 feb 2026 22:22:30 CET
 
 ## Codebase Patterns
 - For async guards that must be synchronous (prevent rapid double-submits), use a `useRef` boolean instead of relying only on React state.
+- For per-card/session IDs that must persist across retries, store them in a `useRef` and set them in one place when a new card is presented (e.g., a `presentWord(...)` helper).
 ---
 
 ## 2026-02-09 22:34:45 CET - US-093.1
@@ -11,4 +12,14 @@ Started: ma  9 feb 2026 22:22:30 CET
 - UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
 - Files changed: `apps/ui/components/training/TrainingScreen.tsx`
 - Learnings for future iterations: If preventing double-submit matters, gate the action entrypoint itself (not only buttons/disabled UI), since React state updates are not synchronous.
+---
+
+## 2026-02-09 22:42:19 CET - US-093.2
+- Added a per-card `turnId` (UUID) generated when a card is presented, stored in a ref, and passed into `recordReview`.
+- Updated `recordReview` to accept `turnId` and attempt an RPC call with `p_turn_id`, with a backward-compatible retry without it if the backend function signature hasn't been migrated yet.
+- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
+- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `apps/ui/lib/trainingService.ts`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - If the DB migration is shipped separately from the UI, prefer a best-effort RPC call with new params plus a safe fallback to the legacy signature to avoid breaking older deployments.
+  - Centralizing “card presented” logic (e.g., `presentWord`) prevents missing side effects like updating `turnId` across multiple code paths (forced load, normal load, prefetch swap).
 ---

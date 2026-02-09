@@ -146,6 +146,26 @@ function predictNextQueueTurn(params: {
   return "review";
 }
 
+function generateReviewTurnId(): string {
+  const c = (globalThis as any).crypto as Crypto | undefined;
+  if (c?.randomUUID) return c.randomUUID();
+
+  // RFC 4122 v4 fallback (best-effort) for environments without crypto.randomUUID().
+  if (c?.getRandomValues) {
+    const b = new Uint8Array(16);
+    c.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const hex = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
+      16,
+      20
+    )}-${hex.slice(20)}`;
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export function TrainingScreen({ user }: Props) {
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -192,6 +212,12 @@ export function TrainingScreen({ user }: Props) {
   // `actionLoading` is React state (async to update). Keep a ref for immediate,
   // synchronous guards against double-submit from rapid keypresses/touches.
   const actionLoadingRef = useRef(false);
+  const currentTurnIdRef = useRef<string | null>(null);
+
+  const presentWord = useCallback((word: TrainingWord | null) => {
+    setCurrentWord(word);
+    currentTurnIdRef.current = word ? generateReviewTurnId() : null;
+  }, [setCurrentWord]);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
@@ -810,7 +836,7 @@ export function TrainingScreen({ user }: Props) {
           if (forced) {
             const mode = enabledModes[0] ?? "word-to-definition";
             void recordWordView({ userId: user.id, wordId: forced.id, mode });
-            setCurrentWord({
+            presentWord({
               ...forced,
               ...(typeof firstEncounter === "boolean"
                 ? { isFirstEncounter: firstEncounter }
@@ -844,9 +870,9 @@ export function TrainingScreen({ user }: Props) {
             wordId: nextWord.id,
             mode: wordMode,
           });
-          setCurrentWord(nextWord);
+          presentWord(nextWord);
         } else {
-          setCurrentWord(null);
+          presentWord(null);
         }
       } finally {
         loadingInProgress.current = false;
@@ -858,6 +884,7 @@ export function TrainingScreen({ user }: Props) {
       enabledModes,
       cardFilter,
       firstEncounter,
+      presentWord,
       queueTurn,
       user?.id,
       wordListId,
@@ -1023,7 +1050,7 @@ export function TrainingScreen({ user }: Props) {
         setLoadingWord(false);
         setRevealed(false);
         setHintRevealed(false);
-        setCurrentWord(prefetched);
+        presentWord(prefetched);
         const nextMode = prefetched.mode ?? enabledModes[0] ?? "word-to-definition";
         void recordWordView({
           userId: user.id,
@@ -1057,6 +1084,7 @@ export function TrainingScreen({ user }: Props) {
         wordId: currentWord.id,
         mode: wordMode,
         result,
+        turnId: currentTurnIdRef.current,
       });
 
       // Log interval/stability changes to console
@@ -1231,6 +1259,7 @@ export function TrainingScreen({ user }: Props) {
       enabledModes,
       loadNextWord,
       loadStats,
+      presentWord,
       preloadAudioForWord,
       stats,
       user?.id,

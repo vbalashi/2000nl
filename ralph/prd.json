@@ -1,6 +1,6 @@
 {
   "branchName": "ralph/fsrs-double-review-fix",
-  "stories": [
+  "userStories": [
     {
       "id": "US-093.1",
       "title": "Client-Side Keyboard Guard",
@@ -27,7 +27,7 @@
         "New card load generates new turnId",
         "Typecheck passes"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
