@@ -41,7 +41,7 @@
         "NULL turn_id (backward compat) still works normally",
         "Typecheck passes"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -4,6 +4,7 @@ Started: ma  9 feb 2026 22:22:30 CET
 ## Codebase Patterns
 - For async guards that must be synchronous (prevent rapid double-submits), use a `useRef` boolean instead of relying only on React state.
 - For per-card/session IDs that must persist across retries, store them in a `useRef` and set them in one place when a new card is presented (e.g., a `presentWord(...)` helper).
+- For backend idempotency of RPCs, add an optional `p_turn_id` UUID, persist it (nullable) in `user_review_log.turn_id`, enforce with a partial unique index, and guard at the start of the function (optionally with an advisory lock to avoid races).
 ---
 
 ## 2026-02-09 22:34:45 CET - US-093.1
@@ -22,4 +23,13 @@ Started: ma  9 feb 2026 22:22:30 CET
 - **Learnings for future iterations:**
   - If the DB migration is shipped separately from the UI, prefer a best-effort RPC call with new params plus a safe fallback to the legacy signature to avoid breaking older deployments.
   - Centralizing “card presented” logic (e.g., `presentWord`) prevents missing side effects like updating `turnId` across multiple code paths (forced load, normal load, prefetch swap).
+---
+
+## 2026-02-09 22:48:19 CET - US-093.3
+- Added DB idempotency support for reviews: `user_review_log.turn_id` (nullable UUID) with a partial unique index, and `handle_review(p_turn_id uuid DEFAULT NULL)` early-return guard to treat duplicate submissions as a no-op.
+- Used an advisory transaction lock keyed by `turn_id` to avoid races where concurrent requests could both pass an `EXISTS` check.
+- UI verification skipped (not necessary for this change; validated via `npx tsc --noEmit` + `npx vitest run`).
+- Files changed: `db/migrations/007_review_idempotency.sql`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - For “silent” dedupe, pair a guard (`EXISTS` early-return) with a unique index, and consider advisory locks if concurrent duplicates are plausible.
 ---
