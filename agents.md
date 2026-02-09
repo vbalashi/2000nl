@@ -36,18 +36,22 @@ Tip: if using a local `.env.local`, you can store `SUPABASE_DB_URL` there and ru
 - Prod login techniques (including token/session injection for `agent-browser`): `docs/production-login.md`
 - Sentence audio (TTS) testing and troubleshooting: `docs/audio-tts-testing.md`
 
-## agent-browser Auth Persistence (Local Dev)
+## agent-browser Auth Persistence (Local Dev + Prod)
 
 Use a persistent browser profile so you don't have to fight OTP/login during automation:
 
-- Profile dir: `tmp/agent-browser/profile-2000nl-local` (do not commit)
-- Session name (suggested): `ab-local`
+- Local dev profile dir: `tmp/agent-browser/profile-2000nl-local` (do not commit)
+- Prod profile dir: `tmp/agent-browser/profile-2000nl-prod` (do not commit)
+- Session names (suggested): `ab-local`, `ab-prod`
+
+Important:
+- `--profile` is only applied when the agent-browser daemon starts. If you reuse a running daemon you can get `--profile ignored: daemon already running`. Fix: `agent-browser close` then re-run the command with `--profile`.
+- Supabase auth is stored in `localStorage` under `sb-lliwdcpuuzjmxyzrjtoz-auth-token` (origin-scoped), so you must inject separately for `http://127.0.0.1:3000` (dev) and `https://2000.dilum.io` (prod).
 
 Deterministic flow (recommended):
 
-1) Mint a Supabase session JSON to `tmp/agent-browser/local-session.b64`:
-   - See: `apps/ui/docs/automation-agent-browser.md` (Deterministic Session Injection)
-2) Inject it once into `http://127.0.0.1:3000` with:
-   - `agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/`
-3) Next runs are just:
-   - `agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/`
+1) Mint a Supabase session JSON (server-side) and write base64 to `tmp/agent-browser/*.b64`:
+   - Local dev: `apps/ui/docs/automation-agent-browser.md` (Deterministic Session Injection)
+   - Production: `docs/production-login.md` (Inject a Supabase Session Token into Production)
+2) Inject into the correct origin once (dev or prod) using a persistent `--profile`, then reload.
+3) Subsequent runs reuse the same `--profile` and typically don't need reinjection until the session expires.

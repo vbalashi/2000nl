@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import { createAudioProvider } from "@/lib/audio/audioProviderFactory";
 import type { AudioQuality, PremiumAudioProviderId } from "@/lib/audio/types";
+import type { IAudioProvider } from "@/lib/audio/audioProvider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,10 +83,8 @@ async function getCachedAudio(cacheKey: string): Promise<string | null> {
 async function generateTTS(
   text: string,
   cacheKey: string,
-  selection: { quality: AudioQuality }
+  provider: IAudioProvider
 ): Promise<string> {
-  const provider = createAudioProvider({ quality: selection.quality });
-
   const { audioMp3 } = await provider.generateAudio(text);
 
   const { nestedDir, nestedPath } = getCachePaths(cacheKey);
@@ -178,10 +177,18 @@ export async function POST(req: NextRequest) {
       requestedQuality ||
       (process.env.AUDIO_QUALITY_DEFAULT as AudioQuality) ||
       "free";
+
+    // Resolve provider via the same factory used for generation, so cache keys always
+    // match the actual provider used (and "premium" prefers a configured backend).
+    const provider = createAudioProvider({ quality: effectiveQuality });
     const effectiveProviderId: "free" | PremiumAudioProviderId =
-      effectiveQuality === "premium"
-        ? ((process.env.PREMIUM_AUDIO_PROVIDER as PremiumAudioProviderId) || "google")
-        : "free";
+      provider.id === "free"
+        ? "free"
+        : provider.id === "google" || provider.id === "azure"
+          ? provider.id
+          : (() => {
+              throw new Error(`Unknown audio provider id: ${provider.id}`);
+            })();
 
     const cacheKey = getCacheKey({
       text: trimmedText,
@@ -205,9 +212,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate new audio
-    const url = await generateTTS(trimmedText, cacheKey, {
-      quality: effectiveQuality,
-    });
+    const url = await generateTTS(trimmedText, cacheKey, provider);
 
     return NextResponse.json(
       {

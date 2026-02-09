@@ -21,10 +21,30 @@ export function createAudioProvider(selection: AudioProviderSelection = {}): IAu
   const quality = selection.quality || (process.env.AUDIO_QUALITY_DEFAULT as AudioQuality) || "free";
 
   if (quality === "premium") {
-    const providerId =
+    let providerId: PremiumAudioProviderId | undefined =
       selection.premiumProviderId ||
-      (process.env.PREMIUM_AUDIO_PROVIDER as PremiumAudioProviderId) ||
-      "google";
+      (process.env.PREMIUM_AUDIO_PROVIDER as PremiumAudioProviderId | undefined);
+
+    // If the premium provider isn't explicitly configured, prefer a provider that is
+    // actually configured in the environment. This prevents "premium" silently using
+    // Google just because it's the default string, even when Azure is set up.
+    if (!providerId) {
+      const hasAzure = Boolean(
+        (process.env.AZURE_SPEECH_KEY || process.env.AZURE_TTS_API_KEY) &&
+          (process.env.AZURE_SPEECH_REGION || process.env.AZURE_TTS_ENDPOINT)
+      );
+      const hasGoogle = Boolean(
+        process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_TTS_API_KEY
+      );
+
+      if (hasAzure) providerId = "azure";
+      else if (hasGoogle) providerId = "google";
+      else {
+        throw new Error(
+          "Premium audio requested, but no premium provider is configured. Set PREMIUM_AUDIO_PROVIDER=google|azure and configure credentials."
+        );
+      }
+    }
 
     if (providerId === "google") {
       return new GoogleCloudTtsProvider();

@@ -87,6 +87,11 @@ This is the most repeatable flow for debugging.
 ```bash
 cd /home/khrustal/dev/2000nl-ui
 
+# Use a persistent profile so the prod session sticks across runs.
+# If you see `--profile ignored: daemon already running`, run `agent-browser close` and retry.
+mkdir -p tmp/agent-browser
+agent-browser close || true
+
 # Convert the session JSON to base64 to avoid quoting issues when passing to agent-browser.
 node - <<'NODE'
 const fs = require('fs');
@@ -96,19 +101,22 @@ NODE
 
 b64=$(cat tmp/prod-session.b64)
 
-agent-browser --session prod2000 open https://2000.dilum.io/
+agent-browser --session prod2000 --profile tmp/agent-browser/profile-2000nl-prod open https://2000.dilum.io/
 agent-browser --session prod2000 wait --load networkidle
 
 # Clear existing Supabase keys + set the new session JSON
-agent-browser --session prod2000 eval '(() => {
+cat <<EOF | agent-browser --session prod2000 eval --stdin
+(() => {
   const key = "sb-lliwdcpuuzjmxyzrjtoz-auth-token";
-  const json = atob("'$b64'");
+  const json = atob("${b64}");
+  const session = JSON.parse(json).session;
   for (const k of Object.keys(localStorage)) {
     if (k.startsWith("sb-")) localStorage.removeItem(k);
   }
-  localStorage.setItem(key, JSON.stringify(JSON.parse(json).session));
+  localStorage.setItem(key, JSON.stringify(session));
   return "ok";
-})()'
+})()
+EOF
 
 agent-browser --session prod2000 reload
 agent-browser --session prod2000 wait --load networkidle
@@ -116,6 +124,15 @@ agent-browser --session prod2000 snapshot -i -C
 ```
 
 You should now see the training UI (not the auth screen).
+
+### 3) Next runs (no auth step, usually)
+
+```bash
+agent-browser --session prod2000 --profile tmp/agent-browser/profile-2000nl-prod open https://2000.dilum.io/
+agent-browser --session prod2000 wait --text "Antwoord Tonen"
+```
+
+If it drops back to the login screen, the session likely expired. Re-run steps (1) + (2) to mint and inject a new session.
 
 ### Security notes
 

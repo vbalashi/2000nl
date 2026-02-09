@@ -4,6 +4,8 @@ This doc is for running quick UI smoke checks with `agent-browser` in both deskt
 
 Recommended approach: use a persistent `agent-browser --profile ...` directory and inject a freshly-minted Supabase session JSON into `localStorage` once. After that, the profile keeps you logged in across runs.
 
+For production auth injection (https://2000.dilum.io), see `docs/production-login.md`.
+
 ## Prerequisites
 
 1. Local dev server is running:
@@ -39,6 +41,7 @@ Use a single profile directory for local automation:
 Notes:
 - `--profile` only applies when the agent-browser daemon starts. If you see `--profile ignored: daemon already running`, run `agent-browser close` and retry.
 - Never commit anything under `tmp/`.
+- Supabase auth is origin-scoped. A session injected into `http://127.0.0.1:3000` does not apply to `https://2000.dilum.io` and vice versa.
 
 ## Deterministic Session Injection (Recommended)
 
@@ -109,6 +112,14 @@ agent-browser --session ab-local wait --text "Antwoord Tonen"
 ```bash
 agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/
 ```
+
+## Production Profile (Recommended)
+
+For production debugging, use a separate profile directory so you do not mix dev and prod sessions:
+
+- `tmp/agent-browser/profile-2000nl-prod`
+
+The session injection steps are the same idea, but you must mint a prod session JSON and inject it into the prod origin. Follow `docs/production-login.md` (Option B), and always include `--profile tmp/agent-browser/profile-2000nl-prod` in your prod `agent-browser` commands.
 
 ## Desktop Run (Example)
 
