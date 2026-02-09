@@ -6,6 +6,12 @@ This app uses Supabase Auth. In production, the `/dev/test-login` helper is inte
 
 This doc describes two ways to get an authenticated session in production for debugging (e.g. testing sentence audio playback) without waiting for OTP email delivery.
 
+If you just want a one-command flow (mint + inject + reload), use:
+
+```bash
+scripts/ab-auth-prod.sh
+```
+
 ## Option A: Normal Production Login (OTP/OAuth)
 
 1. Open `https://2000.dilum.io`.

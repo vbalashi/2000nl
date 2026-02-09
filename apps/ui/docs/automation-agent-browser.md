@@ -121,6 +121,12 @@ For production debugging, use a separate profile directory so you do not mix dev
 
 The session injection steps are the same idea, but you must mint a prod session JSON and inject it into the prod origin. Follow `docs/production-login.md` (Option B), and always include `--profile tmp/agent-browser/profile-2000nl-prod` in your prod `agent-browser` commands.
 
+If you want the whole flow in one command, run:
+
+```bash
+scripts/ab-auth-prod.sh
+```
+
 ## Desktop Run (Example)
 
 ```bash
