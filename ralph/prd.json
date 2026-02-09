@@ -54,7 +54,7 @@
         "Normal reviews (>10s apart) work as before",
         "Typecheck passes"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -278,6 +278,20 @@ TTS cache files are now stored under a 2-character hash prefix directory (for ex
 **Behavior:**
 When a training card is presented, the client generates a unique `turnId` (UUID) and includes it with every review submission for that card. If a submission is retried (for example after a transient network error), the same `turnId` is reused so the backend can treat it as the same review turn rather than a second review. Each newly presented card generates a new `turnId`.
 
+### Backend Review Idempotency Guard (turnId)
+**Added:** 2026-02-09
+**User Story:** US-093.3
+
+**Behavior:**
+The Supabase RPC `handle_review` now accepts an optional `p_turn_id` and silently no-ops if that `turn_id` was already logged, preventing duplicate reviews from double-submits/retries. A unique index enforces one log entry per non-null `turn_id`, while legacy clients that do not send a turn ID continue to work normally.
+
+### Backend Review Temporal Guard (legacy clients)
+**Added:** 2026-02-09
+**User Story:** US-093.4
+
+**Behavior:**
+When `p_turn_id` is not provided, `handle_review` silently no-ops if the same (user, word, mode) was reviewed within the last 10 seconds. This is a fallback for older clients that can't send turn IDs.
+
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
 **User Stories:** US-085.1, US-085.2

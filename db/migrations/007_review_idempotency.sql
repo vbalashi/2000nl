@@ -94,6 +94,15 @@ BEGIN
     FROM user_word_status
     WHERE user_id = p_user_id AND word_id = p_word_id AND mode = p_mode;
 
+    -- Defense-in-depth (backward compat): if the client doesn't send turn_id,
+    -- ignore a repeat review on the same (user, word, mode) within a short window.
+    -- This reduces damage from accidental double-submit even for legacy clients.
+    IF p_turn_id IS NULL
+        AND v_status.last_reviewed_at IS NOT NULL
+        AND (now() - v_status.last_reviewed_at) < interval '10 seconds' THEN
+        RETURN;
+    END IF;
+
     v_params := fsrs6_parameters();
     SELECT COALESCE(target_retention, 0.9) INTO v_target
     FROM user_settings WHERE user_id = p_user_id;
@@ -182,4 +191,3 @@ BEGIN
     VALUES (p_user_id, p_word_id, p_mode, 'review_' || p_result);
 END;
 $$;
-
