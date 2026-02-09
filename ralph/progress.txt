@@ -8,6 +8,7 @@ Started: ma  9 feb 2026 22:22:30 CET
 ## 2026-02-09 22:34:45 CET - US-093.1
 - Added synchronous in-flight guard (`actionLoadingRef`) to block keyboard shortcuts and swipe completion while a review submission is in progress.
 - Wrapped `handleAction` in a `try/finally` so loading state is reliably cleared even if async work throws.
+- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
 - Files changed: `apps/ui/components/training/TrainingScreen.tsx`
 - Learnings for future iterations: If preventing double-submit matters, gate the action entrypoint itself (not only buttons/disabled UI), since React state updates are not synchronous.
 ---
