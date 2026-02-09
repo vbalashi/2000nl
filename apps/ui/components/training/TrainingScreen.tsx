@@ -2026,12 +2026,6 @@ export function TrainingScreen({ user }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
-          {audioQuality === "premium" ? (
-            <div className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200 md:text-[11px]">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-300" />
-              Premium audio
-            </div>
-          ) : null}
           <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
             <div
               role="button"
