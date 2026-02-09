@@ -62,7 +62,7 @@ export default function DevTestLoginPage() {
         return;
       }
 
-      const resolveProjectRef = (supabaseUrl) => {
+      const resolveProjectRef = (supabaseUrl: string | null | undefined) => {
         try {
           const u = new URL(String(supabaseUrl || ""));
           const host = u.hostname || "";
