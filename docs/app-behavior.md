@@ -264,6 +264,13 @@ The cache is stored in hash-based subfolders for filesystem performance:
 - New layout: `TTS_CACHE_DIR/ab/<cacheKey>.mp3` (where `ab` is the first 2 chars of the cache key)
 - Legacy flat files (`TTS_CACHE_DIR/<cacheKey>.mp3`) are still served and are migrated lazily on access; a one-shot migration script exists at `apps/ui/scripts/migrate-tts-cache.js`.
 
+### TTS Cache Subfolder Organization
+**Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-054.1
+
+**Behavior:**
+TTS cache files are now stored under a 2-character hash prefix directory (for example: `TTS_CACHE_DIR/ab/<cacheKey>.mp3`) to avoid large flat directories and improve filesystem performance. The TTS API route is backward-compatible during rollout: it can read both the legacy flat layout and the new nested layout, and it will migrate legacy files as they are accessed.
+
 ### PWA Icon and iOS Splash Screens
 **Added:** 2026-02-06 (Sprint: Production Readiness & Polish)
 **User Stories:** US-085.1, US-085.2
