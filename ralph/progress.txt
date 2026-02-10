@@ -3,6 +3,7 @@ Started: di 10 feb 2026 10:00:23 CET
 
 ## Codebase Patterns
 - For session-scoped state that must not trigger renders (e.g., "already reviewed this session"), use `useRef(new Set())` and clear it via `useEffect` on session boundary changes (list/scenario/mode) plus an unmount cleanup.
+- For local browser automation without OTP, use the dev-only helper page `/dev/test-login` (requires server env `SUPABASE_SERVICE_ROLE_KEY` + `TEST_USER_EMAIL`; see `apps/ui/README.md`).
 ---
 
 ## 2026-02-10 10:03:29 CET - US-094.1
@@ -13,4 +14,13 @@ Started: di 10 feb 2026 10:00:23 CET
 - Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `ralph/prd.json`, `ralph/progress.txt`
 - **Learnings for future iterations:**
   - If a piece of state is needed across async flows but should not participate in render, keep it in a ref and explicitly reset it on boundary changes.
+---
+
+## 2026-02-10 10:09:01 CET - US-094.2
+- Updated next-card prefetch to pass `[..., reviewedInSessionRef.current, forWordId]` as the exclude list.
+- Updated the on-demand fallback `loadNextWord` call to pass `[..., reviewedInSessionRef.current, currentWord.id]` as the exclude list.
+- Browser verification (agent-browser): used `/dev/test-login` and stepped through a few rapid transitions; observed headwords advance without immediately repeating the just-reviewed word (`garage` -> `ineen` -> `kamer`).
+- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - The race fix relies on always including session-reviewed IDs in both prefetch and fallback fetch paths, not just one.
 ---

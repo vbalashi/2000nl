@@ -159,7 +159,7 @@ function generateReviewTurnId(): string {
     const hex = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
       16,
-      20
+      20,
     )}-${hex.slice(20)}`;
   }
 
@@ -177,14 +177,15 @@ export function TrainingScreen({ user }: Props) {
   ]);
   const [cardFilter, setCardFilterState] = useState<CardFilter>("both");
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
-    null
+    null,
   );
   const [recentEntries, setRecentEntries] = useState<SidebarHistoryItem[]>([]);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [trainingSidebarPinned, setTrainingSidebarPinnedState] = useState(false);
+  const [trainingSidebarPinned, setTrainingSidebarPinnedState] =
+    useState(false);
   // Entry to show in the details tab (can be current word or a sidebar card)
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
@@ -217,10 +218,13 @@ export function TrainingScreen({ user }: Props) {
   // them during prefetch/on-demand fetch (used by later US-094 stories).
   const reviewedInSessionRef = useRef<Set<string>>(new Set());
 
-  const presentWord = useCallback((word: TrainingWord | null) => {
-    setCurrentWord(word);
-    currentTurnIdRef.current = word ? generateReviewTurnId() : null;
-  }, [setCurrentWord]);
+  const presentWord = useCallback(
+    (word: TrainingWord | null) => {
+      setCurrentWord(word);
+      currentTurnIdRef.current = word ? generateReviewTurnId() : null;
+    },
+    [setCurrentWord],
+  );
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
@@ -232,10 +236,10 @@ export function TrainingScreen({ user }: Props) {
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
   const [audioQuality, setAudioQualityState] = useState<AudioQuality>(
-    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free"
+    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free",
   );
   const [translationLang, setTranslationLangState] = useState<string | null>(
-    null
+    null,
   );
   const [audioModeEnabled, setAudioModeEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -251,9 +255,9 @@ export function TrainingScreen({ user }: Props) {
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const swipeTrackingRef = useRef(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState<
-    "left" | "right" | null
-  >(null);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
+    null,
+  );
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [swipeActive, setSwipeActive] = useState(false);
 
@@ -261,7 +265,8 @@ export function TrainingScreen({ user }: Props) {
   const [runTour, setRunTour] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
-  const [onboardingLang, setOnboardingLang] = useState<OnboardingLanguage>("en");
+  const [onboardingLang, setOnboardingLang] =
+    useState<OnboardingLanguage>("en");
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   // Initialize onboarding language from DB preferences (auto-detect, don't auto-start tour)
@@ -277,7 +282,8 @@ export function TrainingScreen({ user }: Props) {
 
         // Auto-detect language if not already set
         if (!onboardingLanguage) {
-          const { detectOnboardingLanguage } = await import("@/lib/onboardingI18n");
+          const { detectOnboardingLanguage } =
+            await import("@/lib/onboardingI18n");
           const detected = detectOnboardingLanguage(translationLang);
           setOnboardingLang(detected);
 
@@ -286,7 +292,7 @@ export function TrainingScreen({ user }: Props) {
             userId: user.id,
             preferences: {
               ...prefs.preferences,
-              onboardingLanguage: detected
+              onboardingLanguage: detected,
             },
           });
         } else {
@@ -323,60 +329,66 @@ export function TrainingScreen({ user }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const handleLanguageSelect = useCallback(async (lang: OnboardingLanguage) => {
-    setOnboardingLang(lang);
-    setOnboardingLanguage(lang);
-    setShowLanguageSelection(false);
+  const handleLanguageSelect = useCallback(
+    async (lang: OnboardingLanguage) => {
+      setOnboardingLang(lang);
+      setOnboardingLanguage(lang);
+      setShowLanguageSelection(false);
 
-    // Save language to DB
-    if (user?.id) {
-      try {
-        const prefs = await fetchUserPreferences(user.id);
-        await updateUserPreferences({
-          userId: user.id,
-          preferences: {
-            ...prefs.preferences,
-            onboardingLanguage: lang,
-          },
-        });
-      } catch (e) {
-        console.error("[Onboarding] Failed to save language:", e);
+      // Save language to DB
+      if (user?.id) {
+        try {
+          const prefs = await fetchUserPreferences(user.id);
+          await updateUserPreferences({
+            userId: user.id,
+            preferences: {
+              ...prefs.preferences,
+              onboardingLanguage: lang,
+            },
+          });
+        } catch (e) {
+          console.error("[Onboarding] Failed to save language:", e);
+        }
       }
-    }
 
-    // Start the tour after language selection
-    setRunTour(true);
-  }, [user?.id]);
+      // Start the tour after language selection
+      setRunTour(true);
+    },
+    [user?.id],
+  );
 
   // Method to manually start onboarding (called from settings)
   const startOnboarding = useCallback(() => {
     setRunTour(true);
   }, []);
 
-  const handleJoyrideCallback = useCallback(async (data: CallBackProps) => {
-    const { status, type } = data;
-    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
+  const handleJoyrideCallback = useCallback(
+    async (data: CallBackProps) => {
+      const { status, type } = data;
+      const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-    if (finishedStatuses.includes(status) && user?.id) {
-      // Tour finished or skipped - save to DB and stop tour
-      setRunTour(false);
-      setOnboardingCompleted(true);
+      if (finishedStatuses.includes(status) && user?.id) {
+        // Tour finished or skipped - save to DB and stop tour
+        setRunTour(false);
+        setOnboardingCompleted(true);
 
-      try {
-        const prefs = await fetchUserPreferences(user.id);
-        await updateUserPreferences({
-          userId: user.id,
-          preferences: {
-            ...prefs.preferences,
-            onboardingCompleted: true,
-          },
-        });
-        console.log("[Onboarding] Marked as completed in DB");
-      } catch (e) {
-        console.error("[Onboarding] Failed to save completion:", e);
+        try {
+          const prefs = await fetchUserPreferences(user.id);
+          await updateUserPreferences({
+            userId: user.id,
+            preferences: {
+              ...prefs.preferences,
+              onboardingCompleted: true,
+            },
+          });
+          console.log("[Onboarding] Marked as completed in DB");
+        } catch (e) {
+          console.error("[Onboarding] Failed to save completion:", e);
+        }
       }
-    }
-  }, [user?.id]);
+    },
+    [user?.id],
+  );
 
   useEffect(() => {
     if (devMode) {
@@ -389,7 +401,7 @@ export function TrainingScreen({ user }: Props) {
     try {
       window.localStorage.setItem(
         "audioModeEnabled",
-        audioModeEnabled.toString()
+        audioModeEnabled.toString(),
       );
     } catch {
       // Ignore storage errors (e.g. tests without localStorage support).
@@ -400,7 +412,7 @@ export function TrainingScreen({ user }: Props) {
     if (!currentWord) return;
     console.log(
       `[Training] First encounter: ${currentWord.headword}`,
-      currentWord.isFirstEncounter
+      currentWord.isFirstEncounter,
     );
   }, [currentWord, currentWord?.id]);
 
@@ -502,7 +514,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   const toggleTrainingSidebarPinned = useCallback(() => {
@@ -551,7 +563,7 @@ export function TrainingScreen({ user }: Props) {
         void updateUserPreferences({ userId: user.id, modesEnabled: newModes });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist card filter to Supabase
@@ -568,7 +580,7 @@ export function TrainingScreen({ user }: Props) {
         void updateUserPreferences({ userId: user.id, cardFilter: newFilter });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist language to Supabase
@@ -583,7 +595,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist theme to Supabase
@@ -598,7 +610,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   const setAudioQuality = useCallback(
@@ -612,7 +624,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist new/review ratio to Supabase
@@ -627,7 +639,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist translation language preference to Supabase
@@ -635,7 +647,7 @@ export function TrainingScreen({ user }: Props) {
     (newLang: string | null) => {
       console.log(
         "[Settings] Saving translation language to Supabase:",
-        newLang
+        newLang,
       );
       setTranslationLangState(newLang);
       if (user?.id) {
@@ -645,7 +657,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Wrapper to persist active scenario to Supabase
@@ -653,7 +665,7 @@ export function TrainingScreen({ user }: Props) {
     (newScenario: string) => {
       console.log(
         "[Settings] Saving active scenario to Supabase:",
-        newScenario
+        newScenario,
       );
       setActiveScenarioState(newScenario);
       if (user?.id) {
@@ -663,7 +675,7 @@ export function TrainingScreen({ user }: Props) {
         });
       }
     },
-    [user?.id]
+    [user?.id],
   );
 
   // Advance queue turn for round-robin between new and review
@@ -780,7 +792,7 @@ export function TrainingScreen({ user }: Props) {
     async (
       scope?: { listId?: string | null; listType?: WordListType | null },
       logContext?: string,
-      isInitialLoad?: boolean
+      isInitialLoad?: boolean,
     ) => {
       if (!user?.id) {
         return;
@@ -794,7 +806,7 @@ export function TrainingScreen({ user }: Props) {
           listId: effectiveListId ?? undefined,
           listType: effectiveListType ?? undefined,
         },
-        logContext
+        logContext,
       );
 
       // On initial load, capture the fixed Y value for HERHALING
@@ -804,13 +816,13 @@ export function TrainingScreen({ user }: Props) {
         setInitialReviewDue(totalReviewDue);
         console.log(
           `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
-          "color: #f59e0b; font-weight: bold;"
+          "color: #f59e0b; font-weight: bold;",
         );
       }
 
       setStats(fresh);
     },
-    [user?.id, enabledModes, wordListId, wordListType, initialReviewDue]
+    [user?.id, enabledModes, wordListId, wordListType, initialReviewDue],
   );
 
   const loadRecentHistory = useCallback(async () => {
@@ -825,7 +837,7 @@ export function TrainingScreen({ user }: Props) {
     async (
       excludeWordIds: string[] = [],
       scope?: { listId?: string | null; listType?: WordListType | null },
-      overrideQueueTurn?: QueueTurn
+      overrideQueueTurn?: QueueTurn,
     ) => {
       if (!user?.id) {
         return;
@@ -835,7 +847,7 @@ export function TrainingScreen({ user }: Props) {
       if (loadingInProgress.current) {
         console.log(
           "%c loadNextWord skipped (already loading)",
-          "color: #f59e0b"
+          "color: #f59e0b",
         );
         return;
       }
@@ -877,7 +889,7 @@ export function TrainingScreen({ user }: Props) {
             listType: effectiveListType ?? undefined,
           },
           cardFilter,
-          effectiveQueueTurn
+          effectiveQueueTurn,
         );
         if (nextWord) {
           // Fire and forget view recording, or await if we want strict consistency
@@ -907,7 +919,7 @@ export function TrainingScreen({ user }: Props) {
       user?.id,
       wordListId,
       wordListType,
-    ]
+    ],
   );
 
   const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
@@ -939,7 +951,7 @@ export function TrainingScreen({ user }: Props) {
         // Ignore preload errors (e.g. tests, restricted environments).
       }
     },
-    [resolveAudioUrl]
+    [resolveAudioUrl],
   );
 
   // Background prefetch of the next card while the user is viewing the current card.
@@ -971,13 +983,13 @@ export function TrainingScreen({ user }: Props) {
         const next = await fetchNextTrainingWordByScenario(
           user.id,
           activeScenario,
-          [forWordId],
+          [...reviewedInSessionRef.current, forWordId],
           {
             listId: wordListId ?? undefined,
             listType: wordListType ?? undefined,
           },
           cardFilter,
-          predictedQueueTurn
+          predictedQueueTurn,
         );
 
         if (cancelled) return;
@@ -1028,10 +1040,10 @@ export function TrainingScreen({ user }: Props) {
       forcedNextWordIdRef.current = wordId;
       setShowSettings(false);
       void loadNextWord(
-        [currentWord?.id].filter((x): x is string => Boolean(x))
+        [currentWord?.id].filter((x): x is string => Boolean(x)),
       );
     },
-    [currentWord?.id, loadNextWord]
+    [currentWord?.id, loadNextWord],
   );
 
   // ... (keep useEffect for initial load)
@@ -1046,233 +1058,238 @@ export function TrainingScreen({ user }: Props) {
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
-      // Capture the turnId for the card being reviewed *before* we potentially
-      // swap the UI to a prefetched next card (which generates a new turnId).
-      const turnIdForReview = currentTurnIdRef.current;
+        // Capture the turnId for the card being reviewed *before* we potentially
+        // swap the UI to a prefetched next card (which generates a new turnId).
+        const turnIdForReview = currentTurnIdRef.current;
 
-      // Use the mode from the current word (which was set when the word was fetched)
-      const wordMode = currentWord.mode ?? enabledModes[0];
+        // Use the mode from the current word (which was set when the word was fetched)
+        const wordMode = currentWord.mode ?? enabledModes[0];
 
-      // Compute the next queue turn up front (and persist it) so our on-demand fetch
-      // doesn't read stale `queueTurn` inside this async callback.
-      const nextQueueTurn = advanceQueueTurn();
+        // Compute the next queue turn up front (and persist it) so our on-demand fetch
+        // doesn't read stale `queueTurn` inside this async callback.
+        const nextQueueTurn = advanceQueueTurn();
 
-      // Mark this word as reviewed in the current session BEFORE we potentially
-      // present a prefetched card (instant transition).
-      reviewedInSessionRef.current.add(currentWord.id);
+        // Mark this word as reviewed in the current session BEFORE we potentially
+        // present a prefetched card (instant transition).
+        reviewedInSessionRef.current.add(currentWord.id);
 
-      // If the prefetch for the current word is ready, switch immediately to the
-      // next card for "instant" transitions. Review recording continues below.
-      const prefetched = (() => {
-        const p = nextWordPrefetchRef.current;
-        if (!p) return null;
-        if (p.forWordId !== currentWord.id) return null;
-        if (!p.word) return null;
-        nextWordPrefetchRef.current = null;
-        return p.word;
-      })();
+        // If the prefetch for the current word is ready, switch immediately to the
+        // next card for "instant" transitions. Review recording continues below.
+        const prefetched = (() => {
+          const p = nextWordPrefetchRef.current;
+          if (!p) return null;
+          if (p.forWordId !== currentWord.id) return null;
+          if (!p.word) return null;
+          nextWordPrefetchRef.current = null;
+          return p.word;
+        })();
 
-      if (prefetched) {
-        setLoadingWord(false);
-        setRevealed(false);
-        setHintRevealed(false);
-        presentWord(prefetched);
-        const nextMode = prefetched.mode ?? enabledModes[0] ?? "word-to-definition";
-        void recordWordView({
-          userId: user.id,
-          wordId: prefetched.id,
-          mode: nextMode,
-        });
+        if (prefetched) {
+          setLoadingWord(false);
+          setRevealed(false);
+          setHintRevealed(false);
+          presentWord(prefetched);
+          const nextMode =
+            prefetched.mode ?? enabledModes[0] ?? "word-to-definition";
+          void recordWordView({
+            userId: user.id,
+            wordId: prefetched.id,
+            mode: nextMode,
+          });
 
-        if (audioModeEnabled) {
-          preloadAudioForWord(prefetched);
+          if (audioModeEnabled) {
+            preloadAudioForWord(prefetched);
+          }
         }
-      }
 
-      // Capture BEFORE values from current word's debugStats
-      const beforeInterval = currentWord.debugStats?.interval;
-      const beforeStability = currentWord.debugStats?.ef;
-      const cardSource = currentWord.debugStats?.source ?? "unknown";
+        // Capture BEFORE values from current word's debugStats
+        const beforeInterval = currentWord.debugStats?.interval;
+        const beforeStability = currentWord.debugStats?.ef;
+        const cardSource = currentWord.debugStats?.source ?? "unknown";
 
-      // Log before stats
-      console.log(
-        `%c 📊 Stats [BEFORE ${currentWord.headword}]:`,
-        "color: #8b5cf6; font-weight: bold;",
-        `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
-        `| HERHALING: ${stats.reviewCardsDone}/${
-          stats.reviewCardsDone + stats.reviewCardsDue
-        }`,
-        `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`
-      );
-
-      const updatedStatus = await recordReview({
-        userId: user.id,
-        wordId: currentWord.id,
-        mode: wordMode,
-        result,
-        turnId: turnIdForReview,
-      });
-
-      // Log interval/stability changes to console
-      if (
-        updatedStatus &&
-        ["fail", "hard", "success", "easy"].includes(result)
-      ) {
-        const afterInterval = updatedStatus.interval;
-        const afterStability = updatedStatus.stability;
-
-        const formatDelta = (
-          before: number | undefined,
-          after: number | null | undefined,
-          suffix = ""
-        ) => {
-          if (before == null && after == null) return null;
-          if (before == null) return `→${after?.toFixed(2)}${suffix}`;
-          if (after == null) return `${before.toFixed(2)}${suffix}→?`;
-          return `${before.toFixed(2)}→${after.toFixed(2)}${suffix}`;
-        };
-
-        const intervalDelta = formatDelta(beforeInterval, afterInterval, "d");
-        const stabilityDelta = formatDelta(beforeStability, afterStability);
-
-        // Determine if this card graduated (was new/learning, now has interval >= 1 day)
-        const wasNew = cardSource === "new";
-        const wasLearning = cardSource === "learning";
-        const isGraduated = (afterInterval ?? 0) >= 1.0;
-        const graduationNote =
-          (wasNew || wasLearning) && isGraduated
-            ? ` → GRADUATED to review queue`
-            : "";
-
+        // Log before stats
         console.log(
-          `%c ✓ Review: ${currentWord.headword} (${cardSource} → ${result})`,
-          "color: #10b981; font-weight: bold;",
-          intervalDelta ? `int:${intervalDelta}` : "",
-          stabilityDelta ? `S:${stabilityDelta}` : "",
-          graduationNote
+          `%c 📊 Stats [BEFORE ${currentWord.headword}]:`,
+          "color: #8b5cf6; font-weight: bold;",
+          `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
+          `| HERHALING: ${stats.reviewCardsDone}/${
+            stats.reviewCardsDone + stats.reviewCardsDue
+          }`,
+          `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`,
         );
 
-        // Optional FSRS debug: only enabled when explicitly requested.
-        // This hits an optional RPC (`get_last_review_debug`) that is not exposed in
-        // most environments; calling it unconditionally creates noisy 404s in the
-        // browser console and in automation runs.
-        const enableFsrsDebug =
-          process.env.NODE_ENV !== "production" &&
-          process.env.NEXT_PUBLIC_ENABLE_FSRS_DEBUG === "1";
-        if (enableFsrsDebug) {
-          const debug = await fetchLastReviewDebug({
-            userId: user.id,
-            wordId: currentWord.id,
-            mode: wordMode,
-          });
-          const meta = debug?.metadata ?? null;
-          if (meta) {
-            const r =
-              typeof meta.retrievability === "number"
-                ? meta.retrievability
-                : undefined;
-            const elapsed =
-              typeof meta.elapsed_days === "number"
-                ? meta.elapsed_days
-                : undefined;
-            const sameDay =
-              typeof meta.same_day === "boolean" ? meta.same_day : undefined;
-            console.log(
-              `%c   ↳ FSRS debug:`,
-              "color: #6b7280;",
-              elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
-              r != null ? `R=${r.toFixed(4)}` : "",
-              sameDay != null ? `same_day=${sameDay}` : "",
-              debug?.scheduled_at ? `scheduled_at=${debug.scheduled_at}` : "",
-              debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : ""
-            );
-          }
-        }
-
-        // Explain what should happen to stats
-        if (wasNew) {
-          console.log(
-            `%c   → review_type='new' logged → NIEUW counter should +1`,
-            "color: #6b7280;"
-          );
-        } else {
-          console.log(
-            `%c   → review_type='review' logged → HERHALING done counter should +1`,
-            "color: #6b7280;"
-          );
-        }
-      }
-
-      // Add to sidebar history for graded review actions
-      if (
-        result === "fail" ||
-        result === "hard" ||
-        result === "success" ||
-        result === "easy"
-      ) {
-        setRecentEntries((prev) => {
-          // Compute interval: use FSRS interval, or calculate from learning_due_at for learning phase
-          let displayInterval = updatedStatus?.interval ?? undefined;
-          if (
-            displayInterval == null &&
-            updatedStatus?.in_learning &&
-            updatedStatus?.learning_due_at
-          ) {
-            // Calculate interval in days from now to learning_due_at
-            const dueAt = new Date(updatedStatus.learning_due_at).getTime();
-            const now = Date.now();
-            displayInterval = Math.max(
-              0,
-              (dueAt - now) / (1000 * 60 * 60 * 24)
-            );
-          }
-
-          // Preserve the original source from the card (new/learning/review/practice/fallback)
-          const sourceLabel = currentWord.debugStats?.source ?? "review";
-
-          // Create history item with UPDATED stats from the review, including before values for delta display
-          const historyItem: SidebarHistoryItem = {
-            id: currentWord.id,
-            headword: currentWord.headword,
-            part_of_speech: currentWord.part_of_speech,
-            gender: currentWord.gender,
-            raw: currentWord.raw,
-            source: "review",
-            result,
-            is_nt2_2000: currentWord.is_nt2_2000,
-            meanings_count: currentWord.meanings_count,
-            stats: {
-              click_count:
-                updatedStatus?.clicks ?? currentWord.debugStats?.clicks ?? 0,
-              last_seen_at: new Date().toISOString(),
-            },
-            debugStats: {
-              source: sourceLabel,
-              mode: wordMode,
-              interval: displayInterval,
-              reps: updatedStatus?.reps ?? undefined,
-              ef: updatedStatus?.stability ?? undefined,
-              clicks: updatedStatus?.clicks ?? undefined,
-              next_review:
-                updatedStatus?.next_review ??
-                updatedStatus?.learning_due_at ??
-                undefined,
-              // Include before values for delta display in sidebar
-              previousInterval: beforeInterval,
-              previousStability: beforeStability,
-            },
-          };
-          // Prepend
-          return [historyItem, ...prev].slice(0, 50); // Keep last 50
+        const updatedStatus = await recordReview({
+          userId: user.id,
+          wordId: currentWord.id,
+          mode: wordMode,
+          result,
+          turnId: turnIdForReview,
         });
-      }
 
-      await loadStats(undefined, `AFTER ${currentWord.headword} (${result})`);
+        // Log interval/stability changes to console
+        if (
+          updatedStatus &&
+          ["fail", "hard", "success", "easy"].includes(result)
+        ) {
+          const afterInterval = updatedStatus.interval;
+          const afterStability = updatedStatus.stability;
 
-      // If we didn't have a prefetched card ready, fall back to on-demand fetch.
-      if (!prefetched) {
-        await loadNextWord([currentWord.id], undefined, nextQueueTurn);
-      }
+          const formatDelta = (
+            before: number | undefined,
+            after: number | null | undefined,
+            suffix = "",
+          ) => {
+            if (before == null && after == null) return null;
+            if (before == null) return `→${after?.toFixed(2)}${suffix}`;
+            if (after == null) return `${before.toFixed(2)}${suffix}→?`;
+            return `${before.toFixed(2)}→${after.toFixed(2)}${suffix}`;
+          };
+
+          const intervalDelta = formatDelta(beforeInterval, afterInterval, "d");
+          const stabilityDelta = formatDelta(beforeStability, afterStability);
+
+          // Determine if this card graduated (was new/learning, now has interval >= 1 day)
+          const wasNew = cardSource === "new";
+          const wasLearning = cardSource === "learning";
+          const isGraduated = (afterInterval ?? 0) >= 1.0;
+          const graduationNote =
+            (wasNew || wasLearning) && isGraduated
+              ? ` → GRADUATED to review queue`
+              : "";
+
+          console.log(
+            `%c ✓ Review: ${currentWord.headword} (${cardSource} → ${result})`,
+            "color: #10b981; font-weight: bold;",
+            intervalDelta ? `int:${intervalDelta}` : "",
+            stabilityDelta ? `S:${stabilityDelta}` : "",
+            graduationNote,
+          );
+
+          // Optional FSRS debug: only enabled when explicitly requested.
+          // This hits an optional RPC (`get_last_review_debug`) that is not exposed in
+          // most environments; calling it unconditionally creates noisy 404s in the
+          // browser console and in automation runs.
+          const enableFsrsDebug =
+            process.env.NODE_ENV !== "production" &&
+            process.env.NEXT_PUBLIC_ENABLE_FSRS_DEBUG === "1";
+          if (enableFsrsDebug) {
+            const debug = await fetchLastReviewDebug({
+              userId: user.id,
+              wordId: currentWord.id,
+              mode: wordMode,
+            });
+            const meta = debug?.metadata ?? null;
+            if (meta) {
+              const r =
+                typeof meta.retrievability === "number"
+                  ? meta.retrievability
+                  : undefined;
+              const elapsed =
+                typeof meta.elapsed_days === "number"
+                  ? meta.elapsed_days
+                  : undefined;
+              const sameDay =
+                typeof meta.same_day === "boolean" ? meta.same_day : undefined;
+              console.log(
+                `%c   ↳ FSRS debug:`,
+                "color: #6b7280;",
+                elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
+                r != null ? `R=${r.toFixed(4)}` : "",
+                sameDay != null ? `same_day=${sameDay}` : "",
+                debug?.scheduled_at ? `scheduled_at=${debug.scheduled_at}` : "",
+                debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : "",
+              );
+            }
+          }
+
+          // Explain what should happen to stats
+          if (wasNew) {
+            console.log(
+              `%c   → review_type='new' logged → NIEUW counter should +1`,
+              "color: #6b7280;",
+            );
+          } else {
+            console.log(
+              `%c   → review_type='review' logged → HERHALING done counter should +1`,
+              "color: #6b7280;",
+            );
+          }
+        }
+
+        // Add to sidebar history for graded review actions
+        if (
+          result === "fail" ||
+          result === "hard" ||
+          result === "success" ||
+          result === "easy"
+        ) {
+          setRecentEntries((prev) => {
+            // Compute interval: use FSRS interval, or calculate from learning_due_at for learning phase
+            let displayInterval = updatedStatus?.interval ?? undefined;
+            if (
+              displayInterval == null &&
+              updatedStatus?.in_learning &&
+              updatedStatus?.learning_due_at
+            ) {
+              // Calculate interval in days from now to learning_due_at
+              const dueAt = new Date(updatedStatus.learning_due_at).getTime();
+              const now = Date.now();
+              displayInterval = Math.max(
+                0,
+                (dueAt - now) / (1000 * 60 * 60 * 24),
+              );
+            }
+
+            // Preserve the original source from the card (new/learning/review/practice/fallback)
+            const sourceLabel = currentWord.debugStats?.source ?? "review";
+
+            // Create history item with UPDATED stats from the review, including before values for delta display
+            const historyItem: SidebarHistoryItem = {
+              id: currentWord.id,
+              headword: currentWord.headword,
+              part_of_speech: currentWord.part_of_speech,
+              gender: currentWord.gender,
+              raw: currentWord.raw,
+              source: "review",
+              result,
+              is_nt2_2000: currentWord.is_nt2_2000,
+              meanings_count: currentWord.meanings_count,
+              stats: {
+                click_count:
+                  updatedStatus?.clicks ?? currentWord.debugStats?.clicks ?? 0,
+                last_seen_at: new Date().toISOString(),
+              },
+              debugStats: {
+                source: sourceLabel,
+                mode: wordMode,
+                interval: displayInterval,
+                reps: updatedStatus?.reps ?? undefined,
+                ef: updatedStatus?.stability ?? undefined,
+                clicks: updatedStatus?.clicks ?? undefined,
+                next_review:
+                  updatedStatus?.next_review ??
+                  updatedStatus?.learning_due_at ??
+                  undefined,
+                // Include before values for delta display in sidebar
+                previousInterval: beforeInterval,
+                previousStability: beforeStability,
+              },
+            };
+            // Prepend
+            return [historyItem, ...prev].slice(0, 50); // Keep last 50
+          });
+        }
+
+        await loadStats(undefined, `AFTER ${currentWord.headword} (${result})`);
+
+        // If we didn't have a prefetched card ready, fall back to on-demand fetch.
+        if (!prefetched) {
+          await loadNextWord(
+            [...reviewedInSessionRef.current, currentWord.id],
+            undefined,
+            nextQueueTurn,
+          );
+        }
       } finally {
         actionLoadingRef.current = false;
         setActionLoading(false);
@@ -1289,7 +1306,7 @@ export function TrainingScreen({ user }: Props) {
       preloadAudioForWord,
       stats,
       user?.id,
-    ]
+    ],
   );
 
   const handleFirstTimeStart = useCallback(() => {
@@ -1351,14 +1368,17 @@ export function TrainingScreen({ user }: Props) {
     toggleRecentPanel();
   }, [toggleRecentPanel]);
 
-  const openMobileSidebarTab = useCallback((tab: SidebarTab) => {
-    if (typeof window === "undefined") return;
-    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-    // On desktop, only open the drawer when the sidebar is NOT pinned.
-    if (isDesktop && trainingSidebarPinned) return;
-    setSidebarTab(tab);
-    setMobileSidebarOpen(true);
-  }, [trainingSidebarPinned]);
+  const openMobileSidebarTab = useCallback(
+    (tab: SidebarTab) => {
+      if (typeof window === "undefined") return;
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+      // On desktop, only open the drawer when the sidebar is NOT pinned.
+      if (isDesktop && trainingSidebarPinned) return;
+      setSidebarTab(tab);
+      setMobileSidebarOpen(true);
+    },
+    [trainingSidebarPinned],
+  );
 
   const openSearch = useCallback(() => {
     setSettingsInitialTab("woordenlijst");
@@ -1371,8 +1391,8 @@ export function TrainingScreen({ user }: Props) {
       themePreference === "light"
         ? "dark"
         : themePreference === "dark"
-        ? "system"
-        : "light";
+          ? "system"
+          : "light";
     setTheme(next);
   }, [setTheme, themePreference]);
 
@@ -1474,41 +1494,49 @@ export function TrainingScreen({ user }: Props) {
     });
   }, []);
 
-  const playSentenceTTS = useCallback(async (sentence: string) => {
-    if (!sentence.trim()) {
-      console.error("[TTS] Empty sentence");
-      return;
-    }
-
-    setTtsLoading(true);
-    try {
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sentence.trim(), quality: audioQuality }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("[TTS] API error:", error);
-
-        // Show user-friendly error message
-        if (!error.configured) {
-          console.log("[TTS] Google TTS is not configured. Sentence pronunciation unavailable.");
-        }
+  const playSentenceTTS = useCallback(
+    async (sentence: string) => {
+      if (!sentence.trim()) {
+        console.error("[TTS] Empty sentence");
         return;
       }
 
-      const data = await response.json();
-      if (data.url) {
-        playAudio(data.url, sentence.slice(0, 50));
+      setTtsLoading(true);
+      try {
+        const response = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: sentence.trim(),
+            quality: audioQuality,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("[TTS] API error:", error);
+
+          // Show user-friendly error message
+          if (!error.configured) {
+            console.log(
+              "[TTS] Google TTS is not configured. Sentence pronunciation unavailable.",
+            );
+          }
+          return;
+        }
+
+        const data = await response.json();
+        if (data.url) {
+          playAudio(data.url, sentence.slice(0, 50));
+        }
+      } catch (err) {
+        console.error("[TTS] Request failed:", err);
+      } finally {
+        setTtsLoading(false);
       }
-    } catch (err) {
-      console.error("[TTS] Request failed:", err);
-    } finally {
-      setTtsLoading(false);
-    }
-  }, [audioQuality, playAudio]);
+    },
+    [audioQuality, playAudio],
+  );
 
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
@@ -1612,11 +1640,14 @@ export function TrainingScreen({ user }: Props) {
       sidebarTab,
       trainingSidebarPinned,
       user?.id,
-    ]
+    ],
   );
 
   const handleTrainingWordClick = useCallback(
-    async (clickedWord: string, options?: { forceAudio?: boolean; sentence?: string }) => {
+    async (
+      clickedWord: string,
+      options?: { forceAudio?: boolean; sentence?: string },
+    ) => {
       // Headword always plays audio (forceAudio is set for headword clicks)
       const isHeadwordClick = options?.forceAudio;
 
@@ -1666,7 +1697,7 @@ export function TrainingScreen({ user }: Props) {
       playSentenceTTS,
       resolveAudioUrl,
       user?.id,
-    ]
+    ],
   );
 
   const handleListChange = useCallback(
@@ -1686,15 +1717,15 @@ export function TrainingScreen({ user }: Props) {
       void loadStats({ listId: list.id, listType: list.type });
       void loadNextWord([], { listId: list.id, listType: list.type });
     },
-    [user?.id, loadStats, loadNextWord]
+    [user?.id, loadStats, loadNextWord],
   );
 
   // When no list is selected, use the first available (primary) list
   const activeListValue = wordListId
     ? `${wordListType ?? "curated"}:${wordListId}`
     : availableLists[0]
-    ? `${availableLists[0].type}:${availableLists[0].id}`
-    : "";
+      ? `${availableLists[0].type}:${availableLists[0].id}`
+      : "";
 
   const listOptions = availableLists.map((list) => ({
     value: `${list.type}:${list.id}`,
@@ -1709,7 +1740,7 @@ export function TrainingScreen({ user }: Props) {
         await handleListChange(found);
       }
     },
-    [availableLists, handleListChange]
+    [availableLists, handleListChange],
   );
 
   const handleListsUpdated = useCallback(async () => {
@@ -1764,7 +1795,7 @@ export function TrainingScreen({ user }: Props) {
       setRevealed(false);
       setEnabledModes(newModes);
     },
-    [setEnabledModes]
+    [setEnabledModes],
   );
 
   const handleScenarioChange = useCallback(
@@ -1775,21 +1806,18 @@ export function TrainingScreen({ user }: Props) {
       // Load next word with the new scenario
       void loadNextWord([], { listId: wordListId, listType: wordListType });
     },
-    [setActiveScenario, loadNextWord, wordListId, wordListType]
+    [setActiveScenario, loadNextWord, wordListId, wordListType],
   );
 
   const handleCardFilterChange = useCallback(
     (newFilter: CardFilter) => {
       setCardFilter(newFilter);
     },
-    [setCardFilter]
+    [setCardFilter],
   );
 
   const canSwipe =
-    revealed &&
-    !actionLoading &&
-    !loadingWord &&
-    Boolean(currentWord);
+    revealed && !actionLoading && !loadingWord && Boolean(currentWord);
 
   const handleCardTouchStart = useCallback(
     (event: React.TouchEvent<HTMLDivElement>) => {
@@ -1800,7 +1828,7 @@ export function TrainingScreen({ user }: Props) {
       swipeTrackingRef.current = false;
       setSwipeAnimating(false);
     },
-    []
+    [],
   );
 
   const handleCardTouchMove = useCallback(
@@ -1837,7 +1865,7 @@ export function TrainingScreen({ user }: Props) {
       setSwipeOffset(clamped);
       setSwipeDirection(clamped >= 0 ? "right" : "left");
     },
-    [canSwipe]
+    [canSwipe],
   );
 
   const handleCardTouchEnd = useCallback(() => {
@@ -1861,8 +1889,8 @@ export function TrainingScreen({ user }: Props) {
           ? "fail"
           : "hide"
         : direction === "right"
-        ? "success"
-        : "fail";
+          ? "success"
+          : "fail";
 
       setSwipeAnimating(true);
       setSwipeOffset((direction === "right" ? 1 : -1) * cardWidth * 1.1);
@@ -1902,7 +1930,9 @@ export function TrainingScreen({ user }: Props) {
     // Always clear local session so the UI updates. In practice, Supabase can
     // still reply `session_not_found` here as well; ensure we clear storage
     // regardless.
-    const { error: localError } = await supabase.auth.signOut({ scope: "local" });
+    const { error: localError } = await supabase.auth.signOut({
+      scope: "local",
+    });
     if (localError) {
       const code = (localError as unknown as { code?: string }).code;
       if (code !== "session_not_found") {
@@ -1957,8 +1987,8 @@ export function TrainingScreen({ user }: Props) {
     themePreference === "light"
       ? "Thema: Licht"
       : themePreference === "dark"
-      ? "Thema: Donker"
-      : "Thema: Systeem";
+        ? "Thema: Donker"
+        : "Thema: Systeem";
 
   const renderThemeIcon = () => {
     if (themePreference === "dark") {
@@ -2070,11 +2100,13 @@ export function TrainingScreen({ user }: Props) {
     swipeDirection === "left"
       ? { direction: "left" as const, ...swipeUi.left }
       : swipeDirection === "right"
-      ? { direction: "right" as const, ...swipeUi.right }
-      : null;
+        ? { direction: "right" as const, ...swipeUi.right }
+        : null;
   const swipeThreshold = (cardSwipeRef.current?.offsetWidth ?? 0) * 0.35;
   const swipeProgress =
-    swipeThreshold > 0 ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold) : 0;
+    swipeThreshold > 0
+      ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold)
+      : 0;
   // Use swipe distance (scaled by threshold) as the single "intensity" signal
   // for all swipe feedback (indicator, card tint, and button highlight).
   const swipeFeedbackIntensity =
@@ -2199,14 +2231,18 @@ export function TrainingScreen({ user }: Props) {
 
           {/* Mobile-only: open Recent/Details drawer */}
           <Tooltip
-            content={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+            content={
+              trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"
+            }
             side="bottom"
             showOnFocus={false}
           >
             <div
               role="button"
               tabIndex={0}
-              aria-label={trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"}
+              aria-label={
+                trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"
+              }
               className={`relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border shadow-sm cursor-pointer transition ${
                 trainingSidebarPinned
                   ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
@@ -2390,7 +2426,12 @@ export function TrainingScreen({ user }: Props) {
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
                           {(
-                            ["fail", "hard", "success", "easy"] as ReviewResult[]
+                            [
+                              "fail",
+                              "hard",
+                              "success",
+                              "easy",
+                            ] as ReviewResult[]
                           ).map((actionKey) => {
                             const { label, keyHint, tone } =
                               ACTION_LABELS[actionKey];
@@ -2398,9 +2439,9 @@ export function TrainingScreen({ user }: Props) {
                               actionKey === "fail" && swipeDirection === "left"
                                 ? swipeFeedbackIntensity
                                 : actionKey === "success" &&
-                                  swipeDirection === "right"
-                                ? swipeFeedbackIntensity
-                                : 0;
+                                    swipeDirection === "right"
+                                  ? swipeFeedbackIntensity
+                                  : 0;
                             const swipeButtonRgb =
                               actionKey === "fail"
                                 ? "239, 68, 68" // red-500
@@ -2506,10 +2547,10 @@ export function TrainingScreen({ user }: Props) {
           activeScenario === "understanding"
             ? "Begrip"
             : activeScenario === "listening"
-            ? "Luisteren"
-            : activeScenario === "conjugation"
-            ? "Vervoegingen"
-            : activeScenario
+              ? "Luisteren"
+              : activeScenario === "conjugation"
+                ? "Vervoegingen"
+                : activeScenario
         }
         initialReviewDue={initialReviewDue}
       />
