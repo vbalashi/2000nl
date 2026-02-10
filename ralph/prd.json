@@ -41,7 +41,7 @@
         "Typecheck passes",
         "All tests pass (npx vitest run)"
       ],
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]

@@ -4,6 +4,7 @@ Started: di 10 feb 2026 10:00:23 CET
 ## Codebase Patterns
 - For session-scoped state that must not trigger renders (e.g., "already reviewed this session"), use `useRef(new Set())` and clear it via `useEffect` on session boundary changes (list/scenario/mode) plus an unmount cleanup.
 - For local browser automation without OTP, use the dev-only helper page `/dev/test-login` (requires server env `SUPABASE_SERVICE_ROLE_KEY` + `TEST_USER_EMAIL`; see `apps/ui/README.md`).
+- If vitest/jsdom runtime throws `React is not defined` when rendering a JSX component, add an explicit `import React from "react";` to that component file.
 ---
 
 ## 2026-02-10 10:03:29 CET - US-094.1
@@ -23,4 +24,15 @@ Started: di 10 feb 2026 10:00:23 CET
 - Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `ralph/prd.json`, `ralph/progress.txt`
 - **Learnings for future iterations:**
   - The race fix relies on always including session-reviewed IDs in both prefetch and fallback fetch paths, not just one.
+---
+
+## 2026-02-10 10:24:53 CET - US-094.3
+- Added regression tests to ensure the next-card prefetch and on-demand fetch always exclude words reviewed earlier in the same session.
+- Added a scenario-change test that opens Settings and verifies the session-reviewed exclusion set is cleared when the scenario changes.
+- Fixed a vitest/jsdom runtime failure when opening Settings by adding an explicit React import to `SettingsModal`.
+- UI verification skipped (test-only changes; validated via `npx tsc --noEmit` + `npx vitest run`).
+- Files changed: `apps/ui/tests/TrainingScreen.test.tsx`, `apps/ui/components/training/SettingsModal.tsx`, `ralph/prd.json`, `ralph/progress.txt`
+- **Learnings for future iterations:**
+  - For this prefetch race bug, assert correctness by inspecting the exclude list passed into `fetchNextTrainingWordByScenario` (mock.calls) instead of relying on a brittle call order.
+  - Opening Settings in tests requires `fetchTrainingScenarios` to be mocked, since it loads scenarios on-demand when the modal opens.
 ---

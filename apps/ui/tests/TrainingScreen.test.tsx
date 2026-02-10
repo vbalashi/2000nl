@@ -36,6 +36,22 @@ const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
+const fetchTrainingScenarios = vi.fn().mockResolvedValue([
+  {
+    id: "understanding",
+    enabled: true,
+    nameNl: "Begrip",
+    nameEn: "Understanding",
+    description: null,
+  },
+  {
+    id: "listening",
+    enabled: true,
+    nameNl: "Luisteren",
+    nameEn: "Listening",
+    description: null,
+  },
+]);
 const fetchUserPreferences = vi.fn().mockResolvedValue({
   themePreference: "system",
   modesEnabled: ["word-to-definition"],
@@ -52,6 +68,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchDictionaryEntry,
   fetchNextTrainingWord: vi.fn().mockResolvedValue(mockWord),
   fetchNextTrainingWordByScenario,
+  fetchTrainingScenarios,
   fetchStats,
   fetchRecentHistory,
   fetchActiveList,
@@ -298,6 +315,147 @@ test("uses prefetched next card for instant transition on answer", async () => {
       (vi as any).unstubAllGlobals();
     }
   }
+});
+
+test("US-094.3: after grading a card, the next prefetch exclude list includes the graded card ID", async () => {
+  const words = [
+    { ...mockWord, id: "word-1", headword: "huis" },
+    { ...mockWord, id: "word-2", headword: "boom" },
+    { ...mockWord, id: "word-3", headword: "fiets" },
+  ];
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
+      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    },
+  );
+  recordReview.mockReset();
+  recordReview.mockResolvedValue(null);
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Wait for background prefetch to run at least once.
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(
+      2,
+    ),
+  );
+
+  // Reveal then grade current card.
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  fireEvent.keyDown(window, { key: "k" });
+
+  // Should advance to next card (prefetched or on-demand).
+  await screen.findByRole("heading", { name: "boom" });
+
+  // While viewing word-2, next prefetch should exclude both word-2 and the
+  // previously graded word-1.
+  await waitFor(() => {
+    const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
+      const exclude = c[2] as string[];
+      return exclude.includes("word-1") && exclude.includes("word-2");
+    });
+    expect(hasExclude).toBe(true);
+  });
+});
+
+test("US-094.3: after grading multiple cards, all graded IDs are in the exclude list", async () => {
+  const words = [
+    { ...mockWord, id: "word-1", headword: "huis" },
+    { ...mockWord, id: "word-2", headword: "boom" },
+    { ...mockWord, id: "word-3", headword: "fiets" },
+    { ...mockWord, id: "word-4", headword: "kat" },
+  ];
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
+      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    },
+  );
+  recordReview.mockReset();
+  recordReview.mockResolvedValue(null);
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Grade word-1.
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  fireEvent.keyDown(window, { key: "k" });
+  await screen.findByRole("heading", { name: "boom" });
+
+  // Grade word-2.
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  fireEvent.keyDown(window, { key: "k" });
+  await screen.findByRole("heading", { name: "fiets" });
+
+  // While viewing word-3, next prefetch should exclude both graded IDs.
+  await waitFor(() => {
+    const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
+      const exclude = c[2] as string[];
+      return (
+        exclude.includes("word-1") &&
+        exclude.includes("word-2") &&
+        exclude.includes("word-3")
+      );
+    });
+    expect(hasExclude).toBe(true);
+  });
+});
+
+test("US-094.3: session-reviewed set is cleared on scenario change", async () => {
+  const words = [
+    { ...mockWord, id: "word-1", headword: "huis" },
+    { ...mockWord, id: "word-2", headword: "boom" },
+    { ...mockWord, id: "word-3", headword: "fiets" },
+  ];
+
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
+      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    },
+  );
+  recordReview.mockReset();
+  recordReview.mockResolvedValue(null);
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  // Grade one card so it becomes part of the session-reviewed set.
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  fireEvent.keyDown(window, { key: "k" });
+  await screen.findByRole("heading", { name: "boom" });
+
+  // Open settings from the footer, switch scenario.
+  const openScenario = await screen.findByRole("button", {
+    name: /wijzig scenario in instellingen/i,
+  });
+  fireEvent.click(openScenario);
+
+  // SettingsModal loads scenarios async; wait for the scenario buttons.
+  const listeningBtn = await screen.findByRole("button", { name: /luisteren/i });
+  fireEvent.click(listeningBtn);
+
+  // Scenario change triggers a fresh loadNextWord([]) call; exclude list should
+  // not contain previously reviewed word-1 anymore.
+  await waitFor(() => {
+    const hasClearedFetch = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
+      const scenarioId = c[1] as string;
+      const exclude = c[2] as string[];
+      return scenarioId === "listening" && !exclude.includes("word-1");
+    });
+    expect(hasClearedFetch).toBe(true);
+  });
 });
 
 test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", async () => {
