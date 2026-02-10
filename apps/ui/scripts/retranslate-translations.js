@@ -7,6 +7,8 @@
 //   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... OPENAI_API_KEY=... \
 //     node scripts/retranslate-translations.js
 //
+// If OPENAI_API_KEY is not set, this script will try to read it from `.env.local`.
+//
 // Options:
 //   --limit <n>            Process at most N word entries (default: all)
 //   --concurrency <n>      Number of parallel OpenAI requests (default: 2)
@@ -48,6 +50,63 @@ const LANGUAGE_LABELS = {
   nl: "Dutch",
   ru: "Russian",
 };
+
+function stripOptionalQuotes(value) {
+  const v = String(value || "");
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+    return v.slice(1, -1);
+  }
+  return v;
+}
+
+function loadEnvLocalIfNeeded() {
+  // Prefer explicit environment variables, but fall back to `.env.local` for scripts.
+  // Supports running from either `apps/ui` or monorepo root.
+  const candidates = [
+    path.join(process.cwd(), ".env.local"),
+    path.join(process.cwd(), "apps", "ui", ".env.local"),
+  ];
+
+  const envPath = candidates.find((p) => fs.existsSync(p));
+  if (!envPath) return;
+
+  const raw = fs.readFileSync(envPath, "utf8");
+  const lines = raw.split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = stripOptionalQuotes(trimmed.slice(eq + 1).trim());
+    if (!key) continue;
+    if (process.env[key] == null || process.env[key] === "") {
+      process.env[key] = value;
+    }
+  }
+}
+
+function loadPromptText(filename) {
+  const direct = path.join(process.cwd(), "lib", "translation", "prompts", filename);
+  const fullPath = fs.existsSync(direct)
+    ? direct
+    : path.join(process.cwd(), "apps", "ui", "lib", "translation", "prompts", filename);
+  try {
+    return fs.readFileSync(fullPath, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function sha256(text) {
+  return crypto.createHash("sha256").update(String(text || "")).digest("hex");
+}
+
+function getOpenAiTranslationPromptFingerprint() {
+  const system = loadPromptText("openai_translation_system_v1.txt");
+  const userInstructions = loadPromptText("openai_translation_user_instructions_v1.txt");
+  return sha256([system, userInstructions].join("\n---\n"));
+}
 
 function getArg(flag) {
   const idx = process.argv.indexOf(flag);
@@ -190,11 +249,17 @@ function buildOpenAIMessages(texts, targetLang, context) {
   const posCode =
     (context && context.partOfSpeechCode && String(context.partOfSpeechCode).trim()) || null;
 
+  const systemPrompt =
+    loadPromptText("openai_translation_system_v1.txt").trim() ||
+    "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.";
+  const userInstructions =
+    loadPromptText("openai_translation_user_instructions_v1.txt").trim() ||
+    "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.";
+
   return [
     {
       role: "system",
-      content:
-        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.",
+      content: systemPrompt,
     },
     {
       role: "user",
@@ -207,8 +272,7 @@ function buildOpenAIMessages(texts, targetLang, context) {
           translations: ["string"],
           note: "string | null",
         },
-        instructions:
-          "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.",
+        instructions: userInstructions,
       }),
     },
   ];
@@ -372,6 +436,8 @@ function ensureLogDir(filePath) {
 }
 
 async function main() {
+  loadEnvLocalIfNeeded();
+
   if (hasFlag("--help") || hasFlag("-h")) {
     console.log("Usage: node scripts/retranslate-translations.js [options]");
     process.exit(0);
@@ -452,11 +518,12 @@ async function main() {
 
       const items = extractTranslatableTexts(word);
       const posCode = normalizePosCode(word.part_of_speech);
-      const fingerprint = computeFingerprint([
-        ...items,
-        { path: ["__part_of_speech__"], text: posCode || "" },
-        { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
-      ]);
+    const fingerprint = computeFingerprint([
+      ...items,
+      { path: ["__part_of_speech__"], text: posCode || "" },
+      { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
+      { path: ["__translation_prompt_fingerprint__", "openai"], text: getOpenAiTranslationPromptFingerprint() },
+    ]);
 
       const context = {
         partOfSpeech: posDutchLabelFromCode(posCode) || null,

@@ -30,10 +30,17 @@ Each translation row in `word_entry_translations` has a `source_fingerprint` com
 - Word definition items (path + text)
 - `word_entries.part_of_speech` (POS code like `zn`, `ww`, `bn`)
 - `TRANSLATION_PIPELINE_VERSION` constant (currently `"note_v1"`)
+- Provider prompt fingerprint (OpenAI prompt files are hashed so prompt edits auto-invalidate cache)
 
 When any of these change, the fingerprint mismatches and the translation is **re-generated on next card view** — no manual deletion needed.
 
 **Key constant:** `TRANSLATION_PIPELINE_VERSION` in `apps/ui/app/api/translation/route.ts`. Bump this to force re-translation of all cached entries.
+
+**Prompt files (OpenAI):**
+- System prompt: `apps/ui/lib/translation/prompts/openai_translation_system_v1.txt`
+- User instructions: `apps/ui/lib/translation/prompts/openai_translation_user_instructions_v1.txt`
+
+Edits to these files change the prompt fingerprint and will cause cached translations to refresh automatically on next card view.
 
 ### POS codes
 

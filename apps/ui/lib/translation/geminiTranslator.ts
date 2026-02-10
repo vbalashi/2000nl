@@ -1,4 +1,5 @@
 import { ITranslator } from "./ITranslator";
+import crypto from "crypto";
 
 type GeminiTranslatorOptions = {
   apiKey: string;
@@ -97,6 +98,11 @@ async function delay(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function keyHash(apiKey: string) {
+  if (!apiKey) return "";
+  return crypto.createHash("sha256").update(apiKey).digest("hex").slice(0, 10);
+}
+
 export class GeminiTranslator implements ITranslator {
   private apiKey: string;
   private apiUrl: string;
@@ -123,6 +129,7 @@ export class GeminiTranslator implements ITranslator {
       throw new Error("GEMINI_API_KEY is not configured");
     }
 
+    const geminiKeyHash = keyHash(this.apiKey);
     const attemptTranslate = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -196,6 +203,11 @@ export class GeminiTranslator implements ITranslator {
 
     if (this.fallback) {
       try {
+        console.warn("[translation] Gemini failed; using DeepL fallback", {
+          geminiKeyHash,
+          model: this.model,
+          error: String(lastError),
+        });
         const fallbackResult = await this.fallback.translate(texts, targetLang);
         return Array.isArray(textOrTexts) ? fallbackResult : fallbackResult[0] ?? "";
       } catch (fallbackErr) {

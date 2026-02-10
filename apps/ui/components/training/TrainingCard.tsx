@@ -114,6 +114,8 @@ export function TrainingCard({
   );
   const translationLoadingRef = React.useRef(false);
   const translationPollTimeoutRef = React.useRef<number | null>(null);
+  const translationLongPressTimeoutRef = React.useRef<number | null>(null);
+  const translationLongPressFiredRef = React.useRef(false);
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const [scrollFades, setScrollFades] = React.useState(() => ({
@@ -151,6 +153,11 @@ export function TrainingCard({
       window.clearTimeout(translationPollTimeoutRef.current);
       translationPollTimeoutRef.current = null;
     }
+    if (translationLongPressTimeoutRef.current != null) {
+      window.clearTimeout(translationLongPressTimeoutRef.current);
+      translationLongPressTimeoutRef.current = null;
+    }
+    translationLongPressFiredRef.current = false;
     setTranslationStatus(null);
     setTranslationOverlay(null);
     setTranslationError(null);
@@ -306,6 +313,15 @@ export function TrainingCard({
   const translationUiEnabled =
     Boolean(translationLang) && translationLang !== "off" && revealed;
   const isTranslationOpen = translationUiEnabled ? translationTooltipOpen : false;
+  const translationProviderUsed = translationOverlay?.__meta?.providerUsed ?? null;
+  const translationButtonProviderClass =
+    translationProviderUsed === "deepl"
+      ? "bg-slate-200/80 text-slate-700 hover:bg-slate-200/90 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-800/90"
+      : translationProviderUsed === "gemini"
+        ? "bg-sky-100/80 text-sky-700 hover:bg-sky-100/95 dark:bg-sky-900/30 dark:text-sky-200 dark:hover:bg-sky-900/45"
+        : translationProviderUsed === "openai"
+          ? "bg-white/80 text-slate-700 hover:bg-white/95 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
+          : "bg-slate-100/70 text-slate-600 hover:bg-slate-100/90 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80";
 
   const translationStatusText =
     translationStatus === null
@@ -623,18 +639,56 @@ export function TrainingCard({
 
               {translationUiEnabled && (
                 <Tooltip
-                  content="Translate (T)"
+                  content="Translate (T) (hold to re-translate)"
                   side="bottom"
                   showOnFocus={false}
                   hideOnMobile
                 >
                   <button
                     type="button"
+                    onPointerDown={(e) => {
+                      if (translationLongPressTimeoutRef.current != null) {
+                        window.clearTimeout(translationLongPressTimeoutRef.current);
+                        translationLongPressTimeoutRef.current = null;
+                      }
+                      translationLongPressFiredRef.current = false;
+
+                      // Long-press: force re-translate (use selected priority, fallback if needed).
+                      // Works for touch and mouse press-and-hold.
+                      translationLongPressTimeoutRef.current = window.setTimeout(() => {
+                        translationLongPressFiredRef.current = true;
+                        void fetchTranslation({ force: true });
+                        onTranslationTooltipOpenChange?.(true);
+                      }, 650);
+                    }}
+                    onPointerUp={() => {
+                      if (translationLongPressTimeoutRef.current != null) {
+                        window.clearTimeout(translationLongPressTimeoutRef.current);
+                        translationLongPressTimeoutRef.current = null;
+                      }
+                    }}
+                    onPointerLeave={() => {
+                      if (translationLongPressTimeoutRef.current != null) {
+                        window.clearTimeout(translationLongPressTimeoutRef.current);
+                        translationLongPressTimeoutRef.current = null;
+                      }
+                    }}
+                    onPointerCancel={() => {
+                      if (translationLongPressTimeoutRef.current != null) {
+                        window.clearTimeout(translationLongPressTimeoutRef.current);
+                        translationLongPressTimeoutRef.current = null;
+                      }
+                    }}
                     onClick={() => {
+                      if (translationLongPressFiredRef.current) {
+                        // Suppress the click toggle after a long-press action.
+                        translationLongPressFiredRef.current = false;
+                        return;
+                      }
                       void fetchTranslation();
                       onTranslationTooltipOpenChange?.(!translationTooltipOpen);
                     }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/70 text-slate-600 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 hover:bg-slate-100/90 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80 select-none"
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 dark:border-slate-700 select-none ${translationButtonProviderClass}`}
                     aria-pressed={translationTooltipOpen}
                     aria-label="Translate (T)"
                   >

@@ -1,4 +1,6 @@
 import { ITranslator } from "./ITranslator";
+import { loadPromptText } from "./prompts/promptLoader";
+import crypto from "crypto";
 
 type OpenAITranslatorOptions = {
   apiKey: string;
@@ -17,6 +19,15 @@ export type OpenAITranslationContext = {
 export type OpenAITranslationResult = {
   translations: string[];
   note: string | null;
+  // Optional metadata for debugging/observability (never includes input texts).
+  meta?: {
+    providerSelected: "openai";
+    providerUsed: "openai" | "deepl";
+    usedFallback: boolean;
+    primaryError?: string;
+    openaiKeyHash?: string;
+    model?: string;
+  };
 };
 
 type OpenAIChatResponse = {
@@ -58,11 +69,18 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
   const pos = context?.partOfSpeech?.trim() || null;
   const posCode = context?.partOfSpeechCode?.trim() || null;
 
+  const systemPrompt =
+    loadPromptText("openai_translation_system_v1.txt").trim() ||
+    "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.";
+  const userInstructions =
+    loadPromptText("openai_translation_user_instructions_v1.txt").trim() ||
+    "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.";
+
   return [
     {
       role: "system",
       content:
-        "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.",
+        systemPrompt,
     },
     {
       role: "user",
@@ -75,8 +93,7 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
           translations: ["string"],
           note: "string | null",
         },
-        instructions:
-          "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.",
+        instructions: userInstructions,
       }),
     },
   ];
@@ -109,7 +126,17 @@ function parseTranslationResult(content: string, expectedCount: number): OpenAIT
       typeof item === "string" ? item : String(item)
     ),
     note: note && note.length > 0 ? note : null,
+    meta: {
+      providerSelected: "openai",
+      providerUsed: "openai",
+      usedFallback: false,
+    },
   };
+}
+
+function keyHash(apiKey: string) {
+  if (!apiKey) return "";
+  return crypto.createHash("sha256").update(apiKey).digest("hex").slice(0, 10);
 }
 
 async function delay(ms: number) {
@@ -164,6 +191,7 @@ export class OpenAITranslator implements ITranslator {
       throw new Error("OPENAI_API_KEY is not configured");
     }
 
+    const openaiKeyHash = keyHash(this.apiKey);
     const attemptTranslate = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -213,7 +241,17 @@ export class OpenAITranslator implements ITranslator {
     let lastError: unknown = null;
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        return await attemptTranslate();
+        const result = await attemptTranslate();
+        return {
+          ...result,
+          meta: {
+            providerSelected: "openai",
+            providerUsed: "openai",
+            usedFallback: false,
+            openaiKeyHash,
+            model: this.model,
+          },
+        };
       } catch (err) {
         lastError = err;
         if (attempt < this.maxRetries) {
@@ -225,10 +263,25 @@ export class OpenAITranslator implements ITranslator {
 
     if (this.fallback) {
       try {
+        // Avoid logging inputs; log only high-level diagnostics.
+        console.warn("[translation] OpenAI failed; using DeepL fallback", {
+          openaiKeyHash,
+          model: this.model,
+          error: String(lastError),
+        });
+
         const fallbackResult = await this.fallback.translate(texts, targetLang);
         return {
           translations: fallbackResult,
           note: null,
+          meta: {
+            providerSelected: "openai",
+            providerUsed: "deepl",
+            usedFallback: true,
+            primaryError: String(lastError),
+            openaiKeyHash,
+            model: this.model,
+          },
         };
       } catch (fallbackErr) {
         throw new Error(

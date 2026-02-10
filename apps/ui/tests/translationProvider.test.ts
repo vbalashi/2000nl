@@ -125,13 +125,16 @@ describe("DeepLTranslator", () => {
 
 describe("OpenAITranslator", () => {
   const fetchMock = vi.fn();
+  let warnSpy: any;
 
   beforeEach(() => {
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    warnSpy?.mockRestore?.();
     vi.unstubAllGlobals();
   });
 
@@ -185,10 +188,11 @@ describe("OpenAITranslator", () => {
       partOfSpeech: null,
       partOfSpeechCode: null,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       translations: ["Hallo"],
       note: "Usually means X, but here it means Y.",
     });
+    expect(result.meta?.providerUsed).toBe("openai");
   });
 
   it("falls back when OpenAI fails", async () => {
@@ -214,13 +218,16 @@ describe("OpenAITranslator", () => {
 
 describe("GeminiTranslator", () => {
   const fetchMock = vi.fn();
+  let warnSpy: any;
 
   beforeEach(() => {
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    warnSpy?.mockRestore?.();
     vi.unstubAllGlobals();
   });
 

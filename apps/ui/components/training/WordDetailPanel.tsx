@@ -226,6 +226,23 @@ export function WordDetailPanel({
   const translatedContext = translationOverlay?.meanings?.[0]?.context;
   const translatedExamples = translationOverlay?.meanings?.[0]?.examples ?? [];
   const translatedMeanings = translationOverlay?.meanings ?? [];
+  const translationProviderUsed = translationOverlay?.__meta?.providerUsed ?? null;
+  const translationProviderLabel =
+    translationProviderUsed === "deepl"
+      ? "DeepL"
+      : translationProviderUsed === "openai"
+        ? "OpenAI"
+        : translationProviderUsed === "gemini"
+          ? "Gemini"
+          : null;
+  const translationProviderClass =
+    translationProviderUsed === "deepl"
+      ? "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
+      : translationProviderUsed === "openai"
+        ? "bg-white text-slate-800 dark:bg-slate-900/60 dark:text-slate-100"
+        : translationProviderUsed === "gemini"
+          ? "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-100"
+          : "bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-200";
 
   // Idioms: render as "Idioom" section in Details.
   // Raw idioms are objects; translated idioms can be strings or objects.
@@ -441,8 +458,18 @@ export function WordDetailPanel({
 
           {translationLang && translationLang !== "off" ? (
             <section className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Vertaling ({langLabel(translationLang)})
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Vertaling ({langLabel(translationLang)})
+                </div>
+                {translationProviderLabel ? (
+                  <span
+                    className={`shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold tracking-wide ${translationProviderClass}`}
+                    title="Translation provider"
+                  >
+                    {translationProviderLabel}
+                  </span>
+                ) : null}
               </div>
               {translationStatusText ? (
                 <div className="flex items-center justify-between gap-3">

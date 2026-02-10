@@ -157,6 +157,15 @@ export type TranslationOverlay = {
     examples?: string[];
     idioms?: Array<string | { expression?: string; explanation?: string }>;
   }>;
+  // Optional provenance/debug metadata. Persisted in DB as part of `overlay` JSON.
+  // This is intentionally best-effort: older cached translations may not have it.
+  __meta?: {
+    providerSelected?: "deepl" | "openai" | "gemini";
+    providerUsed?: "deepl" | "openai" | "gemini";
+    usedFallback?: boolean | null;
+    primaryError?: string | null;
+    promptFingerprint?: string | null;
+  };
 };
 
 export type WordEntryTranslationStatus = "pending" | "ready" | "failed";

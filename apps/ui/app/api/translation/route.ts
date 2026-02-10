@@ -8,6 +8,7 @@ import {
 } from "@/lib/translation/translationProvider";
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
+import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -126,6 +127,19 @@ function buildOverlay(items: ExtractedItem[], translated: string[]): Translation
   return overlay;
 }
 
+function attachOverlayMeta(
+  overlay: TranslationOverlay,
+  meta: TranslationOverlay["__meta"]
+): TranslationOverlay {
+  return {
+    ...(overlay ?? {}),
+    __meta: {
+      ...(overlay as any)?.__meta,
+      ...(meta ?? {}),
+    },
+  };
+}
+
 function computeFingerprint(items: ExtractedItem[]) {
   // Stable hash of what we sent to the translation provider (paths + texts)
   const payload = items.map((it) => ({ path: it.path, text: it.text }));
@@ -185,8 +199,9 @@ export async function GET(req: NextRequest) {
   const targetLang = lang.trim();
   let provider: TranslationProviderName;
   let translator: ITranslator;
+  const config = loadTranslationConfigFromEnv();
   try {
-    const resolved = createTranslator(loadTranslationConfigFromEnv());
+    const resolved = createTranslator(config);
     provider = resolved.provider;
     translator = resolved.translator;
   } catch (err: any) {
@@ -194,7 +209,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         error: message,
-        ...(debug ? { debug: { dbLang, targetLang } } : null),
+        ...(debug
+          ? {
+              debug: {
+                dbLang,
+                targetLang,
+                translation: {
+                  providerEnv: config.provider,
+                  fallbackEnv: config.fallback ?? null,
+                  hasKeys: {
+                    openai: Boolean(config.apiKeys.openai),
+                    deepl: Boolean(config.apiKeys.deepl),
+                    gemini: Boolean(config.apiKeys.gemini),
+                  },
+                },
+              },
+            }
+          : null),
       },
       { status: 500, headers: { "Cache-Control": "no-store" } }
     );
@@ -345,6 +376,7 @@ export async function GET(req: NextRequest) {
     ...items,
     { path: ["__part_of_speech__"], text: posCode || "" },
     { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
+    { path: ["__translation_prompt_fingerprint__", provider], text: getTranslationPromptFingerprint(provider) },
   ]);
 
   // Fast-path: return cached overlay only if it matches the current fingerprint.
@@ -550,7 +582,16 @@ export async function GET(req: NextRequest) {
     }
   }
   if (items.length === 0) {
-    const overlay: TranslationOverlay = { headword: "", meanings: [{}] };
+    const overlay: TranslationOverlay = attachOverlayMeta(
+      { headword: "", meanings: [{}] },
+      {
+        providerSelected: provider,
+        providerUsed: provider,
+        usedFallback: false,
+        primaryError: null,
+        promptFingerprint: getTranslationPromptFingerprint(provider),
+      }
+    );
     await supabase
       .from("word_entry_translations")
       .update({
@@ -586,6 +627,9 @@ export async function GET(req: NextRequest) {
 
     let translatedTexts: string[] = [];
     let note: string | null = null;
+    let providerUsed: string | null = null;
+    let usedFallback: boolean | null = null;
+    let primaryError: string | null = null;
 
     if (hasContextTranslateAndNote) {
       const result = await (translator as any).translateWithContextAndNote(
@@ -595,6 +639,9 @@ export async function GET(req: NextRequest) {
       );
       translatedTexts = result?.translations ?? [];
       note = typeof result?.note === "string" ? result.note : null;
+      providerUsed = typeof result?.meta?.providerUsed === "string" ? result.meta.providerUsed : null;
+      usedFallback = typeof result?.meta?.usedFallback === "boolean" ? result.meta.usedFallback : null;
+      primaryError = typeof result?.meta?.primaryError === "string" ? result.meta.primaryError : null;
     } else {
       translatedTexts = hasContextTranslate
         ? await (translator as any).translateWithContext(texts, targetLang, context)
@@ -603,12 +650,23 @@ export async function GET(req: NextRequest) {
     }
 
     const overlay = buildOverlay(items, translatedTexts);
+    const used =
+      providerUsed === "deepl" || providerUsed === "openai" || providerUsed === "gemini"
+        ? (providerUsed as TranslationProviderName)
+        : provider;
+    const overlayWithMeta = attachOverlayMeta(overlay, {
+      providerSelected: provider,
+      providerUsed: used,
+      usedFallback,
+      primaryError,
+      promptFingerprint: getTranslationPromptFingerprint(used),
+    });
 
     const { error: updateError } = await supabase
       .from("word_entry_translations")
       .update({
         status: "ready",
-        overlay,
+        overlay: overlayWithMeta,
         note,
         source_fingerprint: fingerprint,
         error_message: null,
@@ -626,7 +684,32 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { status: "ready" as const, overlay, note },
+      {
+        status: "ready" as const,
+        overlay: overlayWithMeta,
+        note,
+        ...(debug
+          ? {
+              debug: {
+                dbLang,
+                targetLang,
+                translation: {
+                  providerSelected: provider,
+                  providerUsed: used,
+                  usedFallback,
+                  primaryError,
+                  providerEnv: config.provider,
+                  fallbackEnv: config.fallback ?? null,
+                  hasKeys: {
+                    openai: Boolean(config.apiKeys.openai),
+                    deepl: Boolean(config.apiKeys.deepl),
+                    gemini: Boolean(config.apiKeys.gemini),
+                  },
+                },
+              },
+            }
+          : null),
+      },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (err: any) {
@@ -640,7 +723,28 @@ export async function GET(req: NextRequest) {
       .eq("provider", provider);
 
     return NextResponse.json(
-      { status: "failed" as const, error: message },
+      {
+        status: "failed" as const,
+        error: message,
+        ...(debug
+          ? {
+              debug: {
+                dbLang,
+                targetLang,
+                translation: {
+                  providerSelected: provider,
+                  providerEnv: config.provider,
+                  fallbackEnv: config.fallback ?? null,
+                  hasKeys: {
+                    openai: Boolean(config.apiKeys.openai),
+                    deepl: Boolean(config.apiKeys.deepl),
+                    gemini: Boolean(config.apiKeys.gemini),
+                  },
+                },
+              },
+            }
+          : null),
+      },
       { status: 502, headers: { "Cache-Control": "no-store" } }
     );
   }
