@@ -771,9 +771,9 @@ export function TrainingCard({
                     </div>
                   )}
 
-                  <div className="text-center flex-1">
+                  <div className="text-left flex-1">
                     {hasPrimaryDefinitionText ? (
-                      <div className="flex flex-col items-center text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
+                      <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
                           segments={definitionSegments}
                           highlightedWord={highlightedWord}
@@ -782,13 +782,14 @@ export function TrainingCard({
                           sentence={definitionPromptText ?? ""}
                         />
                         <InlineTranslation
+                          align="left"
                           variant="definition"
                           text={getTranslated(0, "definition")}
                         />
                       </div>
                     ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
-                      <div className="flex items-start justify-center gap-3 flex-wrap">
-                        <div className="flex flex-col items-center text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
+                      <div className="flex items-start gap-3 flex-wrap">
+                        <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                           <InteractiveText
                             segments={idiomPromptSegments}
                             highlightedWord={highlightedWord}
@@ -796,6 +797,7 @@ export function TrainingCard({
                             cursorStyle={wordCursorStyle}
                           />
                           <InlineTranslation
+                            align="left"
                             variant="definition"
                             text={
                               hasPrimaryIdiomExplanationText
@@ -1068,134 +1070,153 @@ export function TrainingCard({
 
               {/* If Def->Word mode: Show Headword (Answer) */}
               {!isWordToDefinition && (
-                <div className="mt-4 text-center flex flex-col items-center">
-                  {renderWordWithDecoration(
-                    word.headword,
-                    word.gender,
-                    word.part_of_speech,
-                    "text-3xl md:text-4xl lg:text-5xl"
-                  )}
-                  <InlineTranslation
-                    variant="headword"
-                    text={getHeadwordTranslated()}
-                  />
-                  {/* Context - shown with the answer */}
-                  {primaryMeaning.context && (
-                    <div className="mt-4 text-lg text-slate-500 dark:text-slate-400 font-medium flex flex-col items-center justify-center">
-                      <span>[{primaryMeaning.context}]</span>
-                      <InlineTranslation text={getTranslated(0, "context")} />
-                    </div>
-                  )}
-                  {/* Idioms (revealed): show idiom before examples */}
-                  {primaryMeaning.idioms &&
-                    primaryMeaning.idioms.length > 0 && (
-                      <div className="mt-6 mx-auto max-w-3xl flex flex-col gap-3">
-                        {primaryMeaning.idioms.map((idiom, i) => {
-                          const expressionSegments = buildSegments(
-                            idiom.expression,
-                            primaryMeaning.links
-                          );
-                          const explanationSegments = buildSegments(
-                            idiom.explanation,
-                            primaryMeaning.links
-                          );
+                <div className="flex flex-col gap-4">
+                  {/* Headword - centered across full card width (matches W->D header) */}
+                  <div className="w-full flex flex-col items-center text-center">
+                    {renderWordWithDecoration(
+                      word.headword,
+                      word.gender,
+                      word.part_of_speech,
+                      "text-3xl md:text-4xl lg:text-5xl"
+                    )}
+                    <InlineTranslation
+                      variant="headword"
+                      text={getHeadwordTranslated()}
+                    />
+                  </div>
+                  {/* Content with badge gutter (matches W->D revealed layout) */}
+                  {(primaryMeaning.context ||
+                    (primaryMeaning.idioms && primaryMeaning.idioms.length > 0) ||
+                    (primaryMeaning.examples && primaryMeaning.examples.length > 0)) && (
+                    <div className="flex items-start gap-4 md:gap-6">
+                      {/* Badge gutter spacer */}
+                      {showNumber && <div className="flex-shrink-0 w-12 md:w-14" />}
+                      {/* Content column */}
+                      <div className="flex-1 flex flex-col gap-3">
+                        {/* Context */}
+                        {primaryMeaning.context && (
+                          <div className="text-base text-slate-500 dark:text-slate-400 font-medium flex flex-col items-start">
+                            <span>[{primaryMeaning.context}]</span>
+                            <InlineTranslation align="left" text={getTranslated(0, "context")} />
+                          </div>
+                        )}
+                        {/* Idioms */}
+                        {primaryMeaning.idioms &&
+                          primaryMeaning.idioms.length > 0 && (
+                            <div className="flex flex-col gap-3 mt-2">
+                              {primaryMeaning.idioms.map((idiom, i) => {
+                                const expressionSegments = buildSegments(
+                                  idiom.expression,
+                                  primaryMeaning.links
+                                );
+                                const explanationSegments = buildSegments(
+                                  idiom.explanation,
+                                  primaryMeaning.links
+                                );
 
-                          return (
-                            <div key={i} className="flex flex-col gap-1">
-                              <div className="flex items-start justify-center gap-3 flex-wrap">
-                                <div className="flex flex-col items-center text-xl md:text-2xl leading-[1.4] font-medium text-slate-900 dark:text-slate-100">
-                                  <InteractiveText
-                                    segments={expressionSegments}
-                                    highlightedWord={highlightedWord}
-                                    onWordClick={onWordClick}
-                                    cursorStyle={wordCursorStyle}
-                                    excludeWord={word.headword}
-                                  />
-                                  <InlineTranslation
-                                    text={getTranslated(0, {
-                                      idiomIndex: i,
-                                      idiomField: "expression",
-                                    })}
-                                  />
-                                </div>
-                                <span
-                                  className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
-                                >
-                                  <Tooltip
-                                    content={getGenericBadgeTooltip({
-                                      key: "idiom",
-                                      translationLang,
-                                    })}
-                                    side="top"
-                                  >
-                                    <span>idioom</span>
-                                  </Tooltip>
-                                </span>
-                              </div>
-                              {idiom.explanation?.trim() &&
-                                !(
-                                  hidePrimaryIdiomExplanationOnReveal && i === 0
-                                ) && (
-                                  <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start justify-center">
-                                    <span className="text-slate-500 dark:text-slate-400 mr-2">
-                                      |
-                                    </span>
-                                    <div className="flex flex-col items-center flex-1 text-center">
+                                return (
+                                  <div key={i} className="flex flex-col gap-1">
+                                    {/* Expression with inline idiom badge */}
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <div className="flex flex-col text-xl md:text-2xl leading-[1.4] font-medium text-slate-900 dark:text-slate-100">
+                                        <InteractiveText
+                                          segments={expressionSegments}
+                                          highlightedWord={highlightedWord}
+                                          onWordClick={onWordClick}
+                                          cursorStyle={wordCursorStyle}
+                                          excludeWord={word.headword}
+                                        />
+                                        <InlineTranslation
+                                          align="left"
+                                          text={getTranslated(0, {
+                                            idiomIndex: i,
+                                            idiomField: "expression",
+                                          })}
+                                        />
+                                      </div>
+                                      <span
+                                        className="inline-flex flex-col items-center rounded-md bg-purple-100 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 text-center select-none"
+                                      >
+                                        <Tooltip
+                                          content={getGenericBadgeTooltip({
+                                            key: "idiom",
+                                            translationLang,
+                                          })}
+                                          side="top"
+                                        >
+                                          <span>idioom</span>
+                                        </Tooltip>
+                                      </span>
+                                    </div>
+                                    {/* Explanation with separator */}
+                                    {idiom.explanation?.trim() &&
+                                      !(
+                                        hidePrimaryIdiomExplanationOnReveal && i === 0
+                                      ) && (
+                                        <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
+                                          <span className="text-slate-500 dark:text-slate-400 mr-2">
+                                            |
+                                          </span>
+                                          <div className="flex flex-col flex-1">
+                                            <InteractiveText
+                                              segments={explanationSegments}
+                                              highlightedWord={highlightedWord}
+                                              onWordClick={onWordClick}
+                                              cursorStyle={wordCursorStyle}
+                                              excludeWord={word.headword}
+                                            />
+                                            <InlineTranslation
+                                              align="left"
+                                              text={getTranslated(0, {
+                                                idiomIndex: i,
+                                                idiomField: "explanation",
+                                              })}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        {/* Examples */}
+                        {primaryMeaning.examples &&
+                          primaryMeaning.examples.length > 0 && (
+                            <div className="flex flex-col gap-5 mt-3">
+                              {primaryMeaning.examples.map((ex, i) => {
+                                const exSegments = buildSegments(
+                                  ex,
+                                  primaryMeaning.links
+                                );
+                                return (
+                                  <div key={i} className="flex items-start gap-3">
+                                    <span
+                                      aria-hidden="true"
+                                      className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-400 dark:bg-slate-500"
+                                    />
+                                    <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
                                       <InteractiveText
-                                        segments={explanationSegments}
+                                        segments={exSegments}
                                         highlightedWord={highlightedWord}
                                         onWordClick={onWordClick}
                                         cursorStyle={wordCursorStyle}
                                         excludeWord={word.headword}
+                                        sentence={ex}
                                       />
                                       <InlineTranslation
-                                        text={getTranslated(0, {
-                                          idiomIndex: i,
-                                          idiomField: "explanation",
-                                        })}
+                                        align="left"
+                                        text={getTranslated(0, { exampleIndex: i })}
                                       />
                                     </div>
                                   </div>
-                                )}
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+                          )}
                       </div>
-                    )}
-                  {/* Examples */}
-                  {primaryMeaning.examples &&
-                    primaryMeaning.examples.length > 0 && (
-                      <div className="flex flex-col gap-2 mt-6 mx-auto max-w-3xl text-left px-2 md:px-0">
-                        {primaryMeaning.examples.map((ex, i) => {
-                          const exSegments = buildSegments(
-                            ex,
-                            primaryMeaning.links
-                          );
-                          return (
-                            <div key={i} className="flex items-start gap-3">
-                              <span
-                                aria-hidden="true"
-                                className="flex-shrink-0 mt-[0.45em] h-[1em] w-[2px] rounded bg-slate-400 dark:bg-slate-500"
-                              />
-                              <div className="flex flex-col flex-1 text-lg italic leading-[1.4] text-slate-600 dark:text-slate-400">
-                                <InteractiveText
-                                  segments={exSegments}
-                                  highlightedWord={highlightedWord}
-                                  onWordClick={onWordClick}
-                                  cursorStyle={wordCursorStyle}
-                                  excludeWord={word.headword}
-                                  sentence={ex}
-                                />
-                                <InlineTranslation
-                                  align="left"
-                                  text={getTranslated(0, { exampleIndex: i })}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
