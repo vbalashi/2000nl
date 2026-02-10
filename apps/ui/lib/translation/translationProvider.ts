@@ -106,21 +106,51 @@ export function loadTranslationConfigFromEnv(): TranslationConfig {
     normalizeProvider(process.env.TRANSLATION_FALLBACK) ??
     (provider === "openai" || provider === "gemini" ? "deepl" : undefined);
 
+  // Azure OpenAI support:
+  // - Prefer AZURE_OPENAI_* vars when set (common local/prod setup).
+  // - If AZURE_OPENAI_API_VERSION is set, use the deployments-style endpoint.
+  // - Otherwise use the OpenAI-compatible v1 endpoint at `/openai/v1/` and treat
+  //   OPENAI_MODEL (or AZURE_OPENAI_DEPLOYMENT) as the deployment name.
+  const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT?.trim() || "";
+  const azureApiKey = process.env.AZURE_OPENAI_API_KEY?.trim() || "";
+  const azureDeployment =
+    process.env.AZURE_OPENAI_DEPLOYMENT?.trim() ||
+    process.env.AZURE_OPENAI_MODEL?.trim() ||
+    process.env.OPENAI_MODEL?.trim() ||
+    "";
+  const azureApiVersion = process.env.AZURE_OPENAI_API_VERSION?.trim() || "";
+
+  const openaiApiUrlFromEnv = process.env.OPENAI_API_URL?.trim() || "";
+  const openaiApiUrl =
+    openaiApiUrlFromEnv ||
+    (azureEndpoint
+      ? azureApiVersion && azureDeployment
+        ? `${azureEndpoint.replace(/\/+$/, "")}/openai/deployments/${encodeURIComponent(
+            azureDeployment
+          )}/chat/completions?api-version=${encodeURIComponent(azureApiVersion)}`
+        : `${azureEndpoint.replace(/\/+$/, "")}/openai/v1/chat/completions`
+      : "");
+
+  // Prefer Azure key when configured (many setups still leave OPENAI_API_KEY set).
+  const openaiApiKey = (azureApiKey || process.env.OPENAI_API_KEY?.trim() || "") || undefined;
+  const openaiModel =
+    azureDeployment || process.env.OPENAI_MODEL?.trim() || undefined;
+
   return {
     provider,
     fallback,
     apiKeys: {
       deepl: process.env.DEEPL_API_KEY,
-      openai: process.env.OPENAI_API_KEY,
+      openai: openaiApiKey,
       gemini: process.env.GEMINI_API_KEY,
     },
     apiUrls: {
       deepl: process.env.DEEPL_API_URL,
-      openai: process.env.OPENAI_API_URL,
+      openai: openaiApiUrl || undefined,
       gemini: process.env.GEMINI_API_URL,
     },
     models: {
-      openai: process.env.OPENAI_MODEL,
+      openai: openaiModel,
       gemini: process.env.GEMINI_MODEL,
     },
   };

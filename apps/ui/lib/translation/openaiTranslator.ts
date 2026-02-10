@@ -64,6 +64,29 @@ function targetLanguageLabel(targetLang: string) {
   return LANGUAGE_LABELS[normalized] ?? targetLang.trim();
 }
 
+function looksLikeAzureOpenAI(apiUrl: string) {
+  // Azure OpenAI endpoints commonly use:
+  // - https://{resource}.openai.azure.com/openai/deployments/{deployment}/chat/completions?api-version=...
+  // - https://{resource}.openai.azure.com/openai/v1/chat/completions  (OpenAI-compatible v1)
+  const url = (apiUrl || "").toLowerCase();
+  return url.includes(".openai.azure.com") || url.includes("azure.com/openai/");
+}
+
+function resolveChatCompletionsUrl(apiUrl: string) {
+  const trimmed = (apiUrl || "").trim();
+  if (!trimmed) return trimmed;
+
+  // Support passing a base URL (common when copying "endpoint" values).
+  // This keeps behavior backward compatible: if you pass a full endpoint, we use it as-is.
+  if (/\/openai\/v1\/?$/i.test(trimmed)) {
+    return `${trimmed.replace(/\/+$/, "")}/chat/completions`;
+  }
+  if (/\/openai\/v1\/?$/.test(trimmed.toLowerCase())) {
+    return `${trimmed.replace(/\/+$/, "")}/chat/completions`;
+  }
+  return trimmed;
+}
+
 function buildMessages(texts: string[], targetLang: string, context?: OpenAITranslationContext) {
   const label = targetLanguageLabel(targetLang);
   const pos = context?.partOfSpeech?.trim() || null;
@@ -153,7 +176,7 @@ export class OpenAITranslator implements ITranslator {
 
   constructor(options: OpenAITranslatorOptions) {
     this.apiKey = options.apiKey;
-    this.apiUrl = options.apiUrl ?? DEFAULT_API_URL;
+    this.apiUrl = resolveChatCompletionsUrl(options.apiUrl ?? DEFAULT_API_URL);
     this.model = options.model ?? DEFAULT_MODEL;
     this.fallback = options.fallback;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
@@ -192,16 +215,18 @@ export class OpenAITranslator implements ITranslator {
     }
 
     const openaiKeyHash = keyHash(this.apiKey);
+    const isAzure = looksLikeAzureOpenAI(this.apiUrl);
     const attemptTranslate = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
       try {
+        const includeModel = !isAzure || !/\/openai\/deployments\//i.test(this.apiUrl);
         const body: Record<string, any> = {
-          model: this.model,
           temperature: 0,
           messages: buildMessages(texts, targetLang, context),
         };
+        if (includeModel) body.model = this.model;
         // GPT-5.x supports reasoning_effort; keep it off for translation.
         if (this.model.startsWith("gpt-5")) {
           body.reasoning_effort = "none";
@@ -211,7 +236,9 @@ export class OpenAITranslator implements ITranslator {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
+            ...(isAzure
+              ? { "api-key": this.apiKey }
+              : { Authorization: `Bearer ${this.apiKey}` }),
           },
           body: JSON.stringify(body),
           signal: controller.signal,

@@ -163,6 +163,66 @@ describe("OpenAITranslator", () => {
     expect(init.headers.Authorization).toBe("Bearer key");
   });
 
+  it("uses Azure api-key header when calling an Azure OpenAI endpoint", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ translations: ["Hallo"], note: null }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({
+      apiKey: "azure-key",
+      apiUrl: "https://example.openai.azure.com/openai/v1/chat/completions",
+      model: "deployment-name",
+    });
+    const translated = await translator.translate("hello", "en");
+    expect(translated).toBe("Hallo");
+
+    const [, init] = fetchMock.mock.calls[0] as [string, any];
+    expect(init.headers["api-key"]).toBe("azure-key");
+    expect(init.headers.Authorization).toBeUndefined();
+  });
+
+  it("omits model in request body for Azure deployments endpoint URLs", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ translations: ["Hallo"], note: null }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({
+      apiKey: "azure-key",
+      apiUrl:
+        "https://example.openai.azure.com/openai/deployments/my-deployment/chat/completions?api-version=2024-02-15-preview",
+      model: "ignored",
+    });
+    await translator.translate("hello", "en");
+
+    const [, init] = fetchMock.mock.calls[0] as [string, any];
+    const body = JSON.parse(init.body);
+    expect(body.model).toBeUndefined();
+  });
+
   it("extracts a contextual note when provided", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
