@@ -24,6 +24,11 @@ OPENAI_MODEL=gpt-5.2                 # optional, defaults to gpt-5.2
 DEEPL_API_KEY=...                    # required only if deepl is provider or fallback
 ```
 
+**Azure OpenAI (optional, used by the `openai` provider):**
+- If `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY` are set, the app will prefer them over `OPENAI_API_KEY`.
+- If `AZURE_OPENAI_API_VERSION` is set, the app uses the Azure deployments endpoint.
+- Otherwise it uses the OpenAI-compatible Azure endpoint at `/openai/v1/chat/completions`.
+
 ### Fingerprint-based cache invalidation
 
 Each translation row in `word_entry_translations` has a `source_fingerprint` computed from:
@@ -64,6 +69,23 @@ Mapping is in `POS_DUTCH_LABELS` in the translation route.
 The OpenAI prompt requests a brief contextual `note` (1-2 sentences) about common meaning vs example-specific meaning. Stored in `word_entry_translations.note`. Not displayed in card UI yet — saved for future use.
 
 **Schema:** `db/migrations/004_user_features.sql` (consolidated; includes `word_entry_translations.note`)
+
+### Provider attribution (OpenAI vs Gemini vs DeepL fallback)
+
+Translations can come from the selected provider (usually OpenAI) **or** from a fallback (DeepL) if the primary provider errors (e.g. `429 insufficient_quota`).
+
+To make this visible:
+- The API returns and persists `overlay.__meta` on `word_entry_translations.overlay`:
+  - `providerSelected`: provider chosen by config (`TRANSLATION_PROVIDER`/fallback)
+  - `providerUsed`: provider that actually produced the text (`openai`/`gemini`/`deepl`)
+  - `usedFallback`: whether a fallback was used
+  - `primaryError`: the primary provider error message (best-effort)
+- The Training card Translate button is subtly color-coded by `providerUsed`:
+  - DeepL: grey
+  - OpenAI: white
+  - Gemini: light blue
+- Long-press the Translate button (about ~650ms) to **force re-translate** (`force=1`) using the current provider priority.
+- For debugging, call `/api/translation?...&debug=1` to get `providerSelected/providerUsed/usedFallback/primaryError` in the JSON response.
 
 ### Troubleshooting translations
 

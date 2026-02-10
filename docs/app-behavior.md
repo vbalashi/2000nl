@@ -122,6 +122,16 @@ DeepL remains available only as an automatic code-level fallback if OpenAI fails
 **Behavior:**
 The translation response now includes an optional `note` field (1-2 sentences) where the LLM briefly explains the word's most common meaning vs its meaning in the specific example when they differ. This note is stored in the database alongside the translation for future use in card details, with no current card UI changes.
 
+### Translation Provider Attribution + Force Retranslate
+**Added:** 2026-02-10 (Sprint: Translation Quality, Premium Audio & TTS Cache)
+**User Story:** US-024.4
+
+**Behavior:**
+When the primary LLM translation provider fails (e.g. OpenAI quota errors), the app can fall back to DeepL automatically. The UI now surfaces which backend actually produced the cached translation:
+- The Translate button is subtly color-coded by provider (DeepL vs OpenAI vs Gemini).
+- Word Details shows a small provider badge in the Translation section.
+- Long-pressing the Translate button forces a re-translation of the current card (same provider priority, `force=1`).
+
 ### Bulk Re-translation Cleanup
 **Added:** 2026-02-08 (Sprint: Translation Quality, Premium Audio & TTS Cache)
 **User Story:** US-024.3
