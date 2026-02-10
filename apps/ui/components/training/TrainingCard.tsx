@@ -496,10 +496,10 @@ export function TrainingCard({
 
     const variantClass =
       variant === "headword"
-        ? "text-[17px] md:text-[19px] leading-[1.25] font-semibold tracking-tight text-slate-600 dark:text-slate-300"
+        ? "text-[17px] md:text-[19px] leading-[1.25] font-semibold tracking-tight italic text-translation dark:text-translation-light"
         : variant === "definition"
-          ? "text-[15px] md:text-[17px] leading-[1.3] font-semibold tracking-wide text-slate-500 dark:text-slate-400"
-          : "text-[14px] md:text-[15px] leading-[1.4] font-medium tracking-wide text-slate-500 dark:text-slate-400";
+          ? "text-[15px] md:text-[17px] leading-[1.3] font-semibold tracking-wide italic text-translation dark:text-translation-light"
+          : "text-[14px] md:text-[15px] leading-[1.4] font-medium tracking-wide italic text-translation dark:text-translation-light";
 
     return (
       <div

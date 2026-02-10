@@ -352,7 +352,7 @@ export function WordDetailPanel({
                       })()}
                     </div>
                     {idx === 0 && translatedDefinition ? (
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 text-xs italic text-translation dark:text-translation-light">
                         {translatedDefinition}
                       </div>
                     ) : null}
@@ -360,7 +360,7 @@ export function WordDetailPanel({
                       <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                         {m.context}
                         {idx === 0 && translatedContext ? (
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-xs italic text-translation dark:text-translation-light">
                             {translatedContext}
                           </div>
                         ) : null}
@@ -391,7 +391,7 @@ export function WordDetailPanel({
                       {it.expression}
                     </div>
                     {it.translatedExpression ? (
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 text-xs italic text-translation dark:text-translation-light">
                         {it.translatedExpression}
                       </div>
                     ) : null}
@@ -400,7 +400,7 @@ export function WordDetailPanel({
                       <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                         {it.explanation}
                         {it.translatedExplanation ? (
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="mt-1 text-xs italic text-translation dark:text-translation-light">
                             {it.translatedExplanation}
                           </div>
                         ) : null}
@@ -425,7 +425,7 @@ export function WordDetailPanel({
                   >
                     <div>{ex}</div>
                     {translatedExamples?.[i] ? (
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 text-xs italic text-translation dark:text-translation-light">
                         {translatedExamples[i]}
                       </div>
                     ) : null}
@@ -459,7 +459,7 @@ export function WordDetailPanel({
                 </div>
               ) : translationOverlay ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
-                  <div className="min-w-0 font-semibold text-slate-900 dark:text-white">
+                  <div className="min-w-0 font-semibold italic text-translation dark:text-translation-light">
                     {translationOverlay.headword || "—"}
                   </div>
                   <button

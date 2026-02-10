@@ -8,6 +8,8 @@ This document summarizes the color palette defined in `apps/ui/tailwind.config.j
 | --- | --- | --- |
 | `primary` | `#2e2bee` | Primary actions, links, focus rings, active states on light surfaces |
 | `primary-light` | `#8b89f6` | Primary text/accents on dark surfaces (dark mode) |
+| `translation` | `#806F3A` | Translated text on light surfaces (warm tint, WCAG AA) |
+| `translation-light` | `#D6BB7E` | Translated text on dark surfaces (warm tint, WCAG AA) |
 | `background-light` | `#F8FAFF` | App background (light mode) |
 | `background-dark` | `#0f172a` | App background (dark mode) |
 | `card-light` | `#FFFFFF` | Card surfaces, modal surfaces (light mode) |
@@ -41,6 +43,7 @@ Contrast ratios below use the WCAG 2.1 formula (same as WebAIM Contrast Checker)
 | `slate-600` (#475569) | `card-light` (#FFFFFF) | 7.58 |
 | `slate-500` (#64748b) | `card-light` (#FFFFFF) | 4.76 |
 | `slate-500` (#64748b) | `background-light` (#F8FAFF) | 4.56 |
+| `translation` (#806F3A) | `card-light` (#FFFFFF) | 4.94 |
 | `primary` (#2e2bee) | `card-light` (#FFFFFF) | 7.79 |
 | `primary` (#2e2bee) | `background-light` (#F8FAFF) | 7.46 |
 | `white` (#FFFFFF) | `primary` (#2e2bee) | 7.79 |
@@ -57,6 +60,7 @@ Contrast ratios below use the WCAG 2.1 formula (same as WebAIM Contrast Checker)
 | `slate-100` (#f1f5f9) | `card-dark` (#1f2937) | 13.40 |
 | `primary-light` (#8b89f6) | `card-dark` (#1f2937) | 4.90 |
 | `primary-light` (#8b89f6) | `background-dark` (#0f172a) | 5.96 |
+| `translation-light` (#D6BB7E) | `card-dark` (#1f2937) | 7.88 |
 
 ## Previously failing combinations (fixed)
 
