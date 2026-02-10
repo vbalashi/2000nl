@@ -1,75 +1,47 @@
 {
-  "branchName": "ralph/fsrs-double-review-fix",
-  "userStories": [
+  "sprintName": "Prefetch Race Condition Fix",
+  "branchName": "ralph/prefetch-race-fix",
+  "stories": [
     {
-      "id": "US-093.1",
-      "title": "Client-Side Keyboard Guard",
-      "description": "Add actionLoading check to handleKeyDown in TrainingScreen.tsx so keyboard shortcuts (H/J/K/L) cannot fire handleAction while a review is in flight. Also guard swipe gesture completion handler.\n\nTechnical Context:\n- File: apps/ui/components/training/TrainingScreen.tsx\n- Lines 1358-1369: keyboard handler fires void handleAction(...) with no guard\n- Lines 2345: buttons already have disabled={actionLoading} (this works)\n- Swipe handlers should also check actionLoading\n\nImplementation:\n1. In handleKeyDown function, add early return if actionLoading is true (check the ref or state)\n2. In swipe completion handlers, add same actionLoading guard\n3. Verify that actionLoading is set to true BEFORE any async work begins (already done at line 1048)",
-      "acceptanceCriteria": [
-        "handleKeyDown returns early if actionLoading is true",
-        "Swipe completion handler returns early if actionLoading is true",
-        "Rapid keypresses (e.g. K then H within 100ms) produce only one review",
-        "Rapid key+click combination produces only one review",
-        "Normal single keypress still works correctly",
+      "id": "US-094.1",
+      "title": "Session-level reviewed-words tracking",
+      "description": "Add a useRef<Set<string>> to TrainingScreen that tracks all word IDs reviewed in the current training session. In handleAction, add the current word's ID to the set BEFORE presenting the prefetched card (before the prefetch presentation block around line 1053). Clear the set on session boundary changes (list selection change, mode change, or component unmount).",
+      "acceptance": [
+        "reviewedInSessionRef is initialized as empty Set<string> on mount",
+        "In handleAction, the current word's ID is added to the set BEFORE presenting the prefetched card",
+        "The set is cleared when session boundaries change (list selection change, mode change, or component unmount)",
         "Typecheck passes"
       ],
       "passes": true,
       "notes": ""
     },
     {
-      "id": "US-093.2",
-      "title": "Client-Side Review Turn ID",
-      "description": "Generate a unique reviewTurnId (UUID) when a card is presented to the user. Pass it with every recordReview call. If a retry happens, reuse the same turn ID.\n\nTechnical Context:\n- File: apps/ui/lib/trainingService.ts — recordReview() function (line 617)\n- File: apps/ui/components/training/TrainingScreen.tsx — where card is loaded/presented\n- Generate UUID when fetchNextWord() returns a new card\n- Store as ref (currentTurnIdRef) alongside the current word\n- Pass to recordReview({ ..., turnId }) which forwards to RPC handle_review(p_turn_id)\n\nImplementation:\n1. Add turnId parameter to recordReview function signature and RecordReviewParams type\n2. In TrainingScreen, create currentTurnIdRef = useRef<string>()\n3. When a new card is loaded (after fetchNextWord resolves), set currentTurnIdRef.current = crypto.randomUUID()\n4. In handleAction, pass currentTurnIdRef.current to recordReview\n5. Update supabase.rpc call to include p_turn_id parameter",
-      "acceptanceCriteria": [
-        "New UUID generated each time a card is presented",
-        "recordReview accepts and forwards turnId parameter",
-        "Same turnId is used if the same card submission is retried",
-        "New card load generates new turnId",
-        "Typecheck passes"
-      ],
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-093.3",
-      "title": "Backend Idempotency Guard",
-      "description": "Add p_turn_id parameter to handle_review RPC. Before processing, check if a user_review_log entry with this turn_id already exists. If yes, return early (no-op). Add unique constraint on turn_id column.\n\nTechnical Context:\n- File: db/migrations/002_fsrs_engine.sql — handle_review() function (line 189)\n- Add p_turn_id uuid DEFAULT NULL parameter to function signature\n- Add turn_id column to user_review_log table (nullable uuid)\n- Add unique index: CREATE UNIQUE INDEX ON user_review_log (turn_id) WHERE turn_id IS NOT NULL\n- At top of function body: IF p_turn_id IS NOT NULL AND EXISTS (SELECT 1 FROM user_review_log WHERE turn_id = p_turn_id) THEN RETURN; END IF;\n- Store p_turn_id in user_review_log INSERT statement\n\nIMPORTANT: Create a new migration file (e.g. db/migrations/004_review_idempotency.sql) rather than editing 002. Also apply via Supabase dashboard SQL editor or supabase CLI.",
-      "acceptanceCriteria": [
-        "handle_review accepts optional p_turn_id parameter",
-        "user_review_log has turn_id column with unique index",
-        "Duplicate turn_id is silently rejected (no error, no second log entry)",
-        "NULL turn_id (backward compat) still works normally",
-        "Typecheck passes"
-      ],
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-093.4",
-      "title": "Backend Temporal Guard (Defense-in-Depth)",
-      "description": "As a fallback for clients that don't send turn_id, add a temporal guard: if user_word_status.last_reviewed_at for this (user, word, mode) is less than 10 seconds ago, skip the review and return early.\n\nTechnical Context:\n- File: db/migrations/002_fsrs_engine.sql — handle_review() function\n- After the existing SELECT * INTO v_status FROM user_word_status WHERE ... (line 245)\n- Add check: IF v_status.last_reviewed_at IS NOT NULL AND (now() - v_status.last_reviewed_at) < interval '10 seconds' AND p_turn_id IS NULL THEN RETURN; END IF;\n- Only applies when turn_id is absent (turn_id path already handled by US-093.3)\n- 10s threshold covers all observed anomalies (shortest was 10.79s for treffen)\n\nIMPORTANT: This goes in the same new migration file as US-093.3 (db/migrations/004_review_idempotency.sql). The function is replaced with CREATE OR REPLACE.",
-      "acceptanceCriteria": [
-        "Review within 10s of last review for same (user, word, mode) is silently rejected when no turn_id provided",
-        "Review with valid new turn_id is NOT blocked by temporal guard",
-        "Normal reviews (>10s apart) work as before",
-        "Typecheck passes"
-      ],
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-093.5",
-      "title": "Regression Tests",
-      "description": "Add tests that verify double-submit prevention works at the client level: rapid keyboard simulation and turn ID generation.\n\nTechnical Context:\n- Test location: apps/ui/tests/\n- Use vitest\n- Test 1 (keyboard guard): Create a test that simulates the handleKeyDown behavior. When actionLoading is true, calling the keyboard handler should NOT trigger handleAction. Mock or extract the guard logic.\n- Test 2 (turn ID generation): Verify that loading a new card generates a new turnId, and that the same turnId is reused for retries of the same card.\n- Test 3 (recordReview includes turnId): Verify recordReview passes turnId to supabase RPC.\n\nNote: Backend SQL tests (idempotency + temporal guard) are harder to test in vitest — those are validated by manual verification and the existing anomaly report tool (srs-history-analyzer skill).",
-      "acceptanceCriteria": [
-        "Test: rapid keyboard input triggers only one review when actionLoading is true",
-        "Test: new card generates new turnId, same card reuses turnId",
-        "Test: recordReview forwards turnId to RPC",
-        "All existing tests still pass",
+      "id": "US-094.2",
+      "title": "Exclude reviewed words from prefetch",
+      "description": "Update the prefetch useEffect (around line 956) to pass all session-reviewed word IDs in the exclude list: [...reviewedInSessionRef.current, forWordId]. Also update the fallback loadNextWord call (around line 1252) to pass [...reviewedInSessionRef.current, currentWord.id]. This prevents get_next_word RPC from returning any card already reviewed this session, closing the race window between prefetch and recordReview DB commits.",
+      "acceptance": [
+        "Prefetch passes [...reviewedInSessionRef.current, forWordId] as exclude list",
+        "Fallback loadNextWord call passes [...reviewedInSessionRef.current, currentWord.id]",
+        "Prefetch still works for instant transitions (no user-visible delay)",
         "Typecheck passes",
-        "npx vitest run passes"
+        "Verify in browser using Chrome DevTools MCP"
       ],
-      "passes": true,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-094.3",
+      "title": "Regression tests for prefetch race condition",
+      "description": "Add test coverage in apps/ui/tests/TrainingScreen.test.tsx ensuring that a word reviewed in the current session cannot be returned by the prefetch or on-demand fetch. Test that after grading a card, the next prefetch exclude list includes the graded card's ID. Test that after grading multiple cards, all graded IDs are in the exclude list. Test that the session-reviewed set is cleared on list/mode change. Ensure existing Sprint 17 regression tests still pass.",
+      "acceptance": [
+        "Test: after grading a card, the next prefetch exclude list includes the graded card's ID",
+        "Test: after grading multiple cards, all graded IDs are in the exclude list",
+        "Test: session-reviewed set is cleared on list/mode change",
+        "Existing Sprint 17 regression tests still pass",
+        "Typecheck passes",
+        "All tests pass (npx vitest run)"
+      ],
+      "passes": false,
       "notes": ""
     }
   ]

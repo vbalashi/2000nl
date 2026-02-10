@@ -1,56 +1,16 @@
 # Ralph Progress Log
-Started: ma  9 feb 2026 22:22:30 CET
+Started: di 10 feb 2026 10:00:23 CET
 
 ## Codebase Patterns
-- For async guards that must be synchronous (prevent rapid double-submits), use a `useRef` boolean instead of relying only on React state.
-- For per-card/session IDs that must persist across retries, store them in a `useRef` and set them in one place when a new card is presented (e.g., a `presentWord(...)` helper).
-- If the UI can swap to a prefetched “next card” before an async submit finishes, capture any per-card refs (like `turnId`) into a local variable before triggering the swap so the backend call uses the reviewed card’s ID.
-- For backend idempotency of RPCs, add an optional `p_turn_id` UUID, persist it (nullable) in `user_review_log.turn_id`, enforce with a partial unique index, and guard at the start of the function (optionally with an advisory lock to avoid races).
-- For legacy clients without an idempotency token, a backend temporal guard (e.g., skip if `last_reviewed_at` is within 10s) can reduce damage from accidental double-submits.
+- For session-scoped state that must not trigger renders (e.g., "already reviewed this session"), use `useRef(new Set())` and clear it via `useEffect` on session boundary changes (list/scenario/mode) plus an unmount cleanup.
 ---
 
-## 2026-02-09 22:34:45 CET - US-093.1
-- Added synchronous in-flight guard (`actionLoadingRef`) to block keyboard shortcuts and swipe completion while a review submission is in progress.
-- Wrapped `handleAction` in a `try/finally` so loading state is reliably cleared even if async work throws.
+## 2026-02-10 10:03:29 CET - US-094.1
+- Added `reviewedInSessionRef` (a `useRef<Set<string>>`) to track word IDs reviewed in the current training session.
+- In `handleAction`, added the current word ID to the set before presenting a prefetched next card (so instant transitions still mark the reviewed card).
+- Cleared the set on session boundary changes (list selection or scenario/mode changes) and on component unmount.
 - UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
-- Files changed: `apps/ui/components/training/TrainingScreen.tsx`
-- Learnings for future iterations: If preventing double-submit matters, gate the action entrypoint itself (not only buttons/disabled UI), since React state updates are not synchronous.
----
-
-## 2026-02-09 22:42:19 CET - US-093.2
-- Added a per-card `turnId` (UUID) generated when a card is presented, stored in a ref, and passed into `recordReview`.
-- Updated `recordReview` to accept `turnId` and attempt an RPC call with `p_turn_id`, with a backward-compatible retry without it if the backend function signature hasn't been migrated yet.
-- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
-- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `apps/ui/lib/trainingService.ts`, `ralph/prd.json`, `ralph/progress.txt`
+- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `ralph/prd.json`, `ralph/progress.txt`
 - **Learnings for future iterations:**
-  - If the DB migration is shipped separately from the UI, prefer a best-effort RPC call with new params plus a safe fallback to the legacy signature to avoid breaking older deployments.
-  - Centralizing “card presented” logic (e.g., `presentWord`) prevents missing side effects like updating `turnId` across multiple code paths (forced load, normal load, prefetch swap).
----
-
-## 2026-02-09 22:48:19 CET - US-093.3
-- Added DB idempotency support for reviews: `user_review_log.turn_id` (nullable UUID) with a partial unique index, and `handle_review(p_turn_id uuid DEFAULT NULL)` early-return guard to treat duplicate submissions as a no-op.
-- Used an advisory transaction lock keyed by `turn_id` to avoid races where concurrent requests could both pass an `EXISTS` check.
-- UI verification skipped (not necessary for this change; validated via `npx tsc --noEmit` + `npx vitest run`).
-- Files changed: `db/migrations/007_review_idempotency.sql`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - For “silent” dedupe, pair a guard (`EXISTS` early-return) with a unique index, and consider advisory locks if concurrent duplicates are plausible.
----
-
-## 2026-02-09 22:52:35 CET - US-093.4
-- Added a defense-in-depth temporal guard to `handle_review`: when `p_turn_id` is NULL and the same (user, word, mode) was reviewed within the last 10 seconds, the RPC returns early (no-op).
-- Documented the temporal guard behavior alongside the existing turnId idempotency notes.
-- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
-- Files changed: `db/migrations/007_review_idempotency.sql`, `docs/app-behavior.md`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - Put the temporal guard after loading `user_word_status` so it naturally no-ops for brand new cards (no `last_reviewed_at`).
-  - Ensure the temporal guard only applies when `p_turn_id` is absent so the idempotency-token path remains authoritative.
----
-
-## 2026-02-09 22:59:42 CET - US-093.5
-- Added regression tests covering: (1) rapid hotkeys while a review is in-flight only submit once, (2) turnId is attached to review submissions even when the UI advances to a prefetched next card, (3) `recordReview` forwards `turnId` via `p_turn_id` and falls back to legacy RPC signature when needed.
-- Fixed a subtle bug where `turnId` could be taken from the *next* prefetched card instead of the reviewed card by capturing it before swapping UI state.
-- UI verification skipped (not necessary for this change; covered by `npx tsc --noEmit` + `npx vitest run`).
-- Files changed: `apps/ui/components/training/TrainingScreen.tsx`, `apps/ui/tests/TrainingScreen.test.tsx`, `apps/ui/tests/trainingService.recordReview.test.ts`, `ralph/prd.json`, `ralph/progress.txt`
-- **Learnings for future iterations:**
-  - For instant UI transitions (prefetch swap), don’t read mutable refs after swapping state; capture them before the swap.
+  - If a piece of state is needed across async flows but should not participate in render, keep it in a ref and explicitly reset it on boundary changes.
 ---

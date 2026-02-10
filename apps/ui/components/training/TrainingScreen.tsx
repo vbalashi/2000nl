@@ -213,6 +213,9 @@ export function TrainingScreen({ user }: Props) {
   // synchronous guards against double-submit from rapid keypresses/touches.
   const actionLoadingRef = useRef(false);
   const currentTurnIdRef = useRef<string | null>(null);
+  // Track which cards have already been reviewed in this session to avoid re-serving
+  // them during prefetch/on-demand fetch (used by later US-094 stories).
+  const reviewedInSessionRef = useRef<Set<string>>(new Set());
 
   const presentWord = useCallback((word: TrainingWord | null) => {
     setCurrentWord(word);
@@ -413,6 +416,21 @@ export function TrainingScreen({ user }: Props) {
   // Scenario-based training
   const [activeScenario, setActiveScenarioState] =
     useState<string>("understanding");
+
+  const enabledModesKey = enabledModes.join("|");
+
+  // Session boundary: list selection or mode/scenario changes should reset the
+  // session-reviewed set so the new session starts fresh.
+  useEffect(() => {
+    reviewedInSessionRef.current.clear();
+  }, [activeScenario, enabledModesKey, wordListId, wordListType]);
+
+  // Also clear on unmount to avoid leaking state across mounts in tests/dev.
+  useEffect(() => {
+    return () => {
+      reviewedInSessionRef.current.clear();
+    };
+  }, []);
 
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
@@ -1038,6 +1056,10 @@ export function TrainingScreen({ user }: Props) {
       // Compute the next queue turn up front (and persist it) so our on-demand fetch
       // doesn't read stale `queueTurn` inside this async callback.
       const nextQueueTurn = advanceQueueTurn();
+
+      // Mark this word as reviewed in the current session BEFORE we potentially
+      // present a prefetched card (instant transition).
+      reviewedInSessionRef.current.add(currentWord.id);
 
       // If the prefetch for the current word is ready, switch immediately to the
       // next card for "instant" transitions. Review recording continues below.
