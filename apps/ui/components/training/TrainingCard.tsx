@@ -382,7 +382,9 @@ export function TrainingCard({
   // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
   // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
   const definitionPromptText = (() => {
-    const primaryDefinition = hidePerfectParticiple(primaryMeaning.definition);
+    const primaryDefinition = revealed
+      ? primaryMeaning.definition
+      : hidePerfectParticiple(primaryMeaning.definition);
     if (!primaryDefinition) return primaryDefinition;
     if (isWordToDefinition || revealed) return primaryDefinition;
     return maskTargetWordInDefinition(primaryDefinition, word.headword);
@@ -976,9 +978,7 @@ export function TrainingCard({
               {isWordToDefinition && (
                 <div className="flex flex-col gap-8">
                   {allMeanings.map((meaning, index) => {
-                    const definitionText = hidePerfectParticiple(
-                      meaning.definition
-                    );
+                    const definitionText = meaning.definition;
                     const defSegments = buildSegments(
                       definitionText ?? "",
                       meaning.links

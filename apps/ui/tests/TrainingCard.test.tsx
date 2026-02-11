@@ -81,7 +81,7 @@ test("tap/clicking card requests reveal when not revealed", () => {
   expect(onRequestReveal).toHaveBeenCalledTimes(1);
 });
 
-test("hides perfect participle in auxiliary metadata (W->D revealed)", () => {
+test("shows perfect participle in auxiliary metadata after reveal (W->D)", () => {
   const onWordClick = vi.fn();
   const verbWord = {
     id: "2",
@@ -110,8 +110,7 @@ test("hides perfect participle in auxiliary metadata (W->D revealed)", () => {
     />
   );
 
-  expect(document.body).toHaveTextContent("( heeft ... ) weggaan");
-  expect(document.body).not.toHaveTextContent("vertrokken");
+  expect(document.body).toHaveTextContent("( heeft vertrokken ) weggaan");
 });
 
 test("hides perfect participle in auxiliary metadata (D->W prompt)", () => {
@@ -145,6 +144,38 @@ test("hides perfect participle in auxiliary metadata (D->W prompt)", () => {
 
   expect(document.body).toHaveTextContent("( is ... ) weggelopen");
   expect(document.body).not.toHaveTextContent("vertrokken");
+});
+
+test("shows perfect participle in auxiliary metadata after reveal (D->W)", () => {
+  const onWordClick = vi.fn();
+  const verbWord = {
+    id: "8",
+    headword: "vertrekken",
+    part_of_speech: "ww",
+    raw: {
+      meanings: [
+        {
+          definition: "( is vertrokken ) weggelopen",
+          examples: [],
+          links: []
+        }
+      ]
+    }
+  };
+
+  render(
+    <TrainingCard
+      word={verbWord as any}
+      mode="definition-to-word"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  expect(document.body).toHaveTextContent("( is vertrokken ) weggelopen");
 });
 
 test("D->W prompt uses fixed-width badge gutter so badge doesn't crowd prompt text", () => {
