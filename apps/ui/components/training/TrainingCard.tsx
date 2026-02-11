@@ -226,6 +226,23 @@ export function TrainingCard({
     void fetchTranslation();
   }, [fetchTranslation, translationTooltipOpen]);
 
+  // Preload translation as soon as the answer is revealed so opening the
+  // translation view can feel immediate on first click/tap.
+  React.useEffect(() => {
+    if (!revealed) return;
+    if (!word?.id) return;
+    if (!translationLang || translationLang === "off") return;
+    // Only auto-preload once per card/language lifecycle.
+    if (translationStatus !== null) return;
+    void fetchTranslation();
+  }, [
+    fetchTranslation,
+    revealed,
+    translationLang,
+    translationStatus,
+    word?.id,
+  ]);
+
   // Poll while translation is open and pending.
   React.useEffect(() => {
     if (!translationTooltipOpen) return;
@@ -648,6 +665,21 @@ export function TrainingCard({
                 >
                   <button
                     type="button"
+                    onPointerEnter={() => {
+                      if (translationStatus == null) {
+                        void fetchTranslation();
+                      }
+                    }}
+                    onFocus={() => {
+                      if (translationStatus == null) {
+                        void fetchTranslation();
+                      }
+                    }}
+                    onTouchStart={() => {
+                      if (translationStatus == null) {
+                        void fetchTranslation();
+                      }
+                    }}
                     onPointerDown={(e) => {
                       if (translationLongPressTimeoutRef.current != null) {
                         window.clearTimeout(translationLongPressTimeoutRef.current);
