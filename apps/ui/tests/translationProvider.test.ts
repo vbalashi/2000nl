@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { createTranslator } from "@/lib/translation/translationProvider";
+import { createTranslator, loadTranslationConfigFromEnv } from "@/lib/translation/translationProvider";
 import { DeepLTranslator } from "@/lib/translation/deeplTranslator";
 import { GeminiTranslator } from "@/lib/translation/geminiTranslator";
 import { OpenAITranslator } from "@/lib/translation/openaiTranslator";
@@ -61,6 +61,47 @@ describe("translationProvider", () => {
 
     expect(provider).toBe("deepl");
     expect(translator).toBeInstanceOf(DeepLTranslator);
+  });
+});
+
+describe("loadTranslationConfigFromEnv", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.OPENAI_API_URL;
+    delete process.env.AZURE_OPENAI_API_VERSION;
+    delete process.env.AZURE_OPENAI_DEPLOYMENT;
+    delete process.env.AZURE_OPENAI_MODEL;
+    delete process.env.AZURE_OPENAI_ENDPOINT;
+    delete process.env.OPENAI_MODEL;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("does not duplicate /openai/v1 when AZURE_OPENAI_ENDPOINT already includes it", () => {
+    process.env.AZURE_OPENAI_ENDPOINT = "https://example.openai.azure.com/openai/v1/";
+    process.env.AZURE_OPENAI_API_KEY = "azure-key";
+    process.env.OPENAI_MODEL = "deployment-name";
+
+    const config = loadTranslationConfigFromEnv();
+    expect(config.apiUrls?.openai).toBe(
+      "https://example.openai.azure.com/openai/v1/chat/completions"
+    );
+  });
+
+  it("builds Azure deployments endpoint when api-version and deployment are provided", () => {
+    process.env.AZURE_OPENAI_ENDPOINT = "https://example.openai.azure.com/openai/v1/";
+    process.env.AZURE_OPENAI_API_VERSION = "2024-02-15-preview";
+    process.env.AZURE_OPENAI_DEPLOYMENT = "gpt-4.1";
+    process.env.AZURE_OPENAI_API_KEY = "azure-key";
+
+    const config = loadTranslationConfigFromEnv();
+    expect(config.apiUrls?.openai).toBe(
+      "https://example.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2024-02-15-preview"
+    );
   });
 });
 

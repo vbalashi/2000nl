@@ -100,6 +100,34 @@ export function createTranslator(config: TranslationConfig): TranslationProvider
   throw new Error(`No supported translation providers available. Checked: ${checked}`);
 }
 
+function buildAzureOpenAiUrl(opts: {
+  endpoint: string;
+  deployment: string;
+  apiVersion: string;
+}) {
+  const rawEndpoint = opts.endpoint.trim().replace(/\/+$/, "");
+  if (!rawEndpoint) return "";
+
+  const endpointAlreadyHasChatCompletions = /\/chat\/completions$/i.test(rawEndpoint);
+  if (endpointAlreadyHasChatCompletions) return rawEndpoint;
+
+  const endpointHasOpenAiV1 = /\/openai\/v1$/i.test(rawEndpoint);
+  const endpointBase = rawEndpoint
+    .replace(/\/openai\/v1$/i, "")
+    .replace(/\/openai$/i, "");
+
+  if (opts.apiVersion && opts.deployment) {
+    return `${endpointBase}/openai/deployments/${encodeURIComponent(
+      opts.deployment
+    )}/chat/completions?api-version=${encodeURIComponent(opts.apiVersion)}`;
+  }
+
+  if (endpointHasOpenAiV1) {
+    return `${rawEndpoint}/chat/completions`;
+  }
+  return `${endpointBase}/openai/v1/chat/completions`;
+}
+
 export function loadTranslationConfigFromEnv(): TranslationConfig {
   const provider = normalizeProvider(process.env.TRANSLATION_PROVIDER) ?? "openai";
   const fallback =
@@ -124,11 +152,11 @@ export function loadTranslationConfigFromEnv(): TranslationConfig {
   const openaiApiUrl =
     openaiApiUrlFromEnv ||
     (azureEndpoint
-      ? azureApiVersion && azureDeployment
-        ? `${azureEndpoint.replace(/\/+$/, "")}/openai/deployments/${encodeURIComponent(
-            azureDeployment
-          )}/chat/completions?api-version=${encodeURIComponent(azureApiVersion)}`
-        : `${azureEndpoint.replace(/\/+$/, "")}/openai/v1/chat/completions`
+      ? buildAzureOpenAiUrl({
+          endpoint: azureEndpoint,
+          deployment: azureDeployment,
+          apiVersion: azureApiVersion,
+        })
       : "");
 
   // Prefer Azure key when configured (many setups still leave OPENAI_API_KEY set).
