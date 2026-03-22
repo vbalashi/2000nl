@@ -1,5 +1,7 @@
 # Agent Notes
 
+This file now acts as an operational appendix. Start with `AGENTS.md` at the repo root for the canonical repo map, validation commands, and doc entrypoints.
+
 ## Running psql against Supabase
 
 1. Obtain your Supabase connection string from the project settings (Database > Connection string > psql).
@@ -30,11 +32,11 @@ Tip: if using a local `.env.local`, you can store `SUPABASE_DB_URL` there and ru
 - Clicks are treated as lapses (grade=again).
 
 ## Premium Features (Translations & Audio)
-- LLM translation pipeline (OpenAI GPT-5.2), premium TTS (Google/Azure), env vars, cache invalidation, troubleshooting: `docs/premium-features.md`
+- LLM translation pipeline (OpenAI GPT-5.2), premium TTS (Google/Azure), env vars, cache invalidation, troubleshooting: `docs/features/premium-features.md`
 
 ## Production Debugging
-- Prod login techniques (including token/session injection for `agent-browser`): `docs/production-login.md`
-- Sentence audio (TTS) testing and troubleshooting: `docs/audio-tts-testing.md`
+- Prod login techniques (including token/session injection for `agent-browser`): `docs/runbooks/production-login.md`
+- Sentence audio (TTS) testing and troubleshooting: `docs/runbooks/audio-tts-testing.md`
 
 ## agent-browser Auth Persistence (Local Dev + Prod)
 
@@ -52,6 +54,6 @@ Deterministic flow (recommended):
 
 1) Mint a Supabase session JSON (server-side) and write base64 to `tmp/agent-browser/*.b64`:
    - Local dev: `apps/ui/docs/automation-agent-browser.md` (Deterministic Session Injection)
-   - Production: `docs/production-login.md` (Inject a Supabase Session Token into Production)
+   - Production: `docs/runbooks/production-login.md` (Inject a Supabase Session Token into Production)
 2) Inject into the correct origin once (dev or prod) using a persistent `--profile`, then reload.
 3) Subsequent runs reuse the same `--profile` and typically don't need reinjection until the session expires.

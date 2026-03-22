@@ -157,7 +157,7 @@ WHERE routine_name = 'get_last_review_debug';
 **Problem:** No documentation of public API surface. Unclear which functions are intentional endpoints vs internal helpers.
 
 **Solution:**
-- Created `docs/api-functions.md` (400+ lines)
+- Created `docs/reference/api-functions.md` (400+ lines)
   - 12 public functions documented
   - Complete signatures, parameters, return types
   - Examples for each endpoint
@@ -250,7 +250,7 @@ WHERE routine_name = 'get_last_review_debug';
 
 ### Documentation
 - ✅ db/README.md - Migration workflow (150+ lines)
-- ✅ docs/api-functions.md - Public API reference (400+ lines)
+- ✅ docs/reference/api-functions.md - Public API reference (400+ lines)
 - ✅ reports/security-definer-audit.md - Security audit
 - ✅ reports/migration-discrepancies-2026-01-25.md - Drift analysis
 - ✅ reports/supabase-audit-2026-01-25.md - Complete audit (9.6K)

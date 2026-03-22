@@ -11,7 +11,7 @@
 |----------|------|-------------|
 | [supabase-audit-2026-01-25.md](./supabase-audit-2026-01-25.md) | 9.6K | Complete audit with benchmarks |
 | [migration-discrepancies-2026-01-25.md](./migration-discrepancies-2026-01-25.md) | 7.1K | Drift analysis |
-| [TODO-supabase-optimization.md](../docs/TODO-supabase-optimization.md) | 14K | Implementation tasks |
+| [TODO-supabase-optimization.md](../docs/tech-debt/TODO-supabase-optimization.md) | 14K | Implementation tasks |
 
 🔗 All documents are cross-referenced
 
@@ -176,7 +176,7 @@ Ran the following checks on production DB:
 
 ## 📝 Next Steps
 
-See [TODO-supabase-optimization.md](../docs/TODO-supabase-optimization.md) for detailed implementation plan.
+See [TODO-supabase-optimization.md](../docs/tech-debt/TODO-supabase-optimization.md) for detailed implementation plan.
 
 **Owner:** TBD
 **Timeline:** ~~P0 this week~~, ~~P1 next week~~, P2 ongoing

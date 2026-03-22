@@ -198,7 +198,7 @@ All take `p_user_id` without auth checks:
    - Any helper functions not called by frontend
 
 5. **Document public API:**
-   - Create docs/api-functions.md
+   - Create docs/reference/api-functions.md
    - List all intentional RPC endpoints
    - Document parameters, auth requirements, examples
 

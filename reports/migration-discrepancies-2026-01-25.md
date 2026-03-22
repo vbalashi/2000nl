@@ -3,7 +3,7 @@
 **Date:** 2026-01-25
 **Related:**
 - [Supabase Audit Report](./supabase-audit-2026-01-25.md)
-- [TODO List](../docs/TODO-supabase-optimization.md)
+- [TODO List](../docs/tech-debt/TODO-supabase-optimization.md)
 
 ---
 
@@ -268,7 +268,7 @@ After creating migration 008:
 
 ---
 
-**Next Steps:** See [TODO-supabase-optimization.md](../docs/TODO-supabase-optimization.md) Priority 0
+**Next Steps:** See [TODO-supabase-optimization.md](../docs/tech-debt/TODO-supabase-optimization.md) Priority 0
 
 ---
 

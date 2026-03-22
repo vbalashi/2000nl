@@ -3,7 +3,7 @@
 **Date:** 2026-01-25
 **Database:** lliwdcpuuzjmxyzrjtoz.supabase.co
 **Auditor:** Claude Code
-**Related:** [TODO-supabase-optimization.md](../docs/TODO-supabase-optimization.md)
+**Related:** [TODO-supabase-optimization.md](../docs/tech-debt/TODO-supabase-optimization.md)
 
 ---
 
@@ -308,7 +308,7 @@ USING ((select auth.uid()) = user_id);
 **Report Generated:** 2026-01-25
 **Migrations Deployed:** 2026-01-25 (008, 009, 010)
 **Next Review:** After performance benchmarking
-**Contact:** See [TODO-supabase-optimization.md](../docs/TODO-supabase-optimization.md) for implementation tasks
+**Contact:** See [TODO-supabase-optimization.md](../docs/tech-debt/TODO-supabase-optimization.md) for implementation tasks
 
 ---
 

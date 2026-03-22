@@ -81,4 +81,4 @@ The script shows chronological review history including:
 When adding new scripts:
 1. Add connection logic using `SUPABASE_DB_URL` or `DATABASE_URL`
 2. Document usage in this README
-3. Update `/docs/app-behavior.md` with the new tool
+3. Update `/docs/features/app-behavior.md` with the new tool

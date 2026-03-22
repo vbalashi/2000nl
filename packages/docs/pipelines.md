@@ -13,15 +13,12 @@
 - Scripts live in `packages/ingestion/scripts`; shared logic in `packages/ingestion/src/importer`.
 
 ## Serve
-- API (`apps/api`) exposes:
-  - Notes search/lookup
-  - Lists (system/user) CRUD and entries
-  - Training session generation per card type
-  - Progress mutations and history events
-- API types derive from `packages/shared/types` and card-type registry.
+- The current serving path is primarily Supabase/Postgres plus `apps/ui` server/client code.
+- `apps/api` is a reserved boundary for future extraction, not the default place to look for active runtime behavior.
+- Shared types derive from `packages/shared` and should remain compatible with both the current UI-led runtime and any future API extraction.
 
 ## Learn
-- UI (`apps/ui`) consumes API endpoints, renders cards based on card types, and updates progress/events.
+- UI (`apps/ui`) consumes Supabase/RPC-backed data flows, renders cards based on card types, and updates progress/events.
 
 ## Naming & Layout
 - Raw artifacts: `data/raw/<dictionary>/<lang>/<YYYYMMDD>/<headword>.json`.

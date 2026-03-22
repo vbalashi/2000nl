@@ -115,7 +115,7 @@
 - `reports/supabase-audit-2026-01-25.md` - Issues marked resolved
 - `reports/migration-discrepancies-2026-01-25.md` - Zero drift confirmed
 - `reports/security-definer-audit.md` - Complete security audit
-- `docs/TODO-supabase-optimization.md` - Updated with completion status
+- `docs/tech-debt/TODO-supabase-optimization.md` - Updated with completion status
 
 ### Process Tools
 - `.githooks/pre-commit` - Migration validation hook
@@ -147,7 +147,7 @@
 - Revoke access from public/anon/authenticated roles
 
 ### P2.3: API Documentation (Medium Priority)
-- Create `docs/api-functions.md`
+- Create `docs/reference/api-functions.md`
 - Document all 12 intentional RPC endpoints
 - Parameters, return types, auth requirements, examples
 

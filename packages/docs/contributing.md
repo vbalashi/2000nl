@@ -14,10 +14,10 @@
 ## Add a card type
 1. Append a new entry to `packages/shared/card-types/card-types.json` with prompt/reveal fields and `input_mode`.
 2. Implement UI rendering if a new `input_mode` is needed; reuse existing components when possible.
-3. Ensure API training session builder can emit this card type.
+3. Ensure the current training/session path can emit this card type. Today that usually means checking DB-side selection logic and the UI flow, not a standalone `apps/api` service.
 
 ## Add a list
-1. Insert into `lists` with `kind = system` or via API for user lists.
+1. Insert into `lists` with `kind = system` or through the active app/runtime path for user lists.
 2. Populate `list_entries` referencing `headword_id` (and `meaning_id` when applicable).
 
 ## Development
