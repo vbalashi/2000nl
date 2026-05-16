@@ -5,18 +5,19 @@
 ### Key Tables
 
 **`user_word_status`**
-- Tracks user progress per word
-- FSRS fields: `stability`, `difficulty`, `last_interval`
-- `source`: `new`, `review`, or `practice`
+- Tracks user progress per `user_id + word_id + mode`
+- FSRS fields: `fsrs_stability`, `fsrs_difficulty`, `fsrs_reps`, `fsrs_lapses`, `fsrs_last_grade`, `fsrs_last_interval`
+- Scheduling fields: `next_review_at`, `last_seen_at`, `last_reviewed_at`, `in_learning`, `learning_due_at`
 - `hidden`: flag for excluded words
-- `last_review`: timestamp of most recent review
-- `review_count`: total number of reviews
+- `frozen_until`: temporary exclusion until a later review time
+- Interaction counters: `click_count`, `seen_count`, `success_count`
 
 **`user_review_log`**
 - Audit trail of all review events
 - `grade`: 1 (again) | 2 (hard) | 3 (good) | 4 (easy)
 - `interval_after`: next review interval after the action
-- `review_type`: `review`, `practice`, or `click`
+- `review_type`: current RPC writes `new` or `review` for graded reviews; `handle_click` writes `click`. Queue sources such as `learning` and `practice` are exposed as `stats.source`, not as review-log types.
+- `turn_id`: optional client-generated UUID used to prevent accidental double-submit reviews
 
 **`word_entries`**
 - Dutch words with headword and definitions
@@ -24,14 +25,24 @@
 **`word_forms`**
 - Word variations and conjugations
 
+**`word_lists` / `word_list_items`**
+- Curated lists such as `vandale-all` and `nt2-2000`
+
+**`user_settings`**
+- Training preferences: active scenario, enabled modes, active list, card filter, new/review ratio, translation language, theme, sidebar pinning, audio quality, subscription tier
+
+**`word_entry_translations` / `user_word_notes`**
+- Shared translation overlays per word/language and per-user notes
+
 ## Codebase Structure
 
 ### UI Components
 - `apps/ui/components/training/TrainingScreen.tsx`
 - `apps/ui/components/training/TrainingCard.tsx`
 - `apps/ui/components/training/FirstTimeButtonGroup.tsx`
-- `apps/ui/components/training/ActionButtons.tsx`
 - `apps/ui/components/training/SidebarCard.tsx`
+- `apps/ui/components/training/Sidebar.tsx`
+- `apps/ui/components/training/SettingsModal.tsx`
 - `apps/ui/components/Tooltip.tsx`
 
 ### Types
@@ -40,7 +51,13 @@
 
 ### Service Logic
 - `apps/ui/lib/trainingService.ts`
-- `fetchNextWord()`
+- `apps/ui/lib/training/selectionService.ts`
+- `apps/ui/lib/training/reviewService.ts`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/lib/training/preferencesService.ts`
+- `apps/ui/lib/training/statsHistoryService.ts`
+- `fetchNextTrainingWord()`
+- `fetchNextTrainingWordByScenario()`
 - `recordReview()`
 - `fetchTrainingWordByLookup()`
 
@@ -61,24 +78,32 @@
 
 ### RPC Functions (Supabase)
 
-**`get_next_training_word_with_stats(userId, wordId?)`**
-- Returns the next card in the queue
+**`get_next_word(...)`**
 - Includes `stats.source`
-- Selects card mode by scenario
-- Supports forced card loads for URL testing
+- Selects among explicit card modes supplied by the caller
+- Accepts list scope, card filter, queue turn, and exclusions. Fresh migrations do not expose a separate scenario overload; resolve scenarios through `get_training_scenarios()` / `get_scenario_stats()` and pass the resulting modes.
 
-**`record_training_review(userId, wordId, grade, ...)`**
+**`handle_review(p_user_id, p_word_id, p_mode, p_result, p_turn_id?)`**
 - Records the user action
 - Updates FSRS fields
 - Calculates next review timestamp
-- Returns updated card state
+- Inserts review/event rows
+- Treats duplicate non-null `p_turn_id` submissions as no-ops
+
+**`handle_click(p_user_id, p_word_id, p_mode)`**
+- Records a definition/word click as an FSRS lapse-style event
+- Updates `click_count` and review history
+
+**`get_training_stats(...)`, `get_scenario_stats(...)`, `get_training_scenarios()`**
+- Feed footer counters, settings/statistics views, and scenario-level progress
 
 ### Queue Mechanism
 
-Frontend uses `forcedNextWordIdRef` to bypass the normal queue:
-- Set `forcedNextWordIdRef.current = wordId`
-- The next `fetchNextWord()` loads that word
-- Used by URL testing params and targeted manual testing
+The training screen keeps lightweight session state:
+- `queueTurn` and `reviewCounter` implement the new/review alternation requested by user preferences.
+- `reviewedInSessionRef` excludes already-reviewed cards while fetching the next card.
+- `currentTurnIdRef` stores the UUID sent to `handle_review` for duplicate-submit protection.
+- URL testing uses `useCardParams()` plus `fetchTrainingWordByLookup()` for direct word loads, rather than a separate backend test endpoint.
 
 ## Development Patterns
 
@@ -92,7 +117,8 @@ Frontend uses `forcedNextWordIdRef` to bypass the normal queue:
 
 ### Testing
 - Type safety: `npx tsc --noEmit`
-- Logic tests: `npx vitest run`
+- Logic tests: `npm test`
+- Lint: `npm run lint`
 - Browser verification: current browser automation flow or manual reproduction
 - Targeted card testing: `/?wordId=test&devMode=true`
 

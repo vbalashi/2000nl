@@ -32,8 +32,10 @@ Example:
 
 ## Migration History
 
-- 2026-01-25 (Migration 011): added auth checks to key public functions
-- 2026-01-25 (Migration 012): created `private` schema and moved debug helpers there
+- Current fresh deploys use consolidated migrations in `db/migrations/001_core_schema.sql` through `007_review_idempotency.sql`.
+- `005_security.sql` owns current RLS policies.
+- `007_review_idempotency.sql` adds `turn_id` handling to `handle_review`.
+- Historical migration notes in `reports/` and `db/migrations/archive/` are reference snapshots, not the fresh-deploy path.
 
 ## Testing API Calls
 
@@ -54,6 +56,7 @@ await supabase.rpc('handle_review', {
   p_user_id: '<some-other-user-uuid>',
   p_word_id: wordId,
   p_mode: 'word-to-definition',
-  p_result: 'success'
+  p_result: 'success',
+  p_turn_id: crypto.randomUUID()
 });
 ```

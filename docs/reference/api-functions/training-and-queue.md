@@ -12,7 +12,7 @@ Functions in this group validate that `p_user_id` matches `auth.uid()`.
 
 ## `get_next_word`
 
-Get the next card for training.
+Get the next card for training. The current fresh-deploy function accepts explicit card modes; callers that work from a scenario must resolve that scenario to its `card_modes` first.
 
 ```sql
 get_next_word(
@@ -45,27 +45,6 @@ const { data: cards } = await supabase.rpc('get_next_word', {
 });
 ```
 
-## `get_next_word` Scenario Variant
-
-Get the next card filtered by scenario.
-
-```sql
-get_next_word(
-    p_user_id uuid,
-    p_scenario_id text,
-    p_exclude_ids uuid[] DEFAULT ARRAY[]::uuid[],
-    p_list_id uuid DEFAULT NULL,
-    p_list_type text DEFAULT 'curated',
-    p_card_filter text DEFAULT 'both',
-    p_queue_turn text DEFAULT 'auto'
-) RETURNS SETOF jsonb
-```
-
-Example:
-```javascript
-const { data: cards } = await supabase.rpc('get_next_word', {
-  p_user_id: user.id,
-  p_scenario_id: 'understanding',
-  p_exclude_ids: []
-});
-```
+Notes:
+- `db/migrations/003_queue_training.sql` also keeps a backward-compatible single-mode overload: `get_next_word(p_user_id uuid, p_mode text, p_exclude_ids uuid[], p_list_id uuid, p_list_type text)`.
+- A scenario-based overload was removed from the consolidated migration because it collided with the single-mode overload during Postgres function resolution.

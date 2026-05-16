@@ -35,7 +35,7 @@ Audit targets:
 
 ## Fixes Applied
 
-- Migration 011 added auth checks to `handle_review`, `handle_click`, and `get_user_tier`
+- Auth checks for `handle_review`, `handle_click`, `get_user_tier`, and related public RPCs are captured in the current consolidated migrations
 - `003_queue_training.sql` updated with auth checks on `get_next_word` variants and stats functions
 
 ## Open Follow-Up

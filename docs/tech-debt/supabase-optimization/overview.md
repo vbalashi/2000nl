@@ -4,7 +4,7 @@
 
 ### Must Do
 - P1.3 Benchmark performance before/after
-- P1.4 Confirm production deployment status for migrations 008, 009, 010
+- P1.4 Confirm production matches the current consolidated migrations in `db/migrations/001_core_schema.sql` through `007_review_idempotency.sql`
 
 ### High Value
 - P2.2 Create private schema for internal functions
@@ -50,10 +50,12 @@
 
 ### 2026-01-25 - P0 and P1 Completed
 
-Created migrations:
+Historical pre-consolidation migrations:
 1. `008_capture_missing_policies.sql`
 2. `009_optimize_rls_performance.sql`
 3. `010_enable_rls_review_settings.sql`
+
+Current fresh-deploy state is captured in the consolidated files under `db/migrations/`.
 
 Verified:
 - InitPlan caching pattern applied to `auth.uid()` usage
@@ -72,6 +74,6 @@ Delivered:
 Results:
 - 12 SECURITY DEFINER functions reviewed
 - 9 functions missing auth checks before fixes
-- Migration 011 added auth checks to key functions
+- Auth checks were later folded into the consolidated migration files
 
 Reference report: [reports/security-definer-audit.md](../../../reports/security-definer-audit.md)

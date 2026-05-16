@@ -53,5 +53,5 @@ Reserved service boundary, but currently not the primary runtime. Do not assume 
 
 ## Known Architectural Constraints
 
-- Documentation still contains some pre-normalization assumptions. In particular, `apps/api` is documented in some places more strongly than it exists in practice.
-- Operational knowledge is split between root docs, `docs/`, and `packages/docs/`; this refactor establishes root `AGENTS.md` and `ARCHITECTURE.md` as the canonical starting points.
+- Historical reports and archived migrations may describe older normalized-table or `apps/api` assumptions. Treat live docs plus `db/migrations` as current, and treat `reports/` / `db/migrations/archive/` as snapshots.
+- Operational knowledge is still split between root docs, `docs/`, and `packages/docs/`; root `AGENTS.md` and `ARCHITECTURE.md` are the canonical starting points.

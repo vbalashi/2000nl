@@ -11,6 +11,9 @@ db/migrations/
 ├── 003_queue_training.sql    # get_next_word, training stats, scenarios
 ├── 004_user_features.sql     # User settings, lists, translations, notes, subscription tiers
 ├── 005_security.sql          # RLS policies
+├── 006_fix_omgekeerd_translation_ru.sql
+│                              # Data fix for a cached RU translation overlay
+├── 007_review_idempotency.sql # turn_id review idempotency guard
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -26,7 +29,7 @@ PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstra
 ## Adding New Features
 
 When adding new features:
-1. Add schema changes to the appropriate consolidated file (001-005)
+1. Add schema changes to the appropriate consolidated file (001-007)
 2. Commit the changes
 
 For temporary development migrations, you can create delta files (0040_*, etc.) and add them to `bootstrap.sql`, then merge them into the consolidated files before final commit.

@@ -1,16 +1,14 @@
 # Pipelines
 
 ## Scrape
-- Adapters in `packages/scraper` fetch from sources (e.g., Van Dale NT2) and write artifacts to `data/raw/<dictionary>/<lang>/<YYYYMMDD>/`.
-- Each artifact is a single note JSON matching the language schema in `packages/shared/schemas`.
-- Include metadata: dictionary code, language code, source URL, version/date.
+- Adapters in `packages/scraper` fetch or parse source-specific dictionary artifacts.
+- The current Van Dale path centers on `packages/scraper/vandale_html_parser.py` and ingestion scripts that produce structured word-entry JSON under repo data directories.
+- Keep adapters isolated from UI/runtime code; ingestion owns database loading.
 
 ## Ingest
-- Validate artifacts against shared schema; reject with reason when invalid.
-- Normalize into tables: `languages`, `dictionaries`, `headwords`, `meanings`, `notes`, `lists`, `list_entries`.
+- Validate and normalize source artifacts into `word_entries.raw`, `word_forms`, and curated `word_lists` / `word_list_items`.
 - Apply migrations from `db/migrations` before loading data.
-- Maintain a reject log (file or table) for manual cleanup.
-- Scripts live in `packages/ingestion/scripts`; shared logic in `packages/ingestion/src/importer`.
+- Scripts live in `packages/ingestion/scripts`; see `packages/ingestion/SCRIPTS.md` for the current script inventory.
 
 ## Serve
 - The current serving path is primarily Supabase/Postgres plus `apps/ui` server/client code.
@@ -18,9 +16,9 @@
 - Shared types derive from `packages/shared` and should remain compatible with both the current UI-led runtime and any future API extraction.
 
 ## Learn
-- UI (`apps/ui`) consumes Supabase/RPC-backed data flows, renders cards based on card types, and updates progress/events.
+- UI (`apps/ui`) consumes Supabase/RPC-backed data flows, renders cards for active modes/scenarios, and updates `user_word_status`, `user_review_log`, and `user_events` through RPCs.
 
 ## Naming & Layout
-- Raw artifacts: `data/raw/<dictionary>/<lang>/<YYYYMMDD>/<headword>.json`.
-- Seeds: optional prebuilt lists (e.g., NT2 2k) under `db/seeds/` (future).
+- Structured word content is currently stored under source-data directories such as `packages/ingestion/nl/vandale-nt2/data/words_content/` and loaded by ingestion scripts.
+- Curated lists are represented by `word_lists` and `word_list_items`.
 - Card types: defined once in `packages/shared/card-types` with per-language field selection.

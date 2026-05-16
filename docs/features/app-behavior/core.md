@@ -2,7 +2,7 @@
 
 ## Overview
 
-2000nl is a Dutch vocabulary learning web app using SRS-style training. The backend uses the FSRS algorithm to optimize intervals based on user performance.
+2000nl is a Dutch vocabulary learning web app using SRS-style training. Scheduling and review mutations are backed by Supabase/Postgres RPCs that implement FSRS-6 behavior.
 
 **Tech stack:**
 - Next.js (App Router, single-page app)
@@ -14,17 +14,17 @@
 
 ### Training Flow
 
-1. **Card Queue**: Backend RPC (`get_next_training_word_with_stats`) manages card selection and queue.
+1. **Card Queue**: The UI calls `get_next_word` through `apps/ui/lib/training/selectionService.ts`. Postgres chooses due/new cards, while the UI passes list scope, card filter, scenario, queue-turn hints, and session exclusions.
 2. **Card Presentation**: User sees either:
    - **Word → Definition (W→D)**: Dutch word shown, user recalls meaning
    - **Definition → Word (D→W)**: Meaning shown, user recalls Dutch word
 3. **User Actions**:
-   - `again` (fail): Didn't remember, restart learning
+   - `again` / `fail`: Didn't remember, restart learning
    - `hard`: Remembered with difficulty
    - `good`: Remembered correctly
    - `easy`: Remembered easily
    - `hide`: Exclude word from queue (user already knows it)
-4. **Interval Calculation**: FSRS algorithm adjusts next review interval based on action.
+4. **Interval Calculation**: `handle_review` records the action and updates FSRS state. The UI sends a client-generated `turnId` when available so duplicate submits are no-ops.
 
 ### Word States
 
@@ -32,7 +32,10 @@
   - Shows **FirstTimeButtonGroup** (2 buttons)
   - Always displays in **W→D direction**
   - Actions: "Start learning" (fail) or "I know it already" (hide)
-- **Learning** (`source="review"`): Active in queue with FSRS intervals
+- **Learning** (`source="learning"`): Active sub-day learning step with FSRS interval under one day
+  - Shows standard **4-button interface** (again/hard/good/easy)
+  - Direction varies based on backend scenario selection
+- **Review** (`source="review"`): Graduated card due or in review rotation
   - Shows standard **4-button interface** (again/hard/good/easy)
   - Direction varies based on backend scenario selection
 - **Hidden**: User marked "I know it already"
@@ -45,7 +48,7 @@
 - **Recent Opgezocht Sidebar**: Right sidebar showing recently looked-up words (clicked translations)
 - **Action Buttons**:
   - FirstTimeButtonGroup (first encounter): 2 buttons
-  - Standard ActionButtons (learning/review): 4 buttons
+  - Standard rating buttons are rendered by `TrainingScreen.tsx` for learning/review cards
 
 ## Related Docs
 

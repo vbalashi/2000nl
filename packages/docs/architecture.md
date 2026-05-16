@@ -4,14 +4,14 @@ This document covers the lower-level package/data flow. For the canonical repo-w
 
 End-to-end flow: scrape → ingest → store → serve → learn.
 
-- Scraper (`packages/scraper`): per-dictionary adapters emit validated JSON artifacts to `data/raw/<dictionary>/<lang>/<date>/headword.json`.
-- Ingestion (`packages/ingestion`): validates artifacts against `packages/shared/schemas`, normalizes to relational schema, applies migrations from `db/migrations`, and logs rejects.
-- Database (`db`): canonical schema for languages, dictionaries, notes, lists, user progress, and events.
+- Scraper (`packages/scraper`): source-specific adapters/parsers extract dictionary source data. The current Van Dale path uses `packages/scraper/vandale_html_parser.py`.
+- Ingestion (`packages/ingestion`): normalizes source data from directories such as `packages/ingestion/nl/vandale-nt2/data/` into structured word-entry JSON, then loads `word_entries`, `word_forms`, `word_lists`, and list membership into Postgres.
+- Database (`db`): canonical schema for languages, word entries, curated/user lists, user settings, progress, review logs, events, translations, and notes.
 - Serve layer: today this is primarily Supabase/Postgres plus server/client code in `apps/ui`; `apps/api` remains a reserved boundary rather than the main runtime.
-- UI (`apps/ui`): feature folders for dictionary browsing, list management, training, and provider-backed flows; uses shared types and card-type registry.
+- UI (`apps/ui`): Next.js app for auth, training, list/settings flows, provider-backed translation/audio, and tests; uses Supabase clients/RPCs plus shared types and card-type registry.
 - Shared (`packages/shared`): schemas, types, card-type definitions that bind the stack.
 
 Contracts:
-- Artifacts: scraper output must match language template schema and include dictionary metadata/version.
+- Artifacts: current structured entries are JSON files under source-data directories such as `packages/ingestion/nl/vandale-nt2/data/words_content/`; preserve the `word_entries.raw` shape expected by UI helpers and ingestion.
 - Shared types: keep DB-adjacent code, ingestion, and UI expectations aligned.
-- Card rendering: UI uses card-type registry to decide which fields show on prompt vs reveal; registry is language-agnostic with per-language field choices.
+- Card rendering: active Dutch modes are implemented in `apps/ui/components/training/TrainingCard.tsx` and related helpers. The shared registry remains the intended extension point, not a complete runtime abstraction.

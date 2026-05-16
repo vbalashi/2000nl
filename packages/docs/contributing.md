@@ -1,10 +1,11 @@
 # Contributing
 
 ## Add a new dictionary
-1. Implement a scraper adapter in `packages/scraper` that outputs artifacts to `data/raw/<dictionary>/<lang>/<date>/`.
-2. Ensure artifacts validate against `packages/shared/schemas/<lang>/note.schema.json`.
-3. Add dictionary metadata entry (code, name, version) to shared constants/types.
-4. Run ingestion scripts to load into the DB.
+1. Implement or update a scraper/parser in `packages/scraper` for the source format.
+2. Store source data under an explicit source-data directory, following the current Van Dale pattern when possible: `packages/ingestion/<lang>/<source>/data/`.
+3. Update or add ingestion scripts so entries load into `word_entries.raw` and related lookup/list tables.
+4. Keep shared schemas/types aligned when the structured entry shape changes.
+5. Run ingestion scripts to load into the DB.
 
 ## Add a new language
 1. Create `packages/shared/schemas/<lang>/note.schema.json` describing the template.
@@ -17,10 +18,10 @@
 3. Ensure the current training/session path can emit this card type. Today that usually means checking DB-side selection logic and the UI flow, not a standalone `apps/api` service.
 
 ## Add a list
-1. Insert into `lists` with `kind = system` or through the active app/runtime path for user lists.
-2. Populate `list_entries` referencing `headword_id` (and `meaning_id` when applicable).
+1. Insert curated lists into `word_lists`, or use the active app/runtime path for user lists.
+2. Populate `word_list_items` or `user_word_list_items` referencing `word_id`.
 
 ## Development
 - UI lives in `apps/ui` (Next.js). Install and run from that directory.
 - Ingestion scripts in `packages/ingestion/scripts` use `requirements.txt`.
-- Keep schemas and types in `packages/shared` as the single source of truth.
+- Keep shared schemas/types aligned with the active `word_entries.raw` shape and UI expectations.

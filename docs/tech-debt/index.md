@@ -2,13 +2,13 @@
 
 ## Active Structural Debt
 
-### Documentation drift around `apps/api`
+### Historical docs and reports
 
-The main high-level docs now treat `apps/api` as a reserved boundary instead of an active service, but older package-level and feature docs may still assume a stronger API layer. Continue cleaning those references as they are touched.
+Live repo docs now treat `apps/api` as a reserved boundary and describe the current `word_entries` / Supabase RPC runtime. Historical reports and archived migration notes may still mention older API-layer or normalized-table assumptions; treat those as snapshots unless they are explicitly refreshed.
 
 ### Canonical doc entrypoints were historically missing
 
-The repo historically relied on `README.md`, `docs/`, and `packages/docs/` without a single canonical starting point. Root `AGENTS.md` and `ARCHITECTURE.md` now exist, but older docs still need gradual cleanup.
+The repo historically relied on `README.md`, `docs/`, and `packages/docs/` without a single canonical starting point. Root `AGENTS.md` and `ARCHITECTURE.md` now exist; keep new stable guidance anchored there and link outward to topic docs.
 
 ### Flat `docs/` layout
 
