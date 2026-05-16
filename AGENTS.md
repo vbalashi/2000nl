@@ -19,7 +19,7 @@ This is the canonical agent entrypoint for the 2000nl monorepo. Use it to orient
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - top-level system boundaries and safe change patterns.
 - [docs/intent/index.md](./docs/intent/index.md) - product and workflow intent.
 - [docs/tech-debt/index.md](./docs/tech-debt/index.md) - known structural debt.
-- [agents.md](./agents.md) - operational notes for Supabase, auth persistence, and debugging.
+- [docs/runbooks](./docs/runbooks) - operational notes for Supabase auth, production debugging, and audio/TTS workflows.
 - [packages/docs/README.md](./packages/docs/README.md) - deeper data-flow and contract docs.
 
 ## Working Rules

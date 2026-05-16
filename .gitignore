@@ -38,3 +38,17 @@ db/data/
 
 # Visual testing screenshots & agent-browser temp files
 tmp/
+
+# Local agent/tool config
+.codex/
+
+# Local deployment helpers that move machine-specific env files/secrets
+scripts/sync-env-to-*.sh
+
+# Generated report exports and packaged review artifacts
+reports/generated/*
+!reports/generated/.gitkeep
+reports/*.zip
+reports/*-package-*/
+reports/ux-audit-*-source/
+reports/ui-ideas-*/

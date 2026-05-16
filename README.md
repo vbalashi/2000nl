@@ -38,7 +38,6 @@ See `packages/docs/README.md` for documentation pointers.
 
 Helper docs:
 - `packages/ingestion/SCRIPTS.md` – ingestion script purposes and timestamps.
-- `agents.md` – deeper operational notes for Supabase, auth persistence, and debugging.
 - `docs/runbooks/production-login.md` – how to log into production for debugging (OTP/OAuth or token injection).
 - `docs/runbooks/audio-tts-testing.md` – how to test and troubleshoot sentence audio (TTS) playback.
 - `reports/telegram-notifications-setup.md` – step-by-step Telegram deploy notification setup.
