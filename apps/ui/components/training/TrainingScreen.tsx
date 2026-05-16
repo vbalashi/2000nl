@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
-import type { AudioQuality } from "@/lib/audio/types";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
   fetchDictionaryEntry,
@@ -45,6 +44,10 @@ import {
   getNextQueueTransition,
   predictNextQueueTurn,
 } from "@/lib/training/trainingQueue";
+import {
+  useTrainingPreferences,
+  type ThemePreference,
+} from "@/lib/training/useTrainingPreferences";
 import { TrainingCard } from "./TrainingCard";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
@@ -106,8 +109,6 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
   easy: "order-4 md:order-4",
 };
 
-export type ThemePreference = "light" | "dark" | "system";
-
 const ONBOARDING_STORAGE_KEY = "onboarding_completed";
 
 const STEP_TARGETS: Array<{
@@ -138,10 +139,26 @@ export function TrainingScreen({ user }: Props) {
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [enabledModes, setEnabledModesState] = useState<TrainingMode[]>([
-    "word-to-definition",
-  ]);
-  const [cardFilter, setCardFilterState] = useState<CardFilter>("both");
+  const {
+    activeScenario,
+    audioQuality,
+    cardFilter,
+    enabledModes,
+    language,
+    newReviewRatio,
+    themePreference,
+    trainingSidebarPinned,
+    translationLang,
+    setActiveScenario,
+    setAudioQuality,
+    setCardFilter: setCardFilterPreference,
+    setEnabledModes,
+    setLanguage,
+    setNewReviewRatio,
+    setTheme,
+    setTrainingSidebarPinned: setTrainingSidebarPinnedPreference,
+    setTranslationLang,
+  } = useTrainingPreferences(user?.id);
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null,
   );
@@ -150,8 +167,6 @@ export function TrainingScreen({ user }: Props) {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [trainingSidebarPinned, setTrainingSidebarPinnedState] =
-    useState(false);
   // Entry to show in the details tab (can be current word or a sidebar card)
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
@@ -167,7 +182,6 @@ export function TrainingScreen({ user }: Props) {
   });
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
-  const [language, setLanguageState] = useState("nl");
   const [wordListId, setWordListId] = useState<string | null>(null);
   const [wordListType, setWordListType] = useState<WordListType | null>(null);
   const [wordListLabel, setWordListLabel] = useState<string>("");
@@ -199,14 +213,6 @@ export function TrainingScreen({ user }: Props) {
   const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
     useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [themePreference, setThemePreference] =
-    useState<ThemePreference>("system");
-  const [audioQuality, setAudioQualityState] = useState<AudioQuality>(
-    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free",
-  );
-  const [translationLang, setTranslationLangState] = useState<string | null>(
-    null,
-  );
   const [audioModeEnabled, setAudioModeEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -392,11 +398,6 @@ export function TrainingScreen({ user }: Props) {
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
-  const [newReviewRatio, setNewReviewRatioState] = useState(2);
-
-  // Scenario-based training
-  const [activeScenario, setActiveScenarioState] =
-    useState<string>("understanding");
 
   const enabledModesKey = enabledModes.join("|");
 
@@ -453,51 +454,15 @@ export function TrainingScreen({ user }: Props) {
     setAvailableLists(lists);
   }, [language, user?.id]);
 
-  // Load user preferences from Supabase
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const loadPreferences = async () => {
-      const prefs = await fetchUserPreferences(user.id);
-      trainingDebug.log("[Settings] Loaded preferences from Supabase:", prefs);
-      setThemePreference(prefs.themePreference);
-      setAudioQualityState(prefs.audioQuality);
-      setEnabledModesState(prefs.modesEnabled);
-      setCardFilterState(prefs.cardFilter);
-      setLanguageState(prefs.languageCode);
-      setNewReviewRatioState(prefs.newReviewRatio);
-      setActiveScenarioState(prefs.activeScenario);
-      setTranslationLangState(prefs.translationLang);
-      setTrainingSidebarPinnedState(Boolean(prefs.trainingSidebarPinned));
-    };
-
-    void loadPreferences();
-  }, [user?.id]);
-
   const setTrainingSidebarPinned = useCallback(
     (pinned: boolean) => {
-      setTrainingSidebarPinnedState(pinned);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          trainingSidebarPinned: pinned,
-        });
-      }
+      setTrainingSidebarPinnedPreference(pinned);
     },
-    [user?.id],
+    [setTrainingSidebarPinnedPreference],
   );
 
   const toggleTrainingSidebarPinned = useCallback(() => {
-    setTrainingSidebarPinnedState((prev) => {
-      const next = !prev;
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          trainingSidebarPinned: next,
-        });
-      }
-      return next;
-    });
+    setTrainingSidebarPinnedPreference(!trainingSidebarPinned);
 
     if (typeof window !== "undefined") {
       const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
@@ -506,7 +471,7 @@ export function TrainingScreen({ user }: Props) {
         setMobileSidebarOpen(false);
       }
     }
-  }, [user?.id]);
+  }, [setTrainingSidebarPinnedPreference, trainingSidebarPinned]);
 
   const toggleRecentPanel = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -524,128 +489,16 @@ export function TrainingScreen({ user }: Props) {
     setMobileSidebarOpen((prev) => !prev);
   }, [toggleTrainingSidebarPinned]);
 
-  // Wrapper to persist enabled modes to Supabase
-  const setEnabledModes = useCallback(
-    (newModes: TrainingMode[]) => {
-      trainingDebug.log("[Settings] Saving modes to Supabase:", newModes);
-      setEnabledModesState(newModes);
-      if (user?.id) {
-        void updateUserPreferences({ userId: user.id, modesEnabled: newModes });
-      }
-    },
-    [user?.id],
-  );
-
-  // Wrapper to persist card filter to Supabase
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
-      trainingDebug.log("[Settings] Saving card filter to Supabase:", newFilter);
-      setCardFilterState(newFilter);
+      setCardFilterPreference(newFilter);
       // Reset queue rotation when switching to 'both' to start interleave cycle
       if (newFilter === "both") {
         setQueueTurn("new");
         setReviewCounter(0);
       }
-      if (user?.id) {
-        void updateUserPreferences({ userId: user.id, cardFilter: newFilter });
-      }
     },
-    [user?.id],
-  );
-
-  // Wrapper to persist language to Supabase
-  const setLanguage = useCallback(
-    (newLanguage: string) => {
-      trainingDebug.log("[Settings] Saving language to Supabase:", newLanguage);
-      setLanguageState(newLanguage);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          languageCode: newLanguage,
-        });
-      }
-    },
-    [user?.id],
-  );
-
-  // Wrapper to persist theme to Supabase
-  const setTheme = useCallback(
-    (newTheme: ThemePreference) => {
-      trainingDebug.log("[Settings] Saving theme to Supabase:", newTheme);
-      setThemePreference(newTheme);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          themePreference: newTheme,
-        });
-      }
-    },
-    [user?.id],
-  );
-
-  const setAudioQuality = useCallback(
-    (quality: AudioQuality) => {
-      trainingDebug.log("[Settings] Saving audio quality to Supabase:", quality);
-      setAudioQualityState(quality);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          audioQuality: quality,
-        });
-      }
-    },
-    [user?.id],
-  );
-
-  // Wrapper to persist new/review ratio to Supabase
-  const setNewReviewRatio = useCallback(
-    (newRatio: number) => {
-      trainingDebug.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
-      setNewReviewRatioState(newRatio);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          newReviewRatio: newRatio,
-        });
-      }
-    },
-    [user?.id],
-  );
-
-  // Wrapper to persist translation language preference to Supabase
-  const setTranslationLang = useCallback(
-    (newLang: string | null) => {
-      trainingDebug.log(
-        "[Settings] Saving translation language to Supabase:",
-        newLang,
-      );
-      setTranslationLangState(newLang);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          translationLang: newLang,
-        });
-      }
-    },
-    [user?.id],
-  );
-
-  // Wrapper to persist active scenario to Supabase
-  const setActiveScenario = useCallback(
-    (newScenario: string) => {
-      trainingDebug.log(
-        "[Settings] Saving active scenario to Supabase:",
-        newScenario,
-      );
-      setActiveScenarioState(newScenario);
-      if (user?.id) {
-        void updateUserPreferences({
-          userId: user.id,
-          activeScenario: newScenario,
-        });
-      }
-    },
-    [user?.id],
+    [setCardFilterPreference],
   );
 
   // Advance queue turn for round-robin between new and review

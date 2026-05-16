@@ -66,6 +66,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Completed the selection split by moving next-card selection, scenario lookup, scenario stats, cross-reference skipping, debug logging, and legacy list fallback into `apps/ui/lib/training/selectionService.ts`; `trainingService.ts` is now a compatibility barrel.
 - 2026-05-16: Started Stage 3 by extracting pure queue helpers into `apps/ui/lib/training/trainingQueue.ts`; `TrainingScreen` now uses one transition helper for both prefetch prediction and post-review queue advancement.
 - 2026-05-16: Added the scenario-change safeguard test and fixed `handleScenarioChange` to pass the selected scenario explicitly into `loadNextWord`, avoiding a stale `activeScenario` read after React state update.
+- 2026-05-16: Started the non-visual preferences extraction by moving preference hydration and local-first setters into `apps/ui/lib/training/useTrainingPreferences.ts`; `TrainingScreen` keeps queue reset and other session behavior local.
 
 ## Analysis Output
 
