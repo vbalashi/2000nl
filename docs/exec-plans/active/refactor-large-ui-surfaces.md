@@ -71,6 +71,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Continued non-visual hook extraction by moving onboarding state, language detection, dark-mode tracking, Joyride completion handling, and JSONB preference merges into `apps/ui/lib/training/useTrainingOnboarding.ts`.
 - 2026-05-16: Continued non-visual hook extraction by moving active-list hydration, available-list refresh, deleted-list clearing, primary fallback, and footer list options into `apps/ui/lib/training/useTrainingActiveList.ts`; `TrainingScreen` keeps stats/next-card reload orchestration local.
 - 2026-05-16: Started the pre-designer `TrainingCard` work by extracting pure text helpers into `apps/ui/lib/training/trainingCardText.ts` and adding direct masking tests; no visual JSX/classes changed.
+- 2026-05-16: Completed the pre-designer `TrainingCard` translation slice by adding characterization tests for preload, pending polling, failed state, long-press force refresh, and timer cleanup, then moving translation state/effects into `apps/ui/lib/training/useTrainingTranslation.ts`.
 
 ## Analysis Output
 

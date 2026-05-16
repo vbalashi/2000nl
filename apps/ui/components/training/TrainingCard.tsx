@@ -3,10 +3,6 @@
 import React from "react";
 
 import type { TrainingMode } from "@/lib/types";
-import type {
-  TranslationOverlay,
-  WordEntryTranslationStatus,
-} from "@/lib/types";
 import { getGenericBadgeTooltip, getPosBadgeTooltip } from "@/lib/badgeTooltips";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import {
@@ -19,6 +15,7 @@ import { InteractiveText } from "./InteractiveText";
 import { AudioModeToggle } from "./AudioModeToggle";
 import type { TrainingWord } from "@/lib/types";
 import { maskTargetWordInDefinition } from "@/lib/training/trainingCardText";
+import { useTrainingTranslation } from "@/lib/training/useTrainingTranslation";
 
 type Props = {
   word: TrainingWord | null;
@@ -86,18 +83,6 @@ export function TrainingCard({
   // NOTE:
   // Hooks must run on every render. Do NOT early-return before hooks
   // (otherwise React can hit internal invariants when `loading` flips).
-  const [translationStatus, setTranslationStatus] =
-    React.useState<WordEntryTranslationStatus | null>(null);
-  const [translationOverlay, setTranslationOverlay] =
-    React.useState<TranslationOverlay | null>(null);
-  const [translationError, setTranslationError] = React.useState<string | null>(
-    null
-  );
-  const translationLoadingRef = React.useRef(false);
-  const translationPollTimeoutRef = React.useRef<number | null>(null);
-  const translationLongPressTimeoutRef = React.useRef<number | null>(null);
-  const translationLongPressFiredRef = React.useRef(false);
-
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const [scrollFades, setScrollFades] = React.useState(() => ({
     canScroll: false,
@@ -126,134 +111,21 @@ export function TrainingCard({
     });
   }, []);
 
-  // New card (or language) => clear cached translation state so we don't show
-  // the previous card's overlay and we refetch when user opens/hovers.
-  React.useEffect(() => {
-    translationLoadingRef.current = false;
-    if (translationPollTimeoutRef.current != null) {
-      window.clearTimeout(translationPollTimeoutRef.current);
-      translationPollTimeoutRef.current = null;
-    }
-    if (translationLongPressTimeoutRef.current != null) {
-      window.clearTimeout(translationLongPressTimeoutRef.current);
-      translationLongPressTimeoutRef.current = null;
-    }
-    translationLongPressFiredRef.current = false;
-    setTranslationStatus(null);
-    setTranslationOverlay(null);
-    setTranslationError(null);
-  }, [word?.id, translationLang]);
-
-  const fetchTranslation = React.useCallback(
-    async (opts?: { force?: boolean }) => {
-      if (!word?.id || !translationLang || translationLang === "off") return;
-      if (translationLoadingRef.current) return;
-      if (!opts?.force && translationStatus === "ready" && translationOverlay)
-        return;
-
-      translationLoadingRef.current = true;
-      try {
-        // Immediately mark as pending so the UI reflects that we're working,
-        // especially on mobile where the request can take noticeable time.
-        setTranslationStatus("pending");
-        setTranslationOverlay(null);
-        setTranslationError(null);
-
-        const res = await fetch(
-          `/api/translation?word_id=${encodeURIComponent(
-            word.id
-          )}&lang=${encodeURIComponent(translationLang)}${
-            opts?.force ? "&force=1" : ""
-          }`,
-          {
-            cache: "no-store",
-            credentials: "same-origin",
-            headers: { Accept: "application/json" },
-          }
-        );
-
-        // Some deployments / proxies can return HTML or empty bodies on errors.
-        // Handle non-2xx explicitly so we can show a useful message.
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(
-            `Translation API ${res.status}: ${text || res.statusText}`
-          );
-        }
-
-        const data = (await res.json().catch(() => null)) as
-          | {
-              status?: WordEntryTranslationStatus;
-              overlay?: TranslationOverlay;
-              error?: string;
-            }
-          | null;
-
-        setTranslationStatus(data?.status ?? null);
-        setTranslationOverlay(data?.overlay ?? null);
-        setTranslationError(data?.error ?? null);
-      } catch (e: any) {
-        setTranslationStatus("failed");
-        setTranslationError(String(e?.message ?? e ?? "Unknown error"));
-      } finally {
-        translationLoadingRef.current = false;
-      }
-    },
-    [translationLang, translationOverlay, translationStatus, word?.id]
-  );
-
-  React.useEffect(() => {
-    if (!translationTooltipOpen) return;
-    void fetchTranslation();
-  }, [fetchTranslation, translationTooltipOpen]);
-
-  // Preload translation as soon as the answer is revealed so opening the
-  // translation view can feel immediate on first click/tap.
-  React.useEffect(() => {
-    if (!revealed) return;
-    if (!word?.id) return;
-    if (!translationLang || translationLang === "off") return;
-    // Only auto-preload once per card/language lifecycle.
-    if (translationStatus !== null) return;
-    void fetchTranslation();
-  }, [
-    fetchTranslation,
+  const {
+    getHeadwordTranslated,
+    getTranslated,
+    isTranslationOpen,
+    translationButtonHandlers,
+    translationProviderUsed,
+    translationStatusText,
+    translationUiEnabled,
+  } = useTrainingTranslation({
+    wordId: word?.id,
+    translationLang,
     revealed,
-    translationLang,
-    translationStatus,
-    word?.id,
-  ]);
-
-  // Poll while translation is open and pending.
-  React.useEffect(() => {
-    if (!translationTooltipOpen) return;
-    if (!translationLang || translationLang === "off") return;
-    if (!word?.id) return;
-
-    if (translationPollTimeoutRef.current != null) {
-      window.clearTimeout(translationPollTimeoutRef.current);
-      translationPollTimeoutRef.current = null;
-    }
-
-    if (translationStatus !== "pending") return;
-
-    translationPollTimeoutRef.current = window.setTimeout(() => {
-      void fetchTranslation();
-    }, 3000);
-
-    return () => {
-      if (translationPollTimeoutRef.current != null) {
-        window.clearTimeout(translationPollTimeoutRef.current);
-        translationPollTimeoutRef.current = null;
-      }
-    };
-  }, [
     translationTooltipOpen,
-    translationLang,
-    word?.id,
-    translationStatus,
-    fetchTranslation,
-  ]);
+    onTranslationTooltipOpenChange,
+  });
 
   // Keep fade hints in sync when content changes (new word, reveal, mode switch).
   React.useEffect(() => {
@@ -270,48 +142,6 @@ export function TrainingCard({
     return () => window.removeEventListener("resize", onResize);
   }, [updateScrollFades]);
 
-  const getTranslated = React.useCallback(
-    (
-      meaningIndex: number,
-      kind:
-        | "definition"
-        | "context"
-        | { exampleIndex: number }
-        | { idiomIndex: number; idiomField: "expression" | "explanation" }
-    ) => {
-      const meaning = translationOverlay?.meanings?.[meaningIndex];
-      if (!meaning) return undefined;
-
-      if (kind === "definition") return meaning.definition;
-      if (kind === "context") return meaning.context;
-
-      if (typeof kind === "object" && "exampleIndex" in kind) {
-        return meaning.examples?.[kind.exampleIndex];
-      }
-
-      if (typeof kind === "object" && "idiomIndex" in kind) {
-        const item = meaning.idioms?.[kind.idiomIndex];
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object") {
-          return kind.idiomField === "expression"
-            ? item.expression
-            : item.explanation;
-        }
-      }
-
-      return undefined;
-    },
-    [translationOverlay]
-  );
-
-  const getHeadwordTranslated = React.useCallback(() => {
-    return translationOverlay?.headword;
-  }, [translationOverlay?.headword]);
-
-  const translationUiEnabled =
-    Boolean(translationLang) && translationLang !== "off" && revealed;
-  const isTranslationOpen = translationUiEnabled ? translationTooltipOpen : false;
-  const translationProviderUsed = translationOverlay?.__meta?.providerUsed ?? null;
   const translationButtonProviderClass =
     translationProviderUsed === "deepl"
       ? "bg-slate-200/80 text-slate-700 hover:bg-slate-200/90 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-800/90"
@@ -321,14 +151,6 @@ export function TrainingCard({
           ? "bg-white/80 text-slate-700 hover:bg-white/95 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/80"
           : "bg-slate-100/70 text-slate-600 hover:bg-slate-100/90 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900/80";
 
-  const translationStatusText =
-    translationStatus === null
-      ? "Klik om vertaling te laden"
-      : translationStatus === "pending"
-      ? "Vertaling wordt voorbereid…"
-      : translationStatus === "failed"
-      ? translationError ?? "Vertaling mislukt"
-      : null;
   const speakerCursor =
     "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/><path d='M15.54 8.46a5 5 0 0 1 0 7.07'/><path d='M19.07 4.93a10 10 0 0 1 0 14.14'/></svg>\") 12 12, auto";
   const wordCursorStyle = React.useMemo(
@@ -646,63 +468,7 @@ export function TrainingCard({
                 >
                   <button
                     type="button"
-                    onPointerEnter={() => {
-                      if (translationStatus == null) {
-                        void fetchTranslation();
-                      }
-                    }}
-                    onFocus={() => {
-                      if (translationStatus == null) {
-                        void fetchTranslation();
-                      }
-                    }}
-                    onTouchStart={() => {
-                      if (translationStatus == null) {
-                        void fetchTranslation();
-                      }
-                    }}
-                    onPointerDown={(e) => {
-                      if (translationLongPressTimeoutRef.current != null) {
-                        window.clearTimeout(translationLongPressTimeoutRef.current);
-                        translationLongPressTimeoutRef.current = null;
-                      }
-                      translationLongPressFiredRef.current = false;
-
-                      // Long-press: force re-translate (use selected priority, fallback if needed).
-                      // Works for touch and mouse press-and-hold.
-                      translationLongPressTimeoutRef.current = window.setTimeout(() => {
-                        translationLongPressFiredRef.current = true;
-                        void fetchTranslation({ force: true });
-                        onTranslationTooltipOpenChange?.(true);
-                      }, 650);
-                    }}
-                    onPointerUp={() => {
-                      if (translationLongPressTimeoutRef.current != null) {
-                        window.clearTimeout(translationLongPressTimeoutRef.current);
-                        translationLongPressTimeoutRef.current = null;
-                      }
-                    }}
-                    onPointerLeave={() => {
-                      if (translationLongPressTimeoutRef.current != null) {
-                        window.clearTimeout(translationLongPressTimeoutRef.current);
-                        translationLongPressTimeoutRef.current = null;
-                      }
-                    }}
-                    onPointerCancel={() => {
-                      if (translationLongPressTimeoutRef.current != null) {
-                        window.clearTimeout(translationLongPressTimeoutRef.current);
-                        translationLongPressTimeoutRef.current = null;
-                      }
-                    }}
-                    onClick={() => {
-                      if (translationLongPressFiredRef.current) {
-                        // Suppress the click toggle after a long-press action.
-                        translationLongPressFiredRef.current = false;
-                        return;
-                      }
-                      void fetchTranslation();
-                      onTranslationTooltipOpenChange?.(!translationTooltipOpen);
-                    }}
+                    {...translationButtonHandlers}
                     className={`flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 shadow-sm backdrop-blur-sm opacity-70 transition hover:opacity-100 dark:border-slate-700 select-none ${translationButtonProviderClass}`}
                     aria-pressed={translationTooltipOpen}
                     aria-label="Translate (T)"
