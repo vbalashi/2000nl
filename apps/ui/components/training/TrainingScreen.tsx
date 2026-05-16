@@ -795,6 +795,7 @@ export function TrainingScreen({ user }: Props) {
       excludeWordIds: string[] = [],
       scope?: { listId?: string | null; listType?: WordListType | null },
       overrideQueueTurn?: QueueTurn,
+      overrideScenario?: string,
     ) => {
       if (!user?.id) {
         return;
@@ -815,6 +816,7 @@ export function TrainingScreen({ user }: Props) {
       const effectiveListId = scope?.listId ?? wordListId;
       const effectiveListType = scope?.listType ?? wordListType;
       const effectiveQueueTurn = overrideQueueTurn ?? queueTurn;
+      const effectiveScenario = overrideScenario ?? activeScenario;
       try {
         const forcedId = forcedNextWordIdRef.current;
         if (forcedId) {
@@ -839,7 +841,7 @@ export function TrainingScreen({ user }: Props) {
         // Use scenario-based word selection
         const nextWord = await fetchNextTrainingWordByScenario(
           user.id,
-          activeScenario,
+          effectiveScenario,
           excludeWordIds,
           {
             listId: effectiveListId ?? undefined,
@@ -1761,7 +1763,12 @@ export function TrainingScreen({ user }: Props) {
       setRevealed(false);
       setActiveScenario(newScenario);
       // Load next word with the new scenario
-      void loadNextWord([], { listId: wordListId, listType: wordListType });
+      void loadNextWord(
+        [],
+        { listId: wordListId, listType: wordListType },
+        undefined,
+        newScenario,
+      );
     },
     [setActiveScenario, loadNextWord, wordListId, wordListType],
   );

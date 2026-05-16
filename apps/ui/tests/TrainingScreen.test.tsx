@@ -444,10 +444,18 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
 
   // SettingsModal loads scenarios async; wait for the scenario buttons.
   const listeningBtn = await screen.findByRole("button", { name: /luisteren/i });
+  fetchNextTrainingWordByScenario.mockClear();
   fireEvent.click(listeningBtn);
 
-  // Scenario change triggers a fresh loadNextWord([]) call; exclude list should
-  // not contain previously reviewed word-1 anymore.
+  // Scenario change triggers an immediate fresh loadNextWord([]) call with the
+  // newly selected scenario, not the previous scenario from React state.
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+  );
+  expect(fetchNextTrainingWordByScenario.mock.calls[0][1]).toBe("listening");
+  expect(fetchNextTrainingWordByScenario.mock.calls[0][2]).toEqual([]);
+
+  // The fresh load should also clear the session-reviewed set.
   await waitFor(() => {
     const hasClearedFetch = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
       const scenarioId = c[1] as string;
