@@ -3,7 +3,7 @@
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
+import Joyride, { Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
@@ -21,8 +21,6 @@ import {
   recordReview,
   recordWordView,
   fetchLastReviewDebug,
-  fetchUserPreferences,
-  updateUserPreferences,
   ReviewResult,
 } from "@/lib/trainingService";
 import type {
@@ -49,6 +47,7 @@ import {
   type ThemePreference,
 } from "@/lib/training/useTrainingPreferences";
 import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
+import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
 import { TrainingCard } from "./TrainingCard";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
@@ -58,8 +57,6 @@ import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import {
-  getOnboardingLanguage,
-  setOnboardingLanguage,
   getOnboardingTranslation,
   type OnboardingLanguage,
 } from "@/lib/onboardingI18n";
@@ -109,8 +106,6 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
   hard: "order-3 md:order-2",
   easy: "order-4 md:order-4",
 };
-
-const ONBOARDING_STORAGE_KEY = "onboarding_completed";
 
 const STEP_TARGETS: Array<{
   target: string;
@@ -234,137 +229,18 @@ export function TrainingScreen({ user }: Props) {
   const [swipeAnimating, setSwipeAnimating] = useState(false);
   const [swipeActive, setSwipeActive] = useState(false);
 
-  // Joyride tour state
-  const [runTour, setRunTour] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showLanguageSelection, setShowLanguageSelection] = useState(false);
-  const [onboardingLang, setOnboardingLang] =
-    useState<OnboardingLanguage>("en");
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
-
-  // Initialize onboarding language from DB preferences (auto-detect, don't auto-start tour)
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const loadOnboardingPrefs = async () => {
-      try {
-        const prefs = await fetchUserPreferences(user.id);
-        const preferences = prefs.preferences ?? {};
-        const { onboardingCompleted, onboardingLanguage } = preferences;
-
-        setOnboardingCompleted(Boolean(onboardingCompleted));
-
-        // Auto-detect language if not already set
-        if (!onboardingLanguage) {
-          const { detectOnboardingLanguage } =
-            await import("@/lib/onboardingI18n");
-          const detected = detectOnboardingLanguage(translationLang);
-          setOnboardingLang(detected);
-
-          // Save detected language to DB
-          await updateUserPreferences({
-            userId: user.id,
-            preferences: {
-              ...preferences,
-              onboardingLanguage: detected,
-            },
-          });
-        } else {
-          setOnboardingLang(onboardingLanguage as OnboardingLanguage);
-        }
-
-        // DON'T auto-start onboarding - user must start it manually from settings
-      } catch (e) {
-        console.error("[Onboarding] Failed to load preferences:", e);
-      }
-    };
-
-    void loadOnboardingPrefs();
-  }, [user?.id, translationLang]);
-
-  // Track dark mode for Joyride styling
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const updateDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains("dark"));
-    };
-
-    // Initial check
-    updateDarkMode();
-
-    // Watch for class changes on documentElement
-    const observer = new MutationObserver(updateDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const handleLanguageSelect = useCallback(
-    async (lang: OnboardingLanguage) => {
-      setOnboardingLang(lang);
-      setOnboardingLanguage(lang);
-      setShowLanguageSelection(false);
-
-      // Save language to DB
-      if (user?.id) {
-        try {
-          const prefs = await fetchUserPreferences(user.id);
-          const preferences = prefs.preferences ?? {};
-          await updateUserPreferences({
-            userId: user.id,
-            preferences: {
-              ...preferences,
-              onboardingLanguage: lang,
-            },
-          });
-        } catch (e) {
-          console.error("[Onboarding] Failed to save language:", e);
-        }
-      }
-
-      // Start the tour after language selection
-      setRunTour(true);
-    },
-    [user?.id],
-  );
-
-  // Method to manually start onboarding (called from settings)
-  const startOnboarding = useCallback(() => {
-    setRunTour(true);
-  }, []);
-
-  const handleJoyrideCallback = useCallback(
-    async (data: CallBackProps) => {
-      const { status, type } = data;
-      const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-
-      if (finishedStatuses.includes(status) && user?.id) {
-        // Tour finished or skipped - save to DB and stop tour
-        setRunTour(false);
-        setOnboardingCompleted(true);
-
-        try {
-          const prefs = await fetchUserPreferences(user.id);
-          const preferences = prefs.preferences ?? {};
-          await updateUserPreferences({
-            userId: user.id,
-            preferences: {
-              ...preferences,
-              onboardingCompleted: true,
-            },
-          });
-          trainingDebug.log("[Onboarding] Marked as completed in DB");
-        } catch (e) {
-          console.error("[Onboarding] Failed to save completion:", e);
-        }
-      }
-    },
-    [user?.id],
-  );
+  const {
+    handleJoyrideCallback,
+    handleLanguageSelect,
+    isDarkMode,
+    onboardingLang,
+    runTour,
+    setOnboardingLanguageChoice,
+    showLanguageSelection,
+  } = useTrainingOnboarding({
+    userId: user?.id,
+    translationLang,
+  });
 
   useEffect(() => {
     if (devMode) {
@@ -2321,10 +2197,7 @@ export function TrainingScreen({ user }: Props) {
           audioQuality={audioQuality}
           onAudioQualityChange={setAudioQuality}
           onboardingLanguage={onboardingLang}
-          onOnboardingLanguageChange={(lang) => {
-            setOnboardingLang(lang);
-            setOnboardingLanguage(lang);
-          }}
+          onOnboardingLanguageChange={setOnboardingLanguageChoice}
           language={language}
           onLanguageChange={setLanguage}
           translationLang={translationLang}
