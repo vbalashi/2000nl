@@ -276,7 +276,8 @@ export function TrainingScreen({ user }: Props) {
     const loadOnboardingPrefs = async () => {
       try {
         const prefs = await fetchUserPreferences(user.id);
-        const { onboardingCompleted, onboardingLanguage } = prefs.preferences;
+        const preferences = prefs.preferences ?? {};
+        const { onboardingCompleted, onboardingLanguage } = preferences;
 
         setOnboardingCompleted(Boolean(onboardingCompleted));
 
@@ -291,7 +292,7 @@ export function TrainingScreen({ user }: Props) {
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingLanguage: detected,
             },
           });
@@ -339,10 +340,11 @@ export function TrainingScreen({ user }: Props) {
       if (user?.id) {
         try {
           const prefs = await fetchUserPreferences(user.id);
+          const preferences = prefs.preferences ?? {};
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingLanguage: lang,
             },
           });
@@ -374,10 +376,11 @@ export function TrainingScreen({ user }: Props) {
 
         try {
           const prefs = await fetchUserPreferences(user.id);
+          const preferences = prefs.preferences ?? {};
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingCompleted: true,
             },
           });
@@ -439,8 +442,9 @@ export function TrainingScreen({ user }: Props) {
 
   // Also clear on unmount to avoid leaking state across mounts in tests/dev.
   useEffect(() => {
+    const reviewedInSession = reviewedInSessionRef.current;
     return () => {
-      reviewedInSessionRef.current.clear();
+      reviewedInSession.clear();
     };
   }, []);
 
