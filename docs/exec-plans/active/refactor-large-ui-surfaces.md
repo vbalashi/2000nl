@@ -55,6 +55,7 @@ Recommended initial extraction candidates:
   - `cd apps/ui && npm test -- tests/trainingService.mappers.test.ts tests/trainingService.recordReview.test.ts`
   - `cd apps/ui && npm run lint`
   - `cd apps/ui && npm test`
+- 2026-05-16: Started Stage 0 characterization for service splitting by adding `apps/ui/tests/trainingService.selection.test.ts` covering next-card selection payloads, scenario/list forwarding, cross-reference retries, `stability` to `ef`, first-encounter mode forcing, and legacy-vs-scenario fallback behavior.
 
 ## Analysis Output
 
