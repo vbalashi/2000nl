@@ -40,6 +40,11 @@ import type {
 import { BrandLogo } from "@/components/BrandLogo";
 import { Tooltip } from "@/components/Tooltip";
 import { useCardParams } from "@/lib/cardParams";
+import {
+  generateReviewTurnId,
+  getNextQueueTransition,
+  predictNextQueueTurn,
+} from "@/lib/training/trainingQueue";
 import { TrainingCard } from "./TrainingCard";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
@@ -125,46 +130,6 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
     title: t.onboarding.steps[i].title,
     content: t.onboarding.steps[i].content,
   }));
-}
-
-function predictNextQueueTurn(params: {
-  cardFilter: CardFilter;
-  queueTurn: QueueTurn;
-  reviewCounter: number;
-  newReviewRatio: number;
-}): QueueTurn {
-  // Round-robin is only used when card filter is 'both'.
-  if (params.cardFilter !== "both") return "auto";
-
-  if (params.queueTurn === "new") {
-    // After a new card, switch to review queue.
-    return "review";
-  }
-
-  // After a review card, count up and potentially switch to new.
-  const nextCount = params.reviewCounter + 1;
-  if (nextCount >= params.newReviewRatio) return "new";
-  return "review";
-}
-
-function generateReviewTurnId(): string {
-  const c = (globalThis as any).crypto as Crypto | undefined;
-  if (c?.randomUUID) return c.randomUUID();
-
-  // RFC 4122 v4 fallback (best-effort) for environments without crypto.randomUUID().
-  if (c?.getRandomValues) {
-    const b = new Uint8Array(16);
-    c.getRandomValues(b);
-    b[6] = (b[6] & 0x0f) | 0x40;
-    b[8] = (b[8] & 0x3f) | 0x80;
-    const hex = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
-      16,
-      20,
-    )}-${hex.slice(20)}`;
-  }
-
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export function TrainingScreen({ user }: Props) {
@@ -685,29 +650,16 @@ export function TrainingScreen({ user }: Props) {
 
   // Advance queue turn for round-robin between new and review
   const advanceQueueTurn = useCallback(() => {
-    // Only use round-robin when card filter is 'both'
-    if (cardFilter !== "both") {
-      setQueueTurn("auto");
-      return "auto" as const;
-    }
+    const transition = getNextQueueTransition({
+      cardFilter,
+      queueTurn,
+      reviewCounter,
+      newReviewRatio,
+    });
 
-    if (queueTurn === "new") {
-      // After a new card, switch to review queue
-      setQueueTurn("review");
-      setReviewCounter(0);
-      return "review" as const;
-    } else {
-      // After a review card, count up and potentially switch to new
-      const nextCount = reviewCounter + 1;
-      if (nextCount >= newReviewRatio) {
-        setQueueTurn("new");
-        setReviewCounter(0);
-        return "new" as const;
-      } else {
-        setReviewCounter(nextCount);
-        return "review" as const;
-      }
-    }
+    setQueueTurn(transition.queueTurn);
+    setReviewCounter(transition.reviewCounter);
+    return transition.queueTurn;
   }, [cardFilter, queueTurn, reviewCounter, newReviewRatio]);
 
   // Apply theme to document (client-side only)
