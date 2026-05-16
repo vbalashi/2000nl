@@ -5,6 +5,12 @@ on:
     paths:
       - 'db/migrations/**'
       - '.github/workflows/db-drift-check.yml'
+  push:
+    branches: [main, master]
+    paths:
+      - 'db/migrations/**'
+      - '.github/workflows/db-drift-check.yml'
+  workflow_dispatch:
 
 jobs:
   check-drift:
@@ -50,19 +56,63 @@ jobs:
             echo "result=passed" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check migration file naming
+      - name: Check migration file naming and bootstrap coverage
         run: |
-          echo "Checking migration file naming conventions..."
+          echo "Checking migration file naming conventions and bootstrap coverage..."
 
-          # Verify sequential numbering
-          migration_numbers=$(ls db/migrations/*.sql 2>/dev/null | grep -oP '\d{3}' | sort -n || true)
+          ISSUES_FOUND=false
 
-          if [ -n "$migration_numbers" ]; then
-            echo "Migration files found:"
-            ls -1 db/migrations/*.sql
-          else
-            echo "No migration files found"
+          migration_list="$(mktemp)"
+          bootstrap_include_list="$(mktemp)"
+          trap 'rm -f "$migration_list" "$bootstrap_include_list"' EXIT
+
+          find db/migrations -maxdepth 1 -type f -name '*.sql' ! -name 'bootstrap.sql' | sort > "$migration_list"
+
+          if [ ! -s "$migration_list" ]; then
+            echo "::error::No numbered migration files found in db/migrations"
+            exit 1
           fi
+
+          expected=1
+          while IFS= read -r file; do
+            base="$(basename "$file")"
+
+            if [[ ! "$base" =~ ^[0-9]{3}_[a-z0-9_]+\.sql$ ]]; then
+              echo "::error file=$file::Migration filename must match NNN_descriptive_name.sql"
+              ISSUES_FOUND=true
+              continue
+            fi
+
+            number="${base:0:3}"
+            expected_padded="$(printf '%03d' "$expected")"
+            if [ "$number" != "$expected_padded" ]; then
+              echo "::error file=$file::Expected migration number $expected_padded, found $number"
+              ISSUES_FOUND=true
+            fi
+
+            include_line="\\i db/migrations/$base"
+            if ! grep -Fxq "$include_line" db/migrations/bootstrap.sql; then
+              echo "::error file=db/migrations/bootstrap.sql::Missing bootstrap include for $base"
+              ISSUES_FOUND=true
+            fi
+
+            expected=$((expected + 1))
+          done < "$migration_list"
+
+          grep -E '^\\i db/migrations/[0-9]{3}_[a-z0-9_]+\.sql$' db/migrations/bootstrap.sql | sed 's#^\\i db/migrations/##' > "$bootstrap_include_list" || true
+          while IFS= read -r include; do
+            if [ ! -f "db/migrations/$include" ]; then
+              echo "::error file=db/migrations/bootstrap.sql::Bootstrap includes missing migration $include"
+              ISSUES_FOUND=true
+            fi
+          done < "$bootstrap_include_list"
+
+          if [ "$ISSUES_FOUND" = true ]; then
+            exit 1
+          fi
+
+          migration_count="$(wc -l < "$migration_list" | tr -d ' ')"
+          echo "Found $migration_count numbered migration files; bootstrap coverage is complete."
 
       - name: Verify database connection (optional)
         if: github.event.pull_request.base.ref == 'main'
@@ -85,6 +135,7 @@ jobs:
           echo ""
           echo "Verified:"
           echo "  - No non-optimized auth.uid() calls"
-          echo "  - Migration file naming conventions"
+          echo "  - Migration file naming and sequence"
+          echo "  - Bootstrap includes every numbered migration"
           echo ""
           echo "Note: Live database drift checking requires SUPABASE_DB_URL secret"
