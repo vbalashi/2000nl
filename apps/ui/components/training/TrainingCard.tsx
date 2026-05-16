@@ -18,6 +18,7 @@ import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
 import { AudioModeToggle } from "./AudioModeToggle";
 import type { TrainingWord } from "@/lib/types";
+import { maskTargetWordInDefinition } from "@/lib/training/trainingCardText";
 
 type Props = {
   word: TrainingWord | null;
@@ -62,26 +63,6 @@ const POS_NAMES: Record<string, string> = {
   lidw: "lidwoord",
   vnw: "voornaamwoord",
   tw: "telwoord",
-};
-
-const escapeRegExp = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const maskTargetWordInDefinition = (
-  text: string,
-  headword: string,
-  placeholder = "..."
-) => {
-  const trimmedHeadword = headword.trim();
-  if (!text || !trimmedHeadword) return text;
-
-  const escaped = escapeRegExp(trimmedHeadword);
-  const pattern = new RegExp(
-    `(^|[^\\p{L}])(${escaped})(?:[’'’-]?[\\p{L}]{0,6})?(?!\\p{L})`,
-    "giu"
-  );
-
-  return text.replace(pattern, (_match, prefix) => `${prefix}${placeholder}`);
 };
 
 export function TrainingCard({
