@@ -9,10 +9,27 @@ import {
   runMigrations,
   withTransaction,
 } from "./dbTestUtils";
+import type { PoolClient } from "pg";
 
 const dbUrl = getDbUrl();
 const hasDb = Boolean(dbUrl);
 const describeIfDb = hasDb ? describe : describe.skip;
+
+const callHandleReview = (
+  client: PoolClient,
+  userId: string,
+  wordId: string,
+  mode: string,
+  result: string,
+  turnId: string | null = null
+) =>
+  client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
+    userId,
+    wordId,
+    mode,
+    result,
+    turnId,
+  ]);
 
 describeIfDb("FSRS RPC integration", () => {
   const pool = new Pool({ connectionString: dbUrl });
@@ -33,13 +50,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       await ensureUserWithSettings(client, userId, { target_retention: 0.9 });
 
-      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
-        userId,
-        wordId,
-        mode,
-        "success",
-        null,
-      ]);
+      await callHandleReview(client, userId, wordId, mode, "success", randomUUID());
 
       const { rows: first } = await client.query(
         `select fsrs_reps, fsrs_lapses, last_result, fsrs_enabled
@@ -52,13 +63,7 @@ describeIfDb("FSRS RPC integration", () => {
       expect(first[0].last_result).toBe("success");
       expect(first[0].fsrs_enabled).toBe(true);
 
-      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
-        userId,
-        wordId,
-        mode,
-        "fail",
-        null,
-      ]);
+      await callHandleReview(client, userId, wordId, mode, "fail", randomUUID());
 
       const { rows: second } = await client.query(
         `select fsrs_reps, fsrs_lapses, last_result, fsrs_last_grade
@@ -80,13 +85,7 @@ describeIfDb("FSRS RPC integration", () => {
       await ensureUserWithSettings(client, userId);
 
       // Seed with a success so we have prior state.
-      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
-        userId,
-        wordId,
-        mode,
-        "success",
-        null,
-      ]);
+      await callHandleReview(client, userId, wordId, mode, "success", randomUUID());
 
       await client.query(`select handle_click($1, $2, $3)`, [userId, wordId, mode]);
 
@@ -126,21 +125,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
-      // DEBUG: Check what words exist for this user
-      const { rows: debugWords } = await client.query(
-        `select w.id, w.headword, s.next_review_at, s.fsrs_reps, s.mode
-         from word_entries w
-         left join user_word_status s on s.word_id = w.id and s.user_id = $1
-         where w.is_nt2_2000 = true
-         order by s.next_review_at asc nulls last`,
-        [userId]
-      );
-      console.log('DEBUG: All NT2 words for user:', JSON.stringify(debugWords, null, 2));
-      console.log('DEBUG: Expected overdueId:', overdueId);
-      console.log('DEBUG: UserId:', userId);
-
       const first = await callGetNextWord(client, userId, mode);
-      console.log('DEBUG: First result:', JSON.stringify(first, null, 2));
       expect(first?.id).toBe(overdueId);
       expect(first?.stats?.source).toBe("review");
 
@@ -151,17 +136,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
-      // DEBUG: Check review count
-      const { rows: reviewCount } = await client.query(
-        `select count(*) as cnt from user_review_log
-         where user_id = $1 and mode = $2 and review_type = 'review' and reviewed_at::date = current_date`,
-        [userId, mode]
-      );
-      console.log('DEBUG: Review count today:', reviewCount[0].cnt, '/ limit:', 2);
-      console.log('DEBUG: Expected newId:', newId);
-
       const second = await callGetNextWord(client, userId, mode);
-      console.log('DEBUG: Second result:', JSON.stringify(second, null, 2));
       expect(second?.id).toBe(newId);
       expect(second?.stats?.source).toBe("new");
 
