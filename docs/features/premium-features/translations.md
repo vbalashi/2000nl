@@ -7,6 +7,7 @@ Translation uses `ITranslator` plus a factory in `apps/ui/lib/translation/transl
 - Default provider: OpenAI
 - Fallback: DeepL
 - Model default: `gpt-5.2`
+- Alternate providers: DeepL and Gemini
 
 The route `apps/ui/app/api/translation/route.ts` handles provider selection, caching, and fingerprinting.
 
@@ -18,12 +19,16 @@ TRANSLATION_FALLBACK=deepl
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5.2
 DEEPL_API_KEY=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-1.5-flash
 ```
 
 Azure OpenAI can be used by the `openai` provider via:
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_API_VERSION`
+
+Gemini can be selected with `TRANSLATION_PROVIDER=gemini`. When `TRANSLATION_FALLBACK=deepl` and `DEEPL_API_KEY` is set, Gemini failures fall back to DeepL.
 
 ## Fingerprint-Based Cache Invalidation
 
@@ -98,4 +103,6 @@ select * from word_entry_translations where status in ('pending', 'error') limit
 | Translation route | `apps/ui/app/api/translation/route.ts` |
 | Translation provider factory | `apps/ui/lib/translation/translationProvider.ts` |
 | OpenAI translator | `apps/ui/lib/translation/openaiTranslator.ts` |
+| Gemini translator | `apps/ui/lib/translation/geminiTranslator.ts` |
+| DeepL translator | `apps/ui/lib/translation/deeplTranslator.ts` |
 | Bulk re-translate script | `apps/ui/scripts/retranslate-translations.js` |

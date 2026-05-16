@@ -27,6 +27,21 @@ describe("trainingService next-word selection", () => {
     rpc.mockReset();
   });
 
+  const mockScenarioModes = (
+    cardModes: string[] = ["word-to-definition", "definition-to-word"],
+  ) => {
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "understanding",
+          name_en: "Understanding",
+          card_modes: cardModes,
+        },
+      ],
+      error: null,
+    });
+  };
+
   test("fetchNextTrainingWord forwards modes, list scope, card filter, queue turn, and excludes", async () => {
     const { fetchNextTrainingWord } = await importService();
 
@@ -89,9 +104,10 @@ describe("trainingService next-word selection", () => {
     );
   });
 
-  test("fetchNextTrainingWordByScenario forwards scenario id and forces first encounters to W->D mode", async () => {
+  test("fetchNextTrainingWordByScenario resolves scenario modes and forces first encounters to W->D mode", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 
+    mockScenarioModes();
     rpc.mockResolvedValueOnce({
       data: {
         id: "word-new",
@@ -116,9 +132,10 @@ describe("trainingService next-word selection", () => {
       "new",
     );
 
-    expect(rpc).toHaveBeenCalledWith("get_next_word", {
+    expect(rpc).toHaveBeenNthCalledWith(1, "get_training_scenarios");
+    expect(rpc).toHaveBeenNthCalledWith(2, "get_next_word", {
       p_user_id: "user-1",
-      p_scenario_id: "understanding",
+      p_modes: ["word-to-definition", "definition-to-word"],
       p_exclude_ids: ["already-seen"],
       p_card_filter: "both",
       p_queue_turn: "new",
@@ -145,6 +162,7 @@ describe("trainingService next-word selection", () => {
     const { fetchNextTrainingWordByScenario } = await importService();
     const payloads: any[] = [];
 
+    mockScenarioModes();
     rpc
       .mockImplementationOnce(async (_fn, payload) => {
         payloads.push(structuredClone(payload));
@@ -183,6 +201,7 @@ describe("trainingService next-word selection", () => {
     );
 
     expect(rpc.mock.calls.map((call) => call[0])).toEqual([
+      "get_training_scenarios",
       "get_next_word",
       "get_next_word",
     ]);
@@ -253,6 +272,7 @@ describe("trainingService next-word selection", () => {
   test("scenario selection returns null instead of using list fallback when RPC returns no data", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 
+    mockScenarioModes(["word-to-definition"]);
     rpc.mockResolvedValueOnce({ data: [], error: null });
 
     const word = await fetchNextTrainingWordByScenario(
@@ -263,11 +283,11 @@ describe("trainingService next-word selection", () => {
     );
 
     expect(word).toBeNull();
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith(
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(2,
       "get_next_word",
       expect.objectContaining({
-        p_scenario_id: "understanding",
+        p_modes: ["word-to-definition"],
         p_list_id: "list-1",
       }),
     );

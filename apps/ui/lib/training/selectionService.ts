@@ -17,6 +17,7 @@ import {
 } from "./wordMappers";
 
 const MAX_CROSS_REFERENCE_SKIPS = 5;
+const DEFAULT_SCENARIO_MODES: TrainingMode[] = ["word-to-definition"];
 
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
@@ -211,6 +212,21 @@ export const fetchTrainingScenarios = async (): Promise<TrainingScenario[]> => {
   return (Array.isArray(data) ? data : [data]).map(mapScenario);
 };
 
+const resolveScenarioModes = async (
+  scenarioId: string,
+): Promise<TrainingMode[] | null> => {
+  const scenarios = await fetchTrainingScenarios();
+  const scenario = scenarios.find((item) => item.id === scenarioId);
+
+  if (!scenario) {
+    console.error("Unable to resolve training scenario modes:", scenarioId);
+    return null;
+  }
+
+  const modes = scenario.cardModes.filter(Boolean) as TrainingMode[];
+  return modes.length > 0 ? modes : DEFAULT_SCENARIO_MODES;
+};
+
 export const fetchScenarioStats = async (
   userId: string,
   scenarioId: string,
@@ -252,9 +268,12 @@ export const fetchNextTrainingWordByScenario = async (
   cardFilter: CardFilter = "both",
   queueTurn: QueueTurn = "auto",
 ): Promise<TrainingWord | null> => {
+  const modes = await resolveScenarioModes(scenarioId);
+  if (!modes) return null;
+
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
-    p_scenario_id: scenarioId,
+    p_modes: modes,
     p_exclude_ids: excludeWordIds,
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,

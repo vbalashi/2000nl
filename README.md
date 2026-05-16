@@ -1,6 +1,6 @@
 # 2000nl Monorepo
 
-This repository hosts the full stack for the 2000nl project. Scheduling for training uses an FSRS-6 implementation in Postgres (see `db/migrations/002_fsrs_engine.sql` and `db/migrations/bootstrap.sql`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and unlimited reviews.
+This repository hosts the full stack for the 2000nl project. Scheduling for training uses an FSRS-6 implementation in Postgres (see `db/migrations/002_fsrs_engine.sql` and `db/migrations/bootstrap.sql`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and 40 reviews/day on fresh settings rows.
 
 Canonical repo docs:
 - `AGENTS.md` - agent entrypoint, repo map, and validation commands

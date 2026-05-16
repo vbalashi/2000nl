@@ -1,6 +1,6 @@
 # 2000NL Training UI
 
-Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase for data, auth, and event tracking. Training now uses the FSRS-6 scheduler exposed via Supabase RPCs with a 4-grade flow (Again/Hard/Good/Easy), defaulting to 10 new cards per day and unlimited reviews.
+Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase for data, auth, and event tracking. Training now uses the FSRS-6 scheduler exposed via Supabase RPCs with a 4-grade flow (Again/Hard/Good/Easy), defaulting to 10 new cards per day and 40 reviews per day on fresh settings rows.
 
 ## Setup
 
@@ -36,7 +36,7 @@ GEMINI_MODEL=gemini-1.5-flash
 ```
 
 Notes:
-- Supported providers: `deepl`, `openai`, `gemini` (when implemented).
+- Supported providers: `deepl`, `openai`, `gemini`.
 - Set `TRANSLATION_PROVIDER=openai` to route translations through OpenAI; `TRANSLATION_FALLBACK=deepl` enables automatic fallback if OpenAI fails.
 - Set `TRANSLATION_PROVIDER=gemini` to route translations through Gemini; `TRANSLATION_FALLBACK=deepl` enables automatic fallback if Gemini fails.
 - `OPENAI_MODEL` is optional; defaults to `gpt-5.2`.
