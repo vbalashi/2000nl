@@ -5,7 +5,7 @@ Downloads VanDale audio files referenced by the word data and stores them under 
 ## Prerequisites
 
 - Python with `requests` installed.
-- Valid VanDale OAuth token support via `/home/khrustal/dev/2000nl/auth_vandale.py`.
+- Valid VanDale OAuth token support via a local `auth_vandale.py` helper outside this repo.
 
 ## Usage
 
@@ -25,7 +25,7 @@ Optional flags:
   --rate-mode global \
   --audio-base https://assets.vandale.nl/audio \
   --audio-version 1_0 \
-  --output-dir /home/khrustal/dev/2000nl-ui/db/audio
+  --output-dir db/audio
 ```
 
 ## Notes

@@ -1,6 +1,6 @@
 # 2000nl Monorepo
 
-This repository hosts the full stack for the 2000nl project. Scheduling for training now uses an FSRS-6 implementation that lives in Postgres (see `db/migrations/0010+`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and unlimited reviews.
+This repository hosts the full stack for the 2000nl project. Scheduling for training uses an FSRS-6 implementation in Postgres (see `db/migrations/002_fsrs_engine.sql` and `db/migrations/bootstrap.sql`), with a 4-grade UI (again/hard/good/easy) and defaults of 10 new cards/day and unlimited reviews.
 
 Canonical repo docs:
 - `AGENTS.md` - agent entrypoint, repo map, and validation commands
@@ -25,7 +25,7 @@ Setup:
   - `TELEGRAM_CHAT_ID` (chat/channel ID that receives notifications)
 - (Optional) Update `.github/workflows/deploy-nuc.yml` if the server name changes.
 
-- `apps/ui/` – Next.js web client (moved from the original @2000nl-ui project).
+- `apps/ui/` – active Next.js web client.
 - `apps/api/` – reserved backend boundary for possible future extraction.
 - `packages/ingestion/` – data validation and loaders (from @2000nl-db importer).
 - `packages/scraper/` – scraping adapters (vandale parser included).

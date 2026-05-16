@@ -138,7 +138,7 @@ Customize Supabase email templates with 2000nl branding (logo wordmark, primary 
 2. Run the template update script:
    ```
    SUPABASE_ACCESS_TOKEN=your-token \
-     /home/khrustal/dev/2000nl-ui/scripts/update-supabase-email-templates.sh
+     ../../scripts/update-supabase-email-templates.sh
    ```
 3. Supabase Dashboard → Authentication → Email Templates
 4. Verify confirmation (registration), recovery (password reset), and magic link (OTP) templates render correctly.

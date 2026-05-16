@@ -29,7 +29,7 @@ Expected:
 ## Debug with `agent-browser` (Console + Trace)
 
 ```bash
-cd /home/khrustal/dev/2000nl-ui
+cd /path/to/2000nl
 
 agent-browser --session prod2000 open https://2000.dilum.io/
 agent-browser --session prod2000 wait --load networkidle

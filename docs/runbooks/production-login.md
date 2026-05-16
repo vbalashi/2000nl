@@ -45,7 +45,7 @@ Prereqs (already supported by `.env.local` in this repo):
 Command:
 
 ```bash
-cd /home/khrustal/dev/2000nl-ui
+cd /path/to/2000nl
 set -a && source .env.local && set +a
 node - <<'NODE'
 const fs = require('fs');
@@ -91,7 +91,7 @@ NODE
 This is the most repeatable flow for debugging.
 
 ```bash
-cd /home/khrustal/dev/2000nl-ui
+cd /path/to/2000nl
 
 # Use a persistent profile so the prod session sticks across runs.
 # If you see `--profile ignored: daemon already running`, run `agent-browser close` and retry.

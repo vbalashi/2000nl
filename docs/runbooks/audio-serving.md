@@ -89,7 +89,7 @@ Migration script: `scripts/update-audio-urls.py`
 
 - **Files:** 4,330 MP3 files (2,078 nl + 2,252 be)
 - **Size:** 109 MB total
-- **Location:** `/home/khrustal/dev/2000nl-ui/db/audio/`
+- **Location:** `db/audio/`
 
 ## Testing
 
