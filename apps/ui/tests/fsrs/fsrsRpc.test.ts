@@ -33,11 +33,12 @@ describeIfDb("FSRS RPC integration", () => {
 
       await ensureUserWithSettings(client, userId, { target_retention: 0.9 });
 
-      await client.query(`select handle_review($1, $2, $3, $4)`, [
+      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
         userId,
         wordId,
         mode,
         "success",
+        null,
       ]);
 
       const { rows: first } = await client.query(
@@ -51,11 +52,12 @@ describeIfDb("FSRS RPC integration", () => {
       expect(first[0].last_result).toBe("success");
       expect(first[0].fsrs_enabled).toBe(true);
 
-      await client.query(`select handle_review($1, $2, $3, $4)`, [
+      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
         userId,
         wordId,
         mode,
         "fail",
+        null,
       ]);
 
       const { rows: second } = await client.query(
@@ -78,11 +80,12 @@ describeIfDb("FSRS RPC integration", () => {
       await ensureUserWithSettings(client, userId);
 
       // Seed with a success so we have prior state.
-      await client.query(`select handle_review($1, $2, $3, $4)`, [
+      await client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
         userId,
         wordId,
         mode,
         "success",
+        null,
       ]);
 
       await client.query(`select handle_click($1, $2, $3)`, [userId, wordId, mode]);
