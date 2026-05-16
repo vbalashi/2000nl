@@ -27,3 +27,6 @@
 
 -- Data fixes
 \i db/migrations/006_fix_omgekeerd_translation_ru.sql
+
+-- Review idempotency: turn IDs and temporal guardrails
+\i db/migrations/007_review_idempotency.sql

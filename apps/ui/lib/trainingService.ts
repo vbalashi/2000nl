@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { trainingDebug } from "./trainingDebug";
 import {
   CardFilter,
   DetailedStats,
@@ -271,36 +272,36 @@ export const fetchNextTrainingWord = async (
       return `${(interval / 7).toFixed(1)}w`;
     };
 
-    console.groupCollapsed(
+    trainingDebug.groupCollapsed(
       `%c Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
       "color: #10b981; font-weight: bold;"
     );
-    console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown");
-    console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
+    trainingDebug.log(`%c Source:`, "font-weight: bold", stats.source || "unknown");
+    trainingDebug.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
     if (typeof meaningId === "number") {
-      console.log(`%c Meaning ID:`, "font-weight: bold", meaningId);
+      trainingDebug.log(`%c Meaning ID:`, "font-weight: bold", meaningId);
     }
-    console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
-    console.log(
+    trainingDebug.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
+    trainingDebug.log(
       `%c New Pool:`,
       "font-weight: bold",
       `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} today, ${stats.new_pool_size ?? "?"} available`
     );
-    console.log(
+    trainingDebug.log(
       `%c Learning Due:`,
       "font-weight: bold",
       stats.learning_due_count ?? "?"
     );
-    console.log(
+    trainingDebug.log(
       `%c Review Pool:`,
       "font-weight: bold",
       stats.review_pool_size ?? "?"
     );
-    console.log(`%c Interval:`, "font-weight: bold", formatInterval(stats.interval));
-    console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "new");
-    console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "new");
-    console.log("Full Entry:", item);
-    console.groupEnd();
+    trainingDebug.log(`%c Interval:`, "font-weight: bold", formatInterval(stats.interval));
+    trainingDebug.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "new");
+    trainingDebug.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "new");
+    trainingDebug.log("Full Entry:", item);
+    trainingDebug.groupEnd();
 
     const isFirstEncounter = stats.source === "new";
     const resolvedMode = isFirstEncounter
@@ -496,37 +497,37 @@ export const fetchNextTrainingWordByScenario = async (
     const sourceKey = typeof stats.source === "string" ? stats.source : "unknown";
     const sourceExplanation = sourceExplanationMap[sourceKey] || "Unknown source";
 
-    console.groupCollapsed(
+    trainingDebug.groupCollapsed(
       `%c 📚 Word Selection: ${item.headword}${meaningLabel} (${stats.source || "unknown"})`,
       "color: #10b981; font-weight: bold;"
     );
-    console.log(`%c Source:`, "font-weight: bold", stats.source || "unknown", `- ${sourceExplanation}`);
-    console.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
-    console.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
-    console.log(
+    trainingDebug.log(`%c Source:`, "font-weight: bold", stats.source || "unknown", `- ${sourceExplanation}`);
+    trainingDebug.log(`%c Mode:`, "font-weight: bold", item.mode || stats.mode || "unknown");
+    trainingDebug.log(`%c Queue Turn:`, "font-weight: bold", queueTurn);
+    trainingDebug.log(
       `%c New Cards Today:`,
       "font-weight: bold",
       `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} (${stats.new_pool_size ?? "?"} unseen words available)`
     );
-    console.log(
+    trainingDebug.log(
       `%c Learning Due:`,
       "font-weight: bold",
       `${stats.learning_due_count ?? "?"} cards in learning phase ready for review`
     );
-    console.log(
+    trainingDebug.log(
       `%c Review Pool:`,
       "font-weight: bold",
       `${stats.review_pool_size ?? "?"} graduated cards in rotation`
     );
     if (stats.interval != null) {
-      console.log(`%c Current Interval:`, "font-weight: bold", formatInterval(stats.interval), `(${stats.interval >= 1 ? "graduated" : "in learning"})`);
-      console.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "n/a");
-      console.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "n/a");
+      trainingDebug.log(`%c Current Interval:`, "font-weight: bold", formatInterval(stats.interval), `(${stats.interval >= 1 ? "graduated" : "in learning"})`);
+      trainingDebug.log(`%c Stability:`, "font-weight: bold", stats.stability ?? "n/a");
+      trainingDebug.log(`%c Next Review:`, "font-weight: bold", stats.next_review ?? "n/a");
     } else {
-      console.log(`%c Status:`, "font-weight: bold", "Brand new card - no previous review data");
+      trainingDebug.log(`%c Status:`, "font-weight: bold", "Brand new card - no previous review data");
     }
-    console.log("Full Entry:", item);
-    console.groupEnd();
+    trainingDebug.log("Full Entry:", item);
+    trainingDebug.groupEnd();
 
     const isFirstEncounter = stats.source === "new";
     const resolvedMode = isFirstEncounter
@@ -810,7 +811,7 @@ export const fetchDictionaryEntry = async (
   }
 
   if (!formRow?.word_id) {
-    console.log("No dictionary entry found for:", normalized);
+    trainingDebug.log("No dictionary entry found for:", normalized);
     return null;
   }
 
@@ -880,7 +881,7 @@ export async function fetchStats(
 
   // Log stats with context if provided
   if (logContext) {
-    console.log(
+    trainingDebug.log(
       `%c 📊 Stats [${logContext}]:`,
       "color: #8b5cf6; font-weight: bold;",
       `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,

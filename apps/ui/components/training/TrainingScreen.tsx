@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import Joyride, { CallBackProps, EVENTS, STATUS, Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import type { AudioQuality } from "@/lib/audio/types";
+import { trainingDebug } from "@/lib/trainingDebug";
 import {
   fetchDictionaryEntry,
   fetchNextTrainingWord,
@@ -276,7 +277,8 @@ export function TrainingScreen({ user }: Props) {
     const loadOnboardingPrefs = async () => {
       try {
         const prefs = await fetchUserPreferences(user.id);
-        const { onboardingCompleted, onboardingLanguage } = prefs.preferences;
+        const preferences = prefs.preferences ?? {};
+        const { onboardingCompleted, onboardingLanguage } = preferences;
 
         setOnboardingCompleted(Boolean(onboardingCompleted));
 
@@ -291,7 +293,7 @@ export function TrainingScreen({ user }: Props) {
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingLanguage: detected,
             },
           });
@@ -339,10 +341,11 @@ export function TrainingScreen({ user }: Props) {
       if (user?.id) {
         try {
           const prefs = await fetchUserPreferences(user.id);
+          const preferences = prefs.preferences ?? {};
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingLanguage: lang,
             },
           });
@@ -374,14 +377,15 @@ export function TrainingScreen({ user }: Props) {
 
         try {
           const prefs = await fetchUserPreferences(user.id);
+          const preferences = prefs.preferences ?? {};
           await updateUserPreferences({
             userId: user.id,
             preferences: {
-              ...prefs.preferences,
+              ...preferences,
               onboardingCompleted: true,
             },
           });
-          console.log("[Onboarding] Marked as completed in DB");
+          trainingDebug.log("[Onboarding] Marked as completed in DB");
         } catch (e) {
           console.error("[Onboarding] Failed to save completion:", e);
         }
@@ -392,7 +396,7 @@ export function TrainingScreen({ user }: Props) {
 
   useEffect(() => {
     if (devMode) {
-      console.log("[Training] Dev mode enabled: URL params are active.");
+      trainingDebug.log("[Training] Dev mode enabled: URL params are active.");
     }
   }, [devMode]);
 
@@ -410,7 +414,7 @@ export function TrainingScreen({ user }: Props) {
 
   useEffect(() => {
     if (!currentWord) return;
-    console.log(
+    trainingDebug.log(
       `[Training] First encounter: ${currentWord.headword}`,
       currentWord.isFirstEncounter,
     );
@@ -439,8 +443,9 @@ export function TrainingScreen({ user }: Props) {
 
   // Also clear on unmount to avoid leaking state across mounts in tests/dev.
   useEffect(() => {
+    const reviewedInSession = reviewedInSessionRef.current;
     return () => {
-      reviewedInSessionRef.current.clear();
+      reviewedInSession.clear();
     };
   }, []);
 
@@ -489,7 +494,7 @@ export function TrainingScreen({ user }: Props) {
 
     const loadPreferences = async () => {
       const prefs = await fetchUserPreferences(user.id);
-      console.log("[Settings] Loaded preferences from Supabase:", prefs);
+      trainingDebug.log("[Settings] Loaded preferences from Supabase:", prefs);
       setThemePreference(prefs.themePreference);
       setAudioQualityState(prefs.audioQuality);
       setEnabledModesState(prefs.modesEnabled);
@@ -557,7 +562,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist enabled modes to Supabase
   const setEnabledModes = useCallback(
     (newModes: TrainingMode[]) => {
-      console.log("[Settings] Saving modes to Supabase:", newModes);
+      trainingDebug.log("[Settings] Saving modes to Supabase:", newModes);
       setEnabledModesState(newModes);
       if (user?.id) {
         void updateUserPreferences({ userId: user.id, modesEnabled: newModes });
@@ -569,7 +574,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist card filter to Supabase
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
-      console.log("[Settings] Saving card filter to Supabase:", newFilter);
+      trainingDebug.log("[Settings] Saving card filter to Supabase:", newFilter);
       setCardFilterState(newFilter);
       // Reset queue rotation when switching to 'both' to start interleave cycle
       if (newFilter === "both") {
@@ -586,7 +591,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist language to Supabase
   const setLanguage = useCallback(
     (newLanguage: string) => {
-      console.log("[Settings] Saving language to Supabase:", newLanguage);
+      trainingDebug.log("[Settings] Saving language to Supabase:", newLanguage);
       setLanguageState(newLanguage);
       if (user?.id) {
         void updateUserPreferences({
@@ -601,7 +606,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist theme to Supabase
   const setTheme = useCallback(
     (newTheme: ThemePreference) => {
-      console.log("[Settings] Saving theme to Supabase:", newTheme);
+      trainingDebug.log("[Settings] Saving theme to Supabase:", newTheme);
       setThemePreference(newTheme);
       if (user?.id) {
         void updateUserPreferences({
@@ -615,7 +620,7 @@ export function TrainingScreen({ user }: Props) {
 
   const setAudioQuality = useCallback(
     (quality: AudioQuality) => {
-      console.log("[Settings] Saving audio quality to Supabase:", quality);
+      trainingDebug.log("[Settings] Saving audio quality to Supabase:", quality);
       setAudioQualityState(quality);
       if (user?.id) {
         void updateUserPreferences({
@@ -630,7 +635,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist new/review ratio to Supabase
   const setNewReviewRatio = useCallback(
     (newRatio: number) => {
-      console.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
+      trainingDebug.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
       setNewReviewRatioState(newRatio);
       if (user?.id) {
         void updateUserPreferences({
@@ -645,7 +650,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist translation language preference to Supabase
   const setTranslationLang = useCallback(
     (newLang: string | null) => {
-      console.log(
+      trainingDebug.log(
         "[Settings] Saving translation language to Supabase:",
         newLang,
       );
@@ -663,7 +668,7 @@ export function TrainingScreen({ user }: Props) {
   // Wrapper to persist active scenario to Supabase
   const setActiveScenario = useCallback(
     (newScenario: string) => {
-      console.log(
+      trainingDebug.log(
         "[Settings] Saving active scenario to Supabase:",
         newScenario,
       );
@@ -814,7 +819,7 @@ export function TrainingScreen({ user }: Props) {
       if (isInitialLoad || initialReviewDue === null) {
         const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
         setInitialReviewDue(totalReviewDue);
-        console.log(
+        trainingDebug.log(
           `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
           "color: #f59e0b; font-weight: bold;",
         );
@@ -845,7 +850,7 @@ export function TrainingScreen({ user }: Props) {
 
       // Prevent concurrent calls - if already loading, skip this call
       if (loadingInProgress.current) {
-        console.log(
+        trainingDebug.log(
           "%c loadNextWord skipped (already loading)",
           "color: #f59e0b",
         );
@@ -1108,7 +1113,7 @@ export function TrainingScreen({ user }: Props) {
         const cardSource = currentWord.debugStats?.source ?? "unknown";
 
         // Log before stats
-        console.log(
+        trainingDebug.log(
           `%c 📊 Stats [BEFORE ${currentWord.headword}]:`,
           "color: #8b5cf6; font-weight: bold;",
           `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
@@ -1157,7 +1162,7 @@ export function TrainingScreen({ user }: Props) {
               ? ` → GRADUATED to review queue`
               : "";
 
-          console.log(
+          trainingDebug.log(
             `%c ✓ Review: ${currentWord.headword} (${cardSource} → ${result})`,
             "color: #10b981; font-weight: bold;",
             intervalDelta ? `int:${intervalDelta}` : "",
@@ -1190,7 +1195,7 @@ export function TrainingScreen({ user }: Props) {
                   : undefined;
               const sameDay =
                 typeof meta.same_day === "boolean" ? meta.same_day : undefined;
-              console.log(
+              trainingDebug.log(
                 `%c   ↳ FSRS debug:`,
                 "color: #6b7280;",
                 elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
@@ -1204,12 +1209,12 @@ export function TrainingScreen({ user }: Props) {
 
           // Explain what should happen to stats
           if (wasNew) {
-            console.log(
+            trainingDebug.log(
               `%c   → review_type='new' logged → NIEUW counter should +1`,
               "color: #6b7280;",
             );
           } else {
-            console.log(
+            trainingDebug.log(
               `%c   → review_type='review' logged → HERHALING done counter should +1`,
               "color: #6b7280;",
             );
@@ -1518,7 +1523,7 @@ export function TrainingScreen({ user }: Props) {
 
           // Show user-friendly error message
           if (!error.configured) {
-            console.log(
+            trainingDebug.log(
               "[TTS] Google TTS is not configured. Sentence pronunciation unavailable.",
             );
           }
@@ -1540,7 +1545,7 @@ export function TrainingScreen({ user }: Props) {
 
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {
-      console.log("🔍 Word clicked:", clickedWord);
+      trainingDebug.log("🔍 Word clicked:", clickedWord);
       setTranslationTooltipOpen(false);
 
       if (
@@ -1551,7 +1556,7 @@ export function TrainingScreen({ user }: Props) {
       }
 
       if (!user?.id) {
-        console.log("❌ No user ID");
+        trainingDebug.log("❌ No user ID");
         return;
       }
 
@@ -1563,7 +1568,7 @@ export function TrainingScreen({ user }: Props) {
 
       if (!entry) {
         // Word not found in dictionary - still add to sidebar with "not found" indicator
-        console.log("No dictionary entry found for:", clickedWord);
+        trainingDebug.log("No dictionary entry found for:", clickedWord);
 
         // On mobile, open the Recent drawer so the user sees that something happened.
         openMobileSidebarTab("recent");
@@ -1596,7 +1601,7 @@ export function TrainingScreen({ user }: Props) {
         return;
       }
 
-      console.log("✅ Found entry:", entry.headword);
+      trainingDebug.log("✅ Found entry:", entry.headword);
       setSelectedEntry(entry);
       // On mobile, open the Recent drawer so the user sees that something happened.
       openMobileSidebarTab("recent");
@@ -1800,7 +1805,7 @@ export function TrainingScreen({ user }: Props) {
 
   const handleScenarioChange = useCallback(
     (newScenario: string) => {
-      console.log("[Settings] Changing scenario to:", newScenario);
+      trainingDebug.log("[Settings] Changing scenario to:", newScenario);
       setRevealed(false);
       setActiveScenario(newScenario);
       // Load next word with the new scenario

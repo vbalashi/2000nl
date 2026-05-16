@@ -1,4 +1,5 @@
 import React, { MouseEvent } from "react";
+import { trainingDebug } from "@/lib/trainingDebug";
 import { buildSegments } from "@/lib/wordUtils";
 
 type Props = {
@@ -25,7 +26,7 @@ export function InteractiveText({
     text: string,
     isLink: boolean = false
   ) => {
-    console.log("🖱️ InteractiveText click:", text, "isLink:", isLink);
+    trainingDebug.log("🖱️ InteractiveText click:", text, "isLink:", isLink);
     event.preventDefault();
     event.stopPropagation();
 
@@ -33,7 +34,7 @@ export function InteractiveText({
 
     // Prevent highlighting the word itself if excluded
     if (excludeWord && cleanBox.toLowerCase() === excludeWord.toLowerCase()) {
-      console.log("⏭️ Skipping excluded word:", cleanBox);
+      trainingDebug.log("⏭️ Skipping excluded word:", cleanBox);
       return;
     }
 
@@ -44,11 +45,11 @@ export function InteractiveText({
       // In TrainingCard we ignored it. Let's keep consistent if needed,
       // but for sidebar, clicking again might not do much unless we want to "re-select".
       // Let's stick to ignoring if strictly equal to avoid re-fetches.
-      console.log("⏭️ Skipping already highlighted word:", cleanBox);
+      trainingDebug.log("⏭️ Skipping already highlighted word:", cleanBox);
       return;
     }
 
-    console.log("✅ Calling onWordClick with:", cleanBox, "sentence:", sentence);
+    trainingDebug.log("✅ Calling onWordClick with:", cleanBox, "sentence:", sentence);
     onWordClick(cleanBox, { sentence });
   };
 

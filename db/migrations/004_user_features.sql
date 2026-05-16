@@ -240,7 +240,7 @@ DECLARE
     v_is_locked boolean;
     v_items jsonb;
 BEGIN
-    v_user_id := auth.uid();
+    v_user_id := (select auth.uid());
     IF v_user_id IS NULL THEN
         RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0, 'is_locked', true, 'max_allowed', 0);
     END IF;
@@ -322,7 +322,7 @@ DECLARE
     v_is_locked boolean;
     v_items jsonb;
 BEGIN
-    v_user_id := auth.uid();
+    v_user_id := (select auth.uid());
     IF v_user_id IS NULL THEN
         RETURN jsonb_build_object('items', '[]'::jsonb, 'total', 0, 'is_locked', true, 'max_allowed', 0);
     END IF;

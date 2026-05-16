@@ -23,7 +23,7 @@
 - Root repo map: [AGENTS.md](../../AGENTS.md)
 - System overview: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Data and contract docs: [packages/docs/README.md](../../packages/docs/README.md)
-- Operational notes: [agents.md](../../agents.md)
+- Operational runbooks: [docs/runbooks](../runbooks)
 
 ## Documentation Conventions
 

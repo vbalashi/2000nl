@@ -1,0 +1,38 @@
+name: UI lint and tests
+
+on:
+  pull_request:
+    paths:
+      - "apps/ui/**"
+      - ".github/workflows/ui-tests.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "apps/ui/**"
+      - ".github/workflows/ui-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: apps/ui
+
+      - name: Lint UI
+        run: npm run lint
+        working-directory: apps/ui
+
+      - name: Run UI tests
+        run: npm test
+        working-directory: apps/ui

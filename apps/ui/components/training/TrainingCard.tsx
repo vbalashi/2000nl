@@ -1269,7 +1269,7 @@ export function TrainingCard({
                         {/* Examples */}
                         {primaryMeaning.examples &&
                           primaryMeaning.examples.length > 0 && (
-                            <div className="flex flex-col gap-5 mt-3">
+                            <div className="flex flex-col gap-5 mt-3 px-2">
                               {primaryMeaning.examples.map((ex, i) => {
                                 const exSegments = buildSegments(
                                   ex,

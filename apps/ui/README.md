@@ -55,6 +55,16 @@ Notes:
   npm run test:e2e
   ```
 
+### Training debug logs
+
+Training diagnostics are quiet by default so tests and automation stay readable. Enable them when investigating queue selection, settings persistence, card clicks, or review state:
+
+```
+NEXT_PUBLIC_DEBUG_TRAINING=1 npm run dev
+```
+
+In the browser, you can also use `?debugTraining=1` or set `localStorage["debug:training"] = "1"`.
+
 ### Test Account (Automation)
 
 For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps to have a dedicated test user.
@@ -138,7 +148,7 @@ Customize Supabase email templates with 2000nl branding (logo wordmark, primary 
 2. Run the template update script:
    ```
    SUPABASE_ACCESS_TOKEN=your-token \
-     /home/khrustal/dev/2000nl-ui/scripts/update-supabase-email-templates.sh
+     ../../scripts/update-supabase-email-templates.sh
    ```
 3. Supabase Dashboard → Authentication → Email Templates
 4. Verify confirmation (registration), recovery (password reset), and magic link (OTP) templates render correctly.

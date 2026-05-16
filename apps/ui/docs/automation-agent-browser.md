@@ -48,7 +48,7 @@ Notes:
 1) Mint a session JSON (server-side, no email) and write it to `tmp/agent-browser/`:
 
 ```bash
-cd /home/khrustal/dev/2000nl-ui
+cd /path/to/2000nl
 mkdir -p tmp/agent-browser
 set -a && source .env.local && set +a
 node - <<'NODE'
@@ -84,7 +84,7 @@ NODE
 2) Inject into `http://127.0.0.1:3000` using a persistent profile:
 
 ```bash
-cd /home/khrustal/dev/2000nl-ui
+cd /path/to/2000nl
 b64=$(cat tmp/agent-browser/local-session.b64)
 
 agent-browser close || true
