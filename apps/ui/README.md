@@ -55,6 +55,16 @@ Notes:
   npm run test:e2e
   ```
 
+### Training debug logs
+
+Training diagnostics are quiet by default so tests and automation stay readable. Enable them when investigating queue selection, settings persistence, card clicks, or review state:
+
+```
+NEXT_PUBLIC_DEBUG_TRAINING=1 npm run dev
+```
+
+In the browser, you can also use `?debugTraining=1` or set `localStorage["debug:training"] = "1"`.
+
 ### Test Account (Automation)
 
 For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps to have a dedicated test user.
