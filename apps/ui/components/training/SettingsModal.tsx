@@ -29,6 +29,7 @@ type Props = {
   onAudioQualityChange: (quality: AudioQuality) => void;
   onboardingLanguage: OnboardingLanguage;
   onOnboardingLanguageChange: (lang: OnboardingLanguage) => void;
+  onStartOnboarding: () => void;
   language: string;
   onLanguageChange: (value: string) => void;
   translationLang: string | null;
@@ -64,6 +65,7 @@ export function SettingsModal({
   onAudioQualityChange,
   onboardingLanguage,
   onOnboardingLanguageChange,
+  onStartOnboarding,
   language,
   onLanguageChange,
   translationLang,
@@ -554,10 +556,7 @@ export function SettingsModal({
                   </p>
                   <button
                     type="button"
-                    onClick={() => {
-                      localStorage.removeItem("onboarding_completed");
-                      alert("Tutorial gereset! Ververs de pagina om de rondleiding opnieuw te starten.");
-                    }}
+                    onClick={onStartOnboarding}
                     className="mt-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
                     Tutorial opnieuw starten

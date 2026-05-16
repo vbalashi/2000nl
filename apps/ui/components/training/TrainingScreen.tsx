@@ -229,6 +229,7 @@ export function TrainingScreen({ user }: Props) {
     runTour,
     setOnboardingLanguageChoice,
     showLanguageSelection,
+    startOnboarding,
   } = useTrainingOnboarding({
     userId: user?.id,
     translationLang,
@@ -2092,6 +2093,12 @@ export function TrainingScreen({ user }: Props) {
           onAudioQualityChange={setAudioQuality}
           onboardingLanguage={onboardingLang}
           onOnboardingLanguageChange={setOnboardingLanguageChoice}
+          onStartOnboarding={() => {
+            setShowSettings(false);
+            setSettingsInitialTab("instellingen");
+            setSettingsAutoFocusWordSearch(false);
+            startOnboarding();
+          }}
           language={language}
           onLanguageChange={setLanguage}
           translationLang={translationLang}

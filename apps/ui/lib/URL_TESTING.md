@@ -69,7 +69,7 @@ The URL word loading is wired through `forcedNextWordIdRef` in `TrainingScreen.t
 
 1. `useCardParams()` extracts `wordId` from URL
 2. If dev mode enabled, sets `forcedNextWordIdRef.current = wordId`
-3. `fetchTrainingWordByLookup()` resolves word by ID or headword
+3. `fetchTrainingWordByLookup()` resolves word by ID or headword through the dictionary service
 4. Next card load bypasses normal queue and loads forced word
 
 ---
@@ -117,7 +117,8 @@ When dev mode is active, the console logs:
 - `apps/ui/lib/cardParams.ts` - Hook and parser implementation
 - `apps/ui/tests/cardParams.test.ts` - Unit tests
 - `apps/ui/components/training/TrainingScreen.tsx` - Integration point
-- `apps/ui/lib/trainingService.ts` - `fetchTrainingWordByLookup()` function
+- `apps/ui/lib/trainingService.ts` - compatibility barrel export
+- `apps/ui/lib/training/dictionaryService.ts` - `fetchTrainingWordByLookup()` implementation
 
 ---
 

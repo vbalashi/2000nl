@@ -8,9 +8,9 @@ Prepare a low-risk refactor plan for the largest UI files without changing the t
 
 Current large files:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - roughly 2.7k lines; owns session orchestration, settings persistence, audio/TTS, onboarding, sidebars, queue transitions, and action handling.
-- `apps/ui/components/training/TrainingCard.tsx` - roughly 1.4k lines; owns card rendering across modes, translations, examples, idioms, badges, audio affordances, and reveal states.
-- `apps/ui/lib/trainingService.ts` - roughly 1.8k lines; owns Supabase RPC calls, mapping, list/search operations, review recording, preferences, and fallbacks.
+- `apps/ui/components/training/TrainingScreen.tsx` - roughly 2.2k lines after non-visual hook extraction; still owns session orchestration, sidebars, queue/load sequencing, and action handling.
+- `apps/ui/components/training/TrainingCard.tsx` - roughly 1.1k lines after pure text and translation hook extraction; still owns card rendering across modes, examples, idioms, badges, audio affordances, and reveal states.
+- `apps/ui/lib/trainingService.ts` - compatibility barrel; implementation now lives in focused modules under `apps/ui/lib/training/`.
 
 The user plans to review selected screens with a designer and may change the UI direction afterward. Do not do visual restructuring, layout rewrites, naming-copy changes, or component extraction that would make designer feedback harder to apply.
 
@@ -72,6 +72,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Continued non-visual hook extraction by moving active-list hydration, available-list refresh, deleted-list clearing, primary fallback, and footer list options into `apps/ui/lib/training/useTrainingActiveList.ts`; `TrainingScreen` keeps stats/next-card reload orchestration local.
 - 2026-05-16: Started the pre-designer `TrainingCard` work by extracting pure text helpers into `apps/ui/lib/training/trainingCardText.ts` and adding direct masking tests; no visual JSX/classes changed.
 - 2026-05-16: Completed the pre-designer `TrainingCard` translation slice by adding characterization tests for preload, pending polling, failed state, long-press force refresh, and timer cleanup, then moving translation state/effects into `apps/ui/lib/training/useTrainingTranslation.ts`.
+- 2026-05-16: Audit update: pre-designer non-visual work is complete through Stage 9. Remaining work should stop at the designer-review boundary unless a new approved plan explicitly reopens session or visual extraction.
 
 ## Analysis Output
 
@@ -79,9 +80,10 @@ Snapshot date: 2026-05-16.
 
 Current measured sizes:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - 2,685 lines.
-- `apps/ui/components/training/TrainingCard.tsx` - 1,395 lines.
-- `apps/ui/lib/trainingService.ts` - 1,791 lines.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,165 lines.
+- `apps/ui/components/training/TrainingCard.tsx` - 1,142 lines.
+- `apps/ui/lib/trainingService.ts` - 43 lines, compatibility barrel only.
+- `apps/ui/lib/training/*.ts` - focused service/helper/hook modules.
 
 This plan intentionally favors mechanical extraction and service decomposition over visual component changes. The pending designer review makes JSX/layout movement the highest-risk category.
 
@@ -91,11 +93,11 @@ Architect review status: approved with changes.
 
 Proceed before designer review only with non-visual extraction:
 
-- Service mapper extraction behind the existing `trainingService.ts` barrel.
-- Domain-shaped service module splitting behind the barrel.
-- Pure queue helpers.
-- Pure `TrainingCard` text helpers.
-- Carefully tested non-visual hooks.
+- Completed: service mapper extraction behind the existing `trainingService.ts` barrel.
+- Completed: domain-shaped service module splitting behind the barrel.
+- Completed: pure queue helpers.
+- Completed: pure `TrainingCard` text helpers.
+- Completed: carefully tested non-visual hooks for preferences, audio, onboarding, active list, and card translation.
 
 Wait until after designer review for:
 
@@ -202,31 +204,31 @@ Do not split the Supabase client or replace query logic during this pass.
 
 Low-risk hooks/helpers:
 
-- `apps/ui/components/training/usePersistedTrainingPreferences.ts`
+- `apps/ui/lib/training/useTrainingPreferences.ts`
   - Own preference hydration plus persisted setters for theme, audio quality, modes, filter, language, ratio, translation language, scenario, and sidebar pinning.
   - Preserve existing setter names in the returned object to minimize call-site edits.
-- `apps/ui/components/training/useTrainingAudio.ts`
+- `apps/ui/lib/training/useTrainingAudio.ts`
   - Own `audioModeEnabled` localStorage persistence, `ttsLoading`, `resolveAudioUrl`, `preloadAudioForWord`, `playAudio`, and `playSentenceTTS`.
   - Keep dictionary lookup in `TrainingScreen` initially; move it into the hook only after tests cover click/audio behavior.
-- `apps/ui/components/training/trainingQueue.ts`
+- `apps/ui/lib/training/trainingQueue.ts`
   - Move queue transition logic into a pure helper returning both next `queueTurn` and next `reviewCounter`.
   - Keep prediction and imperative advancement behavior sharing the same transition helper so they cannot drift.
-- `apps/ui/components/training/reviewTurnId.ts` or `trainingQueue.ts`
+- `apps/ui/lib/training/reviewTurnId.ts` or `trainingQueue.ts`
   - Move `generateReviewTurnId`.
   - Add direct unit tests where practical.
-- `apps/ui/components/training/useOnboardingTour.ts`
+- `apps/ui/lib/training/useTrainingOnboarding.ts`
   - Own Joyride state, language selection, completion persistence, dark-mode observer, and step building.
   - Return state/handlers/styles needed by existing JSX.
 
 Medium-risk hooks:
 
-- `apps/ui/components/training/useActiveTrainingList.ts`
+- `apps/ui/lib/training/useTrainingActiveList.ts`
   - Own active-list hydration, available-list refresh, primary auto-select, list switching, and list-updated reconciliation.
   - Risk is reload sequencing with current card and stats.
-- `apps/ui/components/training/useTrainingSession.ts`
+- `apps/ui/lib/training/useTrainingSession.ts`
   - Own current word, reveal/hint state, queue turn, prefetch, stats/history loading, review submission, and first encounter handlers.
   - This should wait until the smaller hooks above reduce the file and tests are stronger.
-- `apps/ui/components/training/useTrainingSwipe.ts`
+- `apps/ui/lib/training/useTrainingSwipe.ts`
   - Own touch start/move/end and swipe-derived presentation state.
   - Low visual-code movement, but behavior is mobile-specific and should be extracted only with existing swipe tests green.
 
@@ -236,13 +238,13 @@ Avoid extracting header/card/footer JSX before designer review.
 
 Low-risk helper modules:
 
-- `apps/ui/components/training/trainingCardText.ts`
+- `apps/ui/lib/training/trainingCardText.ts`
   - Move `escapeRegExp`, `maskTargetWordInDefinition`, possibly prompt/definition text selectors.
   - Add direct unit tests for headword masking, inflected suffixes, punctuation boundaries, and empty input.
 
 Medium-risk hook:
 
-- `apps/ui/components/training/useTrainingCardTranslation.ts`
+- `apps/ui/lib/training/useTrainingTranslation.ts`
   - Own translation status, overlay, error, fetch/poll/long-press timer cleanup, `getTranslated`, `getHeadwordTranslated`, status text.
   - Keep inline translation JSX inside `TrainingCard` until designer review.
 
@@ -274,7 +276,7 @@ Do not include `parseEntry` or `EVENT_MAP` in the first extraction. They are cur
 
 Second extraction should be `TrainingScreen` pure queue helpers:
 
-1. Add `apps/ui/components/training/trainingQueue.ts`.
+1. Add `apps/ui/lib/training/trainingQueue.ts`.
 2. Extract a pure queue transition helper that returns both next `queueTurn` and next `reviewCounter`.
 3. Move `generateReviewTurnId` into `trainingQueue.ts` or a small `reviewTurnId.ts`.
 4. Add unit tests for queue transition parity, prediction/advance consistency, and UUID fallback behavior where practical.
@@ -282,7 +284,7 @@ Second extraction should be `TrainingScreen` pure queue helpers:
 
 Third extraction should be `TrainingCard` text helpers:
 
-1. Add `apps/ui/components/training/trainingCardText.ts`.
+1. Add `apps/ui/lib/training/trainingCardText.ts`.
 2. Move `escapeRegExp` and `maskTargetWordInDefinition`.
 3. Add direct unit tests for masking before touching any JSX.
 4. Run `cd apps/ui && npm test -- tests/TrainingCard.test.tsx` plus the new helper test.
@@ -395,8 +397,8 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/trainingQueue.ts`.
-- Optionally add `apps/ui/components/training/reviewTurnId.ts`.
+- Add `apps/ui/lib/training/trainingQueue.ts`.
+- Optionally add `apps/ui/lib/training/reviewTurnId.ts`.
 - Update `TrainingScreen.tsx` to use shared queue transition and turn-id helpers.
 
 Protected by:
@@ -414,7 +416,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/usePersistedTrainingPreferences.ts`.
+- Add `apps/ui/lib/training/useTrainingPreferences.ts`.
 - Update `TrainingScreen.tsx` call sites only.
 
 Protected by:
@@ -433,7 +435,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/useTrainingAudio.ts`.
+- Add `apps/ui/lib/training/useTrainingAudio.ts`.
 - Move `audioModeEnabled`, localStorage persistence, `ttsLoading`, `resolveAudioUrl`, `preloadAudioForWord`, `playAudio`, and `playSentenceTTS`.
 - Keep dictionary click handling in `TrainingScreen` at first.
 
@@ -452,7 +454,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/useOnboardingTour.ts`.
+- Add `apps/ui/lib/training/useTrainingOnboarding.ts`.
 - Move Joyride state, language selection, completion persistence, dark-mode observer, and step building.
 - Keep rendered Joyride JSX in `TrainingScreen` unless/until visual extraction is approved.
 
@@ -471,7 +473,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/useActiveTrainingList.ts`.
+- Add `apps/ui/lib/training/useTrainingActiveList.ts`.
 - Move active-list hydration, available-list refresh, primary auto-selection, list switching, and list-updated reconciliation.
 
 Protected by:
@@ -489,7 +491,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/trainingCardText.ts`.
+- Add `apps/ui/lib/training/trainingCardText.ts`.
 - Move `escapeRegExp` and `maskTargetWordInDefinition`.
 - Do not move badge classes or visual JSX.
 
@@ -508,7 +510,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/useTrainingCardTranslation.ts`.
+- Add `apps/ui/lib/training/useTrainingTranslation.ts`.
 - Move translation status, overlay, error, fetch/poll/long-press timer cleanup, translated text lookups, and status text.
 - Keep visual translation rendering inside `TrainingCard`.
 
@@ -531,7 +533,7 @@ Risks:
 
 Files:
 
-- Add `apps/ui/components/training/useTrainingSession.ts` only after stages 0-7 are complete and green.
+- Add `apps/ui/lib/training/useTrainingSession.ts` only after stages 0-9 are complete, green, and a new review explicitly approves continuing past the current stop point.
 - Move current word, reveal/hint state, queue turn, prefetch, stats/history loading, review submission, and first encounter handlers.
 
 Protected by:

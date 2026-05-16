@@ -112,8 +112,18 @@ export function useTrainingOnboarding(params: {
   );
 
   const startOnboarding = useCallback(() => {
+    setOnboardingCompleted(false);
+
+    if (userId) {
+      void updateOnboardingPreferences(userId, {
+        onboardingCompleted: false,
+      }).catch((e) => {
+        console.error("[Onboarding] Failed to reset completion:", e);
+      });
+    }
+
     setRunTour(true);
-  }, []);
+  }, [userId]);
 
   const handleJoyrideCallback = useCallback(
     async (data: CallBackProps) => {

@@ -10,7 +10,7 @@ The 2000nl onboarding system provides a guided tour for new users using [react-j
 - **Auto-detection**: Language automatically detected from system locale or user translation settings
 - **No auto-start**: Onboarding only runs when manually triggered by user
 - **Database persistence**: Completion status and language preference stored in DB (syncs across devices)
-- **Manual restart**: Users can restart onboarding anytime from settings
+- **Manual restart**: Users can restart onboarding from settings
 
 ## Architecture
 
@@ -52,6 +52,8 @@ Wait for manual trigger
     ↓
 User clicks "Start Onboarding" in settings
     ↓
+Reset onboardingCompleted in DB
+    ↓
 Tour runs
     ↓
 User completes/skips tour
@@ -74,6 +76,8 @@ CREATE INDEX IF NOT EXISTS user_settings_preferences_idx
 ```
 
 ### API Functions
+
+The public imports remain available through the `trainingService.ts` compatibility barrel. The current implementation lives in `apps/ui/lib/training/preferencesService.ts`, and onboarding orchestration lives in `apps/ui/lib/training/useTrainingOnboarding.ts`.
 
 **Fetch preferences**:
 ```typescript
@@ -111,16 +115,14 @@ const language = detectOnboardingLanguage(translationLang);
 
 ### Manual Onboarding Trigger
 
-To add a "Start Onboarding" button in settings:
+Settings passes a restart callback from `TrainingScreen` into `SettingsModal`. The callback closes the settings modal and calls `startOnboarding()` from `useTrainingOnboarding()`, which resets `onboardingCompleted` in DB and starts Joyride.
 
 ```typescript
-// In SettingsModal or similar
-<button onClick={() => startOnboarding()}>
+// In SettingsModal
+<button onClick={onStartOnboarding}>
   Start Onboarding Tour
 </button>
 ```
-
-The `startOnboarding()` callback is available in `TrainingScreen.tsx`.
 
 ## Translation Files
 
@@ -166,13 +168,13 @@ To add new steps, update:
 1. `STEP_TARGETS` array in `TrainingScreen.tsx`
 2. Translation files with new step content
 
-## Removing localStorage (Legacy)
+## LocalStorage (Legacy)
 
 The old implementation used localStorage:
 - `onboarding_completed` → now in DB
 - `onboarding_language` → now in DB
 
-**Migration**: Existing localStorage keys are ignored. DB is source of truth.
+**Migration**: Existing `onboarding_completed` keys are ignored. DB is source of truth for completion. `onboarding_language` may still be written as a local UI hint by `setOnboardingLanguage()`, but persisted onboarding settings should be merged through `user_settings.preferences`.
 
 ## Adding New Preferences
 
@@ -229,16 +231,14 @@ WHERE user_id = 'uuid-here';
 
 ## Best Practices
 
-1. ✅ **Never auto-start onboarding** on login (respect user attention)
-2. ✅ **Auto-detect language** from user context (system/translation settings)
-3. ✅ **Persist to DB** for cross-device sync
-4. ✅ **Allow manual restart** from settings UI
-5. ✅ **Use JSONB for feature flags** to avoid schema migrations
-6. ❌ **Don't show language selection popup** (auto-detect instead)
+1. Never auto-start onboarding on login.
+2. Auto-detect language from user context when there is no saved language.
+3. Persist completion and saved language to DB for cross-device sync.
+4. Allow manual restart from settings UI.
+5. Use JSONB merges for feature flags to avoid schema migrations and avoid clobbering unrelated preferences.
 
 ## Future Improvements
 
-- [ ] Add "Show onboarding" button to Settings UI
 - [ ] Track onboarding step completion analytics
 - [ ] Add onboarding for mobile vs desktop separately
 - [ ] Support dismissing individual steps

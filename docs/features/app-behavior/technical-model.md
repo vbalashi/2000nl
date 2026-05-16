@@ -50,7 +50,8 @@
 - `TrainingWord` contains `isFirstEncounter`, `mode`, and related UI state
 
 ### Service Logic
-- `apps/ui/lib/trainingService.ts`
+- `apps/ui/lib/trainingService.ts` compatibility barrel
+- `apps/ui/lib/training/dictionaryService.ts`
 - `apps/ui/lib/training/selectionService.ts`
 - `apps/ui/lib/training/reviewService.ts`
 - `apps/ui/lib/training/listService.ts`

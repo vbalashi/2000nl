@@ -21,7 +21,7 @@ Enable direct card access and layout control for testing, debugging, and automat
 **Implementation:**
 - Hook: `useCardParams()` in `apps/ui/lib/cardParams.ts`
 - Helper: `parseCardParams()` in `apps/ui/lib/cardParams.ts`
-- Word loading: `fetchTrainingWordByLookup()` in `apps/ui/lib/trainingService.ts`
+- Word loading: `fetchTrainingWordByLookup()` exported by `apps/ui/lib/trainingService.ts`; implemented in `apps/ui/lib/training/dictionaryService.ts`
 - Integration: `forcedNextWordIdRef` in `TrainingScreen.tsx`
 - Tests: `apps/ui/tests/cardParams.test.ts`
 

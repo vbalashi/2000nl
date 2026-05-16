@@ -94,6 +94,7 @@ describe("useTrainingOnboarding", () => {
       result.current.startOnboarding();
     });
     expect(result.current.runTour).toBe(true);
+    expect(result.current.onboardingCompleted).toBe(false);
 
     await act(async () => {
       await result.current.handleJoyrideCallback({ status: "finished" } as any);
@@ -107,6 +108,14 @@ describe("useTrainingOnboarding", () => {
         onboardingLanguage: "en",
         unrelated: "keep",
         onboardingCompleted: true,
+      },
+    });
+    expect(updateUserPreferences).toHaveBeenCalledWith({
+      userId: "user-1",
+      preferences: {
+        onboardingLanguage: "en",
+        unrelated: "keep",
+        onboardingCompleted: false,
       },
     });
   });
