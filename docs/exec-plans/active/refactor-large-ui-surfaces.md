@@ -56,6 +56,7 @@ Recommended initial extraction candidates:
   - `cd apps/ui && npm run lint`
   - `cd apps/ui && npm test`
 - 2026-05-16: Started Stage 0 characterization for service splitting by adding `apps/ui/tests/trainingService.selection.test.ts` covering next-card selection payloads, scenario/list forwarding, cross-reference retries, `stability` to `ef`, first-encounter mode forcing, and legacy-vs-scenario fallback behavior.
+- 2026-05-16: Extended Stage 0 characterization by adding `apps/ui/tests/trainingService.listsPreferences.test.ts` covering curated-list `sort_order` fallback, gated search payload/result mapping, hidden/frozen fallback filtering, user-list auth guard, active-list fetch/update, preference defaults, legacy mode fallback, translation `"off"`, and audio-quality default seeding.
 
 ## Analysis Output
 
