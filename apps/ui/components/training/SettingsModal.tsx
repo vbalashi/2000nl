@@ -6,7 +6,7 @@ import {
 } from "@/lib/trainingService";
 import type { CardFilter, DetailedStats, TrainingScenario, WordListSummary, WordListType } from "@/lib/types";
 import type { TrainingMode } from "@/lib/types";
-import type { ThemePreference } from "./TrainingScreen";
+import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { DropUpSelect } from "./DropUpSelect";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";

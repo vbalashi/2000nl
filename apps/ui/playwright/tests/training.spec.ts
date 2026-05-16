@@ -67,7 +67,14 @@ const restHandler = async (route: any) => {
   // ---------------------------------------------------------------------------
 
   if (pathname.endsWith("/rpc/get_next_word")) {
-    const pick = entries[Math.min(nextWordIndex, entries.length - 1)];
+    const body = request.postDataJSON?.() ?? {};
+    const excludedIds = new Set<string>(
+      Array.isArray(body.p_exclude_ids) ? body.p_exclude_ids : [],
+    );
+    const pick =
+      entries.find((entry) => !excludedIds.has(entry.id)) ??
+      entries[Math.min(nextWordIndex, entries.length - 1)];
+    const pickIndex = entries.findIndex((entry) => entry.id === pick.id);
     await route.fulfill({
       status: 200,
       headers: { "content-type": "application/json" },
@@ -78,7 +85,7 @@ const restHandler = async (route: any) => {
           is_nt2_2000: false,
           meanings_count: pick.raw?.meanings?.length ?? 1,
           stats: {
-            source: nextWordIndex === 0 ? "new" : "review",
+            source: pickIndex === 0 ? "new" : "review",
             mode: "word-to-definition",
             interval: null,
             stability: null,
