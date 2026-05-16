@@ -13,10 +13,6 @@ import {
   fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
-  fetchActiveList,
-  fetchListSummaryById,
-  fetchAvailableLists,
-  updateActiveList,
   recordDefinitionClick,
   recordReview,
   recordWordView,
@@ -48,6 +44,7 @@ import {
 } from "@/lib/training/useTrainingPreferences";
 import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
+import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
 import { TrainingCard } from "./TrainingCard";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
@@ -178,13 +175,8 @@ export function TrainingScreen({ user }: Props) {
   });
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
-  const [wordListId, setWordListId] = useState<string | null>(null);
-  const [wordListType, setWordListType] = useState<WordListType | null>(null);
-  const [wordListLabel, setWordListLabel] = useState<string>("");
-  const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
   const [loadingWord, setLoadingWord] = useState(true);
-  const [listHydrated, setListHydrated] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   // `actionLoading` is React state (async to update). Keep a ref for immediate,
   // synchronous guards against double-submit from rapid keypresses/touches.
@@ -264,6 +256,23 @@ export function TrainingScreen({ user }: Props) {
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
 
+  const {
+    activeListValue,
+    availableLists,
+    handleListSelectValue,
+    handleListsUpdated: refreshListsAfterUpdate,
+    listHydrated,
+    listOptions,
+    persistListChange,
+    wordListId,
+    wordListLabel,
+    wordListType,
+  } = useTrainingActiveList({
+    userId: user?.id,
+    language,
+    showSettings,
+  });
+
   const enabledModesKey = enabledModes.join("|");
 
   // Session boundary: list selection or mode/scenario changes should reset the
@@ -312,12 +321,6 @@ export function TrainingScreen({ user }: Props) {
     setSwipeAnimating(false);
     setSwipeActive(false);
   }, []);
-
-  const refreshAvailableLists = useCallback(async () => {
-    if (!user?.id) return;
-    const lists = await fetchAvailableLists(user.id, language);
-    setAvailableLists(lists);
-  }, [language, user?.id]);
 
   const setTrainingSidebarPinned = useCallback(
     (pinned: boolean) => {
@@ -408,60 +411,6 @@ export function TrainingScreen({ user }: Props) {
     mediaQuery.addEventListener("change", handleSystemChange);
     return () => mediaQuery.removeEventListener("change", handleSystemChange);
   }, [themePreference]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const hydrateActiveList = async () => {
-      const active = await fetchActiveList(user.id);
-      if (active.listId) {
-        const listType = active.listType ?? "curated";
-        const resolved = await fetchListSummaryById({
-          userId: user.id,
-          listId: active.listId,
-          listType,
-        });
-
-        if (!resolved) {
-          // list no longer exists (or not accessible) → will auto-select primary via effect
-          await updateActiveList({
-            userId: user.id,
-            listId: null,
-            listType: null,
-          });
-          setWordListId(null);
-          setWordListType(null);
-          setWordListLabel("");
-          setListHydrated(true);
-          return;
-        }
-
-        setWordListId(resolved.id);
-        setWordListType(resolved.type);
-        setWordListLabel(resolved.name);
-      } else {
-        // No active list saved → will auto-select primary via effect
-        setWordListId(null);
-        setWordListType(null);
-        setWordListLabel("");
-      }
-      setListHydrated(true);
-    };
-    void hydrateActiveList();
-  }, [user?.id]);
-
-  useEffect(() => {
-    void refreshAvailableLists();
-  }, [refreshAvailableLists, showSettings]);
-
-  // Auto-select primary list when lists load and no list is selected
-  useEffect(() => {
-    if (listHydrated && !wordListId && availableLists.length > 0) {
-      const primary = availableLists[0];
-      setWordListId(primary.id);
-      setWordListType(primary.type);
-      setWordListLabel(primary.name);
-    }
-  }, [listHydrated, wordListId, availableLists]);
 
   const loadStats = useCallback(
     async (
@@ -1291,89 +1240,34 @@ export function TrainingScreen({ user }: Props) {
 
   const handleListChange = useCallback(
     async (list: WordListSummary) => {
-      setWordListId(list.id);
-      setWordListType(list.type);
-      setWordListLabel(list.name);
-
-      if (user?.id) {
-        await updateActiveList({
-          userId: user.id,
-          listId: list.id,
-          listType: list.type,
-        });
-      }
-
+      await persistListChange(list);
       void loadStats({ listId: list.id, listType: list.type });
       void loadNextWord([], { listId: list.id, listType: list.type });
     },
-    [user?.id, loadStats, loadNextWord],
+    [loadStats, loadNextWord, persistListChange],
   );
-
-  // When no list is selected, use the first available (primary) list
-  const activeListValue = wordListId
-    ? `${wordListType ?? "curated"}:${wordListId}`
-    : availableLists[0]
-      ? `${availableLists[0].type}:${availableLists[0].id}`
-      : "";
-
-  const listOptions = availableLists.map((list) => ({
-    value: `${list.type}:${list.id}`,
-    label: list.name,
-  }));
 
   const handleFooterListChange = useCallback(
     async (value: string) => {
-      const [type, id] = value.split(":");
-      const found = availableLists.find((l) => l.id === id && l.type === type);
-      if (found) {
-        await handleListChange(found);
-      }
+      const scope = await handleListSelectValue(value);
+      if (!scope) return;
+      void loadStats(scope);
+      void loadNextWord([], scope);
     },
-    [availableLists, handleListChange],
+    [handleListSelectValue, loadNextWord, loadStats],
   );
 
   const handleListsUpdated = useCallback(async () => {
-    // After create/delete in SettingsModal, refresh options and re-hydrate active list
-    // so the footer dropdown can't show stale (deleted) lists.
-    if (!user?.id) return;
-    const lists = await fetchAvailableLists(user.id, language);
-    setAvailableLists(lists);
+    const reloadForList = (list: WordListSummary) => {
+      void loadStats({ listId: list.id, listType: list.type });
+      void loadNextWord([], { listId: list.id, listType: list.type });
+    };
 
-    const active = await fetchActiveList(user.id);
-    if (active.listId) {
-      const listType = active.listType ?? "curated";
-      const resolved = await fetchListSummaryById({
-        userId: user.id,
-        listId: active.listId,
-        listType,
-      });
-
-      if (resolved) {
-        setWordListId(resolved.id);
-        setWordListType(resolved.type);
-        setWordListLabel(resolved.name);
-        void loadStats({ listId: resolved.id, listType: resolved.type });
-        void loadNextWord([], { listId: resolved.id, listType: resolved.type });
-        return;
-      }
-      // List no longer exists, fall through to select primary
-    }
-
-    // No active list or list was deleted - select primary list
-    const primary = lists[0];
-    if (primary) {
-      await updateActiveList({
-        userId: user.id,
-        listId: primary.id,
-        listType: primary.type,
-      });
-      setWordListId(primary.id);
-      setWordListType(primary.type);
-      setWordListLabel(primary.name);
-      void loadStats({ listId: primary.id, listType: primary.type });
-      void loadNextWord([], { listId: primary.id, listType: primary.type });
-    }
-  }, [language, loadNextWord, loadStats, user?.id]);
+    await refreshListsAfterUpdate({
+      onResolvedActiveList: reloadForList,
+      onPrimaryFallback: reloadForList,
+    });
+  }, [loadNextWord, loadStats, refreshListsAfterUpdate]);
 
   const handleRecentSelect = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);
