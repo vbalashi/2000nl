@@ -13,6 +13,8 @@ type QueryRecord = {
   order: ReturnType<typeof vi.fn>;
   range: ReturnType<typeof vi.fn>;
   maybeSingle: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
   upsert: ReturnType<typeof vi.fn>;
 };
 
@@ -41,6 +43,8 @@ const createQuery = (table: string, response: QueryResponse): QueryRecord => {
   query.order = vi.fn(() => query);
   query.range = vi.fn(async () => response);
   query.maybeSingle = vi.fn(async () => response);
+  query.delete = vi.fn(() => query);
+  query.insert = vi.fn(() => query);
   query.upsert = vi.fn(async () => response);
   (query as any).then = (resolve: any, reject: any) =>
     Promise.resolve(response).then(resolve, reject);
@@ -71,8 +75,13 @@ const importService = async () => {
   return {
     fetchActiveList: service.fetchActiveList,
     fetchCuratedLists: service.fetchCuratedLists,
+    fetchUserListMembership: service.fetchUserListMembership,
     fetchUserPreferences: service.fetchUserPreferences,
     fetchWordsForList: service.fetchWordsForList,
+    addWordsToUserList: service.addWordsToUserList,
+    createUserList: service.createUserList,
+    deleteUserList: service.deleteUserList,
+    removeWordsFromUserList: service.removeWordsFromUserList,
     searchWordEntries: service.searchWordEntries,
     updateActiveList: service.updateActiveList,
     updateUserPreferences: service.updateUserPreferences,
@@ -299,6 +308,120 @@ describe("trainingService list and preference characterization", () => {
       },
       { onConflict: "user_id" },
     );
+  });
+
+  test("createUserList inserts a list and maps the created summary", async () => {
+    const { createUserList } = await importService();
+
+    queueFrom("user_word_lists", {
+      data: {
+        id: "list-1",
+        name: "Nieuw",
+        description: "Words to learn",
+        language_code: "nl",
+        created_at: "2026-05-16T10:00:00.000Z",
+        user_word_list_items: [{ count: 0 }],
+      },
+      error: null,
+    });
+
+    await expect(
+      createUserList({
+        userId: "user-1",
+        name: "Nieuw",
+        description: "Words to learn",
+        language_code: "nl",
+      }),
+    ).resolves.toEqual({
+      id: "list-1",
+      name: "Nieuw",
+      description: "Words to learn",
+      language_code: "nl",
+      type: "user",
+      item_count: 0,
+      created_at: "2026-05-16T10:00:00.000Z",
+    });
+    expect(queries[0].insert).toHaveBeenCalledWith({
+      user_id: "user-1",
+      name: "Nieuw",
+      description: "Words to learn",
+      language_code: "nl",
+    });
+  });
+
+  test("addWordsToUserList upserts unique list items and skips empty input", async () => {
+    const { addWordsToUserList } = await importService();
+
+    await expect(addWordsToUserList("list-1", [])).resolves.toEqual({
+      error: null,
+    });
+    expect(from).not.toHaveBeenCalled();
+
+    queueFrom("user_word_list_items", { data: null, error: null });
+
+    await expect(
+      addWordsToUserList("list-1", ["word-1", "word-2"]),
+    ).resolves.toEqual({ error: null });
+    expect(queries[0].upsert).toHaveBeenCalledWith(
+      [
+        { list_id: "list-1", word_id: "word-1" },
+        { list_id: "list-1", word_id: "word-2" },
+      ],
+      {
+        onConflict: "list_id,word_id",
+        ignoreDuplicates: true,
+      },
+    );
+  });
+
+  test("removeWordsFromUserList and deleteUserList issue scoped deletes", async () => {
+    const { deleteUserList, removeWordsFromUserList } = await importService();
+
+    await expect(removeWordsFromUserList("list-1", [])).resolves.toEqual({
+      error: null,
+    });
+    expect(from).not.toHaveBeenCalled();
+
+    queueFrom("user_word_list_items", { data: null, error: null });
+    queueFrom("user_word_lists", { data: null, error: null });
+
+    await expect(
+      removeWordsFromUserList("list-1", ["word-1", "word-2"]),
+    ).resolves.toEqual({ error: null });
+    await expect(deleteUserList("list-1")).resolves.toEqual({ error: null });
+
+    expect(queries[0].delete).toHaveBeenCalled();
+    expect(queries[0].eq).toHaveBeenCalledWith("list_id", "list-1");
+    expect(queries[0].in).toHaveBeenCalledWith("word_id", [
+      "word-1",
+      "word-2",
+    ]);
+    expect(queries[1].delete).toHaveBeenCalled();
+    expect(queries[1].eq).toHaveBeenCalledWith("id", "list-1");
+  });
+
+  test("fetchUserListMembership returns present word ids only", async () => {
+    const { fetchUserListMembership } = await importService();
+
+    await expect(fetchUserListMembership("list-1", [])).resolves.toEqual(
+      new Set(),
+    );
+    expect(from).not.toHaveBeenCalled();
+
+    queueFrom("user_word_list_items", {
+      data: [{ word_id: "word-1" }, { word_id: null }, { word_id: "word-2" }],
+      error: null,
+    });
+
+    await expect(
+      fetchUserListMembership("list-1", ["word-1", "word-2", "word-3"]),
+    ).resolves.toEqual(new Set(["word-1", "word-2"]));
+    expect(queries[0].eq).toHaveBeenCalledWith("list_id", "list-1");
+    expect(queries[0].in).toHaveBeenCalledWith("word_id", [
+      "word-1",
+      "word-2",
+      "word-3",
+    ]);
   });
 
   test("fetchUserPreferences applies defaults, legacy mode fallback, and translation off sentinel", async () => {
