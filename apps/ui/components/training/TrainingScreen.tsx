@@ -48,6 +48,7 @@ import {
   useTrainingPreferences,
   type ThemePreference,
 } from "@/lib/training/useTrainingPreferences";
+import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 import { TrainingCard } from "./TrainingCard";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
@@ -213,15 +214,15 @@ export function TrainingScreen({ user }: Props) {
   const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
     useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [audioModeEnabled, setAudioModeEnabled] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem("audioModeEnabled") === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [ttsLoading, setTtsLoading] = useState(false);
+  const {
+    audioModeEnabled,
+    playAudio,
+    playSentenceTTS,
+    preloadAudioForWord,
+    resolveAudioUrl,
+    setAudioModeEnabled,
+    ttsLoading,
+  } = useTrainingAudio(audioQuality);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const cardSwipeRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -370,18 +371,6 @@ export function TrainingScreen({ user }: Props) {
       trainingDebug.log("[Training] Dev mode enabled: URL params are active.");
     }
   }, [devMode]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(
-        "audioModeEnabled",
-        audioModeEnabled.toString(),
-      );
-    } catch {
-      // Ignore storage errors (e.g. tests without localStorage support).
-    }
-  }, [audioModeEnabled]);
 
   useEffect(() => {
     if (!currentWord) return;
@@ -732,38 +721,6 @@ export function TrainingScreen({ user }: Props) {
       wordListId,
       wordListType,
     ],
-  );
-
-  const resolveAudioUrl = useCallback((raw?: TrainingWord["raw"] | null) => {
-    if (!raw) return undefined;
-    // Dutch (nl) pronunciation only for MVP - no fallback to Belgian (be)
-    const link = raw.audio_links?.nl;
-    if (!link) return undefined;
-
-    if (/^https?:\/\//i.test(link)) return link;
-
-    const baseUrl = process.env.NEXT_PUBLIC_AUDIO_BASE_URL?.replace(/\/$/, "");
-    if (!baseUrl) return link;
-
-    return link.startsWith("/") ? `${baseUrl}${link}` : `${baseUrl}/${link}`;
-  }, []);
-
-  const preloadAudioForWord = useCallback(
-    (word: TrainingWord) => {
-      if (typeof window === "undefined") return;
-      if (typeof Audio === "undefined") return;
-      const url = resolveAudioUrl(word.raw);
-      if (!url) return;
-
-      try {
-        const audio = new Audio(url);
-        audio.preload = "auto";
-        audio.load();
-      } catch {
-        // Ignore preload errors (e.g. tests, restricted environments).
-      }
-    },
-    [resolveAudioUrl],
   );
 
   // Background prefetch of the next card while the user is viewing the current card.
@@ -1293,62 +1250,6 @@ export function TrainingScreen({ user }: Props) {
     toggleRecentPanel,
     toggleHint,
   ]);
-
-  const playAudio = useCallback((audioUrl?: string, wordLabel?: string) => {
-    if (!audioUrl) {
-      console.error("[Audio] Missing audio URL for:", wordLabel);
-      return;
-    }
-
-    const audio = new Audio(audioUrl);
-    audio.play().catch((err) => {
-      console.error("[Audio] Audio playback failed:", err);
-    });
-  }, []);
-
-  const playSentenceTTS = useCallback(
-    async (sentence: string) => {
-      if (!sentence.trim()) {
-        console.error("[TTS] Empty sentence");
-        return;
-      }
-
-      setTtsLoading(true);
-      try {
-        const response = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: sentence.trim(),
-            quality: audioQuality,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          console.error("[TTS] API error:", error);
-
-          // Show user-friendly error message
-          if (!error.configured) {
-            trainingDebug.log(
-              "[TTS] Google TTS is not configured. Sentence pronunciation unavailable.",
-            );
-          }
-          return;
-        }
-
-        const data = await response.json();
-        if (data.url) {
-          playAudio(data.url, sentence.slice(0, 50));
-        }
-      } catch (err) {
-        console.error("[TTS] Request failed:", err);
-      } finally {
-        setTtsLoading(false);
-      }
-    },
-    [audioQuality, playAudio],
-  );
 
   const handleDefinitionClick = useCallback(
     async (clickedWord: string) => {

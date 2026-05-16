@@ -67,6 +67,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Started Stage 3 by extracting pure queue helpers into `apps/ui/lib/training/trainingQueue.ts`; `TrainingScreen` now uses one transition helper for both prefetch prediction and post-review queue advancement.
 - 2026-05-16: Added the scenario-change safeguard test and fixed `handleScenarioChange` to pass the selected scenario explicitly into `loadNextWord`, avoiding a stale `activeScenario` read after React state update.
 - 2026-05-16: Started the non-visual preferences extraction by moving preference hydration and local-first setters into `apps/ui/lib/training/useTrainingPreferences.ts`; `TrainingScreen` keeps queue reset and other session behavior local.
+- 2026-05-16: Continued non-visual hook extraction by moving audio mode persistence, audio URL resolution, preload/playback, and sentence TTS into `apps/ui/lib/training/useTrainingAudio.ts`; dictionary click orchestration remains in `TrainingScreen`.
 
 ## Analysis Output
 
