@@ -63,6 +63,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Added stats/history characterization and moved detailed stats plus recent-history hydration into `apps/ui/lib/training/statsHistoryService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Continued Stage 2 by moving list summary and active-list helpers into `apps/ui/lib/training/listService.ts` behind the `trainingService.ts` barrel; search/list words/mutations remain for the next slice.
 - 2026-05-16: Completed the remaining list/search split by moving word search, list word loading, user-list mutations, and membership helpers into `apps/ui/lib/training/listService.ts`; `trainingService.ts` still re-exports the public API and only imports `fetchWordsForList` for legacy next-card fallback.
+- 2026-05-16: Completed the selection split by moving next-card selection, scenario lookup, scenario stats, cross-reference skipping, debug logging, and legacy list fallback into `apps/ui/lib/training/selectionService.ts`; `trainingService.ts` is now a compatibility barrel.
 
 ## Analysis Output
 

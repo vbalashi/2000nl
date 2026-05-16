@@ -17,6 +17,8 @@ const importService = async () => {
   return {
     fetchNextTrainingWord: service.fetchNextTrainingWord,
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
+    fetchScenarioStats: service.fetchScenarioStats,
+    fetchTrainingScenarios: service.fetchTrainingScenarios,
   };
 };
 
@@ -269,5 +271,85 @@ describe("trainingService next-word selection", () => {
         p_list_id: "list-1",
       }),
     );
+  });
+
+  test("fetchTrainingScenarios maps RPC rows with defaults", async () => {
+    const { fetchTrainingScenarios } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+        id: "understanding",
+        name_en: "Understanding",
+        description: "Read and understand",
+        card_modes: ["word-to-definition"],
+        graduation_threshold: 7,
+      },
+      {
+        id: "speaking",
+        name_en: "Speaking",
+      },
+      ],
+      error: null,
+    });
+
+    await expect(fetchTrainingScenarios()).resolves.toEqual([
+      {
+        id: "understanding",
+        nameEn: "Understanding",
+        nameNl: undefined,
+        description: "Read and understand",
+        cardModes: ["word-to-definition"],
+        graduationThreshold: 7,
+        enabled: true,
+        sortOrder: 0,
+      },
+      {
+        id: "speaking",
+        nameEn: "Speaking",
+        nameNl: undefined,
+        description: undefined,
+        cardModes: [],
+        graduationThreshold: 21,
+        enabled: true,
+        sortOrder: 0,
+      },
+    ]);
+    expect(rpc).toHaveBeenCalledWith("get_training_scenarios");
+  });
+
+  test("fetchScenarioStats forwards list scope and applies conservative defaults", async () => {
+    const { fetchScenarioStats } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: {
+        learned: 3,
+        total: 10,
+        scenario_id: "from-rpc",
+        card_modes: ["definition-to-word"],
+      },
+      error: null,
+    });
+
+    await expect(
+      fetchScenarioStats("user-1", "understanding", {
+        listId: "list-1",
+        listType: "user",
+      }),
+    ).resolves.toEqual({
+      learned: 3,
+      inProgress: 0,
+      new: 0,
+      total: 10,
+      scenarioId: "from-rpc",
+      cardModes: ["definition-to-word"],
+      graduationThreshold: 21,
+    });
+    expect(rpc).toHaveBeenCalledWith("get_scenario_stats", {
+      p_user_id: "user-1",
+      p_scenario_id: "understanding",
+      p_list_id: "list-1",
+      p_list_type: "user",
+    });
   });
 });
