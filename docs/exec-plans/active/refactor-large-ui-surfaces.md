@@ -61,6 +61,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Added dictionary lookup characterization and continued Stage 2 by moving training-word/dictionary lookup helpers into `apps/ui/lib/training/dictionaryService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added review side-effect characterization and moved review/view/click/debug helpers into `apps/ui/lib/training/reviewService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added stats/history characterization and moved detailed stats plus recent-history hydration into `apps/ui/lib/training/statsHistoryService.ts` behind the `trainingService.ts` barrel.
+- 2026-05-16: Continued Stage 2 by moving list summary and active-list helpers into `apps/ui/lib/training/listService.ts` behind the `trainingService.ts` barrel; search/list words/mutations remain for the next slice.
 
 ## Analysis Output
 
