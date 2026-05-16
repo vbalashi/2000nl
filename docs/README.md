@@ -16,4 +16,5 @@ This folder is organized by document role rather than by creation date.
 - Root `AGENTS.md` - repo map and validation commands.
 - Root `ARCHITECTURE.md` - system boundaries and safe change patterns.
 - `intent/index.md` - what matters in the product/runtime.
+- `intent/current-transformation-targets.md` - living frame for deciding what to transform next.
 - `tech-debt/index.md` - active structural debt.

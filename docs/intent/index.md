@@ -14,6 +14,7 @@
 ## Current Active Areas
 
 - Training UX and scheduling behavior in `apps/ui` plus `db/migrations`.
+- Transformation discovery and next-target framing in `docs/intent/current-transformation-targets.md`.
 - Premium features and provider integrations documented in `docs/features/premium-features.md`.
 - Production auth and test-account workflows documented in `docs/runbooks/production-login.md` and `apps/ui/README.md`.
 - Audio/TTS behavior documented in `docs/runbooks/audio-tts-testing.md`, `docs/runbooks/audio-serving.md`, and `docs/runbooks/audio-download.md`.
@@ -22,6 +23,7 @@
 
 - Root repo map: [AGENTS.md](../../AGENTS.md)
 - System overview: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Current transformation targets: [current-transformation-targets.md](./current-transformation-targets.md)
 - Data and contract docs: [packages/docs/README.md](../../packages/docs/README.md)
 - Operational runbooks: [docs/runbooks](../runbooks)
 
