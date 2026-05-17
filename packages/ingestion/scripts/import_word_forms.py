@@ -10,7 +10,7 @@ from typing import Dict, Iterable, List, Tuple
 import psycopg2
 import psycopg2.extras
 
-from importer.db import load_existing_entries
+from importer.db import ensure_dictionary, load_existing_entries
 from importer.word_forms import extract_word_forms
 
 
@@ -101,6 +101,27 @@ def main() -> None:
         default="nl",
         help="Language code for the imported entries.",
     )
+    parser.add_argument(
+        "--dictionary-slug",
+        default="nl-vandale",
+        help="Slug of the dictionary whose entries should receive word forms.",
+    )
+    parser.add_argument(
+        "--dictionary-name",
+        default="VanDale Dutch",
+        help="Name of the dictionary whose entries should receive word forms.",
+    )
+    parser.add_argument(
+        "--dictionary-schema-key",
+        default="nl-vandale-v1",
+        help="Dictionary schema key registered in dictionary_schemas.",
+    )
+    parser.add_argument(
+        "--dictionary-schema-version",
+        type=int,
+        default=1,
+        help="Dictionary schema version registered in dictionary_schemas.",
+    )
 
     args = parser.parse_args()
     data_dir = Path(args.data_dir)
@@ -119,7 +140,16 @@ def main() -> None:
 
     with connection:
         with connection.cursor() as cursor:
-            existing = load_existing_entries(cursor, args.language)
+            dictionary_id = ensure_dictionary(
+                cursor,
+                args.language,
+                args.dictionary_slug,
+                args.dictionary_name,
+                None,
+                args.dictionary_schema_key,
+                args.dictionary_schema_version,
+            )
+            existing = load_existing_entries(cursor, args.language, dictionary_id)
             # load_existing_entries now keys by (headword, meaning_id); use the first id per headword
             headword_to_id: Dict[str, str] = {}
             for (headword, _meaning_id), word_id in existing.items():
@@ -132,5 +162,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
