@@ -33,3 +33,6 @@
 
 -- Dictionary boundary: schema registry, seeded VanDale dictionary, and compatibility metadata
 \i db/migrations/008_dictionary_boundary.sql
+
+-- Dictionary-scoped identity: allow duplicate headwords/meanings across dictionaries
+\i db/migrations/009_drop_legacy_word_entry_uniqueness.sql

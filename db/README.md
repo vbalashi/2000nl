@@ -15,6 +15,8 @@ db/migrations/
 │                              # Data fix for a cached RU translation overlay
 ├── 007_review_idempotency.sql # turn_id review idempotency guard
 ├── 008_dictionary_boundary.sql # dictionary registry and Stage 0/1A compatibility boundary
+├── 009_drop_legacy_word_entry_uniqueness.sql
+│                              # dictionary-scoped entry identity
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

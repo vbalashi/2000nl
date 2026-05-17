@@ -134,9 +134,6 @@ CREATE TABLE IF NOT EXISTS word_entries (
     created_at timestamptz DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS word_entries_language_headword_meaning_idx
-    ON word_entries(language_code, headword, meaning_id);
-
 CREATE INDEX IF NOT EXISTS word_entries_dictionary_idx
     ON word_entries(dictionary_id);
 

@@ -68,6 +68,26 @@ begin
 
   if not exists (
     select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'word_entries'
+      and indexname = 'word_entries_dictionary_language_headword_meaning_idx'
+  ) then
+    raise exception 'missing dictionary-scoped word_entries uniqueness';
+  end if;
+
+  if exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'word_entries'
+      and indexname = 'word_entries_language_headword_meaning_idx'
+  ) then
+    raise exception 'legacy global word_entries uniqueness still exists';
+  end if;
+
+  if not exists (
+    select 1
     from public.dictionary_schemas
     where schema_key = 'nl-vandale-v1'
       and version = 1
