@@ -271,9 +271,12 @@ export async function searchWordEntries(
 
   let query = supabase
     .from("word_entries")
-    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000", {
-      count: "exact",
-    })
+    .select(
+      "id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000",
+      {
+        count: "exact",
+      },
+    )
     .order("headword", { ascending: true });
 
   if (filters.query) {
@@ -370,7 +373,7 @@ export async function fetchWordsForList(
     let q = supabase
       .from("word_list_items")
       .select(
-        "rank, word_entries!inner(id, headword, part_of_speech, gender, raw, is_nt2_2000)",
+        "rank, word_entries!inner(id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000)",
         { count: "exact" },
       )
       .eq("list_id", listId)
@@ -413,7 +416,7 @@ export async function fetchWordsForList(
   let q = supabase
     .from("user_word_list_items")
     .select(
-      "added_at, word_entries!inner(id, headword, part_of_speech, gender, raw, is_nt2_2000)",
+      "added_at, word_entries!inner(id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000)",
       { count: "exact" },
     )
     .eq("list_id", listId)
