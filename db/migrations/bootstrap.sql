@@ -30,3 +30,6 @@
 
 -- Review idempotency: turn IDs and temporal guardrails
 \i db/migrations/007_review_idempotency.sql
+
+-- Dictionary boundary: schema registry, seeded VanDale dictionary, and compatibility metadata
+\i db/migrations/008_dictionary_boundary.sql

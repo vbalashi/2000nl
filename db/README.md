@@ -14,6 +14,7 @@ db/migrations/
 ├── 006_fix_omgekeerd_translation_ru.sql
 │                              # Data fix for a cached RU translation overlay
 ├── 007_review_idempotency.sql # turn_id review idempotency guard
+├── 008_dictionary_boundary.sql # dictionary registry and Stage 0/1A compatibility boundary
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -29,7 +30,7 @@ PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstra
 ## Adding New Features
 
 When adding new features:
-1. Add schema changes to the appropriate consolidated file (001-007)
+1. Add schema changes to the appropriate consolidated file (001-008)
 2. Commit the changes
 
 For temporary development migrations, you can create delta files (0040_*, etc.) and add them to `bootstrap.sql`, then merge them into the consolidated files before final commit.
@@ -164,6 +165,8 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 ### Core Tables
 
 - `languages` - Supported languages
+- `dictionary_schemas` - Runtime registry for versioned dictionary entry schemas
+- `dictionaries` / `dictionary_entitlements` - Dictionary metadata and access grants
 - `word_entries` - Dictionary entries with raw JSON data
 - `word_lists` / `word_list_items` - Curated word lists (VanDale, VanDale 2k)
 - `word_forms` - Inflections and conjugations

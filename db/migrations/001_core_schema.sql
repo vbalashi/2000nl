@@ -17,10 +17,112 @@ CREATE TABLE IF NOT EXISTS languages (
 INSERT INTO languages (code, name) VALUES ('nl', 'Nederlands')
 ON CONFLICT (code) DO NOTHING;
 
-CREATE TABLE IF NOT EXISTS word_entries (
+CREATE TABLE IF NOT EXISTS dictionary_schemas (
+    schema_key text NOT NULL,
+    version int NOT NULL DEFAULT 1 CHECK (version > 0),
+    language_code text REFERENCES languages(code),
+    title text NOT NULL,
+    description text,
+    json_schema jsonb NOT NULL DEFAULT '{}'::jsonb,
+    checksum text,
+    source_path text,
+    render_capabilities text[] NOT NULL DEFAULT ARRAY[]::text[],
+    created_at timestamptz DEFAULT now(),
+    retired_at timestamptz,
+    PRIMARY KEY (schema_key, version)
+);
+
+INSERT INTO dictionary_schemas (
+    schema_key,
+    version,
+    language_code,
+    title,
+    description,
+    source_path,
+    render_capabilities
+)
+VALUES (
+    'nl-vandale-v1',
+    1,
+    'nl',
+    'Dutch VanDale entry schema',
+    'Runtime registry row for the current Dutch VanDale-shaped dictionary JSON payload.',
+    'packages/shared/schemas/nl/note.schema.json',
+    ARRAY['definitions', 'examples', 'idioms', 'audio', 'images', 'morphology', 'conjugation']
+)
+ON CONFLICT (schema_key, version) DO UPDATE
+SET language_code = excluded.language_code,
+    title = excluded.title,
+    description = excluded.description,
+    source_path = excluded.source_path,
+    render_capabilities = excluded.render_capabilities;
+
+CREATE TABLE IF NOT EXISTS dictionaries (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     language_code text NOT NULL REFERENCES languages(code),
+    slug text NOT NULL,
+    name text NOT NULL,
+    description text,
+    kind text NOT NULL DEFAULT 'curated' CHECK (kind IN ('curated', 'user')),
+    visibility text NOT NULL DEFAULT 'system' CHECK (visibility IN ('system', 'private', 'shared', 'public')),
+    owner_user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+    is_editable boolean NOT NULL DEFAULT false,
+    minimum_subscription_tier text DEFAULT 'free',
+    access_policy_key text,
+    schema_key text,
+    schema_version int,
+    source_provider text,
+    source_version text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    UNIQUE(language_code, slug),
+    FOREIGN KEY (schema_key, schema_version) REFERENCES dictionary_schemas(schema_key, version)
+);
+
+INSERT INTO dictionaries (
+    language_code,
+    slug,
+    name,
+    description,
+    kind,
+    visibility,
+    is_editable,
+    minimum_subscription_tier,
+    schema_key,
+    schema_version,
+    source_provider
+)
+VALUES (
+    'nl',
+    'nl-vandale',
+    'VanDale Dutch',
+    'Trusted Dutch VanDale-backed dictionary used by the current 2000nl training app.',
+    'curated',
+    'system',
+    false,
+    'free',
+    'nl-vandale-v1',
+    1,
+    'vandale'
+)
+ON CONFLICT (language_code, slug) DO UPDATE
+SET name = excluded.name,
+    description = excluded.description,
+    kind = excluded.kind,
+    visibility = excluded.visibility,
+    is_editable = excluded.is_editable,
+    minimum_subscription_tier = excluded.minimum_subscription_tier,
+    schema_key = excluded.schema_key,
+    schema_version = excluded.schema_version,
+    source_provider = excluded.source_provider,
+    updated_at = now();
+
+CREATE TABLE IF NOT EXISTS word_entries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    dictionary_id uuid REFERENCES dictionaries(id),
+    language_code text NOT NULL REFERENCES languages(code),
     headword text NOT NULL,
+    meaning_id int NOT NULL DEFAULT 1,
     part_of_speech text,
     gender text,
     is_nt2_2000 boolean DEFAULT false,
@@ -29,8 +131,45 @@ CREATE TABLE IF NOT EXISTS word_entries (
     created_at timestamptz DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS word_entries_language_headword_idx
-    ON word_entries(language_code, headword);
+CREATE UNIQUE INDEX IF NOT EXISTS word_entries_language_headword_meaning_idx
+    ON word_entries(language_code, headword, meaning_id);
+
+CREATE INDEX IF NOT EXISTS word_entries_dictionary_idx
+    ON word_entries(dictionary_id);
+
+CREATE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_idx
+    ON word_entries(dictionary_id, language_code, lower(headword));
+
+CREATE UNIQUE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_meaning_idx
+    ON word_entries(dictionary_id, language_code, headword, meaning_id)
+    WHERE dictionary_id IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION assign_word_entry_default_dictionary()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+    IF NEW.dictionary_id IS NULL AND NEW.language_code = 'nl' THEN
+        SELECT id INTO NEW.dictionary_id
+        FROM dictionaries
+        WHERE language_code = 'nl' AND slug = 'nl-vandale';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'trg_word_entries_default_dictionary'
+    ) THEN
+        CREATE TRIGGER trg_word_entries_default_dictionary
+        BEFORE INSERT OR UPDATE OF dictionary_id, language_code ON word_entries
+        FOR EACH ROW EXECUTE FUNCTION assign_word_entry_default_dictionary();
+    END IF;
+END $$;
 
 -- =============================================================================
 -- CURATED WORD LISTS (system-defined lists)
@@ -39,6 +178,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS word_entries_language_headword_idx
 CREATE TABLE IF NOT EXISTS word_lists (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     language_code text NOT NULL REFERENCES languages(code),
+    primary_language_code text REFERENCES languages(code),
     slug text NOT NULL,
     name text NOT NULL,
     description text,
@@ -59,6 +199,10 @@ INSERT INTO word_lists (language_code, slug, name, description, is_primary, sort
 VALUES ('nl', 'nt2-2000', 'VanDale 2k', 'Belangrijkste 2000 woorden voor NT2', true, 20)
 ON CONFLICT (language_code, slug) DO UPDATE
 SET name = 'VanDale 2k', sort_order = 20;
+
+UPDATE word_lists
+SET primary_language_code = COALESCE(primary_language_code, language_code)
+WHERE primary_language_code IS NULL;
 
 CREATE TABLE IF NOT EXISTS word_list_items (
     list_id uuid NOT NULL REFERENCES word_lists(id) ON DELETE CASCADE,

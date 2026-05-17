@@ -126,12 +126,20 @@ CREATE TABLE IF NOT EXISTS user_word_lists (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     language_code text REFERENCES languages(code),
+    primary_language_code text REFERENCES languages(code),
     name text NOT NULL,
     description text,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now(),
     UNIQUE (user_id, name)
 );
+
+ALTER TABLE IF EXISTS public.user_word_lists
+    ADD COLUMN IF NOT EXISTS primary_language_code text REFERENCES languages(code);
+
+UPDATE public.user_word_lists
+SET primary_language_code = COALESCE(primary_language_code, language_code)
+WHERE primary_language_code IS NULL;
 
 CREATE TABLE IF NOT EXISTS user_word_list_items (
     list_id uuid NOT NULL REFERENCES user_word_lists(id) ON DELETE CASCADE,
