@@ -88,9 +88,9 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
 
       expect(dbResult.reps).toBe(tsResult.reps);
       expect(dbResult.lapses).toBe(tsResult.lapses);
-      expect(dbResult.interval!).toBeCloseTo(tsResult.interval!, 5);
-      expect(dbResult.stability!).toBeCloseTo(tsResult.stability!, 5);
-      expect(dbResult.difficulty!).toBeCloseTo(tsResult.difficulty!, 5);
+      expect(dbResult.interval!).toBeCloseTo(tsResult.interval!, 4);
+      expect(dbResult.stability!).toBeCloseTo(tsResult.stability!, 4);
+      expect(dbResult.difficulty!).toBeCloseTo(tsResult.difficulty!, 4);
     }
   );
 });

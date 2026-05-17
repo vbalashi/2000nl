@@ -25,6 +25,7 @@ __pycache__/
 
 packages/ingestion/data/raw/
 packages/ingestion/.env
+import.log
 
 # Large + sensitive dictionary data (keep local / out of git)
 packages/ingestion/nl/
@@ -44,6 +45,10 @@ tmp/
 
 # Local deployment helpers that move machine-specific env files/secrets
 scripts/sync-env-to-*.sh
+
+# Supabase CLI local runtime state
+supabase/.branches/
+supabase/.temp/
 
 # Generated report exports and packaged review artifacts
 reports/generated/*

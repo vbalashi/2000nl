@@ -4,6 +4,9 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Private schema for internal/debug routines that should not be exposed via PostgREST.
+CREATE SCHEMA IF NOT EXISTS private;
+
 -- =============================================================================
 -- LANGUAGES & WORD ENTRIES
 -- =============================================================================

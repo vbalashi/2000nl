@@ -8,6 +8,18 @@ export const getDbUrl = () =>
   process.env.FSRS_TEST_DB_URL || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 
 export async function ensureAuthSchema(pool: Pool) {
+  const { rowCount: hasSupabaseAuth } = await pool.query(`
+    select 1
+    from information_schema.tables
+    where table_schema = 'auth'
+      and table_name = 'users'
+  `);
+
+  if (hasSupabaseAuth && hasSupabaseAuth > 0) {
+    await pool.query(`create schema if not exists private;`);
+    return;
+  }
+
   await pool.query(`
     -- Create Supabase-compatible roles
     do $$ begin

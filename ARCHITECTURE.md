@@ -47,7 +47,7 @@ Reserved service boundary, but currently not the primary runtime. Do not assume 
 ## Safe Change Patterns
 
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
-- FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; avoid production DBs for migration-driven tests.
+- FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.
 - Ingestion/scraper changes: preserve artifact/schema contracts and document any new operational steps.
 

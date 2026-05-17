@@ -27,6 +27,19 @@ For a new database, run the bootstrap script:
 PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
 ```
 
+## Local Supabase Test Environment
+
+For migration validation, prefer the local Supabase Docker stack over plain Postgres:
+
+```bash
+scripts/db-local-supabase.sh start
+scripts/db-local-supabase.sh apply
+scripts/db-local-supabase.sh probe
+scripts/db-local-supabase.sh test-fsrs
+```
+
+See [docs/runbooks/local-supabase-test-env.md](../docs/runbooks/local-supabase-test-env.md) for install steps, dictionary import, reset, and staging handoff.
+
 ## Adding New Features
 
 When adding new features:
