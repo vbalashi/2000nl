@@ -27,20 +27,30 @@ def iter_entries(data_dir: Path) -> Iterable[Tuple[Path, dict]]:
         yield path, entry
 
 
-def collect_forms(data_dir: Path) -> Dict[str, List[str]]:
+def collect_forms(data_dir: Path) -> Dict[Tuple[str, int], List[str]]:
     """
-    Returns a mapping: headword -> list of forms (normalized, lowercase).
+    Returns a mapping: (headword, meaning_id) -> list of forms (normalized, lowercase).
     """
-    output: Dict[str, List[str]] = {}
+    output: Dict[Tuple[str, int], List[str]] = {}
 
     for path, entry in iter_entries(data_dir):
         headword = entry.get("headword")
         if not headword:
             logging.warning("Skipping %s: missing headword", path.name)
             continue
+        meaning_id = entry.get("meaning_id") or 1
+        try:
+            meaning_id = int(meaning_id)
+        except (TypeError, ValueError):
+            logging.warning(
+                "Skipping %s: invalid meaning_id %r",
+                path.name,
+                entry.get("meaning_id"),
+            )
+            continue
 
         forms = extract_word_forms(entry)
-        output[headword] = sorted(forms)
+        output[(headword, meaning_id)] = sorted(forms)
 
     return output
 
@@ -49,18 +59,22 @@ def insert_forms(
     connection,
     language_code: str,
     dictionary_id: str,
-    headword_to_id: Dict[str, str],
-    forms_by_headword: Dict[str, List[str]],
+    entry_key_to_id: Dict[Tuple[str, int], str],
+    forms_by_entry_key: Dict[Tuple[str, int], List[str]],
 ) -> Tuple[int, int]:
     inserted = 0
     skipped = 0
 
     records = []
-    for headword, forms in forms_by_headword.items():
-        word_id = headword_to_id.get(headword)
+    for (headword, meaning_id), forms in forms_by_entry_key.items():
+        word_id = entry_key_to_id.get((headword, meaning_id))
         if not word_id:
             skipped += 1
-            logging.warning("No database row found for headword '%s'; skipping its forms.", headword)
+            logging.warning(
+                "No database row found for headword '%s' meaning #%s; skipping its forms.",
+                headword,
+                meaning_id,
+            )
             continue
         for form in forms:
             records.append((language_code, dictionary_id, form, word_id, headword))
@@ -136,8 +150,8 @@ def main() -> None:
         parser.error(f"{data_dir} does not exist")
 
     logging.info("Collecting forms from %s ...", data_dir)
-    forms_by_headword = collect_forms(data_dir)
-    logging.info("Found %d headwords with forms.", len(forms_by_headword))
+    forms_by_entry_key = collect_forms(data_dir)
+    logging.info("Found %d entry meanings with forms.", len(forms_by_entry_key))
 
     logging.info("Connecting to database ...")
     connection = psycopg2.connect(args.database_url)
@@ -154,17 +168,12 @@ def main() -> None:
                 args.dictionary_schema_version,
             )
             existing = load_existing_entries(cursor, args.language, dictionary_id)
-            # load_existing_entries now keys by (headword, meaning_id); use the first id per headword
-            headword_to_id: Dict[str, str] = {}
-            for (headword, _meaning_id), word_id in existing.items():
-                if headword not in headword_to_id:
-                    headword_to_id[headword] = word_id
         inserted, skipped = insert_forms(
             connection,
             args.language,
             dictionary_id,
-            headword_to_id,
-            forms_by_headword,
+            existing,
+            forms_by_entry_key,
         )
 
     logging.info("Inserted %d word-form rows (%d headwords missing in DB).", inserted, skipped)
