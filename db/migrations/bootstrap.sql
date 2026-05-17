@@ -45,3 +45,6 @@
 
 -- Dictionary metadata for word form lookups/imports
 \i db/migrations/012_scope_word_forms_by_dictionary.sql
+
+-- Enforce dictionary read access in gated word entry RPCs
+\i db/migrations/013_filter_gated_word_reads_by_dictionary.sql

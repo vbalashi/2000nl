@@ -23,6 +23,8 @@ db/migrations/
 │                              # explicit RPC for training view tracking
 ├── 012_scope_word_forms_by_dictionary.sql
 │                              # dictionary metadata for word form lookup rows
+├── 013_filter_gated_word_reads_by_dictionary.sql
+│                              # dictionary read checks in gated word RPCs
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
