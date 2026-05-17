@@ -58,3 +58,27 @@ export type DictionaryMeta = {
   source?: string;
   version?: string;
 };
+
+export type {
+  CardRef,
+  CardTypeId as PlatformCardTypeId,
+  DictionaryEntryEnvelope,
+  DictionaryEntryRef,
+  DictionaryKind,
+  DictionaryLookupRequest,
+  DictionaryLookupResult,
+  DictionaryMeaningContent,
+  DictionarySchemaFeature,
+  DictionarySchemaSummary,
+  DictionarySummary,
+  DictionaryVisibility,
+  LookupActionId,
+  LookupIntent,
+  UserCardSchedulingState,
+  UserCardState,
+  UserCardStateRef,
+  UserCardTelemetry,
+  WordListEntryRef,
+  WordListKind,
+  WordListSummaryV2,
+} from "./platform";
