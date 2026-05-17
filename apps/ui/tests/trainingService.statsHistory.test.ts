@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-type QueryResponse = { data?: any; error?: any };
+type QueryResponse = { data?: any; error?: any; count?: number };
 
 type QueryRecord = {
   table: string;
@@ -143,6 +143,8 @@ describe("trainingService stats and history", () => {
           created_at: "2026-05-16T10:00:00.000Z",
           word: {
             id: "word-1",
+            dictionary_id: "dict-1",
+            language_code: "nl",
             headword: "huis",
             part_of_speech: "zn",
             gender: "het",
@@ -158,6 +160,8 @@ describe("trainingService stats and history", () => {
           created_at: "2026-05-16T11:00:00.000Z",
           word: {
             id: "word-2",
+            dictionary_id: "dict-1",
+            language_code: "nl",
             headword: "lopen",
             part_of_speech: "ww",
             gender: null,
@@ -183,14 +187,8 @@ describe("trainingService stats and history", () => {
       ],
       error: null,
     });
-    queueFrom("word_entries", {
-      data: [
-        { headword: "huis" },
-        { headword: "huis" },
-        { headword: "lopen" },
-      ],
-      error: null,
-    });
+    queueFrom("word_entries", { count: 2, error: null });
+    queueFrom("word_entries", { count: 1, error: null });
 
     const history = await fetchRecentHistory("user-1");
 
@@ -202,11 +200,16 @@ describe("trainingService stats and history", () => {
     );
     expect(queries[0].limit).toHaveBeenCalledWith(50);
     expect(queries[1].in).toHaveBeenCalledWith("word_id", ["word-1", "word-2"]);
-    expect(queries[2].in).toHaveBeenCalledWith("headword", ["huis", "lopen"]);
+    expect(queries[2].eq).toHaveBeenCalledWith("headword", "huis");
+    expect(queries[2].eq).toHaveBeenCalledWith("dictionary_id", "dict-1");
+    expect(queries[3].eq).toHaveBeenCalledWith("headword", "lopen");
+    expect(queries[3].eq).toHaveBeenCalledWith("dictionary_id", "dict-1");
 
     expect(history).toEqual([
       {
         id: "word-1",
+        dictionary_id: "dict-1",
+        language_code: "nl",
         headword: "huis",
         part_of_speech: "zn",
         gender: "het",
@@ -231,6 +234,8 @@ describe("trainingService stats and history", () => {
       },
       {
         id: "word-2",
+        dictionary_id: "dict-1",
+        language_code: "nl",
         headword: "lopen",
         part_of_speech: "ww",
         gender: undefined,

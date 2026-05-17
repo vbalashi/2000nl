@@ -50,6 +50,8 @@ export type DebugStats = {
 
 export type TrainingWord = {
   id: string;
+  dictionary_id?: string | null;
+  language_code?: string;
   headword: string;
   part_of_speech?: string;
   gender?: string;
@@ -65,6 +67,8 @@ export type TrainingWord = {
 
 export type DictionaryEntry = {
   id: string;
+  dictionary_id?: string | null;
+  language_code?: string;
   headword: string;
   part_of_speech?: string;
   gender?: string;

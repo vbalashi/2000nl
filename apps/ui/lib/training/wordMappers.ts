@@ -32,6 +32,8 @@ export const isCrossReferenceOnly = (raw: WordRaw): boolean => {
 
 export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   id: data.id,
+  ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
+  ...(data.language_code ? { language_code: data.language_code } : {}),
   headword: data.headword,
   part_of_speech: data.part_of_speech ?? undefined,
   gender: data.gender ?? undefined,

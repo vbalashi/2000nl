@@ -38,6 +38,8 @@ const mapSelectionItem = (
 
   return {
     id: item.id,
+    ...(item.dictionary_id ? { dictionary_id: item.dictionary_id } : {}),
+    ...(item.language_code ? { language_code: item.language_code } : {}),
     headword: item.headword,
     part_of_speech: item.part_of_speech ?? undefined,
     gender: item.gender ?? undefined,
@@ -60,6 +62,8 @@ const mapFallbackItem = (
   mode: TrainingMode,
 ): TrainingWord => ({
   id: item.id,
+  ...(item.dictionary_id ? { dictionary_id: item.dictionary_id } : {}),
+  ...(item.language_code ? { language_code: item.language_code } : {}),
   headword: item.headword,
   part_of_speech: item.part_of_speech ?? undefined,
   gender: item.gender ?? undefined,

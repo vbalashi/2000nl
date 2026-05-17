@@ -8,7 +8,7 @@ const fetchDictionaryEntryById = async (
 ): Promise<DictionaryEntry | null> => {
   const { data, error } = await supabase
     .from("word_entries")
-    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000")
+    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
     .eq("id", id)
     .limit(1)
     .maybeSingle();
@@ -26,7 +26,7 @@ export const fetchTrainingWordById = async (
 ): Promise<TrainingWord | null> => {
   const { data, error } = await supabase
     .from("word_entries")
-    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000")
+    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
     .eq("id", id)
     .limit(1)
     .maybeSingle();
@@ -40,6 +40,8 @@ export const fetchTrainingWordById = async (
 
   return {
     id: data.id,
+    ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
+    ...(data.language_code ? { language_code: data.language_code } : {}),
     headword: data.headword,
     part_of_speech: data.part_of_speech ?? undefined,
     gender: data.gender ?? undefined,
@@ -64,7 +66,7 @@ export const fetchTrainingWordByLookup = async (
 
   const { data, error } = await supabase
     .from("word_entries")
-    .select("id, headword, part_of_speech, gender, raw, is_nt2_2000")
+    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
     .ilike("headword", normalized)
     .limit(1)
     .maybeSingle();
@@ -78,6 +80,8 @@ export const fetchTrainingWordByLookup = async (
 
   return {
     id: data.id,
+    ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
+    ...(data.language_code ? { language_code: data.language_code } : {}),
     headword: data.headword,
     part_of_speech: data.part_of_speech ?? undefined,
     gender: data.gender ?? undefined,
@@ -102,7 +106,7 @@ export const fetchDictionaryEntry = async (
   const tryFetchByHeadword = async (value: string) => {
     const { data, error } = await supabase
       .from("word_entries")
-      .select("id, headword, part_of_speech, gender, raw, is_nt2_2000")
+      .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
       .eq("headword", value)
       .limit(1)
       .maybeSingle();
@@ -112,10 +116,16 @@ export const fetchDictionaryEntry = async (
     }
 
     // Get count of siblings
-    const { count } = await supabase
+    let countQuery = supabase
       .from("word_entries")
       .select("id", { count: "exact", head: true })
       .eq("headword", value);
+    if (data.dictionary_id) {
+      countQuery = countQuery.eq("dictionary_id", data.dictionary_id);
+    } else if (data.language_code) {
+      countQuery = countQuery.eq("language_code", data.language_code);
+    }
+    const { count } = await countQuery;
 
     return { ...mapDictionaryEntry(data), meanings_count: count ?? 1 };
   };

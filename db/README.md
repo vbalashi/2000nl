@@ -17,6 +17,8 @@ db/migrations/
 ├── 008_dictionary_boundary.sql # dictionary registry and Stage 0/1A compatibility boundary
 ├── 009_drop_legacy_word_entry_uniqueness.sql
 │                              # dictionary-scoped entry identity
+├── 010_scope_meanings_count_by_dictionary.sql
+│                              # dictionary-scoped training read metadata
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

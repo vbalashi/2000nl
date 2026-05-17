@@ -36,3 +36,6 @@
 
 -- Dictionary-scoped identity: allow duplicate headwords/meanings across dictionaries
 \i db/migrations/009_drop_legacy_word_entry_uniqueness.sql
+
+-- Dictionary-scoped read metadata for training payloads
+\i db/migrations/010_scope_meanings_count_by_dictionary.sql

@@ -80,7 +80,7 @@ export const fetchRecentHistory = async (
   const { data, error } = await supabase
     .from("user_events")
     .select(
-      "word_id, event_type, mode, created_at, word:word_entries (id, headword, part_of_speech, gender, raw, is_nt2_2000, meaning_id)",
+      "word_id, event_type, mode, created_at, word:word_entries (id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000, meaning_id)",
     )
     .eq("user_id", userId)
     .gte("created_at", since)
@@ -99,6 +99,8 @@ export const fetchRecentHistory = async (
     created_at: string;
     word: {
       id: string;
+      dictionary_id?: string | null;
+      language_code?: string | null;
       headword: string;
       part_of_speech: string | null;
       gender: string | null;
@@ -131,16 +133,20 @@ export const fetchRecentHistory = async (
     }
   >();
 
-  // Collect unique headwords to fetch meanings_count
-  const headwords = Array.from(
+  // Collect unique dictionary-scoped headwords to fetch meanings_count
+  const countScopes = Array.from(
     new Set(
       rows
-        .map((row) => row.word?.headword)
-        .filter((h): h is string => Boolean(h)),
+        .map((row) => {
+          const word = row.word;
+          if (!word?.headword) return null;
+          return `${word.dictionary_id ?? ""}:${word.language_code ?? ""}:${word.headword}`;
+        })
+        .filter((scope): scope is string => Boolean(scope)),
     ),
   );
 
-  // Map of headword -> meanings_count
+  // Map of "dictionary_id:language_code:headword" -> meanings_count
   const meaningsCountMap = new Map<string, number>();
 
   if (wordIds.length > 0) {
@@ -166,22 +172,20 @@ export const fetchRecentHistory = async (
       });
     }
 
-    // Fetch meanings_count for each headword
-    if (headwords.length > 0) {
-      const { data: countData } = await supabase
+    // Fetch meanings_count inside each entry's dictionary/language scope.
+    for (const scope of countScopes) {
+      const [dictionaryId, languageCode, headword] = scope.split(":");
+      let countQuery = supabase
         .from("word_entries")
-        .select("headword")
-        .in("headword", headwords);
-
-      if (countData) {
-        // Count occurrences of each headword
-        countData.forEach((row) => {
-          meaningsCountMap.set(
-            row.headword,
-            (meaningsCountMap.get(row.headword) ?? 0) + 1,
-          );
-        });
+        .select("id", { count: "exact", head: true })
+        .eq("headword", headword);
+      if (dictionaryId) {
+        countQuery = countQuery.eq("dictionary_id", dictionaryId);
+      } else if (languageCode) {
+        countQuery = countQuery.eq("language_code", languageCode);
       }
+      const { count } = await countQuery;
+      meaningsCountMap.set(scope, count ?? 1);
     }
   }
 
@@ -205,12 +209,17 @@ export const fetchRecentHistory = async (
       }
       return {
         id: word.id,
+        ...(word.dictionary_id ? { dictionary_id: word.dictionary_id } : {}),
+        ...(word.language_code ? { language_code: word.language_code } : {}),
         headword: word.headword,
         part_of_speech: word.part_of_speech ?? undefined,
         gender: word.gender ?? undefined,
         raw: normalizedRaw,
         is_nt2_2000: word.is_nt2_2000,
-        meanings_count: meaningsCountMap.get(word.headword) ?? 1,
+        meanings_count:
+          meaningsCountMap.get(
+            `${word.dictionary_id ?? ""}:${word.language_code ?? ""}:${word.headword}`,
+          ) ?? 1,
         source: source as "click" | "review",
         result: mapEventTypeToResult(row.event_type),
         stats: status
