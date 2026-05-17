@@ -150,9 +150,11 @@ export type LookupIntent =
   | "external-click";
 
 export type LookupActionId =
+  | "record-view"
   | "add-to-list"
   | "create-user-entry-copy"
   | "mark-unknown"
+  | "review-card"
   | "start-learning";
 
 export type DictionaryLookupRequest = {
@@ -170,4 +172,49 @@ export type DictionaryLookupResult = {
   listMemberships?: WordListSummaryV2[];
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   availableActions?: LookupActionId[];
+};
+
+export type PlatformLookupApiRequest = {
+  query: string;
+  includeUserState?: boolean;
+};
+
+export type PlatformLookupApiResponse = {
+  query: string;
+  items: DictionaryLookupResult[];
+};
+
+export type PlatformActionRequest =
+  | {
+      action: "record-view" | "start-learning";
+      entryId: string;
+      cardTypeId: CardTypeId;
+    }
+  | {
+      action: "review-card";
+      entryId: string;
+      cardTypeId: CardTypeId;
+      result: "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
+      turnId?: string | null;
+    }
+  | {
+      action: "mark-unknown";
+      entryId: string;
+      cardTypeId: CardTypeId;
+      turnId?: string | null;
+    }
+  | {
+      action: "add-to-list";
+      entryId: string;
+      listId: string;
+    };
+
+export type PlatformActionResponse = {
+  ok: true;
+  action: PlatformActionRequest["action"];
+  entryId: string;
+  cardTypeId?: CardTypeId;
+  result?: "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
+  turnId?: string | null;
+  listId?: string;
 };

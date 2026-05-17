@@ -57,3 +57,77 @@ fetch_dictionary_entry_gated(
 ```
 
 The RPC tries exact headword, lowercase headword, then `word_forms`. It returns entry metadata, `meanings_count`, and lightweight user status if present. It does not write FSRS state, list membership, or review logs.
+
+## HTTP `POST /api/platform/lookup`
+
+Read-only lookup endpoint for external clients and first-party integrations.
+
+Authentication:
+- Requires `Authorization: Bearer <supabase-access-token>`.
+- Uses the anon key plus the caller's JWT, so Supabase RLS/RPC auth context remains the caller.
+
+Request:
+
+```json
+{
+  "query": "huis",
+  "includeUserState": true
+}
+```
+
+Response:
+
+```json
+{
+  "query": "huis",
+  "items": [
+    {
+      "entry": {},
+      "dictionary": {},
+      "userStateByCardType": {},
+      "availableActions": [
+        "record-view",
+        "start-learning",
+        "mark-unknown",
+        "review-card",
+        "add-to-list"
+      ]
+    }
+  ]
+}
+```
+
+This endpoint is read-only. Use `/api/platform/actions` for mutations.
+
+## HTTP `POST /api/platform/actions`
+
+Explicit mutation endpoint. Plain lookup must not call this endpoint implicitly.
+
+Authentication is the same Bearer-token flow as `/api/platform/lookup`.
+
+Supported actions:
+- `record-view` – calls `record_word_view`.
+- `start-learning` – currently records an explicit view/start marker via `record_word_view`.
+- `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
+- `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
+- `add-to-list` – inserts the entry into an owned user list.
+
+Examples:
+
+```json
+{
+  "action": "review-card",
+  "entryId": "entry-uuid",
+  "cardTypeId": "word-to-definition",
+  "result": "success",
+  "turnId": "review-turn-uuid"
+}
+```
+
+```json
+{
+  "action": "add-to-list",
+  "entryId": "entry-uuid",
+  "listId": "list-uuid"
+}
+```
