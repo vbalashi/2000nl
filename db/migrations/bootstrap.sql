@@ -54,3 +54,6 @@
 
 -- Read-only dictionary lookup behind dictionary access checks
 \i db/migrations/015_gated_dictionary_lookup.sql
+
+-- Enforce dictionary read access in training scheduler selection
+\i db/migrations/016_scope_scheduler_by_dictionary_access.sql

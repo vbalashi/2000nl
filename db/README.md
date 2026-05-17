@@ -29,6 +29,8 @@ db/migrations/
 │                              # entry+mode session exclusion for training cards
 ├── 015_gated_dictionary_lookup.sql
 │                              # read-only dictionary lookup with access checks
+├── 016_scope_scheduler_by_dictionary_access.sql
+│                              # dictionary read checks in training scheduler
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

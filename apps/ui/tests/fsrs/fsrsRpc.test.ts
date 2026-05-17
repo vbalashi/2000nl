@@ -192,6 +192,56 @@ describeIfDb("FSRS RPC integration", () => {
       expect(rows[0]?.item?.mode).toBe(reverseMode);
     }, userId);
   });
+
+  test("get_next_word skips dictionaries the user cannot read", async () => {
+    const userId = randomUUID();
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 0,
+        daily_review_limit: 10,
+      });
+      await ensureUserWithSettings(client, ownerId);
+
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+          language_code, slug, name, kind, visibility, owner_user_id,
+          schema_key, schema_version
+        )
+        values ('nl', $1, 'Private test dictionary', 'user', 'private', $2, 'nl-vandale-v1', 1)
+        returning id`,
+        [`private-${Date.now()}`, ownerId],
+      );
+      const privateDictionaryId = dictionaryRows[0].id;
+
+      const publicWordId = await insertWord(client, `fsrs-public-${Date.now()}`);
+      const { rows: privateRows } = await client.query(
+        `insert into word_entries (
+          dictionary_id, language_code, headword, part_of_speech, gender,
+          is_nt2_2000, raw, meaning_id
+        )
+        values ($1, 'nl', $2, 'noun', 'n', true, '{}'::jsonb, 1)
+        returning id`,
+        [privateDictionaryId, `fsrs-private-${Date.now()}`],
+      );
+      const privateWordId = privateRows[0].id;
+
+      await client.query(
+        `insert into user_word_status (
+          user_id, word_id, mode,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
+        ) values
+          ($1, $2, $4, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '2 days', now() - interval '2 days'),
+          ($1, $3, $4, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
+        [userId, privateWordId, publicWordId, mode],
+      );
+
+      const next = await callGetNextWord(client, userId, mode);
+      expect(next?.id).toBe(publicWordId);
+      expect(next?.id).not.toBe(privateWordId);
+    }, userId);
+  });
 });
 
 if (!hasDb) {
