@@ -64,6 +64,32 @@ def main() -> None:
         default="Core 2000 woorden voor NT2",
         help="Description stored with the NT2 word list.",
     )
+    parser.add_argument(
+        "--dictionary-slug",
+        default="nl-vandale",
+        help="Slug of the dictionary that owns imported entries.",
+    )
+    parser.add_argument(
+        "--dictionary-name",
+        default="VanDale Dutch",
+        help="Name of the dictionary that owns imported entries.",
+    )
+    parser.add_argument(
+        "--dictionary-description",
+        default="Trusted Dutch VanDale-backed dictionary used by the current 2000nl training app.",
+        help="Description of the dictionary that owns imported entries.",
+    )
+    parser.add_argument(
+        "--dictionary-schema-key",
+        default="nl-vandale-v1",
+        help="Dictionary schema key registered in dictionary_schemas.",
+    )
+    parser.add_argument(
+        "--dictionary-schema-version",
+        type=int,
+        default=1,
+        help="Dictionary schema version registered in dictionary_schemas.",
+    )
 
     args = parser.parse_args()
 
@@ -86,6 +112,11 @@ def main() -> None:
         nt2_slug=args.list_slug,
         nt2_name=args.list_name,
         nt2_description=args.list_description,
+        dictionary_slug=args.dictionary_slug,
+        dictionary_name=args.dictionary_name,
+        dictionary_description=args.dictionary_description,
+        dictionary_schema_key=args.dictionary_schema_key,
+        dictionary_schema_version=args.dictionary_schema_version,
     )
 
     logging.info(

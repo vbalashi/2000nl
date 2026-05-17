@@ -11,6 +11,7 @@ import psycopg2
 import psycopg2.extras
 
 from importer.db import (
+    ensure_dictionary,
     ensure_language,
     ensure_word_list,
     load_existing_entries,
@@ -40,6 +41,11 @@ def import_entries(
     nt2_slug: str = "nt2-2000",
     nt2_name: str = "VanDale 2k",
     nt2_description: Optional[str] = "Core 2000 woorden voor NT2",
+    dictionary_slug: str = "nl-vandale",
+    dictionary_name: str = "VanDale Dutch",
+    dictionary_description: Optional[str] = "Trusted Dutch VanDale-backed dictionary used by the current 2000nl training app.",
+    dictionary_schema_key: str = "nl-vandale-v1",
+    dictionary_schema_version: int = 1,
 ) -> ImportStats:
     path = Path(data_dir)
     if not path.exists():
@@ -74,6 +80,15 @@ def import_entries(
     with connection as conn:
         with conn.cursor() as cursor:
             ensure_language(cursor, language_code, language_name)
+            dictionary_id = ensure_dictionary(
+                cursor,
+                language_code,
+                dictionary_slug,
+                dictionary_name,
+                dictionary_description,
+                dictionary_schema_key,
+                dictionary_schema_version,
+            )
             list_id = ensure_word_list(
                 cursor,
                 language_code,
@@ -82,7 +97,7 @@ def import_entries(
                 nt2_description,
                 True,
             )
-            existing_entries = load_existing_entries(cursor, language_code)
+            existing_entries = load_existing_entries(cursor, language_code, dictionary_id)
             existing_list_items, max_rank = load_list_state(cursor, list_id)
             next_rank = max_rank + 1
             start_time = time.time()
@@ -100,6 +115,7 @@ def import_entries(
                 entries = list(batch_map.values())
                 values = [
                     (
+                        dictionary_id,
                         language_code,
                         entry.headword,
                         entry.meaning_id,
@@ -124,11 +140,13 @@ def import_entries(
                     cursor,
                     """
                     insert into word_entries (
-                        language_code, headword, meaning_id, part_of_speech, gender,
+                        dictionary_id, language_code, headword, meaning_id, part_of_speech, gender,
                         is_nt2_2000, vandale_id, raw
                     )
                     values %s
-                    on conflict (language_code, headword, meaning_id) do update
+                    on conflict (dictionary_id, language_code, headword, meaning_id)
+                    where dictionary_id is not null
+                    do update
                         set part_of_speech = excluded.part_of_speech,
                             gender = excluded.gender,
                             is_nt2_2000 = excluded.is_nt2_2000,
@@ -137,7 +155,7 @@ def import_entries(
                     returning id, headword, meaning_id
                     """,
                     values,
-                    template="(%s,%s,%s,%s,%s,%s,%s,%s)",
+                    template="(%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     page_size=batch_size,
                 )
                 returned = cursor.fetchall()

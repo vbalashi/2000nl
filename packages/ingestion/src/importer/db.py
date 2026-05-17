@@ -30,23 +30,60 @@ def ensure_word_list(
 ) -> str:
     cursor.execute(
         """
-        insert into word_lists (language_code, slug, name, description, is_primary)
-        values (%s, %s, %s, %s, %s)
+        insert into word_lists (language_code, primary_language_code, slug, name, description, is_primary)
+        values (%s, %s, %s, %s, %s, %s)
         on conflict (language_code, slug) do update
         set name = excluded.name,
             description = coalesce(excluded.description, word_lists.description),
-            is_primary = word_lists.is_primary or excluded.is_primary
+            is_primary = word_lists.is_primary or excluded.is_primary,
+            primary_language_code = coalesce(word_lists.primary_language_code, excluded.primary_language_code)
         returning id
         """,
-        (language_code, slug, name, description, is_primary),
+        (language_code, language_code, slug, name, description, is_primary),
     )
     return cursor.fetchone()[0]
 
 
-def load_existing_entries(cursor: Cursor, language_code: str) -> Dict[tuple[str, int], str]:
+def ensure_dictionary(
+    cursor: Cursor,
+    language_code: str,
+    slug: str,
+    name: str,
+    description: Optional[str],
+    schema_key: str,
+    schema_version: int,
+) -> str:
     cursor.execute(
-        "select id, headword, meaning_id from word_entries where language_code = %s",
-        (language_code,),
+        """
+        insert into dictionaries (
+            language_code, slug, name, description, kind, visibility, is_editable,
+            minimum_subscription_tier, schema_key, schema_version, source_provider
+        )
+        values (%s, %s, %s, %s, 'curated', 'system', false, 'free', %s, %s, 'vandale')
+        on conflict (language_code, slug) do update
+        set name = excluded.name,
+            description = coalesce(excluded.description, dictionaries.description),
+            schema_key = excluded.schema_key,
+            schema_version = excluded.schema_version,
+            updated_at = now()
+        returning id
+        """,
+        (language_code, slug, name, description, schema_key, schema_version),
+    )
+    return cursor.fetchone()[0]
+
+
+def load_existing_entries(
+    cursor: Cursor, language_code: str, dictionary_id: str
+) -> Dict[tuple[str, int], str]:
+    cursor.execute(
+        """
+        select id, headword, meaning_id
+        from word_entries
+        where language_code = %s
+          and dictionary_id = %s
+        """,
+        (language_code, dictionary_id),
     )
     return {(row[1], int(row[2])): row[0] for row in cursor.fetchall()}
 
@@ -69,6 +106,7 @@ def load_list_state(
 def upsert_word_entry(
     cursor: Cursor,
     language_code: str,
+    dictionary_id: str,
     entry: ParsedEntry,
     cache: Dict[tuple[str, int], str],
 ) -> Tuple[str, bool]:
@@ -86,7 +124,8 @@ def upsert_word_entry(
                 is_nt2_2000 = %s,
                 vandale_id = %s,
                 raw = %s,
-                meaning_id = %s
+                meaning_id = %s,
+                dictionary_id = %s
             where id = %s
             """,
             (
@@ -96,6 +135,7 @@ def upsert_word_entry(
                 entry.vandale_id,
                 psycopg2.extras.Json(entry.raw),
                 entry.meaning_id,
+                dictionary_id,
                 word_id,
             ),
         )
@@ -104,13 +144,14 @@ def upsert_word_entry(
     cursor.execute(
         """
         insert into word_entries (
-            language_code, headword, meaning_id, part_of_speech, gender,
+            dictionary_id, language_code, headword, meaning_id, part_of_speech, gender,
             is_nt2_2000, vandale_id, raw
         )
-        values (%s, %s, %s, %s, %s, %s, %s, %s)
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         returning id
         """,
         (
+            dictionary_id,
             language_code,
             entry.headword,
             entry.meaning_id,
