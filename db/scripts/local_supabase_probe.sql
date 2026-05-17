@@ -136,6 +136,14 @@ begin
   ) then
     raise exception 'user_word_lists.primary_language_code was not backfilled';
   end if;
+
+  if exists (
+    select 1
+    from public.word_forms
+    where dictionary_id is null
+  ) then
+    raise exception 'word_forms without dictionary_id remain after backfill/import';
+  end if;
 end $$;
 
 select 'supabase_contracts' as check_name, 'ok' as value;
@@ -160,3 +168,7 @@ select 'word_entries_without_dictionary' as check_name, count(*)::text as value
 from public.word_entries
 where dictionary_id is null;
 select 'word_lists' as check_name, count(*)::text as value from public.word_lists;
+select 'word_forms' as check_name, count(*)::text as value from public.word_forms;
+select 'word_forms_without_dictionary' as check_name, count(*)::text as value
+from public.word_forms
+where dictionary_id is null;

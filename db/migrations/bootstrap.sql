@@ -42,3 +42,6 @@
 
 -- Explicit RPC for training view tracking
 \i db/migrations/011_record_word_view_rpc.sql
+
+-- Dictionary metadata for word form lookups/imports
+\i db/migrations/012_scope_word_forms_by_dictionary.sql

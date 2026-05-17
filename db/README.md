@@ -21,6 +21,8 @@ db/migrations/
 │                              # dictionary-scoped training read metadata
 ├── 011_record_word_view_rpc.sql
 │                              # explicit RPC for training view tracking
+├── 012_scope_word_forms_by_dictionary.sql
+│                              # dictionary metadata for word form lookup rows
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -188,7 +190,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 - `dictionaries` / `dictionary_entitlements` - Dictionary metadata and access grants
 - `word_entries` - Dictionary entries with raw JSON data
 - `word_lists` / `word_list_items` - Curated word lists (VanDale, VanDale 2k)
-- `word_forms` - Inflections and conjugations
+- `word_forms` - Inflections and conjugations, scoped to dictionary entries
 
 ### FSRS State
 

@@ -217,6 +217,7 @@ CREATE TABLE IF NOT EXISTS word_list_items (
 
 CREATE TABLE IF NOT EXISTS word_forms (
     language_code text NOT NULL REFERENCES languages(code),
+    dictionary_id uuid REFERENCES dictionaries(id),
     form text NOT NULL,
     word_id uuid NOT NULL REFERENCES word_entries(id) ON DELETE CASCADE,
     headword text NOT NULL,
@@ -229,6 +230,9 @@ CREATE INDEX IF NOT EXISTS word_forms_form_idx
 
 CREATE INDEX IF NOT EXISTS word_forms_language_form_idx
     ON word_forms(language_code, form);
+
+CREATE INDEX IF NOT EXISTS word_forms_dictionary_form_idx
+    ON word_forms(dictionary_id, language_code, form);
 
 -- =============================================================================
 -- USER WORD STATUS (FSRS state per user/word/mode)

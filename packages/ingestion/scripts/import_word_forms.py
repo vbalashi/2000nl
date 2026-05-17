@@ -48,6 +48,7 @@ def collect_forms(data_dir: Path) -> Dict[str, List[str]]:
 def insert_forms(
     connection,
     language_code: str,
+    dictionary_id: str,
     headword_to_id: Dict[str, str],
     forms_by_headword: Dict[str, List[str]],
 ) -> Tuple[int, int]:
@@ -62,15 +63,18 @@ def insert_forms(
             logging.warning("No database row found for headword '%s'; skipping its forms.", headword)
             continue
         for form in forms:
-            records.append((language_code, form, word_id, headword))
+            records.append((language_code, dictionary_id, form, word_id, headword))
 
     with connection.cursor() as cursor:
-        cursor.execute("delete from word_forms where language_code = %s", (language_code,))
+        cursor.execute(
+            "delete from word_forms where language_code = %s and dictionary_id = %s",
+            (language_code, dictionary_id),
+        )
         if records:
             psycopg2.extras.execute_values(
                 cursor,
                 """
-                insert into word_forms (language_code, form, word_id, headword)
+                insert into word_forms (language_code, dictionary_id, form, word_id, headword)
                 values %s
                 on conflict (language_code, form, word_id) do nothing
                 """,
@@ -155,11 +159,16 @@ def main() -> None:
             for (headword, _meaning_id), word_id in existing.items():
                 if headword not in headword_to_id:
                     headword_to_id[headword] = word_id
-        inserted, skipped = insert_forms(connection, args.language, headword_to_id, forms_by_headword)
+        inserted, skipped = insert_forms(
+            connection,
+            args.language,
+            dictionary_id,
+            headword_to_id,
+            forms_by_headword,
+        )
 
     logging.info("Inserted %d word-form rows (%d headwords missing in DB).", inserted, skipped)
 
 
 if __name__ == "__main__":
     main()
-
