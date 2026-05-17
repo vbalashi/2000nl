@@ -1,12 +1,13 @@
 from pathlib import Path
 import sys
 
-ROOT = Path(__file__).resolve().parents[2]  # packages/ingestion
-sys.path.append(str(ROOT / "src"))
+INGESTION_ROOT = Path(__file__).resolve().parents[2]  # packages/ingestion
+REPO_ROOT = INGESTION_ROOT.parents[1]
+sys.path.append(str(INGESTION_ROOT / "src"))
 
 from importer.dictionary_entry_parser import parse_dictionary_file  # noqa: E402
 
-DATA_ROOT = ROOT / "data" / "words_content"
+DATA_ROOT = REPO_ROOT / "db" / "data" / "words_content"
 
 
 def test_parses_nt2_verb_entry():

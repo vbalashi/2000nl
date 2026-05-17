@@ -4,6 +4,22 @@
   "title": "Dutch Dictionary Note",
   "type": "object",
   "required": ["headword", "meanings"],
+  "oneOf": [
+    {
+      "description": "Training/content entry with at least one meaning.",
+      "properties": {
+        "meanings": {"minItems": 1}
+      }
+    },
+    {
+      "description": "Cross-reference-only entry with no local meanings.",
+      "required": ["cross_reference"],
+      "properties": {
+        "cross_reference": {"type": "string", "minLength": 1},
+        "meanings": {"maxItems": 0}
+      }
+    }
+  ],
   "properties": {
     "headword": {"type": "string"},
     "pronunciation": {"type": "string"},
@@ -37,7 +53,6 @@
     "is_nt2_2000": {"type": "boolean", "default": false},
     "meanings": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "type": "object",
         "required": ["definition"],
