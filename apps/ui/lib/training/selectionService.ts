@@ -32,9 +32,7 @@ const mapSelectionItem = (
 ): TrainingWord => {
   const stats = item.stats || {};
   const isFirstEncounter = stats.source === "new";
-  const resolvedMode = isFirstEncounter
-    ? "word-to-definition"
-    : item.mode || stats.mode;
+  const resolvedMode = item.mode || stats.mode || "word-to-definition";
 
   return {
     id: item.id,

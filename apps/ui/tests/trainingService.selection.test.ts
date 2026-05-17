@@ -104,7 +104,7 @@ describe("trainingService next-word selection", () => {
     );
   });
 
-  test("fetchNextTrainingWordByScenario resolves scenario modes and forces first encounters to W->D mode", async () => {
+  test("fetchNextTrainingWordByScenario resolves scenario modes and preserves RPC mode for first encounters", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 
     mockScenarioModes();
@@ -148,7 +148,7 @@ describe("trainingService next-word selection", () => {
         headword: "nieuw",
         raw: { meanings: [{ definition: "pas gemaakt" }] },
         isFirstEncounter: true,
-        mode: "word-to-definition",
+        mode: "definition-to-word",
         debugStats: expect.objectContaining({
           source: "new",
           stability: 0.1,
