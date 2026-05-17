@@ -20,6 +20,7 @@ const chain = (result: { data?: any; error?: any }) => {
     eq: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     insert: vi.fn(async () => result),
+    upsert: vi.fn(async () => result),
     then: (resolve: any, reject: any) =>
       Promise.resolve(result).then(resolve, reject),
   };
@@ -150,10 +151,13 @@ describe("/api/platform/actions", () => {
     expect(response.status).toBe(200);
     const insertQuery = from.mock.results[3].value;
     expect(from).toHaveBeenNthCalledWith(4, "user_word_list_items");
-    expect(insertQuery.insert).toHaveBeenCalledWith({
-      list_id: "list-1",
-      word_id: "entry-1",
-    });
+    expect(insertQuery.upsert).toHaveBeenCalledWith(
+      {
+        list_id: "list-1",
+        word_id: "entry-1",
+      },
+      { onConflict: "list_id,word_id", ignoreDuplicates: true },
+    );
   });
 
   test("rejects inaccessible entries before mutating", async () => {
@@ -180,6 +184,25 @@ describe("/api/platform/actions", () => {
     await expect(response.json()).resolves.toEqual({
       error: "entry_not_accessible",
     });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("rejects unsupported actions without touching Supabase tables", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+
+    const response = await POST(
+      request({
+        action: "passive-lookup",
+        entryId: "entry-1",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "unsupported_action",
+    });
+    expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
   });
 });

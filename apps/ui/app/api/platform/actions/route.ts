@@ -187,7 +187,10 @@ export async function POST(request: NextRequest) {
 
     const { error } = await auth.supabase
       .from("user_word_list_items")
-      .insert({ list_id: listId, word_id: entryId });
+      .upsert(
+        { list_id: listId, word_id: entryId },
+        { onConflict: "list_id,word_id", ignoreDuplicates: true },
+      );
 
     if (error) {
       return jsonNoStore(
