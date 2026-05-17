@@ -19,6 +19,8 @@ db/migrations/
 │                              # dictionary-scoped entry identity
 ├── 010_scope_meanings_count_by_dictionary.sql
 │                              # dictionary-scoped training read metadata
+├── 011_record_word_view_rpc.sql
+│                              # explicit RPC for training view tracking
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -209,6 +211,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 | `fsrs6_compute()` | Core FSRS-6 algorithm |
 | `handle_review()` | Grade a card (success/fail/hard/easy) |
 | `handle_click()` | "Show answer" click = lapse |
+| `record_word_view()` | Track that a training card was shown |
 | `get_next_word()` | Queue-based card selector |
 | `get_training_stats()` | Basic session statistics |
 | `get_detailed_training_stats()` | Detailed counters for footer |

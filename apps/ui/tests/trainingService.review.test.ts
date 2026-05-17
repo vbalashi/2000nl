@@ -1,16 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const rpc = vi.fn();
-const upsert = vi.fn();
-
-const from = vi.fn(() => ({
-  upsert,
-}));
-
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     rpc,
-    from,
   },
 }));
 
@@ -26,13 +19,11 @@ const importService = async () => {
 describe("trainingService review side effects", () => {
   beforeEach(() => {
     rpc.mockReset();
-    from.mockClear();
-    upsert.mockReset();
   });
 
-  test("recordWordView upserts last seen status", async () => {
+  test("recordWordView records last seen via RPC", async () => {
     const { recordWordView } = await importService();
-    upsert.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
 
     await recordWordView({
       userId: "user-1",
@@ -40,16 +31,11 @@ describe("trainingService review side effects", () => {
       mode: "word-to-definition",
     });
 
-    expect(from).toHaveBeenCalledWith("user_word_status");
-    expect(upsert).toHaveBeenCalledWith(
-      {
-        user_id: "user-1",
-        word_id: "word-1",
-        mode: "word-to-definition",
-        last_seen_at: expect.any(String),
-      },
-      { onConflict: "user_id,word_id,mode" },
-    );
+    expect(rpc).toHaveBeenCalledWith("record_word_view", {
+      p_user_id: "user-1",
+      p_word_id: "word-1",
+      p_mode: "word-to-definition",
+    });
   });
 
   test("recordDefinitionClick skips missing word ids", async () => {

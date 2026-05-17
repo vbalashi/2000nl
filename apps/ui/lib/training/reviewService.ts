@@ -59,15 +59,15 @@ export const recordWordView = async (params: {
   // Actually, let's just log it to user_word_status so 'seen_count' is accurate-ish.
   // but without locking or complex logic.
 
-  const { error } = await supabase.from("user_word_status").upsert(
-    {
-      user_id: params.userId,
-      word_id: params.wordId,
-      mode: params.mode,
-      last_seen_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,word_id,mode" },
-  );
+  const { error } = await supabase.rpc("record_word_view", {
+    p_user_id: params.userId,
+    p_word_id: params.wordId,
+    p_mode: params.mode,
+  });
+
+  if (error) {
+    console.error("Error recording word view via RPC", error);
+  }
 };
 
 export const recordReview = async (

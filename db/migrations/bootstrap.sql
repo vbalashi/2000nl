@@ -39,3 +39,6 @@
 
 -- Dictionary-scoped read metadata for training payloads
 \i db/migrations/010_scope_meanings_count_by_dictionary.sql
+
+-- Explicit RPC for training view tracking
+\i db/migrations/011_record_word_view_rpc.sql

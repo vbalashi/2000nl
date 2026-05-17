@@ -41,6 +41,10 @@ begin
     raise exception 'missing public.handle_click(uuid,uuid,text)';
   end if;
 
+  if to_regprocedure('public.record_word_view(uuid,uuid,text)') is null then
+    raise exception 'missing public.record_word_view(uuid,uuid,text)';
+  end if;
+
   if to_regprocedure('public.can_access_dictionary(uuid,uuid,text)') is null then
     raise exception 'missing public.can_access_dictionary(uuid,uuid,text)';
   end if;
