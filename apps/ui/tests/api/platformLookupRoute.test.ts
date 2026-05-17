@@ -31,6 +31,7 @@ const request = (body: unknown, token = "token-1") =>
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
+      origin: "chrome-extension://abc",
     },
     body: JSON.stringify(body),
   });
@@ -39,6 +40,7 @@ describe("/api/platform/lookup", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+    process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -60,6 +62,27 @@ describe("/api/platform/lookup", () => {
       error: "missing_bearer_token",
     });
     expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("answers CORS preflight for configured origins", async () => {
+    const { OPTIONS } = await import("@/app/api/platform/lookup/route");
+
+    const response = OPTIONS(
+      new NextRequest("http://localhost/api/platform/lookup", {
+        method: "OPTIONS",
+        headers: {
+          origin: "chrome-extension://abc",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "chrome-extension://abc",
+    );
+    expect(response.headers.get("access-control-allow-methods")).toContain(
+      "POST",
+    );
   });
 
   test("returns a read-only lookup payload with dictionary metadata and user state", async () => {
@@ -124,6 +147,9 @@ describe("/api/platform/lookup", () => {
     const response = await POST(request({ query: " huis " }));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "chrome-extension://abc",
+    );
     expect(createClient).toHaveBeenCalledWith(
       "http://localhost:54321",
       "anon-key",

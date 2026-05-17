@@ -65,6 +65,7 @@ Read-only lookup endpoint for external clients and first-party integrations.
 Authentication:
 - Requires `Authorization: Bearer <supabase-access-token>`.
 - Uses the anon key plus the caller's JWT, so Supabase RLS/RPC auth context remains the caller.
+- Browser clients may use CORS if their `Origin` is listed in `PLATFORM_API_ALLOWED_ORIGINS` as a comma-separated allowlist. `*` is supported for non-cookie Bearer-token clients.
 
 Request:
 

@@ -2,11 +2,17 @@ import { NextRequest } from "next/server";
 import {
   getAuthenticatedSupabase,
   jsonNoStore,
+  platformCorsPreflight,
+  withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+export function OPTIONS(request: NextRequest) {
+  return platformCorsPreflight(request);
+}
 
 type LookupRequestBody = {
   query?: unknown;
@@ -35,9 +41,12 @@ async function readJson(request: NextRequest): Promise<LookupRequestBody | null>
 }
 
 export async function POST(request: NextRequest) {
+  const reply = (payload: unknown, status = 200) =>
+    withPlatformCors(request, jsonNoStore(payload, status));
+
   const auth = await getAuthenticatedSupabase(request);
   if (auth instanceof Response) {
-    return auth;
+    return withPlatformCors(request, auth);
   }
 
   const body = await readJson(request);
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
   const includeUserState = body?.includeUserState !== false;
 
   if (!query) {
-    return jsonNoStore({ error: "missing_query" }, 400);
+    return reply({ error: "missing_query" }, 400);
   }
 
   const { data, error } = await auth.supabase.rpc("fetch_dictionary_entry_gated", {
@@ -53,14 +62,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    return jsonNoStore(
+    return reply(
       { error: "lookup_failed", detail: error.message ?? String(error) },
       500,
     );
   }
 
   if (!data) {
-    return jsonNoStore({ query, items: [] });
+    return reply({ query, items: [] });
   }
 
   const entry = data as DictionaryLookupPayload & {
@@ -78,7 +87,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (dictionaryError) {
-      return jsonNoStore(
+      return reply(
         {
           error: "dictionary_metadata_failed",
           detail: dictionaryError.message ?? String(dictionaryError),
@@ -100,7 +109,7 @@ export async function POST(request: NextRequest) {
       .eq("word_id", entry.id);
 
     if (statusError) {
-      return jsonNoStore(
+      return reply(
         { error: "user_state_failed", detail: statusError.message ?? String(statusError) },
         500,
       );
@@ -131,7 +140,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return jsonNoStore({
+  return reply({
     query,
     items: [
       {

@@ -64,6 +64,7 @@ describe("/api/platform/actions", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+    process.env.PLATFORM_API_ALLOWED_ORIGINS = "https://client.example";
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -100,6 +101,24 @@ describe("/api/platform/actions", () => {
         action: "review-card",
         result: "success",
       }),
+    );
+  });
+
+  test("answers CORS preflight for configured origins", async () => {
+    const { OPTIONS } = await import("@/app/api/platform/actions/route");
+
+    const response = OPTIONS(
+      new NextRequest("http://localhost/api/platform/actions", {
+        method: "OPTIONS",
+        headers: {
+          origin: "https://client.example",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://client.example",
     );
   });
 

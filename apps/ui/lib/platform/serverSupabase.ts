@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export type AuthenticatedSupabase = {
   supabase: SupabaseClient;
@@ -10,6 +10,50 @@ export function jsonNoStore(payload: unknown, status = 200) {
   return NextResponse.json(payload, {
     status,
     headers: { "Cache-Control": "no-store" },
+  });
+}
+
+export function platformCorsHeaders(request: Request): HeadersInit {
+  const origin = request.headers.get("origin");
+  if (!origin) return {};
+
+  const allowedOrigins = (process.env.PLATFORM_API_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const allowAll = allowedOrigins.includes("*");
+  if (!allowAll && !allowedOrigins.includes(origin)) {
+    return {};
+  }
+
+  return {
+    "Access-Control-Allow-Origin": allowAll ? "*" : origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, content-type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+export function withPlatformCors<T extends Response>(
+  request: Request,
+  response: T,
+): T {
+  const headers = platformCorsHeaders(request);
+  Object.entries(headers).forEach(([key, value]) => {
+    response.headers.set(key, String(value));
+  });
+  return response;
+}
+
+export function platformCorsPreflight(request: NextRequest): NextResponse {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Cache-Control": "no-store",
+      ...platformCorsHeaders(request),
+    },
   });
 }
 
