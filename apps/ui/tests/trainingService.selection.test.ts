@@ -73,12 +73,14 @@ describe("trainingService next-word selection", () => {
       { listId: "list-1", listType: "user" },
       "review",
       "review",
+      ["word-2:definition-to-word"],
     );
 
     expect(rpc).toHaveBeenCalledWith("get_next_word", {
       p_user_id: "user-1",
       p_modes: ["word-to-definition", "definition-to-word"],
       p_exclude_ids: ["skip-1"],
+      p_exclude_card_keys: ["word-2:definition-to-word"],
       p_card_filter: "review",
       p_queue_turn: "review",
       p_list_id: "list-1",
@@ -130,6 +132,7 @@ describe("trainingService next-word selection", () => {
       { listId: "list-1", listType: "curated" },
       "both",
       "new",
+      ["already-seen:word-to-definition"],
     );
 
     expect(rpc).toHaveBeenNthCalledWith(1, "get_training_scenarios");
@@ -137,6 +140,7 @@ describe("trainingService next-word selection", () => {
       p_user_id: "user-1",
       p_modes: ["word-to-definition", "definition-to-word"],
       p_exclude_ids: ["already-seen"],
+      p_exclude_card_keys: ["already-seen:word-to-definition"],
       p_card_filter: "both",
       p_queue_turn: "new",
       p_list_id: "list-1",
@@ -206,9 +210,13 @@ describe("trainingService next-word selection", () => {
       "get_next_word",
     ]);
     expect(payloads).toEqual([
-      expect.objectContaining({ p_exclude_ids: ["initial-skip"] }),
+      expect.objectContaining({
+        p_exclude_ids: ["initial-skip"],
+        p_exclude_card_keys: [],
+      }),
       expect.objectContaining({
         p_exclude_ids: ["initial-skip", "cross-ref"],
+        p_exclude_card_keys: [],
       }),
     ]);
     expect(word?.id).toBe("word-2");

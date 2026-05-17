@@ -317,7 +317,7 @@ test("uses prefetched next card for instant transition on answer", async () => {
   }
 });
 
-test("US-094.3: after grading a card, the next prefetch exclude list includes the graded card ID", async () => {
+test("US-094.3: after grading a card, the next prefetch exclude list includes the graded card key", async () => {
   const words = [
     { ...mockWord, id: "word-1", headword: "huis" },
     { ...mockWord, id: "word-2", headword: "boom" },
@@ -326,8 +326,20 @@ test("US-094.3: after grading a card, the next prefetch exclude list includes th
 
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementation(
-    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
-      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: unknown,
+      _queueTurn: unknown,
+      excludeCardKeys: string[] = [],
+    ) => {
+      return (
+        words.find(
+          (w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`),
+        ) ?? null
+      );
     },
   );
   recordReview.mockReset();
@@ -352,18 +364,21 @@ test("US-094.3: after grading a card, the next prefetch exclude list includes th
   // Should advance to next card (prefetched or on-demand).
   await screen.findByRole("heading", { name: "boom" });
 
-  // While viewing word-2, next prefetch should exclude both word-2 and the
-  // previously graded word-1.
+  // While viewing word-2, next prefetch should exclude both word-2's current
+  // card and the previously graded word-1 card.
   await waitFor(() => {
     const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
-      const exclude = c[2] as string[];
-      return exclude.includes("word-1") && exclude.includes("word-2");
+      const exclude = c[6] as string[];
+      return (
+        exclude.includes("word-1:word-to-definition") &&
+        exclude.includes("word-2:word-to-definition")
+      );
     });
     expect(hasExclude).toBe(true);
   });
 });
 
-test("US-094.3: after grading multiple cards, all graded IDs are in the exclude list", async () => {
+test("US-094.3: after grading multiple cards, all graded card keys are in the exclude list", async () => {
   const words = [
     { ...mockWord, id: "word-1", headword: "huis" },
     { ...mockWord, id: "word-2", headword: "boom" },
@@ -373,8 +388,20 @@ test("US-094.3: after grading multiple cards, all graded IDs are in the exclude 
 
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementation(
-    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
-      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: unknown,
+      _queueTurn: unknown,
+      excludeCardKeys: string[] = [],
+    ) => {
+      return (
+        words.find(
+          (w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`),
+        ) ?? null
+      );
     },
   );
   recordReview.mockReset();
@@ -399,11 +426,11 @@ test("US-094.3: after grading multiple cards, all graded IDs are in the exclude 
   // While viewing word-3, next prefetch should exclude both graded IDs.
   await waitFor(() => {
     const hasExclude = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
-      const exclude = c[2] as string[];
+      const exclude = c[6] as string[];
       return (
-        exclude.includes("word-1") &&
-        exclude.includes("word-2") &&
-        exclude.includes("word-3")
+        exclude.includes("word-1:word-to-definition") &&
+        exclude.includes("word-2:word-to-definition") &&
+        exclude.includes("word-3:word-to-definition")
       );
     });
     expect(hasExclude).toBe(true);
@@ -419,8 +446,20 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
 
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementation(
-    async (_userId: string, _scenarioId: string, excludeWordIds: string[]) => {
-      return words.find((w) => !excludeWordIds.includes(w.id)) ?? null;
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: unknown,
+      _queueTurn: unknown,
+      excludeCardKeys: string[] = [],
+    ) => {
+      return (
+        words.find(
+          (w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`),
+        ) ?? null
+      );
     },
   );
   recordReview.mockReset();
@@ -454,13 +493,17 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   );
   expect(fetchNextTrainingWordByScenario.mock.calls[0][1]).toBe("listening");
   expect(fetchNextTrainingWordByScenario.mock.calls[0][2]).toEqual([]);
+  expect(fetchNextTrainingWordByScenario.mock.calls[0][6]).toEqual([]);
 
   // The fresh load should also clear the session-reviewed set.
   await waitFor(() => {
     const hasClearedFetch = fetchNextTrainingWordByScenario.mock.calls.some((c) => {
       const scenarioId = c[1] as string;
-      const exclude = c[2] as string[];
-      return scenarioId === "listening" && !exclude.includes("word-1");
+      const exclude = c[6] as string[];
+      return (
+        scenarioId === "listening" &&
+        !exclude.includes("word-1:word-to-definition")
+      );
     });
     expect(hasClearedFetch).toBe(true);
   });

@@ -151,6 +151,47 @@ describeIfDb("FSRS RPC integration", () => {
       expect(none).toBeUndefined();
     }, userId);
   });
+
+  test("get_next_word excludes reviewed cards by entry and mode", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 0,
+        daily_review_limit: 10,
+      });
+
+      const wordId = await insertWord(client, `fsrs-card-key-${Date.now()}`);
+      const reverseMode = "definition-to-word";
+
+      await client.query(
+        `insert into user_word_status (
+          user_id, word_id, mode,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
+        ) values
+          ($1, $2, $3, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '2 days', now() - interval '2 days'),
+          ($1, $2, $4, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
+        [userId, wordId, mode, reverseMode],
+      );
+
+      const { rows } = await client.query(
+        `select get_next_word(
+          $1::uuid,
+          $2::text[],
+          ARRAY[]::uuid[],
+          NULL::uuid,
+          'curated',
+          'review',
+          'review',
+          $3::text[]
+        ) as item`,
+        [userId, [mode, reverseMode], [`${wordId}:${mode}`]],
+      );
+
+      expect(rows[0]?.item?.id).toBe(wordId);
+      expect(rows[0]?.item?.mode).toBe(reverseMode);
+    }, userId);
+  });
 });
 
 if (!hasDb) {

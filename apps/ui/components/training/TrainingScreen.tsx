@@ -62,6 +62,9 @@ type Props = {
   user: User;
 };
 
+const trainingCardKey = (word: TrainingWord, fallbackMode: TrainingMode) =>
+  `${word.id}:${word.mode ?? fallbackMode}`;
+
 const ACTION_LABELS: Record<
   ReviewResult,
   {
@@ -182,8 +185,8 @@ export function TrainingScreen({ user }: Props) {
   // synchronous guards against double-submit from rapid keypresses/touches.
   const actionLoadingRef = useRef(false);
   const currentTurnIdRef = useRef<string | null>(null);
-  // Track which cards have already been reviewed in this session to avoid re-serving
-  // them during prefetch/on-demand fetch (used by later US-094 stories).
+  // Track reviewed cards by entry+mode so another mode for the same entry can
+  // still appear in the same session.
   const reviewedInSessionRef = useRef<Set<string>>(new Set());
 
   const presentWord = useCallback(
@@ -301,6 +304,7 @@ export function TrainingScreen({ user }: Props) {
   const nextWordPrefetchTokenRef = useRef(0);
   const nextWordPrefetchRef = useRef<{
     forWordId: string;
+    forCardKey: string;
     queueTurn: QueueTurn;
     word: TrainingWord | null;
   } | null>(null);
@@ -464,6 +468,7 @@ export function TrainingScreen({ user }: Props) {
       scope?: { listId?: string | null; listType?: WordListType | null },
       overrideQueueTurn?: QueueTurn,
       overrideScenario?: string,
+      excludeCardKeys: string[] = [],
     ) => {
       if (!user?.id) {
         return;
@@ -517,6 +522,7 @@ export function TrainingScreen({ user }: Props) {
           },
           cardFilter,
           effectiveQueueTurn,
+          excludeCardKeys,
         );
         if (nextWord) {
           // Fire and forget view recording, or await if we want strict consistency
@@ -556,6 +562,7 @@ export function TrainingScreen({ user }: Props) {
     if (!currentWord?.id) return;
 
     const forWordId = currentWord.id;
+    const forCardKey = `${currentWord.id}:${currentWord.mode ?? currentMode}`;
     const predictedQueueTurn = predictNextQueueTurn({
       cardFilter,
       queueTurn,
@@ -567,6 +574,7 @@ export function TrainingScreen({ user }: Props) {
     const token = (nextWordPrefetchTokenRef.current += 1);
     nextWordPrefetchRef.current = {
       forWordId,
+      forCardKey,
       queueTurn: predictedQueueTurn,
       word: null,
     };
@@ -578,13 +586,14 @@ export function TrainingScreen({ user }: Props) {
         const next = await fetchNextTrainingWordByScenario(
           user.id,
           activeScenario,
-          [...reviewedInSessionRef.current, forWordId],
+          [],
           {
             listId: wordListId ?? undefined,
             listType: wordListType ?? undefined,
           },
           cardFilter,
           predictedQueueTurn,
+          [...reviewedInSessionRef.current, forCardKey],
         );
 
         if (cancelled) return;
@@ -592,6 +601,7 @@ export function TrainingScreen({ user }: Props) {
 
         nextWordPrefetchRef.current = {
           forWordId,
+          forCardKey,
           queueTurn: predictedQueueTurn,
           word: next,
         };
@@ -621,6 +631,8 @@ export function TrainingScreen({ user }: Props) {
     audioModeEnabled,
     cardFilter,
     currentWord?.id,
+    currentWord?.mode,
+    currentMode,
     newReviewRatio,
     preloadAudioForWord,
     queueTurn,
@@ -659,21 +671,22 @@ export function TrainingScreen({ user }: Props) {
 
         // Use the mode from the current word (which was set when the word was fetched)
         const wordMode = currentWord.mode ?? enabledModes[0];
+        const currentCardKey = trainingCardKey(currentWord, wordMode);
 
         // Compute the next queue turn up front (and persist it) so our on-demand fetch
         // doesn't read stale `queueTurn` inside this async callback.
         const nextQueueTurn = advanceQueueTurn();
 
-        // Mark this word as reviewed in the current session BEFORE we potentially
+        // Mark this card as reviewed in the current session BEFORE we potentially
         // present a prefetched card (instant transition).
-        reviewedInSessionRef.current.add(currentWord.id);
+        reviewedInSessionRef.current.add(currentCardKey);
 
         // If the prefetch for the current word is ready, switch immediately to the
         // next card for "instant" transitions. Review recording continues below.
         const prefetched = (() => {
           const p = nextWordPrefetchRef.current;
           if (!p) return null;
-          if (p.forWordId !== currentWord.id) return null;
+          if (p.forCardKey !== currentCardKey) return null;
           if (!p.word) return null;
           nextWordPrefetchRef.current = null;
           return p.word;
@@ -880,9 +893,11 @@ export function TrainingScreen({ user }: Props) {
         // If we didn't have a prefetched card ready, fall back to on-demand fetch.
         if (!prefetched) {
           await loadNextWord(
-            [...reviewedInSessionRef.current, currentWord.id],
+            [],
             undefined,
             nextQueueTurn,
+            undefined,
+            [...reviewedInSessionRef.current, currentCardKey],
           );
         }
       } finally {

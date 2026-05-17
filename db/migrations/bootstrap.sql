@@ -48,3 +48,6 @@
 
 -- Enforce dictionary read access in gated word entry RPCs
 \i db/migrations/013_filter_gated_word_reads_by_dictionary.sql
+
+-- Exclude reviewed cards by entry+mode during a training session
+\i db/migrations/014_exclude_training_cards_by_identity.sql

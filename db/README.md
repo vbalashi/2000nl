@@ -25,6 +25,8 @@ db/migrations/
 │                              # dictionary metadata for word form lookup rows
 ├── 013_filter_gated_word_reads_by_dictionary.sql
 │                              # dictionary read checks in gated word RPCs
+├── 014_exclude_training_cards_by_identity.sql
+│                              # entry+mode session exclusion for training cards
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

@@ -19,6 +19,9 @@ import {
 const MAX_CROSS_REFERENCE_SKIPS = 5;
 const DEFAULT_SCENARIO_MODES: TrainingMode[] = ["word-to-definition"];
 
+const cardKey = (wordId: string, mode: TrainingMode): string =>
+  `${wordId}:${mode}`;
+
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
   if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
@@ -76,6 +79,7 @@ const mapFallbackItem = (
 const pickListFallbackWord = async (
   modes: TrainingMode[],
   excludedIds: Set<string>,
+  excludedCardKeys: Set<string>,
   listScope?: { listId?: string | null; listType?: WordListType },
 ): Promise<TrainingWord | null> => {
   if (!listScope?.listId) return null;
@@ -85,8 +89,13 @@ const pickListFallbackWord = async (
     listScope.listType ?? "curated",
     { page: 1, pageSize: 50 },
   );
-  const candidates = fallback.items.filter(
-    (word) => !excludedIds.has(word.id) && !isCrossReferenceOnly(word.raw),
+  const candidates = fallback.items.flatMap((word) =>
+    modes.map((mode) => ({ word, mode })),
+  ).filter(
+    ({ word, mode }) =>
+      !excludedIds.has(word.id) &&
+      !excludedCardKeys.has(cardKey(word.id, mode)) &&
+      !isCrossReferenceOnly(word.raw),
   );
   const pick =
     candidates.length > 0
@@ -94,8 +103,7 @@ const pickListFallbackWord = async (
       : null;
   if (!pick) return null;
 
-  const fallbackMode = modes[Math.floor(Math.random() * modes.length)];
-  return mapFallbackItem(pick, fallbackMode);
+  return mapFallbackItem(pick.word, pick.mode);
 };
 
 export const fetchNextTrainingWord = async (
@@ -105,11 +113,13 @@ export const fetchNextTrainingWord = async (
   listScope?: { listId?: string | null; listType?: WordListType },
   cardFilter: CardFilter = "both",
   queueTurn: QueueTurn = "auto",
+  excludeCardKeys: string[] = [],
 ): Promise<TrainingWord | null> => {
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
     p_modes: modes,
     p_exclude_ids: excludeWordIds,
+    p_exclude_card_keys: excludeCardKeys,
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
   };
@@ -120,9 +130,11 @@ export const fetchNextTrainingWord = async (
   }
 
   const excludedIds = new Set(excludeWordIds);
+  const excludedCardKeys = new Set(excludeCardKeys);
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
     rpcPayload.p_exclude_ids = Array.from(excludedIds);
+    rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
     const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
 
@@ -130,7 +142,7 @@ export const fetchNextTrainingWord = async (
       if (error) {
         console.error("Error fetching next word via RPC", error);
       }
-      return pickListFallbackWord(modes, excludedIds, listScope);
+      return pickListFallbackWord(modes, excludedIds, excludedCardKeys, listScope);
     }
 
     const item = Array.isArray(data) ? data[0] : data;
@@ -200,7 +212,7 @@ export const fetchNextTrainingWord = async (
     return mapSelectionItem(item, rawData);
   }
 
-  return pickListFallbackWord(modes, excludedIds, listScope);
+  return pickListFallbackWord(modes, excludedIds, excludedCardKeys, listScope);
 };
 
 export const fetchTrainingScenarios = async (): Promise<TrainingScenario[]> => {
@@ -269,6 +281,7 @@ export const fetchNextTrainingWordByScenario = async (
   listScope?: { listId?: string | null; listType?: WordListType },
   cardFilter: CardFilter = "both",
   queueTurn: QueueTurn = "auto",
+  excludeCardKeys: string[] = [],
 ): Promise<TrainingWord | null> => {
   const modes = await resolveScenarioModes(scenarioId);
   if (!modes) return null;
@@ -277,6 +290,7 @@ export const fetchNextTrainingWordByScenario = async (
     p_user_id: userId,
     p_modes: modes,
     p_exclude_ids: excludeWordIds,
+    p_exclude_card_keys: excludeCardKeys,
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
   };
@@ -287,9 +301,11 @@ export const fetchNextTrainingWordByScenario = async (
   }
 
   const excludedIds = new Set(excludeWordIds);
+  const excludedCardKeys = new Set(excludeCardKeys);
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
     rpcPayload.p_exclude_ids = Array.from(excludedIds);
+    rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
     const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
 
