@@ -51,3 +51,6 @@
 
 -- Exclude reviewed cards by entry+mode during a training session
 \i db/migrations/014_exclude_training_cards_by_identity.sql
+
+-- Read-only dictionary lookup behind dictionary access checks
+\i db/migrations/015_gated_dictionary_lookup.sql

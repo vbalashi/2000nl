@@ -47,10 +47,12 @@ const from = vi.fn((table: string) => {
   fromResponses.set(table, queue);
   return createQuery(table, response);
 });
+const rpc = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     from,
+    rpc,
   },
 }));
 
@@ -75,6 +77,7 @@ const row = {
 describe("trainingService dictionary lookup", () => {
   beforeEach(() => {
     from.mockClear();
+    rpc.mockClear();
     fromResponses.clear();
     queries.length = 0;
   });
@@ -131,6 +134,10 @@ describe("trainingService dictionary lookup", () => {
 
   test("fetchDictionaryEntry returns direct headword match with meanings count and user stats", async () => {
     const { fetchDictionaryEntry } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "PGRST202", message: "Could not find the function" },
+    });
     queueFrom("word_entries", { data: row, error: null });
     queueFrom("word_entries", { count: 3, error: null });
     queueFrom("user_word_status", {
@@ -161,6 +168,44 @@ describe("trainingService dictionary lookup", () => {
     });
     expect(queries[2].eq).toHaveBeenCalledWith("user_id", "user-1");
     expect(queries[2].eq).toHaveBeenCalledWith("word_id", "word-1");
+  });
+
+  test("fetchDictionaryEntry prefers gated lookup RPC for authenticated users", async () => {
+    const { fetchDictionaryEntry } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        ...row,
+        raw: { meanings: [{ definition: "Een gebouw" }] },
+        dictionary_id: "dict-1",
+        language_code: "nl",
+        meanings_count: 2,
+        stats: {
+          click_count: 3,
+          last_seen_at: "2026-05-17T10:00:00.000Z",
+        },
+      },
+      error: null,
+    });
+
+    await expect(fetchDictionaryEntry("huis", "user-1")).resolves.toEqual({
+      id: "word-1",
+      dictionary_id: "dict-1",
+      language_code: "nl",
+      headword: "huis",
+      part_of_speech: "zn",
+      gender: "het",
+      raw: { meanings: [{ definition: "Een gebouw" }] },
+      is_nt2_2000: true,
+      meanings_count: 2,
+      stats: {
+        click_count: 3,
+        last_seen_at: "2026-05-17T10:00:00.000Z",
+      },
+    });
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
   });
 
   test("fetchDictionaryEntry retries lowercase direct match before word_forms", async () => {

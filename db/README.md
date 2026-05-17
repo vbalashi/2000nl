@@ -27,6 +27,8 @@ db/migrations/
 │                              # dictionary read checks in gated word RPCs
 ├── 014_exclude_training_cards_by_identity.sql
 │                              # entry+mode session exclusion for training cards
+├── 015_gated_dictionary_lookup.sql
+│                              # read-only dictionary lookup with access checks
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

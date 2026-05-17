@@ -3,6 +3,32 @@ import { trainingDebug } from "../trainingDebug";
 import type { DictionaryEntry, TrainingWord } from "../types";
 import { mapDictionaryEntry, normalizeRaw } from "./wordMappers";
 
+type DictionaryEntryWithStats = DictionaryEntry & {
+  stats?: { click_count: number; last_seen_at: string | null };
+};
+
+const isMissingRpcError = (error: any): boolean => {
+  const message = error?.message ?? "";
+  const code = error?.code as string | undefined;
+  return (
+    code === "PGRST202" ||
+    message.includes("Could not find the function") ||
+    message.includes("schema cache")
+  );
+};
+
+const mapDictionaryLookupPayload = (
+  data: any,
+): DictionaryEntryWithStats | null => {
+  if (!data) return null;
+  const entry = mapDictionaryEntry(data);
+  return {
+    ...entry,
+    meanings_count: data.meanings_count ?? entry.meanings_count,
+    ...(data.stats ? { stats: data.stats } : {}),
+  };
+};
+
 const fetchDictionaryEntryById = async (
   id: string,
 ): Promise<DictionaryEntry | null> => {
@@ -94,14 +120,24 @@ export const fetchTrainingWordByLookup = async (
 export const fetchDictionaryEntry = async (
   headword: string,
   userId?: string,
-): Promise<
-  | (DictionaryEntry & {
-      stats?: { click_count: number; last_seen_at: string | null };
-    })
-  | null
-> => {
+): Promise<DictionaryEntryWithStats | null> => {
   const normalized = (headword || "").trim();
   if (!normalized) return null;
+
+  if (userId) {
+    const { data, error } = await supabase.rpc("fetch_dictionary_entry_gated", {
+      p_headword: normalized,
+    });
+
+    if (!error) {
+      return mapDictionaryLookupPayload(data);
+    }
+
+    if (!isMissingRpcError(error)) {
+      console.error("Unable to fetch gated dictionary entry", error);
+      return null;
+    }
+  }
 
   const tryFetchByHeadword = async (value: string) => {
     const { data, error } = await supabase
