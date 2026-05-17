@@ -1,12 +1,15 @@
 # Data Model
 
-Canonical tables live in `db/migrations/001_core_schema.sql` and `db/migrations/004_user_features.sql`.
+Canonical tables live in `db/migrations/001_core_schema.sql` plus additive migrations in `db/migrations`.
 
 Content and lists:
 - `languages(code, name)` – language catalog.
-- `word_entries(id, language_code, headword, part_of_speech, gender, is_nt2_2000, vandale_id, raw, created_at)` – dictionary entries. The rich dictionary shape is currently retained in `raw` JSONB.
-- `word_forms(language_code, form, word_id, headword, created_at)` – inflection/conjugation lookup rows.
-- `word_lists(id, language_code, slug, name, description, is_primary, sort_order)` – curated/system word lists such as `vandale-all` and `nt2-2000`.
+- `dictionary_schemas(schema_key, version, language_code, json_schema, checksum, source_path, render_capabilities, retired_at)` – runtime registry for versioned entry payload contracts. Repo files remain the source of truth; DB rows are runtime snapshots/metadata.
+- `dictionaries(id, language_code, slug, name, kind, visibility, owner_user_id, is_editable, minimum_subscription_tier, schema_key, schema_version)` – dictionary/source boundary and access metadata.
+- `dictionary_entitlements(dictionary_id, subject_type, subject_key, permission, starts_at, ends_at)` – explicit dictionary grants used by `can_access_dictionary(...)`.
+- `word_entries(id, dictionary_id, language_code, headword, meaning_id, part_of_speech, gender, is_nt2_2000, vandale_id, raw, created_at)` – meaning-level dictionary entries. Uniqueness is dictionary-scoped: `(dictionary_id, language_code, headword, meaning_id)`.
+- `word_forms(language_code, dictionary_id, form, word_id, headword, created_at)` – inflection/conjugation lookup rows scoped to dictionary entries and meaning identity.
+- `word_lists(id, language_code, primary_language_code, slug, name, description, is_primary, sort_order)` – curated/system entry lists such as `vandale-all` and `nt2-2000`. `language_code` remains for compatibility; `primary_language_code` is the forward-compatible UI hint.
 - `word_list_items(list_id, word_id, rank)` – membership for curated lists.
 
 Training and events:
@@ -17,7 +20,7 @@ Training and events:
 
 User features:
 - `user_settings(user_id, daily_new_limit, daily_review_limit, target_retention, new_review_ratio, modes_enabled, card_filter, active_scenario, active_list_id, active_list_type, translation_lang, subscription_tier, training_sidebar_pinned, preferences, audio_quality, updated_at)` – preferences and account-tier state.
-- `user_word_lists(id, user_id, language_code, name, description, created_at, updated_at)` – user-created lists.
+- `user_word_lists(id, user_id, language_code, primary_language_code, name, description, created_at, updated_at)` – user-created lists.
 - `user_word_list_items(list_id, word_id, added_at)` – membership for user-created lists.
 - `word_entry_translations(word_entry_id, target_lang, provider, status, overlay, note, source_fingerprint, error_message, created_at, updated_at)` – shared translation overlays and provider cache metadata.
 - `user_word_notes(id, user_id, word_entry_id, notes, created_at, updated_at)` – per-user notes.
@@ -28,5 +31,6 @@ JSON Schemas:
 
 Guidelines:
 - Treat `word_entries.raw` as the current fidelity layer for dictionary-specific structure.
+- Dictionary lookup/search/training RPCs must enforce `can_access_dictionary(...)`; ordinary lookup is read-only and must not mutate FSRS state.
 - Do not design new work around the older aspirational `headwords`/`meanings`/`notes`/`user_progress` model unless you are explicitly planning a schema migration.
 - For scheduler changes, update migrations and the FSRS tests in `apps/ui/tests/fsrs`.

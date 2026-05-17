@@ -34,7 +34,7 @@ await supabase.rpc('handle_review', {
 
 ## `handle_click`
 
-Record a reveal click that counts as a lapse in FSRS.
+Record an explicit training reveal/answer click that counts as a lapse in FSRS.
 
 ```sql
 handle_click(
@@ -49,6 +49,8 @@ Side effects:
 - Inserts into `user_review_log`
 - Inserts into `user_events`
 - Increments click count
+
+Do not use this RPC for ordinary dictionary lookup, external API lookup, or passive hover/read events.
 
 Example:
 ```javascript

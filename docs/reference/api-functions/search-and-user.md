@@ -24,7 +24,7 @@ search_word_entries_gated(
 ) RETURNS jsonb
 ```
 
-Free tier is capped; premium and admin are not.
+Free tier is capped; premium and admin are not. Results are filtered through `can_access_dictionary(...)`.
 
 ## `fetch_words_for_list_gated`
 
@@ -44,4 +44,16 @@ fetch_words_for_list_gated(
 ) RETURNS jsonb
 ```
 
-For user lists, ownership is checked.
+For user lists, ownership is checked. Returned entries are filtered through `can_access_dictionary(...)`.
+
+## `fetch_dictionary_entry_gated`
+
+Read-only dictionary lookup for authenticated users.
+
+```sql
+fetch_dictionary_entry_gated(
+    p_headword text
+) RETURNS jsonb
+```
+
+The RPC tries exact headword, lowercase headword, then `word_forms`. It returns entry metadata, `meanings_count`, and lightweight user status if present. It does not write FSRS state, list membership, or review logs.
