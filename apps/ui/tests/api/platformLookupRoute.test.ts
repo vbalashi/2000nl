@@ -74,7 +74,10 @@ describe("/api/platform/lookup", () => {
         dictionary_id: "dict-1",
         language_code: "nl",
         headword: "huis",
+        meaning_id: 1,
+        part_of_speech: "zn",
         raw: { meanings: [{ definition: "gebouw" }] },
+        is_nt2_2000: true,
         meanings_count: 1,
       },
       error: null,
@@ -84,8 +87,13 @@ describe("/api/platform/lookup", () => {
         chain({
           data: {
             id: "dict-1",
+            language_code: "nl",
             slug: "nl-vandale",
             name: "VanDale Dutch",
+            kind: "curated",
+            visibility: "system",
+            schema_key: "nl-vandale-v1",
+            schema_version: 1,
           },
           error: null,
         }),
@@ -127,8 +135,20 @@ describe("/api/platform/lookup", () => {
       p_headword: "huis",
     });
     const payload = await response.json();
-    expect(payload.items[0].entry.id).toBe("entry-1");
+    expect(payload.items[0].entry).toEqual(
+      expect.objectContaining({
+        id: "entry-1",
+        dictionaryId: "dict-1",
+        languageCode: "nl",
+        headword: "huis",
+        meaningId: 1,
+        partOfSpeech: "zn",
+        isNt22000: true,
+        meaningsCount: 1,
+      }),
+    );
     expect(payload.items[0].dictionary.slug).toBe("nl-vandale");
+    expect(payload.items[0].dictionary.schemaKey).toBe("nl-vandale-v1");
     expect(payload.items[0].userStateByCardType["word-to-definition"]).toEqual(
       expect.objectContaining({
         entryId: "entry-1",

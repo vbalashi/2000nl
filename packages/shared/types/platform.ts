@@ -167,8 +167,13 @@ export type DictionaryLookupRequest = {
 };
 
 export type DictionaryLookupResult = {
-  entry: DictionaryEntryRef;
-  dictionary: DictionarySummary;
+  entry: DictionaryEntryRef & {
+    raw?: unknown;
+    gender?: string | null;
+    isNt22000?: boolean | null;
+    meaningsCount?: number | null;
+  };
+  dictionary: DictionarySummary | null;
   listMemberships?: WordListSummaryV2[];
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   availableActions?: LookupActionId[];

@@ -18,6 +18,7 @@ type DictionaryLookupPayload = {
   dictionary_id?: string | null;
   language_code?: string | null;
   headword: string;
+  meaning_id?: number | null;
   part_of_speech?: string | null;
   gender?: string | null;
   raw: unknown;
@@ -134,8 +135,30 @@ export async function POST(request: NextRequest) {
     query,
     items: [
       {
-        entry,
-        dictionary,
+        entry: {
+          id: entry.id,
+          dictionaryId: entry.dictionary_id ?? null,
+          languageCode: entry.language_code ?? null,
+          headword: entry.headword,
+          meaningId: entry.meaning_id ?? null,
+          partOfSpeech: entry.part_of_speech ?? null,
+          gender: entry.gender ?? null,
+          raw: entry.raw,
+          isNt22000: entry.is_nt2_2000 ?? null,
+          meaningsCount: entry.meanings_count ?? null,
+        },
+        dictionary: dictionary
+          ? {
+              id: dictionary.id,
+              languageCode: dictionary.language_code,
+              slug: dictionary.slug,
+              name: dictionary.name,
+              kind: dictionary.kind,
+              visibility: dictionary.visibility,
+              schemaKey: dictionary.schema_key,
+              schemaVersion: dictionary.schema_version,
+            }
+          : null,
         ...(includeUserState ? { userStateByCardType } : {}),
         availableActions: [
           "record-view",
