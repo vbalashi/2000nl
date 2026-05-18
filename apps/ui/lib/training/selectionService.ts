@@ -9,7 +9,6 @@ import type {
   TrainingWord,
   WordListType,
 } from "../types";
-import { fetchWordsForList } from "./listService";
 import {
   isCrossReferenceOnly,
   mapScenario,
@@ -18,9 +17,6 @@ import {
 
 const MAX_CROSS_REFERENCE_SKIPS = 5;
 const DEFAULT_SCENARIO_MODES: TrainingMode[] = ["word-to-definition"];
-
-const cardKey = (wordId: string, mode: TrainingMode): string =>
-  `${wordId}:${mode}`;
 
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
@@ -56,54 +52,6 @@ const mapSelectionItem = (
     isFirstEncounter,
     mode: resolvedMode,
   };
-};
-
-const mapFallbackItem = (
-  item: any,
-  mode: TrainingMode,
-): TrainingWord => ({
-  id: item.id,
-  ...(item.dictionary_id ? { dictionary_id: item.dictionary_id } : {}),
-  ...(item.language_code ? { language_code: item.language_code } : {}),
-  headword: item.headword,
-  part_of_speech: item.part_of_speech ?? undefined,
-  gender: item.gender ?? undefined,
-  raw: normalizeRaw(item.raw),
-  is_nt2_2000: item.is_nt2_2000,
-  meanings_count: item.meanings_count,
-  mode,
-  debugStats: { source: "fallback", mode },
-  isFirstEncounter: false,
-});
-
-const pickListFallbackWord = async (
-  modes: TrainingMode[],
-  excludedIds: Set<string>,
-  excludedCardKeys: Set<string>,
-  listScope?: { listId?: string | null; listType?: WordListType },
-): Promise<TrainingWord | null> => {
-  if (!listScope?.listId) return null;
-
-  const fallback = await fetchWordsForList(
-    listScope.listId,
-    listScope.listType ?? "curated",
-    { page: 1, pageSize: 50 },
-  );
-  const candidates = fallback.items.flatMap((word) =>
-    modes.map((mode) => ({ word, mode })),
-  ).filter(
-    ({ word, mode }) =>
-      !excludedIds.has(word.id) &&
-      !excludedCardKeys.has(cardKey(word.id, mode)) &&
-      !isCrossReferenceOnly(word.raw),
-  );
-  const pick =
-    candidates.length > 0
-      ? candidates[Math.floor(Math.random() * candidates.length)]
-      : null;
-  if (!pick) return null;
-
-  return mapFallbackItem(pick.word, pick.mode);
 };
 
 export const fetchNextTrainingWord = async (
@@ -142,7 +90,7 @@ export const fetchNextTrainingWord = async (
       if (error) {
         console.error("Error fetching next word via RPC", error);
       }
-      return pickListFallbackWord(modes, excludedIds, excludedCardKeys, listScope);
+      return null;
     }
 
     const item = Array.isArray(data) ? data[0] : data;
@@ -212,7 +160,7 @@ export const fetchNextTrainingWord = async (
     return mapSelectionItem(item, rawData);
   }
 
-  return pickListFallbackWord(modes, excludedIds, excludedCardKeys, listScope);
+  return null;
 };
 
 export const fetchTrainingScenarios = async (): Promise<TrainingScenario[]> => {
@@ -335,7 +283,6 @@ export const fetchNextTrainingWordByScenario = async (
       review:
         "Graduated card due for review → counts toward HERHALING when reviewed",
       practice: "Practice mode (no card due) → no counter change",
-      fallback: "Fallback selection → depends on card state",
     };
     const sourceKey =
       typeof stats.source === "string" ? stats.source : "unknown";

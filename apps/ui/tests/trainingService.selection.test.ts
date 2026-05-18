@@ -222,30 +222,10 @@ describe("trainingService next-word selection", () => {
     expect(word?.id).toBe("word-2");
   });
 
-  test("legacy selection falls back to list words when RPC returns no data", async () => {
+  test("selection returns null instead of using frontend list fallback when RPC returns no data", async () => {
     const { fetchNextTrainingWord } = await importService();
 
-    rpc
-      .mockResolvedValueOnce({ data: [], error: null })
-      .mockResolvedValueOnce({
-        data: {
-          items: [
-            {
-              id: "fallback-word",
-              headword: "reserve",
-              part_of_speech: "zn",
-              gender: "de",
-              raw: { meanings: [{ definition: "iets achter de hand" }] },
-              is_nt2_2000: false,
-              meanings_count: 2,
-            },
-          ],
-          total: 1,
-          is_locked: false,
-          max_allowed: null,
-        },
-        error: null,
-      });
+    rpc.mockResolvedValueOnce({ data: [], error: null });
 
     const word = await fetchNextTrainingWord(
       "user-1",
@@ -256,23 +236,13 @@ describe("trainingService next-word selection", () => {
       "auto",
     );
 
-    expect(rpc).toHaveBeenNthCalledWith(
-      2,
-      "fetch_words_for_list_gated",
+    expect(word).toBeNull();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith(
+      "get_next_word",
       expect.objectContaining({
         p_list_id: "list-1",
         p_list_type: "curated",
-        p_page: 1,
-        p_page_size: 50,
-      }),
-    );
-    expect(word).toEqual(
-      expect.objectContaining({
-        id: "fallback-word",
-        headword: "reserve",
-        mode: "definition-to-word",
-        isFirstEncounter: false,
-        debugStats: { source: "fallback", mode: "definition-to-word" },
       }),
     );
   });
