@@ -257,6 +257,41 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_word_list_summary returns owned user list metadata", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `summary-list-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Summary list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        wordId,
+      ]);
+
+      const { rows } = await client.query(
+        `select get_word_list_summary($1::uuid, $2::uuid, 'user') as list`,
+        [userId, listId],
+      );
+
+      expect(rows[0].list).toEqual(
+        expect.objectContaining({
+          id: listId,
+          name: expect.stringContaining("Summary list"),
+          language_code: "nl",
+          primary_language_code: "nl",
+        }),
+      );
+      expect(rows[0].list.user_word_list_items[0].count).toBe(1);
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

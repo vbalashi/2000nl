@@ -75,6 +75,7 @@ const importService = async () => {
   return {
     fetchActiveList: service.fetchActiveList,
     fetchCuratedLists: service.fetchCuratedLists,
+    fetchListSummaryById: service.fetchListSummaryById,
     fetchUserLists: service.fetchUserLists,
     fetchUserListMembership: service.fetchUserListMembership,
     fetchUserPreferences: service.fetchUserPreferences,
@@ -295,6 +296,46 @@ describe("trainingService list and preference characterization", () => {
       "active_list_id, active_list_type",
     );
     expect(queries[0].eq).toHaveBeenCalledWith("user_id", "user-1");
+  });
+
+  test("fetchListSummaryById reads summary through the explicit RPC", async () => {
+    const { fetchListSummaryById } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "list-1",
+        name: "Saved",
+        description: null,
+        language_code: "nl",
+        primary_language_code: "nl",
+        created_at: "2026-05-16T10:00:00.000Z",
+        user_word_list_items: [{ count: 3 }],
+      },
+      error: null,
+    });
+
+    await expect(
+      fetchListSummaryById({
+        userId: "user-1",
+        listId: "list-1",
+        listType: "user",
+      }),
+    ).resolves.toEqual({
+      id: "list-1",
+      name: "Saved",
+      description: null,
+      language_code: "nl",
+      primary_language_code: "nl",
+      type: "user",
+      item_count: 3,
+      created_at: "2026-05-16T10:00:00.000Z",
+    });
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_word_list_summary", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_list_type: "user",
+    });
   });
 
   test("updateActiveList upserts curated default when list type is omitted", async () => {

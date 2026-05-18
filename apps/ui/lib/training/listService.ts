@@ -113,41 +113,22 @@ export async function fetchListSummaryById(params: {
   listId: string;
   listType: WordListType;
 }): Promise<WordListSummary | null> {
-  if (params.listType === "user") {
-    const { data, error } = await supabase
-      .from("user_word_lists")
-      .select(
-        "id, name, description, language_code, primary_language_code, created_at, user_word_list_items(count)",
-      )
-      .eq("id", params.listId)
-      .eq("user_id", params.userId)
-      .maybeSingle();
-
-    if (error || !data) {
-      if (error) {
-        console.error("Error fetching user list summary", error);
-      }
-      return null;
-    }
-    return mapUserListSummary(data);
-  }
-
-  const { data, error } = await supabase
-    .from("word_lists")
-    .select(
-      "id, name, description, language_code, primary_language_code, is_primary, word_list_items(count)",
-    )
-    .eq("id", params.listId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_word_list_summary", {
+    p_user_id: params.userId,
+    p_list_id: params.listId,
+    p_list_type: params.listType,
+  });
 
   if (error || !data) {
     if (error) {
-      console.error("Error fetching curated list summary", error);
+      console.error("Error fetching list summary", error);
     }
     return null;
   }
 
-  return mapCuratedListSummary(data);
+  return params.listType === "user"
+    ? mapUserListSummary(data)
+    : mapCuratedListSummary(data);
 }
 
 export async function updateActiveList(params: {
