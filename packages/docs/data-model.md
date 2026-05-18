@@ -33,5 +33,6 @@ JSON Schemas:
 Guidelines:
 - Treat `word_entries.raw` as the current fidelity layer for dictionary-specific structure.
 - Dictionary lookup/search/training RPCs must enforce `can_access_dictionary(...)`; ordinary lookup is read-only and must not mutate FSRS state.
+- App routes that generate translation overlays may use server credentials for cache writes, but source entry reads must still go through authenticated gated entry RPCs.
 - Do not design new work around the older aspirational `headwords`/`meanings`/`notes`/`user_progress` model unless you are explicitly planning a schema migration.
 - For scheduler changes, update migrations and the FSRS tests in `apps/ui/tests/fsrs`.

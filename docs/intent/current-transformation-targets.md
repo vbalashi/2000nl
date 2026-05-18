@@ -1,6 +1,6 @@
 # Current Transformation Targets
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 This document is the shared scratchpad for transformation wishes, questions,
 constraints, and target areas after codebase discovery.
@@ -59,15 +59,55 @@ Desired concepts:
 ## Current Repo Reality
 
 - Current content is stored primarily in `word_entries` with `raw` JSONB and
-  language/headword fields.
+  language/headword fields. Entries are meaning-level rows and now have
+  `meaning_id` plus `dictionary_id`.
+- `dictionary_schemas`, `dictionaries`, and `dictionary_entitlements` exist.
+  The seeded trusted Dutch dictionary is `nl-vandale` using `nl-vandale-v1`.
+- User-owned dictionaries exist at the DB/RPC/action boundary using the
+  minimal `user-entry-v1` schema. UI editing is intentionally not built yet.
 - Current curated lists are `word_lists` / `word_list_items`; user lists are
-  `user_word_lists` / `user_word_list_items`.
+  `user_word_lists` / `user_word_list_items`. `primary_language_code` is the
+  forward-compatible list language hint; legacy `language_code` remains for
+  compatibility.
 - Current user progress is keyed by `user_id + word_id + mode` in
   `user_word_status`, with review history in `user_review_log`.
 - Current scenarios group modes through `training_scenarios.card_modes`.
 - `apps/api` is currently a reserved boundary, not the active backend.
 - Active serving logic is split between Supabase/Postgres RPCs and `apps/ui`
   services/API routes.
+- Lookup, platform actions, training list reads, card state, recent history,
+  active list, and learning preferences now go through RPC/action boundaries
+  rather than frontend-owned table mutations.
+- Ordinary dictionary lookup is read-only. Mutations that affect FSRS, user
+  lists, or user dictionaries are explicit platform actions/RPCs.
+- App-local UI settings still live in `user_settings` through the existing
+  first-party UI service. Translation cache generation remains an app route,
+  but source entry reads are gated through the dictionary access RPC.
+
+## Completed Migration Steps
+
+- Stage 0: fixed `meaning_id` drift and fresh-DB multi-meaning support.
+- Stage 1A: added dictionary schema registry, dictionary ownership boundary,
+  dictionary access helper, and seeded `nl-vandale`.
+- Updated ingestion to import into a dictionary by slug/id and preserve
+  dictionary-scoped entry identity.
+- Added `user-entry-v1` and DB/RPC/action support for private editable user
+  dictionary storage without adding UI editing yet.
+- Improved lookup/API shape so candidates include dictionary metadata and
+  card-state context without direct client reads of dictionary tables.
+- Moved training-adjacent user list, active list, learning preference, history,
+  and card-state operations behind RPCs.
+
+## Remaining Near-Term Targets
+
+- Add UI for user dictionary creation/editing only after deciding the first
+  product surface and validation rules.
+- Continue reducing direct table access where it crosses platform boundaries;
+  keep truly app-local settings explicit.
+- Add/refresh docs for platform endpoint payloads as external consumers become
+  real clients.
+- Broaden DB/API regression tests around dictionary visibility, private user
+  dictionaries, and translation/lookup read-only guarantees.
 
 ## Planning Questions
 
