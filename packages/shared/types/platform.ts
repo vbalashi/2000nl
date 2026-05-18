@@ -296,7 +296,7 @@ export type PlatformActionRequest =
 export type PlatformActionResponse = {
   ok: true;
   action: PlatformActionRequest["action"];
-  entryId: string;
+  entryId?: string;
   cardTypeId?: CardTypeId;
   result?: "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
   turnId?: string | null;
