@@ -71,8 +71,19 @@ const restHandler = async (route: any) => {
     const excludedIds = new Set<string>(
       Array.isArray(body.p_exclude_ids) ? body.p_exclude_ids : [],
     );
+    const excludedCardKeys = new Set<string>(
+      Array.isArray(body.p_exclude_card_keys) ? body.p_exclude_card_keys : [],
+    );
+    const orderedEntries = [
+      ...entries.slice(nextWordIndex),
+      ...entries.slice(0, nextWordIndex),
+    ];
     const pick =
-      entries.find((entry) => !excludedIds.has(entry.id)) ??
+      orderedEntries.find(
+        (entry) =>
+          !excludedIds.has(entry.id) &&
+          !excludedCardKeys.has(`${entry.id}:word-to-definition`),
+      ) ??
       entries[Math.min(nextWordIndex, entries.length - 1)];
     const pickIndex = entries.findIndex((entry) => entry.id === pick.id);
     await route.fulfill({
@@ -98,6 +109,111 @@ const restHandler = async (route: any) => {
           },
         },
       ]),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_learning_preferences")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        training_mode: "word-to-definition",
+        modes_enabled: ["word-to-definition"],
+        card_filter: "both",
+        language_code: "nl",
+        new_review_ratio: 2,
+        active_scenario: "understanding",
+      }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_training_scenarios")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify([
+        {
+          id: "understanding",
+          name_en: "Understanding",
+          name_nl: "Begrip",
+          card_modes: ["word-to-definition"],
+          graduation_threshold: 21,
+          enabled: true,
+          sort_order: 1,
+        },
+      ]),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_scenario_stats")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        learned: 0,
+        in_progress: 0,
+        new: entries.length,
+        total: entries.length,
+        scenario_id: "understanding",
+        card_modes: ["word-to-definition"],
+        graduation_threshold: 21,
+      }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_available_word_lists")) {
+    const body = request.postDataJSON?.() ?? {};
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(
+        body.p_list_type === "user"
+          ? []
+          : [
+              {
+                id: "list-1",
+                slug: "nt2-2000",
+                name: "VanDale 2k",
+                language_code: "nl",
+                primary_language_code: "nl",
+                is_primary: true,
+                word_list_items: [{ count: entries.length }],
+              },
+            ],
+      ),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_active_word_list")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        active_list_id: "list-1",
+        active_list_type: "curated",
+      }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/get_word_list_summary")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "list-1",
+        slug: "nt2-2000",
+        name: "VanDale 2k",
+        language_code: "nl",
+        primary_language_code: "nl",
+        is_primary: true,
+        word_list_items: [{ count: entries.length }],
+      }),
     });
     return;
   }
@@ -132,11 +248,55 @@ const restHandler = async (route: any) => {
     return;
   }
 
+  if (pathname.endsWith("/rpc/get_card_user_state")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        click_count: 0,
+        last_seen_at: null,
+        last_reviewed_at: new Date().toISOString(),
+        next_review_at: null,
+        hidden: false,
+        frozen_until: null,
+        fsrs_stability: 1,
+        fsrs_difficulty: 5,
+        fsrs_reps: 1,
+        fsrs_lapses: 0,
+        fsrs_last_grade: 1,
+        fsrs_last_interval: 0,
+        in_learning: true,
+        learning_due_at: null,
+      }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/record_word_view")) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: true }),
+    });
+    return;
+  }
+
   if (pathname.endsWith("/rpc/handle_click")) {
     await route.fulfill({
       status: 200,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ok: true }),
+    });
+    return;
+  }
+
+  if (pathname.endsWith("/rpc/fetch_dictionary_entry_gated")) {
+    const body = request.postDataJSON?.() ?? {};
+    const entry = entries.find((item) => item.headword === body.p_headword);
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(entry ? [{ ...entry, meanings_count: 1 }] : []),
     });
     return;
   }
@@ -308,8 +468,10 @@ test("training flow persists review and dictionary lookup", async ({
   await expect(
     page.getByRole("heading", { level: 2, name: /gracht/i })
   ).toBeVisible();
+  await page.getByRole("button", { name: "Sluiten" }).click();
+  await expect(drawer).toBeHidden();
 
   // Grade the card to advance to the next word.
-  await page.keyboard.press("K");
+  await page.getByRole("button", { name: "Begin met leren" }).click();
   await expect(page.locator("h1")).toHaveText(/gracht/i);
 });
