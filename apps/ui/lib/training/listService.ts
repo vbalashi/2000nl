@@ -24,7 +24,7 @@ export async function fetchCuratedLists(
   languageCode?: string,
 ): Promise<WordListSummary[]> {
   const baseSelect =
-    "id, name, description, language_code, is_primary, word_list_items(count)";
+    "id, name, description, language_code, primary_language_code, is_primary, word_list_items(count)";
 
   // Prefer sort_order when available (migration 0039), but gracefully
   // fall back for older DBs where the column doesn't exist.
@@ -63,19 +63,15 @@ export async function fetchCuratedLists(
 
 export async function fetchUserLists(
   userId: string,
-  languageCode?: string,
+  _languageCode?: string,
 ): Promise<WordListSummary[]> {
-  let query = supabase
+  const query = supabase
     .from("user_word_lists")
     .select(
-      "id, name, description, language_code, created_at, user_word_list_items(count)",
+      "id, name, description, language_code, primary_language_code, created_at, user_word_list_items(count)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-
-  if (languageCode) {
-    query = query.eq("language_code", languageCode);
-  }
 
   const { data, error } = await query;
   if (error || !data) return [];
@@ -121,7 +117,7 @@ export async function fetchListSummaryById(params: {
     const { data, error } = await supabase
       .from("user_word_lists")
       .select(
-        "id, name, description, language_code, created_at, user_word_list_items(count)",
+        "id, name, description, language_code, primary_language_code, created_at, user_word_list_items(count)",
       )
       .eq("id", params.listId)
       .eq("user_id", params.userId)
@@ -139,7 +135,7 @@ export async function fetchListSummaryById(params: {
   const { data, error } = await supabase
     .from("word_lists")
     .select(
-      "id, name, description, language_code, is_primary, word_list_items(count)",
+      "id, name, description, language_code, primary_language_code, is_primary, word_list_items(count)",
     )
     .eq("id", params.listId)
     .maybeSingle();

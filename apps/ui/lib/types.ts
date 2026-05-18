@@ -114,6 +114,7 @@ export type WordListSummary = {
   type: WordListType;
   description?: string | null;
   language_code?: string | null;
+  primary_language_code?: string | null;
   item_count?: number;
   is_primary?: boolean;
   created_at?: string;

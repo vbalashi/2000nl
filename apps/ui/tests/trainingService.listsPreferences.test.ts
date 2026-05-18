@@ -75,6 +75,7 @@ const importService = async () => {
   return {
     fetchActiveList: service.fetchActiveList,
     fetchCuratedLists: service.fetchCuratedLists,
+    fetchUserLists: service.fetchUserLists,
     fetchUserListMembership: service.fetchUserListMembership,
     fetchUserPreferences: service.fetchUserPreferences,
     fetchWordsForList: service.fetchWordsForList,
@@ -113,6 +114,7 @@ describe("trainingService list and preference characterization", () => {
           name: "Basis",
           description: "Core",
           language_code: "nl",
+          primary_language_code: "nl",
           is_primary: true,
           word_list_items: [{ count: 2000 }],
         },
@@ -138,9 +140,49 @@ describe("trainingService list and preference characterization", () => {
         name: "Basis",
         description: "Core",
         language_code: "nl",
+        primary_language_code: "nl",
         type: "curated",
         item_count: 2000,
         is_primary: true,
+      },
+    ]);
+  });
+
+  test("fetchUserLists does not constrain user lists by active training language", async () => {
+    const { fetchUserLists } = await importService();
+
+    queueFrom("user_word_lists", {
+      data: [
+        {
+          id: "list-1",
+          name: "Mixed",
+          description: null,
+          language_code: "nl",
+          primary_language_code: null,
+          created_at: "2026-05-16T10:00:00.000Z",
+          user_word_list_items: [{ count: 3 }],
+        },
+      ],
+      error: null,
+    });
+
+    const lists = await fetchUserLists("user-1", "nl");
+
+    expect(queries[0].select).toHaveBeenCalledWith(
+      expect.stringContaining("primary_language_code"),
+    );
+    expect(queries[0].eq).toHaveBeenCalledTimes(1);
+    expect(queries[0].eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(lists).toEqual([
+      {
+        id: "list-1",
+        name: "Mixed",
+        description: null,
+        language_code: "nl",
+        primary_language_code: "nl",
+        type: "user",
+        item_count: 3,
+        created_at: "2026-05-16T10:00:00.000Z",
       },
     ]);
   });
@@ -283,6 +325,7 @@ describe("trainingService list and preference characterization", () => {
         name: "Nieuw",
         description: "Words to learn",
         language_code: "nl",
+        primary_language_code: "nl",
         created_at: "2026-05-16T10:00:00.000Z",
         user_word_list_items: [{ count: 0 }],
       },
@@ -301,6 +344,7 @@ describe("trainingService list and preference characterization", () => {
       name: "Nieuw",
       description: "Words to learn",
       language_code: "nl",
+      primary_language_code: "nl",
       type: "user",
       item_count: 0,
       created_at: "2026-05-16T10:00:00.000Z",
@@ -344,6 +388,7 @@ describe("trainingService list and preference characterization", () => {
       name: "Bijgewerkt",
       description: "Updated words",
       language_code: "nl",
+      primary_language_code: "nl",
       type: "user",
       item_count: 2,
       created_at: "2026-05-16T10:00:00.000Z",
