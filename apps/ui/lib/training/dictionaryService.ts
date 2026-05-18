@@ -20,12 +20,13 @@ const isMissingRpcError = (error: any): boolean => {
 const mapDictionaryLookupPayload = (
   data: any,
 ): DictionaryEntryWithStats | null => {
-  if (!data) return null;
-  const entry = mapDictionaryEntry(data);
+  const payload = Array.isArray(data) ? data[0] : data;
+  if (!payload) return null;
+  const entry = mapDictionaryEntry(payload);
   return {
     ...entry,
-    meanings_count: data.meanings_count ?? entry.meanings_count,
-    ...(data.stats ? { stats: data.stats } : {}),
+    meanings_count: payload.meanings_count ?? entry.meanings_count,
+    ...(payload.stats ? { stats: payload.stats } : {}),
   };
 };
 

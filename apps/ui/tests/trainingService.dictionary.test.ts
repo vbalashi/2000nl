@@ -173,17 +173,26 @@ describe("trainingService dictionary lookup", () => {
   test("fetchDictionaryEntry prefers gated lookup RPC for authenticated users", async () => {
     const { fetchDictionaryEntry } = await importService();
     rpc.mockResolvedValueOnce({
-      data: {
-        ...row,
-        raw: { meanings: [{ definition: "Een gebouw" }] },
-        dictionary_id: "dict-1",
-        language_code: "nl",
-        meanings_count: 2,
-        stats: {
-          click_count: 3,
-          last_seen_at: "2026-05-17T10:00:00.000Z",
+      data: [
+        {
+          ...row,
+          raw: { meanings: [{ definition: "Een gebouw" }] },
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          meanings_count: 2,
+          stats: {
+            click_count: 3,
+            last_seen_at: "2026-05-17T10:00:00.000Z",
+          },
         },
-      },
+        {
+          ...row,
+          id: "word-2",
+          headword: "huis",
+          dictionary_id: "dict-2",
+          raw: { translation: { languageCode: "en", text: "house" } },
+        },
+      ],
       error: null,
     });
 
