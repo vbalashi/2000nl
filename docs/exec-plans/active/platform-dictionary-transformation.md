@@ -67,7 +67,9 @@ Database:
 - `user_word_lists` / `user_word_list_items` represent user lists.
 - User lists currently reference `word_entries` directly and therefore can mix
   entries in practice, but list metadata has only one nullable `language_code`.
-- `user_word_status` and `user_review_log` are keyed by `word_id + mode`.
+- `user_word_status` and `user_review_log` are still keyed by `word_id + mode`;
+  `user_card_status` and card-named RPC wrappers expose `entry_id +
+  card_type_id` terminology for new clients.
 - `training_scenarios` groups text mode IDs in `card_modes`.
 
 Backend/runtime:
@@ -76,8 +78,10 @@ Backend/runtime:
 - Active backend behavior is Supabase/Postgres RPCs plus server/API routes in
   `apps/ui`.
 - `get_next_word` selects `word_entries` from list scope and returns card-ish
-  payloads with `mode` and stats.
-- `handle_review` and `handle_click` mutate FSRS/review state.
+  payloads with `mode` and stats; `get_next_card` is the card-named wrapper.
+- `handle_review` and `handle_click` mutate FSRS/review state; new platform
+  and app code should prefer `handle_card_review`, `record_card_view`,
+  `start_learning_entry_card`, and `get_user_card_state`.
 - Translation/TTS routes are app-local Next.js routes.
 
 Frontend:
@@ -386,10 +390,14 @@ Validation:
 
 ### Stage 4: Card State Generalization
 
-- Introduce `user_card_status` or compatibility views mapping current
+- Done: introduce `user_card_status` compatibility view mapping current
   `user_word_status` to `entry_id + card_type_id`.
-- Update `get_next_word` or a new `get_next_card` RPC to use card terminology.
-- Keep `handle_review` compatibility while adding `handle_card_review`.
+- Done: add card-named wrappers for view/review/start-learning/state reads.
+- Done: add `get_next_card` as a wrapper over `get_next_word`.
+- Done: move platform API and current training service selection/review calls
+  onto card-named wrappers while keeping legacy RPCs available.
+- Remaining: decide whether to physically replace `user_word_status` or keep it
+  as storage behind the compatibility view for the next stage.
 
 Validation:
 
