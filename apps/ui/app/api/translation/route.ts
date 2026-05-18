@@ -9,6 +9,7 @@ import {
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
+import { getAuthenticatedSupabase } from "@/lib/platform/serverSupabase";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -216,6 +217,12 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const authResult = await getAuthenticatedSupabase(req);
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
+  const userSupabase = authResult.supabase;
+
   const dbLang = normalizeLangForDb(lang);
   const targetLang = lang.trim();
   let provider: TranslationProviderName;
@@ -368,12 +375,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Fetch source word fields (also used to compute the fingerprint).
-  const { data: word, error: wordError } = await supabase
-    .from("word_entries")
-    .select("headword,gender,part_of_speech,raw")
-    .eq("id", wordEntryId)
-    .maybeSingle();
+  // Fetch source word fields through the same dictionary access gate used by
+  // lookup/training reads. Translation cache writes still use the service
+  // client below, but private entries must not be readable by id alone.
+  const { data: word, error: wordError } = await userSupabase.rpc(
+    "fetch_dictionary_entry_by_id_gated",
+    { p_word_id: wordEntryId },
+  );
 
   if (wordError || !word?.raw) {
     const message = wordError?.message ?? "word_entries.raw not found";

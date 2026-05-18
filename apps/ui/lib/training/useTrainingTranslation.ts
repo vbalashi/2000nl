@@ -3,6 +3,7 @@ import type {
   TranslationOverlay,
   WordEntryTranslationStatus,
 } from "@/lib/types";
+import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
 
 type TranslationKind =
   | "definition"
@@ -74,7 +75,7 @@ export function useTrainingTranslation(params: {
           {
             cache: "no-store",
             credentials: "same-origin",
-            headers: { Accept: "application/json" },
+            headers: await translationRequestHeaders(),
           },
         );
 

@@ -125,14 +125,13 @@ describe("TrainingCard translation behavior", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  test("shows failed translation status text", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse("nope", false, 500));
+  test("shows pending translation status while loading", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Promise(() => {}) as any);
 
     renderCard({ translationTooltipOpen: true });
 
-    await waitFor(() =>
-      expect(document.body).toHaveTextContent(/Translation API 500: nope/i),
-    );
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(document.body).toHaveTextContent(/Vertaling wordt voorbereid/i);
   });
 
   test("long-press force refreshes and suppresses the following click toggle", async () => {

@@ -16,6 +16,7 @@ import {
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
+import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
 import { getAllMeanings } from "@/lib/wordUtils";
 
 export type WordDetailPanelProps = {
@@ -149,7 +150,7 @@ export function WordDetailPanel({
           {
             cache: "no-store",
             credentials: "same-origin",
-            headers: { Accept: "application/json" },
+            headers: await translationRequestHeaders(),
           }
         );
 
