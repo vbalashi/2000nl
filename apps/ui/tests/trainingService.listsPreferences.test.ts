@@ -349,29 +349,36 @@ describe("trainingService list and preference characterization", () => {
     });
   });
 
-  test("addWordsToUserList upserts unique list items and skips empty input", async () => {
+  test("addWordsToUserList calls the explicit list membership RPC and skips empty input", async () => {
     const { addWordsToUserList } = await importService();
 
     await expect(addWordsToUserList("list-1", [])).resolves.toEqual({
       error: null,
     });
     expect(from).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
 
-    queueFrom("user_word_list_items", { data: null, error: null });
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValue({ data: null, error: null });
 
     await expect(
-      addWordsToUserList("list-1", ["word-1", "word-2"]),
+      addWordsToUserList("list-1", ["word-1", "word-2", "word-1"]),
     ).resolves.toEqual({ error: null });
-    expect(queries[0].upsert).toHaveBeenCalledWith(
-      [
-        { list_id: "list-1", word_id: "word-1" },
-        { list_id: "list-1", word_id: "word-2" },
-      ],
-      {
-        onConflict: "list_id,word_id",
-        ignoreDuplicates: true,
-      },
-    );
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, "add_entry_to_user_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_word_id: "word-1",
+    });
+    expect(rpc).toHaveBeenNthCalledWith(2, "add_entry_to_user_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_word_id: "word-2",
+    });
   });
 
   test("removeWordsFromUserList and deleteUserList issue scoped deletes", async () => {

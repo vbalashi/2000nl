@@ -558,20 +558,29 @@ export async function addWordsToUserList(
   listId: string,
   wordIds: string[],
 ): Promise<{ error: any }> {
-  if (!wordIds.length) {
+  const uniqueWordIds = Array.from(new Set(wordIds.filter(Boolean)));
+  if (!uniqueWordIds.length) {
     return { error: null };
   }
 
-  const rows = wordIds.map((id) => ({
-    list_id: listId,
-    word_id: id,
-  }));
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    const error = userError ?? { message: "not_authenticated" };
+    console.error("Error resolving user before adding words to list", error);
+    return { error };
+  }
 
-  // Use upsert to avoid duplicates (unique constraint on list_id,word_id).
-  const { error } = await supabase.from("user_word_list_items").upsert(rows, {
-    onConflict: "list_id,word_id",
-    ignoreDuplicates: true,
-  });
+  const results = await Promise.all(
+    uniqueWordIds.map((wordId) =>
+      supabase.rpc("add_entry_to_user_list", {
+        p_user_id: userId,
+        p_list_id: listId,
+        p_word_id: wordId,
+      }),
+    ),
+  );
+  const error = results.find((result) => result.error)?.error ?? null;
 
   if (error) {
     console.error("Error adding words to list", error);
