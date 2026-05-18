@@ -49,10 +49,31 @@ type ExtractedItem = {
   text: string;
 };
 
-function extractTranslatableTexts(word: any): ExtractedItem[] {
+export function extractTranslatableTexts(word: any): ExtractedItem[] {
   const raw = word?.raw;
-  const meaning = raw?.meanings?.[0];
-  if (!meaning || typeof meaning !== "object") return [];
+  const rawExample =
+    typeof raw?.example === "string"
+      ? raw.example
+      : typeof raw?.example?.source === "string"
+        ? raw.example.source
+        : undefined;
+  const meaning =
+    raw?.meanings?.[0] && typeof raw.meanings[0] === "object"
+      ? raw.meanings[0]
+      : {
+          definition:
+            raw?.definition ??
+            raw?.translation?.text ??
+            raw?.notes ??
+            rawExample,
+          context:
+            raw?.notes &&
+            raw.notes !== raw?.definition &&
+            raw.notes !== raw?.translation?.text
+              ? raw.notes
+              : undefined,
+          examples: rawExample ? [rawExample] : [],
+        };
 
   const out: ExtractedItem[] = [];
   const push = (path: Array<string | number>, text: unknown) => {
