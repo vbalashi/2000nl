@@ -29,12 +29,14 @@ export type DictionarySummary = {
   kind: DictionaryKind;
   visibility: DictionaryVisibility;
   ownerUserId?: string | null;
-  isEditable: boolean;
+  isEditable?: boolean | null;
   sourceProvider?: string | null;
   sourceVersion?: string | null;
   minimumSubscriptionTier?: string | null;
   visibleToGroups?: string[];
   accessPolicyKey?: string | null;
+  schemaKey?: string | null;
+  schemaVersion?: number | null;
   entrySchemaId?: string | null;
   entrySchemaVersion?: string | null;
 };
