@@ -91,6 +91,33 @@
 -- Explicit user word-list metadata update action
 \i db/migrations/027_update_user_word_list_action.sql
 
+-- Recent training history read RPC
+\i db/migrations/028_recent_training_history_rpc.sql
+
+-- Card user-state read RPC
+\i db/migrations/029_card_user_state_rpc.sql
+
+-- Extended card user-state payload for platform API
+\i db/migrations/030_extend_card_user_state_rpc.sql
+
+-- Owned user-list membership read RPC
+\i db/migrations/031_user_list_membership_rpc.sql
+
+-- Word-list summary read RPC
+\i db/migrations/032_word_list_summary_rpc.sql
+
+-- Available word-lists read RPC
+\i db/migrations/033_available_word_lists_rpc.sql
+
+-- Active word-list preference RPCs
+\i db/migrations/034_active_word_list_rpcs.sql
+
+-- Learning preference RPCs
+\i db/migrations/035_learning_preferences_rpcs.sql
+
+-- Dictionary metadata in lookup candidates
+\i db/migrations/036_lookup_dictionary_metadata.sql
+
 -- User-list memberships for platform lookup/status payloads
 \i db/migrations/037_user_list_memberships_for_entries_rpc.sql
 
