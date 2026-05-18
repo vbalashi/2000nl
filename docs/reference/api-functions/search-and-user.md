@@ -99,7 +99,10 @@ Response:
         "mark-unknown",
         "review-card",
         "add-to-list",
-        "copy-to-user-dictionary"
+        "copy-to-user-dictionary",
+        "create-user-entry",
+        "update-user-entry",
+        "delete-user-entry"
       ]
     }
   ]
@@ -124,6 +127,12 @@ Supported actions:
 - `add-to-list` – calls `add_entry_to_user_list` for an owned user list.
 - `copy-to-user-dictionary` – calls `copy_entry_to_user_dictionary`, creating
   or using a private editable `user-entry-v1` dictionary.
+- `create-user-entry` – calls `create_user_dictionary_entry` with a full
+  `user-entry-v1` payload.
+- `update-user-entry` – calls `update_user_dictionary_entry` and replaces an
+  owned user entry payload.
+- `delete-user-entry` – calls `delete_user_dictionary_entry` for an owned user
+  entry.
 
 Examples:
 
@@ -156,6 +165,42 @@ Examples:
     },
     "notes": "Preferred personal wording"
   }
+}
+```
+
+```json
+{
+  "action": "create-user-entry",
+  "entry": {
+    "headword": "gedoe",
+    "languageCode": "nl",
+    "translation": {
+      "languageCode": "en",
+      "text": "hassle"
+    },
+    "example": {
+      "source": "Wat een gedoe."
+    }
+  }
+}
+```
+
+```json
+{
+  "action": "update-user-entry",
+  "entryId": "entry-uuid",
+  "entry": {
+    "headword": "gedoe",
+    "languageCode": "nl",
+    "definition": "updated personal definition"
+  }
+}
+```
+
+```json
+{
+  "action": "delete-user-entry",
+  "entryId": "entry-uuid"
 }
 ```
 

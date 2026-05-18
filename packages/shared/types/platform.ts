@@ -172,6 +172,9 @@ export type LookupActionId =
   | "record-view"
   | "add-to-list"
   | "copy-to-user-dictionary"
+  | "create-user-entry"
+  | "update-user-entry"
+  | "delete-user-entry"
   | "mark-known"
   | "mark-unknown"
   | "review-card"
@@ -253,6 +256,20 @@ export type PlatformActionRequest =
       entryId: string;
       targetDictionaryId?: string | null;
       overrides?: Partial<UserDictionaryEntryV1>;
+    }
+  | {
+      action: "create-user-entry";
+      dictionaryId?: string | null;
+      entry: UserDictionaryEntryV1;
+    }
+  | {
+      action: "update-user-entry";
+      entryId: string;
+      entry: UserDictionaryEntryV1;
+    }
+  | {
+      action: "delete-user-entry";
+      entryId: string;
     };
 
 export type PlatformActionResponse = {
@@ -265,4 +282,5 @@ export type PlatformActionResponse = {
   listId?: string;
   copiedEntryId?: string;
   targetDictionaryId?: string | null;
+  dictionaryId?: string | null;
 };

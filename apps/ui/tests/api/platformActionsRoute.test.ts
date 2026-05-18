@@ -255,6 +255,97 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("creates user dictionary entries without requiring an existing entry id", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: "created-entry-1", error: null });
+
+    const response = await POST(
+      request({
+        action: "create-user-entry",
+        entry: {
+          headword: "gedoe",
+          languageCode: "nl",
+          translation: {
+            languageCode: "en",
+            text: "hassle",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("create_user_dictionary_entry", {
+      p_user_id: "user-1",
+      p_dictionary_id: null,
+      p_entry: {
+        headword: "gedoe",
+        languageCode: "nl",
+        translation: {
+          languageCode: "en",
+          text: "hassle",
+        },
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      action: "create-user-entry",
+      entryId: "created-entry-1",
+      dictionaryId: null,
+    });
+  });
+
+  test("updates user dictionary entries through the explicit RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: "entry-1", error: null });
+
+    const response = await POST(
+      request({
+        action: "update-user-entry",
+        entryId: "entry-1",
+        entry: {
+          headword: "gedoe",
+          languageCode: "nl",
+          definition: "updated definition",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("update_user_dictionary_entry", {
+      p_user_id: "user-1",
+      p_word_id: "entry-1",
+      p_entry: {
+        headword: "gedoe",
+        languageCode: "nl",
+        definition: "updated definition",
+      },
+    });
+  });
+
+  test("deletes user dictionary entries through the explicit RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(
+      request({
+        action: "delete-user-entry",
+        entryId: "entry-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("delete_user_dictionary_entry", {
+      p_user_id: "user-1",
+      p_word_id: "entry-1",
+    });
+  });
+
   test("rejects inaccessible entries before mutating", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
