@@ -190,6 +190,21 @@ export type PlatformLookupApiResponse = {
   items: DictionaryLookupResult[];
 };
 
+export type PlatformAnalyzeSelectionRequest = {
+  selection?: string;
+  query?: string;
+  includeUserState?: boolean;
+  actions?: PlatformActionRequest[];
+};
+
+export type PlatformAnalyzeSelectionResponse = {
+  lookup: PlatformLookupApiResponse;
+  actionResults: Array<{
+    status: number;
+    body: PlatformActionResponse | { error: string; detail?: string };
+  }>;
+};
+
 export type PlatformActionRequest =
   | {
       action: "record-view" | "start-learning";

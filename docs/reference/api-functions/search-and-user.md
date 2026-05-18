@@ -135,3 +135,44 @@ Examples:
   "listId": "list-uuid"
 }
 ```
+
+## HTTP `POST /api/platform/analyze-selection`
+
+Composite endpoint for browser extensions and adjacent apps that want one
+round trip. It runs lookup first and is read-only unless the request includes
+an explicit `actions` array.
+
+Request:
+
+```json
+{
+  "selection": "huis",
+  "includeUserState": true,
+  "actions": [
+    {
+      "action": "start-learning",
+      "entryId": "entry-uuid",
+      "cardTypeId": "word-to-definition"
+    }
+  ]
+}
+```
+
+Response:
+
+```json
+{
+  "lookup": {
+    "query": "huis",
+    "items": []
+  },
+  "actionResults": [
+    {
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    }
+  ]
+}
+```
