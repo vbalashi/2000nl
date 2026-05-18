@@ -197,18 +197,6 @@ export const fetchDictionaryEntry = async (
       ? await tryFetchByHeadword(normalized.toLowerCase())
       : null);
   if (directMatch) {
-    if (userId) {
-      const { data: statsData } = await supabase
-        .from("user_word_status")
-        .select("click_count, last_seen_at")
-        .eq("user_id", userId)
-        .eq("word_id", directMatch.id)
-        .maybeSingle();
-
-      if (statsData) {
-        return { ...directMatch, stats: statsData };
-      }
-    }
     return directMatch;
   }
 
@@ -232,19 +220,6 @@ export const fetchDictionaryEntry = async (
 
   const entry = await fetchDictionaryEntryById(formRow.word_id, userId);
   if (!entry) return null;
-
-  if (userId) {
-    const { data: statsData } = await supabase
-      .from("user_word_status")
-      .select("click_count, last_seen_at")
-      .eq("user_id", userId)
-      .eq("word_id", entry.id)
-      .maybeSingle();
-
-    if (statsData) {
-      return { ...entry, stats: statsData };
-    }
-  }
 
   return entry;
 };

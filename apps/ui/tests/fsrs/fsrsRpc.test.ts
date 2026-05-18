@@ -191,6 +191,37 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_card_user_state returns one accessible card state", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-card-state-${Date.now()}`);
+
+      await client.query(
+        `insert into user_word_status (
+          user_id, word_id, mode,
+          click_count, fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
+        ) values ($1, $2, $3, 1, 2.0, 3, 4.5, now() + interval '1 day')`,
+        [userId, wordId, mode],
+      );
+
+      const { rows } = await client.query(
+        `select get_card_user_state($1::uuid, $2::uuid, $3::text) as state`,
+        [userId, wordId, mode],
+      );
+
+      expect(rows[0].state).toEqual(
+        expect.objectContaining({
+          click_count: 1,
+          fsrs_last_interval: 2,
+          fsrs_reps: 3,
+          fsrs_stability: 4.5,
+          in_learning: false,
+        }),
+      );
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

@@ -109,17 +109,14 @@ export const recordReview = async (
     return null;
   }
 
-  // Fetch the updated status after the review to get new FSRS values
-  // Note: in_learning and learning_due_at require migration 0015
-  const { data: statusData, error: fetchError } = await supabase
-    .from("user_word_status")
-    .select(
-      "fsrs_last_interval, fsrs_reps, fsrs_stability, click_count, next_review_at",
-    )
-    .eq("user_id", params.userId)
-    .eq("word_id", params.wordId)
-    .eq("mode", params.mode)
-    .maybeSingle();
+  const { data: statusData, error: fetchError } = await supabase.rpc(
+    "get_card_user_state",
+    {
+      p_user_id: params.userId,
+      p_word_id: params.wordId,
+      p_mode: params.mode,
+    },
+  );
 
   if (fetchError || !statusData) {
     // If the basic query fails, the review was still recorded - just can't show updated stats
@@ -135,8 +132,8 @@ export const recordReview = async (
     stability: statusData.fsrs_stability,
     clicks: statusData.click_count,
     next_review: statusData.next_review_at,
-    in_learning: null,
-    learning_due_at: null,
+    in_learning: statusData.in_learning ?? null,
+    learning_due_at: statusData.learning_due_at ?? null,
   };
 };
 
