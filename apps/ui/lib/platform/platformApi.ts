@@ -175,6 +175,22 @@ function mapUserEntryRpcError(
   return { payload: { error: fallbackError, detail }, status: 500 };
 }
 
+function mapUserListRpcPayload(row: any) {
+  if (!row || typeof row !== "object") return null;
+  const count = Array.isArray(row.user_word_list_items)
+    ? row.user_word_list_items[0]?.count
+    : undefined;
+
+  return {
+    id: row.id,
+    kind: "user",
+    name: row.name,
+    description: row.description ?? null,
+    primaryLanguageCode: row.primary_language_code ?? row.language_code ?? null,
+    itemCount: typeof count === "number" ? count : 0,
+  };
+}
+
 export async function performPlatformLookup(
   auth: AuthenticatedSupabase,
   params: { query: string; includeUserState: boolean },
@@ -412,7 +428,7 @@ export async function performPlatformAction(
         ok: true,
         action,
         listId: data?.id ?? null,
-        list: data,
+        list: mapUserListRpcPayload(data),
       },
       status: 200,
     };

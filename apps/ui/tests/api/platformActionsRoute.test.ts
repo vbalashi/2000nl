@@ -282,6 +282,14 @@ describe("/api/platform/actions", () => {
         ok: true,
         action: "create-user-list",
         listId: "list-1",
+        list: {
+          id: "list-1",
+          kind: "user",
+          name: "Mine",
+          description: "Personal words",
+          primaryLanguageCode: "nl",
+          itemCount: 0,
+        },
       }),
     );
   });
