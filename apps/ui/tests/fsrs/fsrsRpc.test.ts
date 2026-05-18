@@ -144,10 +144,68 @@ describeIfDb("FSRS RPC integration", () => {
          where user_id = $1 and word_id = $2`,
         [userId, wordId],
       );
+      const { rows: translationRows } = await client.query(
+        `select count(*)::int as count
+         from word_entry_translations
+         where word_entry_id = $1`,
+        [wordId],
+      );
 
       expect(statusRows[0].count).toBe(0);
       expect(reviewRows[0].count).toBe(0);
+      expect(translationRows[0].count).toBe(0);
     }, userId);
+  });
+
+  test("dictionary lookup by headword hides private user dictionaries from other users", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        ownerId,
+      ]);
+      const headword = `fsrs-private-lookup-${Date.now()}`;
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+          $1,
+          NULL,
+          jsonb_build_object(
+            'headword', $2::text,
+            'languageCode', 'nl',
+            'definition', 'private definition'
+          )
+        ) as word_id`,
+        [ownerId, headword],
+      );
+
+      const { rows: ownerRows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as items`,
+        [headword],
+      );
+      expect(ownerRows[0].items.map((item: { id: string }) => item.id)).toContain(
+        createRows[0].word_id,
+      );
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        otherId,
+      ]);
+      const { rows: otherRows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as items`,
+        [headword],
+      );
+      expect(otherRows[0].items).toEqual([]);
+
+      const { rows: statusRows } = await client.query(
+        `select count(*)::int as count
+         from user_word_status
+         where user_id = $1 and word_id = $2`,
+        [otherId, createRows[0].word_id],
+      );
+      expect(statusRows[0].count).toBe(0);
+    }, ownerId);
   });
 
   test("get_recent_training_history returns hydrated event and status rows", async () => {
