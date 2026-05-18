@@ -197,14 +197,7 @@ describe("/api/platform/actions", () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
     mockAccessibleEntry();
-    from
-      .mockImplementationOnce(() =>
-        chain({
-          data: { id: "list-1" },
-          error: null,
-        }),
-      )
-      .mockImplementationOnce(() => chain({ data: null, error: null }));
+    rpc.mockResolvedValueOnce({ data: null, error: null });
 
     const response = await POST(
       request({
@@ -215,15 +208,11 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
-    const insertQuery = from.mock.results[3].value;
-    expect(from).toHaveBeenNthCalledWith(4, "user_word_list_items");
-    expect(insertQuery.upsert).toHaveBeenCalledWith(
-      {
-        list_id: "list-1",
-        word_id: "entry-1",
-      },
-      { onConflict: "list_id,word_id", ignoreDuplicates: true },
-    );
+    expect(rpc).toHaveBeenCalledWith("add_entry_to_user_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_word_id: "entry-1",
+    });
   });
 
   test("rejects inaccessible entries before mutating", async () => {

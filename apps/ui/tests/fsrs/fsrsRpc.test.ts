@@ -189,6 +189,40 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("add_entry_to_user_list adds readable entries idempotently", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-list-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `List ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        wordId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        wordId,
+      ]);
+
+      const { rows } = await client.query(
+        `select count(*)::int as count
+         from user_word_list_items
+         where list_id = $1 and word_id = $2`,
+        [listId, wordId],
+      );
+      expect(rows[0].count).toBe(1);
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

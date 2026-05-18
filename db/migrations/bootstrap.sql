@@ -60,3 +60,6 @@
 
 -- Explicit start-learning action without review-log side effects
 \i db/migrations/017_start_learning_card_action.sql
+
+-- Explicit user-list membership action with ownership and dictionary access checks
+\i db/migrations/018_add_entry_to_user_list_action.sql

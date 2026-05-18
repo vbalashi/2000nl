@@ -114,7 +114,7 @@ Supported actions:
 - `mark-known` – explicit shortcut to `handle_review(..., "easy")`.
 - `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
 - `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
-- `add-to-list` – inserts the entry into an owned user list.
+- `add-to-list` – calls `add_entry_to_user_list` for an owned user list.
 
 Examples:
 

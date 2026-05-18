@@ -179,33 +179,25 @@ export async function POST(request: NextRequest) {
       return reply({ error: "missing_list_id" }, 400);
     }
 
-    const { data: list, error: listError } = await auth.supabase
-      .from("user_word_lists")
-      .select("id")
-      .eq("id", listId)
-      .eq("user_id", auth.user.id)
-      .maybeSingle();
-
-    if (listError) {
-      return reply(
-        { error: "list_lookup_failed", detail: listError.message ?? String(listError) },
-        500,
-      );
-    }
-    if (!list) {
-      return reply({ error: "list_not_found" }, 404);
-    }
-
-    const { error } = await auth.supabase
-      .from("user_word_list_items")
-      .upsert(
-        { list_id: listId, word_id: entryId },
-        { onConflict: "list_id,word_id", ignoreDuplicates: true },
-      );
+    const { error } = await auth.supabase.rpc("add_entry_to_user_list", {
+      p_user_id: auth.user.id,
+      p_list_id: listId,
+      p_word_id: entryId,
+    });
 
     if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("list_not_found")) {
+        return reply({ error: "list_not_found" }, 404);
+      }
+      if (detail.includes("entry_not_found")) {
+        return reply({ error: "entry_not_found" }, 404);
+      }
+      if (detail.includes("entry_not_accessible")) {
+        return reply({ error: "entry_not_accessible" }, 403);
+      }
       return reply(
-        { error: "add_to_list_failed", detail: error.message ?? String(error) },
+        { error: "add_to_list_failed", detail },
         500,
       );
     }
