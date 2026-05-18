@@ -1,5 +1,4 @@
 import { supabase } from "../supabaseClient";
-import { trainingDebug } from "../trainingDebug";
 import type { DictionaryEntry, TrainingWord } from "../types";
 import { mapDictionaryEntry, normalizeRaw } from "./wordMappers";
 
@@ -42,19 +41,7 @@ const fetchDictionaryEntryById = async (
     return mapDictionaryEntry(data);
   }
 
-  const { data, error } = await supabase
-    .from("word_entries")
-    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
-    .eq("id", id)
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) {
-    console.error("Unable to fetch dictionary entry by id", error);
-    return null;
-  }
-
-  return mapDictionaryEntry(data);
+  return null;
 };
 
 export const fetchTrainingWordById = async (
@@ -116,31 +103,7 @@ export const fetchTrainingWordByLookup = async (
     };
   }
 
-  const { data, error } = await supabase
-    .from("word_entries")
-    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
-    .ilike("headword", normalized)
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) {
-    if (error) {
-      console.error("Unable to fetch training word by headword", error);
-    }
-    return null;
-  }
-
-  return {
-    id: data.id,
-    ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
-    ...(data.language_code ? { language_code: data.language_code } : {}),
-    headword: data.headword,
-    part_of_speech: data.part_of_speech ?? undefined,
-    gender: data.gender ?? undefined,
-    raw: normalizeRaw(data.raw),
-    is_nt2_2000: data.is_nt2_2000,
-    isFirstEncounter: false,
-  };
+  return null;
 };
 
 export const fetchDictionaryEntry = async (
@@ -163,63 +126,5 @@ export const fetchDictionaryEntry = async (
     return null;
   }
 
-  const tryFetchByHeadword = async (value: string) => {
-    const { data, error } = await supabase
-      .from("word_entries")
-      .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
-      .eq("headword", value)
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !data) {
-      return null;
-    }
-
-    // Get count of siblings
-    let countQuery = supabase
-      .from("word_entries")
-      .select("id", { count: "exact", head: true })
-      .eq("headword", value);
-    if (data.dictionary_id) {
-      countQuery = countQuery.eq("dictionary_id", data.dictionary_id);
-    } else if (data.language_code) {
-      countQuery = countQuery.eq("language_code", data.language_code);
-    }
-    const { count } = await countQuery;
-
-    return { ...mapDictionaryEntry(data), meanings_count: count ?? 1 };
-  };
-
-  // 1) Exact headword match (case sensitive, then case-insensitive via lowercase).
-  const directMatch =
-    (await tryFetchByHeadword(normalized)) ??
-    (normalized.toLowerCase() !== normalized
-      ? await tryFetchByHeadword(normalized.toLowerCase())
-      : null);
-  if (directMatch) {
-    return directMatch;
-  }
-
-  // 2) Fallback to word_forms mapping (normalized to lowercase).
-  const { data: formRow, error: formError } = await supabase
-    .from("word_forms")
-    .select("word_id, headword")
-    .eq("form", normalized.toLowerCase())
-    .order("headword", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (formError) {
-    console.error("Unable to query word_forms", formError);
-  }
-
-  if (!formRow?.word_id) {
-    trainingDebug.log("No dictionary entry found for:", normalized);
-    return null;
-  }
-
-  const entry = await fetchDictionaryEntryById(formRow.word_id, userId);
-  if (!entry) return null;
-
-  return entry;
+  return null;
 };
