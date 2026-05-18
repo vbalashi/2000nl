@@ -108,7 +108,8 @@ Authentication is the same Bearer-token flow as `/api/platform/lookup`.
 
 Supported actions:
 - `record-view` – calls `record_word_view`.
-- `start-learning` – currently records an explicit view/start marker via `record_word_view`.
+- `start-learning` – calls `start_learning_card`, enabling the card without
+  writing a review-log row.
 - `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
 - `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
 - `add-to-list` – inserts the entry into an owned user list.

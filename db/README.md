@@ -224,6 +224,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 | `handle_review()` | Grade a card (success/fail/hard/easy) |
 | `handle_click()` | "Show answer" click = lapse |
 | `record_word_view()` | Track that a training card was shown |
+| `start_learning_card()` | Explicitly enable a card for learning without a review-log row |
 | `get_next_word()` | Queue-based card selector |
 | `get_training_stats()` | Basic session statistics |
 | `get_detailed_training_stats()` | Detailed counters for footer |
