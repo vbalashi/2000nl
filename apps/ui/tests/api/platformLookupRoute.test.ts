@@ -92,35 +92,63 @@ describe("/api/platform/lookup", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    rpc.mockResolvedValueOnce({
-      data: [
-        {
-          id: "entry-1",
-          dictionary_id: "dict-1",
-          language_code: "nl",
-          headword: "huis",
-          meaning_id: 1,
-          part_of_speech: "zn",
-          raw: { meanings: [{ definition: "gebouw" }] },
-          is_nt2_2000: true,
-          meanings_count: 1,
-        },
-        {
-          id: "entry-2",
-          dictionary_id: "dict-2",
-          language_code: "nl",
-          headword: "huis",
-          meaning_id: 1,
-          part_of_speech: "noun",
-          raw: { translation: { languageCode: "en", text: "house" } },
-          is_nt2_2000: false,
-          meanings_count: 1,
-        },
-      ],
-      error: null,
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "fetch_dictionary_entry_gated") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "entry-1",
+              dictionary_id: "dict-1",
+              language_code: "nl",
+              headword: "huis",
+              meaning_id: 1,
+              part_of_speech: "zn",
+              raw: { meanings: [{ definition: "gebouw" }] },
+              is_nt2_2000: true,
+              meanings_count: 1,
+            },
+            {
+              id: "entry-2",
+              dictionary_id: "dict-2",
+              language_code: "nl",
+              headword: "huis",
+              meaning_id: 1,
+              part_of_speech: "noun",
+              raw: { translation: { languageCode: "en", text: "house" } },
+              is_nt2_2000: false,
+              meanings_count: 1,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (
+        name === "get_card_user_state" &&
+        args?.p_word_id === "entry-1" &&
+        args?.p_mode === "word-to-definition"
+      ) {
+        return Promise.resolve({
+          data: {
+            click_count: 2,
+            last_seen_at: "2026-05-17T10:00:00.000Z",
+            last_reviewed_at: null,
+            next_review_at: null,
+            hidden: false,
+            frozen_until: null,
+            fsrs_stability: null,
+            fsrs_difficulty: null,
+            fsrs_reps: 0,
+            fsrs_lapses: 0,
+            fsrs_last_grade: null,
+            fsrs_last_interval: null,
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
     from
-      .mockImplementationOnce(() =>
+      .mockImplementation(() =>
         chain({
           data: [
             {
@@ -150,29 +178,6 @@ describe("/api/platform/lookup", () => {
           ],
           error: null,
         }),
-      )
-      .mockImplementationOnce(() =>
-        chain({
-          data: [
-            {
-              word_id: "entry-1",
-              mode: "word-to-definition",
-              click_count: 2,
-              last_seen_at: "2026-05-17T10:00:00.000Z",
-              last_reviewed_at: null,
-              next_review_at: null,
-              hidden: false,
-              frozen_until: null,
-              fsrs_stability: null,
-              fsrs_difficulty: null,
-              fsrs_reps: 0,
-              fsrs_lapses: 0,
-              fsrs_last_grade: null,
-              fsrs_last_interval: null,
-            },
-          ],
-          error: null,
-        }),
       );
 
     const response = await POST(request({ query: " huis " }));
@@ -190,6 +195,11 @@ describe("/api/platform/lookup", () => {
     );
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
       p_headword: "huis",
+    });
+    expect(rpc).toHaveBeenCalledWith("get_card_user_state", {
+      p_user_id: "user-1",
+      p_word_id: "entry-1",
+      p_mode: "word-to-definition",
     });
     const payload = await response.json();
     expect(payload.items[0].entry).toEqual(

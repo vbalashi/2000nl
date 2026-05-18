@@ -255,47 +255,49 @@ export async function performPlatformLookup(
 
   const userStateByEntryId = new Map<string, Record<string, unknown>>();
   if (includeUserState) {
-    const entryIds = entries.map((entry) => entry.id);
-    const { data: statusRows, error: statusError } = await auth.supabase
-      .from("user_word_status")
-      .select(
-        "word_id, mode, click_count, last_seen_at, last_reviewed_at, next_review_at, hidden, frozen_until, fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses, fsrs_last_grade, fsrs_last_interval",
-      )
-      .eq("user_id", auth.user.id)
-      .in("word_id", entryIds);
+    for (const entry of entries) {
+      for (const mode of TRAINING_MODES) {
+        const { data: row, error: statusError } = await auth.supabase.rpc(
+          "get_card_user_state",
+          {
+            p_user_id: auth.user.id,
+            p_word_id: entry.id,
+            p_mode: mode,
+          },
+        );
 
-    if (statusError) {
-      return {
-        payload: {
-          error: "user_state_failed",
-          detail: statusError.message ?? String(statusError),
-        },
-        status: 500,
-      };
-    }
+        if (statusError) {
+          return {
+            payload: {
+              error: "user_state_failed",
+              detail: statusError.message ?? String(statusError),
+            },
+            status: 500,
+          };
+        }
+        if (!row) continue;
 
-    for (const row of statusRows ?? []) {
-      const entryId = row.word_id;
-      const states = userStateByEntryId.get(entryId) ?? {};
-      states[row.mode] = {
-        cardTypeId: row.mode,
-        entryId,
-        clickCount: row.click_count ?? 0,
-        lastSeenAt: row.last_seen_at ?? null,
-        lastReviewedAt: row.last_reviewed_at ?? null,
-        nextReviewAt: row.next_review_at ?? null,
-        hidden: row.hidden ?? false,
-        frozenUntil: row.frozen_until ?? null,
-        fsrs: {
-          stability: row.fsrs_stability ?? null,
-          difficulty: row.fsrs_difficulty ?? null,
-          reps: row.fsrs_reps ?? 0,
-          lapses: row.fsrs_lapses ?? 0,
-          lastGrade: row.fsrs_last_grade ?? null,
-          lastInterval: row.fsrs_last_interval ?? null,
-        },
-      };
-      userStateByEntryId.set(entryId, states);
+        const states = userStateByEntryId.get(entry.id) ?? {};
+        states[mode] = {
+          cardTypeId: mode,
+          entryId: entry.id,
+          clickCount: row.click_count ?? 0,
+          lastSeenAt: row.last_seen_at ?? null,
+          lastReviewedAt: row.last_reviewed_at ?? null,
+          nextReviewAt: row.next_review_at ?? null,
+          hidden: row.hidden ?? false,
+          frozenUntil: row.frozen_until ?? null,
+          fsrs: {
+            stability: row.fsrs_stability ?? null,
+            difficulty: row.fsrs_difficulty ?? null,
+            reps: row.fsrs_reps ?? 0,
+            lapses: row.fsrs_lapses ?? 0,
+            lastGrade: row.fsrs_last_grade ?? null,
+            lastInterval: row.fsrs_last_interval ?? null,
+          },
+        };
+        userStateByEntryId.set(entry.id, states);
+      }
     }
   }
 
