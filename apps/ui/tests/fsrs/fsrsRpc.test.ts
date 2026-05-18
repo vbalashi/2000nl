@@ -310,6 +310,50 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("user word list CRUD actions create and delete owned lists", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+
+      const { rows: createRows } = await client.query(
+        `select create_user_word_list($1, $2, $3, 'nl', 'nl') as list`,
+        [ownerId, `CRUD list ${Date.now()}`, "Created through RPC"],
+      );
+      const list = createRows[0].list;
+      expect(list).toEqual(
+        expect.objectContaining({
+          name: expect.stringContaining("CRUD list"),
+          description: "Created through RPC",
+          language_code: "nl",
+          primary_language_code: "nl",
+        }),
+      );
+      expect(list.user_word_list_items[0].count).toBe(0);
+
+      await client.query("savepoint unauthorized_delete_list");
+      await expect(
+        client.query(`select delete_user_word_list($1, $2)`, [otherId, list.id]),
+      ).rejects.toThrow(/unauthorized/);
+      await client.query("rollback to savepoint unauthorized_delete_list");
+      await client.query("release savepoint unauthorized_delete_list");
+
+      await client.query(`select delete_user_word_list($1, $2)`, [
+        ownerId,
+        list.id,
+      ]);
+
+      const { rows: countRows } = await client.query(
+        `select count(*)::int as count
+         from user_word_lists
+         where id = $1`,
+        [list.id],
+      );
+      expect(countRows[0].count).toBe(0);
+    }, ownerId);
+  });
+
   test("ensure_user_dictionary creates a private editable user dictionary", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

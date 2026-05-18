@@ -525,10 +525,18 @@ export async function removeWordsFromUserList(
 }
 
 export async function deleteUserList(listId: string): Promise<{ error: any }> {
-  const { error } = await supabase
-    .from("user_word_lists")
-    .delete()
-    .eq("id", listId);
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    const error = userError ?? { message: "not_authenticated" };
+    console.error("Error resolving user before deleting user list", error);
+    return { error };
+  }
+
+  const { error } = await supabase.rpc("delete_user_word_list", {
+    p_user_id: userId,
+    p_list_id: listId,
+  });
 
   if (error) {
     console.error("Error deleting user list", error);
@@ -542,18 +550,13 @@ export async function createUserList(params: {
   description?: string;
   language_code?: string;
 }): Promise<WordListSummary | null> {
-  const { data, error } = await supabase
-    .from("user_word_lists")
-    .insert({
-      user_id: params.userId,
-      name: params.name,
-      description: params.description,
-      language_code: params.language_code,
-    })
-    .select(
-      "id, name, description, language_code, created_at, user_word_list_items(count)",
-    )
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("create_user_word_list", {
+    p_user_id: params.userId,
+    p_name: params.name,
+    p_description: params.description ?? null,
+    p_language_code: params.language_code ?? "nl",
+    p_primary_language_code: params.language_code ?? "nl",
+  });
 
   if (error || !data) {
     console.error("Error creating user list", error);

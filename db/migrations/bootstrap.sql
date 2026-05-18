@@ -81,3 +81,6 @@
 
 -- Explicit user-list membership removal action
 \i db/migrations/024_remove_entries_from_user_list_action.sql
+
+-- Explicit user word-list CRUD actions
+\i db/migrations/025_user_word_list_crud_actions.sql

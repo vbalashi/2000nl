@@ -313,7 +313,7 @@ describe("trainingService list and preference characterization", () => {
   test("createUserList inserts a list and maps the created summary", async () => {
     const { createUserList } = await importService();
 
-    queueFrom("user_word_lists", {
+    rpc.mockResolvedValueOnce({
       data: {
         id: "list-1",
         name: "Nieuw",
@@ -341,11 +341,13 @@ describe("trainingService list and preference characterization", () => {
       item_count: 0,
       created_at: "2026-05-16T10:00:00.000Z",
     });
-    expect(queries[0].insert).toHaveBeenCalledWith({
-      user_id: "user-1",
-      name: "Nieuw",
-      description: "Words to learn",
-      language_code: "nl",
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("create_user_word_list", {
+      p_user_id: "user-1",
+      p_name: "Nieuw",
+      p_description: "Words to learn",
+      p_language_code: "nl",
+      p_primary_language_code: "nl",
     });
   });
 
@@ -358,7 +360,7 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValueOnce({
+    getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
     });
@@ -390,12 +392,13 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
 
-    getUser.mockResolvedValueOnce({
+    getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
     });
-    rpc.mockResolvedValueOnce({ data: null, error: null });
-    queueFrom("user_word_lists", { data: null, error: null });
+    rpc
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
 
     await expect(
       removeWordsFromUserList("list-1", ["word-1", "word-2", "word-1"]),
@@ -407,8 +410,11 @@ describe("trainingService list and preference characterization", () => {
       p_list_id: "list-1",
       p_word_ids: ["word-1", "word-2"],
     });
-    expect(queries[0].delete).toHaveBeenCalled();
-    expect(queries[0].eq).toHaveBeenCalledWith("id", "list-1");
+    expect(rpc).toHaveBeenCalledWith("delete_user_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+    });
+    expect(from).not.toHaveBeenCalled();
   });
 
   test("fetchUserListMembership returns present word ids only", async () => {
