@@ -132,23 +132,12 @@ describe("trainingService dictionary lookup", () => {
     expect(queries[1].ilike).toHaveBeenCalledWith("headword", "huis");
   });
 
-  test("fetchDictionaryEntry returns direct headword match with meanings count and user stats", async () => {
+  test("fetchDictionaryEntry returns direct unauthenticated headword match with meanings count", async () => {
     const { fetchDictionaryEntry } = await importService();
-    rpc.mockResolvedValueOnce({
-      data: null,
-      error: { code: "PGRST202", message: "Could not find the function" },
-    });
     queueFrom("word_entries", { data: row, error: null });
     queueFrom("word_entries", { count: 3, error: null });
-    queueFrom("user_word_status", {
-      data: {
-        click_count: 7,
-        last_seen_at: "2026-05-16T10:00:00.000Z",
-      },
-      error: null,
-    });
 
-    await expect(fetchDictionaryEntry("huis", "user-1")).resolves.toEqual({
+    await expect(fetchDictionaryEntry("huis")).resolves.toEqual({
       id: "word-1",
       headword: "huis",
       part_of_speech: "zn",
@@ -156,18 +145,13 @@ describe("trainingService dictionary lookup", () => {
       raw: { meanings: [{ definition: "Een gebouw" }] },
       is_nt2_2000: true,
       meanings_count: 3,
-      stats: {
-        click_count: 7,
-        last_seen_at: "2026-05-16T10:00:00.000Z",
-      },
     });
+    expect(rpc).not.toHaveBeenCalled();
     expect(queries[0].eq).toHaveBeenCalledWith("headword", "huis");
     expect(queries[1].select).toHaveBeenCalledWith("id", {
       count: "exact",
       head: true,
     });
-    expect(queries[2].eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(queries[2].eq).toHaveBeenCalledWith("word_id", "word-1");
   });
 
   test("fetchDictionaryEntry prefers gated lookup RPC for authenticated users", async () => {
@@ -211,6 +195,20 @@ describe("trainingService dictionary lookup", () => {
         last_seen_at: "2026-05-17T10:00:00.000Z",
       },
     });
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  test("fetchDictionaryEntry does not fall back to direct tables for authenticated gated lookup failures", async () => {
+    const { fetchDictionaryEntry } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "PGRST202", message: "Could not find the function" },
+    });
+
+    await expect(fetchDictionaryEntry("huis", "user-1")).resolves.toBeNull();
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
       p_headword: "huis",
     });

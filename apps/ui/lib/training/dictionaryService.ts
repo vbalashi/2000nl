@@ -7,16 +7,6 @@ type DictionaryEntryWithStats = DictionaryEntry & {
   stats?: { click_count: number; last_seen_at: string | null };
 };
 
-const isMissingRpcError = (error: any): boolean => {
-  const message = error?.message ?? "";
-  const code = error?.code as string | undefined;
-  return (
-    code === "PGRST202" ||
-    message.includes("Could not find the function") ||
-    message.includes("schema cache")
-  );
-};
-
 const mapDictionaryLookupPayload = (
   data: any,
 ): DictionaryEntryWithStats | null => {
@@ -134,10 +124,8 @@ export const fetchDictionaryEntry = async (
       return mapDictionaryLookupPayload(data);
     }
 
-    if (!isMissingRpcError(error)) {
-      console.error("Unable to fetch gated dictionary entry", error);
-      return null;
-    }
+    console.error("Unable to fetch gated dictionary entry", error);
+    return null;
   }
 
   const tryFetchByHeadword = async (value: string) => {

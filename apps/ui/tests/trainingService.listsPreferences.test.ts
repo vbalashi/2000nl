@@ -202,35 +202,12 @@ describe("trainingService list and preference characterization", () => {
     });
   });
 
-  test("searchWordEntries fallback intersects hidden and frozen filters before querying words", async () => {
+  test("searchWordEntries returns empty when the gated RPC fails", async () => {
     const { searchWordEntries } = await importService();
 
     rpc.mockResolvedValueOnce({
       data: null,
       error: { message: "missing gated RPC" },
-    });
-    getUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } } });
-    queueFrom("user_word_status", {
-      data: [{ word_id: "word-1" }, { word_id: "word-2" }],
-      error: null,
-    });
-    queueFrom("user_word_status", {
-      data: [{ word_id: "word-2" }, { word_id: "word-3" }],
-      error: null,
-    });
-    queueFrom("word_entries", {
-      data: [
-        {
-          id: "word-2",
-          headword: "huis",
-          part_of_speech: "zn",
-          gender: "het",
-          raw: "{}",
-          is_nt2_2000: true,
-        },
-      ],
-      count: 1,
-      error: null,
     });
 
     const result = await searchWordEntries({
@@ -241,36 +218,22 @@ describe("trainingService list and preference characterization", () => {
       pageSize: 10,
     });
 
-    const statusQueries = queries.filter(
-      (query) => query.table === "user_word_status",
-    );
-    expect(statusQueries[0].eq).toHaveBeenCalledWith("hidden", true);
-    expect(statusQueries[1].gt).toHaveBeenCalledWith(
-      "frozen_until",
-      expect.any(String),
-    );
-
-    const wordQuery = queries.find((query) => query.table === "word_entries");
-    expect(wordQuery?.ilike).toHaveBeenCalledWith("headword", "%hui%");
-    expect(wordQuery?.in).toHaveBeenCalledWith("id", ["word-2"]);
-    expect(wordQuery?.range).toHaveBeenCalledWith(0, 9);
-    expect(result.items.map((item) => item.id)).toEqual(["word-2"]);
-    expect(result.total).toBe(1);
+    expect(result).toEqual({ items: [], total: 0 });
+    expect(from).not.toHaveBeenCalled();
   });
 
-  test("fetchWordsForList returns empty for user lists when fallback cannot resolve the authed user", async () => {
+  test("fetchWordsForList returns empty when the gated RPC fails", async () => {
     const { fetchWordsForList } = await importService();
 
     rpc.mockResolvedValueOnce({
       data: null,
       error: { message: "missing gated RPC" },
     });
-    getUser.mockResolvedValueOnce({ data: { user: null } });
 
     const result = await fetchWordsForList("list-1", "user");
 
     expect(result).toEqual({ items: [], total: 0 });
-    expect(from).not.toHaveBeenCalledWith("user_word_list_items");
+    expect(from).not.toHaveBeenCalled();
   });
 
   test("fetchActiveList maps saved active list fields", async () => {
