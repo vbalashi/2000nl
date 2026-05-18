@@ -100,36 +100,21 @@ async function assertEntryReadable(
   supabase: any,
   entryId: string,
 ): Promise<boolean | { error: string; detail?: string }> {
-  const { data: entry, error } = await supabase
-    .from("word_entries")
-    .select("id, dictionary_id")
-    .eq("id", entryId)
-    .maybeSingle();
+  const { data: entry, error } = await supabase.rpc(
+    "fetch_dictionary_entry_by_id_gated",
+    {
+      p_word_id: entryId,
+    },
+  );
 
   if (error) {
     return { error: "entry_lookup_failed", detail: error.message ?? String(error) };
   }
   if (!entry) {
-    return { error: "entry_not_found" };
-  }
-  if (!entry.dictionary_id) {
-    return true;
+    return { error: "entry_not_accessible" };
   }
 
-  const { data: dictionary, error: dictionaryError } = await supabase
-    .from("dictionaries")
-    .select("id")
-    .eq("id", entry.dictionary_id)
-    .maybeSingle();
-
-  if (dictionaryError) {
-    return {
-      error: "dictionary_access_check_failed",
-      detail: dictionaryError.message ?? String(dictionaryError),
-    };
-  }
-
-  return dictionary ? true : { error: "entry_not_accessible" };
+  return true;
 }
 
 async function recordReview(auth: AuthenticatedSupabase, params: {

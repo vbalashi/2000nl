@@ -45,19 +45,10 @@ function mockAuthenticatedUser() {
 }
 
 function mockAccessibleEntry() {
-  from
-    .mockImplementationOnce(() =>
-      chain({
-        data: { id: "entry-1", dictionary_id: "dict-1" },
-        error: null,
-      }),
-    )
-    .mockImplementationOnce(() =>
-      chain({
-        data: { id: "dict-1" },
-        error: null,
-      }),
-    );
+  rpc.mockResolvedValueOnce({
+    data: { id: "entry-1", dictionary_id: "dict-1" },
+    error: null,
+  });
 }
 
 describe("/api/platform/actions", () => {
@@ -501,14 +492,7 @@ describe("/api/platform/actions", () => {
   test("rejects inaccessible entries before mutating", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
-    from
-      .mockImplementationOnce(() =>
-        chain({
-          data: { id: "entry-1", dictionary_id: "private-dict" },
-          error: null,
-        }),
-      )
-      .mockImplementationOnce(() => chain({ data: null, error: null }));
+    rpc.mockResolvedValueOnce({ data: null, error: null });
 
     const response = await POST(
       request({
@@ -522,7 +506,13 @@ describe("/api/platform/actions", () => {
     await expect(response.json()).resolves.toEqual({
       error: "entry_not_accessible",
     });
-    expect(rpc).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_word_id: "entry-1",
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "record_word_view",
+      expect.anything(),
+    );
   });
 
   test("rejects unsupported actions without touching Supabase tables", async () => {
