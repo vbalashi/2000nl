@@ -440,30 +440,46 @@ export async function performPlatformAction(
     return { payload: { ok: true, action, entryId }, status: 200 };
   }
 
+  if (action === "remove-from-list") {
+    const listId = asString(body?.listId);
+    if (!listId) {
+      return { payload: { error: "missing_list_id" }, status: 400 };
+    }
+
+    const { error } = await auth.supabase.rpc("remove_entries_from_user_list", {
+      p_user_id: auth.user.id,
+      p_list_id: listId,
+      p_word_ids: [entryId],
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("list_not_found")) {
+        return { payload: { error: "list_not_found" }, status: 404 };
+      }
+      return { payload: { error: "remove_from_list_failed", detail }, status: 500 };
+    }
+
+    return { payload: { ok: true, action, entryId, listId }, status: 200 };
+  }
+
   const readable = await assertEntryReadable(auth.supabase, entryId);
   if (readable !== true) {
     const status = readable.error === "entry_not_found" ? 404 : 403;
     return { payload: readable, status };
   }
 
-  if (action === "add-to-list" || action === "remove-from-list") {
+  if (action === "add-to-list") {
     const listId = asString(body?.listId);
     if (!listId) {
       return { payload: { error: "missing_list_id" }, status: 400 };
     }
 
-    const { error } =
-      action === "add-to-list"
-        ? await auth.supabase.rpc("add_entry_to_user_list", {
-            p_user_id: auth.user.id,
-            p_list_id: listId,
-            p_word_id: entryId,
-          })
-        : await auth.supabase.rpc("remove_entries_from_user_list", {
-            p_user_id: auth.user.id,
-            p_list_id: listId,
-            p_word_ids: [entryId],
-          });
+    const { error } = await auth.supabase.rpc("add_entry_to_user_list", {
+      p_user_id: auth.user.id,
+      p_list_id: listId,
+      p_word_id: entryId,
+    });
 
     if (error) {
       const detail = error.message ?? String(error);
@@ -476,16 +492,7 @@ export async function performPlatformAction(
       if (detail.includes("entry_not_accessible")) {
         return { payload: { error: "entry_not_accessible" }, status: 403 };
       }
-      return {
-        payload: {
-          error:
-            action === "add-to-list"
-              ? "add_to_list_failed"
-              : "remove_from_list_failed",
-          detail,
-        },
-        status: 500,
-      };
+      return { payload: { error: "add_to_list_failed", detail }, status: 500 };
     }
 
     return { payload: { ok: true, action, entryId, listId }, status: 200 };

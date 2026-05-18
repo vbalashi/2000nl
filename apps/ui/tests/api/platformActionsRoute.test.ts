@@ -218,7 +218,6 @@ describe("/api/platform/actions", () => {
   test("removes accessible entries from owned user lists", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
-    mockAccessibleEntry();
     rpc.mockResolvedValueOnce({ data: null, error: null });
 
     const response = await POST(
@@ -230,6 +229,7 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith("remove_entries_from_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
