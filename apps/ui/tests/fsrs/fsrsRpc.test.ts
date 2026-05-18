@@ -347,6 +347,39 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("copy_entry_to_user_dictionary copies source definitions without filler notes", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const { rows: sourceRows } = await client.query(
+        `insert into word_entries (
+          language_code, headword, part_of_speech, gender, is_nt2_2000, raw
+        )
+        values ('nl', $1, 'noun', 'n', true, '{"meanings":[{"definition":"source definition"}]}'::jsonb)
+        returning id`,
+        [`fsrs-copy-definition-${Date.now()}`],
+      );
+
+      const { rows: copyRows } = await client.query(
+        `select copy_entry_to_user_dictionary($1, $2, NULL, '{}'::jsonb) as copied_word_id`,
+        [userId, sourceRows[0].id],
+      );
+
+      const { rows } = await client.query(
+        `select raw from word_entries where id = $1`,
+        [copyRows[0].copied_word_id],
+      );
+
+      expect(rows[0].raw).toEqual(
+        expect.objectContaining({
+          definition: "source definition",
+          sourceEntryId: sourceRows[0].id,
+        }),
+      );
+      expect(rows[0].raw.notes).toBeUndefined();
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

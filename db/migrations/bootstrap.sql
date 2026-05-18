@@ -72,3 +72,6 @@
 
 -- Return all accessible candidates from dictionary lookup
 \i db/migrations/021_lookup_multiple_dictionary_candidates.sql
+
+-- Refine copied user-entry payloads for training-safe content
+\i db/migrations/022_refine_user_dictionary_copy_payload.sql

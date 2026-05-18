@@ -41,6 +41,8 @@ db/migrations/
 │                              # explicit copy action into user-owned dictionaries
 ├── 021_lookup_multiple_dictionary_candidates.sql
 │                              # lookup returns all accessible dictionary candidates
+├── 022_refine_user_dictionary_copy_payload.sql
+│                              # training-safe copy payload for user entries
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
