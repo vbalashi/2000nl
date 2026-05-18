@@ -78,3 +78,6 @@
 
 -- Explicit CRUD actions for user-entry-v1 entries
 \i db/migrations/023_user_dictionary_entry_crud_actions.sql
+
+-- Explicit user-list membership removal action
+\i db/migrations/024_remove_entries_from_user_list_action.sql

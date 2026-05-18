@@ -501,13 +501,22 @@ export async function removeWordsFromUserList(
   listId: string,
   wordIds: string[],
 ): Promise<{ error: any }> {
-  if (!wordIds.length) return { error: null };
+  const uniqueWordIds = Array.from(new Set(wordIds.filter(Boolean)));
+  if (!uniqueWordIds.length) return { error: null };
 
-  const { error } = await supabase
-    .from("user_word_list_items")
-    .delete()
-    .eq("list_id", listId)
-    .in("word_id", wordIds);
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    const error = userError ?? { message: "not_authenticated" };
+    console.error("Error resolving user before removing words from list", error);
+    return { error };
+  }
+
+  const { error } = await supabase.rpc("remove_entries_from_user_list", {
+    p_user_id: userId,
+    p_list_id: listId,
+    p_word_ids: uniqueWordIds,
+  });
 
   if (error) {
     console.error("Error removing words from list", error);

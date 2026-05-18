@@ -381,30 +381,34 @@ describe("trainingService list and preference characterization", () => {
     });
   });
 
-  test("removeWordsFromUserList and deleteUserList issue scoped deletes", async () => {
+  test("removeWordsFromUserList calls the explicit membership RPC and deleteUserList deletes the list", async () => {
     const { deleteUserList, removeWordsFromUserList } = await importService();
 
     await expect(removeWordsFromUserList("list-1", [])).resolves.toEqual({
       error: null,
     });
     expect(from).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
 
-    queueFrom("user_word_list_items", { data: null, error: null });
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
     queueFrom("user_word_lists", { data: null, error: null });
 
     await expect(
-      removeWordsFromUserList("list-1", ["word-1", "word-2"]),
+      removeWordsFromUserList("list-1", ["word-1", "word-2", "word-1"]),
     ).resolves.toEqual({ error: null });
     await expect(deleteUserList("list-1")).resolves.toEqual({ error: null });
 
+    expect(rpc).toHaveBeenCalledWith("remove_entries_from_user_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_word_ids: ["word-1", "word-2"],
+    });
     expect(queries[0].delete).toHaveBeenCalled();
-    expect(queries[0].eq).toHaveBeenCalledWith("list_id", "list-1");
-    expect(queries[0].in).toHaveBeenCalledWith("word_id", [
-      "word-1",
-      "word-2",
-    ]);
-    expect(queries[1].delete).toHaveBeenCalled();
-    expect(queries[1].eq).toHaveBeenCalledWith("id", "list-1");
+    expect(queries[0].eq).toHaveBeenCalledWith("id", "list-1");
   });
 
   test("fetchUserListMembership returns present word ids only", async () => {

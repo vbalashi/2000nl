@@ -255,6 +255,61 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("remove_entries_from_user_list removes owned list entries only", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+      const firstWordId = await insertWord(client, `fsrs-remove-list-${Date.now()}`);
+      const secondWordId = await insertWord(client, `fsrs-keep-list-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [ownerId, `Remove list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        ownerId,
+        listId,
+        firstWordId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        ownerId,
+        listId,
+        secondWordId,
+      ]);
+
+      await client.query("savepoint unauthorized_remove");
+      await expect(
+        client.query(`select remove_entries_from_user_list($1, $2, $3::uuid[])`, [
+          otherId,
+          listId,
+          [firstWordId],
+        ]),
+      ).rejects.toThrow(/unauthorized/);
+      await client.query("rollback to savepoint unauthorized_remove");
+      await client.query("release savepoint unauthorized_remove");
+
+      await client.query(`select remove_entries_from_user_list($1, $2, $3::uuid[])`, [
+        ownerId,
+        listId,
+        [firstWordId],
+      ]);
+
+      const { rows } = await client.query(
+        `select word_id
+         from user_word_list_items
+         where list_id = $1
+         order by word_id`,
+        [listId],
+      );
+      expect(rows.map((row) => row.word_id)).toEqual([secondWordId]);
+    }, ownerId);
+  });
+
   test("ensure_user_dictionary creates a private editable user dictionary", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
