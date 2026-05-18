@@ -76,10 +76,10 @@ describe("trainingService next-word selection", () => {
       ["word-2:definition-to-word"],
     );
 
-    expect(rpc).toHaveBeenCalledWith("get_next_word", {
+    expect(rpc).toHaveBeenCalledWith("get_next_card", {
       p_user_id: "user-1",
-      p_modes: ["word-to-definition", "definition-to-word"],
-      p_exclude_ids: ["skip-1"],
+      p_card_type_ids: ["word-to-definition", "definition-to-word"],
+      p_exclude_entry_ids: ["skip-1"],
       p_exclude_card_keys: ["word-2:definition-to-word"],
       p_card_filter: "review",
       p_queue_turn: "review",
@@ -136,10 +136,10 @@ describe("trainingService next-word selection", () => {
     );
 
     expect(rpc).toHaveBeenNthCalledWith(1, "get_training_scenarios");
-    expect(rpc).toHaveBeenNthCalledWith(2, "get_next_word", {
+    expect(rpc).toHaveBeenNthCalledWith(2, "get_next_card", {
       p_user_id: "user-1",
-      p_modes: ["word-to-definition", "definition-to-word"],
-      p_exclude_ids: ["already-seen"],
+      p_card_type_ids: ["word-to-definition", "definition-to-word"],
+      p_exclude_entry_ids: ["already-seen"],
       p_exclude_card_keys: ["already-seen:word-to-definition"],
       p_card_filter: "both",
       p_queue_turn: "new",
@@ -206,16 +206,16 @@ describe("trainingService next-word selection", () => {
 
     expect(rpc.mock.calls.map((call) => call[0])).toEqual([
       "get_training_scenarios",
-      "get_next_word",
-      "get_next_word",
+      "get_next_card",
+      "get_next_card",
     ]);
     expect(payloads).toEqual([
       expect.objectContaining({
-        p_exclude_ids: ["initial-skip"],
+        p_exclude_entry_ids: ["initial-skip"],
         p_exclude_card_keys: [],
       }),
       expect.objectContaining({
-        p_exclude_ids: ["initial-skip", "cross-ref"],
+        p_exclude_entry_ids: ["initial-skip", "cross-ref"],
         p_exclude_card_keys: [],
       }),
     ]);
@@ -239,7 +239,7 @@ describe("trainingService next-word selection", () => {
     expect(word).toBeNull();
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith(
-      "get_next_word",
+      "get_next_card",
       expect.objectContaining({
         p_list_id: "list-1",
         p_list_type: "curated",
@@ -263,9 +263,9 @@ describe("trainingService next-word selection", () => {
     expect(word).toBeNull();
     expect(rpc).toHaveBeenCalledTimes(2);
     expect(rpc).toHaveBeenNthCalledWith(2,
-      "get_next_word",
+      "get_next_card",
       expect.objectContaining({
-        p_modes: ["word-to-definition"],
+        p_card_type_ids: ["word-to-definition"],
         p_list_id: "list-1",
       }),
     );

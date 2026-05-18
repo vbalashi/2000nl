@@ -66,10 +66,10 @@ const restHandler = async (route: any) => {
   // RPCs used by TrainingScreen
   // ---------------------------------------------------------------------------
 
-  if (pathname.endsWith("/rpc/get_next_word")) {
+  if (pathname.endsWith("/rpc/get_next_card")) {
     const body = request.postDataJSON?.() ?? {};
     const excludedIds = new Set<string>(
-      Array.isArray(body.p_exclude_ids) ? body.p_exclude_ids : [],
+      Array.isArray(body.p_exclude_entry_ids) ? body.p_exclude_entry_ids : [],
     );
     const excludedCardKeys = new Set<string>(
       Array.isArray(body.p_exclude_card_keys) ? body.p_exclude_card_keys : [],

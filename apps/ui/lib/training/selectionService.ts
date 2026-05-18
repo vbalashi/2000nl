@@ -65,8 +65,8 @@ export const fetchNextTrainingWord = async (
 ): Promise<TrainingWord | null> => {
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
-    p_modes: modes,
-    p_exclude_ids: excludeWordIds,
+    p_card_type_ids: modes,
+    p_exclude_entry_ids: excludeWordIds,
     p_exclude_card_keys: excludeCardKeys,
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
@@ -81,10 +81,10 @@ export const fetchNextTrainingWord = async (
   const excludedCardKeys = new Set(excludeCardKeys);
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
-    rpcPayload.p_exclude_ids = Array.from(excludedIds);
+    rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+    const { data, error } = await supabase.rpc("get_next_card", rpcPayload);
 
     if (error || !data || data.length === 0) {
       if (error) {
@@ -236,8 +236,8 @@ export const fetchNextTrainingWordByScenario = async (
 
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
-    p_modes: modes,
-    p_exclude_ids: excludeWordIds,
+    p_card_type_ids: modes,
+    p_exclude_entry_ids: excludeWordIds,
     p_exclude_card_keys: excludeCardKeys,
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
@@ -252,10 +252,10 @@ export const fetchNextTrainingWordByScenario = async (
   const excludedCardKeys = new Set(excludeCardKeys);
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
-    rpcPayload.p_exclude_ids = Array.from(excludedIds);
+    rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc("get_next_word", rpcPayload);
+    const { data, error } = await supabase.rpc("get_next_card", rpcPayload);
 
     if (error || !data || data.length === 0) {
       if (error) {
