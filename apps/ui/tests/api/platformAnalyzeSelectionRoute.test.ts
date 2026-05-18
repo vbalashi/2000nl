@@ -133,10 +133,10 @@ describe("/api/platform/analyze-selection", () => {
 
     expect(response.status).toBe(200);
     expect(from).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenLastCalledWith("start_learning_card", {
+    expect(rpc).toHaveBeenLastCalledWith("start_learning_entry_card", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
     });
     const body = await response.json();
     expect(body.actionResults).toEqual([

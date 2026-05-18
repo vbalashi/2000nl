@@ -136,10 +136,10 @@ async function recordReview(auth: AuthenticatedSupabase, params: {
   result: ReviewResult;
   turnId?: string | null;
 }) {
-  return auth.supabase.rpc("handle_review", {
+  return auth.supabase.rpc("handle_card_review", {
     p_user_id: auth.user.id,
-    p_word_id: params.entryId,
-    p_mode: params.mode,
+    p_entry_id: params.entryId,
+    p_card_type_id: params.mode,
     p_result: params.result,
     p_turn_id: params.turnId ?? null,
   });
@@ -261,11 +261,11 @@ export async function performPlatformLookup(
     for (const entry of entries) {
       for (const mode of TRAINING_MODES) {
         const { data: row, error: statusError } = await auth.supabase.rpc(
-          "get_card_user_state",
+          "get_user_card_state",
           {
             p_user_id: auth.user.id,
-            p_word_id: entry.id,
-            p_mode: mode,
+            p_entry_id: entry.id,
+            p_card_type_id: mode,
           },
         );
 
@@ -701,15 +701,15 @@ export async function performPlatformAction(
   if (action === "record-view" || action === "start-learning") {
     const { error } =
       action === "start-learning"
-        ? await auth.supabase.rpc("start_learning_card", {
+        ? await auth.supabase.rpc("start_learning_entry_card", {
             p_user_id: auth.user.id,
-            p_word_id: entryId,
-            p_mode: mode,
+            p_entry_id: entryId,
+            p_card_type_id: mode,
           })
-        : await auth.supabase.rpc("record_word_view", {
+        : await auth.supabase.rpc("record_card_view", {
             p_user_id: auth.user.id,
-            p_word_id: entryId,
-            p_mode: mode,
+            p_entry_id: entryId,
+            p_card_type_id: mode,
           });
 
     if (error) {

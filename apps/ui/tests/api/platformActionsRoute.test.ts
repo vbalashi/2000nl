@@ -79,10 +79,10 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("handle_review", {
+    expect(rpc).toHaveBeenCalledWith("handle_card_review", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
       p_result: "success",
       p_turn_id: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
     });
@@ -128,10 +128,10 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("handle_review", {
+    expect(rpc).toHaveBeenCalledWith("handle_card_review", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "definition-to-word",
+      p_entry_id: "entry-1",
+      p_card_type_id: "definition-to-word",
       p_result: "fail",
       p_turn_id: null,
     });
@@ -153,16 +153,16 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("handle_review", {
+    expect(rpc).toHaveBeenCalledWith("handle_card_review", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
       p_result: "easy",
       p_turn_id: "turn-1",
     });
   });
 
-  test("starts learning through the explicit start_learning_card RPC", async () => {
+  test("starts learning through the explicit start_learning_entry_card RPC", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
     mockAccessibleEntry();
@@ -177,10 +177,10 @@ describe("/api/platform/actions", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("start_learning_card", {
+    expect(rpc).toHaveBeenCalledWith("start_learning_entry_card", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
     });
   });
 
@@ -510,7 +510,7 @@ describe("/api/platform/actions", () => {
       p_word_id: "entry-1",
     });
     expect(rpc).not.toHaveBeenCalledWith(
-      "record_word_view",
+      "record_card_view",
       expect.anything(),
     );
   });
@@ -540,7 +540,7 @@ describe("/api/platform/actions", () => {
       p_word_id: "entry-1",
     });
     expect(rpc).not.toHaveBeenCalledWith(
-      "record_word_view",
+      "record_card_view",
       expect.anything(),
     );
   });

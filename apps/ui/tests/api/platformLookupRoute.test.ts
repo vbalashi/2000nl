@@ -39,9 +39,12 @@ const request = (body: unknown, token = "token-1") =>
 
 const mutationRpcNames = [
   "record_word_view",
+  "record_card_view",
   "handle_review",
+  "handle_card_review",
   "handle_click",
   "start_learning_card",
+  "start_learning_entry_card",
   "add_entry_to_user_list",
   "copy_entry_to_user_dictionary",
   "create_user_dictionary_entry",
@@ -179,9 +182,9 @@ describe("/api/platform/lookup", () => {
         });
       }
       if (
-        name === "get_card_user_state" &&
-        args?.p_word_id === "entry-1" &&
-        args?.p_mode === "word-to-definition"
+        name === "get_user_card_state" &&
+        args?.p_entry_id === "entry-1" &&
+        args?.p_card_type_id === "word-to-definition"
       ) {
         return Promise.resolve({
           data: {
@@ -224,10 +227,10 @@ describe("/api/platform/lookup", () => {
       p_user_id: "user-1",
       p_word_ids: ["entry-1", "entry-2"],
     });
-    expect(rpc).toHaveBeenCalledWith("get_card_user_state", {
+    expect(rpc).toHaveBeenCalledWith("get_user_card_state", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
     });
     expect(from).not.toHaveBeenCalled();
     const payload = await response.json();
@@ -322,6 +325,7 @@ describe("/api/platform/lookup", () => {
     expect(from).not.toHaveBeenCalled();
     for (const name of [
       "get_card_user_state",
+      "get_user_card_state",
       "get_user_list_memberships_for_entries",
       ...mutationRpcNames,
     ]) {
