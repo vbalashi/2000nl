@@ -58,6 +58,7 @@ type DictionaryLookupPayload = {
   raw: unknown;
   is_nt2_2000?: boolean | null;
   meanings_count?: number | null;
+  dictionary?: DictionaryMetadataRow | null;
 };
 
 type DictionaryMetadataRow = {
@@ -207,37 +208,6 @@ export async function performPlatformLookup(
     return { payload: { query, items: [] }, status: 200 };
   }
 
-  const dictionaryIds = Array.from(
-    new Set(
-      entries
-        .map((entry) => entry.dictionary_id)
-        .filter((id): id is string => typeof id === "string" && Boolean(id)),
-    ),
-  );
-
-  const dictionaryById = new Map<string, DictionaryMetadataRow>();
-  if (dictionaryIds.length > 0) {
-    const { data: dictionaryData, error: dictionaryError } = await auth.supabase
-      .from("dictionaries")
-      .select(
-        "id, language_code, slug, name, kind, visibility, owner_user_id, is_editable, schema_key, schema_version",
-      )
-      .in("id", dictionaryIds);
-
-    if (dictionaryError) {
-      return {
-        payload: {
-          error: "dictionary_metadata_failed",
-          detail: dictionaryError.message ?? String(dictionaryError),
-        },
-        status: 500,
-      };
-    }
-    for (const row of dictionaryData ?? []) {
-      dictionaryById.set(row.id, row);
-    }
-  }
-
   const userStateByEntryId = new Map<string, Record<string, unknown>>();
   if (includeUserState) {
     for (const entry of entries) {
@@ -287,9 +257,7 @@ export async function performPlatformLookup(
   }
 
   const items = entries.map((entry) => {
-    const dictionary = entry.dictionary_id
-      ? dictionaryById.get(entry.dictionary_id) ?? null
-      : null;
+    const dictionary = entry.dictionary ?? null;
 
     const availableActions: PlatformAction[] = [
       "record-view",

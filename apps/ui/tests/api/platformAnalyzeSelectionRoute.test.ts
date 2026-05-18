@@ -95,41 +95,27 @@ describe("/api/platform/analyze-selection", () => {
             raw: {},
             is_nt2_2000: true,
             meanings_count: 1,
-          },
-        ],
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: null, error: null });
-    from
-      .mockImplementationOnce(() =>
-        chain({
-          data: [
-            {
+            dictionary: {
               id: "dict-1",
               language_code: "nl",
               slug: "nl-vandale",
               name: "VanDale Dutch",
               kind: "curated",
               visibility: "public",
+              owner_user_id: null,
+              is_editable: false,
               schema_key: "nl-vandale-v1",
               schema_version: 1,
             },
-          ],
-          error: null,
-        }),
-      )
-      .mockImplementationOnce(() =>
-        chain({
-          data: { id: "entry-1", dictionary_id: "dict-1" },
-          error: null,
-        }),
-      )
-      .mockImplementationOnce(() =>
-        chain({
-          data: { id: "dict-1" },
-          error: null,
-        }),
-      );
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { id: "entry-1", dictionary_id: "dict-1" },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: null, error: null });
 
     const response = await POST(
       request({
@@ -146,6 +132,7 @@ describe("/api/platform/analyze-selection", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenLastCalledWith("start_learning_card", {
       p_user_id: "user-1",
       p_word_id: "entry-1",

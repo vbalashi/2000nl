@@ -423,6 +423,14 @@ describeIfDb("FSRS RPC integration", () => {
       expect(ids).toContain(sourceWordId);
       expect(ids).toContain(copyRows[0].copied_word_id);
       expect(rows[0].items[0].id).toBe(copyRows[0].copied_word_id);
+      expect(rows[0].items[0].dictionary).toEqual(
+        expect.objectContaining({
+          kind: "user",
+          schema_key: "user-entry-v1",
+          owner_user_id: userId,
+          is_editable: true,
+        }),
+      );
     }, userId);
   });
 

@@ -106,6 +106,18 @@ describe("/api/platform/lookup", () => {
               raw: { meanings: [{ definition: "gebouw" }] },
               is_nt2_2000: true,
               meanings_count: 1,
+              dictionary: {
+                id: "dict-1",
+                language_code: "nl",
+                slug: "nl-vandale",
+                name: "VanDale Dutch",
+                kind: "curated",
+                visibility: "system",
+                owner_user_id: null,
+                is_editable: false,
+                schema_key: "nl-vandale-v1",
+                schema_version: 1,
+              },
             },
             {
               id: "entry-2",
@@ -117,6 +129,18 @@ describe("/api/platform/lookup", () => {
               raw: { translation: { languageCode: "en", text: "house" } },
               is_nt2_2000: false,
               meanings_count: 1,
+              dictionary: {
+                id: "dict-2",
+                language_code: "nl",
+                slug: "user-user1-nl",
+                name: "My dictionary",
+                kind: "user",
+                visibility: "private",
+                owner_user_id: "user-1",
+                is_editable: true,
+                schema_key: "user-entry-v1",
+                schema_version: 1,
+              },
             },
           ],
           error: null,
@@ -147,38 +171,6 @@ describe("/api/platform/lookup", () => {
       }
       return Promise.resolve({ data: null, error: null });
     });
-    from
-      .mockImplementation(() =>
-        chain({
-          data: [
-            {
-              id: "dict-1",
-              language_code: "nl",
-              slug: "nl-vandale",
-              name: "VanDale Dutch",
-              kind: "curated",
-              visibility: "system",
-              owner_user_id: null,
-              is_editable: false,
-              schema_key: "nl-vandale-v1",
-              schema_version: 1,
-            },
-            {
-              id: "dict-2",
-              language_code: "nl",
-              slug: "user-user1-nl",
-              name: "My dictionary",
-              kind: "user",
-              visibility: "private",
-              owner_user_id: "user-1",
-              is_editable: true,
-              schema_key: "user-entry-v1",
-              schema_version: 1,
-            },
-          ],
-          error: null,
-        }),
-      );
 
     const response = await POST(request({ query: " huis " }));
 
@@ -201,6 +193,7 @@ describe("/api/platform/lookup", () => {
       p_word_id: "entry-1",
       p_mode: "word-to-definition",
     });
+    expect(from).not.toHaveBeenCalled();
     const payload = await response.json();
     expect(payload.items[0].entry).toEqual(
       expect.objectContaining({
