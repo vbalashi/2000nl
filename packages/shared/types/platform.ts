@@ -178,6 +178,8 @@ export type LookupActionId =
   | "create-user-entry"
   | "update-user-entry"
   | "delete-user-entry"
+  | "create-user-list"
+  | "delete-user-list"
   | "mark-known"
   | "mark-unknown"
   | "review-card"
@@ -278,6 +280,17 @@ export type PlatformActionRequest =
   | {
       action: "delete-user-entry";
       entryId: string;
+    }
+  | {
+      action: "create-user-list";
+      name: string;
+      description?: string | null;
+      languageCode?: string | null;
+      primaryLanguageCode?: string | null;
+    }
+  | {
+      action: "delete-user-list";
+      listId: string;
     };
 
 export type PlatformActionResponse = {
@@ -291,4 +304,5 @@ export type PlatformActionResponse = {
   copiedEntryId?: string;
   targetDictionaryId?: string | null;
   dictionaryId?: string | null;
+  list?: WordListSummaryV2;
 };

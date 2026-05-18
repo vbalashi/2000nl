@@ -25,7 +25,9 @@ export type PlatformAction =
   | "copy-to-user-dictionary"
   | "create-user-entry"
   | "update-user-entry"
-  | "delete-user-entry";
+  | "delete-user-entry"
+  | "create-user-list"
+  | "delete-user-list";
 
 export type PlatformActionBody = {
   action?: unknown;
@@ -38,6 +40,10 @@ export type PlatformActionBody = {
   dictionaryId?: unknown;
   entry?: unknown;
   overrides?: unknown;
+  name?: unknown;
+  description?: unknown;
+  languageCode?: unknown;
+  primaryLanguageCode?: unknown;
 };
 
 type DictionaryLookupPayload = {
@@ -365,9 +371,73 @@ export async function performPlatformAction(
       "create-user-entry",
       "update-user-entry",
       "delete-user-entry",
+      "create-user-list",
+      "delete-user-list",
     ].includes(action)
   ) {
     return { payload: { error: "unsupported_action" }, status: 400 };
+  }
+
+  if (action === "create-user-list") {
+    const name = asString(body?.name);
+    if (!name) {
+      return { payload: { error: "missing_list_name" }, status: 400 };
+    }
+
+    const languageCode = asString(body?.languageCode) ?? "nl";
+    const { data, error } = await auth.supabase.rpc("create_user_word_list", {
+      p_user_id: auth.user.id,
+      p_name: name,
+      p_description: asString(body?.description),
+      p_language_code: languageCode,
+      p_primary_language_code: asString(body?.primaryLanguageCode) ?? languageCode,
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("duplicate_user_list")) {
+        return { payload: { error: "duplicate_user_list", detail }, status: 409 };
+      }
+      if (
+        detail.includes("invalid_list_name") ||
+        detail.includes("language_not_found")
+      ) {
+        return { payload: { error: "invalid_user_list", detail }, status: 400 };
+      }
+      return { payload: { error: "create_user_list_failed", detail }, status: 500 };
+    }
+
+    return {
+      payload: {
+        ok: true,
+        action,
+        listId: data?.id ?? null,
+        list: data,
+      },
+      status: 200,
+    };
+  }
+
+  if (action === "delete-user-list") {
+    const listId = asString(body?.listId);
+    if (!listId) {
+      return { payload: { error: "missing_list_id" }, status: 400 };
+    }
+
+    const { error } = await auth.supabase.rpc("delete_user_word_list", {
+      p_user_id: auth.user.id,
+      p_list_id: listId,
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("list_not_found")) {
+        return { payload: { error: "list_not_found" }, status: 404 };
+      }
+      return { payload: { error: "delete_user_list_failed", detail }, status: 500 };
+    }
+
+    return { payload: { ok: true, action, listId }, status: 200 };
   }
 
   if (action === "create-user-entry") {

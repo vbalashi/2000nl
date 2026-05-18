@@ -243,6 +243,69 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("creates user lists through the explicit RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "list-1",
+        name: "Mine",
+        description: "Personal words",
+        language_code: "nl",
+        primary_language_code: "nl",
+        created_at: "2026-05-18T10:00:00.000Z",
+        user_word_list_items: [{ count: 0 }],
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "create-user-list",
+        name: "Mine",
+        description: "Personal words",
+        languageCode: "nl",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("create_user_word_list", {
+      p_user_id: "user-1",
+      p_name: "Mine",
+      p_description: "Personal words",
+      p_language_code: "nl",
+      p_primary_language_code: "nl",
+    });
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        action: "create-user-list",
+        listId: "list-1",
+      }),
+    );
+  });
+
+  test("deletes user lists through the explicit RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(
+      request({
+        action: "delete-user-list",
+        listId: "list-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("delete_user_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+    });
+  });
+
   test("copies accessible entries to a user dictionary", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
