@@ -123,3 +123,6 @@
 
 -- Card-oriented compatibility boundary over user_word_status
 \i db/migrations/038_card_state_compatibility_boundary.sql
+
+-- Card-oriented scheduler compatibility wrapper
+\i db/migrations/039_get_next_card_compatibility_rpc.sql

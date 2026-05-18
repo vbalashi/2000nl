@@ -1272,6 +1272,59 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_next_card wraps scheduler with entry and card terminology", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 10,
+        daily_review_limit: 10,
+      });
+      const firstWordId = await insertWord(client, `fsrs-next-card-a-${Date.now()}`);
+      const secondWordId = await insertWord(client, `fsrs-next-card-b-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Next card list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        firstWordId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        secondWordId,
+      ]);
+
+      const { rows } = await client.query(
+        `select get_next_card(
+          $1::uuid,
+          ARRAY[$2]::text[],
+          ARRAY[$3]::uuid[],
+          $4::uuid,
+          'user',
+          'both',
+          'new',
+          ARRAY[]::text[]
+        ) as item`,
+        [userId, mode, firstWordId, listId],
+      );
+
+      expect(rows[0]?.item).toEqual(
+        expect.objectContaining({
+          id: secondWordId,
+          mode,
+          stats: expect.objectContaining({
+            source: "new",
+          }),
+        }),
+      );
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
