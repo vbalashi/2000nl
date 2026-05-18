@@ -130,6 +130,8 @@ describe("/api/platform/lookup", () => {
               name: "VanDale Dutch",
               kind: "curated",
               visibility: "system",
+              owner_user_id: null,
+              is_editable: false,
               schema_key: "nl-vandale-v1",
               schema_version: 1,
             },
@@ -140,6 +142,8 @@ describe("/api/platform/lookup", () => {
               name: "My dictionary",
               kind: "user",
               visibility: "private",
+              owner_user_id: "user-1",
+              is_editable: true,
               schema_key: "user-entry-v1",
               schema_version: 1,
             },
@@ -202,8 +206,15 @@ describe("/api/platform/lookup", () => {
     );
     expect(payload.items[0].dictionary.slug).toBe("nl-vandale");
     expect(payload.items[0].dictionary.schemaKey).toBe("nl-vandale-v1");
+    expect(payload.items[0].availableActions).toContain("copy-to-user-dictionary");
+    expect(payload.items[0].availableActions).not.toContain("update-user-entry");
+    expect(payload.items[0].availableActions).not.toContain("delete-user-entry");
     expect(payload.items[1].entry.id).toBe("entry-2");
     expect(payload.items[1].dictionary.schemaKey).toBe("user-entry-v1");
+    expect(payload.items[1].dictionary.isEditable).toBe(true);
+    expect(payload.items[1].availableActions).toEqual(
+      expect.arrayContaining(["update-user-entry", "delete-user-entry"]),
+    );
     expect(payload.items[0].userStateByCardType["word-to-definition"]).toEqual(
       expect.objectContaining({
         entryId: "entry-1",

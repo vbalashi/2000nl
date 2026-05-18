@@ -60,6 +60,8 @@ type DictionaryMetadataRow = {
   name: string;
   kind: string;
   visibility: string;
+  owner_user_id?: string | null;
+  is_editable?: boolean | null;
   schema_key: string | null;
   schema_version: number | null;
 };
@@ -210,7 +212,7 @@ export async function performPlatformLookup(
     const { data: dictionaryData, error: dictionaryError } = await auth.supabase
       .from("dictionaries")
       .select(
-        "id, language_code, slug, name, kind, visibility, schema_key, schema_version",
+        "id, language_code, slug, name, kind, visibility, owner_user_id, is_editable, schema_key, schema_version",
       )
       .in("id", dictionaryIds);
 
@@ -279,6 +281,25 @@ export async function performPlatformLookup(
       ? dictionaryById.get(entry.dictionary_id) ?? null
       : null;
 
+    const availableActions: PlatformAction[] = [
+      "record-view",
+      "start-learning",
+      "mark-known",
+      "mark-unknown",
+      "review-card",
+      "add-to-list",
+      "remove-from-list",
+      "copy-to-user-dictionary",
+      "create-user-entry",
+    ];
+    if (
+      dictionary?.kind === "user" &&
+      dictionary.is_editable === true &&
+      dictionary.owner_user_id === auth.user.id
+    ) {
+      availableActions.push("update-user-entry", "delete-user-entry");
+    }
+
     return {
       entry: {
         id: entry.id,
@@ -302,24 +323,13 @@ export async function performPlatformLookup(
             visibility: dictionary.visibility,
             schemaKey: dictionary.schema_key,
             schemaVersion: dictionary.schema_version,
+            isEditable: dictionary.is_editable ?? null,
           }
         : null,
       ...(includeUserState
         ? { userStateByCardType: userStateByEntryId.get(entry.id) ?? {} }
         : {}),
-      availableActions: [
-        "record-view",
-        "start-learning",
-        "mark-known",
-        "mark-unknown",
-        "review-card",
-        "add-to-list",
-        "remove-from-list",
-        "copy-to-user-dictionary",
-        "create-user-entry",
-        "update-user-entry",
-        "delete-user-entry",
-      ],
+      availableActions,
     };
   });
 
