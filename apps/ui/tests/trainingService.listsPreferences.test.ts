@@ -477,21 +477,23 @@ describe("trainingService list and preference characterization", () => {
       new Set(),
     );
     expect(from).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
 
-    queueFrom("user_word_list_items", {
-      data: [{ word_id: "word-1" }, { word_id: null }, { word_id: "word-2" }],
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
       error: null,
     });
+    rpc.mockResolvedValueOnce({ data: ["word-1", "word-2"], error: null });
 
     await expect(
       fetchUserListMembership("list-1", ["word-1", "word-2", "word-3"]),
     ).resolves.toEqual(new Set(["word-1", "word-2"]));
-    expect(queries[0].eq).toHaveBeenCalledWith("list_id", "list-1");
-    expect(queries[0].in).toHaveBeenCalledWith("word_id", [
-      "word-1",
-      "word-2",
-      "word-3",
-    ]);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_user_list_membership", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_word_ids: ["word-1", "word-2", "word-3"],
+    });
   });
 
   test("fetchUserPreferences applies defaults, legacy mode fallback, and translation off sentinel", async () => {

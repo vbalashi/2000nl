@@ -222,6 +222,41 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_user_list_membership returns owned list intersection", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const firstWordId = await insertWord(client, `membership-a-${Date.now()}`);
+      const secondWordId = await insertWord(client, `membership-b-${Date.now()}`);
+      const absentWordId = await insertWord(client, `membership-c-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Membership list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        firstWordId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        secondWordId,
+      ]);
+
+      const { rows } = await client.query(
+        `select get_user_list_membership($1::uuid, $2::uuid, $3::uuid[]) as ids`,
+        [userId, listId, [firstWordId, absentWordId]],
+      );
+
+      expect(rows[0].ids).toEqual([firstWordId]);
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

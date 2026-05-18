@@ -389,20 +389,30 @@ export async function fetchUserListMembership(
 ): Promise<Set<string>> {
   if (!wordIds.length) return new Set();
 
-  const { data, error } = await supabase
-    .from("user_word_list_items")
-    .select("word_id")
-    .eq("list_id", listId)
-    .in("word_id", wordIds);
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    console.error(
+      "Error resolving user before fetching list membership",
+      userError ?? { message: "not_authenticated" },
+    );
+    return new Set();
+  }
+
+  const { data, error } = await supabase.rpc("get_user_list_membership", {
+    p_user_id: userId,
+    p_list_id: listId,
+    p_word_ids: wordIds,
+  });
 
   if (error) {
     console.error("Error fetching user list membership", error);
     return new Set();
   }
 
-  const ids = (data ?? [])
-    .map((row: any) => row?.word_id)
-    .filter((id: any): id is string => typeof id === "string" && id.length > 0);
+  const ids = (Array.isArray(data) ? data : []).filter(
+    (id: any): id is string => typeof id === "string" && id.length > 0,
+  );
 
   return new Set(ids);
 }
