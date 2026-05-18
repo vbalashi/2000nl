@@ -554,7 +554,12 @@ export async function performPlatformAction(
 
   const readable = await assertEntryReadable(auth.supabase, entryId);
   if (readable !== true) {
-    const status = readable.error === "entry_not_found" ? 404 : 403;
+    const status =
+      readable.error === "entry_not_found"
+        ? 404
+        : readable.error === "entry_lookup_failed"
+          ? 500
+          : 403;
     return { payload: readable, status };
   }
 

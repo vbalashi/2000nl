@@ -515,6 +515,36 @@ describe("/api/platform/actions", () => {
     );
   });
 
+  test("reports gated entry lookup failures as server errors", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "function exploded" },
+    });
+
+    const response = await POST(
+      request({
+        action: "record-view",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "entry_lookup_failed",
+      detail: "function exploded",
+    });
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_word_id: "entry-1",
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "record_word_view",
+      expect.anything(),
+    );
+  });
+
   test("rejects unsupported actions without touching Supabase tables", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
