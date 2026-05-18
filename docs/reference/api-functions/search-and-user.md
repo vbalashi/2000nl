@@ -92,6 +92,16 @@ Response:
       "entry": {},
       "dictionary": {},
       "userStateByCardType": {},
+      "listMemberships": [
+        {
+          "id": "list-uuid",
+          "kind": "user",
+          "name": "My words",
+          "description": null,
+          "primaryLanguageCode": "nl",
+          "itemCount": 12
+        }
+      ],
       "availableActions": [
         "record-view",
         "start-learning",
@@ -109,6 +119,9 @@ Response:
 }
 ```
 
+When `includeUserState` is `false`, the endpoint skips both card state and
+user-list membership reads. In either mode it remains read-only.
+
 This endpoint is read-only. Use `/api/platform/actions` for mutations.
 
 ## HTTP `POST /api/platform/actions`
@@ -125,6 +138,8 @@ Supported actions:
 - `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
 - `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
 - `add-to-list` – calls `add_entry_to_user_list` for an owned user list.
+- `remove-from-list` – calls `remove_entries_from_user_list` for an owned user
+  list.
 - `copy-to-user-dictionary` – calls `copy_entry_to_user_dictionary`, creating
   or using a private editable `user-entry-v1` dictionary.
 - `create-user-entry` – calls `create_user_dictionary_entry` with a full
@@ -133,6 +148,9 @@ Supported actions:
   owned user entry payload.
 - `delete-user-entry` – calls `delete_user_dictionary_entry` for an owned user
   entry.
+- `create-user-list` – calls `create_user_word_list`.
+- `update-user-list` – calls `update_user_word_list`.
+- `delete-user-list` – calls `delete_user_word_list`.
 
 Examples:
 
@@ -149,6 +167,14 @@ Examples:
 ```json
 {
   "action": "add-to-list",
+  "entryId": "entry-uuid",
+  "listId": "list-uuid"
+}
+```
+
+```json
+{
+  "action": "remove-from-list",
   "entryId": "entry-uuid",
   "listId": "list-uuid"
 }
@@ -194,6 +220,34 @@ Examples:
     "languageCode": "nl",
     "definition": "updated personal definition"
   }
+}
+```
+
+```json
+{
+  "action": "create-user-list",
+  "name": "Film words",
+  "description": "Words collected while watching",
+  "languageCode": "nl",
+  "primaryLanguageCode": "nl"
+}
+```
+
+```json
+{
+  "action": "update-user-list",
+  "listId": "list-uuid",
+  "name": "Updated film words",
+  "description": null,
+  "languageCode": "nl",
+  "primaryLanguageCode": "nl"
+}
+```
+
+```json
+{
+  "action": "delete-user-list",
+  "listId": "list-uuid"
 }
 ```
 
