@@ -45,6 +45,14 @@ begin
     raise exception 'missing public.record_word_view(uuid,uuid,text)';
   end if;
 
+  if to_regprocedure('public.ensure_user_dictionary(uuid,text,text)') is null then
+    raise exception 'missing public.ensure_user_dictionary(uuid,text,text)';
+  end if;
+
+  if to_regprocedure('public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)') is null then
+    raise exception 'missing public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)';
+  end if;
+
   if to_regprocedure('public.can_access_dictionary(uuid,uuid,text)') is null then
     raise exception 'missing public.can_access_dictionary(uuid,uuid,text)';
   end if;
@@ -97,6 +105,16 @@ begin
       and version = 1
   ) then
     raise exception 'missing seeded nl-vandale-v1 dictionary schema';
+  end if;
+
+  if not exists (
+    select 1
+    from public.dictionary_schemas
+    where schema_key = 'user-entry-v1'
+      and version = 1
+      and json_schema ? 'anyOf'
+  ) then
+    raise exception 'missing seeded user-entry-v1 dictionary schema';
   end if;
 
   if not exists (
