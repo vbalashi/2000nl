@@ -66,3 +66,6 @@
 
 -- User-owned dictionary schema and private editable dictionary container
 \i db/migrations/019_user_entry_schema_boundary.sql
+
+-- Explicit copy action from readable entries into user-owned dictionaries
+\i db/migrations/020_copy_entry_to_user_dictionary_action.sql

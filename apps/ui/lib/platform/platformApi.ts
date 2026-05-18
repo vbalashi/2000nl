@@ -20,7 +20,8 @@ export type PlatformAction =
   | "mark-known"
   | "mark-unknown"
   | "start-learning"
-  | "add-to-list";
+  | "add-to-list"
+  | "copy-to-user-dictionary";
 
 export type PlatformActionBody = {
   action?: unknown;
@@ -29,6 +30,8 @@ export type PlatformActionBody = {
   result?: unknown;
   turnId?: unknown;
   listId?: unknown;
+  targetDictionaryId?: unknown;
+  overrides?: unknown;
 };
 
 type DictionaryLookupPayload = {
@@ -248,6 +251,7 @@ export async function performPlatformLookup(
             "mark-unknown",
             "review-card",
             "add-to-list",
+            "copy-to-user-dictionary",
           ],
         },
       ],
@@ -274,6 +278,7 @@ export async function performPlatformAction(
       "mark-unknown",
       "start-learning",
       "add-to-list",
+      "copy-to-user-dictionary",
     ].includes(action)
   ) {
     return { payload: { error: "unsupported_action" }, status: 400 };
@@ -315,6 +320,56 @@ export async function performPlatformAction(
     }
 
     return { payload: { ok: true, action, entryId, listId }, status: 200 };
+  }
+
+  if (action === "copy-to-user-dictionary") {
+    const targetDictionaryId = asString(body?.targetDictionaryId);
+    const overrides =
+      body?.overrides && typeof body.overrides === "object" && !Array.isArray(body.overrides)
+        ? body.overrides
+        : {};
+
+    const { data, error } = await auth.supabase.rpc("copy_entry_to_user_dictionary", {
+      p_user_id: auth.user.id,
+      p_source_word_id: entryId,
+      p_target_dictionary_id: targetDictionaryId,
+      p_overrides: overrides,
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("entry_not_found")) {
+        return { payload: { error: "entry_not_found" }, status: 404 };
+      }
+      if (detail.includes("entry_not_accessible")) {
+        return { payload: { error: "entry_not_accessible" }, status: 403 };
+      }
+      if (detail.includes("target_dictionary_not_editable")) {
+        return { payload: { error: "target_dictionary_not_editable" }, status: 403 };
+      }
+      if (
+        detail.includes("invalid_user_entry") ||
+        detail.includes("language_not_found") ||
+        detail.includes("language_mismatch")
+      ) {
+        return { payload: { error: "invalid_user_entry", detail }, status: 400 };
+      }
+      return {
+        payload: { error: "copy_to_user_dictionary_failed", detail },
+        status: 500,
+      };
+    }
+
+    return {
+      payload: {
+        ok: true,
+        action,
+        entryId,
+        copiedEntryId: data,
+        targetDictionaryId: targetDictionaryId ?? null,
+      },
+      status: 200,
+    };
   }
 
   const mode = asTrainingMode(body?.cardTypeId);

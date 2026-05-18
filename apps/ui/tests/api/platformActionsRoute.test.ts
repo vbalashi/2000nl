@@ -215,6 +215,46 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("copies accessible entries to a user dictionary", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({ data: "copy-1", error: null });
+
+    const response = await POST(
+      request({
+        action: "copy-to-user-dictionary",
+        entryId: "entry-1",
+        overrides: {
+          translation: {
+            languageCode: "en",
+            text: "house",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("copy_entry_to_user_dictionary", {
+      p_user_id: "user-1",
+      p_source_word_id: "entry-1",
+      p_target_dictionary_id: null,
+      p_overrides: {
+        translation: {
+          languageCode: "en",
+          text: "house",
+        },
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      action: "copy-to-user-dictionary",
+      entryId: "entry-1",
+      copiedEntryId: "copy-1",
+      targetDictionaryId: null,
+    });
+  });
+
   test("rejects inaccessible entries before mutating", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

@@ -92,7 +92,8 @@ Response:
         "mark-known",
         "mark-unknown",
         "review-card",
-        "add-to-list"
+        "add-to-list",
+        "copy-to-user-dictionary"
       ]
     }
   ]
@@ -115,6 +116,8 @@ Supported actions:
 - `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
 - `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
 - `add-to-list` – calls `add_entry_to_user_list` for an owned user list.
+- `copy-to-user-dictionary` – calls `copy_entry_to_user_dictionary`, creating
+  or using a private editable `user-entry-v1` dictionary.
 
 Examples:
 
@@ -133,6 +136,20 @@ Examples:
   "action": "add-to-list",
   "entryId": "entry-uuid",
   "listId": "list-uuid"
+}
+```
+
+```json
+{
+  "action": "copy-to-user-dictionary",
+  "entryId": "entry-uuid",
+  "overrides": {
+    "translation": {
+      "languageCode": "ru",
+      "text": "дом"
+    },
+    "notes": "Preferred personal wording"
+  }
 }
 ```
 

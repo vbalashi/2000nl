@@ -259,6 +259,62 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("copy_entry_to_user_dictionary creates a user-entry-v1 copy", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const sourceWordId = await insertWord(client, `fsrs-copy-${Date.now()}`);
+
+      const { rows: copyRows } = await client.query(
+        `select copy_entry_to_user_dictionary(
+          $1,
+          $2,
+          NULL,
+          '{"translation":{"languageCode":"en","text":"copy"}}'::jsonb
+        ) as copied_word_id`,
+        [userId, sourceWordId],
+      );
+
+      const { rows } = await client.query(
+        `select
+           w.id,
+           w.dictionary_id,
+           w.is_nt2_2000,
+           w.raw,
+           d.kind,
+           d.visibility,
+           d.owner_user_id,
+           d.schema_key
+         from word_entries w
+         join dictionaries d on d.id = w.dictionary_id
+         where w.id = $1`,
+        [copyRows[0].copied_word_id],
+      );
+
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          id: copyRows[0].copied_word_id,
+          is_nt2_2000: false,
+          kind: "user",
+          visibility: "private",
+          owner_user_id: userId,
+          schema_key: "user-entry-v1",
+        }),
+      );
+      expect(rows[0].raw).toEqual(
+        expect.objectContaining({
+          headword: expect.stringContaining("fsrs-copy-"),
+          languageCode: "nl",
+          sourceEntryId: sourceWordId,
+          translation: {
+            languageCode: "en",
+            text: "copy",
+          },
+        }),
+      );
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

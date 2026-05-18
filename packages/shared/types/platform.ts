@@ -171,6 +171,7 @@ export type LookupIntent =
 export type LookupActionId =
   | "record-view"
   | "add-to-list"
+  | "copy-to-user-dictionary"
   | "mark-known"
   | "mark-unknown"
   | "review-card"
@@ -246,6 +247,12 @@ export type PlatformActionRequest =
       action: "add-to-list";
       entryId: string;
       listId: string;
+    }
+  | {
+      action: "copy-to-user-dictionary";
+      entryId: string;
+      targetDictionaryId?: string | null;
+      overrides?: Partial<UserDictionaryEntryV1>;
     };
 
 export type PlatformActionResponse = {
@@ -256,4 +263,6 @@ export type PlatformActionResponse = {
   result?: "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
   turnId?: string | null;
   listId?: string;
+  copiedEntryId?: string;
+  targetDictionaryId?: string | null;
 };
