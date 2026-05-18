@@ -73,6 +73,7 @@ const row = {
   raw: JSON.stringify({ meanings: [{ definition: "Een gebouw" }] }),
   is_nt2_2000: true,
 };
+const uuid = "8b9df84e-7956-4712-a39a-3ea8363be1cf";
 
 describe("trainingService dictionary lookup", () => {
   beforeEach(() => {
@@ -99,6 +100,33 @@ describe("trainingService dictionary lookup", () => {
     expect(queries[0].limit).toHaveBeenCalledWith(1);
   });
 
+  test("fetchTrainingWordById uses gated RPC when a user id is provided", async () => {
+    const { fetchTrainingWordById } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        ...row,
+        dictionary_id: "dict-1",
+        language_code: "nl",
+        raw: { meanings: [{ definition: "Een gebouw" }] },
+        meanings_count: 2,
+      },
+      error: null,
+    });
+
+    await expect(fetchTrainingWordById("word-1", "user-1")).resolves.toEqual(
+      expect.objectContaining({
+        id: "word-1",
+        dictionary_id: "dict-1",
+        language_code: "nl",
+        meanings_count: 2,
+      }),
+    );
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_word_id: "word-1",
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
   test("fetchTrainingWordByLookup returns null for blank lookup without querying", async () => {
     const { fetchTrainingWordByLookup } = await importService();
 
@@ -110,16 +138,15 @@ describe("trainingService dictionary lookup", () => {
     const { fetchTrainingWordByLookup } = await importService();
     queueFrom("word_entries", { data: row, error: null });
 
-    const word = await fetchTrainingWordByLookup(" word-1 ");
+    const word = await fetchTrainingWordByLookup(` ${uuid} `);
 
     expect(word?.id).toBe("word-1");
     expect(queries).toHaveLength(1);
-    expect(queries[0].eq).toHaveBeenCalledWith("id", "word-1");
+    expect(queries[0].eq).toHaveBeenCalledWith("id", uuid);
   });
 
   test("fetchTrainingWordByLookup falls back to headword ilike when id is not found", async () => {
     const { fetchTrainingWordByLookup } = await importService();
-    queueFrom("word_entries", { data: null, error: null });
     queueFrom("word_entries", {
       data: { ...row, id: "word-headword" },
       error: null,
@@ -128,8 +155,40 @@ describe("trainingService dictionary lookup", () => {
     const word = await fetchTrainingWordByLookup("huis");
 
     expect(word?.id).toBe("word-headword");
-    expect(queries[0].eq).toHaveBeenCalledWith("id", "huis");
-    expect(queries[1].ilike).toHaveBeenCalledWith("headword", "huis");
+    expect(queries).toHaveLength(1);
+    expect(queries[0].ilike).toHaveBeenCalledWith("headword", "huis");
+  });
+
+  test("fetchTrainingWordByLookup uses gated lookup for authenticated headwords", async () => {
+    const { fetchTrainingWordByLookup } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          ...row,
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          raw: { meanings: [{ definition: "Een gebouw" }] },
+          meanings_count: 1,
+        },
+      ],
+      error: null,
+    });
+
+    const word = await fetchTrainingWordByLookup("huis", "user-1");
+
+    expect(word).toEqual(
+      expect.objectContaining({
+        id: "word-1",
+        dictionary_id: "dict-1",
+        language_code: "nl",
+        headword: "huis",
+      }),
+    );
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
   });
 
   test("fetchDictionaryEntry returns direct unauthenticated headword match with meanings count", async () => {

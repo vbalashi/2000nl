@@ -7,6 +7,9 @@ type DictionaryEntryWithStats = DictionaryEntry & {
   stats?: { click_count: number; last_seen_at: string | null };
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const mapDictionaryLookupPayload = (
   data: any,
 ): DictionaryEntryWithStats | null => {
@@ -22,7 +25,23 @@ const mapDictionaryLookupPayload = (
 
 const fetchDictionaryEntryById = async (
   id: string,
+  userId?: string,
 ): Promise<DictionaryEntry | null> => {
+  if (userId) {
+    const { data, error } = await supabase.rpc("fetch_dictionary_entry_by_id_gated", {
+      p_word_id: id,
+    });
+
+    if (error || !data) {
+      if (error) {
+        console.error("Unable to fetch gated dictionary entry by id", error);
+      }
+      return null;
+    }
+
+    return mapDictionaryEntry(data);
+  }
+
   const { data, error } = await supabase
     .from("word_entries")
     .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
@@ -40,45 +59,61 @@ const fetchDictionaryEntryById = async (
 
 export const fetchTrainingWordById = async (
   id: string,
+  userId?: string,
 ): Promise<TrainingWord | null> => {
-  const { data, error } = await supabase
-    .from("word_entries")
-    .select("id, dictionary_id, language_code, headword, part_of_speech, gender, raw, is_nt2_2000")
-    .eq("id", id)
-    .limit(1)
-    .maybeSingle();
-
-  if (error || !data) {
-    if (error) {
-      console.error("Unable to fetch training word by id", error);
-    }
+  const entry = await fetchDictionaryEntryById(id, userId);
+  if (!entry) {
     return null;
   }
 
   return {
-    id: data.id,
-    ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
-    ...(data.language_code ? { language_code: data.language_code } : {}),
-    headword: data.headword,
-    part_of_speech: data.part_of_speech ?? undefined,
-    gender: data.gender ?? undefined,
-    raw: normalizeRaw(data.raw),
-    is_nt2_2000: data.is_nt2_2000,
+    id: entry.id,
+    ...(entry.dictionary_id ? { dictionary_id: entry.dictionary_id } : {}),
+    ...(entry.language_code ? { language_code: entry.language_code } : {}),
+    headword: entry.headword,
+    part_of_speech: entry.part_of_speech ?? undefined,
+    gender: entry.gender ?? undefined,
+    raw: normalizeRaw(entry.raw),
+    is_nt2_2000: entry.is_nt2_2000,
+    meanings_count: entry.meanings_count,
     isFirstEncounter: false,
   };
 };
 
 export const fetchTrainingWordByLookup = async (
   lookup: string,
+  userId?: string,
 ): Promise<TrainingWord | null> => {
   const normalized = lookup.trim();
   if (!normalized) {
     return null;
   }
 
-  const byId = await fetchTrainingWordById(normalized);
-  if (byId) {
-    return byId;
+  if (UUID_PATTERN.test(normalized)) {
+    const byId = await fetchTrainingWordById(normalized, userId);
+    if (byId) {
+      return byId;
+    }
+  }
+
+  if (userId) {
+    const entry = await fetchDictionaryEntry(normalized, userId);
+    if (!entry) {
+      return null;
+    }
+
+    return {
+      id: entry.id,
+      ...(entry.dictionary_id ? { dictionary_id: entry.dictionary_id } : {}),
+      ...(entry.language_code ? { language_code: entry.language_code } : {}),
+      headword: entry.headword,
+      part_of_speech: entry.part_of_speech ?? undefined,
+      gender: entry.gender ?? undefined,
+      raw: normalizeRaw(entry.raw),
+      is_nt2_2000: entry.is_nt2_2000,
+      meanings_count: entry.meanings_count,
+      isFirstEncounter: false,
+    };
   }
 
   const { data, error } = await supabase
@@ -195,7 +230,7 @@ export const fetchDictionaryEntry = async (
     return null;
   }
 
-  const entry = await fetchDictionaryEntryById(formRow.word_id);
+  const entry = await fetchDictionaryEntryById(formRow.word_id, userId);
   if (!entry) return null;
 
   if (userId) {

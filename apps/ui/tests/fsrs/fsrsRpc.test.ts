@@ -182,6 +182,56 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("dictionary entry by id lookup is gated by dictionary access", async () => {
+    const userId = randomUUID();
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await ensureUserWithSettings(client, ownerId);
+
+      const publicWordId = await insertWord(client, `fsrs-by-id-public-${Date.now()}`);
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+          language_code, slug, name, kind, visibility, owner_user_id,
+          schema_key, schema_version
+        )
+        values ('nl', $1, 'Private by id dictionary', 'user', 'private', $2, 'user-entry-v1', 1)
+        returning id`,
+        [`private-by-id-${Date.now()}`, ownerId],
+      );
+      const { rows: privateRows } = await client.query(
+        `insert into word_entries (
+          dictionary_id, language_code, headword, part_of_speech, gender,
+          is_nt2_2000, raw, meaning_id
+        )
+        values ($1, 'nl', $2, 'noun', null, false, '{}'::jsonb, 1)
+        returning id`,
+        [dictionaryRows[0].id, `fsrs-by-id-private-${Date.now()}`],
+      );
+
+      const { rows: publicRows } = await client.query(
+        `select fetch_dictionary_entry_by_id_gated($1) as item`,
+        [publicWordId],
+      );
+      expect(publicRows[0].item.id).toBe(publicWordId);
+
+      const { rows: privateRowsForOther } = await client.query(
+        `select fetch_dictionary_entry_by_id_gated($1) as item`,
+        [privateRows[0].id],
+      );
+      expect(privateRowsForOther[0].item).toBeNull();
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        ownerId,
+      ]);
+      const { rows: privateRowsForOwner } = await client.query(
+        `select fetch_dictionary_entry_by_id_gated($1) as item`,
+        [privateRows[0].id],
+      );
+      expect(privateRowsForOwner[0].item.id).toBe(privateRows[0].id);
+    }, userId);
+  });
+
   test("start_learning_card enables a card without review-log side effects", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

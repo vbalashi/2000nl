@@ -493,7 +493,7 @@ export function TrainingScreen({ user }: Props) {
         const forcedId = forcedNextWordIdRef.current;
         if (forcedId) {
           forcedNextWordIdRef.current = null;
-          const forced = await fetchTrainingWordByLookup(forcedId);
+          const forced = await fetchTrainingWordByLookup(forcedId, user.id);
           if (forced) {
             const mode = enabledModes[0] ?? "word-to-definition";
             void recordWordView({ userId: user.id, wordId: forced.id, mode });

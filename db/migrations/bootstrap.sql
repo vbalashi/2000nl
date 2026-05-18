@@ -84,3 +84,6 @@
 
 -- Explicit user word-list CRUD actions
 \i db/migrations/025_user_word_list_crud_actions.sql
+
+-- Gated dictionary entry lookup by id
+\i db/migrations/026_gated_dictionary_entry_by_id.sql

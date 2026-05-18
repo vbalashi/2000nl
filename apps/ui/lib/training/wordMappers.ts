@@ -39,6 +39,7 @@ export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   gender: data.gender ?? undefined,
   raw: normalizeRaw(data.raw),
   is_nt2_2000: data.is_nt2_2000,
+  meanings_count: data.meanings_count ?? undefined,
 });
 
 export const mapCuratedListSummary = (row: any): WordListSummary => ({
