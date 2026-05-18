@@ -152,7 +152,6 @@ export type LookupIntent =
 export type LookupActionId =
   | "record-view"
   | "add-to-list"
-  | "create-user-entry-copy"
   | "mark-known"
   | "mark-unknown"
   | "review-card"
