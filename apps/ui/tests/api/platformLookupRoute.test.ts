@@ -37,6 +37,18 @@ const request = (body: unknown, token = "token-1") =>
     body: JSON.stringify(body),
   });
 
+const mutationRpcNames = [
+  "record_word_view",
+  "handle_review",
+  "handle_click",
+  "start_learning_card",
+  "add_entry_to_user_list",
+  "copy_entry_to_user_dictionary",
+  "create_user_dictionary_entry",
+  "update_user_dictionary_entry",
+  "delete_user_dictionary_entry",
+];
+
 describe("/api/platform/lookup", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
@@ -224,5 +236,59 @@ describe("/api/platform/lookup", () => {
         clickCount: 2,
       }),
     );
+    for (const name of mutationRpcNames) {
+      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
+    }
+  });
+
+  test("does not read card state or mutate when user state is disabled", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-1",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          raw: {},
+          is_nt2_2000: true,
+          meanings_count: 1,
+          dictionary: {
+            id: "dict-1",
+            language_code: "nl",
+            slug: "nl-vandale",
+            name: "VanDale Dutch",
+            kind: "curated",
+            visibility: "system",
+            owner_user_id: null,
+            is_editable: false,
+            schema_key: "nl-vandale-v1",
+            schema_version: 1,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const response = await POST(
+      request({ query: "huis", includeUserState: false }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
+    for (const name of ["get_card_user_state", ...mutationRpcNames]) {
+      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
+    }
+    const payload = await response.json();
+    expect(payload.items[0].userStateByCardType).toBeUndefined();
   });
 });
