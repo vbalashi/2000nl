@@ -280,6 +280,84 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("card-oriented compatibility RPCs map to current word status storage", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-card-compat-${Date.now()}`);
+      const turnId = randomUUID();
+
+      await client.query(`select record_card_view($1, $2, $3)`, [
+        userId,
+        wordId,
+        mode,
+      ]);
+
+      let { rows } = await client.query(
+        `select entry_id, card_type_id, seen_count, last_seen_at
+         from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+        [userId, wordId, mode],
+      );
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          entry_id: wordId,
+          card_type_id: mode,
+          seen_count: 0,
+        }),
+      );
+      expect(rows[0].last_seen_at).toBeTruthy();
+
+      await client.query(`select start_learning_entry_card($1, $2, $3)`, [
+        userId,
+        wordId,
+        mode,
+      ]);
+      await client.query(`select handle_card_review($1, $2, $3, $4, $5)`, [
+        userId,
+        wordId,
+        mode,
+        "success",
+        turnId,
+      ]);
+
+      const { rows: stateRows } = await client.query(
+        `select get_user_card_state($1::uuid, $2::uuid, $3::text) as state`,
+        [userId, wordId, mode],
+      );
+      expect(stateRows[0].state).toEqual(
+        expect.objectContaining({
+          fsrs_reps: 1,
+          fsrs_last_grade: 3,
+        }),
+      );
+
+      rows = (
+        await client.query(
+          `select fsrs_reps, fsrs_last_grade, fsrs_enabled
+           from user_card_status
+           where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+          [userId, wordId, mode],
+        )
+      ).rows;
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          fsrs_reps: 1,
+          fsrs_last_grade: 3,
+          fsrs_enabled: true,
+        }),
+      );
+
+      const { rows: reviewRows } = await client.query(
+        `select count(*)::int as count
+         from user_review_log
+         where user_id = $1 and word_id = $2 and mode = $3 and turn_id = $4`,
+        [userId, wordId, mode, turnId],
+      );
+      expect(reviewRows[0].count).toBe(1);
+    }, userId);
+  });
+
   test("get_user_list_membership returns owned list intersection", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

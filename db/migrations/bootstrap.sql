@@ -93,3 +93,6 @@
 
 -- User-list memberships for platform lookup/status payloads
 \i db/migrations/037_user_list_memberships_for_entries_rpc.sql
+
+-- Card-oriented compatibility boundary over user_word_status
+\i db/migrations/038_card_state_compatibility_boundary.sql
