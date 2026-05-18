@@ -108,6 +108,48 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("dictionary lookup does not mutate FSRS or review logs", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-lookup-${Date.now()}`);
+
+      const { rows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as item`,
+        [`missing-${randomUUID()}`],
+      );
+      // The timestamped query above intentionally should miss; call the real
+      // headword too so both miss and hit paths are read-only.
+      expect(rows[0]?.item).toBeNull();
+
+      const { rows: wordRows } = await client.query(
+        `select headword from word_entries where id = $1`,
+        [wordId],
+      );
+      const { rows: hitRows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as item`,
+        [wordRows[0].headword],
+      );
+      expect(hitRows[0]?.item?.id).toBe(wordId);
+
+      const { rows: statusRows } = await client.query(
+        `select count(*)::int as count
+         from user_word_status
+         where user_id = $1 and word_id = $2`,
+        [userId, wordId],
+      );
+      const { rows: reviewRows } = await client.query(
+        `select count(*)::int as count
+         from user_review_log
+         where user_id = $1 and word_id = $2`,
+        [userId, wordId],
+      );
+
+      expect(statusRows[0].count).toBe(0);
+      expect(reviewRows[0].count).toBe(0);
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
