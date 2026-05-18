@@ -348,3 +348,78 @@ test("W->D hint examples include left padding so text doesn't hug the edge", () 
   });
   expect(hintSection).toHaveClass("px-2");
 });
+
+test("renders user-entry-v1 translation-only cards", () => {
+  const onWordClick = vi.fn();
+  const userEntryWord = {
+    id: "9",
+    dictionary_id: "user-dict-1",
+    language_code: "nl",
+    headword: "gedoe",
+    part_of_speech: "noun",
+    raw: {
+      headword: "gedoe",
+      languageCode: "nl",
+      translation: {
+        languageCode: "en",
+        text: "hassle",
+      },
+      example: {
+        source: "Wat een gedoe.",
+        translation: "What a hassle.",
+      },
+      notes: "Personal dictionary entry",
+      sourceEntryId: "source-1",
+    },
+  };
+
+  render(
+    <TrainingCard
+      word={userEntryWord as any}
+      mode="word-to-definition"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  expect(screen.getByRole("heading", { name: "gedoe" })).toBeInTheDocument();
+  expect(document.body).toHaveTextContent("hassle");
+  expect(document.body).toHaveTextContent("Wat een gedoe.");
+  expect(document.body).not.toHaveTextContent("Definitie niet beschikbaar");
+});
+
+test("D->W user-entry-v1 prompt uses personal translation without revealing headword", () => {
+  const onWordClick = vi.fn();
+  const userEntryWord = {
+    id: "10",
+    dictionary_id: "user-dict-1",
+    language_code: "nl",
+    headword: "gedoe",
+    raw: {
+      headword: "gedoe",
+      languageCode: "nl",
+      translation: {
+        languageCode: "en",
+        text: "hassle",
+      },
+    },
+  };
+
+  render(
+    <TrainingCard
+      word={userEntryWord as any}
+      mode="definition-to-word"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />
+  );
+
+  expect(document.body).toHaveTextContent("hassle");
+  expect(document.body).not.toHaveTextContent("gedoe");
+});

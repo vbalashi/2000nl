@@ -16,6 +16,7 @@ import {
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
+import { getAllMeanings } from "@/lib/wordUtils";
 
 export type WordDetailPanelProps = {
   entry: DictionaryEntry;
@@ -210,7 +211,7 @@ export function WordDetailPanel({
     };
   }, [translationLang, entry?.id, translationStatus, fetchTranslation]);
 
-  const meanings = Array.isArray(entry.raw?.meanings) ? entry.raw.meanings : [];
+  const meanings = getAllMeanings(entry.raw);
   const primaryMeaning = meanings[0] ?? {};
   const examples: string[] = Array.isArray(primaryMeaning.examples)
     ? primaryMeaning.examples.filter((x: unknown) => typeof x === "string")

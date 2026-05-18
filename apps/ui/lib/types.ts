@@ -4,6 +4,21 @@ export type QueueTurn = "new" | "review" | "auto";
 
 export type WordRaw = {
   headword?: string;
+  languageCode?: string;
+  definition?: string;
+  translation?: {
+    languageCode?: string;
+    text?: string;
+  };
+  example?:
+    | string
+    | {
+        source?: string;
+        translation?: string;
+      };
+  notes?: string;
+  tags?: string[];
+  sourceEntryId?: string;
   cross_reference?: string;
   audio_links?: {
     nl?: string | null;

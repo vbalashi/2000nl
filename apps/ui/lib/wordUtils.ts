@@ -7,14 +7,32 @@ export type LinkTerm = {
 
 export const getPrimaryMeaning = (raw: WordRaw) => {
   const firstMeaning = raw.meanings?.[0];
+  const userExample =
+    typeof raw.example === "string"
+      ? raw.example
+      : typeof raw.example?.source === "string"
+        ? raw.example.source
+        : undefined;
   const definition =
-    firstMeaning?.definition ?? raw.headword ?? "Definitie niet beschikbaar.";
+    firstMeaning?.definition ??
+    raw.definition ??
+    raw.translation?.text ??
+    raw.notes ??
+    userExample ??
+    raw.headword ??
+    "Definitie niet beschikbaar.";
 
   // Prefer new 'examples' array, fallback to legacy 'example' string
   const examples =
     firstMeaning?.examples ??
-    (firstMeaning?.example ? [firstMeaning.example] : []);
-  const context = firstMeaning?.context;
+    (firstMeaning?.example
+      ? [firstMeaning.example]
+      : userExample && userExample !== definition
+        ? [userExample]
+        : []);
+  const context =
+    firstMeaning?.context ??
+    (raw.notes && raw.notes !== definition ? raw.notes : undefined);
   const idioms = firstMeaning?.idioms ?? [];
 
   const links = firstMeaning?.links ?? raw.links ?? [];
