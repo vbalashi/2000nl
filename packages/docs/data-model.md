@@ -16,6 +16,7 @@ Content and lists:
 Training and events:
 - `training_scenarios(id, name_en, name_nl, description, card_modes, graduation_threshold, enabled, sort_order)` – user-facing scenario grouping over internal card modes.
 - `user_word_status(user_id, word_id, mode, fsrs_*, next_review_at, last_seen_at, last_reviewed_at, click_count, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – per-user, per-word, per-mode scheduling state.
+- `user_card_status(user_id, entry_id, card_type_id, fsrs_*, next_review_at, last_seen_at, last_reviewed_at, click_count, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – compatibility view over `user_word_status` for card-oriented clients.
 - `user_review_log(id, user_id, word_id, mode, turn_id, grade, review_type, scheduled_at, reviewed_at, stability_before, difficulty_before, stability_after, difficulty_after, interval_after, params_version, metadata)` – review audit trail.
 - `user_events(id, user_id, word_id, mode, event_type, created_at, meta)` – generic event log.
 
@@ -33,6 +34,7 @@ JSON Schemas:
 Guidelines:
 - Treat `word_entries.raw` as the current fidelity layer for dictionary-specific structure.
 - Dictionary lookup/search/training RPCs must enforce `can_access_dictionary(...)`; ordinary lookup is read-only and must not mutate FSRS state.
+- New external/API code should prefer card-oriented compatibility RPCs (`get_user_card_state`, `record_card_view`, `start_learning_entry_card`, `handle_card_review`) while existing app code may keep using legacy names until the scheduler is generalized.
 - App routes that generate translation overlays may use server credentials for cache writes, but source entry reads must still go through authenticated gated entry RPCs.
 - Do not design new work around the older aspirational `headwords`/`meanings`/`notes`/`user_progress` model unless you are explicitly planning a schema migration.
 - For scheduler changes, update migrations and the FSRS tests in `apps/ui/tests/fsrs`.

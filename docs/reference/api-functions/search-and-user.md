@@ -131,12 +131,12 @@ Explicit mutation endpoint. Plain lookup must not call this endpoint implicitly.
 Authentication is the same Bearer-token flow as `/api/platform/lookup`.
 
 Supported actions:
-- `record-view` – calls `record_word_view`.
-- `start-learning` – calls `start_learning_card`, enabling the card without
+- `record-view` – calls `record_card_view`.
+- `start-learning` – calls `start_learning_entry_card`, enabling the card without
   writing a review-log row.
-- `mark-known` – explicit shortcut to `handle_review(..., "easy")`.
-- `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
-- `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
+- `mark-known` – explicit shortcut to `handle_card_review(..., "easy")`.
+- `review-card` – calls `handle_card_review` with the supplied result and optional `turnId`.
+- `mark-unknown` – explicit shortcut to `handle_card_review(..., "fail")`.
 - `add-to-list` – calls `add_entry_to_user_list` for an owned user list.
 - `remove-from-list` – calls `remove_entries_from_user_list` for an owned user
   list.
