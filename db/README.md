@@ -31,6 +31,8 @@ db/migrations/
 │                              # read-only dictionary lookup with access checks
 ├── 016_scope_scheduler_by_dictionary_access.sql
 │                              # dictionary read checks in training scheduler
+├── 017_start_learning_card_action.sql
+│                              # explicit start-learning card action
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

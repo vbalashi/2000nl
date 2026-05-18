@@ -57,3 +57,6 @@
 
 -- Enforce dictionary read access in training scheduler selection
 \i db/migrations/016_scope_scheduler_by_dictionary_access.sql
+
+-- Explicit start-learning action without review-log side effects
+\i db/migrations/017_start_learning_card_action.sql

@@ -150,6 +150,45 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("start_learning_card enables a card without review-log side effects", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-start-${Date.now()}`);
+
+      await client.query(`select start_learning_card($1, $2, $3)`, [
+        userId,
+        wordId,
+        mode,
+      ]);
+
+      const { rows: statusRows } = await client.query(
+        `select fsrs_enabled, fsrs_reps, fsrs_lapses, seen_count, hidden, frozen_until
+         from user_word_status
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      const { rows: reviewRows } = await client.query(
+        `select count(*)::int as count
+         from user_review_log
+         where user_id = $1 and word_id = $2`,
+        [userId, wordId],
+      );
+
+      expect(statusRows[0]).toEqual(
+        expect.objectContaining({
+          fsrs_enabled: true,
+          fsrs_reps: 0,
+          fsrs_lapses: 0,
+          seen_count: 1,
+          hidden: false,
+          frozen_until: null,
+        }),
+      );
+      expect(reviewRows[0].count).toBe(0);
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

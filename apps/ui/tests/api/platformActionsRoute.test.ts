@@ -146,6 +146,28 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("starts learning through the explicit start_learning_card RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("start_learning_card", {
+      p_user_id: "user-1",
+      p_word_id: "entry-1",
+      p_mode: "word-to-definition",
+    });
+  });
+
   test("adds accessible entries to owned user lists", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

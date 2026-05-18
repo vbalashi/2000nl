@@ -217,11 +217,18 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "record-view" || action === "start-learning") {
-    const { error } = await recordView(auth.supabase, {
-      userId: auth.user.id,
-      entryId,
-      mode,
-    });
+    const { error } =
+      action === "start-learning"
+        ? await auth.supabase.rpc("start_learning_card", {
+            p_user_id: auth.user.id,
+            p_word_id: entryId,
+            p_mode: mode,
+          })
+        : await recordView(auth.supabase, {
+            userId: auth.user.id,
+            entryId,
+            mode,
+          });
     if (error) {
       return reply(
         { error: `${action}_failed`, detail: error.message ?? String(error) },
