@@ -56,11 +56,17 @@ fetch_dictionary_entry_gated(
 ) RETURNS jsonb
 ```
 
-The RPC tries exact headword, lowercase headword, then `word_forms`. It returns entry metadata, `meanings_count`, and lightweight user status if present. It does not write FSRS state, list membership, or review logs.
+The RPC tries exact headword, lowercase headword, then `word_forms`. It returns
+a JSON array of all accessible candidates for the resolved headword, ordered
+with user-owned entries first, then curated entries. Each candidate includes
+entry metadata, `meaning_id`, `meanings_count`, and lightweight user status if
+present. It does not write FSRS state, list membership, or review logs.
 
 ## HTTP `POST /api/platform/lookup`
 
 Read-only lookup endpoint for external clients and first-party integrations.
+When the same headword exists in VanDale and a private user dictionary, both
+accessible candidates are returned in `items`.
 
 Authentication:
 - Requires `Authorization: Bearer <supabase-access-token>`.

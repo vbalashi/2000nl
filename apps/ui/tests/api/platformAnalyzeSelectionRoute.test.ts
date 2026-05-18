@@ -18,6 +18,7 @@ const chain = (result: { data?: any; error?: any }) => {
   const query: any = {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
+    in: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     then: (resolve: any, reject: any) =>
       Promise.resolve(result).then(resolve, reject),
@@ -82,34 +83,38 @@ describe("/api/platform/analyze-selection", () => {
     mockAuthenticatedUser();
     rpc
       .mockResolvedValueOnce({
-        data: {
-          id: "entry-1",
-          dictionary_id: "dict-1",
-          language_code: "nl",
-          headword: "huis",
-          meaning_id: 1,
-          part_of_speech: "noun",
-          gender: "n",
-          raw: {},
-          is_nt2_2000: true,
-          meanings_count: 1,
-        },
+        data: [
+          {
+            id: "entry-1",
+            dictionary_id: "dict-1",
+            language_code: "nl",
+            headword: "huis",
+            meaning_id: 1,
+            part_of_speech: "noun",
+            gender: "n",
+            raw: {},
+            is_nt2_2000: true,
+            meanings_count: 1,
+          },
+        ],
         error: null,
       })
       .mockResolvedValueOnce({ data: null, error: null });
     from
       .mockImplementationOnce(() =>
         chain({
-          data: {
-            id: "dict-1",
-            language_code: "nl",
-            slug: "nl-vandale",
-            name: "VanDale Dutch",
-            kind: "curated",
-            visibility: "public",
-            schema_key: "nl-vandale-v1",
-            schema_version: 1,
-          },
+          data: [
+            {
+              id: "dict-1",
+              language_code: "nl",
+              slug: "nl-vandale",
+              name: "VanDale Dutch",
+              kind: "curated",
+              visibility: "public",
+              schema_key: "nl-vandale-v1",
+              schema_version: 1,
+            },
+          ],
           error: null,
         }),
       )

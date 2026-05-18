@@ -18,6 +18,7 @@ const chain = (result: { data?: any; error?: any }) => {
   const query: any = {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
+    in: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     then: (resolve: any, reject: any) =>
       Promise.resolve(result).then(resolve, reject),
@@ -92,32 +93,57 @@ describe("/api/platform/lookup", () => {
       error: null,
     });
     rpc.mockResolvedValueOnce({
-      data: {
-        id: "entry-1",
-        dictionary_id: "dict-1",
-        language_code: "nl",
-        headword: "huis",
-        meaning_id: 1,
-        part_of_speech: "zn",
-        raw: { meanings: [{ definition: "gebouw" }] },
-        is_nt2_2000: true,
-        meanings_count: 1,
-      },
+      data: [
+        {
+          id: "entry-1",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          part_of_speech: "zn",
+          raw: { meanings: [{ definition: "gebouw" }] },
+          is_nt2_2000: true,
+          meanings_count: 1,
+        },
+        {
+          id: "entry-2",
+          dictionary_id: "dict-2",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          part_of_speech: "noun",
+          raw: { translation: { languageCode: "en", text: "house" } },
+          is_nt2_2000: false,
+          meanings_count: 1,
+        },
+      ],
       error: null,
     });
     from
       .mockImplementationOnce(() =>
         chain({
-          data: {
-            id: "dict-1",
-            language_code: "nl",
-            slug: "nl-vandale",
-            name: "VanDale Dutch",
-            kind: "curated",
-            visibility: "system",
-            schema_key: "nl-vandale-v1",
-            schema_version: 1,
-          },
+          data: [
+            {
+              id: "dict-1",
+              language_code: "nl",
+              slug: "nl-vandale",
+              name: "VanDale Dutch",
+              kind: "curated",
+              visibility: "system",
+              schema_key: "nl-vandale-v1",
+              schema_version: 1,
+            },
+            {
+              id: "dict-2",
+              language_code: "nl",
+              slug: "user-user1-nl",
+              name: "My dictionary",
+              kind: "user",
+              visibility: "private",
+              schema_key: "user-entry-v1",
+              schema_version: 1,
+            },
+          ],
           error: null,
         }),
       )
@@ -125,6 +151,7 @@ describe("/api/platform/lookup", () => {
         chain({
           data: [
             {
+              word_id: "entry-1",
               mode: "word-to-definition",
               click_count: 2,
               last_seen_at: "2026-05-17T10:00:00.000Z",
@@ -175,6 +202,8 @@ describe("/api/platform/lookup", () => {
     );
     expect(payload.items[0].dictionary.slug).toBe("nl-vandale");
     expect(payload.items[0].dictionary.schemaKey).toBe("nl-vandale-v1");
+    expect(payload.items[1].entry.id).toBe("entry-2");
+    expect(payload.items[1].dictionary.schemaKey).toBe("user-entry-v1");
     expect(payload.items[0].userStateByCardType["word-to-definition"]).toEqual(
       expect.objectContaining({
         entryId: "entry-1",

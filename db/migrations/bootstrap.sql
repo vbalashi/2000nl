@@ -69,3 +69,6 @@
 
 -- Explicit copy action from readable entries into user-owned dictionaries
 \i db/migrations/020_copy_entry_to_user_dictionary_action.sql
+
+-- Return all accessible candidates from dictionary lookup
+\i db/migrations/021_lookup_multiple_dictionary_candidates.sql

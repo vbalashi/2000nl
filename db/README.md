@@ -39,6 +39,8 @@ db/migrations/
 │                              # user-entry-v1 schema and private dictionary container
 ├── 020_copy_entry_to_user_dictionary_action.sql
 │                              # explicit copy action into user-owned dictionaries
+├── 021_lookup_multiple_dictionary_candidates.sql
+│                              # lookup returns all accessible dictionary candidates
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```

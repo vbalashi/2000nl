@@ -47,6 +47,17 @@ type DictionaryLookupPayload = {
   meanings_count?: number | null;
 };
 
+type DictionaryMetadataRow = {
+  id: string;
+  language_code: string;
+  slug: string;
+  name: string;
+  kind: string;
+  visibility: string;
+  schema_key: string | null;
+  schema_version: number | null;
+};
+
 export type PlatformOperationResult = {
   payload: unknown;
   status: number;
@@ -141,21 +152,32 @@ export async function performPlatformLookup(
     };
   }
 
-  if (!data) {
+  const entries = Array.isArray(data)
+    ? (data as DictionaryLookupPayload[])
+    : data
+      ? [data as DictionaryLookupPayload]
+      : [];
+
+  if (entries.length === 0) {
     return { payload: { query, items: [] }, status: 200 };
   }
 
-  const entry = data as DictionaryLookupPayload;
+  const dictionaryIds = Array.from(
+    new Set(
+      entries
+        .map((entry) => entry.dictionary_id)
+        .filter((id): id is string => typeof id === "string" && Boolean(id)),
+    ),
+  );
 
-  let dictionary = null;
-  if (entry.dictionary_id) {
+  const dictionaryById = new Map<string, DictionaryMetadataRow>();
+  if (dictionaryIds.length > 0) {
     const { data: dictionaryData, error: dictionaryError } = await auth.supabase
       .from("dictionaries")
       .select(
         "id, language_code, slug, name, kind, visibility, schema_key, schema_version",
       )
-      .eq("id", entry.dictionary_id)
-      .maybeSingle();
+      .in("id", dictionaryIds);
 
     if (dictionaryError) {
       return {
@@ -166,18 +188,21 @@ export async function performPlatformLookup(
         status: 500,
       };
     }
-    dictionary = dictionaryData ?? null;
+    for (const row of dictionaryData ?? []) {
+      dictionaryById.set(row.id, row);
+    }
   }
 
-  let userStateByCardType = undefined;
+  const userStateByEntryId = new Map<string, Record<string, unknown>>();
   if (includeUserState) {
+    const entryIds = entries.map((entry) => entry.id);
     const { data: statusRows, error: statusError } = await auth.supabase
       .from("user_word_status")
       .select(
-        "mode, click_count, last_seen_at, last_reviewed_at, next_review_at, hidden, frozen_until, fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses, fsrs_last_grade, fsrs_last_interval",
+        "word_id, mode, click_count, last_seen_at, last_reviewed_at, next_review_at, hidden, frozen_until, fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses, fsrs_last_grade, fsrs_last_interval",
       )
       .eq("user_id", auth.user.id)
-      .eq("word_id", entry.id);
+      .in("word_id", entryIds);
 
     if (statusError) {
       return {
@@ -189,72 +214,80 @@ export async function performPlatformLookup(
       };
     }
 
-    userStateByCardType = Object.fromEntries(
-      (statusRows ?? []).map((row: any) => [
-        row.mode,
-        {
-          cardTypeId: row.mode,
-          entryId: entry.id,
-          clickCount: row.click_count ?? 0,
-          lastSeenAt: row.last_seen_at ?? null,
-          lastReviewedAt: row.last_reviewed_at ?? null,
-          nextReviewAt: row.next_review_at ?? null,
-          hidden: row.hidden ?? false,
-          frozenUntil: row.frozen_until ?? null,
-          fsrs: {
-            stability: row.fsrs_stability ?? null,
-            difficulty: row.fsrs_difficulty ?? null,
-            reps: row.fsrs_reps ?? 0,
-            lapses: row.fsrs_lapses ?? 0,
-            lastGrade: row.fsrs_last_grade ?? null,
-            lastInterval: row.fsrs_last_interval ?? null,
-          },
+    for (const row of statusRows ?? []) {
+      const entryId = row.word_id;
+      const states = userStateByEntryId.get(entryId) ?? {};
+      states[row.mode] = {
+        cardTypeId: row.mode,
+        entryId,
+        clickCount: row.click_count ?? 0,
+        lastSeenAt: row.last_seen_at ?? null,
+        lastReviewedAt: row.last_reviewed_at ?? null,
+        nextReviewAt: row.next_review_at ?? null,
+        hidden: row.hidden ?? false,
+        frozenUntil: row.frozen_until ?? null,
+        fsrs: {
+          stability: row.fsrs_stability ?? null,
+          difficulty: row.fsrs_difficulty ?? null,
+          reps: row.fsrs_reps ?? 0,
+          lapses: row.fsrs_lapses ?? 0,
+          lastGrade: row.fsrs_last_grade ?? null,
+          lastInterval: row.fsrs_last_interval ?? null,
         },
-      ]),
-    );
+      };
+      userStateByEntryId.set(entryId, states);
+    }
   }
+
+  const items = entries.map((entry) => {
+    const dictionary = entry.dictionary_id
+      ? dictionaryById.get(entry.dictionary_id) ?? null
+      : null;
+
+    return {
+      entry: {
+        id: entry.id,
+        dictionaryId: entry.dictionary_id ?? null,
+        languageCode: entry.language_code ?? null,
+        headword: entry.headword,
+        meaningId: entry.meaning_id ?? null,
+        partOfSpeech: entry.part_of_speech ?? null,
+        gender: entry.gender ?? null,
+        raw: entry.raw,
+        isNt22000: entry.is_nt2_2000 ?? null,
+        meaningsCount: entry.meanings_count ?? null,
+      },
+      dictionary: dictionary
+        ? {
+            id: dictionary.id,
+            languageCode: dictionary.language_code,
+            slug: dictionary.slug,
+            name: dictionary.name,
+            kind: dictionary.kind,
+            visibility: dictionary.visibility,
+            schemaKey: dictionary.schema_key,
+            schemaVersion: dictionary.schema_version,
+          }
+        : null,
+      ...(includeUserState
+        ? { userStateByCardType: userStateByEntryId.get(entry.id) ?? {} }
+        : {}),
+      availableActions: [
+        "record-view",
+        "start-learning",
+        "mark-known",
+        "mark-unknown",
+        "review-card",
+        "add-to-list",
+        "copy-to-user-dictionary",
+      ],
+    };
+  });
 
   return {
     payload: {
       query,
-      items: [
-        {
-          entry: {
-            id: entry.id,
-            dictionaryId: entry.dictionary_id ?? null,
-            languageCode: entry.language_code ?? null,
-            headword: entry.headword,
-            meaningId: entry.meaning_id ?? null,
-            partOfSpeech: entry.part_of_speech ?? null,
-            gender: entry.gender ?? null,
-            raw: entry.raw,
-            isNt22000: entry.is_nt2_2000 ?? null,
-            meaningsCount: entry.meanings_count ?? null,
-          },
-          dictionary: dictionary
-            ? {
-                id: dictionary.id,
-                languageCode: dictionary.language_code,
-                slug: dictionary.slug,
-                name: dictionary.name,
-                kind: dictionary.kind,
-                visibility: dictionary.visibility,
-                schemaKey: dictionary.schema_key,
-                schemaVersion: dictionary.schema_version,
-              }
-            : null,
-          ...(includeUserState ? { userStateByCardType } : {}),
-          availableActions: [
-            "record-view",
-            "start-learning",
-            "mark-known",
-            "mark-unknown",
-            "review-card",
-            "add-to-list",
-            "copy-to-user-dictionary",
-          ],
-        },
-      ],
+      items,
     },
     status: 200,
   };

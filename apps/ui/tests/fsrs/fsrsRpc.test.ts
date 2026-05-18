@@ -120,7 +120,7 @@ describeIfDb("FSRS RPC integration", () => {
       );
       // The timestamped query above intentionally should miss; call the real
       // headword too so both miss and hit paths are read-only.
-      expect(rows[0]?.item).toBeNull();
+      expect(rows[0]?.item).toEqual([]);
 
       const { rows: wordRows } = await client.query(
         `select headword from word_entries where id = $1`,
@@ -130,7 +130,7 @@ describeIfDb("FSRS RPC integration", () => {
         `select fetch_dictionary_entry_gated($1) as item`,
         [wordRows[0].headword],
       );
-      expect(hitRows[0]?.item?.id).toBe(wordId);
+      expect(hitRows[0]?.item?.[0]?.id).toBe(wordId);
 
       const { rows: statusRows } = await client.query(
         `select count(*)::int as count
@@ -147,6 +147,38 @@ describeIfDb("FSRS RPC integration", () => {
 
       expect(statusRows[0].count).toBe(0);
       expect(reviewRows[0].count).toBe(0);
+    }, userId);
+  });
+
+  test("dictionary lookup returns curated and user candidates", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const sourceWordId = await insertWord(client, `fsrs-candidates-${Date.now()}`);
+
+      const { rows: copyRows } = await client.query(
+        `select copy_entry_to_user_dictionary(
+          $1,
+          $2,
+          NULL,
+          '{"translation":{"languageCode":"en","text":"candidate copy"}}'::jsonb
+        ) as copied_word_id`,
+        [userId, sourceWordId],
+      );
+
+      const { rows: wordRows } = await client.query(
+        `select headword from word_entries where id = $1`,
+        [sourceWordId],
+      );
+      const { rows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as items`,
+        [wordRows[0].headword],
+      );
+
+      const ids = rows[0].items.map((item: { id: string }) => item.id);
+      expect(ids).toContain(sourceWordId);
+      expect(ids).toContain(copyRows[0].copied_word_id);
+      expect(rows[0].items[0].id).toBe(copyRows[0].copied_word_id);
     }, userId);
   });
 
