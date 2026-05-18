@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
         availableActions: [
           "record-view",
           "start-learning",
+          "mark-known",
           "mark-unknown",
           "review-card",
           "add-to-list",

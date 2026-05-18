@@ -146,6 +146,31 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("maps mark-known to an explicit easy review", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(
+      request({
+        action: "mark-known",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        turnId: "turn-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("handle_review", {
+      p_user_id: "user-1",
+      p_word_id: "entry-1",
+      p_mode: "word-to-definition",
+      p_result: "easy",
+      p_turn_id: "turn-1",
+    });
+  });
+
   test("starts learning through the explicit start_learning_card RPC", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

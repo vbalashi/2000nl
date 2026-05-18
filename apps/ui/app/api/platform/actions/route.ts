@@ -31,6 +31,7 @@ const REVIEW_RESULTS = new Set<ReviewResult>([
 type PlatformAction =
   | "record-view"
   | "review-card"
+  | "mark-known"
   | "mark-unknown"
   | "start-learning"
   | "add-to-list";
@@ -154,6 +155,7 @@ export async function POST(request: NextRequest) {
     ![
       "record-view",
       "review-card",
+      "mark-known",
       "mark-unknown",
       "start-learning",
       "add-to-list",
@@ -239,7 +241,11 @@ export async function POST(request: NextRequest) {
   }
 
   const result =
-    action === "mark-unknown" ? "fail" : asReviewResult(body?.result);
+    action === "mark-unknown"
+      ? "fail"
+      : action === "mark-known"
+        ? "easy"
+        : asReviewResult(body?.result);
   if (!result) {
     return reply({ error: "missing_or_invalid_result" }, 400);
   }

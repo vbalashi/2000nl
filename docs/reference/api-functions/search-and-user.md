@@ -89,6 +89,7 @@ Response:
       "availableActions": [
         "record-view",
         "start-learning",
+        "mark-known",
         "mark-unknown",
         "review-card",
         "add-to-list"
@@ -110,6 +111,7 @@ Supported actions:
 - `record-view` – calls `record_word_view`.
 - `start-learning` – calls `start_learning_card`, enabling the card without
   writing a review-log row.
+- `mark-known` – explicit shortcut to `handle_review(..., "easy")`.
 - `review-card` – calls `handle_review` with the supplied result and optional `turnId`.
 - `mark-unknown` – explicit shortcut to `handle_review(..., "fail")`.
 - `add-to-list` – inserts the entry into an owned user list.
