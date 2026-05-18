@@ -101,14 +101,14 @@ describe("trainingService list and preference characterization", () => {
     delete process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT;
   });
 
-  test("fetchCuratedLists retries without sort_order when the preferred query fails", async () => {
+  test("fetchCuratedLists reads curated list summaries through the explicit RPC", async () => {
     const { fetchCuratedLists } = await importService();
 
-    queueFrom("word_lists", {
-      data: null,
-      error: { message: "column sort_order does not exist" },
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
     });
-    queueFrom("word_lists", {
+    rpc.mockResolvedValueOnce({
       data: [
         {
           id: "list-1",
@@ -125,16 +125,12 @@ describe("trainingService list and preference characterization", () => {
 
     const lists = await fetchCuratedLists("nl");
 
-    const wordListQueries = queries.filter((query) => query.table === "word_lists");
-    expect(wordListQueries).toHaveLength(2);
-    expect(wordListQueries[0].select).toHaveBeenCalledWith(
-      expect.stringContaining("sort_order"),
-    );
-    expect(wordListQueries[1].select).toHaveBeenCalledWith(
-      expect.not.stringContaining("sort_order"),
-    );
-    expect(wordListQueries[0].eq).toHaveBeenCalledWith("language_code", "nl");
-    expect(wordListQueries[1].eq).toHaveBeenCalledWith("language_code", "nl");
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_available_word_lists", {
+      p_user_id: "user-1",
+      p_language_code: "nl",
+      p_list_type: "curated",
+    });
     expect(lists).toEqual([
       {
         id: "list-1",
@@ -152,7 +148,7 @@ describe("trainingService list and preference characterization", () => {
   test("fetchUserLists does not constrain user lists by active training language", async () => {
     const { fetchUserLists } = await importService();
 
-    queueFrom("user_word_lists", {
+    rpc.mockResolvedValueOnce({
       data: [
         {
           id: "list-1",
@@ -169,11 +165,12 @@ describe("trainingService list and preference characterization", () => {
 
     const lists = await fetchUserLists("user-1", "nl");
 
-    expect(queries[0].select).toHaveBeenCalledWith(
-      expect.stringContaining("primary_language_code"),
-    );
-    expect(queries[0].eq).toHaveBeenCalledTimes(1);
-    expect(queries[0].eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_available_word_lists", {
+      p_user_id: "user-1",
+      p_language_code: null,
+      p_list_type: "user",
+    });
     expect(lists).toEqual([
       {
         id: "list-1",

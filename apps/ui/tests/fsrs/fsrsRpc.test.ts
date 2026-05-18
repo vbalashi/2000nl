@@ -292,6 +292,45 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_available_word_lists includes language-scoped curated and all user lists", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await client.query(
+        `insert into languages (code, name)
+         values ('de', 'German')
+         on conflict (code) do nothing`,
+      );
+      const { rows: curatedRows } = await client.query(
+        `insert into word_lists (language_code, primary_language_code, name, slug, is_primary)
+         values ('nl', 'nl', $1, $2, false)
+         returning id`,
+        [`Available curated ${Date.now()}`, `available-curated-${Date.now()}`],
+      );
+      await client.query(
+        `insert into word_lists (language_code, primary_language_code, name, slug, is_primary)
+         values ('de', 'de', $1, $2, false)`,
+        [`Other language curated ${Date.now()}`, `other-curated-${Date.now()}`],
+      );
+      const { rows: userRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'de', 'de', $2)
+         returning id`,
+        [userId, `Available user ${Date.now()}`],
+      );
+
+      const { rows } = await client.query(
+        `select get_available_word_lists($1::uuid, 'nl', null) as lists`,
+        [userId],
+      );
+      const lists = rows[0].lists as Array<{ id: string; list_type: string }>;
+
+      expect(lists.some((list) => list.id === curatedRows[0].id)).toBe(true);
+      expect(lists.some((list) => list.id === userRows[0].id)).toBe(true);
+      expect(lists.every((list) => list.list_type === "curated" || list.list_type === "user")).toBe(true);
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

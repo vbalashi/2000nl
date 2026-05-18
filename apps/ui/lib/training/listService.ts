@@ -23,58 +23,40 @@ type WordSearchFilters = {
 export async function fetchCuratedLists(
   languageCode?: string,
 ): Promise<WordListSummary[]> {
-  const baseSelect =
-    "id, name, description, language_code, primary_language_code, is_primary, word_list_items(count)";
-
-  // Prefer sort_order when available (migration 0039), but gracefully
-  // fall back for older DBs where the column doesn't exist.
-  const run = async (withSortOrder: boolean) => {
-    let query = supabase
-      .from("word_lists")
-      .select(withSortOrder ? `${baseSelect}, sort_order` : baseSelect)
-      .order(withSortOrder ? "sort_order" : "is_primary", {
-        ascending: withSortOrder ? true : false,
-        nullsFirst: withSortOrder ? false : undefined,
-      })
-      .order("is_primary", { ascending: false })
-      .order("name", { ascending: true });
-
-    if (languageCode) {
-      query = query.eq("language_code", languageCode);
-    }
-
-    return await query;
-  };
-
-  const first = await run(true);
-  if (!first.error && first.data) {
-    return first.data.map(mapCuratedListSummary);
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    console.error(
+      "Error resolving user before fetching curated lists",
+      userError ?? { message: "not_authenticated" },
+    );
+    return [];
   }
 
-  // Retry without sort_order if the first query failed (e.g. missing column).
-  if (first.error) {
-    console.warn("fetchCuratedLists: falling back without sort_order", first.error);
+  const { data, error } = await supabase.rpc("get_available_word_lists", {
+    p_user_id: userId,
+    p_language_code: languageCode ?? null,
+    p_list_type: "curated",
+  });
+
+  if (error || !Array.isArray(data)) {
+    if (error) console.error("Error fetching curated lists", error);
+    return [];
   }
 
-  const fallback = await run(false);
-  if (fallback.error || !fallback.data) return [];
-  return fallback.data.map(mapCuratedListSummary);
+  return data.map(mapCuratedListSummary);
 }
 
 export async function fetchUserLists(
   userId: string,
   _languageCode?: string,
 ): Promise<WordListSummary[]> {
-  const query = supabase
-    .from("user_word_lists")
-    .select(
-      "id, name, description, language_code, primary_language_code, created_at, user_word_list_items(count)",
-    )
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  const { data, error } = await query;
-  if (error || !data) return [];
+  const { data, error } = await supabase.rpc("get_available_word_lists", {
+    p_user_id: userId,
+    p_language_code: null,
+    p_list_type: "user",
+  });
+  if (error || !Array.isArray(data)) return [];
   return data.map(mapUserListSummary);
 }
 
