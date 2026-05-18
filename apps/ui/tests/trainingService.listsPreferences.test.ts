@@ -280,7 +280,7 @@ describe("trainingService list and preference characterization", () => {
   test("fetchActiveList maps saved active list fields", async () => {
     const { fetchActiveList } = await importService();
 
-    queueFrom("user_settings", {
+    rpc.mockResolvedValueOnce({
       data: { active_list_id: "list-1", active_list_type: "user" },
       error: null,
     });
@@ -289,10 +289,10 @@ describe("trainingService list and preference characterization", () => {
       listId: "list-1",
       listType: "user",
     });
-    expect(queries[0].select).toHaveBeenCalledWith(
-      "active_list_id, active_list_type",
-    );
-    expect(queries[0].eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_active_word_list", {
+      p_user_id: "user-1",
+    });
   });
 
   test("fetchListSummaryById reads summary through the explicit RPC", async () => {
@@ -338,20 +338,18 @@ describe("trainingService list and preference characterization", () => {
   test("updateActiveList upserts curated default when list type is omitted", async () => {
     const { updateActiveList } = await importService();
 
-    queueFrom("user_settings", { data: null, error: null });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
 
     await expect(
       updateActiveList({ userId: "user-1", listId: "list-1" }),
     ).resolves.toEqual({ error: null });
 
-    expect(queries[0].upsert).toHaveBeenCalledWith(
-      {
-        user_id: "user-1",
-        active_list_id: "list-1",
-        active_list_type: "curated",
-      },
-      { onConflict: "user_id" },
-    );
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("update_active_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_list_type: "curated",
+    });
   });
 
   test("createUserList inserts a list and maps the created summary", async () => {

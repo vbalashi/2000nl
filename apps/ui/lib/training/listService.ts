@@ -74,11 +74,9 @@ export async function fetchAvailableLists(
 export async function fetchActiveList(
   userId: string,
 ): Promise<{ listId: string | null; listType: WordListType | null }> {
-  const { data, error } = await supabase
-    .from("user_settings")
-    .select("active_list_id, active_list_type")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_active_word_list", {
+    p_user_id: userId,
+  });
 
   if (error) {
     console.error("Error fetching active list", error);
@@ -118,14 +116,11 @@ export async function updateActiveList(params: {
   listId: string | null;
   listType?: WordListType | null;
 }) {
-  const { error } = await supabase.from("user_settings").upsert(
-    {
-      user_id: params.userId,
-      active_list_id: params.listId,
-      active_list_type: params.listId ? params.listType ?? "curated" : null,
-    },
-    { onConflict: "user_id" },
-  );
+  const { error } = await supabase.rpc("update_active_word_list", {
+    p_user_id: params.userId,
+    p_list_id: params.listId,
+    p_list_type: params.listId ? params.listType ?? "curated" : null,
+  });
 
   if (error) {
     console.error("Error updating active list", error);

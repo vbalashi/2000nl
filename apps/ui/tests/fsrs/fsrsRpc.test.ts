@@ -331,6 +331,34 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("active word list RPCs read and update saved selection", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Active list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(
+        `select update_active_word_list($1::uuid, $2::uuid, 'user')`,
+        [userId, listId],
+      );
+      const { rows } = await client.query(
+        `select get_active_word_list($1::uuid) as active`,
+        [userId],
+      );
+
+      expect(rows[0].active).toEqual({
+        active_list_id: listId,
+        active_list_type: "user",
+      });
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
