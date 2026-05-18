@@ -237,7 +237,7 @@ const restHandler = async (route: any) => {
     return;
   }
 
-  if (pathname.endsWith("/rpc/handle_review")) {
+  if (pathname.endsWith("/rpc/handle_card_review")) {
     // Advance to the next word after a "review".
     nextWordIndex = Math.min(nextWordIndex + 1, entries.length - 1);
     await route.fulfill({
@@ -248,7 +248,7 @@ const restHandler = async (route: any) => {
     return;
   }
 
-  if (pathname.endsWith("/rpc/get_card_user_state")) {
+  if (pathname.endsWith("/rpc/get_user_card_state")) {
     await route.fulfill({
       status: 200,
       headers: { "content-type": "application/json" },
@@ -272,7 +272,7 @@ const restHandler = async (route: any) => {
     return;
   }
 
-  if (pathname.endsWith("/rpc/record_word_view")) {
+  if (pathname.endsWith("/rpc/record_card_view")) {
     await route.fulfill({
       status: 200,
       headers: { "content-type": "application/json" },
