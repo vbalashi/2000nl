@@ -50,9 +50,8 @@ describe("trainingService review side effects", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  test("recordDefinitionClick forwards handle_click RPC payload", async () => {
+  test("recordDefinitionClick is read-only and does not call handle_click", async () => {
     const { recordDefinitionClick } = await importService();
-    rpc.mockResolvedValueOnce({ data: null, error: null });
 
     await recordDefinitionClick({
       userId: "user-1",
@@ -60,11 +59,7 @@ describe("trainingService review side effects", () => {
       mode: "definition-to-word",
     });
 
-    expect(rpc).toHaveBeenCalledWith("handle_click", {
-      p_user_id: "user-1",
-      p_word_id: "word-1",
-      p_mode: "definition-to-word",
-    });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("fetchLastReviewDebug returns RPC data", async () => {

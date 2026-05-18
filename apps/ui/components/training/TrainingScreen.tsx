@@ -13,7 +13,6 @@ import {
   fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
-  recordDefinitionClick,
   recordReview,
   recordWordView,
   fetchLastReviewDebug,
@@ -1179,11 +1178,6 @@ export function TrainingScreen({ user }: Props) {
         }
 
         return [historyItem, ...prev].slice(0, 50);
-      });
-      await recordDefinitionClick({
-        userId: user.id,
-        wordId: entry.id,
-        mode: clickMode,
       });
     },
     [

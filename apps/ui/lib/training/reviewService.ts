@@ -176,15 +176,8 @@ export const recordDefinitionClick = async (params: {
   wordId?: string | null;
   mode: TrainingMode;
 }) => {
-  if (!params.wordId) return;
-
-  const { error } = await supabase.rpc("handle_click", {
-    p_user_id: params.userId,
-    p_word_id: params.wordId,
-    p_mode: params.mode,
-  });
-
-  if (error) {
-    console.error("Error recording click via RPC", error);
-  }
+  void params;
+  // Ordinary dictionary lookup/click is intentionally read-only. `handle_click`
+  // is reserved for explicit training lapse actions because it mutates FSRS
+  // state and writes a review-log row.
 };
