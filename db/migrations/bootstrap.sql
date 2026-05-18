@@ -75,3 +75,6 @@
 
 -- Refine copied user-entry payloads for training-safe content
 \i db/migrations/022_refine_user_dictionary_copy_payload.sql
+
+-- Explicit CRUD actions for user-entry-v1 entries
+\i db/migrations/023_user_dictionary_entry_crud_actions.sql

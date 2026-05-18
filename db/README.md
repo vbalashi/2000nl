@@ -43,6 +43,8 @@ db/migrations/
 │                              # lookup returns all accessible dictionary candidates
 ├── 022_refine_user_dictionary_copy_payload.sql
 │                              # training-safe copy payload for user entries
+├── 023_user_dictionary_entry_crud_actions.sql
+│                              # explicit CRUD actions for user-entry-v1 entries
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -238,6 +240,9 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 | `add_entry_to_user_list()` | Explicitly add a readable entry to an owned user list |
 | `ensure_user_dictionary()` | Create or return the user's private editable dictionary |
 | `copy_entry_to_user_dictionary()` | Copy a readable entry into a user-owned dictionary |
+| `create_user_dictionary_entry()` | Create an entry in an owned editable user dictionary |
+| `update_user_dictionary_entry()` | Replace an owned editable user dictionary entry |
+| `delete_user_dictionary_entry()` | Delete an owned editable user dictionary entry |
 | `get_next_word()` | Queue-based card selector |
 | `get_training_stats()` | Basic session statistics |
 | `get_detailed_training_stats()` | Detailed counters for footer |

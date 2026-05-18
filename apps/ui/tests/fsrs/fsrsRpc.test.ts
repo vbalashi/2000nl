@@ -380,6 +380,119 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("user dictionary entry CRUD creates updates deletes owned entries", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+          $1,
+          NULL,
+          jsonb_build_object(
+            'headword', $2::text,
+            'languageCode', 'nl',
+            'translation', jsonb_build_object('languageCode', 'en', 'text', 'hassle'),
+            'example', jsonb_build_object('source', 'Wat een gedoe.')
+          )
+        ) as word_id`,
+        [userId, `fsrs-crud-${Date.now()}`],
+      );
+      const wordId = createRows[0].word_id;
+
+      const { rows: createdRows } = await client.query(
+        `select w.raw, d.kind, d.owner_user_id, d.schema_key
+         from word_entries w
+         join dictionaries d on d.id = w.dictionary_id
+         where w.id = $1`,
+        [wordId],
+      );
+      expect(createdRows[0]).toEqual(
+        expect.objectContaining({
+          kind: "user",
+          owner_user_id: userId,
+          schema_key: "user-entry-v1",
+        }),
+      );
+      expect(createdRows[0].raw.translation.text).toBe("hassle");
+
+      await client.query(
+        `select update_user_dictionary_entry(
+          $1,
+          $2,
+          jsonb_build_object(
+            'headword', $3::text,
+            'languageCode', 'nl',
+            'definition', 'updated definition',
+            'notes', 'updated note'
+          )
+        )`,
+        [userId, wordId, createdRows[0].raw.headword],
+      );
+
+      const { rows: lookupRows } = await client.query(
+        `select fetch_dictionary_entry_gated($1) as items`,
+        [createdRows[0].raw.headword],
+      );
+      expect(lookupRows[0].items[0].id).toBe(wordId);
+      expect(lookupRows[0].items[0].raw.definition).toBe("updated definition");
+
+      await client.query(`select delete_user_dictionary_entry($1, $2)`, [
+        userId,
+        wordId,
+      ]);
+
+      const { rows: deletedRows } = await client.query(
+        `select count(*)::int as count from word_entries where id = $1`,
+        [wordId],
+      );
+      expect(deletedRows[0].count).toBe(0);
+    }, userId);
+  });
+
+  test("user dictionary entry update is blocked for other users", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        ownerId,
+      ]);
+      const { rows } = await client.query(
+        `select create_user_dictionary_entry(
+          $1,
+          NULL,
+          jsonb_build_object(
+            'headword', $2::text,
+            'languageCode', 'nl',
+            'definition', 'owned definition'
+          )
+        ) as word_id`,
+        [ownerId, `fsrs-private-crud-${Date.now()}`],
+      );
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        otherId,
+      ]);
+      await expect(
+        client.query(
+          `select update_user_dictionary_entry(
+            $1,
+            $2,
+            jsonb_build_object(
+              'headword', 'blocked',
+              'languageCode', 'nl',
+              'definition', 'blocked'
+            )
+          )`,
+          [otherId, rows[0].word_id],
+        ),
+      ).rejects.toThrow(/target_dictionary_not_editable/);
+    }, ownerId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
