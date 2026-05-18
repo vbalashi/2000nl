@@ -29,4 +29,18 @@ describe("translation route text extraction", () => {
       ]),
     );
   });
+
+  test("handles cross-reference-only entries with empty meanings", () => {
+    const items = extractTranslatableTexts({
+      headword: "ouwe",
+      gender: null,
+      raw: {
+        headword: "ouwe",
+        cross_reference: "2oud",
+        meanings: [],
+      },
+    });
+
+    expect(items).toEqual([{ path: ["headword"], text: "ouwe" }]);
+  });
 });
