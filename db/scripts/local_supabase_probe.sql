@@ -53,6 +53,18 @@ begin
     raise exception 'missing public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)';
   end if;
 
+  if to_regprocedure('public.create_user_dictionary_entry(uuid,uuid,jsonb)') is null then
+    raise exception 'missing public.create_user_dictionary_entry(uuid,uuid,jsonb)';
+  end if;
+
+  if to_regprocedure('public.update_user_dictionary_entry(uuid,uuid,jsonb)') is null then
+    raise exception 'missing public.update_user_dictionary_entry(uuid,uuid,jsonb)';
+  end if;
+
+  if to_regprocedure('public.delete_user_dictionary_entry(uuid,uuid)') is null then
+    raise exception 'missing public.delete_user_dictionary_entry(uuid,uuid)';
+  end if;
+
   if to_regprocedure('public.can_access_dictionary(uuid,uuid,text)') is null then
     raise exception 'missing public.can_access_dictionary(uuid,uuid,text)';
   end if;
