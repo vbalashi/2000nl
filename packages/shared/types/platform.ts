@@ -171,6 +171,7 @@ export type LookupIntent =
 export type LookupActionId =
   | "record-view"
   | "add-to-list"
+  | "remove-from-list"
   | "copy-to-user-dictionary"
   | "create-user-entry"
   | "update-user-entry"
@@ -248,6 +249,11 @@ export type PlatformActionRequest =
     }
   | {
       action: "add-to-list";
+      entryId: string;
+      listId: string;
+    }
+  | {
+      action: "remove-from-list";
       entryId: string;
       listId: string;
     }
