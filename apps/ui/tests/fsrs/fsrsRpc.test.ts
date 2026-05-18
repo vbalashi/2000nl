@@ -493,6 +493,119 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("created user dictionary entries can be listed, scheduled, and reviewed", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 10,
+        daily_review_limit: 10,
+      });
+
+      const headword = `fsrs-user-train-${Date.now()}`;
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+          $1,
+          NULL,
+          jsonb_build_object(
+            'headword', $2::text,
+            'languageCode', 'nl',
+            'translation', jsonb_build_object('languageCode', 'en', 'text', 'trainable user entry'),
+            'example', jsonb_build_object('source', 'Dit is een eigen woord.')
+          )
+        ) as word_id`,
+        [userId, headword],
+      );
+      const wordId = createRows[0].word_id;
+
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Training list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        wordId,
+      ]);
+
+      const { rows: listFetchRows } = await client.query(
+        `select fetch_words_for_list_gated(
+          $1::uuid,
+          'user',
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          1,
+          20
+        ) as result`,
+        [listId],
+      );
+      expect(listFetchRows[0].result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: wordId,
+            headword,
+            raw: expect.objectContaining({
+              translation: expect.objectContaining({
+                text: "trainable user entry",
+              }),
+            }),
+          }),
+        ]),
+      );
+
+      const { rows: nextRows } = await client.query(
+        `select get_next_word(
+          $1::uuid,
+          ARRAY[$2]::text[],
+          ARRAY[]::uuid[],
+          $3::uuid,
+          'user',
+          'both',
+          'new',
+          ARRAY[]::text[]
+        ) as item`,
+        [userId, mode, listId],
+      );
+
+      expect(nextRows[0]?.item).toEqual(
+        expect.objectContaining({
+          id: wordId,
+          headword,
+          mode,
+          raw: expect.objectContaining({
+            translation: expect.objectContaining({
+              text: "trainable user entry",
+            }),
+          }),
+          stats: expect.objectContaining({
+            source: "new",
+          }),
+        }),
+      );
+
+      await callHandleReview(client, userId, wordId, mode, "success", randomUUID());
+
+      const { rows: statusRows } = await client.query(
+        `select fsrs_reps, last_result, fsrs_enabled
+         from user_word_status
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(statusRows[0]).toEqual(
+        expect.objectContaining({
+          fsrs_reps: 1,
+          last_result: "success",
+          fsrs_enabled: true,
+        }),
+      );
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -500,6 +613,40 @@ describeIfDb("FSRS RPC integration", () => {
 
       const overdueId = await insertWord(client, `fsrs-overdue-${Date.now()}`);
       const newId = await insertWord(client, `fsrs-new-${Date.now() + 1}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Scheduler list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        overdueId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        newId,
+      ]);
+
+      const getNextFromList = async () => {
+        const { rows } = await client.query(
+          `select get_next_word(
+            $1::uuid,
+            ARRAY[$2]::text[],
+            ARRAY[]::uuid[],
+            $3::uuid,
+            'user',
+            'both',
+            'auto',
+            ARRAY[]::text[]
+          ) as item`,
+          [userId, mode, listId],
+        );
+        return rows[0]?.item as any | undefined;
+      };
 
       await client.query(
         `insert into user_word_status (
@@ -510,7 +657,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
-      const first = await callGetNextWord(client, userId, mode);
+      const first = await getNextFromList();
       expect(first?.id).toBe(overdueId);
       expect(first?.stats?.source).toBe("review");
 
@@ -521,7 +668,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, overdueId, mode]
       );
 
-      const second = await callGetNextWord(client, userId, mode);
+      const second = await getNextFromList();
       expect(second?.id).toBe(newId);
       expect(second?.stats?.source).toBe("new");
 
@@ -532,7 +679,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, newId, mode]
       );
 
-      const none = await callGetNextWord(client, userId, mode);
+      const none = await getNextFromList();
       expect(none).toBeUndefined();
     }, userId);
   });
