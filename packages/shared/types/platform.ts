@@ -79,6 +79,25 @@ export type DictionaryEntryEnvelope = {
   sourceMeta?: Record<string, unknown>;
 };
 
+export type UserDictionaryEntryV1 = {
+  headword: string;
+  languageCode: string;
+  definition?: string;
+  translation?: {
+    languageCode?: string;
+    text: string;
+  };
+  example?: {
+    source: string;
+    translation?: string;
+  };
+  partOfSpeech?: string;
+  gender?: string;
+  notes?: string;
+  tags?: string[];
+  sourceEntryId?: string;
+};
+
 export type WordListKind = "curated" | "user";
 
 export type WordListSummaryV2 = {

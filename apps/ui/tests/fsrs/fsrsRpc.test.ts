@@ -223,6 +223,42 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("ensure_user_dictionary creates a private editable user dictionary", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+
+      const { rows: firstRows } = await client.query(
+        `select ensure_user_dictionary($1, 'nl', 'My words') as dictionary_id`,
+        [userId],
+      );
+      const { rows: secondRows } = await client.query(
+        `select ensure_user_dictionary($1, 'nl', 'My words') as dictionary_id`,
+        [userId],
+      );
+
+      expect(firstRows[0].dictionary_id).toBe(secondRows[0].dictionary_id);
+
+      const { rows } = await client.query(
+        `select kind, visibility, owner_user_id, is_editable, schema_key, schema_version
+         from dictionaries
+         where id = $1`,
+        [firstRows[0].dictionary_id],
+      );
+
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          kind: "user",
+          visibility: "private",
+          owner_user_id: userId,
+          is_editable: true,
+          schema_key: "user-entry-v1",
+          schema_version: 1,
+        }),
+      );
+    }, userId);
+  });
+
   test("get_next_word honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

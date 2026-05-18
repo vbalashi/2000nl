@@ -35,6 +35,8 @@ db/migrations/
 │                              # explicit start-learning card action
 ├── 018_add_entry_to_user_list_action.sql
 │                              # explicit user-list membership action
+├── 019_user_entry_schema_boundary.sql
+│                              # user-entry-v1 schema and private dictionary container
 ├── bootstrap.sql             # Master script that runs all migrations
 └── archive/                  # Historical individual migrations (reference only)
 ```
@@ -228,6 +230,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 | `record_word_view()` | Track that a training card was shown |
 | `start_learning_card()` | Explicitly enable a card for learning without a review-log row |
 | `add_entry_to_user_list()` | Explicitly add a readable entry to an owned user list |
+| `ensure_user_dictionary()` | Create or return the user's private editable dictionary |
 | `get_next_word()` | Queue-based card selector |
 | `get_training_stats()` | Basic session statistics |
 | `get_detailed_training_stats()` | Detailed counters for footer |

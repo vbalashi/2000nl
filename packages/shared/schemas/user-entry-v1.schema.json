@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://2000nl.app/schemas/user-entry-v1.schema.json",
+  "title": "User dictionary entry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["headword", "languageCode"],
+  "properties": {
+    "headword": {
+      "type": "string",
+      "minLength": 1
+    },
+    "languageCode": {
+      "type": "string",
+      "minLength": 2
+    },
+    "definition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "translation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "languageCode": {
+          "type": "string",
+          "minLength": 2
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "translation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "partOfSpeech": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gender": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "sourceEntryId": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "anyOf": [
+    { "required": ["definition"] },
+    { "required": ["translation"] },
+    { "required": ["example"] },
+    { "required": ["notes"] }
+  ]
+}

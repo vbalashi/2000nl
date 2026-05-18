@@ -63,3 +63,6 @@
 
 -- Explicit user-list membership action with ownership and dictionary access checks
 \i db/migrations/018_add_entry_to_user_list_action.sql
+
+-- User-owned dictionary schema and private editable dictionary container
+\i db/migrations/019_user_entry_schema_boundary.sql

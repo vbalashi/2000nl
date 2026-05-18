@@ -6,6 +6,7 @@ Content and lists:
 - `languages(code, name)` – language catalog.
 - `dictionary_schemas(schema_key, version, language_code, json_schema, checksum, source_path, render_capabilities, retired_at)` – runtime registry for versioned entry payload contracts. Repo files remain the source of truth; DB rows are runtime snapshots/metadata.
 - `dictionaries(id, language_code, slug, name, kind, visibility, owner_user_id, is_editable, minimum_subscription_tier, schema_key, schema_version)` – dictionary/source boundary and access metadata.
+- `user-entry-v1` (`packages/shared/schemas/user-entry-v1.schema.json`) – minimal editable payload for user-owned dictionaries. It requires `headword`, `languageCode`, and at least one useful content field: `definition`, `translation`, `example`, or `notes`.
 - `dictionary_entitlements(dictionary_id, subject_type, subject_key, permission, starts_at, ends_at)` – explicit dictionary grants used by `can_access_dictionary(...)`.
 - `word_entries(id, dictionary_id, language_code, headword, meaning_id, part_of_speech, gender, is_nt2_2000, vandale_id, raw, created_at)` – meaning-level dictionary entries. Uniqueness is dictionary-scoped: `(dictionary_id, language_code, headword, meaning_id)`.
 - `word_forms(language_code, dictionary_id, form, word_id, headword, created_at)` – inflection/conjugation lookup rows scoped to dictionary entries and meaning identity.
