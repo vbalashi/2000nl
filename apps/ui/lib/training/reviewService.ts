@@ -39,31 +39,36 @@ export type RecordReviewParams = {
   turnId?: string | null;
 };
 
+const isMissingRpc = (error: any) => {
+  const msg = error?.message ?? "";
+  const code = error?.code as string | undefined;
+  return (
+    code === "PGRST202" ||
+    msg.includes("Could not find the function") ||
+    msg.includes("schema cache")
+  );
+};
+
 export const recordWordView = async (params: {
   userId: string;
   wordId: string;
   mode: TrainingMode;
 }) => {
-  // We can just log a 'view' event if we want, but the RPC "handle_review" or "handle_click" does the heavy lifting.
-  // "Seen" count is less critical now that we have SM2.
-  // However, we might still want to track simple "shown" stats.
-  // For now, let's keep it simple and NOT do a DB call just for "shown",
-  // OR we can make a lightweight RPC for 'record_view'.
-  // Given the requirements, I'll skip explicit 'view' recording for now to save bandwidth,
-  // as the critical part is 'result' or 'click'.
-  // If we really need 'seen_count' updated on every show, we should add an RPC 'mark_seen'.
-
-  // Let's implement a simple update if we want to preserve 'seen_count' logic,
-  // but honestly, SM2 relies on 'reps' (reviews).
-  // I will leave this empty or minimal for now unless requested.
-  // Actually, let's just log it to user_word_status so 'seen_count' is accurate-ish.
-  // but without locking or complex logic.
-
-  const { error } = await supabase.rpc("record_word_view", {
+  const rpc = await supabase.rpc("record_card_view", {
     p_user_id: params.userId,
-    p_word_id: params.wordId,
-    p_mode: params.mode,
+    p_entry_id: params.wordId,
+    p_card_type_id: params.mode,
   });
+  const error =
+    rpc.error && isMissingRpc(rpc.error)
+      ? (
+          await supabase.rpc("record_word_view", {
+            p_user_id: params.userId,
+            p_word_id: params.wordId,
+            p_mode: params.mode,
+          })
+        ).error
+      : rpc.error;
 
   if (error) {
     console.error("Error recording word view via RPC", error);
@@ -75,32 +80,31 @@ export const recordReview = async (
 ): Promise<WordStatusAfterReview | null> => {
   const argsBase = {
     p_user_id: params.userId,
-    p_word_id: params.wordId,
-    p_mode: params.mode,
+    p_entry_id: params.wordId,
+    p_card_type_id: params.mode,
     p_result: params.result,
   } as const;
 
-  // Prefer sending turnId for idempotency, but fall back to the legacy signature
-  // if the backend hasn't been migrated yet.
   const tryWithTurnId = async () =>
-    supabase.rpc("handle_review", {
+    supabase.rpc("handle_card_review", {
       ...argsBase,
       p_turn_id: params.turnId ?? null,
     });
 
-  const tryLegacy = async () => supabase.rpc("handle_review", argsBase);
+  const tryLegacy = async (includeTurnId: boolean) =>
+    supabase.rpc("handle_review", {
+      p_user_id: params.userId,
+      p_word_id: params.wordId,
+      p_mode: params.mode,
+      p_result: params.result,
+      ...(includeTurnId && params.turnId ? { p_turn_id: params.turnId } : {}),
+    });
 
-  let rpc = params.turnId ? await tryWithTurnId() : await tryLegacy();
-  if (rpc.error && params.turnId) {
-    const msg = rpc.error.message ?? "";
-    const code = (rpc.error as any)?.code as string | undefined;
-    const looksLikeLegacySignature =
-      code === "PGRST202" ||
-      msg.includes("Could not find the function") ||
-      msg.includes("p_turn_id") ||
-      msg.includes("handle_review");
-    if (looksLikeLegacySignature) {
-      rpc = await tryLegacy();
+  let rpc = await tryWithTurnId();
+  if (rpc.error && isMissingRpc(rpc.error)) {
+    rpc = await tryLegacy(Boolean(params.turnId));
+    if (rpc.error && params.turnId && isMissingRpc(rpc.error)) {
+      rpc = await tryLegacy(false);
     }
   }
 
@@ -109,14 +113,23 @@ export const recordReview = async (
     return null;
   }
 
-  const { data: statusData, error: fetchError } = await supabase.rpc(
-    "get_card_user_state",
+  let statusRpc = await supabase.rpc(
+    "get_user_card_state",
     {
+      p_user_id: params.userId,
+      p_entry_id: params.wordId,
+      p_card_type_id: params.mode,
+    },
+  );
+  if (statusRpc.error && isMissingRpc(statusRpc.error)) {
+    statusRpc = await supabase.rpc("get_card_user_state", {
       p_user_id: params.userId,
       p_word_id: params.wordId,
       p_mode: params.mode,
-    },
-  );
+    });
+  }
+
+  const { data: statusData, error: fetchError } = statusRpc;
 
   if (fetchError || !statusData) {
     // If the basic query fails, the review was still recorded - just can't show updated stats

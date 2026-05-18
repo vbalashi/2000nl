@@ -31,10 +31,10 @@ describe("trainingService review side effects", () => {
       mode: "word-to-definition",
     });
 
-    expect(rpc).toHaveBeenCalledWith("record_word_view", {
+    expect(rpc).toHaveBeenCalledWith("record_card_view", {
       p_user_id: "user-1",
-      p_word_id: "word-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "word-1",
+      p_card_type_id: "word-to-definition",
     });
   });
 

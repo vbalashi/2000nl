@@ -40,17 +40,17 @@ describe("trainingService.recordReview turnId forwarding", () => {
     });
 
     expect(rpc).toHaveBeenCalledWith(
-      "handle_review",
+      "handle_card_review",
       expect.objectContaining({ p_turn_id: "turn-123" })
     );
-    expect(rpc).toHaveBeenCalledWith("get_card_user_state", {
+    expect(rpc).toHaveBeenCalledWith("get_user_card_state", {
       p_user_id: "user-1",
-      p_word_id: "word-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "word-1",
+      p_card_type_id: "word-to-definition",
     });
   });
 
-  test("uses legacy signature when turnId is not provided", async () => {
+  test("uses card review RPC when turnId is not provided", async () => {
     const { recordReview } = await import("@/lib/trainingService");
 
     rpc
@@ -76,23 +76,23 @@ describe("trainingService.recordReview turnId forwarding", () => {
     });
 
     expect(rpc).toHaveBeenCalledWith(
-      "handle_review",
-      expect.not.objectContaining({ p_turn_id: expect.anything() })
+      "handle_card_review",
+      expect.objectContaining({ p_turn_id: null })
     );
-    expect(rpc).toHaveBeenCalledWith("get_card_user_state", {
+    expect(rpc).toHaveBeenCalledWith("get_user_card_state", {
       p_user_id: "user-1",
-      p_word_id: "word-1",
-      p_mode: "word-to-definition",
+      p_entry_id: "word-1",
+      p_card_type_id: "word-to-definition",
     });
   });
 
-  test("falls back to legacy signature when backend rejects p_turn_id", async () => {
+  test("falls back to legacy review RPC when card wrapper is missing", async () => {
     const { recordReview } = await import("@/lib/trainingService");
 
     rpc
       .mockResolvedValueOnce({
         data: null,
-        error: { message: "Could not find the function public.handle_review(p_turn_id)", code: "PGRST202" },
+        error: { message: "Could not find the function public.handle_card_review", code: "PGRST202" },
       })
       .mockResolvedValueOnce({ data: null, error: null })
       .mockResolvedValueOnce({
@@ -117,14 +117,14 @@ describe("trainingService.recordReview turnId forwarding", () => {
     });
 
     expect(rpc).toHaveBeenCalledTimes(3);
-    expect(rpc.mock.calls[0]?.[0]).toBe("handle_review");
+    expect(rpc.mock.calls[0]?.[0]).toBe("handle_card_review");
     expect(rpc.mock.calls[0]?.[1]).toEqual(
       expect.objectContaining({ p_turn_id: "turn-legacy" })
     );
     expect(rpc.mock.calls[1]?.[0]).toBe("handle_review");
     expect(rpc.mock.calls[1]?.[1]).toEqual(
-      expect.not.objectContaining({ p_turn_id: expect.anything() })
+      expect.objectContaining({ p_turn_id: "turn-legacy" })
     );
-    expect(rpc.mock.calls[2]?.[0]).toBe("get_card_user_state");
+    expect(rpc.mock.calls[2]?.[0]).toBe("get_user_card_state");
   });
 });
