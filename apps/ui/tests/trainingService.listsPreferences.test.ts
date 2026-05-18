@@ -540,15 +540,20 @@ describe("trainingService list and preference characterization", () => {
       data: {
         theme_preference: null,
         audio_quality: null,
+        translation_lang: "off",
+        training_sidebar_pinned: null,
+        preferences: { onboardingCompleted: true },
+      },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
         training_mode: "definition-to-word",
         modes_enabled: [],
         card_filter: null,
         language_code: null,
         new_review_ratio: null,
         active_scenario: null,
-        translation_lang: "off",
-        training_sidebar_pinned: null,
-        preferences: { onboardingCompleted: true },
       },
       error: null,
     });
@@ -591,5 +596,33 @@ describe("trainingService list and preference characterization", () => {
       },
       { onConflict: "user_id" },
     );
+  });
+
+  test("updateUserPreferences sends learning settings through the explicit RPC", async () => {
+    const { updateUserPreferences } = await importService();
+
+    queueFrom("user_settings", { data: { user_id: "user-1" }, error: null });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    await expect(
+      updateUserPreferences({
+        userId: "user-1",
+        modesEnabled: ["word-to-definition", "definition-to-word"],
+        cardFilter: "review",
+        languageCode: "nl",
+        newReviewRatio: 3,
+        activeScenario: "listening",
+      }),
+    ).resolves.toEqual({ error: null });
+
+    expect(rpc).toHaveBeenCalledWith("update_learning_preferences", {
+      p_user_id: "user-1",
+      p_modes_enabled: ["word-to-definition", "definition-to-word"],
+      p_card_filter: "review",
+      p_language_code: "nl",
+      p_new_review_ratio: 3,
+      p_active_scenario: "listening",
+    });
+    expect(queries).toHaveLength(1);
   });
 });

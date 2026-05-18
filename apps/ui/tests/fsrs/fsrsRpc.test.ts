@@ -359,6 +359,41 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("learning preference RPCs read and update scheduler-facing settings", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+
+      await client.query(
+        `select update_learning_preferences(
+          $1::uuid,
+          ARRAY['definition-to-word']::text[],
+          'review',
+          'nl',
+          3,
+          'listening'
+        )`,
+        [userId],
+      );
+
+      const { rows } = await client.query(
+        `select get_learning_preferences($1::uuid) as prefs`,
+        [userId],
+      );
+
+      expect(rows[0].prefs).toEqual(
+        expect.objectContaining({
+          training_mode: "definition-to-word",
+          modes_enabled: ["definition-to-word"],
+          card_filter: "review",
+          language_code: "nl",
+          new_review_ratio: 3,
+          active_scenario: "listening",
+        }),
+      );
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
