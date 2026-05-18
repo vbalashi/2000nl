@@ -615,6 +615,94 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_user_list_memberships_for_entries returns owned memberships", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+      const firstWordId = await insertWord(client, `fsrs-membership-a-${Date.now()}`);
+      const secondWordId = await insertWord(client, `fsrs-membership-b-${Date.now()}`);
+      const { rows: ownerListRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name, description)
+         values ($1, 'nl', 'nl', $2, 'Owned words')
+         returning id`,
+        [ownerId, `Owned membership list ${Date.now()}`],
+      );
+      const { rows: otherListRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [otherId, `Other membership list ${Date.now()}`],
+      );
+
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        ownerId,
+        ownerListRows[0].id,
+        firstWordId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        ownerId,
+        ownerListRows[0].id,
+        secondWordId,
+      ]);
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [
+        otherId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        otherId,
+        otherListRows[0].id,
+        firstWordId,
+      ]);
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [
+        ownerId,
+      ]);
+
+      const { rows } = await client.query(
+        `select get_user_list_memberships_for_entries($1, $2::uuid[]) as memberships`,
+        [ownerId, [firstWordId, secondWordId]],
+      );
+
+      expect(rows[0].memberships).toEqual(
+        expect.arrayContaining([
+          {
+            word_id: firstWordId,
+            lists: [
+              expect.objectContaining({
+                id: ownerListRows[0].id,
+                kind: "user",
+                description: "Owned words",
+                primary_language_code: "nl",
+                item_count: 2,
+              }),
+            ],
+          },
+          {
+            word_id: secondWordId,
+            lists: [
+              expect.objectContaining({
+                id: ownerListRows[0].id,
+                kind: "user",
+                item_count: 2,
+              }),
+            ],
+          },
+        ]),
+      );
+      expect(rows[0].memberships).toHaveLength(2);
+
+      await client.query("savepoint unauthorized_memberships");
+      await expect(
+        client.query(
+          `select get_user_list_memberships_for_entries($1, $2::uuid[])`,
+          [otherId, [firstWordId]],
+        ),
+      ).rejects.toThrow(/unauthorized/);
+      await client.query("rollback to savepoint unauthorized_memberships");
+      await client.query("release savepoint unauthorized_memberships");
+    }, ownerId);
+  });
+
   test("remove_entries_from_user_list removes owned list entries only", async () => {
     const ownerId = randomUUID();
     const otherId = randomUUID();

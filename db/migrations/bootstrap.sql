@@ -90,3 +90,6 @@
 
 -- Explicit user word-list metadata update action
 \i db/migrations/027_update_user_word_list_action.sql
+
+-- User-list memberships for platform lookup/status payloads
+\i db/migrations/037_user_list_memberships_for_entries_rpc.sql

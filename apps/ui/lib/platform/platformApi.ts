@@ -74,6 +74,18 @@ type DictionaryMetadataRow = {
   schema_version: number | null;
 };
 
+type UserListMembershipRow = {
+  word_id?: string | null;
+  lists?: Array<{
+    id?: string | null;
+    kind?: string | null;
+    name?: string | null;
+    description?: string | null;
+    primary_language_code?: string | null;
+    item_count?: number | null;
+  }>;
+};
+
 export type PlatformOperationResult = {
   payload: unknown;
   status: number;
@@ -209,7 +221,43 @@ export async function performPlatformLookup(
   }
 
   const userStateByEntryId = new Map<string, Record<string, unknown>>();
+  const listMembershipsByEntryId = new Map<string, unknown[]>();
   if (includeUserState) {
+    const { data: membershipRows, error: membershipError } = await auth.supabase.rpc(
+      "get_user_list_memberships_for_entries",
+      {
+        p_user_id: auth.user.id,
+        p_word_ids: entries.map((entry) => entry.id),
+      },
+    );
+
+    if (membershipError) {
+      return {
+        payload: {
+          error: "list_memberships_failed",
+          detail: membershipError.message ?? String(membershipError),
+        },
+        status: 500,
+      };
+    }
+
+    if (Array.isArray(membershipRows)) {
+      for (const row of membershipRows as UserListMembershipRow[]) {
+        if (!row?.word_id || !Array.isArray(row.lists)) continue;
+        listMembershipsByEntryId.set(
+          row.word_id,
+          row.lists.map((list) => ({
+            id: list.id ?? null,
+            kind: list.kind ?? "user",
+            name: list.name ?? "",
+            description: list.description ?? null,
+            primaryLanguageCode: list.primary_language_code ?? null,
+            itemCount: list.item_count ?? 0,
+          })),
+        );
+      }
+    }
+
     for (const entry of entries) {
       for (const mode of TRAINING_MODES) {
         const { data: row, error: statusError } = await auth.supabase.rpc(
@@ -305,7 +353,10 @@ export async function performPlatformLookup(
           }
         : null,
       ...(includeUserState
-        ? { userStateByCardType: userStateByEntryId.get(entry.id) ?? {} }
+        ? {
+            userStateByCardType: userStateByEntryId.get(entry.id) ?? {},
+            listMemberships: listMembershipsByEntryId.get(entry.id) ?? [],
+          }
         : {}),
       availableActions,
     };

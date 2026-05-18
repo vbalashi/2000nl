@@ -158,6 +158,26 @@ describe("/api/platform/lookup", () => {
           error: null,
         });
       }
+      if (name === "get_user_list_memberships_for_entries") {
+        return Promise.resolve({
+          data: [
+            {
+              word_id: "entry-1",
+              lists: [
+                {
+                  id: "list-1",
+                  kind: "user",
+                  name: "My list",
+                  description: "Personal lookup list",
+                  primary_language_code: "nl",
+                  item_count: 3,
+                },
+              ],
+            },
+          ],
+          error: null,
+        });
+      }
       if (
         name === "get_card_user_state" &&
         args?.p_word_id === "entry-1" &&
@@ -200,6 +220,10 @@ describe("/api/platform/lookup", () => {
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
       p_headword: "huis",
     });
+    expect(rpc).toHaveBeenCalledWith("get_user_list_memberships_for_entries", {
+      p_user_id: "user-1",
+      p_word_ids: ["entry-1", "entry-2"],
+    });
     expect(rpc).toHaveBeenCalledWith("get_card_user_state", {
       p_user_id: "user-1",
       p_word_id: "entry-1",
@@ -236,6 +260,17 @@ describe("/api/platform/lookup", () => {
         clickCount: 2,
       }),
     );
+    expect(payload.items[0].listMemberships).toEqual([
+      {
+        id: "list-1",
+        kind: "user",
+        name: "My list",
+        description: "Personal lookup list",
+        primaryLanguageCode: "nl",
+        itemCount: 3,
+      },
+    ]);
+    expect(payload.items[1].listMemberships).toEqual([]);
     for (const name of mutationRpcNames) {
       expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
     }
@@ -285,10 +320,15 @@ describe("/api/platform/lookup", () => {
       p_headword: "huis",
     });
     expect(from).not.toHaveBeenCalled();
-    for (const name of ["get_card_user_state", ...mutationRpcNames]) {
+    for (const name of [
+      "get_card_user_state",
+      "get_user_list_memberships_for_entries",
+      ...mutationRpcNames,
+    ]) {
       expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
     }
     const payload = await response.json();
     expect(payload.items[0].userStateByCardType).toBeUndefined();
+    expect(payload.items[0].listMemberships).toBeUndefined();
   });
 });
