@@ -80,6 +80,7 @@ const importService = async () => {
     fetchWordsForList: service.fetchWordsForList,
     addWordsToUserList: service.addWordsToUserList,
     createUserList: service.createUserList,
+    updateUserList: service.updateUserList,
     deleteUserList: service.deleteUserList,
     removeWordsFromUserList: service.removeWordsFromUserList,
     searchWordEntries: service.searchWordEntries,
@@ -309,6 +310,50 @@ describe("trainingService list and preference characterization", () => {
       p_user_id: "user-1",
       p_name: "Nieuw",
       p_description: "Words to learn",
+      p_language_code: "nl",
+      p_primary_language_code: "nl",
+    });
+  });
+
+  test("updateUserList updates list metadata through the explicit RPC", async () => {
+    const { updateUserList } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "list-1",
+        name: "Bijgewerkt",
+        description: "Updated words",
+        language_code: "nl",
+        primary_language_code: "nl",
+        created_at: "2026-05-16T10:00:00.000Z",
+        user_word_list_items: [{ count: 2 }],
+      },
+      error: null,
+    });
+
+    await expect(
+      updateUserList({
+        userId: "user-1",
+        listId: "list-1",
+        name: "Bijgewerkt",
+        description: "Updated words",
+        language_code: "nl",
+      }),
+    ).resolves.toEqual({
+      id: "list-1",
+      name: "Bijgewerkt",
+      description: "Updated words",
+      language_code: "nl",
+      type: "user",
+      item_count: 2,
+      created_at: "2026-05-16T10:00:00.000Z",
+    });
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("update_user_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_name: "Bijgewerkt",
+      p_description: "Updated words",
       p_language_code: "nl",
       p_primary_language_code: "nl",
     });

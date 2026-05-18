@@ -404,6 +404,47 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("update_user_word_list updates owned list metadata", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+
+      const { rows: createRows } = await client.query(
+        `select create_user_word_list($1, $2, $3, 'nl', 'nl') as list`,
+        [ownerId, `Update list ${Date.now()}`, "Before"],
+      );
+      const list = createRows[0].list;
+
+      await client.query("savepoint unauthorized_update_list");
+      await expect(
+        client.query(
+          `select update_user_word_list($1, $2, $3, $4, 'nl', 'nl')`,
+          [otherId, list.id, "Blocked", "Blocked"],
+        ),
+      ).rejects.toThrow(/unauthorized/);
+      await client.query("rollback to savepoint unauthorized_update_list");
+      await client.query("release savepoint unauthorized_update_list");
+
+      const { rows: updateRows } = await client.query(
+        `select update_user_word_list($1, $2, $3, $4, 'nl', 'nl') as list`,
+        [ownerId, list.id, "Updated list", "After"],
+      );
+
+      expect(updateRows[0].list).toEqual(
+        expect.objectContaining({
+          id: list.id,
+          name: "Updated list",
+          description: "After",
+          language_code: "nl",
+          primary_language_code: "nl",
+        }),
+      );
+      expect(updateRows[0].list.user_word_list_items[0].count).toBe(0);
+    }, ownerId);
+  });
+
   test("ensure_user_dictionary creates a private editable user dictionary", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

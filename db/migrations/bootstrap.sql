@@ -87,3 +87,6 @@
 
 -- Gated dictionary entry lookup by id
 \i db/migrations/026_gated_dictionary_entry_by_id.sql
+
+-- Explicit user word-list metadata update action
+\i db/migrations/027_update_user_word_list_action.sql

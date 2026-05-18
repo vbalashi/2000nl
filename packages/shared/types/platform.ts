@@ -179,6 +179,7 @@ export type LookupActionId =
   | "update-user-entry"
   | "delete-user-entry"
   | "create-user-list"
+  | "update-user-list"
   | "delete-user-list"
   | "mark-known"
   | "mark-unknown"
@@ -284,6 +285,14 @@ export type PlatformActionRequest =
   | {
       action: "create-user-list";
       name: string;
+      description?: string | null;
+      languageCode?: string | null;
+      primaryLanguageCode?: string | null;
+    }
+  | {
+      action: "update-user-list";
+      listId: string;
+      name?: string;
       description?: string | null;
       languageCode?: string | null;
       primaryLanguageCode?: string | null;

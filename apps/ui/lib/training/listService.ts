@@ -324,6 +324,31 @@ export async function createUserList(params: {
   return mapUserListSummary(data);
 }
 
+export async function updateUserList(params: {
+  userId: string;
+  listId: string;
+  name?: string;
+  description?: string | null;
+  language_code?: string;
+  primary_language_code?: string;
+}): Promise<WordListSummary | null> {
+  const { data, error } = await supabase.rpc("update_user_word_list", {
+    p_user_id: params.userId,
+    p_list_id: params.listId,
+    p_name: params.name ?? null,
+    p_description: params.description ?? null,
+    p_language_code: params.language_code ?? null,
+    p_primary_language_code: params.primary_language_code ?? params.language_code ?? null,
+  });
+
+  if (error || !data) {
+    console.error("Error updating user list", error);
+    return null;
+  }
+
+  return mapUserListSummary(data);
+}
+
 export async function addWordsToUserList(
   listId: string,
   wordIds: string[],

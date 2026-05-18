@@ -30,6 +30,7 @@ export {
   removeWordsFromUserList,
   deleteUserList,
   createUserList,
+  updateUserList,
   addWordsToUserList,
   updateActiveList,
 } from "./training/listService";

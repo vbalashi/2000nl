@@ -314,6 +314,59 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("updates user lists through the explicit RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "list-1",
+        name: "Mine updated",
+        description: "Updated words",
+        language_code: "nl",
+        primary_language_code: "nl",
+        created_at: "2026-05-18T10:00:00.000Z",
+        user_word_list_items: [{ count: 3 }],
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "update-user-list",
+        listId: "list-1",
+        name: "Mine updated",
+        description: "Updated words",
+        languageCode: "nl",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("update_user_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_name: "Mine updated",
+      p_description: "Updated words",
+      p_language_code: "nl",
+      p_primary_language_code: "nl",
+    });
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        action: "update-user-list",
+        listId: "list-1",
+        list: {
+          id: "list-1",
+          kind: "user",
+          name: "Mine updated",
+          description: "Updated words",
+          primaryLanguageCode: "nl",
+          itemCount: 3,
+        },
+      }),
+    );
+  });
+
   test("copies accessible entries to a user dictionary", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

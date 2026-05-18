@@ -27,6 +27,7 @@ export type PlatformAction =
   | "update-user-entry"
   | "delete-user-entry"
   | "create-user-list"
+  | "update-user-list"
   | "delete-user-list";
 
 export type PlatformActionBody = {
@@ -388,6 +389,7 @@ export async function performPlatformAction(
       "update-user-entry",
       "delete-user-entry",
       "create-user-list",
+      "update-user-list",
       "delete-user-list",
     ].includes(action)
   ) {
@@ -454,6 +456,52 @@ export async function performPlatformAction(
     }
 
     return { payload: { ok: true, action, listId }, status: 200 };
+  }
+
+  if (action === "update-user-list") {
+    const listId = asString(body?.listId);
+    if (!listId) {
+      return { payload: { error: "missing_list_id" }, status: 400 };
+    }
+
+    const languageCode = asString(body?.languageCode);
+    const { data, error } = await auth.supabase.rpc("update_user_word_list", {
+      p_user_id: auth.user.id,
+      p_list_id: listId,
+      p_name: asString(body?.name),
+      p_description:
+        typeof body?.description === "string" ? body.description : null,
+      p_language_code: languageCode,
+      p_primary_language_code:
+        asString(body?.primaryLanguageCode) ?? languageCode,
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("list_not_found")) {
+        return { payload: { error: "list_not_found" }, status: 404 };
+      }
+      if (detail.includes("duplicate_user_list")) {
+        return { payload: { error: "duplicate_user_list", detail }, status: 409 };
+      }
+      if (
+        detail.includes("invalid_list_name") ||
+        detail.includes("language_not_found")
+      ) {
+        return { payload: { error: "invalid_user_list", detail }, status: 400 };
+      }
+      return { payload: { error: "update_user_list_failed", detail }, status: 500 };
+    }
+
+    return {
+      payload: {
+        ok: true,
+        action,
+        listId,
+        list: mapUserListRpcPayload(data),
+      },
+      status: 200,
+    };
   }
 
   if (action === "create-user-entry") {
