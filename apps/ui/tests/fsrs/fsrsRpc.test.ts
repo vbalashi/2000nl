@@ -150,6 +150,47 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_recent_training_history returns hydrated event and status rows", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-history-${Date.now()}`);
+
+      await client.query(
+        `insert into user_word_status (
+          user_id, word_id, mode,
+          click_count, last_seen_at, fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
+        ) values ($1, $2, $3, 2, now() - interval '30 minutes', 3.0, 4, 7.5, now() + interval '1 day')`,
+        [userId, wordId, mode],
+      );
+      await client.query(
+        `insert into user_events (user_id, word_id, mode, event_type, created_at)
+         values ($1, $2, $3, 'review_success', now())`,
+        [userId, wordId, mode],
+      );
+
+      const { rows } = await client.query(
+        `select *
+         from get_recent_training_history($1::uuid, now() - interval '1 day', 50)`,
+        [userId],
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          id: wordId,
+          headword: expect.stringContaining("fsrs-history-"),
+          event_type: "review_success",
+          mode,
+          click_count: 2,
+          fsrs_reps: 4,
+          meanings_count: 1,
+        }),
+      );
+      expect(rows[0].raw).toEqual(expect.objectContaining({ meaning_id: 1 }));
+    }, userId);
+  });
+
   test("dictionary lookup returns curated and user candidates", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

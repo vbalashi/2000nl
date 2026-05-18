@@ -134,49 +134,21 @@ describe("trainingService stats and history", () => {
   test("fetchRecentHistory hydrates status, meanings count, sources, results, and raw meaning id", async () => {
     const { fetchRecentHistory } = await importService();
 
-    queueFrom("user_events", {
+    rpc.mockResolvedValueOnce({
       data: [
         {
-          word_id: "word-1",
+          id: "word-1",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          part_of_speech: "zn",
+          gender: "het",
+          raw: { meanings: [{ definition: "Een gebouw" }], meaning_id: 2 },
+          is_nt2_2000: true,
+          meanings_count: 2,
           event_type: "review_success",
           mode: "word-to-definition",
           created_at: "2026-05-16T10:00:00.000Z",
-          word: {
-            id: "word-1",
-            dictionary_id: "dict-1",
-            language_code: "nl",
-            headword: "huis",
-            part_of_speech: "zn",
-            gender: "het",
-            raw: JSON.stringify({ meanings: [{ definition: "Een gebouw" }] }),
-            is_nt2_2000: true,
-            meaning_id: 2,
-          },
-        },
-        {
-          word_id: "word-2",
-          event_type: "definition_click",
-          mode: "definition-to-word",
-          created_at: "2026-05-16T11:00:00.000Z",
-          word: {
-            id: "word-2",
-            dictionary_id: "dict-1",
-            language_code: "nl",
-            headword: "lopen",
-            part_of_speech: "ww",
-            gender: null,
-            raw: { meanings: [{ definition: "gaan" }], meaning_id: 4 },
-            is_nt2_2000: false,
-          },
-        },
-      ],
-      error: null,
-    });
-    queueFrom("user_word_status", {
-      data: [
-        {
-          word_id: "word-1",
-          mode: "word-to-definition",
           click_count: 3,
           last_seen_at: "2026-05-16T12:00:00.000Z",
           fsrs_last_interval: 2,
@@ -184,26 +156,34 @@ describe("trainingService stats and history", () => {
           fsrs_stability: 6.5,
           next_review_at: "2026-05-18T10:00:00.000Z",
         },
+        {
+          id: "word-2",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "lopen",
+          part_of_speech: "ww",
+          gender: null,
+          raw: { meanings: [{ definition: "gaan" }], meaning_id: 4 },
+          is_nt2_2000: false,
+          meanings_count: 1,
+          event_type: "definition_click",
+          mode: "definition-to-word",
+          created_at: "2026-05-16T11:00:00.000Z",
+          click_count: 0,
+          last_seen_at: "2026-05-16T11:00:00.000Z",
+        },
       ],
       error: null,
     });
-    queueFrom("word_entries", { count: 2, error: null });
-    queueFrom("word_entries", { count: 1, error: null });
 
     const history = await fetchRecentHistory("user-1");
 
-    expect(queries[0].table).toBe("user_events");
-    expect(queries[0].eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(queries[0].gte).toHaveBeenCalledWith(
-      "created_at",
-      expect.any(String),
-    );
-    expect(queries[0].limit).toHaveBeenCalledWith(50);
-    expect(queries[1].in).toHaveBeenCalledWith("word_id", ["word-1", "word-2"]);
-    expect(queries[2].eq).toHaveBeenCalledWith("headword", "huis");
-    expect(queries[2].eq).toHaveBeenCalledWith("dictionary_id", "dict-1");
-    expect(queries[3].eq).toHaveBeenCalledWith("headword", "lopen");
-    expect(queries[3].eq).toHaveBeenCalledWith("dictionary_id", "dict-1");
+    expect(rpc).toHaveBeenCalledWith("get_recent_training_history", {
+      p_user_id: "user-1",
+      p_since: expect.any(String),
+      p_limit: 50,
+    });
+    expect(from).not.toHaveBeenCalled();
 
     expect(history).toEqual([
       {
@@ -254,7 +234,7 @@ describe("trainingService stats and history", () => {
           interval: undefined,
           reps: undefined,
           ef: undefined,
-          clicks: undefined,
+          clicks: 0,
           next_review: undefined,
         },
       },
