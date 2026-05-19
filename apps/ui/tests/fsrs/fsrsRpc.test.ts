@@ -23,7 +23,7 @@ const callHandleReview = (
   result: string,
   turnId: string | null = null
 ) =>
-  client.query(`select handle_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
+  client.query(`select handle_card_review($1::uuid, $2::uuid, $3::text, $4::text, $5::uuid)`, [
     userId,
     wordId,
     mode,
@@ -43,7 +43,7 @@ describeIfDb("FSRS RPC integration", () => {
     await pool.end();
   });
 
-  test("handle_review creates then updates card state", async () => {
+  test("handle_card_review creates then updates card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       const wordId = await insertWord(client, `fsrs-review-${Date.now()}`);
@@ -78,7 +78,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("handle_click counts as lapse", async () => {
+  test("handle_card_review fail counts as lapse", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       const wordId = await insertWord(client, `fsrs-click-${Date.now()}`);
@@ -87,7 +87,7 @@ describeIfDb("FSRS RPC integration", () => {
       // Seed with a success so we have prior state.
       await callHandleReview(client, userId, wordId, mode, "success", randomUUID());
 
-      await client.query(`select handle_click($1, $2, $3)`, [userId, wordId, mode]);
+      await callHandleReview(client, userId, wordId, mode, "fail", randomUUID());
 
       const { rows } = await client.query(
         `select fsrs_reps, fsrs_lapses, fsrs_last_grade, last_result
@@ -104,7 +104,7 @@ describeIfDb("FSRS RPC integration", () => {
         `select review_type from user_review_log where user_id = $1 and word_id = $2`,
         [userId, wordId]
       );
-      expect(logRows.some((r) => r.review_type === "click")).toBe(true);
+      expect(logRows.some((r) => r.review_type === "review")).toBe(true);
     }, userId);
   });
 
@@ -709,13 +709,13 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("start_learning_card enables a card without review-log side effects", async () => {
+  test("start_learning_entry_card enables a card without review-log side effects", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId);
       const wordId = await insertWord(client, `fsrs-start-${Date.now()}`);
 
-      await client.query(`select start_learning_card($1, $2, $3)`, [
+      await client.query(`select start_learning_entry_card($1, $2, $3)`, [
         userId,
         wordId,
         mode,

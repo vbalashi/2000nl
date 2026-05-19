@@ -281,15 +281,6 @@ const restHandler = async (route: any) => {
     return;
   }
 
-  if (pathname.endsWith("/rpc/handle_click")) {
-    await route.fulfill({
-      status: 200,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ok: true }),
-    });
-    return;
-  }
-
   if (pathname.endsWith("/rpc/fetch_dictionary_entry_gated")) {
     const body = request.postDataJSON?.() ?? {};
     const entry = entries.find((item) => item.headword === body.p_headword);

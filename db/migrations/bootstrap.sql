@@ -168,3 +168,6 @@
 
 -- Make get_next_card the primary scheduler RPC
 \i db/migrations/053_get_next_card_primary.sql
+
+-- Drop legacy word-named training mutation RPCs
+\i db/migrations/054_drop_legacy_word_rpcs.sql

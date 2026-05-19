@@ -38,12 +38,8 @@ const request = (body: unknown, token = "token-1") =>
   });
 
 const mutationRpcNames = [
-  "record_word_view",
   "record_card_view",
-  "handle_review",
   "handle_card_review",
-  "handle_click",
-  "start_learning_card",
   "start_learning_entry_card",
   "add_entry_to_user_list",
   "copy_entry_to_user_dictionary",
