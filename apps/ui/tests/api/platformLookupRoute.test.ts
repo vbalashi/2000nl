@@ -270,6 +270,9 @@ describe("/api/platform/lookup", () => {
         name: "My list",
         description: "Personal lookup list",
         primaryLanguageCode: "nl",
+        defaultScenarioId: null,
+        cardPolicy: "inherit",
+        cardTypeIds: null,
         itemCount: 3,
       },
     ]);
