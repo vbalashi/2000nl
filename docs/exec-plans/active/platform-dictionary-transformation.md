@@ -11,9 +11,8 @@ dictionary-backed learning platform that can serve:
 - curated and user word lists that can mix sources,
 - external clients such as a browser extension.
 
-This is a planning/review package, not an implementation migration. A second
-agent should review the model, risks, and sequencing before runtime schema work
-starts.
+This began as a planning/review package and now also tracks the staged
+implementation status.
 
 Related review detail: `dictionary-schema-and-lookup-review.md`.
 
@@ -56,21 +55,21 @@ Database:
 - `languages` exists as a language catalog.
 - `word_entries` stores dictionary content with `language_code`, `headword`,
   VanDale-specific fields, and `raw` JSONB.
-- Real production `word_entries` also includes `meaning_id`, and current import
-  code treats each `(headword, meaning_id)` as a distinct meaning-level entry.
-  The consolidated migration should be reviewed because it currently appears to
-  omit this column even though archived migration `0007_add_meaning_id.sql`,
-  importer/tests/UI, and production expect it.
-- There is no first-class `dictionaries` table; VanDale is represented through
-  `word_entries.vandale_id`, `is_nt2_2000`, raw JSON, and seeded lists.
+- `word_entries` includes `meaning_id` and `dictionary_id`; current import code
+  treats each `(dictionary_id, headword, meaning_id)` as a distinct
+  meaning-level entry.
+- `dictionary_schemas`, `dictionaries`, and `dictionary_entitlements` exist.
+  The seeded trusted Dutch dictionary is `nl-vandale` using `nl-vandale-v1`.
 - `word_lists` / `word_list_items` represent curated lists.
 - `user_word_lists` / `user_word_list_items` represent user lists.
-- User lists currently reference `word_entries` directly and therefore can mix
-  entries in practice, but list metadata has only one nullable `language_code`.
-- `user_word_status` and `user_review_log` are still keyed by `word_id + mode`;
-  `user_card_status` and card-named RPC wrappers expose `entry_id +
-  card_type_id` terminology for new clients.
-- `training_scenarios` groups text mode IDs in `card_modes`.
+- User lists reference `word_entries` directly and can mix entries in practice.
+  `primary_language_code` is the forward-compatible list language hint while
+  legacy `language_code` remains for compatibility.
+- `user_card_status` is a physical table keyed by `entry_id + card_type_id`;
+  legacy `user_word_status` remains synchronized while scheduler/FSRS functions
+  are migrated.
+- `training_scenarios` groups card mode IDs in `card_modes`, including the
+  supported audio recognition mode.
 
 Backend/runtime:
 
@@ -104,17 +103,19 @@ Already aligned:
 
 Main gaps:
 
-- Dictionary source is not first-class.
-- Dictionary entry schema is not first-class. Current Dutch schema exists as
-  `packages/shared/schemas/nl/note.schema.json`, but dictionaries do not declare
-  which schema/version their entries use.
+- Dictionary source is first-class for current trusted and user-owned
+  dictionaries, but more runtime paths still need to consume dictionary metadata
+  directly.
+- Dictionary entry schema is first-class at the DB registry boundary. More
+  clients still need to consume schema metadata consistently.
 - VanDale-specific fields live directly on `word_entries`.
 - User-created dictionary entries do not exist as editable content separate from
   user lists.
 - A user list item can only reference an existing `word_entries.id`; there is no
   explicit support for source ownership, publication state, or mixed-language
   list semantics.
-- User progress keys by `word_id + mode`, not by a durable card identity.
+- User progress has physical `entry_id + card_type_id` storage, but legacy
+  scheduler functions still operate through `word_id + mode`.
 - External clients do not have a stable public API boundary. They would need to
   call Supabase/RPCs or app-local routes directly.
 - Lookup telemetry and FSRS lapse semantics are coupled through `handle_click`;
@@ -390,14 +391,16 @@ Validation:
 
 ### Stage 4: Card State Generalization
 
-- Done: introduce `user_card_status` compatibility view mapping current
-  `user_word_status` to `entry_id + card_type_id`.
+- Done: introduce physical `user_card_status` storage keyed by `entry_id +
+  card_type_id`, with backfill and bidirectional sync to legacy
+  `user_word_status`.
 - Done: add card-named wrappers for view/review/start-learning/state reads.
 - Done: add `get_next_card` as a wrapper over `get_next_word`.
 - Done: move platform API and current training service selection/review calls
   onto card-named wrappers while keeping legacy RPCs available.
-- Remaining: decide whether to physically replace `user_word_status` or keep it
-  as storage behind the compatibility view for the next stage.
+- Remaining: move scheduler/FSRS source-of-truth reads and writes from
+  `user_word_status` to `user_card_status`, or explicitly freeze
+  `user_word_status` as the long-term compatibility mirror.
 
 Validation:
 

@@ -73,8 +73,10 @@ Desired concepts:
   `default_scenario_id`, `card_policy`, and `card_type_ids`. Lists still store
   entries, not cards. The metadata says how training should treat those entries
   when the list is selected.
-- Current user progress is keyed by `user_id + word_id + mode` in
-  `user_word_status`, with review history in `user_review_log`.
+- Current card-facing user progress is keyed by `user_id + entry_id +
+  card_type_id` in `user_card_status`, with review history in
+  `user_review_log`. Legacy scheduler/FSRS functions still use
+  `user_word_status`; triggers keep both storage shapes synchronized.
 - Current scenarios group modes through `training_scenarios.card_modes`.
 - `apps/api` is currently a reserved boundary, not the active backend.
 - Active serving logic is split between Supabase/Postgres RPCs and `apps/ui`
