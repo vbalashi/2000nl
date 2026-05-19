@@ -404,6 +404,25 @@ Validation:
 - FSRS parity/RPC tests.
 - Training e2e smoke.
 
+### Stage 4A: List Training Intent
+
+- Done: keep lists as entry membership sets while adding training intent
+  metadata: `default_scenario_id`, `card_policy`, and `card_type_ids`.
+- Done: expose that metadata through list summary RPCs, direct UI list services,
+  shared platform types, and platform list create/update actions.
+- Done: current training UI applies a selected list's `default_scenario_id`.
+- Done: `card_policy='restrict'` can limit scheduler card modes, but only to
+  card modes currently supported by the UI renderer. Future audio-only lists
+  are accepted as data but do not render as the wrong text-card shape.
+- Remaining: add product UI for editing list training intent and add renderer
+  support before enabling audio/conjugation card policies in the app.
+
+Validation:
+
+- List RPC tests.
+- Training service/list/selection tests.
+- Full UI test suite.
+
 ### Stage 5: External Backend Boundary
 
 - Revive `apps/api` or add a versioned API route group for external clients.

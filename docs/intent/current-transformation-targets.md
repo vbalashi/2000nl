@@ -1,6 +1,6 @@
 # Current Transformation Targets
 
-Last updated: 2026-05-18
+Last updated: 2026-05-19
 
 This document is the shared scratchpad for transformation wishes, questions,
 constraints, and target areas after codebase discovery.
@@ -69,6 +69,10 @@ Desired concepts:
   `user_word_lists` / `user_word_list_items`. `primary_language_code` is the
   forward-compatible list language hint; legacy `language_code` remains for
   compatibility.
+- Lists now carry optional training intent metadata:
+  `default_scenario_id`, `card_policy`, and `card_type_ids`. Lists still store
+  entries, not cards. The metadata says how training should treat those entries
+  when the list is selected.
 - Current user progress is keyed by `user_id + word_id + mode` in
   `user_word_status`, with review history in `user_review_log`.
 - Current scenarios group modes through `training_scenarios.card_modes`.
@@ -97,11 +101,18 @@ Desired concepts:
   card-state context without direct client reads of dictionary tables.
 - Moved training-adjacent user list, active list, learning preference, history,
   and card-state operations behind RPCs.
+- Added list training intent metadata to curated/user list summaries, platform
+  actions, and the current training app. `default_scenario_id` is applied when
+  a list is selected. `card_policy='restrict'` limits scheduler card modes to
+  currently supported UI renderers; future audio-only lists are stored but not
+  mis-rendered as text cards.
 
 ## Remaining Near-Term Targets
 
 - Add UI for user dictionary creation/editing only after deciding the first
   product surface and validation rules.
+- Add UI controls for list training intent only after deciding the first UX:
+  list settings modal, scenario-specific list templates, or external API first.
 - Continue reducing direct table access where it crosses platform boundaries;
   keep truly app-local settings explicit.
 - Add/refresh docs for platform endpoint payloads as external consumers become
