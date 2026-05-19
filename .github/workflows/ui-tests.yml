@@ -29,6 +29,10 @@ jobs:
         run: npm ci
         working-directory: apps/ui
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/ui
+
       - name: Lint UI
         run: npm run lint
         working-directory: apps/ui
@@ -39,4 +43,8 @@ jobs:
 
       - name: Run UI tests
         run: npm test
+        working-directory: apps/ui
+
+      - name: Run UI e2e smoke
+        run: npm run test:e2e
         working-directory: apps/ui
