@@ -16,7 +16,6 @@ Content and lists:
 Training and events:
 - `training_scenarios(id, name_en, name_nl, description, card_modes, graduation_threshold, enabled, sort_order)` – user-facing scenario grouping over internal card modes.
 - `user_card_status(user_id, entry_id, card_type_id, fsrs_*, next_review_at, last_seen_at, last_reviewed_at, click_count, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – primary per-user, per-entry, per-card scheduling state.
-- `user_word_status(user_id, word_id, mode, fsrs_*, next_review_at, last_seen_at, last_reviewed_at, click_count, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – legacy table kept for migration safety; active RPCs do not synchronize new card state into it.
 - `user_review_log(id, user_id, word_id, mode, turn_id, grade, review_type, scheduled_at, reviewed_at, stability_before, difficulty_before, stability_after, difficulty_after, interval_after, params_version, metadata)` – review audit trail.
 - `user_events(id, user_id, word_id, mode, event_type, created_at, meta)` – generic event log.
 

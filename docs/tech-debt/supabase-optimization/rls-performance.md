@@ -4,7 +4,7 @@
 
 ### Task 0.1: Export Current Policies From Database
 - Connect to production database
-- Export `user_word_status` policies
+- Export `user_card_status` policies
 - Export `user_events` policies
 - Verify they match live DB state
 - Document provenance

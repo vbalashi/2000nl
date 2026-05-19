@@ -216,7 +216,7 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 
 ### FSRS State
 
-- `user_word_status` - Per-user, per-word, per-mode FSRS scheduling state
+- `user_card_status` - Per-user, per-entry, per-card FSRS scheduling state
 - `user_review_log` - Audit trail of all reviews
 - `user_events` - Generic event log
 

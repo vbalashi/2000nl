@@ -56,7 +56,7 @@ The script shows chronological review history including:
 ### Database Tables Used
 
 - `user_review_log`: Review history with grades and intervals
-- `user_word_status`: Current word state and FSRS fields
+- `user_card_status`: Current card state and FSRS fields
 - `word_entries.headword`: Word text lookup
 - `word_forms.form`: Word form variations
 

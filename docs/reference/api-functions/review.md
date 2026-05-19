@@ -17,7 +17,7 @@ handle_review(
 `p_turn_id` is a client-generated UUID for the presented card turn. When it is non-null, duplicate submissions with the same value are treated as no-ops.
 
 Side effects:
-- Updates `user_word_status`
+- Updates `user_card_status`
 - Inserts into `user_review_log`
 - Inserts into `user_events`
 
@@ -45,7 +45,7 @@ handle_click(
 ```
 
 Side effects:
-- Updates `user_word_status`
+- Updates `user_card_status`
 - Inserts into `user_review_log`
 - Inserts into `user_events`
 - Increments click count

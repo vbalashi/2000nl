@@ -66,8 +66,7 @@ Database:
   `primary_language_code` is the forward-compatible list language hint while
   legacy `language_code` remains for compatibility.
 - `user_card_status` is the active storage table keyed by `entry_id +
-  card_type_id`. Legacy `user_word_status` exists in the schema but is no
-  longer synchronized or used by active RPCs.
+  card_type_id`. Legacy `user_word_status` has been dropped after backfill.
 - `training_scenarios` groups card mode IDs in `card_modes`, including the
   supported audio recognition mode.
 
@@ -141,8 +140,9 @@ Reasoning:
 
 - Lists stay reusable across W->D, D->W, audio, and future card types.
 - Apps can render cards differently while sharing content/state.
-- Existing `user_word_status(user_id, word_id, mode)` can migrate gradually
-  because `word_id` maps to entry and `mode` maps to card type.
+- The migration path backfills from the former
+  `user_word_status(user_id, word_id, mode)` shape because `word_id` maps to
+  entry and `mode` maps to card type.
 - Allowing duplicate entries avoids premature canonicalization. If VanDale,
   Oxford, Cambridge, and a user dictionary all contain a similar headword, those
   are separate entries with different source trust and content.
@@ -210,8 +210,7 @@ Candidate new/changed tables:
     IDs in DB constraints/docs
 
 - `user_card_status`
-  - eventual replacement or compatibility view over `user_word_status`
-  - columns map from current FSRS fields
+  - primary FSRS/card-state storage
   - key by `user_id + entry_id + card_type_id`
 
 Avoid in the first migration:
@@ -404,8 +403,8 @@ Validation:
   `user_events` shapes.
 - Done: move scheduler/get-next, legacy-named write RPCs, training stats,
   lookup status, and gated word-list filters onto `user_card_status`.
-- Done: remove the `user_word_status` synchronization bridge. The old table is
-  retained only as migration residue, not as runtime state.
+- Done: remove the `user_word_status` synchronization bridge and drop the old
+  table after the `user_card_status` backfill.
 
 Validation:
 

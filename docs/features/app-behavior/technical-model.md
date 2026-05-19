@@ -4,8 +4,8 @@
 
 ### Key Tables
 
-**`user_word_status`**
-- Tracks user progress per `user_id + word_id + mode`
+**`user_card_status`**
+- Tracks user progress per `user_id + entry_id + card_type_id`
 - FSRS fields: `fsrs_stability`, `fsrs_difficulty`, `fsrs_reps`, `fsrs_lapses`, `fsrs_last_grade`, `fsrs_last_interval`
 - Scheduling fields: `next_review_at`, `last_seen_at`, `last_reviewed_at`, `in_learning`, `learning_due_at`
 - `hidden`: flag for excluded words
