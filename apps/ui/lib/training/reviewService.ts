@@ -111,7 +111,7 @@ export const fetchLastReviewDebug = async (params: {
 }): Promise<LastReviewDebug> => {
   const { data, error } = await supabase.rpc("get_last_review_debug", {
     p_user_id: params.userId,
-    p_word_id: params.wordId,
+    p_entry_id: params.wordId,
     p_mode: params.mode,
   });
 

@@ -85,7 +85,7 @@ describe("trainingService review side effects", () => {
     ).resolves.toEqual(debug);
     expect(rpc).toHaveBeenCalledWith("get_last_review_debug", {
       p_user_id: "user-1",
-      p_word_id: "word-1",
+      p_entry_id: "word-1",
       p_mode: "word-to-definition",
     });
   });

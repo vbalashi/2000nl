@@ -180,3 +180,6 @@
 
 -- Rename user-list membership RPC parameters to entry terminology
 \i db/migrations/057_entry_named_membership_rpc_params.sql
+
+-- Rename optional review debug parameter to entry terminology
+\i db/migrations/058_entry_named_review_debug_param.sql
