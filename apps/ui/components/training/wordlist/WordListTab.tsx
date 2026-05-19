@@ -7,13 +7,38 @@ import {
   removeWordsFromUserList,
   searchWordEntries,
   deleteUserList,
+  updateUserList,
 } from "@/lib/trainingService";
-import type { DictionaryEntry, WordListSummary, WordListType } from "@/lib/types";
+import type {
+  DictionaryEntry,
+  ListCardPolicy,
+  TrainingMode,
+  WordListSummary,
+  WordListType,
+} from "@/lib/types";
 import { DropUpSelect } from "../DropUpSelect";
 import { WordsToolbar, type AttributeFilter } from "./WordsToolbar";
 import { WordsListMobile } from "./WordsListMobile";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { MobileListPickerSheet } from "./MobileListPickerSheet";
+
+const LIST_SCENARIO_OPTIONS = [
+  { value: "", label: "Geen voorkeur" },
+  { value: "understanding", label: "Begrip" },
+  { value: "listening", label: "Luisteren" },
+];
+
+const LIST_CARD_POLICY_OPTIONS: Array<{ value: ListCardPolicy; label: string }> = [
+  { value: "inherit", label: "App-instelling" },
+  { value: "prefer", label: "Voorkeur" },
+  { value: "restrict", label: "Alleen deze kaarten" },
+];
+
+const LIST_CARD_TYPE_OPTIONS: Array<{ value: TrainingMode; label: string }> = [
+  { value: "word-to-definition", label: "Woord -> definitie" },
+  { value: "definition-to-word", label: "Definitie -> woord" },
+  { value: "listen-recognize", label: "Luisteren" },
+];
 
 type Props = {
   open: boolean;
@@ -91,9 +116,29 @@ export function WordListTab({
   const [copyNewListDescription, setCopyNewListDescription] = useState("");
   const [copyBusy, setCopyBusy] = useState(false);
   const [deletingList, setDeletingList] = useState(false);
+  const [intentSaving, setIntentSaving] = useState(false);
+  const [intentScenarioId, setIntentScenarioId] = useState("");
+  const [intentCardPolicy, setIntentCardPolicy] =
+    useState<ListCardPolicy>("inherit");
+  const [intentCardTypeIds, setIntentCardTypeIds] = useState<TrainingMode[]>([]);
   const [membershipSet, setMembershipSet] = useState<Set<string>>(new Set());
   const [mobileListPickerOpen, setMobileListPickerOpen] = useState(false);
   const listScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setIntentScenarioId(selectedList?.default_scenario_id ?? "");
+    setIntentCardPolicy(selectedList?.card_policy ?? "inherit");
+    setIntentCardTypeIds(
+      (selectedList?.card_type_ids ?? []).filter((mode): mode is TrainingMode =>
+        LIST_CARD_TYPE_OPTIONS.some((option) => option.value === mode),
+      ),
+    );
+  }, [
+    selectedList?.card_policy,
+    selectedList?.card_type_ids,
+    selectedList?.default_scenario_id,
+    selectedList?.id,
+  ]);
 
   // Default copy target to first user list (excluding the currently selected user list).
   useEffect(() => {
@@ -196,6 +241,52 @@ export function WordListTab({
     selectedList?.type === "user"
       ? selectedIds.filter((id) => !membershipSet.has(id)).length
       : 0;
+
+  const toggleIntentCardType = useCallback((mode: TrainingMode) => {
+    setIntentCardTypeIds((prev) =>
+      prev.includes(mode)
+        ? prev.filter((item) => item !== mode)
+        : [...prev, mode],
+    );
+  }, []);
+
+  const saveListTrainingIntent = useCallback(async () => {
+    if (!selectedList || selectedList.type !== "user") return;
+
+    setActionMessage(null);
+    setIntentSaving(true);
+    try {
+      const updated = await updateUserList({
+        userId,
+        listId: selectedList.id,
+        default_scenario_id: intentScenarioId || null,
+        clear_default_scenario: !intentScenarioId,
+        card_policy: intentCardPolicy,
+        card_type_ids: intentCardTypeIds,
+      });
+
+      if (!updated) {
+        setActionMessage("Kon lijsttraining niet opslaan.");
+        return;
+      }
+
+      setActionMessage("Lijsttraining opgeslagen.");
+      onListChange(updated);
+      await reloadLists();
+      notifyListsUpdated();
+    } finally {
+      setIntentSaving(false);
+    }
+  }, [
+    intentCardPolicy,
+    intentCardTypeIds,
+    intentScenarioId,
+    notifyListsUpdated,
+    onListChange,
+    reloadLists,
+    selectedList,
+    userId,
+  ]);
 
   const toggleSelected = useCallback((id: string) => {
     setSelectedWordIds((prev) => {
@@ -392,6 +483,79 @@ export function WordListTab({
                     </p>
                   )}
                 </div>
+
+                {selectedList?.type === "user" ? (
+                  <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                      Training
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Scenario
+                        </span>
+                        <select
+                          value={intentScenarioId}
+                          onChange={(event) =>
+                            setIntentScenarioId(event.target.value)
+                          }
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                          {LIST_SCENARIO_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Kaarten
+                        </span>
+                        <select
+                          value={intentCardPolicy}
+                          onChange={(event) =>
+                            setIntentCardPolicy(event.target.value as ListCardPolicy)
+                          }
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        >
+                          {LIST_CARD_POLICY_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <div className="space-y-2">
+                        {LIST_CARD_TYPE_OPTIONS.map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 rounded-lg px-1 text-sm text-slate-700 dark:text-slate-200"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={intentCardTypeIds.includes(option.value)}
+                              onChange={() => toggleIntentCardType(option.value)}
+                              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={intentSaving}
+                        onClick={saveListTrainingIntent}
+                        className="w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
+                      >
+                        {intentSaving ? "Opslaan..." : "Opslaan"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
