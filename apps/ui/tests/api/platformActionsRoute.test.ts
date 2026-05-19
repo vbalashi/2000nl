@@ -244,6 +244,9 @@ describe("/api/platform/actions", () => {
         description: "Personal words",
         language_code: "nl",
         primary_language_code: "nl",
+        default_scenario_id: "listening",
+        card_policy: "restrict",
+        card_type_ids: ["listen-recognize"],
         created_at: "2026-05-18T10:00:00.000Z",
         user_word_list_items: [{ count: 0 }],
       },
@@ -256,6 +259,9 @@ describe("/api/platform/actions", () => {
         name: "Mine",
         description: "Personal words",
         languageCode: "nl",
+        defaultScenarioId: "listening",
+        cardPolicy: "restrict",
+        cardTypeIds: ["listen-recognize"],
       }),
     );
 
@@ -267,6 +273,9 @@ describe("/api/platform/actions", () => {
       p_description: "Personal words",
       p_language_code: "nl",
       p_primary_language_code: "nl",
+      p_default_scenario_id: "listening",
+      p_card_policy: "restrict",
+      p_card_type_ids: ["listen-recognize"],
     });
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
@@ -279,6 +288,9 @@ describe("/api/platform/actions", () => {
           name: "Mine",
           description: "Personal words",
           primaryLanguageCode: "nl",
+          defaultScenarioId: "listening",
+          cardPolicy: "restrict",
+          cardTypeIds: ["listen-recognize"],
           itemCount: 0,
         },
       }),
@@ -315,6 +327,9 @@ describe("/api/platform/actions", () => {
         description: "Updated words",
         language_code: "nl",
         primary_language_code: "nl",
+        default_scenario_id: "understanding",
+        card_policy: "prefer",
+        card_type_ids: ["definition-to-word", "word-to-definition"],
         created_at: "2026-05-18T10:00:00.000Z",
         user_word_list_items: [{ count: 3 }],
       },
@@ -328,6 +343,9 @@ describe("/api/platform/actions", () => {
         name: "Mine updated",
         description: "Updated words",
         languageCode: "nl",
+        defaultScenarioId: "understanding",
+        cardPolicy: "prefer",
+        cardTypeIds: ["definition-to-word", "word-to-definition"],
       }),
     );
 
@@ -340,6 +358,9 @@ describe("/api/platform/actions", () => {
       p_description: "Updated words",
       p_language_code: "nl",
       p_primary_language_code: "nl",
+      p_default_scenario_id: "understanding",
+      p_card_policy: "prefer",
+      p_card_type_ids: ["definition-to-word", "word-to-definition"],
     });
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
@@ -352,6 +373,9 @@ describe("/api/platform/actions", () => {
           name: "Mine updated",
           description: "Updated words",
           primaryLanguageCode: "nl",
+          defaultScenarioId: "understanding",
+          cardPolicy: "prefer",
+          cardTypeIds: ["definition-to-word", "word-to-definition"],
           itemCount: 3,
         },
       }),

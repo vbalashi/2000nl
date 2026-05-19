@@ -1,5 +1,5 @@
 import type { AuthenticatedSupabase } from "./serverSupabase";
-import type { ReviewResult, TrainingMode } from "@/lib/types";
+import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
 
 const TRAINING_MODES = new Set<TrainingMode>([
   "word-to-definition",
@@ -45,6 +45,9 @@ export type PlatformActionBody = {
   description?: unknown;
   languageCode?: unknown;
   primaryLanguageCode?: unknown;
+  defaultScenarioId?: unknown;
+  cardPolicy?: unknown;
+  cardTypeIds?: unknown;
 };
 
 type DictionaryLookupPayload = {
@@ -82,6 +85,9 @@ type UserListMembershipRow = {
     name?: string | null;
     description?: string | null;
     primary_language_code?: string | null;
+    default_scenario_id?: string | null;
+    card_policy?: string | null;
+    card_type_ids?: string[] | null;
     item_count?: number | null;
   }>;
 };
@@ -107,6 +113,25 @@ function asReviewResult(value: unknown): ReviewResult | null {
   return result && REVIEW_RESULTS.has(result as ReviewResult)
     ? (result as ReviewResult)
     : null;
+}
+
+function asListCardPolicy(value: unknown): ListCardPolicy | null {
+  const policy = asString(value);
+  return policy && ["inherit", "prefer", "restrict"].includes(policy)
+    ? (policy as ListCardPolicy)
+    : null;
+}
+
+function asStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const values = Array.from(
+    new Set(
+      value
+        .map((item) => asString(item))
+        .filter((item): item is string => Boolean(item)),
+    ),
+  );
+  return values.length ? values : null;
 }
 
 async function assertEntryReadable(
@@ -186,6 +211,9 @@ function mapUserListRpcPayload(row: any) {
     name: row.name,
     description: row.description ?? null,
     primaryLanguageCode: row.primary_language_code ?? row.language_code ?? null,
+    defaultScenarioId: row.default_scenario_id ?? null,
+    cardPolicy: row.card_policy ?? "inherit",
+    cardTypeIds: row.card_type_ids ?? null,
     itemCount: typeof count === "number" ? count : 0,
   };
 }
@@ -252,6 +280,9 @@ export async function performPlatformLookup(
             name: list.name ?? "",
             description: list.description ?? null,
             primaryLanguageCode: list.primary_language_code ?? null,
+            defaultScenarioId: list.default_scenario_id ?? null,
+            cardPolicy: list.card_policy ?? "inherit",
+            cardTypeIds: list.card_type_ids ?? null,
             itemCount: list.item_count ?? 0,
           })),
         );
@@ -409,12 +440,16 @@ export async function performPlatformAction(
     }
 
     const languageCode = asString(body?.languageCode) ?? "nl";
+    const cardPolicy = asListCardPolicy(body?.cardPolicy) ?? "inherit";
     const { data, error } = await auth.supabase.rpc("create_user_word_list", {
       p_user_id: auth.user.id,
       p_name: name,
       p_description: asString(body?.description),
       p_language_code: languageCode,
       p_primary_language_code: asString(body?.primaryLanguageCode) ?? languageCode,
+      p_default_scenario_id: asString(body?.defaultScenarioId),
+      p_card_policy: cardPolicy,
+      p_card_type_ids: asStringArray(body?.cardTypeIds),
     });
 
     if (error) {
@@ -424,7 +459,10 @@ export async function performPlatformAction(
       }
       if (
         detail.includes("invalid_list_name") ||
-        detail.includes("language_not_found")
+        detail.includes("language_not_found") ||
+        detail.includes("invalid_card_policy") ||
+        detail.includes("scenario_not_found") ||
+        detail.includes("invalid_card_type_ids")
       ) {
         return { payload: { error: "invalid_user_list", detail }, status: 400 };
       }
@@ -471,6 +509,7 @@ export async function performPlatformAction(
     }
 
     const languageCode = asString(body?.languageCode);
+    const cardPolicy = asListCardPolicy(body?.cardPolicy);
     const { data, error } = await auth.supabase.rpc("update_user_word_list", {
       p_user_id: auth.user.id,
       p_list_id: listId,
@@ -480,6 +519,9 @@ export async function performPlatformAction(
       p_language_code: languageCode,
       p_primary_language_code:
         asString(body?.primaryLanguageCode) ?? languageCode,
+      p_default_scenario_id: asString(body?.defaultScenarioId),
+      p_card_policy: cardPolicy,
+      p_card_type_ids: asStringArray(body?.cardTypeIds),
     });
 
     if (error) {
@@ -492,7 +534,10 @@ export async function performPlatformAction(
       }
       if (
         detail.includes("invalid_list_name") ||
-        detail.includes("language_not_found")
+        detail.includes("language_not_found") ||
+        detail.includes("invalid_card_policy") ||
+        detail.includes("scenario_not_found") ||
+        detail.includes("invalid_card_type_ids")
       ) {
         return { payload: { error: "invalid_user_list", detail }, status: 400 };
       }

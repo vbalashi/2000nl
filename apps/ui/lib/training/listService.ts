@@ -261,6 +261,9 @@ export async function createUserList(params: {
   name: string;
   description?: string;
   language_code?: string;
+  default_scenario_id?: string | null;
+  card_policy?: WordListSummary["card_policy"] | null;
+  card_type_ids?: string[] | null;
 }): Promise<WordListSummary | null> {
   const { data, error } = await supabase.rpc("create_user_word_list", {
     p_user_id: params.userId,
@@ -268,6 +271,9 @@ export async function createUserList(params: {
     p_description: params.description ?? null,
     p_language_code: params.language_code ?? "nl",
     p_primary_language_code: params.language_code ?? "nl",
+    p_default_scenario_id: params.default_scenario_id ?? null,
+    p_card_policy: params.card_policy ?? "inherit",
+    p_card_type_ids: params.card_type_ids ?? null,
   });
 
   if (error || !data) {
@@ -285,6 +291,9 @@ export async function updateUserList(params: {
   description?: string | null;
   language_code?: string;
   primary_language_code?: string;
+  default_scenario_id?: string | null;
+  card_policy?: WordListSummary["card_policy"] | null;
+  card_type_ids?: string[] | null;
 }): Promise<WordListSummary | null> {
   const { data, error } = await supabase.rpc("update_user_word_list", {
     p_user_id: params.userId,
@@ -293,6 +302,9 @@ export async function updateUserList(params: {
     p_description: params.description ?? null,
     p_language_code: params.language_code ?? null,
     p_primary_language_code: params.primary_language_code ?? params.language_code ?? null,
+    p_default_scenario_id: params.default_scenario_id ?? null,
+    p_card_policy: params.card_policy ?? null,
+    p_card_type_ids: params.card_type_ids ?? null,
   });
 
   if (error || !data) {

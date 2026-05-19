@@ -101,6 +101,7 @@ export type UserDictionaryEntryV1 = {
 };
 
 export type WordListKind = "curated" | "user";
+export type ListCardPolicy = "inherit" | "prefer" | "restrict";
 
 export type WordListSummaryV2 = {
   id: string;
@@ -109,6 +110,9 @@ export type WordListSummaryV2 = {
   description?: string | null;
   ownerUserId?: string | null;
   primaryLanguageCode?: string | null;
+  defaultScenarioId?: string | null;
+  cardPolicy?: ListCardPolicy;
+  cardTypeIds?: CardTypeId[] | null;
   itemCount?: number;
 };
 
@@ -288,6 +292,9 @@ export type PlatformActionRequest =
       description?: string | null;
       languageCode?: string | null;
       primaryLanguageCode?: string | null;
+      defaultScenarioId?: string | null;
+      cardPolicy?: ListCardPolicy | null;
+      cardTypeIds?: CardTypeId[] | null;
     }
   | {
       action: "update-user-list";
@@ -296,6 +303,9 @@ export type PlatformActionRequest =
       description?: string | null;
       languageCode?: string | null;
       primaryLanguageCode?: string | null;
+      defaultScenarioId?: string | null;
+      cardPolicy?: ListCardPolicy | null;
+      cardTypeIds?: CardTypeId[] | null;
     }
   | {
       action: "delete-user-list";

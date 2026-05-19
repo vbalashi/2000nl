@@ -107,6 +107,7 @@ export type SidebarHistoryItem = DictionaryEntry & {
 };
 
 export type WordListType = "curated" | "user";
+export type ListCardPolicy = "inherit" | "prefer" | "restrict";
 
 export type WordListSummary = {
   id: string;
@@ -115,6 +116,9 @@ export type WordListSummary = {
   description?: string | null;
   language_code?: string | null;
   primary_language_code?: string | null;
+  default_scenario_id?: string | null;
+  card_policy?: ListCardPolicy;
+  card_type_ids?: string[] | null;
   item_count?: number;
   is_primary?: boolean;
   created_at?: string;
