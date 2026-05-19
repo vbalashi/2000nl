@@ -104,7 +104,8 @@ Desired concepts:
 - Added list training intent metadata to curated/user list summaries, platform
   actions, and the current training app. `default_scenario_id` is applied when
   a list is selected. `card_policy='restrict'` limits scheduler card modes to
-  currently supported UI renderers; future audio-only lists are stored but not
+  currently supported UI renderers. `listen-recognize` is supported by the
+  current UI; unsupported audio typing modes are filtered out instead of being
   mis-rendered as text cards.
 
 ## Remaining Near-Term Targets

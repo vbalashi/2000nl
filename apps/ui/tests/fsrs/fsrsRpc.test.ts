@@ -860,7 +860,7 @@ describeIfDb("FSRS RPC integration", () => {
           'nl',
           'listening',
           'restrict',
-          ARRAY['word-to-definition']::text[]
+          ARRAY['listen-recognize']::text[]
         ) as list`,
         [ownerId, `CRUD list ${Date.now()}`, "Created through RPC"],
       );
@@ -873,7 +873,7 @@ describeIfDb("FSRS RPC integration", () => {
           primary_language_code: "nl",
           default_scenario_id: "listening",
           card_policy: "restrict",
-          card_type_ids: ["word-to-definition"],
+          card_type_ids: ["listen-recognize"],
         }),
       );
       expect(list.user_word_list_items[0].count).toBe(0);

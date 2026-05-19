@@ -412,10 +412,12 @@ Validation:
   shared platform types, and platform list create/update actions.
 - Done: current training UI applies a selected list's `default_scenario_id`.
 - Done: `card_policy='restrict'` can limit scheduler card modes, but only to
-  card modes currently supported by the UI renderer. Future audio-only lists
-  are accepted as data but do not render as the wrong text-card shape.
+  card modes currently supported by the UI renderer.
+- Done: `listen-recognize` has a dedicated audio recognition renderer and
+  review controls. Unsupported modes such as `listen-type` are filtered out
+  instead of being rendered as text cards.
 - Remaining: add product UI for editing list training intent and add renderer
-  support before enabling audio/conjugation card policies in the app.
+  support before enabling audio typing/conjugation card policies in the app.
 
 Validation:
 
