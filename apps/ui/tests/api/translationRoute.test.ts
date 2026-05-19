@@ -103,7 +103,7 @@ describe("/api/translation", () => {
 
     expect(response.status).toBe(500);
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_word_id: "00000000-0000-4000-8000-000000000001",
+      p_entry_id: "00000000-0000-4000-8000-000000000001",
     });
     expect(from).toHaveBeenCalledWith("word_entry_translations");
     expect(from).not.toHaveBeenCalledWith("word_entries");

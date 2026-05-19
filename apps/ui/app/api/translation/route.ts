@@ -380,7 +380,7 @@ export async function GET(req: NextRequest) {
   // client below, but private entries must not be readable by id alone.
   const { data: word, error: wordError } = await userSupabase.rpc(
     "fetch_dictionary_entry_by_id_gated",
-    { p_word_id: wordEntryId },
+    { p_entry_id: wordEntryId },
   );
 
   if (wordError || !word?.raw) {
