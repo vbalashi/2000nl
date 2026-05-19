@@ -171,3 +171,6 @@
 
 -- Drop legacy word-named training mutation RPCs
 \i db/migrations/054_drop_legacy_word_rpcs.sql
+
+-- Extend card-state lookup payloads
+\i db/migrations/055_extend_card_state_payload.sql

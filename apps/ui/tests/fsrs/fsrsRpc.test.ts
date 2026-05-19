@@ -258,8 +258,9 @@ describeIfDb("FSRS RPC integration", () => {
       await client.query(
         `insert into user_card_status (
           user_id, entry_id, card_type_id,
-          click_count, fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
-        ) values ($1, $2, $3, 1, 2.0, 3, 4.5, now() + interval '1 day')`,
+          click_count, seen_count, success_count, fsrs_params_version,
+          fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
+        ) values ($1, $2, $3, 1, 5, 2, 'fsrs-6-default', 2.0, 3, 4.5, now() + interval '1 day')`,
         [userId, wordId, mode],
       );
 
@@ -271,6 +272,9 @@ describeIfDb("FSRS RPC integration", () => {
       expect(rows[0].state).toEqual(
         expect.objectContaining({
           click_count: 1,
+          seen_count: 5,
+          success_count: 2,
+          fsrs_params_version: "fsrs-6-default",
           fsrs_last_interval: 2,
           fsrs_reps: 3,
           fsrs_stability: 4.5,
