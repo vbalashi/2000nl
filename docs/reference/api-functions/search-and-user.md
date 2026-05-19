@@ -99,6 +99,9 @@ Response:
           "name": "My words",
           "description": null,
           "primaryLanguageCode": "nl",
+          "defaultScenarioId": "understanding",
+          "cardPolicy": "restrict",
+          "cardTypeIds": ["word-to-definition"],
           "itemCount": 12
         }
       ],
@@ -151,6 +154,14 @@ Supported actions:
 - `create-user-list` – calls `create_user_word_list`.
 - `update-user-list` – calls `update_user_word_list`.
 - `delete-user-list` – calls `delete_user_word_list`.
+
+User-list create/update actions may include training intent metadata:
+
+- `defaultScenarioId`: optional scenario id such as `understanding` or
+  `listening`.
+- `cardPolicy`: `inherit`, `prefer`, or `restrict`.
+- `cardTypeIds`: optional card-type id array. Lists still contain entries; this
+  field describes how training should project those entries into cards.
 
 Examples:
 
@@ -229,7 +240,10 @@ Examples:
   "name": "Film words",
   "description": "Words collected while watching",
   "languageCode": "nl",
-  "primaryLanguageCode": "nl"
+  "primaryLanguageCode": "nl",
+  "defaultScenarioId": "understanding",
+  "cardPolicy": "restrict",
+  "cardTypeIds": ["word-to-definition"]
 }
 ```
 
@@ -240,7 +254,10 @@ Examples:
   "name": "Updated film words",
   "description": null,
   "languageCode": "nl",
-  "primaryLanguageCode": "nl"
+  "primaryLanguageCode": "nl",
+  "defaultScenarioId": "listening",
+  "cardPolicy": "restrict",
+  "cardTypeIds": ["listen-recognize"]
 }
 ```
 
