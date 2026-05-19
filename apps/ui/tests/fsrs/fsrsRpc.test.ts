@@ -372,6 +372,14 @@ describeIfDb("FSRS RPC integration", () => {
       );
       expect(tableRows[0].table_type).toBe("BASE TABLE");
 
+      const { rows: legacyTableRows } = await client.query(
+        `select table_name
+         from information_schema.tables
+         where table_schema = 'public'
+           and table_name = 'user_word_status'`,
+      );
+      expect(legacyTableRows).toHaveLength(0);
+
       await client.query(
         `insert into user_card_status (
            user_id, entry_id, card_type_id, fsrs_enabled, seen_count, last_result

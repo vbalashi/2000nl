@@ -162,3 +162,6 @@
 
 -- Remove legacy word-status sync bridge
 \i db/migrations/051_remove_word_status_sync_bridge.sql
+
+-- Drop legacy word-oriented state storage
+\i db/migrations/052_drop_legacy_user_word_status.sql
