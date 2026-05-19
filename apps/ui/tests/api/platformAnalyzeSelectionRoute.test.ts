@@ -36,6 +36,18 @@ const request = (body: unknown, token = "token-1") =>
     body: JSON.stringify(body),
   });
 
+const mutationRpcNames = [
+  "record_card_view",
+  "handle_card_review",
+  "start_learning_entry_card",
+  "add_entry_to_user_list",
+  "remove_entries_from_user_list",
+  "copy_entry_to_user_dictionary",
+  "create_user_dictionary_entry",
+  "update_user_dictionary_entry",
+  "delete_user_dictionary_entry",
+];
+
 function mockAuthenticatedUser() {
   getUser.mockResolvedValueOnce({
     data: { user: { id: "user-1" } },
@@ -72,10 +84,48 @@ describe("/api/platform/analyze-selection", () => {
       p_headword: "huis",
     });
     expect(from).not.toHaveBeenCalled();
+    for (const name of mutationRpcNames) {
+      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
+    }
     await expect(response.json()).resolves.toEqual({
       lookup: { query: "huis", items: [] },
       actionResults: [],
     });
+  });
+
+  test("is read-only when actions are empty or not an array", async () => {
+    const { POST } = await import("@/app/api/platform/analyze-selection/route");
+
+    for (const actions of [[], { action: "start-learning" }]) {
+      mockAuthenticatedUser();
+      rpc.mockResolvedValueOnce({ data: null, error: null });
+
+      const response = await POST(
+        request({
+          selection: "huis",
+          includeUserState: false,
+          actions,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        lookup: { query: "huis", items: [] },
+        actionResults: [],
+      });
+    }
+
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, "fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(rpc).toHaveBeenNthCalledWith(2, "fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
+    for (const name of mutationRpcNames) {
+      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
+    }
   });
 
   test("runs explicit actions only when provided", async () => {
