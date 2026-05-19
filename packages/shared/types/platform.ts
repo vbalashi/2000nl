@@ -100,12 +100,12 @@ export type UserDictionaryEntryV1 = {
   sourceEntryId?: string;
 };
 
-export type WordListKind = "curated" | "user";
+export type EntryListKind = "curated" | "user";
 export type ListCardPolicy = "inherit" | "prefer" | "restrict";
 
-export type WordListSummaryV2 = {
+export type EntryListSummary = {
   id: string;
-  kind: WordListKind;
+  kind: EntryListKind;
   name: string;
   description?: string | null;
   ownerUserId?: string | null;
@@ -116,7 +116,7 @@ export type WordListSummaryV2 = {
   itemCount?: number;
 };
 
-export type WordListEntryRef = {
+export type EntryListItemRef = {
   listId: string;
   entryId: string;
   dictionaryId: string;
@@ -219,7 +219,7 @@ export type DictionaryLookupResult = {
     meaningsCount?: number | null;
   };
   dictionary: DictionarySummary | null;
-  listMemberships?: WordListSummaryV2[];
+  listMemberships?: EntryListSummary[];
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   progressSummary?: UserEntryProgressSummary;
   availableActions?: LookupActionId[];
@@ -336,5 +336,5 @@ export type PlatformActionResponse = {
   copiedEntryId?: string;
   targetDictionaryId?: string | null;
   dictionaryId?: string | null;
-  list?: WordListSummaryV2;
+  list?: EntryListSummary;
 };
