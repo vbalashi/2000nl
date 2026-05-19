@@ -12,7 +12,7 @@ Current UI-facing tables/RPCs:
 - `user_card_status`, `user_review_log`, `user_events`
 - `user_settings`, `user_word_lists`, `user_word_list_items`
 - `word_entry_translations`, `user_word_notes`
-- `get_next_word`, `handle_review`, `handle_click`, stats/scenario RPCs
+- `get_next_card`, `record_card_view`, `handle_card_review`, `start_learning_entry_card`, stats/scenario RPCs
 
 Fresh database setup should use:
 

@@ -50,7 +50,7 @@ describe("trainingService review side effects", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  test("recordDefinitionClick is read-only and does not call handle_click", async () => {
+  test("recordDefinitionClick is read-only and does not call mutation RPCs", async () => {
     const { recordDefinitionClick } = await importService();
 
     await recordDefinitionClick({

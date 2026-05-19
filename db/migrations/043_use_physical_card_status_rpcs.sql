@@ -1,8 +1,5 @@
 -- Move low-risk card-facing RPCs onto physical user_card_status storage.
---
--- handle_card_review still delegates to handle_review while the FSRS engine and
--- scheduler are migrated. The bidirectional sync added in migration 042 keeps
--- the physical card table current for those legacy paths.
+-- Later migrations make these card-facing RPCs the active runtime contract.
 
 CREATE OR REPLACE FUNCTION get_card_user_state(
     p_user_id uuid,

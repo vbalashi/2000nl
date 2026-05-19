@@ -1,8 +1,5 @@
--- Record card-facing reviews against physical user_card_status.
---
--- Legacy handle_review remains available for older clients. This function keeps
--- the existing review log and event shapes while making the card-named RPC write
--- to the card-state source directly.
+-- Record card-facing reviews against physical user_card_status while keeping
+-- the existing review log and event shapes.
 
 CREATE OR REPLACE FUNCTION handle_card_review(
     p_user_id uuid,

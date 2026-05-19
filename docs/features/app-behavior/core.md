@@ -14,7 +14,7 @@
 
 ### Training Flow
 
-1. **Card Queue**: The UI calls `get_next_word` through `apps/ui/lib/training/selectionService.ts`. Postgres chooses due/new cards, while the UI passes list scope, card filter, scenario, queue-turn hints, and session exclusions.
+1. **Card Queue**: The UI calls `get_next_card` through `apps/ui/lib/training/selectionService.ts`. Postgres chooses due/new cards, while the UI passes list scope, card filter, scenario, queue-turn hints, and session exclusions.
 2. **Card Presentation**: User sees either:
    - **Word → Definition (W→D)**: Dutch word shown, user recalls meaning
    - **Definition → Word (D→W)**: Meaning shown, user recalls Dutch word
@@ -24,7 +24,7 @@
    - `good`: Remembered correctly
    - `easy`: Remembered easily
    - `hide`: Exclude word from queue (user already knows it)
-4. **Interval Calculation**: `handle_review` records the action and updates FSRS state. The UI sends a client-generated `turnId` when available so duplicate submits are no-ops.
+4. **Interval Calculation**: `handle_card_review` records the action and updates FSRS state. The UI sends a client-generated `turnId` when available so duplicate submits are no-ops.
 
 ### Word States
 

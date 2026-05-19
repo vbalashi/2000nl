@@ -13,9 +13,9 @@ Audit fields:
 - Recommended action
 
 Audit targets:
-- High priority: `handle_click`, `handle_review`
+- High priority: `handle_card_review`, `record_card_view`, `start_learning_entry_card`
 - Medium priority: `fetch_words_for_list_gated`, `search_word_entries_gated`, `set_default_user_settings`, `get_user_tier`
-- Lower priority: `get_next_word` overloads, `get_training_scenarios`, `get_detailed_training_stats`, `get_scenario_stats`, `get_scenario_word_stats`, `get_last_review_debug`
+- Lower priority: `get_next_card`, `get_training_scenarios`, `get_detailed_training_stats`, `get_scenario_stats`, `get_scenario_word_stats`, `get_last_review_debug`
 
 ### Task 2.2: Create Private Schema For Internal Functions
 - Create `010_private_schema.sql`
@@ -35,8 +35,8 @@ Audit targets:
 
 ## Fixes Applied
 
-- Auth checks for `handle_review`, `handle_click`, `get_user_tier`, and related public RPCs are captured in the current consolidated migrations
-- `003_queue_training.sql` updated with auth checks on `get_next_word` variants and stats functions
+- Auth checks for `handle_card_review`, `record_card_view`, `start_learning_entry_card`, `get_user_tier`, and related public RPCs are captured in the current consolidated migrations
+- Scheduler auth checks are covered by `get_next_card`
 
 ## Open Follow-Up
 

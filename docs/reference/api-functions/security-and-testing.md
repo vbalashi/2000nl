@@ -34,7 +34,7 @@ Example:
 
 - Current fresh deploys use consolidated migrations in `db/migrations/001_core_schema.sql` through `007_review_idempotency.sql`.
 - `005_security.sql` owns current RLS policies.
-- `007_review_idempotency.sql` adds `turn_id` handling to `handle_review`.
+- `045_handle_card_review_on_card_status.sql` adds `turn_id` handling to `handle_card_review`.
 - Historical migration notes in `reports/` and `db/migrations/archive/` are reference snapshots, not the fresh-deploy path.
 
 ## Testing API Calls
@@ -43,19 +43,19 @@ Authenticated request example:
 
 ```javascript
 const supabase = createClient(url, key);
-const { data, error } = await supabase.rpc('get_next_word', {
+const { data, error } = await supabase.rpc('get_next_card', {
   p_user_id: user.id,
-  p_modes: ['word-to-definition']
+  p_card_type_ids: ['word-to-definition']
 });
 ```
 
 Authorization failure example:
 
 ```javascript
-await supabase.rpc('handle_review', {
+await supabase.rpc('handle_card_review', {
   p_user_id: '<some-other-user-uuid>',
-  p_word_id: wordId,
-  p_mode: 'word-to-definition',
+  p_entry_id: entryId,
+  p_card_type_id: 'word-to-definition',
   p_result: 'success',
   p_turn_id: crypto.randomUUID()
 });

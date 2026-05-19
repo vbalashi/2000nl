@@ -16,7 +16,7 @@
 - Audit trail of all review events
 - `grade`: 1 (again) | 2 (hard) | 3 (good) | 4 (easy)
 - `interval_after`: next review interval after the action
-- `review_type`: current RPC writes `new` or `review` for graded reviews; `handle_click` writes `click`. Queue sources such as `learning` and `practice` are exposed as `stats.source`, not as review-log types.
+- `review_type`: `handle_card_review` writes `new` or `review` for graded reviews. Queue sources such as `learning` and `practice` are exposed as `stats.source`, not as review-log types.
 - `turn_id`: optional client-generated UUID used to prevent accidental double-submit reviews
 
 **`word_entries`**
@@ -79,21 +79,17 @@
 
 ### RPC Functions (Supabase)
 
-**`get_next_word(...)`**
+**`get_next_card(...)`**
 - Includes `stats.source`
 - Selects among explicit card modes supplied by the caller
 - Accepts list scope, card filter, queue turn, and exclusions. Fresh migrations do not expose a separate scenario overload; resolve scenarios through `get_training_scenarios()` / `get_scenario_stats()` and pass the resulting modes.
 
-**`handle_review(p_user_id, p_word_id, p_mode, p_result, p_turn_id?)`**
+**`handle_card_review(p_user_id, p_entry_id, p_card_type_id, p_result, p_turn_id?)`**
 - Records the user action
 - Updates FSRS fields
 - Calculates next review timestamp
 - Inserts review/event rows
 - Treats duplicate non-null `p_turn_id` submissions as no-ops
-
-**`handle_click(p_user_id, p_word_id, p_mode)`**
-- Records a definition/word click as an FSRS lapse-style event
-- Updates `click_count` and review history
 
 **`get_training_stats(...)`, `get_scenario_stats(...)`, `get_training_scenarios()`**
 - Feed footer counters, settings/statistics views, and scenario-level progress
@@ -103,7 +99,7 @@
 The training screen keeps lightweight session state:
 - `queueTurn` and `reviewCounter` implement the new/review alternation requested by user preferences.
 - `reviewedInSessionRef` excludes already-reviewed cards while fetching the next card.
-- `currentTurnIdRef` stores the UUID sent to `handle_review` for duplicate-submit protection.
+- `currentTurnIdRef` stores the UUID sent to `handle_card_review` for duplicate-submit protection.
 - URL testing uses `useCardParams()` plus `fetchTrainingWordByLookup()` for direct word loads, rather than a separate backend test endpoint.
 
 ## Development Patterns

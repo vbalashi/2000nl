@@ -141,7 +141,6 @@ export const recordDefinitionClick = async (params: {
   mode: TrainingMode;
 }) => {
   void params;
-  // Ordinary dictionary lookup/click is intentionally read-only. `handle_click`
-  // is reserved for explicit training lapse actions because it mutates FSRS
-  // state and writes a review-log row.
+  // Ordinary dictionary lookup/click is intentionally read-only. Explicit
+  // training outcomes are recorded through handle_card_review.
 };

@@ -280,7 +280,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("card-oriented compatibility RPCs map to physical card storage", async () => {
+  test("card-oriented RPCs map to physical card storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId);

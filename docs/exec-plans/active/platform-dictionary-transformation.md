@@ -75,11 +75,11 @@ Backend/runtime:
 - `apps/api` is reserved and mostly empty.
 - Active backend behavior is Supabase/Postgres RPCs plus server/API routes in
   `apps/ui`.
-- `get_next_word` selects `word_entries` from list scope and returns card-ish
-  payloads with `mode` and stats; `get_next_card` is the card-named wrapper.
-- `handle_review` and `handle_click` mutate FSRS/review state; new platform
-  and app code should prefer `handle_card_review`, `record_card_view`,
-  `start_learning_entry_card`, and `get_user_card_state`.
+- `get_next_card` selects `word_entries` from list scope and returns card
+  payloads with `mode` and stats.
+- `handle_card_review` mutates FSRS/review state. `record_card_view`,
+  `start_learning_entry_card`, and `get_user_card_state` cover view/start/state
+  actions.
 - Translation/TTS routes are app-local Next.js routes.
 
 Frontend:
@@ -113,12 +113,12 @@ Main gaps:
 - A user list item can only reference an existing `word_entries.id`; there is no
   explicit support for source ownership, publication state, or mixed-language
   list semantics.
-- User progress has physical `entry_id + card_type_id` storage, but legacy
-  scheduler functions still operate through `word_id + mode`.
+- User progress has physical `entry_id + card_type_id` storage, and the active
+  scheduler uses card-oriented RPC parameters.
 - External clients do not have a stable public API boundary. They would need to
   call Supabase/RPCs or app-local routes directly.
-- Lookup telemetry and FSRS lapse semantics are coupled through `handle_click`;
-  external lookup clients need a clearer command/event contract.
+- Lookup telemetry and FSRS mutation semantics are separated; external lookup
+  clients need explicit command/action contracts for mutations.
 
 ## Recommended Conceptual Model
 
@@ -393,18 +393,19 @@ Validation:
 - Done: introduce physical `user_card_status` storage keyed by `entry_id +
   card_type_id`.
 - Done: add card-named wrappers for view/review/start-learning/state reads.
-- Done: add `get_next_card` as a wrapper over `get_next_word`.
+- Done: make `get_next_card` the primary scheduler RPC and drop `get_next_word`.
 - Done: move platform API and current training service selection/review calls
-  onto card-named wrappers while keeping legacy RPCs available.
+  onto card-named RPCs.
 - Done: move card-facing state reads, view tracking, start-learning, and recent
   history status joins onto physical `user_card_status`.
 - Done: make `handle_card_review` write FSRS review results to physical
   `user_card_status` while preserving legacy `user_review_log` and
   `user_events` shapes.
-- Done: move scheduler/get-next, legacy-named write RPCs, training stats,
-  lookup status, and gated word-list filters onto `user_card_status`.
+- Done: move scheduler/get-next, training stats, lookup status, and gated
+  word-list filters onto `user_card_status`.
 - Done: remove the `user_word_status` synchronization bridge and drop the old
   table after the `user_card_status` backfill.
+- Done: drop legacy word-named training mutation RPCs after runtime migration.
 
 Validation:
 
