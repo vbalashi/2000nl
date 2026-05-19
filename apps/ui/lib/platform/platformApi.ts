@@ -122,8 +122,12 @@ function asListCardPolicy(value: unknown): ListCardPolicy | null {
     : null;
 }
 
-function asStringArray(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
+function asOptionalStringArray(
+  value: unknown,
+): { ok: true; value: string[] | null } | { ok: false } {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (!Array.isArray(value)) return { ok: false };
+  if (value.some((item) => !asString(item))) return { ok: false };
   const values = Array.from(
     new Set(
       value
@@ -131,7 +135,7 @@ function asStringArray(value: unknown): string[] | null {
         .filter((item): item is string => Boolean(item)),
     ),
   );
-  return values.length ? values : null;
+  return { ok: true, value: values.length ? values : null };
 }
 
 async function assertEntryReadable(
@@ -440,6 +444,13 @@ export async function performPlatformAction(
     }
 
     const languageCode = asString(body?.languageCode) ?? "nl";
+    if (body?.cardPolicy !== undefined && !asListCardPolicy(body.cardPolicy)) {
+      return { payload: { error: "invalid_user_list" }, status: 400 };
+    }
+    const cardTypeIds = asOptionalStringArray(body?.cardTypeIds);
+    if (!cardTypeIds.ok) {
+      return { payload: { error: "invalid_user_list" }, status: 400 };
+    }
     const cardPolicy = asListCardPolicy(body?.cardPolicy) ?? "inherit";
     const { data, error } = await auth.supabase.rpc("create_user_word_list", {
       p_user_id: auth.user.id,
@@ -449,7 +460,7 @@ export async function performPlatformAction(
       p_primary_language_code: asString(body?.primaryLanguageCode) ?? languageCode,
       p_default_scenario_id: asString(body?.defaultScenarioId),
       p_card_policy: cardPolicy,
-      p_card_type_ids: asStringArray(body?.cardTypeIds),
+      p_card_type_ids: cardTypeIds.value,
     });
 
     if (error) {
@@ -509,6 +520,13 @@ export async function performPlatformAction(
     }
 
     const languageCode = asString(body?.languageCode);
+    if (body?.cardPolicy !== undefined && !asListCardPolicy(body.cardPolicy)) {
+      return { payload: { error: "invalid_user_list" }, status: 400 };
+    }
+    const cardTypeIds = asOptionalStringArray(body?.cardTypeIds);
+    if (!cardTypeIds.ok) {
+      return { payload: { error: "invalid_user_list" }, status: 400 };
+    }
     const cardPolicy = asListCardPolicy(body?.cardPolicy);
     const { data, error } = await auth.supabase.rpc("update_user_word_list", {
       p_user_id: auth.user.id,
@@ -521,7 +539,7 @@ export async function performPlatformAction(
         asString(body?.primaryLanguageCode) ?? languageCode,
       p_default_scenario_id: asString(body?.defaultScenarioId),
       p_card_policy: cardPolicy,
-      p_card_type_ids: asStringArray(body?.cardTypeIds),
+      p_card_type_ids: cardTypeIds.value,
     });
 
     if (error) {

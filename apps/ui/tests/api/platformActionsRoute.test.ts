@@ -297,6 +297,33 @@ describe("/api/platform/actions", () => {
     );
   });
 
+  test("rejects invalid user list training intent payloads before RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+
+    const badPolicyResponse = await POST(
+      request({
+        action: "create-user-list",
+        name: "Mine",
+        cardPolicy: "sometimes",
+      }),
+    );
+
+    expect(badPolicyResponse.status).toBe(400);
+
+    mockAuthenticatedUser();
+    const badCardTypesResponse = await POST(
+      request({
+        action: "update-user-list",
+        listId: "list-1",
+        cardTypeIds: "word-to-definition",
+      }),
+    );
+
+    expect(badCardTypesResponse.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   test("deletes user lists through the explicit RPC", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
