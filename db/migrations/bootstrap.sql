@@ -132,3 +132,6 @@
 
 -- Explicit clear semantics for list training intent updates
 \i db/migrations/041_clear_list_training_intent.sql
+
+-- Physical card-state storage with legacy sync
+\i db/migrations/042_physical_user_card_status.sql

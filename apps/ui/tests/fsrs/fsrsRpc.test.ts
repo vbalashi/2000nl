@@ -358,6 +358,79 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("physical user_card_status table stays synchronized with legacy word status", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-card-physical-${Date.now()}`);
+
+      const { rows: tableRows } = await client.query(
+        `select table_type
+         from information_schema.tables
+         where table_schema = 'public'
+           and table_name = 'user_card_status'`,
+      );
+      expect(tableRows[0].table_type).toBe("BASE TABLE");
+
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, seen_count, last_result
+         ) values ($1, $2, $3, true, 2, 'success')`,
+        [userId, wordId, mode],
+      );
+
+      let { rows } = await client.query(
+        `select fsrs_enabled, seen_count, last_result
+         from user_word_status
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          fsrs_enabled: true,
+          seen_count: 2,
+          last_result: "success",
+        }),
+      );
+
+      await client.query(
+        `update user_word_status
+         set seen_count = 3, last_result = 'fail'
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+
+      rows = (
+        await client.query(
+          `select seen_count, last_result
+           from user_card_status
+           where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+          [userId, wordId, mode],
+        )
+      ).rows;
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          seen_count: 3,
+          last_result: "fail",
+        }),
+      );
+
+      await client.query(
+        `delete from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+        [userId, wordId, mode],
+      );
+
+      const { rows: remainingRows } = await client.query(
+        `select count(*)::int as count
+         from user_word_status
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(remainingRows[0].count).toBe(0);
+    }, userId);
+  });
+
   test("get_user_list_membership returns owned list intersection", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

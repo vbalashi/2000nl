@@ -2,34 +2,48 @@
 -- This keeps Stage 4 additive: new clients can use entry/card terminology while
 -- the scheduler and FSRS engine continue to use the current storage contract.
 
-CREATE OR REPLACE VIEW user_card_status
-WITH (security_invoker = true)
-AS
-SELECT
-    s.user_id,
-    s.word_id AS entry_id,
-    s.mode AS card_type_id,
-    s.fsrs_stability,
-    s.fsrs_difficulty,
-    s.fsrs_reps,
-    s.fsrs_lapses,
-    s.fsrs_last_grade,
-    s.fsrs_last_interval,
-    s.fsrs_target_retention,
-    s.fsrs_params_version,
-    s.fsrs_enabled,
-    s.next_review_at,
-    s.last_seen_at,
-    s.last_reviewed_at,
-    s.click_count,
-    s.seen_count,
-    s.success_count,
-    s.last_result,
-    s.hidden,
-    s.frozen_until,
-    s.in_learning,
-    s.learning_due_at
-FROM user_word_status s;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname = 'user_card_status'
+          AND c.relkind = 'r'
+    ) THEN
+        EXECUTE $view$
+            CREATE OR REPLACE VIEW user_card_status
+            WITH (security_invoker = true)
+            AS
+            SELECT
+                s.user_id,
+                s.word_id AS entry_id,
+                s.mode AS card_type_id,
+                s.fsrs_stability,
+                s.fsrs_difficulty,
+                s.fsrs_reps,
+                s.fsrs_lapses,
+                s.fsrs_last_grade,
+                s.fsrs_last_interval,
+                s.fsrs_target_retention,
+                s.fsrs_params_version,
+                s.fsrs_enabled,
+                s.next_review_at,
+                s.last_seen_at,
+                s.last_reviewed_at,
+                s.click_count,
+                s.seen_count,
+                s.success_count,
+                s.last_result,
+                s.hidden,
+                s.frozen_until,
+                s.in_learning,
+                s.learning_due_at
+            FROM user_word_status s
+        $view$;
+    END IF;
+END $$;
 
 GRANT SELECT ON user_card_status TO authenticated;
 
