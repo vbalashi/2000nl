@@ -79,7 +79,7 @@ type DictionaryMetadataRow = {
   schema_version: number | null;
 };
 
-type UserListMembershipRow = {
+type InternalListMembershipRow = {
   word_id?: string | null;
   lists?: Array<{
     id?: string | null;
@@ -91,6 +91,21 @@ type UserListMembershipRow = {
     card_policy?: string | null;
     card_type_ids?: string[] | null;
     item_count?: number | null;
+  }>;
+};
+
+type EntryListMembership = {
+  entryId: string;
+  lists: Array<{
+    id: string | null;
+    kind: string;
+    name: string;
+    description: string | null;
+    primaryLanguageCode: string | null;
+    defaultScenarioId: string | null;
+    cardPolicy: string;
+    cardTypeIds: string[] | null;
+    itemCount: number;
   }>;
 };
 
@@ -319,6 +334,27 @@ function mapUserListRpcPayload(row: any) {
   };
 }
 
+function mapListMembershipRpcRows(rows: unknown): EntryListMembership[] {
+  if (!Array.isArray(rows)) return [];
+
+  return (rows as InternalListMembershipRow[])
+    .filter((row) => Boolean(row?.word_id) && Array.isArray(row.lists))
+    .map((row) => ({
+      entryId: row.word_id as string,
+      lists: (row.lists ?? []).map((list) => ({
+        id: list.id ?? null,
+        kind: list.kind ?? "user",
+        name: list.name ?? "",
+        description: list.description ?? null,
+        primaryLanguageCode: list.primary_language_code ?? null,
+        defaultScenarioId: list.default_scenario_id ?? null,
+        cardPolicy: list.card_policy ?? "inherit",
+        cardTypeIds: list.card_type_ids ?? null,
+        itemCount: list.item_count ?? 0,
+      })),
+    }));
+}
+
 export async function performPlatformLookup(
   auth: AuthenticatedSupabase,
   params: { query: string; includeUserState: boolean },
@@ -370,24 +406,8 @@ export async function performPlatformLookup(
       };
     }
 
-    if (Array.isArray(membershipRows)) {
-      for (const row of membershipRows as UserListMembershipRow[]) {
-        if (!row?.word_id || !Array.isArray(row.lists)) continue;
-        listMembershipsByEntryId.set(
-          row.word_id,
-          row.lists.map((list) => ({
-            id: list.id ?? null,
-            kind: list.kind ?? "user",
-            name: list.name ?? "",
-            description: list.description ?? null,
-            primaryLanguageCode: list.primary_language_code ?? null,
-            defaultScenarioId: list.default_scenario_id ?? null,
-            cardPolicy: list.card_policy ?? "inherit",
-            cardTypeIds: list.card_type_ids ?? null,
-            itemCount: list.item_count ?? 0,
-          })),
-        );
-      }
+    for (const membership of mapListMembershipRpcRows(membershipRows)) {
+      listMembershipsByEntryId.set(membership.entryId, membership.lists);
     }
 
     for (const entry of entries) {
