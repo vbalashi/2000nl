@@ -161,7 +161,7 @@ describe("/api/platform/lookup", () => {
         return Promise.resolve({
           data: [
             {
-              word_id: "entry-1",
+              entry_id: "entry-1",
               lists: [
                 {
                   id: "list-1",
@@ -226,7 +226,7 @@ describe("/api/platform/lookup", () => {
     });
     expect(rpc).toHaveBeenCalledWith("get_user_list_memberships_for_entries", {
       p_user_id: "user-1",
-      p_word_ids: ["entry-1", "entry-2"],
+      p_entry_ids: ["entry-1", "entry-2"],
     });
     expect(rpc).toHaveBeenCalledWith("get_user_card_state", {
       p_user_id: "user-1",

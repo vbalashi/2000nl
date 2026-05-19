@@ -80,7 +80,7 @@ type DictionaryMetadataRow = {
 };
 
 type InternalListMembershipRow = {
-  word_id?: string | null;
+  entry_id?: string | null;
   lists?: Array<{
     id?: string | null;
     kind?: string | null;
@@ -190,7 +190,7 @@ async function assertEntryReadable(
   const { data: entry, error } = await supabase.rpc(
     "fetch_dictionary_entry_by_id_gated",
     {
-      p_word_id: entryId,
+      p_entry_id: entryId,
     },
   );
 
@@ -338,9 +338,9 @@ function mapListMembershipRpcRows(rows: unknown): EntryListMembership[] {
   if (!Array.isArray(rows)) return [];
 
   return (rows as InternalListMembershipRow[])
-    .filter((row) => Boolean(row?.word_id) && Array.isArray(row.lists))
+    .filter((row) => Boolean(row?.entry_id) && Array.isArray(row.lists))
     .map((row) => ({
-      entryId: row.word_id as string,
+      entryId: row.entry_id as string,
       lists: (row.lists ?? []).map((list) => ({
         id: list.id ?? null,
         kind: list.kind ?? "user",
@@ -392,7 +392,7 @@ export async function performPlatformLookup(
       "get_user_list_memberships_for_entries",
       {
         p_user_id: auth.user.id,
-        p_word_ids: entries.map((entry) => entry.id),
+        p_entry_ids: entries.map((entry) => entry.id),
       },
     );
 
@@ -747,7 +747,7 @@ export async function performPlatformAction(
 
     const { data, error } = await auth.supabase.rpc("update_user_dictionary_entry", {
       p_user_id: auth.user.id,
-      p_word_id: entryId,
+      p_entry_id: entryId,
       p_entry: entry,
     });
 
@@ -761,7 +761,7 @@ export async function performPlatformAction(
   if (action === "delete-user-entry") {
     const { error } = await auth.supabase.rpc("delete_user_dictionary_entry", {
       p_user_id: auth.user.id,
-      p_word_id: entryId,
+      p_entry_id: entryId,
     });
 
     if (error) {
@@ -780,7 +780,7 @@ export async function performPlatformAction(
     const { error } = await auth.supabase.rpc("remove_entries_from_user_list", {
       p_user_id: auth.user.id,
       p_list_id: listId,
-      p_word_ids: [entryId],
+      p_entry_ids: [entryId],
     });
 
     if (error) {
@@ -814,7 +814,7 @@ export async function performPlatformAction(
     const { error } = await auth.supabase.rpc("add_entry_to_user_list", {
       p_user_id: auth.user.id,
       p_list_id: listId,
-      p_word_id: entryId,
+      p_entry_id: entryId,
     });
 
     if (error) {
@@ -843,7 +843,7 @@ export async function performPlatformAction(
 
     const { data, error } = await auth.supabase.rpc("copy_entry_to_user_dictionary", {
       p_user_id: auth.user.id,
-      p_source_word_id: entryId,
+      p_source_entry_id: entryId,
       p_target_dictionary_id: targetDictionaryId,
       p_overrides: overrides,
     });

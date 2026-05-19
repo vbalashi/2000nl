@@ -837,7 +837,7 @@ describeIfDb("FSRS RPC integration", () => {
       expect(rows[0].memberships).toEqual(
         expect.arrayContaining([
           {
-            word_id: firstWordId,
+            entry_id: firstWordId,
             lists: [
               expect.objectContaining({
                 id: ownerListRows[0].id,
@@ -849,7 +849,7 @@ describeIfDb("FSRS RPC integration", () => {
             ],
           },
           {
-            word_id: secondWordId,
+            entry_id: secondWordId,
             lists: [
               expect.objectContaining({
                 id: ownerListRows[0].id,

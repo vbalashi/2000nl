@@ -202,7 +202,7 @@ describe("/api/platform/actions", () => {
     expect(rpc).toHaveBeenCalledWith("add_entry_to_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_id: "entry-1",
+      p_entry_id: "entry-1",
     });
   });
 
@@ -224,7 +224,7 @@ describe("/api/platform/actions", () => {
     expect(rpc).toHaveBeenCalledWith("remove_entries_from_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_ids: ["entry-1"],
+      p_entry_ids: ["entry-1"],
     });
     await expect(response.json()).resolves.toEqual({
       ok: true,
@@ -474,7 +474,7 @@ describe("/api/platform/actions", () => {
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledWith("copy_entry_to_user_dictionary", {
       p_user_id: "user-1",
-      p_source_word_id: "entry-1",
+      p_source_entry_id: "entry-1",
       p_target_dictionary_id: null,
       p_overrides: {
         translation: {
@@ -554,7 +554,7 @@ describe("/api/platform/actions", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith("update_user_dictionary_entry", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
+      p_entry_id: "entry-1",
       p_entry: {
         headword: "gedoe",
         languageCode: "nl",
@@ -579,7 +579,7 @@ describe("/api/platform/actions", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith("delete_user_dictionary_entry", {
       p_user_id: "user-1",
-      p_word_id: "entry-1",
+      p_entry_id: "entry-1",
     });
   });
 
@@ -601,7 +601,7 @@ describe("/api/platform/actions", () => {
       error: "entry_not_accessible",
     });
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_word_id: "entry-1",
+      p_entry_id: "entry-1",
     });
     expect(rpc).not.toHaveBeenCalledWith(
       "record_card_view",
@@ -631,7 +631,7 @@ describe("/api/platform/actions", () => {
       detail: "function exploded",
     });
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_word_id: "entry-1",
+      p_entry_id: "entry-1",
     });
     expect(rpc).not.toHaveBeenCalledWith(
       "record_card_view",

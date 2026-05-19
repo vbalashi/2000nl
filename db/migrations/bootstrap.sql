@@ -174,3 +174,6 @@
 
 -- Extend card-state lookup payloads
 \i db/migrations/055_extend_card_state_payload.sql
+
+-- Rename platform-facing RPC parameters to entry terminology
+\i db/migrations/056_entry_named_platform_rpc_params.sql
