@@ -398,6 +398,8 @@ Validation:
 - Done: add `get_next_card` as a wrapper over `get_next_word`.
 - Done: move platform API and current training service selection/review calls
   onto card-named wrappers while keeping legacy RPCs available.
+- Done: move card-facing state reads, view tracking, start-learning, and recent
+  history status joins onto physical `user_card_status`.
 - Remaining: move scheduler/FSRS source-of-truth reads and writes from
   `user_word_status` to `user_card_status`, or explicitly freeze
   `user_word_status` as the long-term compatibility mirror.

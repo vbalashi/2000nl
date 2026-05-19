@@ -84,6 +84,9 @@ Desired concepts:
 - Lookup, platform actions, training list reads, card state, recent history,
   active list, and learning preferences now go through RPC/action boundaries
   rather than frontend-owned table mutations.
+- Card-facing state reads, view tracking, start-learning, and recent history
+  status joins now use physical `user_card_status`. Full review scheduling still
+  runs through the legacy FSRS path while it is migrated.
 - Ordinary dictionary lookup is read-only. Mutations that affect FSRS, user
   lists, or user dictionaries are explicit platform actions/RPCs.
 - App-local UI settings still live in `user_settings` through the existing
