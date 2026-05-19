@@ -260,6 +260,7 @@ export function TrainingScreen({ user }: Props) {
   const [reviewCounter, setReviewCounter] = useState(0);
 
   const {
+    activeList,
     activeListValue,
     availableLists,
     handleListSelectValue,
@@ -275,6 +276,19 @@ export function TrainingScreen({ user }: Props) {
     language,
     showSettings,
   });
+
+  const appliedDefaultScenarioListRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!activeList?.default_scenario_id) {
+      appliedDefaultScenarioListRef.current = null;
+      return;
+    }
+    if (appliedDefaultScenarioListRef.current === activeList.id) return;
+
+    appliedDefaultScenarioListRef.current = activeList.id;
+    setActiveScenario(activeList.default_scenario_id);
+  }, [activeList?.default_scenario_id, activeList?.id, setActiveScenario]);
 
   const enabledModesKey = enabledModes.join("|");
 
@@ -1251,33 +1265,60 @@ export function TrainingScreen({ user }: Props) {
   const handleListChange = useCallback(
     async (list: WordListSummary) => {
       await persistListChange(list);
+      if (list.default_scenario_id) {
+        setActiveScenario(list.default_scenario_id);
+      }
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord([], { listId: list.id, listType: list.type });
+      void loadNextWord(
+        [],
+        { listId: list.id, listType: list.type },
+        undefined,
+        list.default_scenario_id ?? undefined,
+      );
     },
-    [loadStats, loadNextWord, persistListChange],
+    [loadStats, loadNextWord, persistListChange, setActiveScenario],
   );
 
   const handleFooterListChange = useCallback(
     async (value: string) => {
       const scope = await handleListSelectValue(value);
       if (!scope) return;
+      const list = availableLists.find(
+        (item) => item.id === scope.listId && item.type === scope.listType,
+      );
+      if (list?.default_scenario_id) {
+        setActiveScenario(list.default_scenario_id);
+      }
       void loadStats(scope);
-      void loadNextWord([], scope);
+      void loadNextWord(
+        [],
+        scope,
+        undefined,
+        list?.default_scenario_id ?? undefined,
+      );
     },
-    [handleListSelectValue, loadNextWord, loadStats],
+    [availableLists, handleListSelectValue, loadNextWord, loadStats, setActiveScenario],
   );
 
   const handleListsUpdated = useCallback(async () => {
     const reloadForList = (list: WordListSummary) => {
+      if (list.default_scenario_id) {
+        setActiveScenario(list.default_scenario_id);
+      }
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord([], { listId: list.id, listType: list.type });
+      void loadNextWord(
+        [],
+        { listId: list.id, listType: list.type },
+        undefined,
+        list.default_scenario_id ?? undefined,
+      );
     };
 
     await refreshListsAfterUpdate({
       onResolvedActiveList: reloadForList,
       onPrimaryFallback: reloadForList,
     });
-  }, [loadNextWord, loadStats, refreshListsAfterUpdate]);
+  }, [loadNextWord, loadStats, refreshListsAfterUpdate, setActiveScenario]);
 
   const handleRecentSelect = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);

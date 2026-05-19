@@ -69,6 +69,7 @@ describe("useTrainingActiveList", () => {
     expect(result.current.wordListId).toBe("user-1");
     expect(result.current.wordListType).toBe("user");
     expect(result.current.wordListLabel).toBe("Saved");
+    expect(result.current.activeList).toBe(userList);
   });
 
   test("clears a deleted saved list and then auto-selects primary", async () => {
@@ -116,6 +117,7 @@ describe("useTrainingActiveList", () => {
       listType: "user",
     });
     await waitFor(() => expect(result.current.activeListValue).toBe("user:user-1"));
+    expect(result.current.activeList).toBe(userList);
     expect(result.current.listOptions).toEqual([
       { value: "curated:curated-1", label: "Primary" },
       { value: "user:user-1", label: "Saved" },

@@ -26,6 +26,7 @@ export function useTrainingActiveList(params: {
   const [wordListId, setWordListId] = useState<string | null>(null);
   const [wordListType, setWordListType] = useState<WordListType | null>(null);
   const [wordListLabel, setWordListLabel] = useState<string>("");
+  const [activeList, setActiveList] = useState<WordListSummary | null>(null);
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const [listHydrated, setListHydrated] = useState(false);
 
@@ -33,12 +34,14 @@ export function useTrainingActiveList(params: {
     setWordListId(list.id);
     setWordListType(list.type);
     setWordListLabel(list.name);
+    setActiveList(list);
   }, []);
 
   const clearList = useCallback(() => {
     setWordListId(null);
     setWordListType(null);
     setWordListLabel("");
+    setActiveList(null);
   }, []);
 
   const refreshAvailableLists = useCallback(async () => {
@@ -176,6 +179,7 @@ export function useTrainingActiveList(params: {
   );
 
   return {
+    activeList,
     activeListValue,
     availableLists,
     handleListSelectValue,
