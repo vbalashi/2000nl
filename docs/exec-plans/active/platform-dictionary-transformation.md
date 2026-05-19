@@ -64,7 +64,8 @@ Database:
 - `user_word_lists` / `user_word_list_items` represent user lists.
 - User lists reference `word_entries` directly and can mix entries in practice.
   `primary_language_code` is the forward-compatible list language hint while
-  legacy `language_code` remains for compatibility.
+  `language_code` remains as an older list metadata column until the table shape
+  is renamed more broadly.
 - `user_card_status` is the active storage table keyed by `entry_id +
   card_type_id`. Legacy `user_word_status` has been dropped after backfill.
 - `training_scenarios` groups card mode IDs in `card_modes`, including the
@@ -103,22 +104,24 @@ Already aligned:
 Main gaps:
 
 - Dictionary source is first-class for current trusted and user-owned
-  dictionaries, but more runtime paths still need to consume dictionary metadata
-  directly.
-- Dictionary entry schema is first-class at the DB registry boundary. More
-  clients still need to consume schema metadata consistently.
+  dictionaries. Runtime lookup/platform payloads expose dictionary metadata;
+  older app-local paths still mostly treat it as context rather than UI state.
+- Dictionary entry schema is first-class at the DB registry boundary and
+  exposed through platform lookup metadata. More clients still need to consume
+  schema metadata consistently.
 - VanDale-specific fields live directly on `word_entries`.
-- User-created dictionary entries do not exist as editable content separate from
-  user lists.
-- A user list item can only reference an existing `word_entries.id`; there is no
-  explicit support for source ownership, publication state, or mixed-language
-  list semantics.
+- User-created dictionary entries exist at the DB/RPC/action boundary, but
+  first-party UI editing is intentionally deferred.
+- A user list item references an existing `word_entries.id`; entries can come
+  from curated or user-owned dictionaries. Publication/share semantics for user
+  dictionaries are not designed yet.
 - User progress has physical `entry_id + card_type_id` storage, and the active
   scheduler uses card-oriented RPC parameters.
-- External clients do not have a stable public API boundary. They would need to
-  call Supabase/RPCs or app-local routes directly.
-- Lookup telemetry and FSRS mutation semantics are separated; external lookup
-  clients need explicit command/action contracts for mutations.
+- External clients have the versioned `/api/platform/v1/*` HTTP boundary.
+  Unversioned `/api/platform/*` routes remain aliases for the current app and
+  transition clients.
+- Lookup telemetry and FSRS mutation semantics are separated. External clients
+  mutate only through explicit platform actions.
 
 ## Recommended Conceptual Model
 
@@ -152,7 +155,10 @@ Reasoning:
 
 ## Schema Direction
 
-Stage 1 should be additive and backward-compatible.
+Stage 1 was originally additive and backward-compatible. Because this is still
+a test system with no real user migration risk, active contracts have since
+been moved forward to entry/card terminology instead of preserving all old
+word-named RPC aliases.
 
 Candidate new/changed tables:
 
@@ -250,7 +256,7 @@ App-specific backend responsibilities:
 Likely path:
 
 1. Define shared domain types in `packages/shared`.
-2. Add additive DB schema and compatibility views/RPCs.
+2. Add DB schema and RPC boundaries for dictionary/list/card concepts.
 3. Wrap current Supabase calls in domain service modules that can be reused by
    `apps/ui` and future `apps/api`.
 4. Only then revive `apps/api` or create a versioned API surface for extension
@@ -368,7 +374,8 @@ Validation:
 - Add shared domain types and service payload types.
 - Add lookup/list/status service functions behind the current app service layer.
 - Add RPC/API wrappers that return dictionary metadata and user status.
-- Keep current UI payload shape as a compatibility adapter.
+- Keep current UI payload shape where it is first-party app state, but expose
+  platform payloads with entry/card/list terminology.
 
 Validation:
 

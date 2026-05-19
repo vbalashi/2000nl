@@ -67,8 +67,8 @@ Desired concepts:
   minimal `user-entry-v1` schema. UI editing is intentionally not built yet.
 - Current curated lists are `word_lists` / `word_list_items`; user lists are
   `user_word_lists` / `user_word_list_items`. `primary_language_code` is the
-  forward-compatible list language hint; legacy `language_code` remains for
-  compatibility.
+  forward-compatible list language hint; `language_code` remains as older table
+  metadata until the list tables are renamed more broadly.
 - Lists now carry optional training intent metadata:
   `default_scenario_id`, `card_policy`, and `card_type_ids`. Lists still store
   entries, not cards. The metadata says how training should treat those entries
@@ -83,6 +83,9 @@ Desired concepts:
 - Lookup, platform actions, training list reads, card state, recent history,
   active list, and learning preferences now go through RPC/action boundaries
   rather than frontend-owned table mutations.
+- Platform-facing RPC/action parameters now use entry/card terminology. Physical
+  table names such as `word_entries` and `word_list_items` remain until a later
+  broad table rename is worth the churn.
 - State reads, view tracking, start-learning, review writes, scheduler/get-next,
   lookup status, gated word-list filters, recent history, and training stats now
   use `user_card_status`.
