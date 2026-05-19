@@ -45,6 +45,10 @@ jobs:
         run: npm test
         working-directory: apps/ui
 
+      - name: Run platform API smoke
+        run: npm run test:platform
+        working-directory: apps/ui
+
       - name: Run UI e2e smoke
         run: npm run test:e2e
         working-directory: apps/ui

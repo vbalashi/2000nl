@@ -12,6 +12,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:platform": "vitest run tests/api/platform*.test.ts",
     "test:watch": "vitest --watch",
     "test:e2e": "playwright test",
     "test-account": "node scripts/test-account.js"

@@ -6,6 +6,12 @@ The current unversioned `/api/platform/*` routes remain as aliases for local app
 
 These routes are the external client boundary for browser extensions and other companion apps. They use bearer Supabase user tokens and keep ordinary lookup read-only.
 
+Smoke check:
+```bash
+cd apps/ui
+npm run test:platform
+```
+
 ## Auth And CORS
 
 - Send `Authorization: Bearer <supabase-user-access-token>`.

@@ -450,7 +450,7 @@ Validation:
 
 Validation:
 
-- API contract tests.
+- API contract tests: `cd apps/ui && npm run test:platform`.
 - Extension integration smoke checks when available.
 
 ## Review Instructions For Second Agent
