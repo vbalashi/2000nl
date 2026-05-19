@@ -65,9 +65,9 @@ Database:
 - User lists reference `word_entries` directly and can mix entries in practice.
   `primary_language_code` is the forward-compatible list language hint while
   legacy `language_code` remains for compatibility.
-- `user_card_status` is a physical table keyed by `entry_id + card_type_id`;
-  legacy `user_word_status` remains synchronized while scheduler/FSRS functions
-  are migrated.
+- `user_card_status` is the active storage table keyed by `entry_id +
+  card_type_id`. Legacy `user_word_status` exists in the schema but is no
+  longer synchronized or used by active RPCs.
 - `training_scenarios` groups card mode IDs in `card_modes`, including the
   supported audio recognition mode.
 
@@ -392,8 +392,7 @@ Validation:
 ### Stage 4: Card State Generalization
 
 - Done: introduce physical `user_card_status` storage keyed by `entry_id +
-  card_type_id`, with backfill and bidirectional sync to legacy
-  `user_word_status`.
+  card_type_id`.
 - Done: add card-named wrappers for view/review/start-learning/state reads.
 - Done: add `get_next_card` as a wrapper over `get_next_word`.
 - Done: move platform API and current training service selection/review calls
@@ -403,9 +402,10 @@ Validation:
 - Done: make `handle_card_review` write FSRS review results to physical
   `user_card_status` while preserving legacy `user_review_log` and
   `user_events` shapes.
-- Remaining: move scheduler/get-next reads and legacy RPC paths from
-  `user_word_status` to `user_card_status`, or explicitly freeze
-  `user_word_status` as the long-term compatibility mirror.
+- Done: move scheduler/get-next, legacy-named write RPCs, training stats,
+  lookup status, and gated word-list filters onto `user_card_status`.
+- Done: remove the `user_word_status` synchronization bridge. The old table is
+  retained only as migration residue, not as runtime state.
 
 Validation:
 

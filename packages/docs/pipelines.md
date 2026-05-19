@@ -18,8 +18,7 @@
 ## Learn
 - UI (`apps/ui`) consumes Supabase/RPC-backed data flows, renders cards for
   active modes/scenarios, and updates card state, review logs, and events
-  through RPCs. Card-facing state is stored in `user_card_status`; legacy
-  scheduler paths still synchronize through `user_word_status`.
+  through RPCs. Card state is stored in `user_card_status`.
 
 ## Naming & Layout
 - Structured word content is currently stored under source-data directories such as `packages/ingestion/nl/vandale-nt2/data/words_content/` and loaded by ingestion scripts.

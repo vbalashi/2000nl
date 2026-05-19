@@ -102,7 +102,7 @@ Notes:
 - Tables used:
   - `word_lists` / `word_list_items` (NT2 list)
   - `word_entries` (headwords, raw definitions)
-  - `user_word_status` (per-user review state with FSRS fields)
+  - `user_card_status` (per-user card review state with FSRS fields)
   - `user_review_log` (FSRS audit trail)
   - `user_events` (review and click events)
 - Auth flows via Supabase Auth; provide `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` at runtime.

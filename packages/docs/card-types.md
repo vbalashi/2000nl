@@ -16,6 +16,4 @@ Rendering rules:
 
 Progress tracking:
 - Progress is per `user_id + entry_id + card_type_id` using `user_card_status`.
-  Legacy scheduler paths still read/write `user_word_status`, which is kept in
-  sync during the migration.
 - Event stream (`user_events`) captures granular actions (clicks, reveals, answers) to tune scheduling.

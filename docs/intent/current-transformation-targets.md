@@ -75,8 +75,7 @@ Desired concepts:
   when the list is selected.
 - Current card-facing user progress is keyed by `user_id + entry_id +
   card_type_id` in `user_card_status`, with review history in
-  `user_review_log`. Legacy scheduler/FSRS functions still use
-  `user_word_status`; triggers keep both storage shapes synchronized.
+  `user_review_log`.
 - Current scenarios group modes through `training_scenarios.card_modes`.
 - `apps/api` is currently a reserved boundary, not the active backend.
 - Active serving logic is split between Supabase/Postgres RPCs and `apps/ui`
@@ -84,10 +83,9 @@ Desired concepts:
 - Lookup, platform actions, training list reads, card state, recent history,
   active list, and learning preferences now go through RPC/action boundaries
   rather than frontend-owned table mutations.
-- Card-facing state reads, view tracking, start-learning, and recent history
-  status joins now use physical `user_card_status`. Card-facing reviews also
-  write FSRS results to `user_card_status`; scheduler/get-next and legacy RPC
-  paths still use `user_word_status` while they are migrated.
+- State reads, view tracking, start-learning, review writes, scheduler/get-next,
+  lookup status, gated word-list filters, recent history, and training stats now
+  use `user_card_status`.
 - Ordinary dictionary lookup is read-only. Mutations that affect FSRS, user
   lists, or user dictionaries are explicit platform actions/RPCs.
 - App-local UI settings still live in `user_settings` through the existing
