@@ -400,7 +400,10 @@ Validation:
   onto card-named wrappers while keeping legacy RPCs available.
 - Done: move card-facing state reads, view tracking, start-learning, and recent
   history status joins onto physical `user_card_status`.
-- Remaining: move scheduler/FSRS source-of-truth reads and writes from
+- Done: make `handle_card_review` write FSRS review results to physical
+  `user_card_status` while preserving legacy `user_review_log` and
+  `user_events` shapes.
+- Remaining: move scheduler/get-next reads and legacy RPC paths from
   `user_word_status` to `user_card_status`, or explicitly freeze
   `user_word_status` as the long-term compatibility mirror.
 
