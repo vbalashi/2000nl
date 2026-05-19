@@ -138,3 +138,6 @@
 
 -- Card-facing RPCs backed by physical card-state storage
 \i db/migrations/043_use_physical_card_status_rpcs.sql
+
+-- Recent history backed by physical card-state storage
+\i db/migrations/044_use_physical_card_status_history.sql
