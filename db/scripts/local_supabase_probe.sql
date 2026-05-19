@@ -41,6 +41,14 @@ begin
     raise exception 'missing public.handle_card_review(uuid,uuid,text,text,uuid)';
   end if;
 
+  if pg_get_function_arguments(to_regprocedure('public.handle_card_review(uuid,uuid,text,text,uuid)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.handle_card_review must use p_entry_id';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.handle_card_review(uuid,uuid,text,text,uuid)')) not like '%p_card_type_id text%' then
+    raise exception 'public.handle_card_review must use p_card_type_id';
+  end if;
+
   if to_regprocedure('public.handle_review(uuid,uuid,text,text,uuid)') is not null then
     raise exception 'legacy public.handle_review(uuid,uuid,text,text,uuid) still exists';
   end if;
@@ -53,12 +61,28 @@ begin
     raise exception 'missing public.record_card_view(uuid,uuid,text)';
   end if;
 
+  if pg_get_function_arguments(to_regprocedure('public.record_card_view(uuid,uuid,text)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.record_card_view must use p_entry_id';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.record_card_view(uuid,uuid,text)')) not like '%p_card_type_id text%' then
+    raise exception 'public.record_card_view must use p_card_type_id';
+  end if;
+
   if to_regprocedure('public.record_word_view(uuid,uuid,text)') is not null then
     raise exception 'legacy public.record_word_view(uuid,uuid,text) still exists';
   end if;
 
   if to_regprocedure('public.start_learning_entry_card(uuid,uuid,text)') is null then
     raise exception 'missing public.start_learning_entry_card(uuid,uuid,text)';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.start_learning_entry_card(uuid,uuid,text)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.start_learning_entry_card must use p_entry_id';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.start_learning_entry_card(uuid,uuid,text)')) not like '%p_card_type_id text%' then
+    raise exception 'public.start_learning_entry_card must use p_card_type_id';
   end if;
 
   if to_regprocedure('public.start_learning_card(uuid,uuid,text)') is not null then
@@ -73,6 +97,10 @@ begin
     raise exception 'missing public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)';
   end if;
 
+  if pg_get_function_arguments(to_regprocedure('public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)')) not like '%p_source_entry_id uuid%' then
+    raise exception 'public.copy_entry_to_user_dictionary must use p_source_entry_id';
+  end if;
+
   if to_regprocedure('public.create_user_dictionary_entry(uuid,uuid,jsonb)') is null then
     raise exception 'missing public.create_user_dictionary_entry(uuid,uuid,jsonb)';
   end if;
@@ -81,8 +109,56 @@ begin
     raise exception 'missing public.update_user_dictionary_entry(uuid,uuid,jsonb)';
   end if;
 
+  if pg_get_function_arguments(to_regprocedure('public.update_user_dictionary_entry(uuid,uuid,jsonb)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.update_user_dictionary_entry must use p_entry_id';
+  end if;
+
   if to_regprocedure('public.delete_user_dictionary_entry(uuid,uuid)') is null then
     raise exception 'missing public.delete_user_dictionary_entry(uuid,uuid)';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.delete_user_dictionary_entry(uuid,uuid)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.delete_user_dictionary_entry must use p_entry_id';
+  end if;
+
+  if to_regprocedure('public.fetch_dictionary_entry_by_id_gated(uuid)') is null then
+    raise exception 'missing public.fetch_dictionary_entry_by_id_gated(uuid)';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.fetch_dictionary_entry_by_id_gated(uuid)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.fetch_dictionary_entry_by_id_gated must use p_entry_id';
+  end if;
+
+  if to_regprocedure('public.add_entry_to_user_list(uuid,uuid,uuid)') is null then
+    raise exception 'missing public.add_entry_to_user_list(uuid,uuid,uuid)';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.add_entry_to_user_list(uuid,uuid,uuid)')) not like '%p_entry_id uuid%' then
+    raise exception 'public.add_entry_to_user_list must use p_entry_id';
+  end if;
+
+  if to_regprocedure('public.remove_entries_from_user_list(uuid,uuid,uuid[])') is null then
+    raise exception 'missing public.remove_entries_from_user_list(uuid,uuid,uuid[])';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.remove_entries_from_user_list(uuid,uuid,uuid[])')) not like '%p_entry_ids uuid[]%' then
+    raise exception 'public.remove_entries_from_user_list must use p_entry_ids';
+  end if;
+
+  if to_regprocedure('public.get_user_list_membership(uuid,uuid,uuid[])') is null then
+    raise exception 'missing public.get_user_list_membership(uuid,uuid,uuid[])';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.get_user_list_membership(uuid,uuid,uuid[])')) not like '%p_entry_ids uuid[]%' then
+    raise exception 'public.get_user_list_membership must use p_entry_ids';
+  end if;
+
+  if to_regprocedure('public.get_user_list_memberships_for_entries(uuid,uuid[])') is null then
+    raise exception 'missing public.get_user_list_memberships_for_entries(uuid,uuid[])';
+  end if;
+
+  if pg_get_function_arguments(to_regprocedure('public.get_user_list_memberships_for_entries(uuid,uuid[])')) not like '%p_entry_ids uuid[]%' then
+    raise exception 'public.get_user_list_memberships_for_entries must use p_entry_ids';
   end if;
 
   if to_regprocedure('public.can_access_dictionary(uuid,uuid,text)') is null then
