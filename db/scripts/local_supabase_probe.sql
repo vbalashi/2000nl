@@ -29,20 +29,40 @@ begin
     raise exception 'missing auth.uid()';
   end if;
 
-  if to_regprocedure('public.get_next_word(uuid,text,uuid[],uuid,text)') is null then
-    raise exception 'missing public.get_next_word(uuid,text,uuid[],uuid,text)';
+  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])') is null then
+    raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])';
   end if;
 
-  if to_regprocedure('public.handle_review(uuid,uuid,text,text,uuid)') is null then
-    raise exception 'missing public.handle_review(uuid,uuid,text,text,uuid)';
+  if to_regprocedure('public.get_next_word(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null then
+    raise exception 'legacy public.get_next_word(uuid,text[],uuid[],uuid,text,text,text,text[]) still exists';
   end if;
 
-  if to_regprocedure('public.handle_click(uuid,uuid,text)') is null then
-    raise exception 'missing public.handle_click(uuid,uuid,text)';
+  if to_regprocedure('public.handle_card_review(uuid,uuid,text,text,uuid)') is null then
+    raise exception 'missing public.handle_card_review(uuid,uuid,text,text,uuid)';
   end if;
 
-  if to_regprocedure('public.record_word_view(uuid,uuid,text)') is null then
-    raise exception 'missing public.record_word_view(uuid,uuid,text)';
+  if to_regprocedure('public.handle_review(uuid,uuid,text,text,uuid)') is not null then
+    raise exception 'legacy public.handle_review(uuid,uuid,text,text,uuid) still exists';
+  end if;
+
+  if to_regprocedure('public.handle_click(uuid,uuid,text)') is not null then
+    raise exception 'legacy public.handle_click(uuid,uuid,text) still exists';
+  end if;
+
+  if to_regprocedure('public.record_card_view(uuid,uuid,text)') is null then
+    raise exception 'missing public.record_card_view(uuid,uuid,text)';
+  end if;
+
+  if to_regprocedure('public.record_word_view(uuid,uuid,text)') is not null then
+    raise exception 'legacy public.record_word_view(uuid,uuid,text) still exists';
+  end if;
+
+  if to_regprocedure('public.start_learning_entry_card(uuid,uuid,text)') is null then
+    raise exception 'missing public.start_learning_entry_card(uuid,uuid,text)';
+  end if;
+
+  if to_regprocedure('public.start_learning_card(uuid,uuid,text)') is not null then
+    raise exception 'legacy public.start_learning_card(uuid,uuid,text) still exists';
   end if;
 
   if to_regprocedure('public.ensure_user_dictionary(uuid,text,text)') is null then
