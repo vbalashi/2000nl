@@ -416,8 +416,9 @@ Validation:
 - Done: `listen-recognize` has a dedicated audio recognition renderer and
   review controls. Unsupported modes such as `listen-type` are filtered out
   instead of being rendered as text cards.
-- Remaining: add product UI for editing list training intent and add renderer
-  support before enabling audio typing/conjugation card policies in the app.
+- Done: user-owned list training intent can be edited from the settings list UI.
+- Remaining: add renderer support before enabling audio typing/conjugation card
+  policies in the app.
 
 Validation:
 

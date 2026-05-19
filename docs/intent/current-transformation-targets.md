@@ -107,13 +107,13 @@ Desired concepts:
   currently supported UI renderers. `listen-recognize` is supported by the
   current UI; unsupported audio typing modes are filtered out instead of being
   mis-rendered as text cards.
+- User-list training intent can be edited from the current settings list UI for
+  user-owned lists.
 
 ## Remaining Near-Term Targets
 
 - Add UI for user dictionary creation/editing only after deciding the first
   product surface and validation rules.
-- Add UI controls for list training intent only after deciding the first UX:
-  list settings modal, scenario-specific list templates, or external API first.
 - Continue reducing direct table access where it crosses platform boundaries;
   keep truly app-local settings explicit.
 - Add/refresh docs for platform endpoint payloads as external consumers become
