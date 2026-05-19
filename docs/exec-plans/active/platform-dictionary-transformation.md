@@ -436,14 +436,21 @@ Validation:
 
 ### Stage 5: External Backend Boundary
 
-- Revive `apps/api` or add a versioned API route group for external clients.
-- Expose lookup, list membership, card status, and event mutation endpoints.
-- Keep service-role and auth-sensitive behavior server-side.
+- Done: use the app HTTP route group `/api/platform/*` as the current external
+  client boundary rather than reviving `apps/api` yet.
+- Done: expose read-only lookup with dictionary metadata, list memberships,
+  per-card state, and `progressSummary`.
+- Done: expose explicit mutation actions through `/api/platform/actions`.
+- Done: expose `/api/platform/analyze-selection` as a composite route that only
+  mutates when an explicit `actions` array is present.
+- Done: document the route contract in `docs/reference/platform-api.md`.
+- Remaining: add extension integration smoke tests once an extension client is
+  available.
 
 Validation:
 
 - API contract tests.
-- Extension integration smoke checks.
+- Extension integration smoke checks when available.
 
 ## Review Instructions For Second Agent
 
