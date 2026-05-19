@@ -61,6 +61,20 @@ type Props = {
   user: User;
 };
 
+const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
+  "word-to-definition",
+  "definition-to-word",
+]);
+
+const resolveRestrictedListModes = (
+  list?: WordListSummary | null,
+): TrainingMode[] | undefined => {
+  if (list?.card_policy !== "restrict") return undefined;
+  return (list.card_type_ids ?? []).filter((mode): mode is TrainingMode =>
+    SUPPORTED_LIST_CARD_MODES.has(mode as TrainingMode),
+  );
+};
+
 const trainingCardKey = (word: TrainingWord, fallbackMode: TrainingMode) =>
   `${word.id}:${word.mode ?? fallbackMode}`;
 
@@ -501,8 +515,15 @@ export function TrainingScreen({ user }: Props) {
       setHintRevealed(false); // Reset hint state for new word
       const effectiveListId = scope?.listId ?? wordListId;
       const effectiveListType = scope?.listType ?? wordListType;
+      const effectiveList =
+        availableLists.find(
+          (list) =>
+            list.id === effectiveListId &&
+            list.type === (effectiveListType ?? "curated"),
+        ) ?? activeList;
       const effectiveQueueTurn = overrideQueueTurn ?? queueTurn;
       const effectiveScenario = overrideScenario ?? activeScenario;
+      const restrictedModes = resolveRestrictedListModes(effectiveList);
       try {
         const forcedId = forcedNextWordIdRef.current;
         if (forcedId) {
@@ -536,6 +557,7 @@ export function TrainingScreen({ user }: Props) {
           cardFilter,
           effectiveQueueTurn,
           excludeCardKeys,
+          restrictedModes,
         );
         if (nextWord) {
           // Fire and forget view recording, or await if we want strict consistency
@@ -556,7 +578,9 @@ export function TrainingScreen({ user }: Props) {
       }
     },
     [
+      activeList,
       activeScenario,
+      availableLists,
       enabledModes,
       cardFilter,
       firstEncounter,
@@ -607,6 +631,7 @@ export function TrainingScreen({ user }: Props) {
           cardFilter,
           predictedQueueTurn,
           [...reviewedInSessionRef.current, forCardKey],
+          resolveRestrictedListModes(activeList),
         );
 
         if (cancelled) return;
@@ -641,6 +666,7 @@ export function TrainingScreen({ user }: Props) {
     };
   }, [
     activeScenario,
+    activeList,
     audioModeEnabled,
     cardFilter,
     currentWord?.id,

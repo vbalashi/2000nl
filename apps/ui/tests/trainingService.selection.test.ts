@@ -271,6 +271,64 @@ describe("trainingService next-word selection", () => {
     );
   });
 
+  test("scenario selection can restrict card modes with an explicit override", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+
+    mockScenarioModes(["word-to-definition", "definition-to-word"]);
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "word-restricted",
+        headword: "beperkt",
+        raw: JSON.stringify({ meanings: [{ definition: "begrensd" }] }),
+        mode: "definition-to-word",
+        stats: { source: "review", mode: "definition-to-word" },
+      },
+      error: null,
+    });
+
+    await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      { listId: "list-1", listType: "user" },
+      "both",
+      "review",
+      [],
+      ["definition-to-word"],
+    );
+
+    expect(rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_next_card",
+      expect.objectContaining({
+        p_card_type_ids: ["definition-to-word"],
+        p_list_id: "list-1",
+        p_list_type: "user",
+      }),
+    );
+  });
+
+  test("scenario selection returns null when an explicit mode override is empty", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+
+    mockScenarioModes(["word-to-definition", "definition-to-word"]);
+
+    const word = await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      { listId: "list-1", listType: "user" },
+      "both",
+      "review",
+      [],
+      [],
+    );
+
+    expect(word).toBeNull();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("get_training_scenarios");
+  });
+
   test("fetchTrainingScenarios maps RPC rows with defaults", async () => {
     const { fetchTrainingScenarios } = await importService();
 

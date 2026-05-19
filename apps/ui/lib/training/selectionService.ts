@@ -230,9 +230,12 @@ export const fetchNextTrainingWordByScenario = async (
   cardFilter: CardFilter = "both",
   queueTurn: QueueTurn = "auto",
   excludeCardKeys: string[] = [],
+  modeOverride?: TrainingMode[],
 ): Promise<TrainingWord | null> => {
-  const modes = await resolveScenarioModes(scenarioId);
-  if (!modes) return null;
+  const scenarioModes = await resolveScenarioModes(scenarioId);
+  if (!scenarioModes) return null;
+  const modes = modeOverride ?? scenarioModes;
+  if (modes.length === 0) return null;
 
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
