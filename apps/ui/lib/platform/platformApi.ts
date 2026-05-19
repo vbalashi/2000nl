@@ -140,6 +140,10 @@ function asOptionalStringArray(
   return { ok: true, value: values.length ? values : null };
 }
 
+function hasOwnBodyField(body: PlatformActionBody, field: keyof PlatformActionBody) {
+  return Object.prototype.hasOwnProperty.call(body, field);
+}
+
 async function assertEntryReadable(
   supabase: any,
   entryId: string,
@@ -542,6 +546,9 @@ export async function performPlatformAction(
       p_default_scenario_id: asString(body?.defaultScenarioId),
       p_card_policy: cardPolicy,
       p_card_type_ids: cardTypeIds.value,
+      p_clear_default_scenario:
+        hasOwnBodyField(body, "defaultScenarioId") &&
+        body.defaultScenarioId === null,
     });
 
     if (error) {

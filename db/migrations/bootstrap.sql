@@ -129,3 +129,6 @@
 
 -- Training intent metadata for lists
 \i db/migrations/040_list_training_intent.sql
+
+-- Explicit clear semantics for list training intent updates
+\i db/migrations/041_clear_list_training_intent.sql

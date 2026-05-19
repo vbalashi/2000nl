@@ -951,6 +951,31 @@ describeIfDb("FSRS RPC integration", () => {
         }),
       );
       expect(updateRows[0].list.user_word_list_items[0].count).toBe(0);
+
+      const { rows: clearRows } = await client.query(
+        `select update_user_word_list(
+          $1,
+          $2,
+          null,
+          null,
+          null,
+          null,
+          null,
+          'inherit',
+          ARRAY[]::text[],
+          true
+        ) as list`,
+        [ownerId, list.id],
+      );
+
+      expect(clearRows[0].list).toEqual(
+        expect.objectContaining({
+          id: list.id,
+          default_scenario_id: null,
+          card_policy: "inherit",
+          card_type_ids: null,
+        }),
+      );
     }, ownerId);
   });
 

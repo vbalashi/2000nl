@@ -479,6 +479,7 @@ describe("trainingService list and preference characterization", () => {
       p_default_scenario_id: "understanding",
       p_card_policy: "prefer",
       p_card_type_ids: ["definition-to-word", "word-to-definition"],
+      p_clear_default_scenario: false,
     });
   });
 

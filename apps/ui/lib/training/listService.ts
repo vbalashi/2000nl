@@ -292,6 +292,7 @@ export async function updateUserList(params: {
   language_code?: string;
   primary_language_code?: string;
   default_scenario_id?: string | null;
+  clear_default_scenario?: boolean;
   card_policy?: WordListSummary["card_policy"] | null;
   card_type_ids?: string[] | null;
 }): Promise<WordListSummary | null> {
@@ -305,6 +306,7 @@ export async function updateUserList(params: {
     p_default_scenario_id: params.default_scenario_id ?? null,
     p_card_policy: params.card_policy ?? null,
     p_card_type_ids: params.card_type_ids ?? null,
+    p_clear_default_scenario: params.clear_default_scenario ?? false,
   });
 
   if (error || !data) {

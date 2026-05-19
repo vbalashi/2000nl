@@ -388,6 +388,7 @@ describe("/api/platform/actions", () => {
       p_default_scenario_id: "understanding",
       p_card_policy: "prefer",
       p_card_type_ids: ["definition-to-word", "word-to-definition"],
+      p_clear_default_scenario: false,
     });
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
@@ -407,6 +408,48 @@ describe("/api/platform/actions", () => {
         },
       }),
     );
+  });
+
+  test("clears user list default scenario when null is explicit", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "list-1",
+        name: "Mine updated",
+        description: null,
+        language_code: "nl",
+        primary_language_code: "nl",
+        default_scenario_id: null,
+        card_policy: "inherit",
+        card_type_ids: null,
+        created_at: "2026-05-18T10:00:00.000Z",
+        user_word_list_items: [{ count: 3 }],
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "update-user-list",
+        listId: "list-1",
+        defaultScenarioId: null,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("update_user_word_list", {
+      p_user_id: "user-1",
+      p_list_id: "list-1",
+      p_name: null,
+      p_description: null,
+      p_language_code: null,
+      p_primary_language_code: null,
+      p_default_scenario_id: null,
+      p_card_policy: null,
+      p_card_type_ids: null,
+      p_clear_default_scenario: true,
+    });
   });
 
   test("copies accessible entries to a user dictionary", async () => {
