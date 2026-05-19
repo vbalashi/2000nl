@@ -484,9 +484,11 @@ $$;
 -- This function is internal/debug only and moved to private schema
 -- to prevent exposure via PostgREST API.
 
+DROP FUNCTION IF EXISTS private.get_last_review_debug(uuid, uuid, text);
+
 CREATE OR REPLACE FUNCTION private.get_last_review_debug(
     p_user_id uuid,
-    p_word_id uuid,
+    p_entry_id uuid,
     p_mode text
 ) RETURNS jsonb
 LANGUAGE plpgsql
@@ -505,7 +507,7 @@ BEGIN
     INTO v_row
     FROM user_review_log
     WHERE user_id = p_user_id
-      AND word_id = p_word_id
+      AND word_id = p_entry_id
       AND mode = p_mode
     ORDER BY reviewed_at DESC
     LIMIT 1;
