@@ -135,3 +135,6 @@
 
 -- Physical card-state storage with legacy sync
 \i db/migrations/042_physical_user_card_status.sql
+
+-- Card-facing RPCs backed by physical card-state storage
+\i db/migrations/043_use_physical_card_status_rpcs.sql
