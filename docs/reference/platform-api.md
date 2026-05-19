@@ -1,6 +1,8 @@
 # Platform HTTP API
 
-**Base path:** `/api/platform`
+**Versioned base path:** `/api/platform/v1`
+
+The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients.
 
 These routes are the external client boundary for browser extensions and other companion apps. They use bearer Supabase user tokens and keep ordinary lookup read-only.
 

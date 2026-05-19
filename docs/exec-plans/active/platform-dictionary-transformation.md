@@ -436,8 +436,9 @@ Validation:
 
 ### Stage 5: External Backend Boundary
 
-- Done: use the app HTTP route group `/api/platform/*` as the current external
-  client boundary rather than reviving `apps/api` yet.
+- Done: use the app HTTP route group `/api/platform/v1/*` as the current
+  versioned external client boundary rather than reviving `apps/api` yet.
+  The unversioned `/api/platform/*` routes remain as aliases.
 - Done: expose read-only lookup with dictionary metadata, list memberships,
   per-card state, and `progressSummary`.
 - Done: expose explicit mutation actions through `/api/platform/actions`.
