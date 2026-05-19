@@ -162,6 +162,60 @@ describe("trainingService next-word selection", () => {
     );
   });
 
+  test("scenario selection filters to supported audio card modes", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+
+    mockScenarioModes(["listen-recognize", "listen-type"]);
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "word-audio",
+        headword: "huis",
+        raw: JSON.stringify({
+          audio_links: { nl: "/huis.mp3" },
+          meanings: [{ definition: "woning" }],
+        }),
+        mode: "listen-recognize",
+        stats: { source: "new", mode: "listen-recognize" },
+      },
+      error: null,
+    });
+
+    const word = await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      { listId: "audio-list", listType: "user" },
+    );
+
+    expect(rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_next_card",
+      expect.objectContaining({
+        p_card_type_ids: ["listen-recognize"],
+        p_list_id: "audio-list",
+        p_list_type: "user",
+      }),
+    );
+    expect(word?.mode).toBe("listen-recognize");
+  });
+
+  test("scenario selection returns null when a scenario only has unsupported modes", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+
+    mockScenarioModes(["listen-type"]);
+
+    const word = await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      { listId: "audio-list", listType: "user" },
+    );
+
+    expect(word).toBeNull();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("get_training_scenarios");
+  });
+
   test("selection skips cross-reference-only rows and retries with the skipped id excluded", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
     const payloads: any[] = [];

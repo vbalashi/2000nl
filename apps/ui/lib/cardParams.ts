@@ -28,6 +28,10 @@ const parseLayout = (value: string | null): TrainingMode | undefined => {
     return "definition-to-word";
   }
 
+  if (normalized === "listen" || normalized === "listen-recognize") {
+    return "listen-recognize";
+  }
+
   return undefined;
 };
 

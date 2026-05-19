@@ -17,6 +17,11 @@ import {
 
 const MAX_CROSS_REFERENCE_SKIPS = 5;
 const DEFAULT_SCENARIO_MODES: TrainingMode[] = ["word-to-definition"];
+const SUPPORTED_CARD_MODES = new Set<TrainingMode>([
+  "word-to-definition",
+  "definition-to-word",
+  "listen-recognize",
+]);
 
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
@@ -185,7 +190,14 @@ const resolveScenarioModes = async (
     return null;
   }
 
-  const modes = scenario.cardModes.filter(Boolean) as TrainingMode[];
+  const rawModes = scenario.cardModes.filter(Boolean);
+  const modes = rawModes
+    .filter((mode): mode is TrainingMode =>
+      SUPPORTED_CARD_MODES.has(mode as TrainingMode),
+    );
+  if (rawModes.length > 0 && modes.length === 0) {
+    return null;
+  }
   return modes.length > 0 ? modes : DEFAULT_SCENARIO_MODES;
 };
 

@@ -4,6 +4,8 @@ import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
 const TRAINING_MODES = new Set<TrainingMode>([
   "word-to-definition",
   "definition-to-word",
+  "listen-recognize",
+  "listen-type",
 ]);
 const REVIEW_RESULTS = new Set<ReviewResult>([
   "fail",

@@ -60,6 +60,48 @@ test("headword click requests audio playback", () => {
   expect(onWordClick).toHaveBeenCalledWith("huis", { forceAudio: true });
 });
 
+test("renders audio recognition prompt and requests playback", () => {
+  const onWordClick = vi.fn();
+
+  render(
+    <TrainingCard
+      word={word as any}
+      mode="listen-recognize"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(screen.getByText("Luister")).toBeInTheDocument();
+  expect(screen.getByText("Herken je dit woord?")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Speel audio af" }));
+  expect(onWordClick).toHaveBeenCalledWith("huis", { forceAudio: true });
+});
+
+test("audio recognition reveal shows the answer word", () => {
+  const onWordClick = vi.fn();
+
+  render(
+    <TrainingCard
+      word={word as any}
+      mode="listen-recognize"
+      revealed
+      hintRevealed={false}
+      onWordClick={onWordClick}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(document.body).toHaveTextContent("Een gebouw waar mensen wonen.");
+});
+
 test("tap/clicking card requests reveal when not revealed", () => {
   const onWordClick = vi.fn();
   const onRequestReveal = vi.fn();

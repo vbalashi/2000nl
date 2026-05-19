@@ -198,6 +198,7 @@ export function TrainingCard({
   const allMeanings = getAllMeanings(word.raw);
   const primaryMeaning = allMeanings[0];
   const isWordToDefinition = mode === "word-to-definition";
+  const isListenRecognize = mode === "listen-recognize";
 
   // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
   // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
@@ -529,7 +530,40 @@ export function TrainingCard({
         >
           {/* Header: Headword + POS Badge (Always Visible) */}
           <div className="flex-none mb-8 text-center bg-transparent z-0">
-          {isWordToDefinition ? (
+          {isListenRecognize ? (
+            <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center gap-5 py-8 text-center">
+              <button
+                type="button"
+                data-no-reveal
+                onClick={handleHeadwordClick}
+                className="flex h-20 w-20 items-center justify-center rounded-full border border-sky-200 bg-sky-100/85 text-sky-700 shadow-sm transition hover:bg-sky-100 hover:text-sky-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-500 dark:border-sky-800 dark:bg-sky-900/35 dark:text-sky-200 dark:hover:bg-sky-900/50"
+                aria-label="Speel audio af"
+              >
+                <svg
+                  className="h-9 w-9"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              </button>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Luister
+                </p>
+                <p className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                  Herken je dit woord?
+                </p>
+              </div>
+            </div>
+          ) : isWordToDefinition ? (
             // Keep this full-width so translations align with the sentence width.
             <div className="w-full flex flex-col items-center">
               <div className="inline-flex items-baseline justify-center gap-3">
@@ -917,6 +951,23 @@ export function TrainingCard({
                       text={getHeadwordTranslated()}
                     />
                   </div>
+                  {isListenRecognize && primaryMeaning.definition ? (
+                    <div className="mx-auto flex w-full max-w-2xl flex-col items-start text-xl md:text-2xl leading-[1.4] font-medium text-slate-800 dark:text-slate-100">
+                      <InteractiveText
+                        segments={definitionSegments}
+                        highlightedWord={highlightedWord}
+                        onWordClick={onWordClick}
+                        cursorStyle={wordCursorStyle}
+                        excludeWord={word.headword}
+                        sentence={primaryMeaning.definition}
+                      />
+                      <InlineTranslation
+                        align="left"
+                        variant="definition"
+                        text={getTranslated(0, "definition")}
+                      />
+                    </div>
+                  ) : null}
                   {/* Content with badge gutter (matches W->D revealed layout) */}
                   {(primaryMeaning.context ||
                     (primaryMeaning.idioms && primaryMeaning.idioms.length > 0) ||

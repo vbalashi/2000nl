@@ -64,6 +64,7 @@ type Props = {
 const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
   "word-to-definition",
   "definition-to-word",
+  "listen-recognize",
 ]);
 
 const resolveRestrictedListModes = (
@@ -326,6 +327,7 @@ export function TrainingScreen({ user }: Props) {
   const loadingInProgress = useRef(false);
   // Ref: when set, force this word as the *next* card once.
   const forcedNextWordIdRef = useRef<string | null>(null);
+  const autoPlayedAudioCardRef = useRef<string | null>(null);
 
   // Next-card prefetch state (kept in refs so it never blocks rendering).
   const nextWordPrefetchTokenRef = useRef(0);
@@ -339,6 +341,22 @@ export function TrainingScreen({ user }: Props) {
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
+
+  useEffect(() => {
+    if (!currentWord || currentMode !== "listen-recognize") {
+      autoPlayedAudioCardRef.current = null;
+      return;
+    }
+
+    const cardKey = trainingCardKey(currentWord, currentMode);
+    if (autoPlayedAudioCardRef.current === cardKey) return;
+    autoPlayedAudioCardRef.current = cardKey;
+
+    const audioUrl = resolveAudioUrl(currentWord.raw);
+    if (audioUrl) {
+      playAudio(audioUrl, currentWord.headword);
+    }
+  }, [currentMode, currentWord, playAudio, resolveAudioUrl]);
 
   const revealAnswer = useCallback(() => {
     setTranslationTooltipOpen(false);
@@ -1989,17 +2007,33 @@ export function TrainingScreen({ user }: Props) {
                           swipeIntensity={swipeFeedbackIntensity}
                         />
                       ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 w-full">
+                        <div
+                          className={`grid gap-2 md:gap-3 w-full ${
+                            currentMode === "listen-recognize"
+                              ? "grid-cols-2"
+                              : "grid-cols-2 md:grid-cols-4"
+                          }`}
+                        >
                           {(
-                            [
-                              "fail",
-                              "hard",
-                              "success",
-                              "easy",
-                            ] as ReviewResult[]
+                            currentMode === "listen-recognize"
+                              ? (["fail", "success"] as ReviewResult[])
+                              : ([
+                                  "fail",
+                                  "hard",
+                                  "success",
+                                  "easy",
+                                ] as ReviewResult[])
                           ).map((actionKey) => {
-                            const { label, keyHint, tone } =
-                              ACTION_LABELS[actionKey];
+                            const defaultAction = ACTION_LABELS[actionKey];
+                            const label =
+                              currentMode === "listen-recognize" &&
+                              actionKey === "fail"
+                                ? "Niet herkend"
+                                : currentMode === "listen-recognize" &&
+                                    actionKey === "success"
+                                  ? "Herkend"
+                                  : defaultAction.label;
+                            const { keyHint, tone } = defaultAction;
                             const swipeButtonHighlight =
                               actionKey === "fail" && swipeDirection === "left"
                                 ? swipeFeedbackIntensity

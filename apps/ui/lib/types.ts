@@ -1,4 +1,8 @@
-export type TrainingMode = "word-to-definition" | "definition-to-word";
+export type TrainingMode =
+  | "word-to-definition"
+  | "definition-to-word"
+  | "listen-recognize"
+  | "listen-type";
 export type CardFilter = "new" | "review" | "both";
 export type QueueTurn = "new" | "review" | "auto";
 
