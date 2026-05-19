@@ -150,3 +150,6 @@
 
 -- Legacy-named write RPCs backed by physical card-state storage
 \i db/migrations/047_legacy_write_rpcs_use_card_status.sql
+
+-- Training stats backed by physical card-state storage
+\i db/migrations/048_stats_use_card_status.sql
