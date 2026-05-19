@@ -165,3 +165,6 @@
 
 -- Drop legacy word-oriented state storage
 \i db/migrations/052_drop_legacy_user_word_status.sql
+
+-- Make get_next_card the primary scheduler RPC
+\i db/migrations/053_get_next_card_primary.sql

@@ -166,14 +166,14 @@ export async function insertWord(
   return rows[0].id as string;
 }
 
-export async function callGetNextWord(
+export async function callGetNextCard(
   client: PoolClient,
   userId: string,
   mode: string,
   exclude: string[] = []
 ) {
   const { rows } = await client.query(
-    `select get_next_word($1, $2, $3::uuid[]) as item`,
+    `select get_next_card($1, ARRAY[$2]::text[], $3::uuid[]) as item`,
     [userId, mode, exclude]
   );
   return rows[0]?.item as any | undefined;

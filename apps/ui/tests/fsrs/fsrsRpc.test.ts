@@ -2,7 +2,7 @@ import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import { Pool } from "pg";
 import { randomUUID } from "crypto";
 import {
-  callGetNextWord,
+  callGetNextCard,
   ensureUserWithSettings,
   getDbUrl,
   insertWord,
@@ -1364,7 +1364,7 @@ describeIfDb("FSRS RPC integration", () => {
       );
 
       const { rows: nextRows } = await client.query(
-        `select get_next_word(
+        `select get_next_card(
           $1::uuid,
           ARRAY[$2]::text[],
           ARRAY[]::uuid[],
@@ -1411,7 +1411,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_next_card wraps scheduler with entry and card terminology", async () => {
+  test("get_next_card schedules with entry and card terminology", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -1464,7 +1464,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_next_word honors overdue order and daily caps", async () => {
+  test("get_next_card honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, { daily_new_limit: 1, daily_review_limit: 2 });
@@ -1491,7 +1491,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const getNextFromList = async () => {
         const { rows } = await client.query(
-          `select get_next_word(
+          `select get_next_card(
             $1::uuid,
             ARRAY[$2]::text[],
             ARRAY[]::uuid[],
@@ -1542,7 +1542,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_next_word excludes reviewed cards by entry and mode", async () => {
+  test("get_next_card excludes reviewed cards by entry and mode", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -1565,7 +1565,7 @@ describeIfDb("FSRS RPC integration", () => {
       );
 
       const { rows } = await client.query(
-        `select get_next_word(
+        `select get_next_card(
           $1::uuid,
           $2::text[],
           ARRAY[]::uuid[],
@@ -1583,7 +1583,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_next_word skips dictionaries the user cannot read", async () => {
+  test("get_next_card skips dictionaries the user cannot read", async () => {
     const userId = randomUUID();
     const ownerId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -1627,7 +1627,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, privateWordId, publicWordId, mode],
       );
 
-      const next = await callGetNextWord(client, userId, mode);
+      const next = await callGetNextCard(client, userId, mode);
       expect(next?.id).toBe(publicWordId);
       expect(next?.id).not.toBe(privateWordId);
     }, userId);
