@@ -159,3 +159,6 @@
 
 -- Gated word reads backed by physical card-state storage
 \i db/migrations/050_gated_word_reads_use_card_status.sql
+
+-- Remove legacy word-status sync bridge
+\i db/migrations/051_remove_word_status_sync_bridge.sql

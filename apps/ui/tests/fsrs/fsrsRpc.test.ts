@@ -54,7 +54,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: first } = await client.query(
         `select fsrs_reps, fsrs_lapses, last_result, fsrs_enabled
-         from user_word_status where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode]
       );
 
@@ -67,7 +67,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: second } = await client.query(
         `select fsrs_reps, fsrs_lapses, last_result, fsrs_last_grade
-         from user_word_status where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode]
       );
 
@@ -91,7 +91,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows } = await client.query(
         `select fsrs_reps, fsrs_lapses, fsrs_last_grade, last_result
-         from user_word_status where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode]
       );
 
@@ -134,8 +134,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: statusRows } = await client.query(
         `select count(*)::int as count
-         from user_word_status
-         where user_id = $1 and word_id = $2`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2`,
         [userId, wordId],
       );
       const { rows: reviewRows } = await client.query(
@@ -200,8 +200,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: statusRows } = await client.query(
         `select count(*)::int as count
-         from user_word_status
-         where user_id = $1 and word_id = $2`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2`,
         [otherId, createRows[0].word_id],
       );
       expect(statusRows[0].count).toBe(0);
@@ -215,8 +215,8 @@ describeIfDb("FSRS RPC integration", () => {
       const wordId = await insertWord(client, `fsrs-history-${Date.now()}`);
 
       await client.query(
-        `insert into user_word_status (
-          user_id, word_id, mode,
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
           click_count, last_seen_at, fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
         ) values ($1, $2, $3, 2, now() - interval '30 minutes', 3.0, 4, 7.5, now() + interval '1 day')`,
         [userId, wordId, mode],
@@ -256,8 +256,8 @@ describeIfDb("FSRS RPC integration", () => {
       const wordId = await insertWord(client, `fsrs-card-state-${Date.now()}`);
 
       await client.query(
-        `insert into user_word_status (
-          user_id, word_id, mode,
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
           click_count, fsrs_last_interval, fsrs_reps, fsrs_stability, next_review_at
         ) values ($1, $2, $3, 1, 2.0, 3, 4.5, now() + interval '1 day')`,
         [userId, wordId, mode],
@@ -348,20 +348,6 @@ describeIfDb("FSRS RPC integration", () => {
         }),
       );
 
-      const { rows: legacyRows } = await client.query(
-        `select fsrs_reps, fsrs_last_grade, fsrs_enabled
-         from user_word_status
-         where user_id = $1 and word_id = $2 and mode = $3`,
-        [userId, wordId, mode],
-      );
-      expect(legacyRows[0]).toEqual(
-        expect.objectContaining({
-          fsrs_reps: 1,
-          fsrs_last_grade: 3,
-          fsrs_enabled: true,
-        }),
-      );
-
       const { rows: reviewRows } = await client.query(
         `select count(*)::int as count
          from user_review_log
@@ -372,7 +358,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("physical user_card_status table stays synchronized with legacy word status", async () => {
+  test("physical user_card_status table is the writable card-state storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId);
@@ -395,8 +381,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       let { rows } = await client.query(
         `select fsrs_enabled, seen_count, last_result
-         from user_word_status
-         where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
       );
       expect(rows[0]).toEqual(
@@ -408,9 +394,9 @@ describeIfDb("FSRS RPC integration", () => {
       );
 
       await client.query(
-        `update user_word_status
+        `update user_card_status
          set seen_count = 3, last_result = 'fail'
-         where user_id = $1 and word_id = $2 and mode = $3`,
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
       );
 
@@ -437,8 +423,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: remainingRows } = await client.query(
         `select count(*)::int as count
-         from user_word_status
-         where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
       );
       expect(remainingRows[0].count).toBe(0);
@@ -729,8 +715,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: statusRows } = await client.query(
         `select fsrs_enabled, fsrs_reps, fsrs_lapses, seen_count, hidden, frozen_until
-         from user_word_status
-         where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
       );
       const { rows: reviewRows } = await client.query(
@@ -1403,8 +1389,8 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: statusRows } = await client.query(
         `select fsrs_reps, last_result, fsrs_enabled
-         from user_word_status
-         where user_id = $1 and word_id = $2 and mode = $3`,
+         from user_card_status
+         where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
       );
       expect(statusRows[0]).toEqual(
@@ -1513,8 +1499,8 @@ describeIfDb("FSRS RPC integration", () => {
       };
 
       await client.query(
-        `insert into user_word_status (
-          user_id, word_id, mode,
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
           fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
           fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
         ) values ($1, $2, $3, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
@@ -1560,8 +1546,8 @@ describeIfDb("FSRS RPC integration", () => {
       const reverseMode = "definition-to-word";
 
       await client.query(
-        `insert into user_word_status (
-          user_id, word_id, mode,
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
           fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
           fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
         ) values
@@ -1623,8 +1609,8 @@ describeIfDb("FSRS RPC integration", () => {
       const privateWordId = privateRows[0].id;
 
       await client.query(
-        `insert into user_word_status (
-          user_id, word_id, mode,
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
           fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
           fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
         ) values
