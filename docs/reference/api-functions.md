@@ -5,6 +5,8 @@
 
 This file is now the index for the public Supabase RPC surface. Open only the function group you need.
 
+External browser/companion clients should prefer the versioned app HTTP boundary in [Platform HTTP API](./platform-api.md) instead of calling Supabase RPCs directly.
+
 ## Shared Rules
 
 - All public-schema functions are exposed through PostgREST as `POST /rest/v1/rpc/<function_name>`.
