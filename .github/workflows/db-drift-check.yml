@@ -4,21 +4,42 @@ on:
   pull_request:
     paths:
       - 'db/migrations/**'
+      - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/plain_postgres_supabase_compat.sql'
       - '.github/workflows/db-drift-check.yml'
   push:
     branches: [main, master]
     paths:
       - 'db/migrations/**'
+      - 'db/scripts/local_supabase_probe.sql'
+      - 'db/scripts/plain_postgres_supabase_compat.sql'
       - '.github/workflows/db-drift-check.yml'
   workflow_dispatch:
 
 jobs:
   check-drift:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: contract_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Check migration anti-patterns
         id: check-patterns
@@ -113,6 +134,14 @@ jobs:
 
           migration_count="$(wc -l < "$migration_list" | tr -d ' ')"
           echo "Found $migration_count numbered migration files; bootstrap coverage is complete."
+
+      - name: Apply bootstrap and probe contract
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
 
       - name: Verify database connection (optional)
         if: github.event.pull_request.base.ref == 'main'
