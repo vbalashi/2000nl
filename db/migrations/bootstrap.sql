@@ -153,3 +153,6 @@
 
 -- Training stats backed by physical card-state storage
 \i db/migrations/048_stats_use_card_status.sql
+
+-- Dictionary lookup status backed by physical card-state storage
+\i db/migrations/049_lookup_uses_card_status.sql
