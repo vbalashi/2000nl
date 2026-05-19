@@ -144,3 +144,6 @@
 
 -- Card-facing reviews backed by physical card-state storage
 \i db/migrations/045_handle_card_review_on_card_status.sql
+
+-- Scheduler selection backed by physical card-state storage
+\i db/migrations/046_scheduler_uses_card_status.sql
