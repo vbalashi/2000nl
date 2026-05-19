@@ -169,9 +169,11 @@ $$ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp;
 
+DROP FUNCTION IF EXISTS update_user_dictionary_entry(uuid, uuid, jsonb);
+
 CREATE OR REPLACE FUNCTION update_user_dictionary_entry(
     p_user_id uuid,
-    p_word_id uuid,
+    p_entry_id uuid,
     p_entry jsonb
 ) RETURNS uuid AS $$
 DECLARE
@@ -185,7 +187,7 @@ BEGIN
 
     SELECT * INTO v_existing
     FROM word_entries
-    WHERE id = p_word_id;
+    WHERE id = p_entry_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'entry_not_found';
@@ -201,7 +203,7 @@ BEGIN
           AND language_code = v_payload->>'languageCode'
           AND headword = v_payload->>'headword'
           AND meaning_id = v_existing.meaning_id
-          AND id <> p_word_id
+          AND id <> p_entry_id
     ) THEN
         RAISE EXCEPTION 'duplicate_user_entry';
     END IF;
@@ -213,17 +215,19 @@ BEGIN
         gender = v_payload->>'gender',
         is_nt2_2000 = false,
         raw = v_payload
-    WHERE id = p_word_id;
+    WHERE id = p_entry_id;
 
-    RETURN p_word_id;
+    RETURN p_entry_id;
 END;
 $$ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp;
 
+DROP FUNCTION IF EXISTS delete_user_dictionary_entry(uuid, uuid);
+
 CREATE OR REPLACE FUNCTION delete_user_dictionary_entry(
     p_user_id uuid,
-    p_word_id uuid
+    p_entry_id uuid
 ) RETURNS void AS $$
 DECLARE
     v_existing word_entries%rowtype;
@@ -234,7 +238,7 @@ BEGIN
 
     SELECT * INTO v_existing
     FROM word_entries
-    WHERE id = p_word_id;
+    WHERE id = p_entry_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'entry_not_found';
@@ -243,7 +247,7 @@ BEGIN
     PERFORM assert_editable_user_dictionary(p_user_id, v_existing.dictionary_id);
 
     DELETE FROM word_entries
-    WHERE id = p_word_id;
+    WHERE id = p_entry_id;
 END;
 $$ LANGUAGE plpgsql
 SECURITY DEFINER

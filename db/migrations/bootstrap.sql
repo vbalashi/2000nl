@@ -177,3 +177,6 @@
 
 -- Rename platform-facing RPC parameters to entry terminology
 \i db/migrations/056_entry_named_platform_rpc_params.sql
+
+-- Rename user-list membership RPC parameters to entry terminology
+\i db/migrations/057_entry_named_membership_rpc_params.sql

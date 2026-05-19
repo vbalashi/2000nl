@@ -1,7 +1,9 @@
 -- Read a single dictionary entry by id behind dictionary access checks.
 
+DROP FUNCTION IF EXISTS fetch_dictionary_entry_by_id_gated(uuid);
+
 CREATE OR REPLACE FUNCTION fetch_dictionary_entry_by_id_gated(
-    p_word_id uuid
+    p_entry_id uuid
 ) RETURNS jsonb AS $$
 DECLARE
     v_user_id uuid;
@@ -32,7 +34,7 @@ BEGIN
     )
     INTO v_entry
     FROM word_entries w
-    WHERE w.id = p_word_id
+    WHERE w.id = p_entry_id
       AND (w.dictionary_id IS NULL OR can_access_dictionary(v_user_id, w.dictionary_id, 'read'));
 
     RETURN v_entry;

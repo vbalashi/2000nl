@@ -1,9 +1,11 @@
 -- Explicit list membership action behind ownership and dictionary access checks.
 
+DROP FUNCTION IF EXISTS add_entry_to_user_list(uuid, uuid, uuid);
+
 CREATE OR REPLACE FUNCTION add_entry_to_user_list(
     p_user_id uuid,
     p_list_id uuid,
-    p_word_id uuid
+    p_entry_id uuid
 ) RETURNS void AS $$
 DECLARE
     v_dictionary_id uuid;
@@ -23,7 +25,7 @@ BEGIN
 
     SELECT dictionary_id INTO v_dictionary_id
     FROM word_entries
-    WHERE id = p_word_id;
+    WHERE id = p_entry_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'entry_not_found';
@@ -35,7 +37,7 @@ BEGIN
     END IF;
 
     INSERT INTO user_word_list_items (list_id, word_id)
-    VALUES (p_list_id, p_word_id)
+    VALUES (p_list_id, p_entry_id)
     ON CONFLICT (list_id, word_id) DO NOTHING;
 END;
 $$ LANGUAGE plpgsql

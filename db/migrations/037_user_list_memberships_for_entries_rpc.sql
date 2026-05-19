@@ -1,8 +1,10 @@
 -- Return owned user-list memberships for a batch of dictionary entries.
 
+DROP FUNCTION IF EXISTS get_user_list_memberships_for_entries(uuid, uuid[]);
+
 CREATE OR REPLACE FUNCTION get_user_list_memberships_for_entries(
     p_user_id uuid,
-    p_word_ids uuid[]
+    p_entry_ids uuid[]
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -17,12 +19,12 @@ BEGIN
         RAISE EXCEPTION 'unauthorized';
     END IF;
 
-    WITH requested(word_id) AS (
-        SELECT DISTINCT unnest(COALESCE(p_word_ids, ARRAY[]::uuid[]))
+    WITH requested(entry_id) AS (
+        SELECT DISTINCT unnest(COALESCE(p_entry_ids, ARRAY[]::uuid[]))
     ),
     memberships AS (
         SELECT
-            item.word_id,
+            item.word_id AS entry_id,
             jsonb_build_object(
                 'id', list.id,
                 'kind', 'user',
@@ -36,24 +38,24 @@ BEGIN
                 )
             ) AS list_payload
         FROM requested
-        JOIN user_word_list_items item ON item.word_id = requested.word_id
+        JOIN user_word_list_items item ON item.word_id = requested.entry_id
         JOIN user_word_lists list ON list.id = item.list_id
         WHERE list.user_id = p_user_id
     ),
     grouped AS (
         SELECT
-            word_id,
+            entry_id,
             jsonb_agg(list_payload ORDER BY list_payload->>'name') AS lists
         FROM memberships
-        GROUP BY word_id
+        GROUP BY entry_id
     )
     SELECT COALESCE(
         jsonb_agg(
             jsonb_build_object(
-                'word_id', word_id,
+                'entry_id', entry_id,
                 'lists', lists
             )
-            ORDER BY word_id
+            ORDER BY entry_id
         ),
         '[]'::jsonb
     )

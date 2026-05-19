@@ -1,8 +1,10 @@
 -- Explicit action for copying a readable entry into a user-owned dictionary.
 
+DROP FUNCTION IF EXISTS copy_entry_to_user_dictionary(uuid, uuid, uuid, jsonb);
+
 CREATE OR REPLACE FUNCTION copy_entry_to_user_dictionary(
     p_user_id uuid,
-    p_source_word_id uuid,
+    p_source_entry_id uuid,
     p_target_dictionary_id uuid DEFAULT NULL,
     p_overrides jsonb DEFAULT '{}'::jsonb
 ) RETURNS uuid AS $$
@@ -15,7 +17,7 @@ DECLARE
     v_language_code text;
     v_part_of_speech text;
     v_gender text;
-    v_copied_word_id uuid;
+    v_copied_entry_id uuid;
 BEGIN
     IF p_user_id IS NULL OR p_user_id != (select auth.uid()) THEN
         RAISE EXCEPTION 'unauthorized';
@@ -23,7 +25,7 @@ BEGIN
 
     SELECT * INTO v_source
     FROM word_entries
-    WHERE id = p_source_word_id;
+    WHERE id = p_source_entry_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'entry_not_found';
@@ -118,9 +120,9 @@ BEGIN
         part_of_speech = excluded.part_of_speech,
         gender = excluded.gender,
         raw = excluded.raw
-    RETURNING id INTO v_copied_word_id;
+    RETURNING id INTO v_copied_entry_id;
 
-    RETURN v_copied_word_id;
+    RETURN v_copied_entry_id;
 END;
 $$ LANGUAGE plpgsql
 SECURITY DEFINER

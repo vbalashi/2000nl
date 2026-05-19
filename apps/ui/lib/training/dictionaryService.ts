@@ -28,7 +28,7 @@ const fetchDictionaryEntryById = async (
 ): Promise<DictionaryEntry | null> => {
   if (userId) {
     const { data, error } = await supabase.rpc("fetch_dictionary_entry_by_id_gated", {
-      p_word_id: id,
+      p_entry_id: id,
     });
 
     if (error || !data) {

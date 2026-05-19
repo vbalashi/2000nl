@@ -506,12 +506,12 @@ describe("trainingService list and preference characterization", () => {
     expect(rpc).toHaveBeenNthCalledWith(1, "add_entry_to_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_id: "word-1",
+      p_entry_id: "word-1",
     });
     expect(rpc).toHaveBeenNthCalledWith(2, "add_entry_to_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_id: "word-2",
+      p_entry_id: "word-2",
     });
   });
 
@@ -540,7 +540,7 @@ describe("trainingService list and preference characterization", () => {
     expect(rpc).toHaveBeenCalledWith("remove_entries_from_user_list", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_ids: ["word-1", "word-2"],
+      p_entry_ids: ["word-1", "word-2"],
     });
     expect(rpc).toHaveBeenCalledWith("delete_user_word_list", {
       p_user_id: "user-1",
@@ -571,7 +571,7 @@ describe("trainingService list and preference characterization", () => {
     expect(rpc).toHaveBeenCalledWith("get_user_list_membership", {
       p_user_id: "user-1",
       p_list_id: "list-1",
-      p_word_ids: ["word-1", "word-2", "word-3"],
+      p_entry_ids: ["word-1", "word-2", "word-3"],
     });
   });
 

@@ -227,7 +227,7 @@ export async function removeWordsFromUserList(
   const { error } = await supabase.rpc("remove_entries_from_user_list", {
     p_user_id: userId,
     p_list_id: listId,
-    p_word_ids: uniqueWordIds,
+    p_entry_ids: uniqueWordIds,
   });
 
   if (error) {
@@ -339,7 +339,7 @@ export async function addWordsToUserList(
       supabase.rpc("add_entry_to_user_list", {
         p_user_id: userId,
         p_list_id: listId,
-        p_word_id: wordId,
+        p_entry_id: wordId,
       }),
     ),
   );
@@ -374,7 +374,7 @@ export async function fetchUserListMembership(
   const { data, error } = await supabase.rpc("get_user_list_membership", {
     p_user_id: userId,
     p_list_id: listId,
-    p_word_ids: wordIds,
+    p_entry_ids: wordIds,
   });
 
   if (error) {

@@ -113,7 +113,7 @@ describe("trainingService dictionary lookup", () => {
       }),
     );
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_word_id: "word-1",
+      p_entry_id: "word-1",
     });
     expect(from).not.toHaveBeenCalled();
   });

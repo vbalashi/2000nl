@@ -1,4 +1,4 @@
--- Read user-list membership through an explicit ownership-checked RPC.
+-- Rename user-list membership RPC parameter from p_word_ids to p_entry_ids.
 
 DROP FUNCTION IF EXISTS get_user_list_membership(uuid, uuid, uuid[]);
 
