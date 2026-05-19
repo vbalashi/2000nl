@@ -86,45 +86,30 @@ describe("trainingService.recordReview turnId forwarding", () => {
     });
   });
 
-  test("falls back to legacy review RPC when card wrapper is missing", async () => {
+  test("does not fall back to legacy review RPC when card review fails", async () => {
     const { recordReview } = await import("@/lib/trainingService");
 
-    rpc
-      .mockResolvedValueOnce({
-        data: null,
-        error: { message: "Could not find the function public.handle_card_review", code: "PGRST202" },
-      })
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({
-        data: {
-          fsrs_last_interval: 1,
-          fsrs_reps: 1,
-          fsrs_stability: 0.5,
-          click_count: 0,
-          next_review_at: "2026-02-09T00:00:00.000Z",
-          in_learning: false,
-          learning_due_at: null,
-        },
-        error: null,
-      });
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        message: "Could not find the function public.handle_card_review",
+        code: "PGRST202",
+      },
+    });
 
-    await recordReview({
+    const result = await recordReview({
       userId: "user-1",
       wordId: "word-1",
       mode: "word-to-definition",
       result: "success",
-      turnId: "turn-legacy",
+      turnId: "turn-card",
     });
 
-    expect(rpc).toHaveBeenCalledTimes(3);
+    expect(result).toBeNull();
+    expect(rpc).toHaveBeenCalledTimes(1);
     expect(rpc.mock.calls[0]?.[0]).toBe("handle_card_review");
     expect(rpc.mock.calls[0]?.[1]).toEqual(
-      expect.objectContaining({ p_turn_id: "turn-legacy" })
+      expect.objectContaining({ p_turn_id: "turn-card" })
     );
-    expect(rpc.mock.calls[1]?.[0]).toBe("handle_review");
-    expect(rpc.mock.calls[1]?.[1]).toEqual(
-      expect.objectContaining({ p_turn_id: "turn-legacy" })
-    );
-    expect(rpc.mock.calls[2]?.[0]).toBe("get_user_card_state");
   });
 });

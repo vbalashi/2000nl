@@ -35,18 +35,7 @@ export type RecordReviewParams = {
   mode: TrainingMode;
   result: ReviewResult;
   // Unique ID for the user's "turn" on a presented card. Used for backend idempotency.
-  // Nullable for backward compatibility and to support older deployments.
   turnId?: string | null;
-};
-
-const isMissingRpc = (error: any) => {
-  const msg = error?.message ?? "";
-  const code = error?.code as string | undefined;
-  return (
-    code === "PGRST202" ||
-    msg.includes("Could not find the function") ||
-    msg.includes("schema cache")
-  );
 };
 
 export const recordWordView = async (params: {
@@ -54,21 +43,11 @@ export const recordWordView = async (params: {
   wordId: string;
   mode: TrainingMode;
 }) => {
-  const rpc = await supabase.rpc("record_card_view", {
+  const { error } = await supabase.rpc("record_card_view", {
     p_user_id: params.userId,
     p_entry_id: params.wordId,
     p_card_type_id: params.mode,
   });
-  const error =
-    rpc.error && isMissingRpc(rpc.error)
-      ? (
-          await supabase.rpc("record_word_view", {
-            p_user_id: params.userId,
-            p_word_id: params.wordId,
-            p_mode: params.mode,
-          })
-        ).error
-      : rpc.error;
 
   if (error) {
     console.error("Error recording word view via RPC", error);
@@ -85,35 +64,17 @@ export const recordReview = async (
     p_result: params.result,
   } as const;
 
-  const tryWithTurnId = async () =>
-    supabase.rpc("handle_card_review", {
-      ...argsBase,
-      p_turn_id: params.turnId ?? null,
-    });
-
-  const tryLegacy = async (includeTurnId: boolean) =>
-    supabase.rpc("handle_review", {
-      p_user_id: params.userId,
-      p_word_id: params.wordId,
-      p_mode: params.mode,
-      p_result: params.result,
-      ...(includeTurnId && params.turnId ? { p_turn_id: params.turnId } : {}),
-    });
-
-  let rpc = await tryWithTurnId();
-  if (rpc.error && isMissingRpc(rpc.error)) {
-    rpc = await tryLegacy(Boolean(params.turnId));
-    if (rpc.error && params.turnId && isMissingRpc(rpc.error)) {
-      rpc = await tryLegacy(false);
-    }
-  }
+  const rpc = await supabase.rpc("handle_card_review", {
+    ...argsBase,
+    p_turn_id: params.turnId ?? null,
+  });
 
   if (rpc.error) {
     console.error("Error recording review via RPC", rpc.error);
     return null;
   }
 
-  let statusRpc = await supabase.rpc(
+  const statusRpc = await supabase.rpc(
     "get_user_card_state",
     {
       p_user_id: params.userId,
@@ -121,13 +82,6 @@ export const recordReview = async (
       p_card_type_id: params.mode,
     },
   );
-  if (statusRpc.error && isMissingRpc(statusRpc.error)) {
-    statusRpc = await supabase.rpc("get_card_user_state", {
-      p_user_id: params.userId,
-      p_word_id: params.wordId,
-      p_mode: params.mode,
-    });
-  }
 
   const { data: statusData, error: fetchError } = statusRpc;
 
