@@ -141,3 +141,6 @@
 
 -- Recent history backed by physical card-state storage
 \i db/migrations/044_use_physical_card_status_history.sql
+
+-- Card-facing reviews backed by physical card-state storage
+\i db/migrations/045_handle_card_review_on_card_status.sql

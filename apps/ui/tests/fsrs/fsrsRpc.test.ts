@@ -280,7 +280,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("card-oriented compatibility RPCs map to current word status storage", async () => {
+  test("card-oriented compatibility RPCs map to physical card storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId);
@@ -341,6 +341,20 @@ describeIfDb("FSRS RPC integration", () => {
         )
       ).rows;
       expect(rows[0]).toEqual(
+        expect.objectContaining({
+          fsrs_reps: 1,
+          fsrs_last_grade: 3,
+          fsrs_enabled: true,
+        }),
+      );
+
+      const { rows: legacyRows } = await client.query(
+        `select fsrs_reps, fsrs_last_grade, fsrs_enabled
+         from user_word_status
+         where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(legacyRows[0]).toEqual(
         expect.objectContaining({
           fsrs_reps: 1,
           fsrs_last_grade: 3,
