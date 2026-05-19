@@ -422,6 +422,9 @@ describeIfDb("FSRS RPC integration", () => {
           name: expect.stringContaining("Summary list"),
           language_code: "nl",
           primary_language_code: "nl",
+          default_scenario_id: null,
+          card_policy: "inherit",
+          card_type_ids: null,
         }),
       );
       expect(rows[0].list.user_word_list_items[0].count).toBe(1);
@@ -459,11 +462,16 @@ describeIfDb("FSRS RPC integration", () => {
         `select get_available_word_lists($1::uuid, 'nl', null) as lists`,
         [userId],
       );
-      const lists = rows[0].lists as Array<{ id: string; list_type: string }>;
+      const lists = rows[0].lists as Array<{
+        id: string;
+        list_type: string;
+        card_policy: string;
+      }>;
 
       expect(lists.some((list) => list.id === curatedRows[0].id)).toBe(true);
       expect(lists.some((list) => list.id === userRows[0].id)).toBe(true);
       expect(lists.every((list) => list.list_type === "curated" || list.list_type === "user")).toBe(true);
+      expect(lists.every((list) => list.card_policy === "inherit")).toBe(true);
     }, userId);
   });
 
@@ -844,7 +852,16 @@ describeIfDb("FSRS RPC integration", () => {
       await ensureUserWithSettings(client, otherId);
 
       const { rows: createRows } = await client.query(
-        `select create_user_word_list($1, $2, $3, 'nl', 'nl') as list`,
+        `select create_user_word_list(
+          $1,
+          $2,
+          $3,
+          'nl',
+          'nl',
+          'listening',
+          'restrict',
+          ARRAY['word-to-definition']::text[]
+        ) as list`,
         [ownerId, `CRUD list ${Date.now()}`, "Created through RPC"],
       );
       const list = createRows[0].list;
@@ -854,6 +871,9 @@ describeIfDb("FSRS RPC integration", () => {
           description: "Created through RPC",
           language_code: "nl",
           primary_language_code: "nl",
+          default_scenario_id: "listening",
+          card_policy: "restrict",
+          card_type_ids: ["word-to-definition"],
         }),
       );
       expect(list.user_word_list_items[0].count).toBe(0);
@@ -904,7 +924,17 @@ describeIfDb("FSRS RPC integration", () => {
       await client.query("release savepoint unauthorized_update_list");
 
       const { rows: updateRows } = await client.query(
-        `select update_user_word_list($1, $2, $3, $4, 'nl', 'nl') as list`,
+        `select update_user_word_list(
+          $1,
+          $2,
+          $3,
+          $4,
+          'nl',
+          'nl',
+          'understanding',
+          'prefer',
+          ARRAY['definition-to-word', 'word-to-definition']::text[]
+        ) as list`,
         [ownerId, list.id, "Updated list", "After"],
       );
 
@@ -915,6 +945,9 @@ describeIfDb("FSRS RPC integration", () => {
           description: "After",
           language_code: "nl",
           primary_language_code: "nl",
+          default_scenario_id: "understanding",
+          card_policy: "prefer",
+          card_type_ids: ["definition-to-word", "word-to-definition"],
         }),
       );
       expect(updateRows[0].list.user_word_list_items[0].count).toBe(0);

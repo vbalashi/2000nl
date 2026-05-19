@@ -126,3 +126,6 @@
 
 -- Card-oriented scheduler compatibility wrapper
 \i db/migrations/039_get_next_card_compatibility_rpc.sql
+
+-- Training intent metadata for lists
+\i db/migrations/040_list_training_intent.sql
