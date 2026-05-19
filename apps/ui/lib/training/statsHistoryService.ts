@@ -122,7 +122,7 @@ export const fetchRecentHistory = async (
         part_of_speech: row.part_of_speech ?? undefined,
         gender: row.gender ?? undefined,
         raw: normalizeRaw(row.raw),
-        is_nt2_2000: row.is_nt2_2000,
+        is_nt2_2000: row.is_nt2_2000 ?? undefined,
         meanings_count: row.meanings_count ?? 1,
         source: source as "click" | "review",
         result: mapEventTypeToResult(row.event_type),

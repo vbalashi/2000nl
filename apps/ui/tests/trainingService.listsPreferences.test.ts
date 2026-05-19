@@ -5,17 +5,17 @@ type QueryResponse = { data?: any; error?: any; count?: number };
 type QueryRecord = {
   table: string;
   response: QueryResponse;
-  select: ReturnType<typeof vi.fn>;
-  eq: ReturnType<typeof vi.fn>;
-  gt: ReturnType<typeof vi.fn>;
-  ilike: ReturnType<typeof vi.fn>;
-  in: ReturnType<typeof vi.fn>;
-  order: ReturnType<typeof vi.fn>;
-  range: ReturnType<typeof vi.fn>;
-  maybeSingle: ReturnType<typeof vi.fn>;
-  delete: ReturnType<typeof vi.fn>;
-  insert: ReturnType<typeof vi.fn>;
-  upsert: ReturnType<typeof vi.fn>;
+  select: any;
+  eq: any;
+  gt: any;
+  ilike: any;
+  in: any;
+  order: any;
+  range: any;
+  maybeSingle: any;
+  delete: any;
+  insert: any;
+  upsert: any;
 };
 
 const rpc = vi.fn();

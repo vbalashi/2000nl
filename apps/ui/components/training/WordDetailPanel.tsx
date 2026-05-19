@@ -214,10 +214,11 @@ export function WordDetailPanel({
 
   const meanings = getAllMeanings(entry.raw);
   const primaryMeaning = meanings[0] ?? {};
+  const primaryMeaningRecord = primaryMeaning as Record<string, unknown>;
   const examples: string[] = Array.isArray(primaryMeaning.examples)
     ? primaryMeaning.examples.filter((x: unknown) => typeof x === "string")
-    : typeof (primaryMeaning as { example?: string }).example === "string"
-      ? [(primaryMeaning as { example: string }).example]
+    : typeof primaryMeaningRecord.example === "string"
+      ? [primaryMeaningRecord.example]
       : [];
 
   const pos = entry.part_of_speech ?? "";

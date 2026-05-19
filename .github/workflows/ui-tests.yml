@@ -33,6 +33,10 @@ jobs:
         run: npm run lint
         working-directory: apps/ui
 
+      - name: Typecheck UI
+        run: npm run typecheck
+        working-directory: apps/ui
+
       - name: Run UI tests
         run: npm test
         working-directory: apps/ui

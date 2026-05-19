@@ -5,12 +5,12 @@ type QueryResponse = { data?: any; error?: any; count?: number };
 type QueryRecord = {
   table: string;
   response: QueryResponse;
-  select: ReturnType<typeof vi.fn>;
-  eq: ReturnType<typeof vi.fn>;
-  ilike: ReturnType<typeof vi.fn>;
-  order: ReturnType<typeof vi.fn>;
-  limit: ReturnType<typeof vi.fn>;
-  maybeSingle: ReturnType<typeof vi.fn>;
+  select: any;
+  eq: any;
+  ilike: any;
+  order: any;
+  limit: any;
+  maybeSingle: any;
 };
 
 const fromResponses = new Map<string, QueryResponse[]>();

@@ -5,12 +5,12 @@ type QueryResponse = { data?: any; error?: any; count?: number };
 type QueryRecord = {
   table: string;
   response: QueryResponse;
-  select: ReturnType<typeof vi.fn>;
-  eq: ReturnType<typeof vi.fn>;
-  gte: ReturnType<typeof vi.fn>;
-  in: ReturnType<typeof vi.fn>;
-  order: ReturnType<typeof vi.fn>;
-  limit: ReturnType<typeof vi.fn>;
+  select: any;
+  eq: any;
+  gte: any;
+  in: any;
+  order: any;
+  limit: any;
 };
 
 const rpc = vi.fn();

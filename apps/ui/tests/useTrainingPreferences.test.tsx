@@ -54,10 +54,10 @@ describe("useTrainingPreferences", () => {
   });
 
   test("setters update local state before persistence resolves", async () => {
-    let resolveUpdate: ((value: { error: null }) => void) | null = null;
+    let resolveUpdate!: (value: { error: null }) => void;
     updateUserPreferences.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<{ error: null }>((resolve) => {
           resolveUpdate = resolve;
         }),
     );
@@ -87,6 +87,6 @@ describe("useTrainingPreferences", () => {
       translationLang: null,
     });
 
-    resolveUpdate?.({ error: null });
+    resolveUpdate({ error: null });
   });
 });
