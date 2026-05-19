@@ -156,3 +156,6 @@
 
 -- Dictionary lookup status backed by physical card-state storage
 \i db/migrations/049_lookup_uses_card_status.sql
+
+-- Gated word reads backed by physical card-state storage
+\i db/migrations/050_gated_word_reads_use_card_status.sql
