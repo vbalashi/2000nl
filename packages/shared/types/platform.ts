@@ -169,6 +169,18 @@ export type UserCardState = UserCardStateRef &
   UserCardTelemetry &
   UserCardSchedulingState;
 
+export type UserEntryProgressSummary = {
+  status: "new" | "seen" | "learning" | "reviewing" | "known" | "mixed";
+  trackedCardCount: number;
+  reviewedCardCount: number;
+  learningCardCount: number;
+  hiddenCardCount: number;
+  strongestCardTypeId?: CardTypeId | null;
+  weakestCardTypeId?: CardTypeId | null;
+  lastReviewedAt?: string | null;
+  nextReviewAt?: string | null;
+};
+
 export type LookupIntent =
   | "dictionary-lookup"
   | "training-review"
@@ -209,6 +221,7 @@ export type DictionaryLookupResult = {
   dictionary: DictionarySummary | null;
   listMemberships?: WordListSummaryV2[];
   userStateByCardType?: Record<CardTypeId, UserCardState>;
+  progressSummary?: UserEntryProgressSummary;
   availableActions?: LookupActionId[];
 };
 

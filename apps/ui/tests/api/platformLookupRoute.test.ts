@@ -185,17 +185,22 @@ describe("/api/platform/lookup", () => {
         return Promise.resolve({
           data: {
             click_count: 2,
+            seen_count: 4,
+            success_count: 1,
             last_seen_at: "2026-05-17T10:00:00.000Z",
-            last_reviewed_at: null,
-            next_review_at: null,
+            last_reviewed_at: "2026-05-17T11:00:00.000Z",
+            next_review_at: "2026-05-18T11:00:00.000Z",
             hidden: false,
             frozen_until: null,
+            in_learning: false,
+            learning_due_at: null,
             fsrs_stability: null,
             fsrs_difficulty: null,
-            fsrs_reps: 0,
+            fsrs_reps: 1,
             fsrs_lapses: 0,
             fsrs_last_grade: null,
             fsrs_last_interval: null,
+            fsrs_params_version: "fsrs-6-default",
           },
           error: null,
         });
@@ -257,8 +262,29 @@ describe("/api/platform/lookup", () => {
       expect.objectContaining({
         entryId: "entry-1",
         clickCount: 2,
+        seenCount: 4,
+        successCount: 1,
+        lastReviewedAt: "2026-05-17T11:00:00.000Z",
+        nextReviewAt: "2026-05-18T11:00:00.000Z",
+        inLearning: false,
+        learningDueAt: null,
+        fsrs: expect.objectContaining({
+          reps: 1,
+          paramsVersion: "fsrs-6-default",
+        }),
       }),
     );
+    expect(payload.items[0].progressSummary).toEqual({
+      status: "reviewing",
+      trackedCardCount: 1,
+      reviewedCardCount: 1,
+      learningCardCount: 0,
+      hiddenCardCount: 0,
+      strongestCardTypeId: "word-to-definition",
+      weakestCardTypeId: "word-to-definition",
+      lastReviewedAt: "2026-05-17T11:00:00.000Z",
+      nextReviewAt: "2026-05-18T11:00:00.000Z",
+    });
     expect(payload.items[0].listMemberships).toEqual([
       {
         id: "list-1",

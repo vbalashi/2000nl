@@ -94,6 +94,30 @@ type UserListMembershipRow = {
   }>;
 };
 
+type PlatformUserCardStatePayload = {
+  cardTypeId: TrainingMode;
+  entryId: string;
+  clickCount: number;
+  seenCount: number;
+  successCount: number;
+  lastSeenAt: string | null;
+  lastReviewedAt: string | null;
+  nextReviewAt: string | null;
+  hidden: boolean;
+  frozenUntil: string | null;
+  inLearning: boolean;
+  learningDueAt: string | null;
+  fsrs: {
+    stability: number | null;
+    difficulty: number | null;
+    reps: number;
+    lapses: number;
+    lastGrade: number | null;
+    lastInterval: number | null;
+    paramsVersion: string | null;
+  };
+};
+
 export type PlatformOperationResult = {
   payload: unknown;
   status: number;
@@ -147,7 +171,7 @@ function hasOwnBodyField(body: PlatformActionBody, field: keyof PlatformActionBo
 async function assertEntryReadable(
   supabase: any,
   entryId: string,
-): Promise<boolean | { error: string; detail?: string }> {
+): Promise<true | { error: string; detail?: string }> {
   const { data: entry, error } = await supabase.rpc(
     "fetch_dictionary_entry_by_id_gated",
     {
@@ -163,6 +187,73 @@ async function assertEntryReadable(
   }
 
   return true;
+}
+
+function latestTimestamp(values: Array<string | null | undefined>) {
+  return values
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+}
+
+function earliestTimestamp(values: Array<string | null | undefined>) {
+  return values
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => Date.parse(a) - Date.parse(b))[0] ?? null;
+}
+
+function strengthScore(state: PlatformUserCardStatePayload) {
+  return (
+    state.fsrs.reps * 1000 +
+    (state.fsrs.stability ?? 0) * 10 +
+    state.successCount -
+    state.fsrs.lapses * 100
+  );
+}
+
+function buildProgressSummary(
+  statesByCardType: Record<string, PlatformUserCardStatePayload>,
+) {
+  const states = Object.values(statesByCardType);
+  if (states.length === 0) {
+    return {
+      status: "new",
+      trackedCardCount: 0,
+      reviewedCardCount: 0,
+      learningCardCount: 0,
+      hiddenCardCount: 0,
+      strongestCardTypeId: null,
+      weakestCardTypeId: null,
+      lastReviewedAt: null,
+      nextReviewAt: null,
+    };
+  }
+
+  const reviewed = states.filter((state) => state.fsrs.reps > 0);
+  const learning = states.filter((state) => state.inLearning);
+  const hidden = states.filter((state) => state.hidden);
+  const scored = [...states].sort((a, b) => strengthScore(a) - strengthScore(b));
+  const status =
+    hidden.length === states.length
+      ? "known"
+      : learning.length > 0
+        ? "learning"
+        : reviewed.length === states.length
+          ? "reviewing"
+          : reviewed.length > 0
+            ? "mixed"
+            : "seen";
+
+  return {
+    status,
+    trackedCardCount: states.length,
+    reviewedCardCount: reviewed.length,
+    learningCardCount: learning.length,
+    hiddenCardCount: hidden.length,
+    weakestCardTypeId: scored[0]?.cardTypeId ?? null,
+    strongestCardTypeId: scored[scored.length - 1]?.cardTypeId ?? null,
+    lastReviewedAt: latestTimestamp(states.map((state) => state.lastReviewedAt)),
+    nextReviewAt: earliestTimestamp(states.map((state) => state.nextReviewAt)),
+  };
 }
 
 async function recordReview(auth: AuthenticatedSupabase, params: {
@@ -258,7 +349,7 @@ export async function performPlatformLookup(
     return { payload: { query, items: [] }, status: 200 };
   }
 
-  const userStateByEntryId = new Map<string, Record<string, unknown>>();
+  const userStateByEntryId = new Map<string, Record<string, PlatformUserCardStatePayload>>();
   const listMembershipsByEntryId = new Map<string, unknown[]>();
   if (includeUserState) {
     const { data: membershipRows, error: membershipError } = await auth.supabase.rpc(
@@ -326,11 +417,15 @@ export async function performPlatformLookup(
           cardTypeId: mode,
           entryId: entry.id,
           clickCount: row.click_count ?? 0,
+          seenCount: row.seen_count ?? 0,
+          successCount: row.success_count ?? 0,
           lastSeenAt: row.last_seen_at ?? null,
           lastReviewedAt: row.last_reviewed_at ?? null,
           nextReviewAt: row.next_review_at ?? null,
           hidden: row.hidden ?? false,
           frozenUntil: row.frozen_until ?? null,
+          inLearning: row.in_learning ?? false,
+          learningDueAt: row.learning_due_at ?? null,
           fsrs: {
             stability: row.fsrs_stability ?? null,
             difficulty: row.fsrs_difficulty ?? null,
@@ -338,6 +433,7 @@ export async function performPlatformLookup(
             lapses: row.fsrs_lapses ?? 0,
             lastGrade: row.fsrs_last_grade ?? null,
             lastInterval: row.fsrs_last_interval ?? null,
+            paramsVersion: row.fsrs_params_version ?? null,
           },
         };
         userStateByEntryId.set(entry.id, states);
@@ -396,6 +492,9 @@ export async function performPlatformLookup(
       ...(includeUserState
         ? {
             userStateByCardType: userStateByEntryId.get(entry.id) ?? {},
+            progressSummary: buildProgressSummary(
+              userStateByEntryId.get(entry.id) ?? {},
+            ),
             listMemberships: listMembershipsByEntryId.get(entry.id) ?? [],
           }
         : {}),
@@ -547,8 +646,8 @@ export async function performPlatformAction(
       p_card_policy: cardPolicy,
       p_card_type_ids: cardTypeIds.value,
       p_clear_default_scenario:
-        hasOwnBodyField(body, "defaultScenarioId") &&
-        body.defaultScenarioId === null,
+        hasOwnBodyField(body ?? {}, "defaultScenarioId") &&
+        body?.defaultScenarioId === null,
     });
 
     if (error) {
