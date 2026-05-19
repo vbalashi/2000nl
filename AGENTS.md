@@ -35,6 +35,7 @@ This is the canonical agent entrypoint for the 2000nl monorepo. Use it to orient
 Run the narrowest relevant checks for the files you touched.
 
 - UI dev server: `cd apps/ui && npm run dev`
+- UI typecheck: `cd apps/ui && npm run typecheck`
 - UI lint: `cd apps/ui && npm run lint`
 - UI unit/component tests: `cd apps/ui && npm test`
 - UI e2e tests: `cd apps/ui && npm run test:e2e`
