@@ -76,6 +76,20 @@ The script shows chronological review history including:
 
 ---
 
+## Pre-Drop Card State Parity
+
+**Script:** `check_user_card_status_parity_before_drop.sql`
+**Purpose:** Before applying `db/migrations/052_drop_legacy_user_word_status.sql` to a production-like database, verify that every legacy `user_word_status(user_id, word_id, mode)` row has an exact `user_card_status(user_id, entry_id, card_type_id)` counterpart.
+
+```bash
+SUPABASE_DB_URL="$DATABASE_URL" ./db/scripts/psql_supabase.sh \
+  -f db/scripts/check_user_card_status_parity_before_drop.sql
+```
+
+Run this after migration `042_physical_user_card_status.sql` and before migration `052_drop_legacy_user_word_status.sql`. It fails on missing keys, mismatched FSRS/state fields, and review-log rows without card state.
+
+---
+
 ## Development
 
 When adding new scripts:
