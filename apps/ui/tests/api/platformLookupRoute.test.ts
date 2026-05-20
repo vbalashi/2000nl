@@ -360,4 +360,86 @@ describe("/api/platform/lookup", () => {
     expect(payload.items[0].userStateByCardType).toBeUndefined();
     expect(payload.items[0].listMemberships).toBeUndefined();
   });
+
+  test("reports all-hidden progress as hidden, not known", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "fetch_dictionary_entry_gated") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "entry-hidden",
+              dictionary_id: "dict-1",
+              language_code: "nl",
+              headword: "verborgen",
+              meaning_id: 1,
+              raw: {},
+              is_nt2_2000: true,
+              meanings_count: 1,
+              dictionary: {
+                id: "dict-1",
+                language_code: "nl",
+                slug: "nl-vandale",
+                name: "VanDale Dutch",
+                kind: "curated",
+                visibility: "system",
+                owner_user_id: null,
+                is_editable: false,
+                schema_key: "nl-vandale-v1",
+                schema_version: 1,
+              },
+            },
+          ],
+          error: null,
+        });
+      }
+      if (name === "get_user_list_memberships_for_entries") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      if (
+        name === "get_user_card_state" &&
+        args?.p_card_type_id === "word-to-definition"
+      ) {
+        return Promise.resolve({
+          data: {
+            click_count: 0,
+            seen_count: 0,
+            success_count: 0,
+            last_seen_at: null,
+            last_reviewed_at: null,
+            next_review_at: null,
+            hidden: true,
+            frozen_until: null,
+            in_learning: false,
+            learning_due_at: null,
+            fsrs_stability: null,
+            fsrs_difficulty: null,
+            fsrs_reps: 0,
+            fsrs_lapses: 0,
+            fsrs_last_grade: null,
+            fsrs_last_interval: null,
+            fsrs_params_version: "fsrs-6-default",
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(request({ query: "verborgen" }));
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].progressSummary).toEqual(
+      expect.objectContaining({
+        status: "hidden",
+        hiddenCardCount: 1,
+        reviewedCardCount: 0,
+      }),
+    );
+  });
 });

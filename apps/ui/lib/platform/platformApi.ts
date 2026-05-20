@@ -249,7 +249,7 @@ function buildProgressSummary(
   const scored = [...states].sort((a, b) => strengthScore(a) - strengthScore(b));
   const status =
     hidden.length === states.length
-      ? "known"
+      ? "hidden"
       : learning.length > 0
         ? "learning"
         : reviewed.length === states.length
