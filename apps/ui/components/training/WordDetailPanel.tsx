@@ -37,6 +37,8 @@ export type WordDetailPanelProps = {
   onTrainingAction?: (result: ReviewResult) => void;
   /** Disable training-only actions (e.g. until revealed / while saving). */
   trainingActionDisabled?: boolean;
+  /** Automatically request translation on mount. Defaults to true. */
+  autoFetchTranslation?: boolean;
 };
 
 const POS_COLORS: Record<string, string> = {
@@ -85,6 +87,7 @@ export function WordDetailPanel({
   currentTrainingEntryId = null,
   onTrainingAction,
   trainingActionDisabled = false,
+  autoFetchTranslation = true,
 }: WordDetailPanelProps) {
   const [translationStatus, setTranslationStatus] =
     React.useState<WordEntryTranslationStatus | null>(null);
@@ -184,9 +187,12 @@ export function WordDetailPanel({
 
   // Auto-fetch translation when component mounts or entry changes
   React.useEffect(() => {
+    if (!autoFetchTranslation) return;
+    if (!entry?.id) return;
     if (!translationLang || translationLang === "off") return;
+    if (translationStatus !== null) return;
     void fetchTranslation();
-  }, [translationLang, fetchTranslation]);
+  }, [autoFetchTranslation, entry?.id, translationLang, translationStatus, fetchTranslation]);
 
   // Poll for pending translations
   React.useEffect(() => {

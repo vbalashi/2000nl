@@ -12,6 +12,7 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
+  autoFetchTranslation?: boolean;
 };
 
 export function WordDetailDrawer({
@@ -24,6 +25,7 @@ export function WordDetailDrawer({
   userLists,
   onListsUpdated,
   onTrainWord,
+  autoFetchTranslation = true,
 }: Props) {
   React.useEffect(() => {
     if (!open) return;
@@ -57,6 +59,7 @@ export function WordDetailDrawer({
           onTrainWord={onTrainWord}
           showHeader={true}
           showActions={true}
+          autoFetchTranslation={autoFetchTranslation}
         />
       </div>
     </div>

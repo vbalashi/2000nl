@@ -1477,6 +1477,7 @@ export function WordListTab({
           notifyListsUpdated();
         }}
         onTrainWord={onTrainWord}
+        autoFetchTranslation={false}
       />
     </div>
   );

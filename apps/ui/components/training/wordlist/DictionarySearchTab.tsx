@@ -330,6 +330,7 @@ export function DictionarySearchTab({
               onTrainWord={onTrainWord}
               showHeader={true}
               showActions={true}
+              autoFetchTranslation={false}
             />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -353,6 +354,7 @@ export function DictionarySearchTab({
             notifyListsUpdated();
           }}
           onTrainWord={onTrainWord}
+          autoFetchTranslation={false}
         />
       </div>
 
