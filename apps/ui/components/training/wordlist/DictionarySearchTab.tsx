@@ -136,6 +136,7 @@ export function DictionarySearchTab({
   const [page, setPage] = useState(1);
   const [searchLoading, setSearchLoading] = useState(false);
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
@@ -422,7 +423,10 @@ export function DictionarySearchTab({
                 <button
                   key={entry.id}
                   type="button"
-                  onClick={() => setDetailEntry(entry)}
+                  onClick={() => {
+                    setDetailEntry(entry);
+                    setMobileDetailOpen(true);
+                  }}
                   className={`w-full rounded-2xl border p-3 text-left transition ${
                     selected
                       ? "border-primary/50 bg-primary/5 shadow-sm"
@@ -533,8 +537,8 @@ export function DictionarySearchTab({
       <div className="lg:hidden">
         <WordDetailDrawer
           entry={detailEntry}
-          open={Boolean(detailEntry)}
-          onClose={() => setDetailEntry(null)}
+          open={mobileDetailOpen && Boolean(detailEntry)}
+          onClose={() => setMobileDetailOpen(false)}
           userId={userId}
           translationLang={translationLang}
           selectedListName={selectedListName}
