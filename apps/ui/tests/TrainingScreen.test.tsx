@@ -32,6 +32,30 @@ const fetchAvailableLists = vi.fn().mockResolvedValue([
 const fetchActiveList = vi.fn().mockResolvedValue({ listId: null, listType: null });
 const fetchListSummaryById = vi.fn().mockResolvedValue(null);
 const updateActiveList = vi.fn().mockResolvedValue(undefined);
+const searchWordEntries = vi.fn().mockResolvedValue({
+  items: [
+    {
+      id: "word-1",
+      headword: "huis",
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
+      is_nt2_2000: true,
+    },
+  ],
+  total: 1,
+});
+const fetchWordsForList = vi.fn().mockResolvedValue({
+  items: [
+    {
+      id: "word-1",
+      headword: "huis",
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
+      is_nt2_2000: true,
+    },
+  ],
+  total: 1,
+});
 const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
@@ -74,6 +98,8 @@ vi.mock("@/lib/trainingService", () => ({
   fetchActiveList,
   fetchListSummaryById,
   fetchAvailableLists,
+  fetchWordsForList,
+  searchWordEntries,
   updateActiveList,
   recordDefinitionClick,
   recordReview,
@@ -93,6 +119,24 @@ vi.mock("@/lib/supabaseClient", () => ({
 const { TrainingScreen } = await import("@/components/training/TrainingScreen");
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
+
+test("search action opens the dedicated dictionary search surface", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  fireEvent.click(screen.getByLabelText("Zoeken"));
+
+  await screen.findByPlaceholderText(/zoek een woord of zin/i);
+  const searchTab = screen
+    .getAllByRole("button", { name: "Zoeken" })
+    .find((el) => el.tagName === "BUTTON");
+  expect(searchTab).toHaveClass(
+    "border-primary",
+  );
+  expect(screen.getByRole("button", { name: "Lijsten" })).toBeInTheDocument();
+  await waitFor(() => expect(searchWordEntries).toHaveBeenCalled());
+});
 
 test("hotkey triggers recordReview like button click", async () => {
   render(<TrainingScreen user={user} />);

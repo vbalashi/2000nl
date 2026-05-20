@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchWordsForList, searchWordEntries } from "@/lib/trainingService";
 import type { DictionaryEntry, WordListSummary } from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
