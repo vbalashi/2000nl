@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 import {
   buildFakeSupabaseSession,
   installSupabaseSession,
@@ -301,6 +301,27 @@ const restHandler = async (route: any) => {
     return;
   }
 
+  if (
+    pathname.endsWith("/rpc/search_word_entries_gated") ||
+    pathname.endsWith("/rpc/fetch_words_for_list_gated")
+  ) {
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        items: entries.map((entry) => ({
+          ...entry,
+          is_nt2_2000: entry.id === "word-1",
+          meanings_count: entry.raw?.meanings?.length ?? 1,
+        })),
+        total: entries.length,
+        is_locked: false,
+        max_allowed: null,
+      }),
+    });
+    return;
+  }
+
   // ---------------------------------------------------------------------------
   // Tables used by TrainingScreen + dictionary lookup
   // ---------------------------------------------------------------------------
@@ -420,12 +441,10 @@ const restHandler = async (route: any) => {
   });
 };
 
-test("training flow persists review and dictionary lookup", async ({
-  page,
-}) => {
+async function setupAuthenticatedTrainingPage(page: Page) {
   nextWordIndex = 0;
 
-  await page.route("**/auth/v1/user**", async (route) => {
+  await page.route("**/auth/v1/user**", async (route: Route) => {
     const method = route.request().method().toUpperCase();
     if (method === "OPTIONS") {
       await route.fulfill({ status: 204, body: "" });
@@ -445,6 +464,12 @@ test("training flow persists review and dictionary lookup", async ({
   await installSupabaseSession(page, buildFakeSupabaseSession(userSession));
 
   await page.goto("/");
+}
+
+test("training flow persists review and dictionary lookup", async ({
+  page,
+}) => {
+  await setupAuthenticatedTrainingPage(page);
 
   await expect(page.locator("h1")).toHaveText(/huis/i);
 
@@ -465,4 +490,35 @@ test("training flow persists review and dictionary lookup", async ({
   // Grade the card to advance to the next word.
   await page.getByRole("button", { name: "Begin met leren" }).click();
   await expect(page.locator("h1")).toHaveText(/gracht/i);
+});
+
+test("dictionary search and lists surfaces render", async ({ page }) => {
+  await setupAuthenticatedTrainingPage(page);
+
+  await expect(page.locator("h1")).toHaveText(/huis/i);
+
+  await page.getByLabel("Zoeken").click();
+  await expect(page.locator("button").filter({ hasText: "Zoeken" })).toHaveClass(
+    /border-primary/,
+  );
+  await expect(page.getByPlaceholder("Zoek een woord of zin...")).toBeVisible();
+  await expect(page.getByText("Filters").first()).toBeVisible();
+  await page.getByPlaceholder("Zoek een woord of zin...").fill("huis");
+  await expect(page.getByText("huis").first()).toBeVisible();
+  await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Lijsten" }).click();
+  await expect(
+    page.getByRole("heading", { name: "VanDale 2k", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Woorden", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Trainingsinstellingen" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Info" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Trainingsinstellingen" }).click();
+  await expect(page.getByText("Actieve kaarttypen")).toBeVisible();
 });
