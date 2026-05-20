@@ -272,6 +272,103 @@ begin
   end if;
 end $$;
 
+do $$
+declare
+  v_problem text;
+begin
+  select pg_catalog.string_agg(
+    p.oid::regprocedure::text,
+    E'\n' order by p.oid::regprocedure::text
+  )
+  into v_problem
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prosecdef
+    and not exists (
+      select 1
+      from unnest(coalesce(p.proconfig, array[]::text[])) as c(config)
+      where c.config like 'search_path=%'
+    );
+
+  if v_problem is not null then
+    raise exception 'SECURITY DEFINER functions without fixed search_path:%', E'\n' || v_problem;
+  end if;
+
+  with sensitive_functions(signature) as (
+    values
+      ('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])'::regprocedure),
+      ('public.handle_card_review(uuid,uuid,text,text,uuid)'::regprocedure),
+      ('public.record_card_view(uuid,uuid,text)'::regprocedure),
+      ('public.start_learning_entry_card(uuid,uuid,text)'::regprocedure),
+      ('public.get_user_card_state(uuid,uuid,text)'::regprocedure),
+      ('public.get_recent_training_history(uuid,timestamp with time zone,integer)'::regprocedure),
+      ('public.get_learning_preferences(uuid)'::regprocedure),
+      ('public.update_learning_preferences(uuid,text[],text,text,integer,text)'::regprocedure),
+      ('public.get_active_word_list(uuid)'::regprocedure),
+      ('public.update_active_word_list(uuid,uuid,text)'::regprocedure),
+      ('public.get_detailed_training_stats(uuid,text[],uuid,text)'::regprocedure),
+      ('public.get_scenario_word_stats(uuid,uuid,text)'::regprocedure),
+      ('public.get_scenario_stats(uuid,text,uuid,text)'::regprocedure),
+      ('public.create_user_word_list(uuid,text,text,text,text,text,text,text[])'::regprocedure),
+      ('public.update_user_word_list(uuid,uuid,text,text,text,text,text,text,text[],boolean)'::regprocedure),
+      ('public.delete_user_word_list(uuid,uuid)'::regprocedure),
+      ('public.add_entry_to_user_list(uuid,uuid,uuid)'::regprocedure),
+      ('public.remove_entries_from_user_list(uuid,uuid,uuid[])'::regprocedure),
+      ('public.get_user_list_membership(uuid,uuid,uuid[])'::regprocedure),
+      ('public.get_user_list_memberships_for_entries(uuid,uuid[])'::regprocedure),
+      ('public.copy_entry_to_user_dictionary(uuid,uuid,uuid,jsonb)'::regprocedure),
+      ('public.create_user_dictionary_entry(uuid,uuid,jsonb)'::regprocedure),
+      ('public.update_user_dictionary_entry(uuid,uuid,jsonb)'::regprocedure),
+      ('public.delete_user_dictionary_entry(uuid,uuid)'::regprocedure),
+      ('public.fetch_dictionary_entry_by_id_gated(uuid)'::regprocedure),
+      ('public.ensure_user_dictionary(uuid,text,text)'::regprocedure),
+      ('public.get_available_word_lists(uuid,text,text)'::regprocedure),
+      ('public.get_card_user_state(uuid,uuid,text)'::regprocedure),
+      ('public.get_user_tier(uuid)'::regprocedure),
+      ('public.get_word_list_summary(uuid,uuid,text)'::regprocedure)
+  )
+  select pg_catalog.string_agg(signature::text, E'\n' order by signature::text)
+  into v_problem
+  from sensitive_functions sf
+  join pg_proc p on p.oid = sf.signature
+  where exists (
+    select 1
+    from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) as acl
+    where acl.privilege_type = 'EXECUTE'
+      and (
+        acl.grantee = 0
+        or acl.grantee = 'anon'::regrole
+      )
+  );
+
+  if v_problem is not null then
+    raise exception 'sensitive RPCs still executable by PUBLIC/anon:%', E'\n' || v_problem;
+  end if;
+
+  with active_public_functions as (
+    select p.oid as function_oid, pg_get_functiondef(p.oid) as definition
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prokind = 'f'
+  )
+  select pg_catalog.string_agg(
+    function_oid::regprocedure::text,
+    E'\n' order by function_oid::regprocedure::text
+  )
+  into v_problem
+  from active_public_functions
+  where definition like '%p_user_id != (select auth.uid())%'
+     or definition like '%p_user_id IS NULL OR p_user_id != (select auth.uid())%'
+     or definition like '%p_user_id != auth.uid()%'
+     or definition like '%p_user_id IS NULL OR p_user_id != auth.uid()%';
+
+  if v_problem is not null then
+    raise exception 'null-unsafe p_user_id/auth.uid() guard remains in active RPCs:%', E'\n' || v_problem;
+  end if;
+end $$;
+
 select 'supabase_contracts' as check_name, 'ok' as value;
 select 'dictionary_boundary' as check_name, 'ok' as value;
 

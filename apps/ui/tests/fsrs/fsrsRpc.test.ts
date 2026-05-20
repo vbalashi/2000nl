@@ -31,6 +31,18 @@ const callHandleReview = (
     turnId,
   ]);
 
+async function expectUnauthorizedRpc(
+  client: PoolClient,
+  savepointName: string,
+  query: string,
+  params: unknown[]
+) {
+  await client.query(`savepoint ${savepointName}`);
+  await expect(client.query(query, params)).rejects.toThrow(/unauthorized/);
+  await client.query(`rollback to savepoint ${savepointName}`);
+  await client.query(`release savepoint ${savepointName}`);
+}
+
 describeIfDb("FSRS RPC integration", () => {
   const pool = new Pool({ connectionString: dbUrl });
   const mode = "word-to-definition";
@@ -41,6 +53,108 @@ describeIfDb("FSRS RPC integration", () => {
 
   afterAll(async () => {
     await pool.end();
+  });
+
+  test("user-scoped RPCs reject null auth.uid()", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-null-auth-${Date.now()}`);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Null auth list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(`select set_config('request.jwt.claim.sub', '', true)`);
+
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_next_card",
+        `select get_next_card($1, ARRAY[$2]::text[], ARRAY[]::uuid[])`,
+        [userId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_review",
+        `select handle_card_review($1, $2, $3, 'success', NULL)`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_view",
+        `select record_card_view($1, $2, $3)`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_start",
+        `select start_learning_entry_card($1, $2, $3)`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_state",
+        `select get_user_card_state($1, $2, $3)`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_stats",
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated')`,
+        [userId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_preferences",
+        `select get_learning_preferences($1)`,
+        [userId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_active_list",
+        `select get_active_word_list($1)`,
+        [userId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_membership",
+        `select get_user_list_membership($1, $2, ARRAY[$3]::uuid[])`,
+        [userId, listId, wordId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_ensure_dictionary",
+        `select ensure_user_dictionary($1, 'nl', 'Blocked')`,
+        [userId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_available_lists",
+        `select get_available_word_lists($1, 'nl', NULL)`,
+        [userId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_compat_state",
+        `select get_card_user_state($1, $2, $3)`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_tier",
+        `select get_user_tier($1)`,
+        [userId],
+      );
+      await expectUnauthorizedRpc(
+        client,
+        "null_auth_list_summary",
+        `select get_word_list_summary($1, $2, 'user')`,
+        [userId, listId],
+      );
+    }, userId);
   });
 
   test("handle_card_review creates then updates card state", async () => {

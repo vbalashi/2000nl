@@ -183,3 +183,6 @@
 
 -- Rename optional review debug parameter to entry terminology
 \i db/migrations/058_entry_named_review_debug_param.sql
+
+-- Harden user-scoped RPC auth guards, search paths, and execute grants
+\i db/migrations/059_security_harden_user_scoped_rpcs.sql
