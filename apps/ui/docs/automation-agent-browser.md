@@ -17,7 +17,7 @@ For production auth injection (https://2000.dilum.io), see `docs/runbooks/produc
 2. Server-side env vars exist in `apps/ui/.env.local` (gitignored):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (server only, never client-side)
+   - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` (server only, never client-side)
    - `TEST_USER_EMAIL` (the automation user email)
 
 ## Dev Login (No Manual OTP)
@@ -26,8 +26,13 @@ Open:
 
 - `http://127.0.0.1:3000/dev/test-login?redirectTo=/`
 
+Use the same host and port as the app under test. For example, if the UI runs on
+port 3100, open:
+
+- `http://localhost:3100/dev/test-login?redirectTo=/`
+
 What it does:
-- `GET /api/dev/test-session` (dev-only) uses `SUPABASE_SERVICE_ROLE_KEY` to generate an email OTP for `TEST_USER_EMAIL`.
+- `GET /api/dev/test-session` (dev-only) uses `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to generate an email OTP for `TEST_USER_EMAIL`.
 - It then exchanges the OTP for a real Supabase session and stores the session JSON in `localStorage` (Supabase format).
 
 If this flow is flaky in headless automation (token rotation / Strict Mode timing), use the deterministic injection flow below.
@@ -197,9 +202,9 @@ Notes:
 If `http://127.0.0.1:3000/dev/test-login` shows an error:
 
 - `SUPABASE_SERVICE_ROLE_KEY is required...`
-  - `SUPABASE_SERVICE_ROLE_KEY` is missing from `apps/ui/.env.local`, or the dev server wasn't restarted after editing env.
+  - `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` is missing from `apps/ui/.env.local`, or the dev server wasn't restarted after editing env.
 - `Token has expired or is invalid`
-  - `SUPABASE_SERVICE_ROLE_KEY` is wrong for the project, or was rotated.
+  - `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` is wrong for the project, or was rotated.
 - `Email link is invalid or has expired` / `Token has expired or is invalid` from `verifyOtp`
   - Check that Auth is configured for **email OTP** and that `TEST_USER_EMAIL` exists in the project.
 

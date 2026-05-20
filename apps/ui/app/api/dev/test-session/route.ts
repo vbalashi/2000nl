@@ -18,7 +18,10 @@ export async function GET(): Promise<NextResponse> {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
   const testUserEmail = process.env.TEST_USER_EMAIL;
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -28,11 +31,11 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 
-  if (!serviceRoleKey) {
+  if (!serviceKey) {
     return NextResponse.json(
       {
         error:
-          "SUPABASE_SERVICE_ROLE_KEY is required to generate a dev test session.",
+          "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required to generate a dev test session.",
       },
       { status: 500 }
     );
@@ -46,7 +49,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   // 1) Generate an OTP (server-side) without sending an email.
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, serviceKey, {
     // This route is a one-shot helper; never start background refresh timers.
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
