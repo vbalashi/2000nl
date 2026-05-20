@@ -96,9 +96,38 @@ describe("/api/platform/analyze-selection", () => {
   test("is read-only when actions are empty or not an array", async () => {
     const { POST } = await import("@/app/api/platform/analyze-selection/route");
 
-    for (const actions of [[], { action: "start-learning" }]) {
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const response = await POST(
+      request({
+        selection: "huis",
+        includeUserState: false,
+        actions: [],
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      lookup: { query: "huis", items: [] },
+      actionResults: [],
+    });
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    expect(from).not.toHaveBeenCalled();
+    for (const name of mutationRpcNames) {
+      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
+    }
+  });
+
+  test("rejects action blocks because analysis is read-only", async () => {
+    const { POST } = await import("@/app/api/platform/analyze-selection/route");
+
+    for (const actions of [{ action: "start-learning" }, [{ action: "start-learning" }]]) {
       mockAuthenticatedUser();
-      rpc.mockResolvedValueOnce({ data: null, error: null });
 
       const response = await POST(
         request({
@@ -108,64 +137,20 @@ describe("/api/platform/analyze-selection", () => {
         }),
       );
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
       await expect(response.json()).resolves.toEqual({
-        lookup: { query: "huis", items: [] },
-        actionResults: [],
+        error: "analyze_selection_is_read_only",
+        actionsEndpoint: "/api/platform/actions",
       });
     }
 
-    expect(rpc).toHaveBeenCalledTimes(2);
-    expect(rpc).toHaveBeenNthCalledWith(1, "fetch_dictionary_entry_gated", {
-      p_headword: "huis",
-    });
-    expect(rpc).toHaveBeenNthCalledWith(2, "fetch_dictionary_entry_gated", {
-      p_headword: "huis",
-    });
+    expect(rpc).not.toHaveBeenCalled();
     expect(from).not.toHaveBeenCalled();
-    for (const name of mutationRpcNames) {
-      expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
-    }
   });
 
-  test("runs explicit actions only when provided", async () => {
+  test("does not run explicit actions from analyze-selection", async () => {
     const { POST } = await import("@/app/api/platform/analyze-selection/route");
     mockAuthenticatedUser();
-    rpc
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "entry-1",
-            dictionary_id: "dict-1",
-            language_code: "nl",
-            headword: "huis",
-            meaning_id: 1,
-            part_of_speech: "noun",
-            gender: "n",
-            raw: {},
-            is_nt2_2000: true,
-            meanings_count: 1,
-            dictionary: {
-              id: "dict-1",
-              language_code: "nl",
-              slug: "nl-vandale",
-              name: "VanDale Dutch",
-              kind: "curated",
-              visibility: "public",
-              owner_user_id: null,
-              is_editable: false,
-              schema_key: "nl-vandale-v1",
-              schema_version: 1,
-            },
-          },
-        ],
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { id: "entry-1", dictionary_id: "dict-1" },
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: null, error: null });
 
     const response = await POST(
       request({
@@ -181,25 +166,12 @@ describe("/api/platform/analyze-selection", () => {
       }),
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalledWith("start_learning_entry_card", expect.anything());
     expect(from).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenLastCalledWith("start_learning_entry_card", {
-      p_user_id: "user-1",
-      p_entry_id: "entry-1",
-      p_card_type_id: "word-to-definition",
+    await expect(response.json()).resolves.toEqual({
+      error: "analyze_selection_is_read_only",
+      actionsEndpoint: "/api/platform/actions",
     });
-    const body = await response.json();
-    expect(body.actionResults).toEqual([
-      {
-        status: 200,
-        body: {
-          ok: true,
-          action: "start-learning",
-          entryId: "entry-1",
-          cardTypeId: "word-to-definition",
-        },
-      },
-    ]);
-    expect(body.lookup.items[0].entry.id).toBe("entry-1");
   });
 });

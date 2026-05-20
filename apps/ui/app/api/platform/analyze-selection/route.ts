@@ -7,9 +7,7 @@ import {
 } from "@/lib/platform/serverSupabase";
 import {
   asString,
-  performPlatformAction,
   performPlatformLookup,
-  type PlatformActionBody,
 } from "@/lib/platform/platformApi";
 
 export const runtime = "nodejs";
@@ -45,6 +43,19 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await readJson(request);
+  if (
+    body?.actions !== undefined &&
+    (!Array.isArray(body.actions) || body.actions.length > 0)
+  ) {
+    return reply(
+      {
+        error: "analyze_selection_is_read_only",
+        actionsEndpoint: "/api/platform/actions",
+      },
+      400,
+    );
+  }
+
   const query = asString(body?.selection) ?? asString(body?.query) ?? "";
   const includeUserState = body?.includeUserState !== false;
 
@@ -53,31 +64,8 @@ export async function POST(request: NextRequest) {
     return reply(lookup.payload, lookup.status);
   }
 
-  const actions = Array.isArray(body?.actions) ? body.actions : [];
-  const actionResults = [];
-  for (const actionBody of actions) {
-    const result = await performPlatformAction(
-      auth,
-      actionBody as PlatformActionBody,
-    );
-    actionResults.push({
-      status: result.status,
-      body: result.payload,
-    });
-
-    if (result.status >= 400) {
-      return reply(
-        {
-          lookup: lookup.payload,
-          actionResults,
-        },
-        result.status,
-      );
-    }
-  }
-
   return reply({
     lookup: lookup.payload,
-    actionResults,
+    actionResults: [],
   });
 }
