@@ -502,7 +502,8 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
     /border-primary/,
   );
   await expect(page.getByPlaceholder("Zoek een woord of zin...")).toBeVisible();
-  await expect(page.getByText("Filters").first()).toBeVisible();
+  await expect(page.getByText("Taal: Nederlands")).toBeVisible();
+  await expect(page.getByText("Bron: VanDale")).toBeVisible();
   await page.getByPlaceholder("Zoek een woord of zin...").fill("huis");
   await expect(page.getByText("huis").first()).toBeVisible();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();

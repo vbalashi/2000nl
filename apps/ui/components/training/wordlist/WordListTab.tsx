@@ -39,6 +39,15 @@ const LIST_CARD_TYPE_OPTIONS: Array<{ value: TrainingMode; label: string }> = [
   { value: "listen-recognize", label: "Luisteren" },
 ];
 
+const isDictionarySourceList = (list: WordListSummary | null | undefined) =>
+  Boolean(list && list.type === "curated" && /^vandale$/i.test(list.name.trim()));
+
+const listDisplayName = (list: WordListSummary | null | undefined, fallback: string) => {
+  if (!list) return fallback;
+  if (isDictionarySourceList(list)) return "VanDale woordenboek";
+  return list.name;
+};
+
 type Props = {
   open: boolean;
   userId: string;
@@ -94,14 +103,19 @@ export function WordListTab({
   const [searchLoading, setSearchLoading] = useState(false);
   // applyListFilter: false = show all words (global), true = filter by selected list
   const [applyListFilter, setApplyListFilter] = useState(true);
-  // Track subscription gating
-  const [isLocked, setIsLocked] = useState(false);
-  const [maxAllowed, setMaxAllowed] = useState<number | null>(null);
 
   // Derive nt2Only from attributeFilters for backward compatibility with search
   const nt2Only = attributeFilters.includes("nt2-2k");
   const filterFrozen = attributeFilters.includes("frozen");
   const filterHidden = attributeFilters.includes("dont-show");
+  const curatedLearningLists = useMemo(
+    () => curatedLists.filter((list) => !isDictionarySourceList(list)),
+    [curatedLists],
+  );
+  const dictionarySourceLists = useMemo(
+    () => curatedLists.filter(isDictionarySourceList),
+    [curatedLists],
+  );
   const [selectedWordIds, setSelectedWordIds] = useState<Set<string>>(
     new Set()
   );
@@ -186,8 +200,6 @@ export function WordListTab({
 
     setWordResults(result.items);
     setWordTotal(result.total);
-    setIsLocked(result.isLocked ?? false);
-    setMaxAllowed(result.maxAllowed ?? null);
     setSearchLoading(false);
   }, [
     open,
@@ -328,8 +340,11 @@ export function WordListTab({
       : { key: "info", label: "Info" },
   ];
 
-  const selectedListKindLabel =
-    selectedList?.type === "user" ? "Mijn lijst" : "Gecureerd";
+  const selectedListKindLabel = isDictionarySourceList(selectedList)
+    ? "Bron"
+    : selectedList?.type === "user"
+      ? "Mijn lijst"
+      : "Gecureerd";
 
   const trainingIntentPanel = (
     <div className="space-y-4 p-4">
@@ -466,7 +481,7 @@ export function WordListTab({
                 <div className="mt-2 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                      {selectedList?.name ?? selectedListName}
+                      {listDisplayName(selectedList, selectedListName)}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {selectedList?.item_count ?? "—"} woorden
@@ -490,7 +505,7 @@ export function WordListTab({
                   ) : null}
                 </div>
                 <div className="mt-3 space-y-2">
-                  {curatedLists.map((list) => {
+                  {curatedLearningLists.map((list) => {
                     const isActive = list.id === selectedListId;
                     return (
                       <button
@@ -525,13 +540,55 @@ export function WordListTab({
                       </button>
                     );
                   })}
-                  {!curatedLists.length && (
+                  {!curatedLearningLists.length && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       Geen lijsten gevonden.
                     </p>
                   )}
                 </div>
               </div>
+
+              {dictionarySourceLists.length ? (
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Woordenboekbronnen
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {dictionarySourceLists.map((list) => {
+                      const isActive = list.id === selectedListId;
+                      return (
+                        <button
+                          key={list.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedListId(list.id);
+                            setSelectedWordIds(new Set());
+                            setActionMessage(null);
+                            onListChange(list);
+                          }}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
+                            isActive
+                              ? "border-slate-300 bg-slate-50 text-slate-900 dark:bg-slate-800 dark:text-white"
+                              : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-sm font-semibold">
+                            <span>{listDisplayName(list, list.name)}</span>
+                            {isActive ? (
+                              <span className="text-[10px] uppercase text-slate-500 dark:text-slate-300">
+                                actief
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {list.item_count ?? "—"} woorden
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="flex items-center justify-between">
@@ -637,7 +694,7 @@ export function WordListTab({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-xl font-semibold text-slate-900 dark:text-white">
-                    {selectedList?.name ?? selectedListName}
+                    {listDisplayName(selectedList, selectedListName)}
                   </h2>
                   <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     {selectedListKindLabel}
@@ -683,8 +740,6 @@ export function WordListTab({
             nt2Only={nt2Only}
             selectedList={selectedList}
             autoFocusQuery={autoFocusQuery}
-            isLocked={isLocked}
-            maxAllowed={maxAllowed}
             attributeFilters={attributeFilters}
             onQueryChange={(value) => {
               setQuery(value);
@@ -898,7 +953,7 @@ export function WordListTab({
                         Actieve lijst
                       </div>
                       <div className="truncate font-semibold">
-                        {selectedList?.name ?? selectedListName}
+                        {listDisplayName(selectedList, selectedListName)}
                       </div>
                     </div>
                     <button
@@ -923,8 +978,6 @@ export function WordListTab({
                   nt2Only={nt2Only}
                   selectedList={selectedList}
                   autoFocusQuery={autoFocusQuery}
-                  isLocked={isLocked}
-                  maxAllowed={maxAllowed}
                   attributeFilters={attributeFilters}
                   onQueryChange={(value) => {
                     setQuery(value);
@@ -1231,11 +1284,6 @@ export function WordListTab({
               <span>
                 Toon {wordResults.length ? (page - 1) * pageSize + 1 : 0}-
                 {Math.min(wordTotal, page * pageSize)} van {wordTotal}
-                {maxAllowed !== null && maxAllowed !== undefined && wordTotal > maxAllowed && (
-                  <span className="ml-2 text-amber-600 dark:text-amber-400">
-                    (beperkt tot {maxAllowed})
-                  </span>
-                )}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -1249,45 +1297,17 @@ export function WordListTab({
                 <button
                   type="button"
                   onClick={() => {
-                    // Block pagination if we'd exceed the free tier limit
-                    const nextPageStart = page * pageSize;
-                    const wouldExceedLimit = maxAllowed !== null && maxAllowed !== undefined && nextPageStart >= maxAllowed;
-                    if (!wouldExceedLimit && page * pageSize < wordTotal) {
+                    if (page * pageSize < wordTotal) {
                       setPage((prev) => prev + 1);
                     }
                   }}
-                  disabled={
-                    page * pageSize >= wordTotal ||
-                    (maxAllowed !== null && maxAllowed !== undefined && page * pageSize >= maxAllowed)
-                  }
+                  disabled={page * pageSize >= wordTotal}
                   className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 transition disabled:opacity-50 dark:border-slate-700 dark:text-slate-200"
                 >
                   Volgende
                 </button>
               </div>
             </div>
-
-            {/* Free tier upgrade CTA */}
-            {isLocked && (
-              <div className="border-t border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/30">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                      Je hebt de gratis limiet bereikt
-                    </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300">
-                      Upgrade naar premium voor volledige toegang tot alle {wordTotal} woorden.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700"
-                  >
-                    Upgrade naar Premium
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
             </>
           ) : (

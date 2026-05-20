@@ -97,6 +97,11 @@ export function SettingsModal({
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosLoading, setScenariosLoading] = useState(false);
   const versionInfo = useMemo(() => appVersionInfo(), []);
+  const isDictionarySourceList = useCallback(
+    (list: WordListSummary) =>
+      list.type === "curated" && /^vandale$/i.test(list.name.trim()),
+    [],
+  );
 
   const curatedLists = useMemo(
     () => lists.filter((list) => list.type === "curated"),
@@ -145,7 +150,11 @@ export function SettingsModal({
 
       if (!selectedListId && data.length > 0) {
         const primary =
-          data.find((list) => list.type === "curated" && list.is_primary) ??
+          data.find(
+            (list) =>
+              list.type === "curated" && list.is_primary && !isDictionarySourceList(list),
+          ) ??
+          data.find((list) => list.type === "curated" && !isDictionarySourceList(list)) ??
           data[0];
         setSelectedListId(primary.id);
         onListChange(primary);
@@ -156,7 +165,7 @@ export function SettingsModal({
     } finally {
       setListsLoading(false);
     }
-  }, [userId, language, selectedListId, onListChange]);
+  }, [userId, language, selectedListId, onListChange, isDictionarySourceList]);
 
   const notifyListsUpdated = useCallback(() => {
     onListsUpdated?.();

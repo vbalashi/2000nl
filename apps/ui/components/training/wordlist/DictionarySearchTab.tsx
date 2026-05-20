@@ -9,9 +9,6 @@ import { getAllMeanings } from "@/lib/wordUtils";
 import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 
-type AttributeFilter = "nt2-2k" | "frozen" | "dont-show" | "has-audio" | "irregular";
-type ProgressFilter = "new" | "learning" | "review" | "mastered" | "hidden";
-
 type Props = {
   open: boolean;
   userId: string;
@@ -26,27 +23,6 @@ type Props = {
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
 };
-
-const POS_OPTIONS = [
-  { value: "verb", label: "Werkwoord" },
-  { value: "noun", label: "Zelfstandig naamwoord" },
-  { value: "adjective", label: "Bijvoeglijk naamwoord" },
-  { value: "adverb", label: "Bijwoord" },
-] as const;
-
-const ATTRIBUTE_OPTIONS: Array<{ value: AttributeFilter; label: string; enabled: boolean }> = [
-  { value: "nt2-2k", label: "NT2 2000", enabled: true },
-  { value: "has-audio", label: "Heeft audio", enabled: false },
-  { value: "irregular", label: "Onregelmatig werkwoord", enabled: false },
-];
-
-const PROGRESS_OPTIONS: Array<{ value: ProgressFilter; label: string; color: string; enabled: boolean }> = [
-  { value: "new", label: "Nieuw", color: "bg-blue-500", enabled: false },
-  { value: "learning", label: "Leren", color: "bg-amber-500", enabled: false },
-  { value: "review", label: "Reviewen", color: "bg-sky-500", enabled: false },
-  { value: "mastered", label: "Beheerst", color: "bg-emerald-500", enabled: false },
-  { value: "hidden", label: "Verborgen", color: "bg-slate-400", enabled: true },
-];
 
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
@@ -87,31 +63,6 @@ const meaningLabel = (entry: DictionaryEntry) => {
   return meaningId ? `betekenis ${meaningId}` : "betekenis";
 };
 
-function CheckboxRow({
-  checked,
-  disabled,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  label: string;
-  onChange: () => void;
-}) {
-  return (
-    <label className={`flex items-center gap-2 text-sm ${disabled ? "opacity-45" : ""}`}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={onChange}
-        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed dark:border-slate-600"
-      />
-      <span className="text-slate-700 dark:text-slate-200">{label}</span>
-    </label>
-  );
-}
-
 export function DictionarySearchTab({
   open,
   userId,
@@ -127,10 +78,6 @@ export function DictionarySearchTab({
   autoFocusQuery,
 }: Props) {
   const [query, setQuery] = useState("");
-  const [partOfSpeech, setPartOfSpeech] = useState("");
-  const [genderFilters, setGenderFilters] = useState<string[]>([]);
-  const [attributeFilters, setAttributeFilters] = useState<AttributeFilter[]>([]);
-  const [progressFilters, setProgressFilters] = useState<ProgressFilter[]>([]);
   const [applyListFilter, setApplyListFilter] = useState(false);
   const [wordResults, setWordResults] = useState<DictionaryEntry[]>([]);
   const [wordTotal, setWordTotal] = useState(0);
@@ -138,20 +85,10 @@ export function DictionarySearchTab({
   const [searchLoading, setSearchLoading] = useState(false);
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
 
-  const nt2Only = attributeFilters.includes("nt2-2k");
-  const filterHidden = progressFilters.includes("hidden");
   const sourceLabel = "VanDale";
-  const filterCount =
-    Number(Boolean(partOfSpeech)) +
-    attributeFilters.filter((filter) => filter !== "nt2-2k").length +
-    genderFilters.length +
-    progressFilters.length +
-    Number(nt2Only) +
-    Number(applyListFilter);
 
   const runSearch = useCallback(async () => {
     if (!open) return;
@@ -161,38 +98,25 @@ export function DictionarySearchTab({
       const result = useListFilter
         ? await fetchWordsForList(selectedListId!, selectedList?.type ?? "curated", {
             query: query || undefined,
-            partOfSpeech: partOfSpeech || undefined,
-            isNt2: nt2Only ? true : undefined,
-            filterHidden: filterHidden ? true : undefined,
             page,
             pageSize,
           })
         : await searchWordEntries({
             query: query || undefined,
-            partOfSpeech: partOfSpeech || undefined,
-            isNt2: nt2Only ? true : undefined,
-            filterHidden: filterHidden ? true : undefined,
             page,
             pageSize,
           });
 
-      const items = genderFilters.length
-        ? result.items.filter((entry) => entry.gender && genderFilters.includes(entry.gender))
-        : result.items;
-      setWordResults(items);
+      setWordResults(result.items);
       setWordTotal(result.total);
-      setDetailEntry((current) => current ?? items[0] ?? null);
+      setDetailEntry((current) => current ?? result.items[0] ?? null);
     } finally {
       setSearchLoading(false);
     }
   }, [
     applyListFilter,
-    filterHidden,
-    genderFilters,
-    nt2Only,
     open,
     page,
-    partOfSpeech,
     query,
     selectedList?.type,
     selectedListId,
@@ -211,126 +135,11 @@ export function DictionarySearchTab({
     return () => window.cancelAnimationFrame(raf);
   }, [autoFocusQuery]);
 
-  const toggleAttribute = (value: AttributeFilter) => {
-    setAttributeFilters((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
-    setPage(1);
-  };
-
-  const toggleProgress = (value: ProgressFilter) => {
-    setProgressFilters((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
-    setPage(1);
-  };
-
-  const toggleGender = (value: string) => {
-    setGenderFilters((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
-    setPage(1);
-  };
-
-  const clearFilters = () => {
-    setPartOfSpeech("");
-    setGenderFilters([]);
-    setAttributeFilters([]);
-    setProgressFilters([]);
+  const resetLookup = () => {
+    setQuery("");
     setApplyListFilter(false);
     setPage(1);
   };
-
-  const filters = (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Filters</h2>
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="text-xs font-semibold text-primary hover:underline dark:text-primary-light"
-        >
-          Wissen
-        </button>
-      </div>
-
-      <div className="mt-5 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
-        <section className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Lijsten</h3>
-          <CheckboxRow
-            checked={nt2Only}
-            label="NT2 2000"
-            onChange={() => toggleAttribute("nt2-2k")}
-          />
-          <CheckboxRow
-            checked={applyListFilter}
-            disabled={!selectedListId}
-            label={selectedListName || "Actieve lijst"}
-            onChange={() => {
-              setApplyListFilter((prev) => !prev);
-              setPage(1);
-            }}
-          />
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Woordsoort</h3>
-          {POS_OPTIONS.map((option) => (
-            <CheckboxRow
-              key={option.value}
-              checked={partOfSpeech === option.value}
-              label={option.label}
-              onChange={() => {
-                setPartOfSpeech((prev) => (prev === option.value ? "" : option.value));
-                setPage(1);
-              }}
-            />
-          ))}
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Kenmerken</h3>
-          {ATTRIBUTE_OPTIONS.filter((option) => option.value !== "nt2-2k").map((option) => (
-            <CheckboxRow
-              key={option.value}
-              checked={attributeFilters.includes(option.value)}
-              disabled={!option.enabled}
-              label={option.label}
-              onChange={() => toggleAttribute(option.value)}
-            />
-          ))}
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">
-            Grammatica - Geslacht
-          </h3>
-          <CheckboxRow checked={genderFilters.includes("de")} label="de" onChange={() => toggleGender("de")} />
-          <CheckboxRow checked={genderFilters.includes("het")} label="het" onChange={() => toggleGender("het")} />
-        </section>
-
-        <section className="space-y-2">
-          <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Voortgang</h3>
-          {PROGRESS_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              className={`flex items-center gap-2 text-sm ${option.enabled ? "" : "opacity-45"}`}
-            >
-              <input
-                type="checkbox"
-                checked={progressFilters.includes(option.value)}
-                disabled={!option.enabled}
-                onChange={() => toggleProgress(option.value)}
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed dark:border-slate-600"
-              />
-              <span className={`h-2 w-2 rounded-full ${option.color}`} />
-              <span className="text-slate-700 dark:text-slate-200">{option.label}</span>
-            </label>
-          ))}
-        </section>
-      </div>
-    </div>
-  );
 
   const results = (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -381,13 +190,11 @@ export function DictionarySearchTab({
             <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
               Bron: {sourceLabel}
             </span>
-            <button
-              type="button"
-              onClick={() => setMobileFiltersOpen(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm md:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            >
-              Filter ({filterCount})
-            </button>
+            {applyListFilter ? (
+              <span className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light">
+                Alleen actieve lijst
+              </span>
+            ) : null}
           </div>
           <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
             Alleen actieve lijst
@@ -468,10 +275,10 @@ export function DictionarySearchTab({
             </div>
             <button
               type="button"
-              onClick={clearFilters}
+              onClick={resetLookup}
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Wis filters
+              Wis zoekopdracht
             </button>
           </div>
         )}
@@ -507,9 +314,6 @@ export function DictionarySearchTab({
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[220px] shrink-0 border-r border-slate-100 p-4 md:block dark:border-slate-800">
-          {filters}
-        </aside>
         {results}
         <aside className="hidden w-[380px] shrink-0 border-l border-slate-100 lg:block dark:border-slate-800">
           {detailEntry ? (
@@ -552,24 +356,6 @@ export function DictionarySearchTab({
         />
       </div>
 
-      {mobileFiltersOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setMobileFiltersOpen(false)}
-          />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-            {filters}
-            <button
-              type="button"
-              onClick={() => setMobileFiltersOpen(false)}
-              className="mt-5 w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm"
-            >
-              Toepassen
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
