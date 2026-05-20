@@ -107,6 +107,10 @@ export function SettingsModal({
     () => lists.filter((list) => list.type === "curated"),
     [lists]
   );
+  const trainingLists = useMemo(
+    () => lists.filter((list) => !isDictionarySourceList(list)),
+    [lists, isDictionarySourceList],
+  );
   const userLists = useMemo(
     () => lists.filter((list) => list.type === "user"),
     [lists]
@@ -118,6 +122,23 @@ export function SettingsModal({
   const selectedListName = useMemo(() => {
     return selectedList?.name ?? "VanDale 2k";
   }, [selectedList]);
+  const selectDefaultTrainingList = useCallback(
+    (availableLists: WordListSummary[]) => {
+      const primary =
+        availableLists.find(
+          (list) =>
+            list.type === "curated" && list.is_primary && !isDictionarySourceList(list),
+        ) ??
+        availableLists.find((list) => list.type === "curated" && !isDictionarySourceList(list)) ??
+        availableLists.find((list) => !isDictionarySourceList(list)) ??
+        availableLists[0];
+
+      if (!primary) return;
+      setSelectedListId(primary.id);
+      onListChange(primary);
+    },
+    [isDictionarySourceList, onListChange],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -149,15 +170,7 @@ export function SettingsModal({
       setLists(data);
 
       if (!selectedListId && data.length > 0) {
-        const primary =
-          data.find(
-            (list) =>
-              list.type === "curated" && list.is_primary && !isDictionarySourceList(list),
-          ) ??
-          data.find((list) => list.type === "curated" && !isDictionarySourceList(list)) ??
-          data[0];
-        setSelectedListId(primary.id);
-        onListChange(primary);
+        selectDefaultTrainingList(data);
       }
     } catch (error) {
       console.error("Error loading lists", error);
@@ -165,7 +178,7 @@ export function SettingsModal({
     } finally {
       setListsLoading(false);
     }
-  }, [userId, language, selectedListId, onListChange, isDictionarySourceList]);
+  }, [userId, language, selectedListId, selectDefaultTrainingList]);
 
   const notifyListsUpdated = useCallback(() => {
     onListsUpdated?.();
@@ -193,6 +206,11 @@ export function SettingsModal({
       setSelectedListId(wordListId);
     }
   }, [wordListId]);
+
+  useEffect(() => {
+    if (!selectedList || !isDictionarySourceList(selectedList)) return;
+    selectDefaultTrainingList(trainingLists);
+  }, [selectedList, isDictionarySourceList, selectDefaultTrainingList, trainingLists]);
 
   if (!open) {
     return null;

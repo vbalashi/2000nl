@@ -37,7 +37,7 @@ export function MobileListPickerSheet({
               Selecteer lijst
             </div>
             <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
-              Kies een lijst om woorden toe te voegen of te verwijderen.
+              Kies de trainingslijst die je wil bekijken of beheren.
             </div>
           </div>
           <button
@@ -83,7 +83,7 @@ export function MobileListPickerSheet({
 
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
             <p className="text-sm font-semibold text-slate-800 dark:text-white">
-              Kant-en-klare lijsten
+              Trainingslijsten
             </p>
             <div className="mt-3 space-y-2">
               {curatedLists.map((list) => {
