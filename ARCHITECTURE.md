@@ -22,6 +22,24 @@ The active application surface. Owns user-facing flows, auth callbacks, training
 
 The source of truth for schema, review-state persistence, and FSRS-related functions/RPCs. Any change to review semantics or user progress should usually start here.
 
+Postgres/RPC is also the trust boundary for dictionary access, scheduler/card
+selection, review mutations, user-list membership, user-owned dictionary
+changes, learning preferences that affect scheduling, and platform-facing
+lookup/action contracts. These paths must not rely on frontend-owned table
+mutations.
+
+`user_settings` intentionally contains two classes of settings:
+
+- Learning preferences that affect scheduling/training semantics. These are
+  accessed through RPCs such as `get_learning_preferences` and
+  `update_learning_preferences`.
+- App-local UI preferences such as theme, sidebar pinning, translation language,
+  onboarding JSON, and audio quality. The first-party `apps/ui` service may
+  read/write these columns directly under Supabase RLS because they are not a
+  dictionary/platform boundary. If any of these settings becomes shared across
+  external clients or starts affecting scheduler semantics, move it behind an
+  explicit RPC/action boundary first.
+
 ### `packages/ingestion`
 
 Owns import pipelines and normalization from external dictionary artifacts into the relational model.
