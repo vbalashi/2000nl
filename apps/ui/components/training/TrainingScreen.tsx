@@ -213,7 +213,7 @@ export function TrainingScreen({ user }: Props) {
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    "woordenlijst" | "statistieken" | "instellingen"
+    "zoeken" | "lijsten" | "statistieken" | "instellingen"
   >("instellingen");
   const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
     useState(false);
@@ -1048,7 +1048,7 @@ export function TrainingScreen({ user }: Props) {
   );
 
   const openSearch = useCallback(() => {
-    setSettingsInitialTab("woordenlijst");
+    setSettingsInitialTab("zoeken");
     setSettingsAutoFocusWordSearch(true);
     setShowSettings(true);
   }, []);

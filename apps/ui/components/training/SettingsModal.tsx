@@ -8,19 +8,20 @@ import type { CardFilter, DetailedStats, TrainingScenario, WordListSummary, Word
 import type { TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { DropUpSelect } from "./DropUpSelect";
+import { DictionarySearchTab } from "./wordlist/DictionarySearchTab";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { appVersionInfo } from "@/lib/appVersion";
 import type { AudioQuality } from "@/lib/audio/types";
 
-type TabKey = "woordenlijst" | "statistieken" | "instellingen";
+type TabKey = "zoeken" | "lijsten" | "statistieken" | "instellingen";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   /** Which tab to show when the modal is opened. Defaults to "instellingen". */
   initialTab?: TabKey;
-  /** When opening on "woordenlijst", focus the query/search input. */
+  /** When opening on "zoeken", focus the query/search input. */
   autoFocusWordSearch?: boolean;
   onListsUpdated?: () => void;
   themePreference: ThemePreference;
@@ -266,7 +267,7 @@ export function SettingsModal({
           </div>
 
           <div className="flex items-center gap-4 border-b border-slate-100 px-6 pt-2 text-sm font-semibold text-slate-500 md:px-8 dark:border-slate-800 dark:text-slate-300">
-          {(["woordenlijst", "statistieken", "instellingen"] as TabKey[]).map(
+          {(["zoeken", "lijsten", "statistieken", "instellingen"] as TabKey[]).map(
             (tab) => (
               <button
                 key={tab}
@@ -278,8 +279,10 @@ export function SettingsModal({
                     : "border-transparent hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                {tab === "woordenlijst"
-                  ? "Woordenlijst"
+                {tab === "zoeken"
+                  ? "Zoeken"
+                  : tab === "lijsten"
+                  ? "Lijsten"
                   : tab === "statistieken"
                   ? "Statistieken"
                   : "Instellingen"}
@@ -292,7 +295,24 @@ export function SettingsModal({
         {/* Content area */}
         <div className="flex min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-6 md:px-8">
           <div className="h-full w-full overflow-hidden">
-            {activeTab === "woordenlijst" ? (
+            {activeTab === "zoeken" ? (
+              <DictionarySearchTab
+                open={open}
+                userId={userId}
+                language={language}
+                translationLang={translationLang}
+                userLists={userLists}
+                selectedListId={selectedListId}
+                selectedList={selectedList}
+                selectedListName={selectedListName}
+                reloadLists={loadLists}
+                notifyListsUpdated={notifyListsUpdated}
+                onTrainWord={onTrainWord}
+                autoFocusQuery={Boolean(autoFocusWordSearch)}
+              />
+            ) : null}
+
+            {activeTab === "lijsten" ? (
               <WordListTab
                 open={open}
                 userId={userId}
