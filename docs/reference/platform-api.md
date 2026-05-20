@@ -2,7 +2,7 @@
 
 **Versioned base path:** `/api/platform/v1`
 
-The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients.
+The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients. Versioned response shapes are covered by snapshot tests in `apps/ui/tests/api/platformV1Routes.test.ts`.
 
 These routes are the external client boundary for browser extensions and other companion apps. They use bearer Supabase user tokens and keep ordinary lookup read-only.
 
@@ -68,17 +68,31 @@ Response shape:
         "status": "reviewing",
         "trackedCardCount": 1,
         "reviewedCardCount": 1,
+        "learningCardCount": 0,
+        "hiddenCardCount": 0,
         "strongestCardTypeId": "word-to-definition",
-        "weakestCardTypeId": "word-to-definition"
+        "weakestCardTypeId": "word-to-definition",
+        "lastReviewedAt": "2026-05-17T11:00:00.000Z",
+        "nextReviewAt": "2026-05-18T11:00:00.000Z"
       },
       "listMemberships": [],
-      "availableActions": ["record-view", "start-learning", "review-card"]
+      "availableActions": [
+        "record-view",
+        "start-learning",
+        "mark-known",
+        "mark-unknown",
+        "review-card",
+        "add-to-list",
+        "remove-from-list",
+        "copy-to-user-dictionary",
+        "create-user-entry"
+      ]
     }
   ]
 }
 ```
 
-`includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. This endpoint must not call review/list mutation RPCs.
+`includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
 
 ## `POST /actions`
 
@@ -105,19 +119,25 @@ Examples:
 
 ## `POST /analyze-selection`
 
-Composite convenience endpoint for text-selection clients. It runs lookup first and executes mutations only when an explicit `actions` array is present.
+Read-only convenience endpoint for text-selection clients. It runs lookup using `selection` or `query` and always returns an empty `actionResults` array for shape compatibility. Mutations must go through `POST /actions`.
 
 Request:
 ```json
 {
   "selection": "huis",
-  "includeUserState": true,
-  "actions": [
-    {
-      "action": "start-learning",
-      "entryId": "entry-id",
-      "cardTypeId": "word-to-definition"
-    }
-  ]
+  "includeUserState": true
 }
 ```
+
+Response:
+```json
+{
+  "lookup": {
+    "query": "huis",
+    "items": []
+  },
+  "actionResults": []
+}
+```
+
+If an `actions` field is provided and is not an empty array, the route returns `400` with `error: "analyze_selection_is_read_only"` and `actionsEndpoint: "/api/platform/actions"`.
