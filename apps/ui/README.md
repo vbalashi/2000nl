@@ -21,6 +21,25 @@ Requires Node 20+.
    npm run dev
    ```
 
+For migration/platform work, prefer the repo-level local Supabase wrapper instead
+of plain `npm run dev`:
+
+```
+cd ../..
+scripts/db-local-supabase.sh all
+scripts/ui-local-dev.sh --port 3100
+```
+
+Plain `npm run dev` uses `.env.local` as-is. If that file points at an older
+Supabase project, platform routes can fail with missing-RPC errors such as
+`fetch_dictionary_entry_by_id_gated`. The app performs a development-only deep
+health check and shows a warning banner when the connected database does not
+match the current platform contract. You can also check it directly:
+
+```
+curl http://localhost:3100/api/health?deep=1
+```
+
 ## Translation providers
 
 Translations are provided by a selectable backend. Configure these env vars in `.env.local` or deployment settings:
@@ -84,7 +103,9 @@ For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps t
 Notes:
 - The UI login flow is OTP-only, but automated tests can bypass the UI by installing a Supabase session in `localStorage`.
 - For local development / browser automation that needs a *real* Supabase session without typing an OTP, use the dev-only helper page:
-  - `http://localhost:3000/dev/test-login` (requires `SUPABASE_SERVICE_ROLE_KEY` and `TEST_USER_EMAIL` on the server)
+  - `http://localhost:3100/dev/test-login?redirectTo=/` when using `scripts/ui-local-dev.sh --port 3100`
+  - `http://localhost:3000/dev/test-login` when using plain `npm run dev`
+  - both require `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`, plus `TEST_USER_EMAIL`, on the server
 - For `agent-browser` examples (desktop + mobile) and how to persist sessions across runs, see `apps/ui/docs/automation-agent-browser.md`.
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
 

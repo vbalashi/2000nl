@@ -80,6 +80,28 @@ The wrapper reads `supabase status -o env`, exports local `NEXT_PUBLIC_SUPABASE_
 and server-side `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` values for
 that UI process only, and leaves `.env.local` unchanged.
 
+After the UI starts, verify the runtime is connected to a database with the
+current platform RPC contract:
+
+```bash
+curl http://localhost:3100/api/health?deep=1
+```
+
+Expected high-level result:
+
+```json
+{
+  "status": "ok",
+  "database": { "target": "local" }
+}
+```
+
+If the response is `"status": "warning"` and mentions a missing RPC such as
+`fetch_dictionary_entry_by_id_gated`, the UI is connected to an old or wrong
+Supabase database. Run `scripts/db-local-supabase.sh all` for local development,
+or apply the current migrations to the target project before using platform
+routes like lookup, actions, translation, or dictionary details.
+
 Manual alternative: copy the exports from `scripts/db-local-supabase.sh env` into
 your shell, including the local anon/service keys printed by `supabase status -o env`.
 

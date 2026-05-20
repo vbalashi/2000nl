@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
+import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -37,5 +38,10 @@ export default function HomePage() {
     return <AuthScreen />;
   }
 
-  return <TrainingScreen user={user} />;
+  return (
+    <>
+      <DevDatabaseWarning />
+      <TrainingScreen user={user} />
+    </>
+  );
 }

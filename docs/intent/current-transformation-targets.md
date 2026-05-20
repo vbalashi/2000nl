@@ -121,6 +121,11 @@ Desired concepts:
 
 - Add UI for user dictionary creation/editing only after deciding the first
   product surface and validation rules.
+- Keep user lists and user dictionaries separate in product language:
+  user lists are training collections made from dictionary entries; user
+  dictionaries are private editable sources where users create their own entries
+  via `user-entry-v1`. The DB/RPC/action boundary exists, but the first-party UI
+  for adding/editing custom dictionary entries is not implemented yet.
 - Continue reducing direct table access where it crosses platform boundaries;
   keep truly app-local settings explicit.
 - Add/refresh docs for platform endpoint payloads as external consumers become

@@ -81,6 +81,7 @@ echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"
 echo "  Supabase: $NEXT_PUBLIC_SUPABASE_URL"
 echo "  Dev auth: http://localhost:$port/dev/test-login?redirectTo=/"
+echo "  Health:   http://localhost:$port/api/health?deep=1"
 
 cd "$repo_root/apps/ui"
 exec npm run dev -- --port "$port"
