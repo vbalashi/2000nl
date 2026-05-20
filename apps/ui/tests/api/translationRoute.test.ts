@@ -30,9 +30,9 @@ vi.mock("@/lib/translation/prompts/promptFingerprint", () => ({
   getTranslationPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
 }));
 
-const request = (token?: string) =>
+const request = (token?: string, query = "") =>
   new NextRequest(
-    "http://localhost/api/translation?word_id=00000000-0000-4000-8000-000000000001&lang=en",
+    `http://localhost/api/translation?word_id=00000000-0000-4000-8000-000000000001&lang=en${query}`,
     {
       headers: token ? { authorization: `Bearer ${token}` } : {},
     },
@@ -74,7 +74,7 @@ describe("/api/translation", () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
-  test("reads source entries through gated RPC instead of word_entries", async () => {
+  test("does not read translation cache when gated source entry is inaccessible", async () => {
     const userClient = {
       auth: { getUser },
       rpc,
@@ -101,15 +101,121 @@ describe("/api/translation", () => {
 
     const response = await GET(request("token-1"));
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(404);
     expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
       p_entry_id: "00000000-0000-4000-8000-000000000001",
     });
-    expect(from).toHaveBeenCalledWith("word_entry_translations");
+    expect(from).not.toHaveBeenCalled();
     expect(from).not.toHaveBeenCalledWith("word_entries");
     await expect(response.json()).resolves.toEqual({
-      status: "failed",
-      error: "word_entries.raw not found",
+      error: "word_entry_not_found",
+    });
+  });
+
+  test("reads translation cache only after gated source access succeeds", async () => {
+    const userClient = {
+      auth: { getUser },
+      rpc,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "00000000-0000-4000-8000-000000000001",
+        headword: "huis",
+        gender: "het",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "woning" }] },
+      },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "word_entry_translations") {
+        return queryChain({
+          data: {
+            status: "pending",
+            overlay: null,
+            note: null,
+            updated_at: new Date().toISOString(),
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { GET } = await import("@/app/api/translation/route");
+
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(200);
+    expect(from).toHaveBeenCalledWith("word_entry_translations");
+    expect(rpc.mock.invocationCallOrder[0]).toBeLessThan(
+      from.mock.invocationCallOrder[0],
+    );
+    await expect(response.json()).resolves.toEqual({
+      status: "pending",
+    });
+  });
+
+  test("debug responses do not expose service key fragments", async () => {
+    const userClient = {
+      auth: { getUser },
+      rpc,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "00000000-0000-4000-8000-000000000001",
+        headword: "huis",
+        gender: "het",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "woning" }] },
+      },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "word_entry_translations") {
+        return queryChain({
+          data: null,
+          error: { message: "cache read failed" },
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { GET } = await import("@/app/api/translation/route");
+
+    const response = await GET(request("token-1", "&debug=1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(body)).not.toContain("service-key");
+    expect(JSON.stringify(body)).not.toContain("serviceKeyPrefix");
+    expect(body).toEqual({
+      error: "cache read failed",
+      debug: expect.objectContaining({
+        dbLang: "en",
+        targetLang: "en",
+        provider: "openai",
+      }),
     });
   });
 });

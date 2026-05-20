@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { extractTranslatableTexts } from "@/app/api/translation/route";
+import { extractTranslatableTexts } from "@/lib/translation/extractTranslatableTexts";
 
 describe("translation route text extraction", () => {
   test("extracts translatable text from user-entry-v1 payloads", () => {
