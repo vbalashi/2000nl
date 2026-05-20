@@ -319,7 +319,6 @@ export function SettingsModal({
                 language={language}
                 onLanguageChange={onLanguageChange}
                 translationLang={translationLang}
-                wordListType={wordListType}
                 curatedLists={curatedLists}
                 userLists={userLists}
                 listsLoading={listsLoading}

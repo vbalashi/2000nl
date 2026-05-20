@@ -1,3 +1,4 @@
+import React from "react";
 import type { WordListSummary } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 

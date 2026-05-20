@@ -138,6 +138,25 @@ test("search action opens the dedicated dictionary search surface", async () => 
   await waitFor(() => expect(searchWordEntries).toHaveBeenCalled());
 });
 
+test("lists tab opens the dedicated list management surface", async () => {
+  fetchWordsForList.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  fireEvent.click(screen.getByLabelText("Instellingen"));
+  const listsTab = await screen.findByRole("button", { name: "Lijsten" });
+  fireEvent.click(listsTab);
+
+  await screen.findByRole("button", { name: "Woorden" });
+  expect(
+    screen.getByRole("button", { name: "Trainingsinstellingen" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
+  await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+});
+
 test("hotkey triggers recordReview like button click", async () => {
   render(<TrainingScreen user={user} />);
 

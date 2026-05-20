@@ -1,3 +1,4 @@
+import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addWordsToUserList,
@@ -14,9 +15,7 @@ import type {
   ListCardPolicy,
   TrainingMode,
   WordListSummary,
-  WordListType,
 } from "@/lib/types";
-import { DropUpSelect } from "../DropUpSelect";
 import { WordsToolbar, type AttributeFilter } from "./WordsToolbar";
 import { WordsListMobile } from "./WordsListMobile";
 import { WordDetailDrawer } from "./WordDetailDrawer";
@@ -46,7 +45,6 @@ type Props = {
   language: string;
   onLanguageChange: (value: string) => void;
   translationLang: string | null;
-  wordListType: WordListType | null;
   curatedLists: WordListSummary[];
   userLists: WordListSummary[];
   listsLoading: boolean;
@@ -69,7 +67,6 @@ export function WordListTab({
   language,
   onLanguageChange,
   translationLang,
-  wordListType: _wordListType,
   curatedLists,
   userLists,
   listsLoading,
@@ -84,6 +81,9 @@ export function WordListTab({
   onTrainWord,
   autoFocusQuery,
 }: Props) {
+  const [activeListTab, setActiveListTab] = useState<
+    "words" | "training" | "info" | "edit"
+  >("words");
   const [query, setQuery] = useState("");
   const [partOfSpeech, setPartOfSpeech] = useState("");
   const [attributeFilters, setAttributeFilters] = useState<AttributeFilter[]>([]);
@@ -93,7 +93,7 @@ export function WordListTab({
   const pageSize = 20;
   const [searchLoading, setSearchLoading] = useState(false);
   // applyListFilter: false = show all words (global), true = filter by selected list
-  const [applyListFilter, setApplyListFilter] = useState(false);
+  const [applyListFilter, setApplyListFilter] = useState(true);
   // Track subscription gating
   const [isLocked, setIsLocked] = useState(false);
   const [maxAllowed, setMaxAllowed] = useState<number | null>(null);
@@ -139,6 +139,12 @@ export function WordListTab({
     selectedList?.default_scenario_id,
     selectedList?.id,
   ]);
+
+  useEffect(() => {
+    if (selectedList?.type === "curated" && activeListTab === "edit") {
+      setActiveListTab("info");
+    }
+  }, [activeListTab, selectedList?.type]);
 
   // Default copy target to first user list (excluding the currently selected user list).
   useEffect(() => {
@@ -310,6 +316,142 @@ export function WordListTab({
     return () => window.removeEventListener("keydown", onKey);
   }, [detailEntry]);
 
+  const listTabs: Array<{
+    key: "words" | "training" | "info" | "edit";
+    label: string;
+    disabled?: boolean;
+  }> = [
+    { key: "words", label: "Woorden" },
+    { key: "training", label: "Trainingsinstellingen" },
+    selectedList?.type === "user"
+      ? { key: "edit", label: "Bewerken" }
+      : { key: "info", label: "Info" },
+  ];
+
+  const selectedListKindLabel =
+    selectedList?.type === "user" ? "Mijn lijst" : "Gecureerd";
+
+  const trainingIntentPanel = (
+    <div className="space-y-4 p-4">
+      {selectedList?.type === "curated" ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+          Deze gecureerde lijst is alleen-lezen. De trainingsinstellingen hieronder
+          tonen het list contract; persoonlijke overrides voor gecureerde lijsten
+          volgen later via user preferences.
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Scenario
+          </span>
+          <select
+            value={intentScenarioId}
+            disabled={selectedList?.type !== "user"}
+            onChange={(event) => setIntentScenarioId(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-950"
+          >
+            {LIST_SCENARIO_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Kaarten
+          </span>
+          <select
+            value={intentCardPolicy}
+            disabled={selectedList?.type !== "user"}
+            onChange={(event) =>
+              setIntentCardPolicy(event.target.value as ListCardPolicy)
+            }
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-950"
+          >
+            {LIST_CARD_POLICY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Actieve kaarttypen
+        </div>
+        {LIST_CARD_TYPE_OPTIONS.map((option) => (
+          <label
+            key={option.value}
+            className="flex items-center gap-2 rounded-lg px-1 text-sm text-slate-700 dark:text-slate-200"
+          >
+            <input
+              type="checkbox"
+              checked={intentCardTypeIds.includes(option.value)}
+              disabled={selectedList?.type !== "user"}
+              onChange={() => toggleIntentCardType(option.value)}
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <span>{option.label}</span>
+          </label>
+        ))}
+      </div>
+
+      {selectedList?.type === "user" ? (
+        <button
+          type="button"
+          disabled={intentSaving}
+          onClick={saveListTrainingIntent}
+          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
+        >
+          {intentSaving ? "Opslaan..." : "Opslaan"}
+        </button>
+      ) : null}
+    </div>
+  );
+
+  const infoPanel = (
+    <div className="grid gap-4 p-4 md:grid-cols-2">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Type
+        </p>
+        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+          {selectedListKindLabel}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Taal
+        </p>
+        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+          {selectedList?.primary_language_code ?? selectedList?.language_code ?? "nl"}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Woorden
+        </p>
+        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+          {selectedList?.item_count ?? "—"}
+        </p>
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Bewerken
+        </p>
+        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+          {selectedList?.type === "user" ? "Toegestaan" : "Alleen lezen"}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {/* Use flex on mobile (single column), grid on desktop */}
@@ -317,22 +459,22 @@ export function WordListTab({
         <aside className="hidden min-h-0 md:block">
           <div className="h-full overflow-y-auto pr-1">
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm dark:border-primary/40 dark:bg-primary/10">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Taal
+                  Actieve trainingslijst
                 </p>
-                <div className="mt-2">
-                  <DropUpSelect
-                    label="Taal"
-                    value={language}
-                    options={[
-                      { value: "nl", label: "Nederlands" },
-                      { value: "en", label: "English" },
-                      { value: "de", label: "Deutsch" },
-                      { value: "fr", label: "Français" },
-                    ]}
-                    onChange={onLanguageChange}
-                  />
+                <div className="mt-2 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                      {selectedList?.name ?? selectedListName}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {selectedList?.item_count ?? "—"} woorden
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+                    Actief
+                  </span>
                 </div>
               </div>
 
@@ -483,79 +625,6 @@ export function WordListTab({
                     </p>
                   )}
                 </div>
-
-                {selectedList?.type === "user" ? (
-                  <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                      Training
-                    </p>
-                    <div className="mt-3 space-y-3">
-                      <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          Scenario
-                        </span>
-                        <select
-                          value={intentScenarioId}
-                          onChange={(event) =>
-                            setIntentScenarioId(event.target.value)
-                          }
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        >
-                          {LIST_SCENARIO_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          Kaarten
-                        </span>
-                        <select
-                          value={intentCardPolicy}
-                          onChange={(event) =>
-                            setIntentCardPolicy(event.target.value as ListCardPolicy)
-                          }
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        >
-                          {LIST_CARD_POLICY_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <div className="space-y-2">
-                        {LIST_CARD_TYPE_OPTIONS.map((option) => (
-                          <label
-                            key={option.value}
-                            className="flex items-center gap-2 rounded-lg px-1 text-sm text-slate-700 dark:text-slate-200"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={intentCardTypeIds.includes(option.value)}
-                              onChange={() => toggleIntentCardType(option.value)}
-                              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={intentSaving}
-                        onClick={saveListTrainingIntent}
-                        className="w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
-                      >
-                        {intentSaving ? "Opslaan..." : "Opslaan"}
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
@@ -563,6 +632,44 @@ export function WordListTab({
 
         {/* Mobile UX: toolbars scroll with list; footer stays visible. */}
         <section className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+          <div className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="truncate text-xl font-semibold text-slate-900 dark:text-white">
+                    {selectedList?.name ?? selectedListName}
+                  </h2>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {selectedListKindLabel}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {selectedList?.item_count ?? "—"} woorden
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-4 overflow-x-auto text-sm font-semibold text-slate-500 dark:text-slate-300">
+              {listTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  disabled={tab.disabled}
+                  onClick={() => setActiveListTab(tab.key)}
+                  className={`shrink-0 border-b-2 px-1 py-2 transition ${
+                    activeListTab === tab.key
+                      ? "border-primary text-slate-900 dark:text-white"
+                      : "border-transparent hover:text-slate-800 dark:hover:text-white"
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeListTab === "words" ? (
+            <>
           {/* Desktop: Toolbar stays fixed above the list */}
           <div className="hidden shrink-0 md:block">
           <WordsToolbar
@@ -1182,6 +1289,12 @@ export function WordListTab({
               </div>
             )}
           </div>
+            </>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+              {activeListTab === "training" ? trainingIntentPanel : infoPanel}
+            </div>
+          )}
 
           {/* Copy dialog */}
           {copyDialogOpen && (

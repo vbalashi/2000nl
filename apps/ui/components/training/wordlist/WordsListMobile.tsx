@@ -1,3 +1,4 @@
+import React from "react";
 import type { DictionaryEntry } from "@/lib/types";
 
 const posBadge = (value?: string) => {
