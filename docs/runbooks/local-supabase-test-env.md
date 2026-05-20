@@ -63,7 +63,25 @@ Default local endpoints:
 - Studio: `http://127.0.0.1:54323`
 - DB: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
 
-For UI development, copy the exports from `scripts/db-local-supabase.sh env` into your shell or `.env.local`, including the local anon key printed by `supabase status -o env`.
+For UI development, prefer the wrapper so `.env.local` production Supabase values
+do not leak into local smoke tests:
+
+```bash
+scripts/ui-local-dev.sh --port 3100
+```
+
+Then open the dev-login helper on the same origin:
+
+```text
+http://localhost:3100/dev/test-login?redirectTo=/
+```
+
+The wrapper reads `supabase status -o env`, exports local `NEXT_PUBLIC_SUPABASE_*`
+and server-side `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` values for
+that UI process only, and leaves `.env.local` unchanged.
+
+Manual alternative: copy the exports from `scripts/db-local-supabase.sh env` into
+your shell, including the local anon/service keys printed by `supabase status -o env`.
 
 ## Reset
 
