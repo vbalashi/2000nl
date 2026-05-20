@@ -1750,6 +1750,91 @@ describeIfDb("FSRS RPC integration", () => {
       expect(next?.id).not.toBe(privateWordId);
     }, userId);
   });
+
+  test("training stats exclude dictionaries the user cannot read", async () => {
+    const userId = randomUUID();
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 0,
+        daily_review_limit: 10,
+      });
+      await ensureUserWithSettings(client, ownerId);
+
+      const publicWordId = await insertWord(client, `fsrs-stats-public-${Date.now()}`);
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+          language_code, slug, name, kind, visibility, owner_user_id,
+          schema_key, schema_version
+        )
+        values ('nl', $1, 'Private stats dictionary', 'user', 'private', $2, 'nl-vandale-v1', 1)
+        returning id`,
+        [`private-stats-${Date.now()}`, ownerId],
+      );
+      const { rows: privateRows } = await client.query(
+        `insert into word_entries (
+          dictionary_id, language_code, headword, part_of_speech, gender,
+          is_nt2_2000, raw, meaning_id
+        )
+        values ($1, 'nl', $2, 'noun', 'n', true, '{}'::jsonb, 1)
+        returning id`,
+        [dictionaryRows[0].id, `fsrs-stats-private-${Date.now()}`],
+      );
+      const privateWordId = privateRows[0].id;
+
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Stats mixed list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+
+      await client.query(
+        `insert into user_word_list_items (list_id, word_id)
+         values ($1, $2), ($1, $3)`,
+        [listId, publicWordId, privateWordId],
+      );
+
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
+        ) values
+          ($1, $2, $4, 3.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '2 days', now() - interval '2 days'),
+          ($1, $3, $4, 3.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
+        [userId, publicWordId, privateWordId, mode],
+      );
+
+      const { rows: basicRows } = await client.query(
+        `select get_training_stats($1, ARRAY[$2]::text[], $3, 'user') as stats`,
+        [userId, mode, listId],
+      );
+      expect(basicRows[0].stats.totalItems).toBe(1);
+      expect(basicRows[0].stats.totalSuccess).toBe(1);
+
+      const { rows: detailedRows } = await client.query(
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], $3, 'user') as stats`,
+        [userId, mode, listId],
+      );
+      expect(detailedRows[0].stats.totalWordsInList).toBe(1);
+      expect(detailedRows[0].stats.totalWordsLearned).toBe(1);
+      expect(detailedRows[0].stats.reviewCardsDue).toBe(1);
+
+      const { rows: scenarioRows } = await client.query(
+        `select get_scenario_stats($1, 'understanding', $2, 'user') as stats`,
+        [userId, listId],
+      );
+      expect(scenarioRows[0].stats.total).toBe(1);
+
+      const { rows: privateWordStatsRows } = await client.query(
+        `select get_scenario_word_stats($1, $2, 'understanding') as stats`,
+        [userId, privateWordId],
+      );
+      expect(privateWordStatsRows[0].stats.cards_started).toBe(0);
+    }, userId);
+  });
 });
 
 if (!hasDb) {

@@ -186,3 +186,6 @@
 
 -- Harden user-scoped RPC auth guards, search paths, and execute grants
 \i db/migrations/059_security_harden_user_scoped_rpcs.sql
+
+-- Filter stats by dictionary visibility
+\i db/migrations/060_stats_filter_dictionary_access.sql

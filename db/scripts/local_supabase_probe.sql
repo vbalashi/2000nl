@@ -307,6 +307,8 @@ begin
       ('public.update_learning_preferences(uuid,text[],text,text,integer,text)'::regprocedure),
       ('public.get_active_word_list(uuid)'::regprocedure),
       ('public.update_active_word_list(uuid,uuid,text)'::regprocedure),
+      ('public.get_training_stats(uuid,text[],uuid,text)'::regprocedure),
+      ('public.get_training_stats(uuid,text,uuid,text)'::regprocedure),
       ('public.get_detailed_training_stats(uuid,text[],uuid,text)'::regprocedure),
       ('public.get_scenario_word_stats(uuid,uuid,text)'::regprocedure),
       ('public.get_scenario_stats(uuid,text,uuid,text)'::regprocedure),
