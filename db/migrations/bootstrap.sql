@@ -189,3 +189,6 @@
 
 -- Filter stats by dictionary visibility
 \i db/migrations/060_stats_filter_dictionary_access.sql
+
+-- Bulk user card state lookup for platform APIs
+\i db/migrations/061_bulk_user_card_states.sql

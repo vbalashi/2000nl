@@ -103,9 +103,11 @@ BEGIN
 END;
 $function$;
 
+DROP FUNCTION IF EXISTS public.get_training_stats(uuid, text, uuid, text);
+
 CREATE OR REPLACE FUNCTION public.get_training_stats(
     p_user_id uuid,
-    p_mode text DEFAULT 'word-to-definition',
+    p_mode text,
     p_list_id uuid DEFAULT NULL,
     p_list_type text DEFAULT 'curated'
 )

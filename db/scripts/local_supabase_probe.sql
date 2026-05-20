@@ -302,6 +302,7 @@ begin
       ('public.record_card_view(uuid,uuid,text)'::regprocedure),
       ('public.start_learning_entry_card(uuid,uuid,text)'::regprocedure),
       ('public.get_user_card_state(uuid,uuid,text)'::regprocedure),
+      ('public.get_user_card_states_for_entries(uuid,uuid[],text[])'::regprocedure),
       ('public.get_recent_training_history(uuid,timestamp with time zone,integer)'::regprocedure),
       ('public.get_learning_preferences(uuid)'::regprocedure),
       ('public.update_learning_preferences(uuid,text[],text,text,integer,text)'::regprocedure),

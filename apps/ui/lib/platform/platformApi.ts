@@ -410,54 +410,55 @@ export async function performPlatformLookup(
       listMembershipsByEntryId.set(membership.entryId, membership.lists);
     }
 
-    for (const entry of entries) {
-      for (const mode of TRAINING_MODES) {
-        const { data: row, error: statusError } = await auth.supabase.rpc(
-          "get_user_card_state",
-          {
-            p_user_id: auth.user.id,
-            p_entry_id: entry.id,
-            p_card_type_id: mode,
-          },
-        );
+    const { data: stateRows, error: stateError } = await auth.supabase.rpc(
+      "get_user_card_states_for_entries",
+      {
+        p_user_id: auth.user.id,
+        p_entry_ids: entries.map((entry) => entry.id),
+        p_card_type_ids: Array.from(TRAINING_MODES),
+      },
+    );
 
-        if (statusError) {
-          return {
-            payload: {
-              error: "user_state_failed",
-              detail: statusError.message ?? String(statusError),
-            },
-            status: 500,
-          };
-        }
-        if (!row) continue;
+    if (stateError) {
+      return {
+        payload: {
+          error: "user_state_failed",
+          detail: stateError.message ?? String(stateError),
+        },
+        status: 500,
+      };
+    }
 
-        const states = userStateByEntryId.get(entry.id) ?? {};
-        states[mode] = {
-          cardTypeId: mode,
-          entryId: entry.id,
-          clickCount: row.click_count ?? 0,
-          seenCount: row.seen_count ?? 0,
-          successCount: row.success_count ?? 0,
-          lastSeenAt: row.last_seen_at ?? null,
-          lastReviewedAt: row.last_reviewed_at ?? null,
-          nextReviewAt: row.next_review_at ?? null,
-          hidden: row.hidden ?? false,
-          frozenUntil: row.frozen_until ?? null,
-          inLearning: row.in_learning ?? false,
-          learningDueAt: row.learning_due_at ?? null,
-          fsrs: {
-            stability: row.fsrs_stability ?? null,
-            difficulty: row.fsrs_difficulty ?? null,
-            reps: row.fsrs_reps ?? 0,
-            lapses: row.fsrs_lapses ?? 0,
-            lastGrade: row.fsrs_last_grade ?? null,
-            lastInterval: row.fsrs_last_interval ?? null,
-            paramsVersion: row.fsrs_params_version ?? null,
-          },
-        };
-        userStateByEntryId.set(entry.id, states);
-      }
+    for (const row of Array.isArray(stateRows) ? stateRows : []) {
+      const entryId = asString(row?.entry_id);
+      const mode = asTrainingMode(row?.card_type_id);
+      if (!entryId || !mode) continue;
+
+      const states = userStateByEntryId.get(entryId) ?? {};
+      states[mode] = {
+        cardTypeId: mode,
+        entryId,
+        clickCount: row.click_count ?? 0,
+        seenCount: row.seen_count ?? 0,
+        successCount: row.success_count ?? 0,
+        lastSeenAt: row.last_seen_at ?? null,
+        lastReviewedAt: row.last_reviewed_at ?? null,
+        nextReviewAt: row.next_review_at ?? null,
+        hidden: row.hidden ?? false,
+        frozenUntil: row.frozen_until ?? null,
+        inLearning: row.in_learning ?? false,
+        learningDueAt: row.learning_due_at ?? null,
+        fsrs: {
+          stability: row.fsrs_stability ?? null,
+          difficulty: row.fsrs_difficulty ?? null,
+          reps: row.fsrs_reps ?? 0,
+          lapses: row.fsrs_lapses ?? 0,
+          lastGrade: row.fsrs_last_grade ?? null,
+          lastInterval: row.fsrs_last_interval ?? null,
+          paramsVersion: row.fsrs_params_version ?? null,
+        },
+      };
+      userStateByEntryId.set(entryId, states);
     }
   }
 

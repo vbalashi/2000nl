@@ -102,6 +102,12 @@ describeIfDb("FSRS RPC integration", () => {
       );
       await expectUnauthorizedRpc(
         client,
+        "null_auth_bulk_state",
+        `select * from get_user_card_states_for_entries($1, ARRAY[$2]::uuid[], ARRAY[$3]::text[])`,
+        [userId, wordId, mode],
+      );
+      await expectUnauthorizedRpc(
+        client,
         "null_auth_stats",
         `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated')`,
         [userId, mode],

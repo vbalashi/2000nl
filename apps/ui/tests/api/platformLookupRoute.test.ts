@@ -177,31 +177,32 @@ describe("/api/platform/lookup", () => {
           error: null,
         });
       }
-      if (
-        name === "get_user_card_state" &&
-        args?.p_entry_id === "entry-1" &&
-        args?.p_card_type_id === "word-to-definition"
-      ) {
+      if (name === "get_user_card_states_for_entries") {
+        expect(args?.p_entry_ids).toEqual(["entry-1", "entry-2"]);
         return Promise.resolve({
-          data: {
-            click_count: 2,
-            seen_count: 4,
-            success_count: 1,
-            last_seen_at: "2026-05-17T10:00:00.000Z",
-            last_reviewed_at: "2026-05-17T11:00:00.000Z",
-            next_review_at: "2026-05-18T11:00:00.000Z",
-            hidden: false,
-            frozen_until: null,
-            in_learning: false,
-            learning_due_at: null,
-            fsrs_stability: null,
-            fsrs_difficulty: null,
-            fsrs_reps: 1,
-            fsrs_lapses: 0,
-            fsrs_last_grade: null,
-            fsrs_last_interval: null,
-            fsrs_params_version: "fsrs-6-default",
-          },
+          data: [
+            {
+              entry_id: "entry-1",
+              card_type_id: "word-to-definition",
+              click_count: 2,
+              seen_count: 4,
+              success_count: 1,
+              last_seen_at: "2026-05-17T10:00:00.000Z",
+              last_reviewed_at: "2026-05-17T11:00:00.000Z",
+              next_review_at: "2026-05-18T11:00:00.000Z",
+              hidden: false,
+              frozen_until: null,
+              in_learning: false,
+              learning_due_at: null,
+              fsrs_stability: null,
+              fsrs_difficulty: null,
+              fsrs_reps: 1,
+              fsrs_lapses: 0,
+              fsrs_last_grade: null,
+              fsrs_last_interval: null,
+              fsrs_params_version: "fsrs-6-default",
+            },
+          ],
           error: null,
         });
       }
@@ -228,10 +229,10 @@ describe("/api/platform/lookup", () => {
       p_user_id: "user-1",
       p_entry_ids: ["entry-1", "entry-2"],
     });
-    expect(rpc).toHaveBeenCalledWith("get_user_card_state", {
+    expect(rpc).toHaveBeenCalledWith("get_user_card_states_for_entries", {
       p_user_id: "user-1",
-      p_entry_id: "entry-1",
-      p_card_type_id: "word-to-definition",
+      p_entry_ids: ["entry-1", "entry-2"],
+      p_card_type_ids: expect.arrayContaining(["word-to-definition"]),
     });
     expect(from).not.toHaveBeenCalled();
     const payload = await response.json();
@@ -351,6 +352,7 @@ describe("/api/platform/lookup", () => {
     for (const name of [
       "get_card_user_state",
       "get_user_card_state",
+      "get_user_card_states_for_entries",
       "get_user_list_memberships_for_entries",
       ...mutationRpcNames,
     ]) {
@@ -400,30 +402,32 @@ describe("/api/platform/lookup", () => {
       if (name === "get_user_list_memberships_for_entries") {
         return Promise.resolve({ data: [], error: null });
       }
-      if (
-        name === "get_user_card_state" &&
-        args?.p_card_type_id === "word-to-definition"
-      ) {
+      if (name === "get_user_card_states_for_entries") {
+        expect(args?.p_entry_ids).toEqual(["entry-hidden"]);
         return Promise.resolve({
-          data: {
-            click_count: 0,
-            seen_count: 0,
-            success_count: 0,
-            last_seen_at: null,
-            last_reviewed_at: null,
-            next_review_at: null,
-            hidden: true,
-            frozen_until: null,
-            in_learning: false,
-            learning_due_at: null,
-            fsrs_stability: null,
-            fsrs_difficulty: null,
-            fsrs_reps: 0,
-            fsrs_lapses: 0,
-            fsrs_last_grade: null,
-            fsrs_last_interval: null,
-            fsrs_params_version: "fsrs-6-default",
-          },
+          data: [
+            {
+              entry_id: "entry-hidden",
+              card_type_id: "word-to-definition",
+              click_count: 0,
+              seen_count: 0,
+              success_count: 0,
+              last_seen_at: null,
+              last_reviewed_at: null,
+              next_review_at: null,
+              hidden: true,
+              frozen_until: null,
+              in_learning: false,
+              learning_due_at: null,
+              fsrs_stability: null,
+              fsrs_difficulty: null,
+              fsrs_reps: 0,
+              fsrs_lapses: 0,
+              fsrs_last_grade: null,
+              fsrs_last_interval: null,
+              fsrs_params_version: "fsrs-6-default",
+            },
+          ],
           error: null,
         });
       }
