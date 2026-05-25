@@ -164,9 +164,19 @@ describe("WordDetailPanel membership behavior", () => {
     );
     expect(within(membershipSection).getByText("Mijn oefenlijst"))
       .toBeInTheDocument();
-    expect(screen.getByText("Actieve training")).toBeInTheDocument();
+    expect(screen.getByText("Actieve trainingslijst")).toBeInTheDocument();
     expect(screen.getByText("Bewerkbaar")).toBeInTheDocument();
     expect(screen.getByText("Alleen-lezen")).toBeInTheDocument();
+  });
+
+  test("states that adding to a list does not change training scope", async () => {
+    renderPanel({ userLists: [userList] });
+
+    expect(
+      await screen.findByText(
+        "Toevoegen aan een leerlijst verandert je actieve trainingslijst niet.",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("blocks duplicate add when the selected target already contains the entry", async () => {

@@ -662,7 +662,7 @@ export function WordDetailPanel({
                           </span>
                           {membership.isActiveTrainingList ? (
                             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary dark:text-primary-light">
-                              Actieve training
+                              Actieve trainingslijst
                             </span>
                           ) : null}
                         </div>
@@ -816,6 +816,10 @@ export function WordDetailPanel({
                       Dit woord staat al in de gekozen lijst.
                     </div>
                   ) : null}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Toevoegen aan een leerlijst verandert je actieve trainingslijst
+                    niet.
+                  </p>
 
                   <div className="flex flex-wrap gap-2">
                     <button
