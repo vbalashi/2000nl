@@ -155,6 +155,21 @@ export function WordListTab({
     );
   const canMakeViewedListActive =
     Boolean(viewedList) && !isDictionarySourceList(viewedList);
+  const hasWordFilterCriteria = Boolean(
+    query.trim() || partOfSpeech || attributeFilters.length > 0,
+  );
+  const emptyResultsHeading =
+    applyListFilter && viewedList
+      ? hasWordFilterCriteria
+        ? "Geen woorden binnen de bekeken-lijstfilter."
+        : "Deze bekeken lijst heeft geen woorden."
+      : "Geen woordenboekresultaten gevonden.";
+  const emptyResultsDescription =
+    applyListFilter && viewedList
+      ? hasWordFilterCriteria
+        ? `De filter binnen '${listDisplayName(viewedList, viewedListName)}' vond niets. Wis filters of zoek in het woordenboek.`
+        : "Deze lijstinhoud is leeg. Voeg woorden toe via een eigen lijst of kies een andere bekeken lijst."
+      : `De woordenboeklookup vond niets binnen de huidige filters. De bekeken lijst blijft '${viewedListName}'.`;
 
   const selectViewedList = useCallback(
     (list: WordListSummary) => {
@@ -1229,17 +1244,13 @@ export function WordListTab({
                     </svg>
                   </div>
                   <div className="text-base font-semibold text-slate-900 dark:text-white">
-                    {applyListFilter && viewedList
-                      ? "Deze lijst is leeg."
-                      : "Geen woorden gevonden."}
+                    {emptyResultsHeading}
                   </div>
                   <div className="max-w-[520px] text-sm text-slate-600 dark:text-slate-300">
-                    {applyListFilter && viewedList
-                      ? "Schakel ‘Beperk tot bekeken lijst’ uit om alle woorden te bekijken, of voeg woorden toe via een eigen lijst."
-                      : "Pas je zoekopdracht aan of wis filters om meer resultaten te zien."}
+                    {emptyResultsDescription}
                   </div>
                   <div className="mt-2 flex flex-wrap justify-center gap-2">
-                    {(query.trim() || partOfSpeech || attributeFilters.length > 0) && (
+                    {hasWordFilterCriteria && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1262,7 +1273,7 @@ export function WordListTab({
                         }}
                         className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105"
                       >
-                        Toon alle woorden
+                        Zoek in woordenboek
                       </button>
                     )}
                   </div>

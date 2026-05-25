@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchWordsForList, searchWordEntries } from "@/lib/trainingService";
 import type { DictionaryEntry, WordListSummary } from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
@@ -88,14 +88,22 @@ export function DictionarySearchTab({
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
 
-  const sourceLabel = "VanDale";
+  const sourceLabel = "VanDale woordenboek";
+  const useViewedListFilter = applyListFilter && Boolean(viewedListId);
+  const detailEntryInCurrentResults = useMemo(
+    () =>
+      Boolean(
+        detailEntry &&
+          wordResults.some((resultEntry) => resultEntry.id === detailEntry.id),
+      ),
+    [detailEntry, wordResults],
+  );
 
   const runSearch = useCallback(async () => {
     if (!open) return;
     setSearchLoading(true);
     try {
-      const useListFilter = applyListFilter && viewedListId;
-      const result = useListFilter
+      const result = useViewedListFilter
         ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
             query: query || undefined,
             page,
@@ -114,10 +122,10 @@ export function DictionarySearchTab({
       setSearchLoading(false);
     }
   }, [
-    applyListFilter,
     open,
     page,
     query,
+    useViewedListFilter,
     viewedList?.type,
     viewedListId,
   ]);
@@ -140,6 +148,18 @@ export function DictionarySearchTab({
     setApplyListFilter(false);
     setPage(1);
   };
+  const resultScopeLabel = useViewedListFilter
+    ? `Lijstfilter in bekeken lijst: ${viewedListName}`
+    : `Woordenboeklookup: ${sourceLabel}`;
+  const resultCountLabel = useViewedListFilter
+    ? `${wordTotal} woorden gevonden binnen de bekeken-lijstfilter`
+    : `${wordTotal} woordenboekresultaten gevonden`;
+  const emptyHeading = useViewedListFilter
+    ? "Geen woorden binnen de bekeken-lijstfilter."
+    : "Geen woordenboekresultaten gevonden.";
+  const emptyDescription = useViewedListFilter
+    ? `De filter binnen de bekeken lijst '${viewedListName}' vond niets. Wis de zoekopdracht of zoek opnieuw in het woordenboek.`
+    : `De woordenboekzoekopdracht in ${sourceLabel} vond niets binnen de huidige taal- en broninstelling.`;
 
   const results = (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -164,7 +184,7 @@ export function DictionarySearchTab({
               setQuery(event.target.value);
               setPage(1);
             }}
-            placeholder="Zoek een woord of zin..."
+            placeholder="Zoek in het woordenboek..."
             className="h-12 w-full rounded-2xl border border-primary/50 bg-white pl-12 pr-12 text-base text-slate-900 shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-primary/60 dark:bg-slate-950 dark:text-white"
           />
           {query ? (
@@ -190,14 +210,23 @@ export function DictionarySearchTab({
             <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
               Bron: {sourceLabel}
             </span>
-            {applyListFilter ? (
+            <span
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                useViewedListFilter
+                  ? "border-primary/30 bg-primary/5 text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
+              }`}
+            >
+              {useViewedListFilter ? "Modus: lijstfilter" : "Modus: woordenboeklookup"}
+            </span>
+            {useViewedListFilter ? (
               <span className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light">
                 Bekeken lijst: {viewedListName}
               </span>
             ) : null}
           </div>
           <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
-            Alleen bekeken lijst
+            Filter op bekeken lijst
             <input
               type="checkbox"
               checked={applyListFilter}
@@ -211,8 +240,11 @@ export function DictionarySearchTab({
           </label>
         </div>
 
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {wordTotal} resultaten gevonden
+        <div className="space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <div className="font-semibold text-slate-700 dark:text-slate-200">
+            {resultScopeLabel}
+          </div>
+          <div>{resultCountLabel}</div>
         </div>
       </div>
 
@@ -271,7 +303,10 @@ export function DictionarySearchTab({
         ) : (
           <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
             <div className="text-base font-semibold text-slate-900 dark:text-white">
-              Geen woorden gevonden.
+              {emptyHeading}
+            </div>
+            <div className="max-w-[440px] text-sm text-slate-600 dark:text-slate-300">
+              {emptyDescription}
             </div>
             <button
               type="button"
@@ -317,20 +352,38 @@ export function DictionarySearchTab({
         {results}
         <aside className="hidden w-[380px] shrink-0 border-l border-slate-100 lg:block dark:border-slate-800">
           {detailEntry ? (
-            <WordDetailPanel
-              entry={detailEntry}
-              userId={userId}
-              translationLang={translationLang}
-              userLists={userLists}
-              onListsUpdated={async () => {
-                await reloadLists();
-                notifyListsUpdated();
-              }}
-              onTrainWord={onTrainWord}
-              showHeader={true}
-              showActions={true}
-              autoFetchTranslation={false}
-            />
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="border-b border-slate-100 bg-slate-50 px-5 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
+                <div className="font-semibold text-slate-700 dark:text-slate-200">
+                  Geopende entry
+                </div>
+                {!detailEntryInCurrentResults ? (
+                  <div className="mt-0.5 text-slate-500 dark:text-slate-400">
+                    Deze entry is bewaard terwijl de zoekresultaten veranderden.
+                  </div>
+                ) : (
+                  <div className="mt-0.5 text-slate-500 dark:text-slate-400">
+                    Geselecteerd uit de huidige resultaten.
+                  </div>
+                )}
+              </div>
+              <div className="min-h-0 flex-1">
+                <WordDetailPanel
+                  entry={detailEntry}
+                  userId={userId}
+                  translationLang={translationLang}
+                  userLists={userLists}
+                  onListsUpdated={async () => {
+                    await reloadLists();
+                    notifyListsUpdated();
+                  }}
+                  onTrainWord={onTrainWord}
+                  showHeader={true}
+                  showActions={true}
+                  autoFetchTranslation={false}
+                />
+              </div>
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-500 dark:text-slate-400">
               Selecteer een woord om details te bekijken.

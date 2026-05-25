@@ -106,14 +106,16 @@ export function WordsToolbar({
     return () => window.cancelAnimationFrame(raf);
   }, [autoFocusQuery]);
 
-  // Title shows what we're displaying
-  const title = `TOON WOORDEN IN: ${viewedListName.toUpperCase()}`;
-
-  // Info line
+  const title = applyListFilter
+    ? `LIJSTINHOUD: ${viewedListName.toUpperCase()}`
+    : "WOORDENBOEKLOOKUP";
   const listWordCount = viewedList?.item_count ?? 0;
   const infoText = applyListFilter
-    ? `${wordTotal} woorden in lijst • ${selectedCount} geselecteerd`
-    : `${listWordCount} woorden in lijst • ${wordTotal} totaal • ${selectedCount} geselecteerd`;
+    ? `${wordTotal} woorden in bekeken lijst • ${selectedCount} geselecteerd`
+    : `Bekeken lijst: ${listWordCount} woorden • woordenboekresultaten: ${wordTotal} • ${selectedCount} geselecteerd`;
+  const scopeText = applyListFilter
+    ? "Je inspecteert de inhoud van de bekeken lijst."
+    : `Je zoekt in het woordenboek; de bekeken lijst blijft ${viewedListName}.`;
 
   // Build chips from active filters
   const filterLabels: Record<AttributeFilter, string> = {
@@ -127,7 +129,6 @@ export function WordsToolbar({
   const chips: Array<{ label: string; show: boolean }> = [
     { label: `Zoek: "${query.trim()}"`, show: Boolean(query.trim()) },
     { label: `Woordsoort: ${posLabel(partOfSpeech)}`, show: Boolean(partOfSpeech) },
-    // Add chips for each active attribute filter
     ...attributeFilters.map((f) => ({ label: filterLabels[f], show: true })),
   ].filter((c) => c.show);
 
@@ -162,8 +163,8 @@ export function WordsToolbar({
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
                 {applyListFilter
-                  ? "Binnen bekeken lijst"
-                  : "Beperk tot bekeken lijst"}
+                  ? "Filter: bekeken lijst"
+                  : "Toon bekeken lijst"}
               </button>
             )}
           </div>
@@ -190,19 +191,26 @@ export function WordsToolbar({
               </span>
             ))}
           </div>
+          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+            {scopeText}
+          </div>
         </div>
       </div>
 
       <div className="mt-3">
         <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
-          Nieuwe zoekopdracht
+          {applyListFilter ? "Filter binnen bekeken lijst" : "Zoek in woordenboek"}
         </label>
         <input
           ref={queryInputRef}
           type="text"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Zoek op hoofdwoord..."
+          placeholder={
+            applyListFilter
+              ? "Filter woorden binnen deze lijst..."
+              : "Zoek woordenboekentries..."
+          }
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>

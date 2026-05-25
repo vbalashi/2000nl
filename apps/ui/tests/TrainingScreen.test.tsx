@@ -42,6 +42,22 @@ const userOwnedList = {
   item_count: 3,
 };
 
+const dictionaryHuis = {
+  id: "word-1",
+  headword: "huis",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
+  is_nt2_2000: true,
+};
+
+const dictionaryBoom = {
+  id: "word-2",
+  headword: "boom",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een hoge plant", links: [] }] },
+  is_nt2_2000: false,
+};
+
 const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
 const fetchStats = vi.fn().mockResolvedValue({
   newWordsToday: 0,
@@ -60,27 +76,11 @@ const fetchActiveList = vi.fn().mockResolvedValue({ listId: null, listType: null
 const fetchListSummaryById = vi.fn().mockResolvedValue(null);
 const updateActiveList = vi.fn().mockResolvedValue(undefined);
 const searchWordEntries = vi.fn().mockResolvedValue({
-  items: [
-    {
-      id: "word-1",
-      headword: "huis",
-      part_of_speech: "zn",
-      raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
-      is_nt2_2000: true,
-    },
-  ],
+  items: [dictionaryHuis],
   total: 1,
 });
 const fetchWordsForList = vi.fn().mockResolvedValue({
-  items: [
-    {
-      id: "word-1",
-      headword: "huis",
-      part_of_speech: "zn",
-      raw: { meanings: [{ definition: "Een gebouw", links: [] }] },
-      is_nt2_2000: true,
-    },
-  ],
+  items: [dictionaryHuis],
   total: 1,
 });
 const recordWordView = vi.fn().mockResolvedValue(undefined);
@@ -164,6 +164,20 @@ const restoreDefaultListScope = () => {
   fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
 };
 
+const restoreDefaultSearchResults = () => {
+  searchWordEntries.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+};
+
+const restoreDefaultListResults = () => {
+  fetchWordsForList.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+};
+
 const waitForInitialTrainingFetches = async () => {
   await screen.findByRole("heading", { name: "huis" });
   await waitFor(() =>
@@ -180,7 +194,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
 
   fireEvent.click(screen.getByLabelText("Zoeken"));
 
-  await screen.findByPlaceholderText(/zoek een woord of zin/i);
+  await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   const searchTab = screen
     .getAllByRole("button", { name: "Zoeken" })
     .find((el) => el.tagName === "BUTTON");
@@ -188,7 +202,43 @@ test("search action opens the dedicated dictionary search surface", async () => 
     "border-primary",
   );
   expect(screen.getByRole("button", { name: "Lijsten" })).toBeInTheDocument();
+  expect(screen.getByText("Modus: woordenboeklookup")).toBeInTheDocument();
+  expect(screen.getByText(/Woordenboeklookup: VanDale woordenboek/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/filter op bekeken lijst/i)).toBeInTheDocument();
+  expect(screen.queryByText(/Alleen actieve lijst/i)).not.toBeInTheDocument();
   await waitFor(() => expect(searchWordEntries).toHaveBeenCalled());
+});
+
+test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
+  searchWordEntries.mockImplementation(async ({ query }: { query?: string }) =>
+    query === "boom"
+      ? { items: [dictionaryBoom], total: 1 }
+      : { items: [dictionaryHuis], total: 1 },
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+
+    const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
+    await screen.findByText("Geopende entry");
+    expect(
+      screen.getByText("Geselecteerd uit de huidige resultaten."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(queryInput, { target: { value: "boom" } });
+
+    await screen.findByText("boom");
+    expect(
+      await screen.findByText(
+        "Deze entry is bewaard terwijl de zoekresultaten veranderden.",
+      ),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
 });
 
 test("lists tab opens the dedicated list management surface", async () => {
@@ -207,7 +257,62 @@ test("lists tab opens the dedicated list management surface", async () => {
     screen.getByRole("button", { name: "Trainingsinstellingen" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
+  expect(screen.getAllByText(/LIJSTINHOUD: TEST LIST/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/woorden in bekeken lijst/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Filter: bekeken lijst").length).toBeGreaterThan(0);
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+});
+
+test("list-filtered search empty state names the viewed-list filter", async () => {
+  fetchWordsForList
+    .mockResolvedValueOnce({ items: [dictionaryHuis], total: 1 })
+    .mockResolvedValueOnce({ items: [], total: 0 });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+
+    const filterInput = (
+      await screen.findAllByPlaceholderText(/filter woorden binnen deze lijst/i)
+    )[0];
+    fireEvent.change(filterInput, { target: { value: "zzzz" } });
+
+    expect(
+      await screen.findByText("Geen woorden binnen de bekeken-lijstfilter."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/De filter binnen 'Test list' vond niets/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Zoek in woordenboek" }),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListResults();
+  }
+});
+
+test("dictionary lookup empty state names the dictionary source search", async () => {
+  searchWordEntries.mockResolvedValue({ items: [], total: 0 });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+
+    expect(
+      await screen.findByText("Geen woordenboekresultaten gevonden."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/De woordenboekzoekopdracht in VanDale woordenboek vond niets/i),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
 });
 
 test("clicking a list in Lijsten changes only the viewed list", async () => {
