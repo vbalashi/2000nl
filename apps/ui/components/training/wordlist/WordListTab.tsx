@@ -15,6 +15,7 @@ import type {
   ListCardPolicy,
   TrainingMode,
   WordListSummary,
+  WordListType,
 } from "@/lib/types";
 import { WordsToolbar, type AttributeFilter } from "./WordsToolbar";
 import { WordsListMobile } from "./WordsListMobile";
@@ -58,11 +59,13 @@ type Props = {
   userLists: WordListSummary[];
   listsLoading: boolean;
   listsError: string | null;
-  selectedListId: string | null;
-  setSelectedListId: (id: string | null) => void;
-  selectedList: WordListSummary | null;
-  selectedListName: string;
-  onListChange: (value: WordListSummary) => void;
+  viewedListId: string | null;
+  viewedListType: WordListType | null;
+  onViewedListChange: (list: WordListSummary) => void;
+  viewedList: WordListSummary | null;
+  viewedListName: string;
+  activeTrainingList: WordListSummary | null;
+  onMakeActiveForTraining: (value: WordListSummary) => void;
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onTrainWord?: (wordId: string) => void;
@@ -80,11 +83,13 @@ export function WordListTab({
   userLists,
   listsLoading,
   listsError,
-  selectedListId,
-  setSelectedListId,
-  selectedList,
-  selectedListName,
-  onListChange,
+  viewedListId,
+  viewedListType,
+  onViewedListChange,
+  viewedList,
+  viewedListName,
+  activeTrainingList,
+  onMakeActiveForTraining,
   reloadLists,
   notifyListsUpdated,
   onTrainWord,
@@ -101,7 +106,7 @@ export function WordListTab({
   const [page, setPage] = useState(1);
   const pageSize = 20;
   const [searchLoading, setSearchLoading] = useState(false);
-  // applyListFilter: false = show all words (global), true = filter by selected list
+  // applyListFilter: false = show all words (global), true = filter by viewed list
   const [applyListFilter, setApplyListFilter] = useState(true);
 
   // Derive nt2Only from attributeFilters for backward compatibility with search
@@ -116,12 +121,9 @@ export function WordListTab({
     () => curatedLists.filter(isDictionarySourceList),
     [curatedLists],
   );
-  const activeTrainingList = isDictionarySourceList(selectedList)
-    ? curatedLearningLists[0] ?? userLists[0] ?? null
-    : selectedList;
   const activeTrainingListName = activeTrainingList
-    ? listDisplayName(activeTrainingList, selectedListName)
-    : selectedListName;
+    ? listDisplayName(activeTrainingList, "Geen actieve lijst")
+    : "Geen actieve lijst";
   const [selectedWordIds, setSelectedWordIds] = useState<Set<string>>(
     new Set()
   );
@@ -144,48 +146,66 @@ export function WordListTab({
   const [membershipSet, setMembershipSet] = useState<Set<string>>(new Set());
   const [mobileListPickerOpen, setMobileListPickerOpen] = useState(false);
   const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const isViewedListActiveForTraining =
+    Boolean(
+      viewedList &&
+        activeTrainingList &&
+        viewedList.id === activeTrainingList.id &&
+        viewedList.type === activeTrainingList.type,
+    );
+  const canMakeViewedListActive =
+    Boolean(viewedList) && !isDictionarySourceList(viewedList);
+
+  const selectViewedList = useCallback(
+    (list: WordListSummary) => {
+      onViewedListChange(list);
+      setSelectedWordIds(new Set());
+      setActionMessage(null);
+    },
+    [onViewedListChange],
+  );
 
   useEffect(() => {
-    setIntentScenarioId(selectedList?.default_scenario_id ?? "");
-    setIntentCardPolicy(selectedList?.card_policy ?? "inherit");
+    setIntentScenarioId(viewedList?.default_scenario_id ?? "");
+    setIntentCardPolicy(viewedList?.card_policy ?? "inherit");
     setIntentCardTypeIds(
-      (selectedList?.card_type_ids ?? []).filter((mode): mode is TrainingMode =>
+      (viewedList?.card_type_ids ?? []).filter((mode): mode is TrainingMode =>
         LIST_CARD_TYPE_OPTIONS.some((option) => option.value === mode),
       ),
     );
   }, [
-    selectedList?.card_policy,
-    selectedList?.card_type_ids,
-    selectedList?.default_scenario_id,
-    selectedList?.id,
+    viewedList?.card_policy,
+    viewedList?.card_type_ids,
+    viewedList?.default_scenario_id,
+    viewedList?.id,
   ]);
 
   useEffect(() => {
-    if (selectedList?.type === "curated" && activeListTab === "edit") {
+    if (viewedList?.type === "curated" && activeListTab === "edit") {
       setActiveListTab("info");
     }
-  }, [activeListTab, selectedList?.type]);
+  }, [activeListTab, viewedList?.type]);
 
   // Default copy target to first user list (excluding the currently selected user list).
   useEffect(() => {
     if (copyTargetMode !== "existing") return;
     if (copyTargetListId) return;
     const fallback =
-      userLists.find((l) => l.id !== selectedListId)?.id ?? userLists[0]?.id ?? null;
+      userLists.find((l) => l.id !== viewedListId)?.id ?? userLists[0]?.id ?? null;
     if (fallback) setCopyTargetListId(fallback);
-  }, [copyTargetMode, copyTargetListId, userLists, selectedListId]);
+  }, [copyTargetMode, copyTargetListId, userLists, viewedListId]);
 
   const runSearch = useCallback(async () => {
     if (!open) return;
     setSearchLoading(true);
 
-    // If list filter is on and we have a selected list, fetch from that list
+    // If list filter is on and we have a viewed list, fetch from that list
     // Otherwise, do a global search
-    const useListFilter = applyListFilter && selectedListId;
-    const selectedType = selectedList?.type ?? "curated";
+    const useListFilter = applyListFilter && viewedListId;
+    const selectedType = viewedList?.type ?? "curated";
 
     const result = useListFilter
-      ? await fetchWordsForList(selectedListId!, selectedType, {
+      ? await fetchWordsForList(viewedListId!, selectedType, {
           query: query || undefined,
           partOfSpeech: partOfSpeech || undefined,
           isNt2: nt2Only ? true : undefined,
@@ -210,8 +230,8 @@ export function WordListTab({
   }, [
     open,
     applyListFilter,
-    selectedListId,
-    selectedList?.type,
+    viewedListId,
+    viewedList?.type,
     query,
     partOfSpeech,
     nt2Only,
@@ -232,14 +252,14 @@ export function WordListTab({
     const el = listScrollRef.current;
     if (!el) return;
     el.scrollTop = 0;
-  }, [page, query, partOfSpeech, attributeFilters, applyListFilter, selectedListId]);
+  }, [page, query, partOfSpeech, attributeFilters, applyListFilter, viewedListId]);
 
   const hasSelection = selectedWordIds.size > 0;
   const selectedIds = useMemo(() => Array.from(selectedWordIds), [selectedWordIds]);
 
   // For user lists, compute which selected IDs are already in the target list.
   useEffect(() => {
-    const targetListId = selectedList?.type === "user" ? selectedList.id : null;
+    const targetListId = viewedList?.type === "user" ? viewedList.id : null;
     if (!targetListId || selectedIds.length === 0) {
       setMembershipSet(new Set());
       return;
@@ -255,14 +275,14 @@ export function WordListTab({
     return () => {
       cancelled = true;
     };
-  }, [selectedList, selectedIds]);
+  }, [viewedList, selectedIds]);
 
   const selectedInTargetCount =
-    selectedList?.type === "user"
+    viewedList?.type === "user"
       ? selectedIds.filter((id) => membershipSet.has(id)).length
       : 0;
   const selectedNotInTargetCount =
-    selectedList?.type === "user"
+    viewedList?.type === "user"
       ? selectedIds.filter((id) => !membershipSet.has(id)).length
       : 0;
 
@@ -275,14 +295,14 @@ export function WordListTab({
   }, []);
 
   const saveListTrainingIntent = useCallback(async () => {
-    if (!selectedList || selectedList.type !== "user") return;
+    if (!viewedList || viewedList.type !== "user") return;
 
     setActionMessage(null);
     setIntentSaving(true);
     try {
       const updated = await updateUserList({
         userId,
-        listId: selectedList.id,
+        listId: viewedList.id,
         default_scenario_id: intentScenarioId || null,
         clear_default_scenario: !intentScenarioId,
         card_policy: intentCardPolicy,
@@ -295,7 +315,7 @@ export function WordListTab({
       }
 
       setActionMessage("Lijsttraining opgeslagen.");
-      onListChange(updated);
+      onViewedListChange(updated);
       await reloadLists();
       notifyListsUpdated();
     } finally {
@@ -306,9 +326,9 @@ export function WordListTab({
     intentCardTypeIds,
     intentScenarioId,
     notifyListsUpdated,
-    onListChange,
+    onViewedListChange,
     reloadLists,
-    selectedList,
+    viewedList,
     userId,
   ]);
 
@@ -341,20 +361,20 @@ export function WordListTab({
   }> = [
     { key: "words", label: "Woorden" },
     { key: "training", label: "Trainingsinstellingen" },
-    selectedList?.type === "user"
+    viewedList?.type === "user"
       ? { key: "edit", label: "Bewerken" }
       : { key: "info", label: "Info" },
   ];
 
-  const selectedListKindLabel = isDictionarySourceList(selectedList)
+  const viewedListKindLabel = isDictionarySourceList(viewedList)
     ? "Bron"
-    : selectedList?.type === "user"
+    : viewedList?.type === "user"
       ? "Mijn lijst"
       : "Gecureerd";
 
   const trainingIntentPanel = (
     <div className="space-y-4 p-4">
-      {selectedList?.type === "curated" ? (
+      {viewedList?.type === "curated" ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
           Deze gecureerde lijst is alleen-lezen. De trainingsinstellingen hieronder
           tonen het list contract; persoonlijke overrides voor gecureerde lijsten
@@ -369,7 +389,7 @@ export function WordListTab({
           </span>
           <select
             value={intentScenarioId}
-            disabled={selectedList?.type !== "user"}
+            disabled={viewedList?.type !== "user"}
             onChange={(event) => setIntentScenarioId(event.target.value)}
             className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-950"
           >
@@ -387,7 +407,7 @@ export function WordListTab({
           </span>
           <select
             value={intentCardPolicy}
-            disabled={selectedList?.type !== "user"}
+            disabled={viewedList?.type !== "user"}
             onChange={(event) =>
               setIntentCardPolicy(event.target.value as ListCardPolicy)
             }
@@ -414,7 +434,7 @@ export function WordListTab({
             <input
               type="checkbox"
               checked={intentCardTypeIds.includes(option.value)}
-              disabled={selectedList?.type !== "user"}
+              disabled={viewedList?.type !== "user"}
               onChange={() => toggleIntentCardType(option.value)}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
@@ -423,7 +443,7 @@ export function WordListTab({
         ))}
       </div>
 
-      {selectedList?.type === "user" ? (
+      {viewedList?.type === "user" ? (
         <button
           type="button"
           disabled={intentSaving}
@@ -443,7 +463,7 @@ export function WordListTab({
           Type
         </p>
         <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-          {selectedListKindLabel}
+          {viewedListKindLabel}
         </p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
@@ -451,7 +471,7 @@ export function WordListTab({
           Taal
         </p>
         <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-          {selectedList?.primary_language_code ?? selectedList?.language_code ?? "nl"}
+          {viewedList?.primary_language_code ?? viewedList?.language_code ?? "nl"}
         </p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
@@ -459,7 +479,7 @@ export function WordListTab({
           Woorden
         </p>
         <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-          {selectedList?.item_count ?? "—"}
+          {viewedList?.item_count ?? "—"}
         </p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
@@ -467,7 +487,7 @@ export function WordListTab({
           Bewerken
         </p>
         <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-          {selectedList?.type === "user" ? "Toegestaan" : "Alleen lezen"}
+          {viewedList?.type === "user" ? "Toegestaan" : "Alleen lezen"}
         </p>
       </div>
     </div>
@@ -512,20 +532,18 @@ export function WordListTab({
                 </div>
                 <div className="mt-3 space-y-2">
                   {curatedLearningLists.map((list) => {
-                    const isActive = list.id === selectedListId;
+                    const isViewed =
+                      list.id === viewedListId && list.type === viewedListType;
+                    const isActiveForTraining =
+                      activeTrainingList?.id === list.id &&
+                      activeTrainingList?.type === list.type;
                     return (
                       <button
                         key={list.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedListId(list.id);
-                          // Don't reset filters or change applyListFilter - just change target list
-                          setSelectedWordIds(new Set());
-                          setActionMessage(null);
-                          onListChange(list);
-                        }}
+                        onClick={() => selectViewedList(list)}
                         className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
-                          isActive
+                          isViewed
                             ? "border-primary/60 bg-primary/5 text-slate-900 dark:bg-primary/10 dark:text-white"
                             : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
                         }`}
@@ -534,11 +552,18 @@ export function WordListTab({
                           <span className="flex items-center gap-1.5">
                             {list.name}
                           </span>
-                          {isActive ? (
-                            <span className="text-[10px] uppercase text-primary dark:text-primary-light">
-                              actief
-                            </span>
-                          ) : null}
+                          <span className="flex shrink-0 items-center gap-1">
+                            {isViewed ? (
+                              <span className="text-[10px] uppercase text-primary dark:text-primary-light">
+                                bekeken
+                              </span>
+                            ) : null}
+                            {isActiveForTraining ? (
+                              <span className="text-[10px] uppercase text-emerald-600 dark:text-emerald-300">
+                                training
+                              </span>
+                            ) : null}
+                          </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {list.item_count ?? "—"} woorden
@@ -602,25 +627,24 @@ export function WordListTab({
                     >
                       Nieuwe lijst
                     </button>
-                    {selectedList?.type === "user" ? (
+                    {viewedList?.type === "user" ? (
                       <button
                         type="button"
                         disabled={deletingList}
                         onClick={async () => {
-                          if (!selectedList) return;
+                          if (!viewedList) return;
                           const confirmed = window.confirm(
-                            `Weet je zeker dat je '${selectedList.name}' wil verwijderen?`
+                            `Weet je zeker dat je '${viewedList.name}' wil verwijderen?`
                           );
                           if (!confirmed) return;
                           setActionMessage(null);
                           setDeletingList(true);
-                          const { error } = await deleteUserList(selectedList.id);
+                          const { error } = await deleteUserList(viewedList.id);
                           if (error) {
                             setActionMessage("Kon lijst niet verwijderen.");
                           } else {
                             setActionMessage("Lijst verwijderd.");
                             setSelectedWordIds(new Set());
-                            setSelectedListId(null);
                             setCopyTargetListId(null);
                             await reloadLists();
                             notifyListsUpdated();
@@ -636,31 +660,36 @@ export function WordListTab({
                 </div>
                 <div className="mt-3 space-y-2">
                   {userLists.map((list) => {
-                    const isActive = list.id === selectedListId;
+                    const isViewed =
+                      list.id === viewedListId && list.type === viewedListType;
+                    const isActiveForTraining =
+                      activeTrainingList?.id === list.id &&
+                      activeTrainingList?.type === list.type;
                     return (
                       <button
                         key={list.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedListId(list.id);
-                          // Don't reset filters or change applyListFilter - just change target list
-                          setSelectedWordIds(new Set());
-                          setActionMessage(null);
-                          onListChange(list);
-                        }}
+                        onClick={() => selectViewedList(list)}
                         className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
-                          isActive
+                          isViewed
                             ? "border-primary/60 bg-primary/5 text-slate-900 dark:bg-primary/10 dark:text-white"
                             : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
                         }`}
                       >
                         <div className="flex items-center justify-between text-sm font-semibold">
                           <span>{list.name}</span>
-                          {isActive ? (
-                            <span className="text-[10px] uppercase text-primary dark:text-primary-light">
-                              actief
-                            </span>
-                          ) : null}
+                          <span className="flex shrink-0 items-center gap-1">
+                            {isViewed ? (
+                              <span className="text-[10px] uppercase text-primary dark:text-primary-light">
+                                bekeken
+                              </span>
+                            ) : null}
+                            {isActiveForTraining ? (
+                              <span className="text-[10px] uppercase text-emerald-600 dark:text-emerald-300">
+                                training
+                              </span>
+                            ) : null}
+                          </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {list.item_count ?? "—"} woorden
@@ -684,17 +713,44 @@ export function WordListTab({
           <div className="shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Bekeken lijst
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-xl font-semibold text-slate-900 dark:text-white">
-                    {listDisplayName(selectedList, selectedListName)}
+                    {listDisplayName(viewedList, viewedListName)}
                   </h2>
                   <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                    {selectedListKindLabel}
+                    {viewedListKindLabel}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {selectedList?.item_count ?? "—"} woorden
+                  {viewedList?.item_count ?? "—"} woorden
                 </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {canMakeViewedListActive ? (
+                  isViewedListActiveForTraining ? (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold uppercase text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+                      Actief voor training
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!viewedList) return;
+                        onMakeActiveForTraining(viewedList);
+                      }}
+                      className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105"
+                    >
+                      Maak actief voor training
+                    </button>
+                  )
+                ) : viewedList ? (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    Bron
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -723,14 +779,14 @@ export function WordListTab({
           <div className="hidden shrink-0 md:block">
           <WordsToolbar
             applyListFilter={applyListFilter}
-            selectedListName={selectedListName}
-            selectedListId={selectedListId}
+            viewedListName={viewedListName}
+            viewedListId={viewedListId}
             wordTotal={wordTotal}
             selectedCount={selectedWordIds.size}
             query={query}
             partOfSpeech={partOfSpeech}
             nt2Only={nt2Only}
-            selectedList={selectedList}
+            viewedList={viewedList}
             autoFocusQuery={autoFocusQuery}
             attributeFilters={attributeFilters}
             onQueryChange={(value) => {
@@ -796,17 +852,17 @@ export function WordListTab({
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {selectedList?.type === "user" && selectedNotInTargetCount > 0 && (
+                {viewedList?.type === "user" && selectedNotInTargetCount > 0 && (
                   <button
                     type="button"
                     disabled={copyBusy}
                     onClick={async () => {
-                      if (!selectedList) return;
+                      if (!viewedList) return;
                       setActionMessage(null);
                       setCopyBusy(true);
                       try {
                         const ids = selectedIds.filter((id) => !membershipSet.has(id));
-                        const { error } = await addWordsToUserList(selectedList.id, ids);
+                        const { error } = await addWordsToUserList(viewedList.id, ids);
                         if (error) {
                           setActionMessage("Kon woorden niet toevoegen.");
                         } else {
@@ -825,16 +881,16 @@ export function WordListTab({
                     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/15">
                       +
                     </span>
-                    Voeg toe aan {selectedList.name} ({selectedNotInTargetCount})
+                    Voeg toe aan {viewedList.name} ({selectedNotInTargetCount})
                   </button>
                 )}
 
-                {selectedList?.type === "user" && selectedInTargetCount > 0 && (
+                {viewedList?.type === "user" && selectedInTargetCount > 0 && (
                   <button
                     type="button"
                     disabled={copyBusy}
                     onClick={async () => {
-                      if (!selectedList) return;
+                      if (!viewedList) return;
                       setActionMessage(null);
                       const confirmed = window.confirm(
                         "Verwijder geselecteerde woorden uit deze lijst?"
@@ -844,7 +900,7 @@ export function WordListTab({
                       try {
                         const ids = selectedIds.filter((id) => membershipSet.has(id));
                         const { error } = await removeWordsFromUserList(
-                          selectedList.id,
+                          viewedList.id,
                           ids
                         );
                         if (error) {
@@ -865,7 +921,7 @@ export function WordListTab({
                     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/15">
                       −
                     </span>
-                    Verwijder van {selectedList.name} ({selectedInTargetCount})
+                    Verwijder van {viewedList.name} ({selectedInTargetCount})
                   </button>
                 )}
 
@@ -942,10 +998,13 @@ export function WordListTab({
                   <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                     <div className="min-w-0">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Actieve lijst
+                        Bekeken lijst
                       </div>
                       <div className="truncate font-semibold">
-                        {activeTrainingListName}
+                        {listDisplayName(viewedList, viewedListName)}
+                      </div>
+                      <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        Training: {activeTrainingListName}
                       </div>
                     </div>
                     <button
@@ -961,14 +1020,14 @@ export function WordListTab({
                 {/* Mobile toolbar */}
                 <WordsToolbar
                   applyListFilter={applyListFilter}
-                  selectedListName={selectedListName}
-                  selectedListId={selectedListId}
+                  viewedListName={viewedListName}
+                  viewedListId={viewedListId}
                   wordTotal={wordTotal}
                   selectedCount={selectedWordIds.size}
                   query={query}
                   partOfSpeech={partOfSpeech}
                   nt2Only={nt2Only}
-                  selectedList={selectedList}
+                  viewedList={viewedList}
                   autoFocusQuery={autoFocusQuery}
                   attributeFilters={attributeFilters}
                   onQueryChange={(value) => {
@@ -1032,17 +1091,17 @@ export function WordListTab({
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {selectedList?.type === "user" && selectedNotInTargetCount > 0 && (
+                      {viewedList?.type === "user" && selectedNotInTargetCount > 0 && (
                         <button
                           type="button"
                           disabled={copyBusy}
                           onClick={async () => {
-                            if (!selectedList) return;
+                            if (!viewedList) return;
                             setActionMessage(null);
                             setCopyBusy(true);
                             try {
                               const ids = selectedIds.filter((id) => !membershipSet.has(id));
-                              const { error } = await addWordsToUserList(selectedList.id, ids);
+                              const { error } = await addWordsToUserList(viewedList.id, ids);
                               if (error) {
                                 setActionMessage("Kon woorden niet toevoegen.");
                               } else {
@@ -1061,16 +1120,16 @@ export function WordListTab({
                           <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/15">
                             +
                           </span>
-                          Voeg toe aan {selectedList.name} ({selectedNotInTargetCount})
+                          Voeg toe aan {viewedList.name} ({selectedNotInTargetCount})
                         </button>
                       )}
 
-                      {selectedList?.type === "user" && selectedInTargetCount > 0 && (
+                      {viewedList?.type === "user" && selectedInTargetCount > 0 && (
                         <button
                           type="button"
                           disabled={copyBusy}
                           onClick={async () => {
-                            if (!selectedList) return;
+                            if (!viewedList) return;
                             setActionMessage(null);
                             const confirmed = window.confirm(
                               "Verwijder geselecteerde woorden uit deze lijst?"
@@ -1080,7 +1139,7 @@ export function WordListTab({
                             try {
                               const ids = selectedIds.filter((id) => membershipSet.has(id));
                               const { error } = await removeWordsFromUserList(
-                                selectedList.id,
+                                viewedList.id,
                                 ids
                               );
                               if (error) {
@@ -1101,7 +1160,7 @@ export function WordListTab({
                           <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/15">
                             −
                           </span>
-                          Verwijder van {selectedList.name} ({selectedInTargetCount})
+                          Verwijder van {viewedList.name} ({selectedInTargetCount})
                         </button>
                       )}
 
@@ -1170,13 +1229,13 @@ export function WordListTab({
                     </svg>
                   </div>
                   <div className="text-base font-semibold text-slate-900 dark:text-white">
-                    {applyListFilter && selectedList
+                    {applyListFilter && viewedList
                       ? "Deze lijst is leeg."
                       : "Geen woorden gevonden."}
                   </div>
                   <div className="max-w-[520px] text-sm text-slate-600 dark:text-slate-300">
-                    {applyListFilter && selectedList
-                      ? "Schakel ‘Filter door lijst’ uit om alle woorden te bekijken, of voeg woorden toe via een eigen lijst."
+                    {applyListFilter && viewedList
+                      ? "Schakel ‘Beperk tot bekeken lijst’ uit om alle woorden te bekijken, of voeg woorden toe via een eigen lijst."
                       : "Pas je zoekopdracht aan of wis filters om meer resultaten te zien."}
                   </div>
                   <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -1194,7 +1253,7 @@ export function WordListTab({
                         Wis filters
                       </button>
                     )}
-                    {applyListFilter && selectedListId && (
+                    {applyListFilter && viewedListId && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1345,7 +1404,7 @@ export function WordListTab({
                       </option>
                       <option value="__new__">Nieuwe lijst aanmaken…</option>
                       {userLists
-                        .filter((l) => l.id !== selectedListId)
+                        .filter((l) => l.id !== viewedListId)
                         .map((list) => (
                           <option key={list.id} value={list.id}>
                             {list.name} ({list.item_count ?? "—"})
@@ -1455,13 +1514,10 @@ export function WordListTab({
         onLanguageChange={onLanguageChange}
         curatedLists={curatedLearningLists}
         userLists={userLists}
-        selectedListId={selectedListId}
-        onSelectList={(list) => {
-          setSelectedListId(list.id);
-          setSelectedWordIds(new Set());
-          setActionMessage(null);
-          onListChange(list);
-        }}
+        viewedListId={viewedListId}
+        viewedListType={viewedListType}
+        activeTrainingList={activeTrainingList}
+        onSelectList={selectViewedList}
       />
 
       <WordDetailDrawer

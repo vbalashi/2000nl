@@ -16,6 +16,11 @@ import type { AudioQuality } from "@/lib/audio/types";
 
 type TabKey = "zoeken" | "lijsten" | "statistieken" | "instellingen";
 
+type ViewedListScope = {
+  id: string;
+  type: WordListType;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -37,7 +42,8 @@ type Props = {
   onTranslationLangChange: (value: string | null) => void;
   wordListId: string | null;
   wordListType: WordListType | null;
-  onListChange: (value: WordListSummary) => void;
+  activeTrainingList: WordListSummary | null;
+  onMakeActiveForTraining: (value: WordListSummary) => void;
   /** @deprecated Use activeScenario instead */
   enabledModes: TrainingMode[];
   cardFilter: CardFilter;
@@ -73,7 +79,8 @@ export function SettingsModal({
   onTranslationLangChange,
   wordListId,
   wordListType,
-  onListChange,
+  activeTrainingList,
+  onMakeActiveForTraining,
   enabledModes,
   cardFilter,
   onModesChange,
@@ -91,8 +98,14 @@ export function SettingsModal({
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [listsLoading, setListsLoading] = useState(false);
   const [listsError, setListsError] = useState<string | null>(null);
-  const [selectedListId, setSelectedListId] = useState<string | null>(
-    wordListId || null
+  const [viewedListScope, setViewedListScope] =
+    useState<ViewedListScope | null>(
+      wordListId
+        ? {
+            id: wordListId,
+            type: wordListType ?? "curated",
+          }
+        : null,
   );
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosLoading, setScenariosLoading] = useState(false);
@@ -115,16 +128,46 @@ export function SettingsModal({
     () => lists.filter((list) => list.type === "user"),
     [lists]
   );
-  const selectedList = useMemo(
-    () => lists.find((list) => list.id === selectedListId) ?? null,
-    [lists, selectedListId]
+  const viewedList = useMemo(
+    () =>
+      viewedListScope
+        ? lists.find(
+            (list) =>
+              list.id === viewedListScope.id && list.type === viewedListScope.type,
+          ) ?? null
+        : null,
+    [lists, viewedListScope],
   );
-  const selectedListName = useMemo(() => {
-    return selectedList?.name ?? "VanDale 2k";
-  }, [selectedList]);
-  const selectDefaultTrainingList = useCallback(
+  const viewedListName = useMemo(() => {
+    return viewedList?.name ?? "VanDale 2k";
+  }, [viewedList]);
+  const activeTrainingListFromLists = useMemo(() => {
+    if (!wordListId) return activeTrainingList;
+    return (
+      lists.find(
+        (list) =>
+          list.id === wordListId &&
+          list.type === (wordListType ?? "curated") &&
+          !isDictionarySourceList(list),
+      ) ??
+      activeTrainingList ??
+      null
+    );
+  }, [activeTrainingList, isDictionarySourceList, lists, wordListId, wordListType]);
+  const activeTrainingListName = activeTrainingListFromLists?.name ?? "Geen actieve lijst";
+  const selectDefaultViewedList = useCallback(
     (availableLists: WordListSummary[]) => {
+      const active =
+        wordListId
+          ? availableLists.find(
+              (list) =>
+                list.id === wordListId &&
+                list.type === (wordListType ?? "curated") &&
+                !isDictionarySourceList(list),
+            )
+          : null;
       const primary =
+        active ??
         availableLists.find(
           (list) =>
             list.type === "curated" && list.is_primary && !isDictionarySourceList(list),
@@ -134,10 +177,9 @@ export function SettingsModal({
         availableLists[0];
 
       if (!primary) return;
-      setSelectedListId(primary.id);
-      onListChange(primary);
+      setViewedListScope({ id: primary.id, type: primary.type });
     },
-    [isDictionarySourceList, onListChange],
+    [isDictionarySourceList, wordListId, wordListType],
   );
 
   useEffect(() => {
@@ -169,8 +211,15 @@ export function SettingsModal({
       const data = await fetchAvailableLists(userId, language);
       setLists(data);
 
-      if (!selectedListId && data.length > 0) {
-        selectDefaultTrainingList(data);
+      const viewedListStillAvailable =
+        viewedListScope &&
+        data.some(
+          (list) =>
+            list.id === viewedListScope.id && list.type === viewedListScope.type,
+        );
+
+      if (!viewedListStillAvailable && data.length > 0) {
+        selectDefaultViewedList(data);
       }
     } catch (error) {
       console.error("Error loading lists", error);
@@ -178,7 +227,7 @@ export function SettingsModal({
     } finally {
       setListsLoading(false);
     }
-  }, [userId, language, selectedListId, selectDefaultTrainingList]);
+  }, [userId, language, viewedListScope, selectDefaultViewedList]);
 
   const notifyListsUpdated = useCallback(() => {
     onListsUpdated?.();
@@ -202,15 +251,18 @@ export function SettingsModal({
   }, [open]);
 
   useEffect(() => {
-    if (wordListId) {
-      setSelectedListId(wordListId);
-    }
-  }, [wordListId]);
+    if (!open) return;
+    if (viewedListScope || !wordListId) return;
+    setViewedListScope({
+      id: wordListId,
+      type: wordListType ?? "curated",
+    });
+  }, [open, viewedListScope, wordListId, wordListType]);
 
   useEffect(() => {
-    if (!selectedList || !isDictionarySourceList(selectedList)) return;
-    selectDefaultTrainingList(trainingLists);
-  }, [selectedList, isDictionarySourceList, selectDefaultTrainingList, trainingLists]);
+    if (!viewedList || !isDictionarySourceList(viewedList)) return;
+    selectDefaultViewedList(trainingLists);
+  }, [viewedList, isDictionarySourceList, selectDefaultViewedList, trainingLists]);
 
   if (!open) {
     return null;
@@ -329,9 +381,9 @@ export function SettingsModal({
                 language={language}
                 translationLang={translationLang}
                 userLists={userLists}
-                selectedListId={selectedListId}
-                selectedList={selectedList}
-                selectedListName={selectedListName}
+                viewedListId={viewedListScope?.id ?? null}
+                viewedList={viewedList}
+                viewedListName={viewedListName}
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
                 onTrainWord={onTrainWord}
@@ -350,11 +402,15 @@ export function SettingsModal({
                 userLists={userLists}
                 listsLoading={listsLoading}
                 listsError={listsError}
-                selectedListId={selectedListId}
-                setSelectedListId={setSelectedListId}
-                selectedList={selectedList}
-                selectedListName={selectedListName}
-                onListChange={onListChange}
+                viewedListId={viewedListScope?.id ?? null}
+                viewedListType={viewedListScope?.type ?? null}
+                onViewedListChange={(list) =>
+                  setViewedListScope({ id: list.id, type: list.type })
+                }
+                viewedList={viewedList}
+                viewedListName={viewedListName}
+                activeTrainingList={activeTrainingListFromLists}
+                onMakeActiveForTraining={onMakeActiveForTraining}
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
                 onTrainWord={onTrainWord}
@@ -581,9 +637,9 @@ export function SettingsModal({
                       />
                       <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                         <span className="text-xs uppercase text-slate-500 dark:text-slate-400">
-                          Actieve lijst
+                          Actieve trainingslijst
                         </span>
-                        <span>{selectedListName}</span>
+                        <span>{activeTrainingListName}</span>
                       </div>
                     </div>
                   </div>

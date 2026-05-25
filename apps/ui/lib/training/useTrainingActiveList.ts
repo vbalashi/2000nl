@@ -17,6 +17,12 @@ type ListUpdatedCallbacks = {
   onPrimaryFallback?: (list: WordListSummary) => void;
 };
 
+const isDictionarySourceList = (list: WordListSummary | null | undefined) =>
+  Boolean(list && list.type === "curated" && /^vandale$/i.test(list.name.trim()));
+
+const isTrainingEligibleList = (list: WordListSummary) =>
+  !isDictionarySourceList(list);
+
 export function useTrainingActiveList(params: {
   userId?: string;
   language: string;
@@ -74,6 +80,17 @@ export function useTrainingActiveList(params: {
           return;
         }
 
+        if (!isTrainingEligibleList(resolved)) {
+          await updateActiveList({
+            userId,
+            listId: null,
+            listType: null,
+          });
+          clearList();
+          setListHydrated(true);
+          return;
+        }
+
         applyList(resolved);
       } else {
         clearList();
@@ -87,14 +104,21 @@ export function useTrainingActiveList(params: {
     void refreshAvailableLists();
   }, [refreshAvailableLists, showSettings]);
 
+  const trainingAvailableLists = useMemo(
+    () => availableLists.filter(isTrainingEligibleList),
+    [availableLists],
+  );
+
   useEffect(() => {
-    if (listHydrated && !wordListId && availableLists.length > 0) {
-      applyList(availableLists[0]);
+    if (listHydrated && !wordListId && trainingAvailableLists.length > 0) {
+      applyList(trainingAvailableLists[0]);
     }
-  }, [applyList, availableLists, listHydrated, wordListId]);
+  }, [applyList, trainingAvailableLists, listHydrated, wordListId]);
 
   const persistListChange = useCallback(
     async (list: WordListSummary) => {
+      if (!isTrainingEligibleList(list)) return null;
+
       applyList(list);
 
       if (userId) {
@@ -116,11 +140,13 @@ export function useTrainingActiveList(params: {
   const handleListSelectValue = useCallback(
     async (value: string) => {
       const [type, id] = value.split(":") as [WordListType, string];
-      const found = availableLists.find((list) => list.id === id && list.type === type);
+      const found = trainingAvailableLists.find(
+        (list) => list.id === id && list.type === type,
+      );
       if (!found) return null;
       return persistListChange(found);
     },
-    [availableLists, persistListChange],
+    [trainingAvailableLists, persistListChange],
   );
 
   const handleListsUpdated = useCallback(
@@ -138,14 +164,14 @@ export function useTrainingActiveList(params: {
           listId: active.listId,
           listType,
         });
-        if (resolved) {
+        if (resolved && isTrainingEligibleList(resolved)) {
           applyList(resolved);
           callbacks.onResolvedActiveList?.(resolved);
           return resolved;
         }
       }
 
-      const primary = lists[0];
+      const primary = lists.find(isTrainingEligibleList);
       if (primary) {
         await updateActiveList({
           userId,
@@ -165,17 +191,17 @@ export function useTrainingActiveList(params: {
 
   const activeListValue = wordListId
     ? `${wordListType ?? "curated"}:${wordListId}`
-    : availableLists[0]
-      ? `${availableLists[0].type}:${availableLists[0].id}`
+    : trainingAvailableLists[0]
+      ? `${trainingAvailableLists[0].type}:${trainingAvailableLists[0].id}`
       : "";
 
   const listOptions = useMemo(
     () =>
-      availableLists.map((list) => ({
+      trainingAvailableLists.map((list) => ({
         value: `${list.type}:${list.id}`,
         label: list.name,
       })),
-    [availableLists],
+    [trainingAvailableLists],
   );
 
   return {

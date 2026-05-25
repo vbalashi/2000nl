@@ -1,4 +1,4 @@
-import type { WordListSummary } from "@/lib/types";
+import type { WordListSummary, WordListType } from "@/lib/types";
 import { DropUpSelect } from "../DropUpSelect";
 
 type Props = {
@@ -8,7 +8,9 @@ type Props = {
   onLanguageChange: (value: string) => void;
   curatedLists: WordListSummary[];
   userLists: WordListSummary[];
-  selectedListId: string | null;
+  viewedListId: string | null;
+  viewedListType: WordListType | null;
+  activeTrainingList: WordListSummary | null;
   onSelectList: (list: WordListSummary) => void;
 };
 
@@ -19,7 +21,9 @@ export function MobileListPickerSheet({
   onLanguageChange,
   curatedLists,
   userLists,
-  selectedListId,
+  viewedListId,
+  viewedListType,
+  activeTrainingList,
   onSelectList,
 }: Props) {
   if (!open) return null;
@@ -34,10 +38,10 @@ export function MobileListPickerSheet({
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div>
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Selecteer lijst
+              Selecteer bekeken lijst
             </div>
             <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
-              Kies de trainingslijst die je wil bekijken of beheren.
+              Kies de lijst die je wil bekijken of beheren.
             </div>
           </div>
           <button
@@ -87,7 +91,11 @@ export function MobileListPickerSheet({
             </p>
             <div className="mt-3 space-y-2">
               {curatedLists.map((list) => {
-                const isActive = list.id === selectedListId;
+                const isViewed =
+                  list.id === viewedListId && list.type === viewedListType;
+                const isActiveForTraining =
+                  activeTrainingList?.id === list.id &&
+                  activeTrainingList?.type === list.type;
                 return (
                   <button
                     key={list.id}
@@ -97,18 +105,25 @@ export function MobileListPickerSheet({
                       onClose();
                     }}
                     className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
-                      isActive
+                      isViewed
                         ? "border-primary/60 bg-primary/5 text-slate-900 dark:bg-primary/10 dark:text-white"
                         : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
                     }`}
                   >
                     <div className="flex items-center justify-between text-sm font-semibold">
                       <span>{list.name}</span>
-                      {isActive ? (
-                        <span className="text-[10px] uppercase text-primary dark:text-primary-light">
-                          actief
-                        </span>
-                      ) : null}
+                      <span className="flex shrink-0 items-center gap-1">
+                        {isViewed ? (
+                          <span className="text-[10px] uppercase text-primary dark:text-primary-light">
+                            bekeken
+                          </span>
+                        ) : null}
+                        {isActiveForTraining ? (
+                          <span className="text-[10px] uppercase text-emerald-600 dark:text-emerald-300">
+                            training
+                          </span>
+                        ) : null}
+                      </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {list.item_count ?? "—"} woorden
@@ -130,7 +145,11 @@ export function MobileListPickerSheet({
             </p>
             <div className="mt-3 space-y-2">
               {userLists.map((list) => {
-                const isActive = list.id === selectedListId;
+                const isViewed =
+                  list.id === viewedListId && list.type === viewedListType;
+                const isActiveForTraining =
+                  activeTrainingList?.id === list.id &&
+                  activeTrainingList?.type === list.type;
                 return (
                   <button
                     key={list.id}
@@ -140,18 +159,25 @@ export function MobileListPickerSheet({
                       onClose();
                     }}
                     className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
-                      isActive
+                      isViewed
                         ? "border-primary/60 bg-primary/5 text-slate-900 dark:bg-primary/10 dark:text-white"
                         : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
                     }`}
                   >
                     <div className="flex items-center justify-between text-sm font-semibold">
                       <span>{list.name}</span>
-                      {isActive ? (
-                        <span className="text-[10px] uppercase text-primary dark:text-primary-light">
-                          actief
-                        </span>
-                      ) : null}
+                      <span className="flex shrink-0 items-center gap-1">
+                        {isViewed ? (
+                          <span className="text-[10px] uppercase text-primary dark:text-primary-light">
+                            bekeken
+                          </span>
+                        ) : null}
+                        {isActiveForTraining ? (
+                          <span className="text-[10px] uppercase text-emerald-600 dark:text-emerald-300">
+                            training
+                          </span>
+                        ) : null}
+                      </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {list.item_count ?? "—"} woorden

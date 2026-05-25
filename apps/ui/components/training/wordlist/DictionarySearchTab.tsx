@@ -15,9 +15,9 @@ type Props = {
   language: string;
   translationLang: string | null;
   userLists: WordListSummary[];
-  selectedListId: string | null;
-  selectedList: WordListSummary | null;
-  selectedListName: string;
+  viewedListId: string | null;
+  viewedList: WordListSummary | null;
+  viewedListName: string;
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onTrainWord?: (wordId: string) => void;
@@ -69,9 +69,9 @@ export function DictionarySearchTab({
   language,
   translationLang,
   userLists,
-  selectedListId,
-  selectedList,
-  selectedListName,
+  viewedListId,
+  viewedList,
+  viewedListName,
   reloadLists,
   notifyListsUpdated,
   onTrainWord,
@@ -94,9 +94,9 @@ export function DictionarySearchTab({
     if (!open) return;
     setSearchLoading(true);
     try {
-      const useListFilter = applyListFilter && selectedListId;
+      const useListFilter = applyListFilter && viewedListId;
       const result = useListFilter
-        ? await fetchWordsForList(selectedListId!, selectedList?.type ?? "curated", {
+        ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
             query: query || undefined,
             page,
             pageSize,
@@ -118,8 +118,8 @@ export function DictionarySearchTab({
     open,
     page,
     query,
-    selectedList?.type,
-    selectedListId,
+    viewedList?.type,
+    viewedListId,
   ]);
 
   useEffect(() => {
@@ -192,16 +192,16 @@ export function DictionarySearchTab({
             </span>
             {applyListFilter ? (
               <span className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light">
-                Alleen actieve lijst
+                Bekeken lijst: {viewedListName}
               </span>
             ) : null}
           </div>
           <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
-            Alleen actieve lijst
+            Alleen bekeken lijst
             <input
               type="checkbox"
               checked={applyListFilter}
-              disabled={!selectedListId}
+              disabled={!viewedListId}
               onChange={() => {
                 setApplyListFilter((prev) => !prev);
                 setPage(1);

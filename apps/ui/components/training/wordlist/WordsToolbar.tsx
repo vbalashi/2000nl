@@ -6,14 +6,14 @@ export type AttributeFilter = "nt2-2k" | "frozen" | "dont-show" | "has-idioms" |
 
 type Props = {
   applyListFilter: boolean;
-  selectedListName: string;
-  selectedListId: string | null;
+  viewedListName: string;
+  viewedListId: string | null;
   wordTotal: number;
   selectedCount: number;
   query: string;
   partOfSpeech: string;
   nt2Only: boolean;
-  selectedList: WordListSummary | null;
+  viewedList: WordListSummary | null;
   autoFocusQuery?: boolean;
   isLocked?: boolean;
   maxAllowed?: number | null;
@@ -44,14 +44,14 @@ const ATTRIBUTE_FILTER_OPTIONS: { id: AttributeFilter; label: string; available:
 
 export function WordsToolbar({
   applyListFilter,
-  selectedListName,
-  selectedListId,
+  viewedListName,
+  viewedListId,
   wordTotal,
   selectedCount,
   query,
   partOfSpeech,
   nt2Only,
-  selectedList,
+  viewedList,
   autoFocusQuery,
   isLocked,
   maxAllowed,
@@ -107,10 +107,10 @@ export function WordsToolbar({
   }, [autoFocusQuery]);
 
   // Title shows what we're displaying
-  const title = `TOON WOORDEN IN: ${selectedListName.toUpperCase()}`;
+  const title = `TOON WOORDEN IN: ${viewedListName.toUpperCase()}`;
 
   // Info line
-  const listWordCount = selectedList?.item_count ?? 0;
+  const listWordCount = viewedList?.item_count ?? 0;
   const infoText = applyListFilter
     ? `${wordTotal} woorden in lijst • ${selectedCount} geselecteerd`
     : `${listWordCount} woorden in lijst • ${wordTotal} totaal • ${selectedCount} geselecteerd`;
@@ -140,7 +140,7 @@ export function WordsToolbar({
               {title}
             </h2>
             {/* Filter toggle button */}
-            {selectedListId && (
+            {viewedListId && (
               <button
                 type="button"
                 onClick={onToggleListFilter}
@@ -161,7 +161,9 @@ export function WordsToolbar({
                 >
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
-                {applyListFilter ? "Filter actief" : "Filter door lijst"}
+                {applyListFilter
+                  ? "Binnen bekeken lijst"
+                  : "Beperk tot bekeken lijst"}
               </button>
             )}
           </div>

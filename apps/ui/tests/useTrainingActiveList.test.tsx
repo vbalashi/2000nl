@@ -35,6 +35,13 @@ const userList = {
   item_count: 5,
 };
 
+const dictionarySourceList = {
+  id: "source-1",
+  name: "VanDale",
+  type: "curated" as const,
+  item_count: 2000,
+};
+
 describe("useTrainingActiveList", () => {
   beforeEach(() => {
     fetchActiveList.mockReset();
@@ -97,7 +104,11 @@ describe("useTrainingActiveList", () => {
   });
 
   test("persists explicit list selection and exposes footer options", async () => {
-    fetchAvailableLists.mockResolvedValue([curatedList, userList]);
+    fetchAvailableLists.mockResolvedValue([
+      dictionarySourceList,
+      curatedList,
+      userList,
+    ]);
 
     const { result } = renderHook(() =>
       useTrainingActiveList({
@@ -107,7 +118,7 @@ describe("useTrainingActiveList", () => {
       }),
     );
 
-    await waitFor(() => expect(result.current.availableLists).toHaveLength(2));
+    await waitFor(() => expect(result.current.listOptions).toHaveLength(2));
 
     await result.current.handleListSelectValue("user:user-1");
 
@@ -122,6 +133,34 @@ describe("useTrainingActiveList", () => {
       { value: "curated:curated-1", label: "Primary" },
       { value: "user:user-1", label: "Saved" },
     ]);
+  });
+
+  test("does not expose dictionary source lists as training targets", async () => {
+    fetchAvailableLists.mockResolvedValue([dictionarySourceList, curatedList]);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(result.current.listOptions).toEqual([
+        { value: "curated:curated-1", label: "Primary" },
+      ]),
+    );
+
+    const scope = await result.current.handleListSelectValue("curated:source-1");
+
+    expect(scope).toBeNull();
+    expect(updateActiveList).not.toHaveBeenCalledWith({
+      userId: "user-1",
+      listId: "source-1",
+      listType: "curated",
+    });
+    expect(result.current.activeListValue).toBe("curated:curated-1");
   });
 
   test("list updates keep resolved active list or fall back to primary", async () => {

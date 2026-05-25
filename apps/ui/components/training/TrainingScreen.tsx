@@ -1306,9 +1306,10 @@ export function TrainingScreen({ user }: Props) {
     ],
   );
 
-  const handleListChange = useCallback(
+  const handleMakeActiveTrainingList = useCallback(
     async (list: WordListSummary) => {
-      await persistListChange(list);
+      const scope = await persistListChange(list);
+      if (!scope) return;
       if (list.default_scenario_id) {
         setActiveScenario(list.default_scenario_id);
       }
@@ -2215,7 +2216,8 @@ export function TrainingScreen({ user }: Props) {
           onTranslationLangChange={setTranslationLang}
           wordListId={wordListId}
           wordListType={wordListType}
-          onListChange={handleListChange}
+          activeTrainingList={activeList}
+          onMakeActiveForTraining={handleMakeActiveTrainingList}
           enabledModes={enabledModes}
           cardFilter={cardFilter}
           onModesChange={handleModesChange}

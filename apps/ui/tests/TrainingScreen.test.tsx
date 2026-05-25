@@ -13,6 +13,35 @@ const mockWord = {
   }
 };
 
+const defaultAvailableList = {
+  id: "list-1",
+  name: "Test list",
+  type: "curated" as const,
+  item_count: 1,
+};
+
+const activeList = {
+  id: "list-active",
+  name: "Active list",
+  type: "curated" as const,
+  item_count: 10,
+};
+
+const secondaryList = {
+  id: "list-secondary",
+  name: "Secondary list",
+  type: "curated" as const,
+  item_count: 2,
+  default_scenario_id: "listening",
+};
+
+const userOwnedList = {
+  id: "list-user",
+  name: "My saved words",
+  type: "user" as const,
+  item_count: 3,
+};
+
 const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
 const fetchStats = vi.fn().mockResolvedValue({
   newWordsToday: 0,
@@ -26,9 +55,7 @@ const fetchStats = vi.fn().mockResolvedValue({
   totalWordsInList: 2000,
 });
 const fetchRecentHistory = vi.fn().mockResolvedValue([]);
-const fetchAvailableLists = vi.fn().mockResolvedValue([
-  { id: "list-1", name: "Test list", type: "curated", item_count: 1 },
-]);
+const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchActiveList = vi.fn().mockResolvedValue({ listId: null, listType: null });
 const fetchListSummaryById = vi.fn().mockResolvedValue(null);
 const updateActiveList = vi.fn().mockResolvedValue(undefined);
@@ -60,6 +87,7 @@ const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
+const fetchEntryListMemberships = vi.fn().mockResolvedValue(new Map());
 const fetchTrainingScenarios = vi.fn().mockResolvedValue([
   {
     id: "understanding",
@@ -100,6 +128,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchAvailableLists,
   fetchWordsForList,
   searchWordEntries,
+  fetchEntryListMemberships,
   updateActiveList,
   recordDefinitionClick,
   recordReview,
@@ -119,6 +148,30 @@ vi.mock("@/lib/supabaseClient", () => ({
 const { TrainingScreen } = await import("@/components/training/TrainingScreen");
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
+
+const useTwoListScope = () => {
+  fetchActiveList.mockResolvedValue({
+    listId: activeList.id,
+    listType: activeList.type,
+  });
+  fetchListSummaryById.mockResolvedValue(activeList);
+  fetchAvailableLists.mockResolvedValue([activeList, secondaryList, userOwnedList]);
+};
+
+const restoreDefaultListScope = () => {
+  fetchActiveList.mockResolvedValue({ listId: null, listType: null });
+  fetchListSummaryById.mockResolvedValue(null);
+  fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
+};
+
+const waitForInitialTrainingFetches = async () => {
+  await screen.findByRole("heading", { name: "huis" });
+  await waitFor(() =>
+    expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(
+      2,
+    ),
+  );
+};
 
 test("search action opens the dedicated dictionary search surface", async () => {
   render(<TrainingScreen user={user} />);
@@ -155,6 +208,137 @@ test("lists tab opens the dedicated list management surface", async () => {
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+});
+
+test("clicking a list in Lijsten changes only the viewed list", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockClear();
+  updateActiveList.mockClear();
+  fetchStats.mockClear();
+  fetchWordsForList.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    fetchNextTrainingWordByScenario.mockClear();
+    updateActiveList.mockClear();
+    fetchStats.mockClear();
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+
+    const secondaryListButton = await screen.findByRole("button", {
+      name: /secondary list/i,
+    });
+    fireEvent.click(secondaryListButton);
+
+    await waitFor(() =>
+      expect(fetchWordsForList).toHaveBeenCalledWith(
+        "list-secondary",
+        "curated",
+        expect.objectContaining({ page: 1 }),
+      ),
+    );
+    expect(updateActiveList).not.toHaveBeenCalled();
+    expect(fetchStats).not.toHaveBeenCalled();
+    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+    expect(screen.getAllByText("Active list").length).toBeGreaterThan(0);
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test("explicit list action makes the viewed list active for training", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockClear();
+  updateActiveList.mockClear();
+  fetchStats.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    fetchNextTrainingWordByScenario.mockClear();
+    updateActiveList.mockClear();
+    fetchStats.mockClear();
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /secondary list/i }),
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /maak actief voor training/i,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(updateActiveList).toHaveBeenCalledWith({
+        userId: "user-1",
+        listId: "list-secondary",
+        listType: "curated",
+      }),
+    );
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+    );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string; listType?: string };
+        return (
+          call[1] === "listening" &&
+          scope?.listId === "list-secondary" &&
+          scope?.listType === "curated"
+        );
+      }),
+    ).toBe(true);
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test("footer list selector still changes active training scope", async () => {
+  useTwoListScope();
+  fetchNextTrainingWordByScenario.mockClear();
+  updateActiveList.mockClear();
+  fetchStats.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    fetchNextTrainingWordByScenario.mockClear();
+    updateActiveList.mockClear();
+    fetchStats.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: /active list/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /secondary list/i }),
+    );
+
+    await waitFor(() =>
+      expect(updateActiveList).toHaveBeenCalledWith({
+        userId: "user-1",
+        listId: "list-secondary",
+        listType: "curated",
+      }),
+    );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string; listType?: string };
+        return (
+          call[1] === "listening" &&
+          scope?.listId === "list-secondary" &&
+          scope?.listType === "curated"
+        );
+      }),
+    ).toBe(true);
+  } finally {
+    restoreDefaultListScope();
+  }
 });
 
 test("hotkey triggers recordReview like button click", async () => {
