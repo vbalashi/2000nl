@@ -906,7 +906,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_user_list_memberships_for_entries returns owned memberships", async () => {
+  test("get_user_list_memberships_for_entries returns curated and owned memberships", async () => {
     const ownerId = randomUUID();
     const otherId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -914,6 +914,18 @@ describeIfDb("FSRS RPC integration", () => {
       await ensureUserWithSettings(client, otherId);
       const firstWordId = await insertWord(client, `fsrs-membership-a-${Date.now()}`);
       const secondWordId = await insertWord(client, `fsrs-membership-b-${Date.now()}`);
+      const { rows: curatedListRows } = await client.query(
+        `insert into word_lists (language_code, primary_language_code, slug, name, description)
+         values ('nl', 'nl', $1, $2, 'Curated learning words')
+         returning id`,
+        [`membership-${Date.now()}`, `Curated membership list ${Date.now()}`],
+      );
+      const { rows: sourceListRows } = await client.query(
+        `insert into word_lists (language_code, primary_language_code, slug, name, description)
+         values ('nl', 'nl', $1, 'VanDale', 'Dictionary source container')
+         returning id`,
+        [`membership-source-${Date.now()}`],
+      );
       const { rows: ownerListRows } = await client.query(
         `insert into user_word_lists (user_id, language_code, primary_language_code, name, description)
          values ($1, 'nl', 'nl', $2, 'Owned words')
@@ -927,6 +939,20 @@ describeIfDb("FSRS RPC integration", () => {
         [otherId, `Other membership list ${Date.now()}`],
       );
 
+      await client.query(
+        `insert into word_list_items (list_id, word_id) values ($1, $2)`,
+        [curatedListRows[0].id, firstWordId],
+      );
+      await client.query(
+        `insert into word_list_items (list_id, word_id) values ($1, $2)`,
+        [sourceListRows[0].id, firstWordId],
+      );
+      await client.query(
+        `update user_settings
+         set active_list_id = $2, active_list_type = 'curated'
+         where user_id = $1`,
+        [ownerId, curatedListRows[0].id],
+      );
       await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
         ownerId,
         ownerListRows[0].id,
@@ -960,11 +986,23 @@ describeIfDb("FSRS RPC integration", () => {
             entry_id: firstWordId,
             lists: [
               expect.objectContaining({
+                id: curatedListRows[0].id,
+                kind: "curated",
+                description: "Curated learning words",
+                primary_language_code: "nl",
+                item_count: 1,
+                editable: false,
+                read_only_reason: "curated",
+                is_active_training_list: true,
+              }),
+              expect.objectContaining({
                 id: ownerListRows[0].id,
                 kind: "user",
                 description: "Owned words",
                 primary_language_code: "nl",
                 item_count: 2,
+                editable: true,
+                is_active_training_list: false,
               }),
             ],
           },
@@ -975,12 +1013,16 @@ describeIfDb("FSRS RPC integration", () => {
                 id: ownerListRows[0].id,
                 kind: "user",
                 item_count: 2,
+                editable: true,
               }),
             ],
           },
         ]),
       );
       expect(rows[0].memberships).toHaveLength(2);
+      expect(JSON.stringify(rows[0].memberships)).not.toContain(
+        "Dictionary source container",
+      );
 
       await client.query("savepoint unauthorized_memberships");
       await expect(

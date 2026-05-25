@@ -1,11 +1,12 @@
 import React from "react";
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { WordDetailPanel } from "@/components/training/WordDetailPanel";
 
 vi.mock("@/lib/trainingService", () => ({
   addWordsToUserList: vi.fn(),
   createUserList: vi.fn(),
+  fetchEntryListMemberships: vi.fn(async () => new Map()),
   recordReview: vi.fn(),
 }));
 
@@ -55,7 +56,6 @@ describe("WordDetailPanel translation behavior", () => {
         entry={entry as any}
         userId="test-user"
         translationLang="ru"
-        selectedListName="VanDale 2k"
         userLists={[]}
       />,
     );
@@ -72,13 +72,15 @@ describe("WordDetailPanel translation behavior", () => {
         entry={entry as any}
         userId="test-user"
         translationLang="ru"
-        selectedListName="VanDale 2k"
         userLists={[]}
         autoFetchTranslation={false}
       />,
     );
 
-    await new Promise((resolve) => window.setTimeout(resolve, 50));
+    await waitFor(() =>
+      expect(screen.getByText("Nog niet opgeslagen in een leerlijst."))
+        .toBeInTheDocument(),
+    );
     expect(fetch).not.toHaveBeenCalled();
   });
 });

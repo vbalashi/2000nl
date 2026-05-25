@@ -22,6 +22,7 @@ export {
   fetchActiveList,
   fetchAvailableLists,
   fetchCuratedLists,
+  fetchEntryListMemberships,
   fetchUserListMembership,
   fetchListSummaryById,
   fetchUserLists,

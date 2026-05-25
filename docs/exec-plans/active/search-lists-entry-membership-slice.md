@@ -248,6 +248,30 @@ and list detail with the browser:
 
 - `cd apps/ui && npm run dev`
 
+## Progress
+
+- 2026-05-25: Implementation slice completed.
+- Added real entry learning-list membership rendering in `WordDetailPanel`.
+  Dictionary source is shown separately as `Bron`; selected/viewed list context
+  is no longer used as membership.
+- Added `EntryLearningListMembership` and `fetchEntryListMemberships`.
+- Added migration `db/migrations/062_entry_learning_list_memberships.sql` to
+  return curated read-only and user-owned learning-list memberships while
+  excluding dictionary source lists such as full `VanDale`.
+- Added focused membership tests for empty, loading/error retry, curated,
+  user-owned, active-training-list, duplicate add, and add-refresh states.
+- Validation reported by implementation agent:
+  - `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx`
+  - `cd apps/ui && npm test -- tests/trainingService.listsPreferences.test.ts`
+  - `cd apps/ui && npm test -- tests/WordDetailPanel.translation.test.tsx`
+  - `cd apps/ui && npm run typecheck`
+  - `cd apps/ui && npm run lint`
+  - `cd apps/ui && npm test -- tests/fsrs/fsrsRpc.test.ts` ran, but DB-backed
+    tests were skipped because no `FSRS_TEST_DB_URL` or `SUPABASE_DB_URL` was
+    set locally.
+- 2026-05-25: Acceptance review reran:
+  - `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx tests/trainingService.listsPreferences.test.ts`
+
 ## Agent Handoff Notes
 
 - Start by reading the UX review response, especially `First Implementation

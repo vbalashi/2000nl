@@ -192,3 +192,6 @@
 
 -- Bulk user card state lookup for platform APIs
 \i db/migrations/061_bulk_user_card_states.sql
+
+-- Curated and user learning-list memberships for entry detail
+\i db/migrations/062_entry_learning_list_memberships.sql

@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
 import type {
+  EntryLearningListMembership,
   WordEntrySearchResult,
   WordListSummary,
   WordListType,
@@ -18,6 +19,58 @@ type WordSearchFilters = {
   filterHidden?: boolean;
   page?: number;
   pageSize?: number;
+};
+
+type EntryLearningListMembershipRpcList = {
+  id?: string | null;
+  kind?: string | null;
+  list_type?: string | null;
+  name?: string | null;
+  description?: string | null;
+  primary_language_code?: string | null;
+  item_count?: number | null;
+  editable?: boolean | null;
+  read_only_reason?: string | null;
+  is_active_training_list?: boolean | null;
+};
+
+type EntryLearningListMembershipRpcRow = {
+  entry_id?: string | null;
+  lists?: EntryLearningListMembershipRpcList[] | null;
+};
+
+const READ_ONLY_REASONS = new Set([
+  "curated",
+  "not-owner",
+  "unavailable",
+]);
+
+const mapEntryLearningListMembership = (
+  row: EntryLearningListMembershipRpcList,
+): EntryLearningListMembership | null => {
+  if (!row?.id || !row.name) return null;
+
+  const listType =
+    row.kind === "curated" || row.list_type === "curated" ? "curated" : "user";
+  const readOnlyReason =
+    typeof row.read_only_reason === "string" &&
+    READ_ONLY_REASONS.has(row.read_only_reason)
+      ? (row.read_only_reason as EntryLearningListMembership["readOnlyReason"])
+      : listType === "curated"
+        ? "curated"
+        : undefined;
+
+  return {
+    listId: row.id,
+    listType,
+    name: row.name,
+    description: row.description ?? null,
+    itemCount: typeof row.item_count === "number" ? row.item_count : undefined,
+    primaryLanguageCode: row.primary_language_code ?? null,
+    editable: row.editable ?? listType === "user",
+    readOnlyReason,
+    isActiveTrainingList: Boolean(row.is_active_training_list),
+  };
 };
 
 export async function fetchCuratedLists(
@@ -387,4 +440,56 @@ export async function fetchUserListMembership(
   );
 
   return new Set(ids);
+}
+
+/**
+ * Fetch real learning-list memberships for entries.
+ *
+ * Dictionary source metadata is intentionally excluded by the RPC; returned
+ * rows are curated learning-list memberships and user-owned list memberships.
+ */
+export async function fetchEntryListMemberships(
+  entryIds: string[],
+): Promise<Map<string, EntryLearningListMembership[]>> {
+  const uniqueEntryIds = Array.from(new Set(entryIds.filter(Boolean)));
+  const membershipsByEntry = new Map<string, EntryLearningListMembership[]>(
+    uniqueEntryIds.map((id) => [id, []]),
+  );
+  if (!uniqueEntryIds.length) return membershipsByEntry;
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id ?? null;
+  if (userError || !userId) {
+    const error = userError ?? { message: "not_authenticated" };
+    console.error("Error resolving user before fetching entry list memberships", error);
+    throw error;
+  }
+
+  const { data, error } = await supabase.rpc(
+    "get_user_list_memberships_for_entries",
+    {
+      p_user_id: userId,
+      p_entry_ids: uniqueEntryIds,
+    },
+  );
+
+  if (error) {
+    console.error("Error fetching entry list memberships", error);
+    throw error;
+  }
+
+  const rows = Array.isArray(data)
+    ? (data as EntryLearningListMembershipRpcRow[])
+    : [];
+  for (const row of rows) {
+    if (!row?.entry_id || !uniqueEntryIds.includes(row.entry_id)) continue;
+    const memberships = Array.isArray(row.lists)
+      ? row.lists
+          .map(mapEntryLearningListMembership)
+          .filter((item): item is EntryLearningListMembership => Boolean(item))
+      : [];
+    membershipsByEntry.set(row.entry_id, memberships);
+  }
+
+  return membershipsByEntry;
 }

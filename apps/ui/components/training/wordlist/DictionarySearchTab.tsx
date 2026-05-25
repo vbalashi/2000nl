@@ -321,7 +321,6 @@ export function DictionarySearchTab({
               entry={detailEntry}
               userId={userId}
               translationLang={translationLang}
-              selectedListName={selectedListName}
               userLists={userLists}
               onListsUpdated={async () => {
                 await reloadLists();
@@ -347,7 +346,6 @@ export function DictionarySearchTab({
           onClose={() => setMobileDetailOpen(false)}
           userId={userId}
           translationLang={translationLang}
-          selectedListName={selectedListName}
           userLists={userLists}
           onListsUpdated={async () => {
             await reloadLists();

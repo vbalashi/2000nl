@@ -113,6 +113,18 @@ export type SidebarHistoryItem = DictionaryEntry & {
 export type WordListType = "curated" | "user";
 export type ListCardPolicy = "inherit" | "prefer" | "restrict";
 
+export type EntryLearningListMembership = {
+  listId: string;
+  listType: WordListType;
+  name: string;
+  description?: string | null;
+  itemCount?: number;
+  primaryLanguageCode?: string | null;
+  editable: boolean;
+  readOnlyReason?: "curated" | "not-owner" | "unavailable";
+  isActiveTrainingList: boolean;
+};
+
 export type WordListSummary = {
   id: string;
   name: string;

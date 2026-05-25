@@ -1470,7 +1470,6 @@ export function WordListTab({
         onClose={() => setDetailEntry(null)}
         userId={userId}
         translationLang={translationLang}
-        selectedListName={selectedListName}
         userLists={userLists}
         onListsUpdated={async () => {
           await reloadLists();

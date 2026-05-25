@@ -3,6 +3,7 @@
 import React from "react";
 import type {
   DictionaryEntry,
+  EntryLearningListMembership,
   TrainingMode,
   TranslationOverlay,
   WordEntryTranslationStatus,
@@ -12,6 +13,7 @@ import type { ReviewResult } from "@/lib/trainingService";
 import {
   addWordsToUserList,
   createUserList,
+  fetchEntryListMemberships,
   recordReview,
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
@@ -23,7 +25,6 @@ export type WordDetailPanelProps = {
   entry: DictionaryEntry;
   userId: string;
   translationLang: string | null;
-  selectedListName?: string;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
@@ -74,11 +75,25 @@ const langLabel = (code: string) => {
   return map[code] ?? code;
 };
 
+const dictionarySourceLabel = (entry: DictionaryEntry) => {
+  const raw = entry.raw as Record<string, unknown> | undefined;
+  const metadata = raw?._metadata as Record<string, unknown> | undefined;
+  const source =
+    typeof raw?.source === "string"
+      ? raw.source
+      : typeof metadata?.source === "string"
+        ? metadata.source
+        : typeof metadata?.dictionary_name === "string"
+          ? metadata.dictionary_name
+          : null;
+
+  return source?.trim() || "VanDale woordenboek";
+};
+
 export function WordDetailPanel({
   entry,
   userId,
   translationLang,
-  selectedListName,
   userLists,
   onListsUpdated,
   onTrainWord,
@@ -101,6 +116,13 @@ export function WordDetailPanel({
 
   const [actionMessage, setActionMessage] = React.useState<string | null>(null);
   const [actionBusy, setActionBusy] = React.useState(false);
+  const [memberships, setMemberships] = React.useState<
+    EntryLearningListMembership[]
+  >([]);
+  const [membershipLoading, setMembershipLoading] = React.useState(false);
+  const [membershipError, setMembershipError] = React.useState<string | null>(
+    null,
+  );
 
   const [addMode, setAddMode] = React.useState<"existing" | "new">("existing");
   const [targetListId, setTargetListId] = React.useState<string>("");
@@ -110,7 +132,56 @@ export function WordDetailPanel({
   React.useEffect(() => {
     setActionMessage(null);
     setActionBusy(false);
-  }, [entry?.id]);
+  }, [entry?.id, userId]);
+
+  const loadMemberships = React.useCallback(async () => {
+    if (!entry?.id || !userId) {
+      setMemberships([]);
+      return;
+    }
+
+    setMembershipLoading(true);
+    setMembershipError(null);
+    try {
+      const membershipMap = await fetchEntryListMemberships([entry.id]);
+      setMemberships(membershipMap.get(entry.id) ?? []);
+    } catch (error) {
+      console.error("Error loading entry memberships", error);
+      setMemberships([]);
+      setMembershipError("Kon lijsten niet laden.");
+    } finally {
+      setMembershipLoading(false);
+    }
+  }, [entry?.id, userId]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!entry?.id || !userId) {
+      setMemberships([]);
+      return;
+    }
+
+    setMembershipLoading(true);
+    setMembershipError(null);
+    void fetchEntryListMemberships([entry.id])
+      .then((membershipMap) => {
+        if (cancelled) return;
+        setMemberships(membershipMap.get(entry.id) ?? []);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Error loading entry memberships", error);
+        setMemberships([]);
+        setMembershipError("Kon lijsten niet laden.");
+      })
+      .finally(() => {
+        if (!cancelled) setMembershipLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entry?.id, userId]);
 
   // Reset translation state when entry/lang changes
   React.useEffect(() => {
@@ -126,8 +197,14 @@ export function WordDetailPanel({
 
   // Default list selection
   React.useEffect(() => {
-    if (!userLists.length) return;
-    setTargetListId((prev) => prev || userLists[0].id);
+    if (!userLists.length) {
+      setAddMode("new");
+      setTargetListId("");
+      return;
+    }
+    setTargetListId((prev) =>
+      prev && userLists.some((list) => list.id === prev) ? prev : userLists[0].id,
+    );
   }, [userLists]);
 
   const fetchTranslation = React.useCallback(
@@ -314,11 +391,31 @@ export function WordDetailPanel({
           ? translationError ?? "Vertaling mislukt"
           : null;
 
+  const dictionarySource = dictionarySourceLabel(entry);
+  const membershipListIds = React.useMemo(
+    () =>
+      new Set(
+        memberships
+          .filter((membership) => membership.listType === "user")
+          .map((membership) => membership.listId),
+      ),
+    [memberships],
+  );
+  const selectedTargetAlreadyContainsEntry =
+    addMode === "existing" &&
+    Boolean(targetListId) &&
+    membershipListIds.has(targetListId);
   const canAdd =
-    userLists.length > 0 &&
+    !membershipLoading &&
     (addMode === "existing"
-      ? Boolean(targetListId)
+      ? userLists.length > 0 &&
+        Boolean(targetListId) &&
+        !selectedTargetAlreadyContainsEntry
       : Boolean(newListName.trim()));
+  const addButtonLabel =
+    addMode === "existing" && selectedTargetAlreadyContainsEntry
+      ? "Staat al in lijst"
+      : "Toevoegen aan lijst";
 
   const showTrainingActions =
     Boolean(onTrainingAction) &&
@@ -341,19 +438,17 @@ export function WordDetailPanel({
               </span>
               {entry.is_nt2_2000 ? (
                 <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
-                  VanDale 2k
+                  NT2 2000
                 </span>
               ) : null}
             </div>
 
-            {selectedListName ? (
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                In lijsten:{" "}
-                <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {selectedListName}
-                </span>
-              </div>
-            ) : null}
+            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Bron:{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {dictionarySource}
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -518,6 +613,76 @@ export function WordDetailPanel({
             </section>
           ) : null}
 
+          <section className="space-y-2" aria-label="Leerlijstlidmaatschap">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Opgeslagen in leerlijsten
+            </div>
+
+            {membershipLoading ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+                Lijsten worden geladen…
+              </div>
+            ) : membershipError ? (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+                <span>{membershipError}</span>
+                <button
+                  type="button"
+                  onClick={() => void loadMemberships()}
+                  className="shrink-0 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100 dark:hover:bg-amber-950"
+                >
+                  Opnieuw
+                </button>
+              </div>
+            ) : memberships.length ? (
+              <div className="space-y-2">
+                {memberships.map((membership) => (
+                  <div
+                    key={`${membership.listType}-${membership.listId}`}
+                    className="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-800 dark:bg-slate-900/40"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-slate-900 dark:text-white">
+                          {membership.name}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {membership.listType === "curated"
+                              ? "Curated leerlijst"
+                              : "Mijn lijst"}
+                          </span>
+                          <span
+                            className={
+                              membership.editable
+                                ? "rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+                                : "rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            }
+                          >
+                            {membership.editable ? "Bewerkbaar" : "Alleen-lezen"}
+                          </span>
+                          {membership.isActiveTrainingList ? (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary dark:text-primary-light">
+                              Actieve training
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      {typeof membership.itemCount === "number" ? (
+                        <div className="shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          {membership.itemCount} woorden
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                Nog niet opgeslagen in een leerlijst.
+              </div>
+            )}
+          </section>
+
           {showActions && (
             <section className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -585,7 +750,9 @@ export function WordDetailPanel({
                       <option value="__new__">Nieuwe lijst aanmaken</option>
                       {userLists.map((l) => (
                         <option key={l.id} value={l.id}>
-                          {l.name}
+                          {membershipListIds.has(l.id)
+                            ? `${l.name} (al toegevoegd)`
+                            : l.name}
                         </option>
                       ))}
                     </select>
@@ -630,6 +797,7 @@ export function WordDetailPanel({
                           if (error) {
                             setActionMessage("Kon woord niet toevoegen.");
                           } else {
+                            await loadMemberships();
                             setActionMessage("Woord toegevoegd aan lijst.");
                             await onListsUpdated?.();
                           }
@@ -639,9 +807,15 @@ export function WordDetailPanel({
                       }}
                       className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
                     >
-                      Toevoegen aan lijst
+                      {addButtonLabel}
                     </button>
                   </div>
+
+                  {addMode === "existing" && selectedTargetAlreadyContainsEntry ? (
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Dit woord staat al in de gekozen lijst.
+                    </div>
+                  ) : null}
 
                   <div className="flex flex-wrap gap-2">
                     <button

@@ -75,6 +75,7 @@ const importService = async () => {
   return {
     fetchActiveList: service.fetchActiveList,
     fetchCuratedLists: service.fetchCuratedLists,
+    fetchEntryListMemberships: service.fetchEntryListMemberships,
     fetchListSummaryById: service.fetchListSummaryById,
     fetchUserLists: service.fetchUserLists,
     fetchUserListMembership: service.fetchUserListMembership,
@@ -572,6 +573,89 @@ describe("trainingService list and preference characterization", () => {
       p_user_id: "user-1",
       p_list_id: "list-1",
       p_entry_ids: ["word-1", "word-2", "word-3"],
+    });
+  });
+
+  test("fetchEntryListMemberships maps curated and user learning-list memberships", async () => {
+    const { fetchEntryListMemberships } = await importService();
+
+    await expect(fetchEntryListMemberships([])).resolves.toEqual(new Map());
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          entry_id: "word-1",
+          lists: [
+            {
+              id: "curated-1",
+              kind: "curated",
+              name: "VanDale 2k",
+              description: "NT2 words",
+              primary_language_code: "nl",
+              item_count: 2000,
+              editable: false,
+              read_only_reason: "curated",
+              is_active_training_list: true,
+            },
+            {
+              id: "user-list-1",
+              kind: "user",
+              name: "Mijn lijst",
+              primary_language_code: "nl",
+              item_count: 3,
+              editable: true,
+              is_active_training_list: false,
+            },
+          ],
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchEntryListMemberships(["word-1", "word-2", "word-1"]),
+    ).resolves.toEqual(
+      new Map([
+        [
+          "word-1",
+          [
+            {
+              listId: "curated-1",
+              listType: "curated",
+              name: "VanDale 2k",
+              description: "NT2 words",
+              itemCount: 2000,
+              primaryLanguageCode: "nl",
+              editable: false,
+              readOnlyReason: "curated",
+              isActiveTrainingList: true,
+            },
+            {
+              listId: "user-list-1",
+              listType: "user",
+              name: "Mijn lijst",
+              description: null,
+              itemCount: 3,
+              primaryLanguageCode: "nl",
+              editable: true,
+              readOnlyReason: undefined,
+              isActiveTrainingList: false,
+            },
+          ],
+        ],
+        ["word-2", []],
+      ]),
+    );
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith("get_user_list_memberships_for_entries", {
+      p_user_id: "user-1",
+      p_entry_ids: ["word-1", "word-2"],
     });
   });
 

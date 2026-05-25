@@ -8,7 +8,6 @@ type Props = {
   onClose: () => void;
   userId: string;
   translationLang: string | null;
-  selectedListName?: string;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
@@ -21,7 +20,6 @@ export function WordDetailDrawer({
   onClose,
   userId,
   translationLang,
-  selectedListName,
   userLists,
   onListsUpdated,
   onTrainWord,
@@ -53,7 +51,6 @@ export function WordDetailDrawer({
           entry={entry}
           userId={userId}
           translationLang={translationLang}
-          selectedListName={selectedListName}
           userLists={userLists}
           onListsUpdated={onListsUpdated}
           onTrainWord={onTrainWord}
