@@ -27,6 +27,8 @@ UI change is ready to implement, create a separate execution plan under
 - [Choose what to train](./scenarios/choose-training-scope.md)
 - [Train one entry now](./scenarios/train-one-entry-now.md)
 - [Current UX gap report](./current-ux-gap-report.md)
+- [UX review response](./ux-review-response.md) - senior UX review verdict
+  and required changes before implementation.
 
 Add individual scenario files under `./scenarios/` when a flow needs more detail
 than the summary table in this index.
@@ -38,7 +40,8 @@ curated and user-created lists, and spaced repetition training.
 
 Search, lists, and training are connected but serve different user intentions:
 
-- Search helps the user find and understand a dictionary entry.
+- Search helps the user find and understand any accessible dictionary entry,
+  whether or not that entry belongs to a learning list.
 - Lists help the user save, group, inspect, and manage entries.
 - The active training list controls the default training scope.
 - Training sessions turn entries into reviewable cards and learning progress.
@@ -79,12 +82,14 @@ Observed friction:
 
 | Object | Product meaning | User-facing questions |
 |---|---|---|
-| Dictionary entry | A source-backed meaning-level word entry. | What does this word mean? Which source is it from? |
-| Word list | A curated or user-owned collection of entries. | What words are in this list? Can I add/remove/sort/filter them? |
-| List membership | The relationship between an entry and one or more lists. | Is this word already saved? Where? Can I change that? |
-| Active training list | The default list used by the main training flow. | What am I training right now? How do I change it? |
-| Training session | A run of cards selected from a scope and scenario. | What happens if I start training now? |
-| Card/progress state | The user's learning state for an entry/card type. | Is this new, learning, due, learned, or ignored? |
+| Dictionary entry | A source-backed lexical or meaning-level entry. | What does this word mean? Which source describes it? |
+| Dictionary source | The reference/source that provides or classifies an entry. This is metadata, not learning-list membership. | Where did this entry come from? |
+| Learning list | A curated or user-owned collection of entries used for saving, browsing, or training eligibility. | What words are in this list? Can I browse, save, copy, remove, or train them? |
+| List membership | The relationship between an entry and a learning list. | Is this entry saved in any learning list? Which memberships can I change? |
+| Viewed list | The list currently being inspected in the list UI. This is navigation context. | Which list am I looking at right now? |
+| Active training scope | The persistent default training configuration: list, scenario, card filter, and list card policy. | What will normal training use next? |
+| Temporary training scope | A one-off session scope such as one-entry practice or train-this-list-now. | What am I training just this time? |
+| Card/progress state | The user's learning state for an entry/card type. | Is this new, learning, due, learned, ignored, or unavailable? |
 
 ## User Intent Map
 

@@ -68,10 +68,12 @@ first UI/product changes before opening an execution plan.
 
 ## Implementation Inputs Needed
 
-- A UI-facing membership query for one or more entry ids, including list type,
-  ownership, item count, and editability.
-- A product decision on whether dictionary source lists should appear as
-  membership or source metadata.
+- A UI-facing membership query for one or more entry ids, including curated and
+  user learning-list memberships, list type, ownership, item count, and
+  editability.
+- Dictionary source must be source metadata, not membership.
+- Global dictionary lookup must search accessible dictionary entries even when
+  an entry is not present in any learning list.
 - A product decision on whether `Train dit woord` is one-entry practice,
   next-card override, add-to-active-list, or a different action.
 - A product decision on whether list-level `Trainingsinstellingen` are defaults,
@@ -79,10 +81,19 @@ first UI/product changes before opening an execution plan.
 
 ## Suggested Execution Order
 
-1. Fix entry detail membership and add-to-list behavior.
-2. Clarify lookup-first detail and global search scope.
-3. Decouple viewed list from active training scope in list management.
-4. Clarify training scope controls.
-5. Define and implement single-entry training.
-6. Revisit entry membership as a standalone workflow after the first five
-   changes prove which membership affordances are still missing.
+1. Lock the product semantics needed for implementation: dictionary source
+   versus learning-list membership, membership versus progress, viewed list
+   versus active training list, and the intended meaning of `Train dit woord`.
+2. Implement entry detail membership and add-to-list behavior using real
+   membership state. Do not populate membership from selected/viewed list
+   context.
+3. Remove passive viewed-list-to-active-training side effects in list
+   management. Add an explicit `Make active for training` or equivalent action.
+4. Clarify dictionary lookup scope versus list-filtered lookup/list inspection
+   in `DictionarySearchTab`, `WordListTab`, and `WordsToolbar`.
+5. Summarize effective training scope in the training surface: list, scenario,
+   card filter, and list policy.
+6. Implement the decided single-entry training behavior as a temporary one-entry
+   session or clearly labeled next-card override.
+7. Add the missing state tables and only then expand into advanced list
+   management, bulk actions, sorting, and future role workflows.

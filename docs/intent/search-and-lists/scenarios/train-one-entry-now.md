@@ -78,13 +78,18 @@ Out of scope:
 
 ## Derived Requirements
 
-- Define the product meaning of `Train dit woord` before redesigning its
-  placement or copy.
-- If the intended behavior is one-entry training, create a temporary session
-  boundary with completion behavior.
-- If the intended behavior is "make this the next card", label it as such and
-  keep the user in the normal training queue afterward.
-- Single-entry training must not silently add list membership or change active
-  training scope.
-- The action needs visible error/fallback handling when the selected entry
-  cannot be loaded for training.
+- `Train dit woord` must have one defined product meaning before UI routing
+  changes.
+- Recommended meaning: start a temporary one-entry quick-practice session for
+  the selected entry.
+- One-entry quick practice must not add list membership, remove list
+  membership, or change active training scope.
+- One-entry quick practice may record normal card progress if the selected
+  entry/card type is trainable.
+- The card mode must be explicit: active scenario default, dedicated
+  quick-practice mode, or a visible user choice when needed.
+- If the selected entry cannot be trained, the system must show the failure and
+  return to the originating context rather than silently falling back to the
+  normal queue.
+- Completion must return to the originating entry context or present explicit
+  next actions: continue normal training, save to list, or go back.
