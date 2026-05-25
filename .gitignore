@@ -57,3 +57,4 @@ reports/*.zip
 reports/*-package-*/
 reports/ux-audit-*-source/
 reports/ui-ideas-*/
+review-packages/
