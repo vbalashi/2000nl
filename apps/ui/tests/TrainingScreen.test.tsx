@@ -13,6 +13,18 @@ const mockWord = {
   }
 };
 
+const overrideWord = {
+  ...mockWord,
+  id: "word-2",
+  headword: "boom",
+};
+
+const normalNextWord = {
+  ...mockWord,
+  id: "word-3",
+  headword: "fiets",
+};
+
 const defaultAvailableList = {
   id: "list-1",
   name: "Test list",
@@ -89,6 +101,7 @@ const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
+const fetchTrainingWordByLookup = vi.fn().mockResolvedValue(overrideWord);
 const fetchEntryListMemberships = vi.fn().mockResolvedValue(new Map());
 const fetchTrainingScenarios = vi.fn().mockResolvedValue([
   {
@@ -135,6 +148,7 @@ vi.mock("@/lib/trainingService", () => ({
   recordDefinitionClick,
   recordReview,
   recordWordView,
+  fetchTrainingWordByLookup,
   fetchUserPreferences,
   updateUserPreferences,
 }));
@@ -445,6 +459,102 @@ test("footer list selector still changes active training scope", async () => {
     ).toBe(true);
   } finally {
     restoreDefaultListScope();
+  }
+});
+
+test("search detail trains a selected entry as the next card without changing active scope", async () => {
+  useTwoListScope();
+  searchWordEntries.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  fetchTrainingWordByLookup.mockClear();
+  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
+  fetchNextTrainingWordByScenario.mockClear();
+  updateActiveList.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    fetchNextTrainingWordByScenario.mockClear();
+    updateActiveList.mockClear();
+
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+    await screen.findAllByText("boom");
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    );
+
+    await screen.findByRole("heading", { name: "boom" });
+    expect(
+      await screen.findByText(
+        "boom is nu de volgende kaart. Daarna gaat normale training verder.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchTrainingWordByLookup).toHaveBeenCalledWith("word-2", "user-1");
+    expect(updateActiveList).not.toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string; listType?: string };
+        return scope?.listId === "list-secondary";
+      }),
+    ).toBe(false);
+  } finally {
+    restoreDefaultSearchResults();
+    restoreDefaultListScope();
+    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
+  }
+});
+
+test("next-card override is one-shot and normal training resumes after review", async () => {
+  searchWordEntries.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  fetchTrainingWordByLookup.mockClear();
+  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(mockWord)
+    .mockResolvedValue(normalNextWord);
+  recordReview.mockReset();
+  recordReview.mockResolvedValue(null);
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+    await screen.findAllByText("boom");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    );
+
+    await screen.findByRole("heading", { name: "boom" });
+    await waitFor(() => expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1));
+
+    fireEvent.keyDown(window, { key: " " });
+    await screen.findByRole("button", { name: /opnieuw/i });
+    fireEvent.keyDown(window, { key: "k" });
+
+    await waitFor(() =>
+      expect(recordReview).toHaveBeenCalledWith(
+        expect.objectContaining({ wordId: "word-2", result: "success" }),
+      ),
+    );
+    await screen.findByRole("heading", { name: "fiets" });
+    expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByText(/Daarna gaat normale training verder/i),
+    ).not.toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    recordReview.mockReset();
+    recordReview.mockResolvedValue(null);
+    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
   }
 });
 

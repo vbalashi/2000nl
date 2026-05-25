@@ -325,8 +325,13 @@ export function TrainingScreen({ user }: Props) {
   const initialLoadDone = useRef(false);
   // Ref to prevent concurrent loadNextWord calls
   const loadingInProgress = useRef(false);
-  // Ref: when set, force this word as the *next* card once.
-  const forcedNextWordIdRef = useRef<string | null>(null);
+  // Ref: when set, present this entry as the next card once without changing
+  // the active training scope, viewed list, or list membership.
+  const nextCardOverrideWordIdRef = useRef<string | null>(null);
+  const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
+  const [nextCardOverrideNotice, setNextCardOverrideNotice] = useState<
+    string | null
+  >(null);
   const autoPlayedAudioCardRef = useRef<string | null>(null);
 
   // Next-card prefetch state (kept in refs so it never blocks rendering).
@@ -543,23 +548,42 @@ export function TrainingScreen({ user }: Props) {
       const effectiveScenario = overrideScenario ?? activeScenario;
       const restrictedModes = resolveRestrictedListModes(effectiveList);
       try {
-        const forcedId = forcedNextWordIdRef.current;
-        if (forcedId) {
-          forcedNextWordIdRef.current = null;
-          const forced = await fetchTrainingWordByLookup(forcedId, user.id);
-          if (forced) {
-            const mode = enabledModes[0] ?? "word-to-definition";
-            void recordWordView({ userId: user.id, wordId: forced.id, mode });
+        const overrideWordId = nextCardOverrideWordIdRef.current;
+        if (overrideWordId) {
+          nextCardOverrideWordIdRef.current = null;
+          const overrideWord = await fetchTrainingWordByLookup(
+            overrideWordId,
+            user.id,
+          );
+          if (overrideWord) {
+            // This one-shot override does not ask the scheduler for a new card,
+            // so keep the card mode as close as possible to the current training
+            // flow. Normal scenario/list selection resumes after this card.
+            const mode =
+              currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
+            const overrideCardKey = `${overrideWord.id}:${mode}`;
+            nextCardOverrideActiveKeyRef.current = overrideCardKey;
+            void recordWordView({
+              userId: user.id,
+              wordId: overrideWord.id,
+              mode,
+            });
             presentWord({
-              ...forced,
+              ...overrideWord,
               ...(typeof firstEncounter === "boolean"
                 ? { isFirstEncounter: firstEncounter }
                 : {}),
               mode,
-              debugStats: { source: "forced", mode },
+              debugStats: { source: "next-card-override", mode },
             });
+            setNextCardOverrideNotice(
+              `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
+            );
             return;
           }
+          setNextCardOverrideNotice(
+            "Kon dit woord niet laden; normale training gaat verder.",
+          );
           // If we couldn't fetch it, fall back to normal selection.
         }
 
@@ -601,6 +625,7 @@ export function TrainingScreen({ user }: Props) {
       availableLists,
       enabledModes,
       cardFilter,
+      currentWord?.mode,
       firstEncounter,
       presentWord,
       queueTurn,
@@ -701,7 +726,8 @@ export function TrainingScreen({ user }: Props) {
 
   const handleTrainWord = useCallback(
     (wordId: string) => {
-      forcedNextWordIdRef.current = wordId;
+      nextCardOverrideWordIdRef.current = wordId;
+      setNextCardOverrideNotice("Dit woord wordt als volgende kaart geladen.");
       setShowSettings(false);
       void loadNextWord(
         [currentWord?.id].filter((x): x is string => Boolean(x)),
@@ -729,6 +755,8 @@ export function TrainingScreen({ user }: Props) {
         // Use the mode from the current word (which was set when the word was fetched)
         const wordMode = currentWord.mode ?? enabledModes[0];
         const currentCardKey = trainingCardKey(currentWord, wordMode);
+        const isNextCardOverride =
+          nextCardOverrideActiveKeyRef.current === currentCardKey;
 
         // Compute the next queue turn up front (and persist it) so our on-demand fetch
         // doesn't read stale `queueTurn` inside this async callback.
@@ -947,6 +975,11 @@ export function TrainingScreen({ user }: Props) {
 
         await loadStats(undefined, `AFTER ${currentWord.headword} (${result})`);
 
+        if (isNextCardOverride) {
+          nextCardOverrideActiveKeyRef.current = null;
+          setNextCardOverrideNotice(null);
+        }
+
         // If we didn't have a prefetched card ready, fall back to on-demand fetch.
         if (!prefetched) {
           await loadNextWord(
@@ -999,7 +1032,7 @@ export function TrainingScreen({ user }: Props) {
     }
     initialLoadDone.current = true;
     if (wordId) {
-      forcedNextWordIdRef.current = wordId;
+      nextCardOverrideWordIdRef.current = wordId;
     }
     loadNextWord();
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
@@ -1932,6 +1965,14 @@ export function TrainingScreen({ user }: Props) {
             <div className="flex-1 overflow-y-auto overflow-x-visible scrollbar-hide flex flex-col px-2 md:px-4">
               {/* Card Container */}
               <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
+                {nextCardOverrideNotice ? (
+                  <div
+                    role="status"
+                    className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
+                  >
+                    {nextCardOverrideNotice}
+                  </div>
+                ) : null}
                 {/* Desktop: 16/10 aspect-ratio.
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                 <div

@@ -855,8 +855,12 @@ export function WordDetailPanel({
                     <button
                       type="button"
                       disabled={actionBusy || !onTrainWord}
+                      aria-label="Train dit woord als volgende kaart"
                       onClick={() => {
                         if (!entry?.id) return;
+                        setActionMessage(
+                          "Dit woord wordt als volgende kaart geladen."
+                        );
                         onTrainWord?.(entry.id);
                       }}
                       className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
@@ -864,6 +868,10 @@ export function WordDetailPanel({
                       Train dit woord
                     </button>
                   </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Wordt eenmalig de volgende kaart; je actieve trainingslijst
+                    blijft hetzelfde.
+                  </p>
                 </div>
               </div>
 
