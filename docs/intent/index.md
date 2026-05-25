@@ -24,6 +24,7 @@
 - Root repo map: [AGENTS.md](../../AGENTS.md)
 - System overview: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Current transformation targets: [current-transformation-targets.md](./current-transformation-targets.md)
+- Search and lists intent map: [search-and-lists/index.md](./search-and-lists/index.md)
 - Data and contract docs: [packages/docs/README.md](../../packages/docs/README.md)
 - Operational runbooks: [docs/runbooks](../runbooks)
 
