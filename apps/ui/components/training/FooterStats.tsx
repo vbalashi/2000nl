@@ -1,9 +1,15 @@
 "use client";
 import React from "react";
-import type { CardFilter, DetailedStats, TrainingMode } from "@/lib/types";
+import type {
+  CardFilter,
+  DetailedStats,
+  TrainingMode,
+  WordListSummary,
+} from "@/lib/types";
 import { Tooltip } from "@/components/Tooltip";
 import { DropUpSelect } from "./DropUpSelect";
 import { appVersionInfo } from "@/lib/appVersion";
+import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
 
 type Props = {
   stats: DetailedStats;
@@ -15,6 +21,7 @@ type Props = {
   onCardFilterChange: (filter: CardFilter) => void;
   language: string;
   onLanguageChange: (value: string) => void;
+  activeList?: WordListSummary | null;
   activeListName?: string | null;
   activeListValue?: string;
   listOptions?: Array<{ value: string; label: string }>;
@@ -69,6 +76,7 @@ export function FooterStats({
   onCardFilterChange,
   language,
   onLanguageChange,
+  activeList,
   activeListName,
   activeListValue,
   listOptions,
@@ -134,6 +142,14 @@ export function FooterStats({
             />
           </div>
 
+          <EffectiveTrainingScopeSummary
+            activeList={activeList ?? null}
+            activeScenarioName={activeScenarioName ?? "Begrip"}
+            cardFilter={cardFilter}
+            showFooterSelectorHint
+            className="rounded-xl p-2.5 shadow-none"
+          />
+
           {/* Controls Row */}
           <div className="hidden sm:block border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60">
             <div className="grid w-full grid-cols-4 gap-2">
@@ -148,7 +164,7 @@ export function FooterStats({
               />
               {listOptions?.length && activeListValue && onListChange ? (
                 <DropUpSelect
-                  label="Lijst"
+                  label="Trainingslijst"
                   showLabel={false}
                   uppercase={false}
                   buttonClassName="w-full justify-between px-3 py-2"
@@ -162,7 +178,7 @@ export function FooterStats({
                     type="button"
                     onClick={onOpenSettings}
                     className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
-                    aria-label="Wijzig lijst in Instellingen"
+                    aria-label="Wijzig trainingslijst in Instellingen"
                   >
                     <span className="text-slate-800 dark:text-white">
                       {activeListName ?? "VanDale 2k"}

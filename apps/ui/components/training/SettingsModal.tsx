@@ -8,6 +8,7 @@ import type { CardFilter, DetailedStats, TrainingScenario, WordListSummary, Word
 import type { TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { DropUpSelect } from "./DropUpSelect";
+import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
 import { DictionarySearchTab } from "./wordlist/DictionarySearchTab";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -154,7 +155,16 @@ export function SettingsModal({
       null
     );
   }, [activeTrainingList, isDictionarySourceList, lists, wordListId, wordListType]);
-  const activeTrainingListName = activeTrainingListFromLists?.name ?? "Geen actieve lijst";
+  const activeScenarioName =
+    scenarios.find((scenario) => scenario.id === activeScenario)?.nameNl ??
+    scenarios.find((scenario) => scenario.id === activeScenario)?.nameEn ??
+    (activeScenario === "understanding"
+      ? "Begrip"
+      : activeScenario === "listening"
+        ? "Luisteren"
+        : activeScenario === "conjugation"
+          ? "Vervoegingen"
+          : activeScenario);
   const selectDefaultViewedList = useCallback(
     (availableLists: WordListSummary[]) => {
       const active =
@@ -554,6 +564,12 @@ export function SettingsModal({
                   <p className="text-sm font-semibold text-slate-800 dark:text-white">
                     Trainingsvoorkeuren
                   </p>
+                  <EffectiveTrainingScopeSummary
+                    activeList={activeTrainingListFromLists}
+                    activeScenarioName={activeScenarioName}
+                    cardFilter={cardFilter}
+                    className="mt-3"
+                  />
                   <div className="mt-3 space-y-4">
                     {/* Scenario selector */}
                     <div>
@@ -635,12 +651,6 @@ export function SettingsModal({
                         ]}
                         onChange={onLanguageChange}
                       />
-                      <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                        <span className="text-xs uppercase text-slate-500 dark:text-slate-400">
-                          Actieve trainingslijst
-                        </span>
-                        <span>{activeTrainingListName}</span>
-                      </div>
                     </div>
                   </div>
                   <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">

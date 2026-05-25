@@ -2138,6 +2138,7 @@ export function TrainingScreen({ user }: Props) {
         onCardFilterChange={handleCardFilterChange}
         language={language}
         onLanguageChange={setLanguage}
+        activeList={activeList}
         activeListName={wordListLabel}
         activeListValue={activeListValue}
         listOptions={listOptions}

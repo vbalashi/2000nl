@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 
@@ -25,6 +25,8 @@ const activeList = {
   name: "Active list",
   type: "curated" as const,
   item_count: 10,
+  card_policy: "restrict" as const,
+  card_type_ids: ["listen-recognize"],
 };
 
 const secondaryList = {
@@ -441,6 +443,90 @@ test("footer list selector still changes active training scope", async () => {
         );
       }),
     ).toBe(true);
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test("training UI shows active list, scenario, card filter, and list policy as one effective scope", async () => {
+  useTwoListScope();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+
+    const footerScope = await screen.findByRole("region", {
+      name: "Effectieve trainingsscope",
+    });
+    expect(
+      within(footerScope).getByText("Actieve trainingslijst"),
+    ).toBeInTheDocument();
+    expect(within(footerScope).getByText("Active list")).toBeInTheDocument();
+    expect(within(footerScope).getByText("Scenario")).toBeInTheDocument();
+    expect(within(footerScope).getByText("Begrip")).toBeInTheDocument();
+    expect(within(footerScope).getByText("Kaarten")).toBeInTheDocument();
+    expect(
+      within(footerScope).getByText("Nieuw + herhaling"),
+    ).toBeInTheDocument();
+    expect(within(footerScope).getByText("Lijstbeleid")).toBeInTheDocument();
+    expect(
+      within(footerScope).getByText("Beperkt tot Luisteren"),
+    ).toBeInTheDocument();
+    expect(
+      within(footerScope).getByText(
+        "De lijstkeuze in de footer wijzigt wat normale training gebruikt.",
+      ),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test("settings training section repeats the effective training scope without using viewed-list state", async () => {
+  useTwoListScope();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+
+    const scopeSummaries = await screen.findAllByRole("region", {
+      name: "Effectieve trainingsscope",
+    });
+    const settingsScope = scopeSummaries[scopeSummaries.length - 1];
+    expect(within(settingsScope).getByText("Active list")).toBeInTheDocument();
+    expect(within(settingsScope).getByText("Begrip")).toBeInTheDocument();
+    expect(
+      within(settingsScope).getByText("Nieuw + herhaling"),
+    ).toBeInTheDocument();
+    expect(
+      within(settingsScope).getByText("Beperkt tot Luisteren"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /secondary list/i }),
+    );
+    const settingsTab = screen
+      .getAllByRole("button", { name: "Instellingen" })
+      .find((element) => element.tagName === "BUTTON");
+    expect(settingsTab).toBeDefined();
+    fireEvent.click(settingsTab!);
+
+    const updatedScopeSummaries = await screen.findAllByRole("region", {
+      name: "Effectieve trainingsscope",
+    });
+    const updatedSettingsScope =
+      updatedScopeSummaries[updatedScopeSummaries.length - 1];
+    expect(
+      within(updatedSettingsScope).getByText("Active list"),
+    ).toBeInTheDocument();
+    expect(
+      within(updatedSettingsScope).queryByText("Secondary list"),
+    ).not.toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
   }
