@@ -48,6 +48,17 @@ Run the narrowest relevant checks for the files you touched.
 For local UI browser QA, prefer the `nl-local-ui-qa` / `2000nl-local-ui-qa`
 skill and the dev-login URL on the same origin as the UI server.
 
+Use `3100` as the canonical local QA port. If `3100` is already listening,
+check `curl -sS 'http://localhost:3100/api/health?deep=1'` before starting any
+new UI server. If health is `ok` with `database.target: local`, reuse the
+existing server. If the existing 3100 server is a broken `apps/ui` Next dev
+process from this repo, restart it instead of starting `3101+`. Use alternate
+ports only when another active agent or user process legitimately owns `3100`,
+and stop temporary `3101+` UI processes before the final report. Use
+`scripts/ui-local-qa-cleanup.sh` to clean temporary QA ports and Chrome DevTools
+MCP processes without stopping `3100`; use `--include-3100` only when you intend
+to restart the canonical server.
+
 Do not conflate browser tooling failures:
 
 - Codex in-app Browser / Browser plugin (`iab`) is separate from Chrome
