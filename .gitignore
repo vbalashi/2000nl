@@ -42,6 +42,7 @@ tmp/
 
 # Local agent/tool config
 .codex/
+.claude/
 
 # Local deployment helpers that move machine-specific env files/secrets
 scripts/sync-env-to-*.sh
