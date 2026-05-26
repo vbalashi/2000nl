@@ -15,6 +15,7 @@ type Props = {
   nt2Only: boolean;
   viewedList: WordListSummary | null;
   autoFocusQuery?: boolean;
+  compact?: boolean;
   isLocked?: boolean;
   maxAllowed?: number | null;
   attributeFilters?: AttributeFilter[];
@@ -53,6 +54,7 @@ export function WordsToolbar({
   nt2Only,
   viewedList,
   autoFocusQuery,
+  compact = false,
   isLocked,
   maxAllowed,
   attributeFilters = [],
@@ -64,6 +66,7 @@ export function WordsToolbar({
 }: Props) {
   const queryInputRef = useRef<HTMLInputElement | null>(null);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const filterPopoverRef = useRef<HTMLDivElement | null>(null);
 
   // Close popover when clicking outside
@@ -107,14 +110,14 @@ export function WordsToolbar({
   }, [autoFocusQuery]);
 
   const title = applyListFilter
-    ? `Woorden in ${viewedListName}`
-    : "Woordenboek";
+    ? `Lijst: ${viewedListName}`
+    : "Woordenboek: VanDale";
   const infoText = applyListFilter
     ? `${wordTotal} woorden • ${selectedCount} geselecteerd`
     : `${wordTotal} woordenboekresultaten • ${selectedCount} geselecteerd`;
   const scopeText = applyListFilter
     ? null
-    : `Je zoekt in het woordenboek; ${viewedListName} blijft geselecteerd.`;
+    : `${viewedListName} blijft geselecteerd als lijst.`;
 
   // Build chips from active filters
   const filterLabels: Record<AttributeFilter, string> = {
@@ -130,9 +133,16 @@ export function WordsToolbar({
     { label: `Woordsoort: ${posLabel(partOfSpeech)}`, show: Boolean(partOfSpeech) },
     ...attributeFilters.map((f) => ({ label: filterLabels[f], show: true })),
   ].filter((c) => c.show);
+  const activeFilterCount =
+    (partOfSpeech ? 1 : 0) + Math.max(attributeFilters.length, nt2Only ? 1 : 0);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+    <div
+      className={[
+        "rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/70",
+        compact ? "p-3" : "p-4",
+      ].join(" ")}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-[240px] flex-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -162,12 +172,17 @@ export function WordsToolbar({
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
                 {applyListFilter
-                  ? "Alleen deze lijst"
-                  : "Toon lijst"}
+                  ? "Lijst"
+                  : "Woordenboek"}
               </button>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div
+            className={[
+              "mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400",
+              compact ? "hidden sm:flex" : "",
+            ].join(" ")}
+          >
             <span>{infoText}</span>
             {/* Free tier indicator */}
             {maxAllowed !== null && maxAllowed !== undefined && (
@@ -199,7 +214,12 @@ export function WordsToolbar({
       </div>
 
       <div className="mt-3">
-        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+        <label
+          className={[
+            "mb-1 text-xs font-medium text-slate-500 dark:text-slate-400",
+            compact ? "sr-only" : "block",
+          ].join(" ")}
+        >
           {applyListFilter ? "Zoek in deze lijst" : "Zoek in woordenboek"}
         </label>
         <input
@@ -216,7 +236,27 @@ export function WordsToolbar({
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setAdvancedFiltersOpen((prev) => !prev)}
+          className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Filters
+          {activeFilterCount ? (
+            <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary dark:text-primary-light">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </button>
+      ) : null}
+
+      <div
+        className={[
+          "mt-3 flex flex-wrap items-center gap-3",
+          compact && !advancedFiltersOpen ? "hidden" : "",
+        ].join(" ")}
+      >
         <div className="flex-1">
           <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
             Woordsoort

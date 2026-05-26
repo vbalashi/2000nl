@@ -271,8 +271,8 @@ test("lists tab opens the dedicated list management surface", async () => {
     screen.getByRole("button", { name: "Trainingsinstellingen" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
-  expect(screen.getAllByText(/Woorden in Test list/i).length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Alleen deze lijst").length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Lijst: Test list/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Lijst").length).toBeGreaterThan(0);
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
 });
 

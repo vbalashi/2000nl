@@ -461,7 +461,7 @@ export function WordDetailPanel({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         <div className="space-y-5">
           <section className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -682,13 +682,17 @@ export function WordDetailPanel({
             )}
           </section>
 
-          {showActions && (
-            <section className="space-y-2">
+        </div>
+      </div>
+
+      {showActions && (
+        <section className="shrink-0 border-t border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
+          <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Acties
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="grid gap-2">
                   {showTrainingActions ? (
                     <div className="flex flex-col gap-2">
@@ -880,10 +884,9 @@ export function WordDetailPanel({
                   {actionMessage}
                 </div>
               ) : null}
-            </section>
-          )}
-        </div>
-      </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
