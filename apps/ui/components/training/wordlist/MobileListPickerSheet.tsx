@@ -38,7 +38,7 @@ export function MobileListPickerSheet({
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div>
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
-              Selecteer bekeken lijst
+              Kies lijst
             </div>
             <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
               Kies de lijst die je wil bekijken of beheren.

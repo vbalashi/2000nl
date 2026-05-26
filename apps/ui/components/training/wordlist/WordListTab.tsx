@@ -168,7 +168,7 @@ export function WordListTab({
     applyListFilter && viewedList
       ? hasWordFilterCriteria
         ? `De filter binnen '${listDisplayName(viewedList, viewedListName)}' vond niets. Wis filters of zoek in het woordenboek.`
-        : "Deze lijstinhoud is leeg. Voeg woorden toe via een eigen lijst of kies een andere bekeken lijst."
+        : "Deze lijstinhoud is leeg. Voeg woorden toe via een eigen lijst of kies een andere lijst."
       : `Het woordenboek vond niets binnen de huidige filters. '${viewedListName}' blijft geselecteerd.`;
 
   const selectViewedList = useCallback(
@@ -517,7 +517,7 @@ export function WordListTab({
             <div className="space-y-4">
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm dark:border-primary/40 dark:bg-primary/10">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Actieve trainingslijst
+                  Training
                 </p>
                 <div className="mt-2 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -528,9 +528,6 @@ export function WordListTab({
                       {activeTrainingList?.item_count ?? "—"} woorden
                     </p>
                   </div>
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
-                    Actief
-                  </span>
                 </div>
               </div>
 
