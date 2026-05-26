@@ -75,12 +75,12 @@ describe("WordDetailPanel membership behavior", () => {
 
     expect(screen.getByText("Bron:")).toBeInTheDocument();
     expect(screen.getByText("VanDale woordenboek")).toBeInTheDocument();
-    expect(await screen.findByText("Nog niet opgeslagen in een leerlijst."))
+    expect(await screen.findByText("Nog niet opgeslagen in een lijst."))
       .toBeInTheDocument();
 
     const membershipSection = screen.getByLabelText("Leerlijstlidmaatschap");
     expect(within(membershipSection).queryByText(/VanDale/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/In lijsten/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/In lijsten/i)).toBeInTheDocument();
   });
 
   test("renders an editable user-list membership", async () => {
@@ -104,8 +104,8 @@ describe("WordDetailPanel membership behavior", () => {
       expect(within(membershipSection).getByText("Mijn oefenlijst"))
         .toBeInTheDocument(),
     );
-    expect(screen.getByText("Mijn lijst")).toBeInTheDocument();
-    expect(screen.getByText("Bewerkbaar")).toBeInTheDocument();
+    expect(screen.getByText(/In 1 lijst: Mijn oefenlijst/)).toBeInTheDocument();
+    expect(screen.getByText(/Mijn lijst\s+·\s+bewerkbaar/i)).toBeInTheDocument();
     expect(screen.getByText("12 woorden")).toBeInTheDocument();
   });
 
@@ -131,8 +131,7 @@ describe("WordDetailPanel membership behavior", () => {
       expect(within(membershipSection).getByText("VanDale 2k"))
         .toBeInTheDocument(),
     );
-    expect(screen.getByText("Curated leerlijst")).toBeInTheDocument();
-    expect(screen.getByText("Alleen-lezen")).toBeInTheDocument();
+    expect(screen.getByText(/Gecureerd\s+·\s+alleen-lezen/i)).toBeInTheDocument();
   });
 
   test("shows curated and user memberships together", async () => {
@@ -164,19 +163,10 @@ describe("WordDetailPanel membership behavior", () => {
     );
     expect(within(membershipSection).getByText("Mijn oefenlijst"))
       .toBeInTheDocument();
-    expect(screen.getByText("Actieve trainingslijst")).toBeInTheDocument();
-    expect(screen.getByText("Bewerkbaar")).toBeInTheDocument();
-    expect(screen.getByText("Alleen-lezen")).toBeInTheDocument();
-  });
-
-  test("states that adding to a list does not change training scope", async () => {
-    renderPanel({ userLists: [userList] });
-
     expect(
-      await screen.findByText(
-        "Toevoegen aan een leerlijst verandert je actieve trainingslijst niet.",
-      ),
+      screen.getByText(/Gecureerd\s+·\s+alleen-lezen\s+·\s+actief voor training/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Mijn lijst\s+·\s+bewerkbaar/i)).toBeInTheDocument();
   });
 
   test("blocks duplicate add when the selected target already contains the entry", async () => {
@@ -194,10 +184,10 @@ describe("WordDetailPanel membership behavior", () => {
     });
 
     const addButton = await screen.findByRole("button", {
-      name: "Staat al in lijst",
+      name: "Opgeslagen",
     });
     expect(addButton).toBeDisabled();
-    expect(screen.getByText("Dit woord staat al in de gekozen lijst."))
+    expect(screen.getByText("In deze lijst."))
       .toBeInTheDocument();
     expect(serviceMocks.addWordsToUserList).not.toHaveBeenCalled();
   });
@@ -223,13 +213,13 @@ describe("WordDetailPanel membership behavior", () => {
 
     expect(await screen.findByText("Kon lijsten niet laden."))
       .toBeInTheDocument();
-    expect(screen.queryByText(/In lijsten/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/In lijsten/i)).toBeInTheDocument();
 
     await act(async () => {
       await user.click(screen.getByRole("button", { name: "Opnieuw" }));
     });
 
-    expect(await screen.findByText("Nog niet opgeslagen in een leerlijst."))
+    expect(await screen.findByText("Nog niet opgeslagen in een lijst."))
       .toBeInTheDocument();
     consoleError.mockRestore();
   });
@@ -268,7 +258,7 @@ describe("WordDetailPanel membership behavior", () => {
       />,
     );
 
-    expect(await screen.findByText("Nog niet opgeslagen in een leerlijst."))
+    expect(await screen.findByText("Nog niet opgeslagen in een lijst."))
       .toBeInTheDocument();
 
     const user = userEvent.setup();
@@ -285,10 +275,9 @@ describe("WordDetailPanel membership behavior", () => {
       ),
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Staat al in lijst" }))
-        .toBeDisabled(),
+      expect(screen.getByRole("button", { name: "Opgeslagen" })).toBeDisabled(),
     );
-    expect(screen.getByText("Bewerkbaar")).toBeInTheDocument();
+    expect(screen.getByText(/Mijn lijst\s+·\s+bewerkbaar/i)).toBeInTheDocument();
     expect(screen.getByText("Woord toegevoegd aan lijst.")).toBeInTheDocument();
     expect(onListsUpdated).toHaveBeenCalledTimes(1);
     expect(serviceMocks.recordReview).not.toHaveBeenCalled();

@@ -3,6 +3,7 @@ import { SidebarHistoryItem } from "@/lib/types";
 import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
 import { buildSegments, getPrimaryMeaning } from "@/lib/wordUtils";
+import { isTrainingDebugEnabled } from "@/lib/trainingDebug";
 
 type Props = {
   entry: SidebarHistoryItem;
@@ -46,6 +47,7 @@ export function SidebarCard({
   const showClickedWord =
     entry.clickedWord &&
     entry.clickedWord.toLowerCase() !== entry.headword.toLowerCase();
+  const showDebugStats = Boolean(entry.debugStats) && isTrainingDebugEnabled();
 
   return (
     <div
@@ -77,7 +79,7 @@ export function SidebarCard({
                 2k
               </span>
             )}
-            {entry.debugStats?.mode && (
+            {showDebugStats && entry.debugStats?.mode && (
               <Tooltip
                 content={
                   entry.debugStats.mode === "word-to-definition"
@@ -176,9 +178,9 @@ export function SidebarCard({
         </div>
 
         {/* Stats Row */}
-        {(entry.stats || entry.debugStats) && (
+        {(entry.stats || showDebugStats) && (
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-dashed border-slate-100 pt-2 text-[10px] font-medium text-slate-500 dark:border-slate-800">
-            {entry.debugStats?.source && (
+            {showDebugStats && entry.debugStats?.source && (
               <span>
                 src:{" "}
                 <span className="text-slate-600 dark:text-slate-300">
@@ -186,7 +188,7 @@ export function SidebarCard({
                 </span>
               </span>
             )}
-            {typeof entry.debugStats?.interval === "number" && (
+            {showDebugStats && typeof entry.debugStats?.interval === "number" && (
               <span>
                 int:{" "}
                 <span className="text-blue-500 dark:text-blue-400">
@@ -196,7 +198,7 @@ export function SidebarCard({
                 </span>
               </span>
             )}
-            {typeof entry.debugStats?.reps === "number" && (
+            {showDebugStats && typeof entry.debugStats?.reps === "number" && (
               <span>
                 reps:{" "}
                 <span className="text-green-500 dark:text-green-400">
@@ -204,7 +206,7 @@ export function SidebarCard({
                 </span>
               </span>
             )}
-            {typeof entry.debugStats?.ef === "number" && (
+            {showDebugStats && typeof entry.debugStats?.ef === "number" && (
               <span>
                 S:{" "}
                 <span className="text-yellow-500 dark:text-yellow-400">
@@ -214,7 +216,7 @@ export function SidebarCard({
                 </span>
               </span>
             )}
-            {typeof entry.debugStats?.clicks === "number" && entry.debugStats.clicks > 0 && (
+            {showDebugStats && typeof entry.debugStats?.clicks === "number" && entry.debugStats.clicks > 0 && (
               <span>
                 clicks:{" "}
                 <span className="text-pink-500 dark:text-pink-400">

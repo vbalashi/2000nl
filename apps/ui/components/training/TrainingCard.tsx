@@ -15,6 +15,7 @@ import { InteractiveText } from "./InteractiveText";
 import { AudioModeToggle } from "./AudioModeToggle";
 import type { TrainingWord } from "@/lib/types";
 import { maskTargetWordInDefinition } from "@/lib/training/trainingCardText";
+import { isTrainingDebugEnabled } from "@/lib/trainingDebug";
 import { useTrainingTranslation } from "@/lib/training/useTrainingTranslation";
 
 type Props = {
@@ -80,6 +81,7 @@ export function TrainingCard({
   audioModeEnabled = false,
   onToggleAudioMode,
 }: Props) {
+  const showDebugStats = Boolean(word?.debugStats) && isTrainingDebugEnabled();
   // NOTE:
   // Hooks must run on every render. Do NOT early-return before hooks
   // (otherwise React can hit internal invariants when `loading` flips).
@@ -1107,7 +1109,7 @@ export function TrainingCard({
           )}
 
           {/* Debug Stats (Footer - Color Coded) */}
-          {word.debugStats && (
+          {showDebugStats && word?.debugStats && (
             <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 pt-4 w-full opacity-70 hover:opacity-100 transition-opacity">
               {word.debugStats.source && (
                 <span className="text-slate-500 dark:text-slate-400">

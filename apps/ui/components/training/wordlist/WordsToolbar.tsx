@@ -107,15 +107,14 @@ export function WordsToolbar({
   }, [autoFocusQuery]);
 
   const title = applyListFilter
-    ? `LIJSTINHOUD: ${viewedListName.toUpperCase()}`
-    : "WOORDENBOEKLOOKUP";
-  const listWordCount = viewedList?.item_count ?? 0;
+    ? `Woorden in ${viewedListName}`
+    : "Woordenboek";
   const infoText = applyListFilter
-    ? `${wordTotal} woorden in bekeken lijst • ${selectedCount} geselecteerd`
-    : `Bekeken lijst: ${listWordCount} woorden • woordenboekresultaten: ${wordTotal} • ${selectedCount} geselecteerd`;
+    ? `${wordTotal} woorden • ${selectedCount} geselecteerd`
+    : `${wordTotal} woordenboekresultaten • ${selectedCount} geselecteerd`;
   const scopeText = applyListFilter
-    ? "Je inspecteert de inhoud van de bekeken lijst."
-    : `Je zoekt in het woordenboek; de bekeken lijst blijft ${viewedListName}.`;
+    ? null
+    : `Je zoekt in het woordenboek; ${viewedListName} blijft geselecteerd.`;
 
   // Build chips from active filters
   const filterLabels: Record<AttributeFilter, string> = {
@@ -163,8 +162,8 @@ export function WordsToolbar({
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
                 {applyListFilter
-                  ? "Filter: bekeken lijst"
-                  : "Toon bekeken lijst"}
+                  ? "Alleen deze lijst"
+                  : "Toon lijst"}
               </button>
             )}
           </div>
@@ -191,15 +190,17 @@ export function WordsToolbar({
               </span>
             ))}
           </div>
-          <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-            {scopeText}
-          </div>
+          {scopeText ? (
+            <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+              {scopeText}
+            </div>
+          ) : null}
         </div>
       </div>
 
       <div className="mt-3">
         <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
-          {applyListFilter ? "Filter binnen bekeken lijst" : "Zoek in woordenboek"}
+          {applyListFilter ? "Zoek in deze lijst" : "Zoek in woordenboek"}
         </label>
         <input
           ref={queryInputRef}

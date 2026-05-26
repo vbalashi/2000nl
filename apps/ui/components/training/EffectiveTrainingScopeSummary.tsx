@@ -71,48 +71,34 @@ export function EffectiveTrainingScopeSummary({
   className,
   showFooterSelectorHint = false,
 }: Props) {
-  const summaryItems = [
-    {
-      label: "Actieve trainingslijst",
-      value: activeList?.name ?? "Geen actieve lijst",
-    },
-    { label: "Scenario", value: activeScenarioName },
-    { label: "Kaarten", value: CARD_FILTER_LABELS[cardFilter] },
-    { label: "Lijstbeleid", value: listPolicyLabel(activeList) },
-  ];
+  const activeListName = activeList?.name ?? "Geen actieve lijst";
+  const compactSummary = `Training: ${activeListName} · ${activeScenarioName} · ${CARD_FILTER_LABELS[cardFilter]}`;
+  const policyDetails = listPolicyLabel(activeList);
 
   return (
     <section
-      aria-label="Effectieve trainingsscope"
+      aria-label="Training"
       className={[
-        "rounded-2xl border border-slate-200 bg-white/75 p-3 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900/60",
+        "rounded-2xl border border-slate-200 bg-white/75 px-3 py-2 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900/60",
         className ?? "",
       ].join(" ")}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Effectieve trainingsscope
-          </p>
-          {showFooterSelectorHint ? (
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-              De lijstkeuze in de footer wijzigt wat normale training gebruikt.
-            </p>
-          ) : null}
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate font-semibold text-slate-800 dark:text-slate-100">
+          {compactSummary}
+        </p>
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xs font-bold text-slate-500 dark:border-slate-700 dark:text-slate-300"
+          title={
+            showFooterSelectorHint
+              ? `${policyDetails}. De lijstkeuze in de footer wijzigt normale training.`
+              : policyDetails
+          }
+          aria-label={policyDetails}
+        >
+          i
+        </span>
       </div>
-      <dl className="mt-2 grid gap-2 sm:grid-cols-4">
-        {summaryItems.map((item) => (
-          <div key={item.label} className="min-w-0">
-            <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {item.label}
-            </dt>
-            <dd className="truncate font-semibold text-slate-900 dark:text-white">
-              {item.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
     </section>
   );
 }

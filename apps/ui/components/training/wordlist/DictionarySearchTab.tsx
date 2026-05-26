@@ -101,16 +101,23 @@ export function DictionarySearchTab({
 
   const runSearch = useCallback(async () => {
     if (!open) return;
+    const hasQuery = Boolean(query.trim());
+    if (!hasQuery && !useViewedListFilter) {
+      setWordResults([]);
+      setWordTotal(0);
+      setDetailEntry(null);
+      return;
+    }
     setSearchLoading(true);
     try {
       const result = useViewedListFilter
         ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
-            query: query || undefined,
+            query: query.trim() || undefined,
             page,
             pageSize,
           })
         : await searchWordEntries({
-            query: query || undefined,
+            query: query.trim() || undefined,
             page,
             pageSize,
           });
@@ -149,17 +156,23 @@ export function DictionarySearchTab({
     setPage(1);
   };
   const resultScopeLabel = useViewedListFilter
-    ? `Lijstfilter in bekeken lijst: ${viewedListName}`
-    : `Woordenboeklookup: ${sourceLabel}`;
+    ? `Alleen deze lijst: ${viewedListName}`
+    : `Zoekt in ${sourceLabel}`;
   const resultCountLabel = useViewedListFilter
-    ? `${wordTotal} woorden gevonden binnen de bekeken-lijstfilter`
-    : `${wordTotal} woordenboekresultaten gevonden`;
+    ? `${wordTotal} woorden gevonden`
+    : query.trim()
+      ? `${wordTotal} resultaten in VanDale`
+      : "Typ een woord om te zoeken";
   const emptyHeading = useViewedListFilter
-    ? "Geen woorden binnen de bekeken-lijstfilter."
-    : "Geen woordenboekresultaten gevonden.";
+    ? "Geen woorden in deze lijst."
+    : query.trim()
+      ? "Geen woordenboekresultaten gevonden."
+      : "Zoek een woord in VanDale.";
   const emptyDescription = useViewedListFilter
-    ? `De filter binnen de bekeken lijst '${viewedListName}' vond niets. Wis de zoekopdracht of zoek opnieuw in het woordenboek.`
-    : `De woordenboekzoekopdracht in ${sourceLabel} vond niets binnen de huidige taal- en broninstelling.`;
+    ? `De filter binnen '${viewedListName}' vond niets. Wis de zoekopdracht of zoek opnieuw in het woordenboek.`
+    : query.trim()
+      ? `De zoekopdracht in ${sourceLabel} vond niets.`
+      : "Typ een woord om definities, voorbeelden en leerlijsten te bekijken.";
 
   const results = (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -203,30 +216,11 @@ export function DictionarySearchTab({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              Taal: {languageLabel(language)}
-            </span>
-            <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              Bron: {sourceLabel}
-            </span>
-            <span
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                useViewedListFilter
-                  ? "border-primary/30 bg-primary/5 text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
-              }`}
-            >
-              {useViewedListFilter ? "Modus: lijstfilter" : "Modus: woordenboeklookup"}
-            </span>
-            {useViewedListFilter ? (
-              <span className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary dark:border-primary/50 dark:bg-primary/10 dark:text-primary-light">
-                Bekeken lijst: {viewedListName}
-              </span>
-            ) : null}
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {languageLabel(language)} · {resultScopeLabel}
           </div>
           <label className="hidden items-center gap-2 text-xs font-semibold text-slate-500 md:flex dark:text-slate-300">
-            Filter op bekeken lijst
+            Alleen deze lijst
             <input
               type="checkbox"
               checked={applyListFilter}
@@ -241,9 +235,6 @@ export function DictionarySearchTab({
         </div>
 
         <div className="space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-          <div className="font-semibold text-slate-700 dark:text-slate-200">
-            {resultScopeLabel}
-          </div>
           <div>{resultCountLabel}</div>
         </div>
       </div>
@@ -355,17 +346,13 @@ export function DictionarySearchTab({
             <div className="flex h-full min-h-0 flex-col">
               <div className="border-b border-slate-100 bg-slate-50 px-5 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">
-                  Geopende entry
+                  Details
                 </div>
                 {!detailEntryInCurrentResults ? (
                   <div className="mt-0.5 text-slate-500 dark:text-slate-400">
                     Deze entry is bewaard terwijl de zoekresultaten veranderden.
                   </div>
-                ) : (
-                  <div className="mt-0.5 text-slate-500 dark:text-slate-400">
-                    Geselecteerd uit de huidige resultaten.
-                  </div>
-                )}
+                ) : null}
               </div>
               <div className="min-h-0 flex-1">
                 <WordDetailPanel

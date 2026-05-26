@@ -161,15 +161,15 @@ export function WordListTab({
   const emptyResultsHeading =
     applyListFilter && viewedList
       ? hasWordFilterCriteria
-        ? "Geen woorden binnen de bekeken-lijstfilter."
-        : "Deze bekeken lijst heeft geen woorden."
+        ? "Geen woorden in deze lijst."
+        : "Deze lijst heeft geen woorden."
       : "Geen woordenboekresultaten gevonden.";
   const emptyResultsDescription =
     applyListFilter && viewedList
       ? hasWordFilterCriteria
         ? `De filter binnen '${listDisplayName(viewedList, viewedListName)}' vond niets. Wis filters of zoek in het woordenboek.`
         : "Deze lijstinhoud is leeg. Voeg woorden toe via een eigen lijst of kies een andere bekeken lijst."
-      : `De woordenboeklookup vond niets binnen de huidige filters. De bekeken lijst blijft '${viewedListName}'.`;
+      : `Het woordenboek vond niets binnen de huidige filters. '${viewedListName}' blijft geselecteerd.`;
 
   const selectViewedList = useCallback(
     (list: WordListSummary) => {
@@ -729,7 +729,7 @@ export function WordListTab({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Bekeken lijst
+                  Je bekijkt
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-xl font-semibold text-slate-900 dark:text-white">
@@ -1013,7 +1013,7 @@ export function WordListTab({
                   <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                     <div className="min-w-0">
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Bekeken lijst
+                        Je bekijkt
                       </div>
                       <div className="truncate font-semibold">
                         {listDisplayName(viewedList, viewedListName)}

@@ -218,11 +218,11 @@ test("search action opens the dedicated dictionary search surface", async () => 
     "border-primary",
   );
   expect(screen.getByRole("button", { name: "Lijsten" })).toBeInTheDocument();
-  expect(screen.getByText("Modus: woordenboeklookup")).toBeInTheDocument();
-  expect(screen.getByText(/Woordenboeklookup: VanDale woordenboek/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/filter op bekeken lijst/i)).toBeInTheDocument();
+  expect(screen.getByText(/Zoekt in VanDale woordenboek/i)).toBeInTheDocument();
+  expect(screen.getByText("Typ een woord om te zoeken")).toBeInTheDocument();
+  expect(screen.getByLabelText(/alleen deze lijst/i)).toBeInTheDocument();
   expect(screen.queryByText(/Alleen actieve lijst/i)).not.toBeInTheDocument();
-  await waitFor(() => expect(searchWordEntries).toHaveBeenCalled());
+  expect(searchWordEntries).not.toHaveBeenCalled();
 });
 
 test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
@@ -239,10 +239,8 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     fireEvent.click(screen.getByLabelText("Zoeken"));
 
     const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
-    await screen.findByText("Geopende entry");
-    expect(
-      screen.getByText("Geselecteerd uit de huidige resultaten."),
-    ).toBeInTheDocument();
+    fireEvent.change(queryInput, { target: { value: "huis" } });
+    await screen.findByText("Details");
 
     fireEvent.change(queryInput, { target: { value: "boom" } });
 
@@ -273,9 +271,8 @@ test("lists tab opens the dedicated list management surface", async () => {
     screen.getByRole("button", { name: "Trainingsinstellingen" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
-  expect(screen.getAllByText(/LIJSTINHOUD: TEST LIST/i).length).toBeGreaterThan(0);
-  expect(screen.getAllByText(/woorden in bekeken lijst/i).length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Filter: bekeken lijst").length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Woorden in Test list/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Alleen deze lijst").length).toBeGreaterThan(0);
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
 });
 
@@ -298,14 +295,13 @@ test("list-filtered search empty state names the viewed-list filter", async () =
     fireEvent.change(filterInput, { target: { value: "zzzz" } });
 
     expect(
-      await screen.findByText("Geen woorden binnen de bekeken-lijstfilter."),
+      await screen.findByText("Geen woorden in deze lijst."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/De filter binnen 'Test list' vond niets/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Zoek in woordenboek" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zoek in woordenboek" }))
+      .toBeInTheDocument();
   } finally {
     restoreDefaultListResults();
   }
@@ -319,12 +315,15 @@ test("dictionary lookup empty state names the dictionary source search", async (
 
     await screen.findByRole("heading", { name: "huis" });
     fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
+      target: { value: "zzzz" },
+    });
 
     expect(
       await screen.findByText("Geen woordenboekresultaten gevonden."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/De woordenboekzoekopdracht in VanDale woordenboek vond niets/i),
+      screen.getByText(/De zoekopdracht in VanDale woordenboek vond niets/i),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
@@ -478,6 +477,9 @@ test("search detail trains a selected entry as the next card without changing ac
     updateActiveList.mockClear();
 
     fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
+      target: { value: "boom" },
+    });
     await screen.findAllByText("boom");
 
     fireEvent.click(
@@ -524,6 +526,9 @@ test("next-card override is one-shot and normal training resumes after review", 
     await screen.findByRole("heading", { name: "huis" });
 
     fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
+      target: { value: "boom" },
+    });
     await screen.findAllByText("boom");
     fireEvent.click(
       await screen.findByRole("button", {
@@ -567,26 +572,15 @@ test("training UI shows active list, scenario, card filter, and list policy as o
     await screen.findByRole("heading", { name: "huis" });
 
     const footerScope = await screen.findByRole("region", {
-      name: "Effectieve trainingsscope",
+      name: "Training",
     });
     expect(
-      within(footerScope).getByText("Actieve trainingslijst"),
-    ).toBeInTheDocument();
-    expect(within(footerScope).getByText("Active list")).toBeInTheDocument();
-    expect(within(footerScope).getByText("Scenario")).toBeInTheDocument();
-    expect(within(footerScope).getByText("Begrip")).toBeInTheDocument();
-    expect(within(footerScope).getByText("Kaarten")).toBeInTheDocument();
-    expect(
-      within(footerScope).getByText("Nieuw + herhaling"),
-    ).toBeInTheDocument();
-    expect(within(footerScope).getByText("Lijstbeleid")).toBeInTheDocument();
-    expect(
-      within(footerScope).getByText("Beperkt tot Luisteren"),
-    ).toBeInTheDocument();
-    expect(
       within(footerScope).getByText(
-        "De lijstkeuze in de footer wijzigt wat normale training gebruikt.",
+        "Training: Active list · Begrip · Nieuw + herhaling",
       ),
+    ).toBeInTheDocument();
+    expect(
+      within(footerScope).getByLabelText(/Beperkt tot Luisteren/),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
@@ -604,17 +598,16 @@ test("settings training section repeats the effective training scope without usi
     fireEvent.click(screen.getByLabelText("Instellingen"));
 
     const scopeSummaries = await screen.findAllByRole("region", {
-      name: "Effectieve trainingsscope",
+      name: "Training",
     });
     const settingsScope = scopeSummaries[scopeSummaries.length - 1];
-    expect(within(settingsScope).getByText("Active list")).toBeInTheDocument();
-    expect(within(settingsScope).getByText("Begrip")).toBeInTheDocument();
     expect(
-      within(settingsScope).getByText("Nieuw + herhaling"),
+      within(settingsScope).getByText(
+        "Training: Active list · Begrip · Nieuw + herhaling",
+      ),
     ).toBeInTheDocument();
-    expect(
-      within(settingsScope).getByText("Beperkt tot Luisteren"),
-    ).toBeInTheDocument();
+    expect(within(settingsScope).getByLabelText(/Beperkt tot Luisteren/))
+      .toBeInTheDocument();
 
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
     fireEvent.click(
@@ -627,12 +620,14 @@ test("settings training section repeats the effective training scope without usi
     fireEvent.click(settingsTab!);
 
     const updatedScopeSummaries = await screen.findAllByRole("region", {
-      name: "Effectieve trainingsscope",
+      name: "Training",
     });
     const updatedSettingsScope =
       updatedScopeSummaries[updatedScopeSummaries.length - 1];
     expect(
-      within(updatedSettingsScope).getByText("Active list"),
+      within(updatedSettingsScope).getByText(
+        "Training: Active list · Begrip · Nieuw + herhaling",
+      ),
     ).toBeInTheDocument();
     expect(
       within(updatedSettingsScope).queryByText("Secondary list"),

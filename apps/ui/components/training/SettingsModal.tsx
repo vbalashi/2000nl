@@ -325,10 +325,10 @@ export function SettingsModal({
       >
         {/* Sticky header + tabs */}
         <div className="sticky top-0 z-10 flex-shrink-0 bg-white dark:bg-slate-900">
-          <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-4 md:px-8 dark:border-slate-800">
+          <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-4 sm:px-6 md:px-8 dark:border-slate-800">
             <div>
               <p className="text-[12px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                Instellingen & Beheer
+                Woorden en lijsten
               </p>
               <p className="text-lg font-semibold text-slate-900 dark:text-white">
                 {userEmail}
@@ -355,14 +355,14 @@ export function SettingsModal({
             </button>
           </div>
 
-          <div className="flex items-center gap-4 border-b border-slate-100 px-6 pt-2 text-sm font-semibold text-slate-500 md:px-8 dark:border-slate-800 dark:text-slate-300">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto border-b border-slate-100 px-4 pt-2 text-sm font-semibold text-slate-500 sm:gap-4 sm:px-6 md:px-8 dark:border-slate-800 dark:text-slate-300">
           {(["zoeken", "lijsten", "statistieken", "instellingen"] as TabKey[]).map(
             (tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`border-b-2 px-3 py-3 transition-colors ${
+                className={`shrink-0 whitespace-nowrap border-b-2 px-2 py-3 transition-colors sm:px-3 ${
                   activeTab === tab
                     ? "border-primary text-slate-900 dark:text-white"
                     : "border-transparent hover:text-slate-800 dark:hover:text-white"
