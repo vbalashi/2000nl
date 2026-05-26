@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "room",
+    "pronunciation": "room",
+    "pronunciation_with_stress": "room",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "rooms",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A separate space inside a building.",
+        "context": "",
+        "examples": [
+          "this room is quiet"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "room",
+      "headword_raw": "room",
+      "index": 92005,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

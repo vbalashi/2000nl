@@ -26,6 +26,15 @@ UI change is ready to implement, create a separate execution plan under
 - [Inspect and manage a list's words](./scenarios/manage-list-words.md)
 - [Choose what to train](./scenarios/choose-training-scope.md)
 - [Train one entry now](./scenarios/train-one-entry-now.md)
+- [Switch language and training scope](./scenarios/switch-language-training-scope.md)
+- [Source-of-truth decision](./source-of-truth-decision.md) - product object
+  ownership, precedence, and baseline decisions for search/list/training IA.
+- [Terminology contract](./terminology-contract.md) - approved Dutch UI term
+  boundaries for search, lists, sources, sessions, and preferences.
+- [Multi-source fixture plan](./multisource-fixture-plan.md) - smallest test
+  dictionary/list fixture set for source, language, and duplicate-headword UX.
+- [Search ranking and grouping contract](./search-ranking-grouping-contract.md)
+  - lookup result groups, ordering, metadata, and RPC requirements.
 - [Current UX gap report](./current-ux-gap-report.md)
 - [UX review response](./ux-review-response.md) - senior UX review verdict
   and required changes before implementation.

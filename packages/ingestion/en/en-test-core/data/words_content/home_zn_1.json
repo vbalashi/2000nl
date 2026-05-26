@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "home",
+    "pronunciation": "home",
+    "pronunciation_with_stress": "home",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "homes",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "The place where one lives and feels settled.",
+        "context": "",
+        "examples": [
+          "after work she goes home"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "home",
+      "headword_raw": "home",
+      "index": 92001,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

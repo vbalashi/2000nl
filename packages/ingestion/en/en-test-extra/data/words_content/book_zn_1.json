@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "book",
+    "pronunciation": "book",
+    "pronunciation_with_stress": "book",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "books",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Pages with words bound together.",
+        "context": "",
+        "examples": [
+          "the book is on the table"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "book",
+      "headword_raw": "book",
+      "index": 93006,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

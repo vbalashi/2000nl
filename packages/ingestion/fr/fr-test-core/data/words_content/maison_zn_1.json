@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "maison",
+    "pronunciation": "maison",
+    "pronunciation_with_stress": "maison",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "maisons",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Batiment ou l on habite.",
+        "context": "",
+        "examples": [
+          "la maison a une porte bleue"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "maison",
+      "headword_raw": "maison",
+      "index": 94000,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

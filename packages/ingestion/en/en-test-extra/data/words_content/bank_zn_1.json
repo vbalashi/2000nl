@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "bank",
+    "pronunciation": "bank",
+    "pronunciation_with_stress": "bank",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "banks",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "The raised land along a river.",
+        "context": "",
+        "examples": [
+          "we sat on the river bank"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "bank",
+      "headword_raw": "bank",
+      "index": 93001,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "door",
+    "pronunciation": "door",
+    "pronunciation_with_stress": "door",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "doors",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A panel that opens and closes an entrance.",
+        "context": "",
+        "examples": [
+          "close the door softly"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "door",
+      "headword_raw": "door",
+      "index": 92006,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

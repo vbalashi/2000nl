@@ -22,7 +22,31 @@ type Props = {
   notifyListsUpdated: () => void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
+  searchState: DictionarySearchTabState;
+  onSearchStateChange: React.Dispatch<
+    React.SetStateAction<DictionarySearchTabState>
+  >;
 };
+
+export type DictionarySearchTabState = {
+  query: string;
+  applyListFilter: boolean;
+  wordResults: DictionaryEntry[];
+  wordTotal: number;
+  page: number;
+  detailEntry: DictionaryEntry | null;
+  mobileDetailOpen: boolean;
+};
+
+export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
+  query: "",
+  applyListFilter: false,
+  wordResults: [],
+  wordTotal: 0,
+  page: 1,
+  detailEntry: null,
+  mobileDetailOpen: false,
+});
 
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
@@ -63,6 +87,19 @@ const meaningLabel = (entry: DictionaryEntry) => {
   return meaningId ? `betekenis ${meaningId}` : "betekenis";
 };
 
+const dictionaryLabel = (entry: DictionaryEntry) => {
+  if (entry.dictionary_name) return entry.dictionary_name;
+  const raw = entry.raw as Record<string, unknown>;
+  const metadata = raw?._metadata as Record<string, unknown> | undefined;
+  if (typeof metadata?.dictionary_name === "string") {
+    return metadata.dictionary_name;
+  }
+  return "VanDale";
+};
+
+const searchMatchLabel = (entry: DictionaryEntry) =>
+  entry.search_match_label ?? "Woordenboekentry";
+
 export function DictionarySearchTab({
   open,
   userId,
@@ -76,17 +113,27 @@ export function DictionarySearchTab({
   notifyListsUpdated,
   onTrainWord,
   autoFocusQuery,
+  searchState,
+  onSearchStateChange,
 }: Props) {
-  const [query, setQuery] = useState("");
-  const [applyListFilter, setApplyListFilter] = useState(false);
-  const [wordResults, setWordResults] = useState<DictionaryEntry[]>([]);
-  const [wordTotal, setWordTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const {
+    query,
+    applyListFilter,
+    wordResults,
+    wordTotal,
+    page,
+    detailEntry,
+    mobileDetailOpen,
+  } = searchState;
   const [searchLoading, setSearchLoading] = useState(false);
-  const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
-  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
+  const updateSearchState = useCallback(
+    (patch: Partial<DictionarySearchTabState>) => {
+      onSearchStateChange((current) => ({ ...current, ...patch }));
+    },
+    [onSearchStateChange],
+  );
 
   const sourceLabel = "VanDale woordenboek";
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
@@ -103,9 +150,12 @@ export function DictionarySearchTab({
     if (!open) return;
     const hasQuery = Boolean(query.trim());
     if (!hasQuery && !useViewedListFilter) {
-      setWordResults([]);
-      setWordTotal(0);
-      setDetailEntry(null);
+      updateSearchState({
+        wordResults: [],
+        wordTotal: 0,
+        detailEntry: null,
+        mobileDetailOpen: false,
+      });
       return;
     }
     setSearchLoading(true);
@@ -122,16 +172,21 @@ export function DictionarySearchTab({
             pageSize,
           });
 
-      setWordResults(result.items);
-      setWordTotal(result.total);
-      setDetailEntry((current) => current ?? result.items[0] ?? null);
+      onSearchStateChange((current) => ({
+        ...current,
+        wordResults: result.items,
+        wordTotal: result.total,
+        detailEntry: current.detailEntry ?? result.items[0] ?? null,
+      }));
     } finally {
       setSearchLoading(false);
     }
   }, [
     open,
+    onSearchStateChange,
     page,
     query,
+    updateSearchState,
     useViewedListFilter,
     viewedList?.type,
     viewedListId,
@@ -151,10 +206,16 @@ export function DictionarySearchTab({
   }, [autoFocusQuery]);
 
   const resetLookup = () => {
-    setQuery("");
-    setApplyListFilter(false);
-    setPage(1);
+    updateSearchState(createDictionarySearchTabState());
   };
+  const hasResettableLookupState = Boolean(
+    query.trim() ||
+      applyListFilter ||
+      page !== 1 ||
+      detailEntry ||
+      wordResults.length ||
+      wordTotal,
+  );
   const resultScopeLabel = useViewedListFilter
     ? `Alleen deze lijst: ${viewedListName}`
     : `Zoekt in ${sourceLabel}`;
@@ -194,8 +255,10 @@ export function DictionarySearchTab({
             ref={queryRef}
             value={query}
             onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
+              updateSearchState({
+                query: event.target.value,
+                page: 1,
+              });
             }}
             placeholder="Zoek in het woordenboek..."
             className="h-12 w-full rounded-2xl border border-primary/50 bg-white pl-12 pr-12 text-base text-slate-900 shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 dark:border-primary/60 dark:bg-slate-950 dark:text-white"
@@ -204,8 +267,10 @@ export function DictionarySearchTab({
             <button
               type="button"
               onClick={() => {
-                setQuery("");
-                setPage(1);
+                updateSearchState({
+                  query: "",
+                  page: 1,
+                });
               }}
               className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
@@ -226,8 +291,11 @@ export function DictionarySearchTab({
               checked={applyListFilter}
               disabled={!viewedListId}
               onChange={() => {
-                setApplyListFilter((prev) => !prev);
-                setPage(1);
+                onSearchStateChange((current) => ({
+                  ...current,
+                  applyListFilter: !current.applyListFilter,
+                  page: 1,
+                }));
               }}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
             />
@@ -255,8 +323,10 @@ export function DictionarySearchTab({
                   key={entry.id}
                   type="button"
                   onClick={() => {
-                    setDetailEntry(entry);
-                    setMobileDetailOpen(true);
+                    updateSearchState({
+                      detailEntry: entry,
+                      mobileDetailOpen: true,
+                    });
                   }}
                   className={`w-full rounded-2xl border p-3 text-left transition ${
                     selected
@@ -271,7 +341,12 @@ export function DictionarySearchTab({
                           {entry.headword}
                         </span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {posLabel(entry.part_of_speech)} · VanDale · {meaningLabel(entry)}
+                          {posLabel(entry.part_of_speech)} · {dictionaryLabel(entry)} · {meaningLabel(entry)}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          {searchMatchLabel(entry)}
                         </span>
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm text-slate-700 dark:text-slate-300">
@@ -299,13 +374,15 @@ export function DictionarySearchTab({
             <div className="max-w-[440px] text-sm text-slate-600 dark:text-slate-300">
               {emptyDescription}
             </div>
-            <button
-              type="button"
-              onClick={resetLookup}
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Wis zoekopdracht
-            </button>
+            {hasResettableLookupState ? (
+              <button
+                type="button"
+                onClick={resetLookup}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Wis zoekopdracht
+              </button>
+            ) : null}
           </div>
         )}
       </div>
@@ -318,7 +395,12 @@ export function DictionarySearchTab({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            onClick={() =>
+              onSearchStateChange((current) => ({
+                ...current,
+                page: Math.max(1, current.page - 1),
+              }))
+            }
             disabled={page === 1}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
@@ -326,7 +408,12 @@ export function DictionarySearchTab({
           </button>
           <button
             type="button"
-            onClick={() => setPage((prev) => prev + 1)}
+            onClick={() =>
+              onSearchStateChange((current) => ({
+                ...current,
+                page: current.page + 1,
+              }))
+            }
             disabled={page * pageSize >= wordTotal}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
@@ -383,7 +470,7 @@ export function DictionarySearchTab({
         <WordDetailDrawer
           entry={detailEntry}
           open={mobileDetailOpen && Boolean(detailEntry)}
-          onClose={() => setMobileDetailOpen(false)}
+          onClose={() => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}
           translationLang={translationLang}
           userLists={userLists}

@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "marche",
+    "pronunciation": "marche",
+    "pronunciation_with_stress": "marche",
+    "gender": "le",
+    "part_of_speech": "zn",
+    "plural": "marches",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Lieu ou l on achete et vend des produits.",
+        "context": "",
+        "examples": [
+          "le marche ouvre tot"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "marche",
+      "headword_raw": "marche",
+      "index": 95008,
+      "dictionaryId": "fr-test-extra",
+      "dictionary_name": "FR Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

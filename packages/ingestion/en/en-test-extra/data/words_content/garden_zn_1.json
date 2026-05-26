@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "garden",
+    "pronunciation": "garden",
+    "pronunciation_with_stress": "garden",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "gardens",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "An outdoor area where plants are grown.",
+        "context": "",
+        "examples": [
+          "the garden is behind the house"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "garden",
+      "headword_raw": "garden",
+      "index": 93004,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

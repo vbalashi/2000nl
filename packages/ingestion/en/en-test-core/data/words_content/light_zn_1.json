@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "light",
+    "pronunciation": "light",
+    "pronunciation_with_stress": "light",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "lights",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Brightness that lets people see.",
+        "context": "",
+        "examples": [
+          "the light is warm"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "light",
+      "headword_raw": "light",
+      "index": 92007,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -33,6 +33,9 @@ export const isCrossReferenceOnly = (raw: WordRaw): boolean => {
 export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   id: data.id,
   ...(data.dictionary_id ? { dictionary_id: data.dictionary_id } : {}),
+  ...(data.dictionary_name ? { dictionary_name: data.dictionary_name } : {}),
+  ...(data.dictionary_slug ? { dictionary_slug: data.dictionary_slug } : {}),
+  ...(data.dictionary_kind ? { dictionary_kind: data.dictionary_kind } : {}),
   ...(data.language_code ? { language_code: data.language_code } : {}),
   headword: data.headword,
   part_of_speech: data.part_of_speech ?? undefined,
@@ -40,6 +43,18 @@ export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   raw: normalizeRaw(data.raw),
   is_nt2_2000: data.is_nt2_2000,
   meanings_count: data.meanings_count ?? undefined,
+  ...(data.search_match_group
+    ? { search_match_group: data.search_match_group }
+    : {}),
+  ...(data.search_match_label
+    ? { search_match_label: data.search_match_label }
+    : {}),
+  ...(data.search_matched_text
+    ? { search_matched_text: data.search_matched_text }
+    : {}),
+  ...(typeof data.search_group_rank === "number"
+    ? { search_group_rank: data.search_group_rank }
+    : {}),
 });
 
 export const mapCuratedListSummary = (row: any): WordListSummary => ({

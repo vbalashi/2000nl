@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "table",
+    "pronunciation": "table",
+    "pronunciation_with_stress": "table",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "tables",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Meuble avec un plateau plat.",
+        "context": "",
+        "examples": [
+          "le repas est sur la table"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "table",
+      "headword_raw": "table",
+      "index": 95006,
+      "dictionaryId": "fr-test-extra",
+      "dictionary_name": "FR Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

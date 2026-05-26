@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "table",
+    "pronunciation": "table",
+    "pronunciation_with_stress": "table",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "tables",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Furniture with a flat top and legs.",
+        "context": "",
+        "examples": [
+          "food is on the table"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "table",
+      "headword_raw": "table",
+      "index": 93007,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

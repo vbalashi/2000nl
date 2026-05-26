@@ -114,11 +114,410 @@ Start after A0/A1 and preferably after A2 creates enough fixture pressure.
 
 11. A10 Current screenshot recapture and second reviewer package.
 
+## Multilanguage Scope Implementation Plan
+
+This is the implementation track for the scenario documented in
+`docs/intent/search-and-lists/scenarios/switch-language-training-scope.md`.
+
+The target user studies more than one language in parallel. They may open the
+app in Dutch, switch to English, continue the English training list they used
+before, search English dictionary sources, and later return to the Dutch list
+without rebuilding either context.
+
+### B0: Confirm Product Decisions
+
+Status: planned.
+
+Decisions to lock before code:
+
+- Active training scope is remembered per `Leertaal`.
+- Global `Leertaal` is a default, not always the current training session.
+- Dictionary lookup scope defaults from current training language, but remains
+  independent after the user changes search language/source.
+- User lists are shown under their `primary_language_code` first. Mixed-language
+  lists appear in a separate `Gemengde lijsten` group rather than silently under
+  every language.
+- Languages with no accessible dictionaries or training lists should not appear
+  as normal selectable options. For now, do not show `de` unless German fixtures
+  or production content exist.
+
+Recommended decision:
+
+- Store active training scope per language in a real table/RPC layer, not only in
+  client state or `user_settings.preferences`. The user expectation is
+  cross-device and training-critical.
+
+### B1: Data And Fixture Baseline
+
+Status: fixture seed exists; integration into automated validation still
+planned.
+
+Files:
+
+- `db/test-fixtures/search_multisource.sql`
+- `packages/ingestion/nl/nl-test-lexicon/data/words_content/`
+- `packages/ingestion/en/en-test-core/data/words_content/`
+- `packages/ingestion/en/en-test-extra/data/words_content/`
+- `packages/ingestion/fr/fr-test-core/data/words_content/`
+- `packages/ingestion/fr/fr-test-extra/data/words_content/`
+
+Required changes:
+
+- Keep the 50-entry local fixture as the canonical QA dataset for this track.
+- Add fixture load instructions to the relevant runbook or evidence README.
+- Add a narrow smoke query that proves:
+  - `nl`, `en`, and `fr` languages exist;
+  - every fixture dictionary has 10 entries;
+  - duplicate headword `bank` appears in multiple languages/sources;
+  - `run`, `courir`, and `lopen` preserve conjugation payloads.
+
+Acceptance criteria:
+
+- Local Supabase can apply migrations and `db/test-fixtures/search_multisource.sql`
+  idempotently.
+- The probe still passes after fixture load.
+- A developer can reproduce the same fixture state without manual SQL editing.
+
+### B2: Available Languages And Dictionary Sources API
+
+Status: planned.
+
+Purpose:
+
+Stop hardcoding language options in UI controls. The UI should offer languages
+and sources that are actually available to the current user.
+
+Likely files:
+
+- `db/migrations/`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/lib/trainingService.ts`
+- `apps/ui/lib/types.ts`
+- `apps/ui/tests/trainingService.listsPreferences.test.ts`
+- `apps/ui/tests/fsrs/fsrsRpc.test.ts`
+
+Required changes:
+
+- Add an RPC such as `get_available_learning_languages(p_user_id uuid)`.
+- Return language code, display label, dictionary count, curated-list count,
+  user-list count, and whether the language has training-eligible lists.
+- Add an RPC such as
+  `get_available_dictionary_sources(p_user_id uuid, p_language_code text)`.
+- Return only dictionaries the user can read.
+- Add service wrappers and mapper types.
+- Replace hardcoded `nl/en/de/fr` UI arrays only after this API exists.
+
+Acceptance criteria:
+
+- Local fixture DB returns `nl`, `en`, and `fr`.
+- `de` is absent unless content exists.
+- Dictionary source picker for `en` returns `en-test-core` and `en-test-extra`.
+- Dictionary source picker for `fr` returns `fr-test-core` and `fr-test-extra`.
+
+### B3: Per-Language Active Training Scope
+
+Status: planned.
+
+Purpose:
+
+Make `nl -> en -> nl` restore the correct active training list for each
+language.
+
+Likely files:
+
+- `db/migrations/`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/lib/training/useTrainingActiveList.ts`
+- `apps/ui/lib/training/preferencesService.ts`
+- `apps/ui/tests/trainingService.listsPreferences.test.ts`
+- `apps/ui/tests/useTrainingPreferences.test.tsx`
+- `apps/ui/tests/fsrs/fsrsRpc.test.ts`
+
+Recommended data model:
+
+- Add `user_training_scopes` keyed by `(user_id, language_code)`.
+- Store:
+  - `active_list_id`;
+  - `active_list_type`;
+  - `active_scenario`;
+  - `card_filter`;
+  - `modes_enabled`;
+  - `new_review_ratio`;
+  - timestamps.
+- Keep `user_settings.language_code` as the default/current learning language
+  for backward compatibility.
+- Keep old `get_active_word_list` and `update_active_word_list` wrappers working
+  by delegating to the current/default language.
+
+RPC shape:
+
+- `get_active_training_scope(p_user_id uuid, p_language_code text)`
+- `update_active_training_scope(p_user_id uuid, p_language_code text, p_list_id uuid, p_list_type text, ...)`
+
+Behavior:
+
+- Switching learning language first reads that language's saved scope.
+- If a saved valid scope exists, preselect it.
+- If no saved scope exists, show the best training-eligible list as a
+  suggestion, but require an explicit user action before persisting it.
+- If the saved list no longer exists or is not accessible, clear that language's
+  scope and ask for a new list.
+
+Acceptance criteria:
+
+- User can set Dutch active list, switch to English and set English active list,
+  then switch back to Dutch and recover the Dutch list.
+- Passive list browsing never changes the active training scope.
+- Existing users keep their current active list after migration.
+
+### B4: Search Scope Backend
+
+Status: planned.
+
+Purpose:
+
+Make dictionary lookup explicitly search a language/source scope instead of all
+accessible entries.
+
+Likely files:
+
+- `db/migrations/063_ranked_word_entry_search.sql` or a follow-up migration
+- `db/migrations/bootstrap.sql`
+- `docs/reference/api-functions/search-and-user.md`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/lib/types.ts`
+- `apps/ui/tests/trainingService.mappers.test.ts`
+- `apps/ui/tests/fsrs/fsrsRpc.test.ts`
+
+Required changes:
+
+- Extend search filters with:
+  - `languageCode`;
+  - `dictionaryIds` or `dictionarySlugs`;
+  - optional `sourceProvider` only if source grouping needs it.
+- Prefer dictionary IDs internally. Slugs are useful for fixtures and URLs, but
+  IDs avoid ambiguity across languages.
+- Update the ranked search RPC to apply language and dictionary filters before
+  ranking.
+- Avoid ambiguous overloaded Supabase RPC signatures. Either replace/drop the
+  old function signature explicitly or introduce a clearly named scoped function
+  and migrate callers.
+- Preserve existing result metadata:
+  - dictionary name/slug/kind;
+  - match group/rank/label;
+  - matched text.
+
+Acceptance criteria:
+
+- Searching `bank` in `nl` does not return English or French fixture entries.
+- Searching `bank` in `en` can return both English fixture dictionaries.
+- Selecting only `en-test-core` hides `en-test-extra`.
+- Empty language/source scope returns a clear empty state, not cross-language
+  fallback.
+
+### B5: List Language Filtering
+
+Status: planned.
+
+Purpose:
+
+Make list browsing and list selection match the selected learning language.
+
+Likely files:
+
+- `db/migrations/033_available_word_lists_rpc.sql`
+- `db/migrations/040_list_training_intent.sql`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/components/training/wordlist/WordListTab.tsx`
+- `apps/ui/components/training/wordlist/MobileListPickerSheet.tsx`
+- `apps/ui/tests/TrainingScreen.test.tsx`
+
+Required changes:
+
+- Update `fetchUserLists(userId, languageCode)` to actually filter by language.
+- Update or replace `get_available_word_lists` so user lists follow:
+  - exact `primary_language_code` match first;
+  - exact `language_code` match as fallback for legacy lists;
+  - mixed-language lists in a separate group.
+- Keep curated lists language-scoped.
+- Ensure new list creation sets both `language_code` and
+  `primary_language_code` intentionally.
+- When changing list UI language, change only viewed list context unless the
+  user explicitly chooses `Gebruik voor training`.
+
+Acceptance criteria:
+
+- English list picker does not show Dutch-only user lists as normal English
+  options.
+- Mixed-language fixture list appears under `Gemengde lijsten`.
+- Creating a new English list makes it visible under English.
+- Selecting a viewed list does not mutate active training scope.
+
+### B6: Training Scope UI
+
+Status: planned.
+
+Purpose:
+
+Expose language and list switching as a first-class training action, not as a
+buried settings/list-management task.
+
+Likely files:
+
+- `apps/ui/components/training/FooterStats.tsx`
+- `apps/ui/components/training/EffectiveTrainingScopeSummary.tsx`
+- `apps/ui/components/training/TrainingScreen.tsx`
+- optional new component:
+  `apps/ui/components/training/TrainingScopePicker.tsx`
+- `apps/ui/tests/TrainingScreen.test.tsx`
+
+Required changes:
+
+- Rename/shape the expanded footer control around `Huidige training` or
+  `Trainingsbereik`.
+- Show current `Leertaal` in the collapsed summary when more than one learning
+  language exists.
+- In the expanded scope picker, show:
+  - learning language;
+  - active training list;
+  - training form/scenario;
+  - card filter.
+- When user selects another language:
+  - load that language's saved scope;
+  - preselect it if valid;
+  - otherwise show available lists and require confirmation.
+- Make the final action explicit, for example `Gebruik voor huidige training`.
+- Keep global settings as defaults, not the main path to switch today's
+  training.
+
+Acceptance criteria:
+
+- Desktop user can switch `nl -> en` from the training surface without opening
+  global settings.
+- Mobile user has the same flow in a drawer/sheet.
+- UI clearly says whether a list is being viewed or used for training.
+- User can return `en -> nl` and see the previous Dutch active training list.
+
+### B7: Dictionary Search UI Scope
+
+Status: planned.
+
+Purpose:
+
+Make search language/source visible and editable without changing training.
+
+Likely files:
+
+- `apps/ui/components/training/wordlist/DictionarySearchTab.tsx`
+- `apps/ui/components/training/wordlist/WordListTab.tsx`
+- `apps/ui/components/training/SettingsModal.tsx`
+- `apps/ui/tests/TrainingScreen.test.tsx`
+
+Required changes:
+
+- Add `Zoekbereik` controls to dictionary search:
+  - `Leertaal` or `Taal`;
+  - `Woordenboekbron`: all readable sources in language or one selected source.
+- Default lookup language from current training language when search state is
+  created.
+- After the user changes lookup language/source, persist it only as search modal
+  state unless product later decides to save default dictionary preferences.
+- Pass `languageCode` and selected dictionary IDs into `searchWordEntries`.
+- Show result summary copy such as:
+  - `Zoekt in Engelse woordenboekbronnen`;
+  - `Zoekt in EN Core Test`;
+  - `Geen resultaten in dit zoekbereik`.
+- Keep list-scoped search visibly separate from dictionary lookup.
+
+Acceptance criteria:
+
+- Changing search language does not change current training list or language.
+- Search result rows continue to show dictionary source and match reason.
+- Duplicate headwords across dictionaries are understandable in the result
+  list.
+
+### B8: Settings Cleanup For Defaults
+
+Status: planned.
+
+Purpose:
+
+Avoid using global settings as the primary current-training switch.
+
+Likely files:
+
+- `apps/ui/components/training/SettingsModal.tsx`
+- `apps/ui/lib/training/preferencesService.ts`
+- `apps/ui/tests/TrainingScreen.test.tsx`
+
+Required changes:
+
+- Label global learning language as a default, for example
+  `Standaard leertaal`.
+- Show current training scope only as status or link to `Huidige training`.
+- If default dictionary sources are added, keep them separate from current
+  search `Zoekbereik`.
+
+Acceptance criteria:
+
+- User can tell the difference between changing default language and switching
+  the current training session.
+- Settings do not duplicate the full training scope picker.
+
+### B9: Tests And Browser QA
+
+Status: planned.
+
+Required tests:
+
+- SQL/RPC:
+  - available languages/sources from fixtures;
+  - per-language active training scope;
+  - user-list language filtering;
+  - search language/source filters.
+- UI unit/component:
+  - footer summary includes language when multiple languages are available;
+  - scope picker restores `nl -> en -> nl`;
+  - list picker separates viewed list from active training list;
+  - dictionary search passes lookup scope filters.
+- Browser QA:
+  - desktop `nl -> en -> nl` training switch;
+  - mobile `nl -> en -> nl` training switch;
+  - `bank` search in Dutch, English all sources, English one source;
+  - list browsing in English and French;
+  - global settings default language does not silently change current training.
+
+Validation commands:
+
+- `scripts/db-local-supabase.sh apply`
+- `psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql`
+- `scripts/db-local-supabase.sh probe`
+- `cd apps/ui && npm run typecheck`
+- `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx tests/trainingService.listsPreferences.test.ts tests/trainingService.mappers.test.ts`
+- `cd apps/ui && FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts`
+- Browser smoke through `nl-local-ui-qa` / `2000nl-local-ui-qa`.
+
+### Recommended Build Order For B-Track
+
+1. B0: confirm decisions.
+2. B1: lock fixture/load validation.
+3. B2: available languages/sources API.
+4. B3: per-language active training scope.
+5. B4: search scope backend.
+6. B5: list language filtering.
+7. B6: training scope UI.
+8. B7: dictionary search UI scope.
+9. B8: settings cleanup for defaults.
+10. B9: full fixture-backed QA and screenshots.
+
+The order matters: UI work should not hardcode language/source options before
+B2, and search UI should not expose filters before B4 can enforce them.
+
 ## Agent Task Board
 
 ### A0: Source-Of-Truth Decision Doc
 
-Status: ready.
+Status: complete.
 
 Type: product/architecture documentation, no code changes.
 
@@ -132,6 +531,10 @@ Suggested files:
 - `docs/intent/search-and-lists/`
 - `docs/intent/current-transformation-targets.md`
 - `docs/exec-plans/active/platform-dictionary-transformation.md`
+
+Output:
+
+- `docs/intent/search-and-lists/source-of-truth-decision.md`
 
 Acceptance criteria:
 
@@ -165,7 +568,7 @@ and unresolved product questions.
 
 ### A1: Terminology And Copy Contract
 
-Status: blocked by A0.
+Status: complete.
 
 Type: product/copy documentation, then small UI copy cleanup only if explicit.
 
@@ -177,6 +580,10 @@ Suggested files:
 
 - new or updated doc under `docs/intent/search-and-lists/`
 - later UI references in `apps/ui/components/training/`
+
+Output:
+
+- `docs/intent/search-and-lists/terminology-contract.md`
 
 Acceptance criteria:
 
@@ -210,7 +617,7 @@ removed or renamed.
 
 ### A2: Multi-Source Fixture Plan
 
-Status: blocked by A0 enough to know intended model.
+Status: complete.
 
 Type: data/test plan first; implementation can be a separate task.
 
@@ -225,6 +632,10 @@ Suggested files:
 - `apps/ui/playwright/tests/`
 - `apps/ui/tests/`
 - `packages/ingestion/` only if fixture generation needs it.
+
+Output:
+
+- `docs/intent/search-and-lists/multisource-fixture-plan.md`
 
 Acceptance criteria:
 
@@ -253,7 +664,7 @@ Recommend whether to implement as DB seed data, Playwright mocked data, or both.
 
 ### A3: Search Ranking And Grouping Contract
 
-Status: blocked by A0; benefits from A2.
+Status: complete.
 
 Type: product/search contract; implementation is A4.
 
@@ -266,6 +677,10 @@ Suggested files:
 - `docs/intent/search-and-lists/`
 - `packages/docs/`
 - later `apps/ui/lib/training/listService.ts` and DB/RPC docs.
+
+Output:
+
+- `docs/intent/search-and-lists/search-ranking-grouping-contract.md`
 
 Acceptance criteria:
 
@@ -299,7 +714,8 @@ requirements. Do not implement code in this task.
 
 ### A4: Search Results Implementation
 
-Status: blocked by A3.
+Status: complete; fixture-backed broad example/definition screenshots still
+belong to A10.
 
 Type: backend/UI implementation.
 
@@ -317,6 +733,22 @@ Likely files:
 - `apps/ui/tests/TrainingScreen.test.tsx`
 - `apps/ui/playwright/tests/training.spec.ts`
 
+Output:
+
+- Added `db/migrations/063_ranked_word_entry_search.sql` and included it in
+  `db/migrations/bootstrap.sql`.
+- Updated `search_word_entries_gated` to rank exact headword, word-form,
+  related headword, example, definition, and fallback matches.
+- Search payload now includes dictionary metadata and match metadata:
+  `dictionary_name`, `dictionary_slug`, `dictionary_kind`,
+  `search_group_rank`, `search_match_group`, `search_match_label`,
+  `search_matched_text`.
+- `DictionarySearchTab` displays dictionary source and match labels on result
+  rows.
+- Added focused mapper/service/UI tests for match metadata and ranked display
+  order.
+- Updated `docs/reference/api-functions/search-and-user.md`.
+
 Acceptance criteria:
 
 - Searching `huis` shows exact `huis` before compounds.
@@ -328,10 +760,14 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
-- `cd apps/ui && npm run test:e2e -- training.spec.ts`
-- If DB/RPC changed, add relevant SQL/RPC validation.
+- Passed: `cd apps/ui && npm run typecheck`
+- Passed: `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx tests/trainingService.mappers.test.ts tests/trainingService.listsPreferences.test.ts`
+- Passed SQL syntax/application against local Supabase DB:
+  `psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f db/migrations/063_ranked_word_entry_search.sql`
+- Not rerun: `cd apps/ui && npm run test:e2e -- training.spec.ts`
+  - Earlier attempt was blocked before tests by local port conflict:
+    `http://127.0.0.1:3100 is already used` and Playwright config has
+    `reuseExistingServer: false`.
 
 Agent prompt:
 
@@ -345,7 +781,7 @@ lists tab or training footer in this task.
 
 ### A5: Persist Search State Across Modal Tabs
 
-Status: ready after current code context review.
+Status: complete.
 
 Type: UI state fix.
 
@@ -361,6 +797,16 @@ Likely files:
 - `apps/ui/tests/TrainingScreen.test.tsx`
 - `apps/ui/playwright/tests/training.spec.ts`
 
+Output:
+
+- Lifted dictionary search state to `SettingsModal` so query, results,
+  selected detail, pagination, and list-filter state survive tab switches while
+  the modal stays open.
+- Closing the modal still resets search state because `TrainingScreen`
+  unmounts `SettingsModal`.
+- Added targeted `TrainingScreen.test.tsx` coverage for tab persistence,
+  close/reset behavior, and empty-query clear-button visibility.
+
 Acceptance criteria:
 
 - Tab switching does not reset query.
@@ -372,9 +818,12 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
-- `cd apps/ui && npm run test:e2e -- training.spec.ts`
+- Passed: `cd apps/ui && npm run typecheck`
+- Passed: `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
+- Attempted: `cd apps/ui && npm run test:e2e -- training.spec.ts`
+  - Blocked before tests by local port conflict:
+    `http://127.0.0.1:3100 is already used` and Playwright config has
+    `reuseExistingServer: false`.
 
 Agent prompt:
 
@@ -388,7 +837,7 @@ task.
 
 ### A6: Training Footer IA
 
-Status: blocked by A0/A1.
+Status: complete.
 
 Type: UI simplification.
 
@@ -403,6 +852,17 @@ Likely files:
 - `apps/ui/components/training/TrainingScreen.tsx`
 - related tests.
 
+Output:
+
+- Footer now shows progress plus one `Huidige training` summary by default.
+- Language/list/scenario/card-filter controls are collapsed behind `Wijzigen`
+  instead of being always visible.
+- Mobile footer is collapsed by default and keeps the current-training summary
+  visible.
+- Existing footer controls remain reachable after expanding `Wijzigen`.
+- Updated targeted tests for collapsed controls and the approved A1 term
+  `Huidige training`.
+
 Acceptance criteria:
 
 - Footer shows progress and one current-session summary.
@@ -414,9 +874,16 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- targeted component/unit tests.
-- Browser smoke desktop and mobile.
+- Passed: `cd apps/ui && npm run typecheck`
+- Passed: `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
+- Passed browser smoke with Playwright fallback against
+  `http://localhost:3100/dev/test-login?redirectTo=/`.
+  - Browser/Chrome DevTools MCP was unavailable because the shared Chrome
+    profile was already locked by another running browser instance.
+  - Desktop collapsed footer had `Wijzigen`, `Huidige training`, and no
+    active-list control; expanded footer exposed the controls.
+  - Mobile reload stayed collapsed with `Huidige training` visible and controls
+    hidden.
 
 Agent prompt:
 
@@ -429,7 +896,7 @@ or drawer. Do not change scheduler behavior.
 
 ### A7: Entry Detail Action Hierarchy
 
-Status: blocked by A0/A1 and product answer for primary action.
+Status: complete.
 
 Type: UI hierarchy/action model.
 
@@ -444,6 +911,21 @@ Likely files:
 - `apps/ui/components/training/wordlist/WordDetailDrawer.tsx`
 - membership tests.
 
+Output:
+
+- Entry detail actions now live in the scrollable content after source,
+  definitions, examples, translation, and membership instead of a fixed bottom
+  rail.
+- Add-to-list remains the primary visible action; progress/current-card and
+  train-next actions are under `Meer acties`.
+- `Bevriezen` was renamed to learner-facing `Later oefenen`.
+- `Train dit woord` was renamed to `Train dit woord hierna` and remains
+  labelled as a one-shot next-card action for assistive tech.
+- Train-next is hidden when the selected entry is already the current training
+  card.
+- Added targeted membership/detail tests for current-card action copy and
+  train-next hiding.
+
 Acceptance criteria:
 
 - Order is headword/source, definition, examples, translation, membership,
@@ -457,9 +939,14 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx`
-- Browser smoke for desktop sidebar and mobile drawer.
+- Passed: `cd apps/ui && npm run typecheck`
+- Passed: `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx tests/TrainingScreen.test.tsx`
+- Passed browser smoke with Playwright fallback against
+  `http://localhost:3100/dev/test-login?redirectTo=/`.
+  - Desktop detail order was definition, examples, membership, actions.
+  - Desktop and mobile showed `Meer acties`; `Later oefenen` appeared only
+    after expansion.
+  - `Bevriezen` was absent in desktop and mobile detail states.
 
 Agent prompt:
 
@@ -472,7 +959,7 @@ not change search ranking or footer controls in this task.
 
 ### A8: Lists IA And Dictionary Mode
 
-Status: blocked by A0/A1; benefits from A2.
+Status: complete.
 
 Type: UI IA cleanup.
 
@@ -502,9 +989,14 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
-- Browser smoke for desktop and mobile lists.
+- 2026-05-26: `cd apps/ui && npm run typecheck` passed.
+- 2026-05-26: `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
+  passed.
+- 2026-05-26: Browser/Chrome MCP was still blocked by the shared Chrome
+  profile, so a Playwright fallback smoke checked desktop and mobile at
+  `http://localhost:3100/dev/test-login?redirectTo=/`. Verified list taxonomy,
+  `Lijstinhoud | Woordenboekentries` segmented mode, explicit `Bron: VanDale
+  woordenboek`, and no equal-weight dictionary-source sidebar.
 
 Agent prompt:
 
@@ -577,7 +1069,7 @@ and list state after removal, and add focused tests.
 
 ### A9: Global Settings Cleanup
 
-Status: blocked by A0/A1.
+Status: complete.
 
 Type: UI settings cleanup.
 
@@ -609,9 +1101,14 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- targeted settings/preference tests.
-- Browser smoke for settings scroll.
+- 2026-05-26: `cd apps/ui && npm run typecheck` passed.
+- 2026-05-26: `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
+  passed.
+- 2026-05-26: Browser/Chrome MCP was still blocked by the shared Chrome
+  profile, so a Playwright fallback smoke checked desktop and mobile settings.
+  Verified interface/instruction language, learning language, translation
+  language, default search dictionaries, default scenario, default card types,
+  default new/review mix, and read-only active-training summary/link.
 
 Agent prompt:
 
@@ -624,7 +1121,7 @@ the approved terminology contract.
 
 ### A10: Current Screenshot Recapture And Reviewer Package
 
-Status: blocked by A4/A6/A7/A8/A9 enough to review.
+Status: complete.
 
 Type: QA/artifact generation.
 
@@ -655,9 +1152,17 @@ Required screenshots:
 
 Validation:
 
-- Screenshot package has inventory and caveats.
-- If using mocks, disclose it clearly.
-- If using live local DB, health check must show local DB.
+- 2026-05-26: Created
+  `docs/exec-plans/active/search-lists-multisource-ux-evidence-2026-05-26/`
+  with screenshot inventory and caveats.
+- 2026-05-26: Captured screenshots against live local DB via Playwright
+  fallback because Browser/Chrome MCP was blocked by the shared Chrome profile.
+- 2026-05-26: Local DB health check recorded in the package:
+  `postgres|postgres|172.18.0.2|5432|17389`.
+- 2026-05-26: Package caveats disclose missing fixture-only states:
+  multi-dictionary duplicates, multi-language/source switch, example-only and
+  definition-only forced matches, duplicate/success add-to-list, one-off
+  train-next feedback, and active-training-list switch.
 
 Agent prompt:
 
@@ -726,4 +1231,3 @@ For local browser QA, follow `nl-local-ui-qa` / `2000nl-local-ui-qa` guidance:
 - health check `curl -sS 'http://localhost:3100/api/health?deep=1'`;
 - use `/dev/test-login?redirectTo=/`;
 - disclose mocked screenshots if local auth/session state is not reliable.
-

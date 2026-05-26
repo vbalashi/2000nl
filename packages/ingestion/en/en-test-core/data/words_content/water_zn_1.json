@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "water",
+    "pronunciation": "water",
+    "pronunciation_with_stress": "water",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A clear liquid people drink.",
+        "context": "",
+        "examples": [
+          "water fills the glass"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "water",
+      "headword_raw": "water",
+      "index": 92008,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "rue",
+    "pronunciation": "rue",
+    "pronunciation_with_stress": "rue",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "rues",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Voie publique dans une ville.",
+        "context": "",
+        "examples": [
+          "la rue est longue"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "rue",
+      "headword_raw": "rue",
+      "index": 95007,
+      "dictionaryId": "fr-test-extra",
+      "dictionary_name": "FR Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

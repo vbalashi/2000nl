@@ -429,6 +429,213 @@ export function WordDetailPanel({
     Boolean(onTrainingAction) &&
     Boolean(currentTrainingEntryId) &&
     entry?.id === currentTrainingEntryId;
+  const isCurrentTrainingEntry =
+    Boolean(currentTrainingEntryId) && entry?.id === currentTrainingEntryId;
+  const canTrainEntryNext = Boolean(onTrainWord) && !isCurrentTrainingEntry;
+
+  const actionsSection = showActions ? (
+    <section className="space-y-2" aria-label="Entry acties">
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        Acties
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="grid gap-2">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={addMode === "new" ? "__new__" : targetListId}
+              onChange={(e) => {
+                if (e.target.value === "__new__") {
+                  setAddMode("new");
+                  return;
+                }
+                setAddMode("existing");
+                setTargetListId(e.target.value);
+              }}
+              className="min-w-[220px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="" disabled>
+                Kies lijst…
+              </option>
+              <option value="__new__">Nieuwe lijst aanmaken</option>
+              {userLists.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {membershipListIds.has(l.id)
+                    ? `${l.name} (al toegevoegd)`
+                    : l.name}
+                </option>
+              ))}
+            </select>
+
+            {addMode === "new" ? (
+              <input
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                placeholder="Nieuwe lijstnaam"
+                className="min-w-[200px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              />
+            ) : null}
+
+            <button
+              type="button"
+              disabled={actionBusy || !canAdd}
+              onClick={async () => {
+                if (!entry?.id) return;
+                setActionMessage(null);
+                setActionBusy(true);
+                try {
+                  let listId = targetListId;
+                  if (addMode === "new") {
+                    const created = await createUserList({
+                      userId,
+                      name: newListName.trim(),
+                    });
+                    if (!created?.id) {
+                      setActionMessage("Kon geen lijst aanmaken.");
+                      return;
+                    }
+                    listId = created.id;
+                    setAddMode("existing");
+                    setTargetListId(created.id);
+                    setNewListName("");
+                    await onListsUpdated?.();
+                  }
+
+                  const { error } = await addWordsToUserList(listId, [
+                    entry.id,
+                  ]);
+                  if (error) {
+                    setActionMessage("Kon woord niet toevoegen.");
+                  } else {
+                    await loadMemberships();
+                    setActionMessage("Woord toegevoegd aan lijst.");
+                    await onListsUpdated?.();
+                  }
+                } finally {
+                  setActionBusy(false);
+                }
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition disabled:opacity-60 ${
+                selectedTargetAlreadyContainsEntry
+                  ? "border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  : "bg-primary text-white hover:brightness-105"
+              }`}
+            >
+              {addButtonLabel}
+            </button>
+          </div>
+
+          {addMode === "existing" && selectedTargetAlreadyContainsEntry ? (
+            <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+              In deze lijst.
+            </div>
+          ) : null}
+
+          <details className="group rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/30">
+            <summary className="cursor-pointer list-none px-3 py-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
+              Meer acties
+            </summary>
+            <div className="grid gap-2 border-t border-slate-200 px-3 py-3 dark:border-slate-800">
+              {showTrainingActions ? (
+                <div className="grid gap-2">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    Huidige kaart
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <Tooltip content="Later oefenen (F)" side="top">
+                      <button
+                        type="button"
+                        disabled={trainingActionDisabled}
+                        onClick={() => onTrainingAction?.("freeze")}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                      >
+                        Later oefenen
+                        <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                          (F)
+                        </span>
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Niet meer tonen (X)" side="top">
+                      <button
+                        type="button"
+                        disabled={trainingActionDisabled}
+                        onClick={() => onTrainingAction?.("hide")}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                      >
+                        Niet meer tonen
+                        <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
+                          (X)
+                        </span>
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={actionBusy}
+                onClick={async () => {
+                  if (!entry?.id) return;
+                  setActionMessage(null);
+                  setActionBusy(true);
+                  try {
+                    const modes: TrainingMode[] = [
+                      "word-to-definition",
+                      "definition-to-word",
+                    ];
+                    await Promise.all(
+                      modes.map((mode) =>
+                        recordReview({
+                          userId,
+                          wordId: entry.id,
+                          mode,
+                          result: "hide",
+                        })
+                      )
+                    );
+                    setActionMessage(
+                      "Gemarkeerd als geleerd (niet meer tonen)."
+                    );
+                  } finally {
+                    setActionBusy(false);
+                  }
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+              >
+                Markeer als geleerd
+              </button>
+
+              {canTrainEntryNext ? (
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  aria-label="Train dit woord als volgende kaart"
+                  title="Wordt eenmalig de volgende kaart; je actieve trainingslijst blijft hetzelfde."
+                  onClick={() => {
+                    if (!entry?.id) return;
+                    setActionMessage(
+                      "Dit woord wordt als volgende kaart geladen."
+                    );
+                    onTrainWord?.(entry.id);
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                >
+                  Train dit woord hierna
+                </button>
+              ) : null}
+            </div>
+          </details>
+        </div>
+      </div>
+
+      {actionMessage ? (
+        <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          {actionMessage}
+        </div>
+      ) : null}
+    </section>
+  ) : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -682,211 +889,9 @@ export function WordDetailPanel({
             )}
           </section>
 
+          {actionsSection}
         </div>
       </div>
-
-      {showActions && (
-        <section className="shrink-0 border-t border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
-          <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Acties
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="grid gap-2">
-                  {showTrainingActions ? (
-                    <div className="flex flex-col gap-2">
-                      <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                        Training
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Tooltip content="Bevriezen (F)" side="top">
-                          <button
-                            type="button"
-                            disabled={trainingActionDisabled}
-                            onClick={() => onTrainingAction?.("freeze")}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                          >
-                            Bevriezen
-                            <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
-                              (F)
-                            </span>
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Niet meer tonen (X)" side="top">
-                          <button
-                            type="button"
-                            disabled={trainingActionDisabled}
-                            onClick={() => onTrainingAction?.("hide")}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                          >
-                            Niet meer tonen
-                            <span className="ml-2 text-xs font-bold uppercase tracking-wide opacity-60">
-                              (X)
-                            </span>
-                          </button>
-                        </Tooltip>
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Tip: je kunt ook hotkeys gebruiken (F / X).
-                      </div>
-                      <div className="border-t border-slate-200/70 pt-2 dark:border-slate-800/80" />
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-wrap gap-2">
-                    <select
-                      value={addMode === "new" ? "__new__" : targetListId}
-                      onChange={(e) => {
-                        if (e.target.value === "__new__") {
-                          setAddMode("new");
-                          return;
-                        }
-                        setAddMode("existing");
-                        setTargetListId(e.target.value);
-                      }}
-                      className="min-w-[220px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                    >
-                      <option value="" disabled>
-                        Kies lijst…
-                      </option>
-                      <option value="__new__">Nieuwe lijst aanmaken</option>
-                      {userLists.map((l) => (
-                        <option key={l.id} value={l.id}>
-                          {membershipListIds.has(l.id)
-                            ? `${l.name} (al toegevoegd)`
-                            : l.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {addMode === "new" ? (
-                      <input
-                        value={newListName}
-                        onChange={(e) => setNewListName(e.target.value)}
-                        placeholder="Nieuwe lijstnaam"
-                        className="min-w-[200px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-primary focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                      />
-                    ) : null}
-
-                    <button
-                      type="button"
-                      disabled={actionBusy || !canAdd}
-                      onClick={async () => {
-                        if (!entry?.id) return;
-                        setActionMessage(null);
-                        setActionBusy(true);
-                        try {
-                          let listId = targetListId;
-                          if (addMode === "new") {
-                            const created = await createUserList({
-                              userId,
-                              name: newListName.trim(),
-                            });
-                            if (!created?.id) {
-                              setActionMessage("Kon geen lijst aanmaken.");
-                              return;
-                            }
-                            listId = created.id;
-                            setAddMode("existing");
-                            setTargetListId(created.id);
-                            setNewListName("");
-                            await onListsUpdated?.();
-                          }
-
-                          const { error } = await addWordsToUserList(listId, [
-                            entry.id,
-                          ]);
-                          if (error) {
-                            setActionMessage("Kon woord niet toevoegen.");
-                          } else {
-                            await loadMemberships();
-                            setActionMessage("Woord toegevoegd aan lijst.");
-                            await onListsUpdated?.();
-                          }
-                        } finally {
-                          setActionBusy(false);
-                        }
-                      }}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition disabled:opacity-60 ${
-                        selectedTargetAlreadyContainsEntry
-                          ? "border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          : "bg-primary text-white hover:brightness-105"
-                      }`}
-                    >
-                      {addButtonLabel}
-                    </button>
-                  </div>
-
-                  {addMode === "existing" && selectedTargetAlreadyContainsEntry ? (
-                    <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                      In deze lijst.
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={actionBusy}
-                      onClick={async () => {
-                        if (!entry?.id) return;
-                        setActionMessage(null);
-                        setActionBusy(true);
-                        try {
-                          const modes: TrainingMode[] = [
-                            "word-to-definition",
-                            "definition-to-word",
-                          ];
-                          await Promise.all(
-                            modes.map((mode) =>
-                              recordReview({
-                                userId,
-                                wordId: entry.id,
-                                mode,
-                                result: "hide",
-                              })
-                            )
-                          );
-                          setActionMessage(
-                            "Gemarkeerd als geleerd (niet meer tonen)."
-                          );
-                        } finally {
-                          setActionBusy(false);
-                        }
-                      }}
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                    >
-                      Markeer als geleerd
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={actionBusy || !onTrainWord}
-                      aria-label="Train dit woord als volgende kaart"
-                      title="Wordt eenmalig de volgende kaart; je actieve trainingslijst blijft hetzelfde."
-                      onClick={() => {
-                        if (!entry?.id) return;
-                        setActionMessage(
-                          "Dit woord wordt als volgende kaart geladen."
-                        );
-                        onTrainWord?.(entry.id);
-                      }}
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
-                    >
-                      Train dit woord
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {actionMessage ? (
-                <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                  {actionMessage}
-                </div>
-              ) : null}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "porte",
+    "pronunciation": "porte",
+    "pronunciation_with_stress": "porte",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "portes",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Panneau qui ferme une entree.",
+        "context": "",
+        "examples": [
+          "la porte est ouverte"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "porte",
+      "headword_raw": "porte",
+      "index": 94005,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

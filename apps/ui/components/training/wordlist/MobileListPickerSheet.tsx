@@ -141,7 +141,7 @@ export function MobileListPickerSheet({
 
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
             <p className="text-sm font-semibold text-slate-800 dark:text-white">
-              Je lijsten
+              Mijn lijsten
             </p>
             <div className="mt-3 space-y-2">
               {userLists.map((list) => {

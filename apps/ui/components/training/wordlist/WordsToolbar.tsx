@@ -110,14 +110,14 @@ export function WordsToolbar({
   }, [autoFocusQuery]);
 
   const title = applyListFilter
-    ? `Lijst: ${viewedListName}`
-    : "Woordenboek: VanDale";
+    ? `Lijstinhoud: ${viewedListName}`
+    : "Woordenboekentries";
   const infoText = applyListFilter
     ? `${wordTotal} woorden • ${selectedCount} geselecteerd`
-    : `${wordTotal} woordenboekresultaten • ${selectedCount} geselecteerd`;
+    : `${wordTotal} entries • ${selectedCount} geselecteerd`;
   const scopeText = applyListFilter
     ? null
-    : `${viewedListName} blijft geselecteerd als lijst.`;
+    : `${viewedListName} blijft geselecteerd als lijst. Bron: VanDale woordenboek.`;
 
   // Build chips from active filters
   const filterLabels: Record<AttributeFilter, string> = {
@@ -149,32 +149,41 @@ export function WordsToolbar({
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-800 dark:text-white">
               {title}
             </h2>
-            {/* Filter toggle button */}
             {viewedListId && (
-              <button
-                type="button"
-                onClick={onToggleListFilter}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                  applyListFilter
-                    ? "border-primary bg-primary text-white"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              <div
+                className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800"
+                role="group"
+                aria-label="Kies woordenweergave"
               >
-                <svg
-                  className="h-3.5 w-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!applyListFilter) onToggleListFilter();
+                  }}
+                  aria-pressed={applyListFilter}
+                  className={`rounded-full px-3 py-1 transition ${
+                    applyListFilter
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                  }`}
                 >
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                </svg>
-                {applyListFilter
-                  ? "Lijst"
-                  : "Woordenboek"}
-              </button>
+                  Lijstinhoud
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (applyListFilter) onToggleListFilter();
+                  }}
+                  aria-pressed={!applyListFilter}
+                  className={`rounded-full px-3 py-1 transition ${
+                    !applyListFilter
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-900"
+                  }`}
+                >
+                  Woordenboekentries
+                </button>
+              </div>
             )}
           </div>
           <div
@@ -220,7 +229,7 @@ export function WordsToolbar({
             compact ? "sr-only" : "block",
           ].join(" ")}
         >
-          {applyListFilter ? "Zoek in deze lijst" : "Zoek in woordenboek"}
+          {applyListFilter ? "Filter lijstinhoud" : "Zoek woordenboekentries"}
         </label>
         <input
           ref={queryInputRef}

@@ -43,6 +43,26 @@ Run the narrowest relevant checks for the files you touched.
 - Docker image build for UI: `docker compose build ui`
 - Supabase psql access: `psql "$SUPABASE_DB_URL"`
 
+## Browser QA Notes
+
+For local UI browser QA, prefer the `nl-local-ui-qa` / `2000nl-local-ui-qa`
+skill and the dev-login URL on the same origin as the UI server.
+
+Do not conflate browser tooling failures:
+
+- Codex in-app Browser / Browser plugin (`iab`) is separate from Chrome
+  DevTools MCP.
+- Chrome DevTools MCP may fail because its shared profile is already locked at
+  `~/.cache/chrome-devtools-mcp/chrome-profile`.
+- If Chrome DevTools MCP says the browser is already running for that profile,
+  try the Browser plugin / `iab` path before falling back to standalone
+  Playwright.
+- If no other agent is using Chrome DevTools MCP, stale MCP processes can be
+  checked with `pgrep -fl 'chrome-devtools-mcp|chrome-profile'` and cleared with
+  `pkill -f 'chrome-devtools-mcp' || true`.
+- When using Playwright fallback, report the exact blocked surface instead of
+  saying the whole in-app browser is blocked.
+
 ## Change Routing
 
 - UI copy, layout, auth UX, and browser automation helpers: start in `apps/ui` and `docs/`.

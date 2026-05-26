@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "market",
+    "pronunciation": "market",
+    "pronunciation_with_stress": "market",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "markets",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A place where people buy and sell goods.",
+        "context": "",
+        "examples": [
+          "the market opens early"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "market",
+      "headword_raw": "market",
+      "index": 93009,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

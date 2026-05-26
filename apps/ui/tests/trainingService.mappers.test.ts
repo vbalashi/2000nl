@@ -69,6 +69,41 @@ describe("training word mappers", () => {
     });
   });
 
+  test("mapDictionaryEntry preserves dictionary and search match metadata", () => {
+    expect(
+      mapDictionaryEntry({
+        id: "word-1",
+        dictionary_id: "dict-1",
+        dictionary_name: "Van Dale NT2",
+        dictionary_slug: "nl-vandale",
+        dictionary_kind: "curated",
+        language_code: "nl",
+        headword: "huis",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "Een gebouw" }] },
+        search_match_group: "exact-headword",
+        search_match_label: "Exacte match",
+        search_group_rank: 1,
+      }),
+    ).toEqual({
+      id: "word-1",
+      dictionary_id: "dict-1",
+      dictionary_name: "Van Dale NT2",
+      dictionary_slug: "nl-vandale",
+      dictionary_kind: "curated",
+      language_code: "nl",
+      headword: "huis",
+      part_of_speech: "zn",
+      gender: undefined,
+      raw: { meanings: [{ definition: "Een gebouw" }] },
+      is_nt2_2000: undefined,
+      meanings_count: undefined,
+      search_match_group: "exact-headword",
+      search_match_label: "Exacte match",
+      search_group_rank: 1,
+    });
+  });
+
   test("mapCuratedListSummary maps count and primary metadata", () => {
     expect(
       mapCuratedListSummary({

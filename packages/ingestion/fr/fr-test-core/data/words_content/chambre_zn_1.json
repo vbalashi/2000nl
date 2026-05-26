@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "chambre",
+    "pronunciation": "chambre",
+    "pronunciation_with_stress": "chambre",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "chambres",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Piece ou l on dort.",
+        "context": "",
+        "examples": [
+          "la chambre est calme"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "chambre",
+      "headword_raw": "chambre",
+      "index": 94004,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

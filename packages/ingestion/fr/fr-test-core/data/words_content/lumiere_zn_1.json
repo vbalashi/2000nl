@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "lumiere",
+    "pronunciation": "lumiere",
+    "pronunciation_with_stress": "lumiere",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "lumieres",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Clarte qui permet de voir.",
+        "context": "",
+        "examples": [
+          "la lumiere est douce"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "lumiere",
+      "headword_raw": "lumiere",
+      "index": 94006,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

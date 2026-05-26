@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "house",
+    "pronunciation": "house",
+    "pronunciation_with_stress": "house",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "houses",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A private place where a family may live.",
+        "context": "",
+        "examples": [
+          "their small house is near the park"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "house",
+      "headword_raw": "house",
+      "index": 93000,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

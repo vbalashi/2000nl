@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "bridge",
+    "pronunciation": "bridge",
+    "pronunciation_with_stress": "bridge",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "bridges",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A structure that crosses water or a road.",
+        "context": "",
+        "examples": [
+          "the bridge is old"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "bridge",
+      "headword_raw": "bridge",
+      "index": 92009,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -9,7 +9,11 @@ import type { TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { DropUpSelect } from "./DropUpSelect";
 import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
-import { DictionarySearchTab } from "./wordlist/DictionarySearchTab";
+import {
+  createDictionarySearchTabState,
+  DictionarySearchTab,
+  type DictionarySearchTabState,
+} from "./wordlist/DictionarySearchTab";
 import { WordListTab } from "./wordlist/WordListTab";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { appVersionInfo } from "@/lib/appVersion";
@@ -96,6 +100,8 @@ export function SettingsModal({
   onTrainWord,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("instellingen");
+  const [dictionarySearchState, setDictionarySearchState] =
+    useState<DictionarySearchTabState>(() => createDictionarySearchTabState());
   const [lists, setLists] = useState<WordListSummary[]>([]);
   const [listsLoading, setListsLoading] = useState(false);
   const [listsError, setListsError] = useState<string | null>(null);
@@ -295,10 +301,15 @@ export function SettingsModal({
     { value: "premium", label: "Premium" },
   ];
 
-  const cardFilterOptions: { value: CardFilter; label: string }[] = [
+const cardFilterOptions: { value: CardFilter; label: string }[] = [
     { value: "both", label: "Nieuw + Herhaling" },
     { value: "new", label: "Alleen nieuw" },
     { value: "review", label: "Alleen herhaling" },
+  ];
+  const cardTypeOptions: { value: TrainingMode; label: string }[] = [
+    { value: "word-to-definition", label: "Woord -> definitie" },
+    { value: "definition-to-word", label: "Definitie -> woord" },
+    { value: "listen-recognize", label: "Luisterkaart" },
   ];
 
   const translationLangOptions: { value: string; label: string }[] = [
@@ -398,6 +409,8 @@ export function SettingsModal({
                 notifyListsUpdated={notifyListsUpdated}
                 onTrainWord={onTrainWord}
                 autoFocusQuery={Boolean(autoFocusWordSearch)}
+                searchState={dictionarySearchState}
+                onSearchStateChange={setDictionarySearchState}
               />
             ) : null}
 
@@ -536,7 +549,7 @@ export function SettingsModal({
 
                 <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                   <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                    Taal instructies
+                    Interface- en instructietaal
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {[
@@ -562,19 +575,31 @@ export function SettingsModal({
 
                 <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                   <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                    Trainingsvoorkeuren
+                    Standaard trainingsvoorkeuren
                   </p>
-                  <EffectiveTrainingScopeSummary
-                    activeList={activeTrainingListFromLists}
-                    activeScenarioName={activeScenarioName}
-                    cardFilter={cardFilter}
-                    className="mt-3"
-                  />
+                  <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Actieve training
+                    </p>
+                    <EffectiveTrainingScopeSummary
+                      activeList={activeTrainingListFromLists}
+                      activeScenarioName={activeScenarioName}
+                      cardFilter={cardFilter}
+                      className="mt-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("lijsten")}
+                      className="mt-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                    >
+                      Wijzig trainingslijst in Lijsten
+                    </button>
+                  </div>
                   <div className="mt-3 space-y-4">
                     {/* Scenario selector */}
                     <div>
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Trainingsscenario
+                        Standaard trainingsscenario
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {scenariosLoading ? (
@@ -598,7 +623,7 @@ export function SettingsModal({
                                   {scenario.nameNl || scenario.nameEn}
                                   {isActive && (
                                     <span className="ml-2 text-[10px] uppercase text-primary dark:text-primary-light">
-                                      actief
+                                      standaard
                                     </span>
                                   )}
                                 </button>
@@ -613,10 +638,49 @@ export function SettingsModal({
                       )}
                     </div>
 
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Standaard kaarttypen
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {cardTypeOptions.map((option) => {
+                          const enabled = enabledModes.includes(option.value);
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                const next = enabled
+                                  ? enabledModes.filter((mode) => mode !== option.value)
+                                  : [...enabledModes, option.value];
+                                onModesChange(next.length ? next : [option.value]);
+                              }}
+                              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                                enabled
+                                  ? "border-primary bg-primary/10 text-slate-900 dark:text-white"
+                                  : "border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Standaard zoekwoordenboeken
+                      </p>
+                      <div className="inline-flex rounded-full border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-white">
+                        VanDale woordenboek
+                      </div>
+                    </div>
+
                     {/* Other settings */}
                     <div className="flex flex-wrap gap-3">
                       <DropUpSelect
-                        label="Vertaling"
+                        label="Vertaaltaal"
                         value={translationLang ?? "en"}
                         options={translationLangOptions}
                         onChange={(value) =>
@@ -624,13 +688,13 @@ export function SettingsModal({
                         }
                       />
                       <DropUpSelect
-                        label="Kaarten"
+                        label="Standaard nieuw/herhaling"
                         value={cardFilter}
                         options={cardFilterOptions}
                         onChange={(value) => onCardFilterChange(value as CardFilter)}
                       />
                       <DropUpSelect
-                        label="Herhaling ratio"
+                        label="Standaard herhalingmix"
                         value={String(newReviewRatio)}
                         options={[
                           { value: "1", label: "1:1 (1 nieuw, 1 herhaling)" },
@@ -641,7 +705,7 @@ export function SettingsModal({
                         onChange={(value) => onNewReviewRatioChange(parseInt(value, 10))}
                       />
                       <DropUpSelect
-                        label="Taal"
+                        label="Leertaal"
                         value={language}
                         options={[
                           { value: "nl", label: "Nederlands" },
@@ -654,8 +718,8 @@ export function SettingsModal({
                     </div>
                   </div>
                   <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                    Een scenario bepaalt welke kaarten je traint (bijv. Begrip = Woord↔Definitie in beide richtingen).
-                    Een woord is geleerd wanneer alle kaarten in het scenario stabiel genoeg zijn.
+                    Deze waarden zijn je standaardvoorkeuren voor nieuwe sessies en snelle wijzigingen.
+                    Lijstspecifieke instellingen blijven in Lijsten.
                   </p>
                 </div>
 

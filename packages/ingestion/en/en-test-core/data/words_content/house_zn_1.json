@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "house",
+    "pronunciation": "house",
+    "pronunciation_with_stress": "house",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "houses",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A building for people to live in.",
+        "context": "",
+        "examples": [
+          "the house has a blue door"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "house",
+      "headword_raw": "house",
+      "index": 92000,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

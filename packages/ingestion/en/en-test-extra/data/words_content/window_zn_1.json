@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "window",
+    "pronunciation": "window",
+    "pronunciation_with_stress": "window",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "windows",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "An opening with glass in a wall.",
+        "context": "",
+        "examples": [
+          "open the window"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "window",
+      "headword_raw": "window",
+      "index": 93005,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -87,6 +87,9 @@ export type TrainingWord = {
 export type DictionaryEntry = {
   id: string;
   dictionary_id?: string | null;
+  dictionary_name?: string | null;
+  dictionary_slug?: string | null;
+  dictionary_kind?: string | null;
   language_code?: string;
   headword: string;
   part_of_speech?: string;
@@ -94,6 +97,16 @@ export type DictionaryEntry = {
   raw: WordRaw;
   is_nt2_2000?: boolean;
   meanings_count?: number;
+  search_match_group?:
+    | "exact-headword"
+    | "lemma-or-inflection"
+    | "related-headword"
+    | "example"
+    | "definition"
+    | "fallback";
+  search_match_label?: string;
+  search_matched_text?: string | null;
+  search_group_rank?: number;
 };
 
 export type ReviewResult = "fail" | "hard" | "success" | "easy" | "freeze" | "hide";

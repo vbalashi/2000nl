@@ -1,0 +1,60 @@
+[
+  {
+    "headword": "run",
+    "pronunciation": "run",
+    "pronunciation_with_stress": "run",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "ran, has run",
+    "conjugation_table": {
+      "present": {
+        "i": "run",
+        "you": "run",
+        "he_she_it": "runs",
+        "we": "run",
+        "they": "run"
+      },
+      "past": {
+        "i": "ran",
+        "you": "ran",
+        "he_she_it": "ran",
+        "we": "ran",
+        "they": "ran"
+      },
+      "perfect": {
+        "auxiliary": "has",
+        "participle": "run"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "To move quickly on foot.",
+        "context": "someone runs",
+        "examples": [
+          "they run near the river"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "run",
+      "headword_raw": "run",
+      "index": 92004,
+      "dictionaryId": "en-test-core",
+      "dictionary_name": "EN Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

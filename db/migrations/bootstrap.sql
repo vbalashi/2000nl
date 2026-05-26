@@ -195,3 +195,6 @@
 
 -- Curated and user learning-list memberships for entry detail
 \i db/migrations/062_entry_learning_list_memberships.sql
+
+-- Ranked dictionary search metadata for lookup UI
+\i db/migrations/063_ranked_word_entry_search.sql

@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "eau",
+    "pronunciation": "eau",
+    "pronunciation_with_stress": "eau",
+    "gender": "l",
+    "part_of_speech": "zn",
+    "plural": "eaux",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Liquide transparent que l on boit.",
+        "context": "",
+        "examples": [
+          "un verre d eau"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "eau",
+      "headword_raw": "eau",
+      "index": 94007,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

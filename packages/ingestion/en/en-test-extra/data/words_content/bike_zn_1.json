@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "bike",
+    "pronunciation": "bike",
+    "pronunciation_with_stress": "bike",
+    "gender": "",
+    "part_of_speech": "zn",
+    "plural": "bikes",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "A bicycle used for travel or exercise.",
+        "context": "",
+        "examples": [
+          "the bike has a bell"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "bike",
+      "headword_raw": "bike",
+      "index": 93003,
+      "dictionaryId": "en-test-extra",
+      "dictionary_name": "EN Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

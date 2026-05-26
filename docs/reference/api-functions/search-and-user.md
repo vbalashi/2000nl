@@ -26,6 +26,20 @@ search_word_entries_gated(
 
 Free tier is capped; premium and admin are not. Results are filtered through `can_access_dictionary(...)`.
 
+Search results are ranked for dictionary lookup. Exact headword matches appear
+before `word_forms` lemma/inflection matches, related/compound headwords,
+example matches, definition matches, and broad fallback matches. Each returned
+item may include:
+
+- `dictionary_name`, `dictionary_slug`, `dictionary_kind`
+- `search_group_rank`
+- `search_match_group`
+- `search_match_label`
+- `search_matched_text`
+
+The UI uses these fields to explain why a row appeared and to avoid showing
+broad substring matches before exact dictionary entries.
+
 ## `fetch_words_for_list_gated`
 
 Fetch words from a specific list with tier-based gating.

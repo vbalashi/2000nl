@@ -1,0 +1,57 @@
+[
+  {
+    "headword": "courir",
+    "pronunciation": "courir",
+    "pronunciation_with_stress": "courir",
+    "gender": "",
+    "part_of_speech": "ww",
+    "plural": "",
+    "diminutive": "",
+    "verb_forms": "a couru",
+    "conjugation_table": {
+      "present": {
+        "je": "cours",
+        "tu": "cours",
+        "il_elle": "court",
+        "nous": "courons",
+        "vous": "courez",
+        "ils_elles": "courent"
+      },
+      "past": {
+        "participe": "couru"
+      },
+      "perfect": {
+        "auxiliary": "a",
+        "participle": "couru"
+      }
+    },
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Se deplacer vite avec les jambes.",
+        "context": "quelqu un court",
+        "examples": [
+          "nous aimons courir le matin"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "courir",
+      "headword_raw": "courir",
+      "index": 94003,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

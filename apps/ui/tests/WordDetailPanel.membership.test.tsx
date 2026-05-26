@@ -282,4 +282,33 @@ describe("WordDetailPanel membership behavior", () => {
     expect(onListsUpdated).toHaveBeenCalledTimes(1);
     expect(serviceMocks.recordReview).not.toHaveBeenCalled();
   });
+
+  test("keeps current-card actions learner-facing and hides train-next for the current card", async () => {
+    serviceMocks.fetchEntryListMemberships.mockResolvedValue(
+      new Map([[entry.id, []]]),
+    );
+    const onTrainWord = vi.fn();
+    const onTrainingAction = vi.fn();
+
+    render(
+      <WordDetailPanel
+        entry={entry as any}
+        userId="test-user"
+        translationLang={null}
+        userLists={[]}
+        currentTrainingEntryId={entry.id}
+        onTrainingAction={onTrainingAction}
+        onTrainWord={onTrainWord}
+        autoFetchTranslation={false}
+      />,
+    );
+
+    expect(await screen.findByText("Later oefenen")).toBeInTheDocument();
+    expect(screen.queryByText("Bevriezen")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
 });

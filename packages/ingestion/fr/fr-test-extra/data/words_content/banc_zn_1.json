@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "banc",
+    "pronunciation": "banc",
+    "pronunciation_with_stress": "banc",
+    "gender": "le",
+    "part_of_speech": "zn",
+    "plural": "bancs",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Siege long pour plusieurs personnes.",
+        "context": "",
+        "examples": [
+          "le banc est dans le parc"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "banc",
+      "headword_raw": "banc",
+      "index": 95001,
+      "dictionaryId": "fr-test-extra",
+      "dictionary_name": "FR Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

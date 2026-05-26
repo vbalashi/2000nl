@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "pont",
+    "pronunciation": "pont",
+    "pronunciation_with_stress": "pont",
+    "gender": "le",
+    "part_of_speech": "zn",
+    "plural": "ponts",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Construction qui passe au dessus d une route ou d une riviere.",
+        "context": "",
+        "examples": [
+          "le pont est ancien"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "pont",
+      "headword_raw": "pont",
+      "index": 94008,
+      "dictionaryId": "fr-test-core",
+      "dictionary_name": "FR Core Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]

@@ -72,7 +72,7 @@ export function EffectiveTrainingScopeSummary({
   showFooterSelectorHint = false,
 }: Props) {
   const activeListName = activeList?.name ?? "Geen actieve lijst";
-  const compactSummary = `Training: ${activeListName} · ${activeScenarioName} · ${CARD_FILTER_LABELS[cardFilter]}`;
+  const compactSummary = `Huidige training: ${activeListName} · ${activeScenarioName} · ${CARD_FILTER_LABELS[cardFilter]}`;
   const policyDetails = listPolicyLabel(activeList);
 
   return (

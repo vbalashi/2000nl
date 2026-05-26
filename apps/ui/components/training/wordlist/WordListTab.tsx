@@ -117,10 +117,6 @@ export function WordListTab({
     () => curatedLists.filter((list) => !isDictionarySourceList(list)),
     [curatedLists],
   );
-  const dictionarySourceLists = useMemo(
-    () => curatedLists.filter(isDictionarySourceList),
-    [curatedLists],
-  );
   const activeTrainingListName = activeTrainingList
     ? listDisplayName(activeTrainingList, "Geen actieve lijst")
     : "Geen actieve lijst";
@@ -374,7 +370,7 @@ export function WordListTab({
     label: string;
     disabled?: boolean;
   }> = [
-    { key: "words", label: "Woorden" },
+    { key: "words", label: "Lijstinhoud" },
     { key: "training", label: "Trainingsinstellingen" },
     viewedList?.type === "user"
       ? { key: "edit", label: "Bewerken" }
@@ -591,38 +587,10 @@ export function WordListTab({
                 </div>
               </div>
 
-              {dictionarySourceLists.length ? (
-                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                    Woordenboekbronnen
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    {dictionarySourceLists.map((list) => {
-                      return (
-                        <div
-                          key={list.id}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
-                        >
-                          <div className="flex items-center justify-between text-sm font-semibold">
-                            <span>{listDisplayName(list, list.name)}</span>
-                            <span className="text-[10px] uppercase text-slate-500 dark:text-slate-300">
-                              bron
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {list.item_count ?? "—"} woorden
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
               <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                    Je lijsten
+                    Mijn lijsten
                   </p>
                   <div className="flex items-center gap-2">
                     <button
@@ -988,7 +956,7 @@ export function WordListTab({
                         {listDisplayName(viewedList, viewedListName)}
                       </div>
                       <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        Training: {activeTrainingListName}
+                        Huidige training: {activeTrainingListName}
                       </div>
                     </div>
                     <button

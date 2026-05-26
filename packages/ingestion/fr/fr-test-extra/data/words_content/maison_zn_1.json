@@ -1,0 +1,41 @@
+[
+  {
+    "headword": "maison",
+    "pronunciation": "maison",
+    "pronunciation_with_stress": "maison",
+    "gender": "la",
+    "part_of_speech": "zn",
+    "plural": "maisons",
+    "diminutive": "",
+    "verb_forms": "",
+    "conjugation_table": null,
+    "inflected_form": "",
+    "comparative": "",
+    "superlative": "",
+    "derivations": "",
+    "alternate_headwords": [],
+    "cross_reference": null,
+    "is_nt2_2000": false,
+    "meanings": [
+      {
+        "definition": "Lieu prive ou une famille peut vivre.",
+        "context": "",
+        "examples": [
+          "notre maison est pres du jardin"
+        ],
+        "idioms": []
+      }
+    ],
+    "audio_links": {},
+    "images": [],
+    "_metadata": {
+      "search_term": "maison",
+      "headword_raw": "maison",
+      "index": 95000,
+      "dictionaryId": "fr-test-extra",
+      "dictionary_name": "FR Extra Test",
+      "fixture": true
+    },
+    "meaning_id": 1
+  }
+]
