@@ -16,7 +16,8 @@ In scope:
 
 - Starting a training action from one selected entry.
 - Explaining the scope of the action before or during start.
-- Returning to the previous lookup/list context after the action.
+- Closing the lookup/list/settings surface and continuing normal training after
+  the one-off card.
 
 Out of scope:
 
@@ -31,30 +32,32 @@ Out of scope:
 3. The handler stores the entry id as a forced next word and closes settings if
    the action came from the settings/search/list modal.
 4. The next training load tries to fetch that entry by id.
-5. If the entry is found, the app presents it using the first enabled training
-   mode; after review, normal training queue behavior continues.
-6. The app does not show a one-entry session boundary or automatically return
-   the user to the prior search/list context.
+5. If the entry is found, the app presents it as the next card once; after
+   review, normal training queue behavior continues.
+6. The app does not automatically return to the prior search/list/settings
+   surface; this is accepted current behavior.
 
 ## Intended Product Flow
 
 1. User opens entry detail.
 2. User chooses to train this entry now.
-3. System makes the session scope explicit: one entry, temporary set, active
-   list addition, or another defined behavior.
-4. User confirms or starts.
-5. System trains the entry using the appropriate card type/scenario.
-6. User returns to the previous search/list context.
+3. System makes the action scope explicit: the selected entry becomes the next
+   card once.
+4. The lookup/list/settings surface closes.
+5. System trains the entry without adding list membership or changing the active
+   training list.
+6. After review, the normal training queue continues from the existing training
+   scope.
 
 ## Comparison
 
 | Step | Current support | Problem | Minimum requirement |
 |---|---|---|---|
 | Find action | Clear | `Train dit woord` is available in entry detail. | Keep a direct single-entry training affordance where entry detail actions are shown. |
-| Understand behavior | Missing | The label does not say whether it starts a temporary one-entry session, changes scope, adds to a list, or queues one card before normal training resumes. | The action label and pre-start state must define the exact behavior. |
-| Start one-entry training | Partial | Forced next word exists and can present the selected entry, but it silently falls back to normal selection if lookup fails. | Failure to train the selected entry must be visible, and fallback must not feel like success. |
-| Return to context | Missing | Settings/search/list context is closed and there is no automatic return after the one entry is reviewed. | If the flow is "train one entry now", completion must return to the originating context or offer an explicit next step. |
-| Preserve progress semantics | Ambiguous | Reviewing the forced card records normal progress, but the entry is not necessarily saved to a list and the card mode comes from current preferences. | Product must define whether single-entry training creates progress without list membership and which card type/scenario it uses. |
+| Understand behavior | Handled | The action is labelled as a next-card override, not list membership or a separate session. | Keep copy explicit that the selected entry is next once. |
+| Start one-entry training | Mostly handled | The override presents the selected entry and shows visible fallback if lookup fails. | Failure to train the selected entry must remain visible, and fallback must not feel like success. |
+| Continue normal training | Handled | Settings/search/list context closes and normal training continues after the override card. | Do not reopen the lookup/list/settings surface unless a future product decision changes this flow. |
+| Preserve progress semantics | Handled | Reviewing the override card records normal progress without adding list membership or changing active training scope. | Keep membership and progress independent. |
 
 ## Role Variants
 
@@ -64,32 +67,27 @@ Out of scope:
 | Lookup-first user | May not want training prompts to dominate lookup. |
 | Card-training user | May expect this to behave like a normal scheduled review session. |
 
-## Open Questions
+## Resolved Decisions
 
-- Does "train this word" start a temporary one-entry session?
-- Does it add the entry to a list first?
-- Does it create learning progress if the entry was never saved?
-- What happens after one card is completed?
-- Which training mode should be used when the user starts from entry detail:
-  active scenario default, first enabled mode, or a dedicated quick-practice
-  mode?
-- Should this action be available to lookup-first users by default, or hidden
-  behind a learning action group?
+- `Train dit woord hierna` makes the selected entry the next card once.
+- The action closes the lookup/list/settings surface.
+- It does not add the entry to a list.
+- It does not change the active training list or global preferences.
+- It may create or update normal card progress through the review answer.
+- After the override card is reviewed, normal training continues from the
+  existing training scope.
+- Automatic return to the originating lookup/list/settings surface is not part
+  of the current flow.
 
 ## Derived Requirements
 
-- `Train dit woord` must have one defined product meaning before UI routing
-  changes.
-- Recommended meaning: start a temporary one-entry quick-practice session for
-  the selected entry.
-- One-entry quick practice must not add list membership, remove list
-  membership, or change active training scope.
-- One-entry quick practice may record normal card progress if the selected
-  entry/card type is trainable.
-- The card mode must be explicit: active scenario default, dedicated
-  quick-practice mode, or a visible user choice when needed.
+- `Train dit woord hierna` must remain a one-shot next-card override unless the
+  product explicitly changes the flow.
+- The override must not add list membership, remove list membership, or change
+  active training scope.
+- The override may record normal card progress if the selected entry/card type is
+  trainable.
 - If the selected entry cannot be trained, the system must show the failure and
-  return to the originating context rather than silently falling back to the
-  normal queue.
-- Completion must return to the originating entry context or present explicit
-  next actions: continue normal training, save to list, or go back.
+  continue normal training rather than silently presenting fallback as success.
+- After the override card is answered, normal training must continue from the
+  existing queue/training scope.

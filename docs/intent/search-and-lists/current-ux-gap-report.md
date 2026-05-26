@@ -18,7 +18,7 @@ first UI/product changes before opening an execution plan.
 | Inspect entry membership | Mostly handled. | Detail surfaces share `WordDetailPanel`, which shows curated/read-only and user/editable memberships, active-training-list membership, source metadata, duplicate add state, and empty membership state. Direct open-containing-list and remove-from-entry-detail remain deferred product gaps. |
 | Manage list words | Handled for the prior scope ambiguity. | `Lijsten` distinguishes viewed list from active training list, and passive list browsing no longer changes training scope. Broader create/rename/delete and advanced list-management states remain outside the starter slices. |
 | Choose training scope | Handled for accidental-scope prevention and visibility. | Effective training scope is visible before training, and explicit training-scope actions remain separate from browsing/searching. Temporary train-this-list sessions are still not defined. |
-| Train one entry now | Handled as a defined next-card override. | `Train dit woord` makes the entry the next card once, then normal training resumes without changing active training list or membership. A full one-entry quick-practice session remains a future product option, not current behavior. |
+| Train one entry now | Handled as a defined next-card override. | `Train dit woord hierna` makes the entry the next card once, closes lookup/list/settings if needed, then normal training resumes without changing active training list or membership. Returning to the originating lookup/list/settings surface is not part of the current flow. |
 
 ## Repeated Problems
 
@@ -77,8 +77,9 @@ first UI/product changes before opening an execution plan.
    of independent compact controls.
 
 5. `TrainingScreen` single-entry flow
-   Turn the forced-next-word behavior into a defined product flow: temporary
-   one-entry session, next-card override, or another explicit behavior.
+   Keep the forced-next-word behavior as the defined one-shot next-card override:
+   insert the selected card once, record normal progress, then continue the
+   existing training queue.
 
 ## Implementation Inputs Needed
 

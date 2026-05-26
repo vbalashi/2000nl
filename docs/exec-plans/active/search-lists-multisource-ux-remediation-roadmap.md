@@ -516,6 +516,65 @@ training list. Do not change global settings or search result ranking in this
 task.
 ```
 
+### A11: Entry Membership Navigation And Removal
+
+Status: ready.
+
+Type: targeted entry-detail/list-management UI slice.
+
+Purpose:
+
+Turn entry membership rows from passive state into useful list navigation and
+editable membership controls.
+
+Suggested files:
+
+- `apps/ui/components/training/WordDetailPanel.tsx`
+- `apps/ui/components/training/SettingsModal.tsx`
+- `apps/ui/components/training/wordlist/WordListTab.tsx`
+- `apps/ui/lib/training/listService.ts`
+- `apps/ui/tests/WordDetailPanel.membership.test.tsx`
+- `apps/ui/tests/TrainingScreen.test.tsx`
+
+Output:
+
+- Membership rows in entry detail offer an explicit way to open the containing
+  list without changing the active training list.
+- Opening a containing list switches the settings modal to `Lijsten`, selects
+  that list as the viewed list, and preserves or highlights the originating
+  entry where practical.
+- Editable user-list memberships can be removed from entry detail.
+- Curated/read-only memberships remain visibly read-only and do not show a
+  destructive action.
+- After removal, the membership section refreshes in place and the list state is
+  refreshed.
+
+Acceptance criteria:
+
+- Clicking/opening a membership changes only the viewed list, not the active
+  training list.
+- Removing a user-list membership calls the explicit user-list remove RPC/action
+  and updates visible membership state.
+- Dictionary source metadata still does not appear as membership.
+- Curated memberships are navigable/read-only but not removable.
+- Empty, loading, error, duplicate, and post-remove states remain clear.
+
+Validation:
+
+- `cd apps/ui && npm run typecheck`
+- `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx tests/TrainingScreen.test.tsx`
+
+Agent prompt:
+
+```text
+Implement entry membership navigation and removal. In WordDetailPanel, make
+learning-list membership rows actionable: users can open a containing list in
+the Lijsten tab without changing active training scope, and can remove editable
+user-list memberships directly from entry detail. Keep curated memberships
+read-only, keep dictionary source separate from membership, refresh membership
+and list state after removal, and add focused tests.
+```
+
 ### A9: Global Settings Cleanup
 
 Status: blocked by A0/A1.
