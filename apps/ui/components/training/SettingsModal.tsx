@@ -7,6 +7,7 @@ import {
 import type {
   CardFilter,
   DetailedStats,
+  DictionaryEntry,
   EntryLearningListMembership,
   TrainingScenario,
   WordListSummary,
@@ -60,6 +61,7 @@ type Props = {
   wordListType: WordListType | null;
   activeTrainingList: WordListSummary | null;
   onMakeActiveForTraining: (value: WordListSummary) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   /** @deprecated Use activeScenario instead */
   enabledModes: TrainingMode[];
   cardFilter: CardFilter;
@@ -101,6 +103,7 @@ export function SettingsModal({
   wordListType,
   activeTrainingList,
   onMakeActiveForTraining,
+  onUserDictionaryEntryCreated,
   enabledModes,
   cardFilter,
   onModesChange,
@@ -129,6 +132,8 @@ export function SettingsModal({
           }
         : null,
   );
+  const initialViewedListScopeId = initialViewedListScope?.id;
+  const initialViewedListScopeType = initialViewedListScope?.type;
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosLoading, setScenariosLoading] = useState(false);
   const versionInfo = useMemo(() => appVersionInfo(), []);
@@ -306,12 +311,15 @@ export function SettingsModal({
   }, [open, viewedListScope, wordListId, wordListType]);
 
   useEffect(() => {
-    if (!open || !initialViewedListScope) return;
-    setViewedListScope(initialViewedListScope);
+    if (!open || !initialViewedListScopeId || !initialViewedListScopeType) return;
+    setViewedListScope({
+      id: initialViewedListScopeId,
+      type: initialViewedListScopeType,
+    });
     setActiveTab("lijsten");
   }, [
-    initialViewedListScope?.id,
-    initialViewedListScope?.type,
+    initialViewedListScopeId,
+    initialViewedListScopeType,
     open,
   ]);
 
@@ -448,6 +456,7 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
                 onOpenListMembership={openMembershipList}
+                onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
                 onTrainWord={onTrainWord}
                 autoFocusQuery={Boolean(autoFocusWordSearch)}
                 searchState={dictionarySearchState}
@@ -479,6 +488,7 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
                 onOpenListMembership={openMembershipList}
+                onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
                 onTrainWord={onTrainWord}
                 autoFocusQuery={Boolean(autoFocusWordSearch)}
               />

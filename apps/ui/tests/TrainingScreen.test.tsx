@@ -95,6 +95,24 @@ const dictionaryCompound = {
   is_nt2_2000: false,
 };
 
+const userDictionaryGedoe = {
+  id: "user-entry-1",
+  dictionary_id: "dict-user",
+  dictionary_name: "My dictionary",
+  dictionary_slug: "user-user-1-nl",
+  dictionary_kind: "user",
+  language_code: "nl",
+  headword: "gedoe",
+  part_of_speech: "zn",
+  raw: {
+    headword: "gedoe",
+    languageCode: "nl",
+    definition: "lastige situatie",
+    translation: { languageCode: "en", text: "hassle" },
+  },
+  is_nt2_2000: false,
+};
+
 const fetchNextTrainingWordByScenario = vi.fn().mockResolvedValue(mockWord);
 const fetchStats = vi.fn().mockResolvedValue({
   newWordsToday: 0,
@@ -169,8 +187,11 @@ const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
+const fetchDictionaryEntryById = vi.fn().mockResolvedValue(null);
 const fetchTrainingWordByLookup = vi.fn().mockResolvedValue(overrideWord);
 const fetchEntryListMemberships = vi.fn().mockResolvedValue(new Map());
+const createUserDictionaryEntry = vi.fn().mockResolvedValue("user-entry-1");
+const copyEntryToUserDictionary = vi.fn().mockResolvedValue("user-entry-copy");
 const addWordsToUserList = vi.fn().mockResolvedValue({ error: null });
 const createUserList = vi.fn().mockResolvedValue(userOwnedList);
 const fetchUserListMembership = vi.fn().mockResolvedValue(new Set());
@@ -207,6 +228,9 @@ const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/trainingService", () => ({
   fetchDictionaryEntry,
+  fetchDictionaryEntryById,
+  createUserDictionaryEntry,
+  copyEntryToUserDictionary,
   fetchNextTrainingWord: vi.fn().mockResolvedValue(mockWord),
   fetchNextTrainingWordByScenario,
   fetchTrainingScenarios,
@@ -338,6 +362,84 @@ test("dictionary search scope changes lookup language without changing training"
     ),
   );
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+});
+
+test("dictionary search can create a private user dictionary entry", async () => {
+  fetchAvailableLists.mockResolvedValue([defaultAvailableList, userOwnedList]);
+  createUserDictionaryEntry.mockClear();
+  addWordsToUserList.mockClear();
+  fetchTrainingWordByLookup.mockClear();
+  fetchDictionaryEntryById.mockClear();
+  fetchDictionaryEntryById.mockResolvedValueOnce(userDictionaryGedoe);
+  fetchTrainingWordByLookup.mockResolvedValueOnce({
+    ...userDictionaryGedoe,
+    mode: "word-to-definition",
+    isFirstEncounter: false,
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    updateActiveTrainingScope.mockClear();
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Eigen entry toevoegen" }));
+    fireEvent.change(screen.getByLabelText("Hoofdwoord"), {
+      target: { value: "gedoe" },
+    });
+    fireEvent.change(screen.getByLabelText("Definitie"), {
+      target: { value: "lastige situatie" },
+    });
+    fireEvent.change(screen.getByLabelText("Vertaling"), {
+      target: { value: "hassle" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Opslaan in mijn woordenboek" }));
+
+    await waitFor(() =>
+      expect(createUserDictionaryEntry).toHaveBeenCalledWith({
+        entry: {
+          headword: "gedoe",
+          languageCode: "nl",
+          definition: "lastige situatie",
+          translation: { languageCode: "en", text: "hassle" },
+        },
+      }),
+    );
+    expect(fetchDictionaryEntryById).toHaveBeenCalledWith("user-entry-1", "user-1");
+    expect(await screen.findByText("Eigen entry toegevoegd aan mijn woordenboek."))
+      .toBeInTheDocument();
+    expect(screen.getAllByText("gedoe").length).toBeGreaterThan(0);
+    expect(screen.getByText(/My dictionary/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Toevoegen aan lijst" }));
+    await waitFor(() =>
+      expect(addWordsToUserList).toHaveBeenCalledWith("list-user", [
+        "user-entry-1",
+      ]),
+    );
+
+    const createdEntryActions = await screen.findAllByText("Meer acties");
+    fireEvent.click(createdEntryActions[createdEntryActions.length - 1]);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    );
+    await waitFor(() =>
+      expect(fetchTrainingWordByLookup).toHaveBeenCalledWith(
+        "user-entry-1",
+        "user-1",
+      ),
+    );
+    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
+      expect.objectContaining({ listId: "list-user" }),
+    );
+  } finally {
+    restoreDefaultListScope();
+    fetchDictionaryEntryById.mockResolvedValue(null);
+    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
+  }
 });
 
 test("dictionary lookup state persists while switching settings modal tabs", async () => {
@@ -883,7 +985,8 @@ test("search detail trains a selected entry as the next card without changing ac
     });
     await screen.findAllByText("boom");
 
-    fireEvent.click(await screen.findByText("Meer acties"));
+    const detailActions = await screen.findAllByText("Meer acties");
+    fireEvent.click(detailActions[detailActions.length - 1]);
     fireEvent.click(
       await screen.findByRole("button", {
         name: /train dit woord als volgende kaart/i,
@@ -908,6 +1011,65 @@ test("search detail trains a selected entry as the next card without changing ac
     restoreDefaultSearchResults();
     restoreDefaultListScope();
     fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
+  }
+});
+
+test("search detail copies a trusted entry into the user dictionary", async () => {
+  useTwoListScope();
+  searchWordEntries.mockResolvedValue({ items: [dictionaryHuis], total: 1 });
+  copyEntryToUserDictionary.mockClear();
+  fetchDictionaryEntryById.mockClear();
+  fetchDictionaryEntryById.mockResolvedValueOnce({
+    ...userDictionaryGedoe,
+    id: "user-entry-copy",
+    headword: "huis",
+    raw: {
+      headword: "huis",
+      languageCode: "nl",
+      definition: "mijn huisdefinitie",
+      sourceEntryId: "word-1",
+    },
+  });
+  updateActiveTrainingScope.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    updateActiveTrainingScope.mockClear();
+
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
+      target: { value: "huis" },
+    });
+    await screen.findByText("Details");
+
+    const detailActions = await screen.findAllByText("Meer acties");
+    fireEvent.click(detailActions[detailActions.length - 1]);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Kopieer naar mijn woordenboek",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(copyEntryToUserDictionary).toHaveBeenCalledWith({ entryId: "word-1" }),
+    );
+    expect(fetchDictionaryEntryById).toHaveBeenCalledWith(
+      "user-entry-copy",
+      "user-1",
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/My dictionary/i)).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(screen.getAllByText("mijn huisdefinitie").length).toBeGreaterThan(0),
+    );
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+  } finally {
+    restoreDefaultSearchResults();
+    restoreDefaultListScope();
+    fetchDictionaryEntryById.mockResolvedValue(null);
   }
 });
 

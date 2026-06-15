@@ -71,6 +71,7 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   /** Focus the search field when the tab mounts. */
   autoFocusQuery?: boolean;
@@ -97,6 +98,7 @@ export function WordListTab({
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
+  onUserDictionaryEntryCreated,
   onTrainWord,
   autoFocusQuery,
 }: Props) {
@@ -309,6 +311,19 @@ export function WordListTab({
     viewedList?.type === "user"
       ? selectedIds.filter((id) => !membershipSet.has(id)).length
       : 0;
+
+  const handleUserDictionaryEntryCreated = useCallback(
+    (entry: DictionaryEntry) => {
+      onUserDictionaryEntryCreated?.(entry);
+      setDetailEntry(entry);
+      setWordResults((current) => [
+        entry,
+        ...current.filter((item) => item.id !== entry.id),
+      ]);
+      setWordTotal((current) => Math.max(current, wordResults.length + 1));
+    },
+    [onUserDictionaryEntryCreated, wordResults.length],
+  );
 
   const toggleIntentCardType = useCallback((mode: TrainingMode) => {
     setIntentCardTypeIds((prev) =>
@@ -1547,6 +1562,7 @@ export function WordListTab({
           notifyListsUpdated();
         }}
         onOpenListMembership={onOpenListMembership}
+        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
         onTrainWord={onTrainWord}
         autoFetchTranslation={false}
       />

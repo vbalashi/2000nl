@@ -5,9 +5,12 @@ import { WordDetailPanel } from "@/components/training/WordDetailPanel";
 
 vi.mock("@/lib/trainingService", () => ({
   addWordsToUserList: vi.fn(),
+  copyEntryToUserDictionary: vi.fn(),
   createUserList: vi.fn(),
+  fetchDictionaryEntryById: vi.fn(),
   fetchEntryListMemberships: vi.fn(async () => new Map()),
   recordReview: vi.fn(),
+  removeWordsFromUserList: vi.fn(),
 }));
 
 const entry = {
@@ -78,7 +81,7 @@ describe("WordDetailPanel translation behavior", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText("Nog niet opgeslagen in een leerlijst."))
+      expect(screen.getByText("Nog niet opgeslagen in een lijst."))
         .toBeInTheDocument(),
     );
     expect(fetch).not.toHaveBeenCalled();

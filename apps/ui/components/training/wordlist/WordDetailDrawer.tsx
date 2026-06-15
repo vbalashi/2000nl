@@ -15,6 +15,7 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   autoFetchTranslation?: boolean;
 };
@@ -28,6 +29,7 @@ export function WordDetailDrawer({
   userLists,
   onListsUpdated,
   onOpenListMembership,
+  onUserDictionaryEntryCreated,
   onTrainWord,
   autoFetchTranslation = true,
 }: Props) {
@@ -60,6 +62,7 @@ export function WordDetailDrawer({
           userLists={userLists}
           onListsUpdated={onListsUpdated}
           onOpenListMembership={onOpenListMembership}
+          onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
           onTrainWord={onTrainWord}
           showHeader={true}
           showActions={true}

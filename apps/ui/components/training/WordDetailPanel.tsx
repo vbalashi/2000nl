@@ -12,7 +12,9 @@ import type {
 import type { ReviewResult } from "@/lib/trainingService";
 import {
   addWordsToUserList,
+  copyEntryToUserDictionary,
   createUserList,
+  fetchDictionaryEntryById,
   fetchEntryListMemberships,
   recordReview,
   removeWordsFromUserList,
@@ -29,6 +31,7 @@ export type WordDetailPanelProps = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   /** Whether to show the header with headword, POS badge, etc. Defaults to true. */
   showHeader?: boolean;
@@ -99,6 +102,7 @@ export function WordDetailPanel({
   userLists,
   onListsUpdated,
   onOpenListMembership,
+  onUserDictionaryEntryCreated,
   onTrainWord,
   showHeader = true,
   showActions = true,
@@ -437,6 +441,7 @@ export function WordDetailPanel({
   const isCurrentTrainingEntry =
     Boolean(currentTrainingEntryId) && entry?.id === currentTrainingEntryId;
   const canTrainEntryNext = Boolean(onTrainWord) && !isCurrentTrainingEntry;
+  const isUserDictionaryEntry = entry.dictionary_kind === "user";
   const handleRemoveMembership = React.useCallback(
     async (membership: EntryLearningListMembership) => {
       if (!entry?.id || membership.listType !== "user" || !membership.editable) {
@@ -637,6 +642,39 @@ export function WordDetailPanel({
               >
                 Markeer als geleerd
               </button>
+
+              {!isUserDictionaryEntry ? (
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={async () => {
+                    if (!entry?.id) return;
+                    setActionMessage(null);
+                    setActionBusy(true);
+                    try {
+                      const copiedEntryId = await copyEntryToUserDictionary({
+                        entryId: entry.id,
+                      });
+                      const copiedEntry = await fetchDictionaryEntryById(
+                        copiedEntryId,
+                        userId,
+                      );
+                      if (copiedEntry) {
+                        onUserDictionaryEntryCreated?.(copiedEntry);
+                      }
+                      setActionMessage("Gekopieerd naar mijn woordenboek.");
+                    } catch (error) {
+                      console.error("Error copying entry to user dictionary", error);
+                      setActionMessage("Kon niet naar mijn woordenboek kopiëren.");
+                    } finally {
+                      setActionBusy(false);
+                    }
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/60"
+                >
+                  Kopieer naar mijn woordenboek
+                </button>
+              ) : null}
 
               {canTrainEntryNext ? (
                 <button

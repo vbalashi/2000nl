@@ -32,6 +32,7 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   /** Current training card ID (used to show training-only actions in Details). */
   currentTrainingEntryId?: string | null;
@@ -55,6 +56,7 @@ export function Sidebar({
   userLists,
   onListsUpdated,
   onOpenListMembership,
+  onUserDictionaryEntryCreated,
   onTrainWord,
   currentTrainingEntryId,
   onTrainingAction,
@@ -125,6 +127,7 @@ export function Sidebar({
                 userLists={userLists}
                 onListsUpdated={onListsUpdated}
                 onOpenListMembership={onOpenListMembership}
+                onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
                 onTrainWord={onTrainWord}
                 showHeader={true}
                 showActions={true}

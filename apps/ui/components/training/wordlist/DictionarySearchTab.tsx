@@ -3,8 +3,10 @@
 import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  createUserDictionaryEntry,
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
+  fetchDictionaryEntryById,
   fetchWordsForList,
   searchWordEntries,
 } from "@/lib/trainingService";
@@ -32,6 +34,7 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   searchState: DictionarySearchTabState;
@@ -128,6 +131,7 @@ export function DictionarySearchTab({
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
+  onUserDictionaryEntryCreated,
   onTrainWord,
   autoFocusQuery,
   searchState,
@@ -151,6 +155,16 @@ export function DictionarySearchTab({
   const [dictionarySources, setDictionarySources] = useState<
     AvailableDictionarySource[]
   >([]);
+  const [customEntryOpen, setCustomEntryOpen] = useState(false);
+  const [customHeadword, setCustomHeadword] = useState("");
+  const [customDefinition, setCustomDefinition] = useState("");
+  const [customTranslation, setCustomTranslation] = useState("");
+  const [customExample, setCustomExample] = useState("");
+  const [customNotes, setCustomNotes] = useState("");
+  const [customEntrySaving, setCustomEntrySaving] = useState(false);
+  const [customEntryMessage, setCustomEntryMessage] = useState<string | null>(
+    null,
+  );
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
   const updateSearchState = useCallback(
@@ -229,6 +243,82 @@ export function DictionarySearchTab({
     viewedListId,
   ]);
 
+  const handleUserDictionaryEntryCreated = useCallback(
+    (entry: DictionaryEntry) => {
+      onUserDictionaryEntryCreated?.(entry);
+      onSearchStateChange((current) => ({
+        ...current,
+        detailEntry: entry,
+        wordResults: [
+          entry,
+          ...current.wordResults.filter((item) => item.id !== entry.id),
+        ],
+        wordTotal: Math.max(current.wordTotal, current.wordResults.length + 1),
+      }));
+    },
+    [onSearchStateChange, onUserDictionaryEntryCreated],
+  );
+
+  const createCustomEntry = useCallback(async () => {
+    const headword = (customHeadword || query).trim();
+    const definition = customDefinition.trim();
+    const translation = customTranslation.trim();
+    const example = customExample.trim();
+    const notes = customNotes.trim();
+
+    if (!headword) {
+      setCustomEntryMessage("Vul een hoofdwoord in.");
+      return;
+    }
+    if (!definition && !translation && !example && !notes) {
+      setCustomEntryMessage("Vul minimaal definitie, vertaling, voorbeeld of notitie in.");
+      return;
+    }
+
+    setCustomEntrySaving(true);
+    setCustomEntryMessage(null);
+    try {
+      const entryId = await createUserDictionaryEntry({
+        entry: {
+          headword,
+          languageCode: searchLanguage,
+          ...(definition ? { definition } : {}),
+          ...(translation
+            ? { translation: { languageCode: "en", text: translation } }
+            : {}),
+          ...(example ? { example: { source: example } } : {}),
+          ...(notes ? { notes } : {}),
+        },
+      });
+      const createdEntry = await fetchDictionaryEntryById(entryId, userId);
+      if (createdEntry) {
+        handleUserDictionaryEntryCreated(createdEntry);
+      }
+      setCustomHeadword("");
+      setCustomDefinition("");
+      setCustomTranslation("");
+      setCustomExample("");
+      setCustomNotes("");
+      setCustomEntryOpen(false);
+      setCustomEntryMessage("Eigen entry toegevoegd aan mijn woordenboek.");
+    } catch (error) {
+      console.error("Error creating user dictionary entry", error);
+      setCustomEntryMessage("Kon eigen entry niet opslaan.");
+    } finally {
+      setCustomEntrySaving(false);
+    }
+  }, [
+    customDefinition,
+    customExample,
+    customHeadword,
+    customNotes,
+    customTranslation,
+    handleUserDictionaryEntryCreated,
+    query,
+    searchLanguage,
+    userId,
+  ]);
+
   useEffect(() => {
     if (!open || searchState.languageCode) return;
     updateSearchState({ languageCode: language });
@@ -303,7 +393,7 @@ export function DictionarySearchTab({
   const resultCountLabel = useViewedListFilter
     ? `${wordTotal} woorden gevonden`
     : query.trim()
-      ? `${wordTotal} resultaten in VanDale`
+      ? `${wordTotal} resultaten in ${sourceLabel}`
       : "Typ een woord om te zoeken";
   const emptyHeading = useViewedListFilter
     ? "Geen woorden in deze lijst."
@@ -435,6 +525,98 @@ export function DictionarySearchTab({
               </select>
             </label>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Mijn woordenboek
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Maak een private editable entry los van leerlijsten.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCustomEntryOpen((value) => !value);
+                setCustomHeadword((value) => value || query.trim());
+                setCustomEntryMessage(null);
+              }}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {customEntryOpen ? "Sluit" : "Eigen entry toevoegen"}
+            </button>
+          </div>
+
+          {customEntryOpen ? (
+            <div className="mt-3 grid gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Hoofdwoord</span>
+                  <input
+                    value={customHeadword}
+                    onChange={(event) => setCustomHeadword(event.target.value)}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Definitie</span>
+                  <input
+                    value={customDefinition}
+                    onChange={(event) => setCustomDefinition(event.target.value)}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  />
+                </label>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Vertaling</span>
+                  <input
+                    value={customTranslation}
+                    onChange={(event) => setCustomTranslation(event.target.value)}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Voorbeeld</span>
+                  <input
+                    value={customExample}
+                    onChange={(event) => setCustomExample(event.target.value)}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                  />
+                </label>
+              </div>
+              <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <span>Notitie</span>
+                <input
+                  value={customNotes}
+                  onChange={(event) => setCustomNotes(event.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                />
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={customEntrySaving}
+                  onClick={() => void createCustomEntry()}
+                  className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105 disabled:opacity-60"
+                >
+                  Opslaan in mijn woordenboek
+                </button>
+                {customEntryMessage ? (
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    {customEntryMessage}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : customEntryMessage ? (
+            <div className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              {customEntryMessage}
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -587,6 +769,7 @@ export function DictionarySearchTab({
                     notifyListsUpdated();
                   }}
                   onOpenListMembership={onOpenListMembership}
+                  onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
                   onTrainWord={onTrainWord}
                   showHeader={true}
                   showActions={true}
@@ -615,6 +798,7 @@ export function DictionarySearchTab({
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}
+          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
           onTrainWord={onTrainWord}
           autoFetchTranslation={false}
         />

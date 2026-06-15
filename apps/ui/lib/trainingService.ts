@@ -4,7 +4,10 @@ export {
   type UserPreferences,
 } from "./training/preferencesService";
 export {
+  copyEntryToUserDictionary,
+  createUserDictionaryEntry,
   fetchDictionaryEntry,
+  fetchDictionaryEntryById,
   fetchTrainingWordById,
   fetchTrainingWordByLookup,
 } from "./training/dictionaryService";

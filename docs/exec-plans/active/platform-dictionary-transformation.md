@@ -110,8 +110,10 @@ Main gaps:
   exposed through platform lookup metadata. More clients still need to consume
   schema metadata consistently.
 - VanDale-specific fields live directly on `word_entries`.
-- User-created dictionary entries exist at the DB/RPC/action boundary, but
-  first-party UI editing is intentionally deferred.
+- User-created dictionary entries exist at the DB/RPC/action boundary. The
+  first current training UI slice can create a private entry and copy a trusted
+  entry into the user's dictionary; editing existing user entries remains
+  deferred.
 - A user list item references an existing `word_entries.id`; entries can come
   from curated or user-owned dictionaries. Publication/share semantics for user
   dictionaries are not designed yet.
@@ -384,15 +386,24 @@ Validation:
 
 ### Stage 3: User Dictionaries
 
-- Add user-owned dictionaries and editable entries.
-- Add RLS policies for private user dictionary content.
-- Add list item flows for entries from user dictionaries.
-- Add UI/API flows for creating entries from the extension or training app.
+- Done: add user-owned dictionaries and editable entries.
+- Done: add RLS policies for private user dictionary content.
+- Done: add platform actions for creating a private entry and copying a trusted
+  entry into a user dictionary.
+- Done: add first current training UI slice for creating/copying user
+  dictionary entries, showing source metadata, adding those entries to user
+  lists, and training a selected entry as the next card without switching active
+  training scope.
+- Remaining: add edit/delete UI for existing user dictionary entries after
+  product validation rules are decided.
+- Remaining: run SQL and browser QA for the first UI slice once local
+  Supabase/Docker is available.
 
 Validation:
 
-- RLS tests or SQL checks.
+- SQL checks for trusted and private user dictionary metadata.
 - List/search tests.
+- Browser QA for create/copy/add/train flows.
 - Browser extension contract smoke test when available.
 
 ### Stage 4: Card State Generalization

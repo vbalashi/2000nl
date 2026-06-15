@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
-import type { DictionaryEntry, TrainingWord } from "../types";
+import type { DictionaryEntry, TrainingWord, UserDictionaryEntry } from "../types";
+import { translationRequestHeaders } from "../translation/translationApiClient";
 import { mapDictionaryEntry, normalizeRaw } from "./wordMappers";
 
 type DictionaryEntryWithStats = DictionaryEntry & {
@@ -22,7 +23,7 @@ const mapDictionaryLookupPayload = (
   };
 };
 
-const fetchDictionaryEntryById = async (
+export const fetchDictionaryEntryById = async (
   id: string,
   userId?: string,
 ): Promise<DictionaryEntry | null> => {
@@ -42,6 +43,68 @@ const fetchDictionaryEntryById = async (
   }
 
   return null;
+};
+
+type PlatformActionResponse = {
+  ok?: boolean;
+  error?: string;
+  detail?: string;
+  entryId?: string;
+  copiedEntryId?: string;
+  dictionaryId?: string | null;
+  targetDictionaryId?: string | null;
+};
+
+const postPlatformAction = async (
+  payload: Record<string, unknown>,
+): Promise<PlatformActionResponse> => {
+  const response = await fetch("/api/platform/v1/actions", {
+    method: "POST",
+    cache: "no-store",
+    credentials: "same-origin",
+    headers: {
+      ...(await translationRequestHeaders()),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = (await response.json().catch(() => null)) as
+    | PlatformActionResponse
+    | null;
+  if (!response.ok || !body?.ok) {
+    const detail = body?.detail ? `: ${body.detail}` : "";
+    throw new Error(`${body?.error ?? "platform_action_failed"}${detail}`);
+  }
+  return body;
+};
+
+export const createUserDictionaryEntry = async (params: {
+  dictionaryId?: string | null;
+  entry: UserDictionaryEntry;
+}): Promise<string> => {
+  const body = await postPlatformAction({
+    action: "create-user-entry",
+    dictionaryId: params.dictionaryId ?? null,
+    entry: params.entry,
+  });
+  if (!body.entryId) throw new Error("missing_created_entry_id");
+  return body.entryId;
+};
+
+export const copyEntryToUserDictionary = async (params: {
+  entryId: string;
+  targetDictionaryId?: string | null;
+  overrides?: Partial<UserDictionaryEntry>;
+}): Promise<string> => {
+  const body = await postPlatformAction({
+    action: "copy-to-user-dictionary",
+    entryId: params.entryId,
+    targetDictionaryId: params.targetDictionaryId ?? null,
+    overrides: params.overrides ?? {},
+  });
+  if (!body.copiedEntryId) throw new Error("missing_copied_entry_id");
+  return body.copiedEntryId;
 };
 
 export const fetchTrainingWordById = async (

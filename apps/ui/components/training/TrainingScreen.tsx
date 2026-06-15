@@ -1218,6 +1218,12 @@ export function TrainingScreen({ user }: Props) {
     [],
   );
 
+  const handleUserDictionaryEntryCreated = useCallback((entry: DictionaryEntry) => {
+    setDetailEntry(entry);
+    setSelectedEntry(entry);
+    setSidebarTab("details");
+  }, []);
+
   const cycleThemePreference = useCallback(() => {
     const next =
       themePreference === "light"
@@ -2346,6 +2352,7 @@ export function TrainingScreen({ user }: Props) {
                 userLists={availableLists.filter((l) => l.type === "user")}
                 onListsUpdated={handleListsUpdated}
                 onOpenListMembership={openMembershipList}
+                onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
                 onTrainWord={handleTrainWord}
                 currentTrainingEntryId={currentWord?.id ?? null}
                 onTrainingAction={(result) => void handleAction(result)}
@@ -2411,6 +2418,7 @@ export function TrainingScreen({ user }: Props) {
           userLists={availableLists.filter((l) => l.type === "user")}
           onListsUpdated={handleListsUpdated}
           onOpenListMembership={openMembershipList}
+          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
           onTrainWord={handleTrainWord}
           currentTrainingEntryId={currentWord?.id ?? null}
           onTrainingAction={(result) => void handleAction(result)}
@@ -2456,6 +2464,7 @@ export function TrainingScreen({ user }: Props) {
           wordListType={wordListType}
           activeTrainingList={activeList}
           onMakeActiveForTraining={handleMakeActiveTrainingList}
+          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
           enabledModes={enabledModes}
           cardFilter={cardFilter}
           onModesChange={handleModesChange}

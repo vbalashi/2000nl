@@ -7,7 +7,9 @@ import type { EntryLearningListMembership, WordListSummary } from "@/lib/types";
 
 const serviceMocks = vi.hoisted(() => ({
   addWordsToUserList: vi.fn(),
+  copyEntryToUserDictionary: vi.fn(),
   createUserList: vi.fn(),
+  fetchDictionaryEntryById: vi.fn(),
   fetchEntryListMemberships: vi.fn(),
   recordReview: vi.fn(),
   removeWordsFromUserList: vi.fn(),
@@ -15,7 +17,9 @@ const serviceMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/trainingService", () => ({
   addWordsToUserList: serviceMocks.addWordsToUserList,
+  copyEntryToUserDictionary: serviceMocks.copyEntryToUserDictionary,
   createUserList: serviceMocks.createUserList,
+  fetchDictionaryEntryById: serviceMocks.fetchDictionaryEntryById,
   fetchEntryListMemberships: serviceMocks.fetchEntryListMemberships,
   recordReview: serviceMocks.recordReview,
   removeWordsFromUserList: serviceMocks.removeWordsFromUserList,
@@ -69,7 +73,9 @@ const renderPanel = (props?: {
 describe("WordDetailPanel membership behavior", () => {
   beforeEach(() => {
     serviceMocks.addWordsToUserList.mockReset();
+    serviceMocks.copyEntryToUserDictionary.mockReset();
     serviceMocks.createUserList.mockReset();
+    serviceMocks.fetchDictionaryEntryById.mockReset();
     serviceMocks.fetchEntryListMemberships.mockReset();
     serviceMocks.recordReview.mockReset();
     serviceMocks.removeWordsFromUserList.mockReset();

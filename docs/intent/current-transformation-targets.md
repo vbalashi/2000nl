@@ -1,6 +1,6 @@
 # Current Transformation Targets
 
-Last updated: 2026-05-19
+Last updated: 2026-06-15
 
 This document is the shared scratchpad for transformation wishes, questions,
 constraints, and target areas after codebase discovery.
@@ -64,7 +64,9 @@ Desired concepts:
 - `dictionary_schemas`, `dictionaries`, and `dictionary_entitlements` exist.
   The seeded trusted Dutch dictionary is `nl-vandale` using `nl-vandale-v1`.
 - User-owned dictionaries exist at the DB/RPC/action boundary using the
-  minimal `user-entry-v1` schema. UI editing is intentionally not built yet.
+  minimal `user-entry-v1` schema. The first current training UI slice can create
+  a private entry, copy a trusted entry into the user's dictionary, and then use
+  that user-dictionary entry in list/training flows.
 - Current curated lists are `word_lists` / `word_list_items`; user lists are
   `user_word_lists` / `user_word_list_items`. `primary_language_code` is the
   forward-compatible list language hint; `language_code` remains as older table
@@ -116,16 +118,22 @@ Desired concepts:
   mis-rendered as text cards.
 - User-list training intent can be edited from the current settings list UI for
   user-owned lists.
+- First user-dictionary UI slice: dictionary search can create a private
+  `user-entry-v1` entry; trusted entries can be copied to the user's dictionary
+  from detail actions; created/copied entries keep dictionary source metadata
+  and can be added to user lists and trained as the next card without switching
+  active training scope to the viewed/list source.
 
 ## Remaining Near-Term Targets
 
-- Add UI for user dictionary creation/editing only after deciding the first
-  product surface and validation rules.
+- Finish validating the first user-dictionary UI slice with SQL smoke and
+  browser QA once local Supabase/Docker is available.
+- Add UI for editing/deleting existing user dictionary entries only after
+  deciding validation rules and whether private entries are shareable later.
 - Keep user lists and user dictionaries separate in product language:
   user lists are training collections made from dictionary entries; user
   dictionaries are private editable sources where users create their own entries
-  via `user-entry-v1`. The DB/RPC/action boundary exists, but the first-party UI
-  for adding/editing custom dictionary entries is not implemented yet.
+  via `user-entry-v1`.
 - Continue reducing direct table access where it crosses platform boundaries;
   keep truly app-local settings explicit.
 - Add/refresh docs for platform endpoint payloads as external consumers become

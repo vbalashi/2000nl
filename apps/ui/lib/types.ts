@@ -109,6 +109,25 @@ export type DictionaryEntry = {
   search_group_rank?: number;
 };
 
+export type UserDictionaryEntry = {
+  headword: string;
+  languageCode: string;
+  definition?: string;
+  translation?: {
+    languageCode?: string;
+    text: string;
+  };
+  example?: {
+    source: string;
+    translation?: string;
+  };
+  partOfSpeech?: string;
+  gender?: string;
+  notes?: string;
+  tags?: string[];
+  sourceEntryId?: string;
+};
+
 export type ReviewResult = "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
 export type HistorySource = "click" | "review";
 

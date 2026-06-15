@@ -59,7 +59,10 @@ vi.mock("@/lib/supabaseClient", () => ({
 const importService = async () => {
   const service = await import("@/lib/trainingService");
   return {
+    copyEntryToUserDictionary: service.copyEntryToUserDictionary,
+    createUserDictionaryEntry: service.createUserDictionaryEntry,
     fetchDictionaryEntry: service.fetchDictionaryEntry,
+    fetchDictionaryEntryById: service.fetchDictionaryEntryById,
     fetchTrainingWordById: service.fetchTrainingWordById,
     fetchTrainingWordByLookup: service.fetchTrainingWordByLookup,
   };
@@ -81,6 +84,8 @@ describe("trainingService dictionary lookup", () => {
     rpc.mockClear();
     fromResponses.clear();
     queries.length = 0;
+    window.localStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   test("fetchTrainingWordById returns null without an authenticated user", async () => {
@@ -116,6 +121,36 @@ describe("trainingService dictionary lookup", () => {
       p_entry_id: "word-1",
     });
     expect(from).not.toHaveBeenCalled();
+  });
+
+  test("fetchDictionaryEntryById preserves dictionary source metadata", async () => {
+    const { fetchDictionaryEntryById } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        ...row,
+        dictionary_id: "dict-user",
+        dictionary_name: "My dictionary",
+        dictionary_slug: "user-user-1-nl",
+        dictionary_kind: "user",
+        language_code: "nl",
+        raw: { definition: "private definition" },
+      },
+      error: null,
+    });
+
+    await expect(fetchDictionaryEntryById("word-1", "user-1")).resolves.toEqual(
+      expect.objectContaining({
+        id: "word-1",
+        dictionary_id: "dict-user",
+        dictionary_name: "My dictionary",
+        dictionary_slug: "user-user-1-nl",
+        dictionary_kind: "user",
+        raw: { definition: "private definition" },
+      }),
+    );
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_entry_id: "word-1",
+    });
   });
 
   test("fetchTrainingWordByLookup returns null for blank lookup without querying", async () => {
@@ -244,6 +279,84 @@ describe("trainingService dictionary lookup", () => {
       p_headword: "huis",
     });
     expect(from).not.toHaveBeenCalled();
+  });
+
+  test("createUserDictionaryEntry calls the platform action endpoint", async () => {
+    const { createUserDictionaryEntry } = await importService();
+    window.localStorage.setItem(
+      "sb-test-auth-token",
+      JSON.stringify({ access_token: "token-1" }),
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        action: "create-user-entry",
+        entryId: "entry-created",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createUserDictionaryEntry({
+        entry: {
+          headword: "gedoe",
+          languageCode: "nl",
+          definition: "hassle",
+        },
+      }),
+    ).resolves.toBe("entry-created");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v1/actions",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "same-origin",
+        body: JSON.stringify({
+          action: "create-user-entry",
+          dictionaryId: null,
+          entry: {
+            headword: "gedoe",
+            languageCode: "nl",
+            definition: "hassle",
+          },
+        }),
+      }),
+    );
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer token-1");
+  });
+
+  test("copyEntryToUserDictionary calls the platform copy action", async () => {
+    const { copyEntryToUserDictionary } = await importService();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        action: "copy-to-user-dictionary",
+        copiedEntryId: "entry-copy",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      copyEntryToUserDictionary({
+        entryId: "entry-source",
+        overrides: { definition: "my wording" },
+      }),
+    ).resolves.toBe("entry-copy");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v1/actions",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          action: "copy-to-user-dictionary",
+          entryId: "entry-source",
+          targetDictionaryId: null,
+          overrides: { definition: "my wording" },
+        }),
+      }),
+    );
   });
 
 });

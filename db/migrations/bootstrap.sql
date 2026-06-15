@@ -201,3 +201,6 @@
 
 -- Multilanguage language/source APIs and per-language training scopes
 \i db/migrations/064_multilanguage_scope_rpcs.sql
+
+-- Single-entry fetch source metadata for user dictionary UI
+\i db/migrations/065_fetch_entry_by_id_dictionary_metadata.sql
