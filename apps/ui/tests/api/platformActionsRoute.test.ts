@@ -492,6 +492,47 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("fetches an accessible entry by id", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "entry-1",
+        dictionary_id: "dict-user",
+        dictionary_name: "My dictionary",
+        dictionary_kind: "user",
+        headword: "gedoe",
+        raw: { definition: "private definition" },
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "fetch-entry",
+        entryId: "entry-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_entry_id: "entry-1",
+    });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      action: "fetch-entry",
+      entryId: "entry-1",
+      entry: {
+        id: "entry-1",
+        dictionary_id: "dict-user",
+        dictionary_name: "My dictionary",
+        dictionary_kind: "user",
+        headword: "gedoe",
+        raw: { definition: "private definition" },
+      },
+    });
+  });
+
   test("creates user dictionary entries without requiring an existing entry id", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

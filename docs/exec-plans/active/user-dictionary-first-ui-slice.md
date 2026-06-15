@@ -37,6 +37,29 @@ Passed locally:
 - `cd apps/ui && npm run typecheck`
 - `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
 - `cd apps/ui && npm test -- tests/trainingService.dictionary.test.ts tests/TrainingScreen.test.tsx tests/WordDetailPanel.membership.test.tsx tests/WordDetailPanel.translation.test.tsx`
+- `cd apps/ui && npm test -- tests/api/platformActionsRoute.test.ts tests/trainingService.dictionary.test.ts tests/WordDetailPanel.membership.test.tsx tests/TrainingScreen.test.tsx tests/WordDetailPanel.translation.test.tsx`
+- `cd apps/ui && npm run lint`
+- Manual SQL smoke against local Supabase verified
+  `fetch_dictionary_entry_by_id_gated` returns dictionary metadata for trusted,
+  created user, and copied user entries.
+- Local backend-backed browser smoke on `http://localhost:3100` via
+  `/dev/test-login?redirectTo=/` verified:
+  - create a private `user-entry-v1` entry and see `Bron: My dictionary`,
+  - add the user-dictionary entry to `QA saved words`,
+  - train the user-dictionary entry as the next card,
+  - copy a trusted `nl-vandale` entry into `My dictionary` and see the copied
+    detail source as `Bron: My dictionary`.
+
+Browser QA evidence:
+
+- `reports/qa/user-dictionary-first-ui-slice/01-after-dev-login.png`
+- `reports/qa/user-dictionary-first-ui-slice/02-created-user-entry.png`
+- `reports/qa/user-dictionary-first-ui-slice/03-added-to-learning-list.png`
+- `reports/qa/user-dictionary-first-ui-slice/04-trained-user-entry-next-card.png`
+- `reports/qa/user-dictionary-first-ui-slice/05-trusted-entry-detail.png`
+- `reports/qa/user-dictionary-first-ui-slice/06-copied-trusted-entry.png`
+- `reports/qa/user-dictionary-first-ui-slice/console-create-add-train.json`
+- `reports/qa/user-dictionary-first-ui-slice/console-copy.json`
 
 Known non-blocking test noise:
 
@@ -45,22 +68,28 @@ Known non-blocking test noise:
 - The `trainingService.dictionary` suite intentionally logs the mocked missing
   RPC case for one negative-path test.
 
-Blocked by local environment:
+Resolved local QA setup issue:
 
-- SQL smoke could not run because `SUPABASE_DB_URL` is not set.
-- Local Supabase wrapper status is blocked by Docker/Colima:
-  `Cannot connect to the Docker daemon at unix:///Users/khrustal/.colima/default/docker.sock`.
-- Browser QA is not yet run because canonical port `3100` is not serving and
-  local Supabase cannot start while Docker/Colima is unavailable.
+- `/api/dev/test-session` was using `NEXT_PUBLIC_SUPABASE_URL` first, which can
+  be remote from `.env.local` even when the UI wrapper points server-side routes
+  at local Supabase. The dev-only route now prefers server-side
+  `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`; the
+  wrapper exports `SUPABASE_ANON_KEY`. The dev-session user now exists in local
+  `auth.users`.
 
-## Remaining Before Closing The Goal
+Known unrelated local probe issue:
 
-- Apply migration `065_fetch_entry_by_id_dictionary_metadata.sql` to a local or
-  disposable DB and verify `fetch_dictionary_entry_by_id_gated` returns
-  dictionary metadata for both trusted and user-owned entries.
-- Run local UI QA on port `3100` once local Supabase/Docker is available:
-  create custom entry, copy trusted entry, add user entry to a list, train it as
-  next card, and verify active training scope is not switched by those actions.
-- Decide whether this first slice needs editing existing user entries now, or
-  whether edit/delete stays in the next user-dictionary slice.
+- `scripts/db-local-supabase.sh all` applies migrations and the targeted SQL
+  smoke passes, but the broad `local_supabase_probe.sql` still fails on
+  pre-existing public/anon execute grants for legacy word-list RPCs:
+  `get_active_word_list(uuid)`,
+  `get_available_word_lists(uuid,text,text)`, and
+  `update_active_word_list(uuid,uuid,text)`. This is not introduced by this
+  slice and is tracked separately from user-dictionary behavior.
 
+## Deferred Next Slice
+
+- Editing/deleting existing user dictionary entries stays in the next
+  user-dictionary slice. The current slice proves that created/copied entries
+  are private user-owned dictionary entries and can already flow into lists and
+  training.

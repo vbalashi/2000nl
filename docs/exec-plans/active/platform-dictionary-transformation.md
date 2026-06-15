@@ -394,16 +394,16 @@ Validation:
   dictionary entries, showing source metadata, adding those entries to user
   lists, and training a selected entry as the next card without switching active
   training scope.
+- Done: validate the first current training UI slice with targeted SQL/RPC
+  smoke and backend-backed local browser QA.
 - Remaining: add edit/delete UI for existing user dictionary entries after
   product validation rules are decided.
-- Remaining: run SQL and browser QA for the first UI slice once local
-  Supabase/Docker is available.
 
 Validation:
 
-- SQL checks for trusted and private user dictionary metadata.
-- List/search tests.
-- Browser QA for create/copy/add/train flows.
+- Done: SQL checks for trusted and private user dictionary metadata.
+- Done: List/search tests.
+- Done: Browser QA for create/copy/add/train flows.
 - Browser extension contract smoke test when available.
 
 ### Stage 4: Card State Generalization

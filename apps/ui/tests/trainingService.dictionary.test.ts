@@ -96,18 +96,23 @@ describe("trainingService dictionary lookup", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  test("fetchTrainingWordById uses gated RPC when a user id is provided", async () => {
+  test("fetchTrainingWordById uses the platform fetch-entry action when a user id is provided", async () => {
     const { fetchTrainingWordById } = await importService();
-    rpc.mockResolvedValueOnce({
-      data: {
-        ...row,
-        dictionary_id: "dict-1",
-        language_code: "nl",
-        raw: { meanings: [{ definition: "Een gebouw" }] },
-        meanings_count: 2,
-      },
-      error: null,
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        action: "fetch-entry",
+        entry: {
+          ...row,
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          raw: { meanings: [{ definition: "Een gebouw" }] },
+          meanings_count: 2,
+        },
+      }),
     });
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchTrainingWordById("word-1", "user-1")).resolves.toEqual(
       expect.objectContaining({
@@ -117,26 +122,39 @@ describe("trainingService dictionary lookup", () => {
         meanings_count: 2,
       }),
     );
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_entry_id: "word-1",
-    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v1/actions",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          action: "fetch-entry",
+          entryId: "word-1",
+        }),
+      }),
+    );
+    expect(rpc).not.toHaveBeenCalled();
     expect(from).not.toHaveBeenCalled();
   });
 
   test("fetchDictionaryEntryById preserves dictionary source metadata", async () => {
     const { fetchDictionaryEntryById } = await importService();
-    rpc.mockResolvedValueOnce({
-      data: {
-        ...row,
-        dictionary_id: "dict-user",
-        dictionary_name: "My dictionary",
-        dictionary_slug: "user-user-1-nl",
-        dictionary_kind: "user",
-        language_code: "nl",
-        raw: { definition: "private definition" },
-      },
-      error: null,
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        action: "fetch-entry",
+        entry: {
+          ...row,
+          dictionary_id: "dict-user",
+          dictionary_name: "My dictionary",
+          dictionary_slug: "user-user-1-nl",
+          dictionary_kind: "user",
+          language_code: "nl",
+          raw: { definition: "private definition" },
+        },
+      }),
     });
+    vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchDictionaryEntryById("word-1", "user-1")).resolves.toEqual(
       expect.objectContaining({
@@ -148,9 +166,17 @@ describe("trainingService dictionary lookup", () => {
         raw: { definition: "private definition" },
       }),
     );
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
-      p_entry_id: "word-1",
-    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v1/actions",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          action: "fetch-entry",
+          entryId: "word-1",
+        }),
+      }),
+    );
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("fetchTrainingWordByLookup returns null for blank lookup without querying", async () => {

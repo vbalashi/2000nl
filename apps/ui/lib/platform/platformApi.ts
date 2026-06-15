@@ -17,6 +17,7 @@ const REVIEW_RESULTS = new Set<ReviewResult>([
 ]);
 
 export type PlatformAction =
+  | "fetch-entry"
   | "record-view"
   | "review-card"
   | "mark-known"
@@ -544,6 +545,7 @@ export async function performPlatformAction(
   }
   if (
     ![
+      "fetch-entry",
       "record-view",
       "review-card",
       "mark-known",
@@ -561,6 +563,42 @@ export async function performPlatformAction(
     ].includes(action)
   ) {
     return { payload: { error: "unsupported_action" }, status: 400 };
+  }
+
+  if (action === "fetch-entry") {
+    if (!entryId) {
+      return { payload: { error: "missing_entry_id" }, status: 400 };
+    }
+
+    const { data, error } = await auth.supabase.rpc(
+      "fetch_dictionary_entry_by_id_gated",
+      {
+        p_entry_id: entryId,
+      },
+    );
+
+    if (error) {
+      return {
+        payload: {
+          error: "entry_lookup_failed",
+          detail: error.message ?? String(error),
+        },
+        status: 500,
+      };
+    }
+    if (!data) {
+      return { payload: { error: "entry_not_accessible" }, status: 404 };
+    }
+
+    return {
+      payload: {
+        ok: true,
+        action,
+        entryId,
+        entry: data,
+      },
+      status: 200,
+    };
   }
 
   if (action === "create-user-list") {

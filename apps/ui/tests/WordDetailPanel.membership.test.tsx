@@ -48,18 +48,20 @@ const userList: WordListSummary = {
 };
 
 const renderPanel = (props?: {
+  entry?: typeof entry;
   memberships?: EntryLearningListMembership[];
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 }) => {
+  const panelEntry = props?.entry ?? entry;
   serviceMocks.fetchEntryListMemberships.mockResolvedValue(
-    new Map([[entry.id, props?.memberships ?? []]]),
+    new Map([[panelEntry.id, props?.memberships ?? []]]),
   );
 
   return render(
     <WordDetailPanel
-      entry={entry as any}
+      entry={panelEntry as any}
       userId="test-user"
       translationLang={null}
       userLists={props?.userLists ?? []}
@@ -92,6 +94,21 @@ describe("WordDetailPanel membership behavior", () => {
     const membershipSection = screen.getByLabelText("Leerlijstlidmaatschap");
     expect(within(membershipSection).queryByText(/VanDale/)).not.toBeInTheDocument();
     expect(screen.getByText(/In lijsten/i)).toBeInTheDocument();
+  });
+
+  test("shows top-level dictionary metadata as the detail source", async () => {
+    renderPanel({
+      entry: {
+        ...entry,
+        dictionary_name: "My dictionary",
+        dictionary_kind: "user",
+      } as any,
+    });
+
+    expect(screen.getByText("Bron:")).toBeInTheDocument();
+    expect(screen.getByText("My dictionary")).toBeInTheDocument();
+    expect(await screen.findByText("Nog niet opgeslagen in een lijst."))
+      .toBeInTheDocument();
   });
 
   test("renders an editable user-list membership", async () => {

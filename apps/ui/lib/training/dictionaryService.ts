@@ -28,18 +28,16 @@ export const fetchDictionaryEntryById = async (
   userId?: string,
 ): Promise<DictionaryEntry | null> => {
   if (userId) {
-    const { data, error } = await supabase.rpc("fetch_dictionary_entry_by_id_gated", {
-      p_entry_id: id,
-    });
-
-    if (error || !data) {
-      if (error) {
-        console.error("Unable to fetch gated dictionary entry by id", error);
-      }
+    try {
+      const body = await postPlatformAction({
+        action: "fetch-entry",
+        entryId: id,
+      });
+      return body.entry ? mapDictionaryEntry(body.entry) : null;
+    } catch (error) {
+      console.error("Unable to fetch gated dictionary entry by id", error);
       return null;
     }
-
-    return mapDictionaryEntry(data);
   }
 
   return null;
@@ -49,6 +47,7 @@ type PlatformActionResponse = {
   ok?: boolean;
   error?: string;
   detail?: string;
+  entry?: unknown;
   entryId?: string;
   copiedEntryId?: string;
   dictionaryId?: string | null;

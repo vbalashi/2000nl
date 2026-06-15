@@ -410,7 +410,7 @@ test("dictionary search can create a private user dictionary entry", async () =>
     expect(await screen.findByText("Eigen entry toegevoegd aan mijn woordenboek."))
       .toBeInTheDocument();
     expect(screen.getAllByText("gedoe").length).toBeGreaterThan(0);
-    expect(screen.getByText(/My dictionary/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Toevoegen aan lijst" }));
     await waitFor(() =>
@@ -1060,7 +1060,7 @@ test("search detail copies a trusted entry into the user dictionary", async () =
       "user-1",
     );
     await waitFor(() =>
-      expect(screen.getByText(/My dictionary/i)).toBeInTheDocument(),
+      expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0),
     );
     await waitFor(() =>
       expect(screen.getAllByText("mijn huisdefinitie").length).toBeGreaterThan(0),

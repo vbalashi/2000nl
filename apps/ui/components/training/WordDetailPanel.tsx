@@ -90,6 +90,8 @@ const dictionarySourceLabel = (entry: DictionaryEntry) => {
         ? metadata.source
         : typeof metadata?.dictionary_name === "string"
           ? metadata.dictionary_name
+          : entry.dictionary_name
+            ? entry.dictionary_name
           : null;
 
   return source?.trim() || "VanDale woordenboek";

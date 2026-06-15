@@ -123,11 +123,12 @@ Desired concepts:
   from detail actions; created/copied entries keep dictionary source metadata
   and can be added to user lists and trained as the next card without switching
   active training scope to the viewed/list source.
+- The first user-dictionary UI slice has targeted SQL/RPC validation and
+  backend-backed local browser QA evidence under
+  `reports/qa/user-dictionary-first-ui-slice/`.
 
 ## Remaining Near-Term Targets
 
-- Finish validating the first user-dictionary UI slice with SQL smoke and
-  browser QA once local Supabase/Docker is available.
 - Add UI for editing/deleting existing user dictionary entries only after
   deciding validation rules and whether private entries are shareable later.
 - Keep user lists and user dictionaries separate in product language:
