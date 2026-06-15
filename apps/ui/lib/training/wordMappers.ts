@@ -1,4 +1,7 @@
 import type {
+  ActiveTrainingScope,
+  AvailableDictionarySource,
+  AvailableLearningLanguage,
   DictionaryEntry,
   SidebarHistoryItem,
   TrainingScenario,
@@ -63,6 +66,7 @@ export const mapCuratedListSummary = (row: any): WordListSummary => ({
   description: row.description,
   language_code: row.language_code,
   primary_language_code: row.primary_language_code ?? row.language_code ?? null,
+  is_mixed_language: Boolean(row.is_mixed_language),
   default_scenario_id: row.default_scenario_id ?? null,
   card_policy: row.card_policy ?? "inherit",
   card_type_ids: row.card_type_ids ?? null,
@@ -77,12 +81,59 @@ export const mapUserListSummary = (row: any): WordListSummary => ({
   description: row.description,
   language_code: row.language_code,
   primary_language_code: row.primary_language_code ?? row.language_code ?? null,
+  is_mixed_language: Boolean(row.is_mixed_language),
   default_scenario_id: row.default_scenario_id ?? null,
   card_policy: row.card_policy ?? "inherit",
   card_type_ids: row.card_type_ids ?? null,
   type: "user",
   item_count: row.user_word_list_items?.[0]?.count ?? undefined,
   created_at: row.created_at,
+});
+
+export const mapAvailableLearningLanguage = (
+  row: any,
+): AvailableLearningLanguage => ({
+  code: row.code,
+  label: row.label ?? row.code,
+  dictionaryCount: row.dictionary_count ?? 0,
+  curatedListCount: row.curated_list_count ?? 0,
+  userListCount: row.user_list_count ?? 0,
+  hasTrainingEligibleLists: Boolean(row.has_training_eligible_lists),
+});
+
+export const mapAvailableDictionarySource = (
+  row: any,
+): AvailableDictionarySource => ({
+  id: row.id,
+  languageCode: row.language_code,
+  slug: row.slug,
+  name: row.name,
+  kind: row.kind,
+  visibility: row.visibility ?? null,
+  isEditable: Boolean(row.is_editable),
+  entryCount: row.entry_count ?? 0,
+});
+
+export const mapActiveTrainingScope = (row: any): ActiveTrainingScope => ({
+  languageCode: row?.language_code ?? "nl",
+  activeListId: row?.active_list_id ?? null,
+  activeListType:
+    row?.active_list_type === "curated" || row?.active_list_type === "user"
+      ? row.active_list_type
+      : null,
+  activeScenario: row?.active_scenario ?? "understanding",
+  cardFilter:
+    row?.card_filter === "new" ||
+    row?.card_filter === "review" ||
+    row?.card_filter === "both"
+      ? row.card_filter
+      : "both",
+  modesEnabled: Array.isArray(row?.modes_enabled)
+    ? row.modes_enabled
+    : ["word-to-definition"],
+  newReviewRatio: row?.new_review_ratio ?? 2,
+  hasSavedScope: Boolean(row?.has_saved_scope),
+  isValid: Boolean(row?.is_valid),
 });
 
 export const mapScenario = (data: any): TrainingScenario => ({

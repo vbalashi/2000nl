@@ -54,6 +54,7 @@ type Props = {
   userId: string;
   language: string;
   onLanguageChange: (value: string) => void;
+  languageOptions?: Array<{ value: string; label: string }>;
   translationLang: string | null;
   curatedLists: WordListSummary[];
   userLists: WordListSummary[];
@@ -78,6 +79,7 @@ export function WordListTab({
   userId,
   language,
   onLanguageChange,
+  languageOptions,
   translationLang,
   curatedLists,
   userLists,
@@ -116,6 +118,14 @@ export function WordListTab({
   const curatedLearningLists = useMemo(
     () => curatedLists.filter((list) => !isDictionarySourceList(list)),
     [curatedLists],
+  );
+  const languageUserLists = useMemo(
+    () => userLists.filter((list) => !list.is_mixed_language),
+    [userLists],
+  );
+  const mixedUserLists = useMemo(
+    () => userLists.filter((list) => list.is_mixed_language),
+    [userLists],
   );
   const activeTrainingListName = activeTrainingList
     ? listDisplayName(activeTrainingList, "Geen actieve lijst")
@@ -639,7 +649,7 @@ export function WordListTab({
                   </div>
                 </div>
                 <div className="mt-3 space-y-2">
-                  {userLists.map((list) => {
+                  {languageUserLists.map((list) => {
                     const isViewed =
                       list.id === viewedListId && list.type === viewedListType;
                     const isActiveForTraining =
@@ -677,13 +687,64 @@ export function WordListTab({
                       </button>
                     );
                   })}
-                  {!userLists.length && (
+                  {!languageUserLists.length && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       Nog geen eigen lijsten. Maak er zo één aan en voeg woorden toe.
                     </p>
                   )}
                 </div>
               </div>
+
+              {mixedUserLists.length ? (
+                <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Gemengde lijsten
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Lijsten met woorden uit meerdere talen blijven apart van de huidige leertaal.
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {mixedUserLists.map((list) => {
+                      const isViewed =
+                        list.id === viewedListId && list.type === viewedListType;
+                      const isActiveForTraining =
+                        activeTrainingList?.id === list.id &&
+                        activeTrainingList?.type === list.type;
+                      return (
+                        <button
+                          key={list.id}
+                          type="button"
+                          onClick={() => selectViewedList(list)}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition hover:shadow-sm dark:border-slate-700 ${
+                            isViewed
+                              ? "border-primary/60 bg-primary/5 text-slate-900 dark:bg-primary/10 dark:text-white"
+                              : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-sm font-semibold">
+                            <span>{list.name}</span>
+                            <span className="flex shrink-0 items-center gap-1">
+                              {isViewed ? (
+                                <span className="text-[10px] uppercase text-primary dark:text-primary-light">
+                                  bekeken
+                                </span>
+                              ) : null}
+                              {isActiveForTraining ? (
+                                <span className="text-[10px] uppercase text-emerald-600 dark:text-emerald-300">
+                                  training
+                                </span>
+                              ) : null}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {list.item_count ?? "—"} woorden
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </aside>
@@ -1461,8 +1522,10 @@ export function WordListTab({
         onClose={() => setMobileListPickerOpen(false)}
         language={language}
         onLanguageChange={onLanguageChange}
+        languageOptions={languageOptions}
         curatedLists={curatedLearningLists}
-        userLists={userLists}
+        userLists={languageUserLists}
+        mixedUserLists={mixedUserLists}
         viewedListId={viewedListId}
         viewedListType={viewedListType}
         activeTrainingList={activeTrainingList}

@@ -21,6 +21,7 @@ type Props = {
   onCardFilterChange: (filter: CardFilter) => void;
   language: string;
   onLanguageChange: (value: string) => void;
+  languageOptions?: Array<{ value: string; label: string }>;
   activeList?: WordListSummary | null;
   activeListName?: string | null;
   activeListValue?: string;
@@ -76,6 +77,7 @@ export function FooterStats({
   onCardFilterChange,
   language,
   onLanguageChange,
+  languageOptions,
   activeList,
   activeListName,
   activeListValue,
@@ -99,7 +101,7 @@ export function FooterStats({
   const reviewTotal =
     initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue;
 
-  const languageOptions = [
+  const fallbackLanguageOptions = [
     { value: "nl", label: "Nederlands" },
   ];
 
@@ -148,6 +150,7 @@ export function FooterStats({
               activeList={activeList ?? null}
               activeScenarioName={activeScenarioName ?? "Begrip"}
               cardFilter={cardFilter}
+              language={language}
               showFooterSelectorHint
               className="rounded-xl p-2.5 shadow-none"
             />
@@ -170,12 +173,12 @@ export function FooterStats({
             >
               <div className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <DropUpSelect
-                label="Taal"
+                label="Leertaal"
                 showLabel={false}
                 uppercase={false}
                 buttonClassName="w-full justify-between px-3 py-2"
                 value={language}
-                options={languageOptions}
+                options={languageOptions?.length ? languageOptions : fallbackLanguageOptions}
                 onChange={onLanguageChange}
               />
               {listOptions?.length && activeListValue && onListChange ? (

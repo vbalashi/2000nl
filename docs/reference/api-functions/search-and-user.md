@@ -20,11 +20,15 @@ search_word_entries_gated(
     p_filter_frozen boolean DEFAULT NULL,
     p_filter_hidden boolean DEFAULT NULL,
     p_page int DEFAULT 1,
-    p_page_size int DEFAULT 20
+    p_page_size int DEFAULT 20,
+    p_language_code text DEFAULT NULL,
+    p_dictionary_ids uuid[] DEFAULT NULL
 ) RETURNS jsonb
 ```
 
 Free tier is capped; premium and admin are not. Results are filtered through `can_access_dictionary(...)`.
+`p_language_code` and `p_dictionary_ids` are lookup/search scope filters; they
+are independent of the user's active training scope.
 
 Search results are ranked for dictionary lookup. Exact headword matches appear
 before `word_forms` lemma/inflection matches, related/compound headwords,
@@ -39,6 +43,70 @@ item may include:
 
 The UI uses these fields to explain why a row appeared and to avoid showing
 broad substring matches before exact dictionary entries.
+
+## `get_available_learning_languages`
+
+Return learning languages that have accessible dictionary content or
+training-eligible lists for the current user.
+
+```sql
+get_available_learning_languages(
+    p_user_id uuid
+) RETURNS jsonb
+```
+
+Each row includes `code`, `label`, `dictionary_count`, `curated_list_count`,
+`user_list_count`, and `has_training_eligible_lists`.
+
+## `get_available_dictionary_sources`
+
+Return readable dictionary sources for one learning language.
+
+```sql
+get_available_dictionary_sources(
+    p_user_id uuid,
+    p_language_code text
+) RETURNS jsonb
+```
+
+Each row includes `id`, `language_code`, `slug`, `name`, `kind`, `visibility`,
+`is_editable`, and `entry_count`.
+
+## `get_active_training_scope`
+
+Read the saved active training scope for one learning language.
+
+```sql
+get_active_training_scope(
+    p_user_id uuid,
+    p_language_code text
+) RETURNS jsonb
+```
+
+The scope includes `language_code`, `active_list_id`, `active_list_type`,
+`active_scenario`, `card_filter`, `modes_enabled`, `new_review_ratio`,
+`has_saved_scope`, and `is_valid`. If the saved list is no longer accessible for
+that language, the RPC clears the invalid list reference.
+
+## `update_active_training_scope`
+
+Persist the active training scope for one learning language.
+
+```sql
+update_active_training_scope(
+    p_user_id uuid,
+    p_language_code text,
+    p_list_id uuid DEFAULT NULL,
+    p_list_type text DEFAULT NULL,
+    p_active_scenario text DEFAULT NULL,
+    p_card_filter text DEFAULT NULL,
+    p_modes_enabled text[] DEFAULT NULL,
+    p_new_review_ratio int DEFAULT NULL
+) RETURNS jsonb
+```
+
+The legacy `get_active_word_list` and `update_active_word_list` RPCs remain as
+compatibility wrappers over the default language in `user_settings.language_code`.
 
 ## `fetch_words_for_list_gated`
 

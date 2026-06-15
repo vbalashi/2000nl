@@ -2,6 +2,9 @@ import { describe, expect, test } from "vitest";
 import {
   isCrossReferenceOnly,
   mapCuratedListSummary,
+  mapActiveTrainingScope,
+  mapAvailableDictionarySource,
+  mapAvailableLearningLanguage,
   mapDictionaryEntry,
   mapEventTypeToResult,
   mapScenario,
@@ -126,6 +129,7 @@ describe("training word mappers", () => {
       card_type_ids: null,
       type: "curated",
       item_count: 2000,
+      is_mixed_language: false,
       is_primary: true,
     });
   });
@@ -138,6 +142,7 @@ describe("training word mappers", () => {
         description: null,
         language_code: "nl",
         primary_language_code: null,
+        is_mixed_language: true,
         created_at: "2026-05-16T10:00:00.000Z",
         user_word_list_items: [{ count: 12 }],
       }),
@@ -152,7 +157,84 @@ describe("training word mappers", () => {
       card_type_ids: null,
       type: "user",
       item_count: 12,
+      is_mixed_language: true,
       created_at: "2026-05-16T10:00:00.000Z",
+    });
+  });
+
+  test("available language and dictionary source mappers normalize RPC names", () => {
+    expect(
+      mapAvailableLearningLanguage({
+        code: "en",
+        label: "English",
+        dictionary_count: 2,
+        curated_list_count: 1,
+        user_list_count: 3,
+        has_training_eligible_lists: true,
+      }),
+    ).toEqual({
+      code: "en",
+      label: "English",
+      dictionaryCount: 2,
+      curatedListCount: 1,
+      userListCount: 3,
+      hasTrainingEligibleLists: true,
+    });
+
+    expect(
+      mapAvailableDictionarySource({
+        id: "dict-1",
+        language_code: "en",
+        slug: "en-test-core",
+        name: "EN Core Test",
+        kind: "curated",
+        visibility: "public",
+        is_editable: false,
+        entry_count: 10,
+      }),
+    ).toEqual({
+      id: "dict-1",
+      languageCode: "en",
+      slug: "en-test-core",
+      name: "EN Core Test",
+      kind: "curated",
+      visibility: "public",
+      isEditable: false,
+      entryCount: 10,
+    });
+  });
+
+  test("mapActiveTrainingScope applies scope defaults and validates enum fields", () => {
+    expect(
+      mapActiveTrainingScope({
+        language_code: "fr",
+        active_list_id: "list-fr",
+        active_list_type: "curated",
+        active_scenario: "understanding",
+        card_filter: "new",
+        modes_enabled: ["word-to-definition"],
+        new_review_ratio: 4,
+        has_saved_scope: true,
+        is_valid: true,
+      }),
+    ).toEqual({
+      languageCode: "fr",
+      activeListId: "list-fr",
+      activeListType: "curated",
+      activeScenario: "understanding",
+      cardFilter: "new",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 4,
+      hasSavedScope: true,
+      isValid: true,
+    });
+
+    expect(mapActiveTrainingScope({ active_list_type: "other" })).toMatchObject({
+      languageCode: "nl",
+      activeListId: null,
+      activeListType: null,
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
     });
   });
 

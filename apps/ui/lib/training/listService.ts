@@ -1,11 +1,18 @@
 import { supabase } from "../supabaseClient";
 import type {
+  ActiveTrainingScope,
+  AvailableDictionarySource,
+  AvailableLearningLanguage,
+  CardFilter,
   EntryLearningListMembership,
   WordEntrySearchResult,
   WordListSummary,
   WordListType,
 } from "../types";
 import {
+  mapActiveTrainingScope,
+  mapAvailableDictionarySource,
+  mapAvailableLearningLanguage,
   mapCuratedListSummary,
   mapDictionaryEntry,
   mapUserListSummary,
@@ -17,6 +24,8 @@ type WordSearchFilters = {
   isNt2?: boolean;
   filterFrozen?: boolean;
   filterHidden?: boolean;
+  languageCode?: string;
+  dictionaryIds?: string[];
   page?: number;
   pageSize?: number;
 };
@@ -102,15 +111,47 @@ export async function fetchCuratedLists(
 
 export async function fetchUserLists(
   userId: string,
-  _languageCode?: string,
+  languageCode?: string,
 ): Promise<WordListSummary[]> {
   const { data, error } = await supabase.rpc("get_available_word_lists", {
     p_user_id: userId,
-    p_language_code: null,
+    p_language_code: languageCode ?? null,
     p_list_type: "user",
   });
   if (error || !Array.isArray(data)) return [];
   return data.map(mapUserListSummary);
+}
+
+export async function fetchAvailableLearningLanguages(
+  userId: string,
+): Promise<AvailableLearningLanguage[]> {
+  const { data, error } = await supabase.rpc("get_available_learning_languages", {
+    p_user_id: userId,
+  });
+
+  if (error || !Array.isArray(data)) {
+    if (error) console.error("Error fetching available learning languages", error);
+    return [];
+  }
+
+  return data.map(mapAvailableLearningLanguage);
+}
+
+export async function fetchAvailableDictionarySources(params: {
+  userId: string;
+  languageCode: string;
+}): Promise<AvailableDictionarySource[]> {
+  const { data, error } = await supabase.rpc("get_available_dictionary_sources", {
+    p_user_id: params.userId,
+    p_language_code: params.languageCode,
+  });
+
+  if (error || !Array.isArray(data)) {
+    if (error) console.error("Error fetching available dictionary sources", error);
+    return [];
+  }
+
+  return data.map(mapAvailableDictionarySource);
 }
 
 export async function fetchAvailableLists(
@@ -139,6 +180,22 @@ export async function fetchActiveList(
     listId: data?.active_list_id ?? null,
     listType: (data?.active_list_type as WordListType | null) ?? null,
   };
+}
+
+export async function fetchActiveTrainingScope(params: {
+  userId: string;
+  languageCode: string;
+}): Promise<ActiveTrainingScope> {
+  const { data, error } = await supabase.rpc("get_active_training_scope", {
+    p_user_id: params.userId,
+    p_language_code: params.languageCode,
+  });
+
+  if (error) {
+    console.error("Error fetching active training scope", error);
+  }
+
+  return mapActiveTrainingScope(data);
 }
 
 export async function fetchListSummaryById(params: {
@@ -182,6 +239,34 @@ export async function updateActiveList(params: {
   return { error };
 }
 
+export async function updateActiveTrainingScope(params: {
+  userId: string;
+  languageCode: string;
+  listId: string | null;
+  listType?: WordListType | null;
+  activeScenario?: string | null;
+  cardFilter?: CardFilter | null;
+  modesEnabled?: string[] | null;
+  newReviewRatio?: number | null;
+}): Promise<{ scope: ActiveTrainingScope | null; error: any }> {
+  const { data, error } = await supabase.rpc("update_active_training_scope", {
+    p_user_id: params.userId,
+    p_language_code: params.languageCode,
+    p_list_id: params.listId,
+    p_list_type: params.listId ? params.listType ?? "curated" : null,
+    p_active_scenario: params.activeScenario ?? null,
+    p_card_filter: params.cardFilter ?? null,
+    p_modes_enabled: params.modesEnabled ?? null,
+    p_new_review_ratio: params.newReviewRatio ?? null,
+  });
+
+  if (error) {
+    console.error("Error updating active training scope", error);
+  }
+
+  return { scope: error ? null : mapActiveTrainingScope(data), error };
+}
+
 export async function searchWordEntries(
   filters: WordSearchFilters = {},
 ): Promise<WordEntrySearchResult> {
@@ -198,6 +283,8 @@ export async function searchWordEntries(
       typeof filters.filterHidden === "boolean" ? filters.filterHidden : null,
     p_page: page,
     p_page_size: pageSize,
+    p_language_code: filters.languageCode ?? null,
+    p_dictionary_ids: filters.dictionaryIds?.length ? filters.dictionaryIds : null,
   });
 
   if (error) {

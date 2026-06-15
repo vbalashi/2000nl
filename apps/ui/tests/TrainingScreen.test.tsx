@@ -56,6 +56,14 @@ const userOwnedList = {
   item_count: 3,
 };
 
+const mixedUserList = {
+  id: "list-mixed",
+  name: "Travel mix",
+  type: "user" as const,
+  item_count: 4,
+  is_mixed_language: true,
+};
+
 const dictionarySourceList = {
   id: "list-dictionary",
   name: "VanDale",
@@ -101,9 +109,54 @@ const fetchStats = vi.fn().mockResolvedValue({
 });
 const fetchRecentHistory = vi.fn().mockResolvedValue([]);
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
-const fetchActiveList = vi.fn().mockResolvedValue({ listId: null, listType: null });
+const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
+  {
+    code: "nl",
+    label: "Nederlands",
+    dictionaryCount: 1,
+    curatedListCount: 1,
+    userListCount: 0,
+    hasTrainingEligibleLists: true,
+  },
+  {
+    code: "en",
+    label: "English",
+    dictionaryCount: 2,
+    curatedListCount: 1,
+    userListCount: 0,
+    hasTrainingEligibleLists: true,
+  },
+]);
+const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
+  {
+    id: "dict-vandale",
+    languageCode: "nl",
+    slug: "nl-vandale",
+    name: "VanDale woordenboek",
+    kind: "curated",
+    visibility: "public",
+    isEditable: false,
+    entryCount: 2000,
+  },
+]);
+const defaultActiveTrainingScope = {
+  languageCode: "nl",
+  activeListId: null,
+  activeListType: null,
+  activeScenario: "understanding",
+  cardFilter: "both",
+  modesEnabled: ["word-to-definition"],
+  newReviewRatio: 2,
+  hasSavedScope: false,
+  isValid: true,
+};
+const fetchActiveTrainingScope = vi
+  .fn()
+  .mockResolvedValue(defaultActiveTrainingScope);
 const fetchListSummaryById = vi.fn().mockResolvedValue(null);
-const updateActiveList = vi.fn().mockResolvedValue(undefined);
+const updateActiveTrainingScope = vi
+  .fn()
+  .mockResolvedValue({ scope: null, error: null });
 const searchWordEntries = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -153,13 +206,15 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingScenarios,
   fetchStats,
   fetchRecentHistory,
-  fetchActiveList,
+  fetchActiveTrainingScope,
   fetchListSummaryById,
   fetchAvailableLists,
+  fetchAvailableLearningLanguages,
+  fetchAvailableDictionarySources,
   fetchWordsForList,
   searchWordEntries,
   fetchEntryListMemberships,
-  updateActiveList,
+  updateActiveTrainingScope,
   recordDefinitionClick,
   recordReview,
   recordWordView,
@@ -181,16 +236,18 @@ const { TrainingScreen } = await import("@/components/training/TrainingScreen");
 const user: User = { id: "user-1", email: "user@test.com" } as User;
 
 const useTwoListScope = () => {
-  fetchActiveList.mockResolvedValue({
-    listId: activeList.id,
-    listType: activeList.type,
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: activeList.id,
+    activeListType: activeList.type,
+    hasSavedScope: true,
   });
   fetchListSummaryById.mockResolvedValue(activeList);
   fetchAvailableLists.mockResolvedValue([activeList, secondaryList, userOwnedList]);
 };
 
 const restoreDefaultListScope = () => {
-  fetchActiveList.mockResolvedValue({ listId: null, listType: null });
+  fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
   fetchListSummaryById.mockResolvedValue(null);
   fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
 };
@@ -241,6 +298,34 @@ test("search action opens the dedicated dictionary search surface", async () => 
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
   ).not.toBeInTheDocument();
   expect(searchWordEntries).not.toHaveBeenCalled();
+});
+
+test("dictionary search scope changes lookup language without changing training", async () => {
+  updateActiveTrainingScope.mockClear();
+  searchWordEntries.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+
+  fireEvent.click(screen.getByLabelText("Zoeken"));
+  await screen.findByText("Zoekbereik");
+
+  const languageSelect = screen.getByLabelText("Leertaal");
+  fireEvent.change(languageSelect, { target: { value: "en" } });
+
+  const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
+  fireEvent.change(queryInput, { target: { value: "bank" } });
+
+  await waitFor(() =>
+    expect(searchWordEntries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: "bank",
+        languageCode: "en",
+      }),
+    ),
+  );
+  expect(updateActiveTrainingScope).not.toHaveBeenCalled();
 });
 
 test("dictionary lookup state persists while switching settings modal tabs", async () => {
@@ -414,6 +499,33 @@ test("lists tab keeps dictionary source separate from list browsing", async () =
   }
 });
 
+test("lists tab groups mixed-language user lists separately", async () => {
+  fetchAvailableLists.mockResolvedValue([
+    defaultAvailableList,
+    userOwnedList,
+    mixedUserList,
+  ]);
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+
+    await screen.findByText("Mijn lijsten");
+    expect(screen.getByText("My saved words")).toBeInTheDocument();
+    expect(screen.getByText("Gemengde lijsten")).toBeInTheDocument();
+    expect(screen.getByText("Travel mix")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Lijsten met woorden uit meerdere talen blijven apart/i),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
 test("list-filtered search empty state names the viewed-list filter", async () => {
   fetchWordsForList
     .mockResolvedValueOnce({ items: [dictionaryHuis], total: 1 })
@@ -471,7 +583,7 @@ test("dictionary lookup empty state names the dictionary source search", async (
 test("clicking a list in Lijsten changes only the viewed list", async () => {
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockClear();
-  updateActiveList.mockClear();
+  updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
   fetchWordsForList.mockClear();
 
@@ -480,7 +592,7 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
 
     await waitForInitialTrainingFetches();
     fetchNextTrainingWordByScenario.mockClear();
-    updateActiveList.mockClear();
+    updateActiveTrainingScope.mockClear();
     fetchStats.mockClear();
 
     fireEvent.click(screen.getByLabelText("Instellingen"));
@@ -498,7 +610,7 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
         expect.objectContaining({ page: 1 }),
       ),
     );
-    expect(updateActiveList).not.toHaveBeenCalled();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(fetchStats).not.toHaveBeenCalled();
     expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
     expect(screen.getAllByText("Active list").length).toBeGreaterThan(0);
@@ -510,7 +622,7 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
 test("explicit list action makes the viewed list active for training", async () => {
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockClear();
-  updateActiveList.mockClear();
+  updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
 
   try {
@@ -518,7 +630,7 @@ test("explicit list action makes the viewed list active for training", async () 
 
     await waitForInitialTrainingFetches();
     fetchNextTrainingWordByScenario.mockClear();
-    updateActiveList.mockClear();
+    updateActiveTrainingScope.mockClear();
     fetchStats.mockClear();
 
     fireEvent.click(screen.getByLabelText("Instellingen"));
@@ -534,8 +646,9 @@ test("explicit list action makes the viewed list active for training", async () 
     );
 
     await waitFor(() =>
-      expect(updateActiveList).toHaveBeenCalledWith({
+      expect(updateActiveTrainingScope).toHaveBeenCalledWith({
         userId: "user-1",
+        languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
       }),
@@ -561,7 +674,7 @@ test("explicit list action makes the viewed list active for training", async () 
 test("footer list selector still changes active training scope", async () => {
   useTwoListScope();
   fetchNextTrainingWordByScenario.mockClear();
-  updateActiveList.mockClear();
+  updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
 
   try {
@@ -569,7 +682,7 @@ test("footer list selector still changes active training scope", async () => {
 
     await waitForInitialTrainingFetches();
     fetchNextTrainingWordByScenario.mockClear();
-    updateActiveList.mockClear();
+    updateActiveTrainingScope.mockClear();
     fetchStats.mockClear();
 
     expect(
@@ -582,8 +695,9 @@ test("footer list selector still changes active training scope", async () => {
     );
 
     await waitFor(() =>
-      expect(updateActiveList).toHaveBeenCalledWith({
+      expect(updateActiveTrainingScope).toHaveBeenCalledWith({
         userId: "user-1",
+        languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
       }),
@@ -603,20 +717,102 @@ test("footer list selector still changes active training scope", async () => {
   }
 });
 
+test("footer language selector switches current training language without changing defaults", async () => {
+  fetchActiveTrainingScope.mockImplementation(
+    async ({ languageCode }: { languageCode: string }) => ({
+      ...defaultActiveTrainingScope,
+      languageCode,
+      activeListId: languageCode === "en" ? secondaryList.id : activeList.id,
+      activeListType: "curated",
+      activeScenario: languageCode === "en" ? "listening" : "understanding",
+      cardFilter: languageCode === "en" ? "review" : "both",
+      modesEnabled:
+        languageCode === "en"
+          ? ["listen-recognize"]
+          : ["word-to-definition"],
+      newReviewRatio: languageCode === "en" ? 1 : 2,
+      hasSavedScope: true,
+    }),
+  );
+  fetchListSummaryById.mockImplementation(async ({ listId }: { listId: string }) =>
+    listId === secondaryList.id ? secondaryList : activeList,
+  );
+  fetchAvailableLists.mockImplementation(
+    async (_userId: string, languageCode?: string) =>
+      languageCode === "en" ? [secondaryList] : [activeList],
+  );
+  updateUserPreferences.mockClear();
+  updateActiveTrainingScope.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    const footerScope = await screen.findByRole("region", {
+      name: "Training",
+    });
+    expect(
+      within(footerScope).getByText(
+        /Huidige training: Nederlands · Active list · .* · Nieuw \+ herhaling/,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+    fireEvent.click(screen.getByRole("button", { name: /Nederlands/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /English/ }));
+
+    await waitFor(() =>
+      expect(fetchActiveTrainingScope).toHaveBeenCalledWith({
+        userId: "user-1",
+        languageCode: "en",
+      }),
+    );
+    expect(
+      within(footerScope).getByText(
+        "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /English/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Nederlands/ }));
+
+    await waitFor(() =>
+      expect(fetchActiveTrainingScope).toHaveBeenCalledWith({
+        userId: "user-1",
+        languageCode: "nl",
+      }),
+    );
+    expect(
+      within(footerScope).getByText(
+        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
+      ),
+    ).toBeInTheDocument();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+    expect(updateUserPreferences).not.toHaveBeenCalledWith(
+      expect.objectContaining({ languageCode: "en" }),
+    );
+  } finally {
+    restoreDefaultListScope();
+    fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
+    fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
+    fetchListSummaryById.mockResolvedValue(null);
+  }
+});
+
 test("search detail trains a selected entry as the next card without changing active scope", async () => {
   useTwoListScope();
   searchWordEntries.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
   fetchTrainingWordByLookup.mockClear();
   fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
   fetchNextTrainingWordByScenario.mockClear();
-  updateActiveList.mockClear();
+  updateActiveTrainingScope.mockClear();
 
   try {
     render(<TrainingScreen user={user} />);
 
     await waitForInitialTrainingFetches();
     fetchNextTrainingWordByScenario.mockClear();
-    updateActiveList.mockClear();
+    updateActiveTrainingScope.mockClear();
 
     fireEvent.click(screen.getByLabelText("Zoeken"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
@@ -638,7 +834,7 @@ test("search detail trains a selected entry as the next card without changing ac
       ),
     ).toBeInTheDocument();
     expect(fetchTrainingWordByLookup).toHaveBeenCalledWith("word-2", "user-1");
-    expect(updateActiveList).not.toHaveBeenCalled();
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(
       fetchNextTrainingWordByScenario.mock.calls.some((call) => {
         const scope = call[3] as { listId?: string; listType?: string };
@@ -720,7 +916,7 @@ test("training UI shows active list, scenario, card filter, and list policy as o
     });
     expect(
       within(footerScope).getByText(
-        "Huidige training: Active list · Begrip · Nieuw + herhaling",
+        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
       ),
     ).toBeInTheDocument();
     expect(
@@ -747,7 +943,7 @@ test("settings training section repeats the effective training scope without usi
     const settingsScope = scopeSummaries[scopeSummaries.length - 1];
     expect(
       within(settingsScope).getByText(
-        "Huidige training: Active list · Begrip · Nieuw + herhaling",
+        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
       ),
     ).toBeInTheDocument();
     expect(within(settingsScope).getByLabelText(/Beperkt tot Luisteren/))
@@ -770,12 +966,49 @@ test("settings training section repeats the effective training scope without usi
       updatedScopeSummaries[updatedScopeSummaries.length - 1];
     expect(
       within(updatedSettingsScope).getByText(
-        "Huidige training: Active list · Begrip · Nieuw + herhaling",
+        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
       ),
     ).toBeInTheDocument();
     expect(
       within(updatedSettingsScope).queryByText("Secondary list"),
     ).not.toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+  }
+});
+
+test("settings training controls persist to the current language training scope", async () => {
+  useTwoListScope();
+  updateActiveTrainingScope.mockClear();
+  updateUserPreferences.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await waitForInitialTrainingFetches();
+    updateActiveTrainingScope.mockClear();
+    updateUserPreferences.mockClear();
+
+    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(await screen.findByRole("button", { name: "Luisteren" }));
+
+    await waitFor(() =>
+      expect(updateActiveTrainingScope).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-1",
+          languageCode: "nl",
+          listId: activeList.id,
+          listType: activeList.type,
+          activeScenario: "listening",
+          cardFilter: "both",
+          modesEnabled: ["word-to-definition"],
+          newReviewRatio: 2,
+        }),
+      ),
+    );
+    expect(updateUserPreferences).not.toHaveBeenCalledWith(
+      expect.objectContaining({ activeScenario: "listening" }),
+    );
   } finally {
     restoreDefaultListScope();
   }

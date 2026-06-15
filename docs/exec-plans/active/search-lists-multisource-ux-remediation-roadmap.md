@@ -126,7 +126,7 @@ without rebuilding either context.
 
 ### B0: Confirm Product Decisions
 
-Status: planned.
+Status: confirmed in this roadmap; implementation uses DB/RPC scope state.
 
 Decisions to lock before code:
 
@@ -149,8 +149,7 @@ Recommended decision:
 
 ### B1: Data And Fixture Baseline
 
-Status: fixture seed exists; integration into automated validation still
-planned.
+Status: fixture seed exists; fixture load and smoke query verified locally.
 
 Files:
 
@@ -180,7 +179,8 @@ Acceptance criteria:
 
 ### B2: Available Languages And Dictionary Sources API
 
-Status: planned.
+Status: implemented for RPCs, UI service wrappers, search scope controls, and
+training/default language controls.
 
 Purpose:
 
@@ -216,7 +216,9 @@ Acceptance criteria:
 
 ### B3: Per-Language Active Training Scope
 
-Status: planned.
+Status: DB/RPC model, UI service wrappers, and training-surface full-scope flow
+implemented for list, scenario, card filter, enabled modes, and new/review
+ratio.
 
 Purpose:
 
@@ -272,7 +274,8 @@ Acceptance criteria:
 
 ### B4: Search Scope Backend
 
-Status: planned.
+Status: backend/RPC, UI service filter parameters, and search UI scope controls
+implemented.
 
 Purpose:
 
@@ -317,7 +320,8 @@ Acceptance criteria:
 
 ### B5: List Language Filtering
 
-Status: planned.
+Status: implemented for backend/RPC language filtering and desktop/mobile
+mixed-list grouping.
 
 Purpose:
 
@@ -355,7 +359,9 @@ Acceptance criteria:
 
 ### B6: Training Scope UI
 
-Status: planned.
+Status: implemented for footer training scope summary and language/list
+switching; dedicated confirmation copy for unsaved fallback scopes remains
+planned.
 
 Purpose:
 
@@ -400,7 +406,7 @@ Acceptance criteria:
 
 ### B7: Dictionary Search UI Scope
 
-Status: planned.
+Status: implemented.
 
 Purpose:
 
@@ -438,7 +444,8 @@ Acceptance criteria:
 
 ### B8: Settings Cleanup For Defaults
 
-Status: planned.
+Status: implemented for default/current language separation; broader default
+dictionary-source preferences remain out of scope.
 
 Purpose:
 
@@ -466,7 +473,7 @@ Acceptance criteria:
 
 ### B9: Tests And Browser QA
 
-Status: planned.
+Status: implemented; final completion audit passed on 2026-05-26.
 
 Required tests:
 

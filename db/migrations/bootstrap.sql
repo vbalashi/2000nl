@@ -198,3 +198,6 @@
 
 -- Ranked dictionary search metadata for lookup UI
 \i db/migrations/063_ranked_word_entry_search.sql
+
+-- Multilanguage language/source APIs and per-language training scopes
+\i db/migrations/064_multilanguage_scope_rpcs.sql

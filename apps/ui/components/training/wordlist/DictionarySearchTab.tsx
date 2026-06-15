@@ -2,8 +2,18 @@
 
 import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchWordsForList, searchWordEntries } from "@/lib/trainingService";
-import type { DictionaryEntry, WordListSummary } from "@/lib/types";
+import {
+  fetchAvailableDictionarySources,
+  fetchAvailableLearningLanguages,
+  fetchWordsForList,
+  searchWordEntries,
+} from "@/lib/trainingService";
+import type {
+  AvailableDictionarySource,
+  AvailableLearningLanguage,
+  DictionaryEntry,
+  WordListSummary,
+} from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import { getAllMeanings } from "@/lib/wordUtils";
 import { WordDetailPanel } from "../WordDetailPanel";
@@ -34,6 +44,8 @@ export type DictionarySearchTabState = {
   wordResults: DictionaryEntry[];
   wordTotal: number;
   page: number;
+  languageCode: string | null;
+  dictionaryId: string | null;
   detailEntry: DictionaryEntry | null;
   mobileDetailOpen: boolean;
 };
@@ -44,6 +56,8 @@ export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
   wordResults: [],
   wordTotal: 0,
   page: 1,
+  languageCode: null,
+  dictionaryId: null,
   detailEntry: null,
   mobileDetailOpen: false,
 });
@@ -122,10 +136,18 @@ export function DictionarySearchTab({
     wordResults,
     wordTotal,
     page,
+    languageCode,
+    dictionaryId,
     detailEntry,
     mobileDetailOpen,
   } = searchState;
   const [searchLoading, setSearchLoading] = useState(false);
+  const [availableLanguages, setAvailableLanguages] = useState<
+    AvailableLearningLanguage[]
+  >([]);
+  const [dictionarySources, setDictionarySources] = useState<
+    AvailableDictionarySource[]
+  >([]);
   const queryRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
   const updateSearchState = useCallback(
@@ -135,7 +157,15 @@ export function DictionarySearchTab({
     [onSearchStateChange],
   );
 
-  const sourceLabel = "VanDale woordenboek";
+  const searchLanguage = languageCode ?? language;
+  const selectedDictionary = dictionarySources.find(
+    (source) => source.id === dictionaryId,
+  );
+  const sourceLabel = selectedDictionary
+    ? selectedDictionary.name
+    : searchLanguage === "nl"
+      ? "VanDale woordenboek"
+      : `${languageLabel(searchLanguage)} woordenboekbronnen`;
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
   const detailEntryInCurrentResults = useMemo(
     () =>
@@ -168,6 +198,8 @@ export function DictionarySearchTab({
           })
         : await searchWordEntries({
             query: query.trim() || undefined,
+            languageCode: searchLanguage,
+            dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
             page,
             pageSize,
           });
@@ -188,9 +220,55 @@ export function DictionarySearchTab({
     query,
     updateSearchState,
     useViewedListFilter,
+    searchLanguage,
+    dictionaryId,
     viewedList?.type,
     viewedListId,
   ]);
+
+  useEffect(() => {
+    if (!open || searchState.languageCode) return;
+    updateSearchState({ languageCode: language });
+  }, [language, open, searchState.languageCode, updateSearchState]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const loadSearchScope = async () => {
+      const languages = await fetchAvailableLearningLanguages(userId);
+      if (!cancelled) {
+        setAvailableLanguages(languages);
+      }
+    };
+    void loadSearchScope();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, userId]);
+
+  useEffect(() => {
+    if (!open || !searchLanguage) return;
+    let cancelled = false;
+    const loadSources = async () => {
+      const sources = await fetchAvailableDictionarySources({
+        userId,
+        languageCode: searchLanguage,
+      });
+      if (!cancelled) {
+        setDictionarySources(sources);
+        if (
+          dictionaryId &&
+          !sources.some((source) => source.id === dictionaryId)
+        ) {
+          updateSearchState({ dictionaryId: null, page: 1 });
+        }
+      }
+    };
+    void loadSources();
+    return () => {
+      cancelled = true;
+    };
+  }, [dictionaryId, open, searchLanguage, updateSearchState, userId]);
 
   useEffect(() => {
     void runSearch();
@@ -300,6 +378,60 @@ export function DictionarySearchTab({
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
             />
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Zoekbereik
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span>Leertaal</span>
+              <select
+                value={searchLanguage}
+                onChange={(event) => {
+                  updateSearchState({
+                    languageCode: event.target.value,
+                    dictionaryId: null,
+                    page: 1,
+                  });
+                }}
+                disabled={useViewedListFilter}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                {(availableLanguages.length
+                  ? availableLanguages
+                  : [{ code: searchLanguage, label: languageLabel(searchLanguage) }]
+                ).map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span>Woordenboekbron</span>
+              <select
+                value={dictionaryId ?? "all"}
+                onChange={(event) => {
+                  updateSearchState({
+                    dictionaryId:
+                      event.target.value === "all" ? null : event.target.value,
+                    page: 1,
+                  });
+                }}
+                disabled={useViewedListFilter}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                <option value="all">Alle bronnen</option>
+                {dictionarySources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         <div className="space-y-0.5 text-xs text-slate-500 dark:text-slate-400">

@@ -3,22 +3,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
 
 const {
-  fetchActiveList,
+  fetchActiveTrainingScope,
   fetchAvailableLists,
   fetchListSummaryById,
-  updateActiveList,
+  updateActiveTrainingScope,
 } = vi.hoisted(() => ({
-  fetchActiveList: vi.fn(),
+  fetchActiveTrainingScope: vi.fn(),
   fetchAvailableLists: vi.fn(),
   fetchListSummaryById: vi.fn(),
-  updateActiveList: vi.fn(),
+  updateActiveTrainingScope: vi.fn(),
 }));
 
 vi.mock("@/lib/trainingService", () => ({
-  fetchActiveList,
+  fetchActiveTrainingScope,
   fetchAvailableLists,
   fetchListSummaryById,
-  updateActiveList,
+  updateActiveTrainingScope,
 }));
 
 const curatedList = {
@@ -35,6 +35,14 @@ const userList = {
   item_count: 5,
 };
 
+const englishList = {
+  id: "en-1",
+  name: "English saved",
+  type: "curated" as const,
+  item_count: 10,
+  language_code: "en",
+};
+
 const dictionarySourceList = {
   id: "source-1",
   name: "VanDale",
@@ -44,18 +52,38 @@ const dictionarySourceList = {
 
 describe("useTrainingActiveList", () => {
   beforeEach(() => {
-    fetchActiveList.mockReset();
+    fetchActiveTrainingScope.mockReset();
     fetchAvailableLists.mockReset();
     fetchListSummaryById.mockReset();
-    updateActiveList.mockReset();
+    updateActiveTrainingScope.mockReset();
     fetchAvailableLists.mockResolvedValue([curatedList]);
-    fetchActiveList.mockResolvedValue({ listId: null, listType: null });
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: null,
+      activeListType: null,
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: false,
+      isValid: false,
+    });
     fetchListSummaryById.mockResolvedValue(null);
-    updateActiveList.mockResolvedValue({ error: null });
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
   });
 
   test("hydrates a saved active list", async () => {
-    fetchActiveList.mockResolvedValue({ listId: "user-1", listType: "user" });
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: "user-1",
+      activeListType: "user",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: true,
+    });
     fetchListSummaryById.mockResolvedValue(userList);
 
     const { result } = renderHook(() =>
@@ -79,8 +107,72 @@ describe("useTrainingActiveList", () => {
     expect(result.current.activeList).toBe(userList);
   });
 
+  test("restores the saved active list when switching nl -> en -> nl", async () => {
+    fetchAvailableLists.mockImplementation(async (_userId, language) =>
+      language === "en" ? [englishList] : [curatedList, userList],
+    );
+    fetchActiveTrainingScope.mockImplementation(async ({ languageCode }) =>
+      languageCode === "en"
+        ? {
+            languageCode: "en",
+            activeListId: "en-1",
+            activeListType: "curated",
+            activeScenario: "understanding",
+            cardFilter: "both",
+            modesEnabled: ["word-to-definition"],
+            newReviewRatio: 2,
+            hasSavedScope: true,
+            isValid: true,
+          }
+        : {
+            languageCode: "nl",
+            activeListId: "user-1",
+            activeListType: "user",
+            activeScenario: "understanding",
+            cardFilter: "both",
+            modesEnabled: ["word-to-definition"],
+            newReviewRatio: 2,
+            hasSavedScope: true,
+            isValid: true,
+          },
+    );
+    fetchListSummaryById.mockImplementation(async ({ listId }) =>
+      listId === "en-1" ? englishList : userList,
+    );
+
+    const { result, rerender } = renderHook(
+      ({ language }) =>
+        useTrainingActiveList({
+          userId: "user-1",
+          language,
+          showSettings: false,
+        }),
+      { initialProps: { language: "nl" } },
+    );
+
+    await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
+
+    rerender({ language: "en" });
+    await waitFor(() => expect(result.current.wordListId).toBe("en-1"));
+    expect(result.current.wordListLabel).toBe("English saved");
+
+    rerender({ language: "nl" });
+    await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
+    expect(result.current.wordListLabel).toBe("Saved");
+  });
+
   test("clears a deleted saved list and then auto-selects primary", async () => {
-    fetchActiveList.mockResolvedValue({ listId: "missing", listType: "user" });
+    fetchActiveTrainingScope.mockResolvedValue({
+      languageCode: "nl",
+      activeListId: "missing",
+      activeListType: "user",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: false,
+    });
     fetchListSummaryById.mockResolvedValue(null);
 
     const { result } = renderHook(() =>
@@ -94,8 +186,9 @@ describe("useTrainingActiveList", () => {
     await waitFor(() => expect(result.current.listHydrated).toBe(true));
     await waitFor(() => expect(result.current.wordListId).toBe("curated-1"));
 
-    expect(updateActiveList).toHaveBeenCalledWith({
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith({
       userId: "user-1",
+      languageCode: "nl",
       listId: null,
       listType: null,
     });
@@ -122,8 +215,9 @@ describe("useTrainingActiveList", () => {
 
     await result.current.handleListSelectValue("user:user-1");
 
-    expect(updateActiveList).toHaveBeenCalledWith({
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith({
       userId: "user-1",
+      languageCode: "nl",
       listId: "user-1",
       listType: "user",
     });
@@ -155,8 +249,9 @@ describe("useTrainingActiveList", () => {
     const scope = await result.current.handleListSelectValue("curated:source-1");
 
     expect(scope).toBeNull();
-    expect(updateActiveList).not.toHaveBeenCalledWith({
+    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith({
       userId: "user-1",
+      languageCode: "nl",
       listId: "source-1",
       listType: "curated",
     });
@@ -165,10 +260,40 @@ describe("useTrainingActiveList", () => {
 
   test("list updates keep resolved active list or fall back to primary", async () => {
     fetchAvailableLists.mockResolvedValue([curatedList, userList]);
-    fetchActiveList
-      .mockResolvedValueOnce({ listId: null, listType: null })
-      .mockResolvedValueOnce({ listId: "user-1", listType: "user" })
-      .mockResolvedValueOnce({ listId: "missing", listType: "user" });
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: "user-1",
+        activeListType: "user",
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: "missing",
+        activeListType: "user",
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: false,
+      });
     fetchListSummaryById
       .mockResolvedValueOnce(userList)
       .mockResolvedValueOnce(null);
@@ -191,10 +316,11 @@ describe("useTrainingActiveList", () => {
 
     await result.current.handleListsUpdated({ onPrimaryFallback });
     expect(onPrimaryFallback).toHaveBeenCalledWith(curatedList);
-    expect(updateActiveList).toHaveBeenCalledWith({
-      userId: "user-1",
-      listId: "curated-1",
-      listType: "curated",
-    });
+    expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        listId: "curated-1",
+        listType: "curated",
+      }),
+    );
   });
 });

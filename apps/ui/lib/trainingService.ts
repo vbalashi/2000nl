@@ -20,6 +20,9 @@ export {
 export { fetchRecentHistory, fetchStats } from "./training/statsHistoryService";
 export {
   fetchActiveList,
+  fetchActiveTrainingScope,
+  fetchAvailableDictionarySources,
+  fetchAvailableLearningLanguages,
   fetchAvailableLists,
   fetchCuratedLists,
   fetchEntryListMemberships,
@@ -34,6 +37,7 @@ export {
   updateUserList,
   addWordsToUserList,
   updateActiveList,
+  updateActiveTrainingScope,
 } from "./training/listService";
 export {
   fetchNextTrainingWord,

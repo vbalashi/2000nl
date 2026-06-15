@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { WordListSummary, WordListType } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ActiveTrainingScope, WordListSummary, WordListType } from "@/lib/types";
 import {
-  fetchActiveList,
+  fetchActiveTrainingScope,
   fetchAvailableLists,
   fetchListSummaryById,
-  updateActiveList,
+  updateActiveTrainingScope,
 } from "../trainingService";
 
 type SelectedListScope = {
@@ -33,8 +33,12 @@ export function useTrainingActiveList(params: {
   const [wordListType, setWordListType] = useState<WordListType | null>(null);
   const [wordListLabel, setWordListLabel] = useState<string>("");
   const [activeList, setActiveList] = useState<WordListSummary | null>(null);
+  const [activeTrainingScope, setActiveTrainingScope] =
+    useState<ActiveTrainingScope | null>(null);
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const [listHydrated, setListHydrated] = useState(false);
+  const currentLanguageRef = useRef(language);
+  const listRequestIdRef = useRef(0);
 
   const applyList = useCallback((list: WordListSummary) => {
     setWordListId(list.id);
@@ -50,42 +54,75 @@ export function useTrainingActiveList(params: {
     setActiveList(null);
   }, []);
 
+  useEffect(() => {
+    currentLanguageRef.current = language;
+    listRequestIdRef.current += 1;
+    setAvailableLists([]);
+    setListHydrated(false);
+    setActiveTrainingScope(null);
+    clearList();
+  }, [clearList, language]);
+
   const refreshAvailableLists = useCallback(async () => {
     if (!userId) return [];
+    const requestId = ++listRequestIdRef.current;
+    const requestedLanguage = language;
     const lists = await fetchAvailableLists(userId, language);
-    setAvailableLists(lists);
+    if (
+      requestId === listRequestIdRef.current &&
+      requestedLanguage === currentLanguageRef.current
+    ) {
+      setAvailableLists(lists);
+    }
     return lists;
   }, [language, userId]);
 
   useEffect(() => {
     if (!userId) return;
+    let cancelled = false;
     const hydrateActiveList = async () => {
-      const active = await fetchActiveList(userId);
-      if (active.listId) {
-        const listType = active.listType ?? "curated";
+      setListHydrated(false);
+      const active = await fetchActiveTrainingScope({
+        userId,
+        languageCode: language,
+      });
+      if (cancelled) return;
+      setActiveTrainingScope(active);
+
+      if (active.activeListId) {
+        const listType = active.activeListType ?? "curated";
         const resolved = await fetchListSummaryById({
           userId,
-          listId: active.listId,
+          listId: active.activeListId,
           listType,
         });
+        if (cancelled) return;
 
         if (!resolved) {
-          await updateActiveList({
+          await updateActiveTrainingScope({
             userId,
+            languageCode: language,
             listId: null,
             listType: null,
           });
+          setActiveTrainingScope((current) =>
+            current ? { ...current, activeListId: null, activeListType: null } : current,
+          );
           clearList();
           setListHydrated(true);
           return;
         }
 
         if (!isTrainingEligibleList(resolved)) {
-          await updateActiveList({
+          await updateActiveTrainingScope({
             userId,
+            languageCode: language,
             listId: null,
             listType: null,
           });
+          setActiveTrainingScope((current) =>
+            current ? { ...current, activeListId: null, activeListType: null } : current,
+          );
           clearList();
           setListHydrated(true);
           return;
@@ -98,7 +135,10 @@ export function useTrainingActiveList(params: {
       setListHydrated(true);
     };
     void hydrateActiveList();
-  }, [applyList, clearList, userId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [applyList, clearList, language, userId]);
 
   useEffect(() => {
     void refreshAvailableLists();
@@ -122,11 +162,15 @@ export function useTrainingActiveList(params: {
       applyList(list);
 
       if (userId) {
-        await updateActiveList({
+        const result = await updateActiveTrainingScope({
           userId,
+          languageCode: language,
           listId: list.id,
           listType: list.type,
         });
+        if (result.scope) {
+          setActiveTrainingScope(result.scope);
+        }
       }
 
       return {
@@ -134,7 +178,7 @@ export function useTrainingActiveList(params: {
         listType: list.type,
       } satisfies SelectedListScope;
     },
-    [applyList, userId],
+    [applyList, language, userId],
   );
 
   const handleListSelectValue = useCallback(
@@ -154,14 +198,22 @@ export function useTrainingActiveList(params: {
       if (!userId) return null;
 
       const lists = await fetchAvailableLists(userId, language);
-      setAvailableLists(lists);
+      if (language === currentLanguageRef.current) {
+        setAvailableLists(lists);
+      }
 
-      const active = await fetchActiveList(userId);
-      if (active.listId) {
-        const listType = active.listType ?? "curated";
+      const active = await fetchActiveTrainingScope({
+        userId,
+        languageCode: language,
+      });
+      if (language === currentLanguageRef.current) {
+        setActiveTrainingScope(active);
+      }
+      if (active.activeListId) {
+        const listType = active.activeListType ?? "curated";
         const resolved = await fetchListSummaryById({
           userId,
-          listId: active.listId,
+          listId: active.activeListId,
           listType,
         });
         if (resolved && isTrainingEligibleList(resolved)) {
@@ -173,11 +225,6 @@ export function useTrainingActiveList(params: {
 
       const primary = lists.find(isTrainingEligibleList);
       if (primary) {
-        await updateActiveList({
-          userId,
-          listId: primary.id,
-          listType: primary.type,
-        });
         applyList(primary);
         callbacks.onPrimaryFallback?.(primary);
         return primary;
@@ -206,6 +253,7 @@ export function useTrainingActiveList(params: {
 
   return {
     activeList,
+    activeTrainingScope,
     activeListValue,
     availableLists,
     handleListSelectValue,

@@ -126,6 +126,38 @@ export type SidebarHistoryItem = DictionaryEntry & {
 export type WordListType = "curated" | "user";
 export type ListCardPolicy = "inherit" | "prefer" | "restrict";
 
+export type AvailableLearningLanguage = {
+  code: string;
+  label: string;
+  dictionaryCount: number;
+  curatedListCount: number;
+  userListCount: number;
+  hasTrainingEligibleLists: boolean;
+};
+
+export type AvailableDictionarySource = {
+  id: string;
+  languageCode: string;
+  slug: string;
+  name: string;
+  kind: string;
+  visibility?: string | null;
+  isEditable: boolean;
+  entryCount: number;
+};
+
+export type ActiveTrainingScope = {
+  languageCode: string;
+  activeListId: string | null;
+  activeListType: WordListType | null;
+  activeScenario: string;
+  cardFilter: CardFilter;
+  modesEnabled: string[];
+  newReviewRatio: number;
+  hasSavedScope: boolean;
+  isValid: boolean;
+};
+
 export type EntryLearningListMembership = {
   listId: string;
   listType: WordListType;
@@ -145,6 +177,7 @@ export type WordListSummary = {
   description?: string | null;
   language_code?: string | null;
   primary_language_code?: string | null;
+  is_mixed_language?: boolean;
   default_scenario_id?: string | null;
   card_policy?: ListCardPolicy;
   card_type_ids?: string[] | null;

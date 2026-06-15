@@ -43,6 +43,9 @@ type Props = {
   onStartOnboarding: () => void;
   language: string;
   onLanguageChange: (value: string) => void;
+  languageOptions?: Array<{ value: string; label: string }>;
+  defaultLanguage: string;
+  onDefaultLanguageChange: (value: string) => void;
   translationLang: string | null;
   onTranslationLangChange: (value: string | null) => void;
   wordListId: string | null;
@@ -80,6 +83,9 @@ export function SettingsModal({
   onStartOnboarding,
   language,
   onLanguageChange,
+  languageOptions,
+  defaultLanguage,
+  onDefaultLanguageChange,
   translationLang,
   onTranslationLangChange,
   wordListId,
@@ -420,6 +426,7 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                 userId={userId}
                 language={language}
                 onLanguageChange={onLanguageChange}
+                languageOptions={languageOptions}
                 translationLang={translationLang}
                 curatedLists={curatedLists}
                 userLists={userLists}
@@ -579,12 +586,13 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                   </p>
                   <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Actieve training
+                      Huidige training
                     </p>
                     <EffectiveTrainingScopeSummary
                       activeList={activeTrainingListFromLists}
                       activeScenarioName={activeScenarioName}
                       cardFilter={cardFilter}
+                      language={language}
                       className="mt-2"
                     />
                     <button
@@ -705,15 +713,14 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                         onChange={(value) => onNewReviewRatioChange(parseInt(value, 10))}
                       />
                       <DropUpSelect
-                        label="Leertaal"
-                        value={language}
-                        options={[
-                          { value: "nl", label: "Nederlands" },
-                          { value: "en", label: "English" },
-                          { value: "de", label: "Deutsch" },
-                          { value: "fr", label: "Français" },
-                        ]}
-                        onChange={onLanguageChange}
+                        label="Standaard leertaal"
+                        value={defaultLanguage}
+                        options={
+                          languageOptions?.length
+                            ? languageOptions
+                            : [{ value: "nl", label: "Nederlands" }]
+                        }
+                        onChange={onDefaultLanguageChange}
                       />
                     </div>
                   </div>

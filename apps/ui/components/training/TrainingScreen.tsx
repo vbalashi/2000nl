@@ -8,11 +8,13 @@ import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
   fetchDictionaryEntry,
+  fetchAvailableLearningLanguages,
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
   fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
+  updateActiveTrainingScope,
   recordReview,
   recordWordView,
   fetchLastReviewDebug,
@@ -121,6 +123,11 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
   easy: "order-4 md:order-4",
 };
 
+const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
+
+const fallbackLanguageLabel = (code: string) =>
+  code ? code.toUpperCase() : "Onbekend";
+
 const STEP_TARGETS: Array<{
   target: string;
   placement: "center" | "bottom" | "top" | "right" | "left";
@@ -169,6 +176,57 @@ export function TrainingScreen({ user }: Props) {
     setTrainingSidebarPinned: setTrainingSidebarPinnedPreference,
     setTranslationLang,
   } = useTrainingPreferences(user?.id);
+  const [currentTrainingLanguage, setCurrentTrainingLanguage] =
+    useState(language);
+  const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
+    DEFAULT_LANGUAGE_OPTIONS,
+  );
+  const trainingLanguageManuallyChangedRef = useRef(false);
+
+  useEffect(() => {
+    if (!trainingLanguageManuallyChangedRef.current) {
+      setCurrentTrainingLanguage(language);
+    }
+  }, [language]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    const loadTrainingLanguages = async () => {
+      const languages = await fetchAvailableLearningLanguages(user.id);
+      if (cancelled) return;
+
+      const options = languages.map((item) => ({
+        value: item.code,
+        label: item.label || fallbackLanguageLabel(item.code),
+      }));
+      const withCurrent = options.some(
+        (option) => option.value === currentTrainingLanguage,
+      )
+        ? options
+        : [
+            ...options,
+            {
+              value: currentTrainingLanguage,
+              label: fallbackLanguageLabel(currentTrainingLanguage),
+            },
+          ];
+      setTrainingLanguageOptions(
+        withCurrent.length ? withCurrent : DEFAULT_LANGUAGE_OPTIONS,
+      );
+    };
+
+    void loadTrainingLanguages();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTrainingLanguage, user?.id]);
+
+  const handleTrainingLanguageChange = useCallback((value: string) => {
+    trainingLanguageManuallyChangedRef.current = true;
+    setCurrentTrainingLanguage(value);
+  }, []);
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null,
   );
@@ -280,6 +338,7 @@ export function TrainingScreen({ user }: Props) {
     availableLists,
     handleListSelectValue,
     handleListsUpdated: refreshListsAfterUpdate,
+    activeTrainingScope,
     listHydrated,
     listOptions,
     persistListChange,
@@ -288,22 +347,44 @@ export function TrainingScreen({ user }: Props) {
     wordListType,
   } = useTrainingActiveList({
     userId: user?.id,
-    language,
+    language: currentTrainingLanguage,
     showSettings,
   });
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!activeTrainingScope) return;
+    setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
+    setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
+    setEnabledModes(activeTrainingScope.modesEnabled as TrainingMode[], {
+      persist: false,
+    });
+    setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
+  }, [
+    activeTrainingScope,
+    setActiveScenario,
+    setCardFilterPreference,
+    setEnabledModes,
+    setNewReviewRatio,
+  ]);
+
+  useEffect(() => {
     if (!activeList?.default_scenario_id) {
       appliedDefaultScenarioListRef.current = null;
       return;
     }
+    if (activeTrainingScope?.hasSavedScope) return;
     if (appliedDefaultScenarioListRef.current === activeList.id) return;
 
     appliedDefaultScenarioListRef.current = activeList.id;
-    setActiveScenario(activeList.default_scenario_id);
-  }, [activeList?.default_scenario_id, activeList?.id, setActiveScenario]);
+    setActiveScenario(activeList.default_scenario_id, { persist: false });
+  }, [
+    activeList?.default_scenario_id,
+    activeList?.id,
+    activeTrainingScope?.hasSavedScope,
+    setActiveScenario,
+  ]);
 
   const enabledModesKey = enabledModes.join("|");
 
@@ -311,7 +392,7 @@ export function TrainingScreen({ user }: Props) {
   // session-reviewed set so the new session starts fresh.
   useEffect(() => {
     reviewedInSessionRef.current.clear();
-  }, [activeScenario, enabledModesKey, wordListId, wordListType]);
+  }, [activeScenario, currentTrainingLanguage, enabledModesKey, wordListId, wordListType]);
 
   // Also clear on unmount to avoid leaking state across mounts in tests/dev.
   useEffect(() => {
@@ -384,6 +465,39 @@ export function TrainingScreen({ user }: Props) {
     [setTrainingSidebarPinnedPreference],
   );
 
+  const persistCurrentTrainingScope = useCallback(
+    (overrides: {
+      listId?: string | null;
+      listType?: WordListType | null;
+      activeScenario?: string;
+      cardFilter?: CardFilter;
+      modesEnabled?: TrainingMode[];
+      newReviewRatio?: number;
+    } = {}) => {
+      if (!user?.id) return;
+      void updateActiveTrainingScope({
+        userId: user.id,
+        languageCode: currentTrainingLanguage,
+        listId: overrides.listId ?? wordListId,
+        listType: overrides.listType ?? wordListType,
+        activeScenario: overrides.activeScenario ?? activeScenario,
+        cardFilter: overrides.cardFilter ?? cardFilter,
+        modesEnabled: overrides.modesEnabled ?? enabledModes,
+        newReviewRatio: overrides.newReviewRatio ?? newReviewRatio,
+      });
+    },
+    [
+      activeScenario,
+      cardFilter,
+      currentTrainingLanguage,
+      enabledModes,
+      newReviewRatio,
+      user?.id,
+      wordListId,
+      wordListType,
+    ],
+  );
+
   const toggleTrainingSidebarPinned = useCallback(() => {
     setTrainingSidebarPinnedPreference(!trainingSidebarPinned);
 
@@ -414,14 +528,15 @@ export function TrainingScreen({ user }: Props) {
 
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
-      setCardFilterPreference(newFilter);
+      setCardFilterPreference(newFilter, { persist: false });
+      persistCurrentTrainingScope({ cardFilter: newFilter });
       // Reset queue rotation when switching to 'both' to start interleave cycle
       if (newFilter === "both") {
         setQueueTurn("new");
         setReviewCounter(0);
       }
     },
-    [setCardFilterPreference],
+    [persistCurrentTrainingScope, setCardFilterPreference],
   );
 
   // Advance queue turn for round-robin between new and review
@@ -1343,18 +1458,29 @@ export function TrainingScreen({ user }: Props) {
     async (list: WordListSummary) => {
       const scope = await persistListChange(list);
       if (!scope) return;
-      if (list.default_scenario_id) {
-        setActiveScenario(list.default_scenario_id);
-      }
+      const nextScenario = list.default_scenario_id ?? activeScenario;
+      setActiveScenario(nextScenario, { persist: false });
+      persistCurrentTrainingScope({
+        listId: list.id,
+        listType: list.type,
+        activeScenario: nextScenario,
+      });
       void loadStats({ listId: list.id, listType: list.type });
       void loadNextWord(
         [],
         { listId: list.id, listType: list.type },
         undefined,
-        list.default_scenario_id ?? undefined,
+        nextScenario,
       );
     },
-    [loadStats, loadNextWord, persistListChange, setActiveScenario],
+    [
+      activeScenario,
+      loadStats,
+      loadNextWord,
+      persistCurrentTrainingScope,
+      persistListChange,
+      setActiveScenario,
+    ],
   );
 
   const handleFooterListChange = useCallback(
@@ -1364,31 +1490,47 @@ export function TrainingScreen({ user }: Props) {
       const list = availableLists.find(
         (item) => item.id === scope.listId && item.type === scope.listType,
       );
-      if (list?.default_scenario_id) {
-        setActiveScenario(list.default_scenario_id);
-      }
+      const nextScenario = list?.default_scenario_id ?? activeScenario;
+      setActiveScenario(nextScenario, { persist: false });
+      persistCurrentTrainingScope({
+        listId: scope.listId,
+        listType: scope.listType,
+        activeScenario: nextScenario,
+      });
       void loadStats(scope);
       void loadNextWord(
         [],
         scope,
         undefined,
-        list?.default_scenario_id ?? undefined,
+        nextScenario,
       );
     },
-    [availableLists, handleListSelectValue, loadNextWord, loadStats, setActiveScenario],
+    [
+      activeScenario,
+      availableLists,
+      handleListSelectValue,
+      loadNextWord,
+      loadStats,
+      persistCurrentTrainingScope,
+      setActiveScenario,
+    ],
   );
 
   const handleListsUpdated = useCallback(async () => {
     const reloadForList = (list: WordListSummary) => {
-      if (list.default_scenario_id) {
-        setActiveScenario(list.default_scenario_id);
-      }
+      const nextScenario = list.default_scenario_id ?? activeScenario;
+      setActiveScenario(nextScenario, { persist: false });
+      persistCurrentTrainingScope({
+        listId: list.id,
+        listType: list.type,
+        activeScenario: nextScenario,
+      });
       void loadStats({ listId: list.id, listType: list.type });
       void loadNextWord(
         [],
         { listId: list.id, listType: list.type },
         undefined,
-        list.default_scenario_id ?? undefined,
+        nextScenario,
       );
     };
 
@@ -1396,7 +1538,14 @@ export function TrainingScreen({ user }: Props) {
       onResolvedActiveList: reloadForList,
       onPrimaryFallback: reloadForList,
     });
-  }, [loadNextWord, loadStats, refreshListsAfterUpdate, setActiveScenario]);
+  }, [
+    activeScenario,
+    loadNextWord,
+    loadStats,
+    persistCurrentTrainingScope,
+    refreshListsAfterUpdate,
+    setActiveScenario,
+  ]);
 
   const handleRecentSelect = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);
@@ -1405,16 +1554,18 @@ export function TrainingScreen({ user }: Props) {
   const handleModesChange = useCallback(
     (newModes: TrainingMode[]) => {
       setRevealed(false);
-      setEnabledModes(newModes);
+      setEnabledModes(newModes, { persist: false });
+      persistCurrentTrainingScope({ modesEnabled: newModes });
     },
-    [setEnabledModes],
+    [persistCurrentTrainingScope, setEnabledModes],
   );
 
   const handleScenarioChange = useCallback(
     (newScenario: string) => {
       trainingDebug.log("[Settings] Changing scenario to:", newScenario);
       setRevealed(false);
-      setActiveScenario(newScenario);
+      setActiveScenario(newScenario, { persist: false });
+      persistCurrentTrainingScope({ activeScenario: newScenario });
       // Load next word with the new scenario
       void loadNextWord(
         [],
@@ -1423,7 +1574,13 @@ export function TrainingScreen({ user }: Props) {
         newScenario,
       );
     },
-    [setActiveScenario, loadNextWord, wordListId, wordListType],
+    [
+      setActiveScenario,
+      persistCurrentTrainingScope,
+      loadNextWord,
+      wordListId,
+      wordListType,
+    ],
   );
 
   const handleCardFilterChange = useCallback(
@@ -1431,6 +1588,14 @@ export function TrainingScreen({ user }: Props) {
       setCardFilter(newFilter);
     },
     [setCardFilter],
+  );
+
+  const handleNewReviewRatioChange = useCallback(
+    (newRatio: number) => {
+      setNewReviewRatio(newRatio, { persist: false });
+      persistCurrentTrainingScope({ newReviewRatio: newRatio });
+    },
+    [persistCurrentTrainingScope, setNewReviewRatio],
   );
 
   const canSwipe =
@@ -2177,8 +2342,9 @@ export function TrainingScreen({ user }: Props) {
         cardFilter={cardFilter}
         onModesChange={handleModesChange}
         onCardFilterChange={handleCardFilterChange}
-        language={language}
-        onLanguageChange={setLanguage}
+        language={currentTrainingLanguage}
+        onLanguageChange={handleTrainingLanguageChange}
+        languageOptions={trainingLanguageOptions}
         activeList={activeList}
         activeListName={wordListLabel}
         activeListValue={activeListValue}
@@ -2252,8 +2418,11 @@ export function TrainingScreen({ user }: Props) {
             setSettingsAutoFocusWordSearch(false);
             startOnboarding();
           }}
-          language={language}
-          onLanguageChange={setLanguage}
+          language={currentTrainingLanguage}
+          onLanguageChange={handleTrainingLanguageChange}
+          languageOptions={trainingLanguageOptions}
+          defaultLanguage={language}
+          onDefaultLanguageChange={setLanguage}
           translationLang={translationLang}
           onTranslationLangChange={setTranslationLang}
           wordListId={wordListId}
@@ -2265,7 +2434,7 @@ export function TrainingScreen({ user }: Props) {
           onModesChange={handleModesChange}
           onCardFilterChange={handleCardFilterChange}
           newReviewRatio={newReviewRatio}
-          onNewReviewRatioChange={setNewReviewRatio}
+          onNewReviewRatioChange={handleNewReviewRatioChange}
           stats={stats}
           userEmail={user.email ?? ""}
           userId={user.id}

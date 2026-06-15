@@ -60,19 +60,32 @@ type Props = {
   activeList: WordListSummary | null;
   activeScenarioName: string;
   cardFilter: CardFilter;
+  language?: string;
   className?: string;
   showFooterSelectorHint?: boolean;
+};
+
+const languageLabel = (code: string | null | undefined) => {
+  if (code === "nl") return "Nederlands";
+  if (code === "en") return "English";
+  if (code === "fr") return "Français";
+  if (code === "de") return "Deutsch";
+  return code ?? null;
 };
 
 export function EffectiveTrainingScopeSummary({
   activeList,
   activeScenarioName,
   cardFilter,
+  language,
   className,
   showFooterSelectorHint = false,
 }: Props) {
   const activeListName = activeList?.name ?? "Geen actieve lijst";
-  const compactSummary = `Huidige training: ${activeListName} · ${activeScenarioName} · ${CARD_FILTER_LABELS[cardFilter]}`;
+  const learningLanguage = languageLabel(language);
+  const compactSummary = `Huidige training: ${
+    learningLanguage ? `${learningLanguage} · ` : ""
+  }${activeListName} · ${activeScenarioName} · ${CARD_FILTER_LABELS[cardFilter]}`;
   const policyDetails = listPolicyLabel(activeList);
 
   return (

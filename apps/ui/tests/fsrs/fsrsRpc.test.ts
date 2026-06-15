@@ -636,7 +636,7 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_available_word_lists includes language-scoped curated and all user lists", async () => {
+  test("get_available_word_lists scopes user lists by language and keeps mixed lists separate", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId);
@@ -656,11 +656,46 @@ describeIfDb("FSRS RPC integration", () => {
          values ('de', 'de', $1, $2, false)`,
         [`Other language curated ${Date.now()}`, `other-curated-${Date.now()}`],
       );
-      const { rows: userRows } = await client.query(
+      const { rows: otherLanguageUserRows } = await client.query(
         `insert into user_word_lists (user_id, language_code, primary_language_code, name)
          values ($1, 'de', 'de', $2)
          returning id`,
-        [userId, `Available user ${Date.now()}`],
+        [userId, `Other language user ${Date.now()}`],
+      );
+      const { rows: languageUserRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Dutch user ${Date.now()}`],
+      );
+      const { rows: mixedUserRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Mixed user ${Date.now()}`],
+      );
+      const nlWordId = await insertWord(client, `available-nl-${Date.now()}`);
+      const { rows: deDictionaryRows } = await client.query(
+        `insert into dictionaries (
+          language_code, slug, name, kind, visibility, schema_key, schema_version
+        )
+        values ('de', $1, 'German fixture dictionary', 'curated', 'public', 'nl-vandale-v1', 1)
+        returning id`,
+        [`available-de-${Date.now()}`],
+      );
+      const { rows: deWordRows } = await client.query(
+        `insert into word_entries (
+          dictionary_id, language_code, headword, part_of_speech, gender,
+          is_nt2_2000, raw, meaning_id
+        )
+        values ($1, 'de', $2, 'noun', 'n', true, '{}'::jsonb, 1)
+        returning id`,
+        [deDictionaryRows[0].id, `verfuegbar-${Date.now()}`],
+      );
+      await client.query(
+        `insert into user_word_list_items (list_id, word_id)
+         values ($1, $2), ($3, $2), ($3, $4)`,
+        [languageUserRows[0].id, nlWordId, mixedUserRows[0].id, deWordRows[0].id],
       );
 
       const { rows } = await client.query(
@@ -671,12 +706,14 @@ describeIfDb("FSRS RPC integration", () => {
         id: string;
         list_type: string;
         card_policy: string;
+        is_mixed_language?: boolean;
       }>;
 
       expect(lists.some((list) => list.id === curatedRows[0].id)).toBe(true);
-      expect(lists.some((list) => list.id === userRows[0].id)).toBe(true);
+      expect(lists.some((list) => list.id === languageUserRows[0].id)).toBe(true);
+      expect(lists.some((list) => list.id === mixedUserRows[0].id && list.is_mixed_language === true)).toBe(true);
+      expect(lists.some((list) => list.id === otherLanguageUserRows[0].id)).toBe(false);
       expect(lists.every((list) => list.list_type === "curated" || list.list_type === "user")).toBe(true);
-      expect(lists.every((list) => list.card_policy === "inherit")).toBe(true);
     }, userId);
   });
 
@@ -701,10 +738,15 @@ describeIfDb("FSRS RPC integration", () => {
         [userId],
       );
 
-      expect(rows[0].active).toEqual({
+      expect(rows[0].active).toEqual(expect.objectContaining({
         active_list_id: listId,
         active_list_type: "user",
-      });
+        active_scenario: "understanding",
+        card_filter: "both",
+        language_code: "nl",
+        modes_enabled: ["word-to-definition"],
+        new_review_ratio: 2,
+      }));
     }, userId);
   });
 

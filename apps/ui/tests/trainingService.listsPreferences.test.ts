@@ -74,6 +74,9 @@ const importService = async () => {
   const service = await import("@/lib/trainingService");
   return {
     fetchActiveList: service.fetchActiveList,
+    fetchActiveTrainingScope: service.fetchActiveTrainingScope,
+    fetchAvailableDictionarySources: service.fetchAvailableDictionarySources,
+    fetchAvailableLearningLanguages: service.fetchAvailableLearningLanguages,
     fetchCuratedLists: service.fetchCuratedLists,
     fetchEntryListMemberships: service.fetchEntryListMemberships,
     fetchListSummaryById: service.fetchListSummaryById,
@@ -88,6 +91,7 @@ const importService = async () => {
     removeWordsFromUserList: service.removeWordsFromUserList,
     searchWordEntries: service.searchWordEntries,
     updateActiveList: service.updateActiveList,
+    updateActiveTrainingScope: service.updateActiveTrainingScope,
     updateUserPreferences: service.updateUserPreferences,
   };
 };
@@ -147,12 +151,13 @@ describe("trainingService list and preference characterization", () => {
         card_type_ids: ["word-to-definition"],
         type: "curated",
         item_count: 2000,
+        is_mixed_language: false,
         is_primary: true,
       },
     ]);
   });
 
-  test("fetchUserLists does not constrain user lists by active training language", async () => {
+  test("fetchUserLists constrains user lists by requested learning language", async () => {
     const { fetchUserLists } = await importService();
 
     rpc.mockResolvedValueOnce({
@@ -163,6 +168,7 @@ describe("trainingService list and preference characterization", () => {
           description: null,
           language_code: "nl",
           primary_language_code: null,
+          is_mixed_language: true,
           default_scenario_id: null,
           card_policy: "inherit",
           card_type_ids: null,
@@ -178,7 +184,7 @@ describe("trainingService list and preference characterization", () => {
     expect(from).not.toHaveBeenCalled();
     expect(rpc).toHaveBeenCalledWith("get_available_word_lists", {
       p_user_id: "user-1",
-      p_language_code: null,
+      p_language_code: "nl",
       p_list_type: "user",
     });
     expect(lists).toEqual([
@@ -193,9 +199,166 @@ describe("trainingService list and preference characterization", () => {
         card_type_ids: null,
         type: "user",
         item_count: 3,
+        is_mixed_language: true,
         created_at: "2026-05-16T10:00:00.000Z",
       },
     ]);
+  });
+
+  test("fetchAvailableLearningLanguages maps language availability metadata", async () => {
+    const { fetchAvailableLearningLanguages } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          code: "en",
+          label: "English",
+          dictionary_count: 2,
+          curated_list_count: 2,
+          user_list_count: 1,
+          has_training_eligible_lists: true,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchAvailableLearningLanguages("user-1")).resolves.toEqual([
+      {
+        code: "en",
+        label: "English",
+        dictionaryCount: 2,
+        curatedListCount: 2,
+        userListCount: 1,
+        hasTrainingEligibleLists: true,
+      },
+    ]);
+    expect(rpc).toHaveBeenCalledWith("get_available_learning_languages", {
+      p_user_id: "user-1",
+    });
+  });
+
+  test("fetchAvailableDictionarySources maps source metadata for a language", async () => {
+    const { fetchAvailableDictionarySources } = await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "dict-en-core",
+          language_code: "en",
+          slug: "en-test-core",
+          name: "EN Core Test",
+          kind: "curated",
+          visibility: "public",
+          is_editable: false,
+          entry_count: 10,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchAvailableDictionarySources({
+        userId: "user-1",
+        languageCode: "en",
+      }),
+    ).resolves.toEqual([
+      {
+        id: "dict-en-core",
+        languageCode: "en",
+        slug: "en-test-core",
+        name: "EN Core Test",
+        kind: "curated",
+        visibility: "public",
+        isEditable: false,
+        entryCount: 10,
+      },
+    ]);
+    expect(rpc).toHaveBeenCalledWith("get_available_dictionary_sources", {
+      p_user_id: "user-1",
+      p_language_code: "en",
+    });
+  });
+
+  test("per-language active training scope is read and updated through dedicated RPCs", async () => {
+    const { fetchActiveTrainingScope, updateActiveTrainingScope } =
+      await importService();
+
+    rpc.mockResolvedValueOnce({
+      data: {
+        language_code: "en",
+        active_list_id: "list-en",
+        active_list_type: "curated",
+        active_scenario: "understanding",
+        card_filter: "both",
+        modes_enabled: ["word-to-definition"],
+        new_review_ratio: 2,
+        has_saved_scope: true,
+        is_valid: true,
+      },
+      error: null,
+    });
+
+    await expect(
+      fetchActiveTrainingScope({ userId: "user-1", languageCode: "en" }),
+    ).resolves.toMatchObject({
+      languageCode: "en",
+      activeListId: "list-en",
+      activeListType: "curated",
+      hasSavedScope: true,
+      isValid: true,
+    });
+
+    rpc.mockResolvedValueOnce({
+      data: {
+        language_code: "nl",
+        active_list_id: "list-nl",
+        active_list_type: "user",
+        active_scenario: "listening",
+        card_filter: "review",
+        modes_enabled: ["listen-recognize"],
+        new_review_ratio: 1,
+        has_saved_scope: true,
+        is_valid: true,
+      },
+      error: null,
+    });
+
+    await expect(
+      updateActiveTrainingScope({
+        userId: "user-1",
+        languageCode: "nl",
+        listId: "list-nl",
+        listType: "user",
+        activeScenario: "listening",
+        cardFilter: "review",
+        modesEnabled: ["listen-recognize"],
+        newReviewRatio: 1,
+      }),
+    ).resolves.toMatchObject({
+      scope: {
+        languageCode: "nl",
+        activeListId: "list-nl",
+        activeListType: "user",
+        activeScenario: "listening",
+        cardFilter: "review",
+      },
+      error: null,
+    });
+
+    expect(rpc).toHaveBeenNthCalledWith(1, "get_active_training_scope", {
+      p_user_id: "user-1",
+      p_language_code: "en",
+    });
+    expect(rpc).toHaveBeenNthCalledWith(2, "update_active_training_scope", {
+      p_user_id: "user-1",
+      p_language_code: "nl",
+      p_list_id: "list-nl",
+      p_list_type: "user",
+      p_active_scenario: "listening",
+      p_card_filter: "review",
+      p_modes_enabled: ["listen-recognize"],
+      p_new_review_ratio: 1,
+    });
   });
 
   test("searchWordEntries uses gated RPC payload and maps lock metadata", async () => {
@@ -232,6 +395,8 @@ describe("trainingService list and preference characterization", () => {
       isNt2: true,
       filterFrozen: false,
       filterHidden: true,
+      languageCode: "en",
+      dictionaryIds: ["dict-en-core"],
       page: 2,
       pageSize: 25,
     });
@@ -244,6 +409,8 @@ describe("trainingService list and preference characterization", () => {
       p_filter_hidden: true,
       p_page: 2,
       p_page_size: 25,
+      p_language_code: "en",
+      p_dictionary_ids: ["dict-en-core"],
     });
     expect(result).toEqual({
       items: [
@@ -356,6 +523,7 @@ describe("trainingService list and preference characterization", () => {
       card_type_ids: ["listen-recognize"],
       type: "user",
       item_count: 3,
+      is_mixed_language: false,
       created_at: "2026-05-16T10:00:00.000Z",
     });
     expect(from).not.toHaveBeenCalled();
@@ -423,6 +591,7 @@ describe("trainingService list and preference characterization", () => {
       card_type_ids: ["listen-recognize"],
       type: "user",
       item_count: 0,
+      is_mixed_language: false,
       created_at: "2026-05-16T10:00:00.000Z",
     });
     expect(from).not.toHaveBeenCalled();
@@ -479,6 +648,7 @@ describe("trainingService list and preference characterization", () => {
       card_type_ids: ["definition-to-word", "word-to-definition"],
       type: "user",
       item_count: 2,
+      is_mixed_language: false,
       created_at: "2026-05-16T10:00:00.000Z",
     });
     expect(from).not.toHaveBeenCalled();

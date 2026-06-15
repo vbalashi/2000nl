@@ -5,6 +5,7 @@ import type { CardFilter, TrainingMode } from "@/lib/types";
 import { fetchUserPreferences, updateUserPreferences } from "../trainingService";
 
 export type ThemePreference = "light" | "dark" | "system";
+type PersistOptions = { persist?: boolean };
 
 export function useTrainingPreferences(userId?: string) {
   const [themePreference, setThemePreference] =
@@ -60,10 +61,10 @@ export function useTrainingPreferences(userId?: string) {
   );
 
   const setEnabledModes = useCallback(
-    (newModes: TrainingMode[]) => {
+    (newModes: TrainingMode[], options: PersistOptions = {}) => {
       trainingDebug.log("[Settings] Saving modes to Supabase:", newModes);
       setEnabledModesState(newModes);
-      if (userId) {
+      if (userId && options.persist !== false) {
         void updateUserPreferences({ userId, modesEnabled: newModes });
       }
     },
@@ -71,10 +72,10 @@ export function useTrainingPreferences(userId?: string) {
   );
 
   const setCardFilter = useCallback(
-    (newFilter: CardFilter) => {
+    (newFilter: CardFilter, options: PersistOptions = {}) => {
       trainingDebug.log("[Settings] Saving card filter to Supabase:", newFilter);
       setCardFilterState(newFilter);
-      if (userId) {
+      if (userId && options.persist !== false) {
         void updateUserPreferences({ userId, cardFilter: newFilter });
       }
     },
@@ -124,10 +125,10 @@ export function useTrainingPreferences(userId?: string) {
   );
 
   const setNewReviewRatio = useCallback(
-    (newRatio: number) => {
+    (newRatio: number, options: PersistOptions = {}) => {
       trainingDebug.log("[Settings] Saving new/review ratio to Supabase:", newRatio);
       setNewReviewRatioState(newRatio);
-      if (userId) {
+      if (userId && options.persist !== false) {
         void updateUserPreferences({
           userId,
           newReviewRatio: newRatio,
@@ -155,13 +156,13 @@ export function useTrainingPreferences(userId?: string) {
   );
 
   const setActiveScenario = useCallback(
-    (newScenario: string) => {
+    (newScenario: string, options: PersistOptions = {}) => {
       trainingDebug.log(
         "[Settings] Saving active scenario to Supabase:",
         newScenario,
       );
       setActiveScenarioState(newScenario);
-      if (userId) {
+      if (userId && options.persist !== false) {
         void updateUserPreferences({
           userId,
           activeScenario: newScenario,
