@@ -24,6 +24,7 @@ import type {
   CardFilter,
   DetailedStats,
   DictionaryEntry,
+  EntryLearningListMembership,
   QueueTurn,
   TrainingMode,
   TrainingWord,
@@ -273,6 +274,8 @@ export function TrainingScreen({ user }: Props) {
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     "zoeken" | "lijsten" | "statistieken" | "instellingen"
   >("instellingen");
+  const [settingsInitialViewedListScope, setSettingsInitialViewedListScope] =
+    useState<{ id: string; type: WordListType } | null>(null);
   const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
     useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -1197,9 +1200,23 @@ export function TrainingScreen({ user }: Props) {
 
   const openSearch = useCallback(() => {
     setSettingsInitialTab("zoeken");
+    setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(true);
     setShowSettings(true);
   }, []);
+
+  const openMembershipList = useCallback(
+    (membership: EntryLearningListMembership) => {
+      setSettingsInitialTab("lijsten");
+      setSettingsInitialViewedListScope({
+        id: membership.listId,
+        type: membership.listType,
+      });
+      setSettingsAutoFocusWordSearch(false);
+      setShowSettings(true);
+    },
+    [],
+  );
 
   const cycleThemePreference = useCallback(() => {
     const next =
@@ -1964,12 +1981,14 @@ export function TrainingScreen({ user }: Props) {
               data-tour="settings-button"
               onClick={() => {
                 setSettingsInitialTab("instellingen");
+                setSettingsInitialViewedListScope(null);
                 setSettingsAutoFocusWordSearch(false);
                 setShowSettings(true);
               }}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 setSettingsInitialTab("instellingen");
+                setSettingsInitialViewedListScope(null);
                 setSettingsAutoFocusWordSearch(false);
                 setShowSettings(true);
               }}
@@ -2326,6 +2345,7 @@ export function TrainingScreen({ user }: Props) {
                 translationLang={translationLang}
                 userLists={availableLists.filter((l) => l.type === "user")}
                 onListsUpdated={handleListsUpdated}
+                onOpenListMembership={openMembershipList}
                 onTrainWord={handleTrainWord}
                 currentTrainingEntryId={currentWord?.id ?? null}
                 onTrainingAction={(result) => void handleAction(result)}
@@ -2350,7 +2370,10 @@ export function TrainingScreen({ user }: Props) {
         activeListValue={activeListValue}
         listOptions={listOptions}
         onListChange={handleFooterListChange}
-        onOpenSettings={() => setShowSettings(true)}
+        onOpenSettings={() => {
+          setSettingsInitialViewedListScope(null);
+          setShowSettings(true);
+        }}
         activeScenarioName={
           activeScenario === "understanding"
             ? "Begrip"
@@ -2387,6 +2410,7 @@ export function TrainingScreen({ user }: Props) {
           translationLang={translationLang}
           userLists={availableLists.filter((l) => l.type === "user")}
           onListsUpdated={handleListsUpdated}
+          onOpenListMembership={openMembershipList}
           onTrainWord={handleTrainWord}
           currentTrainingEntryId={currentWord?.id ?? null}
           onTrainingAction={(result) => void handleAction(result)}
@@ -2401,10 +2425,12 @@ export function TrainingScreen({ user }: Props) {
           onClose={() => {
             setShowSettings(false);
             setSettingsInitialTab("instellingen");
+            setSettingsInitialViewedListScope(null);
             setSettingsAutoFocusWordSearch(false);
           }}
           initialTab={settingsInitialTab}
           autoFocusWordSearch={settingsAutoFocusWordSearch}
+          initialViewedListScope={settingsInitialViewedListScope}
           onListsUpdated={handleListsUpdated}
           themePreference={themePreference}
           onThemeChange={setTheme}
@@ -2415,6 +2441,7 @@ export function TrainingScreen({ user }: Props) {
           onStartOnboarding={() => {
             setShowSettings(false);
             setSettingsInitialTab("instellingen");
+            setSettingsInitialViewedListScope(null);
             setSettingsAutoFocusWordSearch(false);
             startOnboarding();
           }}

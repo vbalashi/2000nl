@@ -1,7 +1,12 @@
 "use client";
 
 import React from "react";
-import type { SidebarHistoryItem, DictionaryEntry, WordListSummary } from "@/lib/types";
+import type {
+  SidebarHistoryItem,
+  DictionaryEntry,
+  EntryLearningListMembership,
+  WordListSummary,
+} from "@/lib/types";
 import type { ReviewResult } from "@/lib/trainingService";
 import { SidebarCard } from "./SidebarCard";
 import { WordDetailPanel } from "./WordDetailPanel";
@@ -26,6 +31,7 @@ type Props = {
   translationLang: string | null;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onTrainWord?: (wordId: string) => void;
   /** Current training card ID (used to show training-only actions in Details). */
   currentTrainingEntryId?: string | null;
@@ -48,6 +54,7 @@ export function Sidebar({
   translationLang,
   userLists,
   onListsUpdated,
+  onOpenListMembership,
   onTrainWord,
   currentTrainingEntryId,
   onTrainingAction,
@@ -117,6 +124,7 @@ export function Sidebar({
                 translationLang={translationLang}
                 userLists={userLists}
                 onListsUpdated={onListsUpdated}
+                onOpenListMembership={onOpenListMembership}
                 onTrainWord={onTrainWord}
                 showHeader={true}
                 showActions={true}

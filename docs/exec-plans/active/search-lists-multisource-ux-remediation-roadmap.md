@@ -1017,7 +1017,7 @@ task.
 
 ### A11: Entry Membership Navigation And Removal
 
-Status: ready.
+Status: complete.
 
 Type: targeted entry-detail/list-management UI slice.
 
@@ -1040,8 +1040,7 @@ Output:
 - Membership rows in entry detail offer an explicit way to open the containing
   list without changing the active training list.
 - Opening a containing list switches the settings modal to `Lijsten`, selects
-  that list as the viewed list, and preserves or highlights the originating
-  entry where practical.
+  that list as the viewed list.
 - Editable user-list memberships can be removed from entry detail.
 - Curated/read-only memberships remain visibly read-only and do not show a
   destructive action.
@@ -1060,8 +1059,13 @@ Acceptance criteria:
 
 Validation:
 
-- `cd apps/ui && npm run typecheck`
-- `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx tests/TrainingScreen.test.tsx`
+- 2026-06-15: `cd apps/ui && npm run typecheck` passed.
+- 2026-06-15:
+  `cd apps/ui && npm test -- tests/WordDetailPanel.membership.test.tsx tests/TrainingScreen.test.tsx`
+  passed: 41 tests across 2 files.
+- 2026-06-15: Real local browser smoke was blocked because local Supabase could
+  not start without Docker/Colima:
+  `Cannot connect to the Docker daemon at unix:///Users/khrustal/.colima/default/docker.sock`.
 
 Agent prompt:
 

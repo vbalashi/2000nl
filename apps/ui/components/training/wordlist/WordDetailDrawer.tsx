@@ -1,5 +1,9 @@
 import React from "react";
-import type { DictionaryEntry, WordListSummary } from "@/lib/types";
+import type {
+  DictionaryEntry,
+  EntryLearningListMembership,
+  WordListSummary,
+} from "@/lib/types";
 import { WordDetailPanel } from "../WordDetailPanel";
 
 type Props = {
@@ -10,6 +14,7 @@ type Props = {
   translationLang: string | null;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onTrainWord?: (wordId: string) => void;
   autoFetchTranslation?: boolean;
 };
@@ -22,6 +27,7 @@ export function WordDetailDrawer({
   translationLang,
   userLists,
   onListsUpdated,
+  onOpenListMembership,
   onTrainWord,
   autoFetchTranslation = true,
 }: Props) {
@@ -53,6 +59,7 @@ export function WordDetailDrawer({
           translationLang={translationLang}
           userLists={userLists}
           onListsUpdated={onListsUpdated}
+          onOpenListMembership={onOpenListMembership}
           onTrainWord={onTrainWord}
           showHeader={true}
           showActions={true}

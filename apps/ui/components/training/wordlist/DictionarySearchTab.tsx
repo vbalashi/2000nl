@@ -12,6 +12,7 @@ import type {
   AvailableDictionarySource,
   AvailableLearningLanguage,
   DictionaryEntry,
+  EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
@@ -30,6 +31,7 @@ type Props = {
   viewedListName: string;
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   searchState: DictionarySearchTabState;
@@ -125,6 +127,7 @@ export function DictionarySearchTab({
   viewedListName,
   reloadLists,
   notifyListsUpdated,
+  onOpenListMembership,
   onTrainWord,
   autoFocusQuery,
   searchState,
@@ -583,6 +586,7 @@ export function DictionarySearchTab({
                     await reloadLists();
                     notifyListsUpdated();
                   }}
+                  onOpenListMembership={onOpenListMembership}
                   onTrainWord={onTrainWord}
                   showHeader={true}
                   showActions={true}
@@ -610,6 +614,7 @@ export function DictionarySearchTab({
             await reloadLists();
             notifyListsUpdated();
           }}
+          onOpenListMembership={onOpenListMembership}
           onTrainWord={onTrainWord}
           autoFetchTranslation={false}
         />

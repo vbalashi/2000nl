@@ -15,6 +15,7 @@ import {
   createUserList,
   fetchEntryListMemberships,
   recordReview,
+  removeWordsFromUserList,
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
@@ -27,6 +28,7 @@ export type WordDetailPanelProps = {
   translationLang: string | null;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onTrainWord?: (wordId: string) => void;
   /** Whether to show the header with headword, POS badge, etc. Defaults to true. */
   showHeader?: boolean;
@@ -96,6 +98,7 @@ export function WordDetailPanel({
   translationLang,
   userLists,
   onListsUpdated,
+  onOpenListMembership,
   onTrainWord,
   showHeader = true,
   showActions = true,
@@ -123,6 +126,8 @@ export function WordDetailPanel({
   const [membershipError, setMembershipError] = React.useState<string | null>(
     null,
   );
+  const [removingMembershipId, setRemovingMembershipId] =
+    React.useState<string | null>(null);
 
   const [addMode, setAddMode] = React.useState<"existing" | "new">("existing");
   const [targetListId, setTargetListId] = React.useState<string>("");
@@ -432,6 +437,33 @@ export function WordDetailPanel({
   const isCurrentTrainingEntry =
     Boolean(currentTrainingEntryId) && entry?.id === currentTrainingEntryId;
   const canTrainEntryNext = Boolean(onTrainWord) && !isCurrentTrainingEntry;
+  const handleRemoveMembership = React.useCallback(
+    async (membership: EntryLearningListMembership) => {
+      if (!entry?.id || membership.listType !== "user" || !membership.editable) {
+        return;
+      }
+
+      const key = `${membership.listType}-${membership.listId}`;
+      setActionMessage(null);
+      setRemovingMembershipId(key);
+      try {
+        const { error } = await removeWordsFromUserList(membership.listId, [
+          entry.id,
+        ]);
+        if (error) {
+          setActionMessage("Kon woord niet uit lijst verwijderen.");
+          return;
+        }
+
+        await loadMemberships();
+        setActionMessage("Woord uit lijst verwijderd.");
+        await onListsUpdated?.();
+      } finally {
+        setRemovingMembershipId(null);
+      }
+    },
+    [entry?.id, loadMemberships, onListsUpdated],
+  );
 
   const actionsSection = showActions ? (
     <section className="space-y-2" aria-label="Entry acties">
@@ -877,6 +909,30 @@ export function WordDetailPanel({
                         <div className="shrink-0 text-xs font-semibold text-slate-500 dark:text-slate-400">
                           {membership.itemCount} woorden
                         </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {onOpenListMembership ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenListMembership(membership)}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          Open lijst
+                        </button>
+                      ) : null}
+                      {membership.listType === "user" && membership.editable ? (
+                        <button
+                          type="button"
+                          disabled={
+                            removingMembershipId ===
+                            `${membership.listType}-${membership.listId}`
+                          }
+                          onClick={() => void handleRemoveMembership(membership)}
+                          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/70 dark:bg-slate-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
+                        >
+                          Verwijder uit lijst
+                        </button>
                       ) : null}
                     </div>
                   </div>

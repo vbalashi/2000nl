@@ -10,6 +10,7 @@ const serviceMocks = vi.hoisted(() => ({
   createUserList: vi.fn(),
   fetchEntryListMemberships: vi.fn(),
   recordReview: vi.fn(),
+  removeWordsFromUserList: vi.fn(),
 }));
 
 vi.mock("@/lib/trainingService", () => ({
@@ -17,6 +18,7 @@ vi.mock("@/lib/trainingService", () => ({
   createUserList: serviceMocks.createUserList,
   fetchEntryListMemberships: serviceMocks.fetchEntryListMemberships,
   recordReview: serviceMocks.recordReview,
+  removeWordsFromUserList: serviceMocks.removeWordsFromUserList,
 }));
 
 const entry = {
@@ -45,6 +47,7 @@ const renderPanel = (props?: {
   memberships?: EntryLearningListMembership[];
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 }) => {
   serviceMocks.fetchEntryListMemberships.mockResolvedValue(
     new Map([[entry.id, props?.memberships ?? []]]),
@@ -57,6 +60,7 @@ const renderPanel = (props?: {
       translationLang={null}
       userLists={props?.userLists ?? []}
       onListsUpdated={props?.onListsUpdated}
+      onOpenListMembership={props?.onOpenListMembership}
       autoFetchTranslation={false}
     />,
   );
@@ -68,6 +72,7 @@ describe("WordDetailPanel membership behavior", () => {
     serviceMocks.createUserList.mockReset();
     serviceMocks.fetchEntryListMemberships.mockReset();
     serviceMocks.recordReview.mockReset();
+    serviceMocks.removeWordsFromUserList.mockReset();
   });
 
   test("shows dictionary source separately and an empty learning-list state", async () => {
@@ -107,6 +112,30 @@ describe("WordDetailPanel membership behavior", () => {
     expect(screen.getByText(/In 1 lijst: Mijn oefenlijst/)).toBeInTheDocument();
     expect(screen.getByText(/Mijn lijst\s+·\s+bewerkbaar/i)).toBeInTheDocument();
     expect(screen.getByText("12 woorden")).toBeInTheDocument();
+  });
+
+  test("opens a containing list from membership state", async () => {
+    const onOpenListMembership = vi.fn();
+    const membership: EntryLearningListMembership = {
+      listId: "user-list-1",
+      listType: "user",
+      name: "Mijn oefenlijst",
+      editable: true,
+      itemCount: 12,
+      primaryLanguageCode: "nl",
+      isActiveTrainingList: false,
+    };
+    renderPanel({
+      memberships: [membership],
+      userLists: [userList],
+      onOpenListMembership,
+    });
+
+    const user = userEvent.setup();
+    expect(await screen.findByText("Mijn oefenlijst")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Open lijst" }));
+
+    expect(onOpenListMembership).toHaveBeenCalledWith(membership);
   });
 
   test("renders a curated learning-list membership as read-only", async () => {
@@ -281,6 +310,61 @@ describe("WordDetailPanel membership behavior", () => {
     expect(screen.getByText("Woord toegevoegd aan lijst.")).toBeInTheDocument();
     expect(onListsUpdated).toHaveBeenCalledTimes(1);
     expect(serviceMocks.recordReview).not.toHaveBeenCalled();
+  });
+
+  test("removes an editable user-list membership and refreshes state", async () => {
+    const onListsUpdated = vi.fn();
+    serviceMocks.fetchEntryListMemberships
+      .mockResolvedValueOnce(
+        new Map([
+          [
+            entry.id,
+            [
+              {
+                listId: "user-list-1",
+                listType: "user",
+                name: "Mijn oefenlijst",
+                editable: true,
+                itemCount: 1,
+                isActiveTrainingList: false,
+              },
+            ],
+          ],
+        ]),
+      )
+      .mockResolvedValueOnce(new Map([[entry.id, []]]));
+    serviceMocks.removeWordsFromUserList.mockResolvedValue({ error: null });
+
+    render(
+      <WordDetailPanel
+        entry={entry as any}
+        userId="test-user"
+        translationLang={null}
+        userLists={[userList]}
+        onListsUpdated={onListsUpdated}
+        autoFetchTranslation={false}
+      />,
+    );
+
+    expect(await screen.findByText("Mijn oefenlijst")).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await act(async () => {
+      await user.click(
+        screen.getByRole("button", { name: "Verwijder uit lijst" }),
+      );
+    });
+
+    await waitFor(() =>
+      expect(serviceMocks.removeWordsFromUserList).toHaveBeenCalledWith(
+        "user-list-1",
+        [entry.id],
+      ),
+    );
+    expect(await screen.findByText("Nog niet opgeslagen in een lijst."))
+      .toBeInTheDocument();
+    expect(screen.getByText("Woord uit lijst verwijderd.")).toBeInTheDocument();
+    expect(onListsUpdated).toHaveBeenCalledTimes(1);
   });
 
   test("keeps current-card actions learner-facing and hides train-next for the current card", async () => {

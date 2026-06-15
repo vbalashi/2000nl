@@ -4,7 +4,14 @@ import {
   fetchAvailableLists,
   fetchTrainingScenarios,
 } from "@/lib/trainingService";
-import type { CardFilter, DetailedStats, TrainingScenario, WordListSummary, WordListType } from "@/lib/types";
+import type {
+  CardFilter,
+  DetailedStats,
+  EntryLearningListMembership,
+  TrainingScenario,
+  WordListSummary,
+  WordListType,
+} from "@/lib/types";
 import type { TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { DropUpSelect } from "./DropUpSelect";
@@ -33,6 +40,7 @@ type Props = {
   initialTab?: TabKey;
   /** When opening on "zoeken", focus the query/search input. */
   autoFocusWordSearch?: boolean;
+  initialViewedListScope?: ViewedListScope | null;
   onListsUpdated?: () => void;
   themePreference: ThemePreference;
   onThemeChange: (pref: ThemePreference) => void;
@@ -73,6 +81,7 @@ export function SettingsModal({
   onClose,
   initialTab,
   autoFocusWordSearch,
+  initialViewedListScope,
   onListsUpdated,
   themePreference,
   onThemeChange,
@@ -255,6 +264,21 @@ export function SettingsModal({
     onListsUpdated?.();
   }, [onListsUpdated]);
 
+  const openMembershipList = useCallback(
+    (membership: EntryLearningListMembership) => {
+      setViewedListScope({
+        id: membership.listId,
+        type: membership.listType,
+      });
+      setActiveTab("lijsten");
+      setDictionarySearchState((current) => ({
+        ...current,
+        mobileDetailOpen: false,
+      }));
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!open) return;
     void loadLists();
@@ -280,6 +304,16 @@ export function SettingsModal({
       type: wordListType ?? "curated",
     });
   }, [open, viewedListScope, wordListId, wordListType]);
+
+  useEffect(() => {
+    if (!open || !initialViewedListScope) return;
+    setViewedListScope(initialViewedListScope);
+    setActiveTab("lijsten");
+  }, [
+    initialViewedListScope?.id,
+    initialViewedListScope?.type,
+    open,
+  ]);
 
   useEffect(() => {
     if (!viewedList || !isDictionarySourceList(viewedList)) return;
@@ -413,6 +447,7 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                 viewedListName={viewedListName}
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
+                onOpenListMembership={openMembershipList}
                 onTrainWord={onTrainWord}
                 autoFocusQuery={Boolean(autoFocusWordSearch)}
                 searchState={dictionarySearchState}
@@ -443,6 +478,7 @@ const cardFilterOptions: { value: CardFilter; label: string }[] = [
                 onMakeActiveForTraining={onMakeActiveForTraining}
                 reloadLists={loadLists}
                 notifyListsUpdated={notifyListsUpdated}
+                onOpenListMembership={openMembershipList}
                 onTrainWord={onTrainWord}
                 autoFocusQuery={Boolean(autoFocusWordSearch)}
               />

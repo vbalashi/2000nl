@@ -171,6 +171,12 @@ const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
 const fetchTrainingWordByLookup = vi.fn().mockResolvedValue(overrideWord);
 const fetchEntryListMemberships = vi.fn().mockResolvedValue(new Map());
+const addWordsToUserList = vi.fn().mockResolvedValue({ error: null });
+const createUserList = vi.fn().mockResolvedValue(userOwnedList);
+const fetchUserListMembership = vi.fn().mockResolvedValue(new Set());
+const removeWordsFromUserList = vi.fn().mockResolvedValue({ error: null });
+const deleteUserList = vi.fn().mockResolvedValue({ error: null });
+const updateUserList = vi.fn().mockResolvedValue(userOwnedList);
 const fetchTrainingScenarios = vi.fn().mockResolvedValue([
   {
     id: "understanding",
@@ -214,6 +220,12 @@ vi.mock("@/lib/trainingService", () => ({
   fetchWordsForList,
   searchWordEntries,
   fetchEntryListMemberships,
+  addWordsToUserList,
+  createUserList,
+  fetchUserListMembership,
+  removeWordsFromUserList,
+  deleteUserList,
+  updateUserList,
   updateActiveTrainingScope,
   recordDefinitionClick,
   recordReview,
@@ -354,6 +366,57 @@ test("dictionary lookup state persists while switching settings modal tabs", asy
   expect(screen.getByLabelText(/alleen deze lijst/i)).toBeChecked();
   expect(screen.getByText("Details")).toBeInTheDocument();
   expect(screen.getByText(/Alleen deze lijst: Test list/i)).toBeInTheDocument();
+});
+
+test("search detail opens a containing membership list without changing active training", async () => {
+  fetchAvailableLists.mockResolvedValue([defaultAvailableList, userOwnedList]);
+  fetchEntryListMemberships.mockResolvedValue(
+    new Map([
+      [
+        dictionaryHuis.id,
+        [
+          {
+            listId: userOwnedList.id,
+            listType: "user",
+            name: userOwnedList.name,
+            editable: true,
+            itemCount: userOwnedList.item_count,
+            isActiveTrainingList: false,
+          },
+        ],
+      ],
+    ]),
+  );
+  fetchWordsForList.mockClear();
+  updateActiveTrainingScope.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
+      target: { value: "huis" },
+    });
+
+    await screen.findByText("My saved words");
+    fireEvent.click(screen.getByRole("button", { name: "Open lijst" }));
+
+    await waitFor(() =>
+      expect(fetchWordsForList).toHaveBeenCalledWith(
+        "list-user",
+        "user",
+        expect.objectContaining({ page: 1 }),
+      ),
+    );
+    expect(screen.getAllByText(/Lijstinhoud: My saved words/i).length)
+      .toBeGreaterThan(0);
+    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+  } finally {
+    restoreDefaultListScope();
+    restoreDefaultListResults();
+    fetchEntryListMemberships.mockResolvedValue(new Map());
+  }
 });
 
 test("dictionary lookup state resets after closing the settings modal", async () => {

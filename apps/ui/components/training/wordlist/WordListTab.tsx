@@ -12,6 +12,7 @@ import {
 } from "@/lib/trainingService";
 import type {
   DictionaryEntry,
+  EntryLearningListMembership,
   ListCardPolicy,
   TrainingMode,
   WordListSummary,
@@ -69,6 +70,7 @@ type Props = {
   onMakeActiveForTraining: (value: WordListSummary) => void;
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onTrainWord?: (wordId: string) => void;
   /** Focus the search field when the tab mounts. */
   autoFocusQuery?: boolean;
@@ -94,6 +96,7 @@ export function WordListTab({
   onMakeActiveForTraining,
   reloadLists,
   notifyListsUpdated,
+  onOpenListMembership,
   onTrainWord,
   autoFocusQuery,
 }: Props) {
@@ -1543,6 +1546,7 @@ export function WordListTab({
           await reloadLists();
           notifyListsUpdated();
         }}
+        onOpenListMembership={onOpenListMembership}
         onTrainWord={onTrainWord}
         autoFetchTranslation={false}
       />
