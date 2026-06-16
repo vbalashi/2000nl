@@ -213,3 +213,9 @@
 
 -- Optimize production dictionary search path after live post-migration QA
 \i db/migrations/068_optimize_gated_dictionary_search.sql
+
+-- Prefer exact-case lookup matches when ranked search candidates tie
+\i db/migrations/069_search_exact_case_tiebreak.sql
+
+-- 2000NL Connect registered clients, grants, codes, and sessions
+\i db/migrations/070_connected_clients.sql

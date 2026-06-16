@@ -4,7 +4,7 @@
 
 The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients. Versioned response shapes are covered by snapshot tests in `apps/ui/tests/api/platformV1Routes.test.ts`.
 
-These routes are the external client boundary for browser extensions and other companion apps. They use bearer Supabase user tokens and keep ordinary lookup read-only.
+These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
 Smoke check:
 ```bash
@@ -14,7 +14,8 @@ npm run test:platform
 
 ## Auth And CORS
 
-- Send `Authorization: Bearer <supabase-user-access-token>`.
+- Send `Authorization: Bearer <access_token>`.
+- Connected Clients obtain `access_token` values from [2000NL Connect](./connect-api.md). Treat the token as opaque and refresh only through `/api/connect/token`.
 - Configure allowed browser/extension origins with `PLATFORM_API_ALLOWED_ORIGINS`.
 - Routes respond to `OPTIONS` preflight with the configured CORS headers.
 
