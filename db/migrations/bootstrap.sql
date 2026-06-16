@@ -210,3 +210,6 @@
 
 -- Remove remaining legacy scheduler overloads found in live postflight
 \i db/migrations/067_drop_remaining_legacy_get_next_word.sql
+
+-- Optimize production dictionary search path after live post-migration QA
+\i db/migrations/068_optimize_gated_dictionary_search.sql

@@ -514,12 +514,15 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
     page.getByRole("heading", { name: "VanDale 2k", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Woorden", exact: true }),
+    page.getByRole("button", { name: "Lijstinhoud", exact: true }).first(),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Trainingsinstellingen" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Info" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Woordenboekentries" }),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Trainingsinstellingen" }).click();
   await expect(page.getByText("Actieve kaarttypen")).toBeVisible();

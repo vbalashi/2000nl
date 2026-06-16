@@ -202,6 +202,26 @@ begin
     raise exception 'missing dictionary-scoped word_entries uniqueness';
   end if;
 
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'word_entries'
+      and indexname = 'word_entries_language_lower_headword_idx'
+  ) then
+    raise exception 'missing lower-headword dictionary search index';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'word_forms'
+      and indexname = 'word_forms_language_lower_form_dictionary_idx'
+  ) then
+    raise exception 'missing lower-form dictionary search index';
+  end if;
+
   if exists (
     select 1
     from pg_indexes

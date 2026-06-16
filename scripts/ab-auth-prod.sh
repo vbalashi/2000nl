@@ -157,11 +157,10 @@ agent-browser --session "$SESSION" reload
 agent-browser --session "$SESSION" wait --load networkidle
 
 # Smoke check: training UI usually contains this button once authenticated.
-agent-browser --session "$SESSION" wait --text "Antwoord Tonen"
+agent-browser --session "$SESSION" wait --text "ANTWOORD TONEN"
 
 if [[ "$KEEP_ARTIFACTS" != "1" ]]; then
   rm -f "$OUT_JSON" "$OUT_B64" 2>/dev/null || true
 fi
 
 echo "OK: Auth injected for $URL (session=$SESSION profile=$PROFILE)"
-
