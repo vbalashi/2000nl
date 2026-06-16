@@ -207,3 +207,6 @@
 
 -- Harden live-migration security and read-only scope blockers
 \i db/migrations/066_harden_live_migration_blockers.sql
+
+-- Remove remaining legacy scheduler overloads found in live postflight
+\i db/migrations/067_drop_remaining_legacy_get_next_word.sql

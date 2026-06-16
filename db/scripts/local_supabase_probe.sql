@@ -33,8 +33,14 @@ begin
     raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])';
   end if;
 
-  if to_regprocedure('public.get_next_word(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null then
-    raise exception 'legacy public.get_next_word(uuid,text[],uuid[],uuid,text,text,text,text[]) still exists';
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'get_next_word'
+  ) then
+    raise exception 'legacy public.get_next_word overloads still exist';
   end if;
 
   if to_regprocedure('public.handle_card_review(uuid,uuid,text,text,uuid)') is null then
