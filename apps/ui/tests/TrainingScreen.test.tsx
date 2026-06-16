@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 
@@ -92,6 +92,22 @@ const dictionaryCompound = {
   headword: "bejaardenhuis",
   part_of_speech: "zn",
   raw: { meanings: [{ definition: "Een tehuis voor ouderen", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const dictionarySter = {
+  id: "word-ster",
+  headword: "ster",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "Een hemellichaam", links: [] }] },
+  is_nt2_2000: false,
+};
+
+const dictionaryStedelijk = {
+  id: "word-stedelijk",
+  headword: "stedelijk",
+  part_of_speech: "bn",
+  raw: { meanings: [{ definition: "Met een stad te maken", links: [] }] },
   is_nt2_2000: false,
 };
 
@@ -571,6 +587,68 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
         "Deze entry is bewaard terwijl de zoekresultaten veranderden.",
       ),
     ).toBeInTheDocument();
+  } finally {
+    restoreDefaultSearchResults();
+  }
+});
+
+test("dictionary lookup ignores stale responses from older queries", async () => {
+  const deferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  };
+  const steSearch = deferred<{ items: typeof dictionaryStedelijk[]; total: number }>();
+  const sterSearch = deferred<{ items: typeof dictionarySter[]; total: number }>();
+
+  searchWordEntries.mockImplementation(({ query }: { query?: string }) => {
+    if (query === "ste") return steSearch.promise;
+    if (query === "ster") return sterSearch.promise;
+    return Promise.resolve({ items: [], total: 0 });
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.click(screen.getByLabelText("Zoeken"));
+
+    const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
+    fireEvent.change(queryInput, { target: { value: "ste" } });
+    await waitFor(() =>
+      expect(searchWordEntries).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "ste" }),
+      ),
+    );
+
+    fireEvent.change(queryInput, { target: { value: "ster" } });
+    await waitFor(() =>
+      expect(searchWordEntries).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "ster" }),
+      ),
+    );
+
+    await act(async () => {
+      sterSearch.resolve({ items: [dictionarySter], total: 1 });
+      await sterSearch.promise;
+    });
+
+    expect(
+      await screen.findByRole("button", { name: /ster[\s\S]*Een hemellichaam/i }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      steSearch.resolve({ items: [dictionaryStedelijk], total: 3964 });
+      await steSearch.promise;
+    });
+
+    expect(
+      screen.getByRole("button", { name: /ster[\s\S]*Een hemellichaam/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("stedelijk")).not.toBeInTheDocument();
+    expect(screen.queryByText(/3964 resultaten/i)).not.toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
   }

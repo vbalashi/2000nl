@@ -166,6 +166,7 @@ export function DictionarySearchTab({
     null,
   );
   const queryRef = useRef<HTMLInputElement | null>(null);
+  const latestSearchRequestRef = useRef(0);
   const pageSize = 20;
   const updateSearchState = useCallback(
     (patch: Partial<DictionarySearchTabState>) => {
@@ -195,6 +196,8 @@ export function DictionarySearchTab({
 
   const runSearch = useCallback(async () => {
     if (!open) return;
+    const requestId = latestSearchRequestRef.current + 1;
+    latestSearchRequestRef.current = requestId;
     const hasQuery = Boolean(query.trim());
     if (!hasQuery && !useViewedListFilter) {
       updateSearchState({
@@ -221,6 +224,7 @@ export function DictionarySearchTab({
             pageSize,
           });
 
+      if (latestSearchRequestRef.current !== requestId) return;
       onSearchStateChange((current) => ({
         ...current,
         wordResults: result.items,
@@ -228,7 +232,9 @@ export function DictionarySearchTab({
         detailEntry: current.detailEntry ?? result.items[0] ?? null,
       }));
     } finally {
-      setSearchLoading(false);
+      if (latestSearchRequestRef.current === requestId) {
+        setSearchLoading(false);
+      }
     }
   }, [
     open,
