@@ -235,6 +235,23 @@ export type PlatformLookupApiResponse = {
   items: DictionaryLookupResult[];
 };
 
+export type PlatformTranslationStatus = "pending" | "ready" | "failed";
+
+export type PlatformTranslationApiRequest = {
+  entryId: string;
+  targetLang: string;
+  force?: boolean;
+};
+
+export type PlatformTranslationApiResponse = {
+  entryId: string;
+  targetLang: string;
+  status?: PlatformTranslationStatus;
+  overlay?: unknown;
+  note?: string | null;
+  error?: string | null;
+};
+
 export type PlatformAnalyzeSelectionRequest = {
   selection?: string;
   query?: string;
