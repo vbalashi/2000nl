@@ -54,6 +54,7 @@ supabase/.temp/
 # Generated report exports and packaged review artifacts
 reports/generated/*
 !reports/generated/.gitkeep
+reports/qa/production-post-migration/
 reports/*.zip
 reports/*-package-*/
 reports/ux-audit-*-source/
