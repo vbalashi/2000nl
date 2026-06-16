@@ -126,6 +126,10 @@ Desired concepts:
 - The first user-dictionary UI slice has targeted SQL/RPC validation and
   backend-backed local browser QA evidence under
   `reports/qa/user-dictionary-first-ui-slice/`.
+- Senior live-migration review returned `not_ready` for blind live apply. The
+  immediate security/read-only blockers are addressed by
+  `db/migrations/066_harden_live_migration_blockers.sql`, and the destructive
+  live rollout must follow `docs/runbooks/live-dictionary-migration.md`.
 
 ## Remaining Near-Term Targets
 
@@ -141,6 +145,9 @@ Desired concepts:
   real clients.
 - Broaden DB/API regression tests around dictionary visibility, private user
   dictionaries, and translation/lookup read-only guarantees.
+- Treat live migration as a gated operation, not a one-shot deploy: run the
+  user-card-status parity gate before `052_drop_legacy_user_word_status.sql`
+  and stop if the gate fails.
 
 ## Planning Questions
 

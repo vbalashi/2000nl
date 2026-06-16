@@ -18,3 +18,5 @@ This folder is organized by document role rather than by creation date.
 - `intent/index.md` - what matters in the product/runtime.
 - `intent/current-transformation-targets.md` - living frame for deciding what to transform next.
 - `tech-debt/index.md` - active structural debt.
+- `runbooks/live-dictionary-migration.md` - gated live migration sequence for
+  dictionary/list/card/user-dictionary schema rollout.

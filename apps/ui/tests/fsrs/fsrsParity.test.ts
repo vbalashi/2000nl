@@ -2,7 +2,7 @@ import { describe, expect, test, beforeAll, afterAll } from "vitest";
 import { Pool } from "pg";
 import { fsrsCompute } from "@/lib/fsrsMath";
 import { fsrsCorpus, FsrsHistoryEntry } from "./fsrsCorpus";
-import { getDbUrl, runMigrations, ONE_DAY_MS, withTransaction } from "./dbTestUtils";
+import { getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
 
 type TsState = {
   stability: number | null;
@@ -60,12 +60,18 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
       let interval: number | null = null;
 
       for (const step of history) {
-        const lastSeen =
-          stability == null ? null : new Date(Date.now() - step.elapsedDays * ONE_DAY_MS);
-
         const { rows } = await client.query(
-          `select fsrs6_compute($1, $2, $3, $4, $5, $6, $7, fsrs6_parameters()) as res`,
-          [stability, difficulty, lastSeen, step.grade, 0.9, reps, lapses]
+          `select fsrs6_compute(
+            $1,
+            $2,
+            case when $3::numeric is null then null else now() - ($3::numeric * interval '1 day') end,
+            $4,
+            $5,
+            $6,
+            $7,
+            fsrs6_parameters()
+          ) as res`,
+          [stability, difficulty, stability == null ? null : step.elapsedDays, step.grade, 0.9, reps, lapses]
         );
 
         const res = rows[0].res as any;

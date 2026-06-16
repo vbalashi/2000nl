@@ -326,7 +326,12 @@ begin
       ('public.delete_user_dictionary_entry(uuid,uuid)'::regprocedure),
       ('public.fetch_dictionary_entry_by_id_gated(uuid)'::regprocedure),
       ('public.ensure_user_dictionary(uuid,text,text)'::regprocedure),
+      ('public.get_available_learning_languages(uuid)'::regprocedure),
+      ('public.get_available_dictionary_sources(uuid,text)'::regprocedure),
+      ('public.get_active_training_scope(uuid,text)'::regprocedure),
+      ('public.update_active_training_scope(uuid,text,uuid,text,text,text,text[],int)'::regprocedure),
       ('public.get_available_word_lists(uuid,text,text)'::regprocedure),
+      ('public.search_word_entries_gated(text,text,boolean,boolean,boolean,int,int,text,uuid[])'::regprocedure),
       ('public.get_card_user_state(uuid,uuid,text)'::regprocedure),
       ('public.get_user_tier(uuid)'::regprocedure),
       ('public.get_word_list_summary(uuid,uuid,text)'::regprocedure)
@@ -347,6 +352,30 @@ begin
 
   if v_problem is not null then
     raise exception 'sensitive RPCs still executable by PUBLIC/anon:%', E'\n' || v_problem;
+  end if;
+
+  with internal_helpers(signature) as (
+    values
+      ('public.assert_editable_user_dictionary(uuid,uuid)'::regprocedure),
+      ('public.validate_user_entry_v1_payload(jsonb,text)'::regprocedure)
+  )
+  select pg_catalog.string_agg(signature::text, E'\n' order by signature::text)
+  into v_problem
+  from internal_helpers ih
+  join pg_proc p on p.oid = ih.signature
+  where exists (
+    select 1
+    from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) as acl
+    where acl.privilege_type = 'EXECUTE'
+      and (
+        acl.grantee = 0
+        or acl.grantee = 'anon'::regrole
+        or acl.grantee = 'authenticated'::regrole
+      )
+  );
+
+  if v_problem is not null then
+    raise exception 'internal helper RPCs still directly executable:%', E'\n' || v_problem;
   end if;
 
   with active_public_functions as (

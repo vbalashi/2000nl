@@ -50,6 +50,16 @@ The user wants the platform to have these separable concepts:
 
 ## Current State
 
+Live migration readiness:
+
+- Independent senior review marked blind live migration as `not_ready`.
+- Migration `066_harden_live_migration_blockers.sql` addresses the immediate
+  RPC grant, internal helper, and `STABLE` read-only blockers from that review.
+- The live rollout is still gated by
+  `docs/runbooks/live-dictionary-migration.md`, especially the mandatory
+  `db/scripts/check_user_card_status_parity_before_drop.sql` check before
+  applying destructive migration `052_drop_legacy_user_word_status.sql`.
+
 Database:
 
 - `languages` exists as a language catalog.

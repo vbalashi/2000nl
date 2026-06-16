@@ -204,3 +204,6 @@
 
 -- Single-entry fetch source metadata for user dictionary UI
 \i db/migrations/065_fetch_entry_by_id_dictionary_metadata.sql
+
+-- Harden live-migration security and read-only scope blockers
+\i db/migrations/066_harden_live_migration_blockers.sql
