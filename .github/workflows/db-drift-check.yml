@@ -6,6 +6,8 @@ on:
       - 'db/migrations/**'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
+      - 'db/scripts/live_dictionary_migration*.sql'
+      - 'db/scripts/live_dictionary_migration.sh'
       - '.github/workflows/db-drift-check.yml'
   push:
     branches: [main, master]
@@ -13,6 +15,8 @@ on:
       - 'db/migrations/**'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
+      - 'db/scripts/live_dictionary_migration*.sql'
+      - 'db/scripts/live_dictionary_migration.sh'
       - '.github/workflows/db-drift-check.yml'
   workflow_dispatch:
 
@@ -134,6 +138,13 @@ jobs:
 
           migration_count="$(wc -l < "$migration_list" | tr -d ' ')"
           echo "Found $migration_count numbered migration files; bootstrap coverage is complete."
+
+      - name: Check live migration helper syntax
+        run: |
+          bash -n db/scripts/live_dictionary_migration.sh
+          db/scripts/live_dictionary_migration.sh plan >/tmp/live-dictionary-migration-plan.txt
+          grep -q '051_remove_word_status_sync_bridge.sql' /tmp/live-dictionary-migration-plan.txt
+          grep -q '052_drop_legacy_user_word_status.sql' /tmp/live-dictionary-migration-plan.txt
 
       - name: Apply bootstrap and probe contract
         env:

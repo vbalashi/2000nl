@@ -33,6 +33,15 @@ security/read-only blockers:
 
 Run against live before applying migrations.
 
+Preferred command:
+
+```bash
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" \
+  db/scripts/live_dictionary_migration.sh preflight
+```
+
+Equivalent SQL:
+
 ```sql
 select now() as checked_at, current_database() as database_name;
 
@@ -78,12 +87,18 @@ explicitly accepted before continuing.
 1. Put the app into a short maintenance/write-freeze window.
 2. Take a Supabase backup immediately before migration.
 3. Apply non-destructive migrations up to and including
-   `051_remove_word_status_sync_bridge.sql`.
+   `051_remove_word_status_sync_bridge.sql`:
+
+   ```bash
+   SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" \
+     db/scripts/live_dictionary_migration.sh phase1
+   ```
+
 4. Run the mandatory parity gate:
 
    ```bash
-   psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
-     -f db/scripts/check_user_card_status_parity_before_drop.sql
+   SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" \
+     db/scripts/live_dictionary_migration.sh parity
    ```
 
 5. If the parity gate fails, stop. Do not apply `052` or later. Restore or
@@ -91,7 +106,14 @@ explicitly accepted before continuing.
 6. Take a second backup after the parity gate passes and before the destructive
    drops.
 7. Apply migrations `052` through the latest migration, including
-   `066_harden_live_migration_blockers.sql`.
+   `066_harden_live_migration_blockers.sql`:
+
+   ```bash
+   SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" \
+   LIVE_MIGRATION_ALLOW_DESTRUCTIVE=1 \
+     db/scripts/live_dictionary_migration.sh phase2
+   ```
+
 8. Deploy the matching `apps/ui` build.
 9. Run postflight validation before reopening writes.
 
@@ -103,11 +125,15 @@ deployment into two migration batches.
 Run the local contract probe equivalent against live:
 
 ```bash
-psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
-  -f db/scripts/local_supabase_probe.sql
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" \
+  db/scripts/live_dictionary_migration.sh postflight
 ```
 
-Run this grant audit after `066`:
+The postflight command runs `db/scripts/local_supabase_probe.sql`, then runs the
+grant audit and read-only function check below. These SQL snippets are shown for
+manual inspection if the postflight command fails.
+
+Grant audit after `066`:
 
 ```sql
 with blocked(signature) as (

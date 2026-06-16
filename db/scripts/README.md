@@ -90,6 +90,31 @@ Run this after migration `042_physical_user_card_status.sql` and before migratio
 
 ---
 
+## Live Dictionary Migration Runner
+
+**Script:** `live_dictionary_migration.sh`
+**Purpose:** Run the live dictionary/list/card/user-dictionary migration as two
+explicit phases, with the user-card-status parity gate between the
+non-destructive and destructive migration batches.
+
+```bash
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" db/scripts/live_dictionary_migration.sh preflight
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" db/scripts/live_dictionary_migration.sh phase1
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" db/scripts/live_dictionary_migration.sh parity
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" LIVE_MIGRATION_ALLOW_DESTRUCTIVE=1 \
+  db/scripts/live_dictionary_migration.sh phase2
+SUPABASE_DB_URL="$LIVE_SUPABASE_DB_URL" db/scripts/live_dictionary_migration.sh postflight
+```
+
+`phase2` applies `052_drop_legacy_user_word_status.sql` and later migrations,
+so it refuses to run unless `LIVE_MIGRATION_ALLOW_DESTRUCTIVE=1` is set after a
+backup and successful parity gate.
+
+See `docs/runbooks/live-dictionary-migration.md` for the full operational
+sequence and stop conditions.
+
+---
+
 ## Development
 
 When adding new scripts:
