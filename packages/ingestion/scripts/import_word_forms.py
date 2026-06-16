@@ -4,13 +4,16 @@ import argparse
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 import psycopg2
 import psycopg2.extras
 
-from importer.db import ensure_dictionary, load_existing_entries
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from importer.db import ensure_dictionary, load_existing_entries, refresh_dictionary_search_documents
 from importer.word_forms import extract_word_forms
 
 
@@ -61,11 +64,14 @@ def insert_forms(
     dictionary_id: str,
     entry_key_to_id: Dict[Tuple[str, int], str],
     forms_by_entry_key: Dict[Tuple[str, int], List[str]],
-) -> Tuple[int, int]:
+    refresh_search_documents_after_import: bool,
+) -> Tuple[int, int, int]:
     inserted = 0
     skipped = 0
+    refreshed = 0
 
     records = []
+    touched_word_ids = set()
     for (headword, meaning_id), forms in forms_by_entry_key.items():
         word_id = entry_key_to_id.get((headword, meaning_id))
         if not word_id:
@@ -76,6 +82,7 @@ def insert_forms(
                 meaning_id,
             )
             continue
+        touched_word_ids.add(word_id)
         for form in forms:
             records.append((language_code, dictionary_id, form, word_id, headword))
 
@@ -95,8 +102,10 @@ def insert_forms(
                 records,
             )
             inserted = len(records)
+        if refresh_search_documents_after_import:
+            refreshed = refresh_dictionary_search_documents(cursor, touched_word_ids)
 
-    return inserted, skipped
+    return inserted, skipped, refreshed
 
 
 def main() -> None:
@@ -140,6 +149,11 @@ def main() -> None:
         default=1,
         help="Dictionary schema version registered in dictionary_schemas.",
     )
+    parser.add_argument(
+        "--refresh-search-documents",
+        action="store_true",
+        help="Refresh dictionary_search_documents after importing forms. For full imports, prefer a controlled backfill job.",
+    )
 
     args = parser.parse_args()
     data_dir = Path(args.data_dir)
@@ -168,15 +182,21 @@ def main() -> None:
                 args.dictionary_schema_version,
             )
             existing = load_existing_entries(cursor, args.language, dictionary_id)
-        inserted, skipped = insert_forms(
+        inserted, skipped, refreshed = insert_forms(
             connection,
             args.language,
             dictionary_id,
             existing,
             forms_by_entry_key,
+            args.refresh_search_documents,
         )
 
-    logging.info("Inserted %d word-form rows (%d headwords missing in DB).", inserted, skipped)
+    logging.info(
+        "Inserted %d word-form rows (%d headwords missing in DB); refreshed %d search documents.",
+        inserted,
+        skipped,
+        refreshed,
+    )
 
 
 if __name__ == "__main__":

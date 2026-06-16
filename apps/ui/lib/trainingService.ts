@@ -33,6 +33,7 @@ export {
   fetchListSummaryById,
   fetchUserLists,
   fetchWordsForList,
+  searchDictionaryEntriesV2,
   searchWordEntries,
   removeWordsFromUserList,
   deleteUserList,

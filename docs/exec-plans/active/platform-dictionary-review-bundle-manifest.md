@@ -13,7 +13,11 @@ dictionary transformation.
 - `docs/intent/current-transformation-targets.md`
 - `docs/exec-plans/active/platform-dictionary-transformation.md`
 - `docs/exec-plans/active/dictionary-schema-and-lookup-review.md`
+- `docs/exec-plans/active/dictionary-search-review-brief.md`
+- `docs/exec-plans/active/dictionary-search-v2-search-documents.md`
 - `docs/exec-plans/active/senior-review-request-platform-dictionary.md`
+- `docs/intent/search-and-lists/search-ranking-grouping-contract.md`
+- `docs/reference/api-functions/search-and-user.md`
 
 ## Existing Schema And Data Contracts
 
@@ -30,7 +34,12 @@ dictionary transformation.
 - `db/migrations/001_core_schema.sql`
 - `db/migrations/003_queue_training.sql`
 - `db/migrations/004_user_features.sql`
-- `db/migrations/archive/0007_add_meaning_id.sql`
+- `db/migrations/049_lookup_uses_card_status.sql`
+- `db/migrations/050_gated_word_reads_use_card_status.sql`
+- `db/migrations/068_optimize_gated_dictionary_search.sql`
+- `db/migrations/069_search_exact_case_tiebreak.sql`
+- `db/migrations/071_dictionary_search_documents.sql`
+- `db/migrations/072_dictionary_search_v2_rpcs.sql`
 - `packages/ingestion/README.md`
 - `packages/ingestion/SCRIPTS.md`
 - `packages/ingestion/src/importer/core.py`
@@ -49,9 +58,13 @@ dictionary transformation.
 - `apps/ui/lib/training/selectionService.ts`
 - `apps/ui/lib/training/reviewService.ts`
 - `apps/ui/lib/training/listService.ts`
+- `apps/ui/lib/training/dictionaryService.ts`
+- `apps/ui/lib/platform/platformApi.ts`
 - `apps/ui/lib/wordUtils.ts`
 - `apps/ui/components/training/TrainingScreen.tsx`
 - `apps/ui/components/training/TrainingCard.tsx`
+- `apps/ui/components/training/wordlist/DictionarySearchTab.tsx`
+- `apps/ui/components/training/wordlist/WordListTab.tsx`
 - `apps/ui/app/api/translation/route.ts`
 - `apps/ui/app/api/tts/route.ts`
 
@@ -66,6 +79,11 @@ dictionary transformation.
 - `db/data/words_content/de_lidw_1.json`
 - `db/data/words_content/aan_vz_1.json`
 - `db/data/words_content/ouwe_bn_1.json`
+- `db/data/words_content/ster_zn_1.json`
+- `db/data/words_content/branden_ww_1.json`
+- `db/data/words_content/branden_ww_2.json`
+- `db/data/words_content/branden_ww_3.json`
+- `db/data/words_content/branden_ww_4.json`
 
 ## External Consumer Notes
 

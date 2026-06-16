@@ -13,6 +13,9 @@ Start by reading:
 - `docs/intent/current-transformation-targets.md`
 - `docs/exec-plans/active/platform-dictionary-transformation.md`
 - `docs/exec-plans/active/dictionary-schema-and-lookup-review.md`
+- `docs/exec-plans/active/dictionary-search-review-brief.md`
+- `docs/intent/search-and-lists/search-ranking-grouping-contract.md`
+- `docs/reference/api-functions/search-and-user.md`
 - `packages/shared/types/platform.ts`
 - `packages/shared/schemas/nl/note.schema.json`
 
@@ -21,10 +24,12 @@ Then inspect the current implementation paths that matter:
 - `db/migrations/001_core_schema.sql`
 - `db/migrations/003_queue_training.sql`
 - `db/migrations/004_user_features.sql`
-- `db/migrations/archive/0007_add_meaning_id.sql`
 - `packages/ingestion/src/importer`
 - `packages/ingestion/scripts`
 - `apps/ui/lib/training`
+- `apps/ui/lib/platform/platformApi.ts`
+- `apps/ui/components/training/wordlist/DictionarySearchTab.tsx`
+- `apps/ui/components/training/wordlist/WordListTab.tsx`
 - `apps/ui/components/training/TrainingScreen.tsx`
 - `apps/ui/components/training/TrainingCard.tsx`
 - `apps/ui/app/api/translation/route.ts`
@@ -53,8 +58,8 @@ The user wants:
 2. Should the current Dutch schema become `nl-vandale-v1`, `common-euro-v1`, or
    both through inheritance/composition?
 3. What is the safest first DB migration sequence?
-4. Should the first migration fix the consolidated `meaning_id` drift before any
-   new dictionary work?
+4. Is the confirmed `meaning_id` contract sufficient for meaning-level entry
+   identity during dictionary/search expansion?
 5. Should dictionary visibility use simple columns on `dictionaries`, a separate
    entitlement table, or RLS-only policy logic?
 6. Should `word_lists.language_code` become nullable/derived for mixed-language
@@ -66,6 +71,10 @@ The user wants:
 9. What hidden coupling in `TrainingScreen`, `TrainingCard`, selection RPCs, or
    ingestion would make this transformation risky?
 10. What tests are missing before starting migration work?
+11. Does the current dictionary search implementation search the right fields
+    and rank results in a way that matches dictionary-user expectations?
+12. Should search remain an enriched Postgres RPC, move to extracted Postgres
+    search documents, or eventually use an external search layer?
 
 ## Expected Output
 

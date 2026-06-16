@@ -102,10 +102,13 @@ export type DictionaryEntry = {
     | "lemma-or-inflection"
     | "related-headword"
     | "example"
+    | "idiom"
     | "definition"
     | "fallback";
   search_match_label?: string;
   search_matched_text?: string | null;
+  search_matched_field?: string | null;
+  search_source_path?: string | null;
   search_group_rank?: number;
 };
 
@@ -208,6 +211,12 @@ export type WordListSummary = {
 export type WordEntrySearchResult = {
   items: DictionaryEntry[];
   total: number;
+  groupCounts?: Record<string, number>;
+  queryNormalization?: {
+    query?: string | null;
+    normalized?: string | null;
+    normalized_unaccent?: string | null;
+  };
   /** True if results are capped due to subscription tier (free = 100 words) */
   isLocked?: boolean;
   /** Maximum words allowed for current tier (null = unlimited) */

@@ -202,7 +202,7 @@ Candidate new/changed tables:
   - add `dictionary_id`
   - add `entry_schema_id` / `entry_schema_version` or derive them from
     dictionary
-  - ensure `meaning_id` is present in consolidated migrations
+  - keep `meaning_id` present in consolidated migrations
   - keep current columns during migration
   - eventually replace source-specific columns like `vandale_id` with
     `source_entry_id` and `source_meta`
@@ -364,7 +364,7 @@ Validation:
 
 ### Stage 1: Dictionary Boundary
 
-- Fix/confirm consolidated `meaning_id` schema drift before adding new
+- Keep the confirmed consolidated `meaning_id` contract stable while adding new
   dictionary migrations.
 - Add `dictionaries`.
 - Add a schema registry or at least dictionary-level schema metadata.

@@ -195,6 +195,10 @@ const searchWordEntries = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const searchDictionaryEntriesV2 = vi.fn().mockResolvedValue({
+  items: [dictionaryHuis],
+  total: 1,
+});
 const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -258,6 +262,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchAvailableLearningLanguages,
   fetchAvailableDictionarySources,
   fetchWordsForList,
+  searchDictionaryEntriesV2,
   searchWordEntries,
   fetchEntryListMemberships,
   addWordsToUserList,

@@ -219,3 +219,9 @@
 
 -- 2000NL Connect registered clients, grants, codes, and sessions
 \i db/migrations/070_connected_clients.sql
+
+-- Extracted dictionary search documents and field fragments
+\i db/migrations/071_dictionary_search_documents.sql
+
+-- Versioned dictionary search and exact lookup over extracted search documents
+\i db/migrations/072_dictionary_search_v2_rpcs.sql

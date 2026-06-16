@@ -30,6 +30,13 @@ type WordSearchFilters = {
   pageSize?: number;
 };
 
+type DictionarySearchV2Filters = WordSearchFilters & {
+  listId?: string;
+  listType?: WordListType;
+  includeBodyMatches?: boolean;
+  includeFallback?: boolean;
+};
+
 type EntryLearningListMembershipRpcList = {
   id?: string | null;
   kind?: string | null;
@@ -302,6 +309,50 @@ export async function searchWordEntries(
   return {
     items: (result?.items || []).map(mapDictionaryEntry),
     total: result?.total ?? 0,
+    isLocked: result?.is_locked,
+    maxAllowed: result?.max_allowed,
+  };
+}
+
+export async function searchDictionaryEntriesV2(
+  filters: DictionarySearchV2Filters = {},
+): Promise<WordEntrySearchResult> {
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = filters.pageSize ?? 50;
+
+  const { data, error } = await supabase.rpc("search_dictionary_entries_v2", {
+    p_query: filters.query || null,
+    p_language_code: filters.languageCode ?? null,
+    p_dictionary_ids: filters.dictionaryIds?.length ? filters.dictionaryIds : null,
+    p_list_id: filters.listId ?? null,
+    p_list_type: filters.listType ?? null,
+    p_part_of_speech: filters.partOfSpeech || null,
+    p_is_nt2: typeof filters.isNt2 === "boolean" ? filters.isNt2 : null,
+    p_page: page,
+    p_page_size: pageSize,
+    p_include_body_matches: filters.includeBodyMatches ?? true,
+    p_include_fallback: filters.includeFallback ?? false,
+  });
+
+  if (error) {
+    console.error("Error searching dictionary entries via v2 RPC", error);
+    return { items: [], total: 0 };
+  }
+
+  const result = data as {
+    items: any[];
+    total: number;
+    group_counts?: Record<string, number>;
+    query_normalization?: WordEntrySearchResult["queryNormalization"];
+    is_locked: boolean;
+    max_allowed: number | null;
+  };
+
+  return {
+    items: (result?.items || []).map(mapDictionaryEntry),
+    total: result?.total ?? 0,
+    groupCounts: result?.group_counts ?? undefined,
+    queryNormalization: result?.query_normalization ?? undefined,
     isLocked: result?.is_locked,
     maxAllowed: result?.max_allowed,
   };
