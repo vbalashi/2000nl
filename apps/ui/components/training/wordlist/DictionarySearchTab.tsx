@@ -8,6 +8,7 @@ import {
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
   fetchWordsForList,
+  searchDictionaryEntriesV2,
   searchWordEntries,
 } from "@/lib/trainingService";
 import type {
@@ -119,6 +120,9 @@ const dictionaryLabel = (entry: DictionaryEntry) => {
 const searchMatchLabel = (entry: DictionaryEntry) =>
   entry.search_match_label ?? "Woordenboekentry";
 
+const useDictionarySearchV2 =
+  process.env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2 === "true";
+
 export function DictionarySearchTab({
   open,
   userId,
@@ -210,14 +214,27 @@ export function DictionarySearchTab({
     }
     setSearchLoading(true);
     try {
-      const result = useViewedListFilter
+      const trimmedQuery = query.trim() || undefined;
+      const result = useDictionarySearchV2
+        ? await searchDictionaryEntriesV2({
+            query: trimmedQuery,
+            languageCode: searchLanguage,
+            dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
+            listId: useViewedListFilter ? viewedListId! : undefined,
+            listType: useViewedListFilter ? (viewedList?.type ?? "curated") : undefined,
+            page,
+            pageSize,
+            includeBodyMatches: true,
+            includeFallback: false,
+          })
+        : useViewedListFilter
         ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
-            query: query.trim() || undefined,
+            query: trimmedQuery,
             page,
             pageSize,
           })
         : await searchWordEntries({
-            query: query.trim() || undefined,
+            query: trimmedQuery,
             languageCode: searchLanguage,
             dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
             page,

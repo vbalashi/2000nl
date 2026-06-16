@@ -16,6 +16,7 @@ from importer.db import (
     ensure_word_list,
     load_existing_entries,
     load_list_state,
+    refresh_dictionary_search_documents,
 )
 from importer.dictionary_entry_parser import ParsedEntry, parse_dictionary_file
 
@@ -46,6 +47,7 @@ def import_entries(
     dictionary_description: Optional[str] = "Trusted Dutch VanDale-backed dictionary used by the current 2000nl training app.",
     dictionary_schema_key: str = "nl-vandale-v1",
     dictionary_schema_version: int = 1,
+    refresh_search_documents: bool = False,
 ) -> ImportStats:
     path = Path(data_dir)
     if not path.exists():
@@ -159,8 +161,13 @@ def import_entries(
                     page_size=batch_size,
                 )
                 returned = cursor.fetchall()
+                refreshed_word_ids = []
                 for word_id, headword, meaning_id in returned:
                     existing_entries[(headword, int(meaning_id))] = word_id
+                    refreshed_word_ids.append(word_id)
+
+                if refresh_search_documents:
+                    refresh_dictionary_search_documents(cursor, refreshed_word_ids)
 
                 nt2_rows = []
                 for entry in entries:

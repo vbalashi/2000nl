@@ -40,17 +40,14 @@ Local corpus scan on `db/data/words_content`:
 
 Production/schema check:
 
-- Direct `psql` helper could not run because `psql` is not installed in this
-  environment.
-- A read-only query through the installed `pg` module showed production
-  `word_entries` has `meaning_id integer not null`.
+- Production `word_entries` has `meaning_id integer not null`.
 - Production has unique index
   `word_entries_language_headword_meaning_idx(language_code, headword,
   meaning_id)`.
-- Consolidated migration `001_core_schema.sql` currently does not include
-  `meaning_id`, while archived migration `0007_add_meaning_id.sql`, ingestion,
-  UI code, docs, and tests all expect it. This is a schema drift/migration
-  consolidation issue that should be reviewed before new migrations.
+- Current consolidated migration `001_core_schema.sql` also includes
+  `meaning_id`, so the earlier review concern about consolidated schema drift
+  is resolved. `meaning_id` is not a blocker for new dictionary/search
+  migrations.
 
 ## Candidate Schema Model
 
@@ -208,7 +205,5 @@ Rationale:
 - Should translations inside user dictionary entries use a structured map like
   `translations[target_lang]`, or should translations remain meaning-level
   fields?
-- Should the first migration fix consolidated `meaning_id` drift before adding
-  dictionaries?
 - Should the backend expose separate `lookup` and `translate` endpoints, or a
   composite `analyze-selection` endpoint with optional translation?

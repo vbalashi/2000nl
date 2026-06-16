@@ -90,6 +90,11 @@ def main() -> None:
         default=1,
         help="Dictionary schema version registered in dictionary_schemas.",
     )
+    parser.add_argument(
+        "--refresh-search-documents",
+        action="store_true",
+        help="Refresh dictionary_search_documents after importing entries. For full imports, prefer a controlled backfill job.",
+    )
 
     args = parser.parse_args()
 
@@ -117,6 +122,7 @@ def main() -> None:
         dictionary_description=args.dictionary_description,
         dictionary_schema_key=args.dictionary_schema_key,
         dictionary_schema_version=args.dictionary_schema_version,
+        refresh_search_documents=args.refresh_search_documents,
     )
 
     logging.info(

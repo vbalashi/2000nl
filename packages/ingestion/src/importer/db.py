@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, Iterable, Optional, Set, Tuple
 
 import psycopg2.extras
 from psycopg2.extensions import cursor as Cursor
@@ -165,3 +165,42 @@ def upsert_word_entry(
     word_id = cursor.fetchone()[0]
     cache[cache_key] = word_id
     return word_id, True
+
+
+def refresh_dictionary_search_documents(
+    cursor: Cursor,
+    word_ids: Iterable[str],
+    extraction_version: int = 1,
+    chunk_size: int = 500,
+) -> int:
+    """
+    Refresh extracted search documents when the target database supports them.
+
+    Older/local databases may not have the search-document migration yet, so the
+    importer treats the refresh hook as optional and keeps entry import working.
+    """
+    ids = sorted({str(word_id) for word_id in word_ids if word_id})
+    if not ids:
+        return 0
+
+    cursor.execute(
+        "select to_regprocedure('public.refresh_dictionary_search_document(uuid,int)')"
+    )
+    if cursor.fetchone()[0] is None:
+        return 0
+
+    refreshed = 0
+    chunk_size = max(1, chunk_size)
+    for start in range(0, len(ids), chunk_size):
+        chunk = ids[start : start + chunk_size]
+        cursor.execute(
+            """
+            select count(*)
+            from unnest(%s::uuid[]) as entry_ids(entry_id)
+            cross join lateral refresh_dictionary_search_document(entry_ids.entry_id, %s)
+            """,
+            (chunk, extraction_version),
+        )
+        refreshed += int(cursor.fetchone()[0] or 0)
+
+    return refreshed

@@ -55,6 +55,12 @@ export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   ...(data.search_matched_text
     ? { search_matched_text: data.search_matched_text }
     : {}),
+  ...(data.search_matched_field
+    ? { search_matched_field: data.search_matched_field }
+    : {}),
+  ...(data.search_source_path
+    ? { search_source_path: data.search_source_path }
+    : {}),
   ...(typeof data.search_group_rank === "number"
     ? { search_group_rank: data.search_group_rank }
     : {}),
