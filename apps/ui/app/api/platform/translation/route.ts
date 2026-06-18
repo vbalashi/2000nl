@@ -42,7 +42,14 @@ async function resolveTargetLang(
   if (explicitTargetLang) return { targetLang: explicitTargetLang };
 
   const auth = await getAuthenticatedSupabase(request);
-  if (auth instanceof Response) return { response: auth };
+  if (auth instanceof Response) {
+    if (auth.status === 401) {
+      return {
+        response: jsonNoStore({ error: "authentication_required" }, 401),
+      };
+    }
+    return { response: auth };
+  }
 
   const { data, error } = await auth.supabase
     .from("user_settings")

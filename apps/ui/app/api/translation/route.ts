@@ -539,6 +539,7 @@ export async function GET(req: NextRequest) {
         usedFallback: false,
         primaryError: null,
         promptFingerprint: getTranslationPromptFingerprint(provider),
+        translatedPaths: items.map((item) => item.path),
       }
     );
     await supabase
@@ -609,6 +610,7 @@ export async function GET(req: NextRequest) {
       usedFallback,
       primaryError,
       promptFingerprint: getTranslationPromptFingerprint(used),
+      translatedPaths: items.map((item) => item.path),
     });
 
     const { error: updateError } = await supabase

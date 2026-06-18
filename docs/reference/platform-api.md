@@ -16,6 +16,10 @@ npm run test:platform
 
 - Send `Authorization: Bearer <access_token>`.
 - Connected Clients obtain `access_token` values from [2000NL Connect](./connect-api.md). Treat the token as opaque and refresh only through `/api/connect/token`.
+- Guest/public catalog lookup uses a separate catalog credential:
+  `Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>` against
+  `/api/platform/v1/catalog/lookup`. Do not use a shared end-user token for
+  guest lookup.
 - Configure allowed browser/extension origins with `PLATFORM_API_ALLOWED_ORIGINS`.
 - Routes respond to `OPTIONS` preflight with the configured CORS headers.
 
@@ -33,6 +37,7 @@ Response:
   },
   "preferences": {
     "translationTargetLanguageCode": "en",
+    "source": "user-setting",
     "updatedAt": "2026-06-18T08:00:00.000Z"
   }
 }
@@ -40,7 +45,9 @@ Response:
 
 `translationTargetLanguageCode` is resolved from `user_settings.translation_lang`.
 Unset or missing settings default to `en`; explicit `off` is returned as `null`
-for clients that need to disable translation affordances.
+for clients that need to disable translation affordances. `source` is
+`user-setting` when `user_settings.translation_lang` is explicitly set,
+including `off`; otherwise it is `platform-default`.
 
 ## `POST /lookup`
 
@@ -87,9 +94,17 @@ Response shape:
               "translations": {}
             }
           ],
+          "sections": [
+            {
+              "id": "meaning-1",
+              "sourcePath": "raw.meanings[0].definition",
+              "kind": "meaning",
+              "text": "gebouw"
+            }
+          ],
           "sourceMeta": {}
         },
-        "contentFingerprint": "sha256-of-normalized-content",
+        "contentFingerprint": "sha256-of-learner-visible-content",
         "raw": {}
       },
       "dictionary": {
@@ -127,10 +142,6 @@ Response shape:
         "word-to-definition": {
           "phase": "reviewing",
           "actions": [
-            "record-view",
-            "start-learning",
-            "mark-known",
-            "mark-unknown",
             "review-card"
           ],
           "reviewResults": ["fail", "hard", "success", "easy"],
@@ -161,24 +172,58 @@ Response shape:
 
 `includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
 
-`languageCode`, `contextText`, and `intent` are accepted and echoed in
-`request` so clients can adopt the V2 shape now. The current implementation
-still resolves candidates through the existing headword lookup RPC; language
-filtering and context-sensitive ranking are planned search-pipeline work, not a
-guarantee of this first V2-compatible response.
+When `languageCode`, `contextText`, or `intent: "external-click"` is present,
+lookup uses the gated dictionary search path. `languageCode` is applied as a
+real filter, exact headword matches rank before indexed word-form matches, and
+match evidence is conservative: `exact` is returned for exact headword evidence,
+`inflection` for indexed word-form evidence, and `unknown` otherwise.
+`contextText` is accepted and echoed but does not affect ranking yet.
 
 `entry.content` and `entry.contentFingerprint` are the preferred external
-dictionary contract. `entry.raw` remains available for compatibility and
-diagnostics, but external clients should not parse it as the primary shape.
-Current match semantics are conservative: exact headword matches are reported as
-`exact`; other relations are reported as `unknown` until the search pipeline
-exposes lemma/inflection/fuzzy evidence directly.
+dictionary contract. `entry.content.sections[]` provides stable IDs and source
+paths for learner-visible meaning/example/idiom nodes. The fingerprint is based
+on learner-visible normalized content and excludes volatile diagnostics such as
+`sourceMeta`. `entry.raw` remains available for compatibility and diagnostics,
+but external clients should not parse it as the primary shape.
 
 `availableActions` is the legacy broad action list. New clients should prefer
 `cardCapabilitiesByType["word-to-definition"]` when deciding which training
-controls to render for a specific card type. `mark-known` is an action label and
-maps to an `easy` review result through `POST /actions`; it is not a persisted
-progress status.
+controls to render for a specific card type. Capabilities are phase-aware:
+`not-started` and `encountered` cards allow `start-learning` and `mark-known`;
+`learning` and `reviewing` cards allow `review-card` plus `reviewResults`;
+`hidden` and currently `frozen` cards expose no first-redesign progress actions.
+`mark-known` is an action label and maps to an `easy` review result through
+`POST /actions`; it is not a persisted progress status.
+
+## `POST /catalog/lookup`
+
+Guest-safe public catalog lookup for external clients such as AudioFilms before
+the user connects a 2000NL account.
+
+Authenticate with the dedicated catalog token:
+
+```http
+Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>
+```
+
+Request:
+```json
+{
+  "query": "huis",
+  "languageCode": "nl",
+  "contextText": "optional surrounding text",
+  "intent": "external-click"
+}
+```
+
+The response uses the same `query`, `request`, `items[].entry`,
+`items[].dictionary`, and `items[].match` shape as `/lookup`, including
+normalized `entry.content` and `contentFingerprint`.
+
+Catalog lookup is hard-limited to dictionaries with `visibility` of `system` or
+`public`. It does not run under an end-user Supabase JWT and must not return
+private dictionaries, `userStateByCardType`, `progressSummary`,
+`listMemberships`, `cardCapabilitiesByType`, or `availableActions`.
 
 ## External Translation Flow
 
@@ -245,7 +290,10 @@ Response when a ready overlay is available:
       {
         "definition": "здание для жилья"
       }
-    ]
+    ],
+    "__meta": {
+      "translatedPaths": [["headword"], ["meanings", 0, "definition"]]
+    }
   },
   "note": null
 }
@@ -263,6 +311,9 @@ Response when another request is already producing the same overlay:
 `force: true` refreshes the overlay even when a ready cached row exists. The
 endpoint gates source entry access before any service-role cache read/write, so
 private user-dictionary entries remain visible only to authorized users.
+Ready overlays include best-effort `overlay.__meta.translatedPaths` so
+line-level clients can correlate translated values with stable lookup content
+paths without parsing provider diagnostics.
 
 ## `POST /text-translation`
 
@@ -276,29 +327,37 @@ Request:
   "text": "ik ga naar huis",
   "sourceLanguageCode": "nl",
   "targetLanguageCode": "en",
-  "purpose": "youtube-recall",
+  "purpose": "youtube-phrase-practice",
   "contextText": "optional surrounding context"
 }
 ```
 
 `targetLanguageCode` may be omitted and resolves through the same
-`user_settings.translation_lang` preference as `/translation`.
+`user_settings.translation_lang` preference as `/translation`. When `purpose`
+is omitted, the platform defaults it to `youtube-phrase-practice`.
 
 Response:
 ```json
 {
-  "text": "ik ga naar huis",
-  "translatedText": "I am going home",
+  "translationId": "sha256-artifact-id",
+  "status": "ready",
+  "sourceTextHash": "sha256-source-text",
   "sourceLanguageCode": "nl",
   "targetLanguageCode": "en",
-  "purpose": "youtube-recall",
-  "provider": "openai"
+  "translatedText": "I am going home",
+  "translationPolicyVersion": "platform-text-translation-v1",
+  "cached": false
 }
 ```
 
 2000NL owns the target preference, provider selection, prompt policy, and text
 translation semantics. AudioFilms owns YouTube phrase association and any
-client-side cache linkage.
+client-side cache linkage. `translationId` is derived from source text hash,
+source language, resolved target language, purpose, and
+`translationPolicyVersion`; it is stable for retries of the same artifact.
+The endpoint persists generic text translation artifacts in
+`platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
+return with `cached: true`; a fresh provider call returns with `cached: false`.
 
 ## `POST /actions`
 

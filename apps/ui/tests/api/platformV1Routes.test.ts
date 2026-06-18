@@ -65,34 +65,30 @@ describe("/api/platform/v1 contract", () => {
     const { POST } = await import("@/app/api/platform/v1/lookup/route");
     mockAuthenticatedUser();
     rpc.mockImplementation((name: string) => {
-      if (name === "fetch_dictionary_entry_gated") {
+      if (name === "search_word_entries_gated") {
         return Promise.resolve({
-          data: [
-            {
-              id: "entry-1",
-              dictionary_id: "dict-1",
-              language_code: "nl",
-              headword: "huis",
-              meaning_id: 1,
-              part_of_speech: "zn",
-              gender: "het",
-              raw: { meanings: [{ definition: "gebouw" }] },
-              is_nt2_2000: true,
-              meanings_count: 1,
-              dictionary: {
-                id: "dict-1",
+          data: {
+            items: [
+              {
+                id: "entry-1",
+                dictionary_id: "dict-1",
+                dictionary_name: "VanDale Dutch",
+                dictionary_slug: "nl-vandale",
+                dictionary_kind: "curated",
                 language_code: "nl",
-                slug: "nl-vandale",
-                name: "VanDale Dutch",
-                kind: "curated",
-                visibility: "system",
-                owner_user_id: null,
-                is_editable: false,
-                schema_key: "nl-vandale-v1",
-                schema_version: 1,
+                headword: "huis",
+                meaning_id: 1,
+                part_of_speech: "zn",
+                gender: "het",
+                raw: { meanings: [{ definition: "gebouw" }] },
+                is_nt2_2000: true,
+                meanings_count: 1,
+                search_match_group: "exact-headword",
+                search_matched_text: "huis",
               },
-            },
-          ],
+            ],
+            total: 1,
+          },
           error: null,
         });
       }
@@ -179,10 +175,6 @@ describe("/api/platform/v1 contract", () => {
             "cardCapabilitiesByType": {
               "word-to-definition": {
                 "actions": [
-                  "record-view",
-                  "start-learning",
-                  "mark-known",
-                  "mark-unknown",
                   "review-card",
                 ],
                 "frozenUntil": null,
@@ -197,14 +189,14 @@ describe("/api/platform/v1 contract", () => {
             },
             "dictionary": {
               "id": "dict-1",
-              "isEditable": false,
+              "isEditable": null,
               "kind": "curated",
               "languageCode": "nl",
               "name": "VanDale Dutch",
-              "schemaKey": "nl-vandale-v1",
-              "schemaVersion": 1,
+              "schemaKey": null,
+              "schemaVersion": null,
               "slug": "nl-vandale",
-              "visibility": "system",
+              "visibility": null,
             },
             "entry": {
               "content": {
@@ -220,9 +212,17 @@ describe("/api/platform/v1 contract", () => {
                   },
                 ],
                 "partOfSpeech": "zn",
+                "sections": [
+                  {
+                    "id": "meaning-1",
+                    "kind": "meaning",
+                    "sourcePath": "raw.meanings[0].definition",
+                    "text": "gebouw",
+                  },
+                ],
                 "sourceMeta": {},
               },
-              "contentFingerprint": "63530f2a0785bced457f877f73ee20a90b3ff71fa6d889d5993660cdefe360b3",
+              "contentFingerprint": "38826cc38aa4eb47b5cabf36dbf711a8a41d3d9054dcee1e3014036e0ce8823d",
               "dictionaryId": "dict-1",
               "gender": "het",
               "headword": "huis",
@@ -373,7 +373,72 @@ describe("/api/platform/v1 contract", () => {
       },
       preferences: {
         translationTargetLanguageCode: "en",
+        source: "user-setting",
         updatedAt: "2026-06-18T08:00:00.000Z",
+      },
+    });
+  });
+
+  test("session reports platform-default when translation preference is missing", async () => {
+    const { GET } = await import("@/app/api/platform/v1/session/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1", email: null } },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({ data: null, error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await GET(getRequest("/api/platform/v1/session"));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      user: {
+        id: "user-1",
+        email: null,
+      },
+      preferences: {
+        translationTargetLanguageCode: "en",
+        source: "platform-default",
+        updatedAt: null,
+      },
+    });
+  });
+
+  test("session reports explicit disabled translation preference", async () => {
+    const { GET } = await import("@/app/api/platform/v1/session/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1", email: "user@example.com" } },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({
+          data: {
+            translation_lang: "off",
+            updated_at: "2026-06-18T09:00:00.000Z",
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await GET(getRequest("/api/platform/v1/session"));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      user: {
+        id: "user-1",
+        email: "user@example.com",
+      },
+      preferences: {
+        translationTargetLanguageCode: null,
+        source: "user-setting",
+        updatedAt: "2026-06-18T09:00:00.000Z",
       },
     });
   });
@@ -381,7 +446,7 @@ describe("/api/platform/v1 contract", () => {
   test("lookup echoes V2 request metadata on empty results", async () => {
     const { POST } = await import("@/app/api/platform/v1/lookup/route");
     mockAuthenticatedUser();
-    rpc.mockResolvedValueOnce({ data: [], error: null });
+    rpc.mockResolvedValueOnce({ data: { items: [], total: 0 }, error: null });
 
     const response = await POST(
       request("/api/platform/v1/lookup", {

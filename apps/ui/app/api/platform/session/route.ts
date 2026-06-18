@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const hasUserSetting =
+    typeof data?.translation_lang === "string" && data.translation_lang.length > 0;
   const translationLang =
     data?.translation_lang === "off" ? null : data?.translation_lang ?? "en";
 
@@ -46,6 +48,7 @@ export async function GET(request: NextRequest) {
     },
     preferences: {
       translationTargetLanguageCode: translationLang,
+      source: hasUserSetting ? "user-setting" : "platform-default",
       updatedAt: data?.updated_at ?? null,
     },
   });

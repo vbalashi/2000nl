@@ -185,6 +185,31 @@ describe("/api/platform/v1/translation", () => {
     });
   });
 
+  test("requires authentication when card translation target preference is omitted", async () => {
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/translation", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://client.example",
+        },
+        body: JSON.stringify({ entryId: ENTRY_ID }),
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://client.example",
+    );
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: null,
+      error: "authentication_required",
+    });
+  });
+
   test("wraps a fresh pending cache response with platform contract fields", async () => {
     mockAuthenticatedClients();
     rpc.mockResolvedValueOnce({
@@ -272,6 +297,9 @@ describe("/api/platform/v1/translation", () => {
               definition: "translated:woning",
             }),
           ],
+          __meta: expect.objectContaining({
+            translatedPaths: [["headword"], ["meanings", 0, "definition"]],
+          }),
         }),
         error_message: null,
       }),
@@ -283,6 +311,9 @@ describe("/api/platform/v1/translation", () => {
         status: "ready",
         overlay: expect.objectContaining({
           headword: "translated:het huis",
+          __meta: expect.objectContaining({
+            translatedPaths: [["headword"], ["meanings", 0, "definition"]],
+          }),
         }),
       }),
     );
@@ -329,17 +360,34 @@ describe("/api/platform/v1/translation", () => {
       auth: { getUser },
       from,
     };
-    createClient.mockReturnValueOnce(userClient);
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
     getUser.mockResolvedValueOnce({
       data: { user: { id: "user-1" } },
       error: null,
     });
-    from.mockImplementationOnce((table: string) => {
+    const cacheLookupChain = queryChain({ data: null, error: null });
+    const pendingInsertChain = queryChain({ data: null, error: null });
+    const readyUpdateChain = queryChain({ data: null, error: null });
+    from.mockImplementation((table: string) => {
       if (table === "user_settings") {
         return queryChain({
           data: { translation_lang: "en" },
           error: null,
         });
+      }
+      if (table === "platform_text_translations") {
+        if (from.mock.calls.filter(([name]) => name === table).length === 1) {
+          return cacheLookupChain;
+        }
+        if (from.mock.calls.filter(([name]) => name === table).length === 2) {
+          return pendingInsertChain;
+        }
+        return readyUpdateChain;
       }
       throw new Error(`unexpected table read: ${table}`);
     });
@@ -362,15 +410,295 @@ describe("/api/platform/v1/translation", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(from).toHaveBeenCalledTimes(1);
+    expect(from).not.toHaveBeenCalledWith("word_entry_translations");
+    expect(pendingInsertChain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "pending",
+        purpose: "youtube-recall",
+      }),
+      { onConflict: "translation_id", ignoreDuplicates: true },
+    );
+    expect(readyUpdateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "ready",
+        translated_text: "translated:ik ga naar huis",
+        provider: "openai",
+      }),
+    );
     expect(translate).toHaveBeenCalledWith(["ik ga naar huis"], "en");
     await expect(response.json()).resolves.toEqual({
-      text: "ik ga naar huis",
-      translatedText: "translated:ik ga naar huis",
+      translationId: expect.any(String),
+      status: "ready",
+      sourceTextHash: expect.any(String),
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      purpose: "youtube-recall",
-      provider: "openai",
+      translatedText: "translated:ik ga naar huis",
+      translationPolicyVersion: "platform-text-translation-v1",
+      cached: false,
+    });
+  });
+
+  test("defaults text translation purpose for YouTube phrase practice", async () => {
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    const cacheLookupChain = queryChain({ data: null, error: null });
+    const pendingInsertChain = queryChain({ data: null, error: null });
+    const readyUpdateChain = queryChain({ data: null, error: null });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return queryChain({
+          data: null,
+          error: null,
+        });
+      }
+      if (table === "platform_text_translations") {
+        if (from.mock.calls.filter(([name]) => name === table).length === 1) {
+          return cacheLookupChain;
+        }
+        if (from.mock.calls.filter(([name]) => name === table).length === 2) {
+          return pendingInsertChain;
+        }
+        return readyUpdateChain;
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "tot morgen",
+          sourceLanguageCode: "nl",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        status: "ready",
+        sourceLanguageCode: "nl",
+        targetLanguageCode: "en",
+        translatedText: "translated:tot morgen",
+        translationPolicyVersion: "platform-text-translation-v1",
+        cached: false,
+      }),
+    );
+  });
+
+  test("returns cached ready text translation artifact without calling provider", async () => {
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "platform_text_translations") {
+        return queryChain({
+          data: {
+            translation_id: "translation-id",
+            status: "ready",
+            translated_text: "see you tomorrow",
+            error_message: null,
+            provider: "openai",
+            source_text_hash: "source-hash",
+            source_language_code: "nl",
+            target_language_code: "en",
+            purpose: "youtube-phrase-practice",
+            translation_policy_version: "platform-text-translation-v1",
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "tot morgen",
+          sourceLanguageCode: "nl",
+          targetLanguageCode: "en",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(translate).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      translationId: "translation-id",
+      status: "ready",
+      sourceTextHash: "source-hash",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "en",
+      translatedText: "see you tomorrow",
+      translationPolicyVersion: "platform-text-translation-v1",
+      cached: true,
+    });
+  });
+
+  test("returns cached pending text translation artifact without calling provider", async () => {
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "platform_text_translations") {
+        return queryChain({
+          data: {
+            translation_id: "translation-id",
+            status: "pending",
+            translated_text: null,
+            error_message: null,
+            provider: null,
+            source_text_hash: "source-hash",
+            source_language_code: "nl",
+            target_language_code: "en",
+            purpose: "youtube-phrase-practice",
+            translation_policy_version: "platform-text-translation-v1",
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "tot morgen",
+          sourceLanguageCode: "nl",
+          targetLanguageCode: "en",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(translate).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      translationId: "translation-id",
+      status: "pending",
+      sourceTextHash: "source-hash",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "en",
+      translationPolicyVersion: "platform-text-translation-v1",
+      cached: true,
+    });
+  });
+
+  test("returns failed text translation artifact identity when provider fails", async () => {
+    translate.mockRejectedValueOnce(new Error("provider down"));
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    const cacheLookupChain = queryChain({ data: null, error: null });
+    const pendingInsertChain = queryChain({ data: null, error: null });
+    const failedUpdateChain = queryChain({ data: null, error: null });
+    from.mockImplementation((table: string) => {
+      if (table === "platform_text_translations") {
+        if (from.mock.calls.filter(([name]) => name === table).length === 1) {
+          return cacheLookupChain;
+        }
+        if (from.mock.calls.filter(([name]) => name === table).length === 2) {
+          return pendingInsertChain;
+        }
+        return failedUpdateChain;
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "tot morgen",
+          sourceLanguageCode: "nl",
+          targetLanguageCode: "en",
+          purpose: "youtube-phrase-practice",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(502);
+    expect(failedUpdateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        error_message: "provider down",
+      }),
+    );
+    await expect(response.json()).resolves.toEqual({
+      translationId: expect.any(String),
+      status: "failed",
+      sourceTextHash: expect.any(String),
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "en",
+      translationPolicyVersion: "platform-text-translation-v1",
+      cached: false,
+      error: "provider down",
     });
   });
 });

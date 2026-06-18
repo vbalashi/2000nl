@@ -279,6 +279,7 @@ export type TranslationOverlay = {
     usedFallback?: boolean | null;
     primaryError?: string | null;
     promptFingerprint?: string | null;
+    translatedPaths?: Array<Array<string | number>>;
   };
 };
 

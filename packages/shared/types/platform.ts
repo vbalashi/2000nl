@@ -43,8 +43,8 @@ export type DictionarySummary = {
 
 export type DictionaryEntryRef = {
   id: string;
-  dictionaryId: string;
-  languageCode: string;
+  dictionaryId: string | null;
+  languageCode: string | null;
   headword: string;
   meaningId?: number | null;
   partOfSpeech?: string | null;
@@ -68,6 +68,15 @@ export type DictionaryMeaningContent = {
   >;
 };
 
+export type DictionaryContentSection = {
+  id: string;
+  sourcePath: string;
+  kind: "meaning" | "example" | "idiom" | "form" | "note";
+  label?: string;
+  text: string;
+  translation?: string;
+};
+
 export type DictionaryEntryEnvelope = {
   headword: string;
   languageCode: string;
@@ -78,6 +87,7 @@ export type DictionaryEntryEnvelope = {
   audioLinks?: Record<string, string | null>;
   images?: string[];
   morphology?: Record<string, unknown>;
+  sections: DictionaryContentSection[];
   sourceMeta?: Record<string, unknown>;
 };
 
@@ -236,14 +246,14 @@ export type PlatformCardCapabilityPhase =
 export type PlatformCardCapability = {
   phase: PlatformCardCapabilityPhase;
   actions: LookupActionId[];
-  reviewResults: Array<"fail" | "hard" | "success" | "easy">;
+  reviewResults?: Array<"fail" | "hard" | "success" | "easy">;
   frozenUntil?: string | null;
 };
 
 export type DictionaryLookupResult = {
   entry: DictionaryEntryRef & {
-    content?: DictionaryEntryEnvelope;
-    contentFingerprint?: string;
+    content: DictionaryEntryEnvelope;
+    contentFingerprint: string;
     raw?: unknown;
     gender?: string | null;
     isNt22000?: boolean | null;
@@ -254,7 +264,7 @@ export type DictionaryLookupResult = {
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   progressSummary?: UserEntryProgressSummary;
   cardCapabilitiesByType?: Record<CardTypeId, PlatformCardCapability>;
-  match?: PlatformLookupMatch;
+  match: PlatformLookupMatch;
   availableActions?: LookupActionId[];
 };
 
@@ -284,11 +294,29 @@ export type PlatformTranslationApiRequest = {
   force?: boolean;
 };
 
+export type PlatformTranslationOverlay = {
+  headword?: string;
+  meanings?: Array<{
+    definition?: string;
+    context?: string;
+    examples?: string[];
+    idioms?: Array<string | { expression?: string; explanation?: string }>;
+  }>;
+  __meta?: {
+    providerSelected?: "deepl" | "openai" | "gemini";
+    providerUsed?: "deepl" | "openai" | "gemini";
+    usedFallback?: boolean | null;
+    primaryError?: string | null;
+    promptFingerprint?: string | null;
+    translatedPaths?: Array<Array<string | number>>;
+  };
+};
+
 export type PlatformTranslationApiResponse = {
   entryId: string;
   targetLang: string;
   status?: PlatformTranslationStatus;
-  overlay?: unknown;
+  overlay?: PlatformTranslationOverlay | null;
   note?: string | null;
   error?: string | null;
 };
@@ -300,11 +328,13 @@ export type PlatformSessionApiResponse = {
   };
   preferences: {
     translationTargetLanguageCode: string | null;
+    source: "user-setting" | "platform-default";
     updatedAt: string | null;
   };
 };
 
 export type PlatformTextTranslationPurpose =
+  | "youtube-phrase-practice"
   | "youtube-recall"
   | "show-translation"
   | "external-client"
@@ -319,12 +349,15 @@ export type PlatformTextTranslationApiRequest = {
 };
 
 export type PlatformTextTranslationApiResponse = {
-  text: string;
-  translatedText: string;
-  sourceLanguageCode: string | null;
+  translationId: string;
+  status: PlatformTranslationStatus;
+  sourceTextHash: string;
+  sourceLanguageCode: string;
   targetLanguageCode: string;
-  purpose: PlatformTextTranslationPurpose | null;
-  provider: string;
+  translatedText?: string;
+  translationPolicyVersion: string;
+  cached: boolean;
+  error?: string | null;
 };
 
 export type PlatformAnalyzeSelectionRequest = {

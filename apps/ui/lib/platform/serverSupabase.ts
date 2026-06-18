@@ -6,6 +6,10 @@ export type AuthenticatedSupabase = {
   user: User;
 };
 
+export type ServiceSupabase = {
+  supabase: SupabaseClient;
+};
+
 export function jsonNoStore(payload: unknown, status = 200) {
   return NextResponse.json(payload, {
     status,
@@ -96,4 +100,58 @@ export async function getAuthenticatedSupabase(
   }
 
   return { supabase, user: data.user };
+}
+
+export async function getCatalogSupabase(
+  request: Request,
+): Promise<ServiceSupabase | NextResponse> {
+  const expectedToken = process.env.PLATFORM_CATALOG_ACCESS_TOKEN;
+  if (!expectedToken) {
+    return jsonNoStore({ error: "catalog_lookup_not_configured" }, 500);
+  }
+
+  const token = getBearerToken(request);
+  if (!token || token !== expectedToken) {
+    return jsonNoStore({ error: "invalid_catalog_token" }, 401);
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return jsonNoStore({ error: "supabase_service_not_configured" }, 500);
+  }
+
+  const supabase = createClient(supabaseUrl, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
+
+  return { supabase };
+}
+
+export function getPlatformServiceSupabase(): ServiceSupabase | NextResponse {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return jsonNoStore({ error: "supabase_service_not_configured" }, 500);
+  }
+
+  return {
+    supabase: createClient(supabaseUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false,
+      },
+    }),
+  };
 }

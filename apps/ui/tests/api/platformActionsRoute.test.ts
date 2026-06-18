@@ -95,6 +95,77 @@ describe("/api/platform/actions", () => {
     );
   });
 
+  test.each([
+    {
+      action: "review-card",
+      requestResult: "success",
+      rpcResult: "success",
+    },
+    {
+      action: "mark-known",
+      requestResult: undefined,
+      rpcResult: "easy",
+    },
+    {
+      action: "mark-unknown",
+      requestResult: undefined,
+      rpcResult: "fail",
+    },
+  ])("passes the same turnId through on repeated $action retries", async ({
+    action,
+    requestResult,
+    rpcResult,
+  }) => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    const body = {
+      action,
+      entryId: "entry-1",
+      cardTypeId: "word-to-definition",
+      ...(requestResult ? { result: requestResult } : {}),
+      turnId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+    };
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const firstResponse = await POST(request(body));
+
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const retryResponse = await POST(request(body));
+
+    expect(firstResponse.status).toBe(200);
+    expect(retryResponse.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("handle_card_review", {
+      p_user_id: "user-1",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
+      p_result: rpcResult,
+      p_turn_id: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+    });
+    expect(
+      rpc.mock.calls.filter(([name]) => name === "handle_card_review"),
+    ).toHaveLength(2);
+    await expect(firstResponse.json()).resolves.toEqual({
+      ok: true,
+      action,
+      entryId: "entry-1",
+      cardTypeId: "word-to-definition",
+      result: rpcResult,
+      turnId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+    });
+    await expect(retryResponse.json()).resolves.toEqual({
+      ok: true,
+      action,
+      entryId: "entry-1",
+      cardTypeId: "word-to-definition",
+      result: rpcResult,
+      turnId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+    });
+  });
+
   test("answers CORS preflight for configured origins", async () => {
     const { OPTIONS } = await import("@/app/api/platform/actions/route");
 

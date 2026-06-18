@@ -225,3 +225,6 @@
 
 -- Versioned dictionary search and exact lookup over extracted search documents
 \i db/migrations/072_dictionary_search_v2_rpcs.sql
+
+-- Platform generic text translation artifacts for external clients
+\i db/migrations/073_platform_text_translations.sql

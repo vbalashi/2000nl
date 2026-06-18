@@ -363,6 +363,306 @@ describe("/api/platform/lookup", () => {
     expect(payload.items[0].listMemberships).toBeUndefined();
   });
 
+  test("uses search semantics for external-click exact lookup with language filtering", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string) => {
+      if (name === "search_word_entries_gated") {
+        return Promise.resolve({
+          data: {
+            items: [
+              {
+                id: "entry-1",
+                dictionary_id: "dict-1",
+                dictionary_name: "VanDale Dutch",
+                dictionary_slug: "nl-vandale",
+                dictionary_kind: "curated",
+                language_code: "nl",
+                headword: "huis",
+                meaning_id: 1,
+                raw: { meanings: [{ definition: "gebouw" }] },
+                search_match_group: "exact-headword",
+                search_matched_text: "huis",
+              },
+            ],
+            total: 1,
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      request({
+        query: "huis",
+        languageCode: "nl",
+        contextText: "ik woon in een huis",
+        intent: "external-click",
+        includeUserState: false,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("search_word_entries_gated", {
+      p_query: "huis",
+      p_part_of_speech: null,
+      p_is_nt2: null,
+      p_filter_frozen: null,
+      p_filter_hidden: null,
+      p_page: 1,
+      p_page_size: 10,
+      p_language_code: "nl",
+      p_dictionary_ids: null,
+    });
+    expect(rpc).not.toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
+      p_headword: "huis",
+    });
+    const payload = await response.json();
+    expect(payload.request).toEqual({
+      languageCode: "nl",
+      contextText: "ik woon in een huis",
+      intent: "external-click",
+    });
+    expect(payload.items[0].match).toEqual({
+      queriedForm: "huis",
+      matchedForm: "huis",
+      relation: "exact",
+    });
+    expect(payload.items[0].dictionary).toEqual(
+      expect.objectContaining({
+        id: "dict-1",
+        slug: "nl-vandale",
+        kind: "curated",
+      }),
+    );
+  });
+
+  test("reports indexed word-form matches as inflection evidence", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "entry-1",
+            dictionary_id: "dict-1",
+            dictionary_name: "VanDale Dutch",
+            dictionary_slug: "nl-vandale",
+            dictionary_kind: "curated",
+            language_code: "nl",
+            headword: "lopen",
+            meaning_id: 1,
+            raw: { meanings: [{ definition: "te voet gaan" }] },
+            search_match_group: "lemma-or-inflection",
+            search_matched_text: null,
+          },
+        ],
+        total: 1,
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        query: "loopt",
+        languageCode: "nl",
+        intent: "external-click",
+        includeUserState: false,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.headword).toBe("lopen");
+    expect(payload.items[0].match).toEqual({
+      queriedForm: "loopt",
+      matchedForm: "loopt",
+      relation: "inflection",
+    });
+  });
+
+  test("applies language scope for the same visible clicked token", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "search_word_entries_gated") {
+        expect(args?.p_query).toBe("die");
+        expect(args?.p_language_code).toBe("de");
+        return Promise.resolve({
+          data: {
+            items: [
+              {
+                id: "entry-de-1",
+                dictionary_id: "dict-de",
+                dictionary_name: "German source",
+                dictionary_slug: "de-source",
+                dictionary_kind: "curated",
+                language_code: "de",
+                headword: "die",
+                meaning_id: 1,
+                raw: { meanings: [{ definition: "German article" }] },
+                search_match_group: "exact-headword",
+                search_matched_text: "die",
+              },
+            ],
+            total: 1,
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      request({
+        query: "die",
+        languageCode: "de",
+        intent: "external-click",
+        includeUserState: false,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0].entry.id).toBe("entry-de-1");
+    expect(payload.items[0].entry.languageCode).toBe("de");
+    expect(payload.items[0].match).toEqual({
+      queriedForm: "die",
+      matchedForm: "die",
+      relation: "exact",
+    });
+  });
+
+  test("preserves request metadata when external-click search has no results", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: { items: [], total: 0 },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        query: "bestaatniet",
+        languageCode: "nl",
+        contextText: "geen match",
+        intent: "external-click",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "search_word_entries_gated",
+      expect.objectContaining({
+        p_query: "bestaatniet",
+        p_language_code: "nl",
+      }),
+    );
+    await expect(response.json()).resolves.toEqual({
+      query: "bestaatniet",
+      request: {
+        languageCode: "nl",
+        contextText: "geen match",
+        intent: "external-click",
+      },
+      items: [],
+    });
+  });
+
+  test("fingerprint ignores volatile source metadata but sections keep stable source paths", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-1",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          raw: {
+            meanings: [{ definition: "gebouw" }],
+            _metadata: { importedAt: "2026-06-18T08:00:00.000Z" },
+          },
+          dictionary: {
+            id: "dict-1",
+            language_code: "nl",
+            slug: "nl-vandale",
+            name: "VanDale Dutch",
+            kind: "curated",
+            visibility: "system",
+            owner_user_id: null,
+            is_editable: false,
+            schema_key: "nl-vandale-v1",
+            schema_version: 1,
+          },
+        },
+        {
+          id: "entry-2",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          raw: {
+            meanings: [{ definition: "gebouw" }],
+            _metadata: { importedAt: "2026-06-18T09:00:00.000Z" },
+          },
+          dictionary: {
+            id: "dict-1",
+            language_code: "nl",
+            slug: "nl-vandale",
+            name: "VanDale Dutch",
+            kind: "curated",
+            visibility: "system",
+            owner_user_id: null,
+            is_editable: false,
+            schema_key: "nl-vandale-v1",
+            schema_version: 1,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const response = await POST(
+      request({ query: "huis", includeUserState: false }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.content.sourceMeta).toEqual({
+      importedAt: "2026-06-18T08:00:00.000Z",
+    });
+    expect(payload.items[0].entry.content.sections).toEqual([
+      {
+        id: "meaning-1",
+        sourcePath: "raw.meanings[0].definition",
+        kind: "meaning",
+        text: "gebouw",
+      },
+    ]);
+    expect(payload.items[0].entry.contentFingerprint).toBe(
+      payload.items[1].entry.contentFingerprint,
+    );
+  });
+
   test("reports all-hidden progress as hidden, not known", async () => {
     const { POST } = await import("@/app/api/platform/lookup/route");
     getUser.mockResolvedValueOnce({
@@ -446,4 +746,129 @@ describe("/api/platform/lookup", () => {
       }),
     );
   });
+
+  test.each([
+    {
+      name: "not-started",
+      state: null,
+      actions: ["start-learning", "mark-known"],
+      reviewResults: undefined,
+    },
+    {
+      name: "encountered",
+      state: { click_count: 1, seen_count: 0, fsrs_reps: 0 },
+      actions: ["start-learning", "mark-known"],
+      reviewResults: undefined,
+    },
+    {
+      name: "learning",
+      state: { in_learning: true, seen_count: 1, fsrs_reps: 0 },
+      actions: ["review-card"],
+      reviewResults: ["fail", "hard", "success", "easy"],
+    },
+    {
+      name: "reviewing",
+      state: { seen_count: 1, fsrs_reps: 1 },
+      actions: ["review-card"],
+      reviewResults: ["fail", "hard", "success", "easy"],
+    },
+    {
+      name: "hidden",
+      state: { hidden: true, seen_count: 1, fsrs_reps: 1 },
+      actions: [],
+      reviewResults: undefined,
+    },
+    {
+      name: "frozen",
+      state: {
+        frozen_until: "2999-01-01T00:00:00.000Z",
+        seen_count: 1,
+        fsrs_reps: 1,
+      },
+      actions: [],
+      reviewResults: undefined,
+    },
+  ])(
+    "returns phase-aware word-to-definition capabilities for $name cards",
+    async ({ name, state, actions, reviewResults }) => {
+      const { POST } = await import("@/app/api/platform/lookup/route");
+      getUser.mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      rpc.mockImplementation((rpcName: string) => {
+        if (rpcName === "fetch_dictionary_entry_gated") {
+          return Promise.resolve({
+            data: [
+              {
+                id: `entry-${name}`,
+                dictionary_id: "dict-1",
+                language_code: "nl",
+                headword: "huis",
+                meaning_id: 1,
+                raw: {},
+                dictionary: {
+                  id: "dict-1",
+                  language_code: "nl",
+                  slug: "nl-vandale",
+                  name: "VanDale Dutch",
+                  kind: "curated",
+                  visibility: "system",
+                  owner_user_id: null,
+                  is_editable: false,
+                  schema_key: "nl-vandale-v1",
+                  schema_version: 1,
+                },
+              },
+            ],
+            error: null,
+          });
+        }
+        if (rpcName === "get_user_list_memberships_for_entries") {
+          return Promise.resolve({ data: [], error: null });
+        }
+        if (rpcName === "get_user_card_states_for_entries") {
+          const baseState = {
+            entry_id: `entry-${name}`,
+            card_type_id: "word-to-definition",
+            click_count: 0,
+            seen_count: 0,
+            success_count: 0,
+            last_seen_at: null,
+            last_reviewed_at: null,
+            next_review_at: null,
+            hidden: false,
+            frozen_until: null,
+            in_learning: false,
+            learning_due_at: null,
+            fsrs_stability: null,
+            fsrs_difficulty: null,
+            fsrs_reps: 0,
+            fsrs_lapses: 0,
+            fsrs_last_grade: null,
+            fsrs_last_interval: null,
+            fsrs_params_version: "fsrs-6-default",
+          };
+          return Promise.resolve({
+            data: state ? [Object.assign(baseState, state)] : [],
+            error: null,
+          });
+        }
+        return Promise.resolve({ data: null, error: null });
+      });
+
+      const response = await POST(request({ query: "huis" }));
+
+      expect(response.status).toBe(200);
+      const payload = await response.json();
+      expect(
+        payload.items[0].cardCapabilitiesByType["word-to-definition"],
+      ).toEqual({
+        phase: name,
+        actions,
+        ...(reviewResults ? { reviewResults } : {}),
+        frozenUntil: state?.frozen_until ?? null,
+      });
+    },
+  );
 });

@@ -1,4 +1,4 @@
-import type { AuthenticatedSupabase } from "./serverSupabase";
+import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
 import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
 import crypto from "crypto";
 
@@ -66,6 +66,11 @@ type DictionaryLookupPayload = {
   is_nt2_2000?: boolean | null;
   meanings_count?: number | null;
   dictionary?: DictionaryMetadataRow | null;
+  dictionary_name?: string | null;
+  dictionary_slug?: string | null;
+  dictionary_kind?: string | null;
+  search_match_group?: string | null;
+  search_matched_text?: string | null;
 };
 
 type DictionaryMetadataRow = {
@@ -240,7 +245,12 @@ function stableJson(value: unknown): string {
 }
 
 function contentFingerprint(content: unknown) {
-  return crypto.createHash("sha256").update(stableJson(content)).digest("hex");
+  const record = asRecord(content);
+  const { sourceMeta: _sourceMeta, ...learnerVisibleContent } = record;
+  return crypto
+    .createHash("sha256")
+    .update(stableJson(learnerVisibleContent))
+    .digest("hex");
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -255,9 +265,110 @@ function asStringArray(value: unknown): string[] | undefined {
   return items.length ? items : undefined;
 }
 
+function sectionId(kind: string, index: number, childIndex?: number) {
+  return childIndex === undefined
+    ? `${kind}-${index + 1}`
+    : `${kind}-${index + 1}-${childIndex + 1}`;
+}
+
+function translationText(value: unknown) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const parts = value.filter((item): item is string => typeof item === "string");
+    return parts.length ? parts.join("; ") : undefined;
+  }
+  return undefined;
+}
+
+function buildContentSections(
+  rawMeanings: unknown[],
+  fallbackDefinition: string | null,
+) {
+  const sections: Array<{
+    id: string;
+    sourcePath: string;
+    kind: "meaning" | "example" | "idiom" | "form" | "note";
+    label?: string;
+    text: string;
+    translation?: string;
+  }> = [];
+
+  rawMeanings.forEach((meaning, meaningIndex) => {
+    const item = asRecord(meaning);
+    const definition =
+      typeof item.definition === "string"
+        ? item.definition
+        : typeof item.text === "string"
+          ? item.text
+          : null;
+    const translations = asRecord(item.translations);
+    const firstTranslation = Object.values(translations)
+      .map((value) => translationText(value))
+      .find((value): value is string => Boolean(value));
+
+    if (definition) {
+      sections.push({
+        id: sectionId("meaning", meaningIndex),
+        sourcePath: `raw.meanings[${meaningIndex}].definition`,
+        kind: "meaning",
+        text: definition,
+        ...(firstTranslation ? { translation: firstTranslation } : {}),
+      });
+    }
+
+    asStringArray(item.examples)?.forEach((example, exampleIndex) => {
+      sections.push({
+        id: sectionId("example", meaningIndex, exampleIndex),
+        sourcePath: `raw.meanings[${meaningIndex}].examples[${exampleIndex}]`,
+        kind: "example",
+        text: example,
+      });
+    });
+
+    if (Array.isArray(item.idioms)) {
+      item.idioms.forEach((idiom, idiomIndex) => {
+        const idiomRecord = asRecord(idiom);
+        const text =
+          typeof idiom === "string"
+            ? idiom
+            : typeof idiomRecord.expression === "string"
+              ? idiomRecord.expression
+              : null;
+        if (!text) return;
+        sections.push({
+          id: sectionId("idiom", meaningIndex, idiomIndex),
+          sourcePath: `raw.meanings[${meaningIndex}].idioms[${idiomIndex}]`,
+          kind: "idiom",
+          text,
+          ...(typeof idiomRecord.explanation === "string"
+            ? { label: idiomRecord.explanation }
+            : {}),
+        });
+      });
+    }
+  });
+
+  if (sections.length === 0 && fallbackDefinition) {
+    sections.push({
+      id: "meaning-1",
+      sourcePath: "raw.definition",
+      kind: "meaning",
+      text: fallbackDefinition,
+    });
+  }
+
+  return sections;
+}
+
 function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
   const raw = asRecord(entry.raw);
   const rawMeanings = Array.isArray(raw.meanings) ? raw.meanings : [];
+  const fallbackDefinition =
+    typeof raw.definition === "string"
+      ? raw.definition
+      : typeof raw.notes === "string"
+        ? raw.notes
+        : null;
   const meanings =
     rawMeanings.length > 0
       ? rawMeanings.map((meaning) => {
@@ -277,12 +388,7 @@ function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
         })
       : [
           {
-            definition:
-              typeof raw.definition === "string"
-                ? raw.definition
-                : typeof raw.notes === "string"
-                  ? raw.notes
-                  : null,
+            definition: fallbackDefinition,
             translations:
               raw.translation && typeof raw.translation === "object"
                 ? {
@@ -324,6 +430,7 @@ function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
       raw.morphology && typeof raw.morphology === "object"
         ? (raw.morphology as Record<string, unknown>)
         : undefined,
+    sections: buildContentSections(rawMeanings, fallbackDefinition),
     sourceMeta: asRecord(raw._metadata ?? raw.sourceMeta),
   };
 
@@ -393,19 +500,80 @@ function buildCardCapability(
             : (state?.seenCount ?? 0) > 0 || (state?.clickCount ?? 0) > 0
               ? "encountered"
               : "not-started";
+  const actions: PlatformAction[] =
+    phase === "not-started" || phase === "encountered"
+      ? ["start-learning", "mark-known"]
+      : phase === "learning" || phase === "reviewing"
+        ? ["review-card"]
+        : [];
 
   return {
     phase,
-    actions: [
-      "record-view",
-      "start-learning",
-      "mark-known",
-      "mark-unknown",
-      "review-card",
-    ] satisfies PlatformAction[],
-    reviewResults: ["fail", "hard", "success", "easy"] as const,
+    actions,
+    ...(actions.includes("review-card")
+      ? { reviewResults: ["fail", "hard", "success", "easy"] as const }
+      : {}),
     frozenUntil: state?.frozenUntil ?? null,
   };
+}
+
+function lookupMatchRelation(entry: DictionaryLookupPayload, query: string) {
+  const group = entry.search_match_group;
+  if (group === "exact-headword") return "exact";
+  if (group === "lemma-or-inflection") return "inflection";
+  if (entry.headword.trim().toLocaleLowerCase() === query.trim().toLocaleLowerCase()) {
+    return "exact";
+  }
+  return "unknown";
+}
+
+function lookupMatchedForm(entry: DictionaryLookupPayload, query: string) {
+  if (entry.search_matched_text) return entry.search_matched_text;
+  if (entry.search_match_group === "lemma-or-inflection") return query;
+  if (lookupMatchRelation(entry, query) === "exact") return entry.headword;
+  return undefined;
+}
+
+function dictionarySummaryFromLookupPayload(entry: DictionaryLookupPayload) {
+  const dictionary = entry.dictionary ?? null;
+  if (dictionary) {
+    return {
+      id: dictionary.id,
+      languageCode: dictionary.language_code,
+      slug: dictionary.slug,
+      name: dictionary.name,
+      kind: dictionary.kind,
+      visibility: dictionary.visibility,
+      schemaKey: dictionary.schema_key,
+      schemaVersion: dictionary.schema_version,
+      isEditable: dictionary.is_editable ?? null,
+    };
+  }
+
+  if (!entry.dictionary_id) return null;
+  return {
+    id: entry.dictionary_id,
+    languageCode: entry.language_code ?? null,
+    slug: entry.dictionary_slug ?? "",
+    name: entry.dictionary_name ?? "",
+    kind: entry.dictionary_kind ?? "curated",
+    visibility: null,
+    schemaKey: null,
+    schemaVersion: null,
+    isEditable: null,
+  };
+}
+
+function dictionaryCanBeEditedByUser(
+  entry: DictionaryLookupPayload,
+  userId: string,
+) {
+  const dictionary = entry.dictionary ?? null;
+  return (
+    dictionary?.kind === "user" &&
+    dictionary.is_editable === true &&
+    dictionary.owner_user_id === userId
+  );
 }
 
 async function recordReview(auth: AuthenticatedSupabase, params: {
@@ -519,9 +687,23 @@ export async function performPlatformLookup(
     intent,
   };
 
-  const { data, error } = await auth.supabase.rpc("fetch_dictionary_entry_gated", {
-    p_headword: query,
-  });
+  const usesSearchSemantics =
+    intent === "external-click" || Boolean(languageCode) || Boolean(contextText);
+  const { data, error } = usesSearchSemantics
+    ? await auth.supabase.rpc("search_word_entries_gated", {
+        p_query: query,
+        p_part_of_speech: null,
+        p_is_nt2: null,
+        p_filter_frozen: null,
+        p_filter_hidden: null,
+        p_page: 1,
+        p_page_size: 10,
+        p_language_code: languageCode,
+        p_dictionary_ids: null,
+      })
+    : await auth.supabase.rpc("fetch_dictionary_entry_gated", {
+        p_headword: query,
+      });
 
   if (error) {
     return {
@@ -530,10 +712,13 @@ export async function performPlatformLookup(
     };
   }
 
-  const entries = Array.isArray(data)
-    ? (data as DictionaryLookupPayload[])
-    : data
-      ? [data as DictionaryLookupPayload]
+  const rawEntries = usesSearchSemantics
+    ? asRecord(data).items
+    : data;
+  const entries = Array.isArray(rawEntries)
+    ? (rawEntries as DictionaryLookupPayload[])
+    : rawEntries
+      ? [rawEntries as DictionaryLookupPayload]
       : [];
 
   if (entries.length === 0) {
@@ -625,8 +810,6 @@ export async function performPlatformLookup(
   }
 
   const items = entries.map((entry) => {
-    const dictionary = entry.dictionary ?? null;
-
     const availableActions: PlatformAction[] = [
       "record-view",
       "start-learning",
@@ -638,15 +821,12 @@ export async function performPlatformLookup(
       "copy-to-user-dictionary",
       "create-user-entry",
     ];
-    if (
-      dictionary?.kind === "user" &&
-      dictionary.is_editable === true &&
-      dictionary.owner_user_id === auth.user.id
-    ) {
+    if (dictionaryCanBeEditedByUser(entry, auth.user.id)) {
       availableActions.push("update-user-entry", "delete-user-entry");
     }
     const statesByCardType = userStateByEntryId.get(entry.id) ?? {};
     const content = normalizeDictionaryContent(entry);
+    const matchedForm = lookupMatchedForm(entry, query);
 
     return {
       entry: {
@@ -663,19 +843,7 @@ export async function performPlatformLookup(
         isNt22000: entry.is_nt2_2000 ?? null,
         meaningsCount: entry.meanings_count ?? null,
       },
-      dictionary: dictionary
-        ? {
-            id: dictionary.id,
-            languageCode: dictionary.language_code,
-            slug: dictionary.slug,
-            name: dictionary.name,
-            kind: dictionary.kind,
-            visibility: dictionary.visibility,
-            schemaKey: dictionary.schema_key,
-            schemaVersion: dictionary.schema_version,
-            isEditable: dictionary.is_editable ?? null,
-          }
-        : null,
+      dictionary: dictionarySummaryFromLookupPayload(entry),
       ...(includeUserState
         ? {
             userStateByCardType: statesByCardType,
@@ -690,11 +858,8 @@ export async function performPlatformLookup(
         : {}),
       match: {
         queriedForm: query,
-        matchedForm: entry.headword,
-        relation:
-          entry.headword.trim().toLocaleLowerCase() === query.trim().toLocaleLowerCase()
-            ? "exact"
-            : "unknown",
+        ...(matchedForm ? { matchedForm } : {}),
+        relation: lookupMatchRelation(entry, query),
       },
       availableActions,
     };
@@ -705,6 +870,147 @@ export async function performPlatformLookup(
       query,
       request: requestMetadata,
       items,
+    },
+    status: 200,
+  };
+}
+
+export async function performPlatformCatalogLookup(
+  service: ServiceSupabase,
+  params: {
+    query: string;
+    languageCode?: string | null;
+    contextText?: string | null;
+    intent?: string | null;
+  },
+): Promise<PlatformOperationResult> {
+  const { query, languageCode = null, contextText = null } = params;
+  const intent =
+    params.intent === "dictionary-lookup" ||
+    params.intent === "training-review" ||
+    params.intent === "external-click"
+      ? params.intent
+      : null;
+  if (!query) {
+    return { payload: { error: "missing_query" }, status: 400 };
+  }
+
+  const requestMetadata = {
+    languageCode,
+    contextText,
+    intent,
+  };
+
+  let queryBuilder = service.supabase
+    .from("word_entries")
+    .select(
+      `
+        id,
+        dictionary_id,
+        language_code,
+        headword,
+        meaning_id,
+        part_of_speech,
+        gender,
+        raw,
+        is_nt2_2000,
+        meanings_count,
+        dictionary:dictionaries!inner (
+          id,
+          language_code,
+          slug,
+          name,
+          kind,
+          visibility,
+          owner_user_id,
+          is_editable,
+          schema_key,
+          schema_version
+        )
+      `,
+    )
+    .ilike("headword", query)
+    .in("dictionary.visibility", ["system", "public"])
+    .limit(10);
+
+  if (languageCode) {
+    queryBuilder = queryBuilder.eq("language_code", languageCode);
+  }
+
+  const { data, error } = await queryBuilder;
+
+  if (error) {
+    return {
+      payload: {
+        error: "catalog_lookup_failed",
+        detail: error.message ?? String(error),
+      },
+      status: 500,
+    };
+  }
+
+  const entries = Array.isArray(data)
+    ? (data as unknown as DictionaryLookupPayload[])
+    : data
+      ? [data as unknown as DictionaryLookupPayload]
+      : [];
+
+  return {
+    payload: {
+      query,
+      request: requestMetadata,
+      items: entries.flatMap((entry) => {
+        const dictionary = Array.isArray(entry.dictionary)
+          ? entry.dictionary[0] ?? null
+          : entry.dictionary ?? null;
+        if (
+          dictionary &&
+          dictionary.visibility !== "system" &&
+          dictionary.visibility !== "public"
+        ) {
+          return [];
+        }
+        const content = normalizeDictionaryContent(entry);
+
+        return [{
+          entry: {
+            id: entry.id,
+            dictionaryId: entry.dictionary_id ?? null,
+            languageCode: entry.language_code ?? null,
+            headword: entry.headword,
+            meaningId: entry.meaning_id ?? null,
+            partOfSpeech: entry.part_of_speech ?? null,
+            gender: entry.gender ?? null,
+            content,
+            contentFingerprint: contentFingerprint(content),
+            raw: entry.raw,
+            isNt22000: entry.is_nt2_2000 ?? null,
+            meaningsCount: entry.meanings_count ?? null,
+          },
+          dictionary: dictionary
+            ? {
+                id: dictionary.id,
+                languageCode: dictionary.language_code,
+                slug: dictionary.slug,
+                name: dictionary.name,
+                kind: dictionary.kind,
+                visibility: dictionary.visibility,
+                schemaKey: dictionary.schema_key,
+                schemaVersion: dictionary.schema_version,
+                isEditable: dictionary.is_editable ?? null,
+              }
+            : null,
+          match: {
+            queriedForm: query,
+            matchedForm: entry.headword,
+            relation:
+              entry.headword.trim().toLocaleLowerCase() ===
+              query.trim().toLocaleLowerCase()
+                ? "exact"
+              : "unknown",
+          },
+        }];
+      }),
     },
     status: 200,
   };
