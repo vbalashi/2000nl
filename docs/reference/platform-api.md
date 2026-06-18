@@ -19,6 +19,29 @@ npm run test:platform
 - Configure allowed browser/extension origins with `PLATFORM_API_ALLOWED_ORIGINS`.
 - Routes respond to `OPTIONS` preflight with the configured CORS headers.
 
+## `GET /session`
+
+Read-only session and preference endpoint for connected clients. External
+clients must use this endpoint instead of reading `user_settings` directly.
+
+Response:
+```json
+{
+  "user": {
+    "id": "user-id",
+    "email": "user@example.com"
+  },
+  "preferences": {
+    "translationTargetLanguageCode": "en",
+    "updatedAt": "2026-06-18T08:00:00.000Z"
+  }
+}
+```
+
+`translationTargetLanguageCode` is resolved from `user_settings.translation_lang`.
+Unset or missing settings default to `en`; explicit `off` is returned as `null`
+for clients that need to disable translation affordances.
+
 ## `POST /lookup`
 
 Read-only dictionary lookup.
@@ -27,6 +50,9 @@ Request:
 ```json
 {
   "query": "huis",
+  "languageCode": "nl",
+  "contextText": "optional surrounding text",
+  "intent": "external-click",
   "includeUserState": true
 }
 ```
@@ -35,6 +61,11 @@ Response shape:
 ```json
 {
   "query": "huis",
+  "request": {
+    "languageCode": "nl",
+    "contextText": "optional surrounding text",
+    "intent": "external-click"
+  },
   "items": [
     {
       "entry": {
@@ -43,6 +74,22 @@ Response shape:
         "languageCode": "nl",
         "headword": "huis",
         "meaningId": 1,
+        "content": {
+          "headword": "huis",
+          "languageCode": "nl",
+          "meaningId": 1,
+          "partOfSpeech": "zn",
+          "gender": "het",
+          "meanings": [
+            {
+              "definition": "gebouw",
+              "context": null,
+              "translations": {}
+            }
+          ],
+          "sourceMeta": {}
+        },
+        "contentFingerprint": "sha256-of-normalized-content",
         "raw": {}
       },
       "dictionary": {
@@ -76,6 +123,25 @@ Response shape:
         "lastReviewedAt": "2026-05-17T11:00:00.000Z",
         "nextReviewAt": "2026-05-18T11:00:00.000Z"
       },
+      "cardCapabilitiesByType": {
+        "word-to-definition": {
+          "phase": "reviewing",
+          "actions": [
+            "record-view",
+            "start-learning",
+            "mark-known",
+            "mark-unknown",
+            "review-card"
+          ],
+          "reviewResults": ["fail", "hard", "success", "easy"],
+          "frozenUntil": null
+        }
+      },
+      "match": {
+        "queriedForm": "huis",
+        "matchedForm": "huis",
+        "relation": "exact"
+      },
       "listMemberships": [],
       "availableActions": [
         "record-view",
@@ -94,6 +160,25 @@ Response shape:
 ```
 
 `includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
+
+`languageCode`, `contextText`, and `intent` are accepted and echoed in
+`request` so clients can adopt the V2 shape now. The current implementation
+still resolves candidates through the existing headword lookup RPC; language
+filtering and context-sensitive ranking are planned search-pipeline work, not a
+guarantee of this first V2-compatible response.
+
+`entry.content` and `entry.contentFingerprint` are the preferred external
+dictionary contract. `entry.raw` remains available for compatibility and
+diagnostics, but external clients should not parse it as the primary shape.
+Current match semantics are conservative: exact headword matches are reported as
+`exact`; other relations are reported as `unknown` until the search pipeline
+exposes lemma/inflection/fuzzy evidence directly.
+
+`availableActions` is the legacy broad action list. New clients should prefer
+`cardCapabilitiesByType["word-to-definition"]` when deciding which training
+controls to render for a specific card type. `mark-known` is an action label and
+maps to an `easy` review result through `POST /actions`; it is not a persisted
+progress status.
 
 ## External Translation Flow
 
@@ -143,6 +228,11 @@ Request:
 }
 ```
 
+`targetLang` may be omitted. When omitted, 2000NL resolves the target from
+`user_settings.translation_lang`, defaults unset preferences to `en`, and always
+returns the resolved `targetLang` in the response. Explicit `off` fails closed
+with `error: "translation_disabled"`.
+
 Response when a ready overlay is available:
 ```json
 {
@@ -174,6 +264,42 @@ Response when another request is already producing the same overlay:
 endpoint gates source entry access before any service-role cache read/write, so
 private user-dictionary entries remain visible only to authorized users.
 
+## `POST /text-translation`
+
+Provider-backed free-text or phrase translation. This endpoint is separate from
+entry overlay translation and must be used for Recall / Show Translation phrase
+flows that are not dictionary-card overlays.
+
+Request:
+```json
+{
+  "text": "ik ga naar huis",
+  "sourceLanguageCode": "nl",
+  "targetLanguageCode": "en",
+  "purpose": "youtube-recall",
+  "contextText": "optional surrounding context"
+}
+```
+
+`targetLanguageCode` may be omitted and resolves through the same
+`user_settings.translation_lang` preference as `/translation`.
+
+Response:
+```json
+{
+  "text": "ik ga naar huis",
+  "translatedText": "I am going home",
+  "sourceLanguageCode": "nl",
+  "targetLanguageCode": "en",
+  "purpose": "youtube-recall",
+  "provider": "openai"
+}
+```
+
+2000NL owns the target preference, provider selection, prompt policy, and text
+translation semantics. AudioFilms owns YouTube phrase association and any
+client-side cache linkage.
+
 ## `POST /actions`
 
 Explicit mutation endpoint. Supported action IDs are defined in `packages/shared/types/platform.ts`.
@@ -196,6 +322,11 @@ Examples:
   "turnId": "client-generated-uuid"
 }
 ```
+
+Review-card mutations pass `turnId` through to `handle_card_review` as
+`p_turn_id`; that RPC is the idempotency boundary for repeated connected-client
+turn submissions. Platform writes require a valid bearer token and use the
+authenticated Supabase user id for every user-scoped mutation.
 
 ## `POST /analyze-selection`
 

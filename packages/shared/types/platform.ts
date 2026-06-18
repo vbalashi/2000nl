@@ -170,7 +170,7 @@ export type UserCardState = UserCardStateRef &
   UserCardSchedulingState;
 
 export type UserEntryProgressSummary = {
-  status: "new" | "seen" | "learning" | "reviewing" | "known" | "mixed";
+  status: "new" | "seen" | "learning" | "reviewing" | "hidden" | "mixed";
   trackedCardCount: number;
   reviewedCardCount: number;
   learningCardCount: number;
@@ -207,12 +207,43 @@ export type DictionaryLookupRequest = {
   query: string;
   languageCode?: string;
   dictionaryIds?: string[];
+  contextText?: string;
   includeUserState?: boolean;
   intent?: LookupIntent;
 };
 
+export type PlatformLookupMatchRelation =
+  | "exact"
+  | "inflection"
+  | "lemma"
+  | "fuzzy"
+  | "unknown";
+
+export type PlatformLookupMatch = {
+  queriedForm: string;
+  matchedForm?: string;
+  relation: PlatformLookupMatchRelation;
+};
+
+export type PlatformCardCapabilityPhase =
+  | "not-started"
+  | "encountered"
+  | "learning"
+  | "reviewing"
+  | "hidden"
+  | "frozen";
+
+export type PlatformCardCapability = {
+  phase: PlatformCardCapabilityPhase;
+  actions: LookupActionId[];
+  reviewResults: Array<"fail" | "hard" | "success" | "easy">;
+  frozenUntil?: string | null;
+};
+
 export type DictionaryLookupResult = {
   entry: DictionaryEntryRef & {
+    content?: DictionaryEntryEnvelope;
+    contentFingerprint?: string;
     raw?: unknown;
     gender?: string | null;
     isNt22000?: boolean | null;
@@ -222,16 +253,26 @@ export type DictionaryLookupResult = {
   listMemberships?: EntryListSummary[];
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   progressSummary?: UserEntryProgressSummary;
+  cardCapabilitiesByType?: Record<CardTypeId, PlatformCardCapability>;
+  match?: PlatformLookupMatch;
   availableActions?: LookupActionId[];
 };
 
 export type PlatformLookupApiRequest = {
   query: string;
+  languageCode?: string;
+  contextText?: string;
   includeUserState?: boolean;
+  intent?: LookupIntent;
 };
 
 export type PlatformLookupApiResponse = {
   query: string;
+  request?: {
+    languageCode?: string | null;
+    contextText?: string | null;
+    intent?: LookupIntent | null;
+  };
   items: DictionaryLookupResult[];
 };
 
@@ -239,7 +280,7 @@ export type PlatformTranslationStatus = "pending" | "ready" | "failed";
 
 export type PlatformTranslationApiRequest = {
   entryId: string;
-  targetLang: string;
+  targetLang?: string;
   force?: boolean;
 };
 
@@ -250,6 +291,40 @@ export type PlatformTranslationApiResponse = {
   overlay?: unknown;
   note?: string | null;
   error?: string | null;
+};
+
+export type PlatformSessionApiResponse = {
+  user: {
+    id: string;
+    email: string | null;
+  };
+  preferences: {
+    translationTargetLanguageCode: string | null;
+    updatedAt: string | null;
+  };
+};
+
+export type PlatformTextTranslationPurpose =
+  | "youtube-recall"
+  | "show-translation"
+  | "external-client"
+  | string;
+
+export type PlatformTextTranslationApiRequest = {
+  text: string;
+  sourceLanguageCode?: string;
+  targetLanguageCode?: string;
+  purpose?: PlatformTextTranslationPurpose;
+  contextText?: string;
+};
+
+export type PlatformTextTranslationApiResponse = {
+  text: string;
+  translatedText: string;
+  sourceLanguageCode: string | null;
+  targetLanguageCode: string;
+  purpose: PlatformTextTranslationPurpose | null;
+  provider: string;
 };
 
 export type PlatformAnalyzeSelectionRequest = {

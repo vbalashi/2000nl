@@ -1,5 +1,6 @@
 import type { AuthenticatedSupabase } from "./serverSupabase";
 import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
+import crypto from "crypto";
 
 const TRAINING_MODES = new Set<TrainingMode>([
   "word-to-definition",
@@ -226,6 +227,109 @@ function strengthScore(state: PlatformUserCardStatePayload) {
   );
 }
 
+function stableJson(value: unknown): string {
+  if (value === undefined) return "null";
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((item) => stableJson(item)).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .filter((key) => record[key] !== undefined)
+    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
+    .join(",")}}`;
+}
+
+function contentFingerprint(content: unknown) {
+  return crypto.createHash("sha256").update(stableJson(content)).digest("hex");
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value.filter((item): item is string => typeof item === "string");
+  return items.length ? items : undefined;
+}
+
+function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
+  const raw = asRecord(entry.raw);
+  const rawMeanings = Array.isArray(raw.meanings) ? raw.meanings : [];
+  const meanings =
+    rawMeanings.length > 0
+      ? rawMeanings.map((meaning) => {
+          const item = asRecord(meaning);
+          return {
+            definition:
+              typeof item.definition === "string"
+                ? item.definition
+                : typeof item.text === "string"
+                  ? item.text
+                  : null,
+            context: typeof item.context === "string" ? item.context : null,
+            examples: asStringArray(item.examples),
+            translations: asRecord(item.translations),
+            idioms: Array.isArray(item.idioms) ? item.idioms : undefined,
+          };
+        })
+      : [
+          {
+            definition:
+              typeof raw.definition === "string"
+                ? raw.definition
+                : typeof raw.notes === "string"
+                  ? raw.notes
+                  : null,
+            translations:
+              raw.translation && typeof raw.translation === "object"
+                ? {
+                    [String((raw.translation as any).languageCode ?? "unknown")]:
+                      String((raw.translation as any).text ?? ""),
+                  }
+                : {},
+          },
+        ];
+
+  const content = {
+    headword: typeof raw.headword === "string" ? raw.headword : entry.headword,
+    languageCode:
+      typeof raw.languageCode === "string"
+        ? raw.languageCode
+        : typeof raw.language_code === "string"
+          ? raw.language_code
+          : entry.language_code ?? "nl",
+    meaningId:
+      typeof raw.meaning_id === "number"
+        ? raw.meaning_id
+        : typeof raw.meaningId === "number"
+          ? raw.meaningId
+          : entry.meaning_id ?? null,
+    partOfSpeech:
+      typeof raw.part_of_speech === "string"
+        ? raw.part_of_speech
+        : typeof raw.partOfSpeech === "string"
+          ? raw.partOfSpeech
+          : entry.part_of_speech ?? null,
+    gender: typeof raw.gender === "string" ? raw.gender : entry.gender ?? null,
+    meanings,
+    audioLinks:
+      raw.audio_links && typeof raw.audio_links === "object"
+        ? (raw.audio_links as Record<string, string | null>)
+        : undefined,
+    images: asStringArray(raw.images),
+    morphology:
+      raw.morphology && typeof raw.morphology === "object"
+        ? (raw.morphology as Record<string, unknown>)
+        : undefined,
+    sourceMeta: asRecord(raw._metadata ?? raw.sourceMeta),
+  };
+
+  return content;
+}
+
 function buildProgressSummary(
   statesByCardType: Record<string, PlatformUserCardStatePayload>,
 ) {
@@ -269,6 +373,38 @@ function buildProgressSummary(
     strongestCardTypeId: scored[scored.length - 1]?.cardTypeId ?? null,
     lastReviewedAt: latestTimestamp(states.map((state) => state.lastReviewedAt)),
     nextReviewAt: earliestTimestamp(states.map((state) => state.nextReviewAt)),
+  };
+}
+
+function buildCardCapability(
+  state: PlatformUserCardStatePayload | undefined,
+) {
+  const now = Date.now();
+  const frozenUntilMs = state?.frozenUntil ? Date.parse(state.frozenUntil) : NaN;
+  const phase =
+    state?.hidden
+      ? "hidden"
+      : Number.isFinite(frozenUntilMs) && frozenUntilMs > now
+        ? "frozen"
+        : state?.inLearning
+          ? "learning"
+          : (state?.fsrs.reps ?? 0) > 0
+            ? "reviewing"
+            : (state?.seenCount ?? 0) > 0 || (state?.clickCount ?? 0) > 0
+              ? "encountered"
+              : "not-started";
+
+  return {
+    phase,
+    actions: [
+      "record-view",
+      "start-learning",
+      "mark-known",
+      "mark-unknown",
+      "review-card",
+    ] satisfies PlatformAction[],
+    reviewResults: ["fail", "hard", "success", "easy"] as const,
+    frozenUntil: state?.frozenUntil ?? null,
   };
 }
 
@@ -358,12 +494,30 @@ function mapListMembershipRpcRows(rows: unknown): EntryListMembership[] {
 
 export async function performPlatformLookup(
   auth: AuthenticatedSupabase,
-  params: { query: string; includeUserState: boolean },
+  params: {
+    query: string;
+    includeUserState: boolean;
+    languageCode?: string | null;
+    contextText?: string | null;
+    intent?: string | null;
+  },
 ): Promise<PlatformOperationResult> {
-  const { query, includeUserState } = params;
+  const { query, includeUserState, languageCode = null, contextText = null } = params;
+  const intent =
+    params.intent === "dictionary-lookup" ||
+    params.intent === "training-review" ||
+    params.intent === "external-click"
+      ? params.intent
+      : null;
   if (!query) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
+
+  const requestMetadata = {
+    languageCode,
+    contextText,
+    intent,
+  };
 
   const { data, error } = await auth.supabase.rpc("fetch_dictionary_entry_gated", {
     p_headword: query,
@@ -383,7 +537,14 @@ export async function performPlatformLookup(
       : [];
 
   if (entries.length === 0) {
-    return { payload: { query, items: [] }, status: 200 };
+    return {
+      payload: {
+        query,
+        request: requestMetadata,
+        items: [],
+      },
+      status: 200,
+    };
   }
 
   const userStateByEntryId = new Map<string, Record<string, PlatformUserCardStatePayload>>();
@@ -484,6 +645,8 @@ export async function performPlatformLookup(
     ) {
       availableActions.push("update-user-entry", "delete-user-entry");
     }
+    const statesByCardType = userStateByEntryId.get(entry.id) ?? {};
+    const content = normalizeDictionaryContent(entry);
 
     return {
       entry: {
@@ -494,6 +657,8 @@ export async function performPlatformLookup(
         meaningId: entry.meaning_id ?? null,
         partOfSpeech: entry.part_of_speech ?? null,
         gender: entry.gender ?? null,
+        content,
+        contentFingerprint: contentFingerprint(content),
         raw: entry.raw,
         isNt22000: entry.is_nt2_2000 ?? null,
         meaningsCount: entry.meanings_count ?? null,
@@ -513,13 +678,24 @@ export async function performPlatformLookup(
         : null,
       ...(includeUserState
         ? {
-            userStateByCardType: userStateByEntryId.get(entry.id) ?? {},
-            progressSummary: buildProgressSummary(
-              userStateByEntryId.get(entry.id) ?? {},
-            ),
+            userStateByCardType: statesByCardType,
+            progressSummary: buildProgressSummary(statesByCardType),
+            cardCapabilitiesByType: {
+              "word-to-definition": buildCardCapability(
+                statesByCardType["word-to-definition"],
+              ),
+            },
             listMemberships: listMembershipsByEntryId.get(entry.id) ?? [],
           }
         : {}),
+      match: {
+        queriedForm: query,
+        matchedForm: entry.headword,
+        relation:
+          entry.headword.trim().toLocaleLowerCase() === query.trim().toLocaleLowerCase()
+            ? "exact"
+            : "unknown",
+      },
       availableActions,
     };
   });
@@ -527,6 +703,7 @@ export async function performPlatformLookup(
   return {
     payload: {
       query,
+      request: requestMetadata,
       items,
     },
     status: 200,

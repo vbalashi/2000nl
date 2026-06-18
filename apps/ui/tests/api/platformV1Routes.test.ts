@@ -25,6 +25,24 @@ const request = (path: string, body: unknown, token = "token-1") =>
     body: JSON.stringify(body),
   });
 
+const getRequest = (path: string, token = "token-1") =>
+  new NextRequest(`http://localhost${path}`, {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${token}`,
+      origin: "https://client.example",
+    },
+  });
+
+const chain = (result: { data?: any; error?: any }) => {
+  const query: any = {
+    select: vi.fn(() => query),
+    eq: vi.fn(() => query),
+    maybeSingle: vi.fn(async () => result),
+  };
+  return query;
+};
+
 function mockAuthenticatedUser() {
   getUser.mockResolvedValueOnce({
     data: { user: { id: "user-1" } },
@@ -135,6 +153,9 @@ describe("/api/platform/v1 contract", () => {
     const response = await POST(
       request("/api/platform/v1/lookup", {
         query: "huis",
+        languageCode: "nl",
+        contextText: "ik woon in een huis",
+        intent: "external-click",
         includeUserState: true,
       }),
     );
@@ -155,6 +176,25 @@ describe("/api/platform/v1 contract", () => {
               "copy-to-user-dictionary",
               "create-user-entry",
             ],
+            "cardCapabilitiesByType": {
+              "word-to-definition": {
+                "actions": [
+                  "record-view",
+                  "start-learning",
+                  "mark-known",
+                  "mark-unknown",
+                  "review-card",
+                ],
+                "frozenUntil": null,
+                "phase": "reviewing",
+                "reviewResults": [
+                  "fail",
+                  "hard",
+                  "success",
+                  "easy",
+                ],
+              },
+            },
             "dictionary": {
               "id": "dict-1",
               "isEditable": false,
@@ -167,6 +207,22 @@ describe("/api/platform/v1 contract", () => {
               "visibility": "system",
             },
             "entry": {
+              "content": {
+                "gender": "het",
+                "headword": "huis",
+                "languageCode": "nl",
+                "meaningId": 1,
+                "meanings": [
+                  {
+                    "context": null,
+                    "definition": "gebouw",
+                    "translations": {},
+                  },
+                ],
+                "partOfSpeech": "zn",
+                "sourceMeta": {},
+              },
+              "contentFingerprint": "63530f2a0785bced457f877f73ee20a90b3ff71fa6d889d5993660cdefe360b3",
               "dictionaryId": "dict-1",
               "gender": "het",
               "headword": "huis",
@@ -199,6 +255,11 @@ describe("/api/platform/v1 contract", () => {
                 "primaryLanguageCode": "nl",
               },
             ],
+            "match": {
+              "matchedForm": "huis",
+              "queriedForm": "huis",
+              "relation": "exact",
+            },
             "progressSummary": {
               "hiddenCardCount": 0,
               "lastReviewedAt": "2026-05-17T11:00:00.000Z",
@@ -238,6 +299,11 @@ describe("/api/platform/v1 contract", () => {
           },
         ],
         "query": "huis",
+        "request": {
+          "contextText": "ik woon in een huis",
+          "intent": "external-click",
+          "languageCode": "nl",
+        },
       }
     `);
   });
@@ -275,6 +341,91 @@ describe("/api/platform/v1 contract", () => {
     `);
   });
 
+  test("session exposes user and translation target preference", async () => {
+    const { GET } = await import("@/app/api/platform/v1/session/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1", email: "user@example.com" } },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({
+          data: {
+            translation_lang: "en",
+            updated_at: "2026-06-18T08:00:00.000Z",
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await GET(getRequest("/api/platform/v1/session"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://client.example",
+    );
+    await expect(response.json()).resolves.toEqual({
+      user: {
+        id: "user-1",
+        email: "user@example.com",
+      },
+      preferences: {
+        translationTargetLanguageCode: "en",
+        updatedAt: "2026-06-18T08:00:00.000Z",
+      },
+    });
+  });
+
+  test("lookup echoes V2 request metadata on empty results", async () => {
+    const { POST } = await import("@/app/api/platform/v1/lookup/route");
+    mockAuthenticatedUser();
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+
+    const response = await POST(
+      request("/api/platform/v1/lookup", {
+        query: "bestaatniet",
+        languageCode: "nl",
+        contextText: "geen match",
+        intent: "external-click",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    await expect(response.json()).resolves.toEqual({
+      query: "bestaatniet",
+      request: {
+        languageCode: "nl",
+        contextText: "geen match",
+        intent: "external-click",
+      },
+      items: [],
+    });
+  });
+
+  test("session fails closed without a bearer token", async () => {
+    const { GET } = await import("@/app/api/platform/v1/session/route");
+
+    const response = await GET(
+      new NextRequest("http://localhost/api/platform/v1/session", {
+        method: "GET",
+        headers: {
+          origin: "https://client.example",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://client.example",
+    );
+    await expect(response.json()).resolves.toEqual({
+      error: "missing_bearer_token",
+    });
+  });
+
   test("analyze-selection response shape is snapshotted and read-only", async () => {
     const { POST } = await import("@/app/api/platform/v1/analyze-selection/route");
     mockAuthenticatedUser();
@@ -298,6 +449,11 @@ describe("/api/platform/v1 contract", () => {
         "lookup": {
           "items": [],
           "query": "huis",
+          "request": {
+            "contextText": null,
+            "intent": null,
+            "languageCode": null,
+          },
         },
       }
     `);

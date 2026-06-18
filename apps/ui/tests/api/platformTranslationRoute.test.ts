@@ -76,6 +76,43 @@ function mockAuthenticatedClients() {
   });
 }
 
+function mockAuthenticatedClientsWithPreference(targetLang = "en") {
+  const preferenceClient = {
+    auth: { getUser },
+    rpc,
+    from,
+  };
+  const translationUserClient = {
+    auth: { getUser },
+    rpc,
+  };
+  const serviceClient = {
+    from,
+  };
+  createClient
+    .mockReturnValueOnce(preferenceClient)
+    .mockReturnValueOnce(translationUserClient)
+    .mockReturnValueOnce(serviceClient);
+  getUser
+    .mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    })
+    .mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+  from.mockImplementationOnce((table: string) => {
+    if (table === "user_settings") {
+      return queryChain({
+        data: { translation_lang: targetLang },
+        error: null,
+      });
+    }
+    throw new Error(`unexpected table read: ${table}`);
+  });
+}
+
 describe("/api/platform/v1/translation", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -111,14 +148,14 @@ describe("/api/platform/v1/translation", () => {
     );
   });
 
-  test("validates the platform request body before creating clients", async () => {
+  test("validates missing entry id before creating clients", async () => {
     const { POST } = await import("@/app/api/platform/v1/translation/route");
 
-    const response = await POST(request({ entryId: ENTRY_ID }));
+    const response = await POST(request({ targetLang: "ru" }));
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "missing_target_lang",
+      error: "missing_entry_id",
     });
     expect(createClient).not.toHaveBeenCalled();
   });
@@ -249,5 +286,91 @@ describe("/api/platform/v1/translation", () => {
         }),
       }),
     );
+  });
+
+  test("resolves omitted target language from user settings", async () => {
+    mockAuthenticatedClientsWithPreference("en");
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: ENTRY_ID,
+        headword: "huis",
+        gender: "het",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "woning" }] },
+      },
+      error: null,
+    });
+
+    const lookupChain = queryChain({ data: null, error: null });
+    const insertChain = queryChain({ data: { word_entry_id: ENTRY_ID }, error: null });
+    const updateChain = queryChain({ data: null, error: null });
+    from
+      .mockReturnValueOnce(lookupChain)
+      .mockReturnValueOnce(insertChain)
+      .mockReturnValueOnce(updateChain);
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual(
+      expect.objectContaining({
+        entryId: ENTRY_ID,
+        targetLang: "en",
+        status: "ready",
+      }),
+    );
+    expect(translate).toHaveBeenCalledWith(["het huis", "woning"], "en");
+  });
+
+  test("translates free text without using the entry overlay cache", async () => {
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    createClient.mockReturnValueOnce(userClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementationOnce((table: string) => {
+      if (table === "user_settings") {
+        return queryChain({
+          data: { translation_lang: "en" },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+          origin: "https://client.example",
+        },
+        body: JSON.stringify({
+          text: "ik ga naar huis",
+          sourceLanguageCode: "nl",
+          purpose: "youtube-recall",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(translate).toHaveBeenCalledWith(["ik ga naar huis"], "en");
+    await expect(response.json()).resolves.toEqual({
+      text: "ik ga naar huis",
+      translatedText: "translated:ik ga naar huis",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "en",
+      purpose: "youtube-recall",
+      provider: "openai",
+    });
   });
 });

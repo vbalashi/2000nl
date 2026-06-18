@@ -17,7 +17,10 @@ export function OPTIONS(request: NextRequest) {
 
 type LookupRequestBody = {
   query?: unknown;
+  languageCode?: unknown;
+  contextText?: unknown;
   includeUserState?: unknown;
+  intent?: unknown;
 };
 
 async function readJson(request: NextRequest): Promise<LookupRequestBody | null> {
@@ -39,8 +42,19 @@ export async function POST(request: NextRequest) {
 
   const body = await readJson(request);
   const query = typeof body?.query === "string" ? body.query.trim() : "";
+  const languageCode =
+    typeof body?.languageCode === "string" ? body.languageCode.trim() : null;
+  const contextText =
+    typeof body?.contextText === "string" ? body.contextText.trim() : null;
+  const intent = typeof body?.intent === "string" ? body.intent.trim() : null;
   const includeUserState = body?.includeUserState !== false;
 
-  const result = await performPlatformLookup(auth, { query, includeUserState });
+  const result = await performPlatformLookup(auth, {
+    query,
+    includeUserState,
+    languageCode,
+    contextText,
+    intent,
+  });
   return reply(result.payload, result.status);
 }

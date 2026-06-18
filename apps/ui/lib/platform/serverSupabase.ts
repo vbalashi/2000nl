@@ -29,7 +29,7 @@ export function platformCorsHeaders(request: Request): HeadersInit {
 
   return {
     "Access-Control-Allow-Origin": allowAll ? "*" : origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, content-type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",

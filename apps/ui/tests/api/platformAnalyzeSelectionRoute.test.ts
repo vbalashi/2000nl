@@ -88,7 +88,15 @@ describe("/api/platform/analyze-selection", () => {
       expect(rpc).not.toHaveBeenCalledWith(name, expect.anything());
     }
     await expect(response.json()).resolves.toEqual({
-      lookup: { query: "huis", items: [] },
+      lookup: {
+        query: "huis",
+        request: {
+          languageCode: null,
+          contextText: null,
+          intent: null,
+        },
+        items: [],
+      },
       actionResults: [],
     });
   });
@@ -109,7 +117,15 @@ describe("/api/platform/analyze-selection", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      lookup: { query: "huis", items: [] },
+      lookup: {
+        query: "huis",
+        request: {
+          languageCode: null,
+          contextText: null,
+          intent: null,
+        },
+        items: [],
+      },
       actionResults: [],
     });
 
