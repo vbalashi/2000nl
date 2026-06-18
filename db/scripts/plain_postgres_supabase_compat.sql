@@ -17,6 +17,13 @@ EXCEPTION WHEN duplicate_object THEN
   NULL;
 END $$;
 
+DO $$
+BEGIN
+  CREATE ROLE service_role NOLOGIN;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
+
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE SCHEMA IF NOT EXISTS private;
 
