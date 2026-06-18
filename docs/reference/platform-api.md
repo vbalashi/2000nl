@@ -345,6 +345,7 @@ Response:
   "translationId": "sha256-artifact-id",
   "status": "ready",
   "sourceTextHash": "sha256-source-text",
+  "contextTextHash": "sha256-context-text",
   "sourceLanguageCode": "nl",
   "targetLanguageCode": "en",
   "translatedText": "I am going home",
@@ -356,8 +357,11 @@ Response:
 2000NL owns the target preference, provider selection, prompt policy, and text
 translation semantics. AudioFilms owns YouTube phrase association and any
 client-side cache linkage. `translationId` is derived from source text hash,
-source language, resolved target language, purpose, and
-`translationPolicyVersion`; it is stable for retries of the same artifact.
+optional context text hash, source language, resolved target language, purpose,
+and `translationPolicyVersion`; it is stable for retries of the same artifact.
+When `contextText` is supplied, the platform may pass it to a context-aware
+provider prompt, so it participates in artifact identity and the response
+includes `contextTextHash` alongside `sourceTextHash`.
 The endpoint persists generic text translation artifacts in
 `platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
 return with `cached: true`; a fresh provider call returns with `cached: false`.

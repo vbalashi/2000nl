@@ -27,7 +27,7 @@ type TextTranslationBody = {
 
 const TRANSLATION_POLICY_VERSION = "platform-text-translation-v1";
 const TEXT_TRANSLATION_CACHE_COLUMNS =
-  "translation_id, status, translated_text, error_message, provider, source_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
+  "translation_id, status, translated_text, error_message, provider, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
 
 type TextTranslationCacheRow = {
   translation_id: string;
@@ -36,6 +36,7 @@ type TextTranslationCacheRow = {
   error_message: string | null;
   provider?: string | null;
   source_text_hash: string;
+  context_text_hash?: string | null;
   source_language_code: string;
   target_language_code: string;
   purpose?: string | null;
@@ -59,6 +60,7 @@ function artifactResponse(row: TextTranslationCacheRow, cached = true) {
     translationId: row.translation_id,
     status: row.status,
     sourceTextHash: row.source_text_hash,
+    ...(row.context_text_hash ? { contextTextHash: row.context_text_hash } : {}),
     sourceLanguageCode: row.source_language_code,
     targetLanguageCode: row.target_language_code,
     ...(row.translated_text ? { translatedText: row.translated_text } : {}),
@@ -109,11 +111,15 @@ export async function POST(request: NextRequest) {
   const purpose = asString(body?.purpose) ?? "youtube-phrase-practice";
   const contextText = asString(body?.contextText);
   const sourceTextHash = crypto.createHash("sha256").update(text).digest("hex");
+  const contextTextHash = contextText
+    ? crypto.createHash("sha256").update(contextText).digest("hex")
+    : null;
   const translationId = crypto
     .createHash("sha256")
     .update(
       JSON.stringify({
         sourceTextHash,
+        contextTextHash,
         sourceLanguageCode,
         targetLanguageCode: resolvedTargetLanguageCode,
         purpose,
@@ -121,9 +127,6 @@ export async function POST(request: NextRequest) {
       }),
     )
     .digest("hex");
-  const contextTextHash = contextText
-    ? crypto.createHash("sha256").update(contextText).digest("hex")
-    : null;
 
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) {
@@ -233,6 +236,7 @@ export async function POST(request: NextRequest) {
         translationId,
         status: "failed",
         sourceTextHash,
+        ...(contextTextHash ? { contextTextHash } : {}),
         sourceLanguageCode,
         targetLanguageCode: resolvedTargetLanguageCode,
         translationPolicyVersion: TRANSLATION_POLICY_VERSION,
@@ -265,6 +269,7 @@ export async function POST(request: NextRequest) {
     translationId,
     status: "ready",
     sourceTextHash,
+    ...(contextTextHash ? { contextTextHash } : {}),
     sourceLanguageCode,
     targetLanguageCode: resolvedTargetLanguageCode,
     translatedText: translatedText ?? "",

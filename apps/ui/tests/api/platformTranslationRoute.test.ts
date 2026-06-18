@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import crypto from "crypto";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
@@ -8,6 +9,10 @@ const createClient = vi.fn();
 const translate = vi.fn(async (texts: string[]) =>
   texts.map((text) => `translated:${text}`),
 );
+const translateWithContext = vi.fn(async (texts: string[]) =>
+  texts.map((text) => `translated-with-context:${text}`),
+);
+let useTranslateWithContext = false;
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
@@ -16,7 +21,9 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
-    translator: { translate },
+    translator: useTranslateWithContext
+      ? { translate, translateWithContext }
+      : { translate },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
@@ -34,6 +41,7 @@ vi.mock("@/lib/translation/prompts/promptFingerprint", () => ({
 }));
 
 const ENTRY_ID = "00000000-0000-4000-8000-000000000001";
+const sha256 = (value: string) => crypto.createHash("sha256").update(value).digest("hex");
 
 const request = (body: unknown, token = "token-1") =>
   new NextRequest("http://localhost/api/platform/v1/translation", {
@@ -125,6 +133,8 @@ describe("/api/platform/v1/translation", () => {
     rpc.mockReset();
     from.mockReset();
     translate.mockClear();
+    translateWithContext.mockClear();
+    useTranslateWithContext = false;
   });
 
   test("answers CORS preflight for configured origins", async () => {
@@ -436,6 +446,97 @@ describe("/api/platform/v1/translation", () => {
       translationPolicyVersion: "platform-text-translation-v1",
       cached: false,
     });
+  });
+
+  test("uses context hash in text translation artifact identity when provider consumes context", async () => {
+    useTranslateWithContext = true;
+    const runWithContext = async (contextText: string) => {
+      vi.resetModules();
+      createClient.mockReset();
+      getUser.mockReset();
+      from.mockReset();
+      translateWithContext.mockClear();
+
+      const userClient = {
+        auth: { getUser },
+        from,
+      };
+      const serviceClient = {
+        from,
+      };
+      createClient
+        .mockReturnValueOnce(userClient)
+        .mockReturnValueOnce(serviceClient);
+      getUser.mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      const cacheLookupChain = queryChain({ data: null, error: null });
+      const pendingInsertChain = queryChain({ data: null, error: null });
+      const readyUpdateChain = queryChain({ data: null, error: null });
+      from.mockImplementation((table: string) => {
+        if (table === "platform_text_translations") {
+          const calls = from.mock.calls.filter(([name]) => name === table).length;
+          if (calls === 1) return cacheLookupChain;
+          if (calls === 2) return pendingInsertChain;
+          return readyUpdateChain;
+        }
+        throw new Error(`unexpected table read: ${table}`);
+      });
+
+      const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+      const response = await POST(
+        new NextRequest("http://localhost/api/platform/v1/text-translation", {
+          method: "POST",
+          headers: {
+            authorization: "Bearer token-1",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            text: "ik ga naar huis",
+            sourceLanguageCode: "nl",
+            targetLanguageCode: "en",
+            purpose: "youtube-recall",
+            contextText,
+          }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(translateWithContext).toHaveBeenCalledWith(
+        ["ik ga naar huis"],
+        "en",
+        {
+          sourceLanguageCode: "nl",
+          purpose: "youtube-recall",
+          contextText,
+        },
+      );
+      expect(pendingInsertChain.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source_text_hash: sha256("ik ga naar huis"),
+          context_text_hash: sha256(contextText),
+          purpose: "youtube-recall",
+        }),
+        { onConflict: "translation_id", ignoreDuplicates: true },
+      );
+      return response.json();
+    };
+
+    const first = await runWithContext("Hij is bijna thuis.");
+    const second = await runWithContext("Hij vertrekt net.");
+
+    expect(first).toMatchObject({
+      sourceTextHash: sha256("ik ga naar huis"),
+      contextTextHash: sha256("Hij is bijna thuis."),
+      translatedText: "translated-with-context:ik ga naar huis",
+    });
+    expect(second).toMatchObject({
+      sourceTextHash: sha256("ik ga naar huis"),
+      contextTextHash: sha256("Hij vertrekt net."),
+      translatedText: "translated-with-context:ik ga naar huis",
+    });
+    expect(first.translationId).not.toBe(second.translationId);
   });
 
   test("defaults text translation purpose for YouTube phrase practice", async () => {

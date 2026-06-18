@@ -231,3 +231,6 @@
 
 -- Guest-safe public catalog search for external clients
 \i db/migrations/074_public_catalog_search.sql
+
+-- Align generic text translation lookup index with context-aware identity
+\i db/migrations/075_platform_text_translations_context_lookup_idx.sql
