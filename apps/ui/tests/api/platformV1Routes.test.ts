@@ -196,7 +196,7 @@ describe("/api/platform/v1 contract", () => {
               "schemaKey": null,
               "schemaVersion": null,
               "slug": "nl-vandale",
-              "visibility": null,
+              "visibility": "system",
             },
             "entry": {
               "content": {

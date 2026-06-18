@@ -79,7 +79,7 @@ export type DictionaryContentSection = {
 
 export type DictionaryEntryEnvelope = {
   headword: string;
-  languageCode: string;
+  languageCode: string | null;
   meaningId?: number | null;
   partOfSpeech?: string | null;
   gender?: string | null;

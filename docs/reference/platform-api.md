@@ -220,7 +220,10 @@ The response uses the same `query`, `request`, `items[].entry`,
 `items[].dictionary`, and `items[].match` shape as `/lookup`, including
 normalized `entry.content` and `contentFingerprint`.
 
-Catalog lookup is hard-limited to dictionaries with `visibility` of `system` or
+Catalog lookup uses the public catalog search RPC, so exact headword matches
+rank before indexed word-form matches and expose the same conservative
+`exact`/`inflection`/`unknown` match evidence as authenticated external-click
+lookup. It is hard-limited to dictionaries with `visibility` of `system` or
 `public`. It does not run under an end-user Supabase JWT and must not return
 private dictionaries, `userStateByCardType`, `progressSummary`,
 `listMemberships`, `cardCapabilitiesByType`, or `availableActions`.

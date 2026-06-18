@@ -406,7 +406,7 @@ function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
         ? raw.languageCode
         : typeof raw.language_code === "string"
           ? raw.language_code
-          : entry.language_code ?? "nl",
+          : entry.language_code ?? null,
     meaningId:
       typeof raw.meaning_id === "number"
         ? raw.meaning_id
@@ -557,7 +557,7 @@ function dictionarySummaryFromLookupPayload(entry: DictionaryLookupPayload) {
     slug: entry.dictionary_slug ?? "",
     name: entry.dictionary_name ?? "",
     kind: entry.dictionary_kind ?? "curated",
-    visibility: null,
+    visibility: "system",
     schemaKey: null,
     schemaVersion: null,
     isEditable: null,
@@ -901,43 +901,15 @@ export async function performPlatformCatalogLookup(
     intent,
   };
 
-  let queryBuilder = service.supabase
-    .from("word_entries")
-    .select(
-      `
-        id,
-        dictionary_id,
-        language_code,
-        headword,
-        meaning_id,
-        part_of_speech,
-        gender,
-        raw,
-        is_nt2_2000,
-        meanings_count,
-        dictionary:dictionaries!inner (
-          id,
-          language_code,
-          slug,
-          name,
-          kind,
-          visibility,
-          owner_user_id,
-          is_editable,
-          schema_key,
-          schema_version
-        )
-      `,
-    )
-    .ilike("headword", query)
-    .in("dictionary.visibility", ["system", "public"])
-    .limit(10);
-
-  if (languageCode) {
-    queryBuilder = queryBuilder.eq("language_code", languageCode);
-  }
-
-  const { data, error } = await queryBuilder;
+  const { data, error } = await service.supabase.rpc(
+    "search_public_catalog_entries",
+    {
+      p_query: query,
+      p_language_code: languageCode,
+      p_page: 1,
+      p_page_size: 10,
+    },
+  );
 
   if (error) {
     return {
@@ -949,9 +921,14 @@ export async function performPlatformCatalogLookup(
     };
   }
 
-  const entries = Array.isArray(data)
+  const rawEntries = asRecord(data).items;
+  const entries = Array.isArray(rawEntries)
+    ? (rawEntries as unknown as DictionaryLookupPayload[])
+    : Array.isArray(data)
     ? (data as unknown as DictionaryLookupPayload[])
-    : data
+    : rawEntries
+      ? [rawEntries as unknown as DictionaryLookupPayload]
+      : data
       ? [data as unknown as DictionaryLookupPayload]
       : [];
 
@@ -971,6 +948,7 @@ export async function performPlatformCatalogLookup(
           return [];
         }
         const content = normalizeDictionaryContent(entry);
+        const matchedForm = lookupMatchedForm(entry, query);
 
         return [{
           entry: {
@@ -1002,12 +980,8 @@ export async function performPlatformCatalogLookup(
             : null,
           match: {
             queriedForm: query,
-            matchedForm: entry.headword,
-            relation:
-              entry.headword.trim().toLocaleLowerCase() ===
-              query.trim().toLocaleLowerCase()
-                ? "exact"
-              : "unknown",
+            ...(matchedForm ? { matchedForm } : {}),
+            relation: lookupMatchRelation(entry, query),
           },
         }];
       }),

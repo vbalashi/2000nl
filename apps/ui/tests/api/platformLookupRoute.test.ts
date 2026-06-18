@@ -663,6 +663,48 @@ describe("/api/platform/lookup", () => {
     );
   });
 
+  test("does not infer Dutch when entry language is missing", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-unknown-language",
+          dictionary_id: "dict-1",
+          language_code: null,
+          headword: "bonjour",
+          meaning_id: 1,
+          raw: { meanings: [{ definition: "salutation" }] },
+          dictionary: {
+            id: "dict-1",
+            language_code: "fr",
+            slug: "fr-source",
+            name: "French Source",
+            kind: "curated",
+            visibility: "system",
+            owner_user_id: null,
+            is_editable: false,
+            schema_key: "fr-source-v1",
+            schema_version: 1,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const response = await POST(
+      request({ query: "bonjour", includeUserState: false }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.languageCode).toBeNull();
+    expect(payload.items[0].entry.content.languageCode).toBeNull();
+  });
+
   test("reports all-hidden progress as hidden, not known", async () => {
     const { POST } = await import("@/app/api/platform/lookup/route");
     getUser.mockResolvedValueOnce({

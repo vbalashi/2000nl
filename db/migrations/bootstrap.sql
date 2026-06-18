@@ -228,3 +228,6 @@
 
 -- Platform generic text translation artifacts for external clients
 \i db/migrations/073_platform_text_translations.sql
+
+-- Guest-safe public catalog search for external clients
+\i db/migrations/074_public_catalog_search.sql

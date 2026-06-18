@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const from = vi.fn();
+const rpc = vi.fn();
 const createClient = vi.fn(() => ({
-  from,
+  rpc,
 }));
 
 vi.mock("@supabase/supabase-js", () => ({
@@ -21,19 +21,6 @@ const request = (body: unknown, token = "catalog-token") =>
     body: JSON.stringify(body),
   });
 
-function queryChain(result: { data?: any; error?: any }) {
-  const query: any = {
-    select: vi.fn(() => query),
-    ilike: vi.fn(() => query),
-    in: vi.fn(() => query),
-    eq: vi.fn(() => query),
-    limit: vi.fn(() => query),
-    then: (resolve: any, reject: any) =>
-      Promise.resolve(result).then(resolve, reject),
-  };
-  return query;
-}
-
 describe("/api/platform/v1/catalog/lookup", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
@@ -41,7 +28,7 @@ describe("/api/platform/v1/catalog/lookup", () => {
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     createClient.mockClear();
-    from.mockReset();
+    rpc.mockReset();
   });
 
   test("rejects requests without the dedicated catalog token", async () => {
@@ -63,56 +50,60 @@ describe("/api/platform/v1/catalog/lookup", () => {
 
   test("reads only public catalog dictionaries and omits user/action surfaces", async () => {
     const { POST } = await import("@/app/api/platform/v1/catalog/lookup/route");
-    const query = queryChain({
-      data: [
-        {
-          id: "entry-1",
-          dictionary_id: "dict-1",
-          language_code: "nl",
-          headword: "huis",
-          meaning_id: 1,
-          part_of_speech: "zn",
-          gender: "het",
-          raw: { meanings: [{ definition: "gebouw" }] },
-          is_nt2_2000: true,
-          meanings_count: 1,
-          dictionary: {
-            id: "dict-1",
+    rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "entry-1",
+            dictionary_id: "dict-1",
             language_code: "nl",
-            slug: "nl-vandale",
-            name: "VanDale Dutch",
-            kind: "curated",
-            visibility: "system",
-            owner_user_id: null,
-            is_editable: false,
-            schema_key: "nl-vandale-v1",
-            schema_version: 1,
+            headword: "huis",
+            meaning_id: 1,
+            part_of_speech: "zn",
+            gender: "het",
+            raw: { meanings: [{ definition: "gebouw" }] },
+            is_nt2_2000: true,
+            meanings_count: 1,
+            search_match_group: "exact-headword",
+            search_matched_text: "huis",
+            dictionary: {
+              id: "dict-1",
+              language_code: "nl",
+              slug: "nl-vandale",
+              name: "VanDale Dutch",
+              kind: "curated",
+              visibility: "system",
+              owner_user_id: null,
+              is_editable: false,
+              schema_key: "nl-vandale-v1",
+              schema_version: 1,
+            },
           },
-        },
-        {
-          id: "entry-private",
-          dictionary_id: "dict-private",
-          language_code: "nl",
-          headword: "huis",
-          meaning_id: 1,
-          raw: { meanings: [{ definition: "private house" }] },
-          dictionary: {
-            id: "dict-private",
+          {
+            id: "entry-private",
+            dictionary_id: "dict-private",
             language_code: "nl",
-            slug: "user-private",
-            name: "Private dictionary",
-            kind: "user",
-            visibility: "private",
-            owner_user_id: "user-1",
-            is_editable: true,
-            schema_key: "user-entry-v1",
-            schema_version: 1,
+            headword: "huis",
+            meaning_id: 1,
+            raw: { meanings: [{ definition: "private house" }] },
+            dictionary: {
+              id: "dict-private",
+              language_code: "nl",
+              slug: "user-private",
+              name: "Private dictionary",
+              kind: "user",
+              visibility: "private",
+              owner_user_id: "user-1",
+              is_editable: true,
+              schema_key: "user-entry-v1",
+              schema_version: 1,
+            },
           },
-        },
-      ],
+        ],
+        total: 2,
+      },
       error: null,
     });
-    from.mockReturnValue(query);
 
     const response = await POST(
       request({
@@ -135,13 +126,12 @@ describe("/api/platform/v1/catalog/lookup", () => {
         auth: expect.objectContaining({ persistSession: false }),
       }),
     );
-    expect(from).toHaveBeenCalledWith("word_entries");
-    expect(query.ilike).toHaveBeenCalledWith("headword", "huis");
-    expect(query.in).toHaveBeenCalledWith("dictionary.visibility", [
-      "system",
-      "public",
-    ]);
-    expect(query.eq).toHaveBeenCalledWith("language_code", "nl");
+    expect(rpc).toHaveBeenCalledWith("search_public_catalog_entries", {
+      p_query: "huis",
+      p_language_code: "nl",
+      p_page: 1,
+      p_page_size: 10,
+    });
 
     const payload = await response.json();
     expect(payload).toEqual(
@@ -186,5 +176,56 @@ describe("/api/platform/v1/catalog/lookup", () => {
     expect(payload.items[0].listMemberships).toBeUndefined();
     expect(payload.items[0].cardCapabilitiesByType).toBeUndefined();
     expect(payload.items[0].availableActions).toBeUndefined();
+  });
+
+  test("reports catalog word-form matches as inflection evidence", async () => {
+    const { POST } = await import("@/app/api/platform/v1/catalog/lookup/route");
+    rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "entry-1",
+            dictionary_id: "dict-1",
+            language_code: "nl",
+            headword: "lopen",
+            meaning_id: 1,
+            raw: { meanings: [{ definition: "te voet gaan" }] },
+            search_match_group: "lemma-or-inflection",
+            search_matched_text: "loopt",
+            dictionary: {
+              id: "dict-1",
+              language_code: "nl",
+              slug: "nl-vandale",
+              name: "VanDale Dutch",
+              kind: "curated",
+              visibility: "system",
+              owner_user_id: null,
+              is_editable: false,
+              schema_key: "nl-vandale-v1",
+              schema_version: 1,
+            },
+          },
+        ],
+        total: 1,
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        query: "loopt",
+        languageCode: "nl",
+        intent: "external-click",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.headword).toBe("lopen");
+    expect(payload.items[0].match).toEqual({
+      queriedForm: "loopt",
+      matchedForm: "loopt",
+      relation: "inflection",
+    });
   });
 });

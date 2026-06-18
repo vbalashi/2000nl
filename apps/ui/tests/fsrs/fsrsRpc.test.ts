@@ -444,6 +444,13 @@ describeIfDb("FSRS RPC integration", () => {
         "success",
         turnId,
       ]);
+      await client.query(`select handle_card_review($1, $2, $3, $4, $5)`, [
+        userId,
+        wordId,
+        mode,
+        "success",
+        turnId,
+      ]);
 
       const { rows: stateRows } = await client.query(
         `select get_user_card_state($1::uuid, $2::uuid, $3::text) as state`,
