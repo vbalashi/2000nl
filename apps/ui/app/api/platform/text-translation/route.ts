@@ -26,6 +26,21 @@ type TextTranslationBody = {
 };
 
 const TRANSLATION_POLICY_VERSION = "platform-text-translation-v1";
+const TEXT_TRANSLATION_CACHE_COLUMNS =
+  "translation_id, status, translated_text, error_message, provider, source_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
+
+type TextTranslationCacheRow = {
+  translation_id: string;
+  status: string;
+  translated_text: string | null;
+  error_message: string | null;
+  provider?: string | null;
+  source_text_hash: string;
+  source_language_code: string;
+  target_language_code: string;
+  purpose?: string | null;
+  translation_policy_version: string;
+};
 
 async function readJson(request: NextRequest): Promise<TextTranslationBody | null> {
   try {
@@ -37,6 +52,20 @@ async function readJson(request: NextRequest): Promise<TextTranslationBody | nul
 
 export function OPTIONS(request: NextRequest) {
   return platformCorsPreflight(request);
+}
+
+function artifactResponse(row: TextTranslationCacheRow, cached = true) {
+  return {
+    translationId: row.translation_id,
+    status: row.status,
+    sourceTextHash: row.source_text_hash,
+    sourceLanguageCode: row.source_language_code,
+    targetLanguageCode: row.target_language_code,
+    ...(row.translated_text ? { translatedText: row.translated_text } : {}),
+    translationPolicyVersion: row.translation_policy_version,
+    cached,
+    ...(row.error_message ? { error: row.error_message } : {}),
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -103,9 +132,7 @@ export async function POST(request: NextRequest) {
 
   const { data: cachedRow, error: cacheReadError } = await service.supabase
     .from("platform_text_translations")
-    .select(
-      "translation_id, status, translated_text, error_message, provider, source_text_hash, source_language_code, target_language_code, purpose, translation_policy_version",
-    )
+    .select(TEXT_TRANSLATION_CACHE_COLUMNS)
     .eq("translation_id", translationId)
     .maybeSingle();
 
@@ -117,22 +144,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (cachedRow) {
-    return reply({
-      translationId: cachedRow.translation_id,
-      status: cachedRow.status,
-      sourceTextHash: cachedRow.source_text_hash,
-      sourceLanguageCode: cachedRow.source_language_code,
-      targetLanguageCode: cachedRow.target_language_code,
-      ...(cachedRow.translated_text
-        ? { translatedText: cachedRow.translated_text }
-        : {}),
-      translationPolicyVersion: cachedRow.translation_policy_version,
-      cached: true,
-      ...(cachedRow.error_message ? { error: cachedRow.error_message } : {}),
-    });
+    return reply(artifactResponse(cachedRow as TextTranslationCacheRow));
   }
 
-  const { error: cacheInsertError } = await service.supabase
+  const { data: insertedRow, error: cacheInsertError } = await service.supabase
     .from("platform_text_translations")
     .upsert(
       {
@@ -146,13 +161,36 @@ export async function POST(request: NextRequest) {
         status: "pending",
       },
       { onConflict: "translation_id", ignoreDuplicates: true },
-    );
+    )
+    .select(TEXT_TRANSLATION_CACHE_COLUMNS)
+    .maybeSingle();
 
   if (cacheInsertError) {
     return reply(
       { error: "text_translation_cache_write_failed", detail: cacheInsertError.message },
       500,
     );
+  }
+
+  if (!insertedRow) {
+    const { data: concurrentRow, error: concurrentReadError } = await service.supabase
+      .from("platform_text_translations")
+      .select(TEXT_TRANSLATION_CACHE_COLUMNS)
+      .eq("translation_id", translationId)
+      .maybeSingle();
+
+    if (concurrentReadError) {
+      return reply(
+        {
+          error: "text_translation_cache_read_failed",
+          detail: concurrentReadError.message,
+        },
+        500,
+      );
+    }
+    if (concurrentRow) {
+      return reply(artifactResponse(concurrentRow as TextTranslationCacheRow));
+    }
   }
 
   const config = loadTranslationConfigFromEnv();

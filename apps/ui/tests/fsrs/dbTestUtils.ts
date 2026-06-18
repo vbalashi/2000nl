@@ -34,6 +34,12 @@ export async function ensureAuthSchema(pool: Pool) {
       null;
     end $$;
 
+    do $$ begin
+      create role service_role nologin;
+    exception when duplicate_object then
+      null;
+    end $$;
+
     -- Create auth schema
     create schema if not exists auth;
     create table if not exists auth.users (

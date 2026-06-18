@@ -328,6 +328,59 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("public catalog search excludes private dictionaries under service role", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      const headword = `catalog-private-${Date.now()}`;
+
+      const { rows: publicDictionaryRows } = await client.query(
+        `select id from dictionaries where slug = 'nl-vandale' limit 1`,
+      );
+      const publicDictionaryId = publicDictionaryRows[0].id;
+      const { rows: publicRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values ($1, 'nl', $2, 1, 'noun', jsonb_build_object('definition', 'public definition'))
+         returning id`,
+        [publicDictionaryId, headword],
+      );
+
+      const { rows: privateDictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           is_editable, schema_key, schema_version
+         ) values (
+           'nl', $1, 'Private catalog test', 'user', 'private', $2,
+           true, 'user-entry-v1', 1
+         )
+         returning id`,
+        [`catalog-private-${Date.now()}`, ownerId],
+      );
+      const privateDictionaryId = privateDictionaryRows[0].id;
+      const { rows: privateRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values ($1, 'nl', $2, 1, 'noun', jsonb_build_object('definition', 'private definition'))
+         returning id`,
+        [privateDictionaryId, headword],
+      );
+
+      await client.query(`set local role service_role`);
+      const { rows: catalogRows } = await client.query(
+        `select search_public_catalog_entries($1, 'nl', 1, 10) as result`,
+        [headword],
+      );
+      await client.query(`reset role`);
+
+      const ids = (catalogRows[0].result.items as Array<{ id: string }>).map(
+        (item) => item.id,
+      );
+      expect(ids).toContain(publicRows[0].id);
+      expect(ids).not.toContain(privateRows[0].id);
+    }, ownerId);
+  });
+
   test("get_recent_training_history returns hydrated event and status rows", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

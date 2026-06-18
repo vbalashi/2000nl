@@ -2,6 +2,10 @@
 
 Date: 2026-06-18
 
+Completion status: completed on 2026-06-18 for the 2000NL-side AudioFilms
+handoff. Deferred items remain intentionally out of scope unless promoted into a
+new plan.
+
 Source reviews live in the AudioFilms repository:
 
 - `/Users/khrustal/dev/audiofilms/docs/design-handoff/youtube-extension-architect-review/review01.md`
