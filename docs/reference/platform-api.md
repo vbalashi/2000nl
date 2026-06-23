@@ -566,6 +566,144 @@ Source/provenance storage is normalized into source, source-location, and
 user-card-action event rows. `user_review_log.metadata` remains FSRS diagnostic
 metadata and is not the primary source filtering surface.
 
+## `GET /learning/activity`
+
+Read-only source-aware activity feed for accepted card action events. Connected
+Clients need `platform:read`.
+
+Common filters:
+
+- `occurredAfter`, `occurredBefore`: ISO timestamps applied to event
+  `created_at`.
+- `sourceKind`, `sourceProvider`, `sourceExternalId`, `sourceId`: normalized
+  source filters. For YouTube, use normalized video id in `sourceExternalId`;
+  do not filter by raw URL.
+- `artifactId`, `phraseSetRevisionId`: artifact/revision filters where the
+  action was recorded with `source-context-v2`.
+- `action`, `result`, `entryId`, `cardTypeId`, `connectedClientId`.
+- `limit`: 1-100, default 50.
+- `cursor`: opaque cursor from the previous response. Pagination is ordered by
+  `(created_at, id)` descending, never by offset.
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": "event-id",
+      "occurredAt": "2026-06-01T10:00:00.000Z",
+      "action": "review-card",
+      "result": "success",
+      "clientEventId": "client-event-id",
+      "turnId": "turn-id",
+      "entry": {
+        "id": "entry-id",
+        "cardTypeId": "word-to-definition"
+      },
+      "source": {
+        "id": "source-id",
+        "kind": "youtube_video",
+        "provider": "youtube",
+        "externalId": "4EE7m94mJpk",
+        "canonicalUrl": "https://www.youtube.com/watch?v=4EE7m94mJpk",
+        "languageCode": "nl"
+      },
+      "artifact": {
+        "id": "artifact-id",
+        "sourceId": "source-id",
+        "kind": "caption_phrase_set",
+        "producer": "audiofilms_backend",
+        "phraseSetRevisionId": "phrases-v1"
+      },
+      "location": {
+        "id": "location-id",
+        "sourceId": "source-id",
+        "artifactId": "artifact-id",
+        "kind": "caption_phrase",
+        "startMs": 54210,
+        "endMs": 58100,
+        "phraseIndex": 12,
+        "textHash": "bounded-context-hash"
+      },
+      "selection": {
+        "clickedForm": "huis",
+        "contextTextHash": "bounded-context-hash"
+      },
+      "actor": {
+        "authKind": "connected_client",
+        "connectedClientId": "audiofilms_chrome"
+      }
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+The response intentionally excludes raw `source_context`, diagnostics,
+unsanitized context text, private page/document bodies, and URL credentials.
+
+## `GET /learning/cards`
+
+Read-only card filter endpoint for source-matched learning work. It accepts the
+same filters and cursor parameters as `/learning/activity`, collapses matching
+events by `(entryId, cardTypeId)`, and returns the current card state from the
+existing card-state RPC plus a provenance summary.
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "entryId": "entry-id",
+      "cardTypeId": "word-to-definition",
+      "state": {
+        "entryId": "entry-id",
+        "cardTypeId": "word-to-definition",
+        "clickCount": 4,
+        "seenCount": 5,
+        "successCount": 3,
+        "lastSeenAt": "2026-06-02T10:00:00.000Z",
+        "lastReviewedAt": "2026-06-02T10:00:00.000Z",
+        "nextReviewAt": "2026-06-03T10:00:00.000Z",
+        "hidden": false,
+        "frozenUntil": null,
+        "inLearning": true,
+        "learningDueAt": "2026-06-03T10:00:00.000Z",
+        "fsrs": {
+          "stability": 2.5,
+          "difficulty": 6.1,
+          "reps": 3,
+          "lapses": 0,
+          "lastGrade": 3,
+          "lastInterval": 2,
+          "paramsVersion": "fsrs-6-default"
+        }
+      },
+      "provenance": {
+        "firstMatchedAt": "2026-06-01T10:00:00.000Z",
+        "lastMatchedAt": "2026-06-01T11:00:00.000Z",
+        "matchedEventCount": 2,
+        "source": {
+          "id": "source-id",
+          "kind": "youtube_video",
+          "provider": "youtube",
+          "externalId": "4EE7m94mJpk",
+          "canonicalUrl": "https://www.youtube.com/watch?v=4EE7m94mJpk",
+          "languageCode": "nl"
+        }
+      }
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+This endpoint does not write source ids onto `user_card_status`; current card
+state remains authoritative and source matching is derived from accepted action
+events.
+
 ## `POST /analyze-selection`
 
 Read-only convenience endpoint for text-selection clients. It runs lookup using `selection` or `query` and always returns an empty `actionResults` array for shape compatibility. Mutations must go through `POST /actions`.
