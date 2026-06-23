@@ -52,7 +52,10 @@ describe("/api/platform/lookup", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
+    process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
+    process.env.TRANSLATION_PROVIDER = "openai";
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -541,6 +544,346 @@ describe("/api/platform/lookup", () => {
       queriedForm: "die",
       matchedForm: "die",
       relation: "exact",
+    });
+  });
+
+  test("attaches cached translations to headword, summary, and stable sections", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "entry-1",
+            dictionary_id: "dict-1",
+            dictionary_name: "VanDale Dutch",
+            dictionary_slug: "nl-vandale",
+            dictionary_kind: "curated",
+            language_code: "nl",
+            headword: "huis",
+            meaning_id: 1,
+            raw: {
+              meanings: [
+                {
+                  definition: "gebouw",
+                  examples: ["Ik woon in een huis.", "Het huis is oud."],
+                },
+              ],
+            },
+            search_match_group: "exact-headword",
+            search_matched_text: "huis",
+          },
+        ],
+        total: 1,
+      },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({ data: { translation_lang: "ru" }, error: null });
+      }
+      if (table === "word_entry_translations") {
+        return chain({
+          data: [
+            {
+              id: "translation-1",
+              word_entry_id: "entry-1",
+              target_lang: "ru",
+              provider: "openai",
+              status: "ready",
+              overlay: {
+                headword: "дом",
+                meanings: [
+                  {
+                    definition: "здание",
+                    examples: ["Я живу в доме."],
+                  },
+                ],
+              },
+              source_fingerprint: "fingerprint-1",
+              error_message: null,
+            },
+          ],
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await POST(
+      request({
+        query: "huis",
+        languageCode: "nl",
+        intent: "external-click",
+        includeUserState: false,
+        includeTranslations: true,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(from).toHaveBeenCalledWith("user_settings");
+    expect(from).toHaveBeenCalledWith("word_entry_translations");
+    expect(payload.items[0].translation).toEqual({
+      status: "ready",
+      targetLanguageCode: "ru",
+      translationId: "translation-1",
+      translationPolicyVersion: "fingerprint-1",
+    });
+    expect(payload.items[0].entry.content.headwordTranslation).toBe("дом");
+    expect(payload.items[0].entry.content.summary).toEqual({
+      definition: "gebouw",
+      definitionTranslation: "здание",
+      example: "Ik woon in een huis.",
+      exampleTranslation: "Я живу в доме.",
+    });
+    expect(payload.items[0].entry.content.sections).toEqual([
+      {
+        id: "meaning-1",
+        sourcePath: "raw.meanings[0].definition",
+        kind: "meaning",
+        text: "gebouw",
+        translation: "здание",
+      },
+      {
+        id: "example-1-1",
+        sourcePath: "raw.meanings[0].examples[0]",
+        kind: "example",
+        text: "Ik woon in een huis.",
+        translation: "Я живу в доме.",
+      },
+      {
+        id: "example-1-2",
+        sourcePath: "raw.meanings[0].examples[1]",
+        kind: "example",
+        text: "Het huis is oud.",
+      },
+    ]);
+  });
+
+  test("attaches idiom translations to the idiom source section", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-idiom",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "knoop",
+          meaning_id: 1,
+          raw: {
+            meanings: [
+              {
+                definition: "verbinding",
+                idioms: [
+                  {
+                    expression: "de knoop doorhakken",
+                    explanation: "een beslissing nemen",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({ data: { translation_lang: "ru" }, error: null });
+      }
+      if (table === "word_entry_translations") {
+        return chain({
+          data: [
+            {
+              id: "translation-idiom",
+              word_entry_id: "entry-idiom",
+              target_lang: "ru",
+              provider: "openai",
+              status: "ready",
+              overlay: {
+                meanings: [
+                  {
+                    definition: "связь",
+                    idioms: [{ expression: "принять решение" }],
+                  },
+                ],
+              },
+              source_fingerprint: "fingerprint-idiom",
+              error_message: null,
+            },
+          ],
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await POST(
+      request({
+        query: "knoop",
+        includeUserState: false,
+        includeTranslations: true,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.content.sections).toContainEqual({
+      id: "idiom-1-1",
+      sourcePath: "raw.meanings[0].idioms[0]",
+      kind: "idiom",
+      text: "de knoop doorhakken",
+      label: "een beslissing nemen",
+      translation: "принять решение",
+    });
+  });
+
+  test.each([
+    {
+      status: "pending",
+      row: {
+        id: "translation-pending",
+        word_entry_id: "entry-1",
+        target_lang: "ru",
+        provider: "openai",
+        status: "pending",
+        overlay: null,
+        source_fingerprint: null,
+        error_message: null,
+      },
+      expected: {
+        status: "pending",
+        targetLanguageCode: "ru",
+        translationId: "translation-pending",
+      },
+    },
+    {
+      status: "failed",
+      row: {
+        id: "translation-failed",
+        word_entry_id: "entry-1",
+        target_lang: "ru",
+        provider: "openai",
+        status: "failed",
+        overlay: null,
+        source_fingerprint: null,
+        error_message: "provider timeout",
+      },
+      expected: {
+        status: "failed",
+        targetLanguageCode: "ru",
+        translationId: "translation-failed",
+        error: {
+          code: "translation_failed",
+          message: "provider timeout",
+        },
+      },
+    },
+  ])("returns cached $status translation status without overlay placement", async ({
+    row,
+    expected,
+  }) => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-1",
+          dictionary_id: "dict-1",
+          language_code: "nl",
+          headword: "huis",
+          meaning_id: 1,
+          raw: { meanings: [{ definition: "gebouw" }] },
+        },
+      ],
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({ data: { translation_lang: "ru" }, error: null });
+      }
+      if (table === "word_entry_translations") {
+        return chain({ data: [row], error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await POST(
+      request({
+        query: "huis",
+        includeUserState: false,
+        includeTranslations: true,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].translation).toEqual(expected);
+    expect(payload.items[0].entry.content.sections[0]).toEqual({
+      id: "meaning-1",
+      sourcePath: "raw.meanings[0].definition",
+      kind: "meaning",
+      text: "gebouw",
+    });
+  });
+
+  test("catalog lookup marks requested translations unavailable without target inference", async () => {
+    const { POST } = await import("@/app/api/platform/catalog/lookup/route");
+    rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "entry-public",
+            dictionary_id: "dict-1",
+            dictionary_name: "VanDale Dutch",
+            dictionary_slug: "nl-vandale",
+            dictionary_kind: "curated",
+            language_code: "nl",
+            headword: "huis",
+            raw: { meanings: [{ definition: "gebouw" }] },
+            dictionary: {
+              id: "dict-1",
+              language_code: "nl",
+              slug: "nl-vandale",
+              name: "VanDale Dutch",
+              kind: "curated",
+              visibility: "system",
+              is_editable: false,
+              schema_key: "nl-vandale-v1",
+              schema_version: 1,
+            },
+          },
+        ],
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request(
+        {
+          query: "huis",
+          includeTranslations: true,
+        },
+        "catalog-token",
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].translation).toEqual({ status: "not_available" });
+    expect(payload.items[0].entry.content.translation).toEqual({
+      status: "not_available",
     });
   });
 

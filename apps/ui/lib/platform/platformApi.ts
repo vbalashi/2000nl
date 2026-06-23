@@ -73,6 +73,29 @@ type DictionaryLookupPayload = {
   search_matched_text?: string | null;
 };
 
+type TranslationCacheRow = {
+  id?: string | null;
+  word_entry_id: string;
+  target_lang: string;
+  provider: string;
+  status: "pending" | "ready" | "failed";
+  overlay: Record<string, unknown> | null;
+  note?: string | null;
+  source_fingerprint?: string | null;
+  error_message?: string | null;
+};
+
+type LookupTranslationMetadata = {
+  status: "ready" | "pending" | "failed" | "not_requested" | "not_available";
+  targetLanguageCode?: string;
+  translationId?: string;
+  translationPolicyVersion?: string;
+  error?: {
+    code: string;
+    message?: string;
+  };
+};
+
 type DictionaryMetadataRow = {
   id: string;
   language_code: string;
@@ -246,7 +269,24 @@ function stableJson(value: unknown): string {
 
 function contentFingerprint(content: unknown) {
   const record = asRecord(content);
-  const { sourceMeta: _sourceMeta, ...learnerVisibleContent } = record;
+  const {
+    sourceMeta: _sourceMeta,
+    translation: _translation,
+    headwordTranslation: _headwordTranslation,
+    summary: _summary,
+    sections,
+    ...restContent
+  } = record;
+  const fingerprintedSections = Array.isArray(sections)
+    ? sections.map((section) => {
+        const { translation: _sectionTranslation, ...restSection } = asRecord(section);
+        return restSection;
+      })
+    : sections;
+  const learnerVisibleContent = {
+    ...restContent,
+    ...(fingerprintedSections ? { sections: fingerprintedSections } : {}),
+  };
   return crypto
     .createHash("sha256")
     .update(stableJson(learnerVisibleContent))
@@ -265,10 +305,75 @@ function asStringArray(value: unknown): string[] | undefined {
   return items.length ? items : undefined;
 }
 
+function normalizeLangForDb(lang: string) {
+  return lang.trim().replace("_", "-").toLowerCase();
+}
+
+function normalizeTranslationProvider(value: string | undefined | null) {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "deepl" || normalized === "openai" || normalized === "gemini"
+    ? normalized
+    : "openai";
+}
+
 function sectionId(kind: string, index: number, childIndex?: number) {
   return childIndex === undefined
     ? `${kind}-${index + 1}`
     : `${kind}-${index + 1}-${childIndex + 1}`;
+}
+
+function overlayTranslationAtSourcePath(
+  overlay: Record<string, unknown> | null | undefined,
+  sourcePath: string,
+) {
+  if (!overlay) return undefined;
+  const meanings = Array.isArray(overlay.meanings) ? overlay.meanings : [];
+  const match = sourcePath.match(
+    /^raw\.meanings\[(\d+)\]\.(definition|context|examples\[(\d+)\]|idioms\[(\d+)\])$/,
+  );
+  if (!match) {
+    if (sourcePath === "raw.definition") return asString(overlay.definition);
+    return undefined;
+  }
+
+  const meaning = asRecord(meanings[Number(match[1])]);
+  const field = match[2];
+  if (field === "definition") return asString(meaning.definition);
+  if (field === "context") return asString(meaning.context);
+  if (field.startsWith("examples")) {
+    const examples = Array.isArray(meaning.examples) ? meaning.examples : [];
+    return asString(examples[Number(match[3])]);
+  }
+  if (field.startsWith("idioms")) {
+    const idioms = Array.isArray(meaning.idioms) ? meaning.idioms : [];
+    const idiom = idioms[Number(match[4])];
+    if (typeof idiom === "string") return asString(idiom);
+    const idiomRecord = asRecord(idiom);
+    return asString(idiomRecord.expression) ?? asString(idiomRecord.explanation);
+  }
+  return undefined;
+}
+
+function buildContentSummary(
+  sections: Array<{
+    kind: "meaning" | "context" | "example" | "idiom" | "form" | "note";
+    text: string;
+    translation?: string;
+  }>,
+) {
+  const definitionSection =
+    sections.find((section) => section.kind === "meaning") ?? sections[0];
+  const exampleSection = sections.find((section) => section.kind === "example");
+  return {
+    definition: definitionSection?.text ?? "",
+    ...(definitionSection?.translation
+      ? { definitionTranslation: definitionSection.translation }
+      : {}),
+    ...(exampleSection?.text ? { example: exampleSection.text } : {}),
+    ...(exampleSection?.translation
+      ? { exampleTranslation: exampleSection.translation }
+      : {}),
+  };
 }
 
 function translationText(value: unknown) {
@@ -283,11 +388,12 @@ function translationText(value: unknown) {
 function buildContentSections(
   rawMeanings: unknown[],
   fallbackDefinition: string | null,
+  translationOverlay?: Record<string, unknown> | null,
 ) {
   const sections: Array<{
     id: string;
     sourcePath: string;
-    kind: "meaning" | "example" | "idiom" | "form" | "note";
+    kind: "meaning" | "context" | "example" | "idiom" | "form" | "note";
     label?: string;
     text: string;
     translation?: string;
@@ -307,21 +413,49 @@ function buildContentSections(
       .find((value): value is string => Boolean(value));
 
     if (definition) {
+      const sourcePath = `raw.meanings[${meaningIndex}].definition`;
+      const overlayTranslation = overlayTranslationAtSourcePath(
+        translationOverlay,
+        sourcePath,
+      );
       sections.push({
         id: sectionId("meaning", meaningIndex),
-        sourcePath: `raw.meanings[${meaningIndex}].definition`,
+        sourcePath,
         kind: "meaning",
         text: definition,
-        ...(firstTranslation ? { translation: firstTranslation } : {}),
+        ...(overlayTranslation ?? firstTranslation
+          ? { translation: overlayTranslation ?? firstTranslation }
+          : {}),
+      });
+    }
+
+    if (typeof item.context === "string") {
+      const sourcePath = `raw.meanings[${meaningIndex}].context`;
+      const overlayTranslation = overlayTranslationAtSourcePath(
+        translationOverlay,
+        sourcePath,
+      );
+      sections.push({
+        id: sectionId("context", meaningIndex),
+        sourcePath,
+        kind: "context",
+        text: item.context,
+        ...(overlayTranslation ? { translation: overlayTranslation } : {}),
       });
     }
 
     asStringArray(item.examples)?.forEach((example, exampleIndex) => {
+      const sourcePath = `raw.meanings[${meaningIndex}].examples[${exampleIndex}]`;
+      const overlayTranslation = overlayTranslationAtSourcePath(
+        translationOverlay,
+        sourcePath,
+      );
       sections.push({
         id: sectionId("example", meaningIndex, exampleIndex),
-        sourcePath: `raw.meanings[${meaningIndex}].examples[${exampleIndex}]`,
+        sourcePath,
         kind: "example",
         text: example,
+        ...(overlayTranslation ? { translation: overlayTranslation } : {}),
       });
     });
 
@@ -335,11 +469,17 @@ function buildContentSections(
               ? idiomRecord.expression
               : null;
         if (!text) return;
+        const sourcePath = `raw.meanings[${meaningIndex}].idioms[${idiomIndex}]`;
+        const overlayTranslation = overlayTranslationAtSourcePath(
+          translationOverlay,
+          sourcePath,
+        );
         sections.push({
           id: sectionId("idiom", meaningIndex, idiomIndex),
-          sourcePath: `raw.meanings[${meaningIndex}].idioms[${idiomIndex}]`,
+          sourcePath,
           kind: "idiom",
           text,
+          ...(overlayTranslation ? { translation: overlayTranslation } : {}),
           ...(typeof idiomRecord.explanation === "string"
             ? { label: idiomRecord.explanation }
             : {}),
@@ -349,20 +489,33 @@ function buildContentSections(
   });
 
   if (sections.length === 0 && fallbackDefinition) {
+    const overlayTranslation = overlayTranslationAtSourcePath(
+      translationOverlay,
+      "raw.definition",
+    );
     sections.push({
       id: "meaning-1",
       sourcePath: "raw.definition",
       kind: "meaning",
       text: fallbackDefinition,
+      ...(overlayTranslation ? { translation: overlayTranslation } : {}),
     });
   }
 
   return sections;
 }
 
-function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
+function normalizeDictionaryContent(
+  entry: DictionaryLookupPayload,
+  translation?: {
+    metadata: LookupTranslationMetadata;
+    overlay?: Record<string, unknown> | null;
+  } | null,
+) {
   const raw = asRecord(entry.raw);
   const rawMeanings = Array.isArray(raw.meanings) ? raw.meanings : [];
+  const translationOverlay =
+    translation?.metadata.status === "ready" ? translation.overlay ?? null : null;
   const fallbackDefinition =
     typeof raw.definition === "string"
       ? raw.definition
@@ -430,11 +583,20 @@ function normalizeDictionaryContent(entry: DictionaryLookupPayload) {
       raw.morphology && typeof raw.morphology === "object"
         ? (raw.morphology as Record<string, unknown>)
         : undefined,
-    sections: buildContentSections(rawMeanings, fallbackDefinition),
+    headwordTranslation: asString(translationOverlay?.headword) ?? undefined,
+    sections: buildContentSections(
+      rawMeanings,
+      fallbackDefinition,
+      translationOverlay,
+    ),
+    translation: translation?.metadata,
     sourceMeta: asRecord(raw._metadata ?? raw.sourceMeta),
   };
 
-  return content;
+  return {
+    ...content,
+    summary: buildContentSummary(content.sections),
+  };
 }
 
 function buildProgressSummary(
@@ -576,6 +738,137 @@ function dictionaryCanBeEditedByUser(
   );
 }
 
+async function resolveLookupTranslationContext(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  entryIds: string[],
+): Promise<
+  | {
+      ok: true;
+      targetLanguageCode: string | null;
+      artifactsByEntryId: Map<
+        string,
+        { metadata: LookupTranslationMetadata; overlay?: Record<string, unknown> | null }
+      >;
+    }
+  | { ok: false; payload: unknown; status: number }
+> {
+  const { data: settings, error: settingsError } = await auth.supabase
+    .from("user_settings")
+    .select("translation_lang")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+
+  if (settingsError) {
+    return {
+      ok: false,
+      payload: {
+        error: "translation_preference_failed",
+        detail: settingsError.message ?? String(settingsError),
+      },
+      status: 500,
+    };
+  }
+
+  const targetLanguageCode = settings?.translation_lang ?? "en";
+  if (targetLanguageCode === "off") {
+    return {
+      ok: true,
+      targetLanguageCode: null,
+      artifactsByEntryId: new Map(
+        entryIds.map((entryId) => [
+          entryId,
+          { metadata: { status: "not_available" as const } },
+        ]),
+      ),
+    };
+  }
+
+  const provider = normalizeTranslationProvider(process.env.TRANSLATION_PROVIDER);
+  const dbLang = normalizeLangForDb(targetLanguageCode);
+  const { data: rows, error: translationError } = await service.supabase
+    .from("word_entry_translations")
+    .select(
+      "id,word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message",
+    )
+    .in("word_entry_id", entryIds)
+    .eq("target_lang", dbLang)
+    .eq("provider", provider);
+
+  if (translationError) {
+    return {
+      ok: false,
+      payload: {
+        error: "translation_cache_failed",
+        detail: translationError.message ?? String(translationError),
+      },
+      status: 500,
+    };
+  }
+
+  const rowsByEntryId = new Map<string, TranslationCacheRow>();
+  for (const row of Array.isArray(rows) ? (rows as TranslationCacheRow[]) : []) {
+    if (row?.word_entry_id) rowsByEntryId.set(row.word_entry_id, row);
+  }
+
+  const artifactsByEntryId = new Map<
+    string,
+    { metadata: LookupTranslationMetadata; overlay?: Record<string, unknown> | null }
+  >();
+  for (const entryId of entryIds) {
+    const row = rowsByEntryId.get(entryId);
+    if (!row) {
+      artifactsByEntryId.set(entryId, {
+        metadata: {
+          status: "not_available",
+          targetLanguageCode,
+        },
+      });
+      continue;
+    }
+
+    const translationId = asString(row.id ?? undefined) ?? undefined;
+    const base = {
+      targetLanguageCode,
+      ...(translationId ? { translationId } : {}),
+      ...(row.source_fingerprint
+        ? { translationPolicyVersion: row.source_fingerprint }
+        : {}),
+    };
+    if (row.status === "ready" && row.overlay) {
+      artifactsByEntryId.set(entryId, {
+        metadata: {
+          status: "ready",
+          ...base,
+        },
+        overlay: row.overlay,
+      });
+      continue;
+    }
+    if (row.status === "pending") {
+      artifactsByEntryId.set(entryId, {
+        metadata: {
+          status: "pending",
+          ...base,
+        },
+      });
+      continue;
+    }
+    artifactsByEntryId.set(entryId, {
+      metadata: {
+        status: "failed",
+        ...base,
+        error: {
+          code: "translation_failed",
+          ...(row.error_message ? { message: row.error_message } : {}),
+        },
+      },
+    });
+  }
+
+  return { ok: true, targetLanguageCode, artifactsByEntryId };
+}
+
 async function recordReview(auth: AuthenticatedSupabase, params: {
   entryId: string;
   mode: TrainingMode;
@@ -665,12 +958,20 @@ export async function performPlatformLookup(
   params: {
     query: string;
     includeUserState: boolean;
+    includeTranslations?: boolean;
     languageCode?: string | null;
     contextText?: string | null;
     intent?: string | null;
+    service?: ServiceSupabase | null;
   },
 ): Promise<PlatformOperationResult> {
-  const { query, includeUserState, languageCode = null, contextText = null } = params;
+  const {
+    query,
+    includeUserState,
+    includeTranslations = false,
+    languageCode = null,
+    contextText = null,
+  } = params;
   const intent =
     params.intent === "dictionary-lookup" ||
     params.intent === "training-review" ||
@@ -809,6 +1110,33 @@ export async function performPlatformLookup(
     }
   }
 
+  const translationArtifactsByEntryId = new Map<
+    string,
+    { metadata: LookupTranslationMetadata; overlay?: Record<string, unknown> | null }
+  >();
+  if (includeTranslations) {
+    if (!params.service) {
+      return {
+        payload: { error: "translation_cache_not_configured" },
+        status: 500,
+      };
+    }
+    const resolvedTranslations = await resolveLookupTranslationContext(
+      auth,
+      params.service,
+      entries.map((entry) => entry.id),
+    );
+    if (!resolvedTranslations.ok) {
+      return {
+        payload: resolvedTranslations.payload,
+        status: resolvedTranslations.status,
+      };
+    }
+    for (const [entryId, artifact] of resolvedTranslations.artifactsByEntryId) {
+      translationArtifactsByEntryId.set(entryId, artifact);
+    }
+  }
+
   const items = entries.map((entry) => {
     const availableActions: PlatformAction[] = [
       "record-view",
@@ -825,7 +1153,12 @@ export async function performPlatformLookup(
       availableActions.push("update-user-entry", "delete-user-entry");
     }
     const statesByCardType = userStateByEntryId.get(entry.id) ?? {};
-    const content = normalizeDictionaryContent(entry);
+    const translation = includeTranslations
+      ? translationArtifactsByEntryId.get(entry.id) ?? {
+          metadata: { status: "not_available" as const },
+        }
+      : null;
+    const content = normalizeDictionaryContent(entry, translation);
     const matchedForm = lookupMatchedForm(entry, query);
 
     return {
@@ -856,6 +1189,7 @@ export async function performPlatformLookup(
             listMemberships: listMembershipsByEntryId.get(entry.id) ?? [],
           }
         : {}),
+      ...(translation ? { translation: translation.metadata } : {}),
       match: {
         queriedForm: query,
         ...(matchedForm ? { matchedForm } : {}),
@@ -881,10 +1215,16 @@ export async function performPlatformCatalogLookup(
     query: string;
     languageCode?: string | null;
     contextText?: string | null;
+    includeTranslations?: boolean;
     intent?: string | null;
   },
 ): Promise<PlatformOperationResult> {
-  const { query, languageCode = null, contextText = null } = params;
+  const {
+    query,
+    languageCode = null,
+    contextText = null,
+    includeTranslations = false,
+  } = params;
   const intent =
     params.intent === "dictionary-lookup" ||
     params.intent === "training-review" ||
@@ -947,7 +1287,10 @@ export async function performPlatformCatalogLookup(
         ) {
           return [];
         }
-        const content = normalizeDictionaryContent(entry);
+        const translation = includeTranslations
+          ? { metadata: { status: "not_available" as const } }
+          : null;
+        const content = normalizeDictionaryContent(entry, translation);
         const matchedForm = lookupMatchedForm(entry, query);
 
         return [{
@@ -978,6 +1321,7 @@ export async function performPlatformCatalogLookup(
                 isEditable: dictionary.is_editable ?? null,
               }
             : null,
+          ...(translation ? { translation: translation.metadata } : {}),
           match: {
             queriedForm: query,
             ...(matchedForm ? { matchedForm } : {}),

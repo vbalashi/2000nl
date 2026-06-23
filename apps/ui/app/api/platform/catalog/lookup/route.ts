@@ -19,6 +19,7 @@ type CatalogLookupRequestBody = {
   query?: unknown;
   languageCode?: unknown;
   contextText?: unknown;
+  includeTranslations?: unknown;
   intent?: unknown;
 };
 
@@ -48,11 +49,13 @@ export async function POST(request: NextRequest) {
   const contextText =
     typeof body?.contextText === "string" ? body.contextText.trim() : null;
   const intent = typeof body?.intent === "string" ? body.intent.trim() : null;
+  const includeTranslations = body?.includeTranslations === true;
 
   const result = await performPlatformCatalogLookup(service, {
     query,
     languageCode,
     contextText,
+    includeTranslations,
     intent,
   });
   return reply(result.payload, result.status);

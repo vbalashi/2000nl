@@ -62,6 +62,14 @@ Reserved service boundary, but currently not the primary runtime. Do not assume 
 - CI: targeted checks for DB drift, FSRS parity/RPC behavior, and deployment flows.
 - Production: web UI at `https://2000.dilum.io`, Supabase-backed auth/data, deployment and operational workflows documented in `docs/`.
 
+DB URL aliases are intentionally linked. `SUPABASE_DB_URL` is the preferred
+name for Supabase psql access, `DATABASE_URL` is accepted by DB helpers and can
+be loaded from repo `.env.local`, `FSRS_TEST_DB_URL` is the test-specific alias
+used by `apps/ui/tests/fsrs`, and `LOCAL_SUPABASE_DB_URL` overrides the local
+Docker Supabase URL. For local DB/RPC checks, prefer
+`scripts/db-local-supabase.sh test-fsrs`; for ad-hoc SQL, use
+`db/scripts/psql_supabase.sh`.
+
 ## Safe Change Patterns
 
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.

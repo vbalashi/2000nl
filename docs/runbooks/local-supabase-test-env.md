@@ -42,6 +42,13 @@ Run the FSRS RPC/parity suite against the local Supabase database:
 scripts/db-local-supabase.sh test-fsrs
 ```
 
+The wrapper links the common DB URL names for the test process:
+
+- `LOCAL_SUPABASE_DB_URL` optionally overrides the local Docker Supabase DB URL.
+- `SUPABASE_DB_URL`, `DATABASE_URL`, and `FSRS_TEST_DB_URL` are exported to the selected local DB URL.
+- `apps/ui/tests/fsrs` resolves DB URLs in this order: `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, `DATABASE_URL`.
+- `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from env, then falls back to repo `.env.local`.
+
 Or run the whole local DB harness:
 
 ```bash

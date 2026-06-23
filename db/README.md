@@ -209,6 +209,15 @@ Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your 
 - Query: `db/scripts/psql_supabase.sh -c "select now();"`
 - File: `db/scripts/psql_supabase.sh -f db/migrations/001_core_schema.sql`
 
+Related DB URL names:
+
+- `SUPABASE_DB_URL` - preferred explicit Supabase psql URL.
+- `DATABASE_URL` - accepted fallback, including from repo `.env.local`.
+- `FSRS_TEST_DB_URL` - test-specific alias; `apps/ui/tests/fsrs` also falls back to `SUPABASE_DB_URL` and `DATABASE_URL`.
+- `LOCAL_SUPABASE_DB_URL` - overrides the default local Docker Supabase DB URL used by `scripts/db-local-supabase.sh`.
+
+For local migration/RPC validation, prefer `scripts/db-local-supabase.sh test-fsrs`; it exports the correct local `SUPABASE_DB_URL`, `DATABASE_URL`, and `FSRS_TEST_DB_URL` internally.
+
 ## Schema Overview
 
 ### Core Tables

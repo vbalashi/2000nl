@@ -221,6 +221,9 @@ describe("/api/platform/v1 contract", () => {
                   },
                 ],
                 "sourceMeta": {},
+                "summary": {
+                  "definition": "gebouw",
+                },
               },
               "contentFingerprint": "38826cc38aa4eb47b5cabf36dbf711a8a41d3d9054dcee1e3014036e0ce8823d",
               "dictionaryId": "dict-1",

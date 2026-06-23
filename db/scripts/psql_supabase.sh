@@ -2,6 +2,9 @@
 set -euo pipefail
 
 # Run psql against Supabase using SUPABASE_DB_URL or DATABASE_URL.
+# Falls back to repo .env.local. For local FSRS/RPC tests, use
+# scripts/db-local-supabase.sh test-fsrs, which maps LOCAL_SUPABASE_DB_URL
+# to SUPABASE_DB_URL, DATABASE_URL, and FSRS_TEST_DB_URL.
 # Examples:
 #   db/scripts/psql_supabase.sh -c "select now();"
 #   db/scripts/psql_supabase.sh -f db/migrations/0008_enable_rls.sql

@@ -111,11 +111,14 @@ Notes:
 
 - FSRS parity + RPC tests (need a Postgres URL; runs DB migrations, so point at a disposable/non-prod DB):
   ```
-  # preferred: Supabase psql URL in env, e.g. in db/.env.local or apps/ui/.env.local
+  # preferred: Supabase psql URL in env or repo .env.local
   # SUPABASE_DB_URL=postgresql://USER:PASSWORD@HOST:PORT/postgres?sslmode=require
   FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts
   ```
-  - If `FSRS_TEST_DB_URL` is absent, tests are skipped locally. CI provides Postgres.
+  - DB URL lookup order is `FSRS_TEST_DB_URL`, then `SUPABASE_DB_URL`, then `DATABASE_URL`.
+  - `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from the environment, then falls back to repo `.env.local`.
+  - For local Supabase, prefer `scripts/db-local-supabase.sh test-fsrs`; it points tests at `LOCAL_SUPABASE_DB_URL` or the default `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
+  - If none of `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, or `DATABASE_URL` is present, tests are skipped locally. CI provides Postgres.
   - Uses migrations in `db/migrations`, so avoid pointing at production.
 
 ## Supabase integration

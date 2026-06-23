@@ -71,23 +71,51 @@ export type DictionaryMeaningContent = {
 export type DictionaryContentSection = {
   id: string;
   sourcePath: string;
-  kind: "meaning" | "example" | "idiom" | "form" | "note";
+  kind: "meaning" | "context" | "example" | "idiom" | "form" | "note";
   label?: string;
   text: string;
   translation?: string;
 };
 
+export type DictionaryContentSummary = {
+  definition: string;
+  definitionTranslation?: string;
+  example?: string;
+  exampleTranslation?: string;
+};
+
+export type PlatformLookupTranslationStatus =
+  | "ready"
+  | "pending"
+  | "failed"
+  | "not_requested"
+  | "not_available";
+
+export type PlatformLookupTranslation = {
+  status: PlatformLookupTranslationStatus;
+  targetLanguageCode?: string;
+  translationId?: string;
+  translationPolicyVersion?: string;
+  error?: {
+    code: string;
+    message?: string;
+  };
+};
+
 export type DictionaryEntryEnvelope = {
   headword: string;
+  headwordTranslation?: string;
   languageCode: string | null;
   meaningId?: number | null;
   partOfSpeech?: string | null;
   gender?: string | null;
   meanings: DictionaryMeaningContent[];
+  summary: DictionaryContentSummary;
   audioLinks?: Record<string, string | null>;
   images?: string[];
   morphology?: Record<string, unknown>;
   sections: DictionaryContentSection[];
+  translation?: PlatformLookupTranslation;
   sourceMeta?: Record<string, unknown>;
 };
 
@@ -219,6 +247,7 @@ export type DictionaryLookupRequest = {
   dictionaryIds?: string[];
   contextText?: string;
   includeUserState?: boolean;
+  includeTranslations?: boolean;
   intent?: LookupIntent;
 };
 
@@ -264,6 +293,7 @@ export type DictionaryLookupResult = {
   userStateByCardType?: Record<CardTypeId, UserCardState>;
   progressSummary?: UserEntryProgressSummary;
   cardCapabilitiesByType?: Record<CardTypeId, PlatformCardCapability>;
+  translation?: PlatformLookupTranslation;
   match: PlatformLookupMatch;
   availableActions?: LookupActionId[];
 };
@@ -273,6 +303,7 @@ export type PlatformLookupApiRequest = {
   languageCode?: string;
   contextText?: string;
   includeUserState?: boolean;
+  includeTranslations?: boolean;
   intent?: LookupIntent;
 };
 

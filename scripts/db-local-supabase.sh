@@ -25,6 +25,8 @@ Commands:
 
 Environment:
   LOCAL_SUPABASE_DB_URL Override the local Postgres URL.
+  The env command maps LOCAL_SUPABASE_DB_URL to SUPABASE_DB_URL,
+  DATABASE_URL, and FSRS_TEST_DB_URL for local DB/RPC checks.
 EOF
 }
 

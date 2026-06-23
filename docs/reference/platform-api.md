@@ -60,7 +60,8 @@ Request:
   "languageCode": "nl",
   "contextText": "optional surrounding text",
   "intent": "external-click",
-  "includeUserState": true
+  "includeUserState": true,
+  "includeTranslations": true
 }
 ```
 
@@ -83,6 +84,7 @@ Response shape:
         "meaningId": 1,
         "content": {
           "headword": "huis",
+          "headwordTranslation": "house",
           "languageCode": "nl",
           "meaningId": 1,
           "partOfSpeech": "zn",
@@ -94,14 +96,24 @@ Response shape:
               "translations": {}
             }
           ],
+          "summary": {
+            "definition": "gebouw",
+            "definitionTranslation": "building"
+          },
           "sections": [
             {
               "id": "meaning-1",
               "sourcePath": "raw.meanings[0].definition",
               "kind": "meaning",
-              "text": "gebouw"
+              "text": "gebouw",
+              "translation": "building"
             }
           ],
+          "translation": {
+            "status": "ready",
+            "targetLanguageCode": "en",
+            "translationId": "translation-row-id"
+          },
           "sourceMeta": {}
         },
         "contentFingerprint": "sha256-of-learner-visible-content",
@@ -148,6 +160,11 @@ Response shape:
           "frozenUntil": null
         }
       },
+      "translation": {
+        "status": "ready",
+        "targetLanguageCode": "en",
+        "translationId": "translation-row-id"
+      },
       "match": {
         "queriedForm": "huis",
         "matchedForm": "huis",
@@ -170,7 +187,7 @@ Response shape:
 }
 ```
 
-`includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
+`includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. `includeTranslations: true` asks lookup to attach cached provider-backed translations to the normalized content projection; it does not trigger provider generation. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
 
 When `languageCode`, `contextText`, or `intent: "external-click"` is present,
 lookup uses the gated dictionary search path. `languageCode` is applied as a
@@ -230,10 +247,13 @@ private dictionaries, `userStateByCardType`, `progressSummary`,
 
 ## External Translation Flow
 
-Dictionary lookup and provider-backed translation are separate operations.
-`POST /lookup` returns the accessible dictionary entries and user learning state,
-but it does not generate translation overlays and does not read
-`word_entry_translations`.
+Dictionary lookup can return cached provider-backed translations when the client
+opts in with `includeTranslations: true`. `POST /lookup` still returns the
+accessible dictionary entries and user learning state, and it never performs a
+long provider generation call. For authenticated users it resolves
+`user_settings.translation_lang` server-side, reads matching
+`word_entry_translations` cache rows with the server-side client, and attaches
+ready translations to the normalized `entry.content` projection.
 
 Some dictionary entries can still contain source translations in `entry.raw`
 when the dictionary schema provides them, for example user-owned
@@ -245,14 +265,23 @@ and provider.
 For an external app such as AudioFilms that needs a translation for a selected
 lookup result:
 
-1. Call `POST /api/platform/v1/lookup` with the selected word or phrase.
-2. Choose the relevant `items[].entry.id`.
-3. Request a provider-backed translation for that entry and target language.
-   Use `POST /api/platform/v1/translation`.
-4. If a fresh cached overlay exists, the translation endpoint returns it.
-5. If no fresh overlay exists, the translation endpoint creates or refreshes the
-   `word_entry_translations` row, calls the configured provider, stores the
-   overlay, and returns it when ready.
+1. Call `POST /api/platform/v1/lookup` with the selected word or phrase and
+   `includeTranslations: true`.
+2. Render dictionary-card translations from
+   `items[].entry.content.headwordTranslation`,
+   `items[].entry.content.summary.*Translation`, and
+   `items[].entry.content.sections[].translation`.
+3. Use `items[].translation.status` or `items[].entry.content.translation.status`
+   to distinguish `ready`, `pending`, `failed`, and `not_available`.
+4. Use `POST /api/platform/v1/translation` only as a fallback/refresh path, or
+   for future non-dictionary card translation flows.
+
+When a cached overlay is ready, lookup maps overlay values back to the same
+stable `sections[].sourcePath` values that identify the original content. If one
+example or idiom translation is missing, only that section lacks
+`translation`; neighboring sections are not shifted by index. Guest catalog
+lookup can accept `includeTranslations: true`, but it does not infer a target
+language and returns `translation.status: "not_available"`.
 
 The translation endpoint writes the overlay cache; it does not rewrite the
 source dictionary entry. Repeated requests for the same entry, target language,

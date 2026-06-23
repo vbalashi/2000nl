@@ -948,7 +948,7 @@ describeIfDb("FSRS RPC integration", () => {
       ]);
 
       const { rows: statusRows } = await client.query(
-        `select fsrs_enabled, fsrs_reps, fsrs_lapses, seen_count, hidden, frozen_until
+        `select fsrs_enabled, fsrs_reps, fsrs_lapses, seen_count, in_learning, hidden, frozen_until
          from user_card_status
          where user_id = $1 and entry_id = $2 and card_type_id = $3`,
         [userId, wordId, mode],
@@ -966,6 +966,7 @@ describeIfDb("FSRS RPC integration", () => {
           fsrs_reps: 0,
           fsrs_lapses: 0,
           seen_count: 1,
+          in_learning: true,
           hidden: false,
           frozen_until: null,
         }),

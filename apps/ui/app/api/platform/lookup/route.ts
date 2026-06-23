@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   getAuthenticatedSupabase,
+  getPlatformServiceSupabase,
   jsonNoStore,
   platformCorsPreflight,
   withPlatformCors,
@@ -20,6 +21,7 @@ type LookupRequestBody = {
   languageCode?: unknown;
   contextText?: unknown;
   includeUserState?: unknown;
+  includeTranslations?: unknown;
   intent?: unknown;
 };
 
@@ -48,13 +50,20 @@ export async function POST(request: NextRequest) {
     typeof body?.contextText === "string" ? body.contextText.trim() : null;
   const intent = typeof body?.intent === "string" ? body.intent.trim() : null;
   const includeUserState = body?.includeUserState !== false;
+  const includeTranslations = body?.includeTranslations === true;
+  const service = includeTranslations ? getPlatformServiceSupabase() : null;
+  if (service instanceof Response) {
+    return withPlatformCors(request, service);
+  }
 
   const result = await performPlatformLookup(auth, {
     query,
     includeUserState,
+    includeTranslations,
     languageCode,
     contextText,
     intent,
+    service,
   });
   return reply(result.payload, result.status);
 }
