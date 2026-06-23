@@ -237,3 +237,6 @@
 
 -- Ensure explicit start-learning moves cards into the learning phase
 \i db/migrations/076_start_learning_sets_in_learning.sql
+
+-- Source/provenance-aware external card actions
+\i db/migrations/077_external_card_action_provenance.sql
