@@ -136,6 +136,21 @@ export type UserDictionaryEntryV1 = {
   notes?: string;
   tags?: string[];
   sourceEntryId?: string;
+  generation?: {
+    kind: "llm";
+    provider?: string;
+    model?: string;
+    promptVersion?: string;
+    generatedAt?: string;
+    contentFingerprint?: string;
+    source: {
+      clickedForm: string;
+      languageCode: string;
+      contextText?: string;
+      connectedClientId?: string | null;
+      [key: string]: unknown;
+    };
+  };
 };
 
 export type EntryListKind = "curated" | "user";

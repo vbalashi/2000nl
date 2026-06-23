@@ -261,3 +261,6 @@
 
 -- Diacritic-insensitive platform dictionary lookup
 \i db/migrations/084_diacritic_insensitive_platform_lookup.sql
+
+-- Generated user dictionary entry metadata contract
+\i db/migrations/085_generated_user_entry_contract.sql

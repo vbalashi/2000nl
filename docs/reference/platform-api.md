@@ -302,6 +302,63 @@ overlay. A request can return `status: "pending"` when another request is
 already producing the same overlay, and clients should retry after a short
 delay.
 
+## `POST /user-dictionary/generated-entry`
+
+Authenticated write endpoint for persisting an explicitly accepted generated
+dictionary card after lookup returns no suitable entry. This endpoint is for
+the durable save step only: it does not perform provider generation itself, and
+it does not start learning or write review/progress state.
+
+Use `/api/platform/v1/user-dictionary/generated-entry` from external clients.
+The Bearer token must resolve to a first-party user or a connected client with
+`platform:write`.
+
+Request:
+```json
+{
+  "clickedForm": "gedoe",
+  "languageCode": "nl",
+  "contextText": "Wat een gedoe.",
+  "sourceContext": {
+    "contractVersion": "source-context-v2"
+  },
+  "generated": {
+    "definition": "Een situatie die veel moeite of ongemak geeft.",
+    "example": { "source": "Wat een gedoe." },
+    "partOfSpeech": "noun",
+    "provider": "openai",
+    "model": "gpt-...",
+    "promptVersion": "generated-user-entry-v1"
+  }
+}
+```
+
+The endpoint builds a `user-entry-v1` payload, adds `tags: ["generated"]`, and
+stores `generation` metadata in `word_entries.raw`. Generated entries are
+created in the user's private editable `user-entry-v1` dictionary through
+`create_user_dictionary_entry`; they are not curated/system entries.
+
+Response:
+```json
+{
+  "ok": true,
+  "entryId": "entry-uuid",
+  "dictionaryId": null,
+  "generation": {
+    "status": "persisted",
+    "requiresExplicitStartLearning": true
+  },
+  "nextActions": ["start-learning"]
+}
+```
+
+Duplicate handling follows user dictionary uniqueness: another entry with the
+same dictionary, language, headword, and meaning id returns
+`409 { "error": "duplicate_user_entry" }`. After a successful save, clients
+should refresh normal `/lookup` and render the returned persisted card state.
+To start learning, call `POST /api/platform/v1/actions` with
+`action: "start-learning"` and the returned `entryId`.
+
 ## `POST /translation`
 
 Provider-backed translation overlay for an accessible dictionary entry. This
