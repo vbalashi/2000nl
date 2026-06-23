@@ -1,5 +1,5 @@
 import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
-import { parseSourceContext } from "./sourceContext";
+import { validatePlatformActionEnvelope } from "./actionService";
 import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
 import crypto from "crypto";
 
@@ -187,11 +187,6 @@ function asReviewResult(value: unknown): ReviewResult | null {
   return result && REVIEW_RESULTS.has(result as ReviewResult)
     ? (result as ReviewResult)
     : null;
-}
-
-function asClientEventId(value: unknown): string | null {
-  const eventId = asString(value);
-  return eventId && /^[A-Za-z0-9._:-]{1,128}$/.test(eventId) ? eventId : null;
 }
 
 function asUuid(value: unknown): string | null {
@@ -942,11 +937,6 @@ async function performProvenanceAwareCardAction(auth: AuthenticatedSupabase, par
   });
 }
 
-function sourceContextClientId(sourceContext: Record<string, unknown> | null) {
-  const client = asRecord(sourceContext?.client);
-  return asString(client.id);
-}
-
 function mapUserEntryRpcError(
   fallbackError: string,
   error: { message?: string } | unknown,
@@ -1401,77 +1391,11 @@ export async function performPlatformAction(
   auth: AuthenticatedSupabase,
   body: PlatformActionBody | null,
 ): Promise<PlatformOperationResult> {
-  const action = asString(body?.action) as PlatformAction | null;
-  const entryId = asString(body?.entryId);
-  const clientEventId = asClientEventId(body?.clientEventId);
-  const parsedSourceContext = parseSourceContext(body?.sourceContext, auth.user.id);
-  const sourceContext = parsedSourceContext.ok ? parsedSourceContext.value : null;
-  const sourceContextVersion = parsedSourceContext.ok ? parsedSourceContext.version : "none";
-
-  if (!action) {
-    return { payload: { error: "missing_action" }, status: 400 };
+  const validated = validatePlatformActionEnvelope(auth, body);
+  if (!validated.ok) {
+    return validated.result;
   }
-  if (
-    ![
-      "fetch-entry",
-      "record-view",
-      "review-card",
-      "mark-known",
-      "mark-unknown",
-      "start-learning",
-      "add-to-list",
-      "remove-from-list",
-      "copy-to-user-dictionary",
-      "create-user-entry",
-      "update-user-entry",
-      "delete-user-entry",
-      "create-user-list",
-      "update-user-list",
-      "delete-user-list",
-    ].includes(action)
-  ) {
-    return { payload: { error: "unsupported_action" }, status: 400 };
-  }
-  if (body?.clientEventId !== undefined && !clientEventId) {
-    return { payload: { error: "invalid_client_event_id" }, status: 400 };
-  }
-  if (!parsedSourceContext.ok) {
-    return {
-      payload: { error: parsedSourceContext.error },
-      status: parsedSourceContext.status,
-    };
-  }
-  if (sourceContext && !clientEventId) {
-    return { payload: { error: "missing_client_event_id" }, status: 400 };
-  }
-  if (
-    sourceContextVersion === "v2" &&
-    (action === "review-card" || action === "mark-known" || action === "mark-unknown")
-  ) {
-    const eventUuid = asUuid(clientEventId);
-    const explicitTurnUuid = body?.turnId === undefined ? null : asUuid(body.turnId);
-    if (!eventUuid) {
-      return { payload: { error: "v2_client_event_id_must_be_uuid" }, status: 400 };
-    }
-    if (body?.turnId !== undefined && explicitTurnUuid !== eventUuid) {
-      return { payload: { error: "v2_turn_id_mismatch" }, status: 400 };
-    }
-  }
-  if (auth.principal.authKind === "connected_client") {
-    const reportedClientId = sourceContextClientId(sourceContext);
-    if (
-      reportedClientId &&
-      reportedClientId !== auth.principal.connectedClientId
-    ) {
-      return {
-        payload: {
-          error: "client_identity_mismatch",
-          detail: "sourceContext.client.id must match the authenticated Connected Client.",
-        },
-        status: 403,
-      };
-    }
-  }
+  const { action, entryId, clientEventId, sourceContext } = validated.value;
 
   if (action === "fetch-entry") {
     if (!entryId) {
