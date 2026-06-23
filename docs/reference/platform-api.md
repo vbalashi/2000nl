@@ -410,6 +410,8 @@ return with `cached: true`; a fresh provider call returns with `cached: false`.
 ## `POST /actions`
 
 Explicit mutation endpoint. Supported action IDs are defined in `packages/shared/types/platform.ts`.
+For active database/RPC write-order, idempotency, and provenance behavior, see
+[`platform-provenance-rpc.md`](platform-provenance-rpc.md).
 
 Examples:
 ```json
