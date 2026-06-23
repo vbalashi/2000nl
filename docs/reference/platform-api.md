@@ -404,7 +404,31 @@ Examples:
 {
   "action": "start-learning",
   "entryId": "entry-id",
-  "cardTypeId": "word-to-definition"
+  "cardTypeId": "word-to-definition",
+  "clientEventId": "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+  "sourceContext": {
+    "contractVersion": "source-context-v1",
+    "client": {
+      "id": "audiofilms-youtube-extension"
+    },
+    "source": {
+      "kind": "youtube_video",
+      "provider": "youtube",
+      "externalId": "4EE7m94mJpk",
+      "url": "https://www.youtube.com/watch?v=4EE7m94mJpk",
+      "languageCode": "nl"
+    },
+    "location": {
+      "kind": "caption_phrase",
+      "phraseIndex": 12,
+      "startMs": 54210,
+      "endMs": 58100
+    },
+    "context": {
+      "clickedForm": "huis",
+      "text": "bounded surrounding phrase"
+    }
+  }
 }
 ```
 
@@ -422,6 +446,46 @@ Review-card mutations pass `turnId` through to `handle_card_review` as
 `p_turn_id`; that RPC is the idempotency boundary for repeated connected-client
 turn submissions. Platform writes require a valid bearer token and use the
 authenticated Supabase user id for every user-scoped mutation.
+
+External clients that need source/provenance tracking should send
+`clientEventId` for every explicit card action. When `sourceContext` is present,
+`clientEventId` is required. `clientEventId` is scoped to the authenticated user:
+the first accepted request wins, an identical retry returns the already recorded
+provenance event, and a retry with a different action payload or source context
+returns an idempotency conflict without applying another mutation.
+
+`turnId` remains the review-turn idempotency value used by `handle_card_review`.
+For provenance-aware `review-card`, `mark-known`, and `mark-unknown` requests,
+clients should send a UUID `clientEventId` and may omit `turnId`; the platform
+can use the UUID `clientEventId` as the review turn id. If `turnId` is supplied
+with a provenance-aware request, it must be a UUID.
+
+Minimum `sourceContext` envelope:
+
+- `contractVersion`: currently `source-context-v1`.
+- `client.id`: external client identity, such as `audiofilms-youtube-extension`.
+- `source.kind`: filterable source kind, such as `youtube_video`.
+- `source.provider`, `source.externalId`, or `source.url`: canonical source
+  identity inputs. The platform normalizes these into a source identity row.
+- `location`: optional location within the source, such as a caption phrase time
+  span.
+- `context.clickedForm` and bounded `context.text`: optional context used for
+  diagnostics and future source-linked review UX. The platform truncates and
+  hashes context for queryable event records.
+
+Current idempotency matrix:
+
+| Action | `clientEventId` for source-aware external clients | Card mutation | Retry behavior |
+| --- | --- | --- | --- |
+| `record-view` | Required when provenance is sent | `record_card_view` | Same event id is a no-op duplicate |
+| `start-learning` | Required when provenance is sent | `start_learning_entry_card` | Same event id is a no-op duplicate |
+| `mark-known` | Required | `handle_card_review(..., "easy")` | Same event id/turn id is a no-op duplicate |
+| `mark-unknown` | Required | `handle_card_review(..., "fail")` | Same event id/turn id is a no-op duplicate |
+| `review-card` | Required | `handle_card_review(..., result)` | Same event id/turn id is a no-op duplicate |
+
+Source/provenance storage is normalized into source, source-location, and
+user-card-action event rows. `user_review_log.metadata` remains FSRS diagnostic
+metadata and is not the primary source filtering surface.
 
 ## `POST /analyze-selection`
 

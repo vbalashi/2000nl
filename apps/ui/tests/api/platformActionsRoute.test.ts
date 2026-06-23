@@ -255,6 +255,172 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("records provenance-aware start-learning through the atomic platform action RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        eventId: "event-1",
+        sourceId: "source-1",
+        locationId: "location-1",
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v1",
+          client: { id: "audiofilms-youtube-extension" },
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId: "4EE7m94mJpk",
+            url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+          },
+          location: {
+            kind: "caption_phrase",
+            phraseIndex: 12,
+            startMs: 54210,
+            endMs: 58100,
+          },
+          context: {
+            clickedForm: "huis",
+            text: "Ik ga naar huis.",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("perform_platform_card_action", {
+      p_user_id: "user-1",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
+      p_action: "start-learning",
+      p_result: null,
+      p_turn_id: null,
+      p_client_event_id: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+      p_source_context: expect.objectContaining({
+        contractVersion: "source-context-v1",
+      }),
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "start_learning_entry_card",
+      expect.anything(),
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        action: "start-learning",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        provenance: {
+          status: "accepted",
+          eventId: "event-1",
+          sourceId: "source-1",
+          locationId: "location-1",
+        },
+      }),
+    );
+  });
+
+  test("maps repeated provenance action retries to a duplicate response without legacy mutation calls", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "duplicate",
+        eventId: "event-1",
+        sourceId: "source-1",
+        locationId: "location-1",
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "record-view",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "client-event-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("perform_platform_card_action", {
+      p_user_id: "user-1",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
+      p_action: "record-view",
+      p_result: null,
+      p_turn_id: null,
+      p_client_event_id: "client-event-1",
+      p_source_context: null,
+    });
+    expect(rpc).not.toHaveBeenCalledWith("record_card_view", expect.anything());
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        action: "record-view",
+        provenance: expect.objectContaining({ status: "duplicate" }),
+      }),
+    );
+  });
+
+  test("rejects provenance source context without a client event id", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        sourceContext: {
+          source: { kind: "youtube_video", provider: "youtube" },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "missing_client_event_id",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("returns idempotency conflict when a client event id is reused with a different payload", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "platform_action_idempotency_conflict" },
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "client-event-1",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "idempotency_conflict",
+      detail: "platform_action_idempotency_conflict",
+    });
+  });
+
   test("adds accessible entries to owned user lists", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

@@ -40,6 +40,8 @@ export type PlatformActionBody = {
   cardTypeId?: unknown;
   result?: unknown;
   turnId?: unknown;
+  clientEventId?: unknown;
+  sourceContext?: unknown;
   listId?: unknown;
   targetDictionaryId?: unknown;
   dictionaryId?: unknown;
@@ -184,6 +186,25 @@ function asReviewResult(value: unknown): ReviewResult | null {
   return result && REVIEW_RESULTS.has(result as ReviewResult)
     ? (result as ReviewResult)
     : null;
+}
+
+function asClientEventId(value: unknown): string | null {
+  const eventId = asString(value);
+  return eventId && /^[A-Za-z0-9._:-]{1,128}$/.test(eventId) ? eventId : null;
+}
+
+function asUuid(value: unknown): string | null {
+  const uuid = asString(value);
+  return uuid &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+    ? uuid
+    : null;
+}
+
+function asSourceContext(value: unknown): Record<string, unknown> | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
 }
 
 function asListCardPolicy(value: unknown): ListCardPolicy | null {
@@ -903,6 +924,27 @@ async function recordReview(auth: AuthenticatedSupabase, params: {
   });
 }
 
+async function performProvenanceAwareCardAction(auth: AuthenticatedSupabase, params: {
+  entryId: string;
+  mode: TrainingMode;
+  action: "record-view" | "start-learning" | "mark-known" | "mark-unknown" | "review-card";
+  result?: ReviewResult | null;
+  turnId?: string | null;
+  clientEventId: string;
+  sourceContext?: Record<string, unknown> | null;
+}) {
+  return auth.supabase.rpc("perform_platform_card_action", {
+    p_user_id: auth.user.id,
+    p_entry_id: params.entryId,
+    p_card_type_id: params.mode,
+    p_action: params.action,
+    p_result: params.result ?? null,
+    p_turn_id: params.turnId ?? null,
+    p_client_event_id: params.clientEventId,
+    p_source_context: params.sourceContext ?? null,
+  });
+}
+
 function mapUserEntryRpcError(
   fallbackError: string,
   error: { message?: string } | unknown,
@@ -1359,6 +1401,8 @@ export async function performPlatformAction(
 ): Promise<PlatformOperationResult> {
   const action = asString(body?.action) as PlatformAction | null;
   const entryId = asString(body?.entryId);
+  const clientEventId = asClientEventId(body?.clientEventId);
+  const sourceContext = asSourceContext(body?.sourceContext);
 
   if (!action) {
     return { payload: { error: "missing_action" }, status: 400 };
@@ -1383,6 +1427,15 @@ export async function performPlatformAction(
     ].includes(action)
   ) {
     return { payload: { error: "unsupported_action" }, status: 400 };
+  }
+  if (body?.clientEventId !== undefined && !clientEventId) {
+    return { payload: { error: "invalid_client_event_id" }, status: 400 };
+  }
+  if (body?.sourceContext !== undefined && !sourceContext) {
+    return { payload: { error: "invalid_source_context" }, status: 400 };
+  }
+  if (sourceContext && !clientEventId) {
+    return { payload: { error: "missing_client_event_id" }, status: 400 };
   }
 
   if (action === "fetch-entry") {
@@ -1749,6 +1802,38 @@ export async function performPlatformAction(
   }
 
   if (action === "record-view" || action === "start-learning") {
+    if (clientEventId) {
+      const { data, error } = await performProvenanceAwareCardAction(auth, {
+        entryId,
+        mode,
+        action,
+        clientEventId,
+        sourceContext,
+      });
+
+      if (error) {
+        const detail = error.message ?? String(error);
+        if (detail.includes("platform_action_idempotency_conflict")) {
+          return { payload: { error: "idempotency_conflict", detail }, status: 409 };
+        }
+        return {
+          payload: { error: `${action}_failed`, detail },
+          status: 500,
+        };
+      }
+      return {
+        payload: {
+          ok: true,
+          action,
+          entryId,
+          cardTypeId: mode,
+          clientEventId,
+          provenance: data ?? null,
+        },
+        status: 200,
+      };
+    }
+
     const { error } =
       action === "start-learning"
         ? await auth.supabase.rpc("start_learning_entry_card", {
@@ -1782,6 +1867,48 @@ export async function performPlatformAction(
   }
 
   const turnId = asString(body?.turnId);
+  const provenanceTurnId = clientEventId ? asUuid(body?.turnId) ?? asUuid(clientEventId) : null;
+  if (clientEventId && body?.turnId !== undefined && !asUuid(body.turnId)) {
+    return { payload: { error: "invalid_turn_id" }, status: 400 };
+  }
+
+  if (clientEventId) {
+    const { data, error } = await performProvenanceAwareCardAction(auth, {
+      entryId,
+      mode,
+      action,
+      result,
+      turnId: provenanceTurnId,
+      clientEventId,
+      sourceContext,
+    });
+
+    if (error) {
+      const detail = error.message ?? String(error);
+      if (detail.includes("platform_action_idempotency_conflict")) {
+        return { payload: { error: "idempotency_conflict", detail }, status: 409 };
+      }
+      return {
+        payload: { error: `${action}_failed`, detail },
+        status: 500,
+      };
+    }
+
+    return {
+      payload: {
+        ok: true,
+        action,
+        entryId,
+        cardTypeId: mode,
+        result,
+        turnId: provenanceTurnId,
+        clientEventId,
+        provenance: data ?? null,
+      },
+      status: 200,
+    };
+  }
+
   const { error } = await recordReview(auth, {
     entryId,
     mode,

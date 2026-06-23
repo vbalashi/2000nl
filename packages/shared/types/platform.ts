@@ -402,25 +402,57 @@ export type PlatformAnalyzeSelectionResponse = {
   actionResults: [];
 };
 
+export type PlatformSourceContextV1 = {
+  contractVersion?: "source-context-v1";
+  client?: {
+    id?: string;
+    version?: string;
+  };
+  source?: {
+    kind?: string;
+    provider?: string;
+    externalId?: string;
+    url?: string;
+    title?: string;
+    languageCode?: string;
+  };
+  location?: {
+    kind?: string;
+    startMs?: number;
+    endMs?: number;
+    phraseIndex?: number;
+  };
+  context?: {
+    clickedForm?: string;
+    text?: string;
+  };
+  diagnostics?: Record<string, unknown>;
+};
+
+export type PlatformActionProvenance = {
+  clientEventId?: string | null;
+  sourceContext?: PlatformSourceContextV1 | null;
+};
+
 export type PlatformActionRequest =
-  | {
+  | ({
       action: "record-view" | "start-learning";
       entryId: string;
       cardTypeId: CardTypeId;
-    }
-  | {
+    } & PlatformActionProvenance)
+  | ({
       action: "review-card";
       entryId: string;
       cardTypeId: CardTypeId;
       result: "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
       turnId?: string | null;
-    }
-  | {
+    } & PlatformActionProvenance)
+  | ({
       action: "mark-known" | "mark-unknown";
       entryId: string;
       cardTypeId: CardTypeId;
       turnId?: string | null;
-    }
+    } & PlatformActionProvenance)
   | {
       action: "add-to-list";
       entryId: string;
