@@ -542,6 +542,61 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("source-context-v2 provenance rejects already consumed review turns", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-v2-provenance-turn-${Date.now()}`);
+      const consumedTurnId = randomUUID();
+      const sourceContext = {
+        contractVersion: "source-context-v2",
+        source: {
+          kind: "youtube_video",
+          provider: "youtube",
+          externalId: "4EE7m94mJpk",
+          url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+        },
+      };
+
+      await client.query(`select handle_card_review($1, $2, $3, $4, $5)`, [
+        userId,
+        wordId,
+        mode,
+        "success",
+        consumedTurnId,
+      ]);
+
+      await client.query(`savepoint consumed_turn_collision`);
+      await expect(
+        client.query(
+          `select perform_platform_card_action(
+             $1::uuid,
+             $2::uuid,
+             $3::text,
+             'review-card',
+             'success',
+             $4::uuid,
+             $4::text,
+             $5::jsonb,
+             'first_party',
+             NULL
+           )`,
+          [userId, wordId, mode, consumedTurnId, JSON.stringify(sourceContext)]
+        )
+      ).rejects.toThrow(/platform_review_turn_already_consumed/);
+      await client.query(`rollback to savepoint consumed_turn_collision`);
+      await client.query(`release savepoint consumed_turn_collision`);
+
+      const { rows } = await client.query(
+        `select count(*)::int as count
+         from user_card_action_events
+         where user_id = $1 and client_event_id = $2`,
+        [userId, consumedTurnId]
+      );
+      expect(rows[0].count).toBe(0);
+    }, userId);
+  });
+
   test("physical user_card_status table is the writable card-state storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

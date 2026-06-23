@@ -2127,6 +2127,12 @@ export async function performPlatformAction(
       if (detail.includes("platform_action_idempotency_conflict")) {
         return { payload: { error: "idempotency_conflict", detail }, status: 409 };
       }
+      if (detail.includes("platform_review_turn_already_consumed")) {
+        return {
+          payload: { error: "review_turn_already_consumed", detail },
+          status: 409,
+        };
+      }
       return {
         payload: { error: `${action}_failed`, detail },
         status: 500,

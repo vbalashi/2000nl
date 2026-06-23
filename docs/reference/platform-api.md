@@ -541,7 +541,10 @@ rejected until their private-source normalization and retention rules exist.
 
 For v2 provenance-aware review actions, `clientEventId` must be a UUID. If a
 `turnId` is supplied, it must equal `clientEventId`; otherwise the platform uses
-the UUID `clientEventId` as the review turn id.
+the UUID `clientEventId` as the review turn id. If that review turn id was
+already consumed outside the same provenance event, the platform rejects the
+request with `409 review_turn_already_consumed` instead of recording an accepted
+provenance event for a review mutation that did not apply.
 
 Current idempotency matrix:
 

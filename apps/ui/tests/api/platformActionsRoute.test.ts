@@ -795,6 +795,40 @@ describe("/api/platform/actions", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  test("returns conflict when v2 review turn was already consumed", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "platform_review_turn_already_consumed" },
+    });
+
+    const response = await POST(
+      request({
+        action: "review-card",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        result: "success",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId: "4EE7m94mJpk",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "review_turn_already_consumed",
+      detail: "platform_review_turn_already_consumed",
+    });
+  });
+
   test("returns idempotency conflict when a client event id is reused with a different payload", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
