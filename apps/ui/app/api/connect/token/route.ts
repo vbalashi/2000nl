@@ -136,6 +136,8 @@ export async function POST(request: NextRequest) {
 
     const recordError = await recordConnectedClientSession({
       supabase: service,
+      accessToken: session.access_token,
+      accessTokenExpiresAt: session.expires_at,
       refreshToken: session.refresh_token,
       clientId,
       userId: authCode.user_id,
@@ -199,6 +201,10 @@ export async function POST(request: NextRequest) {
     await service
       .from("connected_client_sessions")
       .update({
+        access_token_hash: sha256Hex(session.access_token),
+        access_token_expires_at: session.expires_at
+          ? new Date(session.expires_at * 1000).toISOString()
+          : null,
         refresh_token_hash: sha256Hex(session.refresh_token),
         updated_at: new Date().toISOString(),
         last_refreshed_at: new Date().toISOString(),

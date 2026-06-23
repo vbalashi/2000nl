@@ -942,7 +942,14 @@ async function performProvenanceAwareCardAction(auth: AuthenticatedSupabase, par
     p_turn_id: params.turnId ?? null,
     p_client_event_id: params.clientEventId,
     p_source_context: params.sourceContext ?? null,
+    p_auth_kind: auth.principal.authKind,
+    p_connected_client_id: auth.principal.connectedClientId,
   });
+}
+
+function sourceContextClientId(sourceContext: Record<string, unknown> | null) {
+  const client = asRecord(sourceContext?.client);
+  return asString(client.id);
 }
 
 function mapUserEntryRpcError(
@@ -1436,6 +1443,21 @@ export async function performPlatformAction(
   }
   if (sourceContext && !clientEventId) {
     return { payload: { error: "missing_client_event_id" }, status: 400 };
+  }
+  if (auth.principal.authKind === "connected_client") {
+    const reportedClientId = sourceContextClientId(sourceContext);
+    if (
+      reportedClientId &&
+      reportedClientId !== auth.principal.connectedClientId
+    ) {
+      return {
+        payload: {
+          error: "client_identity_mismatch",
+          detail: "sourceContext.client.id must match the authenticated Connected Client.",
+        },
+        status: 403,
+      };
+    }
   }
 
   if (action === "fetch-entry") {

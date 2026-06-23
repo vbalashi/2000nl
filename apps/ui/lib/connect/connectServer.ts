@@ -358,12 +358,18 @@ export async function refreshSupabaseSession(params: {
 
 export async function recordConnectedClientSession(params: {
   supabase: SupabaseClient;
+  accessToken: string;
+  accessTokenExpiresAt?: number | null;
   refreshToken: string;
   clientId: string;
   userId: string;
   scopes: string[];
 }): Promise<NextResponse | null> {
   const { error } = await params.supabase.from("connected_client_sessions").insert({
+    access_token_hash: sha256Hex(params.accessToken),
+    access_token_expires_at: params.accessTokenExpiresAt
+      ? new Date(params.accessTokenExpiresAt * 1000).toISOString()
+      : null,
     refresh_token_hash: sha256Hex(params.refreshToken),
     client_id: params.clientId,
     user_id: params.userId,

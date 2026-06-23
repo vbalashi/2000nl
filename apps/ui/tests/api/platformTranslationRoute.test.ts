@@ -68,7 +68,11 @@ const queryChain = (result: { data?: unknown; error?: unknown }) => {
 };
 
 function mockAuthenticatedClients() {
-  const userClient = {
+  const platformUserClient = {
+    auth: { getUser },
+    rpc,
+  };
+  const translationUserClient = {
     auth: { getUser },
     rpc,
   };
@@ -76,12 +80,18 @@ function mockAuthenticatedClients() {
     from,
   };
   createClient
-    .mockReturnValueOnce(userClient)
+    .mockReturnValueOnce(platformUserClient)
+    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser.mockResolvedValueOnce({
-    data: { user: { id: "user-1" } },
-    error: null,
-  });
+  getUser
+    .mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    })
+    .mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
 }
 
 function mockAuthenticatedClientsWithPreference(targetLang = "en") {

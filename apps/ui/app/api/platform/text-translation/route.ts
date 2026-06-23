@@ -5,6 +5,7 @@ import {
   getPlatformServiceSupabase,
   jsonNoStore,
   platformCorsPreflight,
+  requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 import {
@@ -84,6 +85,8 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) {
     return withPlatformCors(request, auth);
   }
+  const scopeError = requirePlatformScope(auth, "platform:write");
+  if (scopeError) return withPlatformCors(request, scopeError);
 
   let targetLanguageCode = asString(body?.targetLanguageCode);
   if (!targetLanguageCode) {

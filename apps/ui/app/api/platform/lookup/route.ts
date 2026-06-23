@@ -4,6 +4,7 @@ import {
   getPlatformServiceSupabase,
   jsonNoStore,
   platformCorsPreflight,
+  requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 import { performPlatformLookup } from "@/lib/platform/platformApi";
@@ -41,6 +42,8 @@ export async function POST(request: NextRequest) {
   if (auth instanceof Response) {
     return withPlatformCors(request, auth);
   }
+  const scopeError = requirePlatformScope(auth, "platform:read");
+  if (scopeError) return withPlatformCors(request, scopeError);
 
   const body = await readJson(request);
   const query = typeof body?.query === "string" ? body.query.trim() : "";

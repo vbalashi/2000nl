@@ -51,11 +51,52 @@ function mockAccessibleEntry() {
   });
 }
 
+function mockConnectedClientPrincipal(
+  scopes: string[],
+  options: { sessionRevoked?: boolean; clientStatus?: string; grantRevoked?: boolean } = {},
+) {
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+  from.mockImplementation((table: string) => {
+    if (table === "connected_client_sessions") {
+      return chain({
+        data: {
+          id: "session-1",
+          client_id: "audiofilms_chrome",
+          user_id: "user-1",
+          scopes,
+          revoked_at: options.sessionRevoked ? new Date().toISOString() : null,
+          access_token_expires_at: new Date(Date.now() + 60_000).toISOString(),
+        },
+        error: null,
+      });
+    }
+    if (table === "connected_clients") {
+      return chain({
+        data: { client_id: "audiofilms_chrome", status: options.clientStatus ?? "active" },
+        error: null,
+      });
+    }
+    if (table === "connected_client_grants") {
+      return chain({
+        data: {
+          scopes,
+          revoked_at: options.grantRevoked ? new Date().toISOString() : null,
+        },
+        error: null,
+      });
+    }
+    return chain({ data: null, error: null });
+  });
+}
+
 describe("/api/platform/actions", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "https://client.example";
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -310,6 +351,8 @@ describe("/api/platform/actions", () => {
       p_source_context: expect.objectContaining({
         contractVersion: "source-context-v1",
       }),
+      p_auth_kind: "first_party",
+      p_connected_client_id: null,
     });
     expect(rpc).not.toHaveBeenCalledWith(
       "start_learning_entry_card",
@@ -328,6 +371,170 @@ describe("/api/platform/actions", () => {
         },
       }),
     );
+  });
+
+  test("blocks connected clients without platform:write from mutating cards", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read"]);
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "insufficient_scope",
+      requiredScope: "platform:write",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("rejects revoked connected-client sessions before mutations", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"], {
+      sessionRevoked: true,
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "connected_client_session_revoked",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("rejects disabled connected clients before mutations", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"], {
+      clientStatus: "disabled",
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "connected_client_disabled",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("persists connected-client actor from the authenticated principal", async () => {
+    const { performPlatformAction } = await import("@/lib/platform/platformApi");
+    rpc.mockImplementation((name: string) => {
+      if (name === "fetch_dictionary_entry_by_id_gated") {
+        return Promise.resolve({
+          data: { id: "entry-1", dictionary_id: "dict-1" },
+          error: null,
+        });
+      }
+      if (name === "perform_platform_card_action") {
+        return Promise.resolve({
+          data: {
+            status: "accepted",
+            eventId: "event-1",
+            authKind: "connected_client",
+            connectedClientId: "audiofilms_chrome",
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const result = await performPlatformAction(
+      {
+        supabase: { rpc } as any,
+        user: { id: "user-1" } as any,
+        principal: {
+          userId: "user-1",
+          authKind: "connected_client",
+          connectedClientId: "audiofilms_chrome",
+          connectedSessionId: "session-1",
+          scopes: new Set(["platform:read", "platform:write"]),
+        },
+      },
+      {
+        action: "record-view",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "client-event-1",
+        sourceContext: {
+          client: { version: "1.2.3" },
+          source: { kind: "youtube_video", provider: "youtube" },
+        },
+      },
+    );
+
+    expect(result.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("perform_platform_card_action", {
+      p_user_id: "user-1",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
+      p_action: "record-view",
+      p_result: null,
+      p_turn_id: null,
+      p_client_event_id: "client-event-1",
+      p_source_context: expect.objectContaining({
+        client: { version: "1.2.3" },
+      }),
+      p_auth_kind: "connected_client",
+      p_connected_client_id: "audiofilms_chrome",
+    });
+  });
+
+  test("rejects connected-client sourceContext client spoofing", async () => {
+    const { performPlatformAction } = await import("@/lib/platform/platformApi");
+
+    const result = await performPlatformAction(
+      {
+        supabase: { rpc } as any,
+        user: { id: "user-1" } as any,
+        principal: {
+          userId: "user-1",
+          authKind: "connected_client",
+          connectedClientId: "audiofilms_chrome",
+          connectedSessionId: "session-1",
+          scopes: new Set(["platform:read", "platform:write"]),
+        },
+      },
+      {
+        action: "record-view",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "client-event-1",
+        sourceContext: {
+          client: { id: "other-client" },
+          source: { kind: "youtube_video", provider: "youtube" },
+        },
+      },
+    );
+
+    expect(result.status).toBe(403);
+    expect(result.payload).toEqual({
+      error: "client_identity_mismatch",
+      detail: "sourceContext.client.id must match the authenticated Connected Client.",
+    });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("maps repeated provenance action retries to a duplicate response without legacy mutation calls", async () => {
@@ -363,6 +570,8 @@ describe("/api/platform/actions", () => {
       p_turn_id: null,
       p_client_event_id: "client-event-1",
       p_source_context: null,
+      p_auth_kind: "first_party",
+      p_connected_client_id: null,
     });
     expect(rpc).not.toHaveBeenCalledWith("record_card_view", expect.anything());
     await expect(response.json()).resolves.toEqual(

@@ -3,6 +3,7 @@ import {
   getAuthenticatedSupabase,
   jsonNoStore,
   platformCorsPreflight,
+  requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 
@@ -22,6 +23,8 @@ export async function GET(request: NextRequest) {
   if (auth instanceof Response) {
     return withPlatformCors(request, auth);
   }
+  const scopeError = requirePlatformScope(auth, "platform:read");
+  if (scopeError) return withPlatformCors(request, scopeError);
 
   const { data, error } = await auth.supabase
     .from("user_settings")

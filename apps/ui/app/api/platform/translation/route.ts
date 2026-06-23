@@ -3,6 +3,7 @@ import {
   getAuthenticatedSupabase,
   jsonNoStore,
   platformCorsPreflight,
+  requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 import { GET as getTranslation } from "@/app/api/translation/route";
@@ -50,6 +51,8 @@ async function resolveTargetLang(
     }
     return { response: auth };
   }
+  const scopeError = requirePlatformScope(auth, "platform:write");
+  if (scopeError) return { response: scopeError };
 
   const { data, error } = await auth.supabase
     .from("user_settings")
@@ -84,6 +87,32 @@ export async function POST(request: NextRequest) {
 
   if (!entryId) {
     return reply({ error: "missing_entry_id" }, 400);
+  }
+  if (explicitTargetLang) {
+    const auth = await getAuthenticatedSupabase(request);
+    if (auth instanceof Response) {
+      const payload = await auth.json().catch(() => null);
+      return reply(
+        {
+          entryId,
+          targetLang: explicitTargetLang,
+          ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
+        },
+        auth.status,
+      );
+    }
+    const scopeError = requirePlatformScope(auth, "platform:write");
+    if (scopeError) {
+      const payload = await scopeError.json().catch(() => null);
+      return reply(
+        {
+          entryId,
+          targetLang: explicitTargetLang,
+          ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
+        },
+        scopeError.status,
+      );
+    }
   }
   const resolved = await resolveTargetLang(request, explicitTargetLang);
   if ("response" in resolved) {

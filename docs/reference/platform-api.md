@@ -16,6 +16,15 @@ npm run test:platform
 
 - Send `Authorization: Bearer <access_token>`.
 - Connected Clients obtain `access_token` values from [2000NL Connect](./connect-api.md). Treat the token as opaque and refresh only through `/api/connect/token`.
+- Every authenticated Platform request resolves to a server-derived
+  `PlatformPrincipal`. First-party Supabase sessions resolve as `first_party`;
+  Connected Client sessions resolve as `connected_client` with a server-tracked
+  `client_id`, session id, and granted scopes.
+- Connected Clients must have `platform:read` for read-oriented endpoints and
+  `platform:write` for mutation endpoints. `offline_access` is only for refresh
+  issuance and never grants Platform read or write access.
+- Connected Client identity is never derived from CORS origin, `Referer`,
+  request JSON, or `sourceContext.client.id`.
 - Guest/public catalog lookup uses a separate catalog credential:
   `Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>` against
   `/api/platform/v1/catalog/lookup`. Do not use a shared end-user token for
@@ -412,7 +421,8 @@ Examples:
   "sourceContext": {
     "contractVersion": "source-context-v1",
     "client": {
-      "id": "audiofilms-youtube-extension"
+      "id": "audiofilms_chrome",
+      "version": "1.2.3"
     },
     "source": {
       "kind": "youtube_video",
@@ -448,7 +458,8 @@ Examples:
 Review-card mutations pass `turnId` through to `handle_card_review` as
 `p_turn_id`; that RPC is the idempotency boundary for repeated connected-client
 turn submissions. Platform writes require a valid bearer token and use the
-authenticated Supabase user id for every user-scoped mutation.
+authenticated Supabase user id for every user-scoped mutation. Connected Client
+writes additionally require `platform:write`.
 
 External clients that need source/provenance tracking should send
 `clientEventId` for every explicit card action. When `sourceContext` is present,
@@ -466,7 +477,10 @@ with a provenance-aware request, it must be a UUID.
 Minimum `sourceContext` envelope:
 
 - `contractVersion`: currently `source-context-v1`.
-- `client.id`: external client identity, such as `audiofilms-youtube-extension`.
+- `client.id`: optional client-reported identity observation. For Connected
+  Client requests, if present it must match the authenticated Connect
+  `client_id`; the persisted authoritative actor is stored separately from this
+  JSON as `auth_kind` and `connected_client_id`.
 - `source.kind`: filterable source kind, such as `youtube_video`.
 - `source.provider`, `source.externalId`, or `source.url`: canonical source
   identity inputs. The platform normalizes these into a source identity row.

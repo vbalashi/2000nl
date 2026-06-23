@@ -3,6 +3,8 @@
 2000NL Connect lets a registered Connected Client obtain a Connected Client
 Session for a 2000NL user. The public token contract is opaque: clients must use
 the returned `access_token` as a Bearer token and refresh only through 2000NL.
+2000NL stores only server-side token hashes and resolves the Connected Client
+principal from the presented access token on Platform API requests.
 
 ## Connected Client Registration
 
@@ -96,6 +98,16 @@ Response:
 
 Store both tokens in extension storage. Treat token values as opaque.
 
+The access token is bound server-side to the Connected Client Session that
+issued it. Platform API routes derive `client_id`, scopes, and session/grant
+status from that binding, not from request JSON, CORS origin, `Referer`, or a
+client-provided source context.
+
+Sessions minted before access-token hash binding do not have a trusted
+Connected Client actor attached to already-issued short-lived access tokens.
+Those tokens expire naturally; clients should refresh or reconnect to obtain a
+new access token that can resolve to a Connected Client principal.
+
 ## Refresh
 
 ```json
@@ -122,8 +134,9 @@ extension ID, `client_id`, redirect URI, and extension storage survive.
 ```
 
 Send this to `POST /api/connect/revoke`. Revocation blocks future refreshes for
-that Connected Client Session. Already issued access tokens may remain usable
-until `expires_at`.
+that Connected Client Session and Platform API requests reject the bound access
+token as soon as the session or grant is marked revoked. Disabled clients cannot
+mint new sessions and their bound Platform API requests are rejected.
 
 ## Platform API Use
 
@@ -135,6 +148,15 @@ Authorization: Bearer <access_token>
 
 AudioFilms should forward the same Bearer token to 2000NL
 `/api/platform/v1/*`.
+
+Connected Client scope enforcement:
+
+- `platform:read` allows read-oriented Platform endpoints such as lookup,
+  session, and analyze-selection.
+- `platform:write` allows Platform mutation endpoints such as actions and
+  translation artifact writes.
+- `offline_access` controls refresh-token issuance only. It does not imply
+  Platform read or write access.
 
 ## CORS
 

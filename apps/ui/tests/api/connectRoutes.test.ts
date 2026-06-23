@@ -270,6 +270,8 @@ describe("2000NL Connect API", () => {
     expect(inserts[0]).toMatchObject({
       table: "connected_client_sessions",
       row: {
+        access_token_hash: sha256Hex("access-1"),
+        access_token_expires_at: new Date(1781619999 * 1000).toISOString(),
         refresh_token_hash: sha256Hex("refresh-1"),
         client_id: "audiofilms_chrome",
         user_id: "user-1",
@@ -384,6 +386,8 @@ describe("2000NL Connect API", () => {
         expect.objectContaining({
           table: "connected_client_sessions",
           row: expect.objectContaining({
+            access_token_hash: sha256Hex("access-2"),
+            access_token_expires_at: new Date(1781620000 * 1000).toISOString(),
             refresh_token_hash: sha256Hex("refresh-2"),
           }),
         }),

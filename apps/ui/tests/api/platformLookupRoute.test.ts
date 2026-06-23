@@ -48,6 +48,38 @@ const mutationRpcNames = [
   "delete_user_dictionary_entry",
 ];
 
+function mockConnectedClientPrincipal(scopes: string[]) {
+  process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+  from.mockImplementation((table: string) => {
+    if (table === "connected_client_sessions") {
+      return chain({
+        data: {
+          id: "session-1",
+          client_id: "audiofilms_chrome",
+          user_id: "user-1",
+          scopes,
+          revoked_at: null,
+          access_token_expires_at: new Date(Date.now() + 60_000).toISOString(),
+        },
+        error: null,
+      });
+    }
+    if (table === "connected_clients") {
+      return chain({
+        data: { client_id: "audiofilms_chrome", status: "active" },
+        error: null,
+      });
+    }
+    if (table === "connected_client_grants") {
+      return chain({
+        data: { scopes, revoked_at: null },
+        error: null,
+      });
+    }
+    return chain({ data: null, error: null });
+  });
+}
+
 describe("/api/platform/lookup", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
@@ -56,10 +88,12 @@ describe("/api/platform/lookup", () => {
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.TRANSLATION_PROVIDER = "openai";
+    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
     from.mockReset();
+    from.mockImplementation(() => chain({ data: null, error: null }));
   });
 
   test("rejects missing bearer tokens", async () => {
@@ -98,6 +132,30 @@ describe("/api/platform/lookup", () => {
     expect(response.headers.get("access-control-allow-methods")).toContain(
       "POST",
     );
+  });
+
+  test("allows connected clients with platform:read to lookup", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    mockConnectedClientPrincipal(["platform:read"]);
+    rpc.mockImplementation((name: string) => {
+      if (name === "fetch_dictionary_entry_gated") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(request({ query: "huis" }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      query: "huis",
+      request: { intent: null, languageCode: null, contextText: null },
+      items: [],
+    });
   });
 
   test("returns a read-only lookup payload with dictionary metadata and user state", async () => {
@@ -610,6 +668,9 @@ describe("/api/platform/lookup", () => {
           error: null,
         });
       }
+      if (table === "connected_client_sessions") {
+        return chain({ data: null, error: null });
+      }
       throw new Error(`unexpected table read: ${table}`);
     });
 
@@ -727,6 +788,9 @@ describe("/api/platform/lookup", () => {
           error: null,
         });
       }
+      if (table === "connected_client_sessions") {
+        return chain({ data: null, error: null });
+      }
       throw new Error(`unexpected table read: ${table}`);
     });
 
@@ -840,6 +904,9 @@ describe("/api/platform/lookup", () => {
       }
       if (table === "word_entry_translations") {
         return chain({ data: [row], error: null });
+      }
+      if (table === "connected_client_sessions") {
+        return chain({ data: null, error: null });
       }
       throw new Error(`unexpected table read: ${table}`);
     });
