@@ -14,6 +14,28 @@ This is the canonical agent entrypoint for the 2000nl monorepo. Use it to orient
 - `docs` - runbooks, feature notes, intent docs, exec plans, and debt tracking.
 - `ops` - deployment and infrastructure placeholders.
 
+## Related Workspaces
+
+2000NL is tracked with AudioFilms and Pontix in the shared GitHub Project
+`AudioFilms / 2000NL Roadmap`:
+https://github.com/users/vbalashi/projects/2.
+
+Before changing behavior that crosses dictionary lookup, platform translation,
+connected-client auth, source provenance, AudioFilms YouTube practice, or Pontix
+selection flows, read the coordination map:
+`/Users/khrustal/dev/docs/project-map/2000nl-audiofilms-translate-extension.md`.
+
+Related local workspaces:
+
+- `/Users/khrustal/dev/audiofilms` - AudioFilms app, subtitle/practice backend,
+  and YouTube shadowing extension.
+- `/Users/khrustal/dev/translate-extension` - Pontix Chrome extension.
+
+Keep 2000NL as the owner of platform APIs, dictionary data, user dictionaries,
+card identity, scheduling/progress state, and source/provenance storage. Treat
+AudioFilms and Pontix as connected clients unless a local document explicitly
+promotes a boundary change.
+
 ## Canonical Docs
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - top-level system boundaries and safe change patterns.
