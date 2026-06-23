@@ -17,6 +17,8 @@ This folder is organized by document role rather than by creation date.
 - Root `ARCHITECTURE.md` - system boundaries and safe change patterns.
 - `intent/index.md` - what matters in the product/runtime.
 - `intent/current-transformation-targets.md` - living frame for deciding what to transform next.
+- `reference/platform-contract-change-checklist.md` - checklist for Platform
+  API/provenance/read-model/external-client contract changes.
 - `tech-debt/index.md` - active structural debt.
 - `runbooks/live-dictionary-migration.md` - gated live migration sequence for
   dictionary/list/card/user-dictionary schema rollout.
