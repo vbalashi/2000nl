@@ -532,14 +532,16 @@ initial supported source kind is YouTube:
 
 For v2, 2000NL derives the canonical YouTube URL from the validated video id.
 Client-observed titles, URLs, playback samples, and diagnostics are not allowed
-to control canonical source identity or idempotency. The current server
-normalizer passes only canonical source, artifact, location, selection, and
-bounded context fields into the atomic action RPC; volatile observation and
-diagnostics are intentionally excluded from the persisted action payload. The
-database computes a SHA-256 idempotency fingerprint for v2 from the normalized
-action tuple plus canonical source, artifact, location, selection, and bounded
-context. A retry that changes only observation or diagnostics returns the
-original duplicate event rather than `409`.
+to control canonical source identity or idempotency. The HTTP normalizer passes
+only canonical source, artifact, location, selection, and bounded context fields
+into the atomic action RPC; volatile observation and diagnostics are
+intentionally excluded from the persisted action payload. The database also
+normalizes v2 source rows before insert/update, so direct RPC callers cannot
+persist a client title, alternate URL, or client metadata on a canonical YouTube
+source. The database computes a SHA-256 idempotency fingerprint for v2 from the
+normalized action tuple plus canonical source, artifact, location, selection,
+and bounded context. A retry that changes only observation or diagnostics
+returns the original duplicate event rather than `409`.
 Reserved future kinds such as `web_page`, `text_document`, and `ebook` are
 rejected until their private-source normalization and retention rules exist.
 

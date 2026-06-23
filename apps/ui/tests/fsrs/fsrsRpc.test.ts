@@ -677,6 +677,60 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("source-context-v2 direct RPC cannot poison canonical YouTube source metadata", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-v2-source-canonical-${Date.now()}`);
+      const clientEventId = randomUUID();
+      const sourceContext = {
+        contractVersion: "source-context-v2",
+        client: { id: "malicious-client" },
+        source: {
+          kind: "youtube_video",
+          provider: "youtube",
+          externalId: "4EE7m94mJpk",
+          url: "https://evil.example/watch?v=4EE7m94mJpk&token=secret",
+          title: "User supplied title",
+          languageCode: "NL",
+        },
+      };
+
+      const { rows: actionRows } = await client.query(
+        `select perform_platform_card_action(
+           $1::uuid,
+           $2::uuid,
+           $3::text,
+           'record-view',
+           NULL,
+           NULL,
+           $4::text,
+           $5::jsonb,
+           'first_party',
+           NULL
+         ) as result`,
+        [userId, wordId, mode, clientEventId, JSON.stringify(sourceContext)]
+      );
+
+      const { rows } = await client.query(
+        `select kind, provider, external_id, canonical_url, title, language_code, metadata
+         from learning_sources
+         where id = $1::uuid`,
+        [actionRows[0].result.sourceId]
+      );
+
+      expect(rows[0]).toEqual({
+        kind: "youtube_video",
+        provider: "youtube",
+        external_id: "4EE7m94mJpk",
+        canonical_url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+        title: null,
+        language_code: "nl",
+        metadata: { contractVersion: "source-context-v2" },
+      });
+    }, userId);
+  });
+
   test("physical user_card_status table is the writable card-state storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

@@ -776,6 +776,46 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("derives v2 YouTube source URL and ignores client title", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: { status: "accepted", eventId: "event-1" },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "record-view",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId: "4EE7m94mJpk",
+            url: "https://evil.example/watch?v=4EE7m94mJpk",
+            title: "client supplied title",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const call = rpc.mock.calls.find(
+      ([name]) => name === "perform_platform_card_action",
+    );
+    expect(call?.[1].p_source_context.source).toEqual({
+      kind: "youtube_video",
+      provider: "youtube",
+      externalId: "4EE7m94mJpk",
+      url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+    });
+  });
+
   test.each([
     ["unsupported_source_kind", { source: { kind: "web_page", provider: "browser" } }],
     [
