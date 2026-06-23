@@ -731,6 +731,118 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("source-context-v2 direct RPC enforces private web source redaction", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await client.query(
+        `insert into connected_clients (
+           client_id, display_name, client_type, allowed_redirect_uris, allowed_scopes
+         ) values (
+           'pontix_chrome_dev',
+           'Pontix Dev',
+           'chrome_extension',
+           ARRAY['https://example.com/callback'],
+           ARRAY['platform:read', 'platform:write', 'offline_access']
+         )
+         on conflict (client_id) do nothing`
+      );
+      const wordId = await insertWord(client, `fsrs-v2-private-web-${Date.now()}`);
+      const sourceContext = {
+        contractVersion: "source-context-v2",
+        source: {
+          kind: "web_page",
+          provider: "web",
+          externalId: `private:web_page:${"a".repeat(64)}`,
+          canonicalUrl: "https://example.com/article?a=1&b=2",
+          title: "Private page title",
+          languageCode: "EN_us",
+        },
+        location: {
+          kind: "text_selection",
+          navigationId: "nav-1",
+          charStart: 4,
+          charEnd: 9,
+        },
+        selection: {
+          clickedForm: "woord",
+          selectionHash: "pontix-fnv1a-11111111",
+          contextTextHash: "pontix-fnv1a-22222222",
+        },
+      };
+
+      const { rows: actionRows } = await client.query(
+        `select perform_platform_card_action(
+           $1::uuid,
+           $2::uuid,
+           $3::text,
+           'record-view',
+           NULL,
+           NULL,
+           $4::text,
+           $5::jsonb,
+           'connected_client',
+           'pontix_chrome_dev'
+         ) as result`,
+        [userId, wordId, mode, randomUUID(), JSON.stringify(sourceContext)]
+      );
+
+      const { rows } = await client.query(
+        `select kind, provider, external_id, canonical_url, title, language_code, metadata
+         from learning_sources
+         where id = $1::uuid`,
+        [actionRows[0].result.sourceId]
+      );
+
+      expect(rows[0]).toEqual({
+        kind: "web_page",
+        provider: "web",
+        external_id: `private:web_page:${"a".repeat(64)}`,
+        canonical_url: "https://example.com/article?a=1&b=2",
+        title: null,
+        language_code: "en-us",
+        metadata: {
+          contractVersion: "source-context-v2",
+          privateSource: true,
+        },
+      });
+
+      await client.query(`savepoint unsafe_private_web_source`);
+      await expect(
+        client.query(
+          `select perform_platform_card_action(
+             $1::uuid,
+             $2::uuid,
+             $3::text,
+             'record-view',
+             NULL,
+             NULL,
+             $4::text,
+             $5::jsonb,
+             'connected_client',
+             'pontix_chrome_dev'
+           )`,
+          [
+            userId,
+            wordId,
+            mode,
+            randomUUID(),
+            JSON.stringify({
+              ...sourceContext,
+              source: {
+                ...sourceContext.source,
+                externalId: `private:web_page:${"b".repeat(64)}`,
+                canonicalUrl: "https://user:password@example.com/private#secret",
+              },
+            }),
+          ]
+        )
+      ).rejects.toThrow(/invalid_v2_private_source/);
+      await client.query(`rollback to savepoint unsafe_private_web_source`);
+      await client.query(`release savepoint unsafe_private_web_source`);
+    }, userId);
+  });
+
   test("physical user_card_status table is the writable card-state storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
