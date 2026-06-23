@@ -97,6 +97,20 @@ function sourceRow() {
   };
 }
 
+function privateSourceRow() {
+  return {
+    id: "source-private",
+    kind: "web_page",
+    provider: "web",
+    external_id:
+      "private:web_page:1111111111111111111111111111111111111111111111111111111111111111",
+    canonical_url: "https://user:pass@example.com/private/path?token=secret#fragment",
+    language_code: "nl",
+    title: "Private Source Title",
+    metadata: { diagnostics: ["private diagnostic"], rawContext: "private body" },
+  };
+}
+
 function artifactRow() {
   return {
     id: "artifact-1",
@@ -116,6 +130,19 @@ function artifactRow() {
   };
 }
 
+function privateArtifactRow() {
+  return {
+    ...artifactRow(),
+    id: "artifact-private",
+    source_id: "source-private",
+    artifact_kind: "private_snapshot",
+    producer: "audiofilms",
+    text_source_id: "private-text-source",
+    phrase_set_revision_id: "private-phrase-rev",
+    metadata: { diagnostics: ["private artifact diagnostic"] },
+  };
+}
+
 function locationRow() {
   return {
     id: "location-1",
@@ -127,6 +154,19 @@ function locationRow() {
     phrase_index: 7,
     text_hash: "hash-1",
     context_text: "should not leak",
+  };
+}
+
+function privateLocationRow() {
+  return {
+    ...locationRow(),
+    id: "location-private",
+    source_id: "source-private",
+    artifact_id: "artifact-private",
+    locator_kind: "text_selection",
+    text_hash: "private-context-hash",
+    context_text: "private raw selected context",
+    metadata: { diagnostics: ["private location diagnostic"] },
   };
 }
 
@@ -151,6 +191,35 @@ function eventRow(overrides: Record<string, unknown> = {}) {
     created_at: "2026-06-01T10:00:00.000Z",
     ...overrides,
   };
+}
+
+function privateEventRow(overrides: Record<string, unknown> = {}) {
+  return eventRow({
+    id: "event-private",
+    source_id: "source-private",
+    location_id: "location-private",
+    artifact_id: "artifact-private",
+    clicked_form: "geheim",
+    context_text_hash: "private-context-hash",
+    source_context: {
+      source: { title: "Private Source Title" },
+      diagnostics: ["private event diagnostic"],
+      context: { text: "private raw selected context" },
+    },
+    ...overrides,
+  });
+}
+
+function expectNoPrivateSourceLeak(payload: unknown) {
+  const serialized = JSON.stringify(payload);
+  expect(serialized).not.toContain("source_context");
+  expect(serialized).not.toContain("diagnostics");
+  expect(serialized).not.toContain("Private Source Title");
+  expect(serialized).not.toContain("private raw selected context");
+  expect(serialized).not.toContain("private body");
+  expect(serialized).not.toContain("user:pass");
+  expect(serialized).not.toContain("token=secret");
+  expect(serialized).not.toContain("#fragment");
 }
 
 describe("platform learning read routes", () => {
@@ -266,6 +335,58 @@ describe("platform learning read routes", () => {
     );
   });
 
+  test("activity returns only sanitized summaries for private source rows", async () => {
+    queryResponder = (table, calls) => {
+      if (table === "learning_sources") {
+        const isFilterLookup = calls.some(
+          (call) => call.method === "select" && call.args[0] === "id",
+        );
+        return {
+          data: isFilterLookup ? [{ id: "source-private" }] : [privateSourceRow()],
+          error: null,
+        };
+      }
+      if (table === "user_card_action_events") {
+        return { data: [privateEventRow()], error: null };
+      }
+      if (table === "learning_source_locations") {
+        return { data: [privateLocationRow()], error: null };
+      }
+      if (table === "learning_source_artifacts") {
+        return { data: [privateArtifactRow()], error: null };
+      }
+      return { data: [], error: null };
+    };
+    mockAuthenticatedUser();
+
+    const { GET } = await import("@/app/api/platform/learning/activity/route");
+    const response = await GET(
+      getRequest(
+        "/api/platform/learning/activity?sourceKind=web_page&sourceProvider=web&limit=1",
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0]).toMatchObject({
+      id: "event-private",
+      source: {
+        id: "source-private",
+        kind: "web_page",
+        provider: "web",
+        canonicalUrl: null,
+        languageCode: "nl",
+      },
+      selection: {
+        clickedForm: "geheim",
+        contextTextHash: "private-context-hash",
+      },
+    });
+    expect(payload.items[0].source.externalId).toMatch(/^private:web_page:[a-f0-9]{64}$/);
+    expectNoPrivateSourceLeak(payload);
+  });
+
   test("cards collapse matching events and return current card state", async () => {
     queryResponder = (table) => {
       if (table === "user_card_action_events") {
@@ -347,6 +468,42 @@ describe("platform learning read routes", () => {
       p_entry_ids: ["entry-1", "entry-2"],
       p_card_type_ids: ["word-to-definition"],
     });
+  });
+
+  test("cards return only sanitized provenance summaries for private source rows", async () => {
+    queryResponder = (table) => {
+      if (table === "user_card_action_events") {
+        return { data: [privateEventRow()], error: null };
+      }
+      if (table === "learning_sources") return { data: [privateSourceRow()], error: null };
+      if (table === "learning_source_locations") {
+        return { data: [privateLocationRow()], error: null };
+      }
+      if (table === "learning_source_artifacts") {
+        return { data: [privateArtifactRow()], error: null };
+      }
+      return { data: [], error: null };
+    };
+    rpc.mockResolvedValue({ data: [], error: null });
+    mockAuthenticatedUser();
+
+    const { GET } = await import("@/app/api/platform/learning/cards/route");
+    const response = await GET(getRequest("/api/platform/learning/cards?sourceKind=web_page"));
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0].provenance.source).toMatchObject({
+      id: "source-private",
+      kind: "web_page",
+      provider: "web",
+      canonicalUrl: null,
+      languageCode: "nl",
+    });
+    expect(payload.items[0].provenance.source.externalId).toMatch(
+      /^private:web_page:[a-f0-9]{64}$/,
+    );
+    expectNoPrivateSourceLeak(payload);
   });
 
   test("cards return a cursor when more matched groups exist in the event window", async () => {

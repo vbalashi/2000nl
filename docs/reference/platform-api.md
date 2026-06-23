@@ -655,6 +655,9 @@ Response:
 
 The response intentionally excludes raw `source_context`, diagnostics,
 unsanitized context text, private page/document bodies, and URL credentials.
+`source.canonicalUrl` is exposed for canonical public YouTube sources only;
+private source kinds return safe normalized identifiers and a null
+`canonicalUrl`.
 
 ## `GET /learning/cards`
 
