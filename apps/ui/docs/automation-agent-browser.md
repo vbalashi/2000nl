@@ -2,16 +2,42 @@
 
 This doc is for running quick UI smoke checks with `agent-browser` in both desktop and mobile viewports, without getting stuck on Supabase OTP auth.
 
+Current preferred local QA path: use the repo wrappers from the 2000NL root so
+the UI process points at the local Supabase stack instead of any production or
+staging values in `.env.local`.
+
+```bash
+scripts/db-local-supabase.sh all
+scripts/ui-local-dev.sh --port 3100
+curl -sS 'http://localhost:3100/api/health?deep=1'
+```
+
+Expected health gate:
+
+```json
+{ "status": "ok", "database": { "target": "local" } }
+```
+
+Then open:
+
+- `http://localhost:3100/dev/test-login?redirectTo=/`
+
+Use `localhost:3100` in the examples below when running the canonical local QA
+server. Older `127.0.0.1:3000` examples are useful only when you deliberately
+started the app on that exact origin.
+
 Recommended approach: use a persistent `agent-browser --profile ...` directory and inject a freshly-minted Supabase session JSON into `localStorage` once. After that, the profile keeps you logged in across runs.
 
 For production auth injection (https://2000.dilum.io), see `docs/runbooks/production-login.md`.
 
 ## Prerequisites
 
-1. Local dev server is running:
+1. Local dev server is running through the wrapper:
    ```bash
-   cd apps/ui
-   npm run dev
+   scripts/db-local-supabase.sh start
+   scripts/db-local-supabase.sh apply
+   scripts/db-local-supabase.sh probe
+   scripts/ui-local-dev.sh --port 3100
    ```
 
 2. Server-side env vars exist in `apps/ui/.env.local` (gitignored):
@@ -24,12 +50,12 @@ For production auth injection (https://2000.dilum.io), see `docs/runbooks/produc
 
 Open:
 
-- `http://127.0.0.1:3000/dev/test-login?redirectTo=/`
+- `http://localhost:3100/dev/test-login?redirectTo=/`
 
 Use the same host and port as the app under test. For example, if the UI runs on
-port 3100, open:
+an alternate port, open that same origin:
 
-- `http://localhost:3100/dev/test-login?redirectTo=/`
+- `http://localhost:<port>/dev/test-login?redirectTo=/`
 
 What it does:
 - `GET /api/dev/test-session` (dev-only) uses `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to generate an email OTP for `TEST_USER_EMAIL`.
@@ -46,7 +72,7 @@ Use a single profile directory for local automation:
 Notes:
 - `--profile` only applies when the agent-browser daemon starts. If you see `--profile ignored: daemon already running`, run `agent-browser close` and retry.
 - Never commit anything under `tmp/`.
-- Supabase auth is origin-scoped. A session injected into `http://127.0.0.1:3000` does not apply to `https://2000.dilum.io` and vice versa.
+- Supabase auth is origin-scoped. A session injected into `http://localhost:3100` does not apply to `https://2000.dilum.io` and vice versa.
 
 ## Deterministic Session Injection (Recommended)
 
@@ -86,14 +112,14 @@ const pub = createClient(url, anon, { auth: { persistSession: false, autoRefresh
 NODE
 ```
 
-2) Inject into `http://127.0.0.1:3000` using a persistent profile:
+2) Inject into `http://localhost:3100` using a persistent profile:
 
 ```bash
 cd /path/to/2000nl
 b64=$(cat tmp/agent-browser/local-session.b64)
 
 agent-browser close || true
-agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/
+agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/
 agent-browser --session ab-local wait --load networkidle
 
 cat <<EOF | agent-browser --session ab-local eval --stdin
@@ -115,7 +141,7 @@ agent-browser --session ab-local wait --text "Antwoord Tonen"
 3) Next runs (no auth step):
 
 ```bash
-agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/
+agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/
 ```
 
 ## Production Profile (Recommended)
@@ -139,7 +165,7 @@ outdir="tmp/agent-browser-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$outdir"
 
 agent-browser --session ab-desktop set viewport 1440 900
-agent-browser --session ab-desktop --profile tmp/agent-browser/profile-2000nl-local open "http://127.0.0.1:3000/"
+agent-browser --session ab-desktop --profile tmp/agent-browser/profile-2000nl-local open "http://localhost:3100/"
 agent-browser --session ab-desktop wait --text "Antwoord Tonen"
 agent-browser --session ab-desktop screenshot "$outdir/desktop-01.png"
 
@@ -158,7 +184,7 @@ outdir="tmp/agent-browser-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$outdir"
 
 agent-browser --session ab-mobile set viewport 390 844
-agent-browser --session ab-mobile --profile tmp/agent-browser/profile-2000nl-local open "http://127.0.0.1:3000/"
+agent-browser --session ab-mobile --profile tmp/agent-browser/profile-2000nl-local open "http://localhost:3100/"
 agent-browser --session ab-mobile wait --text "Antwoord Tonen"
 agent-browser --session ab-mobile screenshot "$outdir/mobile-01.png"
 
@@ -183,14 +209,14 @@ Supabase persists its session in `localStorage`. Whether that survives across `a
    agent-browser state save tmp/ab-auth.json
 
    # Next run (state must be loaded at launch)
-   agent-browser --state tmp/ab-auth.json open http://127.0.0.1:3000/
+   agent-browser --state tmp/ab-auth.json open http://localhost:3100/
    ```
 
 2. Use a persistent profile directory:
    ```bash
-   agent-browser --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/dev/test-login?redirectTo=/
+   agent-browser --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/dev/test-login?redirectTo=/
    # Next time, reuse the same profile:
-   agent-browser --profile tmp/agent-browser/profile-2000nl-local open http://127.0.0.1:3000/
+   agent-browser --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/
    ```
 
 Notes:
@@ -199,7 +225,7 @@ Notes:
 
 ## Troubleshooting
 
-If `http://127.0.0.1:3000/dev/test-login` shows an error:
+If `http://localhost:3100/dev/test-login` shows an error:
 
 - `SUPABASE_SERVICE_ROLE_KEY is required...`
   - `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` is missing from `apps/ui/.env.local`, or the dev server wasn't restarted after editing env.
