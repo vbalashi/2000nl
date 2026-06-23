@@ -264,3 +264,4 @@
 
 -- Generated user dictionary entry metadata contract
 \i db/migrations/085_generated_user_entry_contract.sql
+\i db/migrations/086_training_source_filters.sql

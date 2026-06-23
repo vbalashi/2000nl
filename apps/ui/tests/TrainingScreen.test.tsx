@@ -234,6 +234,27 @@ const fetchTrainingScenarios = vi.fn().mockResolvedValue([
     description: null,
   },
 ]);
+const fetchTrainingFilterSources = vi.fn().mockResolvedValue([
+  {
+    sourceId: "source-youtube-1",
+    kind: "youtube_video",
+    provider: "youtube",
+    externalId: "video-1",
+    title: "TRAPPIST-1",
+    label: "YouTube · TRAPPIST-1",
+    eventCount: 3,
+    lastSeenAt: "2026-06-23T10:00:00Z",
+  },
+]);
+const isTrainingFocusFilterActive = vi.fn((filter) =>
+  Boolean(
+    filter &&
+      (filter.dateWindow !== "all" ||
+        filter.sourceId ||
+        filter.sourceKind ||
+        filter.externalId),
+  ),
+);
 const fetchUserPreferences = vi.fn().mockResolvedValue({
   themePreference: "system",
   modesEnabled: ["word-to-definition"],
@@ -253,7 +274,9 @@ vi.mock("@/lib/trainingService", () => ({
   copyEntryToUserDictionary,
   fetchNextTrainingWord: vi.fn().mockResolvedValue(mockWord),
   fetchNextTrainingWordByScenario,
+  fetchTrainingFilterSources,
   fetchTrainingScenarios,
+  isTrainingFocusFilterActive,
   fetchStats,
   fetchRecentHistory,
   fetchActiveTrainingScope,
@@ -355,6 +378,36 @@ test("search action opens the dedicated dictionary search surface", async () => 
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
   ).not.toBeInTheDocument();
   expect(searchWordEntries).not.toHaveBeenCalled();
+});
+
+test("training focus filters pass date and source scope to card selection", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await waitForInitialTrainingFetches();
+  await waitFor(() => expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id));
+  fetchNextTrainingWordByScenario.mockClear();
+
+  fireEvent.change(screen.getByLabelText("Periode"), {
+    target: { value: "today" },
+  });
+  fireEvent.change(screen.getByLabelText("Bron"), {
+    target: { value: "source:source-youtube-1" },
+  });
+
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const filter = call[8];
+        return (
+          filter?.dateWindow === "today" &&
+          filter?.sourceId === "source-youtube-1"
+        );
+      }),
+    ).toBe(true),
+  );
+  expect(screen.getByText(/Gefilterde training:/i)).toHaveTextContent(
+    /vandaag.*YouTube/i,
+  );
 });
 
 test("dictionary search scope changes lookup language without changing training", async () => {

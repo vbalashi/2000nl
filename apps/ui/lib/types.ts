@@ -6,6 +6,28 @@ export type TrainingMode =
 export type CardFilter = "new" | "review" | "both";
 export type QueueTurn = "new" | "review" | "auto";
 
+export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
+
+export type TrainingFocusFilter = {
+  dateWindow: TrainingDateWindow;
+  daysAgo?: number;
+  timezone?: string;
+  sourceKind?: string;
+  sourceId?: string;
+  externalId?: string;
+};
+
+export type TrainingFilterSource = {
+  sourceId: string;
+  kind: string;
+  provider?: string | null;
+  externalId?: string | null;
+  title?: string | null;
+  label: string;
+  eventCount: number;
+  lastSeenAt?: string | null;
+};
+
 export type WordRaw = {
   headword?: string;
   languageCode?: string;

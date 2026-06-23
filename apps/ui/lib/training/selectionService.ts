@@ -4,6 +4,8 @@ import type {
   CardFilter,
   QueueTurn,
   ScenarioStats,
+  TrainingFocusFilter,
+  TrainingFilterSource,
   TrainingMode,
   TrainingScenario,
   TrainingWord,
@@ -22,6 +24,16 @@ const SUPPORTED_CARD_MODES = new Set<TrainingMode>([
   "definition-to-word",
   "listen-recognize",
 ]);
+
+export const isTrainingFocusFilterActive = (
+  filter?: TrainingFocusFilter | null,
+): filter is TrainingFocusFilter => {
+  if (!filter) return false;
+  return filter.dateWindow !== "all" ||
+    Boolean(filter.sourceId) ||
+    Boolean(filter.sourceKind) ||
+    Boolean(filter.externalId);
+};
 
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
@@ -67,6 +79,7 @@ export const fetchNextTrainingWord = async (
   cardFilter: CardFilter = "both",
   queueTurn: QueueTurn = "auto",
   excludeCardKeys: string[] = [],
+  trainingFilter?: TrainingFocusFilter | null,
 ): Promise<TrainingWord | null> => {
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
@@ -81,15 +94,21 @@ export const fetchNextTrainingWord = async (
     rpcPayload.p_list_id = listScope.listId;
     rpcPayload.p_list_type = listScope.listType ?? "curated";
   }
+  if (isTrainingFocusFilterActive(trainingFilter)) {
+    rpcPayload.p_training_filter = normalizeTrainingFocusFilter(trainingFilter);
+  }
 
   const excludedIds = new Set(excludeWordIds);
   const excludedCardKeys = new Set(excludeCardKeys);
+  const rpcName = isTrainingFocusFilterActive(trainingFilter)
+    ? "get_next_filtered_card"
+    : "get_next_card";
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
     rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc("get_next_card", rpcPayload);
+    const { data, error } = await supabase.rpc(rpcName, rpcPayload);
 
     if (error || !data || data.length === 0) {
       if (error) {
@@ -243,6 +262,7 @@ export const fetchNextTrainingWordByScenario = async (
   queueTurn: QueueTurn = "auto",
   excludeCardKeys: string[] = [],
   modeOverride?: TrainingMode[],
+  trainingFilter?: TrainingFocusFilter | null,
 ): Promise<TrainingWord | null> => {
   const scenarioModes = await resolveScenarioModes(scenarioId);
   if (!scenarioModes) return null;
@@ -262,15 +282,21 @@ export const fetchNextTrainingWordByScenario = async (
     rpcPayload.p_list_id = listScope.listId;
     rpcPayload.p_list_type = listScope.listType ?? "curated";
   }
+  if (isTrainingFocusFilterActive(trainingFilter)) {
+    rpcPayload.p_training_filter = normalizeTrainingFocusFilter(trainingFilter);
+  }
 
   const excludedIds = new Set(excludeWordIds);
   const excludedCardKeys = new Set(excludeCardKeys);
+  const rpcName = isTrainingFocusFilterActive(trainingFilter)
+    ? "get_next_filtered_card"
+    : "get_next_card";
 
   for (let attempt = 0; attempt < MAX_CROSS_REFERENCE_SKIPS; attempt += 1) {
     rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc("get_next_card", rpcPayload);
+    const { data, error } = await supabase.rpc(rpcName, rpcPayload);
 
     if (error || !data || data.length === 0) {
       if (error) {
@@ -366,3 +392,39 @@ export const fetchNextTrainingWordByScenario = async (
 
   return null;
 };
+
+function normalizeTrainingFocusFilter(filter: TrainingFocusFilter) {
+  return {
+    dateWindow: filter.dateWindow,
+    ...(filter.daysAgo !== undefined ? { daysAgo: filter.daysAgo } : {}),
+    timezone: filter.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    ...(filter.sourceKind ? { sourceKind: filter.sourceKind } : {}),
+    ...(filter.sourceId ? { sourceId: filter.sourceId } : {}),
+    ...(filter.externalId ? { externalId: filter.externalId } : {}),
+  };
+}
+
+export async function fetchTrainingFilterSources(
+  userId: string,
+): Promise<TrainingFilterSource[]> {
+  const { data, error } = await supabase.rpc("get_training_filter_sources", {
+    p_user_id: userId,
+    p_limit: 50,
+  });
+
+  if (error || !data) {
+    if (error) console.error("Error fetching training filter sources", error);
+    return [];
+  }
+
+  return (Array.isArray(data) ? data : [data]).map((item: any) => ({
+    sourceId: String(item.sourceId || item.source_id || ""),
+    kind: String(item.kind || "unknown"),
+    provider: item.provider ?? null,
+    externalId: item.externalId ?? item.external_id ?? null,
+    title: item.title ?? null,
+    label: String(item.label || item.title || item.externalId || item.kind || "Source"),
+    eventCount: Number(item.eventCount ?? item.event_count ?? 0),
+    lastSeenAt: item.lastSeenAt ?? item.last_seen_at ?? null,
+  })).filter((item) => item.sourceId);
+}

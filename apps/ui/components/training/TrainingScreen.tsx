@@ -11,9 +11,11 @@ import {
   fetchAvailableLearningLanguages,
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
+  fetchTrainingFilterSources,
   fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
+  isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   recordReview,
   recordWordView,
@@ -26,6 +28,8 @@ import type {
   DictionaryEntry,
   EntryLearningListMembership,
   QueueTurn,
+  TrainingFocusFilter,
+  TrainingFilterSource,
   TrainingMode,
   TrainingWord,
   SidebarHistoryItem,
@@ -125,6 +129,19 @@ const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
 };
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
+
+const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
+  dateWindow: "all",
+};
+
+const trainingFilterKey = (filter: TrainingFocusFilter) =>
+  JSON.stringify({
+    dateWindow: filter.dateWindow,
+    daysAgo: filter.daysAgo ?? null,
+    sourceKind: filter.sourceKind ?? null,
+    sourceId: filter.sourceId ?? null,
+    externalId: filter.externalId ?? null,
+  });
 
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
@@ -228,10 +245,32 @@ export function TrainingScreen({ user }: Props) {
     trainingLanguageManuallyChangedRef.current = true;
     setCurrentTrainingLanguage(value);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+
+    const loadFilterSources = async () => {
+      const sources = await fetchTrainingFilterSources(user.id);
+      if (!cancelled) {
+        setTrainingFilterSources(sources);
+      }
+    };
+
+    void loadFilterSources();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null,
   );
   const [recentEntries, setRecentEntries] = useState<SidebarHistoryItem[]>([]);
+  const [trainingFocusFilter, setTrainingFocusFilter] =
+    useState<TrainingFocusFilter>(DEFAULT_TRAINING_FOCUS_FILTER);
+  const [trainingFilterSources, setTrainingFilterSources] = useState<
+    TrainingFilterSource[]
+  >([]);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
@@ -334,6 +373,9 @@ export function TrainingScreen({ user }: Props) {
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
+  const trainingFocusFilterActive =
+    isTrainingFocusFilterActive(trainingFocusFilter);
+  const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
 
   const {
     activeList,
@@ -395,7 +437,14 @@ export function TrainingScreen({ user }: Props) {
   // session-reviewed set so the new session starts fresh.
   useEffect(() => {
     reviewedInSessionRef.current.clear();
-  }, [activeScenario, currentTrainingLanguage, enabledModesKey, wordListId, wordListType]);
+  }, [
+    activeScenario,
+    currentTrainingLanguage,
+    enabledModesKey,
+    trainingFocusFilterKey,
+    wordListId,
+    wordListType,
+  ]);
 
   // Also clear on unmount to avoid leaking state across mounts in tests/dev.
   useEffect(() => {
@@ -407,6 +456,7 @@ export function TrainingScreen({ user }: Props) {
 
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
+  const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
   // Ref to prevent concurrent loadNextWord calls
   const loadingInProgress = useRef(false);
   // Ref: when set, present this entry as the next card once without changing
@@ -541,6 +591,71 @@ export function TrainingScreen({ user }: Props) {
     },
     [persistCurrentTrainingScope, setCardFilterPreference],
   );
+
+  const resetFocusQueueState = useCallback(() => {
+    reviewedInSessionRef.current.clear();
+    nextWordPrefetchRef.current = null;
+    nextWordPrefetchTokenRef.current += 1;
+    setQueueTurn("new");
+    setReviewCounter(0);
+  }, []);
+
+  const handleTrainingDateWindowChange = useCallback((value: string) => {
+    resetFocusQueueState();
+    setTrainingFocusFilter((current) => ({
+      ...current,
+      dateWindow: value === "today" || value === "yesterday" || value === "daysAgo"
+        ? value
+        : "all",
+      ...(value === "daysAgo" ? { daysAgo: current.daysAgo ?? 7 } : { daysAgo: undefined }),
+    }));
+  }, [resetFocusQueueState]);
+
+  const handleTrainingDaysAgoChange = useCallback((value: string) => {
+    resetFocusQueueState();
+    const daysAgo = Math.max(0, Math.min(365, Number(value) || 0));
+    setTrainingFocusFilter((current) => ({
+      ...current,
+      dateWindow: "daysAgo",
+      daysAgo,
+    }));
+  }, [resetFocusQueueState]);
+
+  const handleTrainingSourceFilterChange = useCallback((value: string) => {
+    resetFocusQueueState();
+    setTrainingFocusFilter((current) => {
+      if (value === "all") {
+        return {
+          ...current,
+          sourceId: undefined,
+          sourceKind: undefined,
+          externalId: undefined,
+        };
+      }
+      if (value === "kind:youtube") {
+        return {
+          ...current,
+          sourceId: undefined,
+          sourceKind: "youtube",
+          externalId: undefined,
+        };
+      }
+      if (value.startsWith("source:")) {
+        return {
+          ...current,
+          sourceId: value.slice("source:".length),
+          sourceKind: undefined,
+          externalId: undefined,
+        };
+      }
+      return current;
+    });
+  }, [resetFocusQueueState]);
+
+  const clearTrainingFocusFilter = useCallback(() => {
+    resetFocusQueueState();
+    setTrainingFocusFilter(DEFAULT_TRAINING_FOCUS_FILTER);
+  }, [resetFocusQueueState]);
 
   // Advance queue turn for round-robin between new and review
   const advanceQueueTurn = useCallback(() => {
@@ -718,6 +833,7 @@ export function TrainingScreen({ user }: Props) {
           effectiveQueueTurn,
           excludeCardKeys,
           restrictedModes,
+          trainingFocusFilterActive ? trainingFocusFilter : null,
         );
         if (nextWord) {
           // Fire and forget view recording, or await if we want strict consistency
@@ -747,6 +863,8 @@ export function TrainingScreen({ user }: Props) {
       firstEncounter,
       presentWord,
       queueTurn,
+      trainingFocusFilter,
+      trainingFocusFilterActive,
       user?.id,
       wordListId,
       wordListType,
@@ -793,6 +911,7 @@ export function TrainingScreen({ user }: Props) {
           predictedQueueTurn,
           [...reviewedInSessionRef.current, forCardKey],
           resolveRestrictedListModes(activeList),
+          trainingFocusFilterActive ? trainingFocusFilter : null,
         );
 
         if (cancelled) return;
@@ -837,6 +956,8 @@ export function TrainingScreen({ user }: Props) {
     preloadAudioForWord,
     queueTurn,
     reviewCounter,
+    trainingFocusFilter,
+    trainingFocusFilterActive,
     user?.id,
     wordListId,
     wordListType,
@@ -1157,6 +1278,17 @@ export function TrainingScreen({ user }: Props) {
     void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, listHydrated, wordId]);
+
+  useEffect(() => {
+    if (!user?.id || !listHydrated || !initialLoadDone.current) {
+      return;
+    }
+    if (lastAppliedTrainingFocusFilterKey.current === trainingFocusFilterKey) {
+      return;
+    }
+    lastAppliedTrainingFocusFilterKey.current = trainingFocusFilterKey;
+    void loadNextWord();
+  }, [listHydrated, loadNextWord, trainingFocusFilterKey, user?.id]);
 
   // Show word details in sidebar (or bottom sheet on mobile)
   const handleShowDetails = useCallback((entry: DictionaryEntry) => {
@@ -1924,6 +2056,28 @@ export function TrainingScreen({ user }: Props) {
     transition: swipeAnimating ? "transform 200ms ease" : "none",
     touchAction: "pan-y",
   };
+  const sourceFilterValue = trainingFocusFilter.sourceId
+    ? `source:${trainingFocusFilter.sourceId}`
+    : trainingFocusFilter.sourceKind === "youtube"
+      ? "kind:youtube"
+      : "all";
+  const activeSourceFilterLabel = trainingFocusFilter.sourceId
+    ? trainingFilterSources.find((source) => source.sourceId === trainingFocusFilter.sourceId)?.label
+    : trainingFocusFilter.sourceKind === "youtube"
+      ? "YouTube"
+      : null;
+  const dateFilterLabel =
+    trainingFocusFilter.dateWindow === "today"
+      ? "vandaag"
+      : trainingFocusFilter.dateWindow === "yesterday"
+        ? "gisteren"
+        : trainingFocusFilter.dateWindow === "daysAgo"
+          ? `${trainingFocusFilter.daysAgo ?? 7} dagen geleden`
+          : null;
+  const activeFilterCopy = [
+    dateFilterLabel,
+    activeSourceFilterLabel,
+  ].filter(Boolean).join(" · ");
 
   return (
     <div className="flex h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
@@ -2161,6 +2315,74 @@ export function TrainingScreen({ user }: Props) {
                     className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
                   >
                     {nextCardOverrideNotice}
+                  </div>
+                ) : null}
+                <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Periode
+                      <select
+                        value={trainingFocusFilter.dateWindow}
+                        onChange={(event) => handleTrainingDateWindowChange(event.target.value)}
+                        className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      >
+                        <option value="all">Alle dagen</option>
+                        <option value="today">Vandaag</option>
+                        <option value="yesterday">Gisteren</option>
+                        <option value="daysAgo">N dagen geleden</option>
+                      </select>
+                    </label>
+                    {trainingFocusFilter.dateWindow === "daysAgo" ? (
+                      <label className="flex w-full flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 md:w-28">
+                        Dagen
+                        <input
+                          type="number"
+                          min={0}
+                          max={365}
+                          value={trainingFocusFilter.daysAgo ?? 7}
+                          onChange={(event) => handleTrainingDaysAgoChange(event.target.value)}
+                          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        />
+                      </label>
+                    ) : null}
+                    <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Bron
+                      <select
+                        value={sourceFilterValue}
+                        onChange={(event) => handleTrainingSourceFilterChange(event.target.value)}
+                        className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      >
+                        <option value="all">Alle bronnen</option>
+                        <option value="kind:youtube">YouTube</option>
+                        {trainingFilterSources.map((source) => (
+                          <option key={source.sourceId} value={`source:${source.sourceId}`}>
+                            {source.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {trainingFocusFilterActive ? (
+                      <button
+                        type="button"
+                        onClick={clearTrainingFocusFilter}
+                        className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900 md:self-end"
+                      >
+                        Wissen
+                      </button>
+                    ) : null}
+                  </div>
+                  {trainingFocusFilterActive ? (
+                    <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Gefilterde training: {activeFilterCopy || "aangepaste selectie"}.
+                    </p>
+                  ) : null}
+                </div>
+                {trainingFocusFilterActive && !loadingWord && !currentWord ? (
+                  <div
+                    role="status"
+                    className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+                  >
+                    Geen kaarten gevonden voor {activeFilterCopy || "dit filter"}.
                   </div>
                 ) : null}
                 {/* Desktop: 16/10 aspect-ratio.

@@ -2194,6 +2194,155 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_next_filtered_card filters by local date window and source", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 10,
+        daily_review_limit: 10,
+      });
+
+      const todayWordId = await insertWord(client, `fsrs-filter-today-${Date.now()}`);
+      const yesterdayWordId = await insertWord(client, `fsrs-filter-yesterday-${Date.now()}`);
+      const otherSourceWordId = await insertWord(client, `fsrs-filter-other-${Date.now()}`);
+
+      const { rows: sourceRows } = await client.query(
+        `insert into learning_sources (
+          source_identity_key, kind, provider, external_id, canonical_url, title, language_code, metadata
+        ) values
+          ($1, 'youtube_video', 'youtube', 'video-a', 'https://www.youtube.com/watch?v=video-a', 'Video A', 'nl', '{}'::jsonb),
+          ($2, 'youtube_video', 'youtube', 'video-b', 'https://www.youtube.com/watch?v=video-b', 'Video B', 'nl', '{}'::jsonb)
+        returning id, external_id`,
+        [`source-a-${Date.now()}`, `source-b-${Date.now()}`],
+      );
+      const sourceA = sourceRows.find((row) => row.external_id === "video-a").id;
+      const sourceB = sourceRows.find((row) => row.external_id === "video-b").id;
+
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
+        ) values
+          ($1, $2, $5, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 hour', now()),
+          ($1, $3, $5, null, null, 0, 0, null, null, false, now(), now() - interval '1 day'),
+          ($1, $4, $5, null, null, 0, 0, null, null, false, now(), now())`,
+        [userId, todayWordId, yesterdayWordId, otherSourceWordId, mode],
+      );
+
+      await client.query(
+        `insert into user_card_action_events (
+          user_id, entry_id, card_type_id, action, client_event_id, source_id, action_payload_hash, created_at
+        ) values
+          ($1, $2, $5, 'review-card', 'today-video-a', $6, 'hash-today-video-a', now()),
+          ($1, $3, $5, 'record-view', 'yesterday-video-a', $6, 'hash-yesterday-video-a', now() - interval '1 day'),
+          ($1, $4, $5, 'record-view', 'today-video-b', $7, 'hash-today-video-b', now())`,
+        [userId, todayWordId, yesterdayWordId, otherSourceWordId, mode, sourceA, sourceB],
+      );
+
+      const getFiltered = async (filter: Record<string, unknown>) => {
+        const { rows } = await client.query(
+          `select get_next_filtered_card(
+            $1::uuid,
+            ARRAY[$2]::text[],
+            ARRAY[]::uuid[],
+            NULL::uuid,
+            'curated',
+            'both',
+            'auto',
+            ARRAY[]::text[],
+            $3::jsonb
+          ) as item`,
+          [userId, mode, JSON.stringify({ timezone: "UTC", ...filter })],
+        );
+        return rows[0]?.item as any | undefined;
+      };
+
+      const todayFromSourceA = await getFiltered({
+        dateWindow: "today",
+        sourceId: sourceA,
+      });
+      expect(todayFromSourceA?.id).toBe(todayWordId);
+      expect(todayFromSourceA?.stats?.source).toBe("review");
+      expect(todayFromSourceA?.stats?.reason).toBe("filtered");
+
+      const yesterdayFromSourceA = await getFiltered({
+        dateWindow: "yesterday",
+        sourceId: sourceA,
+      });
+      expect(yesterdayFromSourceA?.id).toBe(yesterdayWordId);
+      expect(yesterdayFromSourceA?.stats?.source).toBe("new");
+
+      const todayFromYoutubeKind = await getFiltered({
+        dateWindow: "today",
+        sourceKind: "youtube",
+        externalId: "video-b",
+      });
+      expect(todayFromYoutubeKind?.id).toBe(otherSourceWordId);
+
+      const noMatch = await getFiltered({
+        dateWindow: "daysAgo",
+        daysAgo: 30,
+        sourceId: sourceA,
+      });
+      expect(noMatch).toBeUndefined();
+    }, userId);
+  });
+
+  test("get_training_filter_sources returns safe user-owned source labels", async () => {
+    const userId = randomUUID();
+    const otherUserId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await ensureUserWithSettings(client, otherUserId);
+      const wordId = await insertWord(client, `fsrs-filter-source-list-${Date.now()}`);
+
+      const { rows: sourceRows } = await client.query(
+        `insert into learning_sources (
+          source_identity_key, kind, provider, external_id, canonical_url, title, language_code, metadata
+        ) values
+          ($1, 'youtube_video', 'youtube', 'video-safe', 'https://www.youtube.com/watch?v=video-safe', 'Safe Video', 'nl', '{}'::jsonb),
+          ($2, 'document', 'pontix', 'private-doc', null, 'Private Doc', 'nl', '{}'::jsonb)
+        returning id, external_id`,
+        [`source-safe-${Date.now()}`, `source-private-${Date.now()}`],
+      );
+      const safeSource = sourceRows.find((row) => row.external_id === "video-safe").id;
+      const privateSource = sourceRows.find((row) => row.external_id === "private-doc").id;
+
+      await client.query(
+        `insert into user_card_status (user_id, entry_id, card_type_id, last_seen_at)
+         values ($1, $2, $3, now())`,
+        [userId, wordId, mode],
+      );
+      await client.query(
+        `insert into user_card_action_events (
+          user_id, entry_id, card_type_id, action, client_event_id, source_id, action_payload_hash, created_at
+        ) values
+          ($1, $3, $4, 'record-view', 'safe-source-event', $5, 'safe-source-hash', now()),
+          ($2, $3, $4, 'record-view', 'other-source-event', $6, 'other-source-hash', now())`,
+        [userId, otherUserId, wordId, mode, safeSource, privateSource],
+      );
+
+      const { rows } = await client.query(
+        `select get_training_filter_sources($1::uuid, 20) as source`,
+        [userId],
+      );
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].source).toEqual(
+        expect.objectContaining({
+          sourceId: safeSource,
+          kind: "youtube_video",
+          provider: "youtube",
+          externalId: "video-safe",
+          title: "Safe Video",
+          label: "YouTube · Safe Video",
+          eventCount: 1,
+        }),
+      );
+    }, userId);
+  });
+
   test("get_next_card skips dictionaries the user cannot read", async () => {
     const userId = randomUUID();
     const ownerId = randomUUID();

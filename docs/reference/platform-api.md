@@ -694,6 +694,35 @@ Source/provenance storage is normalized into source, source-location, and
 user-card-action event rows. `user_review_log.metadata` remains FSRS diagnostic
 metadata and is not the primary source filtering surface.
 
+### Training Filter Provenance Requirements
+
+2000NL training filters use accepted card action provenance events as their
+read model. External clients such as AudioFilms do not own the filtered queue,
+but they must send stable provenance when an action should later be available
+under `today`, `yesterday`, source, or video-scoped training.
+
+For a card to be discoverable by source-aware training filters, send:
+
+- an explicit card action (`record-view`, `start-learning`, `mark-known`,
+  `mark-unknown`, or `review-card`);
+- a UUID `clientEventId`;
+- `sourceContext.contractVersion = "source-context-v2"`;
+- `source.kind`, `source.provider`, and a stable source identity. For YouTube,
+  use `source.kind = "youtube_video"`, `source.provider = "youtube"`, and the
+  canonical YouTube video id in `source.externalId`;
+- the normal action identity: `entryId`, `cardTypeId`, and action/result fields.
+
+The training date filter is based on the persisted action event timestamp in
+the learner's selected timezone. Clients should not send their own "training
+date" field. Source labels shown in the 2000NL UI come from the normalized
+source row; for YouTube this is rendered as `YouTube · <title or video id>`.
+
+Volatile observation fields, diagnostics, playback samples, and client-rendered
+phrases are useful for troubleshooting but do not define source identity and are
+not enough to make a card source-filterable. Ordinary read-only lookup without
+an explicit card action remains read-only and does not add a card to a filtered
+training queue.
+
 ## `GET /learning/activity`
 
 Read-only source-aware activity feed for accepted card action events. Connected

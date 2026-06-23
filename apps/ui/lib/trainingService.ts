@@ -46,8 +46,10 @@ export {
 export {
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
+  fetchTrainingFilterSources,
   fetchScenarioStats,
   fetchTrainingScenarios,
+  isTrainingFocusFilterActive,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";
