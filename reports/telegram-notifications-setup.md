@@ -62,3 +62,52 @@ Send deploy start/success/failure notifications to a private Telegram group (or 
 - Private group = visible only to group members.
 - DM = visible only to you.
 
+## Current Shared Deployment Bot
+
+Use the same deployment-status bot and chat for 2000NL and AudioFilms deploy
+notifications.
+
+Bot:
+
+```text
+Telegram username: @status_2000nl_bot
+Display name:      2000nl_status
+Bot token source:  1Password item telegram, field @status_2000nl_bot
+Secret name:       TELEGRAM_BOT_TOKEN
+```
+
+Do not write the bot token into repository files, runbooks, shell history, or
+plain `.env` files. Store it as a GitHub Actions secret in each repository that
+sends deploy notifications.
+
+Current chat IDs seen by the bot:
+
+```text
+Current supergroup: -1003979211146  2000nl status
+Old/basic group:    -5197887560     2000nl status
+```
+
+Use the supergroup ID `-1003979211146` for new deployment notifications,
+including AudioFilms. Store it as the GitHub Actions secret
+`TELEGRAM_CHAT_ID`.
+
+Current repositories using this notification pair:
+
+```text
+vbalashi/2000nl      TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+vbalashi/audiofilms  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+```
+
+To recover the chat ID later, send any message in the target Telegram chat
+after the bot has been added, then run:
+
+```bash
+bot_token="$(op read 'op://Private/telegram/4oqpbvfxsspffjdbs2nqoouszy')"
+curl -fsS "https://api.telegram.org/bot${bot_token}/getUpdates" |
+  jq '[.result[] |
+    (.message.chat? // .channel_post.chat? // .my_chat_member.chat? // .chat_member.chat?) |
+    select(. != null) |
+    {id, type, title, username}] | unique'
+```
+
+For this bot, `getMe` should return username `status_2000nl_bot`.
