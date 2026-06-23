@@ -9,7 +9,7 @@ import {
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
-import { getAuthenticatedSupabase } from "@/lib/platform/serverSupabase";
+import { getAuthenticatedUserSupabase } from "@/lib/platform/serverSupabase";
 import {
   extractTranslatableTexts,
   type ExtractedItem,
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const authResult = await getAuthenticatedSupabase(req);
+  const authResult = await getAuthenticatedUserSupabase(req);
   if (authResult instanceof NextResponse) {
     return authResult;
   }

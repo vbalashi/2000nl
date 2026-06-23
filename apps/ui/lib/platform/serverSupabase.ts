@@ -22,6 +22,11 @@ export type AuthenticatedSupabase = {
   principal: PlatformPrincipal;
 };
 
+export type AuthenticatedUserSupabase = {
+  supabase: SupabaseClient;
+  user: User;
+};
+
 export type ServiceSupabase = {
   supabase: SupabaseClient;
 };
@@ -83,9 +88,9 @@ export function getBearerToken(request: Request): string | null {
   return match?.[1]?.trim() || null;
 }
 
-export async function getAuthenticatedSupabase(
+async function getAuthenticatedUserSupabase(
   request: Request,
-): Promise<AuthenticatedSupabase | NextResponse> {
+): Promise<AuthenticatedUserSupabase | NextResponse> {
   const token = getBearerToken(request);
   if (!token) {
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
@@ -115,13 +120,29 @@ export async function getAuthenticatedSupabase(
     return jsonNoStore({ error: "invalid_bearer_token" }, 401);
   }
 
+  return { supabase, user: data.user };
+}
+
+export { getAuthenticatedUserSupabase };
+
+export async function getAuthenticatedSupabase(
+  request: Request,
+): Promise<AuthenticatedSupabase | NextResponse> {
+  const auth = await getAuthenticatedUserSupabase(request);
+  if (auth instanceof NextResponse) return auth;
+
+  const token = getBearerToken(request);
+  if (!token) {
+    return jsonNoStore({ error: "missing_bearer_token" }, 401);
+  }
+
   const principal = await resolvePlatformPrincipal({
     token,
-    userId: data.user.id,
+    userId: auth.user.id,
   });
   if (principal instanceof NextResponse) return principal;
 
-  return { supabase, user: data.user, principal };
+  return { ...auth, principal };
 }
 
 function platformServiceClient(): SupabaseClient | null {

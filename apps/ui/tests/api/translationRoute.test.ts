@@ -56,6 +56,7 @@ describe("/api/translation", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SECRET_KEY = "service-key";
+    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     getUser.mockReset();
     rpc.mockReset();
     from.mockReset();
@@ -72,6 +73,68 @@ describe("/api/translation", () => {
       error: "missing_bearer_token",
     });
     expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("does not require connected-client principal schema for first-party translation", async () => {
+    process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+    const userClient = {
+      auth: { getUser },
+      rpc,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        id: "00000000-0000-4000-8000-000000000001",
+        headword: "huis",
+        gender: "het",
+        part_of_speech: "zn",
+        raw: { meanings: [{ definition: "woning" }] },
+      },
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "connected_client_sessions") {
+        return queryChain({
+          data: null,
+          error: {
+            message:
+              "column connected_client_sessions.access_token_expires_at does not exist",
+          },
+        });
+      }
+      if (table === "word_entry_translations") {
+        return queryChain({
+          data: {
+            status: "pending",
+            overlay: null,
+            note: null,
+            updated_at: new Date().toISOString(),
+          },
+          error: null,
+        });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { GET } = await import("@/app/api/translation/route");
+
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(200);
+    expect(from).not.toHaveBeenCalledWith("connected_client_sessions");
+    expect(from).toHaveBeenCalledWith("word_entry_translations");
+    await expect(response.json()).resolves.toEqual({
+      status: "pending",
+    });
   });
 
   test("does not read translation cache when gated source entry is inaccessible", async () => {
