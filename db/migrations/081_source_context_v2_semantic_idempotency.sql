@@ -107,7 +107,7 @@ BEGIN
             'selection', p_source_context->'selection',
             'context', p_source_context->'context'
         ));
-        v_action_payload_hash := encode(digest(v_action_payload::text, 'sha256'), 'hex');
+        v_action_payload_hash := encode(extensions.digest(v_action_payload::text, 'sha256'), 'hex');
     ELSE
         v_action_payload := jsonb_strip_nulls(jsonb_build_object(
             'entryId', p_entry_id,

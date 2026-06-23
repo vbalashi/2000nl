@@ -89,7 +89,7 @@ BEGIN
            AND jsonb_typeof(p_source_context->'artifact') = 'object'
            AND v_source_id IS NOT NULL THEN
             v_artifact := p_source_context->'artifact';
-            v_artifact_identity_key := encode(digest(jsonb_build_object(
+            v_artifact_identity_key := encode(extensions.digest(jsonb_build_object(
                 'sourceId', v_source_id,
                 'artifact', v_artifact
             )::text, 'sha256'), 'hex');
