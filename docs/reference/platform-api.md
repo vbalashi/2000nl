@@ -20,6 +20,9 @@ npm run test:platform
   `Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>` against
   `/api/platform/v1/catalog/lookup`. Do not use a shared end-user token for
   guest lookup.
+- In production this credential is configured on the 2000NL host as
+  `PLATFORM_CATALOG_ACCESS_TOKEN`. AudioFilms consumes the same value as
+  `DICTIONARY_2000NL_CATALOG_ACCESS_TOKEN`.
 - Configure allowed browser/extension origins with `PLATFORM_API_ALLOWED_ORIGINS`.
 - Routes respond to `OPTIONS` preflight with the configured CORS headers.
 

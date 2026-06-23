@@ -45,6 +45,16 @@ We removed them from tracking and added ignore rules so they **never get pushed*
 - Runtime values live only on `nuc` at:
   - `/srv/2000nl-ui/.env`
 
+The NUC runtime `.env` also owns the read-only external catalog token:
+
+- `PLATFORM_CATALOG_ACCESS_TOKEN`
+
+This is the token that external clients such as AudioFilms send to
+`/api/platform/v1/catalog/lookup` for guest-safe catalog lookup. The same secret
+is stored in 1Password item `2000nl web` as concealed field
+`PLATFORM_CATALOG_ACCESS_TOKEN`; AudioFilms uses the identical value under its
+own env name `DICTIONARY_2000NL_CATALOG_ACCESS_TOKEN`.
+
 Important note: `NEXT_PUBLIC_*` variables are **public** by design in Next.js (inlined into client bundle).
 Secrets (DB URLs, service role keys, API keys) must not be exposed via `NEXT_PUBLIC_*`.
 
@@ -168,4 +178,3 @@ We deferred DNS configuration. Options:
 - **Single host entry** in FritzBox DNS: `2000nl.nuc` → `<nuc-ip>`
 - **Per-device hosts file** (quick but manual)
 - **LAN DNS** (AdGuard Home / dnsmasq / CoreDNS) if you want many names or wildcard
-
