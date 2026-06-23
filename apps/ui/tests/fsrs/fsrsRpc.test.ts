@@ -381,6 +381,47 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("public catalog search matches headwords when query omits diacritics", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      const { rows: publicDictionaryRows } = await client.query(
+        `select id from dictionaries where slug = 'nl-vandale' limit 1`,
+      );
+      const publicDictionaryId = publicDictionaryRows[0].id;
+      const headword = `écht-${Date.now()}`;
+      const plainQuery = headword.replace("é", "e");
+      const { rows: entryRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values ($1, 'nl', $2, 1, 'bw', jsonb_build_object('definition', 'met nadruk echt'))
+         returning id`,
+        [publicDictionaryId, headword],
+      );
+
+      await client.query(`set local role service_role`);
+      const { rows: catalogRows } = await client.query(
+        `select search_public_catalog_entries($1, 'nl', 1, 10) as result`,
+        [plainQuery],
+      );
+      await client.query(`reset role`);
+
+      const items = catalogRows[0].result.items as Array<{
+        id: string;
+        headword: string;
+        search_match_group: string;
+      }>;
+      expect(items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: entryRows[0].id,
+            headword,
+            search_match_group: "exact-headword",
+          }),
+        ]),
+      );
+    }, ownerId);
+  });
+
   test("get_recent_training_history returns hydrated event and status rows", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
