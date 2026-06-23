@@ -234,3 +234,6 @@
 
 -- Align generic text translation lookup index with context-aware identity
 \i db/migrations/075_platform_text_translations_context_lookup_idx.sql
+
+-- Ensure explicit start-learning moves cards into the learning phase
+\i db/migrations/076_start_learning_sets_in_learning.sql
