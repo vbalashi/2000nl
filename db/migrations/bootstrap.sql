@@ -240,3 +240,24 @@
 
 -- Source/provenance-aware external card actions
 \i db/migrations/077_external_card_action_provenance.sql
+
+-- Scope connected-client session/action attribution
+\i db/migrations/078_platform_principal_connected_client_scope.sql
+
+-- Source-context-v2 artifact provenance
+\i db/migrations/079_source_context_v2_artifacts.sql
+
+-- Source-context-v2 review turn idempotency guard
+\i db/migrations/080_source_context_v2_review_exactly_once.sql
+
+-- Source-context-v2 semantic idempotency payloads
+\i db/migrations/081_source_context_v2_semantic_idempotency.sql
+
+-- Source-context-v2 canonical source normalization
+\i db/migrations/082_source_context_v2_source_canonicalization.sql
+
+-- Source-context-v2 private source normalization
+\i db/migrations/083_source_context_v2_private_sources.sql
+
+-- Diacritic-insensitive platform dictionary lookup
+\i db/migrations/084_diacritic_insensitive_platform_lookup.sql
