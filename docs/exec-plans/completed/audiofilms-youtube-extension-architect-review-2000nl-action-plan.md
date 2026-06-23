@@ -6,6 +6,15 @@ Completion status: completed on 2026-06-18 for the 2000NL-side AudioFilms
 handoff. Deferred items remain intentionally out of scope unless promoted into a
 new plan.
 
+Current-code note, June 23, 2026: several sections below preserve the original
+review wording and therefore describe blockers that have since been completed.
+The current implementation has guest-safe catalog lookup, external-click lookup
+through the gated search path, phase-aware card capabilities, `GET
+/api/platform/v1/session`, optional target resolution for card translation, and
+`POST /api/platform/v1/text-translation`. Treat this file as a completed plan
+snapshot; use `docs/reference/platform-api.md` and the live routes/tests as the
+current contract.
+
 Source reviews live in the AudioFilms repository:
 
 - `/Users/khrustal/dev/audiofilms/docs/design-handoff/youtube-extension-architect-review/review01.md`

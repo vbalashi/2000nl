@@ -491,7 +491,17 @@ Minimum `sourceContext` envelope:
   hashes context for queryable event records.
 
 `source-context-v2` is the strict provenance contract for new producers. The
-initial supported source kind is YouTube:
+currently accepted source kinds are:
+
+- `youtube_video`: public canonical video provenance. 2000NL derives canonical
+  source identity from the validated video id and strips client-observed titles,
+  URLs, playback samples, and diagnostics from canonical identity.
+- `web_page`, `text_document`, and `ebook`: private-source provenance. 2000NL
+  stores a user-scoped/private canonical source identity derived from validated
+  client-provided source fields and does not treat a raw URL/title as globally
+  trusted public identity.
+
+Canonical YouTube example:
 
 ```json
 {
@@ -542,8 +552,9 @@ source. The database computes a SHA-256 idempotency fingerprint for v2 from the
 normalized action tuple plus canonical source, artifact, location, selection,
 and bounded context. A retry that changes only observation or diagnostics
 returns the original duplicate event rather than `409`.
-Reserved future kinds such as `web_page`, `text_document`, and `ebook` are
-rejected until their private-source normalization and retention rules exist.
+For private source kinds, the same v2 idempotency rule applies: semantic action,
+canonical source, artifact, location, selection, and bounded context fields
+participate in the fingerprint, while observation and diagnostics do not.
 
 For v2 provenance-aware review actions, `clientEventId` must be a UUID. If a
 `turnId` is supplied, it must equal `clientEventId`; otherwise the platform uses
