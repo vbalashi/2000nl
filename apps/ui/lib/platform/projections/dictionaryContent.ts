@@ -1,16 +1,6 @@
 import type { LookupTranslationArtifact } from "../translationService";
+import type { DictionaryLookupPayload } from "../lookupService";
 import crypto from "crypto";
-
-type DictionaryLookupPayload = {
-  id: string;
-  dictionary_id?: string | null;
-  language_code?: string | null;
-  headword: string;
-  meaning_id?: number | null;
-  part_of_speech?: string | null;
-  gender?: string | null;
-  raw: unknown;
-};
 
 export function contentFingerprint(content: unknown) {
   const record = asRecord(content);
