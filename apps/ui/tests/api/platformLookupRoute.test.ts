@@ -682,6 +682,10 @@ describe("/api/platform/lookup", () => {
             meanings: [
               {
                 definition: "verbinding",
+                examples: [
+                  "de knoop zit los",
+                  "zij hakte de knoop door",
+                ],
                 idioms: [
                   {
                     expression: "de knoop doorhakken",
@@ -736,14 +740,35 @@ describe("/api/platform/lookup", () => {
 
     expect(response.status).toBe(200);
     const payload = await response.json();
-    expect(payload.items[0].entry.content.sections).toContainEqual({
-      id: "idiom-1-1",
-      sourcePath: "raw.meanings[0].idioms[0]",
-      kind: "idiom",
-      text: "de knoop doorhakken",
-      label: "een beslissing nemen",
-      translation: "принять решение",
-    });
+    expect(payload.items[0].entry.content.sections).toEqual([
+      {
+        id: "meaning-1",
+        sourcePath: "raw.meanings[0].definition",
+        kind: "meaning",
+        text: "verbinding",
+        translation: "связь",
+      },
+      {
+        id: "example-1-1",
+        sourcePath: "raw.meanings[0].examples[0]",
+        kind: "example",
+        text: "de knoop zit los",
+      },
+      {
+        id: "idiom-1-1",
+        sourcePath: "raw.meanings[0].idioms[0]",
+        kind: "idiom",
+        text: "de knoop doorhakken",
+        label: "een beslissing nemen",
+        translation: "принять решение",
+      },
+      {
+        id: "example-1-2",
+        sourcePath: "raw.meanings[0].examples[1]",
+        kind: "example",
+        text: "zij hakte de knoop door",
+      },
+    ]);
   });
 
   test.each([

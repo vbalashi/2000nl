@@ -444,7 +444,7 @@ function buildContentSections(
       });
     }
 
-    asStringArray(item.examples)?.forEach((example, exampleIndex) => {
+    const pushExampleSection = (example: string, exampleIndex: number) => {
       const sourcePath = `raw.meanings[${meaningIndex}].examples[${exampleIndex}]`;
       const overlayTranslation = overlayTranslationAtSourcePath(
         translationOverlay,
@@ -457,34 +457,53 @@ function buildContentSections(
         text: example,
         ...(overlayTranslation ? { translation: overlayTranslation } : {}),
       });
-    });
+    };
 
-    if (Array.isArray(item.idioms)) {
-      item.idioms.forEach((idiom, idiomIndex) => {
-        const idiomRecord = asRecord(idiom);
-        const text =
-          typeof idiom === "string"
-            ? idiom
-            : typeof idiomRecord.expression === "string"
-              ? idiomRecord.expression
-              : null;
-        if (!text) return;
-        const sourcePath = `raw.meanings[${meaningIndex}].idioms[${idiomIndex}]`;
-        const overlayTranslation = overlayTranslationAtSourcePath(
-          translationOverlay,
-          sourcePath,
-        );
-        sections.push({
-          id: sectionId("idiom", meaningIndex, idiomIndex),
-          sourcePath,
-          kind: "idiom",
-          text,
-          ...(overlayTranslation ? { translation: overlayTranslation } : {}),
-          ...(typeof idiomRecord.explanation === "string"
-            ? { label: idiomRecord.explanation }
-            : {}),
-        });
+    const pushIdiomSection = (idiom: unknown, idiomIndex: number) => {
+      const idiomRecord = asRecord(idiom);
+      const text =
+        typeof idiom === "string"
+          ? idiom
+          : typeof idiomRecord.expression === "string"
+            ? idiomRecord.expression
+            : null;
+      if (!text) return;
+      const sourcePath = `raw.meanings[${meaningIndex}].idioms[${idiomIndex}]`;
+      const overlayTranslation = overlayTranslationAtSourcePath(
+        translationOverlay,
+        sourcePath,
+      );
+      sections.push({
+        id: sectionId("idiom", meaningIndex, idiomIndex),
+        sourcePath,
+        kind: "idiom",
+        text,
+        ...(overlayTranslation ? { translation: overlayTranslation } : {}),
+        ...(typeof idiomRecord.explanation === "string"
+          ? { label: idiomRecord.explanation }
+          : {}),
       });
+    };
+
+    const examples = asStringArray(item.examples) ?? [];
+    const idioms = Array.isArray(item.idioms) ? item.idioms : [];
+    if (idioms.length) {
+      if (examples[0]) pushExampleSection(examples[0], 0);
+      const detailCount = Math.max(
+        idioms.length,
+        Math.max(0, examples.length - 1),
+      );
+      for (let detailIndex = 0; detailIndex < detailCount; detailIndex += 1) {
+        if (detailIndex < idioms.length) {
+          pushIdiomSection(idioms[detailIndex], detailIndex);
+        }
+        const pairedExample = examples[detailIndex + 1];
+        if (pairedExample) {
+          pushExampleSection(pairedExample, detailIndex + 1);
+        }
+      }
+    } else {
+      examples.forEach(pushExampleSection);
     }
   });
 
