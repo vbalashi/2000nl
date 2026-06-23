@@ -720,6 +720,62 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test("strips volatile source-context-v2 observation and diagnostics before RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: { status: "duplicate", eventId: "event-1" },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId: "4EE7m94mJpk",
+          },
+          location: {
+            kind: "caption_phrase",
+            phraseIndex: 12,
+          },
+          observation: {
+            title: "volatile",
+            currentPlaybackTimeMs: 12345,
+          },
+          diagnostics: {
+            warnings: ["volatile"],
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const call = rpc.mock.calls.find(
+      ([name]) => name === "perform_platform_card_action",
+    );
+    expect(call?.[1].p_source_context).toEqual({
+      contractVersion: "source-context-v2",
+      source: {
+        kind: "youtube_video",
+        provider: "youtube",
+        externalId: "4EE7m94mJpk",
+        url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+      },
+      location: {
+        kind: "caption_phrase",
+        phraseIndex: 12,
+      },
+    });
+  });
+
   test.each([
     ["unsupported_source_kind", { source: { kind: "web_page", provider: "browser" } }],
     [

@@ -597,6 +597,86 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("source-context-v2 idempotency ignores volatile observation fields", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `fsrs-v2-idempotency-${Date.now()}`);
+      const clientEventId = randomUUID();
+      const baseContext = {
+        contractVersion: "source-context-v2",
+        source: {
+          kind: "youtube_video",
+          provider: "youtube",
+          externalId: "4EE7m94mJpk",
+          url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+        },
+        artifact: {
+          artifactKind: "caption_phrase_set",
+          producer: "audiofilms_backend",
+          phraseSetRevisionId: "phrases-v1",
+        },
+        location: {
+          kind: "caption_phrase",
+          phraseIndex: 12,
+          startMs: 54210,
+          endMs: 58100,
+        },
+        selection: {
+          clickedForm: "huis",
+        },
+        context: {
+          clickedForm: "huis",
+          text: "Ik ga naar huis.",
+        },
+      };
+
+      const callAction = (sourceContext: unknown) =>
+        client.query(
+          `select perform_platform_card_action(
+             $1::uuid,
+             $2::uuid,
+             $3::text,
+             'start-learning',
+             NULL,
+             NULL,
+             $4::text,
+             $5::jsonb,
+             'first_party',
+             NULL
+           ) as result`,
+          [userId, wordId, mode, clientEventId, JSON.stringify(sourceContext)]
+        );
+
+      const first = await callAction({
+        ...baseContext,
+        observation: { title: "Original title", currentPlaybackTimeMs: 55000 },
+        diagnostics: { warnings: ["first"] },
+      });
+      const second = await callAction({
+        ...baseContext,
+        observation: { title: "Changed title", currentPlaybackTimeMs: 57000 },
+        diagnostics: { warnings: ["retry-different"] },
+      });
+
+      expect(first.rows[0].result.status).toBe("accepted");
+      expect(second.rows[0].result).toEqual(
+        expect.objectContaining({
+          status: "duplicate",
+          eventId: first.rows[0].result.eventId,
+        })
+      );
+
+      const { rows } = await client.query(
+        `select count(*)::int as count, min(length(action_payload_hash))::int as hash_length
+         from user_card_action_events
+         where user_id = $1 and client_event_id = $2`,
+        [userId, clientEventId]
+      );
+      expect(rows[0]).toEqual({ count: 1, hash_length: 64 });
+    }, userId);
+  });
+
   test("physical user_card_status table is the writable card-state storage", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
