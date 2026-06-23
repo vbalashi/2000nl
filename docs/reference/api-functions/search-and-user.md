@@ -229,11 +229,14 @@ Supported actions:
   or using a private editable `user-entry-v1` dictionary.
 - `create-user-entry` – calls `create_user_dictionary_entry` with a full
   `user-entry-v1` payload.
-- `POST /api/platform/v1/user-dictionary/generated-entry` – builds a
-  generated `user-entry-v1` payload with `generation` metadata and persists it
-  through `create_user_dictionary_entry`. It requires `platform:write`, stores
-  the row in the user's private editable dictionary, and leaves learning state
-  untouched until an explicit `start-learning` action.
+- `POST /api/platform/v1/user-dictionary/generated-entry/draft` – calls the
+  configured OpenAI/Azure OpenAI provider and returns a same-language generated
+  draft without mutating dictionary, list, FSRS, review, or provenance state.
+- `POST /api/platform/v1/user-dictionary/generated-entry` – builds a generated
+  `user-entry-v1` payload with `generation` metadata and persists it through
+  `create_user_dictionary_entry`. It requires `platform:write`, stores the row
+  in the user's private editable dictionary, and leaves learning state untouched
+  until an explicit `start-learning` action.
 - `update-user-entry` – calls `update_user_dictionary_entry` and replaces an
   owned user entry payload.
 - `delete-user-entry` – calls `delete_user_dictionary_entry` for an owned user

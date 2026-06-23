@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 const rpc = vi.fn();
 const from = vi.fn();
 const getUser = vi.fn();
+const fetchMock = vi.fn();
 const createClient = vi.fn(() => ({
   auth: { getUser },
   rpc,
@@ -13,6 +14,8 @@ const createClient = vi.fn(() => ({
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
 }));
+
+vi.stubGlobal("fetch", fetchMock);
 
 const chain = (result: { data?: any; error?: any }) => {
   const query: any = {
@@ -81,11 +84,18 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
+    process.env.OPENAI_API_KEY = "openai-key";
+    process.env.OPENAI_MODEL = "gpt-test";
+    delete process.env.AZURE_OPENAI_API_KEY;
+    delete process.env.AZURE_OPENAI_ENDPOINT;
+    delete process.env.AZURE_OPENAI_DEPLOYMENT;
+    delete process.env.AZURE_OPENAI_MODEL;
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
     from.mockReset();
+    fetchMock.mockReset();
     from.mockImplementation(() => chain({ data: null, error: null }));
   });
 
@@ -250,5 +260,103 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       error: "duplicate_user_entry",
       detail: "duplicate_user_entry",
     });
+  });
+
+  test("drafts generated entries through the provider without DB mutation", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/draft/route"
+    );
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                definition: "Een situatie die veel moeite of ongemak geeft.",
+                example: "Wat een gedoe met die tickets.",
+                partOfSpeech: "noun",
+                notes: "Informeel en vaak licht negatief.",
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        contextText: "Wat een gedoe.",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.openai.com/v1/chat/completions",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          authorization: "Bearer openai-key",
+        }),
+      }),
+    );
+    const payload = await response.json();
+    expect(payload).toEqual(
+      expect.objectContaining({
+        ok: true,
+        draft: expect.objectContaining({
+          clickedForm: "gedoe",
+          languageCode: "nl",
+          contextText: "Wat een gedoe.",
+          generated: expect.objectContaining({
+            definition: "Een situatie die veel moeite of ongemak geeft.",
+            example: { source: "Wat een gedoe met die tickets." },
+            partOfSpeech: "noun",
+            notes: "Informeel en vaak licht negatief.",
+            provider: "openai",
+            model: "gpt-test",
+            promptVersion: "generated-user-entry-v1",
+            generatedAt: expect.any(String),
+            contentFingerprint: expect.any(String),
+          }),
+        }),
+        generation: {
+          status: "draft",
+          provider: "openai",
+          model: "gpt-test",
+          promptVersion: "generated-user-entry-v1",
+          requiresExplicitSave: true,
+        },
+        nextActions: ["save-generated-entry"],
+      }),
+    );
+  });
+
+  test("draft generation fails closed when provider config is missing", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/draft/route"
+    );
+    delete process.env.OPENAI_API_KEY;
+    mockAuthenticatedUser();
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        contextText: "Wat een gedoe.",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "generated_entry_provider_not_configured",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

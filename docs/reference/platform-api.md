@@ -302,12 +302,70 @@ overlay. A request can return `status: "pending"` when another request is
 already producing the same overlay, and clients should retry after a short
 delay.
 
+## `POST /user-dictionary/generated-entry/draft`
+
+Authenticated provider-backed draft generation for lookup misses. This endpoint
+calls the configured OpenAI/Azure OpenAI chat-completions provider and returns a
+same-language learner-card draft. It does not write `word_entries`, lists,
+review logs, FSRS state, or provenance action events.
+
+Use `/api/platform/v1/user-dictionary/generated-entry/draft` from external
+clients. The Bearer token must resolve to a first-party user or a connected
+client with `platform:write`.
+
+Request:
+```json
+{
+  "clickedForm": "gedoe",
+  "languageCode": "nl",
+  "contextText": "Wat een gedoe.",
+  "sourceContext": {
+    "contractVersion": "source-context-v2"
+  }
+}
+```
+
+Response:
+```json
+{
+  "ok": true,
+  "draft": {
+    "clickedForm": "gedoe",
+    "languageCode": "nl",
+    "contextText": "Wat een gedoe.",
+    "generated": {
+      "definition": "Een situatie die veel moeite of ongemak geeft.",
+      "example": { "source": "Wat een gedoe met die tickets." },
+      "partOfSpeech": "noun",
+      "notes": "Informeel en vaak licht negatief.",
+      "provider": "openai",
+      "model": "gpt-...",
+      "promptVersion": "generated-user-entry-v1",
+      "generatedAt": "2026-06-23T19:00:00.000Z",
+      "contentFingerprint": "sha256..."
+    }
+  },
+  "generation": {
+    "status": "draft",
+    "provider": "openai",
+    "model": "gpt-...",
+    "promptVersion": "generated-user-entry-v1",
+    "requiresExplicitSave": true
+  },
+  "nextActions": ["save-generated-entry"]
+}
+```
+
+If no provider key is configured, the endpoint fails closed with
+`503 { "error": "generated_entry_provider_not_configured" }`. Provider errors
+return `502 { "error": "generated_entry_provider_failed" }`.
+
 ## `POST /user-dictionary/generated-entry`
 
 Authenticated write endpoint for persisting an explicitly accepted generated
 dictionary card after lookup returns no suitable entry. This endpoint is for
-the durable save step only: it does not perform provider generation itself, and
-it does not start learning or write review/progress state.
+the durable save step only: it does not start learning or write review/progress
+state.
 
 Use `/api/platform/v1/user-dictionary/generated-entry` from external clients.
 The Bearer token must resolve to a first-party user or a connected client with
@@ -327,8 +385,8 @@ Request:
     "example": { "source": "Wat een gedoe." },
     "partOfSpeech": "noun",
     "provider": "openai",
-    "model": "gpt-...",
-    "promptVersion": "generated-user-entry-v1"
+      "model": "gpt-...",
+      "promptVersion": "generated-user-entry-v1"
   }
 }
 ```
