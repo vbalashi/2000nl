@@ -429,9 +429,51 @@ export type PlatformSourceContextV1 = {
   diagnostics?: Record<string, unknown>;
 };
 
+export type PlatformSourceContextV2 = {
+  contractVersion: "source-context-v2";
+  source: {
+    kind: "youtube_video";
+    provider: "youtube";
+    externalId: string;
+    languageCode?: string;
+  };
+  artifact?: {
+    artifactKind: "caption_phrase_set";
+    producer: string;
+    snapshotRevisionId?: string;
+    textSourceId?: string;
+    textSourceRevisionId?: string;
+    textContentFingerprint?: string;
+    timingEvidenceRevisionId?: string;
+    phraseSetRevisionId?: string;
+    builderVersion?: string;
+    languageCode?: string;
+    quality?: string;
+  };
+  location?: {
+    kind: "caption_phrase";
+    startMs?: number;
+    endMs?: number;
+    phraseIndex?: number;
+    locatorConfidence?: "canonical" | "derived" | "approximate";
+    phraseTextHash?: string;
+    timingQuality?: string;
+  };
+  selection?: {
+    clickedForm?: string;
+    tokenIndex?: number;
+    charStart?: number;
+    charEnd?: number;
+    contextText?: string;
+    contextTextHash?: string;
+  };
+  observation?: Record<string, unknown>;
+  diagnostics?: Record<string, unknown>;
+};
+
 export type PlatformActionProvenance = {
   clientEventId?: string | null;
-  sourceContext?: PlatformSourceContextV1 | null;
+  sourceContext?: PlatformSourceContextV1 | PlatformSourceContextV2 | null;
 };
 
 export type PlatformActionRequest =

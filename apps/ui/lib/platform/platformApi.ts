@@ -201,10 +201,209 @@ function asUuid(value: unknown): string | null {
     : null;
 }
 
-function asSourceContext(value: unknown): Record<string, unknown> | null {
+type SourceContextParseResult =
+  | { ok: true; value: Record<string, unknown> | null; version: "none" | "v1" | "v2" }
+  | { ok: false; error: string; status: number };
+
+function parseSourceContext(value: unknown): SourceContextParseResult {
+  if (value === undefined || value === null) {
+    return { ok: true, value: null, version: "none" };
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "invalid_source_context", status: 400 };
+  }
+
+  const size = JSON.stringify(value).length;
+  if (size > 16_384) {
+    return { ok: false, error: "source_context_too_large", status: 413 };
+  }
+
+  const record = value as Record<string, unknown>;
+  if (record.contractVersion !== "source-context-v2") {
+    return { ok: true, value: record, version: "v1" };
+  }
+
+  const normalized = normalizeSourceContextV2(record);
+  if (!normalized.ok) return normalized;
+  return { ok: true, value: normalized.value, version: "v2" };
+}
+
+function normalizeSourceContextV2(
+  record: Record<string, unknown>,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string; status: number } {
+  const source = asRecord(record.source);
+  const kind = asString(source.kind);
+  if (kind !== "youtube_video") {
+    return { ok: false, error: "unsupported_source_kind", status: 400 };
+  }
+
+  const provider = asString(source.provider);
+  const externalId = asString(source.externalId);
+  if (provider !== "youtube" || !externalId || !/^[A-Za-z0-9_-]{11}$/.test(externalId)) {
+    return { ok: false, error: "invalid_youtube_source", status: 400 };
+  }
+
+  const languageCode = normalizeOptionalLanguageCode(source.languageCode);
+  const artifact = normalizeV2Artifact(record.artifact);
+  if (!artifact.ok) return artifact;
+  const location = normalizeV2Location(record.location);
+  if (!location.ok) return location;
+  const selection = normalizeV2Selection(record.selection);
+  if (!selection.ok) return selection;
+
+  return {
+    ok: true,
+    value: stripUndefined({
+      contractVersion: "source-context-v2",
+      source: stripUndefined({
+        kind: "youtube_video",
+        provider: "youtube",
+        externalId,
+        url: `https://www.youtube.com/watch?v=${externalId}`,
+        languageCode,
+      }),
+      artifact: artifact.value,
+      location: location.value,
+      selection: selection.value,
+      context: selection.context,
+    }),
+  };
+}
+
+function normalizeV2Artifact(
+  value: unknown,
+): { ok: true; value?: Record<string, unknown> } | { ok: false; error: string; status: number } {
+  if (value === undefined || value === null) return { ok: true };
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "invalid_source_artifact", status: 400 };
+  }
+  const artifact = value as Record<string, unknown>;
+  const artifactKind = asString(artifact.artifactKind);
+  if (artifactKind !== "caption_phrase_set") {
+    return { ok: false, error: "unsupported_source_artifact", status: 400 };
+  }
+  const producer = boundedString(artifact.producer, 80);
+  if (!producer) return { ok: false, error: "missing_artifact_producer", status: 400 };
+  return {
+    ok: true,
+    value: stripUndefined({
+      artifactKind,
+      producer,
+      snapshotRevisionId: boundedString(artifact.snapshotRevisionId, 160),
+      textSourceId: boundedString(artifact.textSourceId, 160),
+      textSourceRevisionId: boundedString(artifact.textSourceRevisionId, 160),
+      textContentFingerprint: boundedString(artifact.textContentFingerprint, 160),
+      timingEvidenceRevisionId: boundedString(artifact.timingEvidenceRevisionId, 160),
+      phraseSetRevisionId: boundedString(artifact.phraseSetRevisionId, 160),
+      builderVersion: boundedString(artifact.builderVersion, 80),
+      languageCode: normalizeOptionalLanguageCode(artifact.languageCode),
+      quality: boundedString(artifact.quality, 80),
+    }),
+  };
+}
+
+function normalizeV2Location(
+  value: unknown,
+): { ok: true; value?: Record<string, unknown> } | { ok: false; error: string; status: number } {
+  if (value === undefined || value === null) return { ok: true };
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "invalid_source_location", status: 400 };
+  }
+  const location = value as Record<string, unknown>;
+  const kind = asString(location.kind);
+  if (kind !== "caption_phrase") {
+    return { ok: false, error: "unsupported_source_location", status: 400 };
+  }
+  const startMs = optionalNonNegativeInt(location.startMs);
+  const endMs = optionalNonNegativeInt(location.endMs);
+  if (startMs === false || endMs === false) {
+    return { ok: false, error: "invalid_source_timing", status: 400 };
+  }
+  if (typeof startMs === "number" && typeof endMs === "number" && endMs < startMs) {
+    return { ok: false, error: "invalid_source_timing", status: 400 };
+  }
+  const phraseIndex = optionalNonNegativeInt(location.phraseIndex);
+  if (phraseIndex === false) {
+    return { ok: false, error: "invalid_phrase_index", status: 400 };
+  }
+  const locatorConfidence = asString(location.locatorConfidence);
+  if (
+    locatorConfidence &&
+    !["canonical", "derived", "approximate"].includes(locatorConfidence)
+  ) {
+    return { ok: false, error: "invalid_locator_confidence", status: 400 };
+  }
+  return {
+    ok: true,
+    value: stripUndefined({
+      kind,
+      startMs: startMs ?? undefined,
+      endMs: endMs ?? undefined,
+      phraseIndex: phraseIndex ?? undefined,
+      locatorConfidence,
+      phraseTextHash: boundedString(location.phraseTextHash, 160),
+      timingQuality: boundedString(location.timingQuality, 80),
+    }),
+  };
+}
+
+function normalizeV2Selection(
+  value: unknown,
+):
+  | { ok: true; value?: Record<string, unknown>; context?: Record<string, unknown> }
+  | { ok: false; error: string; status: number } {
+  if (value === undefined || value === null) return { ok: true };
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "invalid_source_selection", status: 400 };
+  }
+  const selection = value as Record<string, unknown>;
+  const clickedForm = boundedString(selection.clickedForm, 160);
+  const tokenIndex = optionalNonNegativeInt(selection.tokenIndex);
+  const charStart = optionalNonNegativeInt(selection.charStart);
+  const charEnd = optionalNonNegativeInt(selection.charEnd);
+  if (tokenIndex === false || charStart === false || charEnd === false) {
+    return { ok: false, error: "invalid_source_selection", status: 400 };
+  }
+  if (typeof charStart === "number" && typeof charEnd === "number" && charEnd < charStart) {
+    return { ok: false, error: "invalid_source_selection", status: 400 };
+  }
+  const contextText = boundedString(selection.contextText, 1000);
+  return {
+    ok: true,
+    value: stripUndefined({
+      clickedForm,
+      tokenIndex: tokenIndex ?? undefined,
+      charStart: charStart ?? undefined,
+      charEnd: charEnd ?? undefined,
+      contextTextHash: boundedString(selection.contextTextHash, 160),
+    }),
+    context:
+      clickedForm || contextText
+        ? stripUndefined({ clickedForm, text: contextText })
+        : undefined,
+  };
+}
+
+function boundedString(value: unknown, maxLength: number) {
+  const text = asString(value);
+  return text ? text.slice(0, maxLength) : undefined;
+}
+
+function normalizeOptionalLanguageCode(value: unknown) {
+  const text = boundedString(value, 16);
+  return text ? text.replace("_", "-").toLowerCase() : undefined;
+}
+
+function optionalNonNegativeInt(value: unknown): number | null | false {
   if (value === undefined || value === null) return null;
-  if (typeof value !== "object" || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
+  if (!Number.isInteger(value) || (value as number) < 0) return false;
+  return value as number;
+}
+
+function stripUndefined<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined),
+  ) as T;
 }
 
 function asListCardPolicy(value: unknown): ListCardPolicy | null {
@@ -1409,7 +1608,9 @@ export async function performPlatformAction(
   const action = asString(body?.action) as PlatformAction | null;
   const entryId = asString(body?.entryId);
   const clientEventId = asClientEventId(body?.clientEventId);
-  const sourceContext = asSourceContext(body?.sourceContext);
+  const parsedSourceContext = parseSourceContext(body?.sourceContext);
+  const sourceContext = parsedSourceContext.ok ? parsedSourceContext.value : null;
+  const sourceContextVersion = parsedSourceContext.ok ? parsedSourceContext.version : "none";
 
   if (!action) {
     return { payload: { error: "missing_action" }, status: 400 };
@@ -1438,11 +1639,27 @@ export async function performPlatformAction(
   if (body?.clientEventId !== undefined && !clientEventId) {
     return { payload: { error: "invalid_client_event_id" }, status: 400 };
   }
-  if (body?.sourceContext !== undefined && !sourceContext) {
-    return { payload: { error: "invalid_source_context" }, status: 400 };
+  if (!parsedSourceContext.ok) {
+    return {
+      payload: { error: parsedSourceContext.error },
+      status: parsedSourceContext.status,
+    };
   }
   if (sourceContext && !clientEventId) {
     return { payload: { error: "missing_client_event_id" }, status: 400 };
+  }
+  if (
+    sourceContextVersion === "v2" &&
+    (action === "review-card" || action === "mark-known" || action === "mark-unknown")
+  ) {
+    const eventUuid = asUuid(clientEventId);
+    const explicitTurnUuid = body?.turnId === undefined ? null : asUuid(body.turnId);
+    if (!eventUuid) {
+      return { payload: { error: "v2_client_event_id_must_be_uuid" }, status: 400 };
+    }
+    if (body?.turnId !== undefined && explicitTurnUuid !== eventUuid) {
+      return { payload: { error: "v2_turn_id_mismatch" }, status: 400 };
+    }
   }
   if (auth.principal.authKind === "connected_client") {
     const reportedClientId = sourceContextClientId(sourceContext);

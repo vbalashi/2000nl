@@ -605,6 +605,196 @@ describe("/api/platform/actions", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  test("normalizes source-context-v2 before calling the atomic action RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        eventId: "event-1",
+        sourceId: "source-1",
+        locationId: "location-1",
+        artifactId: "artifact-1",
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId: "4EE7m94mJpk",
+            url: "https://youtu.be/ignored",
+            title: "Ignored volatile title",
+            languageCode: "NL",
+          },
+          artifact: {
+            artifactKind: "caption_phrase_set",
+            producer: "audiofilms_backend",
+            phraseSetRevisionId: "phrases-v1",
+            timingEvidenceRevisionId: "timing-v1",
+            builderVersion: "builder-1",
+            languageCode: "nl",
+            quality: "aligned",
+          },
+          location: {
+            kind: "caption_phrase",
+            phraseIndex: 12,
+            startMs: 54210,
+            endMs: 58100,
+            locatorConfidence: "canonical",
+          },
+          selection: {
+            clickedForm: "huis",
+            tokenIndex: 3,
+            charStart: 11,
+            charEnd: 15,
+            contextText: "Ik ga naar huis.",
+          },
+          observation: {
+            title: "Volatile current page title",
+            currentPlaybackTimeMs: 55000,
+          },
+          diagnostics: {
+            warnings: ["ignored"],
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("perform_platform_card_action", {
+      p_user_id: "user-1",
+      p_entry_id: "entry-1",
+      p_card_type_id: "word-to-definition",
+      p_action: "start-learning",
+      p_result: null,
+      p_turn_id: null,
+      p_client_event_id: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+      p_source_context: {
+        contractVersion: "source-context-v2",
+        source: {
+          kind: "youtube_video",
+          provider: "youtube",
+          externalId: "4EE7m94mJpk",
+          url: "https://www.youtube.com/watch?v=4EE7m94mJpk",
+          languageCode: "nl",
+        },
+        artifact: {
+          artifactKind: "caption_phrase_set",
+          producer: "audiofilms_backend",
+          phraseSetRevisionId: "phrases-v1",
+          timingEvidenceRevisionId: "timing-v1",
+          builderVersion: "builder-1",
+          languageCode: "nl",
+          quality: "aligned",
+        },
+        location: {
+          kind: "caption_phrase",
+          phraseIndex: 12,
+          startMs: 54210,
+          endMs: 58100,
+          locatorConfidence: "canonical",
+        },
+        selection: {
+          clickedForm: "huis",
+          tokenIndex: 3,
+          charStart: 11,
+          charEnd: 15,
+        },
+        context: {
+          clickedForm: "huis",
+          text: "Ik ga naar huis.",
+        },
+      },
+      p_auth_kind: "first_party",
+      p_connected_client_id: null,
+    });
+  });
+
+  test.each([
+    ["unsupported_source_kind", { source: { kind: "web_page", provider: "browser" } }],
+    [
+      "invalid_source_timing",
+      {
+        source: { kind: "youtube_video", provider: "youtube", externalId: "4EE7m94mJpk" },
+        location: { kind: "caption_phrase", startMs: 2000, endMs: 1000 },
+      },
+    ],
+  ])("rejects invalid source-context-v2 with %s", async (error, partialContext) => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          ...partialContext,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("requires v2 review clientEventId to be a UUID and match turnId", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    const sourceContext = {
+      contractVersion: "source-context-v2",
+      source: { kind: "youtube_video", provider: "youtube", externalId: "4EE7m94mJpk" },
+    };
+
+    const nonUuidResponse = await POST(
+      request({
+        action: "review-card",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        result: "success",
+        clientEventId: "client-event-1",
+        sourceContext,
+      }),
+    );
+
+    expect(nonUuidResponse.status).toBe(400);
+    await expect(nonUuidResponse.json()).resolves.toEqual({
+      error: "v2_client_event_id_must_be_uuid",
+    });
+
+    mockAuthenticatedUser();
+    const mismatchResponse = await POST(
+      request({
+        action: "review-card",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        result: "success",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        turnId: "9b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext,
+      }),
+    );
+
+    expect(mismatchResponse.status).toBe(400);
+    await expect(mismatchResponse.json()).resolves.toEqual({
+      error: "v2_turn_id_mismatch",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   test("returns idempotency conflict when a client event id is reused with a different payload", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();

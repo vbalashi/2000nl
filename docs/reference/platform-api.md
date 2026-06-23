@@ -490,6 +490,59 @@ Minimum `sourceContext` envelope:
   diagnostics and future source-linked review UX. The platform truncates and
   hashes context for queryable event records.
 
+`source-context-v2` is the strict provenance contract for new producers. The
+initial supported source kind is YouTube:
+
+```json
+{
+  "contractVersion": "source-context-v2",
+  "source": {
+    "kind": "youtube_video",
+    "provider": "youtube",
+    "externalId": "4EE7m94mJpk",
+    "languageCode": "nl"
+  },
+  "artifact": {
+    "artifactKind": "caption_phrase_set",
+    "producer": "audiofilms_backend",
+    "phraseSetRevisionId": "phrases-v1",
+    "timingEvidenceRevisionId": "timing-v1",
+    "builderVersion": "builder-1",
+    "quality": "aligned"
+  },
+  "location": {
+    "kind": "caption_phrase",
+    "phraseIndex": 12,
+    "startMs": 54210,
+    "endMs": 58100,
+    "locatorConfidence": "canonical"
+  },
+  "selection": {
+    "clickedForm": "huis",
+    "tokenIndex": 3,
+    "charStart": 11,
+    "charEnd": 15,
+    "contextText": "bounded surrounding phrase"
+  },
+  "observation": {
+    "currentPlaybackTimeMs": 55000
+  }
+}
+```
+
+For v2, 2000NL derives the canonical YouTube URL from the validated video id.
+Client-observed titles, URLs, playback samples, and diagnostics are not allowed
+to control canonical source identity or idempotency. The current server
+normalizer passes only canonical source, artifact, location, selection, and
+bounded context fields into the atomic action RPC; volatile observation and
+diagnostics are intentionally excluded from the persisted action payload.
+Reserved future kinds such as `web_page`, `text_document`, and `ebook` are
+rejected until their private-source normalization and retention rules exist.
+
+For v2 provenance-aware review actions, `clientEventId` must be a UUID. If a
+`turnId` is supplied, it must equal `clientEventId`; otherwise the platform uses
+the UUID `clientEventId` as the review turn id.
+
 Current idempotency matrix:
 
 | Action | `clientEventId` for source-aware external clients | Card mutation | Retry behavior |
