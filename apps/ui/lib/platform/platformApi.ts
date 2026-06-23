@@ -205,7 +205,7 @@ type SourceContextParseResult =
   | { ok: true; value: Record<string, unknown> | null; version: "none" | "v1" | "v2" }
   | { ok: false; error: string; status: number };
 
-function parseSourceContext(value: unknown): SourceContextParseResult {
+function parseSourceContext(value: unknown, userId: string): SourceContextParseResult {
   if (value === undefined || value === null) {
     return { ok: true, value: null, version: "none" };
   }
@@ -223,27 +223,24 @@ function parseSourceContext(value: unknown): SourceContextParseResult {
     return { ok: true, value: record, version: "v1" };
   }
 
-  const normalized = normalizeSourceContextV2(record);
+  const normalized = normalizeSourceContextV2(record, userId);
   if (!normalized.ok) return normalized;
   return { ok: true, value: normalized.value, version: "v2" };
 }
 
 function normalizeSourceContextV2(
   record: Record<string, unknown>,
+  userId: string,
 ): { ok: true; value: Record<string, unknown> } | { ok: false; error: string; status: number } {
   const source = asRecord(record.source);
   const kind = asString(source.kind);
-  if (kind !== "youtube_video") {
+  if (!kind || !["youtube_video", "web_page", "text_document", "ebook"].includes(kind)) {
     return { ok: false, error: "unsupported_source_kind", status: 400 };
   }
 
-  const provider = asString(source.provider);
-  const externalId = asString(source.externalId);
-  if (provider !== "youtube" || !externalId || !/^[A-Za-z0-9_-]{11}$/.test(externalId)) {
-    return { ok: false, error: "invalid_youtube_source", status: 400 };
-  }
+  const normalizedSource = normalizeV2Source(source, kind, userId);
+  if (!normalizedSource.ok) return normalizedSource;
 
-  const languageCode = normalizeOptionalLanguageCode(source.languageCode);
   const artifact = normalizeV2Artifact(record.artifact);
   if (!artifact.ok) return artifact;
   const location = normalizeV2Location(record.location);
@@ -255,19 +252,119 @@ function normalizeSourceContextV2(
     ok: true,
     value: stripUndefined({
       contractVersion: "source-context-v2",
-      source: stripUndefined({
-        kind: "youtube_video",
-        provider: "youtube",
-        externalId,
-        url: `https://www.youtube.com/watch?v=${externalId}`,
-        languageCode,
-      }),
+      source: normalizedSource.value,
       artifact: artifact.value,
       location: location.value,
       selection: selection.value,
       context: selection.context,
     }),
   };
+}
+
+function normalizeV2Source(
+  source: Record<string, unknown>,
+  kind: string,
+  userId: string,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string; status: number } {
+  if (kind === "youtube_video") {
+    const provider = asString(source.provider);
+    const externalId = asString(source.externalId);
+    if (provider !== "youtube" || !externalId || !/^[A-Za-z0-9_-]{11}$/.test(externalId)) {
+      return { ok: false, error: "invalid_youtube_source", status: 400 };
+    }
+    return {
+      ok: true,
+      value: stripUndefined({
+        kind,
+        provider: "youtube",
+        externalId,
+        url: `https://www.youtube.com/watch?v=${externalId}`,
+        languageCode: normalizeOptionalLanguageCode(source.languageCode),
+      }),
+    };
+  }
+
+  if (kind === "web_page") {
+    const canonical = normalizePrivateWebUrl(source.canonicalUrl ?? source.url);
+    if (!canonical) return { ok: false, error: "invalid_web_page_source", status: 400 };
+    return {
+      ok: true,
+      value: stripUndefined({
+        kind,
+        provider: "web",
+        externalId: privateSourceExternalId(userId, kind, canonical),
+        canonicalUrl: canonical,
+        languageCode: normalizeOptionalLanguageCode(source.languageCode),
+      }),
+    };
+  }
+
+  if (kind === "text_document") {
+    const instanceId = boundedString(source.documentInstanceId, 160);
+    const revision = boundedString(source.documentRevision, 160);
+    if (!instanceId || !revision) {
+      return { ok: false, error: "invalid_text_document_source", status: 400 };
+    }
+    return {
+      ok: true,
+      value: stripUndefined({
+        kind,
+        provider: "pontix",
+        externalId: privateSourceExternalId(userId, kind, `${instanceId}:${revision}`),
+        languageCode: normalizeOptionalLanguageCode(source.languageCode),
+        documentInstanceId: instanceId,
+        documentRevision: revision,
+      }),
+    };
+  }
+
+  const provider = boundedString(source.provider, 80);
+  const externalId = boundedString(source.externalId, 160);
+  if (!provider || !externalId) {
+    return { ok: false, error: "invalid_ebook_source", status: 400 };
+  }
+  return {
+    ok: true,
+    value: stripUndefined({
+      kind,
+      provider,
+      externalId: privateSourceExternalId(userId, kind, `${provider}:${externalId}`),
+      languageCode: normalizeOptionalLanguageCode(source.languageCode),
+    }),
+  };
+}
+
+function normalizePrivateWebUrl(value: unknown): string | null {
+  const raw = asString(value);
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  url.username = "";
+  url.password = "";
+  url.hash = "";
+  url.hostname = url.hostname.toLowerCase();
+  if ((url.protocol === "https:" && url.port === "443") || (url.protocol === "http:" && url.port === "80")) {
+    url.port = "";
+  }
+  for (const key of Array.from(url.searchParams.keys())) {
+    if (/^(utm_|fbclid$|gclid$|mc_cid$|mc_eid$)/i.test(key)) {
+      url.searchParams.delete(key);
+    }
+  }
+  url.searchParams.sort();
+  return url.toString();
+}
+
+function privateSourceExternalId(userId: string, kind: string, identity: string) {
+  return `private:${kind}:${crypto
+    .createHash("sha256")
+    .update(`${userId}:${kind}:${identity}`)
+    .digest("hex")}`;
 }
 
 function normalizeV2Artifact(
@@ -311,7 +408,7 @@ function normalizeV2Location(
   }
   const location = value as Record<string, unknown>;
   const kind = asString(location.kind);
-  if (kind !== "caption_phrase") {
+  if (!kind || !["caption_phrase", "text_selection"].includes(kind)) {
     return { ok: false, error: "unsupported_source_location", status: 400 };
   }
   const startMs = optionalNonNegativeInt(location.startMs);
@@ -325,6 +422,14 @@ function normalizeV2Location(
   const phraseIndex = optionalNonNegativeInt(location.phraseIndex);
   if (phraseIndex === false) {
     return { ok: false, error: "invalid_phrase_index", status: 400 };
+  }
+  const charStart = optionalNonNegativeInt(location.charStart);
+  const charEnd = optionalNonNegativeInt(location.charEnd);
+  if (charStart === false || charEnd === false) {
+    return { ok: false, error: "invalid_source_location", status: 400 };
+  }
+  if (typeof charStart === "number" && typeof charEnd === "number" && charEnd < charStart) {
+    return { ok: false, error: "invalid_source_location", status: 400 };
   }
   const locatorConfidence = asString(location.locatorConfidence);
   if (
@@ -343,6 +448,9 @@ function normalizeV2Location(
       locatorConfidence,
       phraseTextHash: boundedString(location.phraseTextHash, 160),
       timingQuality: boundedString(location.timingQuality, 80),
+      navigationId: boundedString(location.navigationId, 160),
+      charStart: charStart ?? undefined,
+      charEnd: charEnd ?? undefined,
     }),
   };
 }
@@ -376,6 +484,7 @@ function normalizeV2Selection(
       charStart: charStart ?? undefined,
       charEnd: charEnd ?? undefined,
       contextTextHash: boundedString(selection.contextTextHash, 160),
+      selectionHash: boundedString(selection.selectionHash, 160),
     }),
     context:
       clickedForm || contextText
@@ -1608,7 +1717,7 @@ export async function performPlatformAction(
   const action = asString(body?.action) as PlatformAction | null;
   const entryId = asString(body?.entryId);
   const clientEventId = asClientEventId(body?.clientEventId);
-  const parsedSourceContext = parseSourceContext(body?.sourceContext);
+  const parsedSourceContext = parseSourceContext(body?.sourceContext, auth.user.id);
   const sourceContext = parsedSourceContext.ok ? parsedSourceContext.value : null;
   const sourceContextVersion = parsedSourceContext.ok ? parsedSourceContext.version : "none";
 

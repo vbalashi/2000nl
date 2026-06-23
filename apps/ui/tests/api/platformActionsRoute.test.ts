@@ -848,7 +848,7 @@ describe("/api/platform/actions", () => {
   });
 
   test.each([
-    ["unsupported_source_kind", { source: { kind: "web_page", provider: "browser" } }],
+    ["unsupported_source_kind", { source: { kind: "file", provider: "browser" } }],
     [
       "invalid_source_timing",
       {
@@ -876,6 +876,168 @@ describe("/api/platform/actions", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error });
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("normalizes private web_page source-context-v2 before RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        eventId: "event-1",
+        sourceId: "source-1",
+        locationId: "location-1",
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "web_page",
+            provider: "browser",
+            canonicalUrl: "https://user:pass@Example.com:443/path?utm_source=x&b=2&a=1#secret",
+            titleObservation: "Private title",
+            languageCode: "NL_nl",
+          },
+          location: {
+            kind: "text_selection",
+            navigationId: "nav-1",
+            charStart: 4,
+            charEnd: 9,
+          },
+          selection: {
+            clickedForm: "woord",
+            contextTextHash: "ctx-hash",
+            selectionHash: "sel-hash",
+          },
+          diagnostics: {
+            rawPage: "should not pass",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const sourceContext = rpc.mock.calls[1]?.[1]?.p_source_context;
+    expect(sourceContext).toMatchObject({
+      contractVersion: "source-context-v2",
+      source: {
+        kind: "web_page",
+        provider: "web",
+        canonicalUrl: "https://example.com/path?a=1&b=2",
+        languageCode: "nl-nl",
+      },
+      location: {
+        kind: "text_selection",
+        navigationId: "nav-1",
+        charStart: 4,
+        charEnd: 9,
+      },
+      selection: {
+        clickedForm: "woord",
+        contextTextHash: "ctx-hash",
+        selectionHash: "sel-hash",
+      },
+    });
+    expect(sourceContext.source.externalId).toMatch(/^private:web_page:[a-f0-9]{64}$/);
+    expect(JSON.stringify(sourceContext)).not.toContain("user:pass");
+    expect(JSON.stringify(sourceContext)).not.toContain("utm_source");
+    expect(JSON.stringify(sourceContext)).not.toContain("Private title");
+    expect(JSON.stringify(sourceContext)).not.toContain("rawPage");
+  });
+
+  test("normalizes private text_document and ebook source-context-v2 before RPC", async () => {
+    const { POST } = await import("@/app/api/platform/actions/route");
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        eventId: "event-1",
+        sourceId: "source-1",
+        locationId: "location-1",
+      },
+      error: null,
+    });
+
+    const textDocumentResponse = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "8b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "text_document",
+            documentInstanceId: "doc-1",
+            documentRevision: "rev-1",
+            titleObservation: "Local file name",
+          },
+          selection: { clickedForm: "huis", selectionHash: "hash-1" },
+        },
+      }),
+    );
+
+    expect(textDocumentResponse.status).toBe(200);
+    expect(rpc.mock.calls[1]?.[1]?.p_source_context.source).toMatchObject({
+      kind: "text_document",
+      provider: "pontix",
+      documentInstanceId: "doc-1",
+      documentRevision: "rev-1",
+    });
+    expect(rpc.mock.calls[1]?.[1]?.p_source_context.source.externalId).toMatch(
+      /^private:text_document:[a-f0-9]{64}$/,
+    );
+    expect(JSON.stringify(rpc.mock.calls[1]?.[1]?.p_source_context)).not.toContain("Local file name");
+
+    mockAuthenticatedUser();
+    mockAccessibleEntry();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        eventId: "event-2",
+        sourceId: "source-2",
+        locationId: "location-2",
+      },
+      error: null,
+    });
+    const ebookResponse = await POST(
+      request({
+        action: "start-learning",
+        entryId: "entry-1",
+        cardTypeId: "word-to-definition",
+        clientEventId: "9b9df84e-7956-4712-a39a-3ea8363be1cf",
+        sourceContext: {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "ebook",
+            provider: "google_books",
+            externalId: "volume-1",
+            languageCode: "nl",
+          },
+          selection: { clickedForm: "huis" },
+        },
+      }),
+    );
+
+    expect(ebookResponse.status).toBe(200);
+    expect(rpc.mock.calls[3]?.[1]?.p_source_context.source).toMatchObject({
+      kind: "ebook",
+      provider: "google_books",
+      languageCode: "nl",
+    });
+    expect(rpc.mock.calls[3]?.[1]?.p_source_context.source.externalId).toMatch(
+      /^private:ebook:[a-f0-9]{64}$/,
+    );
   });
 
   test("requires v2 review clientEventId to be a UUID and match turnId", async () => {
