@@ -774,6 +774,15 @@ describeIfDb("FSRS RPC integration", () => {
       await client.query(`reset role`);
       expect(publicRows[0].result.request.scope).toBe("public-catalog");
       expect(publicRows[0].result.groups[0].items[0].entry.headword).toBe(query);
+
+      const { rows: emptyRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, NULL, 2, NULL) as result`,
+        [`zz-empty-${suffix}`],
+      );
+      const emptyGroups = emptyRows[0].result.groups as SearchGroupResult[];
+      expect(emptyGroups.find((group) => group.id === "headwords")?.items).toEqual([]);
+      expect(emptyGroups.find((group) => group.id === "examples")?.items).toEqual([]);
+      expect(emptyGroups.find((group) => group.id === "definitions")?.items).toEqual([]);
     }, ownerId);
   });
 

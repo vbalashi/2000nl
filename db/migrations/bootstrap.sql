@@ -277,3 +277,6 @@
 
 -- Grouped dictionary discovery search RPCs
 \i db/migrations/090_dictionary_grouped_search_rpcs.sql
+
+-- Clean grouped search empty item arrays
+\i db/migrations/091_clean_grouped_search_empty_items.sql

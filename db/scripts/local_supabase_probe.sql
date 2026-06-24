@@ -203,6 +203,10 @@ begin
     raise exception 'missing public.search_public_dictionary_groups_v1(text,text,text,integer,text)';
   end if;
 
+  if to_regprocedure('private.clean_dictionary_search_groups_v1(jsonb)') is null then
+    raise exception 'missing private.clean_dictionary_search_groups_v1(jsonb)';
+  end if;
+
   if not exists (
     select 1
     from information_schema.columns
@@ -488,6 +492,7 @@ begin
       ('public.get_dictionary_search_backfill_status(uuid)'::regprocedure),
       ('private.encode_dictionary_search_cursor_v1(jsonb)'::regprocedure),
       ('private.decode_dictionary_search_cursor_v1(text)'::regprocedure),
+      ('private.clean_dictionary_search_groups_v1(jsonb)'::regprocedure),
       ('private.search_dictionary_group_v1(uuid,boolean,text,text,uuid[],text,integer,text)'::regprocedure),
       ('public.search_dictionary_groups_v1(text,text,uuid[],text,integer,text)'::regprocedure),
       ('public.search_public_dictionary_groups_v1(text,text,text,integer,text)'::regprocedure),
