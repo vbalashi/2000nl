@@ -7,6 +7,11 @@ import {
   getAuthenticatedSupabase,
 } from "@/lib/platform/serverSupabase";
 import { performPlatformSearch } from "@/lib/platform/platformApi";
+import {
+  appendPlatformRouteHeaders,
+  createPlatformRouteInstrumentation,
+  measureRouteTiming,
+} from "@/lib/platform/routeInstrumentation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,17 +62,24 @@ export function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const instrumentation = createPlatformRouteInstrumentation(request);
   const reply = (payload: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(payload, status));
 
-  const auth = await getAuthenticatedSupabase(request);
+  const auth = await measureRouteTiming(instrumentation, "route.auth", () =>
+    getAuthenticatedSupabase(request),
+  );
   if (auth instanceof Response) {
-    return withPlatformCors(request, auth);
+    return appendPlatformRouteHeaders(withPlatformCors(request, auth), instrumentation);
   }
   const scopeError = requirePlatformScope(auth, "platform:read");
-  if (scopeError) return withPlatformCors(request, scopeError);
+  if (scopeError) {
+    return appendPlatformRouteHeaders(withPlatformCors(request, scopeError), instrumentation);
+  }
 
-  const body = await readJson(request);
+  const body = await measureRouteTiming(instrumentation, "route.parse", () =>
+    readJson(request),
+  );
   const query = typeof body?.query === "string" ? body.query.trim() : "";
   const languageCode =
     typeof body?.languageCode === "string" ? body.languageCode.trim() : null;
@@ -81,17 +93,16 @@ export async function POST(request: NextRequest) {
   }
   const cursor = typeof body?.cursor === "string" ? body.cursor.trim() : null;
 
-  const result = await performPlatformSearch(auth, {
-    query,
-    languageCode,
-    dictionaryIds: parseDictionaryIds(body?.dictionaryIds),
-    group,
-    limit,
-    cursor,
-  });
+  const result = await measureRouteTiming(instrumentation, "route.operation", () =>
+    performPlatformSearch(auth, {
+      query,
+      languageCode,
+      dictionaryIds: parseDictionaryIds(body?.dictionaryIds),
+      group,
+      limit,
+      cursor,
+    }),
+  );
   const response = reply(result.payload, result.status);
-  if (result.serverTiming) {
-    response.headers.set("Server-Timing", result.serverTiming);
-  }
-  return response;
+  return appendPlatformRouteHeaders(response, instrumentation, result.serverTiming);
 }
