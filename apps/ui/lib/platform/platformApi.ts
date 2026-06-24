@@ -119,7 +119,45 @@ export type PlatformActionBody = {
 export type PlatformOperationResult = {
   payload: unknown;
   status: number;
+  serverTiming?: string;
 };
+
+type TimingEntry = {
+  name: string;
+  durationMs: number;
+};
+
+function formatServerTiming(entries: TimingEntry[]) {
+  return entries
+    .map((entry) => `${entry.name};dur=${Math.max(0, entry.durationMs).toFixed(1)}`)
+    .join(", ");
+}
+
+async function measureTiming<T>(
+  timings: TimingEntry[],
+  name: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const startedAt = performance.now();
+  try {
+    return await fn();
+  } finally {
+    timings.push({ name, durationMs: performance.now() - startedAt });
+  }
+}
+
+function measureProjection<T>(
+  timings: TimingEntry[],
+  name: string,
+  fn: () => T,
+): T {
+  const startedAt = performance.now();
+  try {
+    return fn();
+  } finally {
+    timings.push({ name, durationMs: performance.now() - startedAt });
+  }
+}
 
 export function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -229,6 +267,7 @@ export async function performPlatformLookup(
   if (!query) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
+  const timings: TimingEntry[] = [];
 
   const requestMetadata = {
     languageCode,
@@ -240,20 +279,21 @@ export async function performPlatformLookup(
   const usesSearchSemantics =
     !useStrictLookup &&
     (intent === "external-click" || Boolean(languageCode) || Boolean(contextText));
-  const { data, error } = useStrictLookup
-    ? await rpcWithLookupTiming(
-        auth.supabase,
-        "lookup_dictionary_entries_v3",
-        {
-          p_query: query,
-          p_language_code: languageCode,
-          p_dictionary_ids: null,
-          p_limit: 10,
-        },
-        "authenticated",
-      )
+  const { data, error } = await measureTiming(timings, "lookup.db", () =>
+    useStrictLookup
+      ? rpcWithLookupTiming(
+          auth.supabase,
+          "lookup_dictionary_entries_v3",
+          {
+            p_query: query,
+            p_language_code: languageCode,
+            p_dictionary_ids: null,
+            p_limit: 10,
+          },
+          "authenticated",
+        )
     : usesSearchSemantics
-    ? await rpcWithLookupTiming(auth.supabase, "search_word_entries_gated", {
+      ? rpcWithLookupTiming(auth.supabase, "search_word_entries_gated", {
         p_query: query,
         p_part_of_speech: null,
         p_is_nt2: null,
@@ -264,14 +304,17 @@ export async function performPlatformLookup(
         p_language_code: languageCode,
         p_dictionary_ids: null,
       }, "authenticated")
-    : await rpcWithLookupTiming(auth.supabase, "fetch_dictionary_entry_gated", {
+      : rpcWithLookupTiming(auth.supabase, "fetch_dictionary_entry_gated", {
         p_headword: query,
-      }, "authenticated");
+      }, "authenticated"),
+  );
+  const serverTiming = () => formatServerTiming(timings);
 
   if (error) {
     return {
       payload: { error: "lookup_failed", detail: error.message ?? String(error) },
       status: 500,
+      serverTiming: serverTiming(),
     };
   }
 
@@ -294,6 +337,7 @@ export async function performPlatformLookup(
         items: [],
       },
       status: 200,
+      serverTiming: serverTiming(),
     };
   }
 
@@ -303,9 +347,14 @@ export async function performPlatformLookup(
   >();
   let listMembershipsByEntryId = new Map<string, unknown[]>();
   if (includeUserState) {
-    const userState = await readLookupUserState(auth, entries);
+    const userState = await measureTiming(timings, "lookup.user-state", () =>
+      readLookupUserState(auth, entries),
+    );
     if (!userState.ok) {
-      return userState.result;
+      return {
+        ...userState.result,
+        serverTiming: serverTiming(),
+      };
     }
     userStateByEntryId = userState.value.userStateByEntryId;
     listMembershipsByEntryId = userState.value.listMembershipsByEntryId;
@@ -317,17 +366,25 @@ export async function performPlatformLookup(
       return {
         payload: { error: "translation_cache_not_configured" },
         status: 500,
+        serverTiming: serverTiming(),
       };
     }
-    const resolvedTranslations = await resolveLookupTranslationContext(
-      auth,
-      params.service,
-      entries.map((entry) => entry.id),
+    const translationService = params.service;
+    const resolvedTranslations = await measureTiming(
+      timings,
+      "lookup.translation-cache",
+      () =>
+        resolveLookupTranslationContext(
+          auth,
+          translationService,
+          entries.map((entry) => entry.id),
+        ),
     );
     if (!resolvedTranslations.ok) {
       return {
         payload: resolvedTranslations.payload,
         status: resolvedTranslations.status,
+        serverTiming: serverTiming(),
       };
     }
     for (const [entryId, artifact] of resolvedTranslations.artifactsByEntryId) {
@@ -335,7 +392,7 @@ export async function performPlatformLookup(
     }
   }
 
-  const items = entries.map((entry) => {
+  const items = measureProjection(timings, "lookup.projection", () => entries.map((entry) => {
     const availableActions: PlatformAction[] = [
       "record-view",
       "start-learning",
@@ -395,7 +452,7 @@ export async function performPlatformLookup(
       },
       availableActions,
     };
-  });
+  }));
 
   return {
     payload: {
@@ -404,6 +461,7 @@ export async function performPlatformLookup(
       items,
     },
     status: 200,
+    serverTiming: serverTiming(),
   };
 }
 
@@ -432,6 +490,7 @@ export async function performPlatformCatalogLookup(
   if (!query) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
+  const timings: TimingEntry[] = [];
 
   const requestMetadata = {
     languageCode,
@@ -440,28 +499,31 @@ export async function performPlatformCatalogLookup(
   };
 
   const useStrictLookup = strictLookupRoutesEnabled();
-  const { data, error } = useStrictLookup
-    ? await rpcWithLookupTiming(
-        service.supabase,
-        "lookup_public_catalog_entries_v1",
-        {
-          p_query: query,
-          p_language_code: languageCode,
-          p_limit: 10,
-        },
-        "catalog",
-      )
-    : await rpcWithLookupTiming(
-        service.supabase,
-        "search_public_catalog_entries",
-        {
-          p_query: query,
-          p_language_code: languageCode,
-          p_page: 1,
-          p_page_size: 10,
-        },
-        "catalog",
-      );
+  const { data, error } = await measureTiming(timings, "lookup.db", () =>
+    useStrictLookup
+      ? rpcWithLookupTiming(
+          service.supabase,
+          "lookup_public_catalog_entries_v1",
+          {
+            p_query: query,
+            p_language_code: languageCode,
+            p_limit: 10,
+          },
+          "catalog",
+        )
+      : rpcWithLookupTiming(
+          service.supabase,
+          "search_public_catalog_entries",
+          {
+            p_query: query,
+            p_language_code: languageCode,
+            p_page: 1,
+            p_page_size: 10,
+          },
+          "catalog",
+        ),
+  );
+  const serverTiming = () => formatServerTiming(timings);
 
   if (error) {
     return {
@@ -470,6 +532,7 @@ export async function performPlatformCatalogLookup(
         detail: error.message ?? String(error),
       },
       status: 500,
+      serverTiming: serverTiming(),
     };
   }
 
@@ -488,7 +551,7 @@ export async function performPlatformCatalogLookup(
     payload: {
       query,
       request: requestMetadata,
-      items: entries.flatMap((entry) => {
+      items: measureProjection(timings, "lookup.projection", () => entries.flatMap((entry) => {
         const dictionary = Array.isArray(entry.dictionary)
           ? entry.dictionary[0] ?? null
           : entry.dictionary ?? null;
@@ -540,9 +603,10 @@ export async function performPlatformCatalogLookup(
             relation: lookupMatchRelation(entry, query),
           },
         }];
-      }),
+      })),
     },
     status: 200,
+    serverTiming: serverTiming(),
   };
 }
 

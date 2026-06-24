@@ -118,6 +118,12 @@ describe("/api/platform/v1/catalog/lookup", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("lookup.db"),
+    );
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("lookup.projection"),
+    );
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "chrome-extension://abc",
     );

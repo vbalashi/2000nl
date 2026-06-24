@@ -275,6 +275,15 @@ describe("/api/platform/lookup", () => {
     const response = await POST(request({ query: " huis " }));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("lookup.db"),
+    );
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("lookup.user-state"),
+    );
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("lookup.projection"),
+    );
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "chrome-extension://abc",
     );

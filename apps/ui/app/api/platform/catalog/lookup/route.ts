@@ -58,5 +58,9 @@ export async function POST(request: NextRequest) {
     includeTranslations,
     intent,
   });
-  return reply(result.payload, result.status);
+  const response = reply(result.payload, result.status);
+  if (result.serverTiming) {
+    response.headers.set("Server-Timing", result.serverTiming);
+  }
+  return response;
 }
