@@ -435,6 +435,36 @@ Normative group IDs:
 `alphabetical` is not substring or related-headword search. Related compounds
 can become a separate optional group later.
 
+### Group Ranking Policy
+
+Grouped search uses Van Dale as an interaction reference, not as an exact
+ranking clone. The design goal is a fast learner-facing discovery surface that
+keeps lookup cards strict while giving useful adjacent search previews.
+
+`alphabetical` should behave like dictionary browsing. It returns a centered
+browse window around the query's insertion point for both exact matches and
+misses. For example, an exact `oog` query should include previous browse rows
+such as `onzin` / `onzinnig` before `oog`, and a miss such as `gezichtsveld`
+should land near `gezicht`, `gezichtspunt`, `gezichtsverlies`, `gezien`, and
+`gezin`. The unit is the current 2000NL meaning-level search document, because
+2000NL intentionally projects some Van Dale articles into separate learner
+cards when their meanings are separate. Do not deduplicate this group to unique
+headwords unless the card projection contract changes at the same time.
+
+`examples` should stay close to Van Dale's observable behavior: direct example
+and idiom-expression matches first, rendered as field matches rather than
+cards. In the `kwestie` comparison, both Van Dale and 2000NL surface examples
+from `kwestie`, `mening`, and `vreedzaam`.
+
+`definitions` is intentionally learner-oriented rather than a literal Van Dale
+article-order clone. Van Dale's visible `Within definitions` for `kwestie`
+starts with `aangelegenheid`, `anders`, `delicaat`, `kwestie`, and `mening`.
+2000NL currently ranks stronger semantic definition hits such as `zaak`,
+`vraagstuk`, `aangelegenheid`, `delicaat`, and `punt` first. Keep this ranking
+for now because it is more useful for understanding related meaning. If a
+future product surface needs literal dictionary browsing order, add an explicit
+mode or group variant instead of weakening the default learner ranking.
+
 `total` in `dictionary-search-v1` is an exact count of result items available in
 that group, not the number returned in the preview. Do not silently place capped
 or estimated values in `total`. Each group owns independent pagination through

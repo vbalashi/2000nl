@@ -354,6 +354,72 @@ For AudioFilms clicked-word cards:
 - do not mix `alphabetical` candidates into the card list;
 - use group-specific pagination for "More results".
 
+## Follow-Up Comparison: Alphabetical And Definitions
+
+After grouped search shipped, the AudioFilms extension exposed a concrete
+no-match case: `gezichtsveld` has no learner card, but Van Dale still shows an
+`Alphabetical` browse group. Van Dale's visible results were:
+
+```text
+gezicht
+gezichtspunt
+gezichtsverlies
+gezien1 (bn)
+gezien2 (vz)
+```
+
+2000NL initially returned only following rows such as `gezichtsverlies`,
+`gezien`, `gezin`, and later rows. The accepted fix was to make
+`alphabetical` a centered browse window around the normalized query's insertion
+point for both exact matches and misses.
+
+Exact-match spot checks showed the same principle:
+
+| Query | Van Dale `Alphabetical` | 2000NL decision |
+| --- | --- | --- |
+| `oog` | `onzin`, `onzinnig`, `oog`, `oogarts`, `ooggetuige` | include previous rows before the exact match |
+| `appel` | `appartement`, `appartementsgebouw`, `appel1`, `appel2`, `appelflap` | include previous rows before the exact match |
+| `huis` | `huig`, `huilen`, `huis`, `huisarrest`, `huisarts` | include previous rows before the exact match |
+| `gezichtsveld` | `gezicht`, `gezichtspunt`, `gezichtsverlies`, `gezien1`, `gezien2` | centered no-match window |
+| `indie` | `indiaan`, `indicatie`, `indien`, `indienen`, `indirect` | centered no-match window |
+| `cway` | `cv2`, `cv-ketel`, `cycloon`, `cyclus`, `cynisch` | centered no-match window |
+
+One deliberate difference remains: 2000NL's alphabetical group uses
+meaning-level `dictionary_search_documents`, not unique Van Dale article labels.
+This means a verb such as `lopen` or `maken` can produce several visible rows
+for the same headword. That is acceptable for now because 2000NL also projects
+those meanings as separate learner cards. Deduplicating `alphabetical` to
+article-level rows would make the preview disagree with the card model.
+
+The `definitions` group was checked with `kwestie`.
+
+Van Dale visible groups:
+
+```text
+Headwords: kwestie
+Example sentences: kwestie, kwestie, kwestie, mening, vreedzaam
+Within definitions: aangelegenheid, anders2, delicaat, kwestie, mening
+Alphabetical: kwellen, kwelling, kwestie, kwetsbaar, kwetsen
+```
+
+2000NL production grouped search:
+
+```text
+headwords: kwestie, kwestie
+examples: kwestie, kwestie, kwestie, mening, vreedzaam
+definitions: zaak, vraagstuk, aangelegenheid, delicaat, punt
+alphabetical: kwellen, kwelling, kwestie, kwestie, kwetsbaar
+```
+
+Decision: keep 2000NL's `definitions` ranking for now. Van Dale appears to use
+a dictionary/article-order style within the group, while 2000NL's current order
+puts stronger semantic definition matches first. For a learner-facing panel,
+`zaak`, `vraagstuk`, `aangelegenheid`, `delicaat`, and `punt` are more useful
+neighbors for understanding `kwestie` than copying the exact Van Dale ordering.
+If literal dictionary browse order becomes a product requirement, add it as an
+explicit mode or group variant rather than changing the default `definitions`
+ranking.
+
 ## Candidate Implementation Tracks
 
 Track A: Operational unblock
@@ -454,4 +520,3 @@ For each word, capture:
 - Do not let AudioFilms parse 2000NL `entry.raw` or infer dictionary grouping on
   the client.
 - Do not mutate learning state during lookup.
-
