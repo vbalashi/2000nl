@@ -1,4 +1,4 @@
-import type { AuthenticatedSupabase } from "./serverSupabase";
+import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
 import type { PlatformAction, PlatformOperationResult } from "./platformApi";
 import { parseSourceContext } from "./sourceContext";
 
@@ -14,6 +14,7 @@ export type GeneratedUserDictionaryEntryBody = {
   revision?: unknown;
   item?: unknown;
   generated?: unknown;
+  draftTranslation?: unknown;
 };
 
 export async function createUserDictionaryEntry(
@@ -88,6 +89,7 @@ export async function deleteUserDictionaryEntry(
 export async function createGeneratedUserDictionaryEntry(
   auth: AuthenticatedSupabase,
   body: GeneratedUserDictionaryEntryBody | null,
+  service?: ServiceSupabase,
 ): Promise<PlatformOperationResult> {
   const record = asRecord(body);
   const clickedForm = asString(record.clickedForm) ?? asString(record.headword);
@@ -195,6 +197,10 @@ export async function createGeneratedUserDictionaryEntry(
     return mapUserEntryRpcError("create_generated_user_entry_failed", error);
   }
 
+  const draftTranslationCache = service
+    ? await persistGeneratedDraftTranslation(service, data, record.draftTranslation)
+    : null;
+
   return {
     payload: {
       ok: true,
@@ -207,11 +213,63 @@ export async function createGeneratedUserDictionaryEntry(
         candidateId,
         revision,
         requiresExplicitStartLearning: true,
+        ...(draftTranslationCache
+          ? { draftTranslationCache }
+          : {}),
       },
       nextActions: ["start-learning"],
     },
     status: 200,
   };
+}
+
+async function persistGeneratedDraftTranslation(
+  service: ServiceSupabase,
+  entryId: string,
+  value: unknown,
+): Promise<
+  | { status: "stored"; targetLang: string; provider: string }
+  | { status: "failed"; error: string }
+  | null
+> {
+  const translation = asRecord(value);
+  if (translation.status !== "ready") return null;
+
+  const overlay = asRecord(translation.overlay);
+  const targetLang =
+    normalizeLangForDb(asString(translation.targetLang) ?? asString(translation.targetLanguageCode));
+  if (!targetLang || !Object.keys(overlay).length) return null;
+
+  const provider = normalizeTranslationProvider(process.env.TRANSLATION_PROVIDER);
+  const sourceFingerprint =
+    asString(translation.translationPolicyVersion) ??
+    "platform-generated-draft-translation-v1";
+
+  const { error } = await service.supabase
+    .from("word_entry_translations")
+    .upsert(
+      {
+        word_entry_id: entryId,
+        target_lang: targetLang,
+        provider,
+        status: "ready",
+        overlay,
+        note: asString(translation.note),
+        source_fingerprint: sourceFingerprint,
+        error_message: null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "word_entry_id,target_lang,provider" },
+    );
+
+  if (error) {
+    return {
+      status: "failed",
+      error: error.message ?? String(error),
+    };
+  }
+
+  return { status: "stored", targetLang, provider };
 }
 
 export function mapUserEntryRpcError(
@@ -255,6 +313,17 @@ function asString(value: unknown): string | null {
 
 function asPositiveInteger(value: unknown): number | null {
   return Number.isInteger(value) && Number(value) > 0 ? Number(value) : null;
+}
+
+function normalizeLangForDb(value: string | null) {
+  return value?.trim().replace("_", "-").toLowerCase() || null;
+}
+
+function normalizeTranslationProvider(value: string | undefined | null) {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "deepl" || normalized === "openai" || normalized === "gemini"
+    ? normalized
+    : "openai";
 }
 
 function firstSectionText(value: unknown, kind: string): string | null {

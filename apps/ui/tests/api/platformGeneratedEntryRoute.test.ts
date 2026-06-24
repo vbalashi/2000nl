@@ -5,6 +5,7 @@ const rpc = vi.fn();
 const from = vi.fn();
 const getUser = vi.fn();
 const fetchMock = vi.fn();
+const translationUpsert = vi.fn();
 const createClient = vi.fn(() => ({
   auth: { getUser },
   rpc,
@@ -96,6 +97,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
     rpc.mockReset();
     from.mockReset();
     fetchMock.mockReset();
+    translationUpsert.mockReset();
     from.mockImplementation(() => chain({ data: null, error: null }));
   });
 
@@ -266,6 +268,122 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
           requiresExplicitStartLearning: true,
         },
         nextActions: ["start-learning"],
+      }),
+    );
+  });
+
+  test("stores a ready draft translation overlay for the persisted generated entry", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/route"
+    );
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+    translationUpsert.mockResolvedValueOnce({ error: null });
+    from.mockImplementation((table: string) => {
+      if (table === "word_entry_translations") {
+        return { upsert: translationUpsert };
+      }
+      if (table === "connected_client_sessions") {
+        return chain({
+          data: {
+            id: "session-1",
+            client_id: "audiofilms_chrome",
+            user_id: "user-1",
+            scopes: ["platform:read", "platform:write"],
+            revoked_at: null,
+            access_token_expires_at: new Date(Date.now() + 60_000).toISOString(),
+          },
+          error: null,
+        });
+      }
+      if (table === "connected_clients") {
+        return chain({
+          data: { client_id: "audiofilms_chrome", status: "active" },
+          error: null,
+        });
+      }
+      if (table === "connected_client_grants") {
+        return chain({
+          data: { scopes: ["platform:read", "platform:write"], revoked_at: null },
+          error: null,
+        });
+      }
+      return chain({ data: null, error: null });
+    });
+    rpc.mockResolvedValueOnce({ data: "entry-generated-1", error: null });
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        contextText: "Wat een gedoe.",
+        draftSetId: "gds-1",
+        candidateId: "gdc-1",
+        revision: 1,
+        draftTranslation: {
+          targetLang: "ru",
+          status: "ready",
+          overlay: {
+            headword: "хлопоты",
+            meanings: [{ definition: "ситуация с лишними усилиями" }],
+          },
+          note: "Context note",
+          translationPolicyVersion: "platform-generated-draft-translation-v1",
+        },
+        item: {
+          entry: {
+            contentFingerprint: "fingerprint-1",
+            content: {
+              headword: "gedoe",
+              languageCode: "nl",
+              summary: { definition: "Een hoop onhandige moeite." },
+              sections: [
+                {
+                  id: "meaning-1",
+                  kind: "meaning",
+                  text: "Een hoop onhandige moeite.",
+                },
+              ],
+            },
+          },
+          generation: {
+            provider: "openai",
+            model: "gpt-test",
+            promptVersion: "generated-user-entry-v1",
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(translationUpsert).toHaveBeenCalledWith(
+      {
+        word_entry_id: "entry-generated-1",
+        target_lang: "ru",
+        provider: "openai",
+        status: "ready",
+        overlay: {
+          headword: "хлопоты",
+          meanings: [{ definition: "ситуация с лишними усилиями" }],
+        },
+        note: "Context note",
+        source_fingerprint: "platform-generated-draft-translation-v1",
+        error_message: null,
+        updated_at: expect.any(String),
+      },
+      { onConflict: "word_entry_id,target_lang,provider" },
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        entryId: "entry-generated-1",
+        generation: expect.objectContaining({
+          draftTranslationCache: {
+            status: "stored",
+            targetLang: "ru",
+            provider: "openai",
+          },
+        }),
       }),
     );
   });

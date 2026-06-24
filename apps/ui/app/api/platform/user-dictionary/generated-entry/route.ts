@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   getAuthenticatedSupabase,
+  getPlatformServiceSupabase,
   jsonNoStore,
   platformCorsPreflight,
   requirePlatformScope,
@@ -40,7 +41,12 @@ export async function POST(request: NextRequest) {
   const scopeError = requirePlatformScope(auth, "platform:write");
   if (scopeError) return withPlatformCors(request, scopeError);
 
+  const service = getPlatformServiceSupabase();
+  if (service instanceof Response) {
+    return withPlatformCors(request, service);
+  }
+
   const body = await readJson(request);
-  const result = await createGeneratedUserDictionaryEntry(auth, body);
+  const result = await createGeneratedUserDictionaryEntry(auth, body, service);
   return reply(result.payload, result.status);
 }
