@@ -46,6 +46,16 @@ async function expectUnauthorizedRpc(
 describeIfDb("FSRS RPC integration", () => {
   const pool = new Pool({ connectionString: dbUrl });
   const mode = "word-to-definition";
+  type SearchGroupResult = {
+    id: string;
+    total: number;
+    items: Array<{
+      kind: string;
+      resultKey?: string;
+      entry: { headword: string };
+    }>;
+    page: { hasMore: boolean; nextCursor: string | null };
+  };
 
   beforeAll(async () => {
     await runMigrations(pool);
@@ -646,6 +656,124 @@ describeIfDb("FSRS RPC integration", () => {
           batchSize: 2,
         }),
       );
+    }, ownerId);
+  });
+
+  test("grouped dictionary search returns Van Dale-style groups and cursors", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      const suffix = Date.now();
+      const query = `aagroup${suffix}`;
+      await client.query(
+        `insert into languages (code, name)
+         values ('aa', 'Grouped Search Test')
+         on conflict (code) do nothing`,
+      );
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, is_editable,
+           schema_key, schema_version
+         ) values (
+           'aa', $1, 'Grouped Search Test Dictionary', 'curated', 'system', false,
+           'nl-vandale-v1', 1
+         )
+         returning id`,
+        [`aa-grouped-${suffix}`],
+      );
+      const dictionaryId = dictionaryRows[0].id;
+      const entries = [
+        {
+          headword: query,
+          definition: `${query} definition text`,
+          example: `first ${query} example text`,
+        },
+        {
+          headword: `${query}b`,
+          definition: `definition without the token`,
+          example: `second ${query} example text`,
+        },
+        {
+          headword: `${query}c`,
+          definition: `another ${query} definition text`,
+          example: `example without the token`,
+        },
+      ];
+
+      for (const entry of entries) {
+        const { rows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+           ) values ($1, 'aa', $2, 1, 'noun', $3::jsonb)
+           returning id`,
+          [
+            dictionaryId,
+            entry.headword,
+            JSON.stringify({
+              meanings: [
+                {
+                  definition: entry.definition,
+                  examples: [entry.example],
+                },
+              ],
+            }),
+          ],
+        );
+        await client.query(`select refresh_dictionary_search_document($1, 2)`, [rows[0].id]);
+      }
+
+      const { rows: previewRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, NULL, 2, NULL) as result`,
+        [query],
+      );
+      const preview = previewRows[0].result as {
+        contractVersion: string;
+        groups: SearchGroupResult[];
+      };
+      expect(preview.contractVersion).toBe("dictionary-search-v1");
+      expect(preview.groups.map((group: { id: string }) => group.id)).toEqual([
+        "headwords",
+        "examples",
+        "definitions",
+        "alphabetical",
+      ]);
+
+      const byGroup = new Map<string, SearchGroupResult>(
+        preview.groups.map((group) => [group.id, group]),
+      );
+      expect(byGroup.get("headwords")?.items[0].entry.headword).toBe(query);
+      expect(byGroup.get("examples")?.total).toBeGreaterThanOrEqual(2);
+      expect(byGroup.get("definitions")?.total).toBeGreaterThanOrEqual(2);
+      expect(byGroup.get("examples")?.items[0].kind).toBe("field-match");
+      expect(byGroup.get("definitions")?.items[0].kind).toBe("field-match");
+      expect(byGroup.get("alphabetical")?.items.map((item) => item.entry.headword)).toEqual([
+        query,
+        `${query}b`,
+      ]);
+
+      const { rows: firstExampleRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, NULL) as result`,
+        [query],
+      );
+      const firstExampleGroup = firstExampleRows[0].result.groups[0];
+      expect(firstExampleGroup.page.hasMore).toBe(true);
+      expect(firstExampleGroup.page.nextCursor).toEqual(expect.any(String));
+
+      const { rows: secondExampleRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, $2) as result`,
+        [query, firstExampleGroup.page.nextCursor],
+      );
+      const secondExampleGroup = secondExampleRows[0].result.groups[0];
+      expect(secondExampleGroup.items[0].resultKey).not.toBe(firstExampleGroup.items[0].resultKey);
+
+      await client.query(`set local role service_role`);
+      const { rows: publicRows } = await client.query(
+        `select search_public_dictionary_groups_v1($1, 'aa', NULL, 2, NULL) as result`,
+        [query],
+      );
+      await client.query(`reset role`);
+      expect(publicRows[0].result.request.scope).toBe("public-catalog");
+      expect(publicRows[0].result.groups[0].items[0].entry.headword).toBe(query);
     }, ownerId);
   });
 

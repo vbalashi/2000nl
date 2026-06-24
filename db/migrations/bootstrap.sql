@@ -274,3 +274,6 @@
 
 -- Resumable dictionary search document backfill runs
 \i db/migrations/089_dictionary_search_backfill_runs.sql
+
+-- Grouped dictionary discovery search RPCs
+\i db/migrations/090_dictionary_grouped_search_rpcs.sql

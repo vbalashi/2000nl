@@ -195,6 +195,14 @@ begin
     raise exception 'missing public.get_dictionary_search_backfill_status(uuid)';
   end if;
 
+  if to_regprocedure('public.search_dictionary_groups_v1(text,text,uuid[],text,integer,text)') is null then
+    raise exception 'missing public.search_dictionary_groups_v1(text,text,uuid[],text,integer,text)';
+  end if;
+
+  if to_regprocedure('public.search_public_dictionary_groups_v1(text,text,text,integer,text)') is null then
+    raise exception 'missing public.search_public_dictionary_groups_v1(text,text,text,integer,text)';
+  end if;
+
   if not exists (
     select 1
     from information_schema.columns
@@ -478,6 +486,11 @@ begin
       ('public.start_dictionary_search_backfill(integer,integer)'::regprocedure),
       ('public.run_dictionary_search_backfill_batch(uuid)'::regprocedure),
       ('public.get_dictionary_search_backfill_status(uuid)'::regprocedure),
+      ('private.encode_dictionary_search_cursor_v1(jsonb)'::regprocedure),
+      ('private.decode_dictionary_search_cursor_v1(text)'::regprocedure),
+      ('private.search_dictionary_group_v1(uuid,boolean,text,text,uuid[],text,integer,text)'::regprocedure),
+      ('public.search_dictionary_groups_v1(text,text,uuid[],text,integer,text)'::regprocedure),
+      ('public.search_public_dictionary_groups_v1(text,text,text,integer,text)'::regprocedure),
       ('public.get_card_user_state(uuid,uuid,text)'::regprocedure),
       ('public.get_user_tier(uuid)'::regprocedure),
       ('public.get_word_list_summary(uuid,uuid,text)'::regprocedure)
