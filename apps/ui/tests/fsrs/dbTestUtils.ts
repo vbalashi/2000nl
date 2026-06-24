@@ -16,7 +16,7 @@ export async function ensureAuthSchema(pool: Pool) {
   `);
 
   if (hasSupabaseAuth && hasSupabaseAuth > 0) {
-    await pool.query(`create schema if not exists private;`);
+    await pool.query(supabaseCompatSql);
     return;
   }
 
@@ -49,7 +49,7 @@ export async function ensureAuthSchema(pool: Pool) {
     );
 
     -- Create private schema
-    create schema if not exists private;
+    ${supabaseCompatSql}
 
     -- Supabase compatibility: many migrations reference auth.uid() in RLS policies.
     -- In Supabase, this reads the user id from JWT claims; in tests we just need
@@ -63,6 +63,30 @@ export async function ensureAuthSchema(pool: Pool) {
     $$;
   `);
 }
+
+const supabaseCompatSql = `
+  create schema if not exists private;
+  create schema if not exists extensions;
+  create extension if not exists pgcrypto with schema extensions;
+
+  create or replace function public.digest(data text, type text)
+  returns bytea
+  language sql
+  immutable
+  parallel safe
+  as $$
+    select extensions.digest(data, type);
+  $$;
+
+  create or replace function public.digest(data bytea, type text)
+  returns bytea
+  language sql
+  immutable
+  parallel safe
+  as $$
+    select extensions.digest(data, type);
+  $$;
+`;
 
 export async function runMigrations(pool: Pool) {
   // Vitest runs files in parallel in CI, but our workflow uses a single shared

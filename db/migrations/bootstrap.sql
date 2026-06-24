@@ -280,3 +280,6 @@
 
 -- Clean grouped search empty item arrays
 \i db/migrations/091_clean_grouped_search_empty_items.sql
+
+-- Keep generated user-entry validation helper internal
+\i db/migrations/092_harden_generated_user_entry_helper.sql

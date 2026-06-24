@@ -26,6 +26,29 @@ END $$;
 
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE SCHEMA IF NOT EXISTS private;
+CREATE SCHEMA IF NOT EXISTS extensions;
+
+-- Supabase exposes pgcrypto through the `extensions` schema. Plain Postgres CI
+-- needs the same namespace so migrations can call extensions.digest(...).
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
+CREATE OR REPLACE FUNCTION public.digest(data text, type text)
+RETURNS bytea
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT extensions.digest(data, type);
+$$;
+
+CREATE OR REPLACE FUNCTION public.digest(data bytea, type text)
+RETURNS bytea
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT extensions.digest(data, type);
+$$;
 
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY,
