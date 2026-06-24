@@ -39,6 +39,7 @@ promotes a boundary change.
 ## Canonical Docs
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - top-level system boundaries and safe change patterns.
+- [docs/architecture/post-provenance-review/platform-engineering-principles.md](./docs/architecture/post-provenance-review/platform-engineering-principles.md) - required guardrail for substantial Platform, dictionary, provenance, learning-state, external-client, and refactor work.
 - [docs/intent/index.md](./docs/intent/index.md) - product and workflow intent.
 - [docs/tech-debt/index.md](./docs/tech-debt/index.md) - known structural debt.
 - [docs/runbooks](./docs/runbooks) - operational notes for Supabase auth, production debugging, and audio/TTS workflows.
@@ -46,10 +47,17 @@ promotes a boundary change.
 
 ## Working Rules
 
+- Before substantial code changes, new features, contract changes, or refactors,
+  read the platform engineering principles and decide the owning layer/module.
+  Do not grow a broad file when the change belongs in a domain service, helper,
+  schema, migration/RPC, or documented projection.
 - Prefer the existing runtime boundaries: UI in `apps/ui`, scheduler logic in Postgres migrations/RPCs under `db`, ingestion in `packages/ingestion`.
 - Treat `apps/api` as aspirational unless you verify code exists for the path you intend to change.
 - Keep production-sensitive auth, Supabase, and service-role workflows server-side only.
 - When changing DB schema or FSRS behavior, validate both SQL-side behavior and the UI/tests that depend on it.
+- When decomposing broad but working code, add characterization tests for the
+  current request/response shapes, error codes, side effects, DB/RPC behavior,
+  and privacy/redaction behavior before splitting by domain.
 - Do not scatter new operational notes in random docs; add stable system guidance to `ARCHITECTURE.md`, intent to `docs/intent`, and runbook/debug material to `docs/`.
 
 ## Validation Commands

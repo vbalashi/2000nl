@@ -72,6 +72,17 @@ Docker Supabase URL. For local DB/RPC checks, prefer
 
 ## Safe Change Patterns
 
+- Substantial code changes must apply
+  `docs/architecture/post-provenance-review/platform-engineering-principles.md`
+  before editing. In practice: identify the owning layer, keep lookup read-only,
+  keep mutations on explicit Platform/RPC paths, preserve server-derived
+  principal identity, and avoid parsing raw provider payloads above stable
+  documented contracts.
+- Prefer domain modules over broad-file growth. If `apps/ui/lib/platform/platformApi.ts`
+  or another working module must be decomposed, first protect current behavior
+  with characterization tests, then split along stable boundaries such as
+  lookup, actions, source context, provenance, translation, lists, user
+  dictionary, and projection helpers.
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.
