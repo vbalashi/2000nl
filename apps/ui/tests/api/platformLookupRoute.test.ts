@@ -89,6 +89,8 @@ describe("/api/platform/lookup", () => {
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.TRANSLATION_PROVIDER = "openai";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
+    delete process.env.PLATFORM_STRICT_LOOKUP_ROUTES;
+    delete process.env.PLATFORM_LOOKUP_LATENCY_LOGS;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -142,7 +144,7 @@ describe("/api/platform/lookup", () => {
     });
     mockConnectedClientPrincipal(["platform:read"]);
     rpc.mockImplementation((name: string) => {
-      if (name === "fetch_dictionary_entry_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         return Promise.resolve({ data: [], error: null });
       }
       return Promise.resolve({ data: null, error: null });
@@ -165,7 +167,7 @@ describe("/api/platform/lookup", () => {
       error: null,
     });
     rpc.mockImplementation((name: string, args: any) => {
-      if (name === "fetch_dictionary_entry_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         return Promise.resolve({
           data: [
             {
@@ -283,8 +285,11 @@ describe("/api/platform/lookup", () => {
         global: { headers: { Authorization: "Bearer token-1" } },
       }),
     );
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+      p_query: "huis",
+      p_language_code: null,
+      p_dictionary_ids: null,
+      p_limit: 10,
     });
     expect(rpc).toHaveBeenCalledWith("get_user_list_memberships_for_entries", {
       p_user_id: "user-1",
@@ -406,8 +411,11 @@ describe("/api/platform/lookup", () => {
 
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+      p_query: "huis",
+      p_language_code: null,
+      p_dictionary_ids: null,
+      p_limit: 10,
     });
     expect(from).not.toHaveBeenCalled();
     for (const name of [
@@ -424,14 +432,14 @@ describe("/api/platform/lookup", () => {
     expect(payload.items[0].listMemberships).toBeUndefined();
   });
 
-  test("uses search semantics for external-click exact lookup with language filtering", async () => {
+  test("uses strict lookup for external-click metadata with language filtering", async () => {
     const { POST } = await import("@/app/api/platform/lookup/route");
     getUser.mockResolvedValueOnce({
       data: { user: { id: "user-1" } },
       error: null,
     });
     rpc.mockImplementation((name: string) => {
-      if (name === "search_word_entries_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         return Promise.resolve({
           data: {
             items: [
@@ -468,20 +476,16 @@ describe("/api/platform/lookup", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("search_word_entries_gated", {
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
       p_query: "huis",
-      p_part_of_speech: null,
-      p_is_nt2: null,
-      p_filter_frozen: null,
-      p_filter_hidden: null,
-      p_page: 1,
-      p_page_size: 10,
       p_language_code: "nl",
       p_dictionary_ids: null,
+      p_limit: 10,
     });
-    expect(rpc).not.toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
-    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "search_word_entries_gated",
+      expect.anything(),
+    );
     const payload = await response.json();
     expect(payload.request).toEqual({
       languageCode: "nl",
@@ -549,6 +553,105 @@ describe("/api/platform/lookup", () => {
     });
   });
 
+  test("can roll back external-click lookup to broad search by feature flag", async () => {
+    process.env.PLATFORM_STRICT_LOOKUP_ROUTES = "0";
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string) => {
+      if (name === "search_word_entries_gated") {
+        return Promise.resolve({ data: { items: [], total: 0 }, error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      request({
+        query: "huis",
+        languageCode: "nl",
+        intent: "external-click",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("search_word_entries_gated", {
+      p_query: "huis",
+      p_part_of_speech: null,
+      p_is_nt2: null,
+      p_filter_frozen: null,
+      p_filter_hidden: null,
+      p_page: 1,
+      p_page_size: 10,
+      p_language_code: "nl",
+      p_dictionary_ids: null,
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "lookup_dictionary_entries_v3",
+      expect.anything(),
+    );
+  });
+
+  test.each(["de", "oog", "huis"])(
+    "routes clicked token %s through strict lookup without broad search",
+    async (query) => {
+      const { POST } = await import("@/app/api/platform/lookup/route");
+      getUser.mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      rpc.mockImplementation((name: string) => {
+        if (name === "lookup_dictionary_entries_v3") {
+          return Promise.resolve({
+            data: {
+              items: [
+                {
+                  id: `entry-${query}`,
+                  dictionary_id: "dict-1",
+                  language_code: "nl",
+                  headword: query,
+                  meaning_id: 1,
+                  raw: { meanings: [{ definition: `${query} definition` }] },
+                  search_match_group: "exact-headword",
+                  search_matched_text: query,
+                },
+              ],
+              total: 1,
+            },
+            error: null,
+          });
+        }
+        return Promise.resolve({ data: null, error: null });
+      });
+
+      const response = await POST(
+        request({
+          query,
+          languageCode: "nl",
+          intent: "external-click",
+          includeUserState: false,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+        p_query: query,
+        p_language_code: "nl",
+        p_dictionary_ids: null,
+        p_limit: 10,
+      });
+      expect(rpc).not.toHaveBeenCalledWith(
+        "search_word_entries_gated",
+        expect.anything(),
+      );
+      const payload = await response.json();
+      expect(payload.items.map((item: any) => item.entry.headword)).toEqual([
+        query,
+      ]);
+    },
+  );
+
   test("applies language scope for the same visible clicked token", async () => {
     const { POST } = await import("@/app/api/platform/lookup/route");
     getUser.mockResolvedValueOnce({
@@ -556,7 +659,7 @@ describe("/api/platform/lookup", () => {
       error: null,
     });
     rpc.mockImplementation((name: string, args: any) => {
-      if (name === "search_word_entries_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         expect(args?.p_query).toBe("die");
         expect(args?.p_language_code).toBe("de");
         return Promise.resolve({
@@ -1080,7 +1183,7 @@ describe("/api/platform/lookup", () => {
 
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledWith(
-      "search_word_entries_gated",
+      "lookup_dictionary_entries_v3",
       expect.objectContaining({
         p_query: "bestaatniet",
         p_language_code: "nl",
@@ -1226,7 +1329,7 @@ describe("/api/platform/lookup", () => {
       error: null,
     });
     rpc.mockImplementation((name: string, args: any) => {
-      if (name === "fetch_dictionary_entry_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         return Promise.resolve({
           data: [
             {
@@ -1353,7 +1456,7 @@ describe("/api/platform/lookup", () => {
         error: null,
       });
       rpc.mockImplementation((rpcName: string) => {
-        if (rpcName === "fetch_dictionary_entry_gated") {
+        if (rpcName === "lookup_dictionary_entries_v3") {
           return Promise.resolve({
             data: [
               {

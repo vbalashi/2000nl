@@ -51,6 +51,32 @@ const REVIEW_RESULTS = new Set<ReviewResult>([
   "hide",
 ]);
 
+function strictLookupRoutesEnabled() {
+  const value = process.env.PLATFORM_STRICT_LOOKUP_ROUTES;
+  return value !== "0" && value !== "false";
+}
+
+async function rpcWithLookupTiming(
+  supabase: {
+    rpc: (name: string, args: Record<string, unknown>) => any;
+  },
+  name: string,
+  args: Record<string, unknown>,
+  scope: "authenticated" | "catalog",
+) {
+  const startedAt = Date.now();
+  const result = await supabase.rpc(name, args);
+  if (process.env.PLATFORM_LOOKUP_LATENCY_LOGS === "1") {
+    console.info("[platform.lookup]", {
+      scope,
+      rpc: name,
+      elapsedMs: Date.now() - startedAt,
+      ok: !result?.error,
+    });
+  }
+  return result;
+}
+
 export type PlatformAction =
   | "fetch-entry"
   | "record-view"
@@ -210,10 +236,24 @@ export async function performPlatformLookup(
     intent,
   };
 
+  const useStrictLookup = strictLookupRoutesEnabled();
   const usesSearchSemantics =
-    intent === "external-click" || Boolean(languageCode) || Boolean(contextText);
-  const { data, error } = usesSearchSemantics
-    ? await auth.supabase.rpc("search_word_entries_gated", {
+    !useStrictLookup &&
+    (intent === "external-click" || Boolean(languageCode) || Boolean(contextText));
+  const { data, error } = useStrictLookup
+    ? await rpcWithLookupTiming(
+        auth.supabase,
+        "lookup_dictionary_entries_v3",
+        {
+          p_query: query,
+          p_language_code: languageCode,
+          p_dictionary_ids: null,
+          p_limit: 10,
+        },
+        "authenticated",
+      )
+    : usesSearchSemantics
+    ? await rpcWithLookupTiming(auth.supabase, "search_word_entries_gated", {
         p_query: query,
         p_part_of_speech: null,
         p_is_nt2: null,
@@ -223,10 +263,10 @@ export async function performPlatformLookup(
         p_page_size: 10,
         p_language_code: languageCode,
         p_dictionary_ids: null,
-      })
-    : await auth.supabase.rpc("fetch_dictionary_entry_gated", {
+      }, "authenticated")
+    : await rpcWithLookupTiming(auth.supabase, "fetch_dictionary_entry_gated", {
         p_headword: query,
-      });
+      }, "authenticated");
 
   if (error) {
     return {
@@ -235,9 +275,11 @@ export async function performPlatformLookup(
     };
   }
 
-  const rawEntries = usesSearchSemantics
-    ? asRecord(data).items
-    : data;
+  const rawEntries = useStrictLookup
+    ? (asRecord(data).items ?? data)
+    : usesSearchSemantics
+      ? asRecord(data).items
+      : data;
   const entries = Array.isArray(rawEntries)
     ? (rawEntries as DictionaryLookupPayload[])
     : rawEntries
@@ -397,15 +439,29 @@ export async function performPlatformCatalogLookup(
     intent,
   };
 
-  const { data, error } = await service.supabase.rpc(
-    "search_public_catalog_entries",
-    {
-      p_query: query,
-      p_language_code: languageCode,
-      p_page: 1,
-      p_page_size: 10,
-    },
-  );
+  const useStrictLookup = strictLookupRoutesEnabled();
+  const { data, error } = useStrictLookup
+    ? await rpcWithLookupTiming(
+        service.supabase,
+        "lookup_public_catalog_entries_v1",
+        {
+          p_query: query,
+          p_language_code: languageCode,
+          p_limit: 10,
+        },
+        "catalog",
+      )
+    : await rpcWithLookupTiming(
+        service.supabase,
+        "search_public_catalog_entries",
+        {
+          p_query: query,
+          p_language_code: languageCode,
+          p_page: 1,
+          p_page_size: 10,
+        },
+        "catalog",
+      );
 
   if (error) {
     return {
