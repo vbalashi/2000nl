@@ -115,6 +115,42 @@ sequence and stop conditions.
 
 ---
 
+## Dictionary Latency Benchmark
+
+**Script:** `dictionary_latency_benchmark.mjs`
+**Purpose:** Attribute dictionary lookup/search latency across direct SQL,
+2000NL Platform HTTP, and the AudioFilms proxy without printing secrets.
+
+Use it for issue #40 and related outlier diagnostics:
+
+```bash
+node db/scripts/dictionary_latency_benchmark.mjs \
+  --queries ontdekken,de,het,zijn \
+  --samples 30 \
+  --hot-queries de,het \
+  --hot-samples 100 \
+  --output tmp/dictionary-latency.jsonl \
+  --summary-output tmp/dictionary-latency-summary.json
+```
+
+The script emits JSONL rows with timestamp, layer, query, path, group, sample
+kind, status, total time, TTFB, `Server-Timing`, request ID, result shape, and
+result count. The summary JSON aggregates rows by layer/path/query/group/sample
+kind and reports p50/p95/p99/max for total time, TTFB, and named
+`Server-Timing` metrics.
+
+Requirements:
+
+- SQL layer: `SUPABASE_DB_URL` or `DATABASE_URL`
+- 2000NL HTTP layer: `PLATFORM_CATALOG_ACCESS_TOKEN`
+- AudioFilms layer: no local token is required for the production proxy
+
+Use `--layers sql` or `--layers http-2000nl,audiofilms` to isolate one side of
+the boundary. Use `--no-lookup`, `--no-full-search`, or `--no-group-search` for
+focused runs.
+
+---
+
 ## Development
 
 When adding new scripts:
