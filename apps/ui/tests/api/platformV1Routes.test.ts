@@ -65,7 +65,7 @@ describe("/api/platform/v1 contract", () => {
     const { POST } = await import("@/app/api/platform/v1/lookup/route");
     mockAuthenticatedUser();
     rpc.mockImplementation((name: string) => {
-      if (name === "search_word_entries_gated") {
+      if (name === "lookup_dictionary_entries_v3") {
         return Promise.resolve({
           data: {
             items: [
@@ -508,8 +508,11 @@ describe("/api/platform/v1 contract", () => {
 
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+      p_query: "huis",
+      p_language_code: null,
+      p_dictionary_ids: null,
+      p_limit: 10,
     });
     await expect(response.json()).resolves.toMatchInlineSnapshot(`
       {
