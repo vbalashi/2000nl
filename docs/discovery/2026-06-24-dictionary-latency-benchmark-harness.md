@@ -224,3 +224,34 @@ Local token handling:
 - The benchmark now runs from local gitignored env files, not 1Password.
 - Token locations are documented in
   `docs/runbooks/dictionary-platform-smoke.md`.
+
+## Direct PostgreSQL Diagnostic Assessment
+
+The next useful comparison is server-side Supabase RPC/PostgREST versus
+server-side direct pooled PostgreSQL. A production route for that comparison is
+not a safe blind change yet:
+
+- `pg` is currently a devDependency of `apps/ui`, used by tests.
+- The production image uses Next standalone output. Adding a runtime direct
+  PostgreSQL path would require making `pg` a production dependency.
+- `/api/health` reports the Supabase API target, not a Postgres connection URL.
+  It does not prove that `SUPABASE_DB_URL` or `DATABASE_URL` is available to the
+  production Next runtime.
+- The nuc runtime env file is external to the repo (`/srv/2000nl-ui/.env`).
+  We should verify or add the Postgres URL there deliberately before deploying
+  any direct-Postgres diagnostic route.
+
+Safe next options:
+
+1. Run a one-off diagnostic from the nuc host/container where the same network
+   path and runtime env are available, using `pg` outside the public HTTP API.
+2. Add a guarded internal diagnostic route only after confirming:
+   - `pg` is intentionally promoted to production dependency;
+   - `SUPABASE_DB_URL` or a dedicated read-only pooled diagnostic URL is present
+     in the runtime env;
+   - the route is protected by an internal diagnostic token/flag and never logs
+     the URL or query content.
+
+Until that is done, the confirmed root cause remains narrower but not final:
+slow samples are inside the server-side Supabase RPC boundary (`search.db`),
+not generic route overhead.
