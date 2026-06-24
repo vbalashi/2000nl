@@ -40,11 +40,21 @@ export async function resolveLookupTranslationContext(
     }
   | { ok: false; payload: unknown; status: number }
 > {
-  const { data: settings, error: settingsError } = await auth.supabase
+  const provider = normalizeTranslationProvider(process.env.TRANSLATION_PROVIDER);
+  const defaultDbLang = normalizeLangForDb("en");
+  const settingsPromise = auth.supabase
     .from("user_settings")
     .select("translation_lang")
     .eq("user_id", auth.user.id)
     .maybeSingle();
+  const defaultRowsPromise = readTranslationRows(
+    service,
+    entryIds,
+    defaultDbLang,
+    provider,
+  );
+
+  const { data: settings, error: settingsError } = await settingsPromise;
 
   if (settingsError) {
     return {
@@ -71,16 +81,11 @@ export async function resolveLookupTranslationContext(
     };
   }
 
-  const provider = normalizeTranslationProvider(process.env.TRANSLATION_PROVIDER);
   const dbLang = normalizeLangForDb(targetLanguageCode);
-  const { data: rows, error: translationError } = await service.supabase
-    .from("word_entry_translations")
-    .select(
-      "id,word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message",
-    )
-    .in("word_entry_id", entryIds)
-    .eq("target_lang", dbLang)
-    .eq("provider", provider);
+  const { data: rows, error: translationError } =
+    dbLang === defaultDbLang
+      ? await defaultRowsPromise
+      : await readTranslationRows(service, entryIds, dbLang, provider);
 
   if (translationError) {
     return {
@@ -151,6 +156,22 @@ export async function resolveLookupTranslationContext(
   }
 
   return { ok: true, targetLanguageCode, artifactsByEntryId };
+}
+
+function readTranslationRows(
+  service: ServiceSupabase,
+  entryIds: string[],
+  dbLang: string,
+  provider: string,
+) {
+  return service.supabase
+    .from("word_entry_translations")
+    .select(
+      "id,word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message",
+    )
+    .in("word_entry_id", entryIds)
+    .eq("target_lang", dbLang)
+    .eq("provider", provider);
 }
 
 function asString(value: unknown): string | null {
