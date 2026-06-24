@@ -295,3 +295,9 @@
 
 -- Bounded headword/body grouped search
 \i db/migrations/096_grouped_search_bounded_headwords_body.sql
+
+-- Bounded body-group branch pages
+\i db/migrations/097_bounded_body_group_branch_pages.sql
+
+-- Body-group page-order indexes
+\i db/migrations/098_body_group_page_order_indexes.sql
