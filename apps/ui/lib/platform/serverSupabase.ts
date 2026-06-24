@@ -31,6 +31,48 @@ export type ServiceSupabase = {
   supabase: SupabaseClient;
 };
 
+type ServiceClientCache = {
+  url: string;
+  key: string;
+  client: SupabaseClient;
+};
+
+let serviceClientCache: ServiceClientCache | null = null;
+
+function createServiceSupabaseClient(
+  supabaseUrl: string,
+  serviceKey: string,
+): SupabaseClient {
+  return createClient(supabaseUrl, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
+}
+
+function getServiceSupabaseClient(
+  supabaseUrl: string,
+  serviceKey: string,
+): SupabaseClient {
+  if (process.env.NODE_ENV === "test") {
+    return createServiceSupabaseClient(supabaseUrl, serviceKey);
+  }
+
+  if (
+    serviceClientCache &&
+    serviceClientCache.url === supabaseUrl &&
+    serviceClientCache.key === serviceKey
+  ) {
+    return serviceClientCache.client;
+  }
+
+  const client = createServiceSupabaseClient(supabaseUrl, serviceKey);
+  serviceClientCache = { url: supabaseUrl, key: serviceKey, client };
+  return client;
+}
+
 export function jsonNoStore(payload: unknown, status = 200) {
   return NextResponse.json(payload, {
     status,
@@ -152,13 +194,7 @@ function platformServiceClient(): SupabaseClient | null {
     process.env.SUPABASE_SECRET_KEY ??
     process.env.SUPABASE_SERVICE_KEY;
   if (!supabaseUrl || !serviceKey) return null;
-  return createClient(supabaseUrl, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-  });
+  return getServiceSupabaseClient(supabaseUrl, serviceKey);
 }
 
 async function resolvePlatformPrincipal(params: {
@@ -315,15 +351,7 @@ export async function getCatalogSupabase(
     return jsonNoStore({ error: "supabase_service_not_configured" }, 500);
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-  });
-
-  return { supabase };
+  return { supabase: getServiceSupabaseClient(supabaseUrl, serviceKey) };
 }
 
 export function getPlatformServiceSupabase(): ServiceSupabase | NextResponse {
@@ -337,12 +365,6 @@ export function getPlatformServiceSupabase(): ServiceSupabase | NextResponse {
   }
 
   return {
-    supabase: createClient(supabaseUrl, serviceKey, {
-      auth: {
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-        persistSession: false,
-      },
-    }),
+    supabase: getServiceSupabaseClient(supabaseUrl, serviceKey),
   };
 }
