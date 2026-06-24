@@ -132,6 +132,7 @@ export type DictionaryEntry = {
   search_matched_field?: string | null;
   search_source_path?: string | null;
   search_group_rank?: number;
+  search_group_id?: "headwords" | "examples" | "definitions" | "alphabetical";
 };
 
 export type UserDictionaryEntry = {
@@ -234,6 +235,19 @@ export type WordEntrySearchResult = {
   items: DictionaryEntry[];
   total: number;
   groupCounts?: Record<string, number>;
+  grouped?: boolean;
+  groups?: Array<{
+    id: "headwords" | "examples" | "definitions" | "alphabetical";
+    label: string;
+    total: number | null;
+    count?: {
+      value: number | null;
+      relation: "eq" | "unknown";
+    };
+    hasMore: boolean;
+    nextCursor: string | null;
+    itemCount: number;
+  }>;
   queryNormalization?: {
     query?: string | null;
     normalized?: string | null;

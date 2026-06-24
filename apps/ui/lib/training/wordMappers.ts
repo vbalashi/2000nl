@@ -64,6 +64,7 @@ export const mapDictionaryEntry = (data: any): DictionaryEntry => ({
   ...(typeof data.search_group_rank === "number"
     ? { search_group_rank: data.search_group_rank }
     : {}),
+  ...(data.search_group_id ? { search_group_id: data.search_group_id } : {}),
 });
 
 export const mapCuratedListSummary = (row: any): WordListSummary => ({

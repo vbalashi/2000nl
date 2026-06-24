@@ -8,6 +8,7 @@ import {
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
   fetchWordsForList,
+  searchDictionaryGroups,
   searchDictionaryEntriesV2,
   searchWordEntries,
 } from "@/lib/trainingService";
@@ -171,6 +172,7 @@ export function DictionarySearchTab({
   );
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestSearchRequestRef = useRef(0);
+  const latestDetailRequestRef = useRef(0);
   const pageSize = 20;
   const updateSearchState = useCallback(
     (patch: Partial<DictionarySearchTabState>) => {
@@ -215,7 +217,15 @@ export function DictionarySearchTab({
     setSearchLoading(true);
     try {
       const trimmedQuery = query.trim() || undefined;
-      const result = useDictionarySearchV2
+      const result =
+        !useViewedListFilter
+          ? await searchDictionaryGroups({
+              query: trimmedQuery,
+              languageCode: searchLanguage,
+              dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
+              limit: 6,
+            })
+          : useDictionarySearchV2
         ? await searchDictionaryEntriesV2({
             query: trimmedQuery,
             languageCode: searchLanguage,
@@ -265,6 +275,28 @@ export function DictionarySearchTab({
     viewedList?.type,
     viewedListId,
   ]);
+
+  const openEntryDetail = useCallback(
+    async (entry: DictionaryEntry) => {
+      const requestId = latestDetailRequestRef.current + 1;
+      latestDetailRequestRef.current = requestId;
+      updateSearchState({
+        detailEntry: entry,
+        mobileDetailOpen: true,
+      });
+
+      const hydrated = await fetchDictionaryEntryById(entry.id, userId);
+      if (!hydrated || latestDetailRequestRef.current !== requestId) return;
+      onSearchStateChange((current) => ({
+        ...current,
+        detailEntry: hydrated,
+        wordResults: current.wordResults.map((item) =>
+          item.id === hydrated.id ? { ...item, ...hydrated } : item,
+        ),
+      }));
+    },
+    [onSearchStateChange, updateSearchState, userId],
+  );
 
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
@@ -413,8 +445,11 @@ export function DictionarySearchTab({
   const resultScopeLabel = useViewedListFilter
     ? `Alleen deze lijst: ${viewedListName}`
     : `Zoekt in ${sourceLabel}`;
+  const groupedSearchActive = !useViewedListFilter;
   const resultCountLabel = useViewedListFilter
     ? `${wordTotal} woorden gevonden`
+    : groupedSearchActive && query.trim()
+      ? `${wordResults.length} snelle resultaten in ${sourceLabel}`
     : query.trim()
       ? `${wordTotal} resultaten in ${sourceLabel}`
       : "Typ een woord om te zoeken";
@@ -656,53 +691,65 @@ export function DictionarySearchTab({
           </div>
         ) : wordResults.length ? (
           <div className="space-y-2">
-            {wordResults.map((entry) => {
+            {wordResults.map((entry, index) => {
               const selected = detailEntry?.id === entry.id;
+              const previousGroup = index > 0 ? wordResults[index - 1]?.search_group_id : null;
+              const showGroupHeader =
+                groupedSearchActive &&
+                entry.search_group_id &&
+                entry.search_group_id !== previousGroup;
               return (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => {
-                    updateSearchState({
-                      detailEntry: entry,
-                      mobileDetailOpen: true,
-                    });
-                  }}
-                  className={`w-full rounded-2xl border p-3 text-left transition ${
-                    selected
-                      ? "border-primary/50 bg-primary/5 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {entry.headword}
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {posLabel(entry.part_of_speech)} · {dictionaryLabel(entry)} · {meaningLabel(entry)}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {searchMatchLabel(entry)}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-sm text-slate-700 dark:text-slate-300">
-                        {firstDefinition(entry)}
-                      </p>
+                <React.Fragment key={`${entry.search_group_id ?? "flat"}-${entry.id}`}>
+                  {showGroupHeader ? (
+                    <div className="px-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {entry.search_group_id === "headwords"
+                        ? "Hoofdwoorden"
+                        : entry.search_group_id === "examples"
+                          ? "Voorbeeldzinnen"
+                          : entry.search_group_id === "definitions"
+                            ? "Binnen definities"
+                            : "Alfabetisch"}
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {entry.is_nt2_2000 ? (
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                          NT2 2000
-                        </span>
-                      ) : null}
-                      <span className="hidden text-slate-400 sm:inline">...</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void openEntryDetail(entry)}
+                    className={`w-full rounded-2xl border p-3 text-left transition ${
+                      selected
+                        ? "border-primary/50 bg-primary/5 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-white">
+                            {entry.headword}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {posLabel(entry.part_of_speech)} · {dictionaryLabel(entry)} · {meaningLabel(entry)}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {searchMatchLabel(entry)}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-700 dark:text-slate-300">
+                          {firstDefinition(entry)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {entry.is_nt2_2000 ? (
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                            NT2 2000
+                          </span>
+                        ) : null}
+                        <span className="hidden text-slate-400 sm:inline">...</span>
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </React.Fragment>
               );
             })}
           </div>
@@ -741,7 +788,7 @@ export function DictionarySearchTab({
                 page: Math.max(1, current.page - 1),
               }))
             }
-            disabled={page === 1}
+            disabled={page === 1 || groupedSearchActive}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Vorige
@@ -754,7 +801,7 @@ export function DictionarySearchTab({
                 page: current.page + 1,
               }))
             }
-            disabled={page * pageSize >= wordTotal}
+            disabled={groupedSearchActive || page * pageSize >= wordTotal}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Volgende

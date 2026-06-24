@@ -85,6 +85,7 @@ const importService = async () => {
     fetchUserPreferences: service.fetchUserPreferences,
     fetchWordsForList: service.fetchWordsForList,
     searchDictionaryEntriesV2: service.searchDictionaryEntriesV2,
+    searchDictionaryGroups: service.searchDictionaryGroups,
     addWordsToUserList: service.addWordsToUserList,
     createUserList: service.createUserList,
     updateUserList: service.updateUserList,
@@ -513,6 +514,124 @@ describe("trainingService list and preference characterization", () => {
       search_matched_field: "headword",
       search_source_path: "dictionary_search_documents.normalized_headword",
     });
+  });
+
+  test("searchDictionaryGroups uses platform grouped search and maps Van Dale-style sections", async () => {
+    const { searchDictionaryGroups } = await importService();
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          contractVersion: "dictionary-search-v1",
+          groups: [
+            {
+              id: "headwords",
+              total: 1,
+              count: { value: 1, relation: "eq" },
+              page: { hasMore: false, nextCursor: null },
+              items: [
+                {
+                  entry: {
+                    id: "word-1",
+                    headword: "echt",
+                    languageCode: "nl",
+                    partOfSpeech: "zn",
+                    summaryDefinition: "waar",
+                  },
+                  dictionary: {
+                    id: "dict-1",
+                    name: "VanDale Dutch",
+                    slug: "nl-vandale",
+                    kind: "curated",
+                  },
+                  match: {
+                    matchedText: "echt",
+                    sourcePath: "dictionary_search_documents.headword",
+                  },
+                },
+              ],
+            },
+            {
+              id: "examples",
+              total: null,
+              count: { value: null, relation: "unknown" },
+              page: { hasMore: true, nextCursor: "cursor-1" },
+              items: [
+                {
+                  entry: {
+                    id: "word-2",
+                    headword: "bizar",
+                    languageCode: "nl",
+                    partOfSpeech: "bn",
+                  },
+                  displayText: "enkele bizarre verhalen die echt gebeurd zijn",
+                  dictionary: {
+                    id: "dict-1",
+                    name: "VanDale Dutch",
+                    slug: "nl-vandale",
+                    kind: "curated",
+                  },
+                  match: {
+                    matchedText: "echt",
+                    sourcePath: "dictionary_search_fields.example",
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+      } as Response);
+
+    try {
+      const result = await searchDictionaryGroups({
+        query: " echt ",
+        languageCode: "nl",
+        dictionaryIds: ["dict-1"],
+        limit: 6,
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith("/api/platform/v1/search", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          query: "echt",
+          languageCode: "nl",
+          dictionaryIds: ["dict-1"],
+          limit: 6,
+        }),
+      });
+      expect(result.grouped).toBe(true);
+      expect(result.groups?.map((group) => group.id)).toEqual([
+        "headwords",
+        "examples",
+      ]);
+      expect(result.groups?.[1]).toMatchObject({
+        id: "examples",
+        hasMore: true,
+        nextCursor: "cursor-1",
+      });
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0]).toMatchObject({
+        id: "word-1",
+        headword: "echt",
+        dictionary_name: "VanDale Dutch",
+        search_group_id: "headwords",
+        search_match_label: "Exacte match",
+      });
+      expect(result.items[1]).toMatchObject({
+        id: "word-2",
+        headword: "bizar",
+        search_group_id: "examples",
+        search_match_label: "In voorbeeld",
+      });
+    } finally {
+      fetchMock.mockRestore();
+    }
   });
 
   test("searchWordEntries returns empty when the gated RPC fails", async () => {

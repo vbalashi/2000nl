@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { translationRequestHeaders } from "../translation/translationApiClient";
 import type {
   ActiveTrainingScope,
   AvailableDictionarySource,
@@ -35,6 +36,54 @@ type DictionarySearchV2Filters = WordSearchFilters & {
   listType?: WordListType;
   includeBodyMatches?: boolean;
   includeFallback?: boolean;
+};
+
+type DictionarySearchGroupId =
+  | "headwords"
+  | "examples"
+  | "definitions"
+  | "alphabetical";
+
+type GroupedDictionarySearchFilters = {
+  query?: string;
+  languageCode?: string;
+  dictionaryIds?: string[];
+  limit?: number;
+};
+
+type GroupedDictionarySearchResultGroup = {
+  id: DictionarySearchGroupId;
+  label: string;
+  total: number | null;
+  count: WordEntrySearchResult["groups"] extends Array<infer G>
+    ? G extends { count?: infer C }
+      ? C
+      : never
+    : never;
+  hasMore: boolean;
+  nextCursor: string | null;
+  items: ReturnType<typeof mapDictionaryEntry>[];
+};
+
+const GROUP_LABELS: Record<DictionarySearchGroupId, string> = {
+  headwords: "Hoofdwoorden",
+  examples: "Voorbeeldzinnen",
+  definitions: "Binnen definities",
+  alphabetical: "Alfabetisch",
+};
+
+const GROUP_MATCH_LABELS: Record<DictionarySearchGroupId, string> = {
+  headwords: "Exacte match",
+  examples: "In voorbeeld",
+  definitions: "In betekenis",
+  alphabetical: "Alfabetisch",
+};
+
+const GROUP_RANKS: Record<DictionarySearchGroupId, number> = {
+  headwords: 1,
+  examples: 4,
+  definitions: 5,
+  alphabetical: 6,
 };
 
 type EntryLearningListMembershipRpcList = {
@@ -355,6 +404,125 @@ export async function searchDictionaryEntriesV2(
     queryNormalization: result?.query_normalization ?? undefined,
     isLocked: result?.is_locked,
     maxAllowed: result?.max_allowed,
+  };
+}
+
+const mapGroupedDictionarySearchEntry = (
+  item: any,
+  groupId: DictionarySearchGroupId,
+): ReturnType<typeof mapDictionaryEntry> | null => {
+  const entry = item?.entry;
+  if (!entry?.id || !entry?.headword) return null;
+
+  const dictionary = item?.dictionary ?? null;
+  const match = item?.match ?? null;
+  const definition =
+    typeof entry.summaryDefinition === "string" && entry.summaryDefinition.trim()
+      ? entry.summaryDefinition
+      : typeof item?.displayText === "string" && item.displayText.trim()
+        ? item.displayText
+        : null;
+
+  return mapDictionaryEntry({
+    id: entry.id,
+    dictionary_id: dictionary?.id ?? entry.dictionaryId ?? null,
+    dictionary_name: dictionary?.name ?? null,
+    dictionary_slug: dictionary?.slug ?? null,
+    dictionary_kind: dictionary?.kind ?? null,
+    language_code: entry.languageCode ?? null,
+    headword: entry.headword,
+    meaning_id: entry.meaningId ?? null,
+    part_of_speech: entry.partOfSpeech ?? null,
+    raw: definition ? { meanings: [{ definition }] } : {},
+    is_nt2_2000: false,
+    search_match_group:
+      groupId === "headwords"
+        ? "exact-headword"
+        : groupId === "examples"
+          ? "example"
+          : groupId === "definitions"
+            ? "definition"
+            : "related-headword",
+    search_match_label: GROUP_MATCH_LABELS[groupId],
+    search_matched_text:
+      match?.matchedText ?? (typeof item?.displayText === "string" ? item.displayText : null),
+    search_matched_field: groupId,
+    search_source_path: match?.sourcePath ?? null,
+    search_group_rank: GROUP_RANKS[groupId],
+    search_group_id: groupId,
+  });
+};
+
+export async function searchDictionaryGroups(
+  filters: GroupedDictionarySearchFilters = {},
+): Promise<WordEntrySearchResult> {
+  const query = filters.query?.trim();
+  if (!query) return { items: [], total: 0, grouped: true, groups: [] };
+
+  const response = await fetch("/api/platform/v1/search", {
+    method: "POST",
+    cache: "no-store",
+    credentials: "same-origin",
+    headers: {
+      ...(await translationRequestHeaders()),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query,
+      languageCode: filters.languageCode ?? null,
+      dictionaryIds: filters.dictionaryIds?.length ? filters.dictionaryIds : null,
+      limit: filters.limit ?? 6,
+    }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload || !Array.isArray(payload.groups)) {
+    console.error("Error searching dictionary groups", payload);
+    return { items: [], total: 0, grouped: true, groups: [] };
+  }
+
+  const groups: GroupedDictionarySearchResultGroup[] = payload.groups
+    .filter((group: any) =>
+      ["headwords", "examples", "definitions", "alphabetical"].includes(group?.id),
+    )
+    .map((group: any) => {
+      const id = group.id as DictionarySearchGroupId;
+      const items = Array.isArray(group.items)
+        ? group.items
+            .map((item: any) => mapGroupedDictionarySearchEntry(item, id))
+            .filter(Boolean)
+        : [];
+      return {
+        id,
+        label: GROUP_LABELS[id],
+        total: typeof group.total === "number" ? group.total : null,
+        count: group.count,
+        hasMore: Boolean(group.page?.hasMore),
+        nextCursor: typeof group.page?.nextCursor === "string" ? group.page.nextCursor : null,
+        items,
+      };
+    });
+
+  const items = groups.flatMap((group) => group.items);
+  const knownTotal = groups.reduce(
+    (sum: number, group: GroupedDictionarySearchResultGroup) =>
+      sum + (typeof group.total === "number" ? group.total : group.items.length),
+    0,
+  );
+
+  return {
+    items,
+    total: knownTotal,
+    grouped: true,
+    groups: groups.map((group) => ({
+      id: group.id,
+      label: group.label,
+      total: group.total,
+      count: group.count,
+      hasMore: group.hasMore,
+      nextCursor: group.nextCursor,
+      itemCount: group.items.length,
+    })),
   };
 }
 

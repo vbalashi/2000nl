@@ -199,6 +199,10 @@ const searchDictionaryEntriesV2 = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const searchDictionaryGroups = vi.fn().mockResolvedValue({
+  items: [dictionaryHuis],
+  total: 1,
+});
 const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -286,6 +290,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchAvailableDictionarySources,
   fetchWordsForList,
   searchDictionaryEntriesV2,
+  searchDictionaryGroups,
   searchWordEntries,
   fetchEntryListMemberships,
   addWordsToUserList,
@@ -334,6 +339,10 @@ const restoreDefaultListScope = () => {
 
 const restoreDefaultSearchResults = () => {
   searchWordEntries.mockResolvedValue({
+    items: [dictionaryHuis],
+    total: 1,
+  });
+  searchDictionaryGroups.mockResolvedValue({
     items: [dictionaryHuis],
     total: 1,
   });
@@ -412,7 +421,7 @@ test("training focus filters pass date and source scope to card selection", asyn
 
 test("dictionary search scope changes lookup language without changing training", async () => {
   updateActiveTrainingScope.mockClear();
-  searchWordEntries.mockClear();
+  searchDictionaryGroups.mockClear();
 
   render(<TrainingScreen user={user} />);
 
@@ -428,7 +437,7 @@ test("dictionary search scope changes lookup language without changing training"
   fireEvent.change(queryInput, { target: { value: "bank" } });
 
   await waitFor(() =>
-    expect(searchWordEntries).toHaveBeenCalledWith(
+    expect(searchDictionaryGroups).toHaveBeenCalledWith(
       expect.objectContaining({
         query: "bank",
         languageCode: "en",
@@ -621,7 +630,7 @@ test("dictionary lookup state resets after closing the settings modal", async ()
 });
 
 test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
-  searchWordEntries.mockImplementation(async ({ query }: { query?: string }) =>
+  searchDictionaryGroups.mockImplementation(async ({ query }: { query?: string }) =>
     query === "boom"
       ? { items: [dictionaryBoom], total: 1 }
       : { items: [dictionaryHuis], total: 1 },
@@ -661,7 +670,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
   const steSearch = deferred<{ items: typeof dictionaryStedelijk[]; total: number }>();
   const sterSearch = deferred<{ items: typeof dictionarySter[]; total: number }>();
 
-  searchWordEntries.mockImplementation(({ query }: { query?: string }) => {
+  searchDictionaryGroups.mockImplementation(({ query }: { query?: string }) => {
     if (query === "ste") return steSearch.promise;
     if (query === "ster") return sterSearch.promise;
     return Promise.resolve({ items: [], total: 0 });
@@ -675,15 +684,15 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 
     const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
     fireEvent.change(queryInput, { target: { value: "ste" } });
-    await waitFor(() =>
-      expect(searchWordEntries).toHaveBeenCalledWith(
+  await waitFor(() =>
+      expect(searchDictionaryGroups).toHaveBeenCalledWith(
         expect.objectContaining({ query: "ste" }),
       ),
     );
 
     fireEvent.change(queryInput, { target: { value: "ster" } });
-    await waitFor(() =>
-      expect(searchWordEntries).toHaveBeenCalledWith(
+  await waitFor(() =>
+      expect(searchDictionaryGroups).toHaveBeenCalledWith(
         expect.objectContaining({ query: "ster" }),
       ),
     );
@@ -713,7 +722,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 });
 
 test("dictionary lookup shows backend match labels and preserves ranked order", async () => {
-  searchWordEntries.mockResolvedValueOnce({
+  searchDictionaryGroups.mockResolvedValueOnce({
     items: [
       {
         ...dictionaryHuis,
@@ -859,7 +868,7 @@ test("list-filtered search empty state names the viewed-list filter", async () =
 });
 
 test("dictionary lookup empty state names the dictionary source search", async () => {
-  searchWordEntries.mockResolvedValue({ items: [], total: 0 });
+  searchDictionaryGroups.mockResolvedValue({ items: [], total: 0 });
 
   try {
     render(<TrainingScreen user={user} />);
@@ -1102,7 +1111,7 @@ test("footer language selector switches current training language without changi
 
 test("search detail trains a selected entry as the next card without changing active scope", async () => {
   useTwoListScope();
-  searchWordEntries.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
   fetchTrainingWordByLookup.mockClear();
   fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
   fetchNextTrainingWordByScenario.mockClear();
@@ -1152,7 +1161,7 @@ test("search detail trains a selected entry as the next card without changing ac
 
 test("search detail copies a trusted entry into the user dictionary", async () => {
   useTwoListScope();
-  searchWordEntries.mockResolvedValue({ items: [dictionaryHuis], total: 1 });
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryHuis], total: 1 });
   copyEntryToUserDictionary.mockClear();
   fetchDictionaryEntryById.mockClear();
   fetchDictionaryEntryById.mockResolvedValueOnce({
@@ -1210,7 +1219,7 @@ test("search detail copies a trusted entry into the user dictionary", async () =
 });
 
 test("next-card override is one-shot and normal training resumes after review", async () => {
-  searchWordEntries.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
+  searchDictionaryGroups.mockResolvedValue({ items: [dictionaryBoom], total: 1 });
   fetchTrainingWordByLookup.mockClear();
   fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
   fetchNextTrainingWordByScenario.mockReset();
