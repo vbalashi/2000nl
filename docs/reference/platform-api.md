@@ -25,10 +25,10 @@ npm run test:platform
   issuance and never grants Platform read or write access.
 - Connected Client identity is never derived from CORS origin, `Referer`,
   request JSON, or `sourceContext.client.id`.
-- Guest/public catalog lookup uses a separate catalog credential:
+- Guest/public catalog lookup and search use a separate catalog credential:
   `Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>` against
-  `/api/platform/v1/catalog/lookup`. Do not use a shared end-user token for
-  guest lookup.
+  `/api/platform/v1/catalog/lookup` and `/api/platform/v1/catalog/search`. Do
+  not use a shared end-user token for guest lookup/search.
 - In production this credential is configured on the 2000NL host as
   `PLATFORM_CATALOG_ACCESS_TOKEN`. AudioFilms consumes the same value as
   `DICTIONARY_2000NL_CATALOG_ACCESS_TOKEN`.
@@ -63,7 +63,7 @@ including `off`; otherwise it is `platform-default`.
 
 ## `POST /lookup`
 
-Read-only dictionary lookup.
+Read-only strict dictionary lookup.
 
 Request:
 ```json
@@ -201,12 +201,32 @@ Response shape:
 
 `includeUserState: false` omits `userStateByCardType`, `progressSummary`, and `listMemberships`. `includeTranslations: true` asks lookup to attach cached provider-backed translations to the normalized content projection; it does not trigger provider generation. This endpoint must not call review/list mutation RPCs. Progress `status` is one of `new`, `seen`, `mixed`, `learning`, `reviewing`, or `hidden`; hidden cards are not reported as known.
 
-When `languageCode`, `contextText`, or `intent: "external-click"` is present,
-lookup uses the gated dictionary search path. `languageCode` is applied as a
-real filter, exact headword matches rank before indexed word-form matches, and
-match evidence is conservative: `exact` is returned for exact headword evidence,
-`inflection` for indexed word-form evidence, and `unknown` otherwise.
-`contextText` is accepted and echoed but does not affect ranking yet.
+Lookup is strict lexical lookup, not broad dictionary search. It returns
+accessible candidates from one resolution tier:
+
+1. exact, normalized, case-insensitive, and accent-insensitive headword
+   candidates;
+2. trusted `word_forms` candidates only when no headword candidate exists.
+
+It must return every accessible candidate at the selected resolution tier rather
+than selecting one arbitrary lemma. It must not include prefix, substring,
+example, definition, fuzzy, alphabetical, or raw JSON fallback matches. For
+example, `oog` returns meanings of `oog`, not `ogen`, `oogarts`, or `ooglid`;
+`brandt` can resolve to `branden` through a trusted form; `de` returns the
+lexical entry for `de`, not `deadline` or `deal`; a miss returns `items: []`.
+
+`languageCode` is applied as a real filter. `contextText` and `intent` are
+accepted and echoed as request metadata. They may later rerank ambiguous strict
+candidates, but they must not switch lookup into example, definition, raw JSON,
+or alphabetical search.
+
+Match evidence is conservative: `exact` is returned for headword evidence,
+`inflection` for trusted word-form evidence, and `unknown` only when a future
+strict evidence source cannot be represented by those relations.
+
+External clients such as AudioFilms must derive clicked-word `cards[]` from
+`/lookup` or `/catalog/lookup`. Grouped search is preview/navigation data and
+must not populate clicked-word cards.
 
 `entry.content` and `entry.contentFingerprint` are the preferred external
 dictionary contract. `entry.content.sections[]` provides stable IDs and source
@@ -249,13 +269,194 @@ The response uses the same `query`, `request`, `items[].entry`,
 `items[].dictionary`, and `items[].match` shape as `/lookup`, including
 normalized `entry.content` and `contentFingerprint`.
 
-Catalog lookup uses the public catalog search RPC, so exact headword matches
-rank before indexed word-form matches and expose the same conservative
-`exact`/`inflection`/`unknown` match evidence as authenticated external-click
-lookup. It is hard-limited to dictionaries with `visibility` of `system` or
-`public`. It does not run under an end-user Supabase JWT and must not return
-private dictionaries, `userStateByCardType`, `progressSummary`,
+Catalog lookup follows the same strict lexical lookup policy as authenticated
+`/lookup`, but it is hard-limited in SQL to dictionaries with `visibility` of
+`system` or `public`. It does not run under an end-user Supabase JWT and must
+not return private dictionaries, `userStateByCardType`, `progressSummary`,
 `listMemberships`, `cardCapabilitiesByType`, or `availableActions`.
+
+## `POST /search`
+
+Authenticated grouped dictionary discovery search.
+
+This endpoint is separate from strict lookup. Search returns small grouped
+previews and group-specific pages for a Van Dale-style discovery surface. It is
+for finding dictionary material around a query, not for producing learner cards
+for a clicked word.
+
+The current regression corpus and Van Dale reference measurements are tracked in
+`docs/discovery/2026-06-24-vandale-style-dictionary-search.md`.
+
+Request for all group previews:
+
+```json
+{
+  "query": "oog",
+  "languageCode": "nl",
+  "limit": 6
+}
+```
+
+Request for one group page:
+
+```json
+{
+  "query": "oog",
+  "languageCode": "nl",
+  "group": "examples",
+  "limit": 50,
+  "cursor": "opaque-cursor"
+}
+```
+
+Response shape:
+
+```json
+{
+  "contractVersion": "dictionary-search-v1",
+  "query": "oog",
+  "request": {
+    "languageCode": "nl",
+    "scope": "authenticated"
+  },
+  "groups": [
+    {
+      "id": "headwords",
+      "total": 2,
+      "items": [
+        {
+          "kind": "entry",
+          "entry": {
+            "id": "entry-id",
+            "languageCode": "nl",
+            "headword": "oog",
+            "meaningId": 1,
+            "partOfSpeech": "zn",
+            "summaryDefinition": "..."
+          },
+          "dictionary": {
+            "id": "dictionary-id",
+            "slug": "nl-vandale",
+            "name": "VanDale Dutch",
+            "kind": "curated"
+          },
+          "match": {
+            "relation": "exact",
+            "matchedText": "oog",
+            "sourcePath": "word_entries.headword"
+          }
+        }
+      ],
+      "page": {
+        "limit": 6,
+        "nextCursor": null,
+        "hasMore": false
+      }
+    },
+    {
+      "id": "examples",
+      "total": 13,
+      "items": [
+        {
+          "kind": "field-match",
+          "resultKey": "entry-id:raw.meanings[0].examples[1]",
+          "entry": {
+            "id": "entry-id",
+            "headword": "onder vier ogen"
+          },
+          "field": {
+            "kind": "example",
+            "sourcePath": "raw.meanings[0].examples[1]",
+            "text": "Wij spreken elkaar onder vier ogen."
+          },
+          "match": {
+            "matchedText": "ogen"
+          }
+        }
+      ],
+      "page": {
+        "limit": 6,
+        "nextCursor": "opaque-cursor",
+        "hasMore": true
+      }
+    },
+    {
+      "id": "definitions",
+      "total": 13,
+      "items": [],
+      "page": {
+        "limit": 6,
+        "nextCursor": "opaque-cursor",
+        "hasMore": true
+      }
+    },
+    {
+      "id": "alphabetical",
+      "total": 14449,
+      "items": [],
+      "page": {
+        "limit": 6,
+        "nextCursor": "opaque-cursor",
+        "hasMore": true
+      }
+    }
+  ]
+}
+```
+
+Normative group IDs:
+
+- `headwords` - exact/normalized headwords and trusted forms, represented as
+  entry preview rows;
+- `examples` - example and idiom-expression field matches;
+- `definitions` - definition, context, note, and idiom-explanation field
+  matches;
+- `alphabetical` - an ordered browse window anchored near the normalized query.
+
+`alphabetical` is not substring or related-headword search. Related compounds
+can become a separate optional group later.
+
+`total` counts result items available in that group, not the number returned in
+the preview. Each group owns independent pagination through opaque cursors.
+Do not expose durable page counts. Display labels can be client-localized;
+`id` is the stable contract.
+
+Grouped search normally returns previews only. It should not hydrate user
+progress, list memberships, actions, translations, full normalized card content,
+or `raw` unless an explicit later contract adds such overlays. Examples and
+definitions are first-class field matches keyed by stable `(entryId,
+sourcePath)`, not full dictionary cards. Search must not expose HTML
+highlighting; use `matchedText` first and add explicit character ranges later
+if needed.
+
+If the grouped search index is not ready, return `503` with:
+
+```json
+{
+  "error": "search_index_not_ready",
+  "detail": "Grouped dictionary search index is not ready."
+}
+```
+
+Do not return empty groups for index-readiness failures, because that converts
+an operational fault into a false dictionary miss.
+
+## `POST /catalog/search`
+
+Guest-safe public grouped dictionary discovery search.
+
+Authenticate with the dedicated catalog token:
+
+```http
+Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>
+```
+
+Request and response shapes match `/search`, except
+`request.scope` is `public-catalog` and all counts/candidates are hard-limited
+in SQL to dictionaries with `visibility` of `system` or `public`.
+
+Catalog search must not return private dictionaries, user state, list
+memberships, action capabilities, translations, full card content, or `raw`.
 
 ## External Translation Flow
 
