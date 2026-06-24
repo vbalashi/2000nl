@@ -268,3 +268,6 @@
 
 -- Stable dictionary search field identity for grouped search
 \i db/migrations/087_dictionary_search_field_identity.sql
+
+-- Strict clicked-word dictionary lookup RPCs
+\i db/migrations/088_strict_dictionary_lookup_rpcs.sql

@@ -422,6 +422,152 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("strict public catalog lookup returns only the selected lexical tier", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      const suffix = Date.now().toString();
+      const exactHeadword = `oog-${suffix}`;
+      const deHeadword = `de-${suffix}`;
+      const brandenHeadword = `branden-${suffix}`;
+      const brandtForm = `brandt-${suffix}`;
+
+      const { rows: publicDictionaryRows } = await client.query(
+        `select id from dictionaries where slug = 'nl-vandale' limit 1`,
+      );
+      const publicDictionaryId = publicDictionaryRows[0].id;
+
+      const { rows: exactRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values
+           ($1, 'nl', $2, 1, 'noun', jsonb_build_object('definition', 'eye')),
+           ($1, 'nl', $3, 1, 'noun', jsonb_build_object('definition', 'eye doctor')),
+           ($1, 'nl', $4, 1, 'noun', jsonb_build_object('definition', 'eyelid')),
+           ($1, 'nl', $5, 1, 'lidwoord', jsonb_build_object('definition', 'article')),
+           ($1, 'nl', $6, 1, 'noun', jsonb_build_object('definition', 'deadline')),
+           ($1, 'nl', $7, 1, 'verb', jsonb_build_object('definition', 'burn'))
+         returning id, headword`,
+        [
+          publicDictionaryId,
+          exactHeadword,
+          `oogarts-${suffix}`,
+          `ooglid-${suffix}`,
+          deHeadword,
+          `deadline-${suffix}`,
+          brandenHeadword,
+        ],
+      );
+      const idsByHeadword = new Map<string, string>(
+        exactRows.map((row) => [row.headword, row.id]),
+      );
+
+      await client.query(
+        `insert into word_forms (language_code, dictionary_id, form, word_id, headword)
+         values ('nl', $1, $2, $3, $4)`,
+        [
+          publicDictionaryId,
+          brandtForm,
+          idsByHeadword.get(brandenHeadword),
+          brandenHeadword,
+        ],
+      );
+
+      await client.query(`set local role service_role`);
+      const { rows: oogRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [exactHeadword],
+      );
+      const { rows: deRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [deHeadword],
+      );
+      const { rows: formRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [brandtForm],
+      );
+      const { rows: missRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [`missing-${suffix}`],
+      );
+      await client.query(`reset role`);
+
+      expect(
+        (oogRows[0].result.items as Array<{ headword: string }>).map(
+          (item) => item.headword,
+        ),
+      ).toEqual([exactHeadword]);
+      expect(
+        (deRows[0].result.items as Array<{ headword: string }>).map(
+          (item) => item.headword,
+        ),
+      ).toEqual([deHeadword]);
+      expect(formRows[0].result.items).toEqual([
+        expect.objectContaining({
+          headword: brandenHeadword,
+          search_match_group: "lemma-or-inflection",
+          search_matched_text: brandtForm,
+        }),
+      ]);
+      expect(missRows[0].result.items).toEqual([]);
+    }, ownerId);
+  });
+
+  test("strict lookup applies authenticated access and public catalog visibility", async () => {
+    const ownerId = randomUUID();
+    const otherId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherId);
+      const headword = `strict-private-${Date.now()}`;
+
+      const { rows: privateDictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           is_editable, schema_key, schema_version
+         ) values (
+           'nl', $1, 'Private strict lookup test', 'user', 'private', $2,
+           true, 'user-entry-v1', 1
+         )
+         returning id`,
+        [`strict-private-${Date.now()}`, ownerId],
+      );
+      const privateDictionaryId = privateDictionaryRows[0].id;
+      const { rows: privateRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values ($1, 'nl', $2, 1, 'noun', jsonb_build_object('definition', 'private definition'))
+         returning id`,
+        [privateDictionaryId, headword],
+      );
+
+      const { rows: ownerRows } = await client.query(
+        `select lookup_dictionary_entries_v3($1, 'nl', NULL, 10) as result`,
+        [headword],
+      );
+      expect(
+        (ownerRows[0].result.items as Array<{ id: string }>).map((item) => item.id),
+      ).toContain(privateRows[0].id);
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        otherId,
+      ]);
+      const { rows: otherRows } = await client.query(
+        `select lookup_dictionary_entries_v3($1, 'nl', NULL, 10) as result`,
+        [headword],
+      );
+      expect(otherRows[0].result.items).toEqual([]);
+
+      await client.query(`set local role service_role`);
+      const { rows: catalogRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [headword],
+      );
+      await client.query(`reset role`);
+      expect(catalogRows[0].result.items).toEqual([]);
+    }, ownerId);
+  });
+
   test("get_recent_training_history returns hydrated event and status rows", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

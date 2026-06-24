@@ -171,6 +171,18 @@ begin
     raise exception 'missing public.can_access_dictionary(uuid,uuid,text)';
   end if;
 
+  if to_regprocedure('private.resolve_dictionary_lookup_candidates_v1(uuid,text,text,uuid[],boolean,integer)') is null then
+    raise exception 'missing private.resolve_dictionary_lookup_candidates_v1(uuid,text,text,uuid[],boolean,integer)';
+  end if;
+
+  if to_regprocedure('public.lookup_dictionary_entries_v3(text,text,uuid[],integer)') is null then
+    raise exception 'missing public.lookup_dictionary_entries_v3(text,text,uuid[],integer)';
+  end if;
+
+  if to_regprocedure('public.lookup_public_catalog_entries_v1(text,text,integer)') is null then
+    raise exception 'missing public.lookup_public_catalog_entries_v1(text,text,integer)';
+  end if;
+
   if not exists (
     select 1
     from information_schema.columns
@@ -440,6 +452,8 @@ begin
       ('public.update_active_training_scope(uuid,text,uuid,text,text,text,text[],int)'::regprocedure),
       ('public.get_available_word_lists(uuid,text,text)'::regprocedure),
       ('public.search_word_entries_gated(text,text,boolean,boolean,boolean,int,int,text,uuid[])'::regprocedure),
+      ('public.lookup_dictionary_entries_v3(text,text,uuid[],integer)'::regprocedure),
+      ('public.lookup_public_catalog_entries_v1(text,text,integer)'::regprocedure),
       ('public.get_card_user_state(uuid,uuid,text)'::regprocedure),
       ('public.get_user_tier(uuid)'::regprocedure),
       ('public.get_word_list_summary(uuid,uuid,text)'::regprocedure)
@@ -465,7 +479,8 @@ begin
   with internal_helpers(signature) as (
     values
       ('public.assert_editable_user_dictionary(uuid,uuid)'::regprocedure),
-      ('public.validate_user_entry_v1_payload(jsonb,text)'::regprocedure)
+      ('public.validate_user_entry_v1_payload(jsonb,text)'::regprocedure),
+      ('private.resolve_dictionary_lookup_candidates_v1(uuid,text,text,uuid[],boolean,integer)'::regprocedure)
   )
   select pg_catalog.string_agg(signature::text, E'\n' order by signature::text)
   into v_problem
