@@ -154,11 +154,19 @@ export async function readLookupUserState(
   const listMembershipsByEntryId = new Map<string, unknown[]>();
   const entryIds = entries.map((entry) => entry.id);
 
-  const { data: membershipRows, error: membershipError } =
-    await auth.supabase.rpc("get_user_list_memberships_for_entries", {
+  const [membershipResult, stateResult] = await Promise.all([
+    auth.supabase.rpc("get_user_list_memberships_for_entries", {
       p_user_id: auth.user.id,
       p_entry_ids: entryIds,
-    });
+    }),
+    auth.supabase.rpc("get_user_card_states_for_entries", {
+      p_user_id: auth.user.id,
+      p_entry_ids: entryIds,
+      p_card_type_ids: Array.from(TRAINING_MODES),
+    }),
+  ]);
+
+  const { data: membershipRows, error: membershipError } = membershipResult;
 
   if (membershipError) {
     return {
@@ -177,14 +185,7 @@ export async function readLookupUserState(
     listMembershipsByEntryId.set(membership.entryId, membership.lists);
   }
 
-  const { data: stateRows, error: stateError } = await auth.supabase.rpc(
-    "get_user_card_states_for_entries",
-    {
-      p_user_id: auth.user.id,
-      p_entry_ids: entryIds,
-      p_card_type_ids: Array.from(TRAINING_MODES),
-    },
-  );
+  const { data: stateRows, error: stateError } = stateResult;
 
   if (stateError) {
     return {
