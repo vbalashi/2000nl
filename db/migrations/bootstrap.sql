@@ -289,3 +289,6 @@
 
 -- Keyset-first alphabetical grouped search
 \i db/migrations/094_alphabetical_keyset_search.sql
+
+-- Bounded grouped-search readiness checks
+\i db/migrations/095_grouped_search_readiness_exists.sql
