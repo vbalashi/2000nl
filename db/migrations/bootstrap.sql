@@ -304,3 +304,6 @@
 
 -- Indexed authenticated clicked-word lookup
 \i db/migrations/099_indexed_authenticated_lookup.sql
+
+-- Authenticated lookup enrichment indexes
+\i db/migrations/100_lookup_enrichment_indexes.sql
