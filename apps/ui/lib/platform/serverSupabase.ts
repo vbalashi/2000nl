@@ -41,7 +41,55 @@ type ServiceClientCache = {
   client: SupabaseClient;
 };
 
+type PlatformAuthCacheEntry = {
+  user: User;
+  principal: PlatformPrincipal;
+  expiresAtMs: number;
+};
+
 let serviceClientCache: ServiceClientCache | null = null;
+const platformAuthCache = new Map<string, PlatformAuthCacheEntry>();
+const PLATFORM_AUTH_CACHE_MAX_ENTRIES = 256;
+
+function platformAuthCacheTtlMs() {
+  const parsed = Number(process.env.PLATFORM_AUTH_CACHE_TTL_MS);
+  if (Number.isFinite(parsed)) return Math.max(0, Math.min(parsed, 60_000));
+  return 5_000;
+}
+
+function platformAuthCacheEnabled() {
+  return process.env.NODE_ENV !== "test" && platformAuthCacheTtlMs() > 0;
+}
+
+function readPlatformAuthCache(token: string): PlatformAuthCacheEntry | null {
+  if (!platformAuthCacheEnabled()) return null;
+  const tokenHash = sha256Hex(token);
+  const entry = platformAuthCache.get(tokenHash);
+  if (!entry) return null;
+  if (entry.expiresAtMs <= Date.now()) {
+    platformAuthCache.delete(tokenHash);
+    return null;
+  }
+  return entry;
+}
+
+function writePlatformAuthCache(
+  token: string,
+  user: User,
+  principal: PlatformPrincipal,
+) {
+  if (!platformAuthCacheEnabled()) return;
+  const tokenHash = sha256Hex(token);
+  if (platformAuthCache.size >= PLATFORM_AUTH_CACHE_MAX_ENTRIES) {
+    const firstKey = platformAuthCache.keys().next().value;
+    if (firstKey) platformAuthCache.delete(firstKey);
+  }
+  platformAuthCache.set(tokenHash, {
+    user,
+    principal,
+    expiresAtMs: Date.now() + platformAuthCacheTtlMs(),
+  });
+}
 
 function createServiceSupabaseClient(
   supabaseUrl: string,
@@ -134,6 +182,17 @@ export function getBearerToken(request: Request): string | null {
   return match?.[1]?.trim() || null;
 }
 
+function recordAuthTiming(
+  instrumentation: TimingEntrySink | undefined,
+  name: string,
+  durationMs: number,
+) {
+  instrumentation?.entries.push({
+    name,
+    durationMs,
+  });
+}
+
 async function measureAuthTiming<T>(
   instrumentation: TimingEntrySink | undefined,
   name: string,
@@ -150,22 +209,14 @@ async function measureAuthTiming<T>(
   }
 }
 
-async function getAuthenticatedUserSupabase(
-  request: Request,
-  instrumentation?: TimingEntrySink,
-): Promise<AuthenticatedUserSupabase | NextResponse> {
-  const token = getBearerToken(request);
-  if (!token) {
-    return jsonNoStore({ error: "missing_bearer_token" }, 401);
-  }
-
+function createAuthenticatedBearerClient(token: string): SupabaseClient | NextResponse {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
     return jsonNoStore({ error: "supabase_not_configured" }, 500);
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
@@ -177,6 +228,19 @@ async function getAuthenticatedUserSupabase(
       },
     },
   });
+}
+
+async function getAuthenticatedUserSupabase(
+  request: Request,
+  instrumentation?: TimingEntrySink,
+): Promise<AuthenticatedUserSupabase | NextResponse> {
+  const token = getBearerToken(request);
+  if (!token) {
+    return jsonNoStore({ error: "missing_bearer_token" }, 401);
+  }
+
+  const supabase = createAuthenticatedBearerClient(token);
+  if (supabase instanceof NextResponse) return supabase;
 
   const { data, error } = await measureAuthTiming(
     instrumentation,
@@ -196,13 +260,26 @@ export async function getAuthenticatedSupabase(
   request: Request,
   instrumentation?: TimingEntrySink,
 ): Promise<AuthenticatedSupabase | NextResponse> {
-  const auth = await getAuthenticatedUserSupabase(request, instrumentation);
-  if (auth instanceof NextResponse) return auth;
-
   const token = getBearerToken(request);
   if (!token) {
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
+
+  const cached = readPlatformAuthCache(token);
+  if (cached) {
+    const cacheStartedAt = performance.now();
+    const supabase = createAuthenticatedBearerClient(token);
+    if (supabase instanceof NextResponse) return supabase;
+    recordAuthTiming(instrumentation, "auth.cache-hit", performance.now() - cacheStartedAt);
+    return {
+      supabase,
+      user: cached.user,
+      principal: cached.principal,
+    };
+  }
+
+  const auth = await getAuthenticatedUserSupabase(request, instrumentation);
+  if (auth instanceof NextResponse) return auth;
 
   const principal = await resolvePlatformPrincipal(
     {
@@ -212,6 +289,8 @@ export async function getAuthenticatedSupabase(
     instrumentation,
   );
   if (principal instanceof NextResponse) return principal;
+
+  writePlatformAuthCache(token, auth.user, principal);
 
   return { ...auth, principal };
 }
