@@ -292,3 +292,78 @@ Next safe ways forward:
 3. After host access is restored, run the one-off direct comparison from
    `/srv/2000nl-ui` or the running container before considering a production
    diagnostic route.
+
+## Nuc One-Off Diagnostic Results
+
+Scoped SSH access was restored with a local `~/.ssh/ssh_home` key exported from
+the `SSH Home` 1Password item using OpenSSH format. The local `Host nuc` config
+now uses:
+
+```text
+IdentityAgent none
+IdentityFile ~/.ssh/ssh_home
+IdentitiesOnly yes
+```
+
+Non-secret nuc preflight:
+
+- `/srv/2000nl-ui/.env` exists.
+- `DATABASE_URL` is present.
+- `PLATFORM_CATALOG_ACCESS_TOKEN` is present.
+- `NEXT_PUBLIC_SUPABASE_URL` is present.
+- `SUPABASE_SECRET_KEY` is present.
+- `SUPABASE_DB_URL` and `SUPABASE_SERVICE_ROLE_KEY` are not present.
+- UI container `2000nl-ui-ui-1` is running.
+- Host Node is available and host `apps/ui/node_modules/pg` is present.
+- The standalone production container does not include `pg`.
+
+Smoke from nuc host:
+
+| layer | query | path | total ms | Server-Timing |
+| --- | --- | --- | ---: | --- |
+| sql | ontdekken | full search | 64.0 | n/a |
+| http-2000nl | ontdekken | full search | 1802.8 | `route.operation=1243.1ms`, `search.db=1242.3ms` |
+
+Focused nuc host 50-sample run, warm rows only:
+
+| layer | query | group | warm n | total p50 ms | total p95 ms | total p99 ms | max ms | search.db max ms |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| sql | de | full | 49 | 88.4 | 117.6 | 138.1 | 150.2 | n/a |
+| sql | de | headwords | 49 | 36.4 | 43.2 | 46.3 | 47.4 | n/a |
+| sql | de | examples | 49 | 61.0 | 64.3 | 66.4 | 66.5 | n/a |
+| sql | de | definitions | 49 | 58.0 | 61.0 | 64.2 | 66.0 | n/a |
+| sql | de | alphabetical | 49 | 36.6 | 39.8 | 42.6 | 44.1 | n/a |
+| sql | het | full | 49 | 94.9 | 128.0 | 130.4 | 130.9 | n/a |
+| sql | het | headwords | 49 | 36.3 | 41.3 | 45.4 | 47.8 | n/a |
+| sql | het | examples | 49 | 64.0 | 67.7 | 71.4 | 71.8 | n/a |
+| sql | het | definitions | 49 | 62.0 | 64.8 | 65.6 | 65.7 | n/a |
+| sql | het | alphabetical | 49 | 36.9 | 40.0 | 42.1 | 43.4 | n/a |
+| http-2000nl | de | full | 49 | 170.2 | 270.0 | 412.4 | 534.7 | 478.2 |
+| http-2000nl | de | headwords | 49 | 110.3 | 153.1 | 485.5 | 720.0 | 666.6 |
+| http-2000nl | de | examples | 49 | 139.9 | 214.3 | 276.8 | 326.7 | 168.5 |
+| http-2000nl | de | definitions | 49 | 131.2 | 221.1 | 369.8 | 438.8 | 388.0 |
+| http-2000nl | de | alphabetical | 49 | 111.8 | 150.1 | 155.3 | 158.9 | 96.8 |
+| http-2000nl | het | full | 49 | 177.8 | 242.7 | 346.6 | 358.4 | 304.2 |
+| http-2000nl | het | headwords | 49 | 112.1 | 142.7 | 186.7 | 196.4 | 138.9 |
+| http-2000nl | het | examples | 49 | 139.2 | 187.7 | 296.4 | 347.5 | 280.4 |
+| http-2000nl | het | definitions | 49 | 136.5 | 170.1 | 193.1 | 207.8 | 148.2 |
+| http-2000nl | het | alphabetical | 49 | 112.9 | 130.6 | 188.0 | 228.8 | 177.0 |
+
+Outliers above 1.5s in this nuc 50-sample run:
+
+```text
+sql de examples sample=1 first_after_idle total=1620.4ms
+```
+
+Updated attribution:
+
+- Warm direct SQL remains fast and stable.
+- Direct SQL can still produce a first-after-idle body-group outlier on nuc.
+  This keeps the common-term/cold-buffer body-group hypothesis alive.
+- HTTP 2000NL warm calls remain consistently slower than direct SQL and can show
+  additional `search.db` spikes, but this run did not reproduce >1.5s warm HTTP
+  rows.
+- The next fix should not be public response caching. A better next diagnostic
+  is a cold/warm SQL-focused run for `examples` and `definitions`, including
+  `EXPLAIN (ANALYZE, BUFFERS)` for first-after-idle body-group calls when
+  feasible.
