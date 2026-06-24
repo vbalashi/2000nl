@@ -168,3 +168,59 @@ requests without explaining the first-request and p99 boundary spikes.
   direct pooled PostgreSQL path against `supabase.rpc(...)`.
 - Add AudioFilms `Server-Timing` propagation in a separate AudioFilms slice if
   extension-visible latency remains after the 2000NL boundary is stable.
+
+## Route Timing Follow-Up
+
+PR #42 added route-level `Server-Timing` spans and `X-Request-Id`:
+
+- `route.auth`
+- `route.parse`
+- `route.operation`
+- `route.total`
+- existing operation spans such as `search.db` and `lookup.db`
+
+Production smoke after deploy:
+
+```text
+query=de group=examples total=3089.3ms
+route.auth=9.2ms route.parse=9.9ms route.operation=3067.4ms
+route.total=3089.3ms search.db=3066.4ms
+```
+
+This captured a 3s-class outlier directly after instrumentation. The outlier
+was almost entirely inside `route.operation/search.db`, not request parsing,
+catalog-token auth, response construction, or generic route overhead.
+
+Focused 50-sample 2000NL HTTP run after route instrumentation:
+
+| query | group | warm n | total p95 ms | total p99 ms | total max ms | route.operation max ms | search.db max ms |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| de | full | 49 | 200.4 | 255.7 | 299.2 | 226.5 | 226.5 |
+| de | headwords | 49 | 121.7 | 146.8 | 163.9 | 111.9 | 111.9 |
+| de | examples | 49 | 170.1 | 202.9 | 203.3 | 153.2 | 153.2 |
+| de | definitions | 49 | 175.6 | 204.1 | 211.6 | 157.1 | 157.0 |
+| de | alphabetical | 49 | 147.6 | 173.6 | 179.4 | 123.1 | 123.1 |
+| het | full | 49 | 208.7 | 297.8 | 375.8 | 156.2 | 156.2 |
+| het | headwords | 49 | 126.8 | 161.1 | 191.1 | 137.7 | 137.6 |
+| het | examples | 49 | 155.2 | 251.1 | 319.6 | 191.3 | 191.3 |
+| het | definitions | 49 | 164.9 | 191.4 | 199.4 | 140.6 | 140.5 |
+| het | alphabetical | 49 | 143.5 | 187.0 | 211.0 | 148.3 | 148.3 |
+
+No row in this 50-sample run exceeded 1.5s. `route.auth` and `route.parse` max
+values stayed around 1-3ms in the warm run.
+
+Updated attribution:
+
+1. Generic Next route overhead is not the source.
+2. Catalog-token auth and JSON parsing are not the source.
+3. The outlier is inside the Supabase RPC call boundary currently measured by
+   `search.db`.
+4. Since local direct SQL warm runs remain stable, the next comparison should be
+   server-side Supabase RPC over PostgREST vs server-side direct pooled
+   PostgreSQL for the same catalog RPC/group calls.
+
+Local token handling:
+
+- The benchmark now runs from local gitignored env files, not 1Password.
+- Token locations are documented in
+  `docs/runbooks/dictionary-platform-smoke.md`.
