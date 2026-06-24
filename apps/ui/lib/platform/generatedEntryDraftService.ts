@@ -88,12 +88,16 @@ export async function draftGeneratedUserDictionaryEntry(
     };
   }
 
+  const partOfSpeech = normalizeGeneratedPartOfSpeech({
+    languageCode,
+    value: asString(generated.partOfSpeech),
+  });
   const draftGenerated = stripNil({
     definition: asString(generated.definition),
     example: asString(generated.example)
       ? { source: asString(generated.example) }
       : undefined,
-    partOfSpeech: asString(generated.partOfSpeech),
+    partOfSpeech,
     notes: asString(generated.notes),
     provider: "openai",
     model,
@@ -118,7 +122,7 @@ export async function draftGeneratedUserDictionaryEntry(
     languageCode,
     definition: asString(draftGenerated.definition),
     exampleSource: asString(asRecord(draftGenerated.example).source),
-    partOfSpeech: asString(draftGenerated.partOfSpeech),
+    partOfSpeech,
     notes: asString(draftGenerated.notes),
   });
   const contentFingerprint = learnerContentFingerprint(content);
@@ -152,7 +156,7 @@ export async function draftGeneratedUserDictionaryEntry(
             languageCode,
             headword: clickedForm,
             meaningId: null,
-            partOfSpeech: asString(draftGenerated.partOfSpeech),
+            partOfSpeech,
             gender: null,
             content,
             contentFingerprint,
@@ -162,7 +166,7 @@ export async function draftGeneratedUserDictionaryEntry(
               languageCode,
               definition: asString(draftGenerated.definition),
               example: asRecord(draftGenerated.example),
-              partOfSpeech: asString(draftGenerated.partOfSpeech),
+              partOfSpeech,
               notes: asString(draftGenerated.notes),
               tags: ["generated"],
               generation: {
@@ -269,6 +273,34 @@ function normalizeGeneratedDictionaryContent(params: {
       ...(params.exampleSource ? { example: params.exampleSource } : {}),
     },
   };
+}
+
+function normalizeGeneratedPartOfSpeech(params: {
+  languageCode: string;
+  value: string | null;
+}) {
+  const raw = params.value;
+  if (!raw) return null;
+  const normalized = raw.trim().toLocaleLowerCase();
+  if (params.languageCode.toLocaleLowerCase() === "nl") {
+    const dutchMap: Record<string, string> = {
+      "zn": "zn",
+      "noun": "zn",
+      "substantief": "zn",
+      "zelfstandig naamwoord": "zn",
+      "ww": "ww",
+      "verb": "ww",
+      "werkwoord": "ww",
+      "bn": "bn",
+      "adjective": "bn",
+      "bijvoeglijk naamwoord": "bn",
+      "bw": "bw",
+      "adverb": "bw",
+      "bijwoord": "bw",
+    };
+    return dutchMap[normalized] ?? raw.trim();
+  }
+  return raw.trim();
 }
 
 async function callOpenAiGeneratedEntry(params: {

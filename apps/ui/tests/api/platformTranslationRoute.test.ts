@@ -375,6 +375,75 @@ describe("/api/platform/v1/translation", () => {
     expect(translate).toHaveBeenCalledWith(["het huis", "woning"], "en");
   });
 
+  test("translates generated draft items without requiring a persisted entry id", async () => {
+    mockAuthenticatedClientsWithPreference("ru");
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(
+      request({
+        item: {
+          entry: {
+            id: "draft:gdc_1",
+            content: {
+              headword: "ruimtestraling",
+              languageCode: "nl",
+              sections: [
+                {
+                  id: "meaning-1",
+                  kind: "meaning",
+                  text: "Straling die afkomstig is uit de ruimte.",
+                },
+                {
+                  id: "example-1",
+                  kind: "example",
+                  text: "Astronauten beschermen zich tegen ruimtestraling.",
+                },
+                {
+                  id: "note-1",
+                  kind: "note",
+                  text: "Vaak genoemd in de context van ruimtevaart.",
+                },
+              ],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(translate).toHaveBeenCalledWith(
+      [
+        "ruimtestraling",
+        "Straling die afkomstig is uit de ruimte.",
+        "Astronauten beschermen zich tegen ruimtestraling.",
+        "Vaak genoemd in de context van ruimtevaart.",
+      ],
+      "ru",
+    );
+    await expect(response.json()).resolves.toEqual({
+      entryId: "draft:gdc_1",
+      targetLang: "ru",
+      status: "ready",
+      overlay: {
+        headword: "translated:ruimtestraling",
+        meanings: [
+          {
+            definition: "translated:Straling die afkomstig is uit de ruimte.",
+            context: "translated:Vaak genoemd in de context van ruimtevaart.",
+            examples: [
+              "translated:Astronauten beschermen zich tegen ruimtestraling.",
+            ],
+          },
+        ],
+        __meta: {
+          translationPolicyVersion: "platform-generated-draft-translation-v1",
+        },
+      },
+      translationPolicyVersion: "platform-generated-draft-translation-v1",
+    });
+  });
+
   test("translates free text without using the entry overlay cache", async () => {
     const userClient = {
       auth: { getUser },

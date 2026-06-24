@@ -351,12 +351,12 @@ Response:
         "languageCode": "nl",
         "headword": "gedoe",
         "meaningId": null,
-        "partOfSpeech": "noun",
+        "partOfSpeech": "zn",
         "gender": null,
         "content": {
           "headword": "gedoe",
           "languageCode": "nl",
-          "partOfSpeech": "noun",
+          "partOfSpeech": "zn",
           "sections": [
             {
               "id": "meaning-1",
@@ -441,7 +441,7 @@ Request:
       "content": {
         "headword": "gedoe",
         "languageCode": "nl",
-        "partOfSpeech": "noun",
+        "partOfSpeech": "zn",
         "sections": [
           {
             "id": "meaning-1",

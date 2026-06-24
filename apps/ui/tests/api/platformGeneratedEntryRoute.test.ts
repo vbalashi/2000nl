@@ -192,7 +192,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
             content: {
               headword: "gedoe",
               languageCode: "nl",
-              partOfSpeech: "noun",
+              partOfSpeech: "zn",
               sections: [
                 {
                   id: "meaning-1",
@@ -229,7 +229,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
         languageCode: "nl",
         definition: "Een situatie die veel moeite of ongemak geeft.",
         example: { source: "Wat een gedoe." },
-        partOfSpeech: "noun",
+        partOfSpeech: "zn",
         tags: ["generated"],
         generation: expect.objectContaining({
           kind: "llm",
@@ -350,7 +350,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
               content: JSON.stringify({
                 definition: "Een situatie die veel moeite of ongemak geeft.",
                 example: "Wat een gedoe met die tickets.",
-                partOfSpeech: "noun",
+                partOfSpeech: "zn",
                 notes: "Informeel en vaak licht negatief.",
               }),
             },
@@ -400,7 +400,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
               content: expect.objectContaining({
                 headword: "gedoe",
                 languageCode: "nl",
-                partOfSpeech: "noun",
+                partOfSpeech: "zn",
                 sections: expect.arrayContaining([
                   expect.objectContaining({
                     kind: "meaning",

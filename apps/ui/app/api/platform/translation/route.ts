@@ -8,6 +8,10 @@ import {
 } from "@/lib/platform/serverSupabase";
 import { GET as getTranslation } from "@/app/api/translation/route";
 import { asString } from "@/lib/platform/platformApi";
+import {
+  createTranslator,
+  loadTranslationConfigFromEnv,
+} from "@/lib/translation/translationProvider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +19,7 @@ export const revalidate = 0;
 
 type TranslationRequestBody = {
   entryId?: unknown;
+  item?: unknown;
   targetLang?: unknown;
   force?: unknown;
   debug?: unknown;
@@ -83,9 +88,10 @@ export async function POST(request: NextRequest) {
 
   const body = await readJson(request);
   const entryId = asString(body?.entryId);
+  const item = asRecord(body?.item);
   const explicitTargetLang = asString(body?.targetLang);
 
-  if (!entryId) {
+  if (!entryId && !item) {
     return reply({ error: "missing_entry_id" }, 400);
   }
   if (explicitTargetLang) {
@@ -129,6 +135,14 @@ export async function POST(request: NextRequest) {
   }
   const targetLang = resolved.targetLang;
 
+  if (!entryId && item) {
+    const draftTranslation = await translateDraftItem(item, targetLang);
+    return reply(draftTranslation.payload, draftTranslation.status);
+  }
+  if (!entryId) {
+    return reply({ error: "missing_entry_id" }, 400);
+  }
+
   const url = new URL(request.url);
   url.pathname = "/api/translation";
   url.search = "";
@@ -153,4 +167,100 @@ export async function POST(request: NextRequest) {
     },
     translationResponse.status,
   );
+}
+
+async function translateDraftItem(
+  item: Record<string, unknown>,
+  targetLang: string,
+): Promise<{ payload: unknown; status: number }> {
+  const entry = asRecord(item.entry) ?? {};
+  const content = asRecord(entry.content) ?? {};
+  const headword = asString(content.headword) ?? asString(entry.headword);
+  const sections = asArray(content.sections)
+    .map((section) => asRecord(section))
+    .filter((section): section is Record<string, unknown> =>
+      Boolean(section && asString(section.text)),
+    );
+  const texts = [
+    ...(headword ? [{ kind: "headword", text: headword }] : []),
+    ...sections.map((section) => ({
+      kind: asString(section.kind) ?? "meaning",
+      text: asString(section.text) ?? "",
+    })),
+  ];
+
+  if (!texts.length) {
+    return { payload: { error: "missing_translatable_content" }, status: 400 };
+  }
+
+  let translations: string[];
+  try {
+    const provider = createTranslator(loadTranslationConfigFromEnv());
+    translations = await provider.translator.translate(
+      texts.map((item) => item.text),
+      targetLang,
+    );
+  } catch (error) {
+    return {
+      payload: {
+        targetLang,
+        status: "failed",
+        error: {
+          code: "translation_failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      },
+      status: 502,
+    };
+  }
+
+  const translated = texts.map((item, index) => ({
+    ...item,
+    translatedText: translations[index] ?? "",
+  }));
+  const headwordTranslation =
+    translated.find((item) => item.kind === "headword")?.translatedText ?? "";
+  const meaningTranslations = translated
+    .filter((item) => item.kind === "meaning")
+    .map((item) => item.translatedText)
+    .filter(Boolean);
+  const exampleTranslations = translated
+    .filter((item) => item.kind === "example")
+    .map((item) => item.translatedText)
+    .filter(Boolean);
+  const noteTranslation =
+    translated.find((item) => item.kind === "note")?.translatedText ?? "";
+
+  return {
+    payload: {
+      entryId: asString(entry.id) ?? null,
+      targetLang,
+      status: "ready",
+      overlay: {
+        ...(headwordTranslation ? { headword: headwordTranslation } : {}),
+        meanings: [
+          {
+            ...(meaningTranslations[0] ? { definition: meaningTranslations[0] } : {}),
+            ...(noteTranslation ? { context: noteTranslation } : {}),
+            ...(exampleTranslations.length ? { examples: exampleTranslations } : {}),
+          },
+        ],
+        __meta: {
+          translationPolicyVersion: "platform-generated-draft-translation-v1",
+        },
+      },
+      translationPolicyVersion: "platform-generated-draft-translation-v1",
+    },
+    status: 200,
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
 }
