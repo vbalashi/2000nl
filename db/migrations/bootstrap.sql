@@ -307,3 +307,6 @@
 
 -- Authenticated lookup enrichment indexes
 \i db/migrations/100_lookup_enrichment_indexes.sql
+
+-- Nearest alphabetical grouped-search window for missing headwords
+\i db/migrations/101_alphabetical_nearest_window.sql

@@ -683,7 +683,6 @@ describeIfDb("FSRS RPC integration", () => {
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, ownerId);
       const suffix = Date.now();
-      const query = `aagroup${suffix}`;
       await client.query(
         `insert into languages (code, name)
          values ('aa', 'Grouped Search Test')
@@ -701,7 +700,19 @@ describeIfDb("FSRS RPC integration", () => {
         [`aa-grouped-${suffix}`],
       );
       const dictionaryId = dictionaryRows[0].id;
+      const prefix = `aagroup${suffix}`;
+      const query = `${prefix}m`;
       const entries = [
+        {
+          headword: `${prefix}k`,
+          definition: `before ${query} definition text`,
+          example: `before ${query} example text`,
+        },
+        {
+          headword: `${prefix}l`,
+          definition: `near-before ${query} definition text`,
+          example: `near-before ${query} example text`,
+        },
         {
           headword: query,
           definition: `${query} definition text`,
@@ -774,8 +785,8 @@ describeIfDb("FSRS RPC integration", () => {
       expect(byGroup.get("examples")?.items[0].kind).toBe("field-match");
       expect(byGroup.get("definitions")?.items[0].kind).toBe("field-match");
       expect(byGroup.get("alphabetical")?.items.map((item) => item.entry.headword)).toEqual([
+        `${prefix}l`,
         query,
-        `${query}b`,
       ]);
       expect(byGroup.get("alphabetical")?.total).toBeNull();
       expect(byGroup.get("alphabetical")?.count).toEqual({
@@ -793,7 +804,17 @@ describeIfDb("FSRS RPC integration", () => {
         secondAlphabeticalRows[0].result.groups[0].items.map(
           (item: { entry: { headword: string } }) => item.entry.headword,
         ),
-      ).toEqual([`${query}c`]);
+      ).toEqual([`${query}b`, `${query}c`]);
+
+      const { rows: missingAlphabeticalRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'alphabetical', 3, NULL) as result`,
+        [`${query}a`],
+      );
+      expect(
+        missingAlphabeticalRows[0].result.groups[0].items.map(
+          (item: { entry: { headword: string } }) => item.entry.headword,
+        ),
+      ).toEqual([query, `${query}b`, `${query}c`]);
 
       const { rows: firstExampleRows } = await client.query(
         `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, NULL) as result`,
