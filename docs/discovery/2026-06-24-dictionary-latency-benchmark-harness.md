@@ -255,3 +255,40 @@ Safe next options:
 Until that is done, the confirmed root cause remains narrower but not final:
 slow samples are inside the server-side Supabase RPC boundary (`search.db`),
 not generic route overhead.
+
+## Nuc One-Off Diagnostic Access Attempt
+
+Attempted a non-secret nuc preflight to verify `/srv/2000nl-ui/.env`, container
+state, and runtime tool availability before adding any direct-Postgres code.
+
+Current blocker:
+
+```text
+sign_and_send_pubkey: signing failed for ED25519 "SSH Home" from agent:
+communication with agent failed
+Received disconnect from 192.168.178.141 port 22:2: Too many authentication failures
+```
+
+Observed SSH state:
+
+- `ssh -G nuc` resolves to `user khrustal`, `hostname nuc`,
+  `IdentityAgent` under the 1Password agent socket, and `IdentitiesOnly no`.
+- One-shot attempts with local keys and `IdentityAgent=none` failed:
+  - `~/.ssh/id_rsa`
+  - `~/.ssh/mint_den_khrustal_ed25519`
+- No local private key matching `ssh_home.pub` was present.
+
+Conclusion: the safe one-off diagnostic is blocked on scoped nuc SSH access,
+not on application code.
+
+Next safe ways forward:
+
+1. Restore a scoped local SSH key for `nuc`, or add a `Host nuc` config that
+   uses the correct local key with `IdentitiesOnly yes` and avoids the broad
+   1Password wildcard agent.
+2. If SSH remains undesirable, add a temporary/manual self-hosted GitHub Actions
+   diagnostic workflow that runs on the nuc runner, prints only key presence and
+   timing summaries, and never prints secrets.
+3. After host access is restored, run the one-off direct comparison from
+   `/srv/2000nl-ui` or the running container before considering a production
+   diagnostic route.
