@@ -292,3 +292,6 @@
 
 -- Bounded grouped-search readiness checks
 \i db/migrations/095_grouped_search_readiness_exists.sql
+
+-- Bounded headword/body grouped search
+\i db/migrations/096_grouped_search_bounded_headwords_body.sql

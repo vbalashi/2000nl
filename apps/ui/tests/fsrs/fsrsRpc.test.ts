@@ -761,8 +761,16 @@ describeIfDb("FSRS RPC integration", () => {
         preview.groups.map((group) => [group.id, group]),
       );
       expect(byGroup.get("headwords")?.items[0].entry.headword).toBe(query);
-      expect(byGroup.get("examples")?.total).toBeGreaterThanOrEqual(2);
-      expect(byGroup.get("definitions")?.total).toBeGreaterThanOrEqual(2);
+      expect(byGroup.get("examples")?.total).toBeNull();
+      expect(byGroup.get("examples")?.count).toEqual({
+        value: null,
+        relation: "unknown",
+      });
+      expect(byGroup.get("definitions")?.total).toBeNull();
+      expect(byGroup.get("definitions")?.count).toEqual({
+        value: null,
+        relation: "unknown",
+      });
       expect(byGroup.get("examples")?.items[0].kind).toBe("field-match");
       expect(byGroup.get("definitions")?.items[0].kind).toBe("field-match");
       expect(byGroup.get("alphabetical")?.items.map((item) => item.entry.headword)).toEqual([
