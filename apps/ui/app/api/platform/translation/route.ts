@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
   }
   const targetLang = resolved.targetLang;
 
-  if (!entryId && item) {
+  if (item) {
     const draftTranslation = await translateDraftItem(item, targetLang);
     return reply(draftTranslation.payload, draftTranslation.status);
   }

@@ -444,6 +444,47 @@ describe("/api/platform/v1/translation", () => {
     });
   });
 
+  test("prefers generated draft item over draft entry id", async () => {
+    mockAuthenticatedClientsWithPreference("en");
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(
+      request({
+        entryId: "draft:gdc_1",
+        item: {
+          entry: {
+            id: "draft:gdc_1",
+            content: {
+              headword: "gedoe",
+              languageCode: "nl",
+              sections: [
+                {
+                  id: "meaning-1",
+                  kind: "meaning",
+                  text: "Situatie die veel moeite veroorzaakt.",
+                },
+              ],
+            },
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(translate).toHaveBeenCalledWith(
+      ["gedoe", "Situatie die veel moeite veroorzaakt."],
+      "en",
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        entryId: "draft:gdc_1",
+        status: "ready",
+        translationPolicyVersion: "platform-generated-draft-translation-v1",
+      }),
+    );
+  });
+
   test("translates free text without using the entry overlay cache", async () => {
     const userClient = {
       auth: { getUser },
