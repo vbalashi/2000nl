@@ -283,3 +283,6 @@
 
 -- Keep generated user-entry validation helper internal
 \i db/migrations/092_harden_generated_user_entry_helper.sql
+
+-- Indexed public catalog clicked-word lookup
+\i db/migrations/093_indexed_public_catalog_lookup.sql

@@ -236,6 +236,32 @@ describe("/api/platform/v1/catalog/lookup", () => {
     });
   });
 
+  test("returns 503 when the catalog search index is not ready", async () => {
+    const { POST } = await import("@/app/api/platform/v1/catalog/lookup/route");
+    rpc.mockResolvedValueOnce({
+      data: {
+        error: "search_index_not_ready",
+        items: [],
+        total: 0,
+      },
+      error: null,
+    });
+
+    const response = await POST(
+      request({
+        query: "huis",
+        languageCode: "nl",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        error: "search_index_not_ready",
+      }),
+    );
+  });
+
   test("can roll back catalog lookup to broad catalog search by feature flag", async () => {
     process.env.PLATFORM_STRICT_LOOKUP_ROUTES = "0";
     const { POST } = await import("@/app/api/platform/v1/catalog/lookup/route");
