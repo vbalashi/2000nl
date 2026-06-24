@@ -346,47 +346,56 @@ export async function performPlatformLookup(
     Record<string, PlatformUserCardStatePayload>
   >();
   let listMembershipsByEntryId = new Map<string, unknown[]>();
-  if (includeUserState) {
-    const userState = await measureTiming(timings, "lookup.user-state", () =>
-      readLookupUserState(auth, entries),
-    );
-    if (!userState.ok) {
-      return {
-        ...userState.result,
-        serverTiming: serverTiming(),
-      };
-    }
-    userStateByEntryId = userState.value.userStateByEntryId;
-    listMembershipsByEntryId = userState.value.listMembershipsByEntryId;
+  const translationArtifactsByEntryId = new Map<string, LookupTranslationArtifact>();
+
+  if (includeTranslations && !params.service) {
+    return {
+      payload: { error: "translation_cache_not_configured" },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
   }
 
-  const translationArtifactsByEntryId = new Map<string, LookupTranslationArtifact>();
-  if (includeTranslations) {
-    if (!params.service) {
-      return {
-        payload: { error: "translation_cache_not_configured" },
-        status: 500,
-        serverTiming: serverTiming(),
-      };
-    }
-    const translationService = params.service;
-    const resolvedTranslations = await measureTiming(
-      timings,
-      "lookup.translation-cache",
-      () =>
+  const translationService = params.service;
+  const userStatePromise = includeUserState
+    ? measureTiming(timings, "lookup.user-state", () =>
+        readLookupUserState(auth, entries),
+      )
+    : Promise.resolve(null);
+  const translationPromise = includeTranslations && translationService
+    ? measureTiming(timings, "lookup.translation-cache", () =>
         resolveLookupTranslationContext(
           auth,
           translationService,
           entries.map((entry) => entry.id),
         ),
-    );
-    if (!resolvedTranslations.ok) {
-      return {
-        payload: resolvedTranslations.payload,
-        status: resolvedTranslations.status,
-        serverTiming: serverTiming(),
-      };
-    }
+      )
+    : Promise.resolve(null);
+
+  const [userState, resolvedTranslations] = await Promise.all([
+    userStatePromise,
+    translationPromise,
+  ]);
+
+  if (userState && !userState.ok) {
+    return {
+      ...userState.result,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (userState) {
+    userStateByEntryId = userState.value.userStateByEntryId;
+    listMembershipsByEntryId = userState.value.listMembershipsByEntryId;
+  }
+
+  if (resolvedTranslations && !resolvedTranslations.ok) {
+    return {
+      payload: resolvedTranslations.payload,
+      status: resolvedTranslations.status,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (resolvedTranslations) {
     for (const [entryId, artifact] of resolvedTranslations.artifactsByEntryId) {
       translationArtifactsByEntryId.set(entryId, artifact);
     }
