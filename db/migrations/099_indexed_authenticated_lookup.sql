@@ -39,13 +39,50 @@ BEGIN
     v_query_unaccent := normalize_dictionary_search_text_unaccent(v_raw_query);
 
     RETURN QUERY
-    WITH eligible_dictionaries AS MATERIALIZED (
+    WITH user_context AS MATERIALIZED (
+        SELECT COALESCE(
+            (SELECT subscription_tier FROM user_settings WHERE user_id = p_user_id),
+            'free'
+        ) AS subscription_tier
+    ),
+    eligible_dictionaries AS MATERIALIZED (
         SELECT d.id, d.kind, d.owner_user_id
         FROM dictionaries d
-        WHERE can_access_dictionary(p_user_id, d.id, 'read')
+        CROSS JOIN user_context u
+        WHERE (
+              d.owner_user_id = p_user_id
+              OR (
+                  d.visibility IN ('system', 'public', 'shared')
+                  AND (
+                      CASE u.subscription_tier
+                          WHEN 'admin' THEN 30
+                          WHEN 'premium' THEN 20
+                          ELSE 10
+                      END
+                  ) >= (
+                      CASE COALESCE(d.minimum_subscription_tier, 'free')
+                          WHEN 'admin' THEN 30
+                          WHEN 'premium' THEN 20
+                          ELSE 10
+                      END
+                  )
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM dictionary_entitlements e
+                  WHERE e.dictionary_id = d.id
+                    AND (
+                          (e.subject_type = 'user' AND e.subject_key = p_user_id::text)
+                       OR (e.subject_type = 'tier' AND e.subject_key = u.subscription_tier)
+                    )
+                    AND e.permission IN ('read', 'write', 'admin')
+                    AND (e.starts_at IS NULL OR e.starts_at <= now())
+                    AND (e.ends_at IS NULL OR e.ends_at > now())
+              )
+          )
           AND (array_length(v_dictionary_ids, 1) IS NULL OR d.id = ANY(v_dictionary_ids))
     ),
-    headword_matches AS MATERIALIZED (
+    indexed_headword_matches AS MATERIALIZED (
         SELECT
             s.entry_id,
             'exact-headword'::text AS resolved_by,
@@ -84,9 +121,8 @@ BEGIN
         WHERE (v_language_code IS NULL OR s.language_code = v_language_code)
           AND s.normalized_headword_unaccent = v_query_unaccent
           AND s.normalized_headword <> v_query
-
-        UNION ALL
-
+    ),
+    legacy_user_headword_matches AS MATERIALIZED (
         SELECT
             w.id AS entry_id,
             'exact-headword'::text AS resolved_by,
@@ -103,13 +139,19 @@ BEGIN
         FROM word_entries w
         JOIN eligible_dictionaries ed ON ed.id = w.dictionary_id
         LEFT JOIN dictionary_search_documents s ON s.entry_id = w.id
-        WHERE s.entry_id IS NULL
+        WHERE NOT EXISTS (SELECT 1 FROM indexed_headword_matches)
+          AND s.entry_id IS NULL
           AND ed.kind = 'user'
           AND (v_language_code IS NULL OR w.language_code = v_language_code)
           AND (
               lower(w.headword) = lower(v_raw_query)
               OR normalize_dictionary_search_text_unaccent(w.headword) = v_query_unaccent
           )
+    ),
+    headword_matches AS MATERIALIZED (
+        SELECT * FROM indexed_headword_matches
+        UNION ALL
+        SELECT * FROM legacy_user_headword_matches
     ),
     headword_candidates AS MATERIALIZED (
         SELECT DISTINCT ON (hm.entry_id)
@@ -129,7 +171,7 @@ BEGIN
             hm.meaning_id ASC
         LIMIT v_limit
     ),
-    form_matches AS MATERIALIZED (
+    indexed_form_matches AS MATERIALIZED (
         SELECT
             s.entry_id,
             'lemma-or-inflection'::text AS resolved_by,
@@ -174,9 +216,8 @@ BEGIN
           AND (v_language_code IS NULL OR f.language_code = v_language_code)
           AND f.normalized_text_unaccent = v_query_unaccent
           AND f.normalized_text <> v_query
-
-        UNION ALL
-
+    ),
+    legacy_user_form_matches AS MATERIALIZED (
         SELECT
             w.id AS entry_id,
             'lemma-or-inflection'::text AS resolved_by,
@@ -195,6 +236,7 @@ BEGIN
         JOIN eligible_dictionaries ed ON ed.id = w.dictionary_id
         LEFT JOIN dictionary_search_documents s ON s.entry_id = w.id
         WHERE NOT EXISTS (SELECT 1 FROM headword_candidates)
+          AND NOT EXISTS (SELECT 1 FROM indexed_form_matches)
           AND s.entry_id IS NULL
           AND ed.kind = 'user'
           AND (v_language_code IS NULL OR f.language_code = v_language_code)
@@ -207,6 +249,11 @@ BEGIN
               lower(f.form) = lower(v_raw_query)
               OR normalize_dictionary_search_text_unaccent(f.form) = v_query_unaccent
           )
+    ),
+    form_matches AS MATERIALIZED (
+        SELECT * FROM indexed_form_matches
+        UNION ALL
+        SELECT * FROM legacy_user_form_matches
     ),
     form_candidates AS MATERIALIZED (
         SELECT DISTINCT ON (fm.entry_id)
