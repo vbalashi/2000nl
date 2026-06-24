@@ -830,6 +830,83 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("grouped body search paginates from FTS into substring fallback", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      const suffix = Date.now();
+      const query = `aafallback${suffix}`;
+      await client.query(
+        `insert into languages (code, name)
+         values ('aa', 'Grouped Search Test')
+         on conflict (code) do nothing`,
+      );
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, is_editable,
+           schema_key, schema_version
+         ) values (
+           'aa', $1, 'Grouped Search Fallback Test Dictionary', 'curated', 'system', false,
+           'nl-vandale-v1', 1
+         )
+         returning id`,
+        [`aa-grouped-fallback-${suffix}`],
+      );
+      const dictionaryId = dictionaryRows[0].id;
+      const entries = [
+        {
+          headword: `${query}-fts`,
+          example: `first ${query} example text`,
+        },
+        {
+          headword: `${query}-substring`,
+          example: `second compound${query} example text`,
+        },
+      ];
+
+      for (const entry of entries) {
+        const { rows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+           ) values ($1, 'aa', $2, 1, 'noun', $3::jsonb)
+           returning id`,
+          [
+            dictionaryId,
+            entry.headword,
+            JSON.stringify({
+              meanings: [
+                {
+                  definition: `definition for ${entry.headword}`,
+                  examples: [entry.example],
+                },
+              ],
+            }),
+          ],
+        );
+        await client.query(`select refresh_dictionary_search_document($1, 2)`, [rows[0].id]);
+      }
+
+      const { rows: firstRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, NULL) as result`,
+        [query],
+      );
+      const firstGroup = firstRows[0].result.groups[0];
+      expect(firstGroup.items).toHaveLength(1);
+      expect(firstGroup.items[0].entry.headword).toBe(`${query}-fts`);
+      expect(firstGroup.page.hasMore).toBe(true);
+      expect(firstGroup.page.nextCursor).toEqual(expect.any(String));
+
+      const { rows: secondRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, $2) as result`,
+        [query, firstGroup.page.nextCursor],
+      );
+      const secondGroup = secondRows[0].result.groups[0];
+      expect(secondGroup.items).toHaveLength(1);
+      expect(secondGroup.items[0].entry.headword).toBe(`${query}-substring`);
+      expect(secondGroup.page.hasMore).toBe(false);
+    }, ownerId);
+  });
+
   test("get_recent_training_history returns hydrated event and status rows", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
