@@ -48,7 +48,8 @@ describeIfDb("FSRS RPC integration", () => {
   const mode = "word-to-definition";
   type SearchGroupResult = {
     id: string;
-    total: number;
+    total: number | null;
+    count?: { value: number | null; relation: string };
     items: Array<{
       kind: string;
       resultKey?: string;
@@ -768,6 +769,23 @@ describeIfDb("FSRS RPC integration", () => {
         query,
         `${query}b`,
       ]);
+      expect(byGroup.get("alphabetical")?.total).toBeNull();
+      expect(byGroup.get("alphabetical")?.count).toEqual({
+        value: null,
+        relation: "unknown",
+      });
+      expect(byGroup.get("alphabetical")?.page.hasMore).toBe(true);
+      expect(byGroup.get("alphabetical")?.page.nextCursor).toEqual(expect.any(String));
+
+      const { rows: secondAlphabeticalRows } = await client.query(
+        `select search_dictionary_groups_v1($1, 'aa', NULL, 'alphabetical', 2, $2) as result`,
+        [query, byGroup.get("alphabetical")?.page.nextCursor],
+      );
+      expect(
+        secondAlphabeticalRows[0].result.groups[0].items.map(
+          (item: { entry: { headword: string } }) => item.entry.headword,
+        ),
+      ).toEqual([`${query}c`]);
 
       const { rows: firstExampleRows } = await client.query(
         `select search_dictionary_groups_v1($1, 'aa', NULL, 'examples', 1, NULL) as result`,

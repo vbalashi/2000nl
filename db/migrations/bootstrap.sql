@@ -286,3 +286,6 @@
 
 -- Indexed public catalog clicked-word lookup
 \i db/migrations/093_indexed_public_catalog_lookup.sql
+
+-- Keyset-first alphabetical grouped search
+\i db/migrations/094_alphabetical_keyset_search.sql
