@@ -457,6 +457,81 @@ async function setupAuthenticatedTrainingPage(page: Page) {
     });
   });
 
+  await page.route("**/api/platform/v1/search", async (route: Route) => {
+    const items = entries.map((entry) => ({
+      entry: {
+        id: entry.id,
+        headword: entry.headword,
+        languageCode: "nl",
+        partOfSpeech: entry.part_of_speech,
+        summaryDefinition: entry.raw.meanings[0]?.definition ?? null,
+      },
+      dictionary: {
+        id: "dictionary-1",
+        name: "VanDale Dutch",
+        slug: "vandale-2k",
+        kind: "curated",
+      },
+      match: {
+        matchedText: entry.headword,
+        sourcePath: "headword",
+      },
+      displayText: entry.headword,
+    }));
+
+    await route.fulfill({
+      status: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        groups: [
+          {
+            id: "headwords",
+            label: "Headwords",
+            total: items.length,
+            count: { value: items.length, relation: "exact" },
+            page: { hasMore: false, nextCursor: null },
+            items,
+          },
+          {
+            id: "examples",
+            label: "Example sentences",
+            total: 0,
+            count: { value: 0, relation: "exact" },
+            page: { hasMore: false, nextCursor: null },
+            items: [],
+          },
+          {
+            id: "definitions",
+            label: "Within definitions",
+            total: 0,
+            count: { value: 0, relation: "exact" },
+            page: { hasMore: false, nextCursor: null },
+            items: [],
+          },
+          {
+            id: "alphabetical",
+            label: "Alphabetical",
+            total: 0,
+            count: { value: 0, relation: "exact" },
+            page: { hasMore: false, nextCursor: null },
+            items: [],
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route("**/api/platform/v1/actions", async (route: Route) => {
+    const body = route.request().postDataJSON?.() ?? {};
+    const entry = entries.find((item) => item.id === body.entryId);
+
+    await route.fulfill({
+      status: entry ? 200 : 404,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(entry ? { ok: true, entry } : { ok: false }),
+    });
+  });
+
   await page.route("**/rest/v1/**", restHandler);
 
   // Bypass OTP auth flow for browser automation by installing a fake Supabase session.
@@ -506,7 +581,12 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
     page.getByText("Nederlands · Zoekt in VanDale woordenboek"),
   ).toBeVisible();
   await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
-  await expect(page.getByText("huis").first()).toBeVisible();
+  const headwordResult = page.getByRole("button", {
+    name: /huis.*Exacte match/i,
+  });
+  await expect(headwordResult).toBeVisible();
+  await expect(page.getByText("Hoofdwoorden")).toBeVisible();
+  await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
 
   await page.getByRole("button", { name: "Lijsten" }).click();
