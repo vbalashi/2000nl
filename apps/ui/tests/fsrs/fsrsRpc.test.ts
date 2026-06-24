@@ -438,6 +438,8 @@ describeIfDb("FSRS RPC integration", () => {
       await ensureUserWithSettings(client, ownerId);
       const suffix = Date.now().toString();
       const exactHeadword = `oog-${suffix}`;
+      const diacriticHeadword = `écht-${suffix}`;
+      const unaccentedQuery = `echt-${suffix}`;
       const deHeadword = `de-${suffix}`;
       const brandenHeadword = `branden-${suffix}`;
       const brandtForm = `brandt-${suffix}`;
@@ -456,7 +458,8 @@ describeIfDb("FSRS RPC integration", () => {
            ($1, 'nl', $4, 1, 'noun', jsonb_build_object('definition', 'eyelid')),
            ($1, 'nl', $5, 1, 'lidwoord', jsonb_build_object('definition', 'article')),
            ($1, 'nl', $6, 1, 'noun', jsonb_build_object('definition', 'deadline')),
-           ($1, 'nl', $7, 1, 'verb', jsonb_build_object('definition', 'burn'))
+           ($1, 'nl', $7, 1, 'verb', jsonb_build_object('definition', 'burn')),
+           ($1, 'nl', $8, 1, 'adverb', jsonb_build_object('definition', 'really'))
          returning id, headword`,
         [
           publicDictionaryId,
@@ -466,6 +469,7 @@ describeIfDb("FSRS RPC integration", () => {
           deHeadword,
           `deadline-${suffix}`,
           brandenHeadword,
+          diacriticHeadword,
         ],
       );
       const idsByHeadword = new Map<string, string>(
@@ -482,11 +486,20 @@ describeIfDb("FSRS RPC integration", () => {
           brandenHeadword,
         ],
       );
+      await client.query(
+        `select refresh_dictionary_search_document(entry_id, 2)
+         from unnest($1::uuid[]) as entry_id`,
+        [exactRows.map((row) => row.id)],
+      );
 
       await client.query(`set local role service_role`);
       const { rows: oogRows } = await client.query(
         `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
         [exactHeadword],
+      );
+      const { rows: diacriticRows } = await client.query(
+        `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
+        [unaccentedQuery],
       );
       const { rows: deRows } = await client.query(
         `select lookup_public_catalog_entries_v1($1, 'nl', 10) as result`,
@@ -507,6 +520,11 @@ describeIfDb("FSRS RPC integration", () => {
           (item) => item.headword,
         ),
       ).toEqual([exactHeadword]);
+      expect(
+        (diacriticRows[0].result.items as Array<{ headword: string }>).map(
+          (item) => item.headword,
+        ),
+      ).toEqual([diacriticHeadword]);
       expect(
         (deRows[0].result.items as Array<{ headword: string }>).map(
           (item) => item.headword,

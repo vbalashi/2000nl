@@ -536,7 +536,16 @@ export async function performPlatformCatalogLookup(
     };
   }
 
-  const rawEntries = asRecord(data).items;
+  const payload = asRecord(data);
+  if (payload.error === "search_index_not_ready") {
+    return {
+      payload,
+      status: 503,
+      serverTiming: serverTiming(),
+    };
+  }
+
+  const rawEntries = payload.items;
   const entries = Array.isArray(rawEntries)
     ? (rawEntries as unknown as DictionaryLookupPayload[])
     : Array.isArray(data)
