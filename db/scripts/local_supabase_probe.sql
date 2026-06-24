@@ -234,6 +234,88 @@ begin
 
   if not exists (
     select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'dictionary_search_fields'
+      and column_name = 'field_kind'
+  ) then
+    raise exception 'missing public.dictionary_search_fields.field_kind';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'dictionary_search_fields'
+      and column_name = 'meaning_ordinal'
+  ) then
+    raise exception 'missing public.dictionary_search_fields.meaning_ordinal';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'dictionary_search_fields'
+      and column_name = 'item_ordinal'
+  ) then
+    raise exception 'missing public.dictionary_search_fields.item_ordinal';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'dictionary_search_fields'
+      and indexname = 'dictionary_search_fields_entry_source_path_v2_idx'
+      and indexdef like '%UNIQUE%'
+      and indexdef like '%entry_id, source_path%'
+      and indexdef like '%extraction_version >= 2%'
+  ) then
+    raise exception 'missing stable v2 dictionary_search_fields identity index';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'dictionary_search_documents'
+      and indexname = 'dictionary_search_documents_browse_idx'
+  ) then
+    raise exception 'missing dictionary_search_documents browse index';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'dictionary_search_fields'
+      and indexname = 'dictionary_search_fields_examples_tsv_v2_idx'
+      and indexdef like '%field_group = ANY%'
+  ) then
+    raise exception 'missing dictionary_search_fields examples partial tsv index';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'dictionary_search_fields'
+      and indexname = 'dictionary_search_fields_definitions_tsv_v2_idx'
+      and indexdef like '%field_group = ANY%'
+  ) then
+    raise exception 'missing dictionary_search_fields definitions partial tsv index';
+  end if;
+
+  if has_table_privilege('anon', 'public.dictionary_search_fields', 'select')
+     or has_table_privilege('authenticated', 'public.dictionary_search_fields', 'select')
+     or has_table_privilege('anon', 'public.dictionary_search_documents', 'select')
+     or has_table_privilege('authenticated', 'public.dictionary_search_documents', 'select') then
+    raise exception 'dictionary search index tables are directly readable by client roles';
+  end if;
+
+  if not exists (
+    select 1
     from public.dictionary_schemas
     where schema_key = 'nl-vandale-v1'
       and version = 1

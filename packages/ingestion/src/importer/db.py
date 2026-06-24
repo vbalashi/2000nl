@@ -170,7 +170,7 @@ def upsert_word_entry(
 def refresh_dictionary_search_documents(
     cursor: Cursor,
     word_ids: Iterable[str],
-    extraction_version: int = 1,
+    extraction_version: int = 2,
     chunk_size: int = 500,
 ) -> int:
     """
