@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     withPlatformCors(request, jsonNoStore(payload, status));
 
   const auth = await measureRouteTiming(instrumentation, "route.auth", () =>
-    getAuthenticatedSupabase(request),
+    getAuthenticatedSupabase(request, instrumentation),
   );
   if (auth instanceof Response) {
     return appendPlatformRouteHeaders(withPlatformCors(request, auth), instrumentation);

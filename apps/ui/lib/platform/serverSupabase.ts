@@ -31,6 +31,10 @@ export type ServiceSupabase = {
   supabase: SupabaseClient;
 };
 
+type TimingEntrySink = {
+  entries: Array<{ name: string; durationMs: number }>;
+};
+
 type ServiceClientCache = {
   url: string;
   key: string;
@@ -130,8 +134,25 @@ export function getBearerToken(request: Request): string | null {
   return match?.[1]?.trim() || null;
 }
 
+async function measureAuthTiming<T>(
+  instrumentation: TimingEntrySink | undefined,
+  name: string,
+  fn: () => PromiseLike<T>,
+): Promise<T> {
+  const startedAt = performance.now();
+  try {
+    return await Promise.resolve(fn());
+  } finally {
+    instrumentation?.entries.push({
+      name,
+      durationMs: performance.now() - startedAt,
+    });
+  }
+}
+
 async function getAuthenticatedUserSupabase(
   request: Request,
+  instrumentation?: TimingEntrySink,
 ): Promise<AuthenticatedUserSupabase | NextResponse> {
   const token = getBearerToken(request);
   if (!token) {
@@ -157,7 +178,11 @@ async function getAuthenticatedUserSupabase(
     },
   });
 
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await measureAuthTiming(
+    instrumentation,
+    "auth.get-user",
+    () => supabase.auth.getUser(token),
+  );
   if (error || !data.user) {
     return jsonNoStore({ error: "invalid_bearer_token" }, 401);
   }
@@ -169,8 +194,9 @@ export { getAuthenticatedUserSupabase };
 
 export async function getAuthenticatedSupabase(
   request: Request,
+  instrumentation?: TimingEntrySink,
 ): Promise<AuthenticatedSupabase | NextResponse> {
-  const auth = await getAuthenticatedUserSupabase(request);
+  const auth = await getAuthenticatedUserSupabase(request, instrumentation);
   if (auth instanceof NextResponse) return auth;
 
   const token = getBearerToken(request);
@@ -178,10 +204,13 @@ export async function getAuthenticatedSupabase(
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
 
-  const principal = await resolvePlatformPrincipal({
-    token,
-    userId: auth.user.id,
-  });
+  const principal = await resolvePlatformPrincipal(
+    {
+      token,
+      userId: auth.user.id,
+    },
+    instrumentation,
+  );
   if (principal instanceof NextResponse) return principal;
 
   return { ...auth, principal };
@@ -197,10 +226,13 @@ function platformServiceClient(): SupabaseClient | null {
   return getServiceSupabaseClient(supabaseUrl, serviceKey);
 }
 
-async function resolvePlatformPrincipal(params: {
-  token: string;
-  userId: string;
-}): Promise<PlatformPrincipal | NextResponse> {
+async function resolvePlatformPrincipal(
+  params: {
+    token: string;
+    userId: string;
+  },
+  instrumentation?: TimingEntrySink,
+): Promise<PlatformPrincipal | NextResponse> {
   const firstParty: PlatformPrincipal = {
     userId: params.userId,
     authKind: "first_party",
@@ -231,10 +263,18 @@ async function resolvePlatformPrincipal(params: {
     return firstParty;
   }
 
-  const { data: session, error: sessionError } = await sessionQuery
-    .select("id, client_id, user_id, scopes, revoked_at, access_token_expires_at")
-    .eq("access_token_hash", sha256Hex(params.token))
-    .maybeSingle();
+  const { data: session, error: sessionError } = await measureAuthTiming<{
+    data: unknown;
+    error: { message?: string } | null;
+  }>(
+    instrumentation,
+    "auth.principal-session",
+    () =>
+      sessionQuery
+        .select("id, client_id, user_id, scopes, revoked_at, access_token_expires_at")
+        .eq("access_token_hash", sha256Hex(params.token))
+        .maybeSingle(),
+  );
 
   if (sessionError) {
     return jsonNoStore(
@@ -266,11 +306,25 @@ async function resolvePlatformPrincipal(params: {
     return jsonNoStore({ error: "connected_client_token_expired" }, 401);
   }
 
-  const { data: client, error: clientError } = await service
-    .from("connected_clients")
-    .select("client_id, status")
-    .eq("client_id", row.client_id)
-    .maybeSingle();
+  const [clientResult, grantResult] = await Promise.all([
+    measureAuthTiming(instrumentation, "auth.principal-client", () =>
+      service
+        .from("connected_clients")
+        .select("client_id, status")
+        .eq("client_id", row.client_id)
+        .maybeSingle(),
+    ),
+    measureAuthTiming(instrumentation, "auth.principal-grant", () =>
+      service
+        .from("connected_client_grants")
+        .select("scopes, revoked_at")
+        .eq("client_id", row.client_id)
+        .eq("user_id", row.user_id)
+        .maybeSingle(),
+    ),
+  ]);
+
+  const { data: client, error: clientError } = clientResult;
   if (clientError) {
     return jsonNoStore(
       { error: "connected_client_lookup_failed", detail: clientError.message },
@@ -281,12 +335,7 @@ async function resolvePlatformPrincipal(params: {
     return jsonNoStore({ error: "connected_client_disabled" }, 401);
   }
 
-  const { data: grant, error: grantError } = await service
-    .from("connected_client_grants")
-    .select("scopes, revoked_at")
-    .eq("client_id", row.client_id)
-    .eq("user_id", row.user_id)
-    .maybeSingle();
+  const { data: grant, error: grantError } = grantResult;
   if (grantError) {
     return jsonNoStore(
       { error: "connected_client_grant_lookup_failed", detail: grantError.message },
