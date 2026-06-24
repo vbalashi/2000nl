@@ -42,6 +42,11 @@ export function normalizeDictionaryContent(
       : typeof raw.notes === "string"
         ? raw.notes
         : null;
+  const legacyExample = asString(asRecord(raw.example).source);
+  const legacyNote =
+    typeof raw.notes === "string" && raw.notes !== fallbackDefinition
+      ? raw.notes
+      : null;
   const meanings =
     rawMeanings.length > 0
       ? rawMeanings.map((meaning) => {
@@ -107,6 +112,8 @@ export function normalizeDictionaryContent(
     sections: buildContentSections(
       rawMeanings,
       fallbackDefinition,
+      legacyExample,
+      legacyNote,
       translationOverlay,
     ),
     translation: translation?.metadata,
@@ -219,6 +226,8 @@ function translationText(value: unknown) {
 function buildContentSections(
   rawMeanings: unknown[],
   fallbackDefinition: string | null,
+  fallbackExample?: string | null,
+  fallbackNote?: string | null,
   translationOverlay?: Record<string, unknown> | null,
 ) {
   const sections: Array<{
@@ -349,6 +358,22 @@ function buildContentSections(
       kind: "meaning",
       text: fallbackDefinition,
       ...(overlayTranslation ? { translation: overlayTranslation } : {}),
+    });
+  }
+  if (rawMeanings.length === 0 && fallbackExample) {
+    sections.push({
+      id: "example-1-1",
+      sourcePath: "raw.example.source",
+      kind: "example",
+      text: fallbackExample,
+    });
+  }
+  if (rawMeanings.length === 0 && fallbackNote) {
+    sections.push({
+      id: "note-1",
+      sourcePath: "raw.notes",
+      kind: "note",
+      text: fallbackNote,
     });
   }
 
