@@ -367,3 +367,45 @@ Updated attribution:
   is a cold/warm SQL-focused run for `examples` and `definitions`, including
   `EXPLAIN (ANALYZE, BUFFERS)` for first-after-idle body-group calls when
   feasible.
+
+## Nuc EXPLAIN Body-Group Probe
+
+Ran a one-off `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` from the nuc host using
+the same `DATABASE_URL`. The query called:
+
+```sql
+select private.search_dictionary_group_keyset_v1(
+  NULL, true, $query, 'nl', NULL, $group, 6, NULL
+) as result
+```
+
+First loop:
+
+| query | group | elapsed ms | execution ms | shared hit | shared read | temp read/write |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| de | examples | 371.0 | 317.225 | 5,622 | 0 | 0 / 0 |
+| de | definitions | 59.2 | 25.515 | 3,119 | 0 | 0 / 0 |
+| het | examples | 69.2 | 34.109 | 6,221 | 0 | 0 / 0 |
+| het | definitions | 60.8 | 28.063 | 4,736 | 0 | 0 / 0 |
+
+Immediate second loop:
+
+| query | group | elapsed ms | execution ms | shared hit | shared read | temp read/write |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| de | examples | 57.5 | 21.201 | 4,028 | 0 | 0 / 0 |
+| de | definitions | 55.7 | 23.692 | 4,527 | 0 | 0 / 0 |
+| het | examples | 61.7 | 28.526 | 7,734 | 0 | 0 / 0 |
+| het | definitions | 56.0 | 26.195 | 7,734 | 0 | 0 / 0 |
+
+This confirms a direct SQL cold/warm gap for body-group execution on nuc. The
+wrapper-level plan does not expose the internal query plan of
+`private.search_dictionary_body_group_v1`, but the spike is inside direct SQL
+function execution and does not require the HTTP/PostgREST boundary to appear.
+
+Updated next step:
+
+- Inspect and likely refactor the body-group query shape for common terms.
+- Prefer early-terminating key selection before hydration and avoid materialized
+  complete common-term match sets in the blocking preview path.
+- Keep route/PostgREST observations as secondary overhead, not the only root
+  cause.
