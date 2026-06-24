@@ -121,6 +121,10 @@ describe("/api/platform/v1/search", () => {
     expect(response.headers.get("server-timing")).toEqual(
       expect.stringContaining("search.db"),
     );
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("route.total"),
+    );
+    expect(response.headers.get("x-request-id")).toBeTruthy();
     expect(rpc).toHaveBeenCalledWith("search_dictionary_groups_v1", {
       p_query: "oog",
       p_language_code: "nl",
@@ -273,6 +277,10 @@ describe("/api/platform/v1/catalog/search", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("server-timing")).toEqual(
+      expect.stringContaining("route.total"),
+    );
+    expect(response.headers.get("x-request-id")).toBeTruthy();
     expect(createClient).toHaveBeenCalledWith(
       "http://localhost:54321",
       "service-key",
