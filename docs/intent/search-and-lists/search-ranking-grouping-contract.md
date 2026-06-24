@@ -1,7 +1,8 @@
 # Search Ranking And Grouping Contract
 
-Last updated: 2026-05-26
-Status: Approved baseline for A4 implementation
+Last updated: 2026-06-24
+Status: Approved baseline for A4 implementation; count semantics are superseded
+by `docs/reference/platform-api.md`.
 
 ## Purpose
 
@@ -154,7 +155,8 @@ The backend must:
 - search exact headword and `word_forms` before broad headword substring;
 - support example and definition matches from structured `raw` JSON or indexed
   extracted columns;
-- return total counts per group or enough metadata for the client to count;
+- return count metadata per group without blocking first paint on unbounded
+  exact counts;
 - preserve free-tier caps without hiding exact matches behind broad matches;
 - include stable pagination semantics. Pagination should not split stronger
   groups behind weaker groups on page 1.
@@ -162,6 +164,13 @@ The backend must:
 If example/definition search is expensive, A4 may ship exact/lemma/related
 groups first, but the response shape should leave room for example/definition
 groups without another UI rewrite.
+
+For Platform grouped search, do not silently put approximate values in `total`.
+Use the explicit `count.value` / `count.relation` policy in
+`docs/reference/platform-api.md` for exact, lower-bound, estimate, and unknown
+counts. Examples, definitions, and alphabetical browse must support `LIMIT + 1`
+pagination and `hasMore` without requiring an exact count in the blocking
+request.
 
 ## Client Requirements
 

@@ -326,6 +326,10 @@ Response shape:
     {
       "id": "headwords",
       "total": 2,
+      "count": {
+        "value": 2,
+        "relation": "eq"
+      },
       "items": [
         {
           "kind": "entry",
@@ -358,7 +362,11 @@ Response shape:
     },
     {
       "id": "examples",
-      "total": 13,
+      "total": null,
+      "count": {
+        "value": null,
+        "relation": "unknown"
+      },
       "items": [
         {
           "kind": "field-match",
@@ -385,7 +393,11 @@ Response shape:
     },
     {
       "id": "definitions",
-      "total": 13,
+      "total": null,
+      "count": {
+        "value": null,
+        "relation": "unknown"
+      },
       "items": [],
       "page": {
         "limit": 6,
@@ -395,7 +407,11 @@ Response shape:
     },
     {
       "id": "alphabetical",
-      "total": 14449,
+      "total": null,
+      "count": {
+        "value": null,
+        "relation": "unknown"
+      },
       "items": [],
       "page": {
         "limit": 6,
@@ -419,10 +435,53 @@ Normative group IDs:
 `alphabetical` is not substring or related-headword search. Related compounds
 can become a separate optional group later.
 
-`total` counts result items available in that group, not the number returned in
-the preview. Each group owns independent pagination through opaque cursors.
-Do not expose durable page counts. Display labels can be client-localized;
-`id` is the stable contract.
+`total` in `dictionary-search-v1` is an exact count of result items available in
+that group, not the number returned in the preview. Do not silently place capped
+or estimated values in `total`. Each group owns independent pagination through
+opaque cursors. Do not expose durable page counts. Display labels can be
+client-localized; `id` is the stable contract.
+
+### Group Count Policy
+
+Grouped search must not block first paint on unbounded exact counts. Future
+count-aware responses should add an explicit `count` object instead of changing
+the meaning of `total`:
+
+```json
+{
+  "count": {
+    "value": 1000,
+    "relation": "gte"
+  },
+  "page": {
+    "hasMore": true,
+    "nextCursor": "opaque-cursor"
+  }
+}
+```
+
+Allowed `count.relation` values:
+
+- `eq` - exact count;
+- `gte` - lower bound, for example `1000+`;
+- `estimate` - approximate value from cached/planner/statistical metadata;
+- `unknown` - count is intentionally unavailable in the blocking response.
+
+Count policy by group:
+
+| Group | Initial preview | Group page / more results | Notes |
+| --- | --- | --- | --- |
+| `headwords` | exact `eq` | exact `eq` | Candidate set is small and equality-indexed. |
+| `examples` | `unknown` or bounded `gte`; `hasMore` via `LIMIT + 1` | capped exact, then `gte` | Exact body counts may be opt-in/background/cache-backed. |
+| `definitions` | `unknown` or bounded `gte`; `hasMore` via `LIMIT + 1` | capped exact, then `gte` | Same policy as examples. |
+| `alphabetical` | cached/metadata `eq` or `unknown` | cached/metadata `eq` or `unknown` | Do not compute `COUNT(*)` over the browse query path. |
+
+Alphabetical count unit is meaning-level `dictionary_search_documents` rows
+unless a later contract explicitly switches to unique headwords/articles. If
+`total` remains in a count-aware response, it must either remain exact or become
+`null` with the explicit `count` object carrying the display semantics. API
+changes that alter this shape should bump `contractVersion` or document a
+compatible additive rollout before clients depend on it.
 
 Grouped search normally returns previews only. It should not hydrate user
 progress, list memberships, actions, translations, full normalized card content,
