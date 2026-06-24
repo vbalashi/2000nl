@@ -12,6 +12,9 @@ cd apps/ui
 npm run test:platform
 ```
 
+For live catalog lookup/search smoke commands and token lookup rules, use
+[Dictionary Platform Smoke](../runbooks/dictionary-platform-smoke.md).
+
 ## Auth And CORS
 
 - Send `Authorization: Bearer <access_token>`.
