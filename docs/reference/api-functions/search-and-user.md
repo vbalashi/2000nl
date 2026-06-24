@@ -230,13 +230,17 @@ Supported actions:
 - `create-user-entry` – calls `create_user_dictionary_entry` with a full
   `user-entry-v1` payload.
 - `POST /api/platform/v1/user-dictionary/generated-entry/draft` – calls the
-  configured OpenAI/Azure OpenAI provider and returns a same-language generated
-  draft without mutating dictionary, list, FSRS, review, or provenance state.
-- `POST /api/platform/v1/user-dictionary/generated-entry` – builds a generated
-  `user-entry-v1` payload with `generation` metadata and persists it through
-  `create_user_dictionary_entry`. It requires `platform:write`, stores the row
-  in the user's private editable dictionary, and leaves learning state untouched
-  until an explicit `start-learning` action.
+  configured OpenAI/Azure OpenAI provider and returns a same-language
+  lookup-like generated draft candidate with `draftSetId`, `candidateId`,
+  `revision`, normalized `item.entry.content`, and
+  `save-and-start-learning` capability. It does not mutate dictionary, list,
+  FSRS, review, or provenance state.
+- `POST /api/platform/v1/user-dictionary/generated-entry` – persists the
+  selected generated draft candidate/revision as a `user-entry-v1` payload with
+  `generation` metadata through `create_user_dictionary_entry`. It requires
+  `platform:write`, stores the row in the user's private editable dictionary,
+  and leaves learning state untouched until an explicit `start-learning`
+  action. Requests without selected draft candidate identity are rejected.
 - `update-user-entry` – calls `update_user_dictionary_entry` and replaces an
   owned user entry payload.
 - `delete-user-entry` – calls `delete_user_dictionary_entry` for an owned user

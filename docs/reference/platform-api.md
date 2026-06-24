@@ -306,8 +306,8 @@ delay.
 
 Authenticated provider-backed draft generation for lookup misses. This endpoint
 calls the configured OpenAI/Azure OpenAI chat-completions provider and returns a
-same-language learner-card draft. It does not write `word_entries`, lists,
-review logs, FSRS state, or provenance action events.
+same-language lookup-like learner-card draft candidate. It does not write
+`word_entries`, lists, review logs, FSRS state, or provenance action events.
 
 Use `/api/platform/v1/user-dictionary/generated-entry/draft` from external
 clients. The Bearer token must resolve to a first-party user or a connected
@@ -319,30 +319,79 @@ Request:
   "clickedForm": "gedoe",
   "languageCode": "nl",
   "contextText": "Wat een gedoe.",
+  "draftSetId": "gds_... optional for regeneration",
   "sourceContext": {
     "contractVersion": "source-context-v2"
   }
 }
 ```
 
+`contextText` is required so the platform can choose the intended sense. A full
+card regeneration sends the previous `draftSetId`; the endpoint returns a new
+candidate in that same draft set and does not overwrite earlier candidates.
+
 Response:
 ```json
 {
   "ok": true,
   "draft": {
+    "draftSetId": "gds_...",
+    "candidateId": "gdc_...",
+    "revision": 1,
     "clickedForm": "gedoe",
     "languageCode": "nl",
     "contextText": "Wat een gedoe.",
-    "generated": {
-      "definition": "Een situatie die veel moeite of ongemak geeft.",
-      "example": { "source": "Wat een gedoe met die tickets." },
-      "partOfSpeech": "noun",
-      "notes": "Informeel en vaak licht negatief.",
-      "provider": "openai",
-      "model": "gpt-...",
-      "promptVersion": "generated-user-entry-v1",
-      "generatedAt": "2026-06-23T19:00:00.000Z",
-      "contentFingerprint": "sha256..."
+    "item": {
+      "draftSetId": "gds_...",
+      "candidateId": "gdc_...",
+      "revision": 1,
+      "entry": {
+        "id": "draft:gdc_...",
+        "dictionaryId": null,
+        "languageCode": "nl",
+        "headword": "gedoe",
+        "meaningId": null,
+        "partOfSpeech": "noun",
+        "gender": null,
+        "content": {
+          "headword": "gedoe",
+          "languageCode": "nl",
+          "partOfSpeech": "noun",
+          "sections": [
+            {
+              "id": "meaning-1",
+              "kind": "meaning",
+              "text": "Een situatie die veel moeite of ongemak geeft."
+            },
+            {
+              "id": "example-1",
+              "kind": "example",
+              "text": "Wat een gedoe met die tickets."
+            }
+          ],
+          "summary": {
+            "definition": "Een situatie die veel moeite of ongemak geeft.",
+            "example": "Wat een gedoe met die tickets."
+          }
+        },
+        "contentFingerprint": "sha256...",
+        "isGeneratedDraft": true
+      },
+      "cardCapabilitiesByType": {
+        "word-to-definition": {
+          "phase": "draft",
+          "actions": ["save-and-start-learning"]
+        }
+      },
+      "availableActions": ["save-and-start-learning"],
+      "generation": {
+        "status": "draft",
+        "provider": "openai",
+        "model": "gpt-...",
+        "promptVersion": "generated-user-entry-v1",
+        "contentFingerprint": "sha256...",
+        "requiresExplicitSave": true
+      }
     }
   },
   "generation": {
@@ -350,13 +399,16 @@ Response:
     "provider": "openai",
     "model": "gpt-...",
     "promptVersion": "generated-user-entry-v1",
+    "contentFingerprint": "sha256...",
     "requiresExplicitSave": true
   },
-  "nextActions": ["save-generated-entry"]
+  "nextActions": ["save-and-start-learning"]
 }
 ```
 
-If no provider key is configured, the endpoint fails closed with
+If `contextText` is missing, the endpoint returns
+`400 { "error": "missing_context_text" }`. If no provider key is configured,
+the endpoint fails closed with
 `503 { "error": "generated_entry_provider_not_configured" }`. Provider errors
 return `502 { "error": "generated_entry_provider_failed" }`.
 
@@ -380,21 +432,50 @@ Request:
   "sourceContext": {
     "contractVersion": "source-context-v2"
   },
-  "generated": {
-    "definition": "Een situatie die veel moeite of ongemak geeft.",
-    "example": { "source": "Wat een gedoe." },
-    "partOfSpeech": "noun",
-    "provider": "openai",
+  "draftSetId": "gds_...",
+  "candidateId": "gdc_...",
+  "revision": 1,
+  "item": {
+    "entry": {
+      "contentFingerprint": "sha256...",
+      "content": {
+        "headword": "gedoe",
+        "languageCode": "nl",
+        "partOfSpeech": "noun",
+        "sections": [
+          {
+            "id": "meaning-1",
+            "kind": "meaning",
+            "text": "Een situatie die veel moeite of ongemak geeft."
+          },
+          {
+            "id": "example-1",
+            "kind": "example",
+            "text": "Wat een gedoe."
+          }
+        ],
+        "summary": {
+          "definition": "Een situatie die veel moeite of ongemak geeft.",
+          "example": "Wat een gedoe."
+        }
+      }
+    },
+    "generation": {
+      "provider": "openai",
       "model": "gpt-...",
       "promptVersion": "generated-user-entry-v1"
+    }
   }
 }
 ```
 
 The endpoint builds a `user-entry-v1` payload, adds `tags: ["generated"]`, and
-stores `generation` metadata in `word_entries.raw`. Generated entries are
+stores the selected `draftSetId`, `candidateId`, `revision`, provider metadata,
+and content fingerprint in `word_entries.raw.generation`. Generated entries are
 created in the user's private editable `user-entry-v1` dictionary through
-`create_user_dictionary_entry`; they are not curated/system entries.
+`create_user_dictionary_entry`; they are not curated/system entries. Requests
+without selected candidate identity fail with
+`400 { "error": "missing_draft_candidate" }`.
 
 Response:
 ```json
@@ -404,6 +485,9 @@ Response:
   "dictionaryId": null,
   "generation": {
     "status": "persisted",
+    "draftSetId": "gds_...",
+    "candidateId": "gdc_...",
+    "revision": 1,
     "requiresExplicitStartLearning": true
   },
   "nextActions": ["start-learning"]

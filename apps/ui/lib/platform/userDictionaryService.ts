@@ -9,6 +9,10 @@ export type GeneratedUserDictionaryEntryBody = {
   contextText?: unknown;
   sourceContext?: unknown;
   dictionaryId?: unknown;
+  draftSetId?: unknown;
+  candidateId?: unknown;
+  revision?: unknown;
+  item?: unknown;
   generated?: unknown;
 };
 
@@ -88,17 +92,43 @@ export async function createGeneratedUserDictionaryEntry(
   const record = asRecord(body);
   const clickedForm = asString(record.clickedForm) ?? asString(record.headword);
   const languageCode = asString(record.languageCode);
+  const draftSetId = asString(record.draftSetId);
+  const candidateId = asString(record.candidateId);
+  const revision = asPositiveInteger(record.revision);
+  const candidateItem = asRecord(record.item);
+  const candidateEntry = asRecord(candidateItem.entry);
+  const candidateContent = asRecord(candidateEntry.content);
   const generated = asRecord(record.generated);
-  const definition = asString(generated.definition);
-  const notes = asString(generated.notes);
+  const definition =
+    asString(asRecord(candidateContent.summary).definition) ??
+    firstSectionText(candidateContent.sections, "meaning") ??
+    asString(generated.definition);
+  const notes =
+    firstSectionText(candidateContent.sections, "note") ??
+    asString(generated.notes);
   const example = asRecord(generated.example);
-  const exampleSource = asString(example.source) ?? asString(record.contextText);
+  const exampleSource =
+    asString(asRecord(candidateContent.summary).example) ??
+    firstSectionText(candidateContent.sections, "example") ??
+    asString(example.source) ??
+    asString(record.contextText);
+  const selectedHeadword =
+    asString(candidateContent.headword) ??
+    asString(candidateEntry.headword) ??
+    clickedForm;
+  const selectedLanguageCode =
+    asString(candidateContent.languageCode) ??
+    asString(candidateEntry.languageCode) ??
+    languageCode;
 
-  if (!clickedForm) {
+  if (!selectedHeadword) {
     return { payload: { error: "missing_clicked_form" }, status: 400 };
   }
-  if (!languageCode) {
+  if (!selectedLanguageCode) {
     return { payload: { error: "missing_language_code" }, status: 400 };
+  }
+  if (!draftSetId || !candidateId || revision === null || !candidateContent.headword) {
+    return { payload: { error: "missing_draft_candidate" }, status: 400 };
   }
   if (!definition && !notes && !exampleSource) {
     return { payload: { error: "missing_generated_content" }, status: 400 };
@@ -110,8 +140,8 @@ export async function createGeneratedUserDictionaryEntry(
   }
 
   const entry = stripUndefined({
-    headword: clickedForm,
-    languageCode,
+    headword: selectedHeadword,
+    languageCode: selectedLanguageCode,
     definition,
     example: exampleSource
       ? stripUndefined({
@@ -119,20 +149,33 @@ export async function createGeneratedUserDictionaryEntry(
           translation: asString(example.translation),
         })
       : undefined,
-    partOfSpeech: asString(generated.partOfSpeech),
-    gender: asString(generated.gender),
+    partOfSpeech:
+      asString(candidateContent.partOfSpeech) ?? asString(generated.partOfSpeech),
+    gender: asString(candidateContent.gender) ?? asString(generated.gender),
     notes,
     tags: uniqueStringArray(["generated", ...asStringArray(generated.tags)]),
     generation: stripUndefined({
       kind: "llm",
-      provider: asString(generated.provider),
-      model: asString(generated.model),
-      promptVersion: asString(generated.promptVersion),
+      draftSetId,
+      candidateId,
+      revision,
+      provider:
+        asString(asRecord(candidateItem.generation).provider) ??
+        asString(generated.provider),
+      model:
+        asString(asRecord(candidateItem.generation).model) ??
+        asString(generated.model),
+      promptVersion:
+        asString(asRecord(candidateItem.generation).promptVersion) ??
+        asString(generated.promptVersion),
       generatedAt: asString(generated.generatedAt) ?? new Date().toISOString(),
-      contentFingerprint: asString(generated.contentFingerprint),
+      contentFingerprint:
+        asString(candidateEntry.contentFingerprint) ??
+        asString(asRecord(candidateItem.generation).contentFingerprint) ??
+        asString(generated.contentFingerprint),
       source: stripUndefined({
-        clickedForm,
-        languageCode,
+        clickedForm: selectedHeadword,
+        languageCode: selectedLanguageCode,
         contextText: asString(record.contextText),
         connectedClientId: auth.principal.connectedClientId,
         sourceContextVersion: sourceContext.version,
@@ -160,6 +203,9 @@ export async function createGeneratedUserDictionaryEntry(
       entry,
       generation: {
         status: "persisted",
+        draftSetId,
+        candidateId,
+        revision,
         requiresExplicitStartLearning: true,
       },
       nextActions: ["start-learning"],
@@ -205,6 +251,22 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asPositiveInteger(value: unknown): number | null {
+  return Number.isInteger(value) && Number(value) > 0 ? Number(value) : null;
+}
+
+function firstSectionText(value: unknown, kind: string): string | null {
+  if (!Array.isArray(value)) return null;
+  for (const item of value) {
+    const section = asRecord(item);
+    if (section.kind === kind) {
+      const text = asString(section.text);
+      if (text) return text;
+    }
+  }
+  return null;
 }
 
 function asStringArray(value: unknown): string[] {

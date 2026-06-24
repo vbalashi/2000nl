@@ -183,13 +183,39 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
             charEnd: 13,
           },
         },
-        generated: {
-          definition: "Een situatie die veel moeite of ongemak geeft.",
-          example: { source: "Wat een gedoe." },
-          partOfSpeech: "noun",
-          provider: "openai",
-          model: "gpt-test",
-          promptVersion: "generated-user-entry-v1",
+        draftSetId: "gds-1",
+        candidateId: "gdc-1",
+        revision: 1,
+        item: {
+          entry: {
+            contentFingerprint: "fingerprint-1",
+            content: {
+              headword: "gedoe",
+              languageCode: "nl",
+              partOfSpeech: "noun",
+              sections: [
+                {
+                  id: "meaning-1",
+                  kind: "meaning",
+                  text: "Een situatie die veel moeite of ongemak geeft.",
+                },
+                {
+                  id: "example-1",
+                  kind: "example",
+                  text: "Wat een gedoe.",
+                },
+              ],
+              summary: {
+                definition: "Een situatie die veel moeite of ongemak geeft.",
+                example: "Wat een gedoe.",
+              },
+            },
+          },
+          generation: {
+            provider: "openai",
+            model: "gpt-test",
+            promptVersion: "generated-user-entry-v1",
+          },
         },
       }),
     );
@@ -207,9 +233,13 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
         tags: ["generated"],
         generation: expect.objectContaining({
           kind: "llm",
+          draftSetId: "gds-1",
+          candidateId: "gdc-1",
+          revision: 1,
           provider: "openai",
           model: "gpt-test",
           promptVersion: "generated-user-entry-v1",
+          contentFingerprint: "fingerprint-1",
           generatedAt: expect.any(String),
           source: expect.objectContaining({
             clickedForm: "gedoe",
@@ -230,6 +260,9 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
         entryId: "entry-generated-1",
         generation: {
           status: "persisted",
+          draftSetId: "gds-1",
+          candidateId: "gdc-1",
+          revision: 1,
           requiresExplicitStartLearning: true,
         },
         nextActions: ["start-learning"],
@@ -251,7 +284,25 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       request({
         clickedForm: "gedoe",
         languageCode: "nl",
-        generated: { definition: "Een hoop onhandige moeite." },
+        draftSetId: "gds-duplicate",
+        candidateId: "gdc-duplicate",
+        revision: 1,
+        item: {
+          entry: {
+            content: {
+              headword: "gedoe",
+              languageCode: "nl",
+              summary: { definition: "Een hoop onhandige moeite." },
+              sections: [
+                {
+                  id: "meaning-1",
+                  kind: "meaning",
+                  text: "Een hoop onhandige moeite.",
+                },
+              ],
+            },
+          },
+        },
       }),
     );
 
@@ -260,6 +311,28 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       error: "duplicate_user_entry",
       detail: "duplicate_user_entry",
     });
+  });
+
+  test("rejects generated saves without selected draft candidate identity", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/route"
+    );
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        generated: { definition: "Een hoop onhandige moeite." },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "missing_draft_candidate",
+    });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("drafts generated entries through the provider without DB mutation", async () => {
@@ -310,19 +383,61 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       expect.objectContaining({
         ok: true,
         draft: expect.objectContaining({
+          draftSetId: expect.any(String),
+          candidateId: expect.any(String),
+          revision: 1,
           clickedForm: "gedoe",
           languageCode: "nl",
           contextText: "Wat een gedoe.",
-          generated: expect.objectContaining({
-            definition: "Een situatie die veel moeite of ongemak geeft.",
-            example: { source: "Wat een gedoe met die tickets." },
-            partOfSpeech: "noun",
-            notes: "Informeel en vaak licht negatief.",
-            provider: "openai",
-            model: "gpt-test",
-            promptVersion: "generated-user-entry-v1",
-            generatedAt: expect.any(String),
-            contentFingerprint: expect.any(String),
+          item: expect.objectContaining({
+            draftSetId: expect.any(String),
+            candidateId: expect.any(String),
+            revision: 1,
+            entry: expect.objectContaining({
+              id: expect.stringMatching(/^draft:/),
+              languageCode: "nl",
+              headword: "gedoe",
+              content: expect.objectContaining({
+                headword: "gedoe",
+                languageCode: "nl",
+                partOfSpeech: "noun",
+                sections: expect.arrayContaining([
+                  expect.objectContaining({
+                    kind: "meaning",
+                    text: "Een situatie die veel moeite of ongemak geeft.",
+                  }),
+                  expect.objectContaining({
+                    kind: "example",
+                    text: "Wat een gedoe met die tickets.",
+                  }),
+                  expect.objectContaining({
+                    kind: "note",
+                    text: "Informeel en vaak licht negatief.",
+                  }),
+                ]),
+                summary: {
+                  definition: "Een situatie die veel moeite of ongemak geeft.",
+                  example: "Wat een gedoe met die tickets.",
+                },
+              }),
+              contentFingerprint: expect.any(String),
+              isGeneratedDraft: true,
+            }),
+            cardCapabilitiesByType: {
+              "word-to-definition": {
+                phase: "draft",
+                actions: ["save-and-start-learning"],
+              },
+            },
+            availableActions: ["save-and-start-learning"],
+            generation: expect.objectContaining({
+              status: "draft",
+              provider: "openai",
+              model: "gpt-test",
+              promptVersion: "generated-user-entry-v1",
+              contentFingerprint: expect.any(String),
+              requiresExplicitSave: true,
+            }),
           }),
         }),
         generation: {
@@ -330,11 +445,81 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
           provider: "openai",
           model: "gpt-test",
           promptVersion: "generated-user-entry-v1",
+          contentFingerprint: expect.any(String),
           requiresExplicitSave: true,
         },
-        nextActions: ["save-generated-entry"],
+        nextActions: ["save-and-start-learning"],
       }),
     );
+  });
+
+  test("keeps regenerated candidates in the requested draft set", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/draft/route"
+    );
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                definition: "Een tweede kaart voor dezelfde context.",
+                example: "Dat was weer gedoe.",
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    const response = await POST(
+      request({
+        draftSetId: "gds_existing",
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        contextText: "Wat een gedoe.",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.draft).toEqual(
+      expect.objectContaining({
+        draftSetId: "gds_existing",
+        candidateId: expect.stringMatching(/^gdc_/),
+        revision: 1,
+      }),
+    );
+    expect(payload.draft.item).toEqual(
+      expect.objectContaining({
+        draftSetId: "gds_existing",
+        candidateId: payload.draft.candidateId,
+      }),
+    );
+  });
+
+  test("requires context text for generated draft sense disambiguation", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/draft/route"
+    );
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "missing_context_text",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("draft generation fails closed when provider config is missing", async () => {

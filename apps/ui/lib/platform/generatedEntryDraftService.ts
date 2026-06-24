@@ -2,6 +2,9 @@ import crypto from "crypto";
 import type { AuthenticatedSupabase } from "./serverSupabase";
 import type { PlatformOperationResult } from "./platformApi";
 import { parseSourceContext } from "./sourceContext";
+import {
+  contentFingerprint as learnerContentFingerprint,
+} from "./projections/dictionaryContent";
 import { loadTranslationConfigFromEnv } from "@/lib/translation/translationProvider";
 
 const PROMPT_VERSION = "generated-user-entry-v1";
@@ -12,6 +15,7 @@ export type GeneratedEntryDraftBody = {
   clickedForm?: unknown;
   languageCode?: unknown;
   contextText?: unknown;
+  draftSetId?: unknown;
   sourceContext?: unknown;
 };
 
@@ -40,6 +44,9 @@ export async function draftGeneratedUserDictionaryEntry(
   }
   if (!languageCode) {
     return { payload: { error: "missing_language_code" }, status: 400 };
+  }
+  if (!contextText) {
+    return { payload: { error: "missing_context_text" }, status: 400 };
   }
 
   const sourceContext = parseSourceContext(record.sourceContext, auth.user.id);
@@ -93,36 +100,174 @@ export async function draftGeneratedUserDictionaryEntry(
     promptVersion: PROMPT_VERSION,
     generatedAt: new Date().toISOString(),
   });
-  const contentFingerprint = fingerprint({
+  const draftSetId = asString(record.draftSetId) ?? `gds_${fingerprint({
+    clickedForm,
+    languageCode,
+    contextText,
+    sourceContext: sourceContext.value ?? null,
+  }).slice(0, 32)}`;
+  const candidateId = `gdc_${fingerprint({
     clickedForm,
     languageCode,
     contextText,
     generated: draftGenerated,
+  }).slice(0, 32)}`;
+  const revision = 1;
+  const content = normalizeGeneratedDictionaryContent({
+    clickedForm,
+    languageCode,
+    definition: asString(draftGenerated.definition),
+    exampleSource: asString(asRecord(draftGenerated.example).source),
+    partOfSpeech: asString(draftGenerated.partOfSpeech),
+    notes: asString(draftGenerated.notes),
   });
+  const contentFingerprint = learnerContentFingerprint(content);
+  const generationMetadata = {
+    status: "draft",
+    provider: "openai",
+    model,
+    promptVersion: PROMPT_VERSION,
+    contentFingerprint,
+    requiresExplicitSave: true,
+  };
 
   return {
     payload: {
       ok: true,
       draft: {
+        draftSetId,
+        candidateId,
+        revision,
         clickedForm,
         languageCode,
         ...(contextText ? { contextText } : {}),
         ...(sourceContext.value ? { sourceContext: sourceContext.value } : {}),
-        generated: {
-          ...draftGenerated,
-          contentFingerprint,
+        item: {
+          draftSetId,
+          candidateId,
+          revision,
+          entry: {
+            id: `draft:${candidateId}`,
+            dictionaryId: null,
+            languageCode,
+            headword: clickedForm,
+            meaningId: null,
+            partOfSpeech: asString(draftGenerated.partOfSpeech),
+            gender: null,
+            content,
+            contentFingerprint,
+            raw: {
+              schema: "generated-draft-entry-v1",
+              headword: clickedForm,
+              languageCode,
+              definition: asString(draftGenerated.definition),
+              example: asRecord(draftGenerated.example),
+              partOfSpeech: asString(draftGenerated.partOfSpeech),
+              notes: asString(draftGenerated.notes),
+              tags: ["generated"],
+              generation: {
+                kind: "llm",
+                ...generationMetadata,
+                generatedAt: asString(draftGenerated.generatedAt),
+              },
+            },
+            isGeneratedDraft: true,
+          },
+          dictionary: {
+            id: null,
+            languageCode,
+            slug: "generated-draft",
+            name: "Generated draft",
+            kind: "generated",
+            visibility: "private",
+            schemaKey: "generated-draft-entry-v1",
+            schemaVersion: 1,
+            isEditable: true,
+          },
+          match: {
+            queriedForm: clickedForm,
+            matchedForm: clickedForm,
+            relation: "generated",
+          },
+          cardCapabilitiesByType: {
+            "word-to-definition": {
+              phase: "draft",
+              actions: ["save-and-start-learning"],
+            },
+          },
+          availableActions: ["save-and-start-learning"],
+          generation: {
+            ...generationMetadata,
+            generatedAt: asString(draftGenerated.generatedAt),
+          },
         },
       },
-      generation: {
-        status: "draft",
-        provider: "openai",
-        model,
-        promptVersion: PROMPT_VERSION,
-        requiresExplicitSave: true,
-      },
-      nextActions: ["save-generated-entry"],
+      generation: generationMetadata,
+      nextActions: ["save-and-start-learning"],
     },
     status: 200,
+  };
+}
+
+function normalizeGeneratedDictionaryContent(params: {
+  clickedForm: string;
+  languageCode: string;
+  definition: string | null;
+  exampleSource: string | null;
+  partOfSpeech: string | null;
+  notes: string | null;
+}) {
+  const sections = [
+    params.definition
+      ? {
+          id: "meaning-1",
+          kind: "meaning" as const,
+          text: params.definition,
+          sourcePath: "raw.definition",
+        }
+      : null,
+    params.exampleSource
+      ? {
+          id: "example-1",
+          kind: "example" as const,
+          text: params.exampleSource,
+          sourcePath: "raw.example.source",
+        }
+      : null,
+    params.notes
+      ? {
+          id: "note-1",
+          kind: "note" as const,
+          text: params.notes,
+          sourcePath: "raw.notes",
+        }
+      : null,
+  ].filter((section): section is NonNullable<typeof section> => Boolean(section));
+
+  return {
+    headword: params.clickedForm,
+    languageCode: params.languageCode,
+    meaningId: null,
+    partOfSpeech: params.partOfSpeech,
+    gender: null,
+    meanings: [
+      {
+        definition: params.definition,
+        translations: {},
+        examples: params.exampleSource ? [params.exampleSource] : undefined,
+      },
+    ],
+    images: undefined,
+    sections,
+    sourceMeta: {
+      kind: "generated",
+      provider: "openai",
+      promptVersion: PROMPT_VERSION,
+    },
+    summary: {
+      definition: params.definition ?? "",
+      ...(params.exampleSource ? { example: params.exampleSource } : {}),
+    },
   };
 }
 
