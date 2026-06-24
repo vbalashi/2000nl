@@ -271,3 +271,6 @@
 
 -- Strict clicked-word dictionary lookup RPCs
 \i db/migrations/088_strict_dictionary_lookup_rpcs.sql
+
+-- Resumable dictionary search document backfill runs
+\i db/migrations/089_dictionary_search_backfill_runs.sql

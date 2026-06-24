@@ -568,6 +568,87 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
+  test("dictionary search backfill runs in resumable batches", async () => {
+    const ownerId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      const suffix = Date.now();
+      await client.query(
+        `insert into languages (code, name)
+         values ('aa', 'Backfill Test')
+         on conflict (code) do nothing`,
+      );
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, is_editable,
+           schema_key, schema_version
+         ) values (
+           'aa', $1, 'Backfill Test Dictionary', 'curated', 'system', false,
+           'nl-vandale-v1', 1
+         )
+         returning id`,
+        [`aa-backfill-${suffix}`],
+      );
+      const dictionaryId = dictionaryRows[0].id;
+      const headwords = [0, 1, 2].map((index) => `aa-backfill-${suffix}-${index}`);
+      for (const headword of headwords) {
+        await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+           ) values ($1, 'aa', $2, 1, 'noun', jsonb_build_object('definition', $3::text))`,
+          [dictionaryId, headword, `${headword} definition`],
+        );
+      }
+
+      const { rows: runRows } = await client.query(
+        `select start_dictionary_search_backfill(2, 2) as run_id`,
+      );
+      const runId = runRows[0].run_id;
+      const { rows: firstBatchRows } = await client.query(
+        `select run_dictionary_search_backfill_batch($1) as result`,
+        [runId],
+      );
+      expect(firstBatchRows[0].result).toEqual(
+        expect.objectContaining({
+          runId,
+          status: "running",
+          processedInBatch: 2,
+          hasMore: true,
+        }),
+      );
+
+      const { rows: secondBatchRows } = await client.query(
+        `select run_dictionary_search_backfill_batch($1) as result`,
+        [runId],
+      );
+      expect(secondBatchRows[0].result.processedEntryCount).toBeGreaterThanOrEqual(3);
+
+      const { rows: indexedRows } = await client.query(
+        `select
+           (select count(*)::int from dictionary_search_documents where headword = any($1::text[])) as docs,
+           (select count(*)::int
+            from dictionary_search_fields f
+            join dictionary_search_documents d on d.entry_id = f.entry_id
+            where d.headword = any($1::text[])) as fields`,
+        [headwords],
+      );
+      expect(indexedRows[0].docs).toBe(3);
+      expect(indexedRows[0].fields).toBeGreaterThanOrEqual(3);
+
+      const { rows: statusRows } = await client.query(
+        `select get_dictionary_search_backfill_status($1) as status`,
+        [runId],
+      );
+      expect(statusRows[0].status[0]).toEqual(
+        expect.objectContaining({
+          runId,
+          extractionVersion: 2,
+          batchSize: 2,
+        }),
+      );
+    }, ownerId);
+  });
+
   test("get_recent_training_history returns hydrated event and status rows", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

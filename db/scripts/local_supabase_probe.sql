@@ -183,6 +183,18 @@ begin
     raise exception 'missing public.lookup_public_catalog_entries_v1(text,text,integer)';
   end if;
 
+  if to_regprocedure('public.start_dictionary_search_backfill(integer,integer)') is null then
+    raise exception 'missing public.start_dictionary_search_backfill(integer,integer)';
+  end if;
+
+  if to_regprocedure('public.run_dictionary_search_backfill_batch(uuid)') is null then
+    raise exception 'missing public.run_dictionary_search_backfill_batch(uuid)';
+  end if;
+
+  if to_regprocedure('public.get_dictionary_search_backfill_status(uuid)') is null then
+    raise exception 'missing public.get_dictionary_search_backfill_status(uuid)';
+  end if;
+
   if not exists (
     select 1
     from information_schema.columns
@@ -272,6 +284,15 @@ begin
       and column_name = 'item_ordinal'
   ) then
     raise exception 'missing public.dictionary_search_fields.item_ordinal';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'dictionary_search_backfill_runs'
+  ) then
+    raise exception 'missing public.dictionary_search_backfill_runs';
   end if;
 
   if not exists (
@@ -454,6 +475,9 @@ begin
       ('public.search_word_entries_gated(text,text,boolean,boolean,boolean,int,int,text,uuid[])'::regprocedure),
       ('public.lookup_dictionary_entries_v3(text,text,uuid[],integer)'::regprocedure),
       ('public.lookup_public_catalog_entries_v1(text,text,integer)'::regprocedure),
+      ('public.start_dictionary_search_backfill(integer,integer)'::regprocedure),
+      ('public.run_dictionary_search_backfill_batch(uuid)'::regprocedure),
+      ('public.get_dictionary_search_backfill_status(uuid)'::regprocedure),
       ('public.get_card_user_state(uuid,uuid,text)'::regprocedure),
       ('public.get_user_tier(uuid)'::regprocedure),
       ('public.get_word_list_summary(uuid,uuid,text)'::regprocedure)
