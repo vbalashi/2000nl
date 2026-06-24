@@ -301,3 +301,6 @@
 
 -- Body-group page-order indexes
 \i db/migrations/098_body_group_page_order_indexes.sql
+
+-- Indexed authenticated clicked-word lookup
+\i db/migrations/099_indexed_authenticated_lookup.sql
