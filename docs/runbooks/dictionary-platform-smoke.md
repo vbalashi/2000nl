@@ -18,6 +18,16 @@ Production ownership:
 - AudioFilms host env: `DICTIONARY_2000NL_CATALOG_ACCESS_TOKEN`
 - 1Password item: `2000nl web`, concealed field `PLATFORM_CATALOG_ACCESS_TOKEN`
 
+Local agent/runtime cache:
+
+- `/Users/khrustal/dev/2000nl/.env.local`: `PLATFORM_CATALOG_ACCESS_TOKEN`
+- `/Users/khrustal/dev/2000nl/apps/ui/.env.local`: `PLATFORM_CATALOG_ACCESS_TOKEN`
+- `/Users/khrustal/dev/audiofilms/app/.env.local`: `DICTIONARY_2000NL_CATALOG_ACCESS_TOKEN`
+
+These local files are gitignored and should contain the same secret value. Use
+1Password only to restore or rotate the token; normal local agent work should
+load these env files instead of reading 1Password.
+
 ## Direct 2000NL Catalog Smoke
 
 Run from `/Users/khrustal/dev/2000nl`. The command loads local env files if
