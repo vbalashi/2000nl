@@ -1125,6 +1125,130 @@ describe("/api/platform/lookup", () => {
     ]);
   });
 
+  test("attaches cached generated-entry translations to legacy generated sections", async () => {
+    const { POST } = await import("@/app/api/platform/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "entry-generated",
+          dictionary_id: "dict-user",
+          language_code: "nl",
+          headword: "astronomen",
+          part_of_speech: "zn",
+          raw: {
+            headword: "astronomen",
+            languageCode: "nl",
+            definition: "Mensen die het heelal bestuderen.",
+            example: {
+              source: "Astronomen gebruiken telescopen.",
+            },
+            notes: "Meervoud van astronoom.",
+            generation: {
+              kind: "llm",
+              source: {
+                clickedForm: "astronomen",
+                languageCode: "nl",
+              },
+            },
+          },
+          dictionary: {
+            id: "dict-user",
+            language_code: "nl",
+            slug: "user",
+            name: "My dictionary",
+            kind: "user",
+            visibility: "private",
+            owner_user_id: "user-1",
+            is_editable: true,
+            schema_key: "user-entry-v1",
+            schema_version: 1,
+          },
+        },
+      ],
+      error: null,
+    });
+    from.mockImplementation((table: string) => {
+      if (table === "user_settings") {
+        return chain({ data: { translation_lang: "ru" }, error: null });
+      }
+      if (table === "word_entry_translations") {
+        return chain({
+          data: [
+            {
+              id: "translation-generated",
+              word_entry_id: "entry-generated",
+              target_lang: "ru",
+              provider: "openai",
+              status: "ready",
+              overlay: {
+                headword: "астрономы",
+                meanings: [
+                  {
+                    definition: "люди, изучающие Вселенную",
+                    examples: ["Астрономы используют телескопы."],
+                    context: "множественное число от астроном",
+                  },
+                ],
+              },
+              source_fingerprint: "platform-generated-draft-translation-v1",
+              error_message: null,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (table === "connected_client_sessions") {
+        return chain({ data: null, error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const response = await POST(
+      request({
+        query: "astronomen",
+        includeUserState: false,
+        includeTranslations: true,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.items[0].entry.content.headwordTranslation).toBe("астрономы");
+    expect(payload.items[0].entry.content.summary).toEqual({
+      definition: "Mensen die het heelal bestuderen.",
+      definitionTranslation: "люди, изучающие Вселенную",
+      example: "Astronomen gebruiken telescopen.",
+      exampleTranslation: "Астрономы используют телескопы.",
+    });
+    expect(payload.items[0].entry.content.sections).toEqual([
+      {
+        id: "meaning-1",
+        sourcePath: "raw.definition",
+        kind: "meaning",
+        text: "Mensen die het heelal bestuderen.",
+        translation: "люди, изучающие Вселенную",
+      },
+      {
+        id: "example-1-1",
+        sourcePath: "raw.example.source",
+        kind: "example",
+        text: "Astronomen gebruiken telescopen.",
+        translation: "Астрономы используют телескопы.",
+      },
+      {
+        id: "note-1",
+        sourcePath: "raw.notes",
+        kind: "note",
+        text: "Meervoud van astronoom.",
+        translation: "множественное число от астроном",
+      },
+    ]);
+  });
+
   test("catalog lookup marks requested translations unavailable without target inference", async () => {
     const { POST } = await import("@/app/api/platform/catalog/lookup/route");
     rpc.mockResolvedValueOnce({

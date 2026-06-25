@@ -170,7 +170,17 @@ function overlayTranslationAtSourcePath(
     /^raw\.meanings\[(\d+)\]\.(definition|context|examples\[(\d+)\]|idioms\[(\d+)\])$/,
   );
   if (!match) {
-    if (sourcePath === "raw.definition") return asString(overlay.definition);
+    const firstMeaning = asRecord(meanings[0]);
+    if (sourcePath === "raw.definition") {
+      return asString(overlay.definition) ?? asString(firstMeaning.definition);
+    }
+    if (sourcePath === "raw.example.source") {
+      const examples = Array.isArray(firstMeaning.examples) ? firstMeaning.examples : [];
+      return asString(examples[0]);
+    }
+    if (sourcePath === "raw.notes") {
+      return asString(firstMeaning.context) ?? asString(firstMeaning.note);
+    }
     return undefined;
   }
 
@@ -361,19 +371,29 @@ function buildContentSections(
     });
   }
   if (rawMeanings.length === 0 && fallbackExample) {
+    const overlayTranslation = overlayTranslationAtSourcePath(
+      translationOverlay,
+      "raw.example.source",
+    );
     sections.push({
       id: "example-1-1",
       sourcePath: "raw.example.source",
       kind: "example",
       text: fallbackExample,
+      ...(overlayTranslation ? { translation: overlayTranslation } : {}),
     });
   }
   if (rawMeanings.length === 0 && fallbackNote) {
+    const overlayTranslation = overlayTranslationAtSourcePath(
+      translationOverlay,
+      "raw.notes",
+    );
     sections.push({
       id: "note-1",
       sourcePath: "raw.notes",
       kind: "note",
       text: fallbackNote,
+      ...(overlayTranslation ? { translation: overlayTranslation } : {}),
     });
   }
 
