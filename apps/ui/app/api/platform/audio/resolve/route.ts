@@ -24,12 +24,21 @@ type AudioResolveBody = {
 };
 
 const MAX_AUDIO_TEXT_LENGTH = 160;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 20;
 const ALLOWED_PURPOSES = new Set([
   "dictionary-headword",
   "manual-dictionary-card",
   "youtube-phrase-practice",
   "pontix-phrase",
 ]);
+
+type RateBucket = {
+  count: number;
+  resetAt: number;
+};
+
+const audioResolveRateBuckets = new Map<string, RateBucket>();
 
 async function readJson(request: NextRequest): Promise<AudioResolveBody | null> {
   try {
@@ -48,6 +57,23 @@ function absoluteUrl(request: NextRequest, value: string) {
   return new URL(value, request.url).toString();
 }
 
+function consumeRateLimit(key: string) {
+  const now = Date.now();
+  const bucket = audioResolveRateBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    audioResolveRateBuckets.set(key, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return { allowed: false, retryAfterMs: Math.max(0, bucket.resetAt - now) };
+  }
+  bucket.count += 1;
+  return { allowed: true, retryAfterMs: 0 };
+}
+
 export async function POST(request: NextRequest) {
   const reply = (payload: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(payload, status));
@@ -58,6 +84,20 @@ export async function POST(request: NextRequest) {
   }
   const scopeError = requirePlatformScope(auth, "platform:write");
   if (scopeError) return withPlatformCors(request, scopeError);
+
+  const rateLimit = consumeRateLimit(auth.principal.userId);
+  if (!rateLimit.allowed) {
+    return reply(
+      {
+        status: "failed",
+        error: {
+          code: "rate_limited",
+          retryAfterMs: rateLimit.retryAfterMs,
+        },
+      },
+      429,
+    );
+  }
 
   const body = await readJson(request);
   const text = asString(body?.text);
