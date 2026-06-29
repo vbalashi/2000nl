@@ -11,6 +11,7 @@ import {
   hasConfiguredPremiumTtsProvider,
   resolveTtsAudio,
 } from "@/lib/audio/ttsCache";
+import { publicAudioAssetUrl } from "@/lib/platform/audioAssetUrl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,11 +51,6 @@ async function readJson(request: NextRequest): Promise<AudioResolveBody | null> 
 
 export function OPTIONS(request: NextRequest) {
   return platformCorsPreflight(request);
-}
-
-function absoluteUrl(request: NextRequest, value: string) {
-  if (/^https?:\/\//i.test(value)) return value;
-  return new URL(value, request.url).toString();
 }
 
 function consumeRateLimit(key: string) {
@@ -132,7 +128,7 @@ export async function POST(request: NextRequest) {
         assetId: `tts_${artifact.cacheKey}`,
         kind: "generated",
         source: "2000nl-tts",
-        url: absoluteUrl(request, artifact.url),
+        url: publicAudioAssetUrl(request, artifact.url),
         format: "audio/mpeg",
         cache: artifact.cached ? "hit" : "miss",
         cacheKey: artifact.cacheKey,
