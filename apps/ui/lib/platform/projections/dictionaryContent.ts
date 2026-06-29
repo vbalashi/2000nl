@@ -1,6 +1,8 @@
 import type { LookupTranslationArtifact } from "../translationService";
 import type { DictionaryLookupPayload } from "../lookupService";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 
 export function contentFingerprint(content: unknown) {
   const record = asRecord(content);
@@ -101,7 +103,7 @@ export function normalizeDictionaryContent(
     meanings,
     audioLinks:
       raw.audio_links && typeof raw.audio_links === "object"
-        ? (raw.audio_links as Record<string, string | null>)
+        ? normalizeAudioLinks(raw.audio_links)
         : undefined,
     images: asStringArray(raw.images),
     morphology:
@@ -124,6 +126,56 @@ export function normalizeDictionaryContent(
     ...content,
     summary: buildContentSummary(content.sections),
   };
+}
+
+export function normalizeAudioLinks(value: unknown) {
+  const links = asRecord(value);
+  const normalized: Record<string, string> = {};
+
+  for (const [key, link] of Object.entries(links)) {
+    if (typeof link !== "string" || !link.trim()) continue;
+    const trimmed = link.trim();
+    if (isLocalAudioLink(trimmed) && !localAudioAssetExists(trimmed)) continue;
+    normalized[key] = trimmed;
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
+export function localAudioAssetExists(publicUrlPath: string) {
+  if (!isLocalAudioLink(publicUrlPath)) return true;
+
+  const pathname = new URL(publicUrlPath, "http://localhost").pathname;
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch {
+    return false;
+  }
+
+  const relativePath = decodedPath.replace(/^\/+/, "");
+  if (relativePath.split(/[\\/]/).includes("..")) return false;
+
+  const publicRoot = path.resolve(
+    process.env.PLATFORM_AUDIO_PUBLIC_ROOT || path.join(process.cwd(), "public"),
+  );
+  const candidatePath = path.resolve(publicRoot, relativePath);
+  if (
+    candidatePath !== publicRoot &&
+    !candidatePath.startsWith(`${publicRoot}${path.sep}`)
+  ) {
+    return false;
+  }
+
+  try {
+    return fs.statSync(candidatePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function isLocalAudioLink(link: string) {
+  return link.startsWith("/audio/");
 }
 
 function stableJson(value: unknown): string {
