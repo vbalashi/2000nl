@@ -159,6 +159,8 @@ export function localAudioAssetExists(publicUrlPath: string) {
   const publicRoot = path.resolve(
     process.env.PLATFORM_AUDIO_PUBLIC_ROOT || path.join(process.cwd(), "public"),
   );
+  if (!localAudioRootCanBeInspected(publicRoot)) return true;
+
   const candidatePath = path.resolve(publicRoot, relativePath);
   if (
     candidatePath !== publicRoot &&
@@ -176,6 +178,15 @@ export function localAudioAssetExists(publicUrlPath: string) {
 
 function isLocalAudioLink(link: string) {
   return link.startsWith("/audio/");
+}
+
+function localAudioRootCanBeInspected(publicRoot: string) {
+  const audioRoot = path.join(publicRoot, "audio");
+  try {
+    return fs.statSync(audioRoot).isDirectory();
+  } catch {
+    return Boolean(process.env.PLATFORM_AUDIO_PUBLIC_ROOT);
+  }
 }
 
 function stableJson(value: unknown): string {

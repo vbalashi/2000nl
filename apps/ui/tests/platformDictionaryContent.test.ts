@@ -57,4 +57,16 @@ describe("platform dictionary content audio links", () => {
   test("rejects encoded traversal in local audio links", () => {
     expect(localAudioAssetExists("/audio/%2E%2E/secret.mp3")).toBe(false);
   });
+
+  test("keeps local curated links when the default audio root is not inspectable", () => {
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+
+    expect(
+      normalizeAudioLinks({
+        nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+      }),
+    ).toEqual({
+      nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+    });
+  });
 });
