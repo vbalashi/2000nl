@@ -90,6 +90,10 @@ Representative commits:
 - Added page-order partial indexes for examples/idioms and
   definitions/context/notes.
 - Ran `ANALYZE dictionary_search_fields`.
+- Later tightened body-group fallback from broad substring matching to
+  lexical-form matching at token boundaries. This prevents selected short words
+  such as `fel` from producing unrelated `Within examples` hits like `tafel`,
+  while preserving indexed forms such as `felle`.
 
 Representative commits:
 

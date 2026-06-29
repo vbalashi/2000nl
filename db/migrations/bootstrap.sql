@@ -310,3 +310,6 @@
 
 -- Nearest alphabetical grouped-search window for missing headwords
 \i db/migrations/101_alphabetical_nearest_window.sql
+
+-- Body-group substring fallback starts only at token boundaries
+\i db/migrations/102_body_group_prefix_fallback.sql

@@ -12,6 +12,11 @@ Issue: [#40](https://github.com/vbalashi/2000nl/issues/40)
   - Adds page-order partial indexes for Examples/Idioms and Definitions/Context/Notes.
   - These let common body-group queries scan in cursor order and stop at `LIMIT + 1`.
 - Added a DB/RPC regression test for pagination from FTS results into substring fallback.
+- Added follow-up `102_body_group_prefix_fallback.sql`.
+  - The fallback now uses known lexical forms from indexed `form` fields at token
+    boundaries instead of arbitrary `%query%` substring matching.
+  - This keeps `fel` / `felle` example hits while excluding unrelated words such
+    as `tafel`, `betwijfelen`, `Felix`, and `feliciteren`.
 
 ## Key Finding
 
@@ -112,6 +117,10 @@ http-2000nl het/full warm p95: 137.1 ms, search.db p95 72.4 ms
   It was also missing page-order access paths for common body-group terms.
 - The body-group cold SQL path is now bounded for the measured common terms after
   the new indexes and statistics refresh.
+- Body-group fallback is intentionally form-aware. Do not restore broad
+  substring matching to recover recall without a separate product decision and
+  regression coverage, because it makes `Within examples` look like it found
+  the selected word when it only found those letters inside another word.
 - HTTP/PostgREST/pooler first-after-idle outliers still exist and remain in #40.
   They are no longer explained by warm body-group SQL shape alone.
 
