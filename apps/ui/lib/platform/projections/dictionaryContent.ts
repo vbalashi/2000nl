@@ -142,6 +142,39 @@ export function normalizeAudioLinks(value: unknown) {
   return Object.keys(normalized).length ? normalized : undefined;
 }
 
+export async function verifyDictionaryContentAudioLinks<
+  T extends { audioLinks?: Record<string, string> },
+>(content: T): Promise<T> {
+  const audioLinks = await verifiedAudioLinks(content.audioLinks);
+  if (audioLinks === content.audioLinks) return content;
+  return {
+    ...content,
+    audioLinks,
+  };
+}
+
+async function verifiedAudioLinks(value: unknown) {
+  const links = asRecord(value);
+  const verified: Record<string, string> = {};
+  let changed = false;
+
+  for (const [key, link] of Object.entries(links)) {
+    if (typeof link !== "string" || !link.trim()) continue;
+    const trimmed = link.trim();
+    if (isLocalAudioLink(trimmed) && !(await localAudioAssetIsPlayable(trimmed))) {
+      changed = true;
+      continue;
+    }
+    verified[key] = trimmed;
+  }
+
+  const next = Object.keys(verified).length ? verified : undefined;
+  if (!changed && next && Object.keys(next).length === Object.keys(links).length) {
+    return value as Record<string, string>;
+  }
+  return next;
+}
+
 export function localAudioAssetExists(publicUrlPath: string) {
   if (!isLocalAudioLink(publicUrlPath)) return true;
 
@@ -176,6 +209,17 @@ export function localAudioAssetExists(publicUrlPath: string) {
   }
 }
 
+async function localAudioAssetIsPlayable(publicUrlPath: string) {
+  const publicRoot = path.resolve(
+    process.env.PLATFORM_AUDIO_PUBLIC_ROOT || path.join(process.cwd(), "public"),
+  );
+  if (localAudioRootCanBeInspected(publicRoot)) {
+    return localAudioAssetExists(publicUrlPath);
+  }
+  if (process.env.PLATFORM_AUDIO_PUBLIC_ROOT) return localAudioAssetExists(publicUrlPath);
+  return publicAudioAssetExists(publicUrlPath);
+}
+
 function isLocalAudioLink(link: string) {
   return link.startsWith("/audio/");
 }
@@ -187,6 +231,47 @@ function localAudioRootCanBeInspected(publicRoot: string) {
   } catch {
     return Boolean(process.env.PLATFORM_AUDIO_PUBLIC_ROOT);
   }
+}
+
+const publicAudioChecks = new Map<string, { ok: boolean; expiresAt: number }>();
+const PUBLIC_AUDIO_CHECK_TTL_MS = 5 * 60 * 1000;
+
+async function publicAudioAssetExists(publicUrlPath: string) {
+  const base = publicAudioBaseUrl();
+  if (!base) return true;
+  let url: string;
+  try {
+    url = new URL(publicUrlPath, base).toString();
+  } catch {
+    return false;
+  }
+
+  const cached = publicAudioChecks.get(url);
+  if (cached && cached.expiresAt > Date.now()) return cached.ok;
+
+  const ok = await publicAudioHeadOk(url);
+  publicAudioChecks.set(url, {
+    ok,
+    expiresAt: Date.now() + PUBLIC_AUDIO_CHECK_TTL_MS,
+  });
+  return ok;
+}
+
+async function publicAudioHeadOk(url: string) {
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    return response.ok;
+  } catch {
+    return true;
+  }
+}
+
+function publicAudioBaseUrl() {
+  const configured =
+    process.env.PLATFORM_AUDIO_PUBLIC_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    (process.env.NODE_ENV === "production" ? "https://2000.dilum.io" : "");
+  return configured.replace(/\/+$/, "");
 }
 
 function stableJson(value: unknown): string {

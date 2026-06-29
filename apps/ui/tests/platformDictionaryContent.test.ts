@@ -1,11 +1,12 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   localAudioAssetExists,
   normalizeAudioLinks,
   normalizeDictionaryContent,
+  verifyDictionaryContentAudioLinks,
 } from "@/lib/platform/projections/dictionaryContent";
 
 describe("platform dictionary content audio links", () => {
@@ -17,7 +18,9 @@ describe("platform dictionary content audio links", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    delete process.env.NEXT_PUBLIC_SITE_URL;
     fs.rmSync(publicRoot, { recursive: true, force: true });
   });
 
@@ -67,6 +70,46 @@ describe("platform dictionary content audio links", () => {
       }),
     ).toEqual({
       nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+    });
+  });
+
+  test("removes publicly missing local curated links when the default audio root is not inspectable", async () => {
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 404 })),
+    );
+
+    await expect(
+      verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/v/missing.mp3",
+        },
+      }),
+    ).resolves.toEqual({
+      audioLinks: undefined,
+    });
+  });
+
+  test("keeps publicly available local curated links when the default audio root is not inspectable", async () => {
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 200 })),
+    );
+
+    await expect(
+      verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+        },
+      }),
+    ).resolves.toEqual({
+      audioLinks: {
+        nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
+      },
     });
   });
 });

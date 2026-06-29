@@ -3,6 +3,7 @@ import { validatePlatformActionEnvelope } from "./actionService";
 import {
   contentFingerprint,
   normalizeDictionaryContent,
+  verifyDictionaryContentAudioLinks,
 } from "./projections/dictionaryContent";
 import {
   performProvenanceAwareCardAction,
@@ -401,7 +402,7 @@ export async function performPlatformLookup(
     }
   }
 
-  const items = measureProjection(timings, "lookup.projection", () => entries.map((entry) => {
+  const items = await measureTiming(timings, "lookup.projection", async () => Promise.all(entries.map(async (entry) => {
     const availableActions: PlatformAction[] = [
       "record-view",
       "start-learning",
@@ -422,7 +423,9 @@ export async function performPlatformLookup(
           metadata: { status: "not_available" as const },
         }
       : null;
-    const content = normalizeDictionaryContent(entry, translation);
+    const content = await verifyDictionaryContentAudioLinks(
+      normalizeDictionaryContent(entry, translation),
+    );
     const matchedForm = lookupMatchedForm(entry, query);
 
     return {
@@ -461,7 +464,7 @@ export async function performPlatformLookup(
       },
       availableActions,
     };
-  }));
+  })));
 
   return {
     payload: {
@@ -569,7 +572,8 @@ export async function performPlatformCatalogLookup(
     payload: {
       query,
       request: requestMetadata,
-      items: measureProjection(timings, "lookup.projection", () => entries.flatMap((entry) => {
+      items: (await measureTiming(timings, "lookup.projection", async () =>
+        Promise.all(entries.map(async (entry) => {
         const dictionary = Array.isArray(entry.dictionary)
           ? entry.dictionary[0] ?? null
           : entry.dictionary ?? null;
@@ -583,7 +587,9 @@ export async function performPlatformCatalogLookup(
         const translation = includeTranslations
           ? { metadata: { status: "not_available" as const } }
           : null;
-        const content = normalizeDictionaryContent(entry, translation);
+        const content = await verifyDictionaryContentAudioLinks(
+          normalizeDictionaryContent(entry, translation),
+        );
         const matchedForm = lookupMatchedForm(entry, query);
 
         return [{
@@ -622,6 +628,7 @@ export async function performPlatformCatalogLookup(
           },
         }];
       })),
+      )).flat(),
     },
     status: 200,
     serverTiming: serverTiming(),
