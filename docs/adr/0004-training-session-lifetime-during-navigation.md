@@ -128,6 +128,17 @@ Before the first navigation slice:
 9. preserve existing Training tests before extracting any shell/module
    boundary.
 
+Wave 0 current-state evidence is tracked in:
+
+- `docs/architecture/settings-modal-entrypoint-task-map.md`;
+- `docs/architecture/evidence/settings-training-wave0/`;
+- `apps/ui/tests/TrainingScreen.test.tsx`, including current-card/reveal
+  persistence across modal tab navigation and close.
+
+This evidence characterizes the compatibility overlay. It does not yet prove
+Back/Forward behavior in the future persistent shell or pending-review
+navigation blocking, because those controls do not exist yet.
+
 ## Consequences
 
 - Navigation can be introduced without first designing durable sessions.

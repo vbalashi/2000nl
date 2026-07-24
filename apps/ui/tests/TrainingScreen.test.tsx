@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 
@@ -551,6 +552,40 @@ test("dictionary lookup state persists while switching settings modal tabs", asy
   expect(screen.getByLabelText(/alleen deze lijst/i)).toBeChecked();
   expect(screen.getByText("Details")).toBeInTheDocument();
   expect(screen.getByText(/Alleen deze lijst: Test list/i)).toBeInTheDocument();
+});
+
+test("current training card and reveal state survive settings navigation", async () => {
+  const interaction = userEvent.setup();
+  render(<TrainingScreen user={user} />);
+
+  await waitForInitialTrainingFetches();
+  await act(async () => {
+    await Promise.resolve();
+    await interaction.keyboard(" ");
+  });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
+
+  await act(async () => {
+    await interaction.click(screen.getByLabelText("Instellingen"));
+  });
+  await screen.findByRole("button", { name: /begrip/i });
+  await act(async () => {
+    await interaction.click(screen.getByRole("button", { name: "Statistieken" }));
+  });
+  await screen.findAllByText("Vandaag");
+  await act(async () => {
+    await interaction.click(screen.getByRole("button", { name: "Sluit" }));
+  });
+
+  await waitFor(() => {
+    expect(screen.queryByRole("button", { name: "Sluit" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      trainingFetchCount,
+    );
+  });
 });
 
 test("search detail opens a containing membership list without changing active training", async () => {

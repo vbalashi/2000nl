@@ -46,9 +46,15 @@ and `zn`. A binding resolver must not silently convert the filename's `bn`
 token into proven provider POS.
 
 The scan derives `meaning_id` exactly as the current parser does: integer
-payload value, then numeric filename suffix, then `1`. A reproducible manifest
-tool must persist this result and its checksum; this ad hoc verification is not
-the approved manifest.
+payload value, then numeric filename suffix, then `1`.
+
+The Wave 0 reproduction is now tracked at
+`docs/architecture/evidence/dictionary-identity-wave0/`. Its deterministic
+generator persists one record per artifact plus collision groups and
+checksums. The uncompressed manifest SHA-256 is
+`1e814f1c718e623bbaf083693eba887ba3aa427c522a12eea5b408c3932fad35`.
+It is a source-manifest prototype, not the approved binding manifest: it does
+not match artifacts to production UUIDs or close ambiguity decisions.
 
 ## Writers and conflict targets to migrate
 
