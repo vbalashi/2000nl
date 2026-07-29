@@ -1,0 +1,196 @@
+{
+  "capturedAt": "2026-07-29",
+  "purpose": "Reviewable source excerpts for 2000NL issue #71. Raw HTML, audio URLs, and unrelated morphology are intentionally omitted.",
+  "sourceDirectory": "packages/ingestion/nl/vandale-nt2/data/words_content",
+  "entries": [
+    {
+      "sourceFile": "huis_zn_1.json",
+      "sourceFileSha256": "6f68d416cc00bd688c6f94dcfae49874fcbd8b0ef081ef0eb2468dcea03ee7e0",
+      "headword": "huis",
+      "partOfSpeech": "zn",
+      "currentProjection": {
+        "meaningId": 1,
+        "meanings": [
+          {
+            "definition": "een gebouw om in te wonen = de woning",
+            "context": "",
+            "examples": [
+              "hij woont in een groot huis in Gent",
+              "wil je thee, want ik heb geen koffie in huis",
+              "van huis uit ben ik niet gewend zuinig te zijn"
+            ],
+            "idioms": [
+              {
+                "expression": "van huis uit …",
+                "explanation": "vanuit je opvoeding of je gezin"
+              }
+            ]
+          }
+        ],
+        "sections": [
+          {
+            "id": "meaning-1",
+            "sourcePath": "raw.meanings[0].definition",
+            "kind": "meaning",
+            "text": "een gebouw om in te wonen = de woning"
+          },
+          {
+            "id": "context-1",
+            "sourcePath": "raw.meanings[0].context",
+            "kind": "context",
+            "text": ""
+          },
+          {
+            "id": "example-1-1",
+            "sourcePath": "raw.meanings[0].examples[0]",
+            "kind": "example",
+            "text": "hij woont in een groot huis in Gent"
+          },
+          {
+            "id": "example-1-2",
+            "sourcePath": "raw.meanings[0].examples[1]",
+            "kind": "example",
+            "text": "wil je thee, want ik heb geen koffie in huis"
+          },
+          {
+            "id": "idiom-1-1",
+            "sourcePath": "raw.meanings[0].idioms[0]",
+            "kind": "idiom",
+            "text": "van huis uit …",
+            "label": "vanuit je opvoeding of je gezin"
+          },
+          {
+            "id": "example-1-3",
+            "sourcePath": "raw.meanings[0].examples[2]",
+            "kind": "example",
+            "text": "van huis uit ben ik niet gewend zuinig te zijn"
+          }
+        ]
+      }
+    },
+    {
+      "sourceFile": "bank_zn_1.json",
+      "sourceFileSha256": "69e48169a77a6f6370036f868545084ffa83e139927035cd32a8d75cad7c520d",
+      "headword": "bank",
+      "partOfSpeech": "zn",
+      "currentProjection": {
+        "meaningId": 1,
+        "meanings": [
+          {
+            "definition": "een meubelstuk waarop je met meer personen kunt zitten",
+            "context": "",
+            "examples": [
+              "Margriet en Ellie zaten op de bank televisie te kijken",
+              "de banken in de kerk zijn van hout"
+            ],
+            "idioms": []
+          }
+        ],
+        "sections": [
+          {
+            "id": "meaning-1",
+            "sourcePath": "raw.meanings[0].definition",
+            "kind": "meaning",
+            "text": "een meubelstuk waarop je met meer personen kunt zitten"
+          },
+          {
+            "id": "context-1",
+            "sourcePath": "raw.meanings[0].context",
+            "kind": "context",
+            "text": ""
+          },
+          {
+            "id": "example-1-1",
+            "sourcePath": "raw.meanings[0].examples[0]",
+            "kind": "example",
+            "text": "Margriet en Ellie zaten op de bank televisie te kijken"
+          },
+          {
+            "id": "example-1-2",
+            "sourcePath": "raw.meanings[0].examples[1]",
+            "kind": "example",
+            "text": "de banken in de kerk zijn van hout"
+          }
+        ]
+      }
+    },
+    {
+      "sourceFile": "bank_zn_2.json",
+      "sourceFileSha256": "69b45deb2d32eaeca61b253f225e106ec707b9d542a786831bd98438b9d6b546",
+      "headword": "bank",
+      "partOfSpeech": "zn",
+      "currentProjection": {
+        "meaningId": 2,
+        "meanings": [
+          {
+            "definition": "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
+            "context": "",
+            "examples": [
+              "bij welke bank hebt u een rekening?"
+            ],
+            "idioms": []
+          }
+        ],
+        "sections": [
+          {
+            "id": "meaning-1",
+            "sourcePath": "raw.meanings[0].definition",
+            "kind": "meaning",
+            "text": "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen"
+          },
+          {
+            "id": "context-1",
+            "sourcePath": "raw.meanings[0].context",
+            "kind": "context",
+            "text": ""
+          },
+          {
+            "id": "example-1-1",
+            "sourcePath": "raw.meanings[0].examples[0]",
+            "kind": "example",
+            "text": "bij welke bank hebt u een rekening?"
+          }
+        ]
+      }
+    },
+    {
+      "sourceFile": "liggen_ww_2.json",
+      "sourceFileSha256": "c3869c6f742fc8ed3a99e1b7e8419a9397eac3cc98871d0db62778a7b0e3bdf8",
+      "headword": "liggen",
+      "partOfSpeech": "ww",
+      "currentProjection": {
+        "meaningId": 2,
+        "meanings": [
+          {
+            "definition": "passen bij",
+            "context": "iemand of iets ligt iemand",
+            "examples": [
+              "dat werk ligt haar wel"
+            ],
+            "idioms": []
+          }
+        ],
+        "sections": [
+          {
+            "id": "meaning-1",
+            "sourcePath": "raw.meanings[0].definition",
+            "kind": "meaning",
+            "text": "passen bij"
+          },
+          {
+            "id": "context-1",
+            "sourcePath": "raw.meanings[0].context",
+            "kind": "context",
+            "text": "iemand of iets ligt iemand"
+          },
+          {
+            "id": "example-1-1",
+            "sourcePath": "raw.meanings[0].examples[0]",
+            "kind": "example",
+            "text": "dat werk ligt haar wel"
+          }
+        ]
+      }
+    }
+  ]
+}

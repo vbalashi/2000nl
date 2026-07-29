@@ -37,7 +37,8 @@ owns the other meanings of the headword.
 This is a static repository and source-corpus audit, not a production-data
 audit. Evidence was read from:
 
-- `packages/ingestion/nl/vandale-nt2/data/words_content/`;
+- the local generated corpus at
+  `packages/ingestion/nl/vandale-nt2/data/words_content/`;
 - `packages/docs/data-model.md`;
 - `db/migrations/001_core_schema.sql`;
 - `db/migrations/004_user_features.sql`;
@@ -52,9 +53,12 @@ audit. Evidence was read from:
 - the Van Dale v2 production-cutover handoff dated 2026-07-29;
 - the generated Van Dale v2 corpus manifest and representative JSON payloads.
 
-The corpus-wide collision scan was reproduced from the checked-in source
-snapshot for this audit. A separate production binding audit is still required
-before changing source identity or re-import behavior.
+The generated corpus is intentionally not committed to Git. Reviewable excerpts
+with source-file hashes and the exact current projection shapes are captured in
+[`evidence/sense-card-real-data-contract-audit/representative-vandale-excerpts.json`](evidence/sense-card-real-data-contract-audit/representative-vandale-excerpts.json).
+The corpus-wide scan was run against that local generated source. A separate
+production binding audit is still required before changing source identity or
+re-import behavior.
 
 The v2 corpus contains 18,163 entry artifacts and 18,019 meanings. The
 remaining 144 artifacts are explicit cross-reference-only entries. This
@@ -80,6 +84,8 @@ This audit narrows the semantic contract and links to, rather than duplicates:
   translation off/on visual matrix.
 - [2000NL #70](https://github.com/vbalashi/2000nl/issues/70) for publishing and
   compatibility-testing the resulting presentation DTO.
+- [2000NL #84](https://github.com/vbalashi/2000nl/issues/84) for the optional
+  Word Details product surface.
 
 The parent workstream is
 [2000NL #57](https://github.com/vbalashi/2000nl/issues/57).
@@ -97,6 +103,33 @@ The parent workstream is
 The definition, examples, and idiom are sections of one Dictionary Entry and
 therefore one SenseCard for a selected card type.
 
+The committed evidence excerpt shows the exact normalized envelope:
+
+```json
+{
+  "content": {
+    "meaningId": 1,
+    "meanings": [
+      {
+        "definition": "een gebouw om in te wonen = de woning",
+        "context": "",
+        "examples": [
+          "hij woont in een groot huis in Gent",
+          "wil je thee, want ik heb geen koffie in huis",
+          "van huis uit ben ik niet gewend zuinig te zijn"
+        ],
+        "idioms": [
+          {
+            "expression": "van huis uit …",
+            "explanation": "vanuit je opvoeding of je gezin"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ### One headword, multiple meaning-level entries
 
 `bank_zn_1.json` and `bank_zn_2.json` are separate artifacts:
@@ -113,8 +146,8 @@ The normalized Platform shapes are correspondingly separate:
 
 | Lookup item | `meaningId` | `content.meanings` | `content.sections` |
 | --- | ---: | --- | --- |
-| bank/furniture entry | 1 | one object containing its definition and two examples | one `meaning`, two `example` sections |
-| bank/finance entry | 2 | one object containing its definition and one example | one `meaning`, one `example` section |
+| bank/furniture entry | 1 | one object containing its definition and two examples | current: `meaning`, empty `context`, two `example`; intended: omit empty `context` |
+| bank/finance entry | 2 | one object containing its definition and one example | current: `meaning`, empty `context`, one `example`; intended: omit empty `context` |
 
 The headword-level UI count `2 betekenissen` is computed from the returned
 group; it is not the length of either entry's `content.meanings`.
@@ -240,19 +273,17 @@ should expose semantic kinds/action IDs; each client resolves message keys
 through the selected interface locale. They must not be hardcoded from the
 dictionary language.
 
-### Progressive disclosure boundary
+### Rich-content boundary
 
 The base SenseCard v1 hierarchy remains definition, Usage Pattern, examples,
 idioms, and learning actions. Parser v2 does not require synonyms, antonyms,
 full conjugation tables, reference tables, or every Word Form to be visible in
 that default state.
 
-The shared presentation contract should instead expose an optional
-`wordDetails` capability with structured groups such as lexical relations,
-morphology, usage guidance, and references. A card-level More menu may contain
-a `Show word details` command, but the rich content belongs in an expandable or
-replaceable details surface, not inside the menu itself. Exact motion and
-placement remain a later visual design decision.
+Issue #84 owns the product and visual decision for optional rich content. This
+audit only requires the presentation DTO to preserve structured semantic groups
+and exact entry/section ownership so a later UI does not need to parse
+definitions or `entry.raw`.
 
 Meaning-specific relations and notes retain the entry/meaning target. Entry
 morphology can be shared across the grouped headword presentation when its
@@ -298,15 +329,21 @@ be removed after the direct-section contract is mandatory.
 
 ### Required safe contract
 
-For the current schema, a translated section must be revision-scoped by:
+The current index-bearing `sectionId/sourcePath` pair is not a stable semantic
+key. It is only a locator inside one known content revision. The durable
+proposal is a server-issued `sectionBindingId`:
 
 ```text
-entryId + contentFingerprint + sectionId/sourcePath
+entryId + sectionBindingId + sourceTextFingerprint
 ```
 
-If the content fingerprint differs, the translation must be treated as stale
-or unavailable; the system must not attach it to the section now occupying the
-same array index.
+The ingestion boundary assigns and persists `sectionBindingId`. On re-import it
+preserves that ID only when source-native evidence or unambiguous semantic
+reconciliation matches the same section. Reordering alone therefore does not
+change the binding. New or ambiguous sections receive new IDs and require new
+translations; the system never falls back to array position. The
+`sourceTextFingerprint` prevents a translation from surviving a changed source
+text under an otherwise preserved binding.
 
 The next translation artifact shape should carry explicit section bindings,
 for example:
@@ -316,8 +353,8 @@ for example:
   "sourceFingerprint": "…",
   "sections": [
     {
-      "sectionId": "example-1-1",
-      "sourcePath": "raw.meanings[0].examples[0]",
+      "sectionBindingId": "6b59143e-1741-4e51-86b0-68095a70a910",
+      "diagnosticSourcePath": "raw.meanings[0].examples[0]",
       "sourceTextFingerprint": "…",
       "translatedText": "…"
     }
@@ -325,9 +362,9 @@ for example:
 }
 ```
 
-This is safe across a fixed content revision. A later source-binding phase may
-add provider-defined section keys that survive reordering; array paths alone
-cannot provide that guarantee.
+`diagnosticSourcePath` may aid debugging but is not part of identity. Issue #70
+must publish this named section-binding object rather than passing the three
+fields as a loose client-side tuple.
 
 ## Missing Dictionary Words
 
@@ -389,6 +426,8 @@ Accepted by this audit:
 3. Usage Pattern is a distinct section kind.
 4. Clients render Platform semantic sections and direct section translations.
 5. Missing-word drafts remain private candidates until explicit persistence.
+6. Translation artifacts bind through a durable, server-issued
+   `sectionBindingId`; array paths are diagnostic only.
 
 Not solved here:
 
