@@ -19,6 +19,7 @@ from importer.db import (
     refresh_dictionary_search_documents,
 )
 from importer.dictionary_entry_parser import ParsedEntry, parse_dictionary_file
+from importer.source_import import import_source_manifest
 
 
 logger = logging.getLogger(__name__)
@@ -45,13 +46,40 @@ def import_entries(
     dictionary_slug: str = "nl-vandale",
     dictionary_name: str = "VanDale Dutch",
     dictionary_description: Optional[str] = "Trusted Dutch VanDale-backed dictionary used by the current 2000nl training app.",
-    dictionary_schema_key: str = "nl-vandale-v1",
+    dictionary_schema_key: str = "nl-vandale-v2",
     dictionary_schema_version: int = 1,
     refresh_search_documents: bool = False,
+    reconciliation_plan: Path | str | None = None,
+    allow_legacy_identity: bool = False,
 ) -> ImportStats:
     path = Path(data_dir)
     if not path.exists():
         raise FileNotFoundError(f"{path} does not exist")
+
+    if (path / "_manifest.jsonl").is_file():
+        return import_source_manifest(
+            data_dir=path,
+            database_url=database_url,
+            reconciliation_plan=reconciliation_plan,
+            language_code=language_code,
+            language_name=language_name,
+            nt2_slug=nt2_slug,
+            nt2_name=nt2_name,
+            nt2_description=nt2_description,
+            dictionary_slug=dictionary_slug,
+            dictionary_name=dictionary_name,
+            dictionary_description=dictionary_description,
+            dictionary_schema_key=dictionary_schema_key,
+            dictionary_schema_version=dictionary_schema_version,
+            refresh_search_documents=refresh_search_documents,
+        )
+
+    if not allow_legacy_identity:
+        raise RuntimeError(
+            "Source-managed imports require _manifest.jsonl. "
+            "Legacy natural-key import is disabled unless "
+            "allow_legacy_identity=True is explicitly set for test fixtures."
+        )
 
     files = sorted([file for file in path.rglob("*.json") if file.is_file()])
     stats = ImportStats(total_files=len(files))

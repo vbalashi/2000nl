@@ -26,6 +26,18 @@
     "pronunciation_with_stress": {"type": "string"},
     "gender": {"type": "string"},
     "part_of_speech": {"type": "string"},
+    "part_of_speech_evidence": {
+      "type": "object",
+      "required": ["normalized_pos_status", "source", "raw_value"],
+      "properties": {
+        "normalized_pos_status": {
+          "enum": ["known", "source-none", "unresolved"]
+        },
+        "source": {"type": "string", "minLength": 1},
+        "raw_value": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
     "plural": {"type": "string"},
     "diminutive": {"type": "string"},
     "verb_forms": {
@@ -47,7 +59,22 @@
     "derivations": {"type": "string"},
     "alternate_headwords": {
       "type": "array",
-      "items": {"type": "string"}
+      "items": {
+        "oneOf": [
+          {"type": "string"},
+          {
+            "type": "object",
+            "required": ["headword"],
+            "properties": {
+              "headword": {"type": "string"},
+              "pronunciation": {"type": "string"},
+              "gender": {"type": "string"},
+              "plural": {"type": "string"}
+            },
+            "additionalProperties": true
+          }
+        ]
+      }
     },
     "cross_reference": {"type": ["string", "null"]},
     "is_nt2_2000": {"type": "boolean", "default": false},
@@ -72,11 +99,58 @@
                   "type": "object",
                   "properties": {
                     "expression": {"type": "string"},
-                    "explanation": {"type": "string"}
+                    "explanation": {"type": "string"},
+                    "examples": {
+                      "type": "array",
+                      "items": {"type": "string"}
+                    }
                   },
                   "additionalProperties": true
                 }
               ]
+            }
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "antonyms": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "related_terms": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "usage_labels": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "grammar": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {"type": "boolean"},
+                {"type": "string"},
+                {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              ]
+            }
+          },
+          "pronunciation_note": {"type": "string"},
+          "note": {"type": "string"},
+          "cross_references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["headword"],
+              "properties": {
+                "headword": {"type": "string"},
+                "meaning_id": {"type": "integer", "minimum": 1}
+              },
+              "additionalProperties": false
             }
           }
         },
@@ -86,14 +160,77 @@
     "audio_links": {
       "type": "object",
       "properties": {
-        "nl": {"type": "string"},
-        "be": {"type": "string"}
+        "nl": {"type": ["string", "null"]},
+        "be": {"type": ["string", "null"]}
       },
       "additionalProperties": true
     },
     "images": {
       "type": "array",
       "items": {"type": "string"}
+    },
+    "reference_tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "rows"],
+        "properties": {
+          "title": {"type": "string"},
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label", "value"],
+              "properties": {
+                "label": {"type": "string"},
+                "value": {"type": "string"}
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "source_identity": {
+      "type": "object",
+      "required": ["provider_article_id"],
+      "properties": {
+        "provider_article_id": {"type": "string", "minLength": 1},
+        "homograph_number": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "_source": {
+      "type": "object",
+      "required": [
+        "identity_scheme_version",
+        "identity_evidence",
+        "provider_article_id",
+        "normalized_pos_status",
+        "pos_evidence",
+        "source_group_key",
+        "source_entry_key",
+        "source_index",
+        "sense_ordinal"
+      ],
+      "properties": {
+        "identity_scheme_version": {"type": "string", "minLength": 1},
+        "identity_evidence": {"type": "object"},
+        "provider_article_id": {"type": "string", "minLength": 1},
+        "normalized_pos_status": {
+          "enum": ["known", "source-none", "unresolved"]
+        },
+        "pos_evidence": {
+          "$ref": "#/properties/part_of_speech_evidence"
+        },
+        "source_group_key": {"type": "string", "minLength": 1},
+        "source_entry_key": {"type": "string", "minLength": 1},
+        "source_index": {"type": "integer"},
+        "sense_ordinal": {"type": "integer", "minimum": 1},
+        "homograph_number": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
     },
     "_metadata": {
       "type": "object",

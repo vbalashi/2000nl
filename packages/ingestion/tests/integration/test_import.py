@@ -87,6 +87,8 @@ def test_importer_loads_entries_and_is_idempotent(docker_postgres):
     first_run = import_entries(
         data_dir=FIXTURE_DIR,
         database_url=DB_URL,
+        dictionary_schema_key="nl-vandale-v1",
+        allow_legacy_identity=True,
     )
     assert first_run.inserted == 5
     assert first_run.nt2_linked == 3
@@ -95,6 +97,8 @@ def test_importer_loads_entries_and_is_idempotent(docker_postgres):
     second_run = import_entries(
         data_dir=FIXTURE_DIR,
         database_url=DB_URL,
+        dictionary_schema_key="nl-vandale-v1",
+        allow_legacy_identity=True,
     )
     assert second_run.inserted == 0
     assert second_run.updated == 5

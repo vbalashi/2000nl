@@ -197,7 +197,8 @@ Notes:
 
 ## Scripts
 
-- `apps/ui/scripts/import_words.py` (last modified 2025-12-02) — legacy helper to import dictionary JSON into Postgres; prefer `packages/ingestion/scripts/import_words_db.py` for current ingestion.
+- `apps/ui/scripts/import_words.py` — compatibility entry point that delegates
+  to the manifest-aware `packages/ingestion/scripts/import_words_db.py`.
 
 ## Hotkeys / grading
 

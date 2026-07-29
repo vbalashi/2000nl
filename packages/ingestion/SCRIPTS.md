@@ -4,9 +4,12 @@ Timestamps from filesystem (local timezone):
 
 | Script | Last modified | Purpose |
 | --- | --- | --- |
-| `packages/ingestion/scripts/process_raw_words.py` | 2025-12-09 22:57:05 +0100 | Parse raw Vandale HTML from `data/word_list.json` into structured JSON files under `data/words_content/`, splitting multi-meaning entries and adding metadata. Run from a source-data directory such as `packages/ingestion/nl/vandale-nt2/`. |
-| `packages/ingestion/scripts/import_words_db.py` | 2025-12-09 22:57:18 +0100 | Load structured JSON entries into a dictionary in Postgres (languages, dictionaries, word_entries, lists) using `importer.core.import_entries`; defaults to `nl-vandale`; writes progress to `import.log`. |
-| `packages/ingestion/scripts/import_word_forms.py` | 2025-12-09 22:57:13 +0100 | Extract inflected/derived forms from structured JSON and populate `word_forms` table for fast lookup. |
+| `packages/ingestion/scripts/process_raw_words.py` | 2026-07-29 | Parse raw Van Dale HTML into structured, collision-safe JSON artifacts and a deterministic checksummed source manifest. |
+| `packages/ingestion/scripts/generate_source_reconciliation_plan.py` | 2026-07-29 | Reconcile the first versioned manifest with existing production UUIDs and fail closed on ambiguous or unreviewed matches. |
+| `packages/ingestion/scripts/import_words_db.py` | 2026-07-29 | Import a versioned source manifest through the binding ledger, preserving existing UUIDs and making an identical completed manifest a true no-op. |
+| `packages/ingestion/scripts/import_word_forms.py` | 2026-07-29 | Rebuild inflected/derived forms by versioned source-entry key; exact manifest/binding coverage is required. |
 | `packages/ingestion/scripts/dictionary_identity_wave0_audit.py` | 2026-07-24 | Generate or verify the deterministic read-only Wave 0 source manifest, collision report, and hashes under `docs/architecture/evidence/dictionary-identity-wave0/`. |
 
-Data expectation: well-crafted source files live under a source-data directory such as `packages/ingestion/nl/vandale-nt2/data/words_content/`, or any path supplied to importer scripts via CLI flags.
+The Van Dale data directory must contain `_manifest.jsonl` and
+`_manifest.summary.json`. Manifest-free natural-key imports are deprecated and
+must be enabled explicitly for isolated legacy fixtures.

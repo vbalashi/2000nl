@@ -92,29 +92,56 @@ WITH fixture_entries (language_code, dictionary_slug, headword, meaning_id, part
     ('fr', 'fr-test-extra', 'table', 1, 'zn', 'la', 95006, '{"headword":"table","pronunciation":"table","pronunciation_with_stress":"table","gender":"la","part_of_speech":"zn","plural":"tables","diminutive":"","verb_forms":"","conjugation_table":null,"inflected_form":"","comparative":"","superlative":"","derivations":"","alternate_headwords":[],"cross_reference":null,"is_nt2_2000":false,"meanings":[{"definition":"Meuble avec un plateau plat.","context":"","examples":["le repas est sur la table"],"idioms":[]}],"audio_links":{},"images":[],"_metadata":{"search_term":"table","headword_raw":"table","index":95006,"dictionaryId":"fr-test-extra","dictionary_name":"FR Extra Test","fixture":true},"meaning_id":1}'::jsonb),
     ('fr', 'fr-test-extra', 'velo', 1, 'zn', 'le', 95003, '{"headword":"velo","pronunciation":"velo","pronunciation_with_stress":"velo","gender":"le","part_of_speech":"zn","plural":"velos","diminutive":"","verb_forms":"","conjugation_table":null,"inflected_form":"","comparative":"","superlative":"","derivations":"","alternate_headwords":[],"cross_reference":null,"is_nt2_2000":false,"meanings":[{"definition":"Vehicule a deux roues avec des pedales.","context":"","examples":["le velo est rouge"],"idioms":[]}],"audio_links":{},"images":[],"_metadata":{"search_term":"velo","headword_raw":"velo","index":95003,"dictionaryId":"fr-test-extra","dictionary_name":"FR Extra Test","fixture":true},"meaning_id":1}'::jsonb)
 )
-INSERT INTO word_entries (dictionary_id, language_code, headword, meaning_id, part_of_speech, gender, is_nt2_2000, vandale_id, raw)
-SELECT
-    d.id,
-    f.language_code,
-    f.headword,
-    f.meaning_id,
-    f.part_of_speech,
-    f.gender,
-    false,
-    f.metadata_index,
-    f.raw_payload
-FROM fixture_entries f
-JOIN dictionaries d
-  ON d.language_code = f.language_code
- AND d.slug = f.dictionary_slug
-ON CONFLICT (dictionary_id, language_code, headword, meaning_id)
-WHERE dictionary_id IS NOT NULL
-DO UPDATE
-SET part_of_speech = excluded.part_of_speech,
-    gender = excluded.gender,
-    is_nt2_2000 = excluded.is_nt2_2000,
-    vandale_id = excluded.vandale_id,
-    raw = excluded.raw;
+MERGE INTO word_entries AS target
+USING (
+    SELECT
+        d.id AS dictionary_id,
+        f.language_code,
+        f.headword,
+        f.meaning_id,
+        f.part_of_speech,
+        f.gender,
+        f.metadata_index,
+        f.raw_payload
+    FROM fixture_entries f
+    JOIN dictionaries d
+      ON d.language_code = f.language_code
+     AND d.slug = f.dictionary_slug
+) AS source
+ON target.dictionary_id = source.dictionary_id
+AND target.language_code = source.language_code
+AND target.headword = source.headword
+AND target.meaning_id = source.meaning_id
+WHEN MATCHED THEN
+    UPDATE SET
+        part_of_speech = source.part_of_speech,
+        gender = source.gender,
+        is_nt2_2000 = false,
+        vandale_id = source.metadata_index,
+        raw = source.raw_payload
+WHEN NOT MATCHED THEN
+    INSERT (
+        dictionary_id,
+        language_code,
+        headword,
+        meaning_id,
+        part_of_speech,
+        gender,
+        is_nt2_2000,
+        vandale_id,
+        raw
+    )
+    VALUES (
+        source.dictionary_id,
+        source.language_code,
+        source.headword,
+        source.meaning_id,
+        source.part_of_speech,
+        source.gender,
+        false,
+        source.metadata_index,
+        source.raw_payload
+    );
 
 WITH fixture_forms (language_code, dictionary_slug, headword, meaning_id, form) AS (
   VALUES

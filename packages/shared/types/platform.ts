@@ -10,7 +10,13 @@ export type DictionarySchemaFeature =
   | "audio"
   | "images"
   | "morphology"
-  | "conjugation";
+  | "conjugation"
+  | "synonyms"
+  | "antonyms"
+  | "usage-labels"
+  | "notes"
+  | "cross-references"
+  | "reference-tables";
 
 export type DictionarySchemaSummary = {
   id: string;
@@ -57,12 +63,24 @@ export type DictionaryMeaningContent = {
   definition?: string | null;
   context?: string | null;
   examples?: string[];
+  synonyms?: string[];
+  antonyms?: string[];
+  relatedTerms?: string[];
+  usageLabels?: string[];
+  grammar?: Record<string, boolean | string | string[]>;
+  pronunciationNote?: string;
+  note?: string;
+  crossReferences?: Array<{
+    headword: string;
+    meaningId?: number;
+  }>;
   translations?: Record<string, string | string[]>;
   idioms?: Array<
     | string
     | {
         expression?: string;
         explanation?: string;
+        examples?: string[];
         translations?: Record<string, string | string[]>;
       }
   >;

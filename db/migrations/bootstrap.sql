@@ -310,3 +310,6 @@
 
 -- Nearest alphabetical grouped-search window for missing headwords
 \i db/migrations/101_alphabetical_nearest_window.sql
+
+-- Versioned source bindings and disjoint source/user writer identity
+\i db/migrations/104_versioned_source_entry_bindings.sql

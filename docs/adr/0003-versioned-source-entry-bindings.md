@@ -1,6 +1,6 @@
 # Versioned Source Entry Bindings
 
-Status: proposed
+Status: accepted and implemented
 Date: 2026-07-24
 
 ## Context
@@ -90,9 +90,18 @@ join to `dictionaries`.
 - The legacy global unique index is not removed until every writer and fixture
   has moved to one of the disjoint targets.
 
-The exact user-owned uniqueness mechanism is **decision pending**. Do not infer
-whether it should be a partial natural-key index or a persisted
-`user_entry_key`.
+User-owned entries retain the current dictionary-scoped natural identity
+`(dictionary_id, language_code, headword, meaning_id)`, enforced by a partial
+unique index where `management_kind = 'user'`. Source-managed entries do not
+participate in this index.
+
+This decision is based on the production preflight: 3 user dictionaries,
+17 user entries, no duplicate natural-key groups, all 17 entries generated
+rather than copied, and no evidence of an offline caller-supplied import key.
+The copy RPC preserves idempotent copy behavior through the partial user
+conflict target. A production-snapshot rehearsal proved that a duplicate
+source natural key can coexist while a duplicate user natural key is rejected,
+and that two copies of the same source entry resolve to one user UUID.
 
 Evidence required to close that decision:
 
@@ -156,9 +165,11 @@ A source artifact absent from a later approved manifest retires its binding
 and entry; it is not hard-deleted. Retirement preserves direct-by-ID/history
 resolution and all UUID references.
 
-Whether retired entries remain scheduler-eligible is **decision pending**.
-Before cutover, characterize production rows with learning/list state and
-choose one explicit policy:
+Retirement policy remains deferred because the first implemented manifest
+retires no entries. Until a scheduler policy is accepted, the importer fails
+closed on any manifest membership change and cannot retire or add source
+bindings implicitly. Before the first retirement, characterize production rows
+with learning/list state and choose one explicit policy:
 
 - continue current active training;
 - exclude from future selection but preserve direct/history access; or
@@ -194,6 +205,26 @@ No schema cutover or production re-import may begin until all gates pass:
 
 After the first user write to a restored UUID, rollback must retire/disable and
 roll forward; it must not delete the restored entry.
+
+## Implementation record
+
+The first production cutover completed on 2026-07-29:
+
+- the manifest is deterministic and checksummed;
+- all 18,163 artifacts have one active binding;
+- every one of the 17,408 previous UUIDs was preserved;
+- 755 explicitly approved restored artifacts received new UUIDs;
+- no decisions were ambiguous, rejected, or retired;
+- all existing-UUID user-state counts and checksums were unchanged;
+- restored UUIDs had no historical user state;
+- the production-like restore rehearsal and the production cutover both
+  completed successfully;
+- public and authenticated strict lookup returned all 12 candidates for the
+  real `goed` collision group when called with limit 50;
+- an identical manifest is a verified database no-op.
+
+The operational and UI handoff is
+`docs/runbooks/vandale-v2-ui-and-operations-handoff.md`.
 
 ## Consequences
 
