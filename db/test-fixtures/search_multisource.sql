@@ -214,23 +214,13 @@ SELECT
     artifact_count,
     'completed',
     jsonb_build_object(
-        'matched', artifact_count,
-        'new', 0,
-        'changed', 0,
-        'retired', 0,
-        'ambiguous', 0,
-        'rejected', 0
+        'fixture_artifacts', artifact_count
     ),
     'db/test-fixtures/search_multisource.sql',
     'Deterministic local multi-source fixture',
     now()
 FROM fixture_import_runs
-ON CONFLICT (id) DO UPDATE
-SET status = 'completed',
-    counts = excluded.counts,
-    actor = excluded.actor,
-    reason = excluded.reason,
-    finished_at = excluded.finished_at;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO word_entries (
     id,
@@ -276,7 +266,7 @@ SET dictionary_id = excluded.dictionary_id,
     source_lifecycle = 'active',
     normalized_pos_status = excluded.normalized_pos_status;
 
-INSERT INTO private.source_entry_bindings (
+INSERT INTO private.source_entry_bindings AS current_binding (
     dictionary_id,
     identity_scheme_version,
     source_entry_key,
@@ -332,7 +322,30 @@ DO UPDATE SET
     content_fingerprint = excluded.content_fingerprint,
     identity_evidence = excluded.identity_evidence,
     reconciliation_decision = excluded.reconciliation_decision,
-    updated_at = now();
+    updated_at = now()
+WHERE (
+    current_binding.source_group_key,
+    current_binding.sense_ordinal,
+    current_binding.word_entry_id,
+    current_binding.binding_state,
+    current_binding.last_seen_run_id,
+    current_binding.manifest_checksum,
+    current_binding.content_fingerprint_version,
+    current_binding.content_fingerprint,
+    current_binding.identity_evidence,
+    current_binding.reconciliation_decision
+) IS DISTINCT FROM (
+    excluded.source_group_key,
+    excluded.sense_ordinal,
+    excluded.word_entry_id,
+    excluded.binding_state,
+    excluded.last_seen_run_id,
+    excluded.manifest_checksum,
+    excluded.content_fingerprint_version,
+    excluded.content_fingerprint,
+    excluded.identity_evidence,
+    excluded.reconciliation_decision
+);
 
 DO $$
 DECLARE

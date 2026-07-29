@@ -180,8 +180,45 @@ jobs:
             packages/ingestion/tests/integration
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
             -f db/test-fixtures/search_multisource.sql
+          fixture_ledger_digest() {
+            psql "$DATABASE_URL" -Atc "
+              select md5(
+                string_agg(
+                  audit_key || ':' || audit_timestamp,
+                  '|' order by audit_key
+                )
+              )
+              from (
+                select
+                  'run:' || run.id::text as audit_key,
+                  run.finished_at::text as audit_timestamp
+                from private.dictionary_import_runs as run
+                join public.dictionaries as dictionary
+                  on dictionary.id = run.dictionary_id
+                 and dictionary.source_provider = 'local-fixture'
+                where run.identity_scheme_version =
+                  'local-search-fixture-v1'
+                union all
+                select
+                  'binding:'
+                    || binding.dictionary_id::text
+                    || ':'
+                    || binding.source_entry_key as audit_key,
+                  binding.updated_at::text as audit_timestamp
+                from private.source_entry_bindings as binding
+                join public.dictionaries as dictionary
+                  on dictionary.id = binding.dictionary_id
+                 and dictionary.source_provider = 'local-fixture'
+                where binding.identity_scheme_version =
+                  'local-search-fixture-v1'
+              ) as fixture_audit
+            "
+          }
+          first_fixture_digest="$(fixture_ledger_digest)"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
             -f db/test-fixtures/search_multisource.sql
+          second_fixture_digest="$(fixture_ledger_digest)"
+          test "$first_fixture_digest" = "$second_fixture_digest"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
 
