@@ -104,7 +104,14 @@ def extract_word_forms(entry: dict) -> Set[str]:
 
     alternate = entry.get("alternate_headwords")
     if alternate:
-        add(alternate)
+        for alternate_entry in (
+            alternate if isinstance(alternate, list) else [alternate]
+        ):
+            if isinstance(alternate_entry, dict):
+                add(alternate_entry.get("headword"))
+                add(alternate_entry.get("plural"))
+            else:
+                add(alternate_entry)
 
     verb_forms = entry.get("verb_forms")
     if verb_forms:
@@ -131,5 +138,4 @@ def extract_word_forms(entry: dict) -> Set[str]:
                 add(value)
 
     return forms
-
 

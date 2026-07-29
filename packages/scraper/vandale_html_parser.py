@@ -7,6 +7,266 @@ from bs4 import BeautifulSoup
 import re
 
 
+def _clean_text(value: str) -> str:
+    value = re.sub(r"\s+", " ", value or "")
+    return re.sub(r"\s+([,.;:])", r"\1", value).strip()
+
+
+def _extract_direct_synonyms(f1m_span):
+    marker = next(
+        (
+            span
+            for span in f1m_span.find_all("span", class_="f1l", recursive=False)
+            if span.get_text(strip=True) == "="
+        ),
+        None,
+    )
+    if marker is None:
+        return []
+
+    synonyms = []
+    current = marker.next_sibling
+    while current is not None:
+        classes = current.get("class", []) if hasattr(current, "get") else []
+        text = current.get_text(" ", strip=True) if hasattr(current, "get_text") else ""
+        if "f0j" in classes or "f1v" in classes or text == "(":
+            break
+        if "f1j" in classes:
+            cleaned = _clean_text(text).strip(",;")
+            if cleaned:
+                synonyms.append(cleaned)
+        current = current.next_sibling
+    return synonyms
+
+
+def _remove_direct_synonym_segment(f1m_span):
+    marker = next(
+        (
+            span
+            for span in f1m_span.find_all("span", class_="f1l", recursive=False)
+            if span.get_text(strip=True) == "="
+        ),
+        None,
+    )
+    if marker is None:
+        return
+
+    current = marker
+    while current is not None:
+        next_sibling = current.next_sibling
+        classes = current.get("class", []) if hasattr(current, "get") else []
+        text = current.get_text(" ", strip=True) if hasattr(current, "get_text") else ""
+        if current is not marker and (
+            "f0j" in classes or "f1v" in classes or text == "("
+        ):
+            break
+        current.extract()
+        current = next_sibling
+
+
+def _extract_labeled_terms(f1m_span, label_text):
+    label = next(
+        (
+            span
+            for span in f1m_span.find_all("span", class_="f1v", recursive=False)
+            if span.get_text(" ", strip=True).lower().startswith(label_text)
+        ),
+        None,
+    )
+    if label is None:
+        return []
+
+    terms = []
+    current = label.next_sibling
+    while current is not None:
+        classes = current.get("class", []) if hasattr(current, "get") else []
+        text = current.get_text(" ", strip=True) if hasattr(current, "get_text") else ""
+        if text == ")" or "f1v" in classes:
+            break
+        if "f1j" in classes:
+            cleaned = _clean_text(text).strip(",;")
+            if cleaned:
+                terms.append(cleaned)
+        current = current.next_sibling
+    return terms
+
+
+def _remove_labeled_parenthetical(f1m_span, label_text):
+    label = next(
+        (
+            span
+            for span in f1m_span.find_all("span", class_="f1v", recursive=False)
+            if span.get_text(" ", strip=True).lower().startswith(label_text)
+        ),
+        None,
+    )
+    if label is None:
+        return
+
+    start = label
+    previous = label.find_previous_sibling()
+    if (
+        previous is not None
+        and hasattr(previous, "get_text")
+        and previous.get_text(" ", strip=True) == "("
+    ):
+        start = previous
+
+    current = start
+    while current is not None:
+        next_sibling = current.next_sibling
+        text = current.get_text(" ", strip=True) if hasattr(current, "get_text") else ""
+        current.extract()
+        if text == ")":
+            break
+        current = next_sibling
+
+
+def _leading_parenthetical_groups(f1m_span):
+    direct_children = [
+        child for child in f1m_span.children if getattr(child, "name", None)
+    ]
+    groups = []
+    index = 0
+    while index < len(direct_children):
+        child = direct_children[index]
+        classes = child.get("class", [])
+        text = child.get_text(" ", strip=True)
+        if "f3i" in classes:
+            break
+        if "f1k" not in classes or text != "(":
+            index += 1
+            continue
+
+        values = []
+        end = index + 1
+        while end < len(direct_children):
+            current = direct_children[end]
+            current_text = current.get_text(" ", strip=True)
+            if current_text == ")":
+                break
+            if current_text and current_text not in {",", ";", ":"}:
+                values.append((current.get("class", []), current_text))
+            end += 1
+        if end >= len(direct_children):
+            break
+        if values:
+            groups.append(values)
+        index = end + 1
+    return groups
+
+
+def _classify_leading_parentheticals(f1m_span):
+    grammar_field_by_label = {
+        "meervoud": "plural",
+        "verkleinwoord": "diminutive",
+        "verbogen vorm": "inflected_form",
+        "vergrotende trap": "comparative",
+        "overtreffende trap": "superlative",
+    }
+    grammar = {}
+    usage_labels = []
+    pronunciation_note = None
+
+    for group in _leading_parenthetical_groups(f1m_span):
+        if any("f1v" in classes for classes, _ in group):
+            active_field = None
+            for classes, text in group:
+                if "f1v" in classes:
+                    normalized_label = text.lower().rstrip(":").strip()
+                    active_field = grammar_field_by_label.get(normalized_label)
+                    continue
+                if active_field and "f1k" in classes:
+                    grammar.setdefault(active_field, []).append(text)
+            continue
+
+        text = _clean_text(" ".join(value for _, value in group))
+        if not text:
+            continue
+        if text.lower() == "geen meervoud":
+            grammar["no_plural"] = True
+        elif re.match(r"^(heeft|is|hebben|zijn)\b", text, re.IGNORECASE):
+            grammar.setdefault("verb_forms", []).append(text)
+        elif text.lower().startswith("spreek uit:"):
+            pronunciation_note = text.partition(":")[2].strip()
+        else:
+            usage_labels.append(text)
+
+    return {
+        "grammar": grammar,
+        "usage_labels": usage_labels,
+        "pronunciation_note": pronunciation_note,
+    }
+
+
+def _extract_cross_references(f1m_span):
+    references = []
+    for link in f1m_span.find_all("a", class_="f3k"):
+        if link.find_parent("span", class_=["f0c", "f1f", "f2s"]):
+            continue
+        headword = _clean_text(link.get_text(" ", strip=True))
+        if not headword:
+            continue
+        reference = {"headword": headword}
+        number_span = link.find_previous_sibling("span")
+        if number_span and "f1x" in number_span.get("class", []):
+            number_text = number_span.get_text(strip=True)
+            if number_text.isdigit():
+                reference["meaning_id"] = int(number_text)
+        if "meaning_id" not in reference:
+            display_number = link.find_next_sibling("span", class_="f3x")
+            if display_number:
+                number_text = display_number.get_text(strip=True)
+                if number_text.isdigit():
+                    reference["meaning_id"] = int(number_text)
+        references.append(reference)
+    return references
+
+
+def _remove_link_display_sense_suffixes(f1m_span):
+    for sense_number in f1m_span.find_all("span", class_="f3x"):
+        previous = sense_number.find_previous_sibling()
+        following = sense_number.find_next_sibling()
+        if (
+            previous is not None
+            and following is not None
+            and previous.get_text(" ", strip=True) == "("
+            and following.get_text(" ", strip=True) == ")"
+        ):
+            previous.decompose()
+            following.decompose()
+        sense_number.decompose()
+
+
+def _remove_leading_parentheticals(f1m_span):
+    while True:
+        opening = next(
+            (
+                child
+                for child in f1m_span.find_all("span", recursive=False)
+                if "f1k" in child.get("class", [])
+                and child.get_text(" ", strip=True) == "("
+                and child.find_previous_sibling("span", class_="f3i") is None
+            ),
+            None,
+        )
+        if opening is None:
+            return
+
+        current = opening
+        found_closing = False
+        while current is not None:
+            next_sibling = current.next_sibling
+            text = current.get_text(" ", strip=True) if hasattr(current, "get_text") else ""
+            current.extract()
+            if text == ")":
+                found_closing = True
+                break
+            current = next_sibling
+        if not found_closing:
+            return
+
+
 def _normalize_part_of_speech(raw: str) -> str:
     """
     Map various Dutch part‑of‑speech labels/abbreviations to short codes.
@@ -36,7 +296,7 @@ def _normalize_part_of_speech(raw: str) -> str:
         return "vz"
 
     # Adjective (keep a separate code; only used for display)
-    if "bijvoeglijk naamwoord" in text:
+    if "bijvoeglijk naamwoord" in text or re.search(r"\bbn\b", text):
         return "bn"
 
     # Pronoun / preposition / conjunction / numeral / article / abbrev
@@ -48,6 +308,8 @@ def _normalize_part_of_speech(raw: str) -> str:
         return "vw"
     if "telwoord" in text or text in {"tw", "telw"}:
         return "tw"
+    if "tussenwerpsel" in text or text in {"tsw", "tussenw"}:
+        return "tsw"
     if "lidwoord" in text or text == "lidw":
         return "lidw"
     if "afkorting" in text or text == "afk":
@@ -168,6 +430,34 @@ def parse_conjugation_table(soup):
     return None
 
 
+def parse_reference_tables(soup):
+    reference_tables = []
+    for table in soup.find_all("table", class_="f4c"):
+        rows = table.find_all("tr", recursive=False)
+        if not rows:
+            continue
+
+        title_span = rows[0].find("span", class_="f4i")
+        title = _clean_text(
+            title_span.get_text(" ", strip=True)
+            if title_span
+            else rows[0].get_text(" ", strip=True)
+        )
+        parsed_rows = []
+        for row in rows[1:]:
+            cells = row.find_all("td", recursive=False)
+            if len(cells) < 2:
+                continue
+            label = _clean_text(cells[0].get_text(" ", strip=True))
+            value = _clean_text(cells[1].get_text(" ", strip=True))
+            if label or value:
+                parsed_rows.append({"label": label, "value": value})
+
+        if title or parsed_rows:
+            reference_tables.append({"title": title, "rows": parsed_rows})
+    return reference_tables
+
+
 
 def parse_vandale_entry_fixed(content_html, headword_html=None):
     """Parse Van Dale HTML with all features."""
@@ -193,7 +483,28 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
         "meanings": [],
         "audio_links": {"nl": None, "be": None},
         "images": [],
+        "reference_tables": [],
     }
+
+    source_identity = {}
+    article_span = soup.find("span", class_="f1y", id=True)
+    if article_span and article_span.get("id"):
+        source_identity["provider_article_id"] = article_span["id"]
+
+    homograph_number = None
+    if headword_html:
+        headword_identity_soup = BeautifulSoup(headword_html, "html.parser")
+        superscript = headword_identity_soup.find("sup")
+        if superscript and superscript.get_text(strip=True).isdigit():
+            homograph_number = int(superscript.get_text(strip=True))
+    if homograph_number is None:
+        number_span = soup.find("span", class_="f1p")
+        if number_span and number_span.get_text(strip=True).isdigit():
+            homograph_number = int(number_span.get_text(strip=True))
+    if homograph_number is not None:
+        source_identity["homograph_number"] = homograph_number
+    if source_identity:
+        entry["source_identity"] = source_identity
     
     # NT2-2000 marker
     marker = soup.find('span', class_='f3j')
@@ -317,6 +628,9 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
                 continue
 
             if collecting_plural and "f1k" in classes:
+                if text in {")", ";"}:
+                    collecting_plural = False
+                    continue
                 if text and text not in {")", "(", ";", ",", ":"}:
                     current_variant["plural_parts"].append(text)
                 continue
@@ -354,6 +668,9 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
     
     # Part of speech – try several strategies, then normalise
     pos_text = ""
+    pos_evidence_source = "missing"
+    pos_evidence_raw = ""
+    normalized_pos_status = "unresolved"
 
     # 0) Prefer explicit POS from the separate headword HTML, if provided by the API
     #    e.g. "bestaan<sup>2</sup> <i>(ww)</i>" or "... <i>(zn)</i>"
@@ -365,6 +682,9 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
             if txt:
                 m = re.search(r"\(([^)]+)\)", txt)
                 pos_text = (m.group(1).strip() if m else txt.strip())
+                pos_evidence_source = "headword_html"
+                pos_evidence_raw = pos_text
+                normalized_pos_status = "known"
 
     # 1) Look for dedicated POS span(s) in the article HTML.
     # Restrict to known POS keywords to avoid picking up usage labels (e.g. percentages).
@@ -380,6 +700,9 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
             normalized = _normalize_part_of_speech(candidate)
             if normalized:
                 pos_text = candidate
+                pos_evidence_source = "article_pos_span"
+                pos_evidence_raw = candidate
+                normalized_pos_status = "known"
                 break
 
     # 2) Very conservative fallback on raw HTML: only match known POS codes/labels
@@ -391,44 +714,97 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
         )
         if m:
             pos_text = m.group(1).strip()
+            pos_evidence_source = "article_html_label"
+            pos_evidence_raw = pos_text
+            normalized_pos_status = "known"
 
     # 3) Heuristic: Check for "werkwoordrijtje" link
     if not pos_text:
         if soup.find("a", class_="f3g", string="werkwoordrijtje"):
             pos_text = "ww"
+            pos_evidence_source = "conjugation_table_heuristic"
+            pos_evidence_raw = "ww"
+
+    # 4) Some newer provider articles omit the POS label but retain a
+    # conjugation group such as "(accepteerde, heeft geaccepteerd)".
+    if not pos_text:
+        source_headword_block = soup.find("span", class_="f3v")
+        source_headword_text = (
+            source_headword_block.get_text(" ", strip=True)
+            if source_headword_block
+            else ""
+        )
+        if re.search(
+            r"\b(heeft|hebben|is|zijn)\b",
+            source_headword_text,
+            re.IGNORECASE,
+        ):
+            pos_text = "ww"
+            pos_evidence_source = "conjugation_heuristic"
+            pos_evidence_raw = "ww"
 
     if pos_text:
         entry["part_of_speech"] = _normalize_part_of_speech(pos_text)
-    # 4) Heuristic: if we still don't know POS but we have a gender, it's a noun.
+    # 5) Heuristic: if we still don't know POS but we have a gender, it's a noun.
     elif entry["gender"] in {"de", "het"} or any(g in (entry["gender"] or "") for g in ["de", "het"]):
         entry["part_of_speech"] = "zn"
-    
-    # 5) Heuristic: Check for prefix/suffix based on hyphen
+        pos_evidence_source = "gender_heuristic"
+        pos_evidence_raw = entry["gender"]
+
     if not entry["part_of_speech"]:
-        hw_clean = entry["headword"].strip()
+        if any(
+            span.get_text(" ", strip=True).lower() == "meervoud"
+            for span in soup.find_all("span", class_="f1k")
+        ):
+            entry["part_of_speech"] = "zn"
+            pos_evidence_source = "plural_marker_heuristic"
+            pos_evidence_raw = "meervoud"
+
+    source_headword = ""
+    if headword_html:
+        source_headword_soup = BeautifulSoup(headword_html, "html.parser")
+        for unwanted in source_headword_soup.find_all(["sup", "i"]):
+            unwanted.decompose()
+        source_headword = _clean_text(
+            source_headword_soup.get_text(" ", strip=True)
+        )
+    
+    # 6) Heuristic: Check for prefix/suffix based on hyphen
+    if not entry["part_of_speech"]:
+        hw_clean = source_headword or entry["headword"].strip()
         if hw_clean.endswith('-') and len(hw_clean) > 1:
             entry["part_of_speech"] = "vv"
+            pos_evidence_source = "headword_shape_heuristic"
+            pos_evidence_raw = hw_clean
         elif hw_clean.startswith('-') and len(hw_clean) > 1:
              entry["part_of_speech"] = "achtervoegsel"
+             pos_evidence_source = "headword_shape_heuristic"
+             pos_evidence_raw = hw_clean
 
-    # 6) Heuristics to fill remaining blanks (common empty cases)
+    # 7) Heuristics to fill remaining blanks (common empty cases)
     if not entry["part_of_speech"]:
-        hw = entry["headword"].strip()
+        hw = source_headword or entry["headword"].strip()
         hw_lower = hw.lower()
 
-        # Proper noun heuristic: capitalized single token without spaces/slashes
-        if re.match(r"^[A-ZÁÀÂÄÅÃÆÉÈÊËÍÌÎÏÓÒÔÖÚÙÛÜÇÑ][^\\s/]*$", hw):
+        # Proper noun heuristic: capitalized source headword without slash.
+        if re.match(r"^[A-ZÁÀÂÄÅÃÆÉÈÊËÍÌÎÏÓÒÔÖÚÙÛÜÇÑ][^/]*$", hw):
             entry["part_of_speech"] = "zn"
+            pos_evidence_source = "capitalization_heuristic"
+            pos_evidence_raw = hw
 
         # Adjective heuristic: has comparative/superlative/inflected form captured
         if not entry["part_of_speech"] and any(
             entry.get(k) for k in ("comparative", "superlative", "inflected_form")
         ):
             entry["part_of_speech"] = "bn"
+            pos_evidence_source = "adjective_forms_heuristic"
+            pos_evidence_raw = "inflection"
 
         # Noun heuristic: plural captured
         if not entry["part_of_speech"] and entry.get("plural"):
             entry["part_of_speech"] = "zn"
+            pos_evidence_source = "plural_form_heuristic"
+            pos_evidence_raw = entry["plural"]
 
         # Function-word mappings
         TW = {
@@ -440,10 +816,22 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
 
         if not entry["part_of_speech"] and hw_lower in TW:
             entry["part_of_speech"] = "tw"
+            pos_evidence_source = "function_word_heuristic"
+            pos_evidence_raw = hw
         if not entry["part_of_speech"] and hw_lower in VW:
             entry["part_of_speech"] = "vw"
+            pos_evidence_source = "function_word_heuristic"
+            pos_evidence_raw = hw
         if not entry["part_of_speech"] and hw_lower in VNW:
             entry["part_of_speech"] = "vnw"
+            pos_evidence_source = "function_word_heuristic"
+            pos_evidence_raw = hw
+
+    entry["part_of_speech_evidence"] = {
+        "normalized_pos_status": normalized_pos_status,
+        "source": pos_evidence_source,
+        "raw_value": pos_evidence_raw,
+    }
     
     # Cross-reference detection (e.g., "zie aanzien")
     # Look for <span class="f1v">zie</span> followed by a link
@@ -613,11 +1001,46 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
                 if not is_in_idiom:
                     main_def_span = f3i
                     break
+
+            synonyms = _extract_direct_synonyms(f1m_span)
+            if synonyms:
+                meaning["synonyms"] = synonyms
+            antonyms = _extract_labeled_terms(f1m_span, "tegenstelling:")
+            if antonyms:
+                meaning["antonyms"] = antonyms
+            leading_metadata = _classify_leading_parentheticals(f1m_span)
+            if leading_metadata["grammar"]:
+                meaning["grammar"] = leading_metadata["grammar"]
+            if leading_metadata["usage_labels"]:
+                meaning["usage_labels"] = leading_metadata["usage_labels"]
+            if leading_metadata["pronunciation_note"]:
+                meaning["pronunciation_note"] = leading_metadata[
+                    "pronunciation_note"
+                ]
+            note_text = _clean_text(
+                " ".join(
+                    note.get_text(" ", strip=True)
+                    for note in f1m_span.find_all("span", class_="f3e")
+                )
+            )
+            if note_text:
+                meaning["note"] = note_text
+            cross_references = _extract_cross_references(f1m_span)
+            if cross_references:
+                meaning["cross_references"] = cross_references
             
             # If we found a main definition (not in idiom), extract it
             if main_def_span:
                 # Clone the f1m span to avoid modifying the original
                 def_content = f1m_span.__copy__()
+                _remove_direct_synonym_segment(def_content)
+                _remove_labeled_parenthetical(def_content, "tegenstelling:")
+                _remove_leading_parentheticals(def_content)
+                for note in def_content.find_all("span", class_="f3e"):
+                    note.decompose()
+                for reference_number in def_content.find_all("span", class_="f1x"):
+                    reference_number.decompose()
+                _remove_link_display_sense_suffixes(def_content)
                 
                 # Remove example spans (f2s class) and the "voorbeelden" link
                 for unwanted in def_content.find_all("span", class_="f2s"):
@@ -638,14 +1061,21 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
                 # Get the text, which now includes link text and reference numbers
                 definition_text = def_content.get_text(" ", strip=True)
                 # Clean up extra spaces and stray spaces before punctuation
-                definition_text = re.sub(r'\s+', ' ', definition_text)
-                definition_text = re.sub(r'\s+([,.;:])', r'\1', definition_text)
-                meaning["definition"] = definition_text
+                meaning["definition"] = _clean_text(definition_text)
             
             # Fallback: if no f3i found, but f1m exists (e.g. for abbreviations like a.u.b.)
             # Extract text from f1m directly, excluding unwanted parts
             elif not main_def_span:
                 def_content = f1m_span.__copy__()
+
+                _remove_direct_synonym_segment(def_content)
+                _remove_labeled_parenthetical(def_content, "tegenstelling:")
+                _remove_leading_parentheticals(def_content)
+                for note in def_content.find_all("span", class_="f3e"):
+                    note.decompose()
+                for reference_number in def_content.find_all("span", class_="f1x"):
+                    reference_number.decompose()
+                _remove_link_display_sense_suffixes(def_content)
                 
                 # Remove example spans (f2s class) and the "voorbeelden" link
                 for unwanted in def_content.find_all("span", class_="f2s"):
@@ -663,9 +1093,11 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
                     if '[' in f1l_texts and ']' in f1l_texts:
                         f0j.decompose()
                         
-                definition_text = def_content.get_text(" ", strip=True)
-                definition_text = re.sub(r'\s+', ' ', definition_text)
-                definition_text = re.sub(r'\s+([,.;:])', r'\1', definition_text)
+                definition_text = _clean_text(
+                    def_content.get_text(" ", strip=True)
+                )
+                if synonyms or antonyms:
+                    definition_text = definition_text.rstrip(" ;")
                 if definition_text.strip():
                     meaning["definition"] = definition_text
         
@@ -683,10 +1115,21 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
                 if context_text:
                     meaning["context"] = context_text
                     break
+
+        inline_context = re.match(
+            r"^\(([^()]*)\)\s*(.+)$",
+            meaning["definition"],
+        )
+        if inline_context and inline_context.group(1).rstrip().endswith(":"):
+            if not meaning["context"]:
+                meaning["context"] = inline_context.group(1).rstrip(": ").strip()
+            meaning["definition"] = inline_context.group(2).strip()
         
         # Regular examples
         example_spans = block.find_all("span", class_="f2s")
         for ex_span in example_spans:
+            if ex_span.find_parent("span", class_=["f0c", "f1f"]):
+                continue
             example_text = ex_span.get_text(strip=True)
             if example_text:
                 meaning["examples"].append(example_text)
@@ -705,6 +1148,14 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
             expl_span = idiom_block.find("span", class_="f3n")
             if expl_span:
                 idiom["explanation"] = expl_span.get_text(strip=True)
+
+            idiom_examples = [
+                example.get_text(strip=True)
+                for example in idiom_block.find_all("span", class_="f2s")
+                if example.get_text(strip=True)
+            ]
+            if idiom_examples:
+                idiom["examples"] = idiom_examples
             
             if idiom:
                 meaning["idioms"].append(idiom)
@@ -728,6 +1179,8 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
         src = img.get('src', '')
         if src and 'http' in src:
             entry["images"].append(src)
+
+    entry["reference_tables"] = parse_reference_tables(soup)
     
     return entry
 

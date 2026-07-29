@@ -41,11 +41,15 @@
 ## Fixture Smoke
 
 The B-track fixture baseline is `db/test-fixtures/search_multisource.sql`.
-After applying the current DB migrations, load it with:
+After applying the current DB migrations (including migration 102), load it
+with:
 
 ```bash
 psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql
 ```
+
+The fixture is safe to replay: it uses deterministic source keys and verifies
+that every active fixture entry has exactly one active source binding.
 
 Local smoke on 2026-05-26 verified:
 

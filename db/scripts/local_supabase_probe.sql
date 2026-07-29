@@ -233,9 +233,37 @@ begin
     from pg_indexes
     where schemaname = 'public'
       and tablename = 'word_entries'
+      and indexname = 'word_entries_user_identity_idx'
+      and indexdef like '%UNIQUE%'
+      and indexdef like '%management_kind = ''user''%'
+  ) then
+    raise exception 'missing user-owned word_entries uniqueness';
+  end if;
+
+  if exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'word_entries'
       and indexname = 'word_entries_dictionary_language_headword_meaning_idx'
   ) then
-    raise exception 'missing dictionary-scoped word_entries uniqueness';
+    raise exception 'legacy source/user shared word_entries uniqueness remains';
+  end if;
+
+  if to_regclass('private.dictionary_import_runs') is null
+     or to_regclass('private.source_entry_bindings') is null
+     or to_regclass('private.source_entry_binding_aliases') is null then
+    raise exception 'missing versioned source-entry binding ledger';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'word_entries'
+      and column_name = 'management_kind'
+  ) then
+    raise exception 'missing word_entries management discriminator';
   end if;
 
   if not exists (
@@ -362,10 +390,10 @@ begin
   if not exists (
     select 1
     from public.dictionary_schemas
-    where schema_key = 'nl-vandale-v1'
+    where schema_key = 'nl-vandale-v2'
       and version = 1
   ) then
-    raise exception 'missing seeded nl-vandale-v1 dictionary schema';
+    raise exception 'missing seeded nl-vandale-v2 dictionary schema';
   end if;
 
   if not exists (
@@ -383,7 +411,7 @@ begin
     from public.dictionaries
     where language_code = 'nl'
       and slug = 'nl-vandale'
-      and schema_key = 'nl-vandale-v1'
+      and schema_key in ('nl-vandale-v1', 'nl-vandale-v2')
       and schema_version = 1
   ) then
     raise exception 'missing seeded nl-vandale dictionary';

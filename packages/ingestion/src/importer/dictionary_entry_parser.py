@@ -15,6 +15,10 @@ class ParsedEntry:
     is_nt2_2000: bool
     vandale_id: Optional[int]
     raw: Dict[str, Any]
+    identity_scheme_version: Optional[str] = None
+    source_entry_key: Optional[str] = None
+    source_group_key: Optional[str] = None
+    normalized_pos_status: Optional[str] = None
 
 
 def normalize_part_of_speech(value: Any) -> Optional[str]:
@@ -46,6 +50,8 @@ def normalize_part_of_speech(value: Any) -> Optional[str]:
         return "tw"
     if "lidwoord" in normalized or normalized == "lidw":
         return "lidw"
+    if "tussenwerpsel" in normalized or normalized in {"tsw", "tussenw"}:
+        return "tsw"
 
     return normalized or None
 
@@ -117,6 +123,9 @@ def parse_dictionary_file(path: Path) -> ParsedEntry:
         gender = gender.strip() or None
     else:
         gender = None
+    source = payload.get("_source")
+    if not isinstance(source, dict):
+        source = {}
 
     return ParsedEntry(
         headword=headword.strip(),
@@ -126,4 +135,8 @@ def parse_dictionary_file(path: Path) -> ParsedEntry:
         is_nt2_2000=_to_bool(payload.get("is_nt2_2000")),
         vandale_id=_extract_vandale_id(payload.get("_metadata")),
         raw=sanitized,
+        identity_scheme_version=source.get("identity_scheme_version"),
+        source_entry_key=source.get("source_entry_key"),
+        source_group_key=source.get("source_group_key"),
+        normalized_pos_status=source.get("normalized_pos_status"),
     )

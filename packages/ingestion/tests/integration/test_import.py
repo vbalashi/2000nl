@@ -1,123 +1,413 @@
-import subprocess
-import time
+from __future__ import annotations
+
+import hashlib
+import json
+import os
 from pathlib import Path
+import sys
+from urllib.parse import urlparse
+from uuid import uuid4
 
 import psycopg2
 import pytest
 
-from importer.core import import_entries
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-FIXTURE_DIR = PROJECT_ROOT / "tests" / "fixtures" / "sample_words"
-TEST_DB_NAME = "dictionary_test"
-ADMIN_DB_URL = "postgresql://postgres:postgres@localhost:5432/postgres"
-DB_URL = f"postgresql://postgres:postgres@localhost:5432/{TEST_DB_NAME}"
+INGESTION_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(INGESTION_ROOT / "src"))
+
+from importer.core import import_entries  # noqa: E402
 
 
-def _wait_for_database(timeout: float = 10.0) -> None:
-    start = time.time()
-    while True:
-        try:
-            with psycopg2.connect(ADMIN_DB_URL):
-                return
-        except psycopg2.OperationalError:
-            if time.time() - start > timeout:
-                raise
-            time.sleep(0.5)
+TEST_DATABASE_URL = os.environ.get("INGESTION_TEST_DATABASE_URL")
 
 
-def _create_database() -> None:
-    connection = psycopg2.connect(ADMIN_DB_URL)
-    connection.autocommit = True
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(f"drop database if exists {TEST_DB_NAME}")
-            cursor.execute(f"create database {TEST_DB_NAME}")
-    finally:
-        connection.close()
-
-
-def _drop_database() -> None:
-    connection = psycopg2.connect(ADMIN_DB_URL)
-    connection.autocommit = True
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(f"drop database if exists {TEST_DB_NAME}")
-    finally:
-        connection.close()
-
-
-def _apply_migrations(connection: psycopg2.extensions.connection) -> None:
-    migrations = sorted((PROJECT_ROOT / "migrations").glob("*.sql"))
-    with connection.cursor() as cursor:
-        for migration in migrations:
-            cursor.execute(migration.read_text())
-    connection.commit()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def docker_postgres():
-    started = False
-    try:
-        subprocess.check_call(
-            ["docker", "compose", "up", "-d", "postgres"],
-            cwd=PROJECT_ROOT,
+def _require_local_test_database() -> str:
+    if not TEST_DATABASE_URL:
+        pytest.skip("INGESTION_TEST_DATABASE_URL is not configured")
+    parsed = urlparse(TEST_DATABASE_URL)
+    if parsed.hostname not in {"127.0.0.1", "localhost"}:
+        pytest.fail(
+            "INGESTION_TEST_DATABASE_URL must target a local disposable database"
         )
-        started = True
-    except subprocess.CalledProcessError as exc:
-        pytest.skip(f"Unable to start docker compose: {exc}")
-
-    try:
-        _wait_for_database()
-        _drop_database()
-        _create_database()
-        yield
-    finally:
-        if started:
-            subprocess.check_call(
-                ["docker", "compose", "down"],
-                cwd=PROJECT_ROOT,
-            )
+    return TEST_DATABASE_URL
 
 
-def test_importer_loads_entries_and_is_idempotent(docker_postgres):
-    with psycopg2.connect(DB_URL) as connection:
-        _apply_migrations(connection)
+def _write_manifest(
+    root: Path,
+    *,
+    first_definition: str = "een zitmeubel",
+    first_is_nt2: bool = True,
+    second_source_index: int = 2,
+    swap_group_senses: bool = False,
+) -> None:
+    root.mkdir(parents=True, exist_ok=True)
+    artifacts = [
+        {
+            "filename": "000001_a1_bank_zn_1.json",
+            "payload": {
+                "headword": "bank",
+                "part_of_speech": "zn",
+                "is_nt2_2000": first_is_nt2,
+                "meaning_id": 1,
+                "meanings": [{"definition": first_definition}],
+                "_source": {
+                    "identity_scheme_version": "test-provider-v1",
+                    "identity_evidence": {},
+                    "provider_article_id": "a1",
+                    "normalized_pos_status": "known",
+                    "pos_evidence": {
+                        "normalized_pos_status": "known",
+                        "source": "test",
+                        "raw_value": "zn",
+                    },
+                    "source_group_key": "test:article:a1",
+                    "source_entry_key": "test:article:a1:1",
+                    "source_index": 1,
+                    "sense_ordinal": 1,
+                },
+            },
+        },
+        {
+            "filename": "000002_a2_bank_zn_1.json",
+            "payload": {
+                "headword": "bank",
+                "part_of_speech": "zn",
+                "is_nt2_2000": True,
+                "meaning_id": 1,
+                "meanings": [{"definition": "een financiële instelling"}],
+                "_source": {
+                    "identity_scheme_version": "test-provider-v1",
+                    "identity_evidence": {},
+                    "provider_article_id": "a2",
+                    "normalized_pos_status": "known",
+                    "pos_evidence": {
+                        "normalized_pos_status": "known",
+                        "source": "test",
+                        "raw_value": "zn",
+                    },
+                    "source_group_key": "test:article:a2",
+                    "source_entry_key": "test:article:a2:1",
+                    "source_index": second_source_index,
+                    "sense_ordinal": 1,
+                },
+            },
+        },
+        {
+            "filename": "000003_a3_stam_zn_1.json",
+            "payload": {
+                "headword": "stam",
+                "part_of_speech": "zn",
+                "meaning_id": 1,
+                "meanings": [
+                    {
+                        "definition": (
+                            "tweede betekenis"
+                            if swap_group_senses
+                            else "eerste betekenis"
+                        )
+                    }
+                ],
+                "_source": {
+                    "identity_scheme_version": "test-provider-v1",
+                    "identity_evidence": {},
+                    "provider_article_id": "a3",
+                    "normalized_pos_status": "known",
+                    "pos_evidence": {
+                        "normalized_pos_status": "known",
+                        "source": "test",
+                        "raw_value": "zn",
+                    },
+                    "source_group_key": "test:article:a3",
+                    "source_entry_key": "test:article:a3:1",
+                    "source_index": 3,
+                    "sense_ordinal": 1,
+                },
+            },
+        },
+        {
+            "filename": "000004_a3_stam_zn_2.json",
+            "payload": {
+                "headword": "stam",
+                "part_of_speech": "zn",
+                "meaning_id": 2,
+                "meanings": [
+                    {
+                        "definition": (
+                            "eerste betekenis"
+                            if swap_group_senses
+                            else "tweede betekenis"
+                        )
+                    }
+                ],
+                "_source": {
+                    "identity_scheme_version": "test-provider-v1",
+                    "identity_evidence": {},
+                    "provider_article_id": "a3",
+                    "normalized_pos_status": "known",
+                    "pos_evidence": {
+                        "normalized_pos_status": "known",
+                        "source": "test",
+                        "raw_value": "zn",
+                    },
+                    "source_group_key": "test:article:a3",
+                    "source_entry_key": "test:article:a3:2",
+                    "source_index": 3,
+                    "sense_ordinal": 2,
+                },
+            },
+        },
+    ]
 
-    first_run = import_entries(
-        data_dir=FIXTURE_DIR,
-        database_url=DB_URL,
+    records = []
+    for artifact in artifacts:
+        path = root / artifact["filename"]
+        path.write_text(
+            json.dumps(
+                [artifact["payload"]],
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        source = artifact["payload"]["_source"]
+        records.append(
+            {
+                "artifact_path": artifact["filename"],
+                "content_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "identity_scheme_version": source[
+                    "identity_scheme_version"
+                ],
+                "source_entry_key": source["source_entry_key"],
+                "source_group_key": source["source_group_key"],
+            }
+        )
+
+    manifest_path = root / "_manifest.jsonl"
+    manifest_path.write_text(
+        "".join(
+            json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
+            for record in records
+        ),
+        encoding="utf-8",
     )
-    assert first_run.inserted == 5
-    assert first_run.nt2_linked == 3
-    assert first_run.nt2_skipped == 0
-
-    second_run = import_entries(
-        data_dir=FIXTURE_DIR,
-        database_url=DB_URL,
+    (root / "_manifest.summary.json").write_text(
+        json.dumps(
+            {
+                "artifact_count": len(records),
+                "artifact_format_version": "vandale-structured-v2",
+                "identity_scheme_version": "test-provider-v1",
+                "input_sha256": "a" * 64,
+                "manifest_sha256": hashlib.sha256(
+                    manifest_path.read_bytes()
+                ).hexdigest(),
+                "source_record_count": len(records),
+            }
+        ),
+        encoding="utf-8",
     )
-    assert second_run.inserted == 0
-    assert second_run.updated == 5
-    assert second_run.nt2_linked == 0
-    assert second_run.nt2_skipped == 3
 
-    with psycopg2.connect(DB_URL) as connection:
+
+def test_versioned_source_import_is_stable_and_fails_closed_on_drift(
+    tmp_path: Path,
+) -> None:
+    database_url = _require_local_test_database()
+    suffix = uuid4().hex
+    dictionary_slug = f"pytest-source-{suffix}"
+    list_slug = f"pytest-list-{suffix}"
+    _write_manifest(tmp_path)
+
+    first = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert first.inserted == 4
+    assert first.processed == 4
+
+    replay = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert replay.no_op is True
+    assert replay.matched == 4
+
+    with psycopg2.connect(database_url) as connection:
         with connection.cursor() as cursor:
-            cursor.execute("select count(*) from word_entries")
-            assert cursor.fetchone()[0] == 5
-
-            cursor.execute("select raw from word_entries where headword = %s", ("aan",))
-            raw_entry = cursor.fetchone()[0]
-            assert raw_entry["headword"] == "aan"
-            assert raw_entry["meanings"][0]["idioms"][0]["expression"] == "het is aan tussen hen"
-
-            cursor.execute("select count(*) from word_list_items")
-            assert cursor.fetchone()[0] == 3
-
             cursor.execute(
-                "select meaning_id, raw->>'meaning_id' from word_entries where headword = %s order by meaning_id",
-                ("ergens",),
+                """
+                select dictionary.id::text
+                from public.dictionaries as dictionary
+                where dictionary.slug = %s
+                """,
+                (dictionary_slug,),
             )
-            rows = cursor.fetchall()
-            assert [row[0] for row in rows] == [1, 2]
-            assert [row[1] for row in rows] == ["1", "2"]
+            dictionary_id = cursor.fetchone()[0]
+            cursor.execute(
+                """
+                select count(*), count(distinct entry.id)
+                from public.word_entries as entry
+                where entry.dictionary_id = %s
+                  and entry.headword = 'bank'
+                  and entry.meaning_id = 1
+                """,
+                (dictionary_id,),
+            )
+            assert cursor.fetchone() == (2, 2)
+            cursor.execute(
+                """
+                select source_entry_key, word_entry_id::text
+                from private.source_entry_bindings
+                where dictionary_id = %s
+                  and binding_state = 'active'
+                order by source_entry_key
+                """,
+                (dictionary_id,),
+            )
+            original_ids = dict(cursor.fetchall())
+            assert len(original_ids) == 4
+
+    _write_manifest(
+        tmp_path,
+        first_definition="gewijzigde betekenis",
+        first_is_nt2=False,
+        second_source_index=22,
+    )
+    changed = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert changed.changed == 2
+    assert changed.matched == 4
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                select binding.source_entry_key, binding.word_entry_id::text
+                from private.source_entry_bindings as binding
+                where binding.dictionary_id = %s
+                  and binding.binding_state = 'active'
+                order by binding.source_entry_key
+                """,
+                (dictionary_id,),
+            )
+            assert dict(cursor.fetchall()) == original_ids
+            cursor.execute(
+                """
+                select item.rank, entry.raw #>> '{meanings,0,definition}'
+                from public.word_list_items as item
+                join public.word_entries as entry on entry.id = item.word_id
+                where item.list_id = (
+                    select id from public.word_lists where slug = %s
+                )
+                  and entry.dictionary_id = %s
+                order by item.rank
+                """,
+                (list_slug, dictionary_id),
+            )
+            assert cursor.fetchall() == [(22, "een financiële instelling")]
+
+    _write_manifest(
+        tmp_path,
+        first_definition="gewijzigde betekenis",
+        first_is_nt2=False,
+        second_source_index=22,
+        swap_group_senses=True,
+    )
+    with pytest.raises(RuntimeError, match="fingerprints moved"):
+        import_entries(
+            data_dir=tmp_path,
+            database_url=database_url,
+            dictionary_slug=dictionary_slug,
+            dictionary_name="Pytest source dictionary",
+            nt2_slug=list_slug,
+            nt2_name="Pytest source list",
+        )
+
+    _write_manifest(
+        tmp_path,
+        first_definition="gewijzigde betekenis",
+        first_is_nt2=False,
+        second_source_index=22,
+    )
+    extra_entry_id = str(uuid4())
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                insert into public.word_entries (
+                    id,
+                    dictionary_id,
+                    language_code,
+                    headword,
+                    meaning_id,
+                    raw,
+                    management_kind
+                )
+                values (
+                    %s,
+                    %s,
+                    'nl',
+                    'losse rij',
+                    1,
+                    '{"headword":"losse rij","meanings":[{"definition":"drift"}]}'::jsonb,
+                    'source'
+                )
+                """,
+                (extra_entry_id, dictionary_id),
+            )
+    with pytest.raises(RuntimeError, match="exact coverage"):
+        import_entries(
+            data_dir=tmp_path,
+            database_url=database_url,
+            dictionary_slug=dictionary_slug,
+            dictionary_name="Pytest source dictionary",
+            nt2_slug=list_slug,
+            nt2_name="Pytest source list",
+        )
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "delete from public.word_entries where id = %s",
+                (extra_entry_id,),
+            )
+
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                update public.word_entries
+                set raw = jsonb_set(
+                    raw,
+                    '{meanings,0,definition}',
+                    '"tampered outside importer"'::jsonb
+                )
+                where dictionary_id = (
+                    select id
+                    from public.dictionaries
+                    where slug = %s
+                )
+                  and raw #>> '{meanings,0,definition}' = 'gewijzigde betekenis'
+                """,
+                (dictionary_slug,),
+            )
+
+    with pytest.raises(RuntimeError, match="stored source content drifted"):
+        import_entries(
+            data_dir=tmp_path,
+            database_url=database_url,
+            dictionary_slug=dictionary_slug,
+            dictionary_name="Pytest source dictionary",
+            nt2_slug=list_slug,
+            nt2_name="Pytest source list",
+        )

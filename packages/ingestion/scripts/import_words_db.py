@@ -6,9 +6,8 @@ import os
 import sys
 
 from pathlib import Path
-import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from importer.core import import_entries
 
@@ -81,7 +80,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--dictionary-schema-key",
-        default="nl-vandale-v1",
+        default="nl-vandale-v2",
         help="Dictionary schema key registered in dictionary_schemas.",
     )
     parser.add_argument(
@@ -95,7 +94,14 @@ def main() -> None:
         action="store_true",
         help="Refresh dictionary_search_documents after importing entries. For full imports, prefer a controlled backfill job.",
     )
-
+    parser.add_argument(
+        "--reconciliation-plan",
+        type=Path,
+        help=(
+            "Approved first-binding plan required when the target dictionary "
+            "already contains source rows."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.database_url:
@@ -123,16 +129,23 @@ def main() -> None:
         dictionary_schema_key=args.dictionary_schema_key,
         dictionary_schema_version=args.dictionary_schema_version,
         refresh_search_documents=args.refresh_search_documents,
+        reconciliation_plan=args.reconciliation_plan,
     )
 
-    logging.info(
-        "Processed %d files (%d inserted, %d updated); NT2 list gained %d entries (%d skipped).",
-        stats.total_files,
-        stats.inserted,
-        stats.updated,
-        stats.nt2_linked,
-        stats.nt2_skipped,
-    )
+    if getattr(stats, "no_op", False):
+        logging.info(
+            "Manifest already imported: verified %d files with no database changes.",
+            stats.total_files,
+        )
+    else:
+        logging.info(
+            "Processed %d files (%d inserted, %d updated); NT2 list gained %d entries (%d skipped).",
+            stats.total_files,
+            stats.inserted,
+            stats.updated,
+            stats.nt2_linked,
+            stats.nt2_skipped,
+        )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6531 @@
+[
+  {
+    "artifacts": [
+      "Duits_bn_1.json",
+      "Duits_zn_1.json"
+    ],
+    "headword": "Duits",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "Engels_bn_1.json",
+      "Engels_zn_1.json"
+    ],
+    "headword": "Engels",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "Frans_bn_1.json",
+      "Frans_zn_1.json"
+    ],
+    "headword": "Frans",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "Hollands_bn_1.json",
+      "Hollands_zn_1.json"
+    ],
+    "headword": "Hollands",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "Nederlands_bn_1.json",
+      "Nederlands_zn_1.json"
+    ],
+    "headword": "Nederlands",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "Spaans_bn_1.json",
+      "Spaans_bw_1.json"
+    ],
+    "headword": "Spaans",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "Vlaams_bn_1.json",
+      "Vlaams_zn_1.json"
+    ],
+    "headword": "Vlaams",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "aan_bw_1.json",
+      "aan_vz_1.json"
+    ],
+    "headword": "aan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "aan_bw_2.json",
+      "aan_vz_2.json"
+    ],
+    "headword": "aan",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "aangezien_vw_1.json",
+      "aangezien_ww_1.json"
+    ],
+    "headword": "aangezien",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "aanzien_ww_1.json",
+      "aanzien_zn_1.json"
+    ],
+    "headword": "aanzien",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "aardig_bn_1.json",
+      "aardig_bw_1.json"
+    ],
+    "headword": "aardig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "acht_telw_1.json",
+      "acht_zn_1.json"
+    ],
+    "headword": "acht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "achter_bw_1.json",
+      "achter_vz_1.json"
+    ],
+    "headword": "achter",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "achter_bw_2.json",
+      "achter_vz_2.json"
+    ],
+    "headword": "achter",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "achter_bw_3.json",
+      "achter_vz_3.json"
+    ],
+    "headword": "achter",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "achterhaald_bn_1.json",
+      "achterhaald_ww_1.json"
+    ],
+    "headword": "achterhaald",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "afschuwelijk_bn_1.json",
+      "afschuwelijk_bw_1.json"
+    ],
+    "headword": "afschuwelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "afwisselend_bn_1.json",
+      "afwisselend_bw_1.json"
+    ],
+    "headword": "afwisselend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "akkoord_bn_1.json",
+      "akkoord_zn_1.json"
+    ],
+    "headword": "akkoord",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "akkoord_bn_2.json",
+      "akkoord_zn_2.json"
+    ],
+    "headword": "akkoord",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "al_bw_1.json",
+      "al_vnw_1.json",
+      "al_vw_1.json"
+    ],
+    "headword": "al",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vnw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "algemeen_bn_1.json",
+      "algemeen_zn_1.json"
+    ],
+    "headword": "algemeen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "alleen_bn_1.json",
+      "alleen_bw_1.json"
+    ],
+    "headword": "alleen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "allochtoon_bn_1.json",
+      "allochtoon_zn_1.json"
+    ],
+    "headword": "allochtoon",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "alternatief_bn_1.json",
+      "alternatief_zn_1.json"
+    ],
+    "headword": "alternatief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ander_bn_1.json",
+      "ander_vnw_1.json"
+    ],
+    "headword": "ander",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "anders_bn_1.json",
+      "anders_bw_1.json"
+    ],
+    "headword": "anders",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "antiek_bn_1.json",
+      "antiek_zn_1.json"
+    ],
+    "headword": "antiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "arm_bn_1.json",
+      "arm_zn_1.json"
+    ],
+    "headword": "arm",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "aso_bn_1.json",
+      "aso_zn_1.json"
+    ],
+    "headword": "aso",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "autochtoon_bn_1.json",
+      "autochtoon_zn_1.json"
+    ],
+    "headword": "autochtoon",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "balen_ww_1.json",
+      "balen_zn_1.json"
+    ],
+    "headword": "balen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bankroet_bn_1.json",
+      "bankroet_zn_1.json"
+    ],
+    "headword": "bankroet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bar_bn_1.json",
+      "bar_zn_1.json"
+    ],
+    "headword": "bar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bediende_ww_1.json",
+      "bediende_zn_1.json"
+    ],
+    "headword": "bediende",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bedreven_bn_1.json",
+      "bedreven_ww_1.json"
+    ],
+    "headword": "bedreven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bedroefd_bn_1.json",
+      "bedroefd_ww_1.json"
+    ],
+    "headword": "bedroefd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "begaan_bn_1.json",
+      "begaan_ww_1.json"
+    ],
+    "headword": "begaan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "begrepen_bn_1.json",
+      "begrepen_ww_1.json"
+    ],
+    "headword": "begrepen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "behagen_ww_1.json",
+      "behagen_zn_1.json"
+    ],
+    "headword": "behagen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "beheerst_bn_1.json",
+      "beheerst_ww_1.json"
+    ],
+    "headword": "beheerst",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "behouden_bn_1.json",
+      "behouden_ww_1.json"
+    ],
+    "headword": "behouden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bekend_bn_1.json",
+      "bekend_ww_1.json"
+    ],
+    "headword": "bekend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bekende_ww_1.json",
+      "bekende_zn_1.json"
+    ],
+    "headword": "bekende",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "beklaagde_ww_1.json",
+      "beklaagde_zn_1.json"
+    ],
+    "headword": "beklaagde",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "beleefd_bn_1.json",
+      "beleefd_ww_1.json"
+    ],
+    "headword": "beleefd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "beneden_bw_1.json",
+      "beneden_vz_1.json"
+    ],
+    "headword": "beneden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "benieuwd_bn_1.json",
+      "benieuwd_ww_1.json"
+    ],
+    "headword": "benieuwd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bepaald_bn_1.json",
+      "bepaald_ww_1.json"
+    ],
+    "headword": "bepaald",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "beperkt_bn_1.json",
+      "beperkt_ww_1.json"
+    ],
+    "headword": "beperkt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bereid_bn_1.json",
+      "bereid_ww_1.json"
+    ],
+    "headword": "bereid",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bericht_ww_1.json",
+      "bericht_zn_1.json"
+    ],
+    "headword": "bericht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "beroerd_bn_1.json",
+      "beroerd_ww_1.json"
+    ],
+    "headword": "beroerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "beschaamd_bn_1.json",
+      "beschaamd_ww_1.json"
+    ],
+    "headword": "beschaamd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bescheiden_bn_1.json",
+      "bescheiden_zn_1.json"
+    ],
+    "headword": "bescheiden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "beslist_bw_1.json",
+      "beslist_ww_1.json"
+    ],
+    "headword": "beslist",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "besloten_bn_1.json",
+      "besloten_ww_1.json"
+    ],
+    "headword": "besloten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "best_bn_1.json",
+      "best_bw_1.json",
+      "best_zn_1.json"
+    ],
+    "headword": "best",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "best_bn_2.json",
+      "best_bw_2.json"
+    ],
+    "headword": "best",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "bestaan_ww_1.json",
+      "bestaan_zn_1.json"
+    ],
+    "headword": "bestaan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bestaan_ww_2.json",
+      "bestaan_zn_2.json"
+    ],
+    "headword": "bestaan",
+    "meaningId": 2,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "betrekkelijk_bn_1.json",
+      "betrekkelijk_bw_1.json"
+    ],
+    "headword": "betrekkelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "betrokken_bn_1.json",
+      "betrokken_ww_1.json"
+    ],
+    "headword": "betrokken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "beurs_bn_1.json",
+      "beurs_zn_1.json"
+    ],
+    "headword": "beurs",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bewogen_bn_1.json",
+      "bewogen_ww_1.json"
+    ],
+    "headword": "bewogen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bezet_bn_1.json",
+      "bezet_ww_1.json"
+    ],
+    "headword": "bezet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bezorgd_bn_1.json",
+      "bezorgd_ww_1.json"
+    ],
+    "headword": "bezorgd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "bij_bn_1.json",
+      "bij_vz_1.json",
+      "bij_zn_1.json"
+    ],
+    "headword": "bij",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vz",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bij_bn_2.json",
+      "bij_vz_2.json"
+    ],
+    "headword": "bij",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "bijzonder_bn_1.json",
+      "bijzonder_bw_1.json"
+    ],
+    "headword": "bijzonder",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "binnen_bw_1.json",
+      "binnen_vz_1.json"
+    ],
+    "headword": "binnen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "binnen_bw_2.json",
+      "binnen_vz_2.json"
+    ],
+    "headword": "binnen",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "bol_bn_1.json",
+      "bol_zn_1.json"
+    ],
+    "headword": "bol",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bont_bn_1.json",
+      "bont_zn_1.json"
+    ],
+    "headword": "bont",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "borg_ww_1.json",
+      "borg_zn_1.json"
+    ],
+    "headword": "borg",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bot_bn_1.json",
+      "bot_zn_1.json"
+    ],
+    "headword": "bot",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "boven_bw_1.json",
+      "boven_vz_1.json"
+    ],
+    "headword": "boven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "briljant_bn_1.json",
+      "briljant_zn_1.json"
+    ],
+    "headword": "briljant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "bruut_bn_1.json",
+      "bruut_zn_1.json"
+    ],
+    "headword": "bruut",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "buiten_bw_1.json",
+      "buiten_vz_1.json"
+    ],
+    "headword": "buiten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "buiten_bw_2.json",
+      "buiten_vz_2.json"
+    ],
+    "headword": "buiten",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "buitengewoon_bn_1.json",
+      "buitengewoon_bw_1.json"
+    ],
+    "headword": "buitengewoon",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "collectief_bn_1.json",
+      "collectief_zn_1.json"
+    ],
+    "headword": "collectief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "complex_bn_1.json",
+      "complex_zn_1.json"
+    ],
+    "headword": "complex",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "constant_bn_1.json",
+      "constant_bw_1.json"
+    ],
+    "headword": "constant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "contra_vz_1.json",
+      "contra_zn_1.json"
+    ],
+    "headword": "contra",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vz",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "courant_bn_1.json",
+      "courant_zn_1.json"
+    ],
+    "headword": "courant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "crimineel_bn_1.json",
+      "crimineel_zn_1.json"
+    ],
+    "headword": "crimineel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "crème_bn_1.json",
+      "crème_zn_1.json"
+    ],
+    "headword": "crème",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "d'r_bw_1.json",
+      "d'r_vnw_1.json"
+    ],
+    "headword": "d'r",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "daar_bw_1.json",
+      "daar_vw_1.json"
+    ],
+    "headword": "daar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "dag_tw_1.json",
+      "dag_zn_1.json"
+    ],
+    "headword": "dag",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dag_tw_2.json",
+      "dag_zn_2.json"
+    ],
+    "headword": "dag",
+    "meaningId": 2,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dan_bw_1.json",
+      "dan_vw_1.json"
+    ],
+    "headword": "dan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "dat_vnw_1.json",
+      "dat_vw_1.json"
+    ],
+    "headword": "dat",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "dat_vnw_2.json",
+      "dat_vw_2.json"
+    ],
+    "headword": "dat",
+    "meaningId": 2,
+    "payloadPositions": [
+      "vnw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "defect_bn_1.json",
+      "defect_zn_1.json"
+    ],
+    "headword": "defect",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "den_lidw_1.json",
+      "den_zn_1.json"
+    ],
+    "headword": "den",
+    "meaningId": 1,
+    "payloadPositions": [
+      "lidw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "des_bw_1.json",
+      "des_lidw_1.json"
+    ],
+    "headword": "des",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "lidw"
+    ]
+  },
+  {
+    "artifacts": [
+      "diagonaal_bn_1.json",
+      "diagonaal_zn_1.json"
+    ],
+    "headword": "diagonaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dicht_bn_1.json",
+      "dicht_bw_1.json"
+    ],
+    "headword": "dicht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "donker_bn_1.json",
+      "donker_zn_1.json"
+    ],
+    "headword": "donker",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dood_bn_1.json",
+      "dood_zn_1.json"
+    ],
+    "headword": "dood",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "door_bw_1.json",
+      "door_vw_1.json",
+      "door_vz_1.json"
+    ],
+    "headword": "door",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "draagbaar_bn_1.json",
+      "draagbaar_zn_1.json"
+    ],
+    "headword": "draagbaar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "driftig_bn_1.json",
+      "driftig_bw_1.json"
+    ],
+    "headword": "driftig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "drinken_ww_1.json",
+      "drinken_zn_1.json"
+    ],
+    "headword": "drinken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dronken_bn_1.json",
+      "dronken_ww_1.json"
+    ],
+    "headword": "dronken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "druk_bn_1.json",
+      "druk_zn_1.json"
+    ],
+    "headword": "druk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "druk_bn_2.json",
+      "druk_zn_2.json"
+    ],
+    "headword": "druk",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "druk_bn_3.json",
+      "druk_zn_3.json"
+    ],
+    "headword": "druk",
+    "meaningId": 3,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "drukte_ww_1.json",
+      "drukte_zn_1.json"
+    ],
+    "headword": "drukte",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "duister_bn_1.json",
+      "duister_zn_1.json"
+    ],
+    "headword": "duister",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "duur_bn_1.json",
+      "duur_zn_1.json"
+    ],
+    "headword": "duur",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "dwaas_bn_1.json",
+      "dwaas_zn_1.json"
+    ],
+    "headword": "dwaas",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "echt_bn_1.json",
+      "echt_bw_1.json",
+      "echt_zn_1.json"
+    ],
+    "headword": "echt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "een_bn_1.json",
+      "een_lidw_1.json",
+      "een_telw_1.json"
+    ],
+    "headword": "een",
+    "meaningId": 1,
+    "payloadPositions": [
+      "lidw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "eens_bn_1.json",
+      "eens_bw_1.json"
+    ],
+    "headword": "eens",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "eens_bn_2.json",
+      "eens_bw_2.json"
+    ],
+    "headword": "eens",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "eer_vw_1.json",
+      "eer_zn_1.json"
+    ],
+    "headword": "eer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "eigenlijk_bn_1.json",
+      "eigenlijk_bw_1.json"
+    ],
+    "headword": "eigenlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "elf_telw_1.json",
+      "elf_zn_1.json"
+    ],
+    "headword": "elf",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "enig_bn_1.json",
+      "enig_vnw_1.json"
+    ],
+    "headword": "enig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "enig_bn_2.json",
+      "enig_vnw_2.json"
+    ],
+    "headword": "enig",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "enkel_bn_1.json",
+      "enkel_bw_1.json",
+      "enkel_vnw_1.json",
+      "enkel_zn_1.json"
+    ],
+    "headword": "enkel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "enorm_bn_1.json",
+      "enorm_bw_1.json"
+    ],
+    "headword": "enorm",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "erg_bn_1.json",
+      "erg_zn_1.json"
+    ],
+    "headword": "erg",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "erkend_bn_1.json",
+      "erkend_ww_1.json"
+    ],
+    "headword": "erkend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "ervaren_bn_1.json",
+      "ervaren_ww_1.json"
+    ],
+    "headword": "ervaren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "eten_ww_1.json",
+      "eten_zn_1.json"
+    ],
+    "headword": "eten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "euvel_bn_1.json",
+      "euvel_zn_1.json"
+    ],
+    "headword": "euvel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "even_bn_1.json",
+      "even_bw_1.json"
+    ],
+    "headword": "even",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "even_bn_2.json",
+      "even_bw_2.json"
+    ],
+    "headword": "even",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "eventueel_bn_1.json",
+      "eventueel_bw_1.json"
+    ],
+    "headword": "eventueel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "exclusief_bn_1.json",
+      "exclusief_bw_1.json"
+    ],
+    "headword": "exclusief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "explosief_bn_1.json",
+      "explosief_zn_1.json"
+    ],
+    "headword": "explosief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "extreem_bn_1.json",
+      "extreem_bw_1.json"
+    ],
+    "headword": "extreem",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "favoriet_bn_1.json",
+      "favoriet_zn_1.json"
+    ],
+    "headword": "favoriet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "feitelijk_bn_1.json",
+      "feitelijk_bw_1.json"
+    ],
+    "headword": "feitelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "flink_bn_1.json",
+      "flink_bw_1.json"
+    ],
+    "headword": "flink",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "fout_bn_1.json",
+      "fout_zn_1.json"
+    ],
+    "headword": "fout",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "fris_bn_1.json",
+      "fris_zn_1.json"
+    ],
+    "headword": "fris",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "g_afk_1.json",
+      "g_zn_1.json"
+    ],
+    "headword": "g",
+    "meaningId": 1,
+    "payloadPositions": [
+      "afk",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gans_bn_1.json",
+      "gans_zn_1.json"
+    ],
+    "headword": "gans",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geacht_bn_1.json",
+      "geacht_ww_1.json"
+    ],
+    "headword": "geacht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gebeuren_ww_1.json",
+      "gebeuren_zn_1.json"
+    ],
+    "headword": "gebeuren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gebroken_bn_1.json",
+      "gebroken_ww_1.json"
+    ],
+    "headword": "gebroken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gebukt_bn_1.json",
+      "gebukt_ww_1.json"
+    ],
+    "headword": "gebukt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geconcentreerd_bn_1.json",
+      "geconcentreerd_ww_1.json"
+    ],
+    "headword": "geconcentreerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gedateerd_bn_1.json",
+      "gedateerd_ww_1.json"
+    ],
+    "headword": "gedateerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gedicht_ww_1.json",
+      "gedicht_zn_1.json"
+    ],
+    "headword": "gedicht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gedreven_bn_1.json",
+      "gedreven_ww_1.json"
+    ],
+    "headword": "gedreven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geduld_ww_1.json",
+      "geduld_zn_1.json"
+    ],
+    "headword": "geduld",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geforceerd_bn_1.json",
+      "geforceerd_ww_1.json"
+    ],
+    "headword": "geforceerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gegarandeerd_bw_1.json",
+      "gegarandeerd_ww_1.json"
+    ],
+    "headword": "gegarandeerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gegeven_bn_1.json",
+      "gegeven_zn_1.json"
+    ],
+    "headword": "gegeven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gehakt_ww_1.json",
+      "gehakt_zn_1.json"
+    ],
+    "headword": "gehakt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geheel_bn_1.json",
+      "geheel_zn_1.json"
+    ],
+    "headword": "geheel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geheid_bn_1.json",
+      "geheid_ww_1.json"
+    ],
+    "headword": "geheid",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geheim_bn_1.json",
+      "geheim_zn_1.json"
+    ],
+    "headword": "geheim",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gehuwd_bn_1.json",
+      "gehuwd_ww_1.json"
+    ],
+    "headword": "gehuwd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gejaagd_bn_1.json",
+      "gejaagd_ww_1.json"
+    ],
+    "headword": "gejaagd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gek_bn_1.json",
+      "gek_zn_1.json"
+    ],
+    "headword": "gek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gekleurd_bn_1.json",
+      "gekleurd_ww_1.json"
+    ],
+    "headword": "gekleurd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelaten_bn_1.json",
+      "gelaten_ww_1.json"
+    ],
+    "headword": "gelaten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geleden_bn_1.json",
+      "geleden_ww_1.json"
+    ],
+    "headword": "geleden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geleerd_bn_1.json",
+      "geleerd_ww_1.json"
+    ],
+    "headword": "geleerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelegen_bn_1.json",
+      "gelegen_ww_1.json"
+    ],
+    "headword": "gelegen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelijk_bn_1.json",
+      "gelijk_bw_1.json",
+      "gelijk_zn_1.json"
+    ],
+    "headword": "gelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelijk_bw_2.json",
+      "gelijk_zn_2.json"
+    ],
+    "headword": "gelijk",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelijk_bw_3.json",
+      "gelijk_zn_3.json"
+    ],
+    "headword": "gelijk",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gelukkig_bn_1.json",
+      "gelukkig_bw_1.json"
+    ],
+    "headword": "gelukkig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "gematigd_bn_1.json",
+      "gematigd_ww_1.json"
+    ],
+    "headword": "gematigd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gemengd_bn_1.json",
+      "gemengd_ww_1.json"
+    ],
+    "headword": "gemengd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geneigd_bn_1.json",
+      "geneigd_ww_1.json"
+    ],
+    "headword": "geneigd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "generaal_bn_1.json",
+      "generaal_zn_1.json"
+    ],
+    "headword": "generaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gepast_bn_1.json",
+      "gepast_ww_1.json"
+    ],
+    "headword": "gepast",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geraakt_bn_1.json",
+      "geraakt_ww_1.json"
+    ],
+    "headword": "geraakt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geregeld_bn_1.json",
+      "geregeld_ww_1.json"
+    ],
+    "headword": "geregeld",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gereserveerd_bn_1.json",
+      "gereserveerd_ww_1.json"
+    ],
+    "headword": "gereserveerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gerust_bn_1.json",
+      "gerust_ww_1.json"
+    ],
+    "headword": "gerust",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geschift_bn_1.json",
+      "geschift_ww_1.json"
+    ],
+    "headword": "geschift",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geschikt_bn_1.json",
+      "geschikt_ww_1.json"
+    ],
+    "headword": "geschikt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "geslacht_ww_1.json",
+      "geslacht_zn_1.json"
+    ],
+    "headword": "geslacht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geslepen_bn_1.json",
+      "geslepen_ww_1.json"
+    ],
+    "headword": "geslepen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gesloten_bn_1.json",
+      "gesloten_ww_1.json"
+    ],
+    "headword": "gesloten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gesmeerd_bn_1.json",
+      "gesmeerd_ww_1.json"
+    ],
+    "headword": "gesmeerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gespannen_bn_1.json",
+      "gespannen_ww_1.json"
+    ],
+    "headword": "gespannen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gestoord_bn_1.json",
+      "gestoord_ww_1.json"
+    ],
+    "headword": "gestoord",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "getuige_vz_1.json",
+      "getuige_zn_1.json"
+    ],
+    "headword": "getuige",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vz",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gevat_bn_1.json",
+      "gevat_ww_1.json"
+    ],
+    "headword": "gevat",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gevestigd_bn_1.json",
+      "gevestigd_ww_1.json"
+    ],
+    "headword": "gevestigd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gevierd_bn_1.json",
+      "gevierd_ww_1.json"
+    ],
+    "headword": "gevierd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gevorderd_bn_1.json",
+      "gevorderd_ww_1.json"
+    ],
+    "headword": "gevorderd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gewaad_ww_1.json",
+      "gewaad_zn_1.json"
+    ],
+    "headword": "gewaad",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "geweldig_bn_1.json",
+      "geweldig_bw_1.json"
+    ],
+    "headword": "geweldig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "geweten_ww_1.json",
+      "geweten_zn_1.json"
+    ],
+    "headword": "geweten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "gewezen_bn_1.json",
+      "gewezen_ww_1.json"
+    ],
+    "headword": "gewezen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gewild_bn_1.json",
+      "gewild_ww_1.json"
+    ],
+    "headword": "gewild",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gewoon_bn_1.json",
+      "gewoon_bw_1.json"
+    ],
+    "headword": "gewoon",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "gezet_bn_1.json",
+      "gezet_ww_1.json"
+    ],
+    "headword": "gezet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "gezien_bn_1.json",
+      "gezien_vz_1.json"
+    ],
+    "headword": "gezien",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "goed_bn_1.json",
+      "goed_bw_1.json",
+      "goed_zn_1.json"
+    ],
+    "headword": "goed",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "goed_bn_2.json",
+      "goed_bw_2.json",
+      "goed_zn_2.json"
+    ],
+    "headword": "goed",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "goed_bn_3.json",
+      "goed_zn_3.json"
+    ],
+    "headword": "goed",
+    "meaningId": 3,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "goed_bn_4.json",
+      "goed_zn_4.json"
+    ],
+    "headword": "goed",
+    "meaningId": 4,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "grandioos_bn_1.json",
+      "grandioos_bw_1.json"
+    ],
+    "headword": "grandioos",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "ha_afk_1.json",
+      "ha_tw_1.json"
+    ],
+    "headword": "ha",
+    "meaningId": 1,
+    "payloadPositions": [
+      "afk",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "haar_vnw_1.json",
+      "haar_zn_1.json"
+    ],
+    "headword": "haar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "haar_vnw_2.json",
+      "haar_zn_2.json"
+    ],
+    "headword": "haar",
+    "meaningId": 2,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "haast_bw_1.json",
+      "haast_zn_1.json"
+    ],
+    "headword": "haast",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "halt_tw_1.json",
+      "halt_zn_1.json"
+    ],
+    "headword": "halt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hard_bn_1.json",
+      "hard_bw_1.json"
+    ],
+    "headword": "hard",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "hard_bn_2.json",
+      "hard_bw_2.json"
+    ],
+    "headword": "hard",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "heden_bw_1.json",
+      "heden_zn_1.json"
+    ],
+    "headword": "heden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "heel_bn_1.json",
+      "heel_bw_1.json"
+    ],
+    "headword": "heel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "hel_bn_1.json",
+      "hel_zn_1.json"
+    ],
+    "headword": "hel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "helaas_bw_1.json",
+      "helaas_tw_1.json"
+    ],
+    "headword": "helaas",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "hen_vnw_1.json",
+      "hen_zn_1.json"
+    ],
+    "headword": "hen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hervormd_bn_1.json",
+      "hervormd_ww_1.json"
+    ],
+    "headword": "hervormd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "het_lidw_1.json",
+      "het_vnw_1.json"
+    ],
+    "headword": "het",
+    "meaningId": 1,
+    "payloadPositions": [
+      "lidw",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "hoe_bw_1.json",
+      "hoe_vw_1.json"
+    ],
+    "headword": "hoe",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "hol_bn_1.json",
+      "hol_zn_1.json"
+    ],
+    "headword": "hol",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hol_bn_2.json",
+      "hol_zn_2.json"
+    ],
+    "headword": "hol",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hol_bn_3.json",
+      "hol_zn_3.json"
+    ],
+    "headword": "hol",
+    "meaningId": 3,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "homofiel_bn_1.json",
+      "homofiel_zn_1.json"
+    ],
+    "headword": "homofiel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "homoseksueel_bn_1.json",
+      "homoseksueel_zn_1.json"
+    ],
+    "headword": "homoseksueel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "honderd_telw_1.json",
+      "honderd_zn_1.json"
+    ],
+    "headword": "honderd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hoogst_bw_1.json",
+      "hoogst_zn_1.json"
+    ],
+    "headword": "hoogst",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hoor_tw_1.json",
+      "hoor_zn_1.json"
+    ],
+    "headword": "hoor",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "huishouden_ww_1.json",
+      "huishouden_zn_1.json"
+    ],
+    "headword": "huishouden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hulde_ww_1.json",
+      "hulde_zn_1.json"
+    ],
+    "headword": "hulde",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "hurken_ww_1.json",
+      "hurken_zn_1.json"
+    ],
+    "headword": "hurken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ideaal_bn_1.json",
+      "ideaal_zn_1.json"
+    ],
+    "headword": "ideaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "idioot_bn_1.json",
+      "idioot_zn_1.json"
+    ],
+    "headword": "idioot",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "iets_bw_1.json",
+      "iets_vnw_1.json"
+    ],
+    "headword": "iets",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "illegaal_bn_1.json",
+      "illegaal_zn_1.json"
+    ],
+    "headword": "illegaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "in_bw_1.json",
+      "in_vz_1.json"
+    ],
+    "headword": "in",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "in_bw_2.json",
+      "in_vz_2.json"
+    ],
+    "headword": "in",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "in_bw_3.json",
+      "in_vz_3.json"
+    ],
+    "headword": "in",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "in_bw_4.json",
+      "in_vz_4.json"
+    ],
+    "headword": "in",
+    "meaningId": 4,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "inclusief_bn_1.json",
+      "inclusief_bw_1.json"
+    ],
+    "headword": "inclusief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "inkomen_ww_1.json",
+      "inkomen_zn_1.json"
+    ],
+    "headword": "inkomen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "inkopen_ww_1.json",
+      "inkopen_zn_1.json"
+    ],
+    "headword": "inkopen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "innerlijk_bn_1.json",
+      "innerlijk_zn_1.json"
+    ],
+    "headword": "innerlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "inzien_ww_1.json",
+      "inzien_zn_1.json"
+    ],
+    "headword": "inzien",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "inzien_ww_2.json",
+      "inzien_zn_2.json"
+    ],
+    "headword": "inzien",
+    "meaningId": 2,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "jong_bn_1.json",
+      "jong_zn_1.json"
+    ],
+    "headword": "jong",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "jong_bn_2.json",
+      "jong_zn_2.json"
+    ],
+    "headword": "jong",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "jongen_ww_1.json",
+      "jongen_zn_1.json"
+    ],
+    "headword": "jongen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "journalistiek_bn_1.json",
+      "journalistiek_zn_1.json"
+    ],
+    "headword": "journalistiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "juist_bn_1.json",
+      "juist_bw_1.json"
+    ],
+    "headword": "juist",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "kachel_bn_1.json",
+      "kachel_zn_1.json"
+    ],
+    "headword": "kachel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kan_ww_1.json",
+      "kan_zn_1.json"
+    ],
+    "headword": "kan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kapitaal_bn_1.json",
+      "kapitaal_zn_1.json"
+    ],
+    "headword": "kapitaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "karakteristiek_bn_1.json",
+      "karakteristiek_zn_1.json"
+    ],
+    "headword": "karakteristiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kardinaal_bn_1.json",
+      "kardinaal_zn_1.json"
+    ],
+    "headword": "kardinaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "keer_vz_1.json",
+      "keer_zn_1.json"
+    ],
+    "headword": "keer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vz",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "keten_ww_1.json",
+      "keten_zn_1.json"
+    ],
+    "headword": "keten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kies_bn_1.json",
+      "kies_zn_1.json"
+    ],
+    "headword": "kies",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "klem_bn_1.json",
+      "klem_zn_1.json"
+    ],
+    "headword": "klem",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kloek_bn_1.json",
+      "kloek_zn_1.json"
+    ],
+    "headword": "kloek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kort_bn_1.json",
+      "kort_zn_1.json"
+    ],
+    "headword": "kort",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kort_bn_2.json",
+      "kort_zn_2.json"
+    ],
+    "headword": "kort",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kosten_ww_1.json",
+      "kosten_zn_1.json"
+    ],
+    "headword": "kosten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kras_bn_1.json",
+      "kras_zn_1.json"
+    ],
+    "headword": "kras",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kritiek_bn_1.json",
+      "kritiek_zn_1.json"
+    ],
+    "headword": "kritiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kuis_bn_1.json",
+      "kuis_zn_1.json"
+    ],
+    "headword": "kuis",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kuren_ww_1.json",
+      "kuren_zn_1.json"
+    ],
+    "headword": "kuren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kussen_ww_1.json",
+      "kussen_zn_1.json"
+    ],
+    "headword": "kussen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kwaad_bn_1.json",
+      "kwaad_zn_1.json"
+    ],
+    "headword": "kwaad",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "kwaad_bn_2.json",
+      "kwaad_zn_2.json"
+    ],
+    "headword": "kwaad",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "laag_bn_1.json",
+      "laag_zn_1.json"
+    ],
+    "headword": "laag",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "laaiend_bn_1.json",
+      "laaiend_bw_1.json"
+    ],
+    "headword": "laaiend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "laatst_bn_1.json",
+      "laatst_bw_1.json"
+    ],
+    "headword": "laatst",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "lam_bn_1.json",
+      "lam_zn_1.json"
+    ],
+    "headword": "lam",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lang_bn_1.json",
+      "lang_bw_1.json"
+    ],
+    "headword": "lang",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "lang_bn_2.json",
+      "lang_bw_2.json"
+    ],
+    "headword": "lang",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "langs_bw_1.json",
+      "langs_vz_1.json"
+    ],
+    "headword": "langs",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "langs_bw_2.json",
+      "langs_vz_2.json"
+    ],
+    "headword": "langs",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "lek_bn_1.json",
+      "lek_zn_1.json"
+    ],
+    "headword": "lek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lekker_bn_1.json",
+      "lekker_bw_1.json"
+    ],
+    "headword": "lekker",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "lelijk_bn_1.json",
+      "lelijk_bw_1.json"
+    ],
+    "headword": "lelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "leren_bn_1.json",
+      "leren_ww_1.json"
+    ],
+    "headword": "leren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "letterlijk_bn_1.json",
+      "letterlijk_bw_1.json"
+    ],
+    "headword": "letterlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "leven_ww_1.json",
+      "leven_zn_1.json"
+    ],
+    "headword": "leven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "leven_ww_2.json",
+      "leven_zn_2.json"
+    ],
+    "headword": "leven",
+    "meaningId": 2,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "licht_bn_1.json",
+      "licht_zn_1.json"
+    ],
+    "headword": "licht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "licht_bn_2.json",
+      "licht_zn_2.json"
+    ],
+    "headword": "licht",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lief_bn_1.json",
+      "lief_zn_1.json"
+    ],
+    "headword": "lief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lief_bn_2.json",
+      "lief_zn_2.json"
+    ],
+    "headword": "lief",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "link_bn_1.json",
+      "link_zn_1.json"
+    ],
+    "headword": "link",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lokaal_bn_1.json",
+      "lokaal_zn_1.json"
+    ],
+    "headword": "lokaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "lui_bn_1.json",
+      "lui_zn_1.json"
+    ],
+    "headword": "lui",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "luxe_bn_1.json",
+      "luxe_zn_1.json"
+    ],
+    "headword": "luxe",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "maar_bw_1.json",
+      "maar_vw_1.json"
+    ],
+    "headword": "maar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "mal_bn_1.json",
+      "mal_zn_1.json"
+    ],
+    "headword": "mal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "manifest_bn_1.json",
+      "manifest_zn_1.json"
+    ],
+    "headword": "manifest",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "mat_bn_1.json",
+      "mat_zn_1.json"
+    ],
+    "headword": "mat",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "materieel_bn_1.json",
+      "materieel_zn_1.json"
+    ],
+    "headword": "materieel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "maximaal_bn_1.json",
+      "maximaal_bw_1.json"
+    ],
+    "headword": "maximaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "meer_bw_1.json",
+      "meer_telw_1.json",
+      "meer_zn_1.json"
+    ],
+    "headword": "meer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "meerdere_telw_1.json",
+      "meerdere_zn_1.json"
+    ],
+    "headword": "meerdere",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "midden_bw_1.json",
+      "midden_zn_1.json"
+    ],
+    "headword": "midden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "mijn_vnw_1.json",
+      "mijn_zn_1.json"
+    ],
+    "headword": "mijn",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "militair_bn_1.json",
+      "militair_zn_1.json"
+    ],
+    "headword": "militair",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "militant_bn_1.json",
+      "militant_zn_1.json"
+    ],
+    "headword": "militant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "min_bn_1.json",
+      "min_bw_1.json",
+      "min_zn_1.json"
+    ],
+    "headword": "min",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "min_bn_2.json",
+      "min_bw_2.json",
+      "min_zn_2.json"
+    ],
+    "headword": "min",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "miniem_bn_1.json",
+      "miniem_zn_1.json"
+    ],
+    "headword": "miniem",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "minimaal_bn_1.json",
+      "minimaal_bw_1.json"
+    ],
+    "headword": "minimaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "mis_bn_1.json",
+      "mis_zn_1.json"
+    ],
+    "headword": "mis",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "moeilijk_bn_1.json",
+      "moeilijk_bw_1.json"
+    ],
+    "headword": "moeilijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "moreel_bn_1.json",
+      "moreel_zn_1.json"
+    ],
+    "headword": "moreel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "morgen_bw_1.json",
+      "morgen_zn_1.json"
+    ],
+    "headword": "morgen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "mystiek_bn_1.json",
+      "mystiek_zn_1.json"
+    ],
+    "headword": "mystiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "na_bw_1.json",
+      "na_vz_1.json"
+    ],
+    "headword": "na",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "naar_bn_1.json",
+      "naar_vw_1.json",
+      "naar_vz_1.json"
+    ],
+    "headword": "naar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "naar_bn_2.json",
+      "naar_vz_2.json"
+    ],
+    "headword": "naar",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "naast_bn_1.json",
+      "naast_vz_1.json"
+    ],
+    "headword": "naast",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "nabij_bn_1.json",
+      "nabij_vz_1.json"
+    ],
+    "headword": "nabij",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "natuurlijk_bn_1.json",
+      "natuurlijk_bw_1.json"
+    ],
+    "headword": "natuurlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "nauw_bn_1.json",
+      "nauw_zn_1.json"
+    ],
+    "headword": "nauw",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "negatief_bn_1.json",
+      "negatief_zn_1.json"
+    ],
+    "headword": "negatief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "net_bn_1.json",
+      "net_bw_1.json",
+      "net_zn_1.json"
+    ],
+    "headword": "net",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "net_bw_2.json",
+      "net_zn_2.json"
+    ],
+    "headword": "net",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "niet_bw_1.json",
+      "niet_zn_1.json"
+    ],
+    "headword": "niet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "nou_bw_1.json",
+      "nou_tw_1.json"
+    ],
+    "headword": "nou",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "nu_bw_1.json",
+      "nu_vw_1.json"
+    ],
+    "headword": "nu",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "nul_telw_1.json",
+      "nul_zn_1.json"
+    ],
+    "headword": "nul",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "o_tw_1.json",
+      "o_zn_1.json"
+    ],
+    "headword": "o",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "offensief_bn_1.json",
+      "offensief_zn_1.json"
+    ],
+    "headword": "offensief",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "om_bw_1.json",
+      "om_vw_1.json",
+      "om_vz_1.json"
+    ],
+    "headword": "om",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "om_bw_2.json",
+      "om_vz_2.json"
+    ],
+    "headword": "om",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "om_bw_3.json",
+      "om_vz_3.json"
+    ],
+    "headword": "om",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "omgekeerd_bn_1.json",
+      "omgekeerd_ww_1.json"
+    ],
+    "headword": "omgekeerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "onder_bw_1.json",
+      "onder_vz_1.json"
+    ],
+    "headword": "onder",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "onder_bw_2.json",
+      "onder_vz_2.json"
+    ],
+    "headword": "onder",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "ongelijk_bn_1.json",
+      "ongelijk_zn_1.json"
+    ],
+    "headword": "ongelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ons_vnw_1.json",
+      "ons_zn_1.json"
+    ],
+    "headword": "ons",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ons_vnw_2.json",
+      "ons_zn_2.json"
+    ],
+    "headword": "ons",
+    "meaningId": 2,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ontdaan_bn_1.json",
+      "ontdaan_ww_1.json"
+    ],
+    "headword": "ontdaan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "ontspannen_bn_1.json",
+      "ontspannen_ww_1.json"
+    ],
+    "headword": "ontspannen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "ontwikkeld_bn_1.json",
+      "ontwikkeld_ww_1.json"
+    ],
+    "headword": "ontwikkeld",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "onvoldoende_bn_1.json",
+      "onvoldoende_zn_1.json"
+    ],
+    "headword": "onvoldoende",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "oorspronkelijk_bn_1.json",
+      "oorspronkelijk_bw_1.json"
+    ],
+    "headword": "oorspronkelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "op_bw_1.json",
+      "op_vz_1.json"
+    ],
+    "headword": "op",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "op_bw_2.json",
+      "op_vz_2.json"
+    ],
+    "headword": "op",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "opgeruimd_bn_1.json",
+      "opgeruimd_ww_1.json"
+    ],
+    "headword": "opgeruimd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "opgewonden_bn_1.json",
+      "opgewonden_ww_1.json"
+    ],
+    "headword": "opgewonden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "optreden_ww_1.json",
+      "optreden_zn_1.json"
+    ],
+    "headword": "optreden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "optreden_ww_2.json",
+      "optreden_zn_2.json"
+    ],
+    "headword": "optreden",
+    "meaningId": 2,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "origineel_bn_1.json",
+      "origineel_zn_1.json"
+    ],
+    "headword": "origineel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "oud_bn_1.json",
+      "oud_zn_1.json"
+    ],
+    "headword": "oud",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ovaal_bn_1.json",
+      "ovaal_zn_1.json"
+    ],
+    "headword": "ovaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "over_bw_1.json",
+      "over_vz_1.json"
+    ],
+    "headword": "over",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "over_bw_2.json",
+      "over_vz_2.json"
+    ],
+    "headword": "over",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "over_bw_3.json",
+      "over_vz_3.json"
+    ],
+    "headword": "over",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "overtuigd_bn_1.json",
+      "overtuigd_ww_1.json"
+    ],
+    "headword": "overtuigd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "overweg_bw_1.json",
+      "overweg_zn_1.json"
+    ],
+    "headword": "overweg",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "paar_bn_1.json",
+      "paar_zn_1.json"
+    ],
+    "headword": "paar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "papieren_bn_1.json",
+      "papieren_zn_1.json"
+    ],
+    "headword": "papieren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "parallel_bn_1.json",
+      "parallel_zn_1.json"
+    ],
+    "headword": "parallel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "pardon_tw_1.json",
+      "pardon_zn_1.json"
+    ],
+    "headword": "pardon",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "particulier_bn_1.json",
+      "particulier_zn_1.json"
+    ],
+    "headword": "particulier",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "pas_bw_1.json",
+      "pas_zn_1.json"
+    ],
+    "headword": "pas",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "pas_bw_2.json",
+      "pas_zn_2.json"
+    ],
+    "headword": "pas",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "permanent_bn_1.json",
+      "permanent_bw_1.json",
+      "permanent_zn_1.json"
+    ],
+    "headword": "permanent",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "persoonlijk_bn_1.json",
+      "persoonlijk_bw_1.json"
+    ],
+    "headword": "persoonlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "pet_bn_1.json",
+      "pet_zn_1.json"
+    ],
+    "headword": "pet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "plastic_bn_1.json",
+      "plastic_zn_1.json"
+    ],
+    "headword": "plastic",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "pluis_bn_1.json",
+      "pluis_zn_1.json"
+    ],
+    "headword": "pluis",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "plus_bw_1.json",
+      "plus_zn_1.json"
+    ],
+    "headword": "plus",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "politiek_bn_1.json",
+      "politiek_zn_1.json"
+    ],
+    "headword": "politiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "praktisch_bn_1.json",
+      "praktisch_bw_1.json"
+    ],
+    "headword": "praktisch",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "precies_bn_1.json",
+      "precies_bw_1.json"
+    ],
+    "headword": "precies",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "present_bn_1.json",
+      "present_zn_1.json"
+    ],
+    "headword": "present",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "publiek_bn_1.json",
+      "publiek_zn_1.json"
+    ],
+    "headword": "publiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "razend_bn_1.json",
+      "razend_bw_1.json"
+    ],
+    "headword": "razend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "recht_bn_1.json",
+      "recht_zn_1.json"
+    ],
+    "headword": "recht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "recht_bn_2.json",
+      "recht_zn_2.json"
+    ],
+    "headword": "recht",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "rechter_bn_1.json",
+      "rechter_zn_1.json"
+    ],
+    "headword": "rechter",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "redelijk_bn_1.json",
+      "redelijk_bw_1.json"
+    ],
+    "headword": "redelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "reden_ww_1.json",
+      "reden_zn_1.json"
+    ],
+    "headword": "reden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "regelmatig_bn_1.json",
+      "regelmatig_bw_1.json"
+    ],
+    "headword": "regelmatig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "regen_ww_1.json",
+      "regen_zn_1.json"
+    ],
+    "headword": "regen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "retour_bw_1.json",
+      "retour_zn_1.json"
+    ],
+    "headword": "retour",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "rond_bn_1.json",
+      "rond_vz_1.json"
+    ],
+    "headword": "rond",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "rond_bn_2.json",
+      "rond_vz_2.json"
+    ],
+    "headword": "rond",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "rot_bn_1.json",
+      "rot_zn_1.json"
+    ],
+    "headword": "rot",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "ruim_bn_1.json",
+      "ruim_bw_1.json",
+      "ruim_zn_1.json"
+    ],
+    "headword": "ruim",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "sanitair_bn_1.json",
+      "sanitair_zn_1.json"
+    ],
+    "headword": "sanitair",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "scherp_bn_1.json",
+      "scherp_zn_1.json"
+    ],
+    "headword": "scherp",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "scherp_bn_2.json",
+      "scherp_zn_2.json"
+    ],
+    "headword": "scherp",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "scherp_bn_3.json",
+      "scherp_zn_3.json"
+    ],
+    "headword": "scherp",
+    "meaningId": 3,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "schots_bn_1.json",
+      "schots_zn_1.json"
+    ],
+    "headword": "schots",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "schrijven_ww_1.json",
+      "schrijven_zn_1.json"
+    ],
+    "headword": "schrijven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "sinds_vw_1.json",
+      "sinds_vz_1.json"
+    ],
+    "headword": "sinds",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "snik_bn_1.json",
+      "snik_zn_1.json"
+    ],
+    "headword": "snik",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "solden_ww_1.json",
+      "solden_zn_1.json"
+    ],
+    "headword": "solden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "solo_bw_1.json",
+      "solo_zn_1.json"
+    ],
+    "headword": "solo",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "spaak_bw_1.json",
+      "spaak_zn_1.json"
+    ],
+    "headword": "spaak",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "speciaal_bn_1.json",
+      "speciaal_bw_1.json"
+    ],
+    "headword": "speciaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "specifiek_bn_1.json",
+      "specifiek_bw_1.json"
+    ],
+    "headword": "specifiek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "spits_bn_1.json",
+      "spits_zn_1.json"
+    ],
+    "headword": "spits",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "spits_bn_2.json",
+      "spits_zn_2.json"
+    ],
+    "headword": "spits",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "standaard_bw_1.json",
+      "standaard_zn_1.json"
+    ],
+    "headword": "standaard",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "stereo_bn_1.json",
+      "stereo_zn_1.json"
+    ],
+    "headword": "stereo",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "stijf_bn_1.json",
+      "stijf_bw_1.json"
+    ],
+    "headword": "stijf",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "stomp_bn_1.json",
+      "stomp_zn_1.json"
+    ],
+    "headword": "stomp",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "straal_bw_1.json",
+      "straal_zn_1.json"
+    ],
+    "headword": "straal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "streng_bn_1.json",
+      "streng_zn_1.json"
+    ],
+    "headword": "streng",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "strikt_bn_1.json",
+      "strikt_bw_1.json"
+    ],
+    "headword": "strikt",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "stug_bn_1.json",
+      "stug_bw_1.json"
+    ],
+    "headword": "stug",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "stuk_bn_1.json",
+      "stuk_zn_1.json"
+    ],
+    "headword": "stuk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "stuk_bn_2.json",
+      "stuk_zn_2.json"
+    ],
+    "headword": "stuk",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "superieur_bn_1.json",
+      "superieur_zn_1.json"
+    ],
+    "headword": "superieur",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "taboe_bn_1.json",
+      "taboe_zn_1.json"
+    ],
+    "headword": "taboe",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "te_bw_1.json",
+      "te_vz_1.json"
+    ],
+    "headword": "te",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "teer_bn_1.json",
+      "teer_zn_1.json"
+    ],
+    "headword": "teer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "tegen_bw_1.json",
+      "tegen_vz_1.json"
+    ],
+    "headword": "tegen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "tegenwoordig_bn_1.json",
+      "tegenwoordig_bw_1.json"
+    ],
+    "headword": "tegenwoordig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "thuis_bw_1.json",
+      "thuis_zn_1.json"
+    ],
+    "headword": "thuis",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "toe_bw_1.json",
+      "toe_tw_1.json"
+    ],
+    "headword": "toe",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "toen_bw_1.json",
+      "toen_vw_1.json"
+    ],
+    "headword": "toen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "tot_vw_1.json",
+      "tot_vz_1.json"
+    ],
+    "headword": "tot",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "totaal_bn_1.json",
+      "totaal_bw_1.json",
+      "totaal_zn_1.json"
+    ],
+    "headword": "totaal",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "treffen_ww_1.json",
+      "treffen_zn_1.json"
+    ],
+    "headword": "treffen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "treffen_ww_2.json",
+      "treffen_zn_2.json"
+    ],
+    "headword": "treffen",
+    "meaningId": 2,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "trots_bn_1.json",
+      "trots_zn_1.json"
+    ],
+    "headword": "trots",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "trots_bn_2.json",
+      "trots_zn_2.json"
+    ],
+    "headword": "trots",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "trouw_bn_1.json",
+      "trouw_zn_1.json"
+    ],
+    "headword": "trouw",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "u_vnw_1.json",
+      "u_zn_1.json"
+    ],
+    "headword": "u",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "uit_bn_1.json",
+      "uit_bw_1.json",
+      "uit_vz_1.json"
+    ],
+    "headword": "uit",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "uit_bn_2.json",
+      "uit_vz_2.json"
+    ],
+    "headword": "uit",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "uit_bn_3.json",
+      "uit_vz_3.json"
+    ],
+    "headword": "uit",
+    "meaningId": 3,
+    "payloadPositions": [
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "uiteindelijk_bn_1.json",
+      "uiteindelijk_bw_1.json"
+    ],
+    "headword": "uiteindelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "uiterlijk_bn_1.json",
+      "uiterlijk_bw_1.json",
+      "uiterlijk_zn_1.json"
+    ],
+    "headword": "uiterlijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "uiterst_bn_1.json",
+      "uiterst_bw_1.json"
+    ],
+    "headword": "uiterst",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "uitgelaten_bn_1.json",
+      "uitgelaten_ww_1.json"
+    ],
+    "headword": "uitgelaten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "uitgerekend_bn_1.json",
+      "uitgerekend_bw_1.json"
+    ],
+    "headword": "uitgerekend",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "uitgesproken_bw_1.json",
+      "uitgesproken_ww_1.json"
+    ],
+    "headword": "uitgesproken",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "uitgestorven_bn_1.json",
+      "uitgestorven_ww_1.json"
+    ],
+    "headword": "uitgestorven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "uniform_bn_1.json",
+      "uniform_zn_1.json"
+    ],
+    "headword": "uniform",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vaak_bw_1.json",
+      "vaak_zn_1.json"
+    ],
+    "headword": "vaak",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vacuüm_bn_1.json",
+      "vacuüm_zn_1.json"
+    ],
+    "headword": "vacuüm",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "varen_ww_1.json",
+      "varen_zn_1.json"
+    ],
+    "headword": "varen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vast_bn_1.json",
+      "vast_bw_1.json"
+    ],
+    "headword": "vast",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vast_bn_2.json",
+      "vast_bw_2.json"
+    ],
+    "headword": "vast",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vasten_ww_1.json",
+      "vasten_zn_1.json"
+    ],
+    "headword": "vasten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "veeg_bn_1.json",
+      "veeg_zn_1.json"
+    ],
+    "headword": "veeg",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "veeg_bn_2.json",
+      "veeg_zn_2.json"
+    ],
+    "headword": "veeg",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "veel_bw_1.json",
+      "veel_telw_1.json"
+    ],
+    "headword": "veel",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "verbeten_bn_1.json",
+      "verbeten_ww_1.json"
+    ],
+    "headword": "verbeten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "verder_bn_1.json",
+      "verder_bw_1.json"
+    ],
+    "headword": "verder",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vereiste_ww_1.json",
+      "vereiste_zn_1.json"
+    ],
+    "headword": "vereiste",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verheven_bn_1.json",
+      "verheven_ww_1.json"
+    ],
+    "headword": "verheven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "verkeerd_bn_1.json",
+      "verkeerd_ww_1.json"
+    ],
+    "headword": "verkeerd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "verlangen_ww_1.json",
+      "verlangen_zn_1.json"
+    ],
+    "headword": "verlangen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verleden_bn_1.json",
+      "verleden_zn_1.json"
+    ],
+    "headword": "verleden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verlopen_bn_1.json",
+      "verlopen_ww_1.json"
+    ],
+    "headword": "verlopen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "verloren_bn_1.json",
+      "verloren_ww_1.json"
+    ],
+    "headword": "verloren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "vermoeden_ww_1.json",
+      "vermoeden_zn_1.json"
+    ],
+    "headword": "vermoeden",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verplicht_bn_1.json",
+      "verplicht_ww_1.json"
+    ],
+    "headword": "verplicht",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "vers_bn_1.json",
+      "vers_zn_1.json"
+    ],
+    "headword": "vers",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verschoten_bn_1.json",
+      "verschoten_ww_1.json"
+    ],
+    "headword": "verschoten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "verschrikkelijk_bn_1.json",
+      "verschrikkelijk_bw_1.json"
+    ],
+    "headword": "verschrikkelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "verslagen_bn_1.json",
+      "verslagen_ww_1.json"
+    ],
+    "headword": "verslagen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "vertrouwd_bn_1.json",
+      "vertrouwd_ww_1.json"
+    ],
+    "headword": "vertrouwd",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "vertrouwen_ww_1.json",
+      "vertrouwen_zn_1.json"
+    ],
+    "headword": "vertrouwen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verwant_bn_1.json",
+      "verwant_zn_1.json"
+    ],
+    "headword": "verwant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "verzet_ww_1.json",
+      "verzet_zn_1.json"
+    ],
+    "headword": "verzet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vet_bn_1.json",
+      "vet_zn_1.json"
+    ],
+    "headword": "vet",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vet_bn_2.json",
+      "vet_zn_2.json"
+    ],
+    "headword": "vet",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vierde_telw_1.json",
+      "vierde_ww_1.json"
+    ],
+    "headword": "vierde",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "vierkant_bn_1.json",
+      "vierkant_bw_1.json",
+      "vierkant_zn_1.json"
+    ],
+    "headword": "vierkant",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vlak_bn_1.json",
+      "vlak_bw_1.json",
+      "vlak_zn_1.json"
+    ],
+    "headword": "vlak",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vlak_bn_2.json",
+      "vlak_zn_2.json"
+    ],
+    "headword": "vlak",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vlot_bn_1.json",
+      "vlot_zn_1.json"
+    ],
+    "headword": "vlot",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "voldaan_bn_1.json",
+      "voldaan_ww_1.json"
+    ],
+    "headword": "voldaan",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "voldoende_vnw_1.json",
+      "voldoende_zn_1.json"
+    ],
+    "headword": "voldoende",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "voor_bw_1.json",
+      "voor_vw_1.json",
+      "voor_vz_1.json"
+    ],
+    "headword": "voor",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "voor_bw_2.json",
+      "voor_vz_2.json"
+    ],
+    "headword": "voor",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "voor_bw_3.json",
+      "voor_vz_3.json"
+    ],
+    "headword": "voor",
+    "meaningId": 3,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "voor_bw_4.json",
+      "voor_vz_4.json"
+    ],
+    "headword": "voor",
+    "meaningId": 4,
+    "payloadPositions": [
+      "bw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "voorbij_bn_1.json",
+      "voorbij_bw_1.json",
+      "voorbij_vz_1.json"
+    ],
+    "headword": "voorbij",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "voorkomen_ww_1.json",
+      "voorkomen_zn_1.json"
+    ],
+    "headword": "voorkomen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "voornaam_bn_1.json",
+      "voornaam_zn_1.json"
+    ],
+    "headword": "voornaam",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "voornemen_ww_1.json",
+      "voornemen_zn_1.json"
+    ],
+    "headword": "voornemen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "vooruit_bw_1.json",
+      "vooruit_tw_1.json"
+    ],
+    "headword": "vooruit",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "vreselijk_bn_1.json",
+      "vreselijk_bw_1.json"
+    ],
+    "headword": "vreselijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vrij_bn_1.json",
+      "vrij_bw_1.json"
+    ],
+    "headword": "vrij",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vroeger_bn_1.json",
+      "vroeger_bw_1.json"
+    ],
+    "headword": "vroeger",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "vuil_bn_1.json",
+      "vuil_zn_1.json"
+    ],
+    "headword": "vuil",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "waanzinnig_bn_1.json",
+      "waanzinnig_bw_1.json"
+    ],
+    "headword": "waanzinnig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "waar_bn_1.json",
+      "waar_bw_1.json"
+    ],
+    "headword": "waar",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "waarachtig_bn_1.json",
+      "waarachtig_bw_1.json"
+    ],
+    "headword": "waarachtig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "waard_bn_1.json",
+      "waard_zn_1.json"
+    ],
+    "headword": "waard",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wagen_ww_1.json",
+      "wagen_zn_1.json"
+    ],
+    "headword": "wagen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wanneer_bw_1.json",
+      "wanneer_vw_1.json"
+    ],
+    "headword": "wanneer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "want_vw_1.json",
+      "want_zn_1.json"
+    ],
+    "headword": "want",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wantrouwen_ww_1.json",
+      "wantrouwen_zn_1.json"
+    ],
+    "headword": "wantrouwen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "waren_ww_1.json",
+      "waren_zn_1.json"
+    ],
+    "headword": "waren",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "was_ww_1.json",
+      "was_zn_1.json"
+    ],
+    "headword": "was",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wat_bw_1.json",
+      "wat_tw_1.json",
+      "wat_vnw_1.json"
+    ],
+    "headword": "wat",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "wat_bw_2.json",
+      "wat_vnw_2.json"
+    ],
+    "headword": "wat",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "wee_tw_1.json",
+      "wee_zn_1.json"
+    ],
+    "headword": "wee",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "weer_bw_1.json",
+      "weer_zn_1.json"
+    ],
+    "headword": "weer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wees_ww_1.json",
+      "wees_zn_1.json"
+    ],
+    "headword": "wees",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "weg_bw_1.json",
+      "weg_zn_1.json"
+    ],
+    "headword": "weg",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "weg_bw_2.json",
+      "weg_zn_2.json"
+    ],
+    "headword": "weg",
+    "meaningId": 2,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "weinig_bw_1.json",
+      "weinig_telw_1.json"
+    ],
+    "headword": "weinig",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw"
+    ]
+  },
+  {
+    "artifacts": [
+      "welkom_bn_1.json",
+      "welkom_tw_1.json",
+      "welkom_zn_1.json"
+    ],
+    "headword": "welkom",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "werkelijk_bn_1.json",
+      "werkelijk_bw_1.json"
+    ],
+    "headword": "werkelijk",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "weten_ww_1.json",
+      "weten_zn_1.json"
+    ],
+    "headword": "weten",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wezen_ww_1.json",
+      "wezen_zn_1.json"
+    ],
+    "headword": "wezen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wier_vnw_1.json",
+      "wier_zn_1.json"
+    ],
+    "headword": "wier",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wijs_bn_1.json",
+      "wijs_zn_1.json"
+    ],
+    "headword": "wijs",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wild_bn_1.json",
+      "wild_zn_1.json"
+    ],
+    "headword": "wild",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "wond_ww_1.json",
+      "wond_zn_1.json"
+    ],
+    "headword": "wond",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zat_bn_1.json",
+      "zat_vnw_1.json"
+    ],
+    "headword": "zat",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "zeer_bn_1.json",
+      "zeer_bw_1.json",
+      "zeer_zn_1.json"
+    ],
+    "headword": "zeer",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zeker_bn_1.json",
+      "zeker_bw_1.json",
+      "zeker_vnw_1.json"
+    ],
+    "headword": "zeker",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved",
+      "vnw"
+    ]
+  },
+  {
+    "artifacts": [
+      "zeven_telw_1.json",
+      "zeven_ww_1.json"
+    ],
+    "headword": "zeven",
+    "meaningId": 1,
+    "payloadPositions": [
+      "tw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "zij_vnw_1.json",
+      "zij_zn_1.json"
+    ],
+    "headword": "zij",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zijn_vnw_1.json",
+      "zijn_ww_1.json"
+    ],
+    "headword": "zijn",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vnw",
+      "ww"
+    ]
+  },
+  {
+    "artifacts": [
+      "zinnen_ww_1.json",
+      "zinnen_zn_1.json"
+    ],
+    "headword": "zinnen",
+    "meaningId": 1,
+    "payloadPositions": [
+      "ww",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zo_bw_1.json",
+      "zo_tw_1.json",
+      "zo_vw_1.json"
+    ],
+    "headword": "zo",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "tw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "zoek_bn_1.json",
+      "zoek_zn_1.json"
+    ],
+    "headword": "zoek",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zolang_bw_1.json",
+      "zolang_vw_1.json"
+    ],
+    "headword": "zolang",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "vw"
+    ]
+  },
+  {
+    "artifacts": [
+      "zonde_bn_1.json",
+      "zonde_zn_1.json"
+    ],
+    "headword": "zonde",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zonder_vw_1.json",
+      "zonder_vz_1.json"
+    ],
+    "headword": "zonder",
+    "meaningId": 1,
+    "payloadPositions": [
+      "vw",
+      "vz"
+    ]
+  },
+  {
+    "artifacts": [
+      "zout_bn_1.json",
+      "zout_zn_1.json"
+    ],
+    "headword": "zout",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zuiver_bn_1.json",
+      "zuiver_bw_1.json"
+    ],
+    "headword": "zuiver",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "unresolved"
+    ]
+  },
+  {
+    "artifacts": [
+      "zus_bw_1.json",
+      "zus_zn_1.json"
+    ],
+    "headword": "zus",
+    "meaningId": 1,
+    "payloadPositions": [
+      "bw",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zuur_bn_1.json",
+      "zuur_zn_1.json"
+    ],
+    "headword": "zuur",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zwak_bn_1.json",
+      "zwak_zn_1.json"
+    ],
+    "headword": "zwak",
+    "meaningId": 1,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  },
+  {
+    "artifacts": [
+      "zwak_bn_2.json",
+      "zwak_zn_2.json"
+    ],
+    "headword": "zwak",
+    "meaningId": 2,
+    "payloadPositions": [
+      "unresolved",
+      "zn"
+    ]
+  }
+]

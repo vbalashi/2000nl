@@ -13,7 +13,14 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `import_words_db.py` – load structured entries into a dictionary in Postgres and seed the NT2 list.
 - `import_word_forms.py` – populate `word_forms` lookup from structured entries.
 
-`import_words_db.py` defaults to the seeded `nl-vandale` dictionary and
-`nl-vandale-v1` schema. Use `--dictionary-slug`, `--dictionary-name`,
-`--dictionary-schema-key`, and `--dictionary-schema-version` when importing a
-different source.
+`process_raw_words.py` produces a checksummed `vandale-structured-v2`
+manifest. The supported Van Dale import path requires that manifest and uses
+versioned source-entry bindings, so homographs can coexist without changing
+existing Platform UUIDs. `import_words_db.py` defaults to the seeded
+`nl-vandale` dictionary and `nl-vandale-v2` schema. Manifest-free
+natural-key writes are rejected, including for test fixtures; committed tests
+generate a small versioned manifest instead.
+
+Run `import_word_forms.py` after the entry import. For a versioned corpus it
+resolves each entry through the source-binding ledger and fails closed if the
+manifest and active bindings do not have exact coverage.

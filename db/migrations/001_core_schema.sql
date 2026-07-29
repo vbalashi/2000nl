@@ -140,9 +140,29 @@ CREATE INDEX IF NOT EXISTS word_entries_dictionary_idx
 CREATE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_idx
     ON word_entries(dictionary_id, language_code, lower(headword));
 
-CREATE UNIQUE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_meaning_idx
-    ON word_entries(dictionary_id, language_code, headword, meaning_id)
-    WHERE dictionary_id IS NOT NULL;
+DO $$
+BEGIN
+    -- The versioned source-binding migration removes this legacy natural-key
+    -- index. Do not recreate it when bootstrap is replayed on that schema.
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'word_entries'
+          AND column_name = 'management_kind'
+    ) THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS
+            word_entries_dictionary_language_headword_meaning_idx
+        ON word_entries(
+            dictionary_id,
+            language_code,
+            headword,
+            meaning_id
+        )
+        WHERE dictionary_id IS NOT NULL;
+    END IF;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION assign_word_entry_default_dictionary()
 RETURNS trigger

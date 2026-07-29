@@ -126,8 +126,21 @@ ALTER TABLE word_entries
 
 DROP INDEX IF EXISTS word_entries_language_headword_idx;
 
-CREATE UNIQUE INDEX IF NOT EXISTS word_entries_language_headword_meaning_idx
-    ON word_entries(language_code, headword, meaning_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'word_entries'
+          AND column_name = 'management_kind'
+    ) THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS
+            word_entries_language_headword_meaning_idx
+        ON word_entries(language_code, headword, meaning_id);
+    END IF;
+END;
+$$;
 
 ALTER TABLE word_entries
     ADD COLUMN IF NOT EXISTS dictionary_id uuid REFERENCES dictionaries(id);
@@ -146,9 +159,27 @@ CREATE INDEX IF NOT EXISTS word_entries_dictionary_idx
 CREATE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_idx
     ON word_entries(dictionary_id, language_code, lower(headword));
 
-CREATE UNIQUE INDEX IF NOT EXISTS word_entries_dictionary_language_headword_meaning_idx
-    ON word_entries(dictionary_id, language_code, headword, meaning_id)
-    WHERE dictionary_id IS NOT NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'word_entries'
+          AND column_name = 'management_kind'
+    ) THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS
+            word_entries_dictionary_language_headword_meaning_idx
+        ON word_entries(
+            dictionary_id,
+            language_code,
+            headword,
+            meaning_id
+        )
+        WHERE dictionary_id IS NOT NULL;
+    END IF;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION assign_word_entry_default_dictionary()
 RETURNS trigger

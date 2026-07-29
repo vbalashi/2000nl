@@ -10,7 +10,13 @@ export type DictionarySchemaFeature =
   | "audio"
   | "images"
   | "morphology"
-  | "conjugation";
+  | "conjugation"
+  | "synonyms"
+  | "antonyms"
+  | "usage-labels"
+  | "notes"
+  | "cross-references"
+  | "reference-tables";
 
 export type DictionarySchemaSummary = {
   id: string;
