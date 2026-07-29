@@ -147,3 +147,5 @@ export type {
   UserCardStateRef,
   UserCardTelemetry,
 } from "./platform";
+
+export type * from "./platformV2";
