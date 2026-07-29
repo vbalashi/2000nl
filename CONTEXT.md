@@ -26,7 +26,7 @@ The authorization flow where a 2000NL user grants a Connected Client access and 
 _Avoid_: extension login, OAuth, Supabase login
 
 **Headword Group**:
-A presentation and search grouping of Dictionary Entries that share a normalized headword within a dictionary and language. It can contain multiple meanings and parts of speech, but is not itself a learning-action target.
+A Platform-owned presentation and search grouping of Dictionary Entries that belong to one source article or an explicitly owned user/generated group. The Platform exposes an opaque `headwordGroupId`; clients must not reconstruct the group from visible spelling, part of speech, source labels, or result order. Separate homographs and entries from different dictionaries remain separate groups even when their displayed headword is identical. Initially, each user-owned entry receives its own private durable group on create/copy/save; edits and renames preserve that group, and combining user meanings requires a future explicit regroup action. A group can contain multiple meanings and parts of speech, but is not itself a learning-action target.
 _Avoid_: card, entry, meaning
 
 **Dictionary Meaning**:
@@ -40,6 +40,14 @@ _Avoid_: headword group, whole dictionary article
 **SenseCard**:
 The learner-facing projection of one Dictionary Entry for one card type, enriched with the current user's state and permitted actions.
 _Avoid_: headword group, multi-meaning article
+
+**Known Mark**:
+A reversible user decision that one exact SenseCard does not need training. It is durable current state layered over, rather than encoded as, an FSRS review result. Marking known excludes the card without rewriting its prior scheduling state; `undo-known` atomically clears the current mark and restores that preserved state. The action history remains auditable.
+_Avoid_: Easy review, hidden card, deleting prior state
+
+**Content Node**:
+A durable, Platform-issued semantic element inside one Dictionary Entry, such as a definition, Usage Pattern, example, idiom, or note. Its opaque `contentNodeId` survives harmless source reordering. Translation freshness is checked separately through the node's source-text fingerprint; a diagnostic source path is never identity. New or ambiguous source elements receive new IDs instead of being matched by array position.
+_Avoid_: section index, source path, visible text as identity
 
 **Usage Pattern**:
 A schematic construction or valency pattern that shows how a Dictionary Meaning is used, such as `iemand of iets ligt iemand`. It is not a natural-language example sentence.
