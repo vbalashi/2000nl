@@ -192,7 +192,8 @@ part of v1 and must not be implemented as competing state models.
   [2000NL #84](https://github.com/vbalashi/2000nl/issues/84);
 - personal definition/translation overrides: separate contract gap recorded by
   the real-data audit;
-- final parser/source re-import mechanics;
+- repository integration of the completed Van Dale v2 parser/source-binding
+  work: [2000NL #86](https://github.com/vbalashi/2000nl/issues/86);
 - 2000NL navigation, Training Plan, Queue Builder, and Settings information
   architecture;
 - the non-extension AudioFilms application.
