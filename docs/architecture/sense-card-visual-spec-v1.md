@@ -40,20 +40,15 @@ hierarchy and states below, not copy arbitrary legacy frames from zone `90`.
 
 ## Evidence Index
 
-| Visible address | What it proves | Snapshot |
-| --- | --- | --- |
-| `00.10` | canvas navigation, visible-address registry and frozen status | [canvas index](evidence/sense-card-visual-spec-v1/00.10-canvas-index.png) |
-| `20.10` | single-sense new, learning, known; Full and Narrow | [single-sense states](evidence/sense-card-visual-spec-v1/20.10-single-sense-states.png) |
-| `20.20` | several meaning-level entries grouped under one headword | [multi-sense group](evidence/sense-card-visual-spec-v1/20.20-multi-sense-group.png) |
-| `20.30` | each meaning has independent learning state and actions | [independent learning states](evidence/sense-card-visual-spec-v1/20.30-independent-learning-states.png) |
-| `20.70` | Full translation OFF/ON, corner number, expanded/collapsed actions | [Full translation states](evidence/sense-card-visual-spec-v1/20.70-full-translation-states.png) |
-| `20.71` | Narrow translation OFF/ON and long compound wrapping | [Narrow responsive states](evidence/sense-card-visual-spec-v1/20.71-narrow-responsive-states.png) |
-| `20.80` | sparse and rich optional content at both widths | [optional content](evidence/sense-card-visual-spec-v1/20.80-optional-content.png) |
-| `50.20` | article/headword stress, morphology, NL/RU interface copy | [header and localization stress](evidence/sense-card-visual-spec-v1/50.20-header-localization-stress.png) |
-| `50.30` | loading, no match, translation, audio, mutation and guest states | [exception states](evidence/sense-card-visual-spec-v1/50.30-exception-states.png) |
+The sole screenshot registry is
+[`manifest.json`](evidence/sense-card-visual-spec-v1/manifest.json). It maps
+human-visible addresses to tool node IDs, PNG files, and SHA-256 hashes.
 
-Snapshot hashes and tool IDs are recorded in
-[`manifest.json`](evidence/sense-card-visual-spec-v1/manifest.json).
+Its ten entries cover the canvas index (`00.10`), single and grouped card
+states (`20.10`, `20.20`, `20.30`), Full/Narrow translation and responsive
+behavior (`20.70`, `20.71`), optional content (`20.80`), header/localization
+stress (`50.20`), exceptional states (`50.30`), and the complete single-sense
+Full/Narrow translation matrix (`20.81`).
 
 ## Identity and Ownership
 
@@ -154,18 +149,13 @@ interface locale. It is independent of:
 - translation target language;
 - content language.
 
-Required key families are:
-
-```text
-sensecard.section.*
-sensecard.state.*
-sensecard.translation.*
-sensecard.action.*
-sensecard.auth.*
-```
+The shared DTO supplies semantic section kinds, state codes, action IDs, and
+auth/capability codes. Each product maps those codes into its own localization
+catalog; the shared contract does not prescribe a client-internal key
+namespace.
 
 Dutch and Russian text on the approved boards is fixture copy, not a value to
-hardcode. Part-of-speech labels also come from localized semantic codes.
+hardcode. Part-of-speech labels also resolve from semantic codes.
 
 ## Exceptional States
 
@@ -190,8 +180,8 @@ part of v1 and must not be implemented as competing state models.
   [AudioFilms #36](https://github.com/vbalashi/audiofilms/issues/36);
 - optional Word Details:
   [2000NL #84](https://github.com/vbalashi/2000nl/issues/84);
-- personal definition/translation overrides: separate contract gap recorded by
-  the real-data audit;
+- personal definition/translation overrides:
+  [2000NL #87](https://github.com/vbalashi/2000nl/issues/87);
 - repository integration of the completed Van Dale v2 parser/source-binding
   work: [2000NL #86](https://github.com/vbalashi/2000nl/issues/86);
 - 2000NL navigation, Training Plan, Queue Builder, and Settings information
@@ -218,29 +208,20 @@ Not frozen:
 - subpixel baseline corrections required by real browser font metrics;
 - future optional sections behind explicit capabilities.
 
-## Change Process
+## Change Control
 
-1. Open or link a GitHub issue that states the affected v1 rule.
-2. Create a visibly numbered Working or Exploration board in the correct Pen
-   zone. Do not edit a canonical Approved board as an untracked experiment.
-3. Build from the approved reusable component and prove propagation with
-   instances.
-4. Validate Full and Narrow, translation OFF/ON, realistic long copy, and
-   affected exceptional states.
-5. Run independent visual QA and record findings.
-6. Obtain owner approval, mark the visible board Approved, then update this
-   document and evidence manifest in the same change.
-7. Implementation consumes only the new approved version.
+The shared program operating model and Pen canvas governance remain the single
+owners of workflow. This specification adds only four contract gates:
 
-Classification:
+1. link the affected v1 rule to a GitHub issue;
+2. explore on a visibly numbered non-Approved board built from the reusable
+   component;
+3. validate affected widths/states and obtain independent visual QA plus owner
+   approval;
+4. promote the new visible version and update this boundary plus the evidence
+   manifest together.
 
-- `v1.x patch`: token, spacing, copy-key, or accessibility correction that does
-  not change hierarchy or ownership;
-- `v1.x minor`: additive optional state/section with backward-compatible
-  fallback;
-- `v2`: changed identity, action ownership, required hierarchy, or incompatible
-  state behavior.
-
-Every implementation PR must cite this spec version and list any deliberate
-deviation. A deviation without a linked design issue is a defect, not a new
-implicit contract.
+Changes to identity, action ownership, required hierarchy, or incompatible
+state behavior require a new major visual contract. Additive optional states
+and corrections may remain within v1 when old consumers have a defined
+fallback.

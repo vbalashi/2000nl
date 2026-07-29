@@ -6,54 +6,70 @@
     {
       "visibleAddress": "00.10",
       "nodeId": "pSkbP",
+      "coverage": "Canvas navigation, visible-address registry, and frozen v1 status.",
       "file": "00.10-canvas-index.png",
-      "sha256": "b023f65b2fbc5b27ff1b540cee7f7aa687792cd490d40a18c3c970f871379b32"
+      "sha256": "a90e17f2f569b32d16d5cca345415d519c62a8568a61fea0d34477b2b4f86d4f"
     },
     {
       "visibleAddress": "20.10",
       "nodeId": "T7XiZB",
+      "coverage": "Single-sense new, learning, and known states at Full and Narrow widths.",
       "file": "20.10-single-sense-states.png",
       "sha256": "e5adc0ad12b0818b6284a2054e7989007af0f07654e5d701fa9ee622fc73be0b"
     },
     {
       "visibleAddress": "20.20",
       "nodeId": "CeEod",
+      "coverage": "Several meaning-level entries grouped under one headword.",
       "file": "20.20-multi-sense-group.png",
       "sha256": "80e02bdb1688ca09edaeafc4d320e7d1aad487a7ddda65493a93e6a38a8733ed"
     },
     {
       "visibleAddress": "20.30",
       "nodeId": "rPDYL",
+      "coverage": "Independent learning state and actions for every meaning-level entry.",
       "file": "20.30-independent-learning-states.png",
       "sha256": "173ea52d69448fe349168eb5dd170689f917cdbf1f63f0c119c73a539e1a8eef"
     },
     {
       "visibleAddress": "20.70",
       "nodeId": "QzuSs",
+      "coverage": "Full translation OFF/ON, corner number, and expanded/collapsed actions.",
       "file": "20.70-full-translation-states.png",
       "sha256": "b933a3693ce8dcbb2c95629332e452e2d94aae42874a6a18f17e56c8f653c556"
     },
     {
       "visibleAddress": "20.71",
       "nodeId": "sh8Ai",
+      "coverage": "Narrow translation OFF/ON and long-compound wrapping.",
       "file": "20.71-narrow-responsive-states.png",
       "sha256": "043f1fc0ac8f52c77936405931079fd6d431f2918c53b4d2832aef6d5e9796bc"
     },
     {
       "visibleAddress": "20.80",
       "nodeId": "gbBiX",
+      "coverage": "Sparse and rich optional content at Full and Narrow widths.",
       "file": "20.80-optional-content.png",
       "sha256": "3575db115da0c3508714a9bfa00e371ff84129fdd90edd9dc63458f957ec8330"
     },
     {
+      "visibleAddress": "20.81",
+      "nodeId": "hEI97",
+      "coverage": "Single-sense translation OFF/ON matrix at Full and Narrow widths.",
+      "file": "20.81-single-sense-translation-matrix.png",
+      "sha256": "ea9503f5413fdacae55bf2abc7a6a24fddfa3354c6be78dd315c4d6098aac18a"
+    },
+    {
       "visibleAddress": "50.20",
       "nodeId": "ucxol",
+      "coverage": "Article/headword stress, morphology, and NL/RU interface copy.",
       "file": "50.20-header-localization-stress.png",
       "sha256": "1bb3337584c016180fb0acd3c91b97c424a5024977c56f02bb605280db124734"
     },
     {
       "visibleAddress": "50.30",
       "nodeId": "g8dx5",
+      "coverage": "Lookup, translation, audio, mutation, and guest exceptional states.",
       "file": "50.30-exception-states.png",
       "sha256": "fc1aeeea598f094e59ac3707e91aa7c268ea2aa889c0e29f0efa4634f65bcb21"
     }
