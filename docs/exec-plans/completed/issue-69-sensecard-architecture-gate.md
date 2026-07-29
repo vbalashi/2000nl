@@ -1,9 +1,11 @@
 # Issue #69 — SenseCard Architecture Gate
 
 Issue: https://github.com/vbalashi/2000nl/issues/69
-Status: in progress
+Status: completed
 Branch: `codex/issue-69-sensecard-architecture-review`
 Base: `d65909f78597e40c883b5df152a2eaba06c7e5d6`
+Reviewed feature SHA: `2c0ff4e4de552a340871d711fbb90627c4babb30`
+Integrated main SHA: `d16e2b7273e4526eb98430f42f2b8f7f19440129`
 
 ## Scope
 
@@ -86,8 +88,9 @@ AudioFilms mutation is part of this issue.
 - [x] every remaining P0/P1 resolved or assigned with an explicit blocking boundary;
 - [x] ADR status finalized;
 - [x] final repository review passes (Standards and Spec);
-- [ ] PR integrated and #69 closed;
-- [ ] this execution plan moved to `completed/`.
+- [x] PR #90 integrated and exact reviewed SHA verified as an ancestor of
+  `main`;
+- [x] this execution plan moved to `completed/`.
 
 ## Stop Rules
 
