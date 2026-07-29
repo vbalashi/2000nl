@@ -7,6 +7,8 @@ This folder is organized by document role rather than by creation date.
 - `intent/` - product and runtime intent.
 - `runbooks/` - operational procedures, debugging guides, and manual test flows.
 - `features/` - feature behavior and implementation notes.
+- `architecture/` - evidence audits, engineering principles, and durable
+  cross-module contract decisions.
 - `reference/` - reference material such as RPC/API docs and model catalogs.
 - `exec-plans/` - active and completed implementation plans.
 - `tech-debt/` - debt tracking and longer-running cleanup plans.
@@ -17,6 +19,8 @@ This folder is organized by document role rather than by creation date.
 - Root `ARCHITECTURE.md` - system boundaries and safe change patterns.
 - `intent/index.md` - what matters in the product/runtime.
 - `intent/current-transformation-targets.md` - living frame for deciding what to transform next.
+- `architecture/sense-card-real-data-contract-audit.md` - real-data identity,
+  section, translation-binding, and action-ownership contract for SenseCard.
 - `reference/platform-contract-change-checklist.md` - checklist for Platform
   API/provenance/read-model/external-client contract changes.
 - `tech-debt/index.md` - active structural debt.
