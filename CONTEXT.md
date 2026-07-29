@@ -48,3 +48,15 @@ _Avoid_: example, usage note, definition
 **Usage Note**:
 Explicit editorial guidance about register, region, restriction, or usage. It must come from source semantics and must not be inferred from a Usage Pattern or example.
 _Avoid_: context, pattern, example
+
+**Lexical Relation**:
+A typed meaning-level relationship to another expression, such as a synonym, antonym, or cross-reference. It is structured dictionary content and must not be recovered by parsing punctuation from a definition.
+_Avoid_: definition suffix, example, untyped related text
+
+**Word Form**:
+An inflected, conjugated, declined, comparative, plural, diminutive, or alternate form associated with a Dictionary Entry. A Word Form can support lookup or word details but is not a separate Dictionary Meaning by default.
+_Avoid_: meaning, headword group, card
+
+**Cross-reference Entry**:
+A dictionary lookup record that redirects to another headword or meaning and has no independent learnable meaning content.
+_Avoid_: empty SenseCard, synonym

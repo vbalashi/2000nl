@@ -26,8 +26,8 @@ not two competing domain models:
 - `meaningId` is the source/order metadata of the meaning-level entry;
 - `content.meanings` is a normalized envelope inherited from raw dictionary
   schemas that can technically carry an array;
-- in the audited Van Dale NT2 corpus, 17,819 artifacts carry one raw meaning,
-  140 carry none, and none carries more than one.
+- in the production Van Dale v2 corpus, 18,019 artifacts carry one raw meaning,
+  144 cross-reference artifacts carry none, and none carries more than one.
 
 The plural field should not be used by clients to infer that one returned entry
 owns the other meanings of the headword.
@@ -49,10 +49,16 @@ audit. Evidence was read from:
 - `apps/ui/lib/platform/userDictionaryService.ts`;
 - AudioFilms `app/src/lib/dictionary/overlayProjection.ts`;
 - AudioFilms extension dictionary presentation and generated-entry modules.
+- the Van Dale v2 production-cutover handoff dated 2026-07-29;
+- the generated Van Dale v2 corpus manifest and representative JSON payloads.
 
 The corpus-wide collision scan was reproduced from the checked-in source
 snapshot for this audit. A separate production binding audit is still required
 before changing source identity or re-import behavior.
+
+The v2 corpus contains 18,163 entry artifacts and 18,019 meanings. The
+remaining 144 artifacts are explicit cross-reference-only entries. This
+confirms rather than changes the meaning-level Entry model.
 
 ### Related work
 
@@ -130,8 +136,10 @@ For this entry the normalized `content.meanings` still has one object, while
 `content.sections` contains `meaning`, `context`, and `example` sections with
 their own source paths.
 
-The corpus contains 3,867 non-empty `context` values among 17,959 audited
+The v2 corpus contains 3,969 non-empty `context` values among 18,163 audited
 artifacts and no top-level `notes`, so the two concepts must not be conflated.
+It now also contains 81 explicit meaning-level `note` values, which confirms
+that Usage Pattern and Usage Note are separate source concepts.
 
 ### A meaning can lack a definition
 
@@ -148,6 +156,33 @@ an idiom. These elements enrich one learnable meaning; they do not become
 independent review targets unless a future product decision explicitly creates
 new entries/card types for them.
 
+### Parser v2 preserves additional structured content
+
+The production Van Dale v2 cutover no longer flattens the following fields into
+definitions or examples:
+
+| Ownership | Structured fields |
+| --- | --- |
+| Meaning-level | synonyms, antonyms, usage labels, grammar, note, pronunciation note, cross-references |
+| Idiom-level | expression, explanation, idiom-specific examples |
+| Entry-level morphology | plural, diminutive, verb forms, conjugation table, inflected form, comparative, superlative, derivations |
+| Entry-level references | alternate headwords, reference tables, redirect target |
+| Source identity evidence | provider article ID, homograph number, source group/entry key, POS evidence |
+
+The corpus now contains 3,715 synonym terms, 647 antonyms, 1,347
+idiom-specific examples, 283 usage labels, 394 meaning grammar objects, 81
+notes, and 252 reference-table occurrences. These are material contract
+capabilities, even though they do not all belong in the default card.
+
+For example, `afgrond` now has a clean definition and the separate synonym
+`het ravijn`; `liggen` has a conjugation table shared by its meaning-level
+entries; and the example `ze had haar tas in de trein laten liggen` is nested
+under its idiom rather than heuristically paired by array position.
+
+The parser preserves a `homograph_number` as source identity evidence. That is
+not a meaning-level `homonyms[]` relationship and must not be presented as a
+list of homonyms without a separately supported lexical relation.
+
 ## Field and Ownership Map
 
 | Concern | Durable owner | Platform projection | Client rule |
@@ -158,6 +193,9 @@ new entries/card types for them.
 | Card variant | `card_type_id` | capability/state map by card type | combine with entry ID |
 | User learning state | `(user_id, entry_id, card_type_id)` | per-card capabilities and state | mutate the exact SenseCard |
 | Definition/pattern/example/idiom | entry raw content | typed `content.sections[]` | render the supplied kind |
+| Lexical relations | one Dictionary Meaning | structured relation fields with stable item anchors | optional meaning details; never parse the definition |
+| Word forms and morphology | one Dictionary Entry | structured morphology/details object | lookup support or secondary details; not new meanings |
+| Cross-reference-only record | source entry with redirect target | explicit redirect result, no SenseCard capabilities | navigate/resolve; do not render an empty learnable card |
 | Translation | entry translation artifact and target language | direct translation on the matching section | do not re-join by array order |
 | Meaning feedback | entry ID, optionally a section anchor | explicit action payload | never guess from headword |
 | Headword-wide feedback/action | explicit headword-group identity | separate group action | do not send as a meaning action |
@@ -201,6 +239,42 @@ review-result copy are interface messages, not dictionary data. Contracts
 should expose semantic kinds/action IDs; each client resolves message keys
 through the selected interface locale. They must not be hardcoded from the
 dictionary language.
+
+### Progressive disclosure boundary
+
+The base SenseCard v1 hierarchy remains definition, Usage Pattern, examples,
+idioms, and learning actions. Parser v2 does not require synonyms, antonyms,
+full conjugation tables, reference tables, or every Word Form to be visible in
+that default state.
+
+The shared presentation contract should instead expose an optional
+`wordDetails` capability with structured groups such as lexical relations,
+morphology, usage guidance, and references. A card-level More menu may contain
+a `Show word details` command, but the rich content belongs in an expandable or
+replaceable details surface, not inside the menu itself. Exact motion and
+placement remain a later visual design decision.
+
+Meaning-specific relations and notes retain the entry/meaning target. Entry
+morphology can be shared across the grouped headword presentation when its
+source identity is the same, but the backend must provide that relationship;
+the client must not deduplicate by matching visible text.
+
+### Projection gap introduced by the richer source
+
+The parser v2 branch adds structured schema/types, but the current
+`normalizeDictionaryContent` projection still copies only definition, context,
+examples, translations, and idioms into `content.meanings`. It also reads only
+a pre-existing `raw.morphology` object, while Van Dale v2 stores plural,
+conjugation, comparison, and related fields explicitly.
+
+Therefore the new information is not yet a stable client contract. Issue #70
+must project it into the shared presentation DTO before either 2000NL or
+AudioFilms renders it. Connected clients must not work around this by reading
+or parsing `entry.raw`.
+
+Idiom-specific examples also need their own semantic anchors. The old
+projection's positional pairing of entry-level examples with idioms is no
+longer an acceptable fallback for v2 data.
 
 ## Translation Binding
 
@@ -320,6 +394,8 @@ Not solved here:
 
 - corpus/source identity collisions and stable cross-revision binding;
 - migration from positional translation overlays;
+- projection of parser v2 lexical relations, morphology, redirects, and nested
+  idiom examples into the shared DTO;
 - personal definition/translation overrides;
 - final headword-group identity and complete lookup pagination;
 - UI implementation of the approved Pencil states.
