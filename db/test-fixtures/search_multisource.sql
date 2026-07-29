@@ -39,6 +39,7 @@ SET name = excluded.name,
     source_version = excluded.source_version,
     updated_at = now();
 
+CREATE TEMP TABLE fixture_source_entries ON COMMIT DROP AS
 WITH fixture_entries (language_code, dictionary_slug, headword, meaning_id, part_of_speech, gender, metadata_index, raw_payload) AS (
   VALUES
     ('nl', 'nl-test-lexicon', 'bank', 1, 'zn', 'de', 91001, '{"headword":"bank","pronunciation":"bank","pronunciation_with_stress":"bank","gender":"de","part_of_speech":"zn","plural":"banken","diminutive":"","verb_forms":"","conjugation_table":null,"inflected_form":"","comparative":"","superlative":"","derivations":"","alternate_headwords":[],"cross_reference":null,"is_nt2_2000":false,"meanings":[{"definition":"Zitmeubel voor meerdere personen.","context":"","examples":["de bank staat in de kamer"],"idioms":[]}],"audio_links":{},"images":[],"_metadata":{"search_term":"bank","headword_raw":"bank","index":91001,"dictionaryId":"nl-test-lexicon","dictionary_name":"NL Testlexicon","fixture":true},"meaning_id":1}'::jsonb),
@@ -92,56 +93,307 @@ WITH fixture_entries (language_code, dictionary_slug, headword, meaning_id, part
     ('fr', 'fr-test-extra', 'table', 1, 'zn', 'la', 95006, '{"headword":"table","pronunciation":"table","pronunciation_with_stress":"table","gender":"la","part_of_speech":"zn","plural":"tables","diminutive":"","verb_forms":"","conjugation_table":null,"inflected_form":"","comparative":"","superlative":"","derivations":"","alternate_headwords":[],"cross_reference":null,"is_nt2_2000":false,"meanings":[{"definition":"Meuble avec un plateau plat.","context":"","examples":["le repas est sur la table"],"idioms":[]}],"audio_links":{},"images":[],"_metadata":{"search_term":"table","headword_raw":"table","index":95006,"dictionaryId":"fr-test-extra","dictionary_name":"FR Extra Test","fixture":true},"meaning_id":1}'::jsonb),
     ('fr', 'fr-test-extra', 'velo', 1, 'zn', 'le', 95003, '{"headword":"velo","pronunciation":"velo","pronunciation_with_stress":"velo","gender":"le","part_of_speech":"zn","plural":"velos","diminutive":"","verb_forms":"","conjugation_table":null,"inflected_form":"","comparative":"","superlative":"","derivations":"","alternate_headwords":[],"cross_reference":null,"is_nt2_2000":false,"meanings":[{"definition":"Vehicule a deux roues avec des pedales.","context":"","examples":["le velo est rouge"],"idioms":[]}],"audio_links":{},"images":[],"_metadata":{"search_term":"velo","headword_raw":"velo","index":95003,"dictionaryId":"fr-test-extra","dictionary_name":"FR Extra Test","fixture":true},"meaning_id":1}'::jsonb)
 )
-MERGE INTO word_entries AS target
-USING (
+SELECT
+    COALESCE(
+        (
+            SELECT existing.id
+            FROM word_entries AS existing
+            WHERE existing.dictionary_id = dictionary.id
+              AND existing.raw #>> '{_metadata,fixture}' = 'true'
+              AND existing.raw #>> '{_metadata,index}' =
+                  fixture.metadata_index::text
+        ),
+        md5(
+            '2000nl:search-multisource:'
+            || fixture.dictionary_slug
+            || ':'
+            || fixture.metadata_index::text
+        )::uuid
+    ) AS word_entry_id,
+    dictionary.id AS dictionary_id,
+    fixture.dictionary_slug,
+    fixture.language_code,
+    fixture.headword,
+    fixture.meaning_id,
+    fixture.part_of_speech,
+    fixture.gender,
+    fixture.metadata_index,
+    'local-search-fixture:'
+        || fixture.dictionary_slug
+        || ':'
+        || fixture.metadata_index::text AS source_entry_key,
+    'local-search-fixture:'
+        || fixture.dictionary_slug
+        || ':'
+        || fixture.metadata_index::text AS source_group_key,
+    jsonb_set(
+        fixture.raw_payload,
+        '{_source}',
+        jsonb_build_object(
+            'identity_scheme_version', 'local-search-fixture-v1',
+            'source_entry_key',
+                'local-search-fixture:'
+                    || fixture.dictionary_slug
+                    || ':'
+                    || fixture.metadata_index::text,
+            'source_group_key',
+                'local-search-fixture:'
+                    || fixture.dictionary_slug
+                    || ':'
+                    || fixture.metadata_index::text,
+            'source_index', fixture.metadata_index,
+            'sense_ordinal', fixture.meaning_id,
+            'normalized_pos_status', 'known',
+            'identity_evidence',
+                jsonb_build_object(
+                    'kind', 'deterministic-local-fixture',
+                    'metadata_index', fixture.metadata_index
+                )
+        ),
+        true
+    ) AS raw_payload
+FROM fixture_entries AS fixture
+JOIN dictionaries AS dictionary
+  ON dictionary.language_code = fixture.language_code
+ AND dictionary.slug = fixture.dictionary_slug;
+
+CREATE TEMP TABLE fixture_import_runs ON COMMIT DROP AS
+WITH fixture_manifests AS (
     SELECT
-        d.id AS dictionary_id,
-        f.language_code,
-        f.headword,
-        f.meaning_id,
-        f.part_of_speech,
-        f.gender,
-        f.metadata_index,
-        f.raw_payload
-    FROM fixture_entries f
-    JOIN dictionaries d
-      ON d.language_code = f.language_code
-     AND d.slug = f.dictionary_slug
-) AS source
-ON target.dictionary_id = source.dictionary_id
-AND target.language_code = source.language_code
-AND target.headword = source.headword
-AND target.meaning_id = source.meaning_id
-WHEN MATCHED THEN
-    UPDATE SET
-        part_of_speech = source.part_of_speech,
-        gender = source.gender,
-        is_nt2_2000 = false,
-        vandale_id = source.metadata_index,
-        raw = source.raw_payload
-WHEN NOT MATCHED THEN
-    INSERT (
         dictionary_id,
-        language_code,
-        headword,
-        meaning_id,
-        part_of_speech,
-        gender,
-        is_nt2_2000,
-        vandale_id,
-        raw
+        encode(
+            digest(
+                string_agg(
+                    raw_payload::text,
+                    ''
+                    ORDER BY source_entry_key
+                ),
+                'sha256'
+            ),
+            'hex'
+        ) AS manifest_checksum,
+        count(*)::integer AS artifact_count
+    FROM fixture_source_entries
+    GROUP BY dictionary_id
+)
+SELECT
+    md5(
+        '2000nl:search-multisource-run:'
+        || dictionary_id::text
+        || ':'
+        || manifest_checksum
+    )::uuid AS run_id,
+    dictionary_id,
+    manifest_checksum,
+    artifact_count
+FROM fixture_manifests;
+
+INSERT INTO private.dictionary_import_runs (
+    id,
+    dictionary_id,
+    identity_scheme_version,
+    artifact_format_version,
+    manifest_checksum,
+    input_checksum,
+    source_record_count,
+    artifact_count,
+    status,
+    counts,
+    actor,
+    reason,
+    finished_at
+)
+SELECT
+    run_id,
+    dictionary_id,
+    'local-search-fixture-v1',
+    'local-search-fixture-v1',
+    manifest_checksum,
+    manifest_checksum,
+    artifact_count,
+    artifact_count,
+    'completed',
+    jsonb_build_object(
+        'matched', artifact_count,
+        'new', 0,
+        'changed', 0,
+        'retired', 0,
+        'ambiguous', 0,
+        'rejected', 0
+    ),
+    'db/test-fixtures/search_multisource.sql',
+    'Deterministic local multi-source fixture',
+    now()
+FROM fixture_import_runs
+ON CONFLICT (id) DO UPDATE
+SET status = 'completed',
+    counts = excluded.counts,
+    actor = excluded.actor,
+    reason = excluded.reason,
+    finished_at = excluded.finished_at;
+
+INSERT INTO word_entries (
+    id,
+    dictionary_id,
+    language_code,
+    headword,
+    meaning_id,
+    part_of_speech,
+    gender,
+    is_nt2_2000,
+    vandale_id,
+    raw,
+    management_kind,
+    source_lifecycle,
+    normalized_pos_status
+)
+SELECT
+    word_entry_id,
+    dictionary_id,
+    language_code,
+    headword,
+    meaning_id,
+    part_of_speech,
+    gender,
+    false,
+    metadata_index,
+    raw_payload,
+    'source',
+    'active',
+    'known'
+FROM fixture_source_entries
+ON CONFLICT (id) DO UPDATE
+SET dictionary_id = excluded.dictionary_id,
+    language_code = excluded.language_code,
+    headword = excluded.headword,
+    meaning_id = excluded.meaning_id,
+    part_of_speech = excluded.part_of_speech,
+    gender = excluded.gender,
+    is_nt2_2000 = excluded.is_nt2_2000,
+    vandale_id = excluded.vandale_id,
+    raw = excluded.raw,
+    management_kind = 'source',
+    source_lifecycle = 'active',
+    normalized_pos_status = excluded.normalized_pos_status;
+
+INSERT INTO private.source_entry_bindings (
+    dictionary_id,
+    identity_scheme_version,
+    source_entry_key,
+    source_group_key,
+    sense_ordinal,
+    word_entry_id,
+    binding_state,
+    first_seen_run_id,
+    last_seen_run_id,
+    manifest_checksum,
+    content_fingerprint_version,
+    content_fingerprint,
+    identity_evidence,
+    reconciliation_decision
+)
+SELECT
+    fixture.dictionary_id,
+    'local-search-fixture-v1',
+    fixture.source_entry_key,
+    fixture.source_group_key,
+    fixture.meaning_id,
+    fixture.word_entry_id,
+    'active',
+    run.run_id,
+    run.run_id,
+    run.manifest_checksum,
+    'fixture-jsonb-v1',
+    encode(digest(fixture.raw_payload::text, 'sha256'), 'hex'),
+    jsonb_build_object(
+        'kind', 'deterministic-local-fixture',
+        'metadata_index', fixture.metadata_index
+    ),
+    jsonb_build_object(
+        'action', 'bind-existing-or-deterministic-fixture',
+        'fixture', 'search_multisource'
     )
-    VALUES (
-        source.dictionary_id,
-        source.language_code,
-        source.headword,
-        source.meaning_id,
-        source.part_of_speech,
-        source.gender,
-        false,
-        source.metadata_index,
-        source.raw_payload
-    );
+FROM fixture_source_entries AS fixture
+JOIN fixture_import_runs AS run
+  ON run.dictionary_id = fixture.dictionary_id
+ON CONFLICT (
+    dictionary_id,
+    identity_scheme_version,
+    source_entry_key
+)
+DO UPDATE SET
+    source_group_key = excluded.source_group_key,
+    sense_ordinal = excluded.sense_ordinal,
+    word_entry_id = excluded.word_entry_id,
+    binding_state = 'active',
+    last_seen_run_id = excluded.last_seen_run_id,
+    manifest_checksum = excluded.manifest_checksum,
+    content_fingerprint_version = excluded.content_fingerprint_version,
+    content_fingerprint = excluded.content_fingerprint,
+    identity_evidence = excluded.identity_evidence,
+    reconciliation_decision = excluded.reconciliation_decision,
+    updated_at = now();
+
+DO $$
+DECLARE
+    mismatch_count integer;
+BEGIN
+    SELECT count(*)
+    INTO mismatch_count
+    FROM fixture_source_entries AS fixture
+    LEFT JOIN private.source_entry_bindings AS binding
+      ON binding.dictionary_id = fixture.dictionary_id
+     AND binding.identity_scheme_version = 'local-search-fixture-v1'
+     AND binding.source_entry_key = fixture.source_entry_key
+     AND binding.word_entry_id = fixture.word_entry_id
+     AND binding.binding_state = 'active'
+    WHERE binding.source_entry_key IS NULL;
+
+    IF mismatch_count <> 0 THEN
+        RAISE EXCEPTION
+            'local fixture has % source rows without exact active bindings',
+            mismatch_count;
+    END IF;
+
+    SELECT count(*)
+    INTO mismatch_count
+    FROM private.source_entry_bindings AS binding
+    JOIN dictionaries AS dictionary
+      ON dictionary.id = binding.dictionary_id
+     AND dictionary.source_provider = 'local-fixture'
+    LEFT JOIN fixture_source_entries AS fixture
+      ON fixture.dictionary_id = binding.dictionary_id
+     AND fixture.source_entry_key = binding.source_entry_key
+     AND fixture.word_entry_id = binding.word_entry_id
+    WHERE binding.identity_scheme_version = 'local-search-fixture-v1'
+      AND binding.binding_state = 'active'
+      AND fixture.source_entry_key IS NULL;
+
+    IF mismatch_count <> 0 THEN
+        RAISE EXCEPTION
+            'local fixture has % active bindings outside its manifest',
+            mismatch_count;
+    END IF;
+
+    SELECT count(*)
+    INTO mismatch_count
+    FROM word_entries AS entry
+    JOIN dictionaries AS dictionary
+      ON dictionary.id = entry.dictionary_id
+     AND dictionary.source_provider = 'local-fixture'
+    LEFT JOIN fixture_source_entries AS fixture
+      ON fixture.word_entry_id = entry.id
+    WHERE entry.management_kind = 'source'
+      AND entry.source_lifecycle = 'active'
+      AND fixture.word_entry_id IS NULL;
+
+    IF mismatch_count <> 0 THEN
+        RAISE EXCEPTION
+            'local fixture has % active source rows outside its manifest',
+            mismatch_count;
+    END IF;
+END;
+$$;
 
 WITH fixture_forms (language_code, dictionary_slug, headword, meaning_id, form) AS (
   VALUES

@@ -8,6 +8,7 @@ on:
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
+      - 'db/test-fixtures/search_multisource.sql'
       - 'packages/ingestion/**'
       - 'packages/scraper/**'
       - 'packages/shared/schemas/nl/**'
@@ -20,6 +21,7 @@ on:
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
+      - 'db/test-fixtures/search_multisource.sql'
       - 'packages/ingestion/**'
       - 'packages/scraper/**'
       - 'packages/shared/schemas/nl/**'
@@ -176,6 +178,10 @@ jobs:
             packages/scraper/tests \
             packages/ingestion/tests/unit \
             packages/ingestion/tests/integration
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f db/test-fixtures/search_multisource.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f db/test-fixtures/search_multisource.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
 

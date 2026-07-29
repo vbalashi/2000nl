@@ -203,8 +203,11 @@ Current fixture artifacts:
 
 - JSON source templates live under `packages/ingestion/<lang>/<dictionary>/data/words_content/`.
 - The local idempotent SQL seed lives at `db/test-fixtures/search_multisource.sql`.
+- The SQL seed requires migration 102. It writes deterministic local-fixture
+  source keys, completed fixture import runs, and one exact active binding per
+  active fixture entry; it no longer exercises the legacy natural-key writer.
 - Load it only into a local/test database, for example:
-  `psql "$SUPABASE_DB_URL" -f db/test-fixtures/search_multisource.sql`.
+  `psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql`.
 
 Mocked UI fixture implementation should:
 

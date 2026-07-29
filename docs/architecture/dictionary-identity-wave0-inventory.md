@@ -1,7 +1,8 @@
 # Dictionary Identity Wave 0 Inventory
 
 Date: 2026-07-24
-Status: static repository inventory; production audit still required
+Status: historical pre-cutover inventory; migrated writer notes updated after
+the 2026-07-29 source-binding cutover
 
 This report inventories identity-sensitive surfaces before any binding-ledger,
 uniqueness, re-import, or lookup-completeness change. It is not authorization
@@ -19,7 +20,7 @@ to mutate schema or production data.
 | User copy writer | copies `sourceEntryId` into JSON and upserts on the same global conflict target | `db/migrations/059_security_harden_user_scoped_rpcs.sql:101-167` |
 | User create writer | checks/creates one `meaning_id = 1` row per dictionary/headword | `db/migrations/059_security_harden_user_scoped_rpcs.sql:174-235` |
 | User update/delete | updates identity-like fields by UUID; delete cascades current FK consumers | `db/migrations/059_security_harden_user_scoped_rpcs.sql:343-368,1929-1978` |
-| Test fixture writer | uses the same global conflict target | `db/test-fixtures/search_multisource.sql:95-116` |
+| Test fixture writer | uses deterministic fixture source keys, import runs, and exact active bindings | `db/test-fixtures/search_multisource.sql` |
 | Default-dictionary trigger | null Dutch dictionary IDs can be rewritten to VanDale | `db/migrations/001_core_schema.sql:147-170` |
 | Meaning/POS evidence | meaning may be payload, filename ordinal, or default `1`; POS comes from normalized payload; metadata index becomes `vandale_id` | `packages/ingestion/src/importer/dictionary_entry_parser.py:20-50,63-95,98-128` |
 
@@ -74,7 +75,10 @@ not match artifacts to production UUIDs or close ambiguity decisions.
    - `update_user_dictionary_entry`;
    - `delete_user_dictionary_entry`.
 4. Replay history in migrations 020, 022, 023, and 056.
-5. `db/test-fixtures/search_multisource.sql`.
+5. `db/test-fixtures/search_multisource.sql`
+   - migrated to deterministic fixture UUID/source keys and the private
+     source-binding ledger;
+   - verifies exact active row/binding coverage on every replay.
 6. FSRS/database test setup inserts in
    `apps/ui/tests/fsrs/dbTestUtils.ts` and
    `apps/ui/tests/fsrs/fsrsRpc.test.ts`.
@@ -86,10 +90,11 @@ not match artifacts to production UUIDs or close ambiguity decisions.
 WHERE dictionary_id IS NOT NULL
 ```
 
-It appears in the bulk importer, current copy RPC, prior replay migrations, and
-search fixture. Before dropping the old unique index, a repository audit must
-return zero live writers using this target except historical migrations whose
-replay strategy has been explicitly adapted.
+It appeared in the old bulk importer, copy RPC, prior replay migrations, and
+search fixture. The source importer and search fixture now use versioned
+bindings, while user copies use the partial user-owned conflict target.
+Historical migrations remain replay-compatible without recreating the removed
+global source uniqueness rule.
 
 ## UUID consumers
 
