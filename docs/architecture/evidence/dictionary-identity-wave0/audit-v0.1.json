@@ -1,0 +1,13 @@
+{
+  "acceptedArtifactCount": 17959,
+  "artifactCount": 17959,
+  "contentFingerprintVersion": "parser-sanitized-json-v0.1",
+  "currentKeyCount": 17389,
+  "generatorVersion": "dictionary-identity-wave0-audit-v0.1",
+  "manifestGzipSha256": "1ee44805572d4e58ed3656246133e125b11333343fec5a50850a8d839b6e3b53",
+  "manifestSha256": "1e814f1c718e623bbaf083693eba887ba3aa427c522a12eea5b408c3932fad35",
+  "minimumOverwrittenVariantCount": 570,
+  "multiPayloadPosCurrentKeyGroupCount": 539,
+  "rejectedArtifactCount": 0,
+  "sourceTreeSha256": "80a417e2bbc767fae9f0824618258d7960cabc754cfa38f71d13c63a2be88e9f"
+}
