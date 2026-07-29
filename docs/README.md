@@ -21,6 +21,8 @@ This folder is organized by document role rather than by creation date.
 - `intent/current-transformation-targets.md` - living frame for deciding what to transform next.
 - `architecture/sense-card-real-data-contract-audit.md` - real-data identity,
   section, translation-binding, and action-ownership contract for SenseCard.
+- `architecture/sense-card-visual-spec-v1.md` - frozen shared SenseCard visual,
+  responsive, state, localization, and change-management contract.
 - `reference/platform-contract-change-checklist.md` - checklist for Platform
   API/provenance/read-model/external-client contract changes.
 - `tech-debt/index.md` - active structural debt.
