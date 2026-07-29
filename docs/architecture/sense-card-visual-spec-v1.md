@@ -1,8 +1,11 @@
 # Shared SenseCard Visual Specification v1
 
-Date: 2026-07-29  
-Status: frozen visual contract for 2000NL and the AudioFilms extension  
-Owner: 2000NL Platform and shared dictionary UX  
+Date: 2026-07-29
+
+Status: frozen visual contract for 2000NL and the AudioFilms extension
+
+Owner: 2000NL Platform and shared dictionary UX
+
 Source canvas: `/Users/khrustal/dev/pens/2000nl-audiofilms.pen`
 
 ## Purpose
