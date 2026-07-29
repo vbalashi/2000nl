@@ -312,4 +312,4 @@
 \i db/migrations/101_alphabetical_nearest_window.sql
 
 -- Versioned source bindings and disjoint source/user writer identity
-\i db/migrations/104_versioned_source_entry_bindings.sql
+\i db/migrations/102_versioned_source_entry_bindings.sql

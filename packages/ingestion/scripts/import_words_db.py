@@ -102,15 +102,6 @@ def main() -> None:
             "already contains source rows."
         ),
     )
-    parser.add_argument(
-        "--allow-legacy-identity",
-        action="store_true",
-        help=(
-            "Allow the deprecated headword/meaning importer for isolated "
-            "test fixtures without a source manifest."
-        ),
-    )
-
     args = parser.parse_args()
 
     if not args.database_url:
@@ -139,7 +130,6 @@ def main() -> None:
         dictionary_schema_version=args.dictionary_schema_version,
         refresh_search_documents=args.refresh_search_documents,
         reconciliation_plan=args.reconciliation_plan,
-        allow_legacy_identity=args.allow_legacy_identity,
     )
 
     if getattr(stats, "no_op", False):

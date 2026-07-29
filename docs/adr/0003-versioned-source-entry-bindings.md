@@ -90,6 +90,10 @@ join to `dictionaries`.
 - The legacy global unique index is not removed until every writer and fixture
   has moved to one of the disjoint targets.
 
+The implemented source writer requires a versioned manifest. The former
+manifest-free natural-key writer and its fixture-only escape hatch are removed;
+tests generate a small versioned manifest and exercise the same binding path.
+
 User-owned entries retain the current dictionary-scoped natural identity
 `(dictionary_id, language_code, headword, meaning_id)`, enforced by a partial
 unique index where `management_kind = 'user'`. Source-managed entries do not
@@ -158,6 +162,11 @@ For the first binding, reconciliation is group-atomic:
 
 The identity-matching fingerprint is independent of presentation/API
 fingerprints. A projection-only change cannot alter a source binding.
+Content-only changes retain the already-bound UUID. Because the provider does
+not expose a durable sense identifier, the importer additionally detects a
+semantic fingerprint moving between ordinal keys inside one source group and
+fails closed for group-atomic reconciliation instead of silently swapping
+meaning identities.
 
 ### Retirement
 
@@ -221,7 +230,8 @@ The first production cutover completed on 2026-07-29:
   completed successfully;
 - public and authenticated strict lookup returned all 12 candidates for the
   real `goed` collision group when called with limit 50;
-- an identical manifest is a verified database no-op.
+- an identical manifest is a verified database no-op only after exact active
+  binding/row coverage and stored payload fingerprints are rechecked.
 
 The operational and UI handoff is
 `docs/runbooks/vandale-v2-ui-and-operations-handoff.md`.
@@ -234,5 +244,5 @@ The operational and UI handoff is
 - Existing learning identity remains stable.
 - Ambiguity becomes visible operational state and can block only affected
   entries or the cutover, rather than corrupting UUID bindings.
-- A separate ADR or amendment must close user-owned uniqueness and retired
-  scheduler behavior before implementation.
+- A separate ADR or amendment must close retired-entry scheduler behavior
+  before the first retirement.

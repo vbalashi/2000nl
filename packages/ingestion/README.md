@@ -17,8 +17,9 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 manifest. The supported Van Dale import path requires that manifest and uses
 versioned source-entry bindings, so homographs can coexist without changing
 existing Platform UUIDs. `import_words_db.py` defaults to the seeded
-`nl-vandale` dictionary and `nl-vandale-v2` schema. The legacy natural-key
-path is available only through the explicit test-fixture flag.
+`nl-vandale` dictionary and `nl-vandale-v2` schema. Manifest-free
+natural-key writes are rejected, including for test fixtures; committed tests
+generate a small versioned manifest instead.
 
 Run `import_word_forms.py` after the entry import. For a versioned corpus it
 resolves each entry through the source-binding ledger and fails closed if the

@@ -21,6 +21,7 @@ from importer.reconciliation import load_reconciliation_plan
 from importer.source_manifest import (
     SourceArtifact,
     load_source_manifest,
+    semantic_content_fingerprint,
     stored_raw_fingerprint,
 )
 
@@ -50,6 +51,12 @@ def _uuid_set_checksum(values: set[str]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def _ordinal_independent_fingerprint(payload: dict) -> str:
+    content = dict(payload)
+    content.pop("meaning_id", None)
+    return semantic_content_fingerprint(content)
+
+
 def _verify_source_schema(cursor) -> None:
     cursor.execute(
         """
@@ -68,7 +75,7 @@ def _verify_source_schema(cursor) -> None:
     import_runs, bindings, management_column = cursor.fetchone()
     if import_runs is None or bindings is None or not management_column:
         raise RuntimeError(
-            "Versioned source-binding migration 104 is not applied"
+            "Versioned source-binding migration 102 is not applied"
         )
 
 
@@ -76,7 +83,9 @@ def _load_active_bindings(cursor, dictionary_id: str, scheme: str):
     cursor.execute(
         """
         select source_entry_key, word_entry_id::text,
-               content_fingerprint, manifest_checksum
+               source_group_key, sense_ordinal,
+               content_fingerprint_version, content_fingerprint,
+               manifest_checksum
         from private.source_entry_bindings
         where dictionary_id = %s
           and identity_scheme_version = %s
@@ -87,8 +96,11 @@ def _load_active_bindings(cursor, dictionary_id: str, scheme: str):
     return {
         row[0]: {
             "word_entry_id": row[1],
-            "content_fingerprint": row[2],
-            "manifest_checksum": row[3],
+            "source_group_key": row[2],
+            "sense_ordinal": row[3],
+            "content_fingerprint_version": row[4],
+            "content_fingerprint": row[5],
+            "manifest_checksum": row[6],
         }
         for row in cursor.fetchall()
     }
@@ -101,6 +113,7 @@ def _load_source_rows(cursor, dictionary_id: str):
         from public.word_entries
         where dictionary_id = %s
           and management_kind = 'source'
+          and source_lifecycle = 'active'
         """,
         (dictionary_id,),
     )
@@ -143,15 +156,57 @@ def _completed_manifest_is_noop(
         artifact.source_entry_key: artifact.content_fingerprint
         for artifact in manifest.artifacts
     }
-    actual = {
-        key: value["content_fingerprint"]
-        for key, value in bindings.items()
-        if value["manifest_checksum"] == manifest.manifest_sha256
+    artifacts_by_key = {
+        artifact.source_entry_key: artifact
+        for artifact in manifest.artifacts
     }
-    if actual != expected:
+    if set(bindings) != set(expected):
         raise RuntimeError(
-            "Completed manifest exists but active bindings do not match it"
+            "Completed manifest exists but active binding coverage differs"
         )
+
+    for source_entry_key, content_fingerprint in expected.items():
+        binding = bindings[source_entry_key]
+        if (
+            binding["manifest_checksum"] != manifest.manifest_sha256
+            or binding["content_fingerprint_version"]
+            != artifacts_by_key[source_entry_key].fingerprint_version
+            or binding["content_fingerprint"] != content_fingerprint
+        ):
+            raise RuntimeError(
+                "Completed manifest exists but active bindings do not match it"
+            )
+
+    word_entry_ids = [
+        binding["word_entry_id"]
+        for binding in bindings.values()
+    ]
+    cursor.execute(
+        """
+        select id::text, raw
+        from public.word_entries
+        where dictionary_id = %s
+          and management_kind = 'source'
+          and source_lifecycle = 'active'
+        """,
+        (dictionary_id,),
+    )
+    active_rows = {row[0]: row[1] for row in cursor.fetchall()}
+    if set(active_rows) != set(word_entry_ids):
+        raise RuntimeError(
+            "Completed manifest exists but active source rows and bindings "
+            "do not have exact coverage"
+        )
+
+    for source_entry_key, binding in bindings.items():
+        actual_fingerprint = stored_raw_fingerprint(
+            active_rows[binding["word_entry_id"]]
+        )
+        artifact = artifacts_by_key[source_entry_key]
+        if actual_fingerprint != stored_raw_fingerprint(artifact.payload):
+            raise RuntimeError(
+                "Completed manifest exists but stored source content drifted"
+            )
     return True
 
 
@@ -198,7 +253,7 @@ def _bulk_update_entries(cursor, rows) -> None:
             part_of_speech = source.part_of_speech,
             gender = source.gender,
             is_nt2_2000 = source.is_nt2_2000,
-            vandale_id = source.vandale_id,
+            vandale_id = source.vandale_id::integer,
             raw = source.raw::jsonb,
             management_kind = 'source',
             source_lifecycle = 'active',
@@ -384,12 +439,85 @@ def import_source_manifest(
                             f"{decision.word_entry_id}"
                         )
             elif active_bindings:
+                bound_word_ids = {
+                    binding["word_entry_id"]
+                    for binding in active_bindings.values()
+                }
+                if set(source_rows) != bound_word_ids:
+                    raise RuntimeError(
+                        "Active source rows and bindings do not have exact "
+                        "coverage"
+                    )
                 missing = set(active_bindings) - set(artifacts_by_key)
                 added = set(artifacts_by_key) - set(active_bindings)
                 if missing or added:
                     raise RuntimeError(
                         "Manifest changes source membership; prepare an "
                         "explicit add/retire reconciliation plan"
+                    )
+                if reconciliation_plan is not None:
+                    raise RuntimeError(
+                        "Post-binding reconciliation plans are not implemented"
+                    )
+                changed_identity_groups = {
+                    artifact.source_group_key
+                    for artifact in manifest.artifacts
+                    if (
+                        active_bindings[
+                            artifact.source_entry_key
+                        ]["source_group_key"]
+                        != artifact.source_group_key
+                        or active_bindings[
+                            artifact.source_entry_key
+                        ]["sense_ordinal"]
+                        != artifact.sense_ordinal
+                    )
+                }
+                previous_fingerprints_by_group = {}
+                for source_entry_key, binding in active_bindings.items():
+                    previous_fingerprints_by_group.setdefault(
+                        binding["source_group_key"],
+                        {},
+                    ).setdefault(
+                        _ordinal_independent_fingerprint(
+                            source_rows[binding["word_entry_id"]]
+                        ),
+                        set(),
+                    ).add(source_entry_key)
+                moved_fingerprint_groups = {
+                    artifact.source_group_key
+                    for artifact in manifest.artifacts
+                    if (
+                        _ordinal_independent_fingerprint(artifact.payload)
+                        != _ordinal_independent_fingerprint(
+                            source_rows[
+                                active_bindings[
+                                    artifact.source_entry_key
+                                ]["word_entry_id"]
+                            ]
+                        )
+                        and previous_fingerprints_by_group.get(
+                            artifact.source_group_key,
+                            {},
+                        ).get(
+                            _ordinal_independent_fingerprint(artifact.payload),
+                            set(),
+                        )
+                        - {artifact.source_entry_key}
+                    )
+                }
+                if changed_identity_groups:
+                    raise RuntimeError(
+                        "Source group identity changed for "
+                        f"{len(changed_identity_groups)} source group(s); "
+                        "prepare an approved group-atomic reconciliation plan"
+                    )
+                if moved_fingerprint_groups:
+                    raise RuntimeError(
+                        "Semantic fingerprints moved between ordinal source "
+                        f"keys in {len(moved_fingerprint_groups)} source "
+                        "group(s); prepare an approved group-atomic "
+                        "reconciliation plan"
                     )
             elif reconciliation_plan is not None:
                 raise RuntimeError(
@@ -459,8 +587,8 @@ def import_source_manifest(
                     word_entry_id = binding["word_entry_id"]
                     stats.matched += 1
                     if (
-                        binding["content_fingerprint"]
-                        != artifact.content_fingerprint
+                        stored_raw_fingerprint(source_rows[word_entry_id])
+                        != stored_raw_fingerprint(artifact.payload)
                     ):
                         stats.changed += 1
                     target = updates
@@ -571,18 +699,36 @@ def import_source_manifest(
                 for artifact, row, _ in resolved
                 if row["is_nt2_2000"]
             ]
+            nt2_word_ids = [word_id for _, word_id, _ in nt2_rows]
+            cursor.execute(
+                """
+                select item.word_id::text
+                from public.word_list_items as item
+                join public.word_entries as entry
+                  on entry.id = item.word_id
+                where item.list_id = %s
+                  and entry.dictionary_id = %s
+                  and entry.management_kind = 'source'
+                """,
+                (list_id, dictionary_id),
+            )
+            existing_nt2_ids = {row[0] for row in cursor.fetchall()}
+            expected_nt2_ids = set(nt2_word_ids)
+            stats.nt2_skipped = len(existing_nt2_ids & expected_nt2_ids)
+            stats.nt2_linked = len(expected_nt2_ids - existing_nt2_ids)
+            cursor.execute(
+                """
+                delete from public.word_list_items as item
+                using public.word_entries as entry
+                where item.list_id = %s
+                  and entry.id = item.word_id
+                  and entry.dictionary_id = %s
+                  and entry.management_kind = 'source'
+                  and not (entry.id = any(%s::uuid[]))
+                """,
+                (list_id, dictionary_id, nt2_word_ids),
+            )
             if nt2_rows:
-                nt2_word_ids = [word_id for _, word_id, _ in nt2_rows]
-                cursor.execute(
-                    """
-                    select count(*)
-                    from public.word_list_items
-                    where list_id = %s
-                      and word_id = any(%s::uuid[])
-                    """,
-                    (list_id, nt2_word_ids),
-                )
-                stats.nt2_skipped = int(cursor.fetchone()[0] or 0)
                 psycopg2.extras.execute_values(
                     cursor,
                     """
@@ -592,12 +738,12 @@ def import_source_manifest(
                         rank
                     )
                     values %s
-                    on conflict (list_id, word_id) do nothing
+                    on conflict (list_id, word_id) do update
+                    set rank = excluded.rank
                     """,
                     nt2_rows,
                     page_size=500,
                 )
-                stats.nt2_linked = len(nt2_rows) - stats.nt2_skipped
 
             if refresh_search_documents:
                 refresh_dictionary_search_documents(

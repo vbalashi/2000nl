@@ -27,8 +27,10 @@ checksums were identical before and after the import.
 
 ## UI Data Contract
 
-The existing top-level `word_entries.raw` payload remains the UI payload. The
-renderer can now use these structured fields:
+`word_entries.raw` is the internal persistence payload, not a client contract.
+Issue #70 owns publishing the following structured fields through the
+documented Platform projection/response DTO before 2000nl or AudioFilms renders
+them:
 
 - `meanings[].synonyms: string[]`
 - `meanings[].antonyms: string[]`
@@ -47,8 +49,9 @@ renderer can now use these structured fields:
 - `part_of_speech_evidence` for the distinction between source-confirmed and
   inferred/unresolved POS.
 
-Renderers should prefer these fields over parsing punctuation from
-`definition`. For example, `afgrond` is now:
+The Platform projection should preserve this structure instead of parsing
+punctuation from `definition`. For example, the stored source payload for
+`afgrond` is now:
 
 ```json
 {
@@ -57,11 +60,12 @@ Renderers should prefer these fields over parsing punctuation from
 }
 ```
 
-The UI should not split remaining `=` characters heuristically. The three
-remaining definitions containing `=` are genuine mathematical or explanatory
-notation.
+Clients must not read `word_entries.raw` directly and must not split remaining
+`=` characters heuristically. The three remaining definitions containing `=`
+are genuine mathematical or explanatory notation.
 
-Recommended visual hierarchy inside a meaning:
+Recommended visual hierarchy once these fields are present in the projected
+SenseCard DTO:
 
 1. definition and context;
 2. examples;
@@ -123,7 +127,10 @@ db/scripts/run_dictionary_search_backfill.sh start 2 500
 
 An identical completed manifest is verified and produces no database changes.
 If source membership changes, the importer stops and requires an explicit
-add/retire reconciliation plan. It never silently deletes or rekeys an entry.
+add/retire reconciliation plan. A normal content-only update keeps its bound
+UUID; if semantic fingerprints move between ordinal keys in one source group,
+the importer fails closed and requires group-atomic reconciliation. It never
+silently deletes or rekeys an entry.
 
 The obsolete UI-local importer now delegates to the supported ingestion
 command, so there is only one write path.

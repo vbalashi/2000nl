@@ -11,5 +11,6 @@ Timestamps from filesystem (local timezone):
 | `packages/ingestion/scripts/dictionary_identity_wave0_audit.py` | 2026-07-24 | Generate or verify the deterministic read-only Wave 0 source manifest, collision report, and hashes under `docs/architecture/evidence/dictionary-identity-wave0/`. |
 
 The Van Dale data directory must contain `_manifest.jsonl` and
-`_manifest.summary.json`. Manifest-free natural-key imports are deprecated and
-must be enabled explicitly for isolated legacy fixtures.
+`_manifest.summary.json`. Manifest-free natural-key writes are rejected;
+committed tests generate small versioned manifests and exercise the same
+source-binding path as the production importer.

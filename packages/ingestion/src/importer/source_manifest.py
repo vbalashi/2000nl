@@ -7,8 +7,18 @@ import json
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
 
 ARTIFACT_FINGERPRINT_VERSION = "vandale-semantic-v1"
+NL_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "packages"
+    / "shared"
+    / "schemas"
+    / "nl"
+    / "note.schema.json"
+)
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -89,6 +99,31 @@ def _load_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _load_schema_validator() -> Draft202012Validator:
+    schema = json.loads(NL_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def _validate_payload(
+    validator: Draft202012Validator,
+    payload: dict[str, Any],
+    artifact_path: str,
+) -> None:
+    errors = sorted(
+        validator.iter_errors(payload),
+        key=lambda error: tuple(str(part) for part in error.absolute_path),
+    )
+    if not errors:
+        return
+    error = errors[0]
+    location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+    raise ValueError(
+        f"{artifact_path} violates NL dictionary schema at "
+        f"{location}: {error.message}"
+    )
+
+
 def load_source_manifest(data_dir: Path | str) -> SourceManifest:
     root = Path(data_dir)
     manifest_path = root / "_manifest.jsonl"
@@ -110,6 +145,7 @@ def load_source_manifest(data_dir: Path | str) -> SourceManifest:
         raise ValueError("manifest artifact count mismatch")
 
     artifacts = []
+    schema_validator = _load_schema_validator()
     seen_paths = set()
     seen_source_keys = set()
     expected_scheme = summary.get("identity_scheme_version")
@@ -129,6 +165,7 @@ def load_source_manifest(data_dir: Path | str) -> SourceManifest:
             raise ValueError(f"artifact checksum mismatch: {artifact_path}")
 
         payload = _load_payload(path)
+        _validate_payload(schema_validator, payload, artifact_path)
         source = payload.get("_source")
         if not isinstance(source, dict):
             raise ValueError(f"{artifact_path} is missing _source")

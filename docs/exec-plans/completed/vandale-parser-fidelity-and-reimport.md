@@ -59,8 +59,9 @@ Unrelated UI, translation, FSRS, and provenance work is out of scope.
   source/user writer spaces, manifest-led importer, exact-coverage word-form
   rebuild, and true identical-manifest no-op.
 - 2026-07-29: restored the full production backup to a disposable local
-  database, applied migration 104 twice, imported the corpus, rebuilt forms
-  and search, and verified UUID and consumer invariants.
+  database, applied the then-numbered migration 104 twice, imported the corpus,
+  rebuilt forms and search, and verified UUID and consumer invariants. The
+  clean-main integration later renumbered the same migration to 102.
 - 2026-07-29: preserved the old local generated corpus, installed v2 under
   `db/data/words_content`, and created a fresh validated production backup.
 - 2026-07-29: completed the production cutover: 18,163 active source entries,

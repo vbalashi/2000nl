@@ -77,6 +77,24 @@ def _write_manifest(root: Path) -> Path:
     return artifact_path
 
 
+def _refresh_manifest_checksums(root: Path, artifact_path: Path) -> None:
+    manifest_path = root / "_manifest.jsonl"
+    record = json.loads(manifest_path.read_text(encoding="utf-8"))
+    record["content_sha256"] = hashlib.sha256(
+        artifact_path.read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(
+        json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    summary_path = root / "_manifest.summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["manifest_sha256"] = hashlib.sha256(
+        manifest_path.read_bytes()
+    ).hexdigest()
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+
 def test_loads_and_verifies_a_source_manifest(tmp_path: Path) -> None:
     _write_manifest(tmp_path)
 
@@ -115,4 +133,15 @@ def test_rejects_manifest_path_outside_data_directory(tmp_path: Path) -> None:
     summary_path.write_text(json.dumps(summary), encoding="utf-8")
 
     with pytest.raises(ValueError, match="unsafe artifact path"):
+        load_source_manifest(tmp_path)
+
+
+def test_rejects_payload_that_violates_shared_schema(tmp_path: Path) -> None:
+    artifact_path = _write_manifest(tmp_path)
+    payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+    payload[0]["meanings"] = [{"examples": ["missing definition"]}]
+    artifact_path.write_text(json.dumps(payload), encoding="utf-8")
+    _refresh_manifest_checksums(tmp_path, artifact_path)
+
+    with pytest.raises(ValueError, match="violates NL dictionary schema"):
         load_source_manifest(tmp_path)

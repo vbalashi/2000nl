@@ -11,7 +11,7 @@ from importer.dictionary_entry_parser import parse_dictionary_file  # noqa: E402
 DATA_ROOT = Path(
     os.environ.get(
         "VANDALE_DATA_ROOT",
-        REPO_ROOT / "db" / "data" / "words_content",
+        INGESTION_ROOT / "tests" / "fixtures" / "legacy_words",
     )
 )
 

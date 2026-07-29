@@ -1,0 +1,20 @@
+[
+  {
+    "headword": "aan",
+    "part_of_speech": "bw",
+    "is_nt2_2000": true,
+    "meaning_id": 1,
+    "meanings": [
+      {
+        "definition": "in werking",
+        "examples": [],
+        "idioms": [
+          {
+            "expression": "het is aan tussen hen",
+            "explanation": "zij hebben ruzie"
+          }
+        ]
+      }
+    ]
+  }
+]

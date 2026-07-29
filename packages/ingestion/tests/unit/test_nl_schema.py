@@ -10,7 +10,12 @@ SCHEMA_PATH = REPO_ROOT / "packages" / "shared" / "schemas" / "nl" / "note.schem
 DATA_ROOT = Path(
     os.environ.get(
         "VANDALE_DATA_ROOT",
-        REPO_ROOT / "db" / "data" / "words_content",
+        REPO_ROOT
+        / "packages"
+        / "ingestion"
+        / "tests"
+        / "fixtures"
+        / "legacy_words",
     )
 )
 

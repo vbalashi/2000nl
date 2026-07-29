@@ -8,6 +8,9 @@ on:
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
+      - 'packages/ingestion/**'
+      - 'packages/scraper/**'
+      - 'packages/shared/schemas/nl/**'
       - '.github/workflows/db-drift-check.yml'
   push:
     branches: [main, master]
@@ -17,6 +20,9 @@ on:
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
       - 'db/scripts/live_dictionary_migration.sh'
+      - 'packages/ingestion/**'
+      - 'packages/scraper/**'
+      - 'packages/shared/schemas/nl/**'
       - '.github/workflows/db-drift-check.yml'
   workflow_dispatch:
 
@@ -44,6 +50,11 @@ jobs:
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Check migration anti-patterns
         id: check-patterns
@@ -75,10 +86,10 @@ jobs:
           done
 
           if [ "$ISSUES_FOUND" = true ]; then
-            echo "result=failed" >> $GITHUB_OUTPUT
+            echo "result=failed" >> "$GITHUB_OUTPUT"
             exit 1
           else
-            echo "result=passed" >> $GITHUB_OUTPUT
+            echo "result=passed" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check migration file naming and bootstrap coverage
@@ -151,6 +162,20 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
+
+      - name: Test versioned importer and populated bootstrap replay
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+          INGESTION_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+        run: |
+          python -m venv /tmp/ingestion-venv
+          /tmp/ingestion-venv/bin/pip install -r packages/ingestion/requirements.txt
+          /tmp/ingestion-venv/bin/python -m pytest -q \
+            packages/scraper/tests \
+            packages/ingestion/tests/unit \
+            packages/ingestion/tests/integration
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
 
