@@ -7,6 +7,8 @@ fields; provider `raw` data and diagnostic `sourcePath` values are forbidden.
 - `catalog-single-sense.json` covers a public, non-mutating SenseCard.
 - `catalog-cross-reference.json` covers a redirect-only dictionary record that
   must never become a learning card.
+- `known-action-roundtrip.json` pins server-owned Mark/Undo targets. Consumers
+  must not synthesize Known state, mark IDs, revisions, or rollback locally.
 - `rollout-matrix.json` pins allowed independent consumer/server combinations
   and the consumer-first rollback order.
 

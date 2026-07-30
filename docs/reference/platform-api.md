@@ -16,6 +16,13 @@ after the source-manifest replay and exact Content Node coverage check described
 in the Van Dale operations handoff. Removing the variable is the server-side
 rollback switch and does not affect V1.
 
+V2 mutations are independently dark by default. `POST
+/api/platform/v2/actions` returns
+`503 {"error":"platform_v2_actions_not_enabled"}` unless
+`PLATFORM_V2_ACTIONS_ENABLED=1`. Authenticated lookup emits progress
+capabilities only while this action flag is enabled, so a consumer is never
+given a mutation that the server has darkened.
+
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
 Smoke check:
@@ -143,12 +150,12 @@ Important V2 rules:
   provider `audio_links` from `raw`; Platform will expose `header.audio` only
   together with a server-owned playable resource/action contract;
 - catalog lookup returns `card: null` and no user mutation capabilities;
-- Known and undo-known remain absent until issue #89 supplies the atomic
-  database/action boundary.
+- authenticated lookup exposes server-derived `mark-known` or `undo-known`
+  only for the exact returned card state and revision.
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `108` and the V2 code with the flag absent;
+1. deploy migrations `105` through `109` and the V2 code with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
@@ -156,7 +163,10 @@ Deployment order is intentionally fail-closed:
    `lookup_platform_v2_entries` and run a direct service-role RPC smoke;
 5. in an isolated staging environment, temporarily set
    `PLATFORM_V2_LOOKUP_ENABLED=1` and run the functional V2 route smoke. Keep
-   production disabled until that smoke passes, then enable it explicitly.
+   production disabled until that smoke passes;
+6. run the Known/Undo database and route smoke, then set
+   `PLATFORM_V2_ACTIONS_ENABLED=1`. Removing only this flag hides all V2
+   mutation capabilities without deleting accepted Known Marks.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes
@@ -168,6 +178,33 @@ catalogs cover English, Russian, and Dutch and are verified against
 `packages/shared/platform-v2/localization.ts`. The interface language is a
 renderer/session preference; it is independent from dictionary content
 language and translation target language.
+
+### Platform V2 card actions
+
+```http
+POST /api/platform/v2/actions
+Authorization: Bearer <access_token>
+```
+
+The request must be one of the discriminated mutation variants in
+`packages/shared/types/platformV2.ts`: `start-learning`, `mark-known`,
+`undo-known`, or `review-card`. Every request carries a UUID
+`clientEventId` and the exact `target` returned by lookup, including
+`stateRevision`. Undo additionally carries the current `activeKnownMarkId`
+and `knownMarkRevision`.
+
+The endpoint returns `contractVersion: "platform-action-v2"` and the complete
+resulting card state. Identical retries return the original accepted result.
+Reusing an event ID with another canonical payload, submitting a stale state
+revision, or undoing a non-current Known Mark returns HTTP 409 without writes.
+When normalized `source-context-v2` is present, card mutation, immutable action
+history, source, artifact, and location commit atomically.
+
+Known is an overlay, not an FSRS result. Marking Known preserves scheduler
+state and excludes the exact card from shared training selection. Undo clears
+only the current mark and reveals the preserved state. Consumers must dispatch
+the returned capability target verbatim and must not simulate either state
+locally.
 
 ### Translation transition
 

@@ -331,3 +331,6 @@
 
 -- Group-atomic opaque-cursor lookup for Platform V2
 \i db/migrations/108_platform_v2_group_atomic_lookup.sql
+
+-- Durable reversible Known Marks for Platform V2 SenseCards
+\i db/migrations/109_platform_v2_known_marks.sql

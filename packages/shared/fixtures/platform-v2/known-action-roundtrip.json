@@ -1,0 +1,69 @@
+{
+  "fixtureVersion": "platform-v2-known-roundtrip-1",
+  "initialCapability": {
+    "actionId": "mark-known",
+    "elementId": "sense-card.known.mark",
+    "messageKey": "senseCard.known.mark",
+    "target": {
+      "kind": "sense-card",
+      "entryId": "10000000-0000-4000-8000-000000000001",
+      "cardTypeId": "word-to-definition",
+      "stateRevision": "untracked"
+    }
+  },
+  "markRequest": {
+    "actionId": "mark-known",
+    "clientEventId": "10000000-0000-4000-8000-000000000002",
+    "target": {
+      "kind": "sense-card",
+      "entryId": "10000000-0000-4000-8000-000000000001",
+      "cardTypeId": "word-to-definition",
+      "stateRevision": "untracked"
+    }
+  },
+  "markResponse": {
+    "contractVersion": "platform-action-v2",
+    "actionId": "mark-known",
+    "clientEventId": "10000000-0000-4000-8000-000000000002",
+    "accepted": true,
+    "card": {
+      "cardTypeId": "word-to-definition",
+      "scheduler": {
+        "phase": "not-started",
+        "repeatCount": 0,
+        "lastSeenAt": null
+      },
+      "knownMark": {
+        "markId": "10000000-0000-4000-8000-000000000003",
+        "revision": "10000000-0000-4000-8000-000000000004",
+        "markedAt": "2026-07-30T08:00:00.000Z"
+      },
+      "stateRevision": "10000000-0000-4000-8000-000000000005"
+    }
+  },
+  "undoCapability": {
+    "actionId": "undo-known",
+    "elementId": "sense-card.known.undo",
+    "messageKey": "senseCard.known.undo",
+    "target": {
+      "kind": "sense-card",
+      "entryId": "10000000-0000-4000-8000-000000000001",
+      "cardTypeId": "word-to-definition",
+      "stateRevision": "10000000-0000-4000-8000-000000000005",
+      "activeKnownMarkId": "10000000-0000-4000-8000-000000000003",
+      "knownMarkRevision": "10000000-0000-4000-8000-000000000004"
+    }
+  },
+  "undoRequest": {
+    "actionId": "undo-known",
+    "clientEventId": "10000000-0000-4000-8000-000000000006",
+    "target": {
+      "kind": "sense-card",
+      "entryId": "10000000-0000-4000-8000-000000000001",
+      "cardTypeId": "word-to-definition",
+      "stateRevision": "10000000-0000-4000-8000-000000000005",
+      "activeKnownMarkId": "10000000-0000-4000-8000-000000000003",
+      "knownMarkRevision": "10000000-0000-4000-8000-000000000004"
+    }
+  }
+}

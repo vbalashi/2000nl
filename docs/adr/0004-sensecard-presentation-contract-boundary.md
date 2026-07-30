@@ -130,8 +130,10 @@ review/start attempts against it fail closed. V2 must not present those legacy
 mappings as the approved Known interaction.
 
 Because the mutation semantics change, V2 Known/undo is available only through
-`/api/platform/v2/actions` after #89 is integrated. V2 lookup must not advertise
-those capabilities while the durable mutation boundary is unavailable.
+`/api/platform/v2/actions`. Migration `109` supplies the durable boundary, and
+`PLATFORM_V2_ACTIONS_ENABLED` gates both the endpoint and the mutation
+capabilities returned by lookup. V2 lookup must not advertise those
+capabilities while the boundary is darkened.
 
 ### Lookup is complete at Headword Group boundaries
 

@@ -173,17 +173,36 @@ describe("Platform V2 shared consumer contract", () => {
   test("manifest names every shared lookup fixture", () => {
     const manifest = readJson("manifest.json");
     expect(manifest).toEqual({
-      fixtureVersion: "platform-v2-consumer-fixtures-1",
+      fixtureVersion: "platform-v2-consumer-fixtures-2",
       contractVersion: "platform-lookup-v2",
       files: [
         "catalog-single-sense.json",
         "catalog-cross-reference.json",
+        "known-action-roundtrip.json",
         "rollout-matrix.json",
       ],
     });
     for (const file of manifest.files) {
       expect(fs.existsSync(path.join(fixtureRoot, file))).toBe(true);
     }
+  });
+
+  test("pins one server-owned Known and exact Undo roundtrip for both consumers", () => {
+    const fixture = readJson("known-action-roundtrip.json");
+    expect(fixture.markRequest.target).toEqual(
+      fixture.initialCapability.target,
+    );
+    expect(fixture.markResponse.card.knownMark).toEqual({
+      markId: fixture.undoCapability.target.activeKnownMarkId,
+      revision: fixture.undoCapability.target.knownMarkRevision,
+      markedAt: "2026-07-30T08:00:00.000Z",
+    });
+    expect(fixture.undoRequest.target).toEqual(
+      fixture.undoCapability.target,
+    );
+    expect(fixture.undoRequest.target.stateRevision).toBe(
+      fixture.markResponse.card.stateRevision,
+    );
   });
 
   test("keeps V2 consumers behind a V2-capable server and rollback consumer-first", () => {

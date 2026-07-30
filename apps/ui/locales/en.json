@@ -58,6 +58,11 @@
     "learning": {
       "start": "Learn"
     },
+    "known": {
+      "mark": "Mark as known",
+      "marked": "Marked as known",
+      "undo": "Undo known"
+    },
     "review": {
       "fail": "Again",
       "hard": "Hard",

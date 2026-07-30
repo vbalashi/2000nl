@@ -17,6 +17,11 @@ import type { PlatformV2ContentSectionInput } from "../platformV2RichContent";
 
 export type ProjectionCardState = {
   stateRevision: string;
+  knownMark?: {
+    markId: string;
+    revision: string;
+    markedAt: string;
+  } | null;
   clickCount: number;
   seenCount: number;
   successCount: number;
@@ -325,7 +330,7 @@ function projectCardState(
       lastSeenAt: state.lastSeenAt,
       ...(state.frozenUntil ? { frozenUntil: state.frozenUntil } : {}),
     },
-    knownMark: null,
+    knownMark: state.knownMark ?? null,
     stateRevision: state.stateRevision,
   };
 }
@@ -363,7 +368,18 @@ function capabilitiesFor(params: {
       cardTypeId: card.cardTypeId,
       stateRevision: card.stateRevision,
     };
-    if (
+    if (card.knownMark) {
+      capabilities.push({
+        actionId: "undo-known",
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          ...target,
+          activeKnownMarkId: card.knownMark.markId,
+          knownMarkRevision: card.knownMark.revision,
+        },
+      });
+    } else if (
       card.scheduler.phase === "learning" ||
       card.scheduler.phase === "reviewing"
     ) {
@@ -389,6 +405,12 @@ function capabilitiesFor(params: {
         actionId: "start-learning",
         elementId: "sense-card.learning.start",
         messageKey: "senseCard.learning.start",
+        target,
+      });
+      capabilities.push({
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
         target,
       });
     }
