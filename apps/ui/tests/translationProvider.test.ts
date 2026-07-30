@@ -296,6 +296,55 @@ describe("OpenAITranslator", () => {
     expect(result.meta?.providerUsed).toBe("openai");
   });
 
+  it("sends source context and parses literal translations", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                translations: ["резко возрастают."],
+                literalTranslations: ["огромный палец ноги."],
+                note: "Здесь это часть разделяемого глагола nemen ... toe.",
+              }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({ apiKey: "key" });
+    const result = await translator.translateWithContextAndNote(["enorm toe."], "ru", {
+      sourceLanguageCode: "nl",
+      purpose: "youtube-span-translation",
+      contextText: "Plotseling nemen de kansen om leven in het universum te vinden enorm toe.",
+    });
+
+    expect(result).toMatchObject({
+      translations: ["резко возрастают."],
+      literalTranslations: ["огромный палец ноги."],
+      note: "Здесь это часть разделяемого глагола nemen ... toe.",
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, any];
+    const body = JSON.parse(init.body);
+    const userMessage = JSON.parse(body.messages[1].content);
+    expect(userMessage).toMatchObject({
+      sourceLanguageCode: "nl",
+      purpose: "youtube-span-translation",
+      targetLanguage: "Russian",
+      targetLanguageCode: "ru",
+      commentLanguage: "Russian",
+      texts: ["enorm toe."],
+      contextText: "Plotseling nemen de kansen om leven in het universum te vinden enorm toe.",
+    });
+    expect(userMessage.instructions).toContain("Write 'note' in commentLanguage");
+    expect(userMessage.instructions).toContain("For targetLanguageCode 'ru'");
+  });
+
   it("falls back when OpenAI fails", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,

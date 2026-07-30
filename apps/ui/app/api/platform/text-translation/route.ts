@@ -28,12 +28,14 @@ type TextTranslationBody = {
 
 const TRANSLATION_POLICY_VERSION = "platform-text-translation-v1";
 const TEXT_TRANSLATION_CACHE_COLUMNS =
-  "translation_id, status, translated_text, error_message, provider, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
+  "translation_id, status, translated_text, literal_translated_text, translator_comment, error_message, provider, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
 
 type TextTranslationCacheRow = {
   translation_id: string;
   status: string;
   translated_text: string | null;
+  literal_translated_text?: string | null;
+  translator_comment?: string | null;
   error_message: string | null;
   provider?: string | null;
   source_text_hash: string;
@@ -65,6 +67,10 @@ function artifactResponse(row: TextTranslationCacheRow, cached = true) {
     sourceLanguageCode: row.source_language_code,
     targetLanguageCode: row.target_language_code,
     ...(row.translated_text ? { translatedText: row.translated_text } : {}),
+    ...(row.literal_translated_text
+      ? { literalTranslatedText: row.literal_translated_text }
+      : {}),
+    ...(row.translator_comment ? { translatorComment: row.translator_comment } : {}),
     translationPolicyVersion: row.translation_policy_version,
     cached,
     ...(row.error_message ? { error: row.error_message } : {}),
@@ -202,12 +208,27 @@ export async function POST(request: NextRequest) {
   const config = loadTranslationConfigFromEnv();
   let provider: string;
   let translatedText: string;
+  let literalTranslatedText: string | undefined;
+  let translatorComment: string | undefined;
   try {
     const resolved = createTranslator(config);
     provider = resolved.provider;
     const translator: any = resolved.translator;
 
-    if (typeof translator.translateWithContext === "function") {
+    if (typeof translator.translateWithContextAndNote === "function") {
+      const result = await translator.translateWithContextAndNote(
+        [text],
+        resolvedTargetLanguageCode,
+        {
+          sourceLanguageCode,
+          purpose,
+          contextText,
+        },
+      );
+      translatedText = result.translations?.[0] ?? "";
+      literalTranslatedText = result.literalTranslations?.[0];
+      translatorComment = result.note ?? undefined;
+    } else if (typeof translator.translateWithContext === "function") {
       [translatedText] = await translator.translateWithContext(
         [text],
         resolvedTargetLanguageCode,
@@ -255,6 +276,8 @@ export async function POST(request: NextRequest) {
     .update({
       status: "ready",
       translated_text: translatedText ?? "",
+      literal_translated_text: literalTranslatedText ?? null,
+      translator_comment: translatorComment ?? null,
       provider,
       error_message: null,
       updated_at: new Date().toISOString(),
@@ -276,6 +299,8 @@ export async function POST(request: NextRequest) {
     sourceLanguageCode,
     targetLanguageCode: resolvedTargetLanguageCode,
     translatedText: translatedText ?? "",
+    ...(literalTranslatedText ? { literalTranslatedText } : {}),
+    ...(translatorComment ? { translatorComment } : {}),
     translationPolicyVersion: TRANSLATION_POLICY_VERSION,
     cached: false,
   });
