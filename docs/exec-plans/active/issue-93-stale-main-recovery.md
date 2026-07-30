@@ -60,15 +60,25 @@ then restore green.
 
 ## Validation evidence
 
+Code validation SHA: `ddca591624e7e90565d505e390ff2d08f4a4d317`
+
 - TDD red: the two recovered public-seam tests failed before implementation
   recovery, one because `translateWithContextAndNote` was not called and one
   because `literalTranslations` was absent.
+- Policy-identity red: the text-translation route test failed while the rich
+  contract still persisted `platform-text-translation-v1`.
 - Focused green: 33/33 route and provider tests.
 - Full UI suite: 352 passed, 50 skipped.
 - TypeScript typecheck: pass.
 - Next.js lint: pass without warnings.
 - `actionlint` for `deploy-nuc.yml`: pass.
 - `git diff --check`: pass.
+- Local Supabase bootstrap applied with `ON_ERROR_STOP=1`: pass.
+- Migration 103 columns verified through `information_schema`; a second
+  migration application passed, proving idempotence.
+- DB-backed FSRS RPC/parity suite: 50/50 pass.
+- Rich translation now uses `platform-text-translation-v2` in artifact
+  identity, so pre-rich V1 cache rows cannot satisfy the new request identity.
 
 ## Guardrail incident analysis
 
