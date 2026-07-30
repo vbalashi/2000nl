@@ -1,6 +1,6 @@
 # Issue 97: recover training-session navigation evidence
 
-Status: active
+Status: completed
 
 Issue: https://github.com/vbalashi/2000nl/issues/97
 
@@ -51,9 +51,21 @@ Historical screenshots require a privacy review before any public push.
       current UI.
 - [x] Record every preserved path as superseded, integrate, or restricted.
 - [x] Run relevant UI tests, typecheck/lint, link/diff checks.
-- [ ] Close independent Standards review findings and rerun both reviews.
-- [x] Push candidate SHA, open a draft PR, and record the checkpoint:
-      PR #100 at `90836a99213d12f02589b1d9cde8d4784bb27e2f`.
+- [x] Close independent Standards review findings and rerun both reviews.
+- [x] Push the exact SHA, open a draft PR, and record review-ready evidence.
+
+## Integration evidence
+
+- Final reviewed feature SHA:
+  `4d85803e53679d3babb260cb35d46e2b26cba675`.
+- Independent Standards review: PASS.
+- Independent Spec/Architecture review: PASS.
+- PR #100 UI check: PASS.
+- Squash merge: `dfc2fd4c4ebb9a532e252515f4ceb450aa4aef40`.
+- The SHA-256 of the complete feature patch and merged patch is identical:
+  `3b666927728789e8a744c7a6c21cdb2746a3500f7f7a4f497a6328e60a7cc2f7`.
+- Integrated `main` UI and deployment checks: PASS at the exact merge SHA.
+- ADR 0005 remains proposed; no Pen or target-shell implementation was added.
 
 ## Stop rules
 
