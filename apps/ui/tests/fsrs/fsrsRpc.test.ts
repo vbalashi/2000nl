@@ -851,12 +851,13 @@ describeIfDb("FSRS RPC integration", () => {
     }, ownerId);
   });
 
-  test("grouped body search paginates from FTS into substring fallback", async () => {
+  test("grouped body search paginates from FTS into lexical-form fallback", async () => {
     const ownerId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, ownerId);
       const suffix = Date.now();
       const query = `aafallback${suffix}`;
+      const queryVariant = `${query}variant`;
       await client.query(
         `insert into languages (code, name)
          values ('aa', 'Grouped Search Test')
@@ -880,8 +881,12 @@ describeIfDb("FSRS RPC integration", () => {
           example: `first ${query} example text`,
         },
         {
-          headword: `${query}-substring`,
-          example: `second compound${query} example text`,
+          headword: `${query}-prefix`,
+          example: `second ${queryVariant} example text`,
+        },
+        {
+          headword: `${query}-midword`,
+          example: `third compound${query} example text`,
         },
       ];
 
@@ -904,6 +909,13 @@ describeIfDb("FSRS RPC integration", () => {
             }),
           ],
         );
+        if (entry.headword === `${query}-prefix`) {
+          await client.query(
+            `insert into word_forms (word_id, dictionary_id, language_code, form, headword)
+             values ($1, $2, 'aa', $3, $5), ($1, $2, 'aa', $4, $5)`,
+            [rows[0].id, dictionaryId, query, queryVariant, entry.headword],
+          );
+        }
         await client.query(`select refresh_dictionary_search_document($1, 2)`, [rows[0].id]);
       }
 
@@ -923,7 +935,12 @@ describeIfDb("FSRS RPC integration", () => {
       );
       const secondGroup = secondRows[0].result.groups[0];
       expect(secondGroup.items).toHaveLength(1);
-      expect(secondGroup.items[0].entry.headword).toBe(`${query}-substring`);
+      expect(secondGroup.items[0].entry.headword).toBe(`${query}-prefix`);
+      expect(
+        secondGroup.items.some(
+          (item: { entry: { headword: string } }) => item.entry.headword === `${query}-midword`,
+        ),
+      ).toBe(false);
       expect(secondGroup.page.hasMore).toBe(false);
     }, ownerId);
   });
