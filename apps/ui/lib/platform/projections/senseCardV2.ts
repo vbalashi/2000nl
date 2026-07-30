@@ -4,6 +4,7 @@ import type {
 } from "../../../../../packages/shared/types/platform";
 import type {
   PlatformContentNodeKindV2,
+  PlatformContentNodeV2,
   PlatformContentNodeTranslationV2,
   PlatformEntryTranslationStateV2,
   PlatformLookupV2Response,
@@ -12,6 +13,7 @@ import type {
   PlatformSenseCardStateV2,
   PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
+import type { PlatformV2ContentSectionInput } from "../platformV2RichContent";
 
 export type ProjectionCardState = {
   stateRevision: string;
@@ -52,9 +54,12 @@ export type PlatformLookupV2ProjectionEntry = {
   entry: DictionaryLookupResult["entry"];
   dictionary: DictionarySummary;
   contentNodeBindings: PlatformContentNodeBindingV2Input[];
+  contentSections?: PlatformV2ContentSectionInput[];
+  crossReferenceQuery?: string | null;
   cardState?: ProjectionCardState | null;
   entryTranslation?: PlatformEntryTranslationStateV2 | null;
   wordDetails?: PlatformWordDetailsV2;
+  allowWordDetailsCapability?: boolean;
 };
 
 export type PlatformLookupV2ProjectionInput = {
@@ -153,7 +158,7 @@ function projectHeadwordGroup(
         ? { partOfSpeech: semanticTerm("part-of-speech", uniformPartOfSpeech) }
         : {}),
     },
-    senseCount: entries.length,
+    senseCount: entries.filter((item) => !item.crossReferenceQuery).length,
     entryCount: entries.length,
     indicators: entries.every((item) => item.entry.isNt22000 === true)
       ? [
@@ -164,7 +169,11 @@ function projectHeadwordGroup(
           },
         ]
       : [],
-    entries: entries.map((item) => projectSenseCard(item, request)),
+    entries: entries.map((item) =>
+      item.crossReferenceQuery
+        ? projectCrossReference(item, item.crossReferenceQuery)
+        : projectSenseCard(item, request),
+    ),
   };
 }
 
@@ -183,8 +192,16 @@ function projectSenseCard(
     bindingsByPath.set(binding.sourcePath, binding);
   }
 
-  const contentNodes = item.entry.content.sections.flatMap((section, order) => {
-    const kind = publicContentKind(section.kind);
+  const sections =
+    item.contentSections ??
+    item.entry.content.sections.flatMap((section) => {
+      const kind = publicContentKind(section.kind);
+      return kind
+        ? [{ sourcePath: section.sourcePath, kind, text: section.text }]
+        : [];
+    });
+  const contentNodes = sections.flatMap((section, order) => {
+    const kind = section.kind;
     if (!kind) return [];
     const binding = bindingsByPath.get(section.sourcePath);
     if (!binding || binding.kind !== kind) {
@@ -237,10 +254,38 @@ function projectSenseCard(
     capabilities: capabilitiesFor({
       card,
       entryTarget,
+      contentNodes,
+      entryTranslation: item.entryTranslation ?? null,
+      hasWordDetails: Boolean(item.wordDetails),
+      allowWordDetails:
+        item.allowWordDetailsCapability !== false,
       targetLanguageCode: request.translationTargetLanguageCode,
       allowMutations: item.allowMutationCapabilities !== false,
     }),
     ...(item.wordDetails ? { wordDetails: item.wordDetails } : {}),
+  };
+}
+
+function projectCrossReference(
+  item: PlatformLookupV2ProjectionEntry,
+  query: string,
+): PlatformLookupV2Response["groups"][number]["entries"][number] {
+  return {
+    kind: "cross-reference",
+    crossReferenceId: item.entry.id,
+    label: {
+      termId: "cross-reference.see",
+      messageKey: "crossReference.see",
+    },
+    text: query,
+    target: { query },
+    capabilities: [
+      {
+        actionId: "follow-cross-reference",
+        elementId: "cross-reference.follow",
+        messageKey: "crossReference.follow",
+      },
+    ],
   };
 }
 
@@ -280,13 +325,16 @@ function capabilitiesFor(params: {
     entryId: string;
     contentRevision: string;
   };
+  contentNodes: PlatformContentNodeV2[];
+  entryTranslation: PlatformEntryTranslationStateV2 | null;
+  hasWordDetails: boolean;
+  allowWordDetails: boolean;
   targetLanguageCode: string | null;
   allowMutations: boolean;
 }): PlatformSenseCardCapabilityV2[] {
   const capabilities: PlatformSenseCardCapabilityV2[] = [];
-  if (!params.allowMutations) return capabilities;
   const card = params.card;
-  if (card) {
+  if (params.allowMutations && card) {
     const target = {
       kind: "sense-card" as const,
       entryId: params.entryTarget.entryId,
@@ -323,7 +371,7 @@ function capabilitiesFor(params: {
       });
     }
   }
-  if (params.targetLanguageCode) {
+  if (params.allowMutations && params.targetLanguageCode) {
     capabilities.push({
       actionId: "request-translation",
       elementId: "sense-card.translation.request",
@@ -332,12 +380,63 @@ function capabilitiesFor(params: {
       targetLanguageCode: params.targetLanguageCode,
     });
   }
-  capabilities.push({
-    actionId: "report-content",
-    elementId: "sense-card.report",
-    messageKey: "senseCard.report",
-    target: params.entryTarget,
-  });
+  if (params.allowMutations) {
+    capabilities.push({
+      actionId: "report-content",
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: params.entryTarget,
+    });
+    for (const node of params.contentNodes) {
+      capabilities.push({
+        actionId: "report-content",
+        elementId: "sense-card.report.content-node",
+        messageKey: "senseCard.report",
+        target: {
+          kind: "content-node",
+          entryId: params.entryTarget.entryId,
+          contentNodeId: node.contentNodeId,
+          sourceTextFingerprint: node.sourceTextFingerprint,
+        },
+      });
+      for (const translation of node.translations) {
+        capabilities.push({
+          actionId: "report-content",
+          elementId: "sense-card.report.translation",
+          messageKey: "senseCard.report",
+          target: {
+            kind: "translation",
+            entryId: params.entryTarget.entryId,
+            translationId: translation.translationId,
+            contentNodeId: node.contentNodeId,
+            sourceTextFingerprint: translation.sourceTextFingerprint,
+          },
+        });
+      }
+    }
+    if (params.entryTranslation) {
+      capabilities.push({
+        actionId: "report-content",
+        elementId: "sense-card.report.translation",
+        messageKey: "senseCard.report",
+        target: {
+          kind: "translation",
+          entryId: params.entryTarget.entryId,
+          translationId: params.entryTranslation.translationId,
+          sourceTextFingerprint:
+            params.entryTranslation.sourceContentFingerprint,
+        },
+      });
+    }
+  }
+  if (params.hasWordDetails && params.allowWordDetails) {
+    capabilities.push({
+      actionId: "open-word-details",
+      elementId: "sense-card.word-details.open",
+      messageKey: "senseCard.wordDetails.open",
+      target: params.entryTarget,
+    });
+  }
   return capabilities;
 }
 

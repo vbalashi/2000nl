@@ -48,7 +48,7 @@ Tests assert these public seams, not internal helper calls.
 ### 4 — Translation, rich content, and compatibility
 
 - [x] project entry and Content Node translation states with fingerprints;
-- [ ] project typed cross-reference and minimum Word Details variants;
+- [x] project typed cross-reference and minimum Word Details variants;
 - [ ] cover localization keys and exact action targets;
 - [ ] update Platform API reference and shared consumer fixtures;
 - [ ] validate the V1/V2 rollout and rollback matrix.

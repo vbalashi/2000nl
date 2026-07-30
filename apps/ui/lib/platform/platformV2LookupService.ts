@@ -10,7 +10,6 @@ import type {
   PlatformLookupV2Response,
 } from "../../../../packages/shared/types/platformV2";
 import {
-  contentFingerprint,
   normalizeDictionaryContent,
   verifyDictionaryContentAudioLinks,
 } from "./projections/dictionaryContent";
@@ -27,6 +26,12 @@ import type {
 } from "./serverSupabase";
 import type { DictionaryLookupPayload } from "./lookupService";
 import { resolvePlatformV2Translations } from "./platformV2TranslationService";
+import {
+  extractPlatformV2ContentSections,
+  platformV2ContentRevision,
+  platformV2CrossReferenceQuery,
+  projectPlatformV2WordDetails,
+} from "./platformV2RichContent";
 
 const LOOKUP_ENTRY_SAFETY_BOUND = 50;
 
@@ -284,6 +289,28 @@ export async function performPlatformV2Lookup(
             const content = await verifyDictionaryContentAudioLinks(
               normalizeDictionaryContent(entry),
             );
+            const contentNodeBindings = identity.contentNodeBindings.map(
+              (binding) => ({
+                ...binding,
+                translations:
+                  translationResult.byEntryId
+                    .get(entry.id)
+                    ?.nodeTranslationsById.get(binding.contentNodeId) ?? [],
+              }),
+            );
+            const contentSections = extractPlatformV2ContentSections(entry);
+            const crossReferenceQuery =
+              platformV2CrossReferenceQuery(entry);
+            const wordDetails =
+              context.kind === "authenticated" && !crossReferenceQuery
+                ? projectPlatformV2WordDetails(entry, contentNodeBindings)
+                : null;
+            const entryContentRevision = platformV2ContentRevision(
+              entry.id,
+              contentSections,
+              wordDetails,
+              crossReferenceQuery,
+            );
             const projectedEntry: DictionaryLookupResult["entry"] = {
               id: entry.id,
               dictionaryId: entry.dictionary_id ?? null,
@@ -294,7 +321,7 @@ export async function performPlatformV2Lookup(
               gender: entry.gender ?? null,
               content:
                 content as DictionaryLookupResult["entry"]["content"],
-              contentFingerprint: contentFingerprint(content),
+              contentFingerprint: entryContentRevision,
               raw: entry.raw,
               isNt22000: entry.is_nt2_2000 ?? null,
               meaningsCount: entry.meanings_count ?? null,
@@ -306,17 +333,13 @@ export async function performPlatformV2Lookup(
               allowMutationCapabilities:
                 context.kind === "authenticated" &&
                 context.auth.principal.scopes.has("platform:write"),
+              allowWordDetailsCapability:
+                context.kind === "authenticated",
               entry: projectedEntry,
               dictionary,
-              contentNodeBindings: identity.contentNodeBindings.map(
-                (binding) => ({
-                  ...binding,
-                  translations:
-                    translations?.nodeTranslationsById.get(
-                      binding.contentNodeId,
-                    ) ?? [],
-                }),
-              ),
+              contentNodeBindings,
+              contentSections,
+              crossReferenceQuery,
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(
@@ -327,6 +350,7 @@ export async function performPlatformV2Lookup(
                   : null,
               entryTranslation:
                 translations?.entryTranslation ?? null,
+              ...(wordDetails ? { wordDetails } : {}),
             };
           }),
         ),

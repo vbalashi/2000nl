@@ -260,6 +260,28 @@ describe("Platform V2 SenseCard projection", () => {
                     contentRevision: "content-revision-1",
                   },
                 },
+                {
+                  actionId: "report-content",
+                  elementId: "sense-card.report.content-node",
+                  messageKey: "senseCard.report",
+                  target: {
+                    kind: "content-node",
+                    entryId: "entry-1",
+                    contentNodeId: "node-definition-1",
+                    sourceTextFingerprint: "definition-fingerprint-1",
+                  },
+                },
+                {
+                  actionId: "report-content",
+                  elementId: "sense-card.report.content-node",
+                  messageKey: "senseCard.report",
+                  target: {
+                    kind: "content-node",
+                    entryId: "entry-1",
+                    contentNodeId: "node-example-1",
+                    sourceTextFingerprint: "example-fingerprint-1",
+                  },
+                },
               ],
             },
           ],

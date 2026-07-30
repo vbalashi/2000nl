@@ -86,6 +86,9 @@ describe("/api/platform/v2/lookup", () => {
           {
             definition: "een gebouw om in te wonen",
             examples: ["dit is mijn huis"],
+            synonyms: ["woning"],
+            usage_labels: ["informeel"],
+            note: "Vaak gebruikt voor een woonhuis.",
           },
         ],
       },
@@ -177,6 +180,13 @@ describe("/api/platform/v2/lookup", () => {
                     parentContentNodeId: null,
                     sourceTextFingerprint: "example-fingerprint-1",
                   },
+                  {
+                    contentNodeId: "node-note-1",
+                    sourcePath: "raw.meanings[0].note",
+                    kind: "usage-note",
+                    parentContentNodeId: null,
+                    sourceTextFingerprint: "note-fingerprint-1",
+                  },
                 ],
               },
             ],
@@ -253,6 +263,52 @@ describe("/api/platform/v2/lookup", () => {
               sourceTextFingerprint: "definition-fingerprint-1",
             }),
           ],
+        }),
+      ]),
+    );
+    expect(payload.groups[0].entries[0].wordDetails).toEqual(
+      expect.objectContaining({
+        entryId: "entry-1",
+        lexicalRelations: [
+          expect.objectContaining({ kind: "synonym", text: "woning" }),
+        ],
+        labels: [
+          expect.objectContaining({
+            messageKey: "wordDetails.usageLabel",
+            sourceValue: "informeel",
+          }),
+        ],
+        usageNotes: [
+          expect.objectContaining({
+            text: "Vaak gebruikt voor een woonhuis.",
+            contentNodeId: "node-note-1",
+          }),
+        ],
+      }),
+    );
+    expect(payload.groups[0].entries[0].capabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actionId: "report-content",
+          target: expect.objectContaining({
+            kind: "content-node",
+            contentNodeId: "node-definition-1",
+          }),
+        }),
+        expect.objectContaining({
+          actionId: "open-word-details",
+          target: expect.objectContaining({
+            kind: "entry",
+            entryId: "entry-1",
+          }),
+        }),
+        expect.objectContaining({
+          actionId: "report-content",
+          target: expect.objectContaining({
+            kind: "translation",
+            translationId: "translation-entry-1",
+            sourceTextFingerprint: sourceContentRevision,
+          }),
         }),
       ]),
     );
@@ -375,6 +431,101 @@ describe("/api/platform/v2/lookup", () => {
       "get_user_card_states_for_entries",
       expect.anything(),
     );
+  });
+
+  test("projects redirect-only dictionary records as non-learnable cross-references", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v2/catalog/lookup/route"
+    );
+    rpc.mockImplementation((name: string) => {
+      if (name === "lookup_public_catalog_entries_v1") {
+        return Promise.resolve({
+          data: {
+            items: [
+              {
+                id: "entry-selder-1",
+                dictionary_id: "dict-1",
+                language_code: "nl",
+                headword: "selder",
+                meaning_id: 1,
+                part_of_speech: "zn",
+                raw: {
+                  cross_reference: "selderie",
+                  meanings: [],
+                },
+                dictionary: {
+                  id: "dict-1",
+                  language_code: "nl",
+                  slug: "nl-vandale",
+                  name: "Van Dale",
+                  kind: "curated",
+                  visibility: "system",
+                  owner_user_id: null,
+                  is_editable: false,
+                  schema_key: "nl-vandale-v2",
+                  schema_version: 1,
+                },
+              },
+            ],
+          },
+          error: null,
+        });
+      }
+      if (name === "read_platform_v2_presentation_identity") {
+        return Promise.resolve({
+          data: {
+            entries: [
+              {
+                entryId: "entry-selder-1",
+                headwordGroupId: "group-selder-1",
+                meaningOrdinal: 1,
+                contentNodeBindings: [],
+              },
+            ],
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      catalogRequest({
+        query: "selder",
+        contentLanguageCode: "nl",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.groups[0]).toEqual(
+      expect.objectContaining({
+        senseCount: 0,
+        entryCount: 1,
+      }),
+    );
+    expect(payload.groups[0].entries).toEqual([
+      {
+        kind: "cross-reference",
+        crossReferenceId: "entry-selder-1",
+        label: {
+          termId: "cross-reference.see",
+          messageKey: "crossReference.see",
+        },
+        text: "selderie",
+        target: { query: "selderie" },
+        capabilities: [
+          {
+            actionId: "follow-cross-reference",
+            elementId: "cross-reference.follow",
+            messageKey: "crossReference.follow",
+          },
+        ],
+      },
+    ]);
+    expect(JSON.stringify(payload)).not.toContain("sense-card");
+    expect(JSON.stringify(payload)).not.toContain("start-learning");
   });
 
   test("returns the complete real-world-sized Headword Group beyond the V1 limit", async () => {
