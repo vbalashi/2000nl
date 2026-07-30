@@ -26,7 +26,7 @@ type TextTranslationBody = {
   contextText?: unknown;
 };
 
-const TRANSLATION_POLICY_VERSION = "platform-text-translation-v1";
+const TRANSLATION_POLICY_VERSION = "platform-text-translation-v2";
 const TEXT_TRANSLATION_CACHE_COLUMNS =
   "translation_id, status, translated_text, literal_translated_text, translator_comment, error_message, provider, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
 
@@ -58,6 +58,16 @@ export function OPTIONS(request: NextRequest) {
   return platformCorsPreflight(request);
 }
 
+function richTranslationResponseFields(
+  literalTranslatedText?: string | null,
+  translatorComment?: string | null,
+) {
+  return {
+    ...(literalTranslatedText ? { literalTranslatedText } : {}),
+    ...(translatorComment ? { translatorComment } : {}),
+  };
+}
+
 function artifactResponse(row: TextTranslationCacheRow, cached = true) {
   return {
     translationId: row.translation_id,
@@ -67,10 +77,10 @@ function artifactResponse(row: TextTranslationCacheRow, cached = true) {
     sourceLanguageCode: row.source_language_code,
     targetLanguageCode: row.target_language_code,
     ...(row.translated_text ? { translatedText: row.translated_text } : {}),
-    ...(row.literal_translated_text
-      ? { literalTranslatedText: row.literal_translated_text }
-      : {}),
-    ...(row.translator_comment ? { translatorComment: row.translator_comment } : {}),
+    ...richTranslationResponseFields(
+      row.literal_translated_text,
+      row.translator_comment,
+    ),
     translationPolicyVersion: row.translation_policy_version,
     cached,
     ...(row.error_message ? { error: row.error_message } : {}),
@@ -299,8 +309,7 @@ export async function POST(request: NextRequest) {
     sourceLanguageCode,
     targetLanguageCode: resolvedTargetLanguageCode,
     translatedText: translatedText ?? "",
-    ...(literalTranslatedText ? { literalTranslatedText } : {}),
-    ...(translatorComment ? { translatorComment } : {}),
+    ...richTranslationResponseFields(literalTranslatedText, translatorComment),
     translationPolicyVersion: TRANSLATION_POLICY_VERSION,
     cached: false,
   });

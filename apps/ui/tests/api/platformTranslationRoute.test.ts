@@ -555,6 +555,7 @@ describe("/api/platform/v1/translation", () => {
       expect.objectContaining({
         status: "pending",
         purpose: "youtube-recall",
+        translation_policy_version: "platform-text-translation-v2",
       }),
       { onConflict: "translation_id", ignoreDuplicates: true },
     );
@@ -573,7 +574,7 @@ describe("/api/platform/v1/translation", () => {
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
       translatedText: "translated:ik ga naar huis",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
     });
   });
@@ -807,7 +808,7 @@ describe("/api/platform/v1/translation", () => {
         sourceLanguageCode: "nl",
         targetLanguageCode: "en",
         translatedText: "translated:tot morgen",
-        translationPolicyVersion: "platform-text-translation-v1",
+        translationPolicyVersion: "platform-text-translation-v2",
         cached: false,
       }),
     );
@@ -841,7 +842,7 @@ describe("/api/platform/v1/translation", () => {
             source_language_code: "nl",
             target_language_code: "en",
             purpose: "youtube-phrase-practice",
-            translation_policy_version: "platform-text-translation-v1",
+            translation_policy_version: "platform-text-translation-v2",
           },
           error: null,
         });
@@ -874,7 +875,7 @@ describe("/api/platform/v1/translation", () => {
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
       translatedText: "see you tomorrow",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -907,7 +908,7 @@ describe("/api/platform/v1/translation", () => {
             source_language_code: "nl",
             target_language_code: "en",
             purpose: "youtube-phrase-practice",
-            translation_policy_version: "platform-text-translation-v1",
+            translation_policy_version: "platform-text-translation-v2",
           },
           error: null,
         });
@@ -939,7 +940,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: "source-hash",
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -972,7 +973,7 @@ describe("/api/platform/v1/translation", () => {
         source_language_code: "nl",
         target_language_code: "en",
         purpose: "youtube-phrase-practice",
-        translation_policy_version: "platform-text-translation-v1",
+        translation_policy_version: "platform-text-translation-v2",
       },
       error: null,
     });
@@ -1016,7 +1017,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: "source-hash",
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -1083,7 +1084,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: expect.any(String),
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
       error: "provider down",
     });

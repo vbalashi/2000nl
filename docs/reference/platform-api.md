@@ -884,7 +884,7 @@ Response:
   "translatedText": "I am going home",
   "literalTranslatedText": "I go to house",
   "translatorComment": "In this sentence, the phrase is a normal motion phrase; the literal wording is less natural.",
-  "translationPolicyVersion": "platform-text-translation-v1",
+  "translationPolicyVersion": "platform-text-translation-v2",
   "cached": false
 }
 ```
