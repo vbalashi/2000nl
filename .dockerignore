@@ -1,0 +1,19 @@
+# Production UI builds use the repository root only so the app can resolve the
+# shared Platform contract. Keep the build context default-deny.
+**
+
+!apps/
+!apps/ui/
+!apps/ui/**
+!packages/
+!packages/shared/
+!packages/shared/**
+
+# Local state and build outputs must never enter the Docker context.
+apps/ui/.env*
+apps/ui/.next/
+apps/ui/node_modules/
+apps/ui/npm-debug.log
+apps/ui/playwright-report/
+apps/ui/test-results/
+apps/ui/coverage/
