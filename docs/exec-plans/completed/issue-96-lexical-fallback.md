@@ -1,6 +1,6 @@
 # Issue 96: lexical-form grouped-search fallback
 
-Status: active
+Status: completed
 
 Issue: https://github.com/vbalashi/2000nl/issues/96
 
@@ -60,8 +60,8 @@ match an arbitrary occurrence of the query inside an unrelated token.
 - [x] Restore the regression and the complete DB-backed suite to green.
 - [x] Update current grouped-search documentation with the new migration path.
 - [x] Run bootstrap, migration idempotence, typecheck/lint, and diff checks.
-- [ ] Run independent Standards and Spec reviews.
-- [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
+- [x] Run independent Standards and Spec reviews.
+- [x] Push exact SHA, open a draft PR, and record review-ready evidence.
 
 ## Validation evidence
 
@@ -80,6 +80,15 @@ match an arbitrary occurrence of the query inside an unrelated token.
   - historical unguarded prepass: 5.039 ms, 1,502 shared buffers;
   - length-gated prepass: 4.464 ms, 1,456 shared buffers;
   - no fixture rows or migration state were committed by the probe.
+- Independent Standards and Spec reviews: PASS at exact feature SHA
+  `de3935898aa88e7cefe30d6148ffa19eae563db5`.
+- PR #99 required checks: drift, FSRS/RPC, and UI all PASS.
+- Squash merge: `cddd84ac3cf11c79935d8dda001320f6036f58f9`.
+- The SHA-256 of the complete base-to-feature patch and base-to-merge patch is
+  identical: `b77e26eeece9d48ed5527aa21cc1b21bfe5c2cd03c86c29b5a978d358b2144af`.
+- Integrated `main` checks at the exact merge SHA: drift, FSRS/RPC, UI, and
+  deployment all PASS.
+- No manual live/production migration application was performed by this task.
 
 ## Stop rules
 
