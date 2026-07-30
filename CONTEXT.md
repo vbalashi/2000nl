@@ -25,6 +25,14 @@ _Avoid_: role, entitlement, feature flag
 The authorization flow where a 2000NL user grants a Connected Client access and receives a Connected Client Session.
 _Avoid_: extension login, OAuth, Supabase login
 
+**Canonical Learning Source**:
+The stable technical identity of content that produced a learning action, such as a YouTube video id and derived canonical URL.
+_Avoid_: video title, page title, user-visible source label
+
+**User-Observed Source Label**:
+The source label a specific user saw when they performed a learning action, such as the YouTube video title shown at that moment.
+_Avoid_: canonical source title, global source metadata
+
 **Headword Group**:
 A Platform-owned presentation and search grouping of Dictionary Entries that belong to one source article or an explicitly owned user/generated group. The Platform exposes an opaque `headwordGroupId`; clients must not reconstruct the group from visible spelling, part of speech, source labels, or result order. Separate homographs and entries from different dictionaries remain separate groups even when their displayed headword is identical. Initially, each user-owned entry receives its own private durable group on create/copy/save; edits and renames preserve that group, and combining user meanings requires a future explicit regroup action. A group can contain multiple meanings and parts of speech, but is not itself a learning-action target.
 _Avoid_: card, entry, meaning
