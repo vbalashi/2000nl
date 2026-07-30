@@ -242,6 +242,48 @@ def test_versioned_source_import_is_stable_and_fails_closed_on_drift(
         with connection.cursor() as cursor:
             cursor.execute(
                 """
+                delete from private.platform_v2_content_nodes
+                where id = (
+                    select node.id
+                    from private.platform_v2_content_nodes as node
+                    join public.word_entries as entry
+                      on entry.id = node.entry_id
+                    join public.dictionaries as dictionary
+                      on dictionary.id = entry.dictionary_id
+                    where dictionary.slug = %s
+                      and node.binding_state = 'active'
+                    limit 1
+                )
+                """,
+                (dictionary_slug,),
+            )
+            assert cursor.rowcount == 1
+
+    repaired = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert repaired.no_op is False
+    assert repaired.matched == 4
+    verified = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert verified.no_op is True
+    assert verified.matched == 4
+
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
                 select dictionary.id::text
                 from public.dictionaries as dictionary
                 where dictionary.slug = %s
@@ -272,6 +314,18 @@ def test_versioned_source_import_is_stable_and_fails_closed_on_drift(
             )
             original_ids = dict(cursor.fetchall())
             assert len(original_ids) == 4
+            cursor.execute(
+                """
+                select count(*)
+                from private.platform_v2_content_nodes as node
+                join public.word_entries as entry
+                  on entry.id = node.entry_id
+                where entry.dictionary_id = %s
+                  and node.binding_state = 'active'
+                """,
+                (dictionary_id,),
+            )
+            assert cursor.fetchone()[0] == 4
 
     _write_manifest(
         tmp_path,

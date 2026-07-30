@@ -1,0 +1,9 @@
+{
+  "fixtureVersion": "platform-v2-consumer-fixtures-1",
+  "contractVersion": "platform-lookup-v2",
+  "files": [
+    "catalog-single-sense.json",
+    "catalog-cross-reference.json",
+    "rollout-matrix.json"
+  ]
+}

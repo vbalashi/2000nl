@@ -14,6 +14,7 @@ sys.path.insert(0, str(INGESTION_ROOT / "src"))
 from importer.source_manifest import (  # noqa: E402
     ARTIFACT_FINGERPRINT_VERSION,
     load_source_manifest,
+    platform_v2_content_node_inputs,
 )
 
 
@@ -145,3 +146,41 @@ def test_rejects_payload_that_violates_shared_schema(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="violates NL dictionary schema"):
         load_source_manifest(tmp_path)
+
+
+def test_builds_semantic_platform_v2_content_node_inputs() -> None:
+    nodes = platform_v2_content_node_inputs(
+        {
+            "meanings": [
+                {
+                    "definition": "een illustratie",
+                    "context": "ter verduidelijking",
+                    "examples": ["dit is een voorbeeld"],
+                    "idioms": [
+                        {
+                            "expression": "een lichtend voorbeeld",
+                            "explanation": "iemand die navolging verdient",
+                            "examples": ["zij is een lichtend voorbeeld"],
+                        }
+                    ],
+                    "note": "vooral figuurlijk",
+                }
+            ]
+        }
+    )
+
+    assert [node["kind"] for node in nodes] == [
+        "definition",
+        "usage-pattern",
+        "example",
+        "idiom",
+        "idiom-explanation",
+        "example",
+        "usage-note",
+    ]
+    idiom = nodes[3]
+    assert nodes[4]["parentInputKey"] == idiom["inputKey"]
+    assert nodes[5]["parentInputKey"] == idiom["inputKey"]
+    assert nodes[0]["sourcePath"] == "raw.meanings[0].definition"
+    assert all(len(node["sourceTextFingerprint"]) == 64 for node in nodes)
+    assert all("sourceNativeKey" not in node for node in nodes)

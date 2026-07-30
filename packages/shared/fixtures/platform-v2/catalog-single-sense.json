@@ -1,0 +1,65 @@
+{
+  "contractVersion": "platform-lookup-v2",
+  "query": "huis",
+  "request": {
+    "contentLanguageCode": "nl",
+    "translationTargetLanguageCode": null,
+    "cardTypeId": "word-to-definition",
+    "intent": "external-click"
+  },
+  "groups": [
+    {
+      "headwordGroupId": "fixture-group-huis",
+      "dictionary": {
+        "dictionaryId": "fixture-dictionary-vandale",
+        "sourceLanguageCode": "nl",
+        "displayName": "Van Dale",
+        "messageKey": "dictionary.name"
+      },
+      "header": {
+        "text": "huis",
+        "article": "het",
+        "partOfSpeech": {
+          "termId": "part-of-speech.zn",
+          "messageKey": "partOfSpeech.zn",
+          "sourceValue": "zn"
+        }
+      },
+      "senseCount": 1,
+      "entryCount": 1,
+      "indicators": [],
+      "entries": [
+        {
+          "kind": "sense-card",
+          "entryId": "fixture-entry-huis-1",
+          "meaningOrdinal": 1,
+          "partOfSpeech": {
+            "termId": "part-of-speech.zn",
+            "messageKey": "partOfSpeech.zn",
+            "sourceValue": "zn"
+          },
+          "card": null,
+          "contentRevision": "fixture-content-revision-huis-1",
+          "summaryContentNodeId": "fixture-node-huis-definition",
+          "contentNodes": [
+            {
+              "contentNodeId": "fixture-node-huis-definition",
+              "parentContentNodeId": null,
+              "kind": "definition",
+              "order": 0,
+              "text": "een gebouw om in te wonen",
+              "sourceTextFingerprint": "fixture-fingerprint-huis-definition",
+              "translations": []
+            }
+          ],
+          "translation": null,
+          "capabilities": []
+        }
+      ]
+    }
+  ],
+  "page": {
+    "selectedTierComplete": true,
+    "nextGroupCursor": null
+  }
+}

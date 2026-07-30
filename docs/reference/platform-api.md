@@ -1,8 +1,20 @@
 # Platform HTTP API
 
-**Versioned base path:** `/api/platform/v1`
+**Versioned base paths:** `/api/platform/v1` and additive
+`/api/platform/v2`
 
 The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients. Versioned response shapes are covered by snapshot tests in `apps/ui/tests/api/platformV1Routes.test.ts`.
+
+V1 remains the production compatibility contract. V2 currently publishes
+strict SenseCard lookup as an additive opt-in; it does not retire or silently
+change V1.
+
+V2 lookup is dark by default. Both V2 lookup routes return
+`503 {"error":"platform_v2_lookup_not_enabled"}` unless
+`PLATFORM_V2_LOOKUP_ENABLED=1` is set on the 2000NL runtime. Enable it only
+after the source-manifest replay and exact Content Node coverage check described
+in the Van Dale operations handoff. Removing the variable is the server-side
+rollback switch and does not affect V1.
 
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
@@ -63,6 +75,136 @@ Unset or missing settings default to `en`; explicit `off` is returned as `null`
 for clients that need to disable translation affordances. `source` is
 `user-setting` when `user_settings.translation_lang` is explicitly set,
 including `off`; otherwise it is `platform-default`.
+
+## Platform V2 SenseCard lookup
+
+Authenticated:
+
+```http
+POST /api/platform/v2/lookup
+Authorization: Bearer <access_token>
+```
+
+Public catalog:
+
+```http
+POST /api/platform/v2/catalog/lookup
+Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>
+```
+
+Request:
+
+```json
+{
+  "query": "huis",
+  "contentLanguageCode": "nl",
+  "translationTargetLanguageCode": "ru",
+  "cardTypeId": "word-to-definition",
+  "intent": "external-click"
+}
+```
+
+`cardTypeId` is required and echoed. Both routes return
+`contractVersion: "platform-lookup-v2"`, explicit complete Headword Groups,
+opaque `headwordGroupId` / `entryId` / `contentNodeId` identity, and
+group-atomic completeness metadata. A selected strict-match tier is never
+silently split. Responses contain up to ten complete groups; an opaque
+`nextGroupCursor` continues at the next group and is bound to the principal,
+query, and language. Reusing it for another request fails with
+`invalid_cursor`. Only a single group above the 50-entry operational bound
+fails with `group-too-large`; a tier containing many ordinary groups is
+paginated instead of rejected.
+
+The normative TypeScript DTO is
+`packages/shared/types/platformV2.ts`. Consumer-pinned JSON examples and their
+manifest are in `packages/shared/fixtures/platform-v2`.
+
+Important V2 rules:
+
+- `meaningOrdinal` is display order only and never identity;
+- `senseCount` counts learnable SenseCards, while `entryCount` also counts
+  cross-reference-only records;
+- redirect-only dictionary records use `kind: "cross-reference"` and expose no
+  learning, review, Known, translation, reporting, or Word Details state;
+- translations are attached to exact Content Node IDs and are renderable only
+  when source content and translation policy revisions match;
+- lookup reads cached translations but never starts a paid provider call;
+- `wordDetails`, when present for an authenticated lookup, contains typed
+  lexical relations, notes, forms, conjugation rows, and references; clients
+  never parse `raw`;
+- `dictionary.messageKey` is always the controlled `dictionary.name`; render
+  the server-provided `dictionary.displayName` as its value. Clients must not
+  manufacture locale keys from user dictionary slugs;
+- the current frequency behavior is deliberately narrow:
+  `indicator.coreVocabulary.nt22000` is emitted only when every learnable
+  entry in the group belongs to the NT2 2000 corpus; no indicator means
+  frequency is unknown/not presented, not that the word is uncommon;
+- header audio is deliberately absent in this slice. Clients must not parse
+  provider `audio_links` from `raw`; Platform will expose `header.audio` only
+  together with a server-owned playable resource/action contract;
+- catalog lookup returns `card: null` and no user mutation capabilities;
+- Known and undo-known remain absent until issue #89 supplies the atomic
+  database/action boundary.
+
+Deployment order is intentionally fail-closed:
+
+1. deploy migrations `105` through `108` and the V2 code with the flag absent;
+2. replay the current versioned source manifest once to populate Content Nodes;
+3. replay it again and require the importer to report a verified no-op, which
+   proves exact source-binding, stored-content, and Content Node coverage;
+4. while the flag remains absent, confirm migration `108` created
+   `lookup_platform_v2_entries` and run a direct service-role RPC smoke;
+5. in an isolated staging environment, temporarily set
+   `PLATFORM_V2_LOOKUP_ENABLED=1` and run the functional V2 route smoke. Keep
+   production disabled until that smoke passes, then enable it explicitly.
+
+Do not enable the flag merely because the migrations applied successfully:
+migration `106` backfills user-owned entries but source-managed Content Nodes
+are reconstructed by the versioned importer from the checksummed source
+manifest.
+
+V2 message keys are semantic identifiers, not visible copy. The current 2000NL
+catalogs cover English, Russian, and Dutch and are verified against
+`packages/shared/platform-v2/localization.ts`. The interface language is a
+renderer/session preference; it is independent from dictionary content
+language and translation target language.
+
+### Translation transition
+
+V2 lookup projects only fresh cached entry and node translations. During the
+additive rollout, provider generation remains on the existing authenticated V1
+translation command. A V2 renderer must not render the positional V1 overlay:
+after generation it refreshes V2 lookup and renders only the returned
+node-bound V2 artifacts. A dedicated revision-checked V2 generation command is
+required before removing this adapter.
+
+Until that dedicated command exists, V2 responses do not advertise the
+`request-translation` capability. A consumer may use the documented V1
+transition adapter outside the V2 capability dispatcher and then refresh V2
+lookup. This prevents a semantic action ID from pointing at a command that
+cannot enforce the V2 `contentRevision`.
+
+### V1/V2 rollout and rollback matrix
+
+| Server | 2000NL adapter | AudioFilms adapter | Allowed state |
+| --- | --- | --- | --- |
+| V1 only | V1 | V1 | current fallback |
+| V1 + V2 | V1 | V1 | server dark launch |
+| V1 + V2 | V2 | V1 | 2000NL pilot after shared fixtures |
+| V1 + V2 | V1 | V2 | AudioFilms pilot after backend and extension locale coverage |
+| V1 + V2 | V2 | V2 | only after independent consumer smoke |
+
+Each consumer switch is independent. One rendered card consumes exactly one
+contract version. On a consumer regression, disable that consumer's V2 switch
+first and keep the V1 adapter deployable. Do not disable V2 routes while
+another consumer still uses them.
+
+Before any external V2 identity is recorded, projection can be rolled back by
+disabling V2. After a group/node ID appears in a translation, report, or action
+history, rollback must retire or disable a bad binding and roll forward; it
+must never reassign an emitted ID. A future Known rollback disables the
+consumer surface but never deletes an accepted Known Mark or rewrites its
+preserved scheduler state.
 
 ## `POST /lookup`
 

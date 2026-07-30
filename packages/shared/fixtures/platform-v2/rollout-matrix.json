@@ -1,0 +1,50 @@
+{
+  "serverModes": [
+    {
+      "server": "v1-only",
+      "consumer2000nl": "v1",
+      "consumerAudioFilms": "v1",
+      "allowed": true
+    },
+    {
+      "server": "v1-only",
+      "consumer2000nl": "v2",
+      "consumerAudioFilms": "v1",
+      "allowed": false
+    },
+    {
+      "server": "v1+v2",
+      "consumer2000nl": "v1",
+      "consumerAudioFilms": "v1",
+      "allowed": true
+    },
+    {
+      "server": "v1+v2",
+      "consumer2000nl": "v2",
+      "consumerAudioFilms": "v1",
+      "allowed": true
+    },
+    {
+      "server": "v1+v2",
+      "consumer2000nl": "v1",
+      "consumerAudioFilms": "v2",
+      "allowed": true
+    },
+    {
+      "server": "v1+v2",
+      "consumer2000nl": "v2",
+      "consumerAudioFilms": "v2",
+      "allowed": true
+    }
+  ],
+  "rules": {
+    "oneContractVersionPerRenderedCard": true,
+    "consumerSwitchesIndependent": true,
+    "rollbackOrder": [
+      "disable-affected-consumer-v2",
+      "verify-v1-consumer-smoke",
+      "keep-v2-for-remaining-consumers"
+    ],
+    "emittedIdentityPolicy": "retire-or-roll-forward-never-reassign"
+  }
+}
