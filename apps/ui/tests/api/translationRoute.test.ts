@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+} from "@/lib/platform/projections/dictionaryContent";
+import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
@@ -37,6 +42,26 @@ const request = (token?: string, query = "") =>
       headers: token ? { authorization: `Bearer ${token}` } : {},
     },
   );
+
+const accessibleWord = {
+  id: "00000000-0000-4000-8000-000000000001",
+  headword: "huis",
+  gender: "het",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "woning" }] },
+};
+
+const currentPendingTranslation = () => ({
+  status: "pending",
+  overlay: null,
+  note: null,
+  source_content_revision: contentFingerprint(
+    normalizeDictionaryContent(accessibleWord as any),
+  ),
+  translation_policy_version: translationPolicyVersion("openai"),
+  provider_revision: "prompt-fingerprint",
+  updated_at: new Date().toISOString(),
+});
 
 const queryChain = (result: { data?: unknown; error?: unknown }) => {
   const query: any = {
@@ -91,16 +116,7 @@ describe("/api/translation", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    rpc.mockResolvedValueOnce({
-      data: {
-        id: "00000000-0000-4000-8000-000000000001",
-        headword: "huis",
-        gender: "het",
-        part_of_speech: "zn",
-        raw: { meanings: [{ definition: "woning" }] },
-      },
-      error: null,
-    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
     from.mockImplementation((table: string) => {
       if (table === "connected_client_sessions") {
         return queryChain({
@@ -113,12 +129,7 @@ describe("/api/translation", () => {
       }
       if (table === "word_entry_translations") {
         return queryChain({
-          data: {
-            status: "pending",
-            overlay: null,
-            note: null,
-            updated_at: new Date().toISOString(),
-          },
+          data: currentPendingTranslation(),
           error: null,
         });
       }
@@ -190,25 +201,11 @@ describe("/api/translation", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    rpc.mockResolvedValueOnce({
-      data: {
-        id: "00000000-0000-4000-8000-000000000001",
-        headword: "huis",
-        gender: "het",
-        part_of_speech: "zn",
-        raw: { meanings: [{ definition: "woning" }] },
-      },
-      error: null,
-    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
     from.mockImplementation((table: string) => {
       if (table === "word_entry_translations") {
         return queryChain({
-          data: {
-            status: "pending",
-            overlay: null,
-            note: null,
-            updated_at: new Date().toISOString(),
-          },
+          data: currentPendingTranslation(),
           error: null,
         });
       }

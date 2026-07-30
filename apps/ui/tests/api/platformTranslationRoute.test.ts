@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 import crypto from "crypto";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+} from "@/lib/platform/projections/dictionaryContent";
+import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
@@ -242,14 +247,15 @@ describe("/api/platform/v1/translation", () => {
 
   test("wraps a fresh pending cache response with platform contract fields", async () => {
     mockAuthenticatedClients();
+    const entry = {
+      id: ENTRY_ID,
+      headword: "huis",
+      gender: "het",
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "woning" }] },
+    };
     rpc.mockResolvedValueOnce({
-      data: {
-        id: ENTRY_ID,
-        headword: "huis",
-        gender: "het",
-        part_of_speech: "zn",
-        raw: { meanings: [{ definition: "woning" }] },
-      },
+      data: entry,
       error: null,
     });
     from.mockImplementation((table: string) => {
@@ -259,6 +265,12 @@ describe("/api/platform/v1/translation", () => {
             status: "pending",
             overlay: null,
             note: null,
+            source_content_revision: contentFingerprint(
+              normalizeDictionaryContent(entry as any),
+            ),
+            translation_policy_version:
+              translationPolicyVersion("openai"),
+            provider_revision: "prompt-fingerprint",
             updated_at: new Date().toISOString(),
           },
           error: null,

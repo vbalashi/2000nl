@@ -116,6 +116,30 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     await pool.end();
   });
 
+  test("stores source, policy, and provider revisions separately for translations", async () => {
+    const { rows } = await pool.query(
+      `select column_name
+         from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'word_entry_translations'
+          and column_name = any($1::text[])
+        order by column_name`,
+      [
+        [
+          "provider_revision",
+          "source_content_revision",
+          "translation_policy_version",
+        ],
+      ],
+    );
+
+    expect(rows.map((row) => row.column_name)).toEqual([
+      "provider_revision",
+      "source_content_revision",
+      "translation_policy_version",
+    ]);
+  });
+
   test("returns one opaque Headword Group for entries in one source group", async () => {
     const userId = randomUUID();
 

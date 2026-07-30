@@ -26,6 +26,7 @@ import type {
   ServiceSupabase,
 } from "./serverSupabase";
 import type { DictionaryLookupPayload } from "./lookupService";
+import { resolvePlatformV2Translations } from "./platformV2TranslationService";
 
 const LOOKUP_ENTRY_SAFETY_BOUND = 50;
 
@@ -236,6 +237,34 @@ export async function performPlatformV2Lookup(
       stateByEntryId.set(record.entry_id, record);
     }
   }
+  const bindingsByEntryId = new Map(
+    identities.map((identity) => [
+      identity.entryId,
+      identity.contentNodeBindings,
+    ]),
+  );
+  const translationResult = request.translationTargetLanguageCode
+    ? await measure(timings, "lookup.translations", () =>
+        resolvePlatformV2Translations(context.service, {
+          entries,
+          bindingsByEntryId,
+          targetLanguageCode: request.translationTargetLanguageCode!,
+        }),
+      )
+    : {
+        ok: true as const,
+        byEntryId: new Map(),
+      };
+  if (!translationResult.ok) {
+    return {
+      payload: {
+        error: "translation_cache_failed",
+        detail: translationResult.error,
+      },
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
 
   try {
     const projectionEntries = await measure(
@@ -270,6 +299,7 @@ export async function performPlatformV2Lookup(
               isNt22000: entry.is_nt2_2000 ?? null,
               meaningsCount: entry.meanings_count ?? null,
             };
+            const translations = translationResult.byEntryId.get(entry.id);
             return {
               headwordGroupId: identity.headwordGroupId,
               meaningOrdinal: identity.meaningOrdinal,
@@ -278,7 +308,15 @@ export async function performPlatformV2Lookup(
                 context.auth.principal.scopes.has("platform:write"),
               entry: projectedEntry,
               dictionary,
-              contentNodeBindings: identity.contentNodeBindings,
+              contentNodeBindings: identity.contentNodeBindings.map(
+                (binding) => ({
+                  ...binding,
+                  translations:
+                    translations?.nodeTranslationsById.get(
+                      binding.contentNodeId,
+                    ) ?? [],
+                }),
+              ),
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(
@@ -287,6 +325,8 @@ export async function performPlatformV2Lookup(
                       stateByEntryId.get(entry.id),
                     )
                   : null,
+              entryTranslation:
+                translations?.entryTranslation ?? null,
             };
           }),
         ),

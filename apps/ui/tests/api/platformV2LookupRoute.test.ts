@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+} from "@/lib/platform/projections/dictionaryContent";
+import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
 
 const rpc = vi.fn();
 const from = vi.fn();
@@ -54,6 +59,7 @@ describe("/api/platform/v2/lookup", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
+    process.env.TRANSLATION_PROVIDER = "openai";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
@@ -65,48 +71,80 @@ describe("/api/platform/v2/lookup", () => {
 
   test("returns one semantic SenseCard group without raw or positional identity", async () => {
     const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    const entry = {
+      id: "entry-1",
+      dictionary_id: "dict-1",
+      language_code: "nl",
+      headword: "huis",
+      meaning_id: 1,
+      part_of_speech: "zn",
+      gender: "het",
+      is_nt2_2000: true,
+      raw: {
+        providerOnly: "must-not-leak",
+        meanings: [
+          {
+            definition: "een gebouw om in te wonen",
+            examples: ["dit is mijn huis"],
+          },
+        ],
+      },
+      dictionary: {
+        id: "dict-1",
+        language_code: "nl",
+        slug: "nl-vandale",
+        name: "Van Dale",
+        kind: "curated",
+        visibility: "system",
+        owner_user_id: null,
+        is_editable: false,
+        schema_key: "nl-vandale-v2",
+        schema_version: 1,
+      },
+    };
+    const sourceContentRevision = contentFingerprint(
+      normalizeDictionaryContent(entry),
+    );
     getUser.mockResolvedValueOnce({
       data: { user: { id: "user-1" } },
       error: null,
     });
+    from.mockImplementation((table: string) =>
+      table === "word_entry_translations"
+        ? chain({
+            data: [
+              {
+                id: "translation-entry-1",
+                word_entry_id: "entry-1",
+                target_lang: "ru",
+                provider: "openai",
+                status: "ready",
+                overlay: {
+                  headword: "дом",
+                  meanings: [
+                    {
+                      definition: "здание для проживания",
+                      examples: ["это мой дом"],
+                    },
+                  ],
+                },
+                source_content_revision: sourceContentRevision,
+                translation_policy_version:
+                  translationPolicyVersion("openai"),
+                provider_revision: "openai:test",
+                error_message: null,
+              },
+            ],
+            error: null,
+          })
+        : chain({ data: null, error: null }),
+    );
     rpc.mockImplementation((name: string, args: any) => {
       if (name === "lookup_dictionary_entries_v3") {
         expect(args.p_limit).toBe(50);
         return Promise.resolve({
           data: {
-            items: [
-              {
-                id: "entry-1",
-                dictionary_id: "dict-1",
-                language_code: "nl",
-                headword: "huis",
-                meaning_id: 1,
-                part_of_speech: "zn",
-                gender: "het",
-                is_nt2_2000: true,
-                raw: {
-                  providerOnly: "must-not-leak",
-                  meanings: [
-                    {
-                      definition: "een gebouw om in te wonen",
-                      examples: ["dit is mijn huis"],
-                    },
-                  ],
-                },
-                dictionary: {
-                  id: "dict-1",
-                  language_code: "nl",
-                  slug: "nl-vandale",
-                  name: "Van Dale",
-                  kind: "curated",
-                  visibility: "system",
-                  owner_user_id: null,
-                  is_editable: false,
-                  schema_key: "nl-vandale-v2",
-                  schema_version: 1,
-                },
-              },
-            ],
+            items: [entry],
           },
           error: null,
         });
@@ -194,6 +232,29 @@ describe("/api/platform/v2/lookup", () => {
         cardTypeId: "word-to-definition",
         scheduler: expect.objectContaining({ phase: "not-started" }),
       }),
+    );
+    expect(payload.groups[0].entries[0].translation).toEqual(
+      expect.objectContaining({
+        translationId: "translation-entry-1",
+        status: "ready",
+        text: "дом",
+        sourceContentFingerprint: sourceContentRevision,
+        isFresh: true,
+      }),
+    );
+    expect(payload.groups[0].entries[0].contentNodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentNodeId: "node-definition-1",
+          translations: [
+            expect.objectContaining({
+              status: "ready",
+              text: "здание для проживания",
+              sourceTextFingerprint: "definition-fingerprint-1",
+            }),
+          ],
+        }),
+      ]),
     );
     expect(JSON.stringify(payload)).not.toContain("providerOnly");
     expect(JSON.stringify(payload)).not.toContain("sourcePath");

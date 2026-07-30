@@ -9,7 +9,17 @@ import {
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
+import {
+  TRANSLATION_PIPELINE_VERSION,
+  translationPolicyVersion,
+} from "@/lib/translation/translationPolicy";
 import { getAuthenticatedUserSupabase } from "@/lib/platform/serverSupabase";
+import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+  verifyDictionaryContentAudioLinks,
+} from "@/lib/platform/projections/dictionaryContent";
 import {
   extractTranslatableTexts,
   type ExtractedItem,
@@ -28,6 +38,9 @@ type TranslationRow = {
   overlay: TranslationOverlay | null;
   note: string | null;
   source_fingerprint: string | null;
+  source_content_revision: string | null;
+  translation_policy_version: string | null;
+  provider_revision: string | null;
   error_message: string | null;
   updated_at: string | null;
 };
@@ -96,9 +109,6 @@ function computeFingerprint(items: ExtractedItem[]) {
   const payload = items.map((it) => ({ path: it.path, text: it.text }));
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
-
-// Bump when the translation prompt/outputs change in a way that should invalidate cache.
-const TRANSLATION_PIPELINE_VERSION = "note_v1";
 
 const POS_DUTCH_LABELS: Record<string, string> = {
   zn: "zelfstandig naamwoord",
@@ -259,7 +269,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("word_entry_translations")
       .select(
-        "word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,error_message,updated_at"
+        "word_entry_id,target_lang,provider,status,overlay,note,source_fingerprint,source_content_revision,translation_policy_version,provider_revision,error_message,updated_at"
       )
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
@@ -300,8 +310,19 @@ export async function GET(req: NextRequest) {
   //
   // We still avoid duplicate in-flight work by treating very recent 'pending'
   // as fresh and returning it so the other request can finish.
+  const sourceContent = await verifyDictionaryContentAudioLinks(
+    normalizeDictionaryContent(word as DictionaryLookupPayload),
+  );
+  const sourceContentRevision = contentFingerprint(sourceContent);
+  const currentTranslationPolicyVersion = translationPolicyVersion(provider);
+  const selectedProviderRevision = getTranslationPromptFingerprint(provider);
   const pendingFreshForMs = 15_000;
-  if (existing?.status === "pending" && isFresh(existing.updated_at, pendingFreshForMs)) {
+  if (
+    existing?.status === "pending" &&
+    existing.source_content_revision === sourceContentRevision &&
+    existing.translation_policy_version === currentTranslationPolicyVersion &&
+    isFresh(existing.updated_at, pendingFreshForMs)
+  ) {
     return NextResponse.json(
       {
         status: existing.status,
@@ -341,7 +362,9 @@ export async function GET(req: NextRequest) {
     existing.overlay &&
     overlayHasHeadword &&
     existing.source_fingerprint &&
-    existing.source_fingerprint === fingerprint
+    existing.source_fingerprint === fingerprint &&
+    existing.source_content_revision === sourceContentRevision &&
+    existing.translation_policy_version === currentTranslationPolicyVersion
   ) {
     return NextResponse.json(
       {
@@ -377,7 +400,10 @@ export async function GET(req: NextRequest) {
           status: "pending",
           overlay: null,
           note: null,
-          source_fingerprint: null,
+          source_fingerprint: fingerprint,
+          source_content_revision: sourceContentRevision,
+          translation_policy_version: currentTranslationPolicyVersion,
+          provider_revision: selectedProviderRevision,
           error_message: null,
         },
         { onConflict: "word_entry_id,target_lang,provider", ignoreDuplicates: true }
@@ -483,7 +509,9 @@ export async function GET(req: NextRequest) {
       existing.status !== "ready" ||
       (existing.status === "ready" && !overlayHasHeadword) ||
       !existing.source_fingerprint ||
-      existing.source_fingerprint !== fingerprint;
+      existing.source_fingerprint !== fingerprint ||
+      existing.source_content_revision !== sourceContentRevision ||
+      existing.translation_policy_version !== currentTranslationPolicyVersion;
 
     if (needsWork) {
       const nowIso = new Date().toISOString();
@@ -493,6 +521,10 @@ export async function GET(req: NextRequest) {
           status: "pending",
           error_message: null,
           note: null,
+          source_fingerprint: fingerprint,
+          source_content_revision: sourceContentRevision,
+          translation_policy_version: currentTranslationPolicyVersion,
+          provider_revision: selectedProviderRevision,
           updated_at: nowIso,
         })
         .eq("word_entry_id", wordEntryId)
@@ -549,6 +581,9 @@ export async function GET(req: NextRequest) {
         overlay,
         note: null,
         source_fingerprint: fingerprint,
+        source_content_revision: sourceContentRevision,
+        translation_policy_version: currentTranslationPolicyVersion,
+        provider_revision: selectedProviderRevision,
         error_message: null,
         updated_at: new Date().toISOString(),
       })
@@ -620,6 +655,9 @@ export async function GET(req: NextRequest) {
         overlay: overlayWithMeta,
         note,
         source_fingerprint: fingerprint,
+        source_content_revision: sourceContentRevision,
+        translation_policy_version: currentTranslationPolicyVersion,
+        provider_revision: getTranslationPromptFingerprint(used),
         error_message: null,
         updated_at: new Date().toISOString(),
       })
@@ -668,7 +706,15 @@ export async function GET(req: NextRequest) {
 
     await supabase
       .from("word_entry_translations")
-      .update({ status: "failed", error_message: message, updated_at: new Date().toISOString() })
+      .update({
+        status: "failed",
+        source_fingerprint: fingerprint,
+        source_content_revision: sourceContentRevision,
+        translation_policy_version: currentTranslationPolicyVersion,
+        provider_revision: selectedProviderRevision,
+        error_message: message,
+        updated_at: new Date().toISOString(),
+      })
       .eq("word_entry_id", wordEntryId)
       .eq("target_lang", dbLang)
       .eq("provider", provider);

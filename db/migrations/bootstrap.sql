@@ -325,3 +325,6 @@
 
 -- Durable Content Node identity and fail-closed reconciliation for Platform V2
 \i db/migrations/106_platform_v2_content_nodes.sql
+
+-- Explicit source, policy, and provider revisions for Platform V2 translations
+\i db/migrations/107_platform_v2_translation_revisions.sql
