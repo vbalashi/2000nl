@@ -292,6 +292,90 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     }, userId);
   });
 
+  test("clears a preserved Content Node parent when the source reparents it to the root", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(
+        client,
+        `platform-v2-reparent-root-${Date.now()}`,
+      );
+      await bindSourceEntries(client, [entryId]);
+
+      const { rows: firstRows } = await client.query(
+        `select private.reconcile_platform_v2_content_nodes(
+           $1,
+           'revision-1',
+           $2::jsonb
+         ) as result`,
+        [
+          entryId,
+          JSON.stringify([
+            {
+              inputKey: "idiom",
+              kind: "idiom",
+              sourcePath: "meanings[0].idioms[0]",
+              sourceNativeKey: "idiom:primary",
+              sourceTextFingerprint: "idiom-v1",
+            },
+            {
+              inputKey: "explanation",
+              kind: "idiom-explanation",
+              sourcePath: "meanings[0].idioms[0].explanation",
+              sourceNativeKey: "idiom:primary:explanation",
+              sourceTextFingerprint: "explanation-v1",
+              parentInputKey: "idiom",
+            },
+          ]),
+        ],
+      );
+      const explanationId = firstRows[0].result.nodes.find(
+        (node: { inputKey: string }) => node.inputKey === "explanation",
+      ).contentNodeId as string;
+
+      await client.query(
+        `select private.reconcile_platform_v2_content_nodes(
+           $1,
+           'revision-2',
+           $2::jsonb
+         )`,
+        [
+          entryId,
+          JSON.stringify([
+            {
+              inputKey: "idiom",
+              kind: "idiom",
+              sourcePath: "meanings[0].idioms[0]",
+              sourceNativeKey: "idiom:primary",
+              sourceTextFingerprint: "idiom-v1",
+            },
+            {
+              inputKey: "explanation",
+              kind: "idiom-explanation",
+              sourcePath: "meanings[0].idioms[0].explanation",
+              sourceNativeKey: "idiom:primary:explanation",
+              sourceTextFingerprint: "explanation-v1",
+            },
+          ]),
+        ],
+      );
+
+      const { rows } = await client.query(
+        `select id, parent_content_node_id
+           from private.platform_v2_content_nodes
+          where id = $1`,
+        [explanationId],
+      );
+      expect(rows).toEqual([
+        {
+          id: explanationId,
+          parent_content_node_id: null,
+        },
+      ]);
+    }, userId);
+  });
+
   test("does not pair indistinguishable duplicate nodes by array position", async () => {
     const userId = randomUUID();
 

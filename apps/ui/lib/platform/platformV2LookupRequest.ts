@@ -1,5 +1,6 @@
 import type { LookupIntent } from "../../../../packages/shared/types/platform";
 import type { PlatformLookupV2Request } from "../../../../packages/shared/types/platformV2";
+import { isPlatformCardTypeId } from "./cardTypeRegistry";
 
 export function parsePlatformV2LookupRequest(
   value: unknown,
@@ -13,6 +14,9 @@ export function parsePlatformV2LookupRequest(
     typeof body.cardTypeId === "string" ? body.cardTypeId.trim() : "";
   if (!query) return { ok: false, error: "missing_query" };
   if (!cardTypeId) return { ok: false, error: "missing_card_type_id" };
+  if (!isPlatformCardTypeId(cardTypeId)) {
+    return { ok: false, error: "unsupported_card_type_id" };
+  }
 
   return {
     ok: true,

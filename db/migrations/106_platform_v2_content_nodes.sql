@@ -284,15 +284,17 @@ BEGIN
     FOR v_node IN
         SELECT *
         FROM pg_temp.platform_v2_incoming_nodes
-        WHERE parent_input_key IS NOT NULL
     LOOP
-        SELECT content_node_id
-        INTO v_parent_id
-        FROM pg_temp.platform_v2_incoming_nodes
-        WHERE input_key = v_node.parent_input_key;
+        v_parent_id := NULL;
+        IF v_node.parent_input_key IS NOT NULL THEN
+            SELECT content_node_id
+            INTO v_parent_id
+            FROM pg_temp.platform_v2_incoming_nodes
+            WHERE input_key = v_node.parent_input_key;
 
-        IF v_parent_id IS NULL THEN
-            RAISE EXCEPTION 'platform_v2_content_node_parent_not_found';
+            IF v_parent_id IS NULL THEN
+                RAISE EXCEPTION 'platform_v2_content_node_parent_not_found';
+            END IF;
         END IF;
 
         UPDATE private.platform_v2_content_nodes

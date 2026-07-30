@@ -9,6 +9,13 @@ V1 remains the production compatibility contract. V2 currently publishes
 strict SenseCard lookup as an additive opt-in; it does not retire or silently
 change V1.
 
+V2 lookup is dark by default. Both V2 lookup routes return
+`503 {"error":"platform_v2_lookup_not_enabled"}` unless
+`PLATFORM_V2_LOOKUP_ENABLED=1` is set on the 2000NL runtime. Enable it only
+after the source-manifest replay and exact Content Node coverage check described
+in the Van Dale operations handoff. Removing the variable is the server-side
+rollback switch and does not affect V1.
+
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
 Smoke check:
@@ -122,6 +129,19 @@ Important V2 rules:
 - catalog lookup returns `card: null` and no user mutation capabilities;
 - Known and undo-known remain absent until issue #89 supplies the atomic
   database/action boundary.
+
+Deployment order is intentionally fail-closed:
+
+1. deploy migrations `105` through `107` and the V2 code with the flag absent;
+2. replay the current versioned source manifest once to populate Content Nodes;
+3. replay it again and require the importer to report a verified no-op, which
+   proves exact source-binding, stored-content, and Content Node coverage;
+4. run the V2 route smoke checks, then set `PLATFORM_V2_LOOKUP_ENABLED=1`.
+
+Do not enable the flag merely because the migrations applied successfully:
+migration `106` backfills user-owned entries but source-managed Content Nodes
+are reconstructed by the versioned importer from the checksummed source
+manifest.
 
 V2 message keys are semantic identifiers, not visible copy. The current 2000NL
 catalogs cover English, Russian, and Dutch and are verified against

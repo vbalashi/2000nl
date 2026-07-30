@@ -61,12 +61,35 @@ describe("/api/platform/v2/lookup", () => {
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.TRANSLATION_PROVIDER = "openai";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
+    process.env.PLATFORM_V2_LOOKUP_ENABLED = "1";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
     from.mockReset();
     from.mockImplementation(() => chain({ data: null, error: null }));
+  });
+
+  test("keeps Platform V2 lookup unavailable until the corpus readiness gate is enabled", async () => {
+    delete process.env.PLATFORM_V2_LOOKUP_ENABLED;
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+
+    const response = await POST(
+      authenticatedRequest({
+        query: "huis",
+        cardTypeId: "word-to-definition",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "platform_v2_lookup_not_enabled",
+    });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("returns one semantic SenseCard group without raw or positional identity", async () => {
@@ -344,6 +367,45 @@ describe("/api/platform/v2/lookup", () => {
     });
     expect(rpc).not.toHaveBeenCalled();
   });
+
+  test.each([
+    {
+      name: "authenticated",
+      importRoute: () => import("@/app/api/platform/v2/lookup/route"),
+      request: authenticatedRequest,
+      authenticate: () =>
+        getUser.mockResolvedValueOnce({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+    },
+    {
+      name: "catalog",
+      importRoute: () =>
+        import("@/app/api/platform/v2/catalog/lookup/route"),
+      request: catalogRequest,
+      authenticate: () => undefined,
+    },
+  ])(
+    "rejects a client-invented cardTypeId on the $name route",
+    async ({ importRoute, request, authenticate }) => {
+      const { POST } = await importRoute();
+      authenticate();
+
+      const response = await POST(
+        request({
+          query: "huis",
+          cardTypeId: "client-invented-card",
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error: "unsupported_card_type_id",
+      });
+      expect(rpc).not.toHaveBeenCalled();
+    },
+  );
 
   test("returns catalog cards without user state or mutation capabilities", async () => {
     const { POST } = await import(

@@ -12,6 +12,7 @@ import {
 } from "@/lib/platform/serverSupabase";
 import { performPlatformV2Lookup } from "@/lib/platform/platformV2LookupService";
 import { parsePlatformV2LookupRequest } from "@/lib/platform/platformV2LookupRequest";
+import { platformV2LookupEnabled } from "@/lib/platform/platformV2Rollout";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,12 @@ export async function POST(request: NextRequest) {
   if (service instanceof Response) {
     return appendPlatformRouteHeaders(
       withPlatformCors(request, service),
+      instrumentation,
+    );
+  }
+  if (!platformV2LookupEnabled()) {
+    return appendPlatformRouteHeaders(
+      reply({ error: "platform_v2_lookup_not_enabled" }, 503),
       instrumentation,
     );
   }

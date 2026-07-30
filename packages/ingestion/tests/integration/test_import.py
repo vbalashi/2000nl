@@ -269,6 +269,16 @@ def test_versioned_source_import_is_stable_and_fails_closed_on_drift(
     )
     assert repaired.no_op is False
     assert repaired.matched == 4
+    verified = import_entries(
+        data_dir=tmp_path,
+        database_url=database_url,
+        dictionary_slug=dictionary_slug,
+        dictionary_name="Pytest source dictionary",
+        nt2_slug=list_slug,
+        nt2_name="Pytest source list",
+    )
+    assert verified.no_op is True
+    assert verified.matched == 4
 
     with psycopg2.connect(database_url) as connection:
         with connection.cursor() as cursor:

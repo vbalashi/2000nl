@@ -176,3 +176,29 @@ normal rollback mechanism.
 - Authenticated lookup with limit 50 returns all 12 `goed` candidates.
 - Re-running the completed manifest reports a verified no-op and does not even
   change dictionary metadata timestamps.
+
+## Platform V2 Content Node rollout
+
+Platform V2 migrations deliberately do not infer source-managed Content Nodes
+from `word_entries.raw`. The checksummed source manifest remains the authority.
+When migrations `105` through `107` are deployed, keep
+`PLATFORM_V2_LOOKUP_ENABLED` unset and run:
+
+```bash
+python packages/ingestion/scripts/import_words_db.py \
+  --data-dir db/data/words_content
+
+python packages/ingestion/scripts/import_words_db.py \
+  --data-dir db/data/words_content
+```
+
+The first replay reconstructs any missing Content Nodes in one database
+transaction. The second replay must report a verified no-op. That no-op check
+compares the manifest, active source bindings, persisted source content, and
+the complete `(kind, sourceTextFingerprint)` Content Node multiset for every
+entry. A mismatch repairs through a normal replay or fails closed; it is never
+accepted as ready.
+
+Only after the verified no-op and V2 smoke checks may the runtime set
+`PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and
+catalog V2 lookup without changing V1 or reassigning any published identity.
