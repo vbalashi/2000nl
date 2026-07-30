@@ -55,6 +55,19 @@
     "follow": "Open reference"
   },
   "senseCard": {
+    "sections": {
+      "meaning": "Meaning",
+      "examples": "Examples",
+      "reviewPrompt": "How well did you know this meaning?"
+    },
+    "state": {
+      "new": "New",
+      "meaningCount": "{count} meaning",
+      "repeatCount": "{count} repeats"
+    },
+    "audio": {
+      "play": "Play pronunciation"
+    },
     "learning": {
       "start": "Learn"
     },

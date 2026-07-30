@@ -52,6 +52,10 @@ import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
 import { TrainingCard } from "./TrainingCard";
+import {
+  platformV2SenseCardUiEnabled,
+  TrainingSenseCardV2Tracer,
+} from "@/components/platform-v2/TrainingSenseCardV2Tracer";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -174,6 +178,7 @@ export function TrainingScreen({ user }: Props) {
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
+  const [v2TracerAvailable, setV2TracerAvailable] = useState(false);
   const {
     activeScenario,
     audioQuality,
@@ -1259,6 +1264,7 @@ export function TrainingScreen({ user }: Props) {
   useEffect(() => {
     // New card => close translation overlay.
     setTranslationTooltipOpen(false);
+    setV2TracerAvailable(false);
   }, [currentWord?.id]);
 
   useEffect(() => {
@@ -2420,32 +2426,80 @@ export function TrainingScreen({ user }: Props) {
                         </div>
                       </div>
                     )}
-                    <TrainingCard
-                      word={currentWord}
-                      mode={currentMode}
-                      revealed={revealed}
-                      hintRevealed={hintRevealed}
-                      loading={loadingWord}
-                      highlightedWord={selectedEntry?.headword}
-                      onWordClick={handleTrainingWordClick}
-                      userId={user.id}
-                      translationLang={translationLang}
-                      translationTooltipOpen={translationTooltipOpen}
-                      onTranslationTooltipOpenChange={setTranslationTooltipOpen}
-                      onToggleHint={toggleHint}
-                      onRequestReveal={revealAnswer}
-                      onShowDetails={handleShowCurrentWordDetails}
-                      audioModeEnabled={audioModeEnabled}
-                      onToggleAudioMode={() =>
-                        setAudioModeEnabled((prev) => !prev)
-                      }
-                    />
+                    {platformV2SenseCardUiEnabled() &&
+                    revealed &&
+                    currentWord &&
+                    currentMode === "word-to-definition" ? (
+                      <TrainingSenseCardV2Tracer
+                        word={currentWord}
+                        mode={currentMode}
+                        contentLanguageCode={currentTrainingLanguage}
+                        translationTargetLanguageCode={translationLang}
+                        interfaceLanguage={onboardingLang}
+                        onPlayAudio={() =>
+                          handleTrainingWordClick(currentWord.headword, {
+                            forceAudio: true,
+                          })
+                        }
+                        onLegacyReview={(result) => void handleAction(result)}
+                        onLegacyStartLearning={handleFirstTimeStart}
+                        onAvailabilityChange={setV2TracerAvailable}
+                        fallback={
+                          <TrainingCard
+                            word={currentWord}
+                            mode={currentMode}
+                            revealed={revealed}
+                            hintRevealed={hintRevealed}
+                            loading={loadingWord}
+                            highlightedWord={selectedEntry?.headword}
+                            onWordClick={handleTrainingWordClick}
+                            userId={user.id}
+                            translationLang={translationLang}
+                            translationTooltipOpen={translationTooltipOpen}
+                            onTranslationTooltipOpenChange={
+                              setTranslationTooltipOpen
+                            }
+                            onToggleHint={toggleHint}
+                            onRequestReveal={revealAnswer}
+                            onShowDetails={handleShowCurrentWordDetails}
+                            audioModeEnabled={audioModeEnabled}
+                            onToggleAudioMode={() =>
+                              setAudioModeEnabled((prev) => !prev)
+                            }
+                          />
+                        }
+                      />
+                    ) : (
+                      <TrainingCard
+                        word={currentWord}
+                        mode={currentMode}
+                        revealed={revealed}
+                        hintRevealed={hintRevealed}
+                        loading={loadingWord}
+                        highlightedWord={selectedEntry?.headword}
+                        onWordClick={handleTrainingWordClick}
+                        userId={user.id}
+                        translationLang={translationLang}
+                        translationTooltipOpen={translationTooltipOpen}
+                        onTranslationTooltipOpenChange={
+                          setTranslationTooltipOpen
+                        }
+                        onToggleHint={toggleHint}
+                        onRequestReveal={revealAnswer}
+                        onShowDetails={handleShowCurrentWordDetails}
+                        audioModeEnabled={audioModeEnabled}
+                        onToggleAudioMode={() =>
+                          setAudioModeEnabled((prev) => !prev)
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 2. Fixed Buttons Area (Always Visible) */}
+            {/* V2 owns its meaning-level controls; V1 keeps the legacy outer controls. */}
+            {!v2TracerAvailable ? (
             <div className="flex-none pt-4 pb-2 z-10">
               {/* Translucent container for buttons */}
               <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
@@ -2555,6 +2609,7 @@ export function TrainingScreen({ user }: Props) {
                 </div>
               </div>
             </div>
+            ) : null}
           </section>
 
           {/* Sidebar Section: Fixed Width, adjacent to Main */}

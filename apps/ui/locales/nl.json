@@ -55,6 +55,19 @@
     "follow": "Verwijzing openen"
   },
   "senseCard": {
+    "sections": {
+      "meaning": "Betekenis",
+      "examples": "Voorbeelden",
+      "reviewPrompt": "Hoe goed ken je deze betekenis?"
+    },
+    "state": {
+      "new": "Nieuw",
+      "meaningCount": "{count} betekenis",
+      "repeatCount": "{count}× herhaald"
+    },
+    "audio": {
+      "play": "Uitspraak afspelen"
+    },
     "learning": {
       "start": "Leren"
     },

@@ -55,6 +55,19 @@
     "follow": "Открыть ссылку"
   },
   "senseCard": {
+    "sections": {
+      "meaning": "Значение",
+      "examples": "Примеры",
+      "reviewPrompt": "Насколько хорошо вы знали это значение?"
+    },
+    "state": {
+      "new": "Новое",
+      "meaningCount": "{count} значение",
+      "repeatCount": "Повторов: {count}"
+    },
+    "audio": {
+      "play": "Воспроизвести произношение"
+    },
     "learning": {
       "start": "Учить"
     },
