@@ -56,7 +56,8 @@ Silence in `git status` is not evidence of safe classification.
 | `5e97c239` proposed ADR 0004 | integrate separately | Missing from `main`; issue #97 owns current-context review and recovery. |
 | `ca5fbe6a` dictionary audit script, tests, and evidence | superseded | PR #88 integrated the current authoritative versions. |
 | `ca5fbe6a` session/settings evidence, task map, and TrainingScreen characterization | integrate separately | Missing from `main`; issue #97 owns path-by-path review and recovery. |
-| `2026-07-06_notes.md`, training-scope brief/review/screenshots, `docs/interface-review.md` | integrate | Curated under `docs/intent/training-scope-redesign/` in this branch. |
+| `2026-07-06_notes.md`, training-scope brief/review, `docs/interface-review.md` | integrate | Curated under `docs/intent/training-scope-redesign/` in this branch. |
+| Training-scope screenshots 01–04 | restricted local archive | Excluded from the public PR because two contain an account email and user-created list names. |
 | `.codex-exports/`, `_qa/`, `_render_check/` | restricted local archive | Exact bytes and hashes are retained under `/Users/khrustal/archive/2000nl/stale-main-2026-07-30`; public publication is prohibited pending privacy review. |
 | `2000nl.pen`, `untitled.pen` | restricted local archive | Exact encrypted binaries and hashes are retained locally; neither overwrites the canonical shared Pen. |
 | Untracked migration 103 | superseded and archived | Exact hash was recovered by #94 and also remains in the restricted local snapshot. |
@@ -81,5 +82,6 @@ Silence in `git status` is not evidence of safe classification.
 - Do not overwrite the canonical program Pen file at
   `/Users/khrustal/dev/pens/2000nl-audiofilms.pen`.
 - Stop on content ambiguity: archive first, then ask for product ownership.
-- Keep the preservation branch until the owner accepts the final retirement
-  checkpoint.
+- Keep the preserved-commits branch and restricted local archive until the
+  owner accepts the final retirement checkpoint and chooses a private backup
+  destination for local-only payloads.
