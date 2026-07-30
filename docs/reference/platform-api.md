@@ -456,6 +456,16 @@ and idiom-expression matches first, rendered as field matches rather than
 cards. In the `kwestie` comparison, both Van Dale and 2000NL surface examples
 from `kwestie`, `mening`, and `vreedzaam`.
 
+Body-group matching is lexical, not arbitrary substring search. The FTS branch
+is the primary matcher. The fallback branch exists for indexed lexical forms
+that FTS does not surface as expected, and it must use trusted `word_forms` /
+`dictionary_search_fields` form rows at token boundaries. For example, `fel`
+may match `fel` and known forms such as `felle`, but it must not match unrelated
+tokens such as `tafel`, `betwijfelen`, `Felix`, or `feliciteren`. This rule is
+implemented by `db/migrations/104_body_group_lexical_form_fallback.sql` and
+covered by the DB/RPC grouped-search regression in
+`apps/ui/tests/fsrs/fsrsRpc.test.ts`.
+
 `definitions` is intentionally learner-oriented rather than a literal Van Dale
 article-order clone. Van Dale's visible `Within definitions` for `kwestie`
 starts with `aangelegenheid`, `anders`, `delicaat`, `kwestie`, and `mening`.

@@ -34,13 +34,26 @@ match an arbitrary occurrence of the query inside an unrelated token.
 ## Slices
 
 - [x] Verify current `main`, competing worktrees, and the next migration number.
-- [ ] Port only the historical DB/RPC regression and prove it fails.
-- [ ] Add collision-free migration 104 and equivalent bootstrap definition.
-- [ ] Restore the regression and the complete DB-backed suite to green.
-- [ ] Update current grouped-search documentation with the new migration path.
-- [ ] Run bootstrap, migration idempotence, typecheck/lint, and diff checks.
+- [x] Port only the historical DB/RPC regression and prove it fails.
+- [x] Add collision-free migration 104 and equivalent bootstrap definition.
+- [x] Restore the regression and the complete DB-backed suite to green.
+- [x] Update current grouped-search documentation with the new migration path.
+- [x] Run bootstrap, migration idempotence, typecheck/lint, and diff checks.
 - [ ] Run independent Standards and Spec reviews.
 - [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
+
+## Validation evidence
+
+- TDD red at test-only SHA `191d72f7`: the second grouped-search page returned
+  the unrelated `*-midword` entry instead of the trusted `*-prefix` lexical
+  form.
+- Focused green after local migration 104: 1/1, 45 skipped.
+- Migration 104 applied twice with `ON_ERROR_STOP=1`: pass.
+- Full bootstrap including migration 104: pass.
+- DB-backed FSRS/RPC suite: 50/50 pass.
+- TypeScript typecheck: pass.
+- Next.js lint: pass without warnings.
+- `git diff --check`: pass.
 
 ## Stop rules
 
