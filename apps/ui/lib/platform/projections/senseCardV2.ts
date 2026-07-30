@@ -13,7 +13,7 @@ import type {
   PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
 
-type ProjectionCardState = {
+export type ProjectionCardState = {
   stateRevision: string;
   clickCount: number;
   seenCount: number;
@@ -47,6 +47,8 @@ export type PlatformContentNodeBindingV2Input = {
 
 export type PlatformLookupV2ProjectionEntry = {
   headwordGroupId: string;
+  meaningOrdinal?: number | null;
+  allowMutationCapabilities?: boolean;
   entry: DictionaryLookupResult["entry"];
   dictionary: DictionarySummary;
   contentNodeBindings: PlatformContentNodeBindingV2Input[];
@@ -215,7 +217,7 @@ function projectSenseCard(
   return {
     kind: "sense-card",
     entryId: item.entry.id,
-    meaningOrdinal: item.entry.meaningId ?? null,
+    meaningOrdinal: item.meaningOrdinal ?? item.entry.meaningId ?? null,
     ...(item.entry.partOfSpeech
       ? {
           partOfSpeech: semanticTerm(
@@ -236,6 +238,7 @@ function projectSenseCard(
       card,
       entryTarget,
       targetLanguageCode: request.translationTargetLanguageCode,
+      allowMutations: item.allowMutationCapabilities !== false,
     }),
     ...(item.wordDetails ? { wordDetails: item.wordDetails } : {}),
   };
@@ -278,8 +281,10 @@ function capabilitiesFor(params: {
     contentRevision: string;
   };
   targetLanguageCode: string | null;
+  allowMutations: boolean;
 }): PlatformSenseCardCapabilityV2[] {
   const capabilities: PlatformSenseCardCapabilityV2[] = [];
+  if (!params.allowMutations) return capabilities;
   const card = params.card;
   if (card) {
     const target = {

@@ -39,11 +39,11 @@ Tests assert these public seams, not internal helper calls.
 
 ### 3 — Additive lookup routes
 
-- [ ] require and echo `cardTypeId`;
-- [ ] return whole groups with explicit completeness metadata;
-- [ ] add authenticated `/api/platform/v2/lookup`;
-- [ ] add public `/api/platform/v2/catalog/lookup`;
-- [ ] keep Known/undo capabilities absent until #89.
+- [x] require and echo `cardTypeId`;
+- [x] return whole groups with explicit completeness metadata;
+- [x] add authenticated `/api/platform/v2/lookup`;
+- [x] add public `/api/platform/v2/catalog/lookup`;
+- [x] keep Known/undo capabilities absent until #89.
 
 ### 4 — Translation, rich content, and compatibility
 

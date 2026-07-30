@@ -136,7 +136,7 @@ def platform_v2_content_node_inputs(
                 append_node(
                     input_key=idiom_key,
                     kind="idiom",
-                    source_path=f"{idiom_path}.expression",
+                    source_path=idiom_path,
                     text=idiom.get("expression"),
                 )
                 append_node(
