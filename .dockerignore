@@ -1,0 +1,26 @@
+# Production UI builds use the repository root only so the app can resolve the
+# shared Platform contract. Keep the build context default-deny.
+**
+
+!apps/
+!apps/ui/
+!apps/ui/**
+!packages/
+!packages/shared/
+!packages/shared/**
+
+# Local state, credentials, and build outputs must never re-enter through an
+# allowed source directory.
+**/.env*
+**/.npmrc
+**/.git/
+**/.DS_Store
+**/node_modules/
+**/.next/
+**/*.tsbuildinfo
+**/*.log
+**/playwright-report/
+**/test-results/
+**/coverage/
+apps/ui/yarn.lock
+apps/ui/pnpm-lock.yaml
