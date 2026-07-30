@@ -51,11 +51,11 @@ Silence in `git status` is not evidence of safe classification.
 | Source | Disposition | Evidence |
 | --- | --- | --- |
 | Working diff recovered by #94 | superseded | Integrated as `702b449352f6e3b064221e20964953e33d9c4b30`; the rich cache contract was versioned to V2 during review. |
-| `c21a073f` grouped-search fallback | integrate separately | Issue #96 owns a collision-free port. Historical migration number 102 now conflicts with the integrated source-entry migration. |
+| `c21a073f` grouped-search fallback | integrated | Issue #96 was delivered by PR #99 (`cddd84ac`) and closed out by PR #101 (`19d02d89`); both merge commits are ancestors of current `origin/main`. The historical migration number 102 was replaced by a collision-free migration. |
 | `5e97c239` ADR 0003 and dictionary inventory | superseded | PR #88 integrated and evolved these files. |
-| `5e97c239` proposed ADR 0004 | integrate separately | Missing from `main`; issue #97 owns current-context review and recovery. |
+| `5e97c239` proposed ADR 0004 | integrated | Issue #97 recovered it through PR #100 (`dfc2fd4c`) and closeout PR #102 (`704a22fe`); both merge commits are ancestors of current `origin/main`. |
 | `ca5fbe6a` dictionary audit script, tests, and evidence | superseded | PR #88 integrated the current authoritative versions. |
-| `ca5fbe6a` session/settings evidence, task map, and TrainingScreen characterization | integrate separately | Missing from `main`; issue #97 owns path-by-path review and recovery. |
+| `ca5fbe6a` session/settings evidence, task map, and TrainingScreen characterization | integrated | Issue #97 recovered the current-context subset through PR #100 (`dfc2fd4c`) and closeout PR #102 (`704a22fe`), now ancestors of `origin/main`. |
 | `2026-07-06_notes.md`, training-scope brief/review, `docs/interface-review.md` | integrate | Curated under `docs/intent/training-scope-redesign/` in this branch. |
 | Training-scope screenshots 01–04 | restricted local archive | Excluded from the public PR because two contain an account email and user-created list names. |
 | `.codex-exports/`, `_qa/`, `_render_check/` | restricted local archive | Exact bytes and hashes are retained under `/Users/khrustal/archive/2000nl/stale-main-2026-07-30`; public publication is prohibited pending privacy review. |
@@ -72,7 +72,9 @@ Silence in `git status` is not evidence of safe classification.
 - The archive is mode `0700` and contains `SHA256SUMS` covering every preserved
   local-only file. The initial remote branch was deleted immediately after
   personal data was identified; its payload must not be published.
-- Follow-up implementation issues: #96 and #97.
+- Follow-up issues #96 and #97 are closed. Their implementation and closeout
+  commits (`cddd84ac`, `19d02d89`, `dfc2fd4c`, and `704a22fe`) are all
+  integrated into current `origin/main`.
 
 ## Stop rules
 
