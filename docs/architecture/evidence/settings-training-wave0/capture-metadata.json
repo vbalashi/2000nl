@@ -1,0 +1,35 @@
+{
+  "browserSurface": "Codex in-app browser",
+  "capturedAt": "2026-07-24",
+  "database": {
+    "dictionarySearchIndex": {
+      "documentRowCount": 0,
+      "fieldRowCount": 0,
+      "pendingBackfill": true,
+      "status": "warning"
+    },
+    "platformRpcContract": "ok",
+    "target": "local"
+  },
+  "desktopCssViewport": {
+    "height": 1000,
+    "width": 1440
+  },
+  "limitations": [
+    "The local database contained no dictionary entries or search-index documents, so captured Training and Library content states are empty."
+  ],
+  "mobileCssViewport": {
+    "height": 844,
+    "width": 390
+  },
+  "repositoryRevision": "5e97c239",
+  "screenshots": {
+    "01-desktop-training-empty.jpg": "ae0c697d826f48d9b49afe0aca4578bcb69de4514676f5cfac7af92d27c8b27d",
+    "02-desktop-settings.jpg": "3603078726bd110755028ecc75dacd0d70403977f34cae22b21436d22f1426b4",
+    "03-desktop-search.jpg": "46846cb030001e043788fdbd267d2a756d014b4d3cf77b74b855f353d6ecdc85",
+    "04-desktop-lists.jpg": "015f57c3de5b0a1a664b5304949c8afc4c2e8aa99027566fc98d07381db04ad4",
+    "05-mobile-lists.jpg": "c5d28286fbd162c02895d93b296109db51a9c9c7cdab2fe5762bc62e66536ed1",
+    "06-mobile-settings.jpg": "32318d43fc2d00a984e8d9cd486459d0649d136c2ce6992ab98bb3149860a304",
+    "07-mobile-training-empty.jpg": "d98a110d8934f37ee6c3841e7f410258d3f105da4f2313d4b1f7222a729add12"
+  }
+}
