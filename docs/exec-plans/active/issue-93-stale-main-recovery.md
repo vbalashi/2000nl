@@ -47,16 +47,63 @@ then restore green.
 
 ## Slices
 
-- [ ] Record start checkpoint and prove the recovery worktree is clean.
-- [ ] Port tests and public response type; record the expected red result.
-- [ ] Port provider, prompts, route, migration, bootstrap, and API docs; restore green.
-- [ ] Commit rich translation as an independent semantic change.
-- [ ] Port and validate the deploy workflow filter; commit independently.
-- [ ] Port the #53 glossary terms without implementing #53; commit independently.
-- [ ] Run focused tests, typecheck, lint/diff checks, and workflow validation.
+- [x] Record start checkpoint and prove the recovery worktree is clean.
+- [x] Port tests and public response type; record the expected red result.
+- [x] Port provider, prompts, route, migration, bootstrap, and API docs; restore green.
+- [x] Commit rich translation as an independent semantic change.
+- [x] Port and validate the deploy workflow filter; commit independently.
+- [x] Port the #53 glossary terms without implementing #53; commit independently.
+- [x] Run focused tests, typecheck, lint/diff checks, and workflow validation.
 - [ ] Run independent Standards and Spec reviews against the fixed base.
 - [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
-- [ ] Document the guardrail failure timeline and remaining enforcement gaps.
+- [x] Document the guardrail failure timeline and remaining enforcement gaps.
+
+## Validation evidence
+
+- TDD red: the two recovered public-seam tests failed before implementation
+  recovery, one because `translateWithContextAndNote` was not called and one
+  because `literalTranslations` was absent.
+- Focused green: 33/33 route and provider tests.
+- Full UI suite: 352 passed, 50 skipped.
+- TypeScript typecheck: pass.
+- Next.js lint: pass without warnings.
+- `actionlint` for `deploy-nuc.yml`: pass.
+- `git diff --check`: pass.
+
+## Guardrail incident analysis
+
+### Timeline
+
+1. The deploy filter, source-label glossary, and rich-translation work were
+   written between 2026-06-25 and 2026-06-29.
+2. The dev-wide agent-work contract and program coordination additions were
+   committed on 2026-07-26. The original orphaned work therefore predates these
+   rules.
+3. The 2026-07-26 manual audit correctly identified the default checkout as
+   occupied evidence and directed future work to isolated worktrees.
+4. WorkGate repository adoption was not applied. WorkGate issue #4 and draft PR
+   #18 were later closed as an over-broad experiment; 2000NL adoption issues #81
+   and #82 remain open.
+5. The only active 2000NL Git hook is the January migration checker. It does
+   not check claims, branch/worktree ownership, dirty state, pushed state, or
+   integration, and it exits zero.
+6. On 2026-07-29 an agent temporarily edited the stale default checkout's
+   `CONTEXT.md` after the policy existed. The edit was removed, but it proves
+   that a text-only start rule can be missed.
+7. Issue #70 demonstrates the successful manual path: explicit claim, isolated
+   worktree, clean exact-SHA checkpoint, push, and draft PR.
+
+### Conclusion
+
+The policy did prevent the old dirty checkout from contaminating #69 and #70,
+but it could not retroactively recover pre-policy work and it had no
+deterministic SessionStart enforcement. The remaining atomic gap is start-time
+visibility, not another broad transactional hook system.
+
+The qualifying incident and bounded correction are recorded in
+`vbalashi/workgate#20`, under the incident registry `vbalashi/workgate#19`.
+That issue authorizes evaluation of a read-only Codex SessionStart status
+injection only; it does not reopen the parked WorkGate adoption design.
 
 ## Stop rules
 
@@ -67,4 +114,3 @@ then restore green.
   `/Users/khrustal/dev/2000nl`.
 - Do not mark Done until the reviewed branch is integrated and verified on
   `main`.
-
