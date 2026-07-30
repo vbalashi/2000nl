@@ -12,7 +12,13 @@ const translate = vi.fn(async (texts: string[]) =>
 const translateWithContext = vi.fn(async (texts: string[]) =>
   texts.map((text) => `translated-with-context:${text}`),
 );
+const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
+  translations: texts.map((text) => `translated-with-context:${text}`),
+  literalTranslations: texts.map((text) => `literal:${text}`),
+  note: "translator note",
+}));
 let useTranslateWithContext = false;
+let useRichTranslateWithContext = false;
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
@@ -22,7 +28,9 @@ vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
     translator: useTranslateWithContext
-      ? { translate, translateWithContext }
+      ? useRichTranslateWithContext
+        ? { translate, translateWithContext, translateWithContextAndNote }
+        : { translate, translateWithContext }
       : { translate },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
@@ -144,7 +152,9 @@ describe("/api/platform/v1/translation", () => {
     from.mockReset();
     translate.mockClear();
     translateWithContext.mockClear();
+    translateWithContextAndNote.mockClear();
     useTranslateWithContext = false;
+    useRichTranslateWithContext = false;
   });
 
   test("answers CORS preflight for configured origins", async () => {
@@ -545,6 +555,7 @@ describe("/api/platform/v1/translation", () => {
       expect.objectContaining({
         status: "pending",
         purpose: "youtube-recall",
+        translation_policy_version: "platform-text-translation-v2",
       }),
       { onConflict: "translation_id", ignoreDuplicates: true },
     );
@@ -563,7 +574,7 @@ describe("/api/platform/v1/translation", () => {
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
       translatedText: "translated:ik ga naar huis",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
     });
   });
@@ -659,6 +670,85 @@ describe("/api/platform/v1/translation", () => {
     expect(first.translationId).not.toBe(second.translationId);
   });
 
+  test("returns rich text translation fields when provider supplies them", async () => {
+    useTranslateWithContext = true;
+    useRichTranslateWithContext = true;
+    vi.resetModules();
+    createClient.mockReset();
+    getUser.mockReset();
+    from.mockReset();
+
+    const userClient = {
+      auth: { getUser },
+      from,
+    };
+    const serviceClient = {
+      from,
+    };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    const cacheLookupChain = queryChain({ data: null, error: null });
+    const pendingInsertChain = queryChain({ data: null, error: null });
+    const readyUpdateChain = queryChain({ data: null, error: null });
+    from.mockImplementation((table: string) => {
+      if (table === "platform_text_translations") {
+        const calls = from.mock.calls.filter(([name]) => name === table).length;
+        if (calls === 1) return cacheLookupChain;
+        if (calls === 2) return pendingInsertChain;
+        return readyUpdateChain;
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/text-translation/route");
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v1/text-translation", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer token-1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          text: "enorm toe.",
+          sourceLanguageCode: "nl",
+          targetLanguageCode: "ru",
+          purpose: "youtube-span-translation",
+          contextText: "Plotseling nemen de kansen om leven in het universum te vinden enorm toe.",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(translateWithContextAndNote).toHaveBeenCalledWith(
+      ["enorm toe."],
+      "ru",
+      {
+        sourceLanguageCode: "nl",
+        purpose: "youtube-span-translation",
+        contextText: "Plotseling nemen de kansen om leven in het universum te vinden enorm toe.",
+      },
+    );
+    expect(readyUpdateChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        translated_text: "translated-with-context:enorm toe.",
+        literal_translated_text: "literal:enorm toe.",
+        translator_comment: "translator note",
+      }),
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      translatedText: "translated-with-context:enorm toe.",
+      literalTranslatedText: "literal:enorm toe.",
+      translatorComment: "translator note",
+    });
+
+    useRichTranslateWithContext = false;
+  });
+
   test("defaults text translation purpose for YouTube phrase practice", async () => {
     const userClient = {
       auth: { getUser },
@@ -718,7 +808,7 @@ describe("/api/platform/v1/translation", () => {
         sourceLanguageCode: "nl",
         targetLanguageCode: "en",
         translatedText: "translated:tot morgen",
-        translationPolicyVersion: "platform-text-translation-v1",
+        translationPolicyVersion: "platform-text-translation-v2",
         cached: false,
       }),
     );
@@ -752,7 +842,7 @@ describe("/api/platform/v1/translation", () => {
             source_language_code: "nl",
             target_language_code: "en",
             purpose: "youtube-phrase-practice",
-            translation_policy_version: "platform-text-translation-v1",
+            translation_policy_version: "platform-text-translation-v2",
           },
           error: null,
         });
@@ -785,7 +875,7 @@ describe("/api/platform/v1/translation", () => {
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
       translatedText: "see you tomorrow",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -818,7 +908,7 @@ describe("/api/platform/v1/translation", () => {
             source_language_code: "nl",
             target_language_code: "en",
             purpose: "youtube-phrase-practice",
-            translation_policy_version: "platform-text-translation-v1",
+            translation_policy_version: "platform-text-translation-v2",
           },
           error: null,
         });
@@ -850,7 +940,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: "source-hash",
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -883,7 +973,7 @@ describe("/api/platform/v1/translation", () => {
         source_language_code: "nl",
         target_language_code: "en",
         purpose: "youtube-phrase-practice",
-        translation_policy_version: "platform-text-translation-v1",
+        translation_policy_version: "platform-text-translation-v2",
       },
       error: null,
     });
@@ -927,7 +1017,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: "source-hash",
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
     });
   });
@@ -994,7 +1084,7 @@ describe("/api/platform/v1/translation", () => {
       sourceTextHash: expect.any(String),
       sourceLanguageCode: "nl",
       targetLanguageCode: "en",
-      translationPolicyVersion: "platform-text-translation-v1",
+      translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
       error: "provider down",
     });

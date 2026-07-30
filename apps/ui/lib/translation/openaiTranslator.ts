@@ -14,10 +14,14 @@ type OpenAITranslatorOptions = {
 export type OpenAITranslationContext = {
   partOfSpeech?: string | null;
   partOfSpeechCode?: string | null;
+  sourceLanguageCode?: string | null;
+  purpose?: string | null;
+  contextText?: string | null;
 };
 
 export type OpenAITranslationResult = {
   translations: string[];
+  literalTranslations?: string[];
   note: string | null;
   // Optional metadata for debugging/observability (never includes input texts).
   meta?: {
@@ -91,6 +95,9 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
   const label = targetLanguageLabel(targetLang);
   const pos = context?.partOfSpeech?.trim() || null;
   const posCode = context?.partOfSpeechCode?.trim() || null;
+  const sourceLanguageCode = context?.sourceLanguageCode?.trim() || null;
+  const purpose = context?.purpose?.trim() || null;
+  const contextText = context?.contextText?.trim() || null;
 
   const systemPrompt =
     loadPromptText("openai_translation_system_v1.txt").trim() ||
@@ -109,11 +116,17 @@ function buildMessages(texts: string[], targetLang: string, context?: OpenAITran
       role: "user",
       content: JSON.stringify({
         targetLanguage: label,
+        targetLanguageCode: targetLang,
+        commentLanguage: label,
+        sourceLanguageCode,
+        purpose,
         partOfSpeech: pos,
         partOfSpeechCode: posCode,
         texts,
+        contextText,
         responseFormat: {
           translations: ["string"],
+          literalTranslations: ["string"],
           note: "string | null",
         },
         instructions: userInstructions,
@@ -140,6 +153,13 @@ function parseTranslationResult(content: string, expectedCount: number): OpenAIT
     );
   }
 
+  const literalTranslationsRaw = payload?.literalTranslations;
+  const literalTranslations = Array.isArray(literalTranslationsRaw)
+    ? literalTranslationsRaw.map((item) =>
+        typeof item === "string" ? item : String(item),
+      )
+    : undefined;
+
   const noteRaw = payload?.note;
   const note =
     typeof noteRaw === "string" ? noteRaw.trim().slice(0, 800) : null;
@@ -148,6 +168,7 @@ function parseTranslationResult(content: string, expectedCount: number): OpenAIT
     translations: translations.map((item) =>
       typeof item === "string" ? item : String(item)
     ),
+    ...(literalTranslations?.length === expectedCount ? { literalTranslations } : {}),
     note: note && note.length > 0 ? note : null,
     meta: {
       providerSelected: "openai",

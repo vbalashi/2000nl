@@ -313,3 +313,6 @@
 
 -- Versioned source bindings and disjoint source/user writer identity
 \i db/migrations/102_versioned_source_entry_bindings.sql
+
+-- Rich cached output for platform text translation artifacts
+\i db/migrations/103_platform_text_translation_rich_fields.sql

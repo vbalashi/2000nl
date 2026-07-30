@@ -407,6 +407,8 @@ export type PlatformTextTranslationApiResponse = {
   sourceLanguageCode: string;
   targetLanguageCode: string;
   translatedText?: string;
+  literalTranslatedText?: string;
+  translatorComment?: string;
   translationPolicyVersion: string;
   cached: boolean;
   error?: string | null;

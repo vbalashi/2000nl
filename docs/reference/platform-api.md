@@ -882,7 +882,9 @@ Response:
   "sourceLanguageCode": "nl",
   "targetLanguageCode": "en",
   "translatedText": "I am going home",
-  "translationPolicyVersion": "platform-text-translation-v1",
+  "literalTranslatedText": "I go to house",
+  "translatorComment": "In this sentence, the phrase is a normal motion phrase; the literal wording is less natural.",
+  "translationPolicyVersion": "platform-text-translation-v2",
   "cached": false
 }
 ```
@@ -894,7 +896,10 @@ optional context text hash, source language, resolved target language, purpose,
 and `translationPolicyVersion`; it is stable for retries of the same artifact.
 When `contextText` is supplied, the platform may pass it to a context-aware
 provider prompt, so it participates in artifact identity and the response
-includes `contextTextHash` alongside `sourceTextHash`.
+includes `contextTextHash` alongside `sourceTextHash`. `translatedText` is the
+contextual translation. Providers that support richer output may also return
+`literalTranslatedText`, a without-context/literal rendering of the selected
+text, and `translatorComment`, a short explanation for learners and reviewers.
 The endpoint persists generic text translation artifacts in
 `platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
 return with `cached: true`; a fresh provider call returns with `cached: false`.
