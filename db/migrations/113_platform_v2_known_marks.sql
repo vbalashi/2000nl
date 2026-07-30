@@ -3,8 +3,7 @@
 -- A Known Mark is an overlay on one exact card target. It never rewrites the
 -- preserved scheduler/FSRS fields in user_card_status.
 
-ALTER TABLE public.user_card_status
-    ADD COLUMN IF NOT EXISTS state_revision uuid NOT NULL DEFAULT gen_random_uuid();
+BEGIN;
 
 CREATE OR REPLACE FUNCTION private.bump_user_card_state_revision()
 RETURNS trigger
@@ -60,38 +59,60 @@ CREATE INDEX IF NOT EXISTS user_card_known_marks_target_history_idx
 CREATE OR REPLACE FUNCTION private.reject_known_card_scheduler_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
 DECLARE
-    v_user_id uuid := COALESCE(NEW.user_id, OLD.user_id);
-    v_entry_id uuid := COALESCE(NEW.entry_id, OLD.entry_id);
-    v_card_type_id text := COALESCE(NEW.card_type_id, OLD.card_type_id);
+    v_old_is_known boolean := false;
+    v_new_is_known boolean := false;
 BEGIN
     IF TG_OP = 'DELETE'
        AND (
            NOT EXISTS (
                SELECT 1
                  FROM auth.users u
-                WHERE u.id = v_user_id
+                WHERE u.id = OLD.user_id
            )
            OR NOT EXISTS (
                SELECT 1
                  FROM public.word_entries e
-                WHERE e.id = v_entry_id
+                WHERE e.id = OLD.entry_id
            )
        ) THEN
         RETURN OLD;
     END IF;
 
-    IF NOT EXISTS (
+    SELECT EXISTS (
         SELECT 1
           FROM public.user_card_known_marks k
-         WHERE k.user_id = v_user_id
-           AND k.entry_id = v_entry_id
-           AND k.card_type_id = v_card_type_id
+         WHERE k.user_id = OLD.user_id
+           AND k.entry_id = OLD.entry_id
+           AND k.card_type_id = OLD.card_type_id
            AND k.cleared_at IS NULL
-    ) THEN
+    )
+    INTO v_old_is_known;
+
+    IF TG_OP = 'UPDATE' THEN
+        SELECT EXISTS (
+            SELECT 1
+              FROM public.user_card_known_marks k
+             WHERE k.user_id = NEW.user_id
+               AND k.entry_id = NEW.entry_id
+               AND k.card_type_id = NEW.card_type_id
+               AND k.cleared_at IS NULL
+        )
+        INTO v_new_is_known;
+    END IF;
+
+    IF NOT v_old_is_known AND NOT v_new_is_known THEN
         RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    IF TG_OP = 'UPDATE'
+       AND ROW(NEW.user_id, NEW.entry_id, NEW.card_type_id)
+           IS DISTINCT FROM
+           ROW(OLD.user_id, OLD.entry_id, OLD.card_type_id) THEN
+        RAISE EXCEPTION 'card_is_known';
     END IF;
 
     IF TG_OP = 'DELETE' OR ROW(
@@ -137,6 +158,9 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+REVOKE ALL ON FUNCTION private.reject_known_card_scheduler_mutation()
+FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS reject_known_card_scheduler_mutation
     ON public.user_card_status;
@@ -220,7 +244,7 @@ REVOKE ALL ON FUNCTION public.get_next_card_without_known(
     text,
     text,
     text[]
-) FROM PUBLIC, anon, authenticated;
+) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.get_next_filtered_card_without_known(
     uuid,
     text[],
@@ -231,7 +255,7 @@ REVOKE ALL ON FUNCTION public.get_next_filtered_card_without_known(
     text,
     text[],
     jsonb
-) FROM PUBLIC, anon, authenticated;
+) FROM PUBLIC, anon, authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.get_next_card(
     p_user_id uuid,
@@ -563,6 +587,7 @@ AS $$
 DECLARE
     v_dictionary_id uuid;
     v_status_revision text;
+    v_scheduler_phase text;
     v_existing_receipt public.platform_v2_action_receipts%rowtype;
     v_existing_event public.user_card_action_events%rowtype;
     v_active_mark public.user_card_known_marks%rowtype;
@@ -589,9 +614,23 @@ DECLARE
     v_start_ms integer;
     v_end_ms integer;
     v_phrase_index integer;
+    v_jwt_role text := COALESCE(
+        NULLIF(current_setting('request.jwt.claim.role', true), ''),
+        (
+            NULLIF(
+                current_setting('request.jwt.claims', true),
+                ''
+            )::jsonb
+        )->>'role'
+    );
 BEGIN
-    IF (select auth.uid()) IS NULL
-       OR p_user_id IS DISTINCT FROM (select auth.uid()) THEN
+    IF NOT (
+        (
+            (select auth.uid()) IS NOT NULL
+            AND p_user_id IS NOT DISTINCT FROM (select auth.uid())
+        )
+        OR v_jwt_role = 'service_role'
+    ) THEN
         RAISE EXCEPTION 'unauthorized';
     END IF;
     IF p_action_id NOT IN (
@@ -603,7 +642,10 @@ BEGIN
         RAISE EXCEPTION 'unsupported_action';
     END IF;
     IF p_action_id = 'review-card'
-       AND p_review_result NOT IN ('fail', 'hard', 'success', 'easy') THEN
+       AND (
+           p_review_result IS NULL
+           OR p_review_result NOT IN ('fail', 'hard', 'success', 'easy')
+       ) THEN
         RAISE EXCEPTION 'missing_or_invalid_result';
     END IF;
     IF p_action_id <> 'review-card' AND p_review_result IS NOT NULL THEN
@@ -726,8 +768,20 @@ BEGIN
         )
     );
 
-    SELECT state_revision::text
-      INTO v_status_revision
+    SELECT
+        state_revision::text,
+        CASE
+            WHEN COALESCE(hidden, false) THEN 'hidden'
+            WHEN frozen_until IS NOT NULL AND frozen_until > now()
+                THEN 'frozen'
+            WHEN COALESCE(in_learning, false) THEN 'learning'
+            WHEN COALESCE(fsrs_reps, 0) > 0
+              OR last_reviewed_at IS NOT NULL THEN 'reviewing'
+            WHEN COALESCE(seen_count, 0) > 0
+              OR COALESCE(click_count, 0) > 0 THEN 'encountered'
+            ELSE 'not-started'
+        END
+      INTO v_status_revision, v_scheduler_phase
       FROM public.user_card_status
      WHERE user_id = p_user_id
        AND entry_id = p_entry_id
@@ -768,7 +822,8 @@ BEGIN
             0,
             false
         )
-        RETURNING state_revision::text INTO v_status_revision;
+        RETURNING state_revision::text, 'not-started'
+        INTO v_status_revision, v_scheduler_phase;
     ELSIF v_status_revision IS DISTINCT FROM p_state_revision THEN
         RAISE EXCEPTION 'platform_card_state_conflict';
     END IF;
@@ -795,6 +850,24 @@ BEGIN
               IS DISTINCT FROM p_known_mark_revision THEN
             RAISE EXCEPTION 'platform_known_mark_conflict';
         END IF;
+    END IF;
+
+    IF (
+        p_action_id = 'start-learning'
+        AND v_scheduler_phase NOT IN ('not-started', 'encountered')
+    ) OR (
+        p_action_id = 'review-card'
+        AND v_scheduler_phase NOT IN ('learning', 'reviewing')
+    ) OR (
+        p_action_id = 'mark-known'
+        AND v_scheduler_phase NOT IN (
+            'not-started',
+            'encountered',
+            'learning',
+            'reviewing'
+        )
+    ) THEN
+        RAISE EXCEPTION 'platform_action_not_available';
     END IF;
 
     v_source := CASE
@@ -1219,7 +1292,7 @@ REVOKE ALL ON FUNCTION public.perform_platform_v2_card_action(
     jsonb,
     text,
     text
-) FROM PUBLIC, anon;
+) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.perform_platform_v2_card_action(
     uuid,
     text,
@@ -1233,4 +1306,6 @@ GRANT EXECUTE ON FUNCTION public.perform_platform_v2_card_action(
     jsonb,
     text,
     text
-) TO authenticated;
+) TO service_role;
+
+COMMIT;

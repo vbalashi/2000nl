@@ -45,6 +45,7 @@
       "verify-v1-consumer-smoke",
       "keep-v2-for-remaining-consumers"
     ],
-    "emittedIdentityPolicy": "retire-or-roll-forward-never-reassign"
+    "emittedIdentityPolicy": "retire-or-roll-forward-never-reassign",
+    "acceptedKnownMarkRollback": "disable-consumer-surface-preserve-server-state"
   }
 }

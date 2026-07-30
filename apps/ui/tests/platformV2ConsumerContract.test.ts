@@ -173,7 +173,7 @@ describe("Platform V2 shared consumer contract", () => {
   test("manifest names every shared lookup fixture", () => {
     const manifest = readJson("manifest.json");
     expect(manifest).toEqual({
-      fixtureVersion: "platform-v2-consumer-fixtures-2",
+      fixtureVersion: "platform-v2-consumer-fixtures-3",
       contractVersion: "platform-lookup-v2",
       files: [
         "catalog-single-sense.json",
@@ -192,6 +192,12 @@ describe("Platform V2 shared consumer contract", () => {
     expect(fixture.markRequest.target).toEqual(
       fixture.initialCapability.target,
     );
+    expect(fixture.initialCapability.target.stateRevision).toBe(
+      fixture.initialCard.stateRevision,
+    );
+    expect(fixture.markResponse.card.scheduler).toEqual(
+      fixture.initialCard.scheduler,
+    );
     expect(fixture.markResponse.card.knownMark).toEqual({
       markId: fixture.undoCapability.target.activeKnownMarkId,
       revision: fixture.undoCapability.target.knownMarkRevision,
@@ -201,6 +207,20 @@ describe("Platform V2 shared consumer contract", () => {
       fixture.undoCapability.target,
     );
     expect(fixture.undoRequest.target.stateRevision).toBe(
+      fixture.markResponse.card.stateRevision,
+    );
+    expect(fixture.undoResponse).toEqual(
+      expect.objectContaining({
+        actionId: "undo-known",
+        clientEventId: fixture.undoRequest.clientEventId,
+        accepted: true,
+      }),
+    );
+    expect(fixture.undoResponse.card.scheduler).toEqual(
+      fixture.initialCard.scheduler,
+    );
+    expect(fixture.undoResponse.card.knownMark).toBeNull();
+    expect(fixture.undoResponse.card.stateRevision).not.toBe(
       fixture.markResponse.card.stateRevision,
     );
   });
@@ -226,6 +246,8 @@ describe("Platform V2 shared consumer contract", () => {
         ],
         emittedIdentityPolicy:
           "retire-or-roll-forward-never-reassign",
+        acceptedKnownMarkRollback:
+          "disable-consumer-surface-preserve-server-state",
       }),
     );
   });

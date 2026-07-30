@@ -147,6 +147,44 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
+  test("executes through the service-role-only production RPC path", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(
+        client,
+        `platform-known-service-role-${Date.now()}`,
+      );
+
+      await client.query(
+        `select
+           set_config('request.jwt.claim.sub', '', true),
+           set_config('request.jwt.claim.role', 'service_role', true)`,
+      );
+      await client.query("set local role service_role");
+      const result = await client.query(
+        `select perform_platform_v2_card_action(
+           $1::uuid, 'mark-known', $2::uuid, $3::text, 'untracked',
+           null, null, null, $4::uuid, null, 'first_party', null
+         ) as result`,
+        [userId, entryId, cardTypeId, randomUUID()],
+      );
+
+      expect(result.rows[0].result).toEqual(
+        expect.objectContaining({
+          status: "accepted",
+          actionId: "mark-known",
+          card: expect.objectContaining({
+            knownMark: expect.objectContaining({
+              markId: expect.any(String),
+            }),
+          }),
+        }),
+      );
+    });
+  });
+
   test("uses the same revision-checked boundary for Start Learning and Review", async () => {
     const userId = randomUUID();
 
@@ -172,6 +210,25 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
             knownMark: null,
           }),
         );
+
+        await client.query("savepoint missing_review_result");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+              null, null, null, $5::uuid, null, 'first_party', null
+            )`,
+            [
+              userId,
+              entryId,
+              cardTypeId,
+              started.rows[0].result.card.stateRevision,
+              randomUUID(),
+            ],
+          ),
+        ).rejects.toThrow(/missing_or_invalid_result/);
+        await client.query("rollback to savepoint missing_review_result");
+        await client.query("release savepoint missing_review_result");
 
         const reviewed = await client.query(
           `select perform_platform_v2_card_action(
@@ -208,6 +265,97 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
             { action: "review-card", result: "success" },
           ]),
         );
+      },
+      userId,
+    );
+  });
+
+  test("rejects actions that were not advertised for the current scheduler phase", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(
+      pool,
+      async (client) => {
+        await ensureUserWithSettings(client, userId);
+        const learningEntryId = await insertWord(
+          client,
+          `platform-v2-phase-learning-${Date.now()}`,
+        );
+        const hiddenEntryId = await insertWord(
+          client,
+          `platform-v2-phase-hidden-${Date.now()}`,
+        );
+        const untrackedEntryId = await insertWord(
+          client,
+          `platform-v2-phase-untracked-${Date.now()}`,
+        );
+
+        const started = await client.query(
+          `select perform_platform_v2_card_action(
+            $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+            null, null, null, $4::uuid, null, 'first_party', null
+          ) as result`,
+          [userId, learningEntryId, cardTypeId, randomUUID()],
+        );
+
+        await client.query("savepoint repeated_start");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+              null, null, null, $5::uuid, null, 'first_party', null
+            )`,
+            [
+              userId,
+              learningEntryId,
+              cardTypeId,
+              started.rows[0].result.card.stateRevision,
+              randomUUID(),
+            ],
+          ),
+        ).rejects.toThrow(/platform_action_not_available/);
+        await client.query("rollback to savepoint repeated_start");
+        await client.query("release savepoint repeated_start");
+
+        const hidden = await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, hidden
+           )
+           values ($1, $2, $3, true)
+           returning state_revision`,
+          [userId, hiddenEntryId, cardTypeId],
+        );
+        await client.query("savepoint hidden_mark");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'mark-known', $2::uuid, $3::text, $4::text,
+              null, null, null, $5::uuid, null, 'first_party', null
+            )`,
+            [
+              userId,
+              hiddenEntryId,
+              cardTypeId,
+              hidden.rows[0].state_revision,
+              randomUUID(),
+            ],
+          ),
+        ).rejects.toThrow(/platform_action_not_available/);
+        await client.query("rollback to savepoint hidden_mark");
+        await client.query("release savepoint hidden_mark");
+
+        await client.query("savepoint untracked_review");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'review-card', $2::uuid, $3::text, 'untracked',
+              null, null, 'success', $4::uuid, null, 'first_party', null
+            )`,
+            [userId, untrackedEntryId, cardTypeId, randomUUID()],
+          ),
+        ).rejects.toThrow(/platform_action_not_available/);
+        await client.query("rollback to savepoint untracked_review");
+        await client.query("release savepoint untracked_review");
       },
       userId,
     );
@@ -456,6 +604,98 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
+  test("protects Known scheduler state under authenticated table privileges", async () => {
+    const userId = randomUUID();
+    const clientEventId = randomUUID();
+
+    await withTransaction(
+      pool,
+      async (client) => {
+        await ensureUserWithSettings(client, userId);
+        const knownEntryId = await insertWord(
+          client,
+          `platform-known-authenticated-guard-${Date.now()}`,
+        );
+        const otherEntryId = await insertWord(
+          client,
+          `platform-known-authenticated-other-${Date.now()}`,
+        );
+
+        await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, in_learning
+           )
+           values
+             ($1, $2, $3, false),
+             ($1, $4, $3, false)`,
+          [userId, knownEntryId, cardTypeId, otherEntryId],
+        );
+        const state = await client.query(
+          `select state_revision
+             from user_card_status
+            where user_id = $1
+              and entry_id = $2
+              and card_type_id = $3`,
+          [userId, knownEntryId, cardTypeId],
+        );
+        await client.query(
+          `select perform_platform_v2_card_action(
+             $1::uuid, 'mark-known', $2::uuid, $3::text, $4::text,
+             null, null, null, $5::uuid, null, 'first_party', null
+           )`,
+          [
+            userId,
+            knownEntryId,
+            cardTypeId,
+            state.rows[0].state_revision,
+            clientEventId,
+          ],
+        );
+
+        await client.query("set local role authenticated");
+
+        const ordinaryUpdate = await client.query(
+          `update user_card_status
+              set success_count = success_count + 1
+            where user_id = $1
+              and entry_id = $2
+              and card_type_id = $3`,
+          [userId, otherEntryId, cardTypeId],
+        );
+        expect(ordinaryUpdate.rowCount).toBe(1);
+
+        await client.query("savepoint known_direct_update");
+        await expect(
+          client.query(
+            `update user_card_status
+                set success_count = success_count + 1
+              where user_id = $1
+                and entry_id = $2
+                and card_type_id = $3`,
+            [userId, knownEntryId, cardTypeId],
+          ),
+        ).rejects.toThrow(/card_is_known/);
+        await client.query("rollback to savepoint known_direct_update");
+        await client.query("release savepoint known_direct_update");
+
+        await client.query("savepoint known_identity_move");
+        await expect(
+          client.query(
+            `update user_card_status
+                set entry_id = $4
+              where user_id = $1
+                and entry_id = $2
+                and card_type_id = $3`,
+            [userId, knownEntryId, cardTypeId, otherEntryId],
+          ),
+        ).rejects.toThrow(/card_is_known/);
+        await client.query("rollback to savepoint known_identity_move");
+        await client.query("release savepoint known_identity_move");
+      },
+      userId,
+    );
+  });
+
   test("excludes an active Known Mark from broad and source-filtered training queues", async () => {
     const userId = randomUUID();
     const clientEventId = randomUUID();
@@ -556,14 +796,57 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
         );
         expect(filtered.rows).toEqual([]);
 
-        const bypassPrivilege = await client.query(
-          `select has_function_privilege(
-             'authenticated',
-             'public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])',
-             'EXECUTE'
-           ) as can_execute`,
+        const bypassPrivileges = await client.query(
+          `select
+             has_function_privilege(
+               'authenticated',
+               'public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])',
+               'EXECUTE'
+             ) as authenticated_card,
+             has_function_privilege(
+               'service_role',
+               'public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])',
+               'EXECUTE'
+             ) as service_card,
+             has_function_privilege(
+               'authenticated',
+               'public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)',
+               'EXECUTE'
+             ) as authenticated_filtered,
+             has_function_privilege(
+               'service_role',
+               'public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)',
+               'EXECUTE'
+             ) as service_filtered`,
         );
-        expect(bypassPrivilege.rows).toEqual([{ can_execute: false }]);
+        expect(bypassPrivileges.rows).toEqual([
+          {
+            authenticated_card: false,
+            service_card: false,
+            authenticated_filtered: false,
+            service_filtered: false,
+          },
+        ]);
+
+        const actionPrivileges = await client.query(
+          `select
+             has_function_privilege(
+               'authenticated',
+               'public.perform_platform_v2_card_action(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text)',
+               'EXECUTE'
+             ) as authenticated_execute,
+             has_function_privilege(
+               'service_role',
+               'public.perform_platform_v2_card_action(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text)',
+               'EXECUTE'
+             ) as service_execute`,
+        );
+        expect(actionPrivileges.rows).toEqual([
+          {
+            authenticated_execute: false,
+            service_execute: true,
+          },
+        ]);
       },
       userId,
     );
@@ -712,6 +995,74 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
             language_code: "nl",
             metadata: { contractVersion: "source-context-v2" },
           },
+        ]);
+      },
+      userId,
+    );
+  });
+
+  test("rolls back card state and provenance together when provenance is invalid", async () => {
+    const userId = randomUUID();
+    const externalId = randomUUID().replaceAll("-", "").slice(0, 11);
+
+    await withTransaction(
+      pool,
+      async (client) => {
+        await ensureUserWithSettings(client, userId);
+        const entryId = await insertWord(
+          client,
+          `platform-known-provenance-rollback-${Date.now()}`,
+        );
+        const invalidContext = {
+          contractVersion: "source-context-v2",
+          source: {
+            kind: "youtube_video",
+            provider: "youtube",
+            externalId,
+          },
+          artifact: {
+            artifactKind: "caption_phrase_set",
+          },
+        };
+
+        await client.query("savepoint invalid_provenance");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'mark-known', $2::uuid, $3::text, 'untracked',
+              null, null, null, $4::uuid, $5::jsonb,
+              'first_party', null
+            )`,
+            [
+              userId,
+              entryId,
+              cardTypeId,
+              randomUUID(),
+              JSON.stringify(invalidContext),
+            ],
+          ),
+        ).rejects.toThrow(/artifact_kind|null value/i);
+        await client.query("rollback to savepoint invalid_provenance");
+        await client.query("release savepoint invalid_provenance");
+
+        const persisted = await client.query(
+          `select
+             (select count(*)::int
+                from user_card_status
+               where user_id = $1 and entry_id = $2) as states,
+             (select count(*)::int
+                from user_card_known_marks
+               where user_id = $1 and entry_id = $2) as marks,
+             (select count(*)::int
+                from user_card_action_events
+               where user_id = $1 and entry_id = $2) as events,
+             (select count(*)::int
+                from learning_sources
+               where external_id = $3) as sources`,
+          [userId, entryId, externalId],
+        );
+        expect(persisted.rows).toEqual([
+          { states: 0, marks: 0, events: 0, sources: 0 },
         ]);
       },
       userId,

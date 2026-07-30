@@ -155,7 +155,7 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `109` and the V2 code with both flags absent;
+1. deploy migrations `105` through `113` and the V2 code with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
@@ -200,11 +200,24 @@ revision, or undoing a non-current Known Mark returns HTTP 409 without writes.
 When normalized `source-context-v2` is present, card mutation, immutable action
 history, source, artifact, and location commit atomically.
 
+The HTTP endpoint is the only consumer-facing action boundary. Its server
+authenticates the caller, derives the principal and user ID, enforces the
+connected-client scope, and then invokes the service-role-only database RPC.
+Browser and extension clients must never call
+`perform_platform_v2_card_action` directly.
+
 Known is an overlay, not an FSRS result. Marking Known preserves scheduler
 state and excludes the exact card from shared training selection. Undo clears
 only the current mark and reveals the preserved state. Consumers must dispatch
 the returned capability target verbatim and must not simulate either state
 locally.
+
+Capabilities are the authoritative action state machine, not UI hints.
+`mark-known` is available for not-started, encountered, learning, and reviewing
+cards; learning/reviewing cards expose it alongside their review actions.
+Hidden and frozen cards expose no progress action. The database rejects
+start/review/mark commands that are not available for the target's current
+phase even when the supplied revision is otherwise current.
 
 ### Translation transition
 

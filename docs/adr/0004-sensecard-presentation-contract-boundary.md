@@ -116,6 +116,12 @@ The database operation must be atomic:
 - idempotent retries return the already accepted result without applying a
   second mutation.
 
+The returned capability set is authoritative. Mark Known remains available
+before and during learning, alongside review actions where applicable; hidden
+and frozen states advertise no progress mutation. The action RPC independently
+enforces the same phase policy so a client cannot invoke a non-advertised
+transition by constructing request JSON.
+
 Idempotency is bound to the canonical payload. Reusing a key with a different
 action, target, result, or normalized source context conflicts without a
 write. When a V2 action carries `source-context-v2`, action state, immutable
@@ -130,7 +136,8 @@ review/start attempts against it fail closed. V2 must not present those legacy
 mappings as the approved Known interaction.
 
 Because the mutation semantics change, V2 Known/undo is available only through
-`/api/platform/v2/actions`. Migration `109` supplies the durable boundary, and
+`/api/platform/v2/actions`. Migrations `109` through `113` supply the lock-safe
+state-revision rollout and durable boundary, and
 `PLATFORM_V2_ACTIONS_ENABLED` gates both the endpoint and the mutation
 capabilities returned by lookup. V2 lookup must not advertise those
 capabilities while the boundary is darkened.

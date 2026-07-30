@@ -37,8 +37,9 @@ Tests observe these seams rather than private helpers.
 
 1. [x] Add DB-backed red tests for mark/undo state preservation, retries, stale
    undo, concurrency, and selection/mutation exclusion.
-2. [x] Add migration `109` with the Known Mark/current-state model and one atomic V2
-   action RPC, reusing the existing provenance/idempotency transaction.
+2. [x] Add lock-safe migrations `109`–`113` with the state-revision rollout,
+   Known Mark/current-state model, and one atomic V2 action RPC, reusing the
+   existing provenance/idempotency transaction.
 3. [x] Add V2 projection and route red tests, then expose `knownMark`,
    `mark-known`, and `undo-known` from returned server state.
 4. [x] Add V1 rollback and source-aware atomicity coverage.
@@ -46,7 +47,8 @@ Tests observe these seams rather than private helpers.
 
 ## Implementation checkpoint
 
-- Migration `109` stores one active Known Mark per exact card and immutable
+- Migrations `109`–`113` roll out state revisions without a volatile-default
+  table rewrite, then store one active Known Mark per exact card and immutable
   Mark/Undo events without changing scheduler fields.
 - The shared broad and filtered selectors exclude active marks; their renamed
   pre-Known implementations are no longer executable by API roles.
@@ -59,12 +61,15 @@ Tests observe these seams rather than private helpers.
 
 Validation before review-ready:
 
-- focused Known/Undo database tests: 9/9;
-- clean-database FSRS/DB suite: 73/73;
-- Platform route suite: 143/143;
-- full non-DB UI suite: 380/380 with 69 expected DB skips;
+- focused Known/Undo database tests: 13/13;
+- clean-database FSRS/DB suite: 77/77;
+- Platform API/projection suite: 167/167;
+- full non-DB UI suite: 382/382 with 72 expected DB skips;
 - typecheck and lint: pass;
-- production build with explicit non-production Supabase build values: pass.
+- production build with explicit non-production Supabase build values: pass;
+- fresh bootstrap/probe through migration 113: pass;
+- populated migration-108 upgrade through split migrations 109–113: pass;
+- migrations 109–113 exact reapply: pass.
 
 ## Validation
 

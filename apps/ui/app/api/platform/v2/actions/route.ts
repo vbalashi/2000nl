@@ -6,6 +6,7 @@ import {
 } from "@/lib/platform/routeInstrumentation";
 import {
   getAuthenticatedSupabase,
+  getPlatformServiceSupabase,
   jsonNoStore,
   platformCorsPreflight,
   requirePlatformScope,
@@ -58,10 +59,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const service = getPlatformServiceSupabase();
+  if (service instanceof Response) {
+    return appendPlatformRouteHeaders(
+      withPlatformCors(request, service),
+      instrumentation,
+    );
+  }
+
   const result = await measureRouteTiming(
     instrumentation,
     "route.operation",
-    () => performPlatformV2Action(auth, parsed.request),
+    () => performPlatformV2Action(auth, service, parsed.request),
   );
   return appendPlatformRouteHeaders(
     reply(result.payload, result.status),

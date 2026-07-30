@@ -3,7 +3,10 @@ import type {
   PlatformActionV2Response,
   PlatformSenseCardStateV2,
 } from "../../../../packages/shared/types/platformV2";
-import type { AuthenticatedSupabase } from "./serverSupabase";
+import type {
+  AuthenticatedSupabase,
+  ServiceSupabase,
+} from "./serverSupabase";
 
 export type PlatformV2ActionOperationResult = {
   payload: unknown;
@@ -12,13 +15,14 @@ export type PlatformV2ActionOperationResult = {
 
 export async function performPlatformV2Action(
   auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
   request: PlatformActionV2Request,
 ): Promise<PlatformV2ActionOperationResult> {
   const undoTarget =
     request.actionId === "undo-known" ? request.target : null;
   const reviewResult =
     request.actionId === "review-card" ? request.reviewResult : null;
-  const { data, error } = await auth.supabase.rpc(
+  const { data, error } = await service.supabase.rpc(
     "perform_platform_v2_card_action",
     {
       p_user_id: auth.user.id,
@@ -74,6 +78,9 @@ function actionError(error: unknown): PlatformV2ActionOperationResult {
   }
   if (message.includes("platform_card_already_known")) {
     return { payload: { error: "card_already_known" }, status: 409 };
+  }
+  if (message.includes("platform_action_not_available")) {
+    return { payload: { error: "action_not_available" }, status: 409 };
   }
   if (message.includes("card_is_known")) {
     return { payload: { error: "card_is_known" }, status: 409 };

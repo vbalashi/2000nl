@@ -1,5 +1,15 @@
 {
-  "fixtureVersion": "platform-v2-known-roundtrip-1",
+  "fixtureVersion": "platform-v2-known-roundtrip-2",
+  "initialCard": {
+    "cardTypeId": "word-to-definition",
+    "scheduler": {
+      "phase": "learning",
+      "repeatCount": 3,
+      "lastSeenAt": "2026-07-29T08:00:00.000Z"
+    },
+    "knownMark": null,
+    "stateRevision": "10000000-0000-4000-8000-000000000008"
+  },
   "initialCapability": {
     "actionId": "mark-known",
     "elementId": "sense-card.known.mark",
@@ -8,7 +18,7 @@
       "kind": "sense-card",
       "entryId": "10000000-0000-4000-8000-000000000001",
       "cardTypeId": "word-to-definition",
-      "stateRevision": "untracked"
+      "stateRevision": "10000000-0000-4000-8000-000000000008"
     }
   },
   "markRequest": {
@@ -18,7 +28,7 @@
       "kind": "sense-card",
       "entryId": "10000000-0000-4000-8000-000000000001",
       "cardTypeId": "word-to-definition",
-      "stateRevision": "untracked"
+      "stateRevision": "10000000-0000-4000-8000-000000000008"
     }
   },
   "markResponse": {
@@ -29,9 +39,9 @@
     "card": {
       "cardTypeId": "word-to-definition",
       "scheduler": {
-        "phase": "not-started",
-        "repeatCount": 0,
-        "lastSeenAt": null
+        "phase": "learning",
+        "repeatCount": 3,
+        "lastSeenAt": "2026-07-29T08:00:00.000Z"
       },
       "knownMark": {
         "markId": "10000000-0000-4000-8000-000000000003",
@@ -64,6 +74,22 @@
       "stateRevision": "10000000-0000-4000-8000-000000000005",
       "activeKnownMarkId": "10000000-0000-4000-8000-000000000003",
       "knownMarkRevision": "10000000-0000-4000-8000-000000000004"
+    }
+  },
+  "undoResponse": {
+    "contractVersion": "platform-action-v2",
+    "actionId": "undo-known",
+    "clientEventId": "10000000-0000-4000-8000-000000000006",
+    "accepted": true,
+    "card": {
+      "cardTypeId": "word-to-definition",
+      "scheduler": {
+        "phase": "learning",
+        "repeatCount": 3,
+        "lastSeenAt": "2026-07-29T08:00:00.000Z"
+      },
+      "knownMark": null,
+      "stateRevision": "10000000-0000-4000-8000-000000000007"
     }
   }
 }

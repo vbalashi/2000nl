@@ -75,6 +75,30 @@ describe("Platform V2 SenseCard projection", () => {
     ).toEqual([]);
   });
 
+  test("treats an expired freeze as inactive, matching the action RPC phase", () => {
+    const input = projectionInput({
+      stateRevision: "state-expired-freeze",
+      knownMark: null,
+    });
+    const cardState = input.entries[0].cardState;
+    if (!cardState) throw new Error("Expected card state");
+    cardState.frozenUntil = "2000-01-01T00:00:00.000Z";
+
+    const response = projectPlatformLookupV2(input);
+    const senseCard = response.groups[0].entries[0];
+    expect(senseCard.kind).toBe("sense-card");
+    if (senseCard.kind !== "sense-card") {
+      throw new Error("Expected a SenseCard");
+    }
+    expect(senseCard.card?.scheduler.phase).toBe("not-started");
+    expect(senseCard.capabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ actionId: "start-learning" }),
+        expect.objectContaining({ actionId: "mark-known" }),
+      ]),
+    );
+  });
+
   test("projects one persisted meaning through explicit group and Content Node identity", () => {
     const response = projectPlatformLookupV2({
       query: "huis",
@@ -314,6 +338,17 @@ describe("Platform V2 SenseCard projection", () => {
                   reviewResult: "easy",
                 },
                 {
+                  actionId: "mark-known",
+                  elementId: "sense-card.known.mark",
+                  messageKey: "senseCard.known.mark",
+                  target: {
+                    kind: "sense-card",
+                    entryId: "entry-1",
+                    cardTypeId: "word-to-definition",
+                    stateRevision: "state-revision-1",
+                  },
+                },
+                {
                   actionId: "report-content",
                   elementId: "sense-card.report",
                   messageKey: "senseCard.report",
@@ -358,7 +393,7 @@ describe("Platform V2 SenseCard projection", () => {
 
     expect(JSON.stringify(response)).not.toContain("providerOnly");
     expect(JSON.stringify(response)).not.toContain("sourcePath");
-    expect(JSON.stringify(response)).not.toContain("mark-known");
+    expect(JSON.stringify(response)).toContain("mark-known");
     expect(JSON.stringify(response)).not.toContain("undo-known");
   });
 

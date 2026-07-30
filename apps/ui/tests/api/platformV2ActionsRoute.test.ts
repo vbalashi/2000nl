@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const rpc = vi.fn();
+const authenticatedRpc = vi.fn();
 const getUser = vi.fn();
-const createClient = vi.fn(() => ({
-  auth: { getUser },
-  rpc,
-}));
+const createClient = vi.fn((_url: string, key: string) =>
+  key === "service-key"
+    ? { auth: { getUser }, rpc }
+    : { auth: { getUser }, rpc: authenticatedRpc },
+);
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
@@ -27,11 +29,13 @@ describe("/api/platform/v2/actions", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_V2_ACTIONS_ENABLED = "1";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     getUser.mockReset();
     rpc.mockReset();
+    authenticatedRpc.mockReset();
     getUser.mockResolvedValue({
       data: { user: { id: "00000000-0000-4000-8000-000000000001" } },
       error: null,
@@ -113,6 +117,7 @@ describe("/api/platform/v2/actions", () => {
         p_connected_client_id: null,
       },
     );
+    expect(authenticatedRpc).not.toHaveBeenCalled();
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
       expect.objectContaining({
@@ -154,6 +159,32 @@ describe("/api/platform/v2/actions", () => {
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
       error: "known_mark_conflict",
+    });
+  });
+
+  test("returns a typed conflict when an action is not available in the current phase", async () => {
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "platform_action_not_available" },
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000008",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "00000000-0000-4000-8000-000000000009",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "action_not_available",
     });
   });
 

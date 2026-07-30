@@ -1,5 +1,5 @@
 {
-  "fixtureVersion": "platform-v2-consumer-fixtures-2",
+  "fixtureVersion": "platform-v2-consumer-fixtures-3",
   "contractVersion": "platform-lookup-v2",
   "files": [
     "catalog-single-sense.json",

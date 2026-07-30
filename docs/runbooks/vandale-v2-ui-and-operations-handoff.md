@@ -181,7 +181,7 @@ normal rollback mechanism.
 
 Platform V2 migrations deliberately do not infer source-managed Content Nodes
 from `word_entries.raw`. The checksummed source manifest remains the authority.
-When migrations `105` through `109` are deployed, keep
+When migrations `105` through `113` are deployed, keep
 `PLATFORM_V2_LOOKUP_ENABLED` and `PLATFORM_V2_ACTIONS_ENABLED` unset and run:
 
 ```bash
@@ -209,7 +209,7 @@ Only after the verified no-op and V2 smoke checks may the runtime set
 `PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and
 catalog V2 lookup without changing V1 or reassigning any published identity.
 
-Keep `PLATFORM_V2_ACTIONS_ENABLED` unset until the migration `109` Known/Undo
+Keep `PLATFORM_V2_ACTIONS_ENABLED` unset until migration `113` Known/Undo
 database tests and the authenticated action-route smoke pass. Enable it
 separately after lookup. Unsetting it removes V2 progress capabilities and
 rejects V2 mutations, but deliberately preserves accepted Known Marks and
