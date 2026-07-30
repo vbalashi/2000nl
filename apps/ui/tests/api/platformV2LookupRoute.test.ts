@@ -62,6 +62,7 @@ describe("/api/platform/v2/lookup", () => {
     process.env.TRANSLATION_PROVIDER = "openai";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_V2_LOOKUP_ENABLED = "1";
+    process.env.PLATFORM_V2_ACTIONS_ENABLED = "1";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     createClient.mockClear();
     getUser.mockReset();
@@ -231,7 +232,7 @@ describe("/api/platform/v2/lookup", () => {
           error: null,
         });
       }
-      if (name === "get_user_card_states_for_entries") {
+      if (name === "get_platform_v2_card_states_for_entries") {
         expect(args.p_card_type_ids).toEqual(["word-to-definition"]);
         return Promise.resolve({ data: [], error: null });
       }
@@ -330,6 +331,18 @@ describe("/api/platform/v2/lookup", () => {
     expect(payload.groups[0].entries[0].capabilities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          actionId: "start-learning",
+          target: expect.objectContaining({
+            stateRevision: "untracked",
+          }),
+        }),
+        expect.objectContaining({
+          actionId: "mark-known",
+          target: expect.objectContaining({
+            stateRevision: "untracked",
+          }),
+        }),
+        expect.objectContaining({
           actionId: "report-content",
           target: expect.objectContaining({
             kind: "content-node",
@@ -355,7 +368,6 @@ describe("/api/platform/v2/lookup", () => {
     );
     expect(JSON.stringify(payload)).not.toContain("providerOnly");
     expect(JSON.stringify(payload)).not.toContain("sourcePath");
-    expect(JSON.stringify(payload)).not.toContain("mark-known");
     expect(JSON.stringify(payload)).not.toContain("undo-known");
   });
 
@@ -521,7 +533,7 @@ describe("/api/platform/v2/lookup", () => {
       }),
     );
     expect(rpc).not.toHaveBeenCalledWith(
-      "get_user_card_states_for_entries",
+      "get_platform_v2_card_states_for_entries",
       expect.anything(),
     );
   });

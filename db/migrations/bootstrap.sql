@@ -331,3 +331,13 @@
 
 -- Group-atomic opaque-cursor lookup for Platform V2
 \i db/migrations/108_platform_v2_group_atomic_lookup.sql
+
+-- Revision token for Platform V2 card actions, split to avoid a volatile-default
+-- table rewrite under one long ACCESS EXCLUSIVE migration lock
+\i db/migrations/109_platform_v2_state_revision_column.sql
+\i db/migrations/110_platform_v2_state_revision_default.sql
+\i db/migrations/111_platform_v2_state_revision_backfill.sql
+\i db/migrations/112_platform_v2_state_revision_not_null.sql
+
+-- Durable reversible Known Marks for Platform V2 SenseCards
+\i db/migrations/113_platform_v2_known_marks.sql

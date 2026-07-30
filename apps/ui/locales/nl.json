@@ -58,6 +58,11 @@
     "learning": {
       "start": "Leren"
     },
+    "known": {
+      "mark": "Markeer als bekend",
+      "marked": "Gemarkeerd als bekend",
+      "undo": "Markering ongedaan maken"
+    },
     "review": {
       "fail": "Opnieuw",
       "hard": "Lastig",

@@ -2,6 +2,103 @@ import { describe, expect, test } from "vitest";
 import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
 
 describe("Platform V2 SenseCard projection", () => {
+  test("offers Start Learning and Mark Known for an untracked card", () => {
+    const response = projectPlatformLookupV2(
+      projectionInput({
+        stateRevision: "untracked",
+        knownMark: null,
+      }),
+    );
+
+    const senseCard = response.groups[0].entries[0];
+    expect(senseCard.kind).toBe("sense-card");
+    expect(senseCard.capabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ actionId: "start-learning" }),
+        expect.objectContaining({ actionId: "mark-known" }),
+      ]),
+    );
+  });
+
+  test("projects an active Known Mark and offers only its exact Undo mutation", () => {
+    const response = projectPlatformLookupV2(
+      projectionInput({
+        stateRevision: "state-known-2",
+        knownMark: {
+          markId: "known-mark-1",
+          revision: "known-revision-1",
+          markedAt: "2026-07-30T08:00:00.000Z",
+        },
+      }),
+    );
+
+    const senseCard = response.groups[0].entries[0];
+    expect(senseCard.kind).toBe("sense-card");
+    if (senseCard.kind !== "sense-card") {
+      throw new Error("Expected a SenseCard");
+    }
+    expect(senseCard.card).toEqual(
+      expect.objectContaining({
+        knownMark: {
+          markId: "known-mark-1",
+          revision: "known-revision-1",
+          markedAt: "2026-07-30T08:00:00.000Z",
+        },
+        stateRevision: "state-known-2",
+      }),
+    );
+    expect(senseCard.capabilities).toEqual(
+      expect.arrayContaining([
+        {
+          actionId: "undo-known",
+          elementId: "sense-card.known.undo",
+          messageKey: "senseCard.known.undo",
+          target: {
+            kind: "sense-card",
+            entryId: "entry-known",
+            cardTypeId: "word-to-definition",
+            stateRevision: "state-known-2",
+            activeKnownMarkId: "known-mark-1",
+            knownMarkRevision: "known-revision-1",
+          },
+        },
+      ]),
+    );
+    expect(
+      senseCard.capabilities.filter((capability) =>
+        [
+          "start-learning",
+          "mark-known",
+          "review-card",
+        ].includes(capability.actionId),
+      ),
+    ).toEqual([]);
+  });
+
+  test("treats an expired freeze as inactive, matching the action RPC phase", () => {
+    const input = projectionInput({
+      stateRevision: "state-expired-freeze",
+      knownMark: null,
+    });
+    const cardState = input.entries[0].cardState;
+    if (!cardState) throw new Error("Expected card state");
+    cardState.frozenUntil = "2000-01-01T00:00:00.000Z";
+
+    const response = projectPlatformLookupV2(input);
+    const senseCard = response.groups[0].entries[0];
+    expect(senseCard.kind).toBe("sense-card");
+    if (senseCard.kind !== "sense-card") {
+      throw new Error("Expected a SenseCard");
+    }
+    expect(senseCard.card?.scheduler.phase).toBe("not-started");
+    expect(senseCard.capabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ actionId: "start-learning" }),
+        expect.objectContaining({ actionId: "mark-known" }),
+      ]),
+    );
+  });
+
   test("projects one persisted meaning through explicit group and Content Node identity", () => {
     const response = projectPlatformLookupV2({
       query: "huis",
@@ -241,6 +338,17 @@ describe("Platform V2 SenseCard projection", () => {
                   reviewResult: "easy",
                 },
                 {
+                  actionId: "mark-known",
+                  elementId: "sense-card.known.mark",
+                  messageKey: "senseCard.known.mark",
+                  target: {
+                    kind: "sense-card",
+                    entryId: "entry-1",
+                    cardTypeId: "word-to-definition",
+                    stateRevision: "state-revision-1",
+                  },
+                },
+                {
                   actionId: "report-content",
                   elementId: "sense-card.report",
                   messageKey: "senseCard.report",
@@ -285,7 +393,7 @@ describe("Platform V2 SenseCard projection", () => {
 
     expect(JSON.stringify(response)).not.toContain("providerOnly");
     expect(JSON.stringify(response)).not.toContain("sourcePath");
-    expect(JSON.stringify(response)).not.toContain("mark-known");
+    expect(JSON.stringify(response)).toContain("mark-known");
     expect(JSON.stringify(response)).not.toContain("undo-known");
   });
 
@@ -366,3 +474,99 @@ describe("Platform V2 SenseCard projection", () => {
     );
   });
 });
+
+function projectionInput(
+  state: {
+    stateRevision: string;
+    knownMark: null | {
+      markId: string;
+      revision: string;
+      markedAt: string;
+    };
+  },
+): Parameters<typeof projectPlatformLookupV2>[0] {
+  return {
+    query: "huis",
+    request: {
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: null,
+      cardTypeId: "word-to-definition",
+      intent: "external-click",
+    },
+    page: {
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    },
+    entries: [
+      {
+        headwordGroupId: "group-known",
+        entry: {
+          id: "entry-known",
+          dictionaryId: "dict-1",
+          languageCode: "nl",
+          headword: "huis",
+          meaningId: 1,
+          partOfSpeech: "zn",
+          gender: "het",
+          contentFingerprint: "content-known-1",
+          raw: {},
+          content: {
+            headword: "huis",
+            languageCode: "nl",
+            meaningId: 1,
+            partOfSpeech: "zn",
+            gender: "het",
+            meanings: [{ definition: "een gebouw om in te wonen" }],
+            summary: { definition: "een gebouw om in te wonen" },
+            sections: [
+              {
+                id: "meaning-1",
+                sourcePath: "raw.meanings[0].definition",
+                kind: "meaning",
+                text: "een gebouw om in te wonen",
+              },
+            ],
+          },
+        },
+        dictionary: {
+          id: "dict-1",
+          languageCode: "nl",
+          slug: "nl-vandale",
+          name: "Van Dale",
+          kind: "curated",
+          visibility: "system",
+        },
+        contentNodeBindings: [
+          {
+            contentNodeId: "node-definition-known",
+            sourcePath: "raw.meanings[0].definition",
+            kind: "definition",
+            sourceTextFingerprint: "definition-known-1",
+          },
+        ],
+        cardState: {
+          ...state,
+          clickCount: 0,
+          seenCount: 0,
+          successCount: 0,
+          lastSeenAt: null,
+          lastReviewedAt: null,
+          nextReviewAt: null,
+          hidden: false,
+          frozenUntil: null,
+          inLearning: false,
+          learningDueAt: null,
+          fsrs: {
+            stability: null,
+            difficulty: null,
+            reps: 0,
+            lapses: 0,
+            lastGrade: null,
+            lastInterval: null,
+            paramsVersion: null,
+          },
+        } as never,
+      },
+    ],
+  };
+}

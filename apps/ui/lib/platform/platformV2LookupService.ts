@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import type {
   CardTypeId,
   DictionaryLookupResult,
@@ -33,6 +32,7 @@ import {
   platformV2HeaderEvidence,
   projectPlatformV2WordDetails,
 } from "./platformV2RichContent";
+import { platformV2ActionsEnabled } from "./platformV2Rollout";
 
 const LOOKUP_GROUP_PAGE_SIZE = 10;
 const LOOKUP_GROUP_ENTRY_SAFETY_BOUND = 50;
@@ -195,7 +195,7 @@ export async function performPlatformV2Lookup(
     context.kind === "authenticated"
       ? measure<RpcResult>(timings, "lookup.user-state", async () =>
           await context.auth.supabase.rpc(
-            "get_user_card_states_for_entries",
+            "get_platform_v2_card_states_for_entries",
             {
               p_user_id: context.auth.user.id,
               p_entry_ids: entryIds,
@@ -368,7 +368,8 @@ export async function performPlatformV2Lookup(
               meaningOrdinal: identity.meaningOrdinal,
               allowMutationCapabilities:
                 context.kind === "authenticated" &&
-                context.auth.principal.scopes.has("platform:write"),
+                context.auth.principal.scopes.has("platform:write") &&
+                platformV2ActionsEnabled(),
               allowWordDetailsCapability:
                 context.kind === "authenticated",
               entry: projectedEntry,
@@ -379,8 +380,6 @@ export async function performPlatformV2Lookup(
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(
-                      entry.id,
-                      request.cardTypeId,
                       stateByEntryId.get(entry.id),
                     )
                   : null,
@@ -533,13 +532,21 @@ function dictionarySummary(
 }
 
 function projectionCardState(
-  entryId: string,
-  cardTypeId: CardTypeId,
   row?: Record<string, unknown>,
 ): ProjectionCardState {
-  const snapshot = {
-    entryId,
-    cardTypeId,
+  const knownMarkId = stringOrNull(row?.known_mark_id);
+  const knownMarkRevision = stringOrNull(row?.known_mark_revision);
+  const knownMarkedAt = stringOrNull(row?.known_marked_at);
+  return {
+    stateRevision: stringOrNull(row?.state_revision) ?? "untracked",
+    knownMark:
+      knownMarkId && knownMarkRevision && knownMarkedAt
+        ? {
+            markId: knownMarkId,
+            revision: knownMarkRevision,
+            markedAt: knownMarkedAt,
+          }
+        : null,
     clickCount: numberValue(row?.click_count),
     seenCount: numberValue(row?.seen_count),
     successCount: numberValue(row?.success_count),
@@ -559,13 +566,6 @@ function projectionCardState(
       lastInterval: numberOrNull(row?.fsrs_last_interval),
       paramsVersion: stringOrNull(row?.fsrs_params_version),
     },
-  };
-  return {
-    ...snapshot,
-    stateRevision: crypto
-      .createHash("sha256")
-      .update(JSON.stringify(snapshot))
-      .digest("hex"),
   };
 }
 

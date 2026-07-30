@@ -17,6 +17,11 @@ import type { PlatformV2ContentSectionInput } from "../platformV2RichContent";
 
 export type ProjectionCardState = {
   stateRevision: string;
+  knownMark?: {
+    markId: string;
+    revision: string;
+    markedAt: string;
+  } | null;
   clickCount: number;
   seenCount: number;
   successCount: number;
@@ -325,7 +330,7 @@ function projectCardState(
       lastSeenAt: state.lastSeenAt,
       ...(state.frozenUntil ? { frozenUntil: state.frozenUntil } : {}),
     },
-    knownMark: null,
+    knownMark: state.knownMark ?? null,
     stateRevision: state.stateRevision,
   };
 }
@@ -334,7 +339,12 @@ function schedulerPhase(
   state: ProjectionCardState,
 ): PlatformSenseCardStateV2["scheduler"]["phase"] {
   if (state.hidden) return "hidden";
-  if (state.frozenUntil) return "frozen";
+  if (
+    state.frozenUntil &&
+    Date.parse(state.frozenUntil) > Date.now()
+  ) {
+    return "frozen";
+  }
   if (state.inLearning) return "learning";
   if (state.fsrs.reps > 0 || state.lastReviewedAt) return "reviewing";
   if (state.seenCount > 0 || state.clickCount > 0) return "encountered";
@@ -363,7 +373,18 @@ function capabilitiesFor(params: {
       cardTypeId: card.cardTypeId,
       stateRevision: card.stateRevision,
     };
-    if (
+    if (card.knownMark) {
+      capabilities.push({
+        actionId: "undo-known",
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          ...target,
+          activeKnownMarkId: card.knownMark.markId,
+          knownMarkRevision: card.knownMark.revision,
+        },
+      });
+    } else if (
       card.scheduler.phase === "learning" ||
       card.scheduler.phase === "reviewing"
     ) {
@@ -381,6 +402,12 @@ function capabilitiesFor(params: {
           reviewResult,
         });
       }
+      capabilities.push({
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
+        target,
+      });
     } else if (
       card.scheduler.phase === "not-started" ||
       card.scheduler.phase === "encountered"
@@ -389,6 +416,12 @@ function capabilitiesFor(params: {
         actionId: "start-learning",
         elementId: "sense-card.learning.start",
         messageKey: "senseCard.learning.start",
+        target,
+      });
+      capabilities.push({
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
         target,
       });
     }

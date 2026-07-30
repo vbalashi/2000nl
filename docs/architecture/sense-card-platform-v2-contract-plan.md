@@ -864,8 +864,9 @@ search hit as a learning card.
 - During the rollback window, disable the affected consumer switch before
   disabling any V2 route. Keep the V1 adapter deployable until all consumers
   have completed the agreed observation window.
-- V2 Known capabilities remain off until #89 and `/api/platform/v2/actions`
-  are deployed together. Rolling back the UI never rewrites or deletes an
+- V2 Known capabilities are gated by `PLATFORM_V2_ACTIONS_ENABLED` and appear
+  only when migrations `109` through `113` and `/api/platform/v2/actions` are deployed
+  together. Rolling back the UI never rewrites or deletes an
   accepted Known Mark. Shared scheduling excludes active marks even when a
   consumer is on V1, and legacy review/start mutations fail closed for such a
   target. The rollback matrix includes an active-Known fixture.
