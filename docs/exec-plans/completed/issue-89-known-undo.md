@@ -1,6 +1,10 @@
 # Issue 89 — Durable SenseCard Known / Undo
 
-Status: active
+Status: completed
+
+Completed: 2026-07-30
+
+Integrated as: `9f23ebe7bed92c6bd2d9325b79a314f840d12dee`
 
 Issue: https://github.com/vbalashi/2000nl/issues/89
 
@@ -73,6 +77,16 @@ Validation before review-ready:
 - populated bootstrap replay with the legacy V1 card-state RPC intact: pass;
 - populated migration-108 upgrade through split migrations 109–113: pass;
 - migrations 109–113 exact reapply: pass.
+
+Post-merge verification:
+
+- stable patch ID matches the independently reviewed PR head;
+- merged-main Database Drift Check: pass;
+- merged-main FSRS parity and RPC tests: pass;
+- merged-main UI lint, typecheck, unit, API smoke, and E2E smoke: pass;
+- existing NUC application deploy: pass;
+- V2 feature flags remain off and production migration rollout remains a
+  separate controlled operation.
 
 ## Validation
 
