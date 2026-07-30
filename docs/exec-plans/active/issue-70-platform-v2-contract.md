@@ -3,7 +3,7 @@
 Issue: https://github.com/vbalashi/2000nl/issues/70
 Status: in progress
 Branch: `codex/issue-70-platform-v2-contract`
-Base: `9772e516fbf72016fc9321db5abb2d7707e698fb`
+Base: `704a22fe30594f2d94da36fc29969952a17f75fd`
 
 ## Scope
 
@@ -32,10 +32,10 @@ Tests assert these public seams, not internal helper calls.
 
 ### 2 — Identity and grouping
 
-- [ ] add durable Headword Group and Content Node storage;
-- [ ] backfill source groups and one private group per existing user entry;
-- [ ] reconcile Content Nodes only from native or unambiguous evidence;
-- [ ] add group/count/privacy/reorder/ambiguity tests.
+- [x] add durable Headword Group and Content Node storage;
+- [x] backfill source groups and one private group per existing user entry;
+- [x] reconcile Content Nodes only from native or unambiguous evidence;
+- [x] add group/count/privacy/reorder/ambiguity tests.
 
 ### 3 — Additive lookup routes
 
@@ -55,14 +55,16 @@ Tests assert these public seams, not internal helper calls.
 
 ## Parallel-Work Guard
 
-The dirty `/Users/khrustal/dev/2000nl` checkout contains stale unpublished
-translation work last modified on 2026-06-29, including
+The dirty `/Users/khrustal/dev/2000nl` checkout remains on stale local `main`
+`ca5fbe6a` with unpublished translation work last modified on 2026-06-29,
+including
 `packages/shared/types/platform.ts`, `docs/reference/platform-api.md`,
 `db/migrations/bootstrap.sql`, and an untracked migration numbered `103`.
 
 - Do not edit or clean that checkout.
 - Put V2 types and projection in new modules.
-- Reserve migration `103`; use the next collision-safe number.
+- Migrations through `104` are integrated upstream; this branch owns `105`
+  and `106`.
 - Keep bootstrap/API documentation changes minimal and easy to reconcile.
 - Recheck the dirty checkout before every checkpoint that touches an
   overlapping path.

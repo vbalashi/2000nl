@@ -51,6 +51,126 @@ def stored_raw_fingerprint(payload: dict[str, Any]) -> str:
     return hashlib.sha256(_canonical_json(stored)).hexdigest()
 
 
+def platform_v2_content_node_inputs(
+    payload: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Build semantic node evidence without treating array position as identity."""
+    nodes: list[dict[str, str]] = []
+
+    def append_node(
+        *,
+        input_key: str,
+        kind: str,
+        source_path: str,
+        text: Any,
+        parent_input_key: str | None = None,
+    ) -> None:
+        if not isinstance(text, str) or not text.strip():
+            return
+        normalized_text = text.strip()
+        node = {
+            "inputKey": input_key,
+            "kind": kind,
+            "sourcePath": source_path,
+            "sourceTextFingerprint": hashlib.sha256(
+                _canonical_json(
+                    {
+                        "kind": kind,
+                        "text": normalized_text,
+                    }
+                )
+            ).hexdigest(),
+        }
+        if parent_input_key is not None:
+            node["parentInputKey"] = parent_input_key
+        nodes.append(node)
+
+    meanings = payload.get("meanings")
+    if not isinstance(meanings, list):
+        return nodes
+
+    for meaning_index, meaning in enumerate(meanings):
+        if not isinstance(meaning, dict):
+            continue
+        prefix = f"meaning:{meaning_index}"
+        source_prefix = f"raw.meanings[{meaning_index}]"
+        append_node(
+            input_key=f"{prefix}:definition",
+            kind="definition",
+            source_path=f"{source_prefix}.definition",
+            text=meaning.get("definition"),
+        )
+        append_node(
+            input_key=f"{prefix}:context",
+            kind="usage-pattern",
+            source_path=f"{source_prefix}.context",
+            text=meaning.get("context"),
+        )
+        examples = meaning.get("examples")
+        if isinstance(examples, list):
+            for example_index, example in enumerate(examples):
+                append_node(
+                    input_key=f"{prefix}:example:{example_index}",
+                    kind="example",
+                    source_path=(
+                        f"{source_prefix}.examples[{example_index}]"
+                    ),
+                    text=example,
+                )
+
+        idioms = meaning.get("idioms")
+        if isinstance(idioms, list):
+            for idiom_index, idiom in enumerate(idioms):
+                idiom_key = f"{prefix}:idiom:{idiom_index}"
+                idiom_path = f"{source_prefix}.idioms[{idiom_index}]"
+                if isinstance(idiom, str):
+                    append_node(
+                        input_key=idiom_key,
+                        kind="idiom",
+                        source_path=idiom_path,
+                        text=idiom,
+                    )
+                    continue
+                if not isinstance(idiom, dict):
+                    continue
+                append_node(
+                    input_key=idiom_key,
+                    kind="idiom",
+                    source_path=f"{idiom_path}.expression",
+                    text=idiom.get("expression"),
+                )
+                append_node(
+                    input_key=f"{idiom_key}:explanation",
+                    kind="idiom-explanation",
+                    source_path=f"{idiom_path}.explanation",
+                    text=idiom.get("explanation"),
+                    parent_input_key=idiom_key,
+                )
+                idiom_examples = idiom.get("examples")
+                if isinstance(idiom_examples, list):
+                    for example_index, example in enumerate(idiom_examples):
+                        append_node(
+                            input_key=(
+                                f"{idiom_key}:example:{example_index}"
+                            ),
+                            kind="example",
+                            source_path=(
+                                f"{idiom_path}.examples[{example_index}]"
+                            ),
+                            text=example,
+                            parent_input_key=idiom_key,
+                        )
+
+        append_node(
+            input_key=f"{prefix}:note",
+            kind="usage-note",
+            source_path=f"{source_prefix}.note",
+            text=meaning.get("note"),
+        )
+
+    return nodes
+
+
 @dataclass(frozen=True)
 class SourceArtifact:
     path: Path

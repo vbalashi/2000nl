@@ -319,3 +319,9 @@
 
 -- Body-group fallback uses trusted lexical forms at token boundaries
 \i db/migrations/104_body_group_lexical_form_fallback.sql
+
+-- Durable opaque Headword Group identity for Platform V2
+\i db/migrations/105_platform_v2_headword_groups.sql
+
+-- Durable Content Node identity and fail-closed reconciliation for Platform V2
+\i db/migrations/106_platform_v2_content_nodes.sql

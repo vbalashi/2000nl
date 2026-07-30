@@ -21,6 +21,7 @@ from importer.reconciliation import load_reconciliation_plan
 from importer.source_manifest import (
     SourceArtifact,
     load_source_manifest,
+    platform_v2_content_node_inputs,
     semantic_content_fingerprint,
     stored_raw_fingerprint,
 )
@@ -63,6 +64,11 @@ def _verify_source_schema(cursor) -> None:
         select
             to_regclass('private.dictionary_import_runs'),
             to_regclass('private.source_entry_bindings'),
+            to_regclass('private.platform_v2_headword_groups'),
+            to_regclass('private.platform_v2_content_nodes'),
+            to_regprocedure(
+                'private.reconcile_platform_v2_content_nodes(uuid,text,jsonb)'
+            ),
             exists (
                 select 1
                 from information_schema.columns
@@ -72,10 +78,24 @@ def _verify_source_schema(cursor) -> None:
             )
         """
     )
-    import_runs, bindings, management_column = cursor.fetchone()
-    if import_runs is None or bindings is None or not management_column:
+    (
+        import_runs,
+        bindings,
+        headword_groups,
+        content_nodes,
+        reconcile_nodes,
+        management_column,
+    ) = cursor.fetchone()
+    if (
+        import_runs is None
+        or bindings is None
+        or headword_groups is None
+        or content_nodes is None
+        or reconcile_nodes is None
+        or not management_column
+    ):
         raise RuntimeError(
-            "Versioned source-binding migration 102 is not applied"
+            "Platform V2 identity migrations 102, 105, and 106 are not applied"
         )
 
 
@@ -207,6 +227,30 @@ def _completed_manifest_is_noop(
             raise RuntimeError(
                 "Completed manifest exists but stored source content drifted"
             )
+
+    cursor.execute(
+        """
+        select entry_id::text, kind, source_text_fingerprint
+        from private.platform_v2_content_nodes
+        where entry_id = any(%s::uuid[])
+          and binding_state = 'active'
+        """,
+        (word_entry_ids,),
+    )
+    actual_nodes: dict[str, list[tuple[str, str]]] = {}
+    for entry_id, kind, fingerprint in cursor.fetchall():
+        actual_nodes.setdefault(entry_id, []).append((kind, fingerprint))
+    for source_entry_key, artifact in artifacts_by_key.items():
+        entry_id = bindings[source_entry_key]["word_entry_id"]
+        expected_nodes = sorted(
+            (
+                node["kind"],
+                node["sourceTextFingerprint"],
+            )
+            for node in platform_v2_content_node_inputs(artifact.payload)
+        )
+        if sorted(actual_nodes.get(entry_id, [])) != expected_nodes:
+            return False
     return True
 
 
@@ -690,6 +734,35 @@ def import_source_manifest(
                         psycopg2.extras.Json(decision_payload),
                     )
                     for artifact, row, decision_payload in resolved
+                ],
+                page_size=500,
+            )
+
+            psycopg2.extras.execute_values(
+                cursor,
+                """
+                select private.reconcile_platform_v2_content_nodes(
+                    source.entry_id::uuid,
+                    source.source_revision,
+                    source.nodes::jsonb
+                )
+                from (values %s) as source (
+                    entry_id,
+                    source_revision,
+                    nodes
+                )
+                """,
+                [
+                    (
+                        row["id"],
+                        manifest.manifest_sha256,
+                        psycopg2.extras.Json(
+                            platform_v2_content_node_inputs(
+                                artifact.payload
+                            )
+                        ),
+                    )
+                    for artifact, row, _ in resolved
                 ],
                 page_size=500,
             )
