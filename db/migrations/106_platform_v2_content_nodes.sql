@@ -510,10 +510,19 @@ BEGIN
     )
     OR (
         NOT p_catalog
-        AND public.can_access_dictionary(
-            p_user_id,
-            dictionary.id,
-            'read'
+        AND (
+            (
+                dictionary.kind = 'user'
+                AND dictionary.owner_user_id = p_user_id
+            )
+            OR (
+                dictionary.kind <> 'user'
+                AND public.can_access_dictionary(
+                    p_user_id,
+                    dictionary.id,
+                    'read'
+                )
+            )
         )
     );
 

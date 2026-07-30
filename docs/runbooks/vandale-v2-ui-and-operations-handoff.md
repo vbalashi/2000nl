@@ -199,9 +199,11 @@ the complete `(kind, sourceTextFingerprint)` Content Node multiset for every
 entry. A mismatch repairs through a normal replay or fails closed; it is never
 accepted as ready.
 
-Before enabling `PLATFORM_V2_LOOKUP_ENABLED`, verify that migration `108`
-created the service-only `lookup_platform_v2_entries` RPC and complete the V2
-route smoke checks.
+While `PLATFORM_V2_LOOKUP_ENABLED` remains unset, verify that migration `108`
+created the service-only `lookup_platform_v2_entries` RPC and run a direct
+service-role RPC smoke. Functional route smoke requires the flag: enable it
+temporarily only in an isolated staging environment, run the route checks, and
+keep production disabled until those checks pass.
 
 Only after the verified no-op and V2 smoke checks may the runtime set
 `PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and

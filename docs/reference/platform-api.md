@@ -152,8 +152,11 @@ Deployment order is intentionally fail-closed:
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
-4. confirm migration `108` created `lookup_platform_v2_entries`, run the V2
-   route smoke checks, then set `PLATFORM_V2_LOOKUP_ENABLED=1`.
+4. while the flag remains absent, confirm migration `108` created
+   `lookup_platform_v2_entries` and run a direct service-role RPC smoke;
+5. in an isolated staging environment, temporarily set
+   `PLATFORM_V2_LOOKUP_ENABLED=1` and run the functional V2 route smoke. Keep
+   production disabled until that smoke passes, then enable it explicitly.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes

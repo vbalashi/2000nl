@@ -826,6 +826,84 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     }, ownerId);
   });
 
+  test("authenticated lookup never exposes another user's public or shared dictionary", async () => {
+    const ownerId = randomUUID();
+    const otherUserId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherUserId);
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        ownerId,
+      ]);
+      const headword = `platform-v2-cross-user-${randomUUID()}`;
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+           $1,
+           NULL,
+           jsonb_build_object(
+             'headword', $2::text,
+             'languageCode', 'nl',
+             'definition', 'owner-only definition'
+           )
+         ) as entry_id`,
+        [ownerId, headword],
+      );
+      const entryId = createRows[0].entry_id as string;
+      const { rows: dictionaryRows } = await client.query(
+        `select dictionary_id
+           from word_entries
+          where id = $1`,
+        [entryId],
+      );
+      const dictionaryId = dictionaryRows[0].dictionary_id as string;
+
+      for (const visibility of ["public", "shared"]) {
+        await client.query(
+          `update dictionaries
+              set visibility = $1
+            where id = $2`,
+          [visibility, dictionaryId],
+        );
+
+        const { rows: lookupRows } = await client.query(
+          `select lookup_platform_v2_entries(
+             $1,
+             false,
+             $2,
+             'nl',
+             NULL,
+             10,
+             50
+           ) as result`,
+          [otherUserId, headword],
+        );
+        expect(lookupRows[0].result).toEqual({
+          query: headword,
+          items: [],
+          page: {
+            selectedTierComplete: true,
+            nextGroupCursor: null,
+          },
+        });
+
+        await client.query(`savepoint cross_user_identity_check`);
+        await expect(
+          client.query(
+            `select read_platform_v2_presentation_identity(
+               $1,
+               ARRAY[$2]::uuid[],
+               false
+             )`,
+            [otherUserId, entryId],
+          ),
+        ).rejects.toThrow(/platform_v2_entry_not_accessible/);
+        await client.query(`rollback to savepoint cross_user_identity_check`);
+        await client.query(`release savepoint cross_user_identity_check`);
+      }
+    }, ownerId);
+  });
+
   test("keeps user groups one-to-one, private, and stable across rename", async () => {
     const ownerId = randomUUID();
     const otherUserId = randomUUID();

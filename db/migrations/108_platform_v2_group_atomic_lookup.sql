@@ -161,59 +161,70 @@ BEGIN
             OR (
                 NOT p_catalog
                 AND (
-                    dictionary.owner_user_id = p_user_id
-                    OR (
-                        dictionary.visibility IN (
-                            'system',
-                            'public',
-                            'shared'
-                        )
-                        AND (
-                            CASE user_context.subscription_tier
-                                WHEN 'admin' THEN 30
-                                WHEN 'premium' THEN 20
-                                ELSE 10
-                            END
-                        ) >= (
-                            CASE COALESCE(
-                                dictionary.minimum_subscription_tier,
-                                'free'
-                            )
-                                WHEN 'admin' THEN 30
-                                WHEN 'premium' THEN 20
-                                ELSE 10
-                            END
-                        )
+                    (
+                        dictionary.kind = 'user'
+                        AND dictionary.owner_user_id = p_user_id
                     )
-                    OR EXISTS (
-                        SELECT 1
-                        FROM public.dictionary_entitlements AS entitlement
-                        WHERE entitlement.dictionary_id = dictionary.id
-                          AND (
-                              (
-                                  entitlement.subject_type = 'user'
-                                  AND entitlement.subject_key =
-                                      p_user_id::text
+                    OR (
+                        dictionary.kind <> 'user'
+                        AND (
+                            dictionary.owner_user_id = p_user_id
+                            OR (
+                                dictionary.visibility IN (
+                                    'system',
+                                    'public',
+                                    'shared'
+                                )
+                                AND (
+                                    CASE user_context.subscription_tier
+                                        WHEN 'admin' THEN 30
+                                        WHEN 'premium' THEN 20
+                                        ELSE 10
+                                    END
+                                ) >= (
+                                    CASE COALESCE(
+                                        dictionary.minimum_subscription_tier,
+                                        'free'
+                                    )
+                                        WHEN 'admin' THEN 30
+                                        WHEN 'premium' THEN 20
+                                        ELSE 10
+                                    END
+                                )
+                            )
+                            OR EXISTS (
+                                SELECT 1
+                                FROM public.dictionary_entitlements
+                                    AS entitlement
+                                WHERE entitlement.dictionary_id =
+                                    dictionary.id
+                                  AND (
+                                      (
+                                          entitlement.subject_type = 'user'
+                                          AND entitlement.subject_key =
+                                              p_user_id::text
+                                      )
+                                      OR (
+                                          entitlement.subject_type = 'tier'
+                                          AND entitlement.subject_key =
+                                              user_context.subscription_tier
+                                      )
+                                  )
+                                  AND entitlement.permission IN (
+                                      'read',
+                                      'write',
+                                      'admin'
+                                  )
+                                  AND (
+                                      entitlement.starts_at IS NULL
+                                      OR entitlement.starts_at <= now()
+                                  )
+                                  AND (
+                                      entitlement.ends_at IS NULL
+                                      OR entitlement.ends_at > now()
+                                  )
                               )
-                              OR (
-                                  entitlement.subject_type = 'tier'
-                                  AND entitlement.subject_key =
-                                      user_context.subscription_tier
-                              )
-                          )
-                          AND entitlement.permission IN (
-                              'read',
-                              'write',
-                              'admin'
-                          )
-                          AND (
-                              entitlement.starts_at IS NULL
-                              OR entitlement.starts_at <= now()
-                          )
-                          AND (
-                              entitlement.ends_at IS NULL
-                              OR entitlement.ends_at > now()
-                          )
+                        )
                     )
                 )
             )

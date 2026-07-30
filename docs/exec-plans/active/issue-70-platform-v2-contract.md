@@ -100,8 +100,9 @@ the authoritative identity boundary. The follow-up patch:
 
 - binds the opaque cursor to the exact trimmed query, principal, catalog mode,
   and language;
-- excludes `kind = 'user'` dictionaries from catalog readiness and lookup even
-  if their visibility was changed to `public`;
+- excludes `kind = 'user'` dictionaries from catalog lookup and from every
+  non-owner authenticated lookup even if visibility was changed to `public` or
+  `shared`;
 - unions an unindexed owner-only form with indexed public collisions and
   deduplicates per entry;
 - counts complete groups before reading `word_entries.raw` or building JSON,
