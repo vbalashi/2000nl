@@ -109,7 +109,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
 
         const projectedState = await client.query(
           `select *
-             from get_user_card_states_for_entries(
+             from get_platform_v2_card_states_for_entries(
                $1,
                ARRAY[$2]::uuid[],
                ARRAY[$3]::text[]
@@ -630,6 +630,14 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
              ($1, $4, $3, false)`,
           [userId, knownEntryId, cardTypeId, otherEntryId],
         );
+        const ordinaryBefore = await client.query(
+          `select state_revision
+             from user_card_status
+            where user_id = $1
+              and entry_id = $2
+              and card_type_id = $3`,
+          [userId, otherEntryId, cardTypeId],
+        );
         const state = await client.query(
           `select state_revision
              from user_card_status
@@ -659,10 +667,53 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
               set success_count = success_count + 1
             where user_id = $1
               and entry_id = $2
-              and card_type_id = $3`,
+              and card_type_id = $3
+          returning state_revision`,
           [userId, otherEntryId, cardTypeId],
         );
         expect(ordinaryUpdate.rowCount).toBe(1);
+        expect(ordinaryUpdate.rows[0].state_revision).not.toBe(
+          ordinaryBefore.rows[0].state_revision,
+        );
+
+        const attemptedRevisionReuse = await client.query(
+          `update user_card_status
+              set state_revision = $4
+            where user_id = $1
+              and entry_id = $2
+              and card_type_id = $3
+          returning state_revision`,
+          [
+            userId,
+            otherEntryId,
+            cardTypeId,
+            ordinaryBefore.rows[0].state_revision,
+          ],
+        );
+        expect(attemptedRevisionReuse.rows[0].state_revision).not.toBe(
+          ordinaryBefore.rows[0].state_revision,
+        );
+
+        await client.query("reset role");
+        await client.query("savepoint stale_revision_reuse");
+        await expect(
+          client.query(
+            `select perform_platform_v2_card_action(
+              $1::uuid, 'mark-known', $2::uuid, $3::text, $4::text,
+              null, null, null, $5::uuid, null, 'first_party', null
+            )`,
+            [
+              userId,
+              otherEntryId,
+              cardTypeId,
+              ordinaryBefore.rows[0].state_revision,
+              randomUUID(),
+            ],
+          ),
+        ).rejects.toThrow(/platform_card_state_conflict/);
+        await client.query("rollback to savepoint stale_revision_reuse");
+        await client.query("release savepoint stale_revision_reuse");
+        await client.query("set local role authenticated");
 
         await client.query("savepoint known_direct_update");
         await expect(

@@ -48,8 +48,10 @@ Tests observe these seams rather than private helpers.
 ## Implementation checkpoint
 
 - Migrations `109`–`113` roll out state revisions without a volatile-default
-  table rewrite, then store one active Known Mark per exact card and immutable
-  Mark/Undo events without changing scheduler fields.
+  table rewrite. The backfill fails closed above 100,000 pending rows so a
+  larger installation must use an operator-managed batched rollout. Migration
+  113 then stores one active Known Mark per exact card and immutable Mark/Undo
+  events without changing scheduler fields.
 - The shared broad and filtered selectors exclude active marks; their renamed
   pre-Known implementations are no longer executable by API roles.
 - `/api/platform/v2/actions` accepts only revision-checked Platform V2 card
@@ -68,6 +70,7 @@ Validation before review-ready:
 - typecheck and lint: pass;
 - production build with explicit non-production Supabase build values: pass;
 - fresh bootstrap/probe through migration 113: pass;
+- populated bootstrap replay with the legacy V1 card-state RPC intact: pass;
 - populated migration-108 upgrade through split migrations 109–113: pass;
 - migrations 109–113 exact reapply: pass.
 

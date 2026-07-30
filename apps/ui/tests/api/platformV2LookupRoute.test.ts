@@ -232,7 +232,7 @@ describe("/api/platform/v2/lookup", () => {
           error: null,
         });
       }
-      if (name === "get_user_card_states_for_entries") {
+      if (name === "get_platform_v2_card_states_for_entries") {
         expect(args.p_card_type_ids).toEqual(["word-to-definition"]);
         return Promise.resolve({ data: [], error: null });
       }
@@ -533,7 +533,7 @@ describe("/api/platform/v2/lookup", () => {
       }),
     );
     expect(rpc).not.toHaveBeenCalledWith(
-      "get_user_card_states_for_entries",
+      "get_platform_v2_card_states_for_entries",
       expect.anything(),
     );
   });

@@ -195,7 +195,7 @@ export async function performPlatformV2Lookup(
     context.kind === "authenticated"
       ? measure<RpcResult>(timings, "lookup.user-state", async () =>
           await context.auth.supabase.rpc(
-            "get_user_card_states_for_entries",
+            "get_platform_v2_card_states_for_entries",
             {
               p_user_id: context.auth.user.id,
               p_entry_ids: entryIds,

@@ -11,9 +11,8 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        NEW.state_revision := COALESCE(NEW.state_revision, gen_random_uuid());
-    ELSIF NEW IS DISTINCT FROM OLD
-       AND NEW.state_revision IS NOT DISTINCT FROM OLD.state_revision THEN
+        NEW.state_revision := gen_random_uuid();
+    ELSIF NEW IS DISTINCT FROM OLD THEN
         NEW.state_revision := gen_random_uuid();
     END IF;
     RETURN NEW;
@@ -403,12 +402,12 @@ GRANT EXECUTE ON FUNCTION public.get_next_filtered_card(
     jsonb
 ) TO authenticated;
 
-DROP FUNCTION IF EXISTS public.get_user_card_states_for_entries(
+DROP FUNCTION IF EXISTS public.get_platform_v2_card_states_for_entries(
     uuid,
     uuid[],
     text[]
 );
-CREATE FUNCTION public.get_user_card_states_for_entries(
+CREATE FUNCTION public.get_platform_v2_card_states_for_entries(
     p_user_id uuid,
     p_entry_ids uuid[],
     p_card_type_ids text[] DEFAULT NULL
@@ -503,12 +502,12 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.get_user_card_states_for_entries(
+REVOKE ALL ON FUNCTION public.get_platform_v2_card_states_for_entries(
     uuid,
     uuid[],
     text[]
 ) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.get_user_card_states_for_entries(
+GRANT EXECUTE ON FUNCTION public.get_platform_v2_card_states_for_entries(
     uuid,
     uuid[],
     text[]

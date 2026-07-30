@@ -173,6 +173,11 @@ migration `106` backfills user-owned entries but source-managed Content Nodes
 are reconstructed by the versioned importer from the checksummed source
 manifest.
 
+Migration `111` deliberately refuses to backfill more than 100,000 existing
+card-state rows in one transaction. If that guard fires, keep both V2 flags
+absent and use an operator-reviewed batched state-revision backfill before
+continuing with migrations `112` and `113`.
+
 V2 message keys are semantic identifiers, not visible copy. The current 2000NL
 catalogs cover English, Russian, and Dutch and are verified against
 `packages/shared/platform-v2/localization.ts`. The interface language is a
