@@ -301,14 +301,17 @@ export async function performPlatformV2Lookup(
             const contentSections = extractPlatformV2ContentSections(entry);
             const crossReferenceQuery =
               platformV2CrossReferenceQuery(entry);
+            const projectedWordDetails = !crossReferenceQuery
+              ? projectPlatformV2WordDetails(entry, contentNodeBindings)
+              : null;
             const wordDetails =
-              context.kind === "authenticated" && !crossReferenceQuery
-                ? projectPlatformV2WordDetails(entry, contentNodeBindings)
+              context.kind === "authenticated"
+                ? projectedWordDetails
                 : null;
             const entryContentRevision = platformV2ContentRevision(
               entry.id,
               contentSections,
-              wordDetails,
+              projectedWordDetails,
               crossReferenceQuery,
             );
             const projectedEntry: DictionaryLookupResult["entry"] = {
