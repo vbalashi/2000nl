@@ -40,5 +40,70 @@
       "russian": "Русский",
       "dutch": "Nederlands"
     }
+  },
+  "dictionary": {
+    "nl-vandale": "Van Dale"
+  },
+  "indicator": {
+    "coreVocabulary": {
+      "nt22000": "2K"
+    }
+  },
+  "crossReference": {
+    "see": "Zie",
+    "follow": "Verwijzing openen"
+  },
+  "senseCard": {
+    "learning": {
+      "start": "Leren"
+    },
+    "review": {
+      "fail": "Opnieuw",
+      "hard": "Lastig",
+      "success": "Goed",
+      "easy": "Makkelijk"
+    },
+    "translation": {
+      "request": "Vertalen"
+    },
+    "report": "Probleem melden",
+    "wordDetails": {
+      "open": "Woorddetails"
+    }
+  },
+  "partOfSpeech": {
+    "afk": "afkorting",
+    "bn": "bijvoeglijk naamwoord",
+    "bw": "bijwoord",
+    "lidw": "lidwoord",
+    "tsw": "tussenwerpsel",
+    "tw": "telwoord",
+    "vnw": "voornaamwoord",
+    "vv": "voorvoegsel",
+    "vw": "voegwoord",
+    "vz": "voorzetsel",
+    "ww": "werkwoord",
+    "zn": "zelfstandig naamwoord"
+  },
+  "wordDetails": {
+    "usageLabel": "Gebruik",
+    "form": {
+      "plural": "Meervoud",
+      "diminutive": "Verkleinwoord",
+      "verbForms": "Werkwoordsvormen",
+      "inflectedForm": "Verbogen vorm",
+      "comparative": "Vergrotende trap",
+      "superlative": "Overtreffende trap",
+      "derivation": "Afleiding",
+      "alternateHeadword": "Alternatief trefwoord"
+    },
+    "feature": {
+      "gender": "Geslacht",
+      "plural": "Meervoud"
+    },
+    "reference": {
+      "headword": "Verwant trefwoord",
+      "table": "Naslag"
+    }
   }
 }

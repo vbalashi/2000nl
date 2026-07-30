@@ -40,5 +40,70 @@
       "russian": "Русский",
       "dutch": "Nederlands"
     }
+  },
+  "dictionary": {
+    "nl-vandale": "Van Dale"
+  },
+  "indicator": {
+    "coreVocabulary": {
+      "nt22000": "2K"
+    }
+  },
+  "crossReference": {
+    "see": "See",
+    "follow": "Open reference"
+  },
+  "senseCard": {
+    "learning": {
+      "start": "Learn"
+    },
+    "review": {
+      "fail": "Again",
+      "hard": "Hard",
+      "success": "Good",
+      "easy": "Easy"
+    },
+    "translation": {
+      "request": "Translate"
+    },
+    "report": "Report",
+    "wordDetails": {
+      "open": "Word details"
+    }
+  },
+  "partOfSpeech": {
+    "afk": "abbreviation",
+    "bn": "adjective",
+    "bw": "adverb",
+    "lidw": "article",
+    "tsw": "interjection",
+    "tw": "numeral",
+    "vnw": "pronoun",
+    "vv": "prefix",
+    "vw": "conjunction",
+    "vz": "preposition",
+    "ww": "verb",
+    "zn": "noun"
+  },
+  "wordDetails": {
+    "usageLabel": "Usage",
+    "form": {
+      "plural": "Plural",
+      "diminutive": "Diminutive",
+      "verbForms": "Verb forms",
+      "inflectedForm": "Inflected form",
+      "comparative": "Comparative",
+      "superlative": "Superlative",
+      "derivation": "Derivation",
+      "alternateHeadword": "Alternate headword"
+    },
+    "feature": {
+      "gender": "Gender",
+      "plural": "Plural"
+    },
+    "reference": {
+      "headword": "Related headword",
+      "table": "Reference"
+    }
   }
 }

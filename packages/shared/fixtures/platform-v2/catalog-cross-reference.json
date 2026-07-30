@@ -1,0 +1,56 @@
+{
+  "contractVersion": "platform-lookup-v2",
+  "query": "selder",
+  "request": {
+    "contentLanguageCode": "nl",
+    "translationTargetLanguageCode": null,
+    "cardTypeId": "word-to-definition",
+    "intent": "external-click"
+  },
+  "groups": [
+    {
+      "headwordGroupId": "fixture-group-selder",
+      "dictionary": {
+        "dictionaryId": "fixture-dictionary-vandale",
+        "sourceLanguageCode": "nl",
+        "messageKey": "dictionary.nl-vandale"
+      },
+      "header": {
+        "text": "selder",
+        "partOfSpeech": {
+          "termId": "part-of-speech.zn",
+          "messageKey": "partOfSpeech.zn",
+          "sourceValue": "zn"
+        }
+      },
+      "senseCount": 0,
+      "entryCount": 1,
+      "indicators": [],
+      "entries": [
+        {
+          "kind": "cross-reference",
+          "crossReferenceId": "fixture-entry-selder-1",
+          "label": {
+            "termId": "cross-reference.see",
+            "messageKey": "crossReference.see"
+          },
+          "text": "selderie",
+          "target": {
+            "query": "selderie"
+          },
+          "capabilities": [
+            {
+              "actionId": "follow-cross-reference",
+              "elementId": "cross-reference.follow",
+              "messageKey": "crossReference.follow"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "page": {
+    "selectedTierComplete": true,
+    "nextGroupCursor": null
+  }
+}

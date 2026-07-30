@@ -40,5 +40,70 @@
       "russian": "Русский",
       "dutch": "Nederlands"
     }
+  },
+  "dictionary": {
+    "nl-vandale": "Van Dale"
+  },
+  "indicator": {
+    "coreVocabulary": {
+      "nt22000": "2K"
+    }
+  },
+  "crossReference": {
+    "see": "См.",
+    "follow": "Открыть ссылку"
+  },
+  "senseCard": {
+    "learning": {
+      "start": "Учить"
+    },
+    "review": {
+      "fail": "Снова",
+      "hard": "Трудно",
+      "success": "Хорошо",
+      "easy": "Легко"
+    },
+    "translation": {
+      "request": "Перевести"
+    },
+    "report": "Сообщить об ошибке",
+    "wordDetails": {
+      "open": "Сведения о слове"
+    }
+  },
+  "partOfSpeech": {
+    "afk": "аббревиатура",
+    "bn": "прилагательное",
+    "bw": "наречие",
+    "lidw": "артикль",
+    "tsw": "междометие",
+    "tw": "числительное",
+    "vnw": "местоимение",
+    "vv": "приставка",
+    "vw": "союз",
+    "vz": "предлог",
+    "ww": "глагол",
+    "zn": "существительное"
+  },
+  "wordDetails": {
+    "usageLabel": "Употребление",
+    "form": {
+      "plural": "Множественное число",
+      "diminutive": "Уменьшительная форма",
+      "verbForms": "Формы глагола",
+      "inflectedForm": "Изменённая форма",
+      "comparative": "Сравнительная степень",
+      "superlative": "Превосходная степень",
+      "derivation": "Производное слово",
+      "alternateHeadword": "Другой вариант"
+    },
+    "feature": {
+      "gender": "Род",
+      "plural": "Множественное число"
+    },
+    "reference": {
+      "headword": "Связанное слово",
+      "table": "Справочная информация"
+    }
   }
 }

@@ -49,9 +49,9 @@ Tests assert these public seams, not internal helper calls.
 
 - [x] project entry and Content Node translation states with fingerprints;
 - [x] project typed cross-reference and minimum Word Details variants;
-- [ ] cover localization keys and exact action targets;
-- [ ] update Platform API reference and shared consumer fixtures;
-- [ ] validate the V1/V2 rollout and rollback matrix.
+- [x] cover localization keys and exact action targets;
+- [x] update Platform API reference and shared consumer fixtures;
+- [x] validate the V1/V2 rollout and rollback matrix.
 
 ## Parallel-Work Guard
 

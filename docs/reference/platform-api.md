@@ -1,8 +1,13 @@
 # Platform HTTP API
 
-**Versioned base path:** `/api/platform/v1`
+**Versioned base paths:** `/api/platform/v1` and additive
+`/api/platform/v2`
 
 The current unversioned `/api/platform/*` routes remain as aliases for local app usage and transition clients. Versioned response shapes are covered by snapshot tests in `apps/ui/tests/api/platformV1Routes.test.ts`.
+
+V1 remains the production compatibility contract. V2 currently publishes
+strict SenseCard lookup as an additive opt-in; it does not retire or silently
+change V1.
 
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
@@ -63,6 +68,97 @@ Unset or missing settings default to `en`; explicit `off` is returned as `null`
 for clients that need to disable translation affordances. `source` is
 `user-setting` when `user_settings.translation_lang` is explicitly set,
 including `off`; otherwise it is `platform-default`.
+
+## Platform V2 SenseCard lookup
+
+Authenticated:
+
+```http
+POST /api/platform/v2/lookup
+Authorization: Bearer <access_token>
+```
+
+Public catalog:
+
+```http
+POST /api/platform/v2/catalog/lookup
+Authorization: Bearer <PLATFORM_CATALOG_ACCESS_TOKEN>
+```
+
+Request:
+
+```json
+{
+  "query": "huis",
+  "contentLanguageCode": "nl",
+  "translationTargetLanguageCode": "ru",
+  "cardTypeId": "word-to-definition",
+  "intent": "external-click"
+}
+```
+
+`cardTypeId` is required and echoed. Both routes return
+`contractVersion: "platform-lookup-v2"`, explicit complete Headword Groups,
+opaque `headwordGroupId` / `entryId` / `contentNodeId` identity, and
+group-atomic completeness metadata. A selected strict-match tier is never
+silently split; reaching the operational safety bound fails explicitly.
+
+The normative TypeScript DTO is
+`packages/shared/types/platformV2.ts`. Consumer-pinned JSON examples and their
+manifest are in `packages/shared/fixtures/platform-v2`.
+
+Important V2 rules:
+
+- `meaningOrdinal` is display order only and never identity;
+- `senseCount` counts learnable SenseCards, while `entryCount` also counts
+  cross-reference-only records;
+- redirect-only dictionary records use `kind: "cross-reference"` and expose no
+  learning, review, Known, translation, reporting, or Word Details state;
+- translations are attached to exact Content Node IDs and are renderable only
+  when source content and translation policy revisions match;
+- lookup reads cached translations but never starts a paid provider call;
+- `wordDetails`, when present for an authenticated lookup, contains typed
+  lexical relations, notes, forms, and references; clients never parse `raw`;
+- catalog lookup returns `card: null` and no user mutation capabilities;
+- Known and undo-known remain absent until issue #89 supplies the atomic
+  database/action boundary.
+
+V2 message keys are semantic identifiers, not visible copy. The current 2000NL
+catalogs cover English, Russian, and Dutch and are verified against
+`packages/shared/platform-v2/localization.ts`. The interface language is a
+renderer/session preference; it is independent from dictionary content
+language and translation target language.
+
+### Translation transition
+
+V2 lookup projects only fresh cached entry and node translations. During the
+additive rollout, provider generation remains on the existing authenticated V1
+translation command. A V2 renderer must not render the positional V1 overlay:
+after generation it refreshes V2 lookup and renders only the returned
+node-bound V2 artifacts. A dedicated revision-checked V2 generation command is
+required before removing this adapter.
+
+### V1/V2 rollout and rollback matrix
+
+| Server | 2000NL adapter | AudioFilms adapter | Allowed state |
+| --- | --- | --- | --- |
+| V1 only | V1 | V1 | current fallback |
+| V1 + V2 | V1 | V1 | server dark launch |
+| V1 + V2 | V2 | V1 | 2000NL pilot after shared fixtures |
+| V1 + V2 | V1 | V2 | AudioFilms pilot after backend and extension locale coverage |
+| V1 + V2 | V2 | V2 | only after independent consumer smoke |
+
+Each consumer switch is independent. One rendered card consumes exactly one
+contract version. On a consumer regression, disable that consumer's V2 switch
+first and keep the V1 adapter deployable. Do not disable V2 routes while
+another consumer still uses them.
+
+Before any external V2 identity is recorded, projection can be rolled back by
+disabling V2. After a group/node ID appears in a translation, report, or action
+history, rollback must retire or disable a bad binding and roll forward; it
+must never reassign an emitted ID. A future Known rollback disables the
+consumer surface but never deletes an accepted Known Mark or rewrites its
+preserved scheduler state.
 
 ## `POST /lookup`
 
