@@ -3,6 +3,19 @@ name: Deploy to nuc
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/shared/**"
+      - "db/migrations/**"
+      - "supabase/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy-nuc.yml"
+      - "!**/*.md"
+      - "!apps/**/docs/**"
+      - "!packages/docs/**"
+      - "!docs/**"
+      - "!reports/**"
+      - "!review-packages/**"
 
 concurrency:
   group: deploy-nuc
