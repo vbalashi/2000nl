@@ -18,7 +18,7 @@ identity material authoritative.
   - `ca5fbe6a78720da3ee2c1499ffc3bf29027a19a3`
 - Related target-shell design issue: #72.
 - Claimed paths:
-  - proposed ADR 0004;
+  - proposed ADR 0005;
   - settings/training current-state evidence and task map;
   - the exact `TrainingScreen` characterization added by the preserved work.
 - No Pen edit or product UI implementation is authorized.
@@ -36,7 +36,7 @@ Historical screenshots require a privacy review before any public push.
 | Preserved material | Disposition |
 | --- | --- |
 | ADR 0003, dictionary identity inventory, audit script/tests, dictionary evidence | Superseded by the integrated and evolved PR #88 versions; do not copy |
-| ADR 0004 | Integrate as a proposed session-lifetime decision |
+| ADR 0005 | Integrate as a proposed session-lifetime decision |
 | Settings/training task map and Wave 0 evidence | Integrate as current-state evidence, not approved target design |
 | `TrainingScreen` modal-navigation characterization | Integrate as a compatibility test |
 | Historical edits to ingestion script notes and dictionary inventory | Superseded by current `main` and PR #88 |
@@ -45,18 +45,19 @@ Historical screenshots require a privacy review before any public push.
 
 - [x] Verify the preserved source paths against current `main`.
 - [x] Visually inspect every candidate screenshot for personal or account data.
-- [x] Restore proposed ADR 0004 and current-state task-map evidence without
+- [x] Restore proposed ADR 0005 and current-state task-map evidence without
       treating either as target-design approval.
 - [x] Port the `TrainingScreen` characterization and prove it against the
       current UI.
 - [x] Record every preserved path as superseded, integrate, or restricted.
 - [x] Run relevant UI tests, typecheck/lint, link/diff checks.
-- [ ] Run independent Standards and Spec reviews.
-- [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
+- [ ] Close independent Standards review findings and rerun both reviews.
+- [x] Push candidate SHA, open a draft PR, and record the checkpoint:
+      PR #100 at `90836a99213d12f02589b1d9cde8d4784bb27e2f`.
 
 ## Stop rules
 
 - Do not overwrite any PR #88 path with an older preserved version.
 - Do not publish screenshots containing account or user-created data.
-- Do not convert proposed ADR 0004 to accepted.
+- Do not convert proposed ADR 0005 to accepted.
 - Do not edit the canonical Pen or implement the target shell.

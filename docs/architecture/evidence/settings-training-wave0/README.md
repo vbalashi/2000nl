@@ -135,11 +135,12 @@ modal, and that modal navigation does not fetch another Training card.
 
 Changing a session-defining value remains a separate explicit reset boundary.
 Refresh, tab close, and leaving the app still end the transient session as
-specified by proposed ADR 0004.
+specified by proposed ADR 0005.
 
 ## Related Decision Material
 
 - `docs/architecture/settings-modal-entrypoint-task-map.md`
-- `docs/adr/0004-training-session-lifetime-during-navigation.md`
-- shared coordination repository:
-  `/Users/khrustal/dev/docs/intent/2000nl-audiofilms-dictionary-ux-architecture-plan-v2.md`
+- `docs/adr/0005-training-session-lifetime-during-navigation.md`
+- cross-application coordination and target-design approval remain tracked in
+  the linked GitHub program issues; this package deliberately preserves only
+  current-state evidence needed by issue #72.

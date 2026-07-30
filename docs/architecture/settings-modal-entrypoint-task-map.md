@@ -124,7 +124,7 @@ as one immediate settings page. There is no draft/apply boundary.
 | View another list | Does not by itself change the active training list |
 | Change theme/audio/interface/translation defaults | Persists immediately through preference handlers |
 | Open/close modal | Must not submit a review or mutate lookup/progress state |
-| Refresh/tab close | Ends the transient Training session; ADR 0004 deliberately does not promise resume |
+| Refresh/tab close | Ends the transient Training session; ADR 0005 deliberately does not promise resume |
 
 Focused characterization now covers:
 
