@@ -48,41 +48,43 @@ BEGIN
     v_query_unaccent := normalize_dictionary_search_text_unaccent(v_raw_query);
     v_ts_query := plainto_tsquery('simple', v_query_unaccent);
 
-    WITH matching_entries AS MATERIALIZED (
-        SELECT DISTINCT f.entry_id
-        FROM dictionary_search_fields f
-        JOIN dictionaries d ON d.id = f.dictionary_id
-        WHERE f.field_group = 'form'
-          AND f.extraction_version >= 2
-          AND f.normalized_text_unaccent = v_query_unaccent
-          AND (v_language_code IS NULL OR f.language_code = v_language_code)
-          AND (array_length(v_dictionary_ids, 1) IS NULL OR f.dictionary_id = ANY(v_dictionary_ids))
-          AND CASE
-              WHEN p_public_catalog THEN d.visibility IN ('system', 'public')
-              ELSE p_user_id IS NOT NULL AND can_access_dictionary(p_user_id, d.id, 'read')
-          END
-    )
-    SELECT COALESCE(array_agg(term ORDER BY term), ARRAY[]::text[])
-    INTO v_match_terms
-    FROM (
-        SELECT DISTINCT f.normalized_text_unaccent AS term
-        FROM dictionary_search_fields f
-        JOIN matching_entries m ON m.entry_id = f.entry_id
-        WHERE f.field_group = 'form'
-          AND f.extraction_version >= 2
-          AND f.normalized_text_unaccent ~ '^[[:alnum:]]+$'
+    IF length(v_query_unaccent) >= 3 THEN
+        WITH matching_entries AS MATERIALIZED (
+            SELECT DISTINCT f.entry_id
+            FROM dictionary_search_fields f
+            JOIN dictionaries d ON d.id = f.dictionary_id
+            WHERE f.field_group = 'form'
+              AND f.extraction_version >= 2
+              AND f.normalized_text_unaccent = v_query_unaccent
+              AND (v_language_code IS NULL OR f.language_code = v_language_code)
+              AND (array_length(v_dictionary_ids, 1) IS NULL OR f.dictionary_id = ANY(v_dictionary_ids))
+              AND CASE
+                  WHEN p_public_catalog THEN d.visibility IN ('system', 'public')
+                  ELSE p_user_id IS NOT NULL AND can_access_dictionary(p_user_id, d.id, 'read')
+              END
+        )
+        SELECT COALESCE(array_agg(term ORDER BY term), ARRAY[]::text[])
+        INTO v_match_terms
+        FROM (
+            SELECT DISTINCT f.normalized_text_unaccent AS term
+            FROM dictionary_search_fields f
+            JOIN matching_entries m ON m.entry_id = f.entry_id
+            WHERE f.field_group = 'form'
+              AND f.extraction_version >= 2
+              AND f.normalized_text_unaccent ~ '^[[:alnum:]]+$'
 
-        UNION
+            UNION
 
-        SELECT v_query_unaccent AS term
-        WHERE v_query_unaccent ~ '^[[:alnum:]]+$'
-    ) terms;
+            SELECT v_query_unaccent AS term
+            WHERE v_query_unaccent ~ '^[[:alnum:]]+$'
+        ) terms;
 
-    v_term_query := CASE
-        WHEN cardinality(v_match_terms) > 0
-        THEN '(^|[^[:alnum:]])(' || array_to_string(v_match_terms, '|') || ')([^[:alnum:]]|$)'
-        ELSE NULL
-    END;
+        v_term_query := CASE
+            WHEN cardinality(v_match_terms) > 0
+            THEN '(^|[^[:alnum:]])(' || array_to_string(v_match_terms, '|') || ')([^[:alnum:]]|$)'
+            ELSE NULL
+        END;
+    END IF;
 
     WITH eligible_dictionaries AS MATERIALIZED (
         SELECT d.id

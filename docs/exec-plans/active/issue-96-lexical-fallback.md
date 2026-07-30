@@ -4,6 +4,12 @@ Status: active
 
 Issue: https://github.com/vbalashi/2000nl/issues/96
 
+Required contract references:
+
+- [`platform-engineering-principles.md`](../../architecture/post-provenance-review/platform-engineering-principles.md)
+- [`platform-api.md`](../../reference/platform-api.md)
+- [`platform-contract-change-checklist.md`](../../reference/platform-contract-change-checklist.md)
+
 ## Objective
 
 Recover the intended lexical-form fallback from preserved commit `c21a073f`
@@ -31,6 +37,21 @@ dictionary-search RPC contract.
 The fallback may match trusted lexical forms at token boundaries. It must not
 match an arbitrary occurrence of the query inside an unrelated token.
 
+## Contract impact
+
+- [x] Lookup remains read-only; no card or user mutation is introduced.
+- [x] Action IDs, review result IDs, FSRS scheduling, and review behavior are
+      unchanged.
+- [x] Source-context versions, privacy/retention, and connected-client scopes
+      are unchanged.
+- [x] Public request and response shapes are unchanged.
+- [x] DB/RPC result selection changes through migration 104 and is documented
+      in the Platform API reference.
+- [x] AudioFilms and Pontix require no fixture change because the versioned
+      response shape is unchanged; they receive the corrected result set.
+- [x] Live rollout status: not applied. Production deployment is explicitly out
+      of scope for this PR.
+
 ## Slices
 
 - [x] Verify current `main`, competing worktrees, and the next migration number.
@@ -54,6 +75,11 @@ match an arbitrary occurrence of the query inside an unrelated token.
 - TypeScript typecheck: pass.
 - Next.js lint: pass without warnings.
 - `git diff --check`: pass.
+- Representative short-query probe on a rolled-back local fixture with 18,000
+  documents, 36,006 fields, and six forms for `de`:
+  - historical unguarded prepass: 5.039 ms, 1,502 shared buffers;
+  - length-gated prepass: 4.464 ms, 1,456 shared buffers;
+  - no fixture rows or migration state were committed by the probe.
 
 ## Stop rules
 

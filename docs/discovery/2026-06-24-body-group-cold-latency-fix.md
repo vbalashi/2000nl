@@ -17,6 +17,10 @@ Issue: [#40](https://github.com/vbalashi/2000nl/issues/40)
     boundaries instead of arbitrary `%query%` substring matching.
   - This keeps `fel` / `felle` example hits while excluding unrelated words such
     as `tafel`, `betwijfelen`, `Felix`, and `feliciteren`.
+  - Queries shorter than three normalized characters skip lexical-form
+    preparation entirely because the fallback is disabled for them. On a
+    rolled-back local 18,000-document fixture, the representative `de` call
+    decreased from 5.039 ms / 1,502 shared buffers to 4.464 ms / 1,456.
 
 ## Key Finding
 
