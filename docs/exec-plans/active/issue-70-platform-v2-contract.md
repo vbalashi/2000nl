@@ -79,6 +79,19 @@ including
 - full UI suite once before review-ready;
 - independent Standards and Spec reviews on the exact pushed SHA.
 
+### Real-corpus checkpoint
+
+On 2026-07-30 a fresh local Supabase reset applied migrations through `108`,
+then imported the checksummed Van Dale v2 corpus:
+
+- 18,163 entries and 40,409 active Content Nodes;
+- a second identical importer replay was a verified no-op;
+- `goed` returned its complete 12-entry group;
+- the high-collision form `heeft` returned consecutive pages of 10 complete
+  groups (13 then 19 entries because groups contain independent senses), with
+  no entry overlap and an opaque continuation cursor;
+- two sequential `heeft` pages completed in 39.332 ms on the local corpus.
+
 ## Stop Rules
 
 - Do not expose synthetic or position-derived public identity.
