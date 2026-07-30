@@ -92,6 +92,30 @@ then imported the checksummed Van Dale v2 corpus:
   no entry overlap and an opaque continuation cursor;
 - two sequential `heeft` pages completed in 39.332 ms on the local corpus.
 
+### Independent-review hardening
+
+The first exact-SHA review of the group-atomic lookup found correctness drift
+between cursor ordering, catalog authorization, fresh user-form fallback, and
+the authoritative identity boundary. The follow-up patch:
+
+- binds the opaque cursor to the exact trimmed query, principal, catalog mode,
+  and language;
+- excludes `kind = 'user'` dictionaries from catalog readiness and lookup even
+  if their visibility was changed to `public`;
+- unions an unindexed owner-only form with indexed public collisions and
+  deduplicates per entry;
+- counts complete groups before reading `word_entries.raw` or building JSON,
+  so `group-too-large` is a real hydration/aggregation preflight;
+- computes frequency indicators from at least one learnable sense, never from
+  redirect-only records;
+- requires migrations `105` through `108` before route smoke checks and flag
+  enablement.
+
+The contract PR remains additive and dark by default. Real consumer adoption is
+owned by 2000NL issue #76 and AudioFilms issue #31. Those downstream gates must
+either be completed or formally moved out of issue #70 before #70 can close;
+this producer PR alone does not prove both renderers.
+
 ## Stop Rules
 
 - Do not expose synthetic or position-derived public identity.

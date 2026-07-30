@@ -68,6 +68,7 @@ BEGIN
                 'platform-v2-group-cursor-v1',
                 COALESCE(p_user_id::text, 'catalog'),
                 p_catalog::text,
+                v_raw_query,
                 v_query,
                 v_query_unaccent,
                 COALESCE(v_language_code, '')
@@ -106,6 +107,7 @@ BEGIN
            JOIN public.dictionaries AS dictionary
              ON dictionary.id = entry.dictionary_id
            WHERE dictionary.visibility IN ('system', 'public')
+             AND dictionary.kind <> 'user'
              AND (
                  v_language_code IS NULL
                  OR entry.language_code = v_language_code
@@ -118,6 +120,7 @@ BEGIN
            JOIN public.dictionaries AS dictionary
              ON dictionary.id = document.dictionary_id
            WHERE dictionary.visibility IN ('system', 'public')
+             AND dictionary.kind <> 'user'
              AND (
                  v_language_code IS NULL
                  OR document.language_code = v_language_code
@@ -153,6 +156,7 @@ BEGIN
             (
                 p_catalog
                 AND dictionary.visibility IN ('system', 'public')
+                AND dictionary.kind <> 'user'
             )
             OR (
                 NOT p_catalog
@@ -391,7 +395,6 @@ BEGIN
           ON document.entry_id = entry.id
         WHERE NOT p_catalog
           AND NOT EXISTS (SELECT 1 FROM headword_candidates)
-          AND NOT EXISTS (SELECT 1 FROM indexed_form_matches)
           AND dictionary.kind = 'user'
           AND document.entry_id IS NULL
           AND (
@@ -519,19 +522,10 @@ BEGIN
             headword_group_id
         LIMIT v_group_limit
     ),
-    group_entries AS MATERIALIZED (
+    group_entry_ids AS MATERIALIZED (
         SELECT
             group_page.*,
-            entry.*,
-            dictionary.language_code AS dictionary_language_code,
-            dictionary.slug AS dictionary_slug,
-            dictionary.name AS dictionary_name,
-            dictionary.kind AS dictionary_kind,
-            dictionary.visibility AS dictionary_visibility,
-            dictionary.owner_user_id AS dictionary_owner_user_id,
-            dictionary.is_editable AS dictionary_is_editable,
-            dictionary.schema_key AS dictionary_schema_key,
-            dictionary.schema_version AS dictionary_schema_version,
+            entry.id AS entry_id,
             COALESCE(binding.sense_ordinal, entry.meaning_id)
                 AS group_meaning_order
         FROM returned_groups AS group_page
@@ -556,8 +550,46 @@ BEGIN
         SELECT
             headword_group_id,
             count(*)::integer AS entry_count
-        FROM group_entries
+        FROM group_entry_ids
         GROUP BY headword_group_id
+    ),
+    oversized_groups AS MATERIALIZED (
+        SELECT jsonb_build_object(
+            'headwordGroupId', size.headword_group_id,
+            'entryCount', size.entry_count,
+            'safetyBound', v_group_entry_bound
+        ) AS error_payload
+        FROM group_sizes AS size
+        WHERE size.entry_count > v_group_entry_bound
+        ORDER BY size.entry_count DESC, size.headword_group_id
+        LIMIT 1
+    ),
+    group_entries AS MATERIALIZED (
+        SELECT
+            member.tier_rank,
+            member.match_rank,
+            member.dictionary_rank,
+            member.sort_headword,
+            member.resolved_by,
+            member.matched_text,
+            member.headword_group_id,
+            member.group_meaning_order,
+            entry.*,
+            dictionary.language_code AS dictionary_language_code,
+            dictionary.slug AS dictionary_slug,
+            dictionary.name AS dictionary_name,
+            dictionary.kind AS dictionary_kind,
+            dictionary.visibility AS dictionary_visibility,
+            dictionary.owner_user_id AS dictionary_owner_user_id,
+            dictionary.is_editable AS dictionary_is_editable,
+            dictionary.schema_key AS dictionary_schema_key,
+            dictionary.schema_version AS dictionary_schema_version
+        FROM group_entry_ids AS member
+        JOIN public.word_entries AS entry
+          ON entry.id = member.entry_id
+        JOIN public.dictionaries AS dictionary
+          ON dictionary.id = entry.dictionary_id
+        WHERE NOT EXISTS (SELECT 1 FROM oversized_groups)
     ),
     payloads AS (
         SELECT
@@ -649,15 +681,8 @@ BEGIN
             WHERE headword_group_id IS NULL
         ),
         (
-            SELECT jsonb_build_object(
-                'headwordGroupId', size.headword_group_id,
-                'entryCount', size.entry_count,
-                'safetyBound', v_group_entry_bound
-            )
-            FROM group_sizes AS size
-            WHERE size.entry_count > v_group_entry_bound
-            ORDER BY size.entry_count DESC, size.headword_group_id
-            LIMIT 1
+            SELECT error_payload
+            FROM oversized_groups
         )
     INTO
         v_items,

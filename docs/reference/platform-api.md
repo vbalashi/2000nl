@@ -148,11 +148,12 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `107` and the V2 code with the flag absent;
+1. deploy migrations `105` through `108` and the V2 code with the flag absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
-4. run the V2 route smoke checks, then set `PLATFORM_V2_LOOKUP_ENABLED=1`.
+4. confirm migration `108` created `lookup_platform_v2_entries`, run the V2
+   route smoke checks, then set `PLATFORM_V2_LOOKUP_ENABLED=1`.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes

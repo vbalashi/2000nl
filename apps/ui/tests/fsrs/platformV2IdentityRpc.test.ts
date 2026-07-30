@@ -598,6 +598,70 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         error: "invalid_cursor",
       });
 
+      const { rows: caseVariantRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           $3,
+           2,
+           50
+         ) as result`,
+        [userId, query.toUpperCase(), firstPage.page.nextGroupCursor],
+      );
+      expect(caseVariantRows[0].result).toEqual({
+        error: "invalid_cursor",
+      });
+
+      const { rows: otherPrincipalRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           $3,
+           2,
+           50
+         ) as result`,
+        [randomUUID(), query, firstPage.page.nextGroupCursor],
+      );
+      expect(otherPrincipalRows[0].result).toEqual({
+        error: "invalid_cursor",
+      });
+
+      const { rows: catalogPrincipalRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           NULL,
+           true,
+           $1,
+           'nl',
+           $2,
+           2,
+           50
+         ) as result`,
+        [query, firstPage.page.nextGroupCursor],
+      );
+      expect(catalogPrincipalRows[0].result).toEqual({
+        error: "invalid_cursor",
+      });
+
+      const { rows: otherLanguageRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'en',
+           $3,
+           2,
+           50
+         ) as result`,
+        [userId, query, firstPage.page.nextGroupCursor],
+      );
+      expect(otherLanguageRows[0].result).toEqual({
+        error: "invalid_cursor",
+      });
+
       const { rows: oversizedRows } = await client.query(
         `select lookup_platform_v2_entries(
            $1,
@@ -620,6 +684,146 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         }),
       );
     }, userId);
+  });
+
+  test("unions a fresh private form with an indexed public collision", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const suffix = randomUUID();
+      const query = `platform-v2-mixed-form-${suffix}`;
+      const publicEntryId = await insertWord(
+        client,
+        `platform-v2-public-form-${suffix}`,
+      );
+      await bindSourceEntries(client, [publicEntryId]);
+
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        userId,
+      ]);
+      const { rows: privateRows } = await client.query(
+        `select create_user_dictionary_entry(
+           $1,
+           NULL,
+           jsonb_build_object(
+             'headword', $2::text,
+             'languageCode', 'nl',
+             'definition', 'private form definition'
+           )
+         ) as entry_id`,
+        [userId, `platform-v2-private-form-${suffix}`],
+      );
+      const privateEntryId = privateRows[0].entry_id as string;
+      const { rows: entryRows } = await client.query(
+        `select id, dictionary_id, headword
+           from word_entries
+          where id = any($1::uuid[])`,
+        [[publicEntryId, privateEntryId]],
+      );
+      for (const entry of entryRows) {
+        await client.query(
+          `insert into word_forms (
+             language_code,
+             dictionary_id,
+             form,
+             word_id,
+             headword
+           )
+           values ('nl', $1, $2, $3, $4)`,
+          [
+            entry.dictionary_id,
+            query,
+            entry.id,
+            entry.headword,
+          ],
+        );
+      }
+      await client.query(
+        `select refresh_dictionary_search_document($1, 2)`,
+        [publicEntryId],
+      );
+
+      const { rows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           NULL,
+           10,
+           50
+         ) as result`,
+        [userId, query],
+      );
+      const result = rows[0].result as {
+        items: Array<{ id: string }>;
+      };
+      expect(result.items.map((entry) => entry.id)).toEqual(
+        expect.arrayContaining([publicEntryId, privateEntryId]),
+      );
+      expect(result.items).toHaveLength(2);
+    }, userId);
+  });
+
+  test("catalog lookup never exposes a public user dictionary", async () => {
+    const ownerId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
+        ownerId,
+      ]);
+      const headword = `platform-v2-public-user-${randomUUID()}`;
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+           $1,
+           NULL,
+           jsonb_build_object(
+             'headword', $2::text,
+             'languageCode', 'nl',
+             'definition', 'must remain private to catalog'
+           )
+         ) as entry_id`,
+        [ownerId, headword],
+      );
+      const entryId = createRows[0].entry_id as string;
+      await client.query(
+        `update dictionaries
+            set visibility = 'public'
+          where id = (
+            select dictionary_id
+              from word_entries
+             where id = $1
+          )`,
+        [entryId],
+      );
+      await client.query(
+        `select refresh_dictionary_search_document($1, 2)`,
+        [entryId],
+      );
+
+      const { rows } = await client.query(
+        `select lookup_platform_v2_entries(
+           NULL,
+           true,
+           $1,
+           'nl',
+           NULL,
+           10,
+           50
+         ) as result`,
+        [headword],
+      );
+      expect(rows[0].result).toEqual({
+        query: headword,
+        items: [],
+        page: {
+          selectedTierComplete: true,
+          nextGroupCursor: null,
+        },
+      });
+    }, ownerId);
   });
 
   test("keeps user groups one-to-one, private, and stable across rename", async () => {

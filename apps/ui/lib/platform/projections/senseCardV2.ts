@@ -155,6 +155,9 @@ function projectHeadwordGroup(
       );
     }),
   );
+  const learnableEntries = entries.filter(
+    (item) => !item.crossReferenceQuery,
+  );
 
   return {
     headwordGroupId,
@@ -177,9 +180,11 @@ function projectHeadwordGroup(
         ? { partOfSpeech: semanticTerm("part-of-speech", uniformPartOfSpeech) }
         : {}),
     },
-    senseCount: entries.filter((item) => !item.crossReferenceQuery).length,
+    senseCount: learnableEntries.length,
     entryCount: entries.length,
-    indicators: entries.every((item) => item.entry.isNt22000 === true)
+    indicators:
+      learnableEntries.length > 0 &&
+      learnableEntries.every((item) => item.entry.isNt22000 === true)
       ? [
           {
             indicatorId: "core-vocabulary",

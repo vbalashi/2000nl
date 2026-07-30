@@ -181,7 +181,7 @@ normal rollback mechanism.
 
 Platform V2 migrations deliberately do not infer source-managed Content Nodes
 from `word_entries.raw`. The checksummed source manifest remains the authority.
-When migrations `105` through `107` are deployed, keep
+When migrations `105` through `108` are deployed, keep
 `PLATFORM_V2_LOOKUP_ENABLED` unset and run:
 
 ```bash
@@ -198,6 +198,10 @@ compares the manifest, active source bindings, persisted source content, and
 the complete `(kind, sourceTextFingerprint)` Content Node multiset for every
 entry. A mismatch repairs through a normal replay or fails closed; it is never
 accepted as ready.
+
+Before enabling `PLATFORM_V2_LOOKUP_ENABLED`, verify that migration `108`
+created the service-only `lookup_platform_v2_entries` RPC and complete the V2
+route smoke checks.
 
 Only after the verified no-op and V2 smoke checks may the runtime set
 `PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and

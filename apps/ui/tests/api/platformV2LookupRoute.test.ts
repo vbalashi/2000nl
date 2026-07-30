@@ -444,6 +444,7 @@ describe("/api/platform/v2/lookup", () => {
                 headword: "huis",
                 meaning_id: 1,
                 part_of_speech: "zn",
+                is_nt2_2000: true,
                 raw: {
                   meanings: [{ definition: "een gebouw om in te wonen" }],
                 },
@@ -599,6 +600,7 @@ describe("/api/platform/v2/lookup", () => {
       expect.objectContaining({
         senseCount: 0,
         entryCount: 1,
+        indicators: [],
       }),
     );
     expect(payload.groups[0].entries).toEqual([
