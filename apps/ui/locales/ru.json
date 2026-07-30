@@ -42,6 +42,7 @@
     }
   },
   "dictionary": {
+    "name": "Словарь",
     "nl-vandale": "Van Dale"
   },
   "indicator": {
@@ -95,11 +96,14 @@
       "comparative": "Сравнительная степень",
       "superlative": "Превосходная степень",
       "derivation": "Производное слово",
-      "alternateHeadword": "Другой вариант"
+      "alternateHeadword": "Другой вариант",
+      "conjugation": "Спряжение"
     },
     "feature": {
       "gender": "Род",
-      "plural": "Множественное число"
+      "plural": "Множественное число",
+      "tense": "Время",
+      "personOrForm": "Лицо или форма"
     },
     "reference": {
       "headword": "Связанное слово",

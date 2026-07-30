@@ -127,7 +127,8 @@ describe("Platform V2 SenseCard projection", () => {
           dictionary: {
             dictionaryId: "dict-1",
             sourceLanguageCode: "nl",
-            messageKey: "dictionary.nl-vandale",
+            displayName: "Van Dale",
+            messageKey: "dictionary.name",
           },
           header: {
             text: "huis",
@@ -240,17 +241,6 @@ describe("Platform V2 SenseCard projection", () => {
                   reviewResult: "easy",
                 },
                 {
-                  actionId: "request-translation",
-                  elementId: "sense-card.translation.request",
-                  messageKey: "senseCard.translation.request",
-                  target: {
-                    kind: "entry",
-                    entryId: "entry-1",
-                    contentRevision: "content-revision-1",
-                  },
-                  targetLanguageCode: "ru",
-                },
-                {
                   actionId: "report-content",
                   elementId: "sense-card.report",
                   messageKey: "senseCard.report",
@@ -297,5 +287,82 @@ describe("Platform V2 SenseCard projection", () => {
     expect(JSON.stringify(response)).not.toContain("sourcePath");
     expect(JSON.stringify(response)).not.toContain("mark-known");
     expect(JSON.stringify(response)).not.toContain("undo-known");
+  });
+
+  test("uses controlled dictionary copy with a server-provided user dictionary name", () => {
+    const response = projectPlatformLookupV2({
+      query: "huis",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: null,
+        cardTypeId: "word-to-definition",
+        intent: "dictionary-lookup",
+      },
+      page: {
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      },
+      entries: [
+        {
+          headwordGroupId: "private-group-1",
+          allowMutationCapabilities: false,
+          entry: {
+            id: "private-entry-1",
+            dictionaryId: "private-dictionary-1",
+            languageCode: "nl",
+            headword: "huis",
+            meaningId: 1,
+            partOfSpeech: "zn",
+            gender: "het",
+            contentFingerprint: "private-content-revision-1",
+            raw: {},
+            content: {
+              headword: "huis",
+              languageCode: "nl",
+              meaningId: 1,
+              partOfSpeech: "zn",
+              gender: "het",
+              meanings: [{ definition: "mijn eigen definitie" }],
+              summary: { definition: "mijn eigen definitie" },
+              sections: [
+                {
+                  id: "definition",
+                  sourcePath: "raw.definition",
+                  kind: "meaning",
+                  text: "mijn eigen definitie",
+                },
+              ],
+            },
+          },
+          dictionary: {
+            id: "private-dictionary-1",
+            languageCode: "nl",
+            slug: "user-7b0dcd42",
+            name: "Mijn reiswoorden",
+            kind: "user",
+            visibility: "private",
+          },
+          contentNodeBindings: [
+            {
+              contentNodeId: "private-node-definition-1",
+              sourcePath: "raw.definition",
+              kind: "definition",
+              sourceTextFingerprint: "private-definition-fingerprint-1",
+            },
+          ],
+          cardState: null,
+        },
+      ],
+    });
+
+    expect(response.groups[0].dictionary).toEqual({
+      dictionaryId: "private-dictionary-1",
+      sourceLanguageCode: "nl",
+      displayName: "Mijn reiswoorden",
+      messageKey: "dictionary.name",
+    });
+    expect(JSON.stringify(response)).not.toContain(
+      "dictionary.user-7b0dcd42",
+    );
   });
 });

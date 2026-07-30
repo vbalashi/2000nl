@@ -125,7 +125,18 @@ Important V2 rules:
   when source content and translation policy revisions match;
 - lookup reads cached translations but never starts a paid provider call;
 - `wordDetails`, when present for an authenticated lookup, contains typed
-  lexical relations, notes, forms, and references; clients never parse `raw`;
+  lexical relations, notes, forms, conjugation rows, and references; clients
+  never parse `raw`;
+- `dictionary.messageKey` is always the controlled `dictionary.name`; render
+  the server-provided `dictionary.displayName` as its value. Clients must not
+  manufacture locale keys from user dictionary slugs;
+- the current frequency behavior is deliberately narrow:
+  `indicator.coreVocabulary.nt22000` is emitted only when every learnable
+  entry in the group belongs to the NT2 2000 corpus; no indicator means
+  frequency is unknown/not presented, not that the word is uncommon;
+- header audio is deliberately absent in this slice. Clients must not parse
+  provider `audio_links` from `raw`; Platform will expose `header.audio` only
+  together with a server-owned playable resource/action contract;
 - catalog lookup returns `card: null` and no user mutation capabilities;
 - Known and undo-known remain absent until issue #89 supplies the atomic
   database/action boundary.
@@ -157,6 +168,12 @@ translation command. A V2 renderer must not render the positional V1 overlay:
 after generation it refreshes V2 lookup and renders only the returned
 node-bound V2 artifacts. A dedicated revision-checked V2 generation command is
 required before removing this adapter.
+
+Until that dedicated command exists, V2 responses do not advertise the
+`request-translation` capability. A consumer may use the documented V1
+transition adapter outside the V2 capability dispatcher and then refresh V2
+lookup. This prevents a semantic action ID from pointing at a command that
+cannot enforce the V2 `contentRevision`.
 
 ### V1/V2 rollout and rollback matrix
 

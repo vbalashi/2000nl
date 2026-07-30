@@ -13,7 +13,8 @@
       "dictionary": {
         "dictionaryId": "fixture-dictionary-vandale",
         "sourceLanguageCode": "nl",
-        "messageKey": "dictionary.nl-vandale"
+        "displayName": "Van Dale",
+        "messageKey": "dictionary.name"
       },
       "header": {
         "text": "huis",

@@ -232,14 +232,17 @@ function projectForms(
     value: unknown,
     features: PlatformSemanticTermV2[] = [],
   ) => {
-    const text = asString(value);
-    if (!text) return;
-    forms.push({
-      formId: stableId(entryId, "form", kind, text),
-      kind: semanticTerm("wordDetails.form", kind),
-      text,
-      features,
-    });
+    const values = Array.isArray(value) ? value : [value];
+    for (const candidate of values) {
+      const text = asString(candidate);
+      if (!text) continue;
+      forms.push({
+        formId: stableId(entryId, "form", kind, text),
+        kind: semanticTerm("wordDetails.form", kind),
+        text,
+        features,
+      });
+    }
   };
 
   push("plural", raw.plural);
@@ -249,6 +252,20 @@ function projectForms(
   push("comparative", raw.comparative);
   push("superlative", raw.superlative);
   push("derivation", raw.derivations);
+  const conjugationTable = asRecord(raw.conjugation_table);
+  for (const [tense, conjugations] of Object.entries(conjugationTable)) {
+    for (const [personOrForm, value] of Object.entries(
+      asRecord(conjugations),
+    )) {
+      push("conjugation", value, [
+        semanticTerm("wordDetails.feature.tense", tense),
+        semanticTerm(
+          "wordDetails.feature.personOrForm",
+          personOrForm,
+        ),
+      ]);
+    }
+  }
 
   const alternateHeadwords = Array.isArray(raw.alternate_headwords)
     ? raw.alternate_headwords

@@ -42,6 +42,7 @@
     }
   },
   "dictionary": {
+    "name": "Dictionary",
     "nl-vandale": "Van Dale"
   },
   "indicator": {
@@ -95,11 +96,14 @@
       "comparative": "Comparative",
       "superlative": "Superlative",
       "derivation": "Derivation",
-      "alternateHeadword": "Alternate headword"
+      "alternateHeadword": "Alternate headword",
+      "conjugation": "Conjugation"
     },
     "feature": {
       "gender": "Gender",
-      "plural": "Plural"
+      "plural": "Plural",
+      "tense": "Tense",
+      "personOrForm": "Person or form"
     },
     "reference": {
       "headword": "Related headword",

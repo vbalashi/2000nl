@@ -5,7 +5,7 @@ export const PLATFORM_V2_SUPPORTED_INTERFACE_LANGUAGES = [
 ] as const;
 
 export const PLATFORM_V2_REQUIRED_MESSAGE_KEYS = [
-  "dictionary.nl-vandale",
+  "dictionary.name",
   "indicator.coreVocabulary.nt22000",
   "crossReference.see",
   "crossReference.follow",
@@ -38,8 +38,11 @@ export const PLATFORM_V2_REQUIRED_MESSAGE_KEYS = [
   "wordDetails.form.superlative",
   "wordDetails.form.derivation",
   "wordDetails.form.alternateHeadword",
+  "wordDetails.form.conjugation",
   "wordDetails.feature.gender",
   "wordDetails.feature.plural",
+  "wordDetails.feature.tense",
+  "wordDetails.feature.personOrForm",
   "wordDetails.reference.headword",
   "wordDetails.reference.table",
 ] as const;

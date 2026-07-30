@@ -9,6 +9,7 @@ export type PlatformSemanticTermV2 = {
 export type PlatformDictionarySummaryV2 = {
   dictionaryId: string;
   sourceLanguageCode: string;
+  displayName: string;
   messageKey: string;
 };
 

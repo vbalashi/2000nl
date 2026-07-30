@@ -161,7 +161,11 @@ function projectHeadwordGroup(
     dictionary: {
       dictionaryId: first.dictionary.id,
       sourceLanguageCode: first.dictionary.languageCode,
-      messageKey: dictionaryMessageKey(first.dictionary),
+      displayName:
+        first.dictionary.name.trim() ||
+        first.dictionary.slug.trim() ||
+        first.dictionary.id,
+      messageKey: "dictionary.name",
     },
     header: {
       text: first.entry.headword,
@@ -274,7 +278,6 @@ function projectSenseCard(
       hasWordDetails: Boolean(item.wordDetails),
       allowWordDetails:
         item.allowWordDetailsCapability !== false,
-      targetLanguageCode: request.translationTargetLanguageCode,
       allowMutations: item.allowMutationCapabilities !== false,
     }),
     ...(item.wordDetails ? { wordDetails: item.wordDetails } : {}),
@@ -344,7 +347,6 @@ function capabilitiesFor(params: {
   entryTranslation: PlatformEntryTranslationStateV2 | null;
   hasWordDetails: boolean;
   allowWordDetails: boolean;
-  targetLanguageCode: string | null;
   allowMutations: boolean;
 }): PlatformSenseCardCapabilityV2[] {
   const capabilities: PlatformSenseCardCapabilityV2[] = [];
@@ -385,15 +387,6 @@ function capabilitiesFor(params: {
         target,
       });
     }
-  }
-  if (params.allowMutations && params.targetLanguageCode) {
-    capabilities.push({
-      actionId: "request-translation",
-      elementId: "sense-card.translation.request",
-      messageKey: "senseCard.translation.request",
-      target: params.entryTarget,
-      targetLanguageCode: params.targetLanguageCode,
-    });
   }
   if (params.allowMutations) {
     capabilities.push({
@@ -475,11 +468,6 @@ function semanticTerm(namespace: string, value: string): PlatformSemanticTermV2 
         : `${namespace}.${value}`,
     sourceValue: value,
   };
-}
-
-function dictionaryMessageKey(dictionary: DictionarySummary) {
-  const key = dictionary.slug.trim() || dictionary.id;
-  return `dictionary.${key}`;
 }
 
 function uniformString(values: Array<string | null>) {

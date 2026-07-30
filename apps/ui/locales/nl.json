@@ -42,6 +42,7 @@
     }
   },
   "dictionary": {
+    "name": "Woordenboek",
     "nl-vandale": "Van Dale"
   },
   "indicator": {
@@ -95,11 +96,14 @@
       "comparative": "Vergrotende trap",
       "superlative": "Overtreffende trap",
       "derivation": "Afleiding",
-      "alternateHeadword": "Alternatief trefwoord"
+      "alternateHeadword": "Alternatief trefwoord",
+      "conjugation": "Vervoeging"
     },
     "feature": {
       "gender": "Geslacht",
-      "plural": "Meervoud"
+      "plural": "Meervoud",
+      "tense": "Tijd",
+      "personOrForm": "Persoon of vorm"
     },
     "reference": {
       "headword": "Verwant trefwoord",

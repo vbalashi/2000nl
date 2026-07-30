@@ -16,6 +16,17 @@ describe("Platform V2 rich dictionary projection", () => {
         pronunciation_with_stress: "ˈmees·te·res",
         source_identity: { homograph_number: 2 },
         plural: "meesters",
+        verb_forms: ["was meester", "is meester geweest"],
+        conjugation_table: {
+          present: {
+            ik: "ben meester",
+            wij: "zijn meester",
+          },
+          perfect: {
+            auxiliary: "is",
+            participle: "geweest",
+          },
+        },
         alternate_headwords: [
           {
             headword: "meesteres",
@@ -124,6 +135,34 @@ describe("Platform V2 rich dictionary projection", () => {
               messageKey: "wordDetails.form.alternateHeadword",
             }),
             text: "meesteres",
+          }),
+          expect.objectContaining({
+            kind: expect.objectContaining({
+              messageKey: "wordDetails.form.verbForms",
+            }),
+            text: "was meester",
+          }),
+          expect.objectContaining({
+            kind: expect.objectContaining({
+              messageKey: "wordDetails.form.verbForms",
+            }),
+            text: "is meester geweest",
+          }),
+          expect.objectContaining({
+            kind: expect.objectContaining({
+              messageKey: "wordDetails.form.conjugation",
+            }),
+            text: "ben meester",
+            features: expect.arrayContaining([
+              expect.objectContaining({
+                messageKey: "wordDetails.feature.tense",
+                sourceValue: "present",
+              }),
+              expect.objectContaining({
+                messageKey: "wordDetails.feature.personOrForm",
+                sourceValue: "ik",
+              }),
+            ]),
           }),
         ]),
         references: [
