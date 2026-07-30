@@ -316,3 +316,6 @@
 
 -- Rich cached output for platform text translation artifacts
 \i db/migrations/103_platform_text_translation_rich_fields.sql
+
+-- Body-group fallback uses trusted lexical forms at token boundaries
+\i db/migrations/104_body_group_lexical_form_fallback.sql
