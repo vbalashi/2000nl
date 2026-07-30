@@ -31,15 +31,26 @@ copied only when it is absent from current `main` and still supports issue #72.
 
 Historical screenshots require a privacy review before any public push.
 
+## Preserved-path disposition
+
+| Preserved material | Disposition |
+| --- | --- |
+| ADR 0003, dictionary identity inventory, audit script/tests, dictionary evidence | Superseded by the integrated and evolved PR #88 versions; do not copy |
+| ADR 0004 | Integrate as a proposed session-lifetime decision |
+| Settings/training task map and Wave 0 evidence | Integrate as current-state evidence, not approved target design |
+| `TrainingScreen` modal-navigation characterization | Integrate as a compatibility test |
+| Historical edits to ingestion script notes and dictionary inventory | Superseded by current `main` and PR #88 |
+
 ## Slices
 
 - [x] Verify the preserved source paths against current `main`.
-- [ ] Visually inspect every candidate screenshot for personal or account data.
-- [ ] Restore proposed ADR 0004 and current-state task-map evidence without
+- [x] Visually inspect every candidate screenshot for personal or account data.
+- [x] Restore proposed ADR 0004 and current-state task-map evidence without
       treating either as target-design approval.
-- [ ] Port the `TrainingScreen` characterization and prove it against current UI.
-- [ ] Record every preserved path as superseded, integrate, or restricted.
-- [ ] Run relevant UI tests, typecheck/lint, link/diff checks.
+- [x] Port the `TrainingScreen` characterization and prove it against the
+      current UI.
+- [x] Record every preserved path as superseded, integrate, or restricted.
+- [x] Run relevant UI tests, typecheck/lint, link/diff checks.
 - [ ] Run independent Standards and Spec reviews.
 - [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
 
