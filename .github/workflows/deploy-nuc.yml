@@ -8,6 +8,7 @@ on:
       - "packages/shared/**"
       - "db/migrations/**"
       - "supabase/**"
+      - ".dockerignore"
       - "docker-compose.yml"
       - ".github/workflows/deploy-nuc.yml"
       - "!**/*.md"

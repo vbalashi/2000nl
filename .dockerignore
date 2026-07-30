@@ -9,11 +9,18 @@
 !packages/shared/
 !packages/shared/**
 
-# Local state and build outputs must never enter the Docker context.
-apps/ui/.env*
-apps/ui/.next/
-apps/ui/node_modules/
-apps/ui/npm-debug.log
-apps/ui/playwright-report/
-apps/ui/test-results/
-apps/ui/coverage/
+# Local state, credentials, and build outputs must never re-enter through an
+# allowed source directory.
+**/.env*
+**/.npmrc
+**/.git/
+**/.DS_Store
+**/node_modules/
+**/.next/
+**/*.tsbuildinfo
+**/*.log
+**/playwright-report/
+**/test-results/
+**/coverage/
+apps/ui/yarn.lock
+apps/ui/pnpm-lock.yaml
