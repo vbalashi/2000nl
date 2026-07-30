@@ -13,6 +13,33 @@ export type PlatformV2ContentSectionInput = {
   text: string;
 };
 
+export type PlatformV2HeaderEvidence = {
+  displayPronunciation: string | null;
+  pronunciation: string | null;
+  homographNumber: number | null;
+};
+
+export function platformV2HeaderEvidence(
+  entry: DictionaryLookupPayload,
+): PlatformV2HeaderEvidence {
+  const raw = asRecord(entry.raw);
+  const sourceIdentity = asRecord(raw.source_identity);
+  const source = asRecord(raw._source);
+  return {
+    displayPronunciation: asString(
+      raw.pronunciation_with_stress ?? raw.displayPronunciation,
+    ),
+    pronunciation: asString(
+      raw.pronunciation ?? raw.pronunciation_ipa,
+    ),
+    homographNumber: asPositiveInteger(
+      sourceIdentity.homograph_number ??
+        source.homograph_number ??
+        raw.homograph_number,
+    ),
+  };
+}
+
 export function extractPlatformV2ContentSections(
   entry: DictionaryLookupPayload,
 ): PlatformV2ContentSectionInput[] {
@@ -167,6 +194,7 @@ export function platformV2ContentRevision(
   contentSections: PlatformV2ContentSectionInput[],
   wordDetails: PlatformWordDetailsV2 | null,
   crossReferenceQuery: string | null,
+  headerEvidence?: PlatformV2HeaderEvidence,
 ) {
   return crypto
     .createHash("sha256")
@@ -176,6 +204,7 @@ export function platformV2ContentRevision(
         contentSections,
         wordDetails,
         crossReferenceQuery,
+        headerEvidence: headerEvidence ?? null,
       }),
     )
     .digest("hex");
@@ -337,6 +366,14 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asPositiveInteger(value: unknown) {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value > 0
+    ? value
+    : null;
 }
 
 function stableId(...parts: string[]) {

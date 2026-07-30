@@ -82,6 +82,8 @@ describe("/api/platform/v2/lookup", () => {
       is_nt2_2000: true,
       raw: {
         providerOnly: "must-not-leak",
+        pronunciation: "huis",
+        pronunciation_with_stress: "ˈhuis",
         meanings: [
           {
             definition: "een gebouw om in te wonen",
@@ -235,6 +237,10 @@ describe("/api/platform/v2/lookup", () => {
         headwordGroupId: "group-1",
         senseCount: 1,
         entryCount: 1,
+        header: expect.objectContaining({
+          displayPronunciation: "ˈhuis",
+          pronunciation: "huis",
+        }),
       }),
     );
     expect(payload.groups[0].entries[0].card).toEqual(

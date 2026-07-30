@@ -130,15 +130,30 @@ function projectHeadwordGroup(
   const uniformArticle = uniformString(
     entries.map((item) => item.entry.gender ?? null),
   );
-  const sourceMeta = asRecord(first.entry.content.sourceMeta);
-  const displayPronunciation = asString(
-    sourceMeta.pronunciation_with_stress ?? sourceMeta.displayPronunciation,
+  const displayPronunciation = uniformString(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return asString(
+        sourceMeta.pronunciation_with_stress ??
+          sourceMeta.displayPronunciation,
+      );
+    }),
   );
-  const pronunciation = asString(
-    sourceMeta.pronunciation ?? sourceMeta.pronunciation_ipa,
+  const pronunciation = uniformString(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return asString(
+        sourceMeta.pronunciation ?? sourceMeta.pronunciation_ipa,
+      );
+    }),
   );
-  const homographNumber = asPositiveInteger(
-    sourceMeta.homograph_number ?? sourceMeta.homographNumber,
+  const homographNumber = uniformPositiveInteger(
+    entries.map((item) => {
+      const sourceMeta = asRecord(item.entry.content.sourceMeta);
+      return asPositiveInteger(
+        sourceMeta.homograph_number ?? sourceMeta.homographNumber,
+      );
+    }),
   );
 
   return {
@@ -486,5 +501,12 @@ function asString(value: unknown) {
 function asPositiveInteger(value: unknown) {
   return typeof value === "number" && Number.isInteger(value) && value > 0
     ? value
+    : null;
+}
+
+function uniformPositiveInteger(values: Array<number | null>) {
+  const first = values[0] ?? null;
+  return first && values.every((value) => value === first)
+    ? first
     : null;
 }

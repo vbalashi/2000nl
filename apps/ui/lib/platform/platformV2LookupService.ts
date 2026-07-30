@@ -30,6 +30,7 @@ import {
   extractPlatformV2ContentSections,
   platformV2ContentRevision,
   platformV2CrossReferenceQuery,
+  platformV2HeaderEvidence,
   projectPlatformV2WordDetails,
 } from "./platformV2RichContent";
 
@@ -299,6 +300,7 @@ export async function performPlatformV2Lookup(
               }),
             );
             const contentSections = extractPlatformV2ContentSections(entry);
+            const headerEvidence = platformV2HeaderEvidence(entry);
             const crossReferenceQuery =
               platformV2CrossReferenceQuery(entry);
             const projectedWordDetails = !crossReferenceQuery
@@ -313,6 +315,7 @@ export async function performPlatformV2Lookup(
               contentSections,
               projectedWordDetails,
               crossReferenceQuery,
+              headerEvidence,
             );
             const projectedEntry: DictionaryLookupResult["entry"] = {
               id: entry.id,
@@ -322,8 +325,27 @@ export async function performPlatformV2Lookup(
               meaningId: entry.meaning_id ?? null,
               partOfSpeech: entry.part_of_speech ?? null,
               gender: entry.gender ?? null,
-              content:
-                content as DictionaryLookupResult["entry"]["content"],
+              content: {
+                ...content,
+                sourceMeta: {
+                  ...content.sourceMeta,
+                  ...(headerEvidence.displayPronunciation
+                    ? {
+                        pronunciation_with_stress:
+                          headerEvidence.displayPronunciation,
+                      }
+                    : {}),
+                  ...(headerEvidence.pronunciation
+                    ? { pronunciation: headerEvidence.pronunciation }
+                    : {}),
+                  ...(headerEvidence.homographNumber
+                    ? {
+                        homograph_number:
+                          headerEvidence.homographNumber,
+                      }
+                    : {}),
+                },
+              } as DictionaryLookupResult["entry"]["content"],
               contentFingerprint: entryContentRevision,
               raw: entry.raw,
               isNt22000: entry.is_nt2_2000 ?? null,

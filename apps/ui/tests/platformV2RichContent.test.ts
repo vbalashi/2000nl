@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   extractPlatformV2ContentSections,
   platformV2ContentRevision,
+  platformV2HeaderEvidence,
   projectPlatformV2WordDetails,
 } from "@/lib/platform/platformV2RichContent";
 
@@ -11,6 +12,9 @@ describe("Platform V2 rich dictionary projection", () => {
       id: "entry-meester-1",
       headword: "meester",
       raw: {
+        pronunciation: "mees·te·res",
+        pronunciation_with_stress: "ˈmees·te·res",
+        source_identity: { homograph_number: 2 },
         plural: "meesters",
         alternate_headwords: [
           {
@@ -53,6 +57,11 @@ describe("Platform V2 rich dictionary projection", () => {
 
     const sections = extractPlatformV2ContentSections(entry);
     const details = projectPlatformV2WordDetails(entry, bindings);
+    expect(platformV2HeaderEvidence(entry)).toEqual({
+      displayPronunciation: "ˈmees·te·res",
+      pronunciation: "mees·te·res",
+      homographNumber: 2,
+    });
 
     expect(sections).toEqual(
       expect.arrayContaining([
