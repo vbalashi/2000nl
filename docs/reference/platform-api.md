@@ -108,7 +108,12 @@ Request:
 `contractVersion: "platform-lookup-v2"`, explicit complete Headword Groups,
 opaque `headwordGroupId` / `entryId` / `contentNodeId` identity, and
 group-atomic completeness metadata. A selected strict-match tier is never
-silently split; reaching the operational safety bound fails explicitly.
+silently split. Responses contain up to ten complete groups; an opaque
+`nextGroupCursor` continues at the next group and is bound to the principal,
+query, and language. Reusing it for another request fails with
+`invalid_cursor`. Only a single group above the 50-entry operational bound
+fails with `group-too-large`; a tier containing many ordinary groups is
+paginated instead of rejected.
 
 The normative TypeScript DTO is
 `packages/shared/types/platformV2.ts`. Consumer-pinned JSON examples and their

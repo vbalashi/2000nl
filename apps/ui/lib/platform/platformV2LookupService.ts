@@ -34,7 +34,8 @@ import {
   projectPlatformV2WordDetails,
 } from "./platformV2RichContent";
 
-const LOOKUP_ENTRY_SAFETY_BOUND = 50;
+const LOOKUP_GROUP_PAGE_SIZE = 10;
+const LOOKUP_GROUP_ENTRY_SAFETY_BOUND = 50;
 
 export type PlatformV2LookupOperationResult = {
   payload: unknown;
@@ -86,26 +87,20 @@ export async function performPlatformV2Lookup(
   if (!request.cardTypeId.trim()) {
     return { payload: { error: "missing_card_type_id" }, status: 400 };
   }
-  if (request.cursor) {
-    return { payload: { error: "unsupported_cursor" }, status: 400 };
-  }
-
   const lookupResult = await measure<RpcResult>(
     timings,
     "lookup.db",
     async () =>
-      await (context.kind === "authenticated"
-        ? context.auth.supabase.rpc("lookup_dictionary_entries_v3", {
-            p_query: query,
-            p_language_code: request.contentLanguageCode ?? null,
-            p_dictionary_ids: null,
-            p_limit: LOOKUP_ENTRY_SAFETY_BOUND,
-          })
-        : context.service.supabase.rpc("lookup_public_catalog_entries_v1", {
-            p_query: query,
-            p_language_code: request.contentLanguageCode ?? null,
-            p_limit: LOOKUP_ENTRY_SAFETY_BOUND,
-          })),
+      await context.service.supabase.rpc("lookup_platform_v2_entries", {
+        p_user_id:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        p_catalog: context.kind === "catalog",
+        p_query: query,
+        p_language_code: request.contentLanguageCode ?? null,
+        p_cursor: request.cursor ?? null,
+        p_group_limit: LOOKUP_GROUP_PAGE_SIZE,
+        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+      }),
   );
 
   if (lookupResult.error) {
@@ -130,17 +125,36 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
-  const entries = lookupEntries(lookupResult.data);
-  if (entries.length >= LOOKUP_ENTRY_SAFETY_BOUND) {
+  if (lookupPayload.error === "invalid_cursor") {
     return {
-      payload: {
-        error: "lookup-tier-too-large",
-        safetyBound: LOOKUP_ENTRY_SAFETY_BOUND,
-      },
+      payload: { error: "invalid_cursor" },
+      status: 400,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (lookupPayload.error === "group-too-large") {
+    return {
+      payload: lookupPayload,
       status: 422,
       serverTiming: serverTiming(),
     };
   }
+  if (lookupPayload.error === "presentation_identity_incomplete") {
+    return {
+      payload: lookupPayload,
+      status: 409,
+      serverTiming: serverTiming(),
+    };
+  }
+  if (lookupPayload.error) {
+    return {
+      payload: lookupPayload,
+      status: 500,
+      serverTiming: serverTiming(),
+    };
+  }
+  const entries = lookupEntries(lookupResult.data);
+  const page = lookupPage(lookupPayload);
 
   const responseRequest: PlatformLookupV2Response["request"] = {
     contentLanguageCode: request.contentLanguageCode ?? null,
@@ -155,10 +169,7 @@ export async function performPlatformV2Lookup(
         query,
         request: responseRequest,
         entries: [],
-        page: {
-          selectedTierComplete: true,
-          nextGroupCursor: null,
-        },
+        page,
       }),
       status: 200,
       serverTiming: serverTiming(),
@@ -386,10 +397,7 @@ export async function performPlatformV2Lookup(
         query,
         request: responseRequest,
         entries: projectionEntries,
-        page: {
-          selectedTierComplete: true,
-          nextGroupCursor: null,
-        },
+        page,
       }),
       status: 200,
       serverTiming: serverTiming(),
@@ -432,6 +440,19 @@ function lookupEntries(value: unknown): DictionaryLookupPayload[] {
   const items = payload.items ?? value;
   if (Array.isArray(items)) return items as DictionaryLookupPayload[];
   return items ? [items as DictionaryLookupPayload] : [];
+}
+
+function lookupPage(
+  payload: Record<string, unknown>,
+): PlatformLookupV2Response["page"] {
+  const page = asRecord(payload.page);
+  return {
+    selectedTierComplete: page.selectedTierComplete === true,
+    nextGroupCursor:
+      typeof page.nextGroupCursor === "string"
+        ? page.nextGroupCursor
+        : null,
+  };
 }
 
 function identityEntries(value: unknown): PlatformV2IdentityEntry[] {

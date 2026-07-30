@@ -64,7 +64,7 @@ including
 - Do not edit or clean that checkout.
 - Put V2 types and projection in new modules.
 - Migrations through `104` are integrated upstream; this branch owns `105`
-  through `107`.
+  through `108`.
 - Keep bootstrap/API documentation changes minimal and easy to reconcile.
 - Recheck the dirty checkout before every checkpoint that touches an
   overlapping path.

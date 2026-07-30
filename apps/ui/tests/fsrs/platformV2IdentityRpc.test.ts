@@ -450,6 +450,178 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     }, userId);
   });
 
+  test("paginates complete Headword Groups with a query-bound opaque cursor", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const suffix = randomUUID();
+      const firstEntryId = await insertWord(
+        client,
+        `platform-v2-page-first-${suffix}`,
+      );
+      const firstSiblingId = await insertWord(
+        client,
+        `platform-v2-page-first-sibling-${suffix}`,
+      );
+      const secondEntryId = await insertWord(
+        client,
+        `platform-v2-page-second-${suffix}`,
+      );
+      const thirdEntryId = await insertWord(
+        client,
+        `platform-v2-page-third-${suffix}`,
+      );
+      await bindSourceEntries(
+        client,
+        [firstEntryId, firstSiblingId],
+        `platform-v2-page-group-first-${suffix}`,
+      );
+      await bindSourceEntries(
+        client,
+        [secondEntryId],
+        `platform-v2-page-group-second-${suffix}`,
+      );
+      await bindSourceEntries(
+        client,
+        [thirdEntryId],
+        `platform-v2-page-group-third-${suffix}`,
+      );
+
+      const { rows: dictionaryRows } = await client.query(
+        `select dictionary_id
+           from word_entries
+          where id = $1`,
+        [firstEntryId],
+      );
+      const dictionaryId = dictionaryRows[0].dictionary_id as string;
+      const query = `platform-v2-form-${suffix}`;
+      for (const [entryId, headword] of [
+        [firstEntryId, `platform-v2-page-first-${suffix}`],
+        [secondEntryId, `platform-v2-page-second-${suffix}`],
+        [thirdEntryId, `platform-v2-page-third-${suffix}`],
+      ]) {
+        await client.query(
+          `insert into word_forms (
+             language_code,
+             dictionary_id,
+             form,
+             word_id,
+             headword
+           )
+           values ('nl', $1, $2, $3, $4)`,
+          [dictionaryId, query, entryId, headword],
+        );
+      }
+      for (const entryId of [
+        firstEntryId,
+        firstSiblingId,
+        secondEntryId,
+        thirdEntryId,
+      ]) {
+        await client.query(
+          `select refresh_dictionary_search_document($1, 2)`,
+          [entryId],
+        );
+      }
+
+      const { rows: firstRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           NULL,
+           2,
+           50
+         ) as result`,
+        [userId, query],
+      );
+      const firstPage = firstRows[0].result as {
+        items: Array<{ id: string }>;
+        page: {
+          selectedTierComplete: boolean;
+          nextGroupCursor: string;
+        };
+      };
+      expect(firstPage.items.map((entry) => entry.id)).toEqual(
+        expect.arrayContaining([firstEntryId, firstSiblingId]),
+      );
+      expect(firstPage.items).toHaveLength(3);
+      expect(firstPage.page.selectedTierComplete).toBe(false);
+      expect(firstPage.page.nextGroupCursor).toEqual(expect.any(String));
+
+      const { rows: secondRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           $3,
+           2,
+           50
+         ) as result`,
+        [userId, query, firstPage.page.nextGroupCursor],
+      );
+      const secondPage = secondRows[0].result as {
+        items: Array<{ id: string }>;
+        page: {
+          selectedTierComplete: boolean;
+          nextGroupCursor: string | null;
+        };
+      };
+      expect(secondPage.items).toHaveLength(1);
+      expect(
+        firstPage.items.some(
+          (firstEntry) =>
+            firstEntry.id === secondPage.items[0].id,
+        ),
+      ).toBe(false);
+      expect(secondPage.page).toEqual({
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+
+      const { rows: wrongQueryRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           'another-query',
+           'nl',
+           $2,
+           2,
+           50
+         ) as result`,
+        [userId, firstPage.page.nextGroupCursor],
+      );
+      expect(wrongQueryRows[0].result).toEqual({
+        error: "invalid_cursor",
+      });
+
+      const { rows: oversizedRows } = await client.query(
+        `select lookup_platform_v2_entries(
+           $1,
+           false,
+           $2,
+           'nl',
+           NULL,
+           2,
+           1
+         ) as result`,
+        [userId, query],
+      );
+      expect(oversizedRows[0].result).toEqual(
+        expect.objectContaining({
+          error: "group-too-large",
+          group: expect.objectContaining({
+            entryCount: 2,
+            safetyBound: 1,
+          }),
+        }),
+      );
+    }, userId);
+  });
+
   test("keeps user groups one-to-one, private, and stable across rename", async () => {
     const ownerId = randomUUID();
     const otherUserId = randomUUID();

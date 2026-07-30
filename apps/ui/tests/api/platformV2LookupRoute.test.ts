@@ -168,11 +168,23 @@ describe("/api/platform/v2/lookup", () => {
         : chain({ data: null, error: null }),
     );
     rpc.mockImplementation((name: string, args: any) => {
-      if (name === "lookup_dictionary_entries_v3") {
-        expect(args.p_limit).toBe(50);
+      if (name === "lookup_platform_v2_entries") {
+        expect(args).toEqual({
+          p_user_id: "user-1",
+          p_catalog: false,
+          p_query: "huis",
+          p_language_code: "nl",
+          p_cursor: null,
+          p_group_limit: 10,
+          p_group_entry_bound: 50,
+        });
         return Promise.resolve({
           data: {
             items: [entry],
+            page: {
+              selectedTierComplete: true,
+              nextGroupCursor: null,
+            },
           },
           error: null,
         });
@@ -412,8 +424,16 @@ describe("/api/platform/v2/lookup", () => {
       "@/app/api/platform/v2/catalog/lookup/route"
     );
     rpc.mockImplementation((name: string, args: any) => {
-      if (name === "lookup_public_catalog_entries_v1") {
-        expect(args.p_limit).toBe(50);
+      if (name === "lookup_platform_v2_entries") {
+        expect(args).toEqual({
+          p_user_id: null,
+          p_catalog: true,
+          p_query: "huis",
+          p_language_code: "nl",
+          p_cursor: null,
+          p_group_limit: 10,
+          p_group_entry_bound: 50,
+        });
         return Promise.resolve({
           data: {
             items: [
@@ -441,6 +461,10 @@ describe("/api/platform/v2/lookup", () => {
                 },
               },
             ],
+            page: {
+              selectedTierComplete: true,
+              nextGroupCursor: null,
+            },
           },
           error: null,
         });
@@ -506,7 +530,7 @@ describe("/api/platform/v2/lookup", () => {
       "@/app/api/platform/v2/catalog/lookup/route"
     );
     rpc.mockImplementation((name: string) => {
-      if (name === "lookup_public_catalog_entries_v1") {
+      if (name === "lookup_platform_v2_entries") {
         return Promise.resolve({
           data: {
             items: [
@@ -535,6 +559,10 @@ describe("/api/platform/v2/lookup", () => {
                 },
               },
             ],
+            page: {
+              selectedTierComplete: true,
+              nextGroupCursor: null,
+            },
           },
           error: null,
         });
@@ -624,8 +652,17 @@ describe("/api/platform/v2/lookup", () => {
       },
     }));
     rpc.mockImplementation((name: string) => {
-      if (name === "lookup_public_catalog_entries_v1") {
-        return Promise.resolve({ data: { items: entries }, error: null });
+      if (name === "lookup_platform_v2_entries") {
+        return Promise.resolve({
+          data: {
+            items: entries,
+            page: {
+              selectedTierComplete: true,
+              nextGroupCursor: null,
+            },
+          },
+          error: null,
+        });
       }
       if (name === "read_platform_v2_presentation_identity") {
         return Promise.resolve({
@@ -676,17 +713,62 @@ describe("/api/platform/v2/lookup", () => {
     });
   });
 
-  test("fails explicitly instead of returning a possibly split safety-bound group", async () => {
+  test("forwards an opaque group cursor and preserves continuation metadata", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v2/catalog/lookup/route"
+    );
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "lookup_platform_v2_entries") {
+        expect(args.p_cursor).toBe("opaque-current");
+        return Promise.resolve({
+          data: {
+            items: [],
+            page: {
+              selectedTierComplete: false,
+              nextGroupCursor: "opaque-next",
+            },
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      catalogRequest({
+        query: "lopen",
+        contentLanguageCode: "nl",
+        cardTypeId: "word-to-definition",
+        cursor: "opaque-current",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        groups: [],
+        page: {
+          selectedTierComplete: false,
+          nextGroupCursor: "opaque-next",
+        },
+      }),
+    );
+  });
+
+  test("fails explicitly when one complete group exceeds the safety bound", async () => {
     const { POST } = await import(
       "@/app/api/platform/v2/catalog/lookup/route"
     );
     rpc.mockImplementation((name: string) => {
-      if (name === "lookup_public_catalog_entries_v1") {
+      if (name === "lookup_platform_v2_entries") {
         return Promise.resolve({
           data: {
-            items: Array.from({ length: 50 }, (_, index) => ({
-              id: `entry-bound-${index + 1}`,
-            })),
+            error: "group-too-large",
+            group: {
+              headwordGroupId: "group-oversized",
+              entryCount: 51,
+              safetyBound: 50,
+            },
           },
           error: null,
         });
@@ -704,8 +786,12 @@ describe("/api/platform/v2/lookup", () => {
 
     expect(response.status).toBe(422);
     await expect(response.json()).resolves.toEqual({
-      error: "lookup-tier-too-large",
-      safetyBound: 50,
+      error: "group-too-large",
+      group: {
+        headwordGroupId: "group-oversized",
+        entryCount: 51,
+        safetyBound: 50,
+      },
     });
     expect(rpc).not.toHaveBeenCalledWith(
       "read_platform_v2_presentation_identity",
