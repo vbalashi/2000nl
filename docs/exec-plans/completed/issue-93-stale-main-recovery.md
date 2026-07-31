@@ -1,6 +1,6 @@
 # Issue 93: stale main-checkout recovery
 
-Status: active
+Status: completed — PR #94 merged as `702b449352f6e3b064221e20964953e33d9c4b30`
 
 Issue: https://github.com/vbalashi/2000nl/issues/93
 
@@ -54,8 +54,8 @@ then restore green.
 - [x] Port and validate the deploy workflow filter; commit independently.
 - [x] Port the #53 glossary terms without implementing #53; commit independently.
 - [x] Run focused tests, typecheck, lint/diff checks, and workflow validation.
-- [ ] Run independent Standards and Spec reviews against the fixed base.
-- [ ] Push exact SHA, open a draft PR, and record review-ready evidence.
+- [x] Run independent Standards and Spec reviews against the fixed base.
+- [x] Push exact SHA, open a draft PR, and record review-ready evidence.
 - [x] Document the guardrail failure timeline and remaining enforcement gaps.
 
 ## Validation evidence

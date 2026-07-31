@@ -1,9 +1,15 @@
 # Issue #70 — Platform V2 SenseCard Contract
 
 Issue: https://github.com/vbalashi/2000nl/issues/70
-Status: in progress
+Status: producer integrated and live; consumer acceptance gates remain open
 Branch: `codex/issue-70-platform-v2-contract`
 Base: `704a22fe30594f2d94da36fc29969952a17f75fd`
+
+Integrated producer: PR #92 merged as
+`101a7b25685516d9580e4f26f708e5bd51aa97a7`; deployment repair #103/#104
+published the contract at `2c47b82f229e4e35024039fc4c2b604a5dec9366`.
+The plan remains under `active/` only for the explicit 2000NL #76 and
+AudioFilms consumer gates below; no producer slice remains unimplemented.
 
 ## Scope
 

@@ -1,6 +1,6 @@
 # Issue 95: retire the stale default checkout
 
-Status: active
+Status: completed — PR #98 merged as `25cf0cc5a0c306b61d52eb6e7e55896e7a586a78`
 
 Issue: https://github.com/vbalashi/2000nl/issues/95
 
@@ -41,10 +41,10 @@ Silence in `git status` is not evidence of safe classification.
 - [x] Move or commit durable product/design evidence to explicit owners.
 - [x] Archive or deliberately remove reproducible generated artifacts.
 - [x] Prove every old-checkout item is remotely or durably reachable.
-- [ ] Update the default checkout to current `origin/main`.
-- [ ] Verify the default checkout is clean and document its safe-use rule.
-- [ ] Run independent Standards and Spec reviews on the retirement evidence.
-- [ ] Push the exact retirement SHA and record the final checkpoint.
+- [x] Update the default checkout to current `origin/main`.
+- [x] Verify the default checkout is clean and document its safe-use rule.
+- [x] Run independent Standards and Spec reviews on the retirement evidence.
+- [x] Push the exact retirement SHA and record the final checkpoint.
 
 ## Classification
 
