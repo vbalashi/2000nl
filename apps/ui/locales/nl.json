@@ -72,6 +72,22 @@
     "translation": {
       "request": "Vertalen"
     },
+    "audio": {
+      "play": "Afspelen"
+    },
+    "hint": {
+      "show": "Hint tonen",
+      "hide": "Hint verbergen",
+      "example": "Hint · voorbeeld"
+    },
+    "answer": {
+      "show": "Antwoord tonen"
+    },
+    "sections": {
+      "meaning": "Betekenis",
+      "examples": "Voorbeelden",
+      "reviewPrompt": "Hoe goed ken je deze betekenis?"
+    },
     "report": "Probleem melden",
     "wordDetails": {
       "open": "Woorddetails"

@@ -72,6 +72,22 @@
     "translation": {
       "request": "Translate"
     },
+    "audio": {
+      "play": "Play audio"
+    },
+    "hint": {
+      "show": "Show hint",
+      "hide": "Hide hint",
+      "example": "Hint · example"
+    },
+    "answer": {
+      "show": "Show answer"
+    },
+    "sections": {
+      "meaning": "Meaning",
+      "examples": "Examples",
+      "reviewPrompt": "How well do you know this meaning?"
+    },
     "report": "Report",
     "wordDetails": {
       "open": "Word details"

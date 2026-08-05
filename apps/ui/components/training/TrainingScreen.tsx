@@ -52,6 +52,12 @@ import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
 import { TrainingCard } from "./TrainingCard";
+import {
+  TrainingKnownUndoNotice,
+  TrainingSenseCardV2Session,
+} from "./v2/TrainingSenseCardV2Session";
+import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
+import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingClient";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -66,6 +72,16 @@ import {
 
 type Props = {
   user: User;
+};
+
+type AcceptedCardTransition = {
+  word: TrainingWord;
+  wordMode: TrainingMode;
+  currentCardKey: string;
+  turnIdForReview: string | null;
+  isNextCardOverride: boolean;
+  nextQueueTurn: QueueTurn;
+  prefetched: TrainingWord | null;
 };
 
 const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
@@ -174,6 +190,7 @@ export function TrainingScreen({ user }: Props) {
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
+  const [v2CardAvailable, setV2CardAvailable] = useState(false);
   const {
     activeScenario,
     audioQuality,
@@ -480,6 +497,9 @@ export function TrainingScreen({ user }: Props) {
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
+  const trainingShellV2Enabled = platformV2TrainingUiEnabled();
+  const trainingSessionV2Enabled =
+    trainingShellV2Enabled && currentMode === "word-to-definition";
 
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
@@ -977,6 +997,89 @@ export function TrainingScreen({ user }: Props) {
 
   // ... (keep useEffect for initial load)
 
+  const beginAcceptedCardTransition = useCallback(
+    (): AcceptedCardTransition | null => {
+      if (!user?.id || !currentWord) return null;
+      const word = currentWord;
+      const wordMode = word.mode ?? enabledModes[0];
+      const currentCardKey = trainingCardKey(word, wordMode);
+      const transition: AcceptedCardTransition = {
+        word,
+        wordMode,
+        currentCardKey,
+        turnIdForReview: currentTurnIdRef.current,
+        isNextCardOverride:
+          nextCardOverrideActiveKeyRef.current === currentCardKey,
+        nextQueueTurn: advanceQueueTurn(),
+        prefetched: null,
+      };
+
+      reviewedInSessionRef.current.add(currentCardKey);
+      const candidate = nextWordPrefetchRef.current;
+      if (
+        candidate &&
+        candidate.forCardKey === currentCardKey &&
+        candidate.word
+      ) {
+        nextWordPrefetchRef.current = null;
+        transition.prefetched = candidate.word;
+        setLoadingWord(false);
+        setRevealed(false);
+        setHintRevealed(false);
+        presentWord(candidate.word);
+        const nextMode =
+          candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
+        void recordWordView({
+          userId: user.id,
+          wordId: candidate.word.id,
+          mode: nextMode,
+        });
+        if (audioModeEnabled) preloadAudioForWord(candidate.word);
+      }
+
+      return transition;
+    },
+    [
+      advanceQueueTurn,
+      audioModeEnabled,
+      currentWord,
+      enabledModes,
+      presentWord,
+      preloadAudioForWord,
+      user?.id,
+    ],
+  );
+
+  const finishAcceptedCardTransition = useCallback(
+    async (
+      transition: AcceptedCardTransition,
+      options: { statsLabel: string; refreshHistory?: boolean },
+    ) => {
+      await Promise.all([
+        loadStats(undefined, options.statsLabel),
+        options.refreshHistory ? loadRecentHistory() : Promise.resolve(),
+      ]);
+
+      if (transition.isNextCardOverride) {
+        nextCardOverrideActiveKeyRef.current = null;
+        setNextCardOverrideNotice(null);
+      }
+      if (!transition.prefetched) {
+        await loadNextWord(
+          [],
+          undefined,
+          transition.nextQueueTurn,
+          undefined,
+          [
+            ...reviewedInSessionRef.current,
+            transition.currentCardKey,
+          ],
+        );
+      }
+    },
+    [loadNextWord, loadRecentHistory, loadStats],
+  );
+
   const handleAction = useCallback(
     async (result: ReviewResult) => {
       if (!user?.id || !currentWord) {
@@ -987,52 +1090,9 @@ export function TrainingScreen({ user }: Props) {
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
-        // Capture the turnId for the card being reviewed *before* we potentially
-        // swap the UI to a prefetched next card (which generates a new turnId).
-        const turnIdForReview = currentTurnIdRef.current;
-
-        // Use the mode from the current word (which was set when the word was fetched)
-        const wordMode = currentWord.mode ?? enabledModes[0];
-        const currentCardKey = trainingCardKey(currentWord, wordMode);
-        const isNextCardOverride =
-          nextCardOverrideActiveKeyRef.current === currentCardKey;
-
-        // Compute the next queue turn up front (and persist it) so our on-demand fetch
-        // doesn't read stale `queueTurn` inside this async callback.
-        const nextQueueTurn = advanceQueueTurn();
-
-        // Mark this card as reviewed in the current session BEFORE we potentially
-        // present a prefetched card (instant transition).
-        reviewedInSessionRef.current.add(currentCardKey);
-
-        // If the prefetch for the current word is ready, switch immediately to the
-        // next card for "instant" transitions. Review recording continues below.
-        const prefetched = (() => {
-          const p = nextWordPrefetchRef.current;
-          if (!p) return null;
-          if (p.forCardKey !== currentCardKey) return null;
-          if (!p.word) return null;
-          nextWordPrefetchRef.current = null;
-          return p.word;
-        })();
-
-        if (prefetched) {
-          setLoadingWord(false);
-          setRevealed(false);
-          setHintRevealed(false);
-          presentWord(prefetched);
-          const nextMode =
-            prefetched.mode ?? enabledModes[0] ?? "word-to-definition";
-          void recordWordView({
-            userId: user.id,
-            wordId: prefetched.id,
-            mode: nextMode,
-          });
-
-          if (audioModeEnabled) {
-            preloadAudioForWord(prefetched);
-          }
-        }
+        const transition = beginAcceptedCardTransition();
+        if (!transition) return;
+        const { turnIdForReview, wordMode } = transition;
 
         // Capture BEFORE values from current word's debugStats
         const beforeInterval = currentWord.debugStats?.interval;
@@ -1212,37 +1272,18 @@ export function TrainingScreen({ user }: Props) {
           });
         }
 
-        await loadStats(undefined, `AFTER ${currentWord.headword} (${result})`);
-
-        if (isNextCardOverride) {
-          nextCardOverrideActiveKeyRef.current = null;
-          setNextCardOverrideNotice(null);
-        }
-
-        // If we didn't have a prefetched card ready, fall back to on-demand fetch.
-        if (!prefetched) {
-          await loadNextWord(
-            [],
-            undefined,
-            nextQueueTurn,
-            undefined,
-            [...reviewedInSessionRef.current, currentCardKey],
-          );
-        }
+        await finishAcceptedCardTransition(transition, {
+          statsLabel: `AFTER ${currentWord.headword} (${result})`,
+        });
       } finally {
         actionLoadingRef.current = false;
         setActionLoading(false);
       }
     },
     [
-      advanceQueueTurn,
-      audioModeEnabled,
+      beginAcceptedCardTransition,
       currentWord,
-      enabledModes,
-      loadNextWord,
-      loadStats,
-      presentWord,
-      preloadAudioForWord,
+      finishAcceptedCardTransition,
       stats,
       user?.id,
     ],
@@ -1255,6 +1296,31 @@ export function TrainingScreen({ user }: Props) {
   const handleFirstTimeAlreadyKnow = useCallback(() => {
     void handleAction("hide");
   }, [handleAction]);
+
+  const handleV2ProgressActionAccepted = useCallback(
+    async (_capability: PlatformV2TrainingActionCapability) => {
+      if (!user?.id || !currentWord || actionLoadingRef.current) return;
+      actionLoadingRef.current = true;
+      setActionLoading(true);
+      try {
+        const transition = beginAcceptedCardTransition();
+        if (!transition) return;
+        await finishAcceptedCardTransition(transition, {
+          statsLabel: `AFTER ${currentWord.headword} (platform-v2)`,
+          refreshHistory: true,
+        });
+      } finally {
+        actionLoadingRef.current = false;
+        setActionLoading(false);
+      }
+    },
+    [
+      beginAcceptedCardTransition,
+      currentWord,
+      finishAcceptedCardTransition,
+      user?.id,
+    ],
+  );
 
   useEffect(() => {
     // New card => close translation overlay.
@@ -2079,6 +2145,27 @@ export function TrainingScreen({ user }: Props) {
     activeSourceFilterLabel,
   ].filter(Boolean).join(" · ");
 
+  const legacyTrainingCard = (
+    <TrainingCard
+      word={currentWord}
+      mode={currentMode}
+      revealed={revealed}
+      hintRevealed={hintRevealed}
+      loading={loadingWord}
+      highlightedWord={selectedEntry?.headword}
+      onWordClick={handleTrainingWordClick}
+      userId={user.id}
+      translationLang={translationLang}
+      translationTooltipOpen={translationTooltipOpen}
+      onTranslationTooltipOpenChange={setTranslationTooltipOpen}
+      onToggleHint={toggleHint}
+      onRequestReveal={revealAnswer}
+      onShowDetails={handleShowCurrentWordDetails}
+      audioModeEnabled={audioModeEnabled}
+      onToggleAudioMode={() => setAudioModeEnabled((prev) => !prev)}
+    />
+  );
+
   return (
     <div className="flex h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
       <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
@@ -2317,6 +2404,7 @@ export function TrainingScreen({ user }: Props) {
                     {nextCardOverrideNotice}
                   </div>
                 ) : null}
+                {!trainingShellV2Enabled ? (
                 <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center">
                     <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -2377,6 +2465,7 @@ export function TrainingScreen({ user }: Props) {
                     </p>
                   ) : null}
                 </div>
+                ) : null}
                 {trainingFocusFilterActive && !loadingWord && !currentWord ? (
                   <div
                     role="status"
@@ -2389,12 +2478,18 @@ export function TrainingScreen({ user }: Props) {
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                 <div
                   data-testid="training-card-frame"
-                  className="mx-auto w-full min-h-[360px] h-[clamp(360px,55dvh,520px)] max-h-[520px] md:h-auto md:aspect-[16/10] md:min-h-[400px] mb-6 md:mb-8 transition-[height] duration-200"
+                  className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
+                    v2CardAvailable
+                      ? "h-[580px] min-h-0 max-h-[calc(100dvh-156px)] shrink-0 overflow-hidden md:h-[592px] md:max-h-[calc(100dvh-192px)]"
+                      : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
+                  }`}
                 >
                   <div
                     ref={cardSwipeRef}
                     data-testid="training-card-swipe-wrapper"
-                    className="relative h-full"
+                    className={`relative h-full ${
+                      v2CardAvailable ? "min-h-0 overflow-hidden" : ""
+                    }`}
                     style={swipeCardStyle}
                     onTouchStart={handleCardTouchStart}
                     onTouchMove={handleCardTouchMove}
@@ -2420,32 +2515,34 @@ export function TrainingScreen({ user }: Props) {
                         </div>
                       </div>
                     )}
-                    <TrainingCard
-                      word={currentWord}
-                      mode={currentMode}
-                      revealed={revealed}
-                      hintRevealed={hintRevealed}
-                      loading={loadingWord}
-                      highlightedWord={selectedEntry?.headword}
-                      onWordClick={handleTrainingWordClick}
-                      userId={user.id}
-                      translationLang={translationLang}
-                      translationTooltipOpen={translationTooltipOpen}
-                      onTranslationTooltipOpenChange={setTranslationTooltipOpen}
-                      onToggleHint={toggleHint}
-                      onRequestReveal={revealAnswer}
-                      onShowDetails={handleShowCurrentWordDetails}
-                      audioModeEnabled={audioModeEnabled}
-                      onToggleAudioMode={() =>
-                        setAudioModeEnabled((prev) => !prev)
-                      }
-                    />
+                    {trainingSessionV2Enabled && currentWord ? (
+                      <TrainingSenseCardV2Session
+                        word={currentWord}
+                        mode={currentMode}
+                        contentLanguageCode={currentTrainingLanguage}
+                        translationTargetLanguageCode={
+                          translationLang === "off" ? null : translationLang
+                        }
+                        interfaceLanguage={onboardingLang}
+                        fallback={legacyTrainingCard}
+                        onPlayResolvedAudio={(url, label) =>
+                          playAudio(url, label)
+                        }
+                        onAvailabilityChange={setV2CardAvailable}
+                        onProgressActionAccepted={
+                          handleV2ProgressActionAccepted
+                        }
+                      />
+                    ) : (
+                      legacyTrainingCard
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 2. Fixed Buttons Area (Always Visible) */}
+            {!v2CardAvailable ? (
             <div className="flex-none pt-4 pb-2 z-10">
               {/* Translucent container for buttons */}
               <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
@@ -2555,6 +2652,7 @@ export function TrainingScreen({ user }: Props) {
                 </div>
               </div>
             </div>
+            ) : null}
           </section>
 
           {/* Sidebar Section: Fixed Width, adjacent to Main */}
@@ -2614,6 +2712,10 @@ export function TrainingScreen({ user }: Props) {
         }
         initialReviewDue={initialReviewDue}
       />
+
+      {trainingShellV2Enabled ? (
+        <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
+      ) : null}
 
       <TrainingSidebarDrawer
         open={mobileSidebarOpen}
