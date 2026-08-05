@@ -390,6 +390,45 @@ test("search action opens the dedicated dictionary search surface", async () => 
   expect(searchWordEntries).not.toHaveBeenCalled();
 });
 
+test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
+  function Harness() {
+    const [destination, setDestination] = React.useState<
+      "training" | "library"
+    >("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        onRequestDestination={setDestination}
+      />
+    );
+  }
+
+  render(<Harness />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  expect(screen.queryByLabelText("Periode")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Bron")).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
+  fireEvent.click(screen.getByLabelText("Zoeken"));
+
+  expect(
+    await screen.findByRole("heading", { name: /Bibliotheek|Library/ }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Terug naar Training|Back to Training/ }),
+  );
+
+  expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
+});
+
 test("training focus filters pass date and source scope to card selection", async () => {
   render(<TrainingScreen user={user} />);
 

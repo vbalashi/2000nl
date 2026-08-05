@@ -65,6 +65,9 @@ import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
+import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
+import { LibraryDestination } from "@/components/navigation/LibraryDestination";
+import type { AppDestination } from "@/components/navigation/appDestination";
 import {
   getOnboardingTranslation,
   type OnboardingLanguage,
@@ -72,6 +75,9 @@ import {
 
 type Props = {
   user: User;
+  destination?: AppDestination;
+  onRequestDestination?: (destination: AppDestination) => void;
+  onNavigationBlockedChange?: (blocked: boolean) => void;
 };
 
 type AcceptedCardTransition = {
@@ -184,7 +190,12 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
   }));
 }
 
-export function TrainingScreen({ user }: Props) {
+export function TrainingScreen({
+  user,
+  destination = "training",
+  onRequestDestination,
+  onNavigationBlockedChange,
+}: Props) {
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
@@ -313,6 +324,11 @@ export function TrainingScreen({ user }: Props) {
   // `actionLoading` is React state (async to update). Keep a ref for immediate,
   // synchronous guards against double-submit from rapid keypresses/touches.
   const actionLoadingRef = useRef(false);
+
+  useEffect(() => {
+    onNavigationBlockedChange?.(actionLoading);
+    return () => onNavigationBlockedChange?.(false);
+  }, [actionLoading, onNavigationBlockedChange]);
   const currentTurnIdRef = useRef<string | null>(null);
   // Track reviewed cards by entry+mode so another mode for the same entry can
   // still appear in the same session.
@@ -1397,11 +1413,17 @@ export function TrainingScreen({ user }: Props) {
   );
 
   const openSearch = useCallback(() => {
+    if (onRequestDestination) {
+      if (!actionLoadingRef.current) {
+        onRequestDestination("library");
+      }
+      return;
+    }
     setSettingsInitialTab("zoeken");
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(true);
     setShowSettings(true);
-  }, []);
+  }, [onRequestDestination]);
 
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
@@ -2167,14 +2189,30 @@ export function TrainingScreen({ user }: Props) {
   );
 
   return (
-    <div className="flex h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100">
-      <header className="relative z-40 flex flex-none items-center justify-between border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-        <div className="flex min-w-0 items-center gap-2">
+    <>
+    <div
+      aria-hidden={destination !== "training"}
+      className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
+    >
+      <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+        <div className="flex min-w-0 items-center gap-2 justify-self-start">
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
             <BrandLogo />
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+        {onRequestDestination ? (
+          <div className="hidden justify-self-center md:block">
+            <AppDestinationNav
+              active="training"
+              interfaceLanguage={onboardingLang}
+              disabled={actionLoading}
+              onNavigate={onRequestDestination}
+            />
+          </div>
+        ) : (
+          <div />
+        )}
+        <div className="flex items-center gap-2 justify-self-end text-sm text-slate-500 dark:text-slate-300">
           <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
             <div
               role="button"
@@ -2404,7 +2442,7 @@ export function TrainingScreen({ user }: Props) {
                     {nextCardOverrideNotice}
                   </div>
                 ) : null}
-                {!trainingShellV2Enabled ? (
+                {!trainingShellV2Enabled && !onRequestDestination ? (
                 <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center">
                     <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -2851,5 +2889,28 @@ export function TrainingScreen({ user }: Props) {
         }}
       />
     </div>
+    {onRequestDestination ? (
+      <LibraryDestination
+        open={destination === "library"}
+        userId={user.id}
+        language={currentTrainingLanguage}
+        translationLang={translationLang}
+        interfaceLanguage={onboardingLang}
+        lists={availableLists}
+        activeList={activeList ?? null}
+        onReloadLists={handleListsUpdated}
+        onBack={() => onRequestDestination("training")}
+        onOpenListMembership={(membership) => {
+          onRequestDestination("training");
+          openMembershipList(membership);
+        }}
+        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+        onTrainWord={(wordId) => {
+          handleTrainWord(wordId);
+          onRequestDestination("training");
+        }}
+      />
+    ) : null}
+    </>
   );
 }
