@@ -36,7 +36,7 @@
 .appHeader nav span { padding: 10px 16px; color: #aab3c1; font-size: 13px; }
 .appHeader .navActive { color: var(--ink); border: 1px solid #514b91; border-radius: 10px; background: #28254e; }
 .headerActions { justify-self: end; display: flex; gap: 8px; }
-.headerActions button, .wordActions button { border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 10px; font-size: 11px; color: #bfc7d4; }
+.headerActions button { border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 10px; font-size: 11px; color: #bfc7d4; }
 
 .sessionBar {
   width: min(960px, calc(100% - 32px));
@@ -105,9 +105,14 @@
 .cardKnown { border-color: #37d99b; box-shadow: inset 4px 0 0 rgba(55, 217, 155, .55); }
 
 .face { flex: 1; display: grid; grid-template-rows: 1fr auto; padding: 42px 28px 28px; }
-.faceWord { place-self: center; display: flex; align-items: baseline; gap: 8px; font-family: Newsreader, Georgia, serif; }
+.faceLockup { place-self: center; position: relative; }
+.faceWord { display: flex; align-items: baseline; gap: 8px; font-family: Newsreader, Georgia, serif; }
 .faceWord span { color: var(--muted); font-size: 34px; line-height: 1; }
 .faceWord strong { font-size: 64px; font-weight: 500; line-height: .92; }
+.faceAudio, .wordActions button { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: #bfc7d4; }
+.faceAudio { position: absolute; left: calc(100% + 14px); top: 50%; transform: translateY(-50%); }
+.faceAudio svg, .wordActions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.wordActions button:last-child svg { fill: currentColor; stroke: none; }
 .hint { display: grid; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 15px 18px; }
 .hint span { color: var(--muted); font: 700 9px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .14em; }
 .hint em { font-family: Newsreader, Georgia, serif; font-size: 17px; color: #e9ebf1; }
@@ -201,11 +206,9 @@
   .headwordRow span { font-size: 20px; }
   .headwordRow strong { font-size: 39px; }
   .wordActions { gap: 6px; }
-  .wordActions button { width: 30px; height: 30px; overflow: hidden; padding: 0; font-size: 0; }
-  .wordActions button::after { font: 600 11px/1 Inter, sans-serif; }
-  .wordActions .translateAction::after { content: "文"; }
-  .wordActions .audioAction::after { content: "◖))"; font-size: 8px; }
-  .wordActions .moreAction::after { content: "•••"; letter-spacing: -1px; }
+  .wordActions button { width: 30px; height: 30px; }
+  .wordActions svg { width: 15px; height: 15px; }
+  .faceAudio { width: 34px; height: 34px; }
   .wordTranslation { font-size: 13.5px; }
   .lexicalScroll { padding: 2px 16px 28px; }
   .definition { font-size: 14px; }

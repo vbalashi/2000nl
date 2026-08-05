@@ -35,6 +35,7 @@ This route is unavailable in production. It uses in-memory fixture state only an
 - overflow scrolls only inside the lexical body; the entity header and actions stay fixed;
 - top fade appears after scrolling, bottom fade disappears at the end;
 - Face/Answer, hint, report, mark-known, and undo transitions are interactive;
+- translation, audio, and more-actions use the same compact icon-button contract on desktop and mobile; Face also exposes audio without revealing the answer;
 - TypeScript, ESLint, and whitespace checks pass.
 - independent visual QA passed with no High, Medium, or Low findings after the baseline and dock fixes.
 

@@ -6,6 +6,7 @@ import styles from "./training-card.module.css";
 
 type Variant = "A" | "B" | "C";
 type Density = "sparse" | "dense";
+type IconName = "translate" | "audio" | "more";
 
 const variants: Array<{ key: Variant; label: string }> = [
   { key: "A", label: "Desktop centered stack" },
@@ -20,6 +21,29 @@ const expressions = [
   ["de handen uit de mouwen steken", "hard aan het werk gaan"],
   ["iemand de hand boven het hoofd houden", "iemand blijven beschermen"],
 ] as const;
+
+function ActionIcon({ name }: { name: IconName }) {
+  if (name === "translate") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M4 5h8M8 3v2M5 9c2-1.4 3.7-3.4 4.5-5M5 7c1.2 1.7 2.8 3 5 4M13 20l4-11 4 11M14.5 16h5" />
+      </svg>
+    );
+  }
+  if (name === "audio") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z" />
+        <path d="M15 9.5a4 4 0 0 1 0 5M17.8 7a7 7 0 0 1 0 10" />
+      </svg>
+    );
+  }
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" />
+    </svg>
+  );
+}
 
 function readParam<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -163,7 +187,10 @@ export function TrainingCardTracer() {
         <div className={`${styles.cardViewport} ${known ? styles.cardKnown : ""}`}>
           {!revealed ? (
             <div className={styles.face}>
-              <div className={styles.faceWord}><span>de</span><strong>hand</strong></div>
+              <div className={styles.faceLockup}>
+                <div className={styles.faceWord}><span>de</span><strong>hand</strong></div>
+                <button className={styles.faceAudio} type="button" aria-label="Uitspraak afspelen" title="Uitspraak afspelen" onClick={() => setLastAction("Audio requested from Face")}><ActionIcon name="audio" /></button>
+              </div>
               {hint ? <div className={styles.hint}><span>HINT · VOORBEELD</span><em>Ze hield de brief stevig in haar hand.</em></div> : null}
             </div>
           ) : (
@@ -173,12 +200,12 @@ export function TrainingCardTracer() {
                 <div className={styles.headwordRow}>
                   <div><span>de</span><strong>hand</strong></div>
                   <div className={styles.wordActions}>
-                    <button className={styles.translateAction} type="button" onClick={() => setTranslation((value) => {
+                    <button type="button" aria-label="Vertaling tonen of verbergen" title="Vertaling" onClick={() => setTranslation((value) => {
                       updateUrl({ translation: value ? "off" : "on" });
                       return !value;
-                    })}>Vertalen</button>
-                    <button className={styles.audioAction} type="button">Audio</button>
-                    <button className={styles.moreAction} type="button">Meer</button>
+                    })}><ActionIcon name="translate" /></button>
+                    <button type="button" aria-label="Uitspraak afspelen" title="Uitspraak afspelen" onClick={() => setLastAction("Audio requested from Answer")}><ActionIcon name="audio" /></button>
+                    <button type="button" aria-label="Meer acties" title="Meer acties"><ActionIcon name="more" /></button>
                   </div>
                 </div>
                 <TranslationRow visible={translation}><div className={styles.wordTranslation}>hand</div></TranslationRow>
