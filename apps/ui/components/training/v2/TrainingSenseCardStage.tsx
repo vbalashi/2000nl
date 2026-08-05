@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { HeadwordWithPronunciationBreaks } from "../HeadwordWithPronunciationBreaks";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type {
@@ -137,8 +138,11 @@ function EntityHeader({
                 {model.article}
               </span>
             ) : null}
-            <h2 className="min-w-0 break-words font-serif text-[clamp(2.75rem,8vw,4.6rem)] font-normal leading-[0.92] tracking-[-0.035em] text-slate-50">
-              {model.headword}
+            <h2
+              aria-label={model.headword}
+              className="min-w-0 break-words font-serif text-[clamp(2.75rem,8vw,4.6rem)] font-normal leading-[0.92] tracking-[-0.035em] text-slate-50"
+            >
+              <HeadwordWithPronunciationBreaks text={model.headword} />
             </h2>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -212,8 +216,11 @@ function FaceBody({
                 {model.article}
               </span>
             ) : null}
-            <h2 className="min-w-0 break-words text-[clamp(2.75rem,10vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em] text-slate-50">
-              {model.headword}
+            <h2
+              aria-label={model.headword}
+              className="min-w-0 break-words text-[clamp(2.75rem,10vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em] text-slate-50"
+            >
+              <HeadwordWithPronunciationBreaks text={model.headword} />
             </h2>
           </div>
           {onPlayAudio ? (

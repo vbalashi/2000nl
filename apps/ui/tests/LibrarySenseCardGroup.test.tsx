@@ -10,8 +10,49 @@ import { describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
+import {
+  gateLongHeadwordGroup,
+  gateSingleSenseGroup,
+} from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("keeps a localized long headword usable in the single-sense fixture", () => {
+    render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(gateLongHeadwordGroup, "ru")}
+        interfaceLanguage="ru"
+        translationEnabled
+        onAction={vi.fn()}
+      />,
+    );
+
+    const headword = screen.getByRole("heading", {
+      name: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring",
+    });
+    expect(headword).toBeInTheDocument();
+    expect(headword.querySelectorAll("wbr")).toHaveLength(9);
+    expect(headword.querySelectorAll(".whitespace-nowrap")).toHaveLength(10);
+    expect(screen.getByText("существительное")).toBeInTheDocument();
+    expect(screen.getByText("Значения")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Показать перевод значения 1" }),
+    ).toBeInTheDocument();
+  });
+
+  test("does not create a meaning ordinal badge for a one-sense group", () => {
+    const { container } = render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(gateSingleSenseGroup, "nl")}
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(
+      container.querySelector("[data-testid='library-sense-card-entry-bank-furniture'] > span"),
+    ).not.toBeInTheDocument();
+  });
+
   test("expands and acts on each meaning independently", () => {
     const onAction = vi.fn();
     render(

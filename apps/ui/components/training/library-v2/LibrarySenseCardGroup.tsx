@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { HeadwordWithPronunciationBreaks } from "../HeadwordWithPronunciationBreaks";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type {
@@ -85,8 +86,11 @@ export function LibrarySenseCardGroup({
               {model.article}
             </span>
           ) : null}
-          <h2 className="min-w-0 break-words text-[clamp(2.6rem,8vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em]">
-            {model.headword}
+          <h2
+            aria-label={model.headword}
+            className="min-w-0 break-words text-[clamp(2.6rem,8vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em]"
+          >
+            <HeadwordWithPronunciationBreaks text={model.headword} />
           </h2>
           {onPlayAudio && model.audioCapability ? (
             <button
@@ -410,7 +414,7 @@ function MeaningActions({
   if (meaning.reviewActions.length) {
     return (
       <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
           {meaning.reviewActions.map((action) => (
             <button
               key={action.reviewResult}
