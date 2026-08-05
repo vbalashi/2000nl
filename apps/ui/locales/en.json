@@ -86,7 +86,11 @@
     "sections": {
       "meaning": "Meaning",
       "meanings": "Meanings",
+      "definition": "Definition",
+      "usagePattern": "Usage pattern",
       "examples": "Examples",
+      "idioms": "Idioms",
+      "notes": "Notes",
       "reviewPrompt": "How well do you know this meaning?"
     },
     "state": {
@@ -94,7 +98,10 @@
     },
     "translation": {
       "request": "Translate",
-      "forMeaning": "Show translation for meaning {number}"
+      "forMeaning": "Show translation for meaning {number}",
+      "pending": "Translation is being prepared…",
+      "failed": "Translation could not be loaded.",
+      "retry": "Retry"
     },
     "collapse": "Collapse meaning",
     "report": "Report",

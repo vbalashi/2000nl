@@ -1,4 +1,5 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
+import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformHeadwordGroupV2,
@@ -32,6 +33,26 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   const payload = (await response.json()) as PlatformLookupV2Response;
   if (payload.contractVersion !== "platform-lookup-v2") return null;
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
+}
+
+export async function requestPlatformV2LibraryTranslation(input: {
+  entryId: string;
+  targetLanguageCode: string;
+  force?: boolean;
+}): Promise<"ready" | "pending" | "failed"> {
+  const response = await fetch(
+    `/api/translation?word_id=${encodeURIComponent(input.entryId)}&lang=${encodeURIComponent(input.targetLanguageCode)}${input.force ? "&force=1" : ""}`,
+    {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: await translationRequestHeaders(),
+    },
+  );
+  if (!response.ok) throw new Error("translation_failed");
+  const payload = (await response.json().catch(() => null)) as {
+    status?: "ready" | "pending" | "failed";
+  } | null;
+  return payload?.status ?? "failed";
 }
 
 export function selectPlatformV2MultiSenseGroup(

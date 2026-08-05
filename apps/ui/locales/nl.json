@@ -86,7 +86,11 @@
     "sections": {
       "meaning": "Betekenis",
       "meanings": "Betekenissen",
+      "definition": "Definitie",
+      "usagePattern": "Gebruikspatroon",
       "examples": "Voorbeelden",
+      "idioms": "Uitdrukkingen",
+      "notes": "Notities",
       "reviewPrompt": "Hoe goed ken je deze betekenis?"
     },
     "state": {
@@ -94,7 +98,10 @@
     },
     "translation": {
       "request": "Vertalen",
-      "forMeaning": "Vertaling voor betekenis {number} tonen"
+      "forMeaning": "Vertaling voor betekenis {number} tonen",
+      "pending": "Vertaling wordt voorbereid…",
+      "failed": "Vertaling kon niet worden geladen.",
+      "retry": "Opnieuw proberen"
     },
     "collapse": "Betekenis inklappen",
     "report": "Probleem melden",

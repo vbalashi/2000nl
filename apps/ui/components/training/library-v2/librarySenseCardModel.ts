@@ -2,10 +2,12 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type {
   PlatformContentNodeKindV2,
+  PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../../packages/shared/types/platformV2";
+import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 
 type StartOrMarkCapability = Extract<
   PlatformSenseCardCapabilityV2,
@@ -41,13 +43,15 @@ export type LibrarySenseContent = {
 
 export type LibrarySenseCardModel = {
   entryId: string;
+  cardTypeId: CardTypeId;
   displayOrdinal: number | null;
+  partOfSpeech: string | null;
   definition: LibrarySenseContent | null;
   entryTranslation: string | null;
-  details: LibrarySenseContent[];
-  phase: PlatformSenseCardEntryV2["card"] extends infer _Card
-    ? NonNullable<PlatformSenseCardEntryV2["card"]>["scheduler"]["phase"] | null
+  translationStatus: PlatformSenseCardEntryV2["translation"] extends infer _State
+    ? NonNullable<PlatformSenseCardEntryV2["translation"]>["status"] | null
     : never;
+  details: LibrarySenseContent[];
   repeatCount: number;
   startLearning: LibraryStartLearningCapability | null;
   markKnown: LibraryMarkKnownCapability | null;
@@ -56,13 +60,13 @@ export type LibrarySenseCardModel = {
 };
 
 export type LibrarySenseCardGroupModel = {
-  headwordGroupId: string;
   article: string | null;
   headword: string;
-  pronunciation: string | null;
+  audioCapability: PlatformAudioCapabilityV2 | null;
   partOfSpeech: string | null;
   coreVocabularyLabel: string | null;
   meaningCountLabel: string;
+  senseCount: number;
   meanings: LibrarySenseCardModel[];
 };
 
@@ -71,24 +75,38 @@ export type LibrarySenseCardViewState = Record<
   { expanded: boolean; translationVisible: boolean }
 >;
 
+export function librarySenseCardIdentity(
+  entryId: string,
+  cardTypeId: CardTypeId,
+): string {
+  return `${entryId}\u0000${cardTypeId}`;
+}
+
 export function reconcileLibrarySenseCardViewState(
   current: LibrarySenseCardViewState,
-  entries: PlatformSenseCardEntryV2[],
+  meanings: Array<Pick<LibrarySenseCardModel, "entryId" | "cardTypeId">>,
 ): LibrarySenseCardViewState {
   return Object.fromEntries(
-    entries.map((entry, index) => [
-      entry.entryId,
-      current[entry.entryId] ?? {
-        expanded: index === 0,
-        translationVisible: false,
-      },
-    ]),
+    meanings.map((meaning, index) => {
+      const identity = librarySenseCardIdentity(
+        meaning.entryId,
+        meaning.cardTypeId,
+      );
+      return [
+        identity,
+        current[identity] ?? {
+          expanded: index === 0,
+          translationVisible: false,
+        },
+      ];
+    }),
   );
 }
 
 export function buildLibrarySenseCardGroupModel(
   group: PlatformHeadwordGroupV2,
   interfaceLanguage: OnboardingLanguage,
+  requestedCardTypeId: CardTypeId = "word-to-definition",
 ): LibrarySenseCardGroupModel {
   const senseEntries = group.entries.filter(
     (entry): entry is PlatformSenseCardEntryV2 => entry.kind === "sense-card",
@@ -101,25 +119,24 @@ export function buildLibrarySenseCardGroupModel(
   );
 
   return {
-    headwordGroupId: group.headwordGroupId,
     article: group.header.article ?? null,
     headword: group.header.displayPronunciation ?? group.header.text,
-    pronunciation:
-      group.header.displayPronunciation &&
-      group.header.displayPronunciation !== group.header.text
-        ? group.header.pronunciation ?? null
-        : group.header.pronunciation ?? null,
+    audioCapability: group.header.audio ?? null,
     partOfSpeech: partOfSpeech
       ? t(partOfSpeech.messageKey) === partOfSpeech.messageKey
-        ? partOfSpeech.sourceValue ?? null
+        ? (partOfSpeech.sourceValue ?? null)
         : t(partOfSpeech.messageKey)
       : null,
-    coreVocabularyLabel: coreVocabulary
-      ? t(coreVocabulary.messageKey)
-      : null,
+    coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     meaningCountLabel: t("senseCard.sections.meanings"),
+    senseCount: group.senseCount,
     meanings: senseEntries.map((entry) =>
-      buildMeaning(entry, group.senseCount),
+      buildMeaning(
+        entry,
+        group.senseCount,
+        requestedCardTypeId,
+        interfaceLanguage,
+      ),
     ),
   };
 }
@@ -127,6 +144,8 @@ export function buildLibrarySenseCardGroupModel(
 function buildMeaning(
   entry: PlatformSenseCardEntryV2,
   senseCount: number,
+  requestedCardTypeId: CardTypeId,
+  interfaceLanguage: OnboardingLanguage,
 ): LibrarySenseCardModel {
   const nodes = [...entry.contentNodes].sort(
     (left, right) => left.order - right.order,
@@ -150,16 +169,23 @@ function buildMeaning(
 
   return {
     entryId: entry.entryId,
+    cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
     displayOrdinal: senseCount > 1 ? entry.meaningOrdinal : null,
+    partOfSpeech: entry.partOfSpeech
+      ? platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey) ===
+        entry.partOfSpeech.messageKey
+        ? (entry.partOfSpeech.sourceValue ?? null)
+        : platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey)
+      : null,
     definition,
     entryTranslation:
       entry.translation?.status === "ready" && entry.translation.isFresh
-        ? entry.translation.text ?? null
+        ? (entry.translation.text ?? null)
         : null,
+    translationStatus: entry.translation?.status ?? null,
     details: content.filter(
       (node) => node.contentNodeId !== definition?.contentNodeId,
     ),
-    phase: entry.card?.scheduler.phase ?? null,
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     startLearning: capability(entry, "start-learning"),
     markKnown: capability(entry, "mark-known"),

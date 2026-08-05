@@ -2,12 +2,17 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type {
   LibrarySenseCardGroupModel,
   LibrarySenseCardModel,
   LibrarySenseCardViewState,
   LibraryMutationCapability,
+} from "./librarySenseCardModel";
+import {
+  reconcileLibrarySenseCardViewState,
+  librarySenseCardIdentity,
 } from "./librarySenseCardModel";
 
 const reviewTone = {
@@ -20,14 +25,24 @@ const reviewTone = {
 type Props = {
   model: LibrarySenseCardGroupModel;
   interfaceLanguage: OnboardingLanguage;
-  busyEntryId?: string | null;
+  busyIdentity?: string | null;
+  audioBusy?: boolean;
+  onPlayAudio?: () => void;
+  translationEnabled?: boolean;
+  translationStates?: Record<string, "pending" | "failed">;
+  onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 };
 
 export function LibrarySenseCardGroup({
   model,
   interfaceLanguage,
-  busyEntryId = null,
+  busyIdentity = null,
+  audioBusy = false,
+  onPlayAudio,
+  translationEnabled = false,
+  translationStates = {},
+  onRequestTranslation,
   onAction,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
@@ -36,26 +51,20 @@ export function LibrarySenseCardGroup({
 
   React.useEffect(() => {
     setViewState((current) =>
-      Object.fromEntries(
-        model.meanings.map((meaning, index) => [
-          meaning.entryId,
-          current[meaning.entryId] ?? {
-            expanded: index === 0,
-            translationVisible: false,
-          },
-        ]),
-      ),
+      reconcileLibrarySenseCardViewState(current, model.meanings),
     );
   }, [model.meanings]);
 
   const updateEntry = (
-    entryId: string,
-    update: (current: LibrarySenseCardViewState[string]) => LibrarySenseCardViewState[string],
+    identity: string,
+    update: (
+      current: LibrarySenseCardViewState[string],
+    ) => LibrarySenseCardViewState[string],
   ) => {
     setViewState((current) => ({
       ...current,
-      [entryId]: update(
-        current[entryId] ?? {
+      [identity]: update(
+        current[identity] ?? {
           expanded: false,
           translationVisible: false,
         },
@@ -78,6 +87,20 @@ export function LibrarySenseCardGroup({
           <h2 className="min-w-0 break-words text-[clamp(2.6rem,8vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em]">
             {model.headword}
           </h2>
+          {onPlayAudio && model.audioCapability ? (
+            <button
+              type="button"
+              disabled={audioBusy}
+              aria-label={platformV2Message(
+                interfaceLanguage,
+                "senseCard.audio.play",
+              )}
+              onClick={onPlayAudio}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+            >
+              <AudioIcon />
+            </button>
+          ) : null}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           {model.partOfSpeech ? (
@@ -98,38 +121,55 @@ export function LibrarySenseCardGroup({
         <span>{model.meaningCountLabel}</span>
         <span className="h-px flex-1 bg-slate-300 dark:bg-slate-700" />
         <span className="flex h-7 min-w-7 items-center justify-center rounded-full border border-slate-300 px-2 font-mono tracking-normal dark:border-slate-700">
-          {model.meanings.length}
+          {model.senseCount}
         </span>
       </div>
 
       <div className="space-y-3">
-        {model.meanings.map((meaning) => (
-          <MeaningCard
-            key={meaning.entryId}
-            meaning={meaning}
-            state={
-              viewState[meaning.entryId] ?? {
-                expanded: false,
-                translationVisible: false,
+        {model.meanings.map((meaning) => {
+          const identity = librarySenseCardIdentity(
+            meaning.entryId,
+            meaning.cardTypeId,
+          );
+          return (
+            <MeaningCard
+              key={identity}
+              meaning={meaning}
+              groupPartOfSpeech={model.partOfSpeech}
+              state={
+                viewState[identity] ?? {
+                  expanded: false,
+                  translationVisible: false,
+                }
               }
-            }
-            interfaceLanguage={interfaceLanguage}
-            busy={busyEntryId === meaning.entryId}
-            onToggleExpanded={() =>
-              updateEntry(meaning.entryId, (current) => ({
-                ...current,
-                expanded: !current.expanded,
-              }))
-            }
-            onToggleTranslation={() =>
-              updateEntry(meaning.entryId, (current) => ({
-                ...current,
-                translationVisible: !current.translationVisible,
-              }))
-            }
-            onAction={onAction}
-          />
-        ))}
+              interfaceLanguage={interfaceLanguage}
+              busy={busyIdentity === identity}
+              translationEnabled={translationEnabled}
+              translationState={translationStates[identity] ?? null}
+              onToggleExpanded={() =>
+                updateEntry(identity, (current) => ({
+                  ...current,
+                  expanded: !current.expanded,
+                }))
+              }
+              onToggleTranslation={() => {
+                updateEntry(identity, (current) => ({
+                  ...current,
+                  translationVisible: !current.translationVisible,
+                }));
+                const hasCachedTranslation = Boolean(
+                  meaning.entryTranslation ||
+                  meaning.definition?.translation ||
+                  meaning.details.some((item) => item.translation),
+                );
+                if (!hasCachedTranslation) {
+                  onRequestTranslation?.(meaning.entryId, meaning.cardTypeId);
+                }
+              }}
+              onAction={onAction}
+            />
+          );
+        })}
       </div>
     </section>
   );
@@ -137,17 +177,23 @@ export function LibrarySenseCardGroup({
 
 function MeaningCard({
   meaning,
+  groupPartOfSpeech,
   state,
   interfaceLanguage,
   busy,
+  translationEnabled,
+  translationState,
   onToggleExpanded,
   onToggleTranslation,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
+  groupPartOfSpeech: string | null;
   state: LibrarySenseCardViewState[string];
   interfaceLanguage: OnboardingLanguage;
   busy: boolean;
+  translationEnabled: boolean;
+  translationState: "pending" | "failed" | null;
   onToggleExpanded: () => void;
   onToggleTranslation: () => void;
   onAction: (capability: LibraryMutationCapability) => void;
@@ -157,8 +203,8 @@ function MeaningCard({
   const ordinal = meaning.displayOrdinal ?? 1;
   const hasTranslation = Boolean(
     meaning.entryTranslation ||
-      meaning.definition?.translation ||
-      meaning.details.some((item) => item.translation),
+    meaning.definition?.translation ||
+    meaning.details.some((item) => item.translation),
   );
 
   const activateCard = () => {
@@ -217,27 +263,49 @@ function MeaningCard({
           )}
         </div>
 
+        {meaning.partOfSpeech && meaning.partOfSpeech !== groupPartOfSpeech ? (
+          <div className="mt-2 inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            {meaning.partOfSpeech}
+          </div>
+        ) : null}
+
         {state.expanded ? (
           <div className="mt-5" onClick={(event) => event.stopPropagation()}>
             {meaning.details.length ? (
               <div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-700">
-                {meaning.details.map((item) => (
-                  <div key={item.contentNodeId}>
-                    <p className="border-l-[3px] border-indigo-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200">
-                      {item.text}
-                    </p>
-                    {state.translationVisible && item.translation ? (
-                      <p className="mt-1 pl-[15px] text-sm text-slate-500 dark:text-slate-400">
-                        {item.translation}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
+                {meaning.details.map((item, index) => {
+                  const presentation = contentPresentation[item.kind];
+                  const previous = meaning.details[index - 1];
+                  const showLabel =
+                    presentation.labelKey &&
+                    (!previous ||
+                      contentPresentation[previous.kind].sectionGroup !==
+                        presentation.sectionGroup);
+                  return (
+                    <section
+                      key={item.contentNodeId}
+                      data-content-kind={item.kind}
+                    >
+                      {showLabel && presentation.labelKey ? (
+                        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                          {t(presentation.labelKey)}
+                        </h3>
+                      ) : null}
+                      <p className={presentation.textClassName}>{item.text}</p>
+                      {state.translationVisible && item.translation ? (
+                        <p className="mt-1 pl-[15px] text-sm text-slate-500 dark:text-slate-400">
+                          {item.translation}
+                        </p>
+                      ) : null}
+                    </section>
+                  );
+                })}
               </div>
             ) : null}
 
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-              {hasTranslation ? (
+              {translationEnabled || hasTranslation ? (
                 <button
                   type="button"
                   aria-label={t("senseCard.translation.forMeaning", {
@@ -245,6 +313,7 @@ function MeaningCard({
                   })}
                   aria-pressed={state.translationVisible}
                   onClick={onToggleTranslation}
+                  disabled={translationState === "pending"}
                   className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-lg text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-300"
                 >
                   <TranslateIcon />
@@ -267,6 +336,25 @@ function MeaningCard({
                 ↑
               </button>
             </div>
+            {translationState ? (
+              <div
+                role={translationState === "failed" ? "alert" : "status"}
+                className="mt-2 text-sm text-slate-500 dark:text-slate-400"
+              >
+                {translationState === "pending"
+                  ? t("senseCard.translation.pending")
+                  : t("senseCard.translation.failed")}
+                {translationState === "failed" ? (
+                  <button
+                    type="button"
+                    onClick={onToggleTranslation}
+                    className="ml-2 font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300"
+                  >
+                    {t("senseCard.translation.retry")}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -300,18 +388,30 @@ function MeaningActions({
   }
   if (meaning.reviewActions.length) {
     return (
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {meaning.reviewActions.map((action) => (
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {meaning.reviewActions.map((action) => (
+            <button
+              key={action.reviewResult}
+              type="button"
+              disabled={busy}
+              onClick={() => onAction(action)}
+              className={`relative overflow-hidden rounded-xl border border-slate-300 px-2 py-2 text-sm font-semibold before:absolute before:inset-y-0 before:left-0 before:w-1 disabled:opacity-50 dark:border-slate-600 ${reviewTone[action.reviewResult]}`}
+            >
+              {t(action.messageKey)}
+            </button>
+          ))}
+        </div>
+        {meaning.markKnown ? (
           <button
-            key={action.reviewResult}
             type="button"
             disabled={busy}
-            onClick={() => onAction(action)}
-            className={`relative overflow-hidden rounded-xl border border-slate-300 px-2 py-2 text-sm font-semibold before:absolute before:inset-y-0 before:left-0 before:w-1 disabled:opacity-50 dark:border-slate-600 ${reviewTone[action.reviewResult]}`}
+            onClick={() => onAction(meaning.markKnown!)}
+            className="w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline disabled:opacity-50 dark:text-slate-400"
           >
-            {t(action.messageKey)}
+            ✓ {t(meaning.markKnown.messageKey)}
           </button>
-        ))}
+        ) : null}
       </div>
     );
   }
@@ -363,10 +463,65 @@ function TranslateIcon() {
 function initialViewState(
   model: LibrarySenseCardGroupModel,
 ): LibrarySenseCardViewState {
-  return Object.fromEntries(
-    model.meanings.map((meaning, index) => [
-      meaning.entryId,
-      { expanded: index === 0, translationVisible: false },
-    ]),
+  return reconcileLibrarySenseCardViewState({}, model.meanings);
+}
+
+const contentPresentation: Record<
+  LibrarySenseCardModel["details"][number]["kind"],
+  { sectionGroup: string; labelKey: string | null; textClassName: string }
+> = {
+  definition: {
+    sectionGroup: "definition",
+    labelKey: "senseCard.sections.definition",
+    textClassName:
+      "border-l-[3px] border-slate-400 pl-3 text-base leading-6 text-slate-700 dark:text-slate-200",
+  },
+  "usage-pattern": {
+    sectionGroup: "usage",
+    labelKey: "senseCard.sections.usagePattern",
+    textClassName:
+      "border-l-[3px] border-amber-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+  },
+  example: {
+    sectionGroup: "examples",
+    labelKey: "senseCard.sections.examples",
+    textClassName:
+      "border-l-[3px] border-indigo-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+  },
+  idiom: {
+    sectionGroup: "idioms",
+    labelKey: "senseCard.sections.idioms",
+    textClassName:
+      "border-l-[3px] border-violet-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+  },
+  "idiom-explanation": {
+    sectionGroup: "idioms",
+    labelKey: null,
+    textClassName:
+      "border-l-[3px] border-violet-300 pl-3 text-sm leading-5 text-slate-600 dark:text-slate-300",
+  },
+  "usage-note": {
+    sectionGroup: "notes",
+    labelKey: "senseCard.sections.notes",
+    textClassName:
+      "border-l-[3px] border-slate-400 pl-3 text-sm leading-5 text-slate-600 dark:text-slate-300",
+  },
+};
+
+function AudioIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z" />
+      <path d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11" />
+    </svg>
   );
 }

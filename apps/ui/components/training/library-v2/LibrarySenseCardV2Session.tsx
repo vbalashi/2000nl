@@ -2,13 +2,20 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { fetchPlatformV2MultiSenseGroup } from "@/lib/platform/platformV2LibraryClient";
-import { performPlatformV2TrainingAction } from "@/lib/platform/platformV2TrainingClient";
+import {
+  fetchPlatformV2MultiSenseGroup,
+  requestPlatformV2LibraryTranslation,
+} from "@/lib/platform/platformV2LibraryClient";
+import {
+  performPlatformV2TrainingAction,
+  resolvePlatformV2Audio,
+} from "@/lib/platform/platformV2TrainingClient";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import {
   buildLibrarySenseCardGroupModel,
+  librarySenseCardIdentity,
   type LibraryMutationCapability,
 } from "./librarySenseCardModel";
 
@@ -31,8 +38,14 @@ export function LibrarySenseCardV2Session({
   interfaceLanguage,
   fallback,
 }: Props) {
-  const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(null);
-  const [busyEntryId, setBusyEntryId] = React.useState<string | null>(null);
+  const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
+    null,
+  );
+  const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
+  const [audioBusy, setAudioBusy] = React.useState(false);
+  const [translationStates, setTranslationStates] = React.useState<
+    Record<string, "pending" | "failed">
+  >({});
   const [error, setError] = React.useState<string | null>(null);
 
   const load = React.useCallback(
@@ -70,13 +83,18 @@ export function LibrarySenseCardV2Session({
   const model = React.useMemo(
     () =>
       group
-        ? buildLibrarySenseCardGroupModel(group, interfaceLanguage)
+        ? buildLibrarySenseCardGroupModel(group, interfaceLanguage, cardTypeId)
         : null,
-    [group, interfaceLanguage],
+    [cardTypeId, group, interfaceLanguage],
   );
 
   const handleAction = async (capability: LibraryMutationCapability) => {
-    setBusyEntryId(capability.target.entryId);
+    setBusyIdentity(
+      librarySenseCardIdentity(
+        capability.target.entryId,
+        capability.target.cardTypeId,
+      ),
+    );
     setError(null);
     try {
       await performPlatformV2TrainingAction(capability);
@@ -84,7 +102,62 @@ export function LibrarySenseCardV2Session({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "action_failed");
     } finally {
-      setBusyEntryId(null);
+      setBusyIdentity(null);
+    }
+  };
+
+  const handlePlayAudio = async () => {
+    if (!group?.header.audio) return;
+    setAudioBusy(true);
+    setError(null);
+    try {
+      const url = await resolvePlatformV2Audio({
+        capability: group.header.audio,
+        text: group.header.text,
+      });
+      const audio = new Audio(url);
+      await audio.play();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "audio_failed");
+    } finally {
+      setAudioBusy(false);
+    }
+  };
+
+  const handleRequestTranslation = async (
+    meaningEntryId: string,
+    meaningCardTypeId: CardTypeId,
+  ) => {
+    if (!translationTargetLanguageCode) return;
+    const identity = librarySenseCardIdentity(
+      meaningEntryId,
+      meaningCardTypeId,
+    );
+    setTranslationStates((current) => ({ ...current, [identity]: "pending" }));
+    try {
+      const status = await requestPlatformV2LibraryTranslation({
+        entryId: meaningEntryId,
+        targetLanguageCode: translationTargetLanguageCode,
+        force: translationStates[identity] === "failed",
+      });
+      if (status === "ready") {
+        await load();
+        setTranslationStates((current) => {
+          const next = { ...current };
+          delete next[identity];
+          return next;
+        });
+      } else {
+        setTranslationStates((current) => ({
+          ...current,
+          [identity]: status,
+        }));
+      }
+    } catch {
+      setTranslationStates((current) => ({
+        ...current,
+        [identity]: "failed",
+      }));
     }
   };
 
@@ -95,7 +168,16 @@ export function LibrarySenseCardV2Session({
       <LibrarySenseCardGroup
         model={model}
         interfaceLanguage={interfaceLanguage}
-        busyEntryId={busyEntryId}
+        busyIdentity={busyIdentity}
+        audioBusy={audioBusy}
+        onPlayAudio={
+          model.audioCapability ? () => void handlePlayAudio() : undefined
+        }
+        translationEnabled={Boolean(translationTargetLanguageCode)}
+        translationStates={translationStates}
+        onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
+          void handleRequestTranslation(meaningEntryId, meaningCardTypeId)
+        }
         onAction={(capability) => void handleAction(capability)}
       />
       {error ? (
