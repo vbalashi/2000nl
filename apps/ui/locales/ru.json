@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Закрыть"
+  },
   "onboarding": {
     "steps": [
       {
@@ -69,9 +72,6 @@
       "success": "Хорошо",
       "easy": "Легко"
     },
-    "translation": {
-      "request": "Перевести"
-    },
     "audio": {
       "play": "Воспроизвести"
     },
@@ -85,9 +85,25 @@
     },
     "sections": {
       "meaning": "Значение",
+      "meanings": "Значения",
+      "definition": "Определение",
+      "usagePattern": "Способ употребления",
       "examples": "Примеры",
+      "idioms": "Выражения",
+      "notes": "Заметки",
       "reviewPrompt": "Насколько хорошо вы знаете это значение?"
     },
+    "state": {
+      "new": "Новое"
+    },
+    "translation": {
+      "request": "Перевести",
+      "forMeaning": "Показать перевод значения {number}",
+      "pending": "Перевод готовится…",
+      "failed": "Не удалось загрузить перевод.",
+      "retry": "Повторить"
+    },
+    "collapse": "Свернуть значение",
     "report": "Сообщить об ошибке",
     "wordDetails": {
       "open": "Сведения о слове"

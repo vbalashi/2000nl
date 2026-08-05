@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformActionV2Request,
@@ -74,7 +74,7 @@ export async function fetchPlatformV2SingleSense(input: {
     credentials: "same-origin",
     cache: "no-store",
     signal: input.signal,
-    headers: await authenticatedJsonHeaders(),
+    headers: await platformV2AuthenticatedJsonHeaders(),
     body: JSON.stringify({
       query: input.query,
       cardTypeId: input.cardTypeId,
@@ -117,7 +117,7 @@ export async function performPlatformV2TrainingAction(
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
-    headers: await authenticatedJsonHeaders(),
+    headers: await platformV2AuthenticatedJsonHeaders(),
     body: JSON.stringify(request),
   });
   const payload = (await response.json()) as
@@ -146,7 +146,7 @@ export async function resolvePlatformV2Audio(input: {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
-    headers: await authenticatedJsonHeaders(),
+    headers: await platformV2AuthenticatedJsonHeaders(),
     body: JSON.stringify({
       text: input.text,
       languageCode: input.capability.contentLanguageCode,
@@ -166,15 +166,4 @@ export async function resolvePlatformV2Audio(input: {
     );
   }
   return url;
-}
-
-async function authenticatedJsonHeaders(): Promise<HeadersInit> {
-  const headers: Record<string, string> = {
-    accept: "application/json",
-    "content-type": "application/json",
-  };
-  const { data } = await supabase.auth.getSession();
-  const accessToken = data.session?.access_token;
-  if (accessToken) headers.authorization = `Bearer ${accessToken}`;
-  return headers;
 }

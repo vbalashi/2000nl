@@ -23,12 +23,15 @@ import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import { getAllMeanings } from "@/lib/wordUtils";
 import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
+import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
 type Props = {
   open: boolean;
   userId: string;
   language: string;
   translationLang: string | null;
+  interfaceLanguage: OnboardingLanguage;
   userLists: WordListSummary[];
   viewedListId: string | null;
   viewedList: WordListSummary | null;
@@ -129,6 +132,7 @@ export function DictionarySearchTab({
   userId,
   language,
   translationLang,
+  interfaceLanguage,
   userLists,
   viewedListId,
   viewedList,
@@ -829,21 +833,33 @@ export function DictionarySearchTab({
                 ) : null}
               </div>
               <div className="min-h-0 flex-1">
-                <WordDetailPanel
-                  entry={detailEntry}
-                  userId={userId}
-                  translationLang={translationLang}
-                  userLists={userLists}
-                  onListsUpdated={async () => {
-                    await reloadLists();
-                    notifyListsUpdated();
-                  }}
-                  onOpenListMembership={onOpenListMembership}
-                  onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-                  onTrainWord={onTrainWord}
-                  showHeader={true}
-                  showActions={true}
-                  autoFetchTranslation={false}
+                <LibraryWordDetail
+                  entryId={detailEntry.id}
+                  headword={detailEntry.headword}
+                  contentLanguageCode={
+                    detailEntry.language_code ?? searchLanguage
+                  }
+                  translationTargetLanguageCode={translationLang}
+                  interfaceLanguage={interfaceLanguage}
+                  viewport="desktop"
+                  fallback={
+                    <WordDetailPanel
+                      entry={detailEntry}
+                      userId={userId}
+                      translationLang={translationLang}
+                      userLists={userLists}
+                      onListsUpdated={async () => {
+                        await reloadLists();
+                        notifyListsUpdated();
+                      }}
+                      onOpenListMembership={onOpenListMembership}
+                      onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+                      onTrainWord={onTrainWord}
+                      showHeader={true}
+                      showActions={true}
+                      autoFetchTranslation={false}
+                    />
+                  }
                 />
               </div>
             </div>
@@ -861,7 +877,9 @@ export function DictionarySearchTab({
           open={mobileDetailOpen && Boolean(detailEntry)}
           onClose={() => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}
+          contentLanguageCode={searchLanguage}
           translationLang={translationLang}
+          interfaceLanguage={interfaceLanguage}
           userLists={userLists}
           onListsUpdated={async () => {
             await reloadLists();
