@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthScreen } from "@/components/auth/AuthScreen";
-import { TrainingScreen } from "@/components/training/TrainingScreen";
+import { TrainingLibraryShell } from "@/components/navigation/TrainingLibraryShell";
 import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 
 export default function HomePage() {
@@ -41,7 +41,7 @@ export default function HomePage() {
   return (
     <>
       <DevDatabaseWarning />
-      <TrainingScreen user={user} />
+      <TrainingLibraryShell user={user} />
     </>
   );
 }

@@ -686,7 +686,7 @@ export function DictionarySearchTab({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3">
         {searchLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
