@@ -341,3 +341,6 @@
 
 -- Durable reversible Known Marks for Platform V2 SenseCards
 \i db/migrations/113_platform_v2_known_marks.sql
+
+-- Service-principal adapter for Platform V2 scheduler actions
+\i db/migrations/114_platform_v2_service_principal_actions.sql

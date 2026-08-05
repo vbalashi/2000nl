@@ -101,7 +101,7 @@ describe("/api/platform/v2/actions", () => {
     );
 
     expect(rpc).toHaveBeenCalledWith(
-      "perform_platform_v2_card_action",
+      "perform_platform_v2_card_action_as_principal",
       {
         p_user_id: "00000000-0000-4000-8000-000000000001",
         p_action_id: "mark-known",

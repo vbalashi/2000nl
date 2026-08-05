@@ -185,6 +185,56 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     });
   });
 
+  test("lets the service boundary start and review for an authorized principal", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(
+        client,
+        `platform-service-learning-review-${Date.now()}`,
+      );
+
+      await client.query(
+        `select
+           set_config('request.jwt.claim.sub', '', true),
+           set_config('request.jwt.claim.role', 'service_role', true)`,
+      );
+      await client.query("set local role service_role");
+      const started = await client.query(
+        `select perform_platform_v2_card_action_as_principal(
+           $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+           null, null, null, $4::uuid, null, 'first_party', null
+         ) as result`,
+        [userId, entryId, cardTypeId, randomUUID()],
+      );
+      expect(started.rows[0].result.card.scheduler.phase).toBe("learning");
+
+      const reviewed = await client.query(
+        `select perform_platform_v2_card_action_as_principal(
+           $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+           null, null, 'success', $5::uuid, null, 'first_party', null
+         ) as result`,
+        [
+          userId,
+          entryId,
+          cardTypeId,
+          started.rows[0].result.card.stateRevision,
+          randomUUID(),
+        ],
+      );
+      expect(reviewed.rows[0].result).toEqual(
+        expect.objectContaining({
+          status: "accepted",
+          actionId: "review-card",
+          card: expect.objectContaining({
+            scheduler: expect.objectContaining({ phase: "learning" }),
+          }),
+        }),
+      );
+    });
+  });
+
   test("uses the same revision-checked boundary for Start Learning and Review", async () => {
     const userId = randomUUID();
 

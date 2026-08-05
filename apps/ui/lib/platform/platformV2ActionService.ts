@@ -23,7 +23,7 @@ export async function performPlatformV2Action(
   const reviewResult =
     request.actionId === "review-card" ? request.reviewResult : null;
   const { data, error } = await service.supabase.rpc(
-    "perform_platform_v2_card_action",
+    "perform_platform_v2_card_action_as_principal",
     {
       p_user_id: auth.user.id,
       p_action_id: request.actionId,
