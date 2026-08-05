@@ -1,5 +1,11 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
@@ -170,5 +176,42 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       container.querySelector('[data-content-kind="idiom"]'),
     ).toBeInTheDocument();
+  });
+
+  test("shows completed known state instead of new", () => {
+    const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
+    const knownMeaning = {
+      ...model.meanings[0],
+      reviewActions: [],
+      markKnown: null,
+      undoKnown: {
+        actionId: "undo-known" as const,
+        elementId: "sense-card.known.undo",
+        messageKey: "senseCard.known.undo",
+        target: {
+          kind: "sense-card" as const,
+          entryId: model.meanings[0].entryId,
+          cardTypeId: model.meanings[0].cardTypeId,
+          stateRevision: "known-state",
+          activeKnownMarkId: "known-mark",
+          knownMarkRevision: "known-revision",
+        },
+      },
+    };
+    render(
+      <LibrarySenseCardGroup
+        model={{ ...model, meanings: [knownMeaning, model.meanings[1]] }}
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const firstCard = screen.getByTestId(
+      `library-sense-card-${knownMeaning.entryId}`,
+    );
+    expect(within(firstCard).getAllByText(/Marked as known/)).not.toHaveLength(
+      0,
+    );
+    expect(within(firstCard).queryByText("New")).not.toBeInTheDocument();
   });
 });

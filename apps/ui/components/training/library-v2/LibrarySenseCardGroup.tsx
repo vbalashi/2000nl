@@ -76,6 +76,7 @@ export function LibrarySenseCardGroup({
     <section
       data-testid="library-sense-card-group"
       className="h-full overflow-y-auto bg-slate-50 px-3 py-4 text-slate-900 dark:bg-[#11151d] dark:text-slate-100 sm:px-5"
+      style={{ scrollbarColor: "rgb(100 116 139 / 0.55) transparent" }}
     >
       <header className="mb-5 px-1 sm:px-2">
         <div className="flex min-w-0 items-baseline gap-2.5 font-serif">
@@ -257,7 +258,11 @@ function MeaningCard({
               </div>
             ) : null}
           </div>
-          {meaning.repeatCount > 0 ? (
+          {meaning.undoKnown ? (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
+              {t("senseCard.known.marked")}
+            </span>
+          ) : meaning.repeatCount > 0 ? (
             <span className="shrink-0 rounded-xl border border-slate-300 px-2.5 py-1 font-mono text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
               ↔ {meaning.repeatCount}×
             </span>
@@ -398,7 +403,7 @@ function MeaningActions({
         onClick={() => onAction(meaning.undoKnown!)}
         className="w-full rounded-xl border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-50 dark:text-emerald-300"
       >
-        {t(meaning.undoKnown.messageKey)}
+        {t("senseCard.known.marked")} · {t(meaning.undoKnown.messageKey)}
       </button>
     );
   }

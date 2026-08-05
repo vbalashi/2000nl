@@ -52,8 +52,10 @@ export function LibrarySenseCardV2Session({
   >({});
   const [error, setError] = React.useState<string | null>(null);
   const translationPollTimers = React.useRef<Record<string, number>>({});
+  const translationSession = React.useRef(0);
 
   React.useEffect(() => {
+    translationSession.current += 1;
     for (const timer of Object.values(translationPollTimers.current)) {
       window.clearTimeout(timer);
     }
@@ -62,7 +64,7 @@ export function LibrarySenseCardV2Session({
   }, [cardTypeId, entryId, translationLanguage]);
 
   const load = React.useCallback(
-    async (signal?: AbortSignal) => {
+    async (signal?: AbortSignal, expectedTranslationSession?: number) => {
       const next = await fetchPlatformV2MultiSenseGroup({
         query: headword,
         entryId,
@@ -71,6 +73,13 @@ export function LibrarySenseCardV2Session({
         translationTargetLanguageCode: translationLanguage,
         signal,
       });
+      if (
+        signal?.aborted ||
+        (expectedTranslationSession != null &&
+          expectedTranslationSession !== translationSession.current)
+      ) {
+        return next;
+      }
       setGroup(next);
       return next;
     },
@@ -136,6 +145,7 @@ export function LibrarySenseCardV2Session({
       meaningEntryId: string,
       meaningCardTypeId: CardTypeId,
       force = false,
+      expectedTranslationSession = translationSession.current,
     ) => {
       if (!translationLanguage) return;
       const identity = librarySenseCardIdentity(
@@ -156,8 +166,10 @@ export function LibrarySenseCardV2Session({
           targetLanguageCode: translationLanguage,
           force,
         });
+        if (expectedTranslationSession !== translationSession.current) return;
         if (status === "ready") {
-          await load();
+          await load(undefined, expectedTranslationSession);
+          if (expectedTranslationSession !== translationSession.current) return;
           setTranslationStates((current) => {
             const next = { ...current };
             delete next[identity];
@@ -166,7 +178,12 @@ export function LibrarySenseCardV2Session({
         } else if (status === "pending") {
           translationPollTimers.current[identity] = window.setTimeout(
             () =>
-              void handleRequestTranslation(meaningEntryId, meaningCardTypeId),
+              void handleRequestTranslation(
+                meaningEntryId,
+                meaningCardTypeId,
+                false,
+                expectedTranslationSession,
+              ),
             3000,
           );
         } else {
@@ -176,6 +193,7 @@ export function LibrarySenseCardV2Session({
           }));
         }
       } catch {
+        if (expectedTranslationSession !== translationSession.current) return;
         setTranslationStates((current) => ({
           ...current,
           [identity]: "failed",
