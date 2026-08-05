@@ -146,6 +146,18 @@ Focused characterization now covers:
 | Training controls inside `Instellingen` | Training Setup | Existing active training-scope persistence and reset boundary |
 | Theme/language/tutorial/version | App Settings | Preference handlers; language/TTS redesign stays separate |
 
+### First production slice
+
+Issue #78 starts with **Training ↔ Library / Dictionary search**. The current
+Training header search entry moves behind the Library destination seam while
+the same `TrainingScreen` instance remains mounted. The remaining modal tabs
+and entry points continue to use `SettingsModal` until their owning slices are
+implemented. This avoids treating the destination map above as one big-bang
+shell rewrite.
+
+The session lifetime, Back/Forward behavior, rollout gates, and rollback are
+owned by accepted ADR 0005.
+
 The persistent shell must keep the existing `TrainingScreen` instance mounted
 until session ownership is deliberately moved. Extracting a destination must
 not turn modal-local browsing into an implicit session mutation.

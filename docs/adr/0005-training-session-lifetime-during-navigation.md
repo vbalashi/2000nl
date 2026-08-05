@@ -1,7 +1,9 @@
 # Training Session Lifetime During Navigation
 
-Status: proposed
+Status: accepted
 Date: 2026-07-24
+Accepted: 2026-08-05
+Related: #72 target shell; #74 Training tracer; #78 first navigation strangler
 
 ## Context
 
@@ -44,6 +46,30 @@ This preserves current behavior while application areas are separated.
 This ADR does not introduce a persisted `TrainingSession` aggregate. That
 requires a later decision about identity, snapshot versioning, expiry,
 multi-device ownership, resume conflict, and scheduler interaction.
+
+The first production slice is explicitly **Training ↔ Library**:
+
+- the authenticated root gains a persistent destination shell;
+- the existing `TrainingScreen` remains mounted when Library is visible;
+- the current dictionary-search entry point opens Library as an independent
+  destination instead of presenting it as a peer tab inside the catch-all
+  Settings modal;
+- browser Back/Forward and the mobile Library return action select the visible
+  destination without reconstructing the Training session;
+- Lists, Statistics, Training Setup, App Settings, and Profile remain on their
+  existing compatibility paths until their own slices are implemented.
+
+This is a bounded ownership change, not permission to reproduce the whole
+target information architecture in one pull request.
+
+### Decision acceptance versus rollout evidence
+
+The lifetime decision is accepted from the current-state characterization, the
+responsive target-shell work in #72, and the accepted Training interaction
+tracer in #74. The acceptance gates below are rollout obligations for #78:
+they must pass before the first slice is enabled, but they are not circular
+prerequisites for accepting the architecture decision that tells the slice
+what to implement.
 
 ### Navigation semantics
 
@@ -128,6 +154,10 @@ Before the first navigation slice:
 9. preserve existing Training tests before extracting any shell/module
    boundary.
 
+For #78, failures in these gates keep the new shell disabled and leave the
+compatibility entry point authoritative. They do not justify silently changing
+the accepted session-lifetime policy inside implementation code.
+
 Wave 0 current-state evidence is tracked in:
 
 - `docs/architecture/settings-modal-entrypoint-task-map.md`;
@@ -148,3 +178,11 @@ navigation blocking, because those controls do not exist yet.
   semantics.
 - A later persisted-session design can replace this policy only through a new
   ADR and migration plan.
+
+## Rollback
+
+The first shell slice is guarded independently from the existing Training and
+SettingsModal behavior. Disabling the slice restores the current root and its
+dictionary-search entry point without migrating or rewriting session, review,
+or preference data. Removing the shell must therefore require no database
+rollback.
