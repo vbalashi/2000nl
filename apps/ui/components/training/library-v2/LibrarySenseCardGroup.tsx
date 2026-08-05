@@ -201,12 +201,6 @@ function MeaningCard({
   const t = (key: string, variables?: Record<string, string | number>) =>
     platformV2Message(interfaceLanguage, key, variables);
   const ordinal = meaning.displayOrdinal ?? 1;
-  const hasTranslation = Boolean(
-    meaning.entryTranslation ||
-    meaning.definition?.translation ||
-    meaning.details.some((item) => item.translation),
-  );
-
   const activateCard = () => {
     if (!state.expanded) onToggleExpanded();
   };
@@ -250,6 +244,17 @@ function MeaningCard({
               <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
                 {meaning.definition.translation}
               </p>
+            ) : null}
+            {meaning.definition?.children.length ? (
+              <div className="mt-2 space-y-2 pl-4">
+                {meaning.definition.children.map((child) => (
+                  <NestedContent
+                    key={child.contentNodeId}
+                    item={child}
+                    translationVisible={state.translationVisible}
+                  />
+                ))}
+              </div>
             ) : null}
           </div>
           {meaning.repeatCount > 0 ? (
@@ -298,6 +303,17 @@ function MeaningCard({
                           {item.translation}
                         </p>
                       ) : null}
+                      {item.children.length ? (
+                        <div className="mt-2 space-y-2 pl-4">
+                          {item.children.map((child) => (
+                            <NestedContent
+                              key={child.contentNodeId}
+                              item={child}
+                              translationVisible={state.translationVisible}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
                     </section>
                   );
                 })}
@@ -305,7 +321,7 @@ function MeaningCard({
             ) : null}
 
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-              {translationEnabled || hasTranslation ? (
+              {translationEnabled ? (
                 <button
                   type="button"
                   aria-label={t("senseCard.translation.forMeaning", {
@@ -457,6 +473,37 @@ function TranslateIcon() {
       <path d="M4 5h9M8.5 3v2M6 8c1.2 2.6 3.1 4.4 5.5 5.5M11.5 8c-.8 2.2-2.3 4-4.5 5.5" />
       <path d="m14 19 3.5-9 3.5 9M15.2 16h4.6" />
     </svg>
+  );
+}
+
+function NestedContent({
+  item,
+  translationVisible,
+}: {
+  item: LibrarySenseCardModel["details"][number];
+  translationVisible: boolean;
+}) {
+  const presentation = contentPresentation[item.kind];
+  return (
+    <div data-content-kind={item.kind}>
+      <p className={presentation.textClassName}>{item.text}</p>
+      {translationVisible && item.translation ? (
+        <p className="mt-1 pl-[15px] text-sm text-slate-500 dark:text-slate-400">
+          {item.translation}
+        </p>
+      ) : null}
+      {item.children.length ? (
+        <div className="mt-2 space-y-2 pl-4">
+          {item.children.map((child) => (
+            <NestedContent
+              key={child.contentNodeId}
+              item={child}
+              translationVisible={translationVisible}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

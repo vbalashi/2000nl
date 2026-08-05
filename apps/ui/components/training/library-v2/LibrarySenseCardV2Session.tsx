@@ -38,6 +38,10 @@ export function LibrarySenseCardV2Session({
   interfaceLanguage,
   fallback,
 }: Props) {
+  const translationLanguage =
+    translationTargetLanguageCode === "off"
+      ? null
+      : translationTargetLanguageCode;
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     null,
   );
@@ -47,6 +51,7 @@ export function LibrarySenseCardV2Session({
     Record<string, "pending" | "failed">
   >({});
   const [error, setError] = React.useState<string | null>(null);
+  const translationPollTimers = React.useRef<Record<string, number>>({});
 
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
@@ -55,19 +60,13 @@ export function LibrarySenseCardV2Session({
         entryId,
         cardTypeId,
         contentLanguageCode,
-        translationTargetLanguageCode,
+        translationTargetLanguageCode: translationLanguage,
         signal,
       });
       setGroup(next);
       return next;
     },
-    [
-      cardTypeId,
-      contentLanguageCode,
-      entryId,
-      headword,
-      translationTargetLanguageCode,
-    ],
+    [cardTypeId, contentLanguageCode, entryId, headword, translationLanguage],
   );
 
   React.useEffect(() => {
@@ -124,42 +123,104 @@ export function LibrarySenseCardV2Session({
     }
   };
 
-  const handleRequestTranslation = async (
-    meaningEntryId: string,
-    meaningCardTypeId: CardTypeId,
-  ) => {
-    if (!translationTargetLanguageCode) return;
-    const identity = librarySenseCardIdentity(
-      meaningEntryId,
-      meaningCardTypeId,
-    );
-    setTranslationStates((current) => ({ ...current, [identity]: "pending" }));
-    try {
-      const status = await requestPlatformV2LibraryTranslation({
-        entryId: meaningEntryId,
-        targetLanguageCode: translationTargetLanguageCode,
-        force: translationStates[identity] === "failed",
-      });
-      if (status === "ready") {
-        await load();
-        setTranslationStates((current) => {
-          const next = { ...current };
-          delete next[identity];
-          return next;
-        });
-      } else {
-        setTranslationStates((current) => ({
-          ...current,
-          [identity]: status,
-        }));
+  const handleRequestTranslation = React.useCallback(
+    async (
+      meaningEntryId: string,
+      meaningCardTypeId: CardTypeId,
+      force = false,
+    ) => {
+      if (!translationLanguage) return;
+      const identity = librarySenseCardIdentity(
+        meaningEntryId,
+        meaningCardTypeId,
+      );
+      if (translationPollTimers.current[identity]) {
+        window.clearTimeout(translationPollTimers.current[identity]);
+        delete translationPollTimers.current[identity];
       }
-    } catch {
       setTranslationStates((current) => ({
         ...current,
-        [identity]: "failed",
+        [identity]: "pending",
       }));
+      try {
+        const status = await requestPlatformV2LibraryTranslation({
+          entryId: meaningEntryId,
+          targetLanguageCode: translationLanguage,
+          force,
+        });
+        if (status === "ready") {
+          await load();
+          setTranslationStates((current) => {
+            const next = { ...current };
+            delete next[identity];
+            return next;
+          });
+        } else if (status === "pending") {
+          translationPollTimers.current[identity] = window.setTimeout(
+            () =>
+              void handleRequestTranslation(meaningEntryId, meaningCardTypeId),
+            3000,
+          );
+        } else {
+          setTranslationStates((current) => ({
+            ...current,
+            [identity]: "failed",
+          }));
+        }
+      } catch {
+        setTranslationStates((current) => ({
+          ...current,
+          [identity]: "failed",
+        }));
+      }
+    },
+    [load, translationLanguage],
+  );
+
+  React.useEffect(() => {
+    if (!model) return;
+    setTranslationStates((current) => {
+      const next = { ...current };
+      for (const meaning of model.meanings) {
+        const identity = librarySenseCardIdentity(
+          meaning.entryId,
+          meaning.cardTypeId,
+        );
+        if (
+          meaning.translationStatus === "pending" ||
+          meaning.translationStatus === "failed"
+        ) {
+          next[identity] = meaning.translationStatus;
+        } else if (meaning.translationStatus === "ready") {
+          delete next[identity];
+        }
+      }
+      return next;
+    });
+    for (const meaning of model.meanings) {
+      if (meaning.translationStatus !== "pending") continue;
+      const identity = librarySenseCardIdentity(
+        meaning.entryId,
+        meaning.cardTypeId,
+      );
+      if (translationPollTimers.current[identity]) continue;
+      translationPollTimers.current[identity] = window.setTimeout(
+        () =>
+          void handleRequestTranslation(meaning.entryId, meaning.cardTypeId),
+        3000,
+      );
     }
-  };
+  }, [handleRequestTranslation, model]);
+
+  React.useEffect(
+    () => () => {
+      for (const timer of Object.values(translationPollTimers.current)) {
+        window.clearTimeout(timer);
+      }
+      translationPollTimers.current = {};
+    },
+    [],
+  );
 
   if (!model) return <>{fallback}</>;
 
@@ -173,10 +234,16 @@ export function LibrarySenseCardV2Session({
         onPlayAudio={
           model.audioCapability ? () => void handlePlayAudio() : undefined
         }
-        translationEnabled={Boolean(translationTargetLanguageCode)}
+        translationEnabled={Boolean(translationLanguage)}
         translationStates={translationStates}
         onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
-          void handleRequestTranslation(meaningEntryId, meaningCardTypeId)
+          void handleRequestTranslation(
+            meaningEntryId,
+            meaningCardTypeId,
+            translationStates[
+              librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
+            ] === "failed",
+          )
         }
         onAction={(capability) => void handleAction(capability)}
       />

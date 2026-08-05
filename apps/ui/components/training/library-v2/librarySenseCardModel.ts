@@ -36,9 +36,11 @@ export type LibraryMutationCapability =
 
 export type LibrarySenseContent = {
   contentNodeId: string;
+  parentContentNodeId: string | null;
   kind: PlatformContentNodeKindV2;
   text: string;
   translation: string | null;
+  children: LibrarySenseContent[];
 };
 
 export type LibrarySenseCardModel = {
@@ -150,16 +152,26 @@ function buildMeaning(
   const nodes = [...entry.contentNodes].sort(
     (left, right) => left.order - right.order,
   );
-  const content = nodes.map((node): LibrarySenseContent => ({
-    contentNodeId: node.contentNodeId,
-    kind: node.kind,
-    text: node.text,
-    translation:
-      node.translations.find(
-        (translation) =>
-          translation.status === "ready" && Boolean(translation.text),
-      )?.text ?? null,
-  }));
+  const contentById = new Map<string, LibrarySenseContent>();
+  for (const node of nodes) {
+    contentById.set(node.contentNodeId, {
+      contentNodeId: node.contentNodeId,
+      parentContentNodeId: node.parentContentNodeId,
+      kind: node.kind,
+      text: node.text,
+      translation:
+        node.translations.find(
+          (translation) =>
+            translation.status === "ready" && Boolean(translation.text),
+        )?.text ?? null,
+      children: [],
+    });
+  }
+  for (const node of contentById.values()) {
+    if (!node.parentContentNodeId) continue;
+    contentById.get(node.parentContentNodeId)?.children.push(node);
+  }
+  const content = [...contentById.values()];
   const summaryId = entry.summaryContentNodeId;
   const definition =
     content.find((node) => node.contentNodeId === summaryId) ??
@@ -184,7 +196,10 @@ function buildMeaning(
         : null,
     translationStatus: entry.translation?.status ?? null,
     details: content.filter(
-      (node) => node.contentNodeId !== definition?.contentNodeId,
+      (node) =>
+        node.contentNodeId !== definition?.contentNodeId &&
+        (!node.parentContentNodeId ||
+          !contentById.has(node.parentContentNodeId)),
     ),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     startLearning: capability(entry, "start-learning"),

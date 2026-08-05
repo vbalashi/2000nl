@@ -144,4 +144,73 @@ describe("Library multi-sense model", () => {
     expect(model.meanings).toHaveLength(2);
     expect(model.meanings[0].partOfSpeech).toBe("noun");
   });
+
+  test("attaches reordered nested content by parent identity", () => {
+    const model = buildLibrarySenseCardGroupModel(
+      {
+        ...multiSenseBankGroup,
+        entries: multiSenseBankGroup.entries.map((entry, index) =>
+          entry.kind === "sense-card" && index === 0
+            ? {
+                ...entry,
+                contentNodes: [
+                  entry.contentNodes[0],
+                  {
+                    contentNodeId: "explanation-second",
+                    parentContentNodeId: "idiom-second",
+                    kind: "idiom-explanation" as const,
+                    order: 1,
+                    text: "second explanation",
+                    sourceTextFingerprint: "fp-explanation-second",
+                    translations: [],
+                  },
+                  {
+                    contentNodeId: "idiom-first",
+                    parentContentNodeId: null,
+                    kind: "idiom" as const,
+                    order: 2,
+                    text: "first idiom",
+                    sourceTextFingerprint: "fp-idiom-first",
+                    translations: [],
+                  },
+                  {
+                    contentNodeId: "idiom-second",
+                    parentContentNodeId: null,
+                    kind: "idiom" as const,
+                    order: 3,
+                    text: "second idiom",
+                    sourceTextFingerprint: "fp-idiom-second",
+                    translations: [],
+                  },
+                  {
+                    contentNodeId: "explanation-first",
+                    parentContentNodeId: "idiom-first",
+                    kind: "idiom-explanation" as const,
+                    order: 4,
+                    text: "first explanation",
+                    sourceTextFingerprint: "fp-explanation-first",
+                    translations: [],
+                  },
+                ],
+              }
+            : entry,
+        ),
+      },
+      "en",
+    );
+
+    const idioms = model.meanings[0].details.filter(
+      (detail) => detail.kind === "idiom",
+    );
+    expect(idioms.map((idiom) => idiom.text)).toEqual([
+      "first idiom",
+      "second idiom",
+    ]);
+    expect(idioms[0].children.map((child) => child.text)).toEqual([
+      "first explanation",
+    ]);
+    expect(idioms[1].children.map((child) => child.text)).toEqual([
+      "second explanation",
+    ]);
+  });
 });

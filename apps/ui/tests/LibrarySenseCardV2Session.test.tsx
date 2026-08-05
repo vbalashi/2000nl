@@ -1,5 +1,11 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
@@ -95,6 +101,118 @@ describe("LibrarySenseCardV2Session", () => {
     expect(screen.getByText("Legacy detail")).toBeInTheDocument();
     expect(await screen.findByText("Meanings")).toBeInTheDocument();
     expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
+  });
+
+  test("normalizes the translation-off sentinel before lookup", async () => {
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="off"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    await screen.findByText("Meanings");
+    expect(fetchGroup).toHaveBeenCalledWith(
+      expect.objectContaining({ translationTargetLanguageCode: null }),
+    );
+    expect(
+      screen.queryByRole("button", {
+        name: "Show translation for meaning 1",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("hydrates a failed translation state returned by lookup", async () => {
+    fetchGroup.mockResolvedValue({
+      ...multiSenseBankGroup,
+      entries: multiSenseBankGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
+          ? {
+              ...entry,
+              translation: {
+                ...financeEntry.translation!,
+                status: "failed" as const,
+                text: undefined,
+              },
+            }
+          : entry,
+      ),
+    });
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    await screen.findByText("Meanings");
+    fireEvent.click(
+      screen.getByTestId("library-sense-card-entry-bank-finance"),
+    );
+    expect(
+      await screen.findByText("Translation could not be loaded."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  test("polls a pending translation until it becomes ready", async () => {
+    fetchGroup.mockResolvedValue({
+      ...multiSenseBankGroup,
+      entries: multiSenseBankGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
+          ? { ...entry, translation: null }
+          : entry,
+      ),
+    });
+    requestTranslation
+      .mockResolvedValueOnce("pending")
+      .mockResolvedValueOnce("ready");
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+    await screen.findByText("Meanings");
+    fireEvent.click(
+      screen.getByTestId("library-sense-card-entry-bank-finance"),
+    );
+
+    let poll: (() => void) | null = null;
+    const timeout = vi
+      .spyOn(window, "setTimeout")
+      .mockImplementation((handler, delay) => {
+        if (delay === 3000 && typeof handler === "function") {
+          poll = handler as () => void;
+        }
+        return 77 as never;
+      });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Show translation for meaning 2",
+        }),
+      );
+    });
+    expect(requestTranslation).toHaveBeenCalledTimes(1);
+    expect(poll).not.toBeNull();
+
+    await act(async () => poll?.());
+    expect(requestTranslation).toHaveBeenCalledTimes(2);
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+    timeout.mockRestore();
   });
 
   test("submits the selected meaning capability and refreshes the group", async () => {
