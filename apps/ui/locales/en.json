@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Close"
+  },
   "onboarding": {
     "steps": [
       {
@@ -69,9 +72,6 @@
       "success": "Good",
       "easy": "Easy"
     },
-    "translation": {
-      "request": "Translate"
-    },
     "audio": {
       "play": "Play audio"
     },
@@ -85,9 +85,18 @@
     },
     "sections": {
       "meaning": "Meaning",
+      "meanings": "Meanings",
       "examples": "Examples",
       "reviewPrompt": "How well do you know this meaning?"
     },
+    "state": {
+      "new": "New"
+    },
+    "translation": {
+      "request": "Translate",
+      "forMeaning": "Show translation for meaning {number}"
+    },
+    "collapse": "Collapse meaning",
     "report": "Report",
     "wordDetails": {
       "open": "Word details"

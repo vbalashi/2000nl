@@ -14,3 +14,10 @@ export function platformV2TrainingUiEnabled() {
     .toLowerCase();
   return value === "1" || value === "true";
 }
+
+export function platformV2LibraryUiEnabled() {
+  const value = process.env.NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI
+    ?.trim()
+    .toLowerCase();
+  return value === "1" || value === "true";
+}

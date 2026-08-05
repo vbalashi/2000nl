@@ -23,6 +23,7 @@ import { WordsToolbar, type AttributeFilter } from "./WordsToolbar";
 import { WordsListMobile } from "./WordsListMobile";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { MobileListPickerSheet } from "./MobileListPickerSheet";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
 const LIST_SCENARIO_OPTIONS = [
   { value: "", label: "Geen voorkeur" },
@@ -61,6 +62,7 @@ type Props = {
   onLanguageChange: (value: string) => void;
   languageOptions?: Array<{ value: string; label: string }>;
   translationLang: string | null;
+  interfaceLanguage: OnboardingLanguage;
   curatedLists: WordListSummary[];
   userLists: WordListSummary[];
   listsLoading: boolean;
@@ -88,6 +90,7 @@ export function WordListTab({
   onLanguageChange,
   languageOptions,
   translationLang,
+  interfaceLanguage,
   curatedLists,
   userLists,
   listsLoading,
@@ -1573,7 +1576,9 @@ export function WordListTab({
         entry={detailEntry}
         onClose={() => setDetailEntry(null)}
         userId={userId}
+        contentLanguageCode={language}
         translationLang={translationLang}
+        interfaceLanguage={interfaceLanguage}
         userLists={userLists}
         onListsUpdated={async () => {
           await reloadLists();

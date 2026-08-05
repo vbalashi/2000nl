@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Закрыть"
+  },
   "onboarding": {
     "steps": [
       {
@@ -69,9 +72,6 @@
       "success": "Хорошо",
       "easy": "Легко"
     },
-    "translation": {
-      "request": "Перевести"
-    },
     "audio": {
       "play": "Воспроизвести"
     },
@@ -85,9 +85,18 @@
     },
     "sections": {
       "meaning": "Значение",
+      "meanings": "Значения",
       "examples": "Примеры",
       "reviewPrompt": "Насколько хорошо вы знаете это значение?"
     },
+    "state": {
+      "new": "Новое"
+    },
+    "translation": {
+      "request": "Перевести",
+      "forMeaning": "Показать перевод значения {number}"
+    },
+    "collapse": "Свернуть значение",
     "report": "Сообщить об ошибке",
     "wordDetails": {
       "open": "Сведения о слове"

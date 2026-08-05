@@ -1,4 +1,7 @@
 {
+  "common": {
+    "close": "Sluiten"
+  },
   "onboarding": {
     "steps": [
       {
@@ -69,9 +72,6 @@
       "success": "Goed",
       "easy": "Makkelijk"
     },
-    "translation": {
-      "request": "Vertalen"
-    },
     "audio": {
       "play": "Afspelen"
     },
@@ -85,9 +85,18 @@
     },
     "sections": {
       "meaning": "Betekenis",
+      "meanings": "Betekenissen",
       "examples": "Voorbeelden",
       "reviewPrompt": "Hoe goed ken je deze betekenis?"
     },
+    "state": {
+      "new": "Nieuw"
+    },
+    "translation": {
+      "request": "Vertalen",
+      "forMeaning": "Vertaling voor betekenis {number} tonen"
+    },
+    "collapse": "Betekenis inklappen",
     "report": "Probleem melden",
     "wordDetails": {
       "open": "Woorddetails"
