@@ -53,6 +53,14 @@ export function LibrarySenseCardV2Session({
   const [error, setError] = React.useState<string | null>(null);
   const translationPollTimers = React.useRef<Record<string, number>>({});
 
+  React.useEffect(() => {
+    for (const timer of Object.values(translationPollTimers.current)) {
+      window.clearTimeout(timer);
+    }
+    translationPollTimers.current = {};
+    setTranslationStates({});
+  }, [cardTypeId, entryId, translationLanguage]);
+
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
       const next = await fetchPlatformV2MultiSenseGroup({

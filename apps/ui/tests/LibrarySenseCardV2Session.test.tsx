@@ -215,6 +215,61 @@ describe("LibrarySenseCardV2Session", () => {
     timeout.mockRestore();
   });
 
+  test("cancels pending translation polling when the selected entry changes", async () => {
+    fetchGroup.mockResolvedValue({
+      ...multiSenseBankGroup,
+      entries: multiSenseBankGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
+          ? { ...entry, translation: null }
+          : entry,
+      ),
+    });
+    requestTranslation.mockResolvedValue("pending");
+    const { rerender } = render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+    await screen.findByText("Meanings");
+    fireEvent.click(
+      screen.getByTestId("library-sense-card-entry-bank-finance"),
+    );
+
+    vi.useFakeTimers();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Show translation for meaning 2",
+        }),
+      );
+    });
+    expect(requestTranslation).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      rerender(
+        <LibrarySenseCardV2Session
+          entryId="entry-next"
+          headword="next"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          fallback={<p>Next legacy detail</p>}
+        />,
+      );
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(requestTranslation).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   test("submits the selected meaning capability and refreshes the group", async () => {
     render(
       <LibrarySenseCardV2Session
