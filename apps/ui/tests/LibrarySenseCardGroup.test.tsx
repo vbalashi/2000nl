@@ -90,9 +90,23 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       screen.getByRole("button", { name: "Expand meaning" }),
     ).toBeInTheDocument();
+    const financeCard = screen.getByTestId(
+      "library-sense-card-entry-bank-finance",
+    );
+    expect(financeCard).toHaveClass("py-2.5");
+    expect(
+      within(financeCard).getByTestId("library-sense-card-lead"),
+    ).toHaveClass("grid", "items-start");
+    expect(
+      within(financeCard).getByTestId("sense-card-top-actions"),
+    ).not.toHaveClass("float-right");
+    const furnitureDetails = screen
+      .getByText("Margriet en Ellie zaten op de bank televisie te kijken.")
+      .closest('[aria-hidden="false"]');
+    expect(furnitureDetails).toHaveClass("mt-3");
 
     fireEvent.click(
-      screen.getByTestId("library-sense-card-entry-bank-finance"),
+      financeCard,
     );
     expect(
       screen.getByText("Bij welke bank hebt u een rekening?"),
@@ -115,6 +129,7 @@ describe("LibrarySenseCardGroup", () => {
       1,
     );
     fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    expect(furnitureDetails).toHaveClass("mt-4");
     expect(
       screen.getByText("bank · financial institution"),
     ).toBeInTheDocument();

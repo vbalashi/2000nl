@@ -292,6 +292,9 @@ function MeaningCard({
   const activateCard = () => {
     if (!state.expanded) onToggleExpanded();
   };
+  const hasVisibleLeadTranslation =
+    state.translationVisible &&
+    Boolean(meaning.entryTranslation || meaning.definition?.translation);
 
   return (
     <article
@@ -300,7 +303,7 @@ function MeaningCard({
       data-expanded={state.expanded ? "true" : "false"}
       onClick={activateCard}
       className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] shadow-sm outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
-        state.expanded ? "pb-3 pt-5" : "py-3"
+        state.expanded ? "pb-3 pt-4" : "py-2.5"
       }`}
     >
       {meaning.displayOrdinal != null ? (
@@ -311,55 +314,60 @@ function MeaningCard({
 
       <div>
         <div
-          className="float-right mb-2 ml-3 flex shrink-0 items-center gap-2"
-          data-testid="sense-card-top-actions"
+          data-testid="library-sense-card-lead"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
         >
-          {meaning.undoKnown ? (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
-              {t("senseCard.known.marked")}
-            </span>
-          ) : meaning.repeatCount > 0 ? (
-            <ExposureBadge count={meaning.repeatCount} tone="light" />
-          ) : (
-            <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
-          )}
-          <button
-            type="button"
-            aria-label={t(
-              state.expanded ? "senseCard.collapse" : "senseCard.expand",
-            )}
-            aria-expanded={state.expanded}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleExpanded();
-            }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
+          <div className="min-w-0">
+            {meaning.entryTranslation ? (
+              <SenseCardReveal open={state.translationVisible}>
+                <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
+                  {meaning.entryTranslation}
+                </p>
+              </SenseCardReveal>
+            ) : null}
+            <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
+              {meaning.definition?.text ?? "—"}
+            </p>
+            {meaning.definition?.translation ? (
+              <SenseCardReveal open={state.translationVisible}>
+                <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+                  {meaning.definition.translation}
+                </p>
+              </SenseCardReveal>
+            ) : null}
+          </div>
+          <div
+            className="flex shrink-0 items-center gap-2"
+            data-testid="sense-card-top-actions"
           >
-            <ChevronIcon
-              className="h-3.5 w-3.5"
-              direction={state.expanded ? "up" : "down"}
-            />
-          </button>
+            {meaning.undoKnown ? (
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
+                {t("senseCard.known.marked")}
+              </span>
+            ) : meaning.repeatCount > 0 ? (
+              <ExposureBadge count={meaning.repeatCount} tone="light" />
+            ) : (
+              <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
+            )}
+            <button
+              type="button"
+              aria-label={t(
+                state.expanded ? "senseCard.collapse" : "senseCard.expand",
+              )}
+              aria-expanded={state.expanded}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleExpanded();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
+            >
+              <ChevronIcon
+                className="h-3.5 w-3.5"
+                direction={state.expanded ? "up" : "down"}
+              />
+            </button>
+          </div>
         </div>
-
-        {meaning.entryTranslation ? (
-          <SenseCardReveal open={state.translationVisible}>
-            <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
-              {meaning.entryTranslation}
-            </p>
-          </SenseCardReveal>
-        ) : null}
-        <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
-          {meaning.definition?.text ?? "—"}
-        </p>
-        {meaning.definition?.translation ? (
-          <SenseCardReveal open={state.translationVisible}>
-            <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
-              {meaning.definition.translation}
-            </p>
-          </SenseCardReveal>
-        ) : null}
-        <div className="clear-both" />
         {meaning.definition?.children.length ? (
           <div className="mt-2 space-y-2 pl-4">
             {meaning.definition.children.map((child) => (
@@ -379,7 +387,10 @@ function MeaningCard({
           </div>
         ) : null}
 
-        <SenseCardReveal open={state.expanded} expandedClassName="mt-5">
+        <SenseCardReveal
+          open={state.expanded}
+          expandedClassName={hasVisibleLeadTranslation ? "mt-4" : "mt-3"}
+        >
           <div onClick={(event) => event.stopPropagation()}>
             {meaning.details.length ? (
               <div className="space-y-4">

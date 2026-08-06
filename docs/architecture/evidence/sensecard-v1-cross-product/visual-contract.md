@@ -54,5 +54,24 @@ is the nearest light reference.
 - Library actions: Collections + Train next on the primary row; flag + `Melden`
   and Known/Undo on the quiet service row.
 
+### Library meaning-card geometry
+
+Full and Narrow render the same `MeaningCard`; viewport width may wrap content
+but must not select a second set of typography or spacing values.
+
+- The lead row is a two-column grid: flexible definition/translation content,
+  then compact exposure + disclosure controls. It must not use floats or a
+  clearing spacer.
+- Collapsed block padding is 10 px; a one-line meaning is approximately 50 px
+  high and grows naturally when its definition wraps. Top and bottom whitespace
+  remain visually equal.
+- Expanded padding is 16 px above and 12 px below.
+- The gap from an untranslated lead definition to expanded details is 12 px;
+  when a lead translation is visible, it is 16 px.
+- Lead text is 14.5 px at 1.45 line height; top controls are 28 px high with a
+  12 px column gap. Exposure badges remain 24 px high.
+- These values live in the shared Library component and are covered by its
+  component test. Do not reproduce them in Full/Narrow fixtures or page shells.
+
 Any later change must update this matrix or explicitly supersede the relevant
 Pen revision before implementation.
