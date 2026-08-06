@@ -3,6 +3,7 @@ node_modules
 apps/ui/tsconfig.tsbuildinfo
 ralph/
 .next
+apps/ui/.next-dev/
 .env.local
 **/.env.local
 .env.development.local
