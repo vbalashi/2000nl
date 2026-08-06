@@ -393,7 +393,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] = React.useState<
-      "training" | "library"
+      "training" | "library" | "statistics" | "settings"
     >("training");
     return (
       <TrainingScreen
@@ -425,6 +425,51 @@ test("shell Library replaces the visible destination without remounting the curr
   );
 
   expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
+});
+
+test("Statistics and Settings destinations preserve the revealed Training turn", async () => {
+  function Harness() {
+    const [destination, setDestination] = React.useState<
+      "training" | "library" | "statistics" | "settings"
+    >("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        extendedDestinationsEnabled
+        onRequestDestination={setDestination}
+      />
+    );
+  }
+
+  render(<Harness />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.keyDown(window, { key: " " });
+  await screen.findByRole("button", { name: /opnieuw/i });
+  const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Statistieken|Statistics/ }),
+  );
+  expect(
+    await screen.findByRole("heading", { name: /Statistieken|Statistics/ }),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Training" }));
+  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText("Instellingen"));
+  expect(
+    await screen.findByRole("heading", { name: /Instellingen|Settings/ }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/Audio kwaliteit/i)).not.toBeInTheDocument();
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Terug naar Training|Back to Training/ }),
+  );
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
   expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
 });

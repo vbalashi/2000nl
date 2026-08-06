@@ -1,28 +1,23 @@
 "use client";
 
 import React, { useEffect } from "react";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { getTrainingHotkeys } from "./trainingHotkeys";
 
 type Props = {
+  interfaceLanguage?: OnboardingLanguage;
   onClose: () => void;
 };
 
-const HOTKEYS = [
-  { key: "Space", description: "Toon / Verberg definitie" },
-  { key: "I", description: "Hint (context + voorbeeld)" },
-  { key: "Shift+I", description: "Woorddetails in sidebar" },
-  { key: "T", description: "Toon / verberg vertaling (inline)" },
-  { key: "S", description: "Zoeken" },
-  { key: "Esc", description: "Sluit vertaling" },
-  { key: "H", description: "Opnieuw" },
-  { key: "J", description: "Moeilijk" },
-  { key: "K", description: "Goed" },
-  { key: "L", description: "Makkelijk" },
-  { key: "F", description: "Bevriezen (tot morgen)" },
-  { key: "X", description: "Niet meer tonen" },
-  { key: "?", description: "Toon deze lijst" },
-];
+const dialogCopy = {
+  nl: { title: "Sneltoetsen", close: "Sluiten" },
+  en: { title: "Keyboard shortcuts", close: "Close" },
+  ru: { title: "Горячие клавиши", close: "Закрыть" },
+} satisfies Record<OnboardingLanguage, { title: string; close: string }>;
 
-export function HotkeyDialog({ onClose }: Props) {
+export function HotkeyDialog({ interfaceLanguage = "nl", onClose }: Props) {
+  const copy = dialogCopy[interfaceLanguage];
+  const hotkeys = getTrainingHotkeys(interfaceLanguage);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -39,18 +34,18 @@ export function HotkeyDialog({ onClose }: Props) {
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/15 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Hotkey overzicht
+            {copy.title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400 dark:hover:border-primary-light dark:hover:text-primary-light"
           >
-            Sluiten
+            {copy.close}
           </button>
         </div>
         <div className="mt-4 space-y-3">
-          {HOTKEYS.map((item) => (
+          {hotkeys.map((item) => (
             <div
               key={item.key}
               className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"

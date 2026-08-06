@@ -6,17 +6,18 @@ import type { AppDestination } from "./appDestination";
 
 const labels: Record<
   OnboardingLanguage,
-  Record<AppDestination, string>
+  Record<Exclude<AppDestination, "settings">, string>
 > = {
-  nl: { training: "Training", library: "Bibliotheek" },
-  en: { training: "Training", library: "Library" },
-  ru: { training: "Тренировка", library: "Библиотека" },
+  nl: { training: "Training", library: "Bibliotheek", statistics: "Statistieken" },
+  en: { training: "Training", library: "Library", statistics: "Statistics" },
+  ru: { training: "Тренировка", library: "Библиотека", statistics: "Статистика" },
 };
 
 type Props = {
   active: AppDestination;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
+  extendedDestinationsEnabled?: boolean;
   onNavigate: (destination: AppDestination) => void;
 };
 
@@ -24,11 +25,17 @@ export function AppDestinationNav({
   active,
   interfaceLanguage,
   disabled = false,
+  extendedDestinationsEnabled = true,
   onNavigate,
 }: Props) {
+  const destinations: Array<Exclude<AppDestination, "settings">> =
+    extendedDestinationsEnabled
+      ? ["training", "library", "statistics"]
+      : ["training", "library"];
+
   return (
     <nav aria-label="Primary" className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-sm dark:border-slate-700 dark:bg-slate-800/80">
-      {(["training", "library"] as const).map((destination) => (
+      {destinations.map((destination) => (
         <button
           key={destination}
           type="button"

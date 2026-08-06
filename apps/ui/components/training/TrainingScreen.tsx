@@ -67,6 +67,8 @@ import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
+import { SettingsDestination } from "@/components/navigation/SettingsDestination";
+import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import type { AppDestination } from "@/components/navigation/appDestination";
 import {
   getOnboardingTranslation,
@@ -76,6 +78,7 @@ import {
 type Props = {
   user: User;
   destination?: AppDestination;
+  extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
 };
@@ -193,6 +196,8 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen({
   user,
   destination = "training",
+  extendedDestinationsEnabled =
+    process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
   onRequestDestination,
   onNavigationBlockedChange,
 }: Props) {
@@ -377,7 +382,7 @@ export function TrainingScreen({
     isDarkMode,
     onboardingLang,
     runTour,
-    setOnboardingLanguageChoice,
+    saveOnboardingLanguageChoice,
     showLanguageSelection,
     startOnboarding,
   } = useTrainingOnboarding({
@@ -1425,6 +1430,19 @@ export function TrainingScreen({
     setShowSettings(true);
   }, [onRequestDestination]);
 
+  const openAppSettings = useCallback(() => {
+    if (extendedDestinationsEnabled && onRequestDestination) {
+      if (!actionLoadingRef.current) {
+        onRequestDestination("settings");
+      }
+      return;
+    }
+    setSettingsInitialTab("instellingen");
+    setSettingsInitialViewedListScope(null);
+    setSettingsAutoFocusWordSearch(false);
+    setShowSettings(true);
+  }, [extendedDestinationsEnabled, onRequestDestination]);
+
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
       setSettingsInitialTab("lijsten");
@@ -2206,6 +2224,7 @@ export function TrainingScreen({
               active="training"
               interfaceLanguage={onboardingLang}
               disabled={actionLoading}
+              extendedDestinationsEnabled={extendedDestinationsEnabled}
               onNavigate={onRequestDestination}
             />
           </div>
@@ -2264,18 +2283,10 @@ export function TrainingScreen({
               aria-label="Instellingen"
               className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               data-tour="settings-button"
-              onClick={() => {
-                setSettingsInitialTab("instellingen");
-                setSettingsInitialViewedListScope(null);
-                setSettingsAutoFocusWordSearch(false);
-                setShowSettings(true);
-              }}
+              onClick={openAppSettings}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
-                setSettingsInitialTab("instellingen");
-                setSettingsInitialViewedListScope(null);
-                setSettingsAutoFocusWordSearch(false);
-                setShowSettings(true);
+                openAppSettings();
               }}
             >
               <svg
@@ -2404,6 +2415,20 @@ export function TrainingScreen({
                   </p>
                 </div>
                 <div className="border-t border-slate-100 dark:border-slate-800" />
+                {extendedDestinationsEnabled && onRequestDestination ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      onRequestDestination("statistics");
+                    }}
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    Statistieken
+                    <span aria-hidden="true">→</span>
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   role="menuitem"
@@ -2788,8 +2813,13 @@ export function TrainingScreen({
         />
       </TrainingSidebarDrawer>
 
-      {showHotkeys && <HotkeyDialog onClose={() => setShowHotkeys(false)} />}
-      {showSettings && (
+      {showHotkeys && (
+        <HotkeyDialog
+          interfaceLanguage={onboardingLang}
+          onClose={() => setShowHotkeys(false)}
+        />
+      )}
+      {showSettings && !extendedDestinationsEnabled && (
         <SettingsModal
           open={showSettings}
           onClose={() => {
@@ -2807,7 +2837,7 @@ export function TrainingScreen({
           audioQuality={audioQuality}
           onAudioQualityChange={setAudioQuality}
           onboardingLanguage={onboardingLang}
-          onOnboardingLanguageChange={setOnboardingLanguageChoice}
+          onOnboardingLanguageChange={saveOnboardingLanguageChoice}
           onStartOnboarding={() => {
             setShowSettings(false);
             setSettingsInitialTab("instellingen");
@@ -2899,7 +2929,8 @@ export function TrainingScreen({
         lists={availableLists}
         activeList={activeList ?? null}
         onReloadLists={handleListsUpdated}
-        onBack={() => onRequestDestination("training")}
+        extendedDestinationsEnabled={extendedDestinationsEnabled}
+        onNavigate={onRequestDestination}
         onOpenListMembership={(membership) => {
           onRequestDestination("training");
           openMembershipList(membership);
@@ -2909,6 +2940,26 @@ export function TrainingScreen({
           handleTrainWord(wordId);
           onRequestDestination("training");
         }}
+      />
+    ) : null}
+    {onRequestDestination && extendedDestinationsEnabled ? (
+      <StatisticsDestination
+        open={destination === "statistics"}
+        interfaceLanguage={onboardingLang}
+        stats={stats}
+        onNavigate={onRequestDestination}
+      />
+    ) : null}
+    {onRequestDestination && extendedDestinationsEnabled ? (
+      <SettingsDestination
+        open={destination === "settings"}
+        interfaceLanguage={onboardingLang}
+        themePreference={themePreference}
+        translationLanguage={translationLang}
+        onThemeChange={setTheme}
+        onInterfaceLanguageChange={saveOnboardingLanguageChoice}
+        onTranslationLanguageChange={setTranslationLang}
+        onNavigate={onRequestDestination}
       />
     ) : null}
     </>

@@ -76,6 +76,38 @@ describe("useTrainingOnboarding", () => {
     });
   });
 
+  test("settings language choice persists without starting onboarding", async () => {
+    fetchUserPreferences.mockResolvedValue({
+      preferences: {
+        onboardingCompleted: true,
+        unrelated: "keep",
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useTrainingOnboarding({ userId: "user-1", translationLang: "en" }),
+    );
+
+    await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalled());
+    updateUserPreferences.mockClear();
+
+    await act(async () => {
+      await result.current.saveOnboardingLanguageChoice("ru");
+    });
+
+    expect(result.current.onboardingLang).toBe("ru");
+    expect(result.current.runTour).toBe(false);
+    expect(window.localStorage.getItem("onboarding_language")).toBe("ru");
+    expect(updateUserPreferences).toHaveBeenCalledWith({
+      userId: "user-1",
+      preferences: {
+        onboardingCompleted: true,
+        unrelated: "keep",
+        onboardingLanguage: "ru",
+      },
+    });
+  });
+
   test("completion persists without clobbering other preferences", async () => {
     fetchUserPreferences.mockResolvedValue({
       preferences: {
