@@ -40,7 +40,9 @@ describe("TrainingSenseCardStage", () => {
     expect(onPlayAudio).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Hint tonen" }));
-    expect(screen.getByText(model.examples[0].text)).toBeInTheDocument();
+    const hint = screen.getByText(model.examples[0].text).closest("aside");
+    expect(hint).toBeInTheDocument();
+    expect(hint).toHaveClass("absolute");
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();

@@ -29,10 +29,17 @@ export function SenseCardHeadwordLockup({
     tone === "dark" ? "text-slate-400" : "text-slate-500 dark:text-slate-400";
 
   return (
-    <div className="min-w-0" data-testid="sense-card-headword-lockup">
+    <div className="relative min-w-0" data-testid="sense-card-headword-lockup">
+      {topActions ? (
+        <div className="absolute right-0 top-0 flex shrink-0 items-center gap-2">
+          {topActions}
+        </div>
+      ) : null}
       {showMetadata && (partOfSpeech || coreVocabularyLabel) ? (
         <div
-          className={`mb-2 flex min-h-5 flex-wrap items-center gap-2 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText}`}
+          className={`mb-2 flex min-h-5 flex-wrap items-center gap-2 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText} ${
+            topActions ? "pr-[clamp(5.5rem,24cqw,8rem)]" : ""
+          }`}
           data-testid="sense-card-metadata"
         >
           {partOfSpeech ? (
@@ -55,37 +62,36 @@ export function SenseCardHeadwordLockup({
         </div>
       ) : null}
 
-      <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-w-0 items-start">
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-baseline gap-[0.22em] font-serif">
-            {article ? (
-              <span
-                className={`shrink-0 text-[clamp(1.35rem,6cqw,2rem)] leading-none ${mutedText}`}
+          <div className="flex min-w-0 items-baseline font-sense-serif">
+            <div className="flex min-w-0 items-baseline gap-[0.22em]">
+              {article ? (
+                <span
+                  className={`shrink-0 text-[clamp(1.35rem,6cqw,2rem)] leading-none ${mutedText}`}
+                >
+                  {article}
+                </span>
+              ) : null}
+              <h2
+                aria-label={headword}
+                data-long-headword={longHeadword ? "true" : "false"}
+                className={`min-w-0 break-words font-normal tracking-[-0.035em] ${primaryText} ${
+                  longHeadword
+                    ? "text-[clamp(1.55rem,7.4cqw,3.15rem)] leading-[0.96]"
+                    : "text-[clamp(2.65rem,11cqw,4rem)] leading-[0.92]"
+                }`}
               >
-                {article}
-              </span>
-            ) : null}
-            <h2
-              aria-label={headword}
-              data-long-headword={longHeadword ? "true" : "false"}
-              className={`min-w-0 break-words font-normal tracking-[-0.035em] ${primaryText} ${
-                longHeadword
-                  ? "text-[clamp(1.55rem,7.4cqw,3.15rem)] leading-[0.96]"
-                  : "text-[clamp(2.65rem,11cqw,4rem)] leading-[0.92]"
-              }`}
-            >
-              <HeadwordWithPronunciationBreaks text={headword} />
-            </h2>
+                <HeadwordWithPronunciationBreaks text={headword} />
+              </h2>
+            </div>
             {inlineAction ? (
-              <span className="mb-[0.16em] shrink-0 self-end">
+              <span className="mb-[0.16em] ml-[clamp(0.7rem,2.4cqw,1.1rem)] shrink-0 self-end">
                 {inlineAction}
               </span>
             ) : null}
           </div>
         </div>
-        {topActions ? (
-          <div className="flex shrink-0 items-center gap-2">{topActions}</div>
-        ) : null}
       </div>
     </div>
   );
@@ -135,6 +141,27 @@ export function ExposureBadge({ count, tone }: { count: number; tone: Tone }) {
     >
       <RepeatIcon className="h-3.5 w-3.5" />
       {count}×
+    </span>
+  );
+}
+
+export function NewExposureBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: Tone;
+}) {
+  return (
+    <span
+      className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${
+        tone === "dark"
+          ? "border-slate-700 text-slate-400"
+          : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+      }`}
+    >
+      <RepeatIcon className="h-3.5 w-3.5" />
+      {label}
     </span>
   );
 }

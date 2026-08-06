@@ -42,7 +42,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(headword.className).toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Показать перевод значения 1" }),
+      screen.getByRole("button", { name: "Перевести" }),
     ).toBeInTheDocument();
   });
 
@@ -96,15 +96,14 @@ describe("LibrarySenseCardGroup", () => {
       }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Show translation for meaning 2",
-      }),
+    expect(screen.getAllByRole("button", { name: "Translate" })).toHaveLength(
+      1,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
     expect(
       screen.getByText("bank · financial institution"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("bench · sofa")).not.toBeInTheDocument();
+    expect(screen.getByText("bench · sofa")).toBeInTheDocument();
   });
 
   test("does not render the aggregate group count as card chrome", () => {
@@ -194,11 +193,7 @@ describe("LibrarySenseCardGroup", () => {
         onAction={vi.fn()}
       />,
     );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Show translation for meaning 1",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
     expect(screen.getByText("bench · sofa")).toBeInTheDocument();
 
     rerender(
@@ -317,5 +312,22 @@ describe("LibrarySenseCardGroup", () => {
       0,
     );
     expect(within(firstCard).queryByText("New")).not.toBeInTheDocument();
+  });
+
+  test("renders the new state with the same bordered exposure chrome", () => {
+    render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const financeCard = screen.getByTestId(
+      "library-sense-card-entry-bank-finance",
+    );
+    const badge = within(financeCard).getByText("New").closest("span");
+    expect(badge).toHaveClass("border");
+    expect(badge?.querySelector("svg")).toBeInTheDocument();
   });
 });

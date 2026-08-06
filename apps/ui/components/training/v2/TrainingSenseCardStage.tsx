@@ -178,7 +178,7 @@ function EntityHeader({
       {translationVisible && model.entryTranslation ? (
         <p
           data-testid="entry-translation"
-          className="mt-2 font-serif text-base italic text-[#dbc47e]"
+          className="mt-2 font-sense-serif text-base italic text-[#dbc47e]"
         >
           {model.entryTranslation}
         </p>
@@ -205,7 +205,7 @@ function FaceBody({
   onPlayAudio?: () => void;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
+    <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
         <SenseCardHeadwordLockup
           article={model.article}
@@ -227,11 +227,11 @@ function FaceBody({
         />
       </div>
       {hint && hintVisible ? (
-        <aside className="w-full rounded-2xl border border-slate-700 bg-[#191e27] px-4 py-3">
+        <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-700 bg-[#191e27] px-4 py-3 sm:inset-x-9">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             {hintLabel}
           </p>
-          <p className="border-l-[3px] border-indigo-400 pl-3 font-serif text-lg italic leading-7 text-slate-200">
+          <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-200">
             {hint.text}
           </p>
         </aside>
@@ -251,7 +251,7 @@ function AnswerBody({
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   return (
-    <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%-22px),transparent_100%)] sm:px-9">
+    <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%-22px),transparent_100%)] [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden">
       {model.definitions.length ? (
         <div className="space-y-4 pt-3">
           {model.definitions.map((item) => (
@@ -316,7 +316,7 @@ function ContentItem({
       <p
         className={
           example
-            ? "font-serif text-lg italic leading-7 text-slate-100"
+            ? "font-sense-serif text-lg italic leading-7 text-slate-100"
             : "text-[17px] leading-7 text-slate-100"
         }
       >
@@ -325,7 +325,7 @@ function ContentItem({
       {translationVisible && item.translation ? (
         <p
           data-content-translation="true"
-          className="mt-1 font-serif text-[15px] italic leading-6 text-slate-400"
+          className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-400"
         >
           {item.translation}
         </p>

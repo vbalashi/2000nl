@@ -19,9 +19,11 @@ This gate validates one semantic SenseCard contract in two intentionally
 different product contexts. It does not require identical outer shells:
 
 - 2000NL Training presents one exact `entryId` at a time as Face → Answer.
-- 2000NL Library presents all entries in one `headwordGroupId`, while every
-  meaning keeps independent expansion, translation, collection membership and
-  learning state. Review grading remains exclusive to Training.
+- 2000NL Library presents all entries in one `headwordGroupId`. One group-level
+  translation control toggles visibility for the whole headword, while every
+  translation remains attached to its exact meaning/content node; expansion,
+  collection membership and learning state remain meaning-scoped. Review
+  grading remains exclusive to Training.
 - AudioFilms presents the same headword group inside an extension overlay,
   with independent controls per `entryId` and selected-word context around it.
 
@@ -46,32 +48,32 @@ The two repositories use product-owned adapters, but the scenarios below are
 the shared fixture contract. Differences in literal IDs, target translation
 language and surrounding shell are intentional and must not alter semantics.
 
-| ID | Shared input/state | 2000NL adapter | AudioFilms adapter | Required invariant |
-| --- | --- | --- | --- | --- |
-| `SC-01` | one Dutch noun sense, translation off | `singleSenseGroup` / `singleSenseEntry` | `mockSenseCardLookup({ singleSense: true })` | no ordinal chip for a one-sense group; source definition remains visible where the context exposes Answer/body |
-| `SC-02` | one sense, translation on | training fixture translations | single-sense presentation with `translationVisible: true` | entry, definition and example translations remain attached to their own semantic targets |
-| `SC-03` | `bank`, two meanings with different learning phases | `multiSenseBankGroup` | default `mockSenseCardLookup()` | controls and local UI state for meaning 1 do not mutate meaning 2 |
-| `SC-04` | rich content hierarchy | optional usage-pattern/idiom test data | semantic content-node presentation | node `kind`, parent and translation pairing are preserved |
-| `SC-05` | sparse content | entry with definition and no optional sections | collapsed/single-sense overlay | absent sections reserve no semantic placeholder content |
-| `SC-06` | long compound headword | long-headword responsive fixture | long-headword overlay fixture | headword wraps without separating article semantics or obscuring actions |
-| `SC-07` | interface language `nl`, `en`, `ru` | `platformV2ClientI18n` | `senseCardPresentation.interfaceLanguageCode` | labels come from interface language; dictionary content remains source language |
-| `SC-08` | Known and Undo | Platform V2 action capability/response | semantic action workflow | undo addresses the active Known Mark and exact prior card state, not the headword group |
-| `SC-09` | translation pending/failed | Library translation session tests | extension translation/error workflow | failure is local, retryable and does not replace source content |
-| `SC-10` | report content | typed entry/content/translation target | per-entry `report-content` capability | report carries the exact entry/content identity; no inference by displayed order |
+| ID      | Shared input/state                                  | 2000NL adapter                                 | AudioFilms adapter                                        | Required invariant                                                                                             |
+| ------- | --------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `SC-01` | one Dutch noun sense, translation off               | `singleSenseGroup` / `singleSenseEntry`        | `mockSenseCardLookup({ singleSense: true })`              | no ordinal chip for a one-sense group; source definition remains visible where the context exposes Answer/body |
+| `SC-02` | one sense, translation on                           | training fixture translations                  | single-sense presentation with `translationVisible: true` | entry, definition and example translations remain attached to their own semantic targets                       |
+| `SC-03` | `bank`, two meanings with different learning phases | `multiSenseBankGroup`                          | default `mockSenseCardLookup()`                           | controls and local UI state for meaning 1 do not mutate meaning 2                                              |
+| `SC-04` | rich content hierarchy                              | optional usage-pattern/idiom test data         | semantic content-node presentation                        | node `kind`, parent and translation pairing are preserved                                                      |
+| `SC-05` | sparse content                                      | entry with definition and no optional sections | collapsed/single-sense overlay                            | absent sections reserve no semantic placeholder content                                                        |
+| `SC-06` | long compound headword                              | long-headword responsive fixture               | long-headword overlay fixture                             | headword wraps without separating article semantics or obscuring actions                                       |
+| `SC-07` | interface language `nl`, `en`, `ru`                 | `platformV2ClientI18n`                         | `senseCardPresentation.interfaceLanguageCode`             | labels come from interface language; dictionary content remains source language                                |
+| `SC-08` | Known and Undo                                      | Platform V2 action capability/response         | semantic action workflow                                  | undo addresses the active Known Mark and exact prior card state, not the headword group                        |
+| `SC-09` | translation pending/failed                          | Library translation session tests              | extension translation/error workflow                      | failure is local, retryable and does not replace source content                                                |
+| `SC-10` | report content                                      | typed entry/content/translation target         | per-entry `report-content` capability                     | report carries the exact entry/content identity; no inference by displayed order                               |
 
 ## Contract compatibility
 
-| Concern | Result | Evidence |
-| --- | --- | --- |
-| Group identity | compatible | both expose `headwordGroupId` and an ordered `entries[]` collection |
-| Learning identity | compatible | capabilities target `entryId`, `cardTypeId`, `stateRevision` |
-| Meaning order | compatible | both expose nullable `meaningOrdinal`; it is presentation metadata, not identity |
-| Content hierarchy | compatible | the same six typed node kinds, stable node IDs, parent IDs and fingerprints are supported |
-| Translation identity | compatible | entry and node translations carry target language, fingerprint/policy evidence and status |
-| Known rollback | compatible | both retain active Known Mark ID and revision for `undo-known` |
-| Localization | compatible | both resolve UI labels independently from source dictionary content |
-| Word details | compatible with narrower AudioFilms use | 2000NL owns the structured details type; AudioFilms currently passes details through and does not render them in the compact overlay |
-| Capability typing | compatible at runtime, drift risk | AudioFilms' local TypeScript copy uses a broad `Record<string, unknown>` for non-learning targets; payloads currently conform to the stricter 2000NL contract |
+| Concern              | Result                                  | Evidence                                                                                                                                                      |
+| -------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Group identity       | compatible                              | both expose `headwordGroupId` and an ordered `entries[]` collection                                                                                           |
+| Learning identity    | compatible                              | capabilities target `entryId`, `cardTypeId`, `stateRevision`                                                                                                  |
+| Meaning order        | compatible                              | both expose nullable `meaningOrdinal`; it is presentation metadata, not identity                                                                              |
+| Content hierarchy    | compatible                              | the same six typed node kinds, stable node IDs, parent IDs and fingerprints are supported                                                                     |
+| Translation identity | compatible                              | entry and node translations carry target language, fingerprint/policy evidence and status                                                                     |
+| Known rollback       | compatible                              | both retain active Known Mark ID and revision for `undo-known`                                                                                                |
+| Localization         | compatible                              | both resolve UI labels independently from source dictionary content                                                                                           |
+| Word details         | compatible with narrower AudioFilms use | 2000NL owns the structured details type; AudioFilms currently passes details through and does not render them in the compact overlay                          |
+| Capability typing    | compatible at runtime, drift risk       | AudioFilms' local TypeScript copy uses a broad `Record<string, unknown>` for non-learning targets; payloads currently conform to the stricter 2000NL contract |
 
 The last row is not a rollout blocker because current payloads and behavior are
 compatible. It is a follow-up candidate: generate or validate the AudioFilms
@@ -106,23 +108,23 @@ dev-only `/dev/sense-card-gate` regression harness. The AudioFilms screenshots
 render its product-owned presentation and DOM adapters through
 `scripts/fixtures/sense-card-preview.html`.
 
-| Evidence | Scope |
-| --- | --- |
-| `screenshots/2000nl-desktop-face.png` | Training Face plus the complete Library single/multi, Full/Narrow and long-headword matrix with translation off |
-| `screenshots/2000nl-desktop-answer-translation.png` | The same desktop matrix with Training Answer and translation visible |
-| `screenshots/2000nl-mobile-training-face.png` | 390×844 Training Face viewport |
-| `screenshots/2000nl-mobile-training-answer-translation.png` | 390×844 Training Answer with translation |
-| `screenshots/2000nl-mobile-library-multi.png` | 390px multi-sense Library card |
-| `screenshots/2000nl-mobile-library-single-off.png` | 390px single-sense Narrow card, translation off |
-| `screenshots/2000nl-mobile-library-single-on.png` | 390px single-sense Narrow card, translation on and Russian UI |
-| `screenshots/2000nl-mobile-long-headword-full.png` | 390px long compound in the Full Library composition |
-| `screenshots/2000nl-mobile-long-headword.png` | 390px localized long compound in the Narrow composition |
-| `screenshots/2000nl-library-canonical-desktop.png` | corrected Library multi-sense detail: no Training grading, meaning-scoped collections and actions |
-| `screenshots/2000nl-library-canonical-mobile.png` | the corrected Library composition at 390×844 |
-| `screenshots/2000nl-library-collections-picker.png` | meaning-scoped collection picker opened from the first `bank` meaning |
-| `screenshots/audiofilms-desktop-fixtures.png` | AudioFilms Full/Narrow, single/multi, translation and long-headword matrix |
-| `screenshots/audiofilms-mobile-fixtures.png` | the same AudioFilms fixture at 390px |
-| `screenshots/audiofilms-280-fixtures.png` | extreme-width regression for container-responsive service labels and controls |
+| Evidence                                                    | Scope                                                                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `screenshots/2000nl-desktop-face.png`                       | Training Face plus the complete Library single/multi, Full/Narrow and long-headword matrix with translation off |
+| `screenshots/2000nl-desktop-answer-translation.png`         | The same desktop matrix with Training Answer and translation visible                                            |
+| `screenshots/2000nl-mobile-training-face.png`               | 390×844 Training Face viewport                                                                                  |
+| `screenshots/2000nl-mobile-training-answer-translation.png` | 390×844 Training Answer with translation                                                                        |
+| `screenshots/2000nl-mobile-library-multi.png`               | 390px multi-sense Library card                                                                                  |
+| `screenshots/2000nl-mobile-library-single-off.png`          | 390px single-sense Narrow card, translation off                                                                 |
+| `screenshots/2000nl-mobile-library-single-on.png`           | 390px single-sense Narrow card, translation on and Russian UI                                                   |
+| `screenshots/2000nl-mobile-long-headword-full.png`          | 390px long compound in the Full Library composition                                                             |
+| `screenshots/2000nl-mobile-long-headword.png`               | 390px localized long compound in the Narrow composition                                                         |
+| `screenshots/2000nl-library-canonical-desktop.png`          | corrected Library multi-sense detail: no Training grading, meaning-scoped collections and actions               |
+| `screenshots/2000nl-library-canonical-mobile.png`           | the corrected Library composition at 390×844                                                                    |
+| `screenshots/2000nl-library-collections-picker.png`         | meaning-scoped collection picker opened from the first `bank` meaning                                           |
+| `screenshots/audiofilms-desktop-fixtures.png`               | AudioFilms Full/Narrow, single/multi, translation and long-headword matrix                                      |
+| `screenshots/audiofilms-mobile-fixtures.png`                | the same AudioFilms fixture at 390px                                                                            |
+| `screenshots/audiofilms-280-fixtures.png`                   | extreme-width regression for container-responsive service labels and controls                                   |
 
 Automated browser assertions:
 

@@ -69,7 +69,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Show translation for meaning 2",
+        name: "Translate",
       }),
     );
     expect(
@@ -123,7 +123,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
     expect(
       screen.queryByRole("button", {
-        name: "Show translation for meaning 1",
+        name: "Translate",
       }),
     ).not.toBeInTheDocument();
   });
@@ -204,7 +204,7 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: "Show translation for meaning 2",
+          name: "Translate",
         }),
       );
     });
@@ -246,7 +246,7 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: "Show translation for meaning 2",
+          name: "Translate",
         }),
       );
     });
@@ -303,7 +303,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Show translation for meaning 2",
+        name: "Translate",
       }),
     );
     expect(requestTranslation).toHaveBeenCalledTimes(1);

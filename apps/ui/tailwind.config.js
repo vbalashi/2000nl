@@ -5,7 +5,19 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ["Lexend", "sans-serif"]
+        display: ["Lexend", "sans-serif"],
+        "sense-sans": [
+          "var(--font-sense-sans)",
+          "Inter",
+          "ui-sans-serif",
+          "sans-serif",
+        ],
+        "sense-serif": [
+          "var(--font-sense-serif)",
+          "Newsreader",
+          "Georgia",
+          "serif",
+        ],
       },
       colors: {
         primary: "#2e2bee",

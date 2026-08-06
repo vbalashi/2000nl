@@ -7,8 +7,10 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ExposureBadge,
   FlagIcon,
+  NewExposureBadge,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
+  SmallIcon,
 } from "../SenseCardChrome";
 import type {
   LibrarySenseCardGroupModel,
@@ -56,6 +58,11 @@ export function LibrarySenseCardGroup({
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
     () => initialViewState(model),
   );
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [scrollEdges, setScrollEdges] = React.useState({
+    top: true,
+    bottom: true,
+  });
 
   React.useEffect(() => {
     setViewState((current) =>
@@ -80,88 +87,166 @@ export function LibrarySenseCardGroup({
     }));
   };
 
-  return (
-    <section
-      data-testid="library-sense-card-group"
-      className="h-full overflow-y-auto bg-slate-50 px-3 py-4 text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100 sm:px-5"
-      style={{ scrollbarColor: "rgb(100 116 139 / 0.55) transparent" }}
-    >
-      <header className="mb-5 px-1 sm:px-2">
-        <SenseCardHeadwordLockup
-          article={model.article}
-          headword={model.headword}
-          partOfSpeech={model.partOfSpeech}
-          coreVocabularyLabel={model.coreVocabularyLabel}
-          tone="light"
-          inlineAction={
-            onPlayAudio && model.audioCapability ? (
-              <button
-                type="button"
-                disabled={audioBusy}
-                aria-label={platformV2Message(
-                  interfaceLanguage,
-                  "senseCard.audio.play",
-                )}
-                onClick={onPlayAudio}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-              >
-                <AudioIcon />
-              </button>
-            ) : null
-          }
-        />
-      </header>
+  const updateScrollEdges = React.useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    setScrollEdges({
+      top: node.scrollTop <= 2,
+      bottom: node.scrollTop + node.clientHeight >= node.scrollHeight - 2,
+    });
+  }, []);
 
-      <div className="space-y-3">
-        {model.meanings.map((meaning) => {
+  React.useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    updateScrollEdges();
+    node.addEventListener("scroll", updateScrollEdges, { passive: true });
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateScrollEdges);
+    observer?.observe(node);
+    return () => {
+      node.removeEventListener("scroll", updateScrollEdges);
+      observer?.disconnect();
+    };
+  }, [model, updateScrollEdges, viewState]);
+
+  const translationsVisible = model.meanings.every((meaning) => {
+    const identity = librarySenseCardIdentity(
+      meaning.entryId,
+      meaning.cardTypeId,
+    );
+    return viewState[identity]?.translationVisible;
+  });
+
+  const toggleGroupTranslation = () => {
+    const nextVisible = !translationsVisible;
+    setViewState((current) =>
+      Object.fromEntries(
+        model.meanings.map((meaning) => {
           const identity = librarySenseCardIdentity(
             meaning.entryId,
             meaning.cardTypeId,
           );
-          return (
-            <MeaningCard
-              key={identity}
-              meaning={meaning}
-              groupPartOfSpeech={model.partOfSpeech}
-              state={
-                viewState[identity] ?? {
-                  expanded: false,
-                  translationVisible: false,
+          return [
+            identity,
+            {
+              ...(current[identity] ?? {
+                expanded: false,
+                translationVisible: false,
+              }),
+              translationVisible: nextVisible,
+            },
+          ];
+        }),
+      ),
+    );
+    if (!nextVisible) return;
+    for (const meaning of model.meanings) {
+      const hasCachedTranslation = Boolean(
+        meaning.entryTranslation ||
+        meaning.definition?.translation ||
+        meaning.details.some((item) => item.translation),
+      );
+      if (!hasCachedTranslation) {
+        onRequestTranslation?.(meaning.entryId, meaning.cardTypeId);
+      }
+    }
+  };
+
+  return (
+    <section
+      data-testid="library-sense-card-group"
+      className="relative h-full overflow-hidden bg-slate-50 font-sense-sans text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100"
+    >
+      <div
+        ref={scrollRef}
+        className="h-full overflow-y-auto px-3 py-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
+      >
+        <header className="mb-5 px-1 sm:px-2">
+          <SenseCardHeadwordLockup
+            article={model.article}
+            headword={model.headword}
+            partOfSpeech={model.partOfSpeech}
+            coreVocabularyLabel={model.coreVocabularyLabel}
+            tone="light"
+            inlineAction={
+              onPlayAudio && model.audioCapability ? (
+                <button
+                  type="button"
+                  disabled={audioBusy}
+                  aria-label={platformV2Message(
+                    interfaceLanguage,
+                    "senseCard.audio.play",
+                  )}
+                  onClick={onPlayAudio}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+                >
+                  <AudioIcon />
+                </button>
+              ) : null
+            }
+            topActions={
+              translationEnabled ? (
+                <button
+                  type="button"
+                  aria-label={platformV2Message(
+                    interfaceLanguage,
+                    "senseCard.translation.request",
+                  )}
+                  aria-pressed={translationsVisible}
+                  onClick={toggleGroupTranslation}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-300 text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
+                >
+                  <TranslateIcon />
+                </button>
+              ) : null
+            }
+          />
+        </header>
+
+        <div className="space-y-3">
+          {model.meanings.map((meaning) => {
+            const identity = librarySenseCardIdentity(
+              meaning.entryId,
+              meaning.cardTypeId,
+            );
+            return (
+              <MeaningCard
+                key={identity}
+                meaning={meaning}
+                groupPartOfSpeech={model.partOfSpeech}
+                state={
+                  viewState[identity] ?? {
+                    expanded: false,
+                    translationVisible: false,
+                  }
                 }
-              }
-              interfaceLanguage={interfaceLanguage}
-              busy={busyIdentity === identity}
-              translationEnabled={translationEnabled}
-              translationState={translationStates[identity] ?? null}
-              collectionCount={collectionCounts[meaning.entryId] ?? 0}
-              onToggleExpanded={() =>
-                updateEntry(identity, (current) => ({
-                  ...current,
-                  expanded: !current.expanded,
-                }))
-              }
-              onToggleTranslation={() => {
-                updateEntry(identity, (current) => ({
-                  ...current,
-                  translationVisible: !current.translationVisible,
-                }));
-                const hasCachedTranslation = Boolean(
-                  meaning.entryTranslation ||
-                  meaning.definition?.translation ||
-                  meaning.details.some((item) => item.translation),
-                );
-                if (!hasCachedTranslation) {
-                  onRequestTranslation?.(meaning.entryId, meaning.cardTypeId);
+                interfaceLanguage={interfaceLanguage}
+                busy={busyIdentity === identity}
+                translationState={translationStates[identity] ?? null}
+                collectionCount={collectionCounts[meaning.entryId] ?? 0}
+                onToggleExpanded={() =>
+                  updateEntry(identity, (current) => ({
+                    ...current,
+                    expanded: !current.expanded,
+                  }))
                 }
-              }}
-              onOpenCollections={onOpenCollections}
-              onTrainNext={onTrainNext}
-              onReport={onReport}
-              onAction={onAction}
-            />
-          );
-        })}
+                onRetryTranslation={() =>
+                  onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
+                }
+                onOpenCollections={onOpenCollections}
+                onTrainNext={onTrainNext}
+                onReport={onReport}
+                onAction={onAction}
+              />
+            );
+          })}
+        </div>
       </div>
+      {!scrollEdges.top ? <ScrollFade edge="top" /> : null}
+      {!scrollEdges.bottom ? <ScrollFade edge="bottom" /> : null}
     </section>
   );
 }
@@ -172,11 +257,10 @@ function MeaningCard({
   state,
   interfaceLanguage,
   busy,
-  translationEnabled,
   translationState,
   collectionCount,
   onToggleExpanded,
-  onToggleTranslation,
+  onRetryTranslation,
   onOpenCollections,
   onTrainNext,
   onReport,
@@ -187,11 +271,10 @@ function MeaningCard({
   state: LibrarySenseCardViewState[string];
   interfaceLanguage: OnboardingLanguage;
   busy: boolean;
-  translationEnabled: boolean;
   translationState: "pending" | "failed" | null;
   collectionCount: number;
   onToggleExpanded: () => void;
-  onToggleTranslation: () => void;
+  onRetryTranslation: () => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (capability: LibraryReportCapability) => void;
@@ -199,7 +282,6 @@ function MeaningCard({
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
     platformV2Message(interfaceLanguage, key, variables);
-  const ordinal = meaning.displayOrdinal ?? 1;
   const activateCard = () => {
     if (!state.expanded) onToggleExpanded();
   };
@@ -220,89 +302,70 @@ function MeaningCard({
           activateCard();
         }
       }}
-      className="relative rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none"
+      className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] pt-5 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
+        state.expanded ? "pb-3" : "pb-4"
+      }`}
     >
       {meaning.displayOrdinal != null ? (
-        <span className="absolute -left-px -top-px flex h-7 w-7 -translate-x-1/4 -translate-y-1/4 items-center justify-center bg-slate-50 font-mono text-lg text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+        <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
           {meaning.displayOrdinal}
         </span>
       ) : null}
 
-      <div className={meaning.displayOrdinal != null ? "pl-4" : ""}>
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="min-w-0 flex-1">
-            {state.translationVisible && meaning.entryTranslation ? (
-              <p className="mb-1 font-serif text-base italic text-amber-700 dark:text-[#dbc47e]">
-                {meaning.entryTranslation}
-              </p>
-            ) : null}
-            <p className="text-base leading-6 text-slate-800 dark:text-slate-100">
-              {meaning.definition?.text ?? "—"}
-            </p>
-            {state.translationVisible && meaning.definition?.translation ? (
-              <p className="mt-1 text-sm leading-5 text-slate-500 dark:text-slate-400">
-                {meaning.definition.translation}
-              </p>
-            ) : null}
-            {meaning.definition?.children.length ? (
-              <div className="mt-2 space-y-2 pl-4">
-                {meaning.definition.children.map((child) => (
-                  <NestedContent
-                    key={child.contentNodeId}
-                    item={child}
-                    translationVisible={state.translationVisible}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <div
-            className="flex shrink-0 items-center gap-2"
-            data-testid="sense-card-top-actions"
-          >
-            {meaning.undoKnown ? (
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
-                {t("senseCard.known.marked")}
-              </span>
-            ) : meaning.repeatCount > 0 ? (
-              <ExposureBadge count={meaning.repeatCount} tone="light" />
-            ) : (
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                {t("senseCard.state.new")}
-              </span>
-            )}
-            {translationEnabled ? (
-              <button
-                type="button"
-                aria-label={t("senseCard.translation.forMeaning", {
-                  number: ordinal,
-                })}
-                aria-pressed={state.translationVisible}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleTranslation();
-                }}
-                disabled={translationState === "pending"}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-              >
-                <TranslateIcon />
-              </button>
-            ) : null}
-            {state.expanded ? (
-              <button
-                type="button"
-                aria-label={t("senseCard.collapse")}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleExpanded();
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
-              >
-                ↑
-              </button>
-            ) : null}
-          </div>
+      <div>
+        <div
+          className="float-right mb-2 ml-3 flex shrink-0 items-center gap-2"
+          data-testid="sense-card-top-actions"
+        >
+          {meaning.undoKnown ? (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
+              {t("senseCard.known.marked")}
+            </span>
+          ) : meaning.repeatCount > 0 ? (
+            <ExposureBadge count={meaning.repeatCount} tone="light" />
+          ) : (
+            <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
+          )}
+          {state.expanded ? (
+            <button
+              type="button"
+              aria-label={t("senseCard.collapse")}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleExpanded();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
+            >
+              ↑
+            </button>
+          ) : null}
         </div>
+
+        {state.translationVisible && meaning.entryTranslation ? (
+          <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
+            {meaning.entryTranslation}
+          </p>
+        ) : null}
+        <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
+          {meaning.definition?.text ?? "—"}
+        </p>
+        {state.translationVisible && meaning.definition?.translation ? (
+          <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+            {meaning.definition.translation}
+          </p>
+        ) : null}
+        <div className="clear-both" />
+        {meaning.definition?.children.length ? (
+          <div className="mt-2 space-y-2 pl-4">
+            {meaning.definition.children.map((child) => (
+              <NestedContent
+                key={child.contentNodeId}
+                item={child}
+                translationVisible={state.translationVisible}
+              />
+            ))}
+          </div>
+        ) : null}
 
         {meaning.partOfSpeech && meaning.partOfSpeech !== groupPartOfSpeech ? (
           <div className="mt-2 inline-flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
@@ -341,12 +404,10 @@ function MeaningCard({
                           }
                         />
                       ) : null}
-                      <p className={presentation.textClassName}>{item.text}</p>
-                      {state.translationVisible && item.translation ? (
-                        <p className="mt-1 pl-[15px] text-sm text-slate-500 dark:text-slate-400">
-                          {item.translation}
-                        </p>
-                      ) : null}
+                      <ContentText
+                        item={item}
+                        translationVisible={state.translationVisible}
+                      />
                       {item.children.length ? (
                         <div className="mt-2 space-y-2 pl-4">
                           {item.children.map((child) => (
@@ -366,7 +427,7 @@ function MeaningCard({
 
             <div
               data-testid="library-primary-actions"
-              className="mt-5 grid grid-cols-[minmax(0,3fr)_minmax(7.5rem,1fr)] gap-2 border-t border-slate-200 pt-4 text-xs dark:border-slate-700"
+              className="mt-4 grid grid-cols-[minmax(0,3fr)_minmax(7.5rem,1fr)] gap-2 text-xs"
             >
               {onOpenCollections ? (
                 <button
@@ -394,7 +455,7 @@ function MeaningCard({
 
             <div
               data-testid="library-service-actions"
-              className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs"
+              className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11.5px]"
             >
               {meaning.reportCapability && onReport ? (
                 <button
@@ -435,7 +496,7 @@ function MeaningCard({
                 {translationState === "failed" ? (
                   <button
                     type="button"
-                    onClick={onToggleTranslation}
+                    onClick={onRetryTranslation}
                     className="ml-2 font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300"
                   >
                     {t("senseCard.translation.retry")}
@@ -512,15 +573,9 @@ function NestedContent({
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
 }) {
-  const presentation = contentPresentation[item.kind];
   return (
     <div data-content-kind={item.kind}>
-      <p className={presentation.textClassName}>{item.text}</p>
-      {translationVisible && item.translation ? (
-        <p className="mt-1 pl-[15px] text-sm text-slate-500 dark:text-slate-400">
-          {item.translation}
-        </p>
-      ) : null}
+      <ContentText item={item} translationVisible={translationVisible} />
       {item.children.length ? (
         <div className="mt-2 space-y-2 pl-4">
           {item.children.map((child) => (
@@ -531,6 +586,26 @@ function NestedContent({
             />
           ))}
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ContentText({
+  item,
+  translationVisible,
+}: {
+  item: LibrarySenseCardModel["details"][number];
+  translationVisible: boolean;
+}) {
+  const presentation = contentPresentation[item.kind];
+  return (
+    <div className={`pl-3 ${presentation.borderClassName}`}>
+      <p className={presentation.textClassName}>{item.text}</p>
+      {translationVisible && item.translation ? (
+        <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+          {item.translation}
+        </p>
       ) : null}
     </div>
   );
@@ -565,6 +640,27 @@ function ContentSectionHeader({
   );
 }
 
+function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
+  const isTop = edge === "top";
+  return (
+    <div
+      aria-hidden="true"
+      data-scroll-affordance={edge}
+      className={`pointer-events-none absolute inset-x-0 z-20 flex h-11 justify-center px-4 ${
+        isTop
+          ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
+          : "bottom-0 items-end bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent pb-1 dark:from-[#11151d] dark:via-[#11151d]/90"
+      }`}
+    >
+      <SmallIcon
+        className={`h-4 w-4 text-slate-400 ${isTop ? "" : "rotate-180"}`}
+      >
+        <path d="m6 14 6-6 6 6" />
+      </SmallIcon>
+    </div>
+  );
+}
+
 function initialViewState(
   model: LibrarySenseCardGroupModel,
 ): LibrarySenseCardViewState {
@@ -573,43 +669,54 @@ function initialViewState(
 
 const contentPresentation: Record<
   LibrarySenseCardModel["details"][number]["kind"],
-  { sectionGroup: string; labelKey: string | null; textClassName: string }
+  {
+    sectionGroup: string;
+    labelKey: string | null;
+    borderClassName: string;
+    textClassName: string;
+  }
 > = {
   definition: {
     sectionGroup: "definition",
     labelKey: "senseCard.sections.definition",
+    borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
-      "border-l-[3px] border-slate-400 pl-3 text-base leading-6 text-slate-700 dark:text-slate-200",
+      "text-[14.5px] leading-[1.45] text-slate-700 dark:text-slate-200",
   },
   "usage-pattern": {
     sectionGroup: "usage",
     labelKey: "senseCard.sections.usagePattern",
+    borderClassName: "border-l-[3px] border-amber-400",
     textClassName:
-      "border-l-[3px] border-amber-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
   },
   example: {
     sectionGroup: "examples",
     labelKey: "senseCard.sections.examples",
+    borderClassName: "border-l-[3px] border-indigo-400",
     textClassName:
-      "border-l-[3px] border-indigo-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
   },
   idiom: {
     sectionGroup: "idioms",
     labelKey: "senseCard.sections.idioms",
+    borderClassName: "border-l-[3px] border-violet-400",
     textClassName:
-      "border-l-[3px] border-violet-400 pl-3 font-serif text-base italic leading-6 text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
   },
   "idiom-explanation": {
     sectionGroup: "idioms",
     labelKey: null,
+    borderClassName: "border-l-[3px] border-violet-300",
     textClassName:
-      "border-l-[3px] border-violet-300 pl-3 text-sm leading-5 text-slate-600 dark:text-slate-300",
+      "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
   },
   "usage-note": {
     sectionGroup: "notes",
     labelKey: "senseCard.sections.notes",
+    borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
-      "border-l-[3px] border-slate-400 pl-3 text-sm leading-5 text-slate-600 dark:text-slate-300",
+      "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
   },
 };
 
@@ -632,26 +739,6 @@ function AudioIcon() {
 }
 
 type SmallIconProps = { className: string };
-
-function SmallIcon({
-  className,
-  children,
-}: SmallIconProps & { children: React.ReactNode }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {children}
-    </svg>
-  );
-}
 
 function BracesIcon({ className }: SmallIconProps) {
   return (
