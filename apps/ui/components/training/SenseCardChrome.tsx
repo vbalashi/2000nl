@@ -64,11 +64,11 @@ export function SenseCardHeadwordLockup({
 
       <div className="flex min-w-0 items-start">
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-baseline font-sense-serif">
+          <div className="flex min-w-0 items-center font-sense-serif">
             <div className="flex min-w-0 items-baseline gap-[0.22em]">
               {article ? (
                 <span
-                  className={`shrink-0 text-[clamp(1.35rem,6cqw,2rem)] leading-none ${mutedText}`}
+                  className={`shrink-0 text-[1.35rem] leading-none sm:text-[1.5rem] ${mutedText}`}
                 >
                   {article}
                 </span>
@@ -78,15 +78,15 @@ export function SenseCardHeadwordLockup({
                 data-long-headword={longHeadword ? "true" : "false"}
                 className={`min-w-0 break-words font-normal tracking-[-0.035em] ${primaryText} ${
                   longHeadword
-                    ? "text-[clamp(1.55rem,7.4cqw,3.15rem)] leading-[0.96]"
-                    : "text-[clamp(2.65rem,11cqw,4rem)] leading-[0.92]"
+                    ? "text-[1.75rem] leading-[0.96] sm:text-[2.2rem]"
+                    : "text-[2.65rem] leading-[0.92] sm:text-[3rem]"
                 }`}
               >
                 <HeadwordWithPronunciationBreaks text={headword} />
               </h2>
             </div>
             {inlineAction ? (
-              <span className="mb-[0.16em] ml-[clamp(0.7rem,2.4cqw,1.1rem)] shrink-0 self-end">
+              <span className="ml-4 shrink-0">
                 {inlineAction}
               </span>
             ) : null}

@@ -39,7 +39,8 @@ describe("LibrarySenseCardGroup", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(headword).toHaveAttribute("data-long-headword", "true");
-    expect(headword.className).toContain("cqw");
+    expect(headword.className).toContain("text-[1.75rem]");
+    expect(headword.className).not.toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Перевести" }),
@@ -276,6 +277,16 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       container.querySelector('[data-section-icon="idioms"]'),
     ).toBeInTheDocument();
+    const usagePattern = container.querySelector(
+      '[data-content-kind="usage-pattern"]',
+    );
+    const example = container.querySelector('[data-content-kind="example"]');
+    expect(usagePattern).toBeInTheDocument();
+    expect(example).toBeInTheDocument();
+    expect(
+      (usagePattern as Element).compareDocumentPosition(example as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   test("shows completed known state instead of new", () => {

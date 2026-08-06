@@ -378,50 +378,53 @@ function MeaningCard({
           <div className="mt-5" onClick={(event) => event.stopPropagation()}>
             {meaning.details.length ? (
               <div className="space-y-4">
-                {meaning.details.map((item, index) => {
-                  const presentation = contentPresentation[item.kind];
-                  const previous = meaning.details[index - 1];
-                  const showLabel =
-                    presentation.labelKey &&
-                    (!previous ||
-                      contentPresentation[previous.kind].sectionGroup !==
-                        presentation.sectionGroup);
-                  return (
-                    <section
-                      key={item.contentNodeId}
-                      data-content-kind={item.kind}
-                    >
-                      {showLabel && presentation.labelKey ? (
-                        <ContentSectionHeader
-                          label={t(presentation.labelKey)}
-                          sectionGroup={presentation.sectionGroup}
-                          count={
-                            meaning.details.filter(
-                              (candidate) =>
-                                contentPresentation[candidate.kind]
-                                  .sectionGroup === presentation.sectionGroup,
-                            ).length
-                          }
+                {orderMeaningDetails(meaning.details).map(
+                  (item, index, orderedDetails) => {
+                    const presentation = contentPresentation[item.kind];
+                    const previous = orderedDetails[index - 1];
+                    const showLabel =
+                      presentation.labelKey &&
+                      (!previous ||
+                        contentPresentation[previous.kind].sectionGroup !==
+                          presentation.sectionGroup);
+                    return (
+                      <section
+                        key={item.contentNodeId}
+                        data-content-kind={item.kind}
+                      >
+                        {showLabel && presentation.labelKey ? (
+                          <ContentSectionHeader
+                            label={t(presentation.labelKey)}
+                            sectionGroup={presentation.sectionGroup}
+                            count={
+                              orderedDetails.filter(
+                                (candidate) =>
+                                  contentPresentation[candidate.kind]
+                                    .sectionGroup ===
+                                  presentation.sectionGroup,
+                              ).length
+                            }
+                          />
+                        ) : null}
+                        <ContentText
+                          item={item}
+                          translationVisible={state.translationVisible}
                         />
-                      ) : null}
-                      <ContentText
-                        item={item}
-                        translationVisible={state.translationVisible}
-                      />
-                      {item.children.length ? (
-                        <div className="mt-2 space-y-2 pl-4">
-                          {item.children.map((child) => (
-                            <NestedContent
-                              key={child.contentNodeId}
-                              item={child}
-                              translationVisible={state.translationVisible}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </section>
-                  );
-                })}
+                        {item.children.length ? (
+                          <div className="mt-2 space-y-2 pl-4">
+                            {item.children.map((child) => (
+                              <NestedContent
+                                key={child.contentNodeId}
+                                item={child}
+                                translationVisible={state.translationVisible}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </section>
+                    );
+                  },
+                )}
               </div>
             ) : null}
 
@@ -719,6 +722,32 @@ const contentPresentation: Record<
       "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
   },
 };
+
+const contentSectionOrder: Record<
+  LibrarySenseCardModel["details"][number]["kind"],
+  number
+> = {
+  definition: 0,
+  "usage-pattern": 1,
+  example: 2,
+  idiom: 3,
+  "idiom-explanation": 3,
+  "usage-note": 4,
+};
+
+function orderMeaningDetails(
+  details: LibrarySenseCardModel["details"],
+): LibrarySenseCardModel["details"] {
+  return details
+    .map((item, sourceIndex) => ({ item, sourceIndex }))
+    .sort(
+      (left, right) =>
+        contentSectionOrder[left.item.kind] -
+          contentSectionOrder[right.item.kind] ||
+        left.sourceIndex - right.sourceIndex,
+    )
+    .map(({ item }) => item);
+}
 
 function AudioIcon() {
   return (
