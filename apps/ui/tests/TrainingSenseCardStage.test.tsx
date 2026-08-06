@@ -12,11 +12,32 @@ describe("TrainingSenseCardStage", () => {
   test("keeps one exact sense hidden on Face, supports a hint, then reveals Answer actions", () => {
     const onPlayAudio = vi.fn();
     const onAction = vi.fn();
-    const model = buildTrainingSenseCardModel({
+    const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
       interfaceLanguage: "nl",
     });
+    const model = {
+      ...baseModel,
+      definitions: [
+        ...baseModel.definitions,
+        {
+          contentNodeId: "usage-pattern-1",
+          kind: "usage-pattern" as const,
+          text: "iemand de hand geven",
+          translation: "to shake someone's hand",
+        },
+      ],
+      examples: [
+        ...baseModel.examples,
+        {
+          contentNodeId: "idiom-1",
+          kind: "idiom" as const,
+          text: "door de bank genomen",
+          translation: "on average",
+        },
+      ],
+    };
 
     const { container } = render(
       <TrainingSenseCardStage
@@ -60,6 +81,33 @@ describe("TrainingSenseCardStage", () => {
         '[data-section="examples"] [data-testid="sense-section-header"] svg',
       ),
     ).toBeInTheDocument();
+    const usageSection = container.querySelector('[data-section="usage"]');
+    const examplesSection = container.querySelector(
+      '[data-section="examples"]',
+    );
+    const idiomsSection = container.querySelector('[data-section="idioms"]');
+    expect(usageSection).toBeInTheDocument();
+    expect(
+      usageSection?.querySelector('[data-testid="sense-section-header"] svg'),
+    ).toBeInTheDocument();
+    expect(
+      (usageSection as Element).compareDocumentPosition(
+        examplesSection as Node,
+      ) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(idiomsSection).toBeInTheDocument();
+    expect(
+      idiomsSection?.querySelector('[data-testid="sense-section-header"] svg'),
+    ).toBeInTheDocument();
+    expect(idiomsSection?.querySelector("div[class*='border-l']")).toHaveClass(
+      "border-amber-400",
+    );
+    expect(
+      (examplesSection as Element).compareDocumentPosition(
+        idiomsSection as Node,
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Vertalen" }));
     expect(
@@ -70,7 +118,7 @@ describe("TrainingSenseCardStage", () => {
     ).toBeInTheDocument();
     expect(
       container.querySelectorAll('[data-content-translation="true"]'),
-    ).toHaveLength(2);
+    ).toHaveLength(4);
     expect(
       container.querySelector('[data-content-translation="true"]'),
     ).not.toHaveClass("text-[#dbc47e]");

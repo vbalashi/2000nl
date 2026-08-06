@@ -6,9 +6,12 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ExposureBadge,
   FlagIcon,
+  IdiomIcon,
   ListMarkerIcon,
+  SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
+  UsagePatternIcon,
 } from "../SenseCardChrome";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type {
@@ -138,7 +141,7 @@ function EntityHeader({
   onPlayAudio?: () => void;
 }) {
   return (
-    <header className="relative z-10 shrink-0 bg-[#1d222b] px-6 pb-4 pt-7 sm:px-9 sm:pt-8">
+    <header className="relative z-10 shrink-0 bg-[#1d222b] px-6 pb-2 pt-7 sm:px-9 sm:pt-8">
       <SenseCardHeadwordLockup
         article={model.article}
         headword={model.headword}
@@ -175,13 +178,15 @@ function EntityHeader({
           </>
         }
       />
-      {translationVisible && model.entryTranslation ? (
-        <p
-          data-testid="entry-translation"
-          className="mt-2 font-sense-serif text-base italic text-[#dbc47e]"
-        >
-          {model.entryTranslation}
-        </p>
+      {model.entryTranslation ? (
+        <SenseCardReveal open={translationVisible}>
+          <p
+            data-testid="entry-translation"
+            className="mt-2 font-sense-serif text-base italic text-[#dbc47e]"
+          >
+            {model.entryTranslation}
+          </p>
+        </SenseCardReveal>
       ) : null}
     </header>
   );
@@ -250,11 +255,22 @@ function AnswerBody({
   interfaceLanguage: OnboardingLanguage;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const definitions = model.definitions.filter(
+    (item) => item.kind === "definition",
+  );
+  const usagePatterns = model.definitions.filter(
+    (item) => item.kind === "usage-pattern",
+  );
+  const notes = model.definitions.filter((item) => item.kind === "usage-note");
+  const examples = model.examples.filter((item) => item.kind === "example");
+  const idioms = model.examples.filter(
+    (item) => item.kind === "idiom" || item.kind === "idiom-explanation",
+  );
   return (
-    <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%-22px),transparent_100%)] [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden">
-      {model.definitions.length ? (
-        <div className="space-y-4 pt-3">
-          {model.definitions.map((item) => (
+    <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-0 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%-22px),transparent_100%)] [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden">
+      {definitions.length ? (
+        <div className="space-y-4 pt-2">
+          {definitions.map((item) => (
             <ContentItem
               key={item.contentNodeId}
               item={item}
@@ -263,18 +279,64 @@ function AnswerBody({
           ))}
         </div>
       ) : null}
-      {model.examples.length ? (
+      {usagePatterns.length ? (
         <ContentSection
-          title={t("senseCard.sections.examples")}
-          count={model.examples.length}
-          icon={<ListMarkerIcon className="h-3 w-3" />}
+          section="usage"
+          title={t("senseCard.sections.usagePattern")}
+          count={usagePatterns.length}
+          icon={<UsagePatternIcon className="h-3 w-3" />}
         >
-          {model.examples.map((item) => (
+          {usagePatterns.map((item) => (
             <ContentItem
               key={item.contentNodeId}
               item={item}
               translationVisible={translationVisible}
-              example
+              accent="usage"
+            />
+          ))}
+        </ContentSection>
+      ) : null}
+      {examples.length ? (
+        <ContentSection
+          section="examples"
+          title={t("senseCard.sections.examples")}
+          count={examples.length}
+          icon={<ListMarkerIcon className="h-3 w-3" />}
+        >
+          {examples.map((item) => (
+            <ContentItem
+              key={item.contentNodeId}
+              item={item}
+              translationVisible={translationVisible}
+              accent="example"
+            />
+          ))}
+        </ContentSection>
+      ) : null}
+      {idioms.length ? (
+        <ContentSection
+          section="idioms"
+          title={t("senseCard.sections.idioms")}
+          count={idioms.length}
+          icon={<IdiomIcon className="h-3 w-3" />}
+        >
+          {idioms.map((item) => (
+            <ContentItem
+              key={item.contentNodeId}
+              item={item}
+              translationVisible={translationVisible}
+              accent="idiom"
+            />
+          ))}
+        </ContentSection>
+      ) : null}
+      {notes.length ? (
+        <ContentSection section="notes" title={t("senseCard.sections.notes")}>
+          {notes.map((item) => (
+            <ContentItem
+              key={item.contentNodeId}
+              item={item}
+              translationVisible={translationVisible}
             />
           ))}
         </ContentSection>
@@ -284,18 +346,20 @@ function AnswerBody({
 }
 
 function ContentSection({
+  section,
   title,
   count,
   icon,
   children,
 }: {
+  section: "usage" | "examples" | "idioms" | "notes";
   title: string;
   count?: number;
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-5 first:mt-0" data-section="examples">
+    <section className="mt-5 first:mt-0" data-section={section}>
       <SenseSectionHeader label={title} icon={icon} count={count} tone="dark" />
       <div className="space-y-4">{children}</div>
     </section>
@@ -305,30 +369,42 @@ function ContentSection({
 function ContentItem({
   item,
   translationVisible,
-  example = false,
+  accent = "none",
 }: {
   item: TrainingSenseCardContent;
   translationVisible: boolean;
-  example?: boolean;
+  accent?: "none" | "usage" | "example" | "idiom";
 }) {
+  const literary =
+    accent === "usage" || accent === "example" || accent === "idiom";
+  const border =
+    accent === "usage"
+      ? "border-l-[3px] border-slate-500 pl-4"
+      : accent === "example"
+        ? "border-l-[3px] border-indigo-400 pl-4"
+        : accent === "idiom"
+          ? "border-l-[3px] border-amber-400 pl-4"
+        : "";
   return (
-    <div className={example ? "border-l-[3px] border-indigo-400 pl-4" : ""}>
+    <div className={border}>
       <p
         className={
-          example
+          literary
             ? "font-sense-serif text-lg italic leading-7 text-slate-100"
             : "text-[17px] leading-7 text-slate-100"
         }
       >
         {item.text}
       </p>
-      {translationVisible && item.translation ? (
-        <p
-          data-content-translation="true"
-          className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-400"
-        >
-          {item.translation}
-        </p>
+      {item.translation ? (
+        <SenseCardReveal open={translationVisible}>
+          <p
+            data-content-translation="true"
+            className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-400"
+          >
+            {item.translation}
+          </p>
+        </SenseCardReveal>
       ) : null}
     </div>
   );

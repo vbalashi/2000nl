@@ -105,6 +105,7 @@
       "retry": "Retry"
     },
     "collapse": "Collapse meaning",
+    "expand": "Expand meaning",
     "report": "Report",
     "collections": {
       "label": "Collections",

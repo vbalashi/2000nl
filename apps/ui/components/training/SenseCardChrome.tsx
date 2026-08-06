@@ -64,8 +64,16 @@ export function SenseCardHeadwordLockup({
 
       <div className="flex min-w-0 items-start">
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center font-sense-serif">
-            <div className="flex min-w-0 items-baseline gap-[0.22em]">
+          <div
+            className={`flex min-w-0 items-center font-sense-serif ${
+              topActions ? "pr-12" : ""
+            }`}
+          >
+            <div
+              className={`flex min-w-0 items-baseline gap-[0.22em] ${
+                longHeadword ? "flex-1" : ""
+              }`}
+            >
               {article ? (
                 <span
                   className={`shrink-0 text-[1.35rem] leading-none sm:text-[1.5rem] ${mutedText}`}
@@ -129,17 +137,46 @@ export function SenseSectionHeader({
   );
 }
 
+export function SenseCardReveal({
+  open,
+  expandedClassName = "",
+  children,
+}: {
+  open: boolean;
+  expandedClassName?: string;
+  children: React.ReactNode;
+}) {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (contentRef.current) contentRef.current.inert = !open;
+  }, [open]);
+  return (
+    <div
+      aria-hidden={!open}
+      className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+        open
+          ? `grid-rows-[1fr] opacity-100 ${expandedClassName}`
+          : "mt-0 grid-rows-[0fr] opacity-0"
+      }`}
+    >
+      <div ref={contentRef} className="min-h-0 overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function ExposureBadge({ count, tone }: { count: number; tone: Tone }) {
   return (
     <span
-      className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-xs ${
+      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[10px] ${
         tone === "dark"
           ? "border-slate-700 text-slate-400"
           : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
       }`}
       aria-label={`${count}×`}
     >
-      <RepeatIcon className="h-3.5 w-3.5" />
+      <RepeatIcon className="h-3 w-3" />
       {count}×
     </span>
   );
@@ -154,13 +191,13 @@ export function NewExposureBadge({
 }) {
   return (
     <span
-      className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${
+      className={`inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.06em] ${
         tone === "dark"
           ? "border-slate-700 text-slate-400"
           : "border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-400"
       }`}
     >
-      <RepeatIcon className="h-3.5 w-3.5" />
+      <RepeatIcon className="h-3 w-3" />
       {label}
     </span>
   );
@@ -214,6 +251,38 @@ export function FlagIcon({ className }: { className: string }) {
     <SmallIcon className={className}>
       <path d="M5 21V4" />
       <path d="M5 5h10l-1.5 3L15 11H5" />
+    </SmallIcon>
+  );
+}
+
+export function UsagePatternIcon({ className }: { className: string }) {
+  return (
+    <SmallIcon className={className}>
+      <path d="M8 4H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2" />
+    </SmallIcon>
+  );
+}
+
+export function IdiomIcon({ className }: { className: string }) {
+  return (
+    <SmallIcon className={className}>
+      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2H4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
+      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2h-4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
+    </SmallIcon>
+  );
+}
+
+export function ChevronIcon({
+  className,
+  direction,
+}: {
+  className: string;
+  direction: "up" | "down";
+}) {
+  return (
+    <SmallIcon className={className}>
+      <path d={direction === "up" ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} />
     </SmallIcon>
   );
 }

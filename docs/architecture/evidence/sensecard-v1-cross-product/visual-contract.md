@@ -37,13 +37,20 @@ is the nearest light reference.
   usage, quotation mark for idioms.
 - Expanded content uses the stable section order: usage pattern, examples,
   idioms, then notes. Source order is preserved within each section.
+- Content accents are semantic and stable: usage pattern uses the quiet gray
+  rule, examples use indigo, and idioms use amber.
 - Training: no `Betekenis` header; translated definition/example text is muted;
   only the short entry translation uses the warm accent.
 - Library group controls: one translation toggle sits in the headword header and
   shows or hides translations for all meanings. Translation requests and
   rendered content remain bound to each exact entry/content node.
 - Library per-sense controls: exposure and collapse at top-right. Clicking a
-  collapsed card expands it; the explicit arrow only collapses.
+  collapsed card expands it; quiet down/up chevrons also expose the same action.
+- In constrained Library layouts the headword header remains fixed while the
+  meaning-card region scrolls. Exposure badges stay visually secondary and use
+  the compact `2K`-scale geometry.
+- Meaning disclosure and translation visibility animate over 300 ms without
+  reserving hidden height; `prefers-reduced-motion` disables the transition.
 - Library actions: Collections + Train next on the primary row; flag + `Melden`
   and Known/Undo on the quiet service row.
 

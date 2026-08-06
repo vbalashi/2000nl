@@ -5,12 +5,16 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
+  ChevronIcon,
   ExposureBadge,
   FlagIcon,
+  IdiomIcon,
   NewExposureBadge,
+  SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
   SmallIcon,
+  UsagePatternIcon,
 } from "../SenseCardChrome";
 import type {
   LibrarySenseCardGroupModel,
@@ -158,95 +162,98 @@ export function LibrarySenseCardGroup({
   return (
     <section
       data-testid="library-sense-card-group"
-      className="relative h-full overflow-hidden bg-slate-50 font-sense-sans text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100"
+      className="relative flex h-full flex-col overflow-hidden bg-slate-50 font-sense-sans text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100"
     >
-      <div
-        ref={scrollRef}
-        className="h-full overflow-y-auto px-3 py-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
-      >
-        <header className="mb-5 px-1 sm:px-2">
-          <SenseCardHeadwordLockup
-            article={model.article}
-            headword={model.headword}
-            partOfSpeech={model.partOfSpeech}
-            coreVocabularyLabel={model.coreVocabularyLabel}
-            tone="light"
-            inlineAction={
-              onPlayAudio && model.audioCapability ? (
-                <button
-                  type="button"
-                  disabled={audioBusy}
-                  aria-label={platformV2Message(
-                    interfaceLanguage,
-                    "senseCard.audio.play",
-                  )}
-                  onClick={onPlayAudio}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-                >
-                  <AudioIcon />
-                </button>
-              ) : null
-            }
-            topActions={
-              translationEnabled ? (
-                <button
-                  type="button"
-                  aria-label={platformV2Message(
-                    interfaceLanguage,
-                    "senseCard.translation.request",
-                  )}
-                  aria-pressed={translationsVisible}
-                  onClick={toggleGroupTranslation}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-300 text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
-                >
-                  <TranslateIcon />
-                </button>
-              ) : null
-            }
-          />
-        </header>
+      <header className="shrink-0 px-4 pb-5 pt-4 sm:px-7">
+        <SenseCardHeadwordLockup
+          article={model.article}
+          headword={model.headword}
+          partOfSpeech={model.partOfSpeech}
+          coreVocabularyLabel={model.coreVocabularyLabel}
+          tone="light"
+          inlineAction={
+            onPlayAudio && model.audioCapability ? (
+              <button
+                type="button"
+                disabled={audioBusy}
+                aria-label={platformV2Message(
+                  interfaceLanguage,
+                  "senseCard.audio.play",
+                )}
+                onClick={onPlayAudio}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+              >
+                <AudioIcon />
+              </button>
+            ) : null
+          }
+          topActions={
+            translationEnabled ? (
+              <button
+                type="button"
+                aria-label={platformV2Message(
+                  interfaceLanguage,
+                  "senseCard.translation.request",
+                )}
+                aria-pressed={translationsVisible}
+                onClick={toggleGroupTranslation}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-300 text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
+              >
+                <TranslateIcon />
+              </button>
+            ) : null
+          }
+        />
+      </header>
 
-        <div className="space-y-3">
-          {model.meanings.map((meaning) => {
-            const identity = librarySenseCardIdentity(
-              meaning.entryId,
-              meaning.cardTypeId,
-            );
-            return (
-              <MeaningCard
-                key={identity}
-                meaning={meaning}
-                groupPartOfSpeech={model.partOfSpeech}
-                state={
-                  viewState[identity] ?? {
-                    expanded: false,
-                    translationVisible: false,
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scrollRef}
+          data-testid="library-sense-card-scroll-region"
+          className="h-full overflow-y-auto px-3 pb-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
+        >
+          <div className="space-y-3">
+            {model.meanings.map((meaning) => {
+              const identity = librarySenseCardIdentity(
+                meaning.entryId,
+                meaning.cardTypeId,
+              );
+              return (
+                <MeaningCard
+                  key={identity}
+                  meaning={meaning}
+                  groupPartOfSpeech={model.partOfSpeech}
+                  state={
+                    viewState[identity] ?? {
+                      expanded: false,
+                      translationVisible: false,
+                    }
                   }
-                }
-                interfaceLanguage={interfaceLanguage}
-                busy={busyIdentity === identity}
-                translationState={translationStates[identity] ?? null}
-                collectionCount={collectionCounts[meaning.entryId] ?? 0}
-                onToggleExpanded={() =>
-                  updateEntry(identity, (current) => ({
-                    ...current,
-                    expanded: !current.expanded,
-                  }))
-                }
-                onRetryTranslation={() =>
-                  onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
-                }
-                onOpenCollections={onOpenCollections}
-                onTrainNext={onTrainNext}
-                onReport={onReport}
-                onAction={onAction}
-              />
-            );
-          })}
+                  interfaceLanguage={interfaceLanguage}
+                  busy={busyIdentity === identity}
+                  translationState={translationStates[identity] ?? null}
+                  collectionCount={collectionCounts[meaning.entryId] ?? 0}
+                  onToggleExpanded={() =>
+                    updateEntry(identity, (current) => ({
+                      ...current,
+                      expanded: !current.expanded,
+                    }))
+                  }
+                  onRetryTranslation={() =>
+                    onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
+                  }
+                  onOpenCollections={onOpenCollections}
+                  onTrainNext={onTrainNext}
+                  onReport={onReport}
+                  onAction={onAction}
+                />
+              );
+            })}
+          </div>
         </div>
+        {!scrollEdges.top ? <ScrollFade edge="top" /> : null}
+        {!scrollEdges.bottom ? <ScrollFade edge="bottom" /> : null}
       </div>
-      {!scrollEdges.top ? <ScrollFade edge="top" /> : null}
-      {!scrollEdges.bottom ? <ScrollFade edge="bottom" /> : null}
     </section>
   );
 }
@@ -291,19 +298,9 @@ function MeaningCard({
       data-testid={`library-sense-card-${meaning.entryId}`}
       data-entry-id={meaning.entryId}
       data-expanded={state.expanded ? "true" : "false"}
-      tabIndex={state.expanded ? -1 : 0}
-      role={state.expanded ? undefined : "button"}
-      aria-expanded={state.expanded}
       onClick={activateCard}
-      onKeyDown={(event) => {
-        if (state.expanded) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          activateCard();
-        }
-      }}
-      className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] pt-5 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
-        state.expanded ? "pb-3" : "pb-4"
+      className={`relative rounded-[22px] border border-slate-300 bg-white px-[clamp(1rem,4cqw,1.25rem)] shadow-sm outline-none transition-[padding,border-color,box-shadow] duration-300 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none ${
+        state.expanded ? "pb-3 pt-5" : "py-3"
       }`}
     >
       {meaning.displayOrdinal != null ? (
@@ -326,33 +323,41 @@ function MeaningCard({
           ) : (
             <NewExposureBadge label={t("senseCard.state.new")} tone="light" />
           )}
-          {state.expanded ? (
-            <button
-              type="button"
-              aria-label={t("senseCard.collapse")}
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleExpanded();
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
-            >
-              ↑
-            </button>
-          ) : null}
+          <button
+            type="button"
+            aria-label={t(
+              state.expanded ? "senseCard.collapse" : "senseCard.expand",
+            )}
+            aria-expanded={state.expanded}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleExpanded();
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
+          >
+            <ChevronIcon
+              className="h-3.5 w-3.5"
+              direction={state.expanded ? "up" : "down"}
+            />
+          </button>
         </div>
 
-        {state.translationVisible && meaning.entryTranslation ? (
-          <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
-            {meaning.entryTranslation}
-          </p>
+        {meaning.entryTranslation ? (
+          <SenseCardReveal open={state.translationVisible}>
+            <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
+              {meaning.entryTranslation}
+            </p>
+          </SenseCardReveal>
         ) : null}
         <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
           {meaning.definition?.text ?? "—"}
         </p>
-        {state.translationVisible && meaning.definition?.translation ? (
-          <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
-            {meaning.definition.translation}
-          </p>
+        {meaning.definition?.translation ? (
+          <SenseCardReveal open={state.translationVisible}>
+            <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+              {meaning.definition.translation}
+            </p>
+          </SenseCardReveal>
         ) : null}
         <div className="clear-both" />
         {meaning.definition?.children.length ? (
@@ -374,8 +379,8 @@ function MeaningCard({
           </div>
         ) : null}
 
-        {state.expanded ? (
-          <div className="mt-5" onClick={(event) => event.stopPropagation()}>
+        <SenseCardReveal open={state.expanded} expandedClassName="mt-5">
+          <div onClick={(event) => event.stopPropagation()}>
             {meaning.details.length ? (
               <div className="space-y-4">
                 {orderMeaningDetails(meaning.details).map(
@@ -508,7 +513,7 @@ function MeaningCard({
               </div>
             ) : null}
           </div>
-        ) : null}
+        </SenseCardReveal>
       </div>
     </article>
   );
@@ -605,10 +610,12 @@ function ContentText({
   return (
     <div className={`pl-3 ${presentation.borderClassName}`}>
       <p className={presentation.textClassName}>{item.text}</p>
-      {translationVisible && item.translation ? (
-        <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
-          {item.translation}
-        </p>
+      {item.translation ? (
+        <SenseCardReveal open={translationVisible}>
+          <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+            {item.translation}
+          </p>
+        </SenseCardReveal>
       ) : null}
     </div>
   );
@@ -625,11 +632,11 @@ function ContentSectionHeader({
 }) {
   const Icon =
     sectionGroup === "usage"
-      ? BracesIcon
+      ? UsagePatternIcon
       : sectionGroup === "examples"
         ? ListIcon
         : sectionGroup === "idioms"
-          ? QuoteIcon
+          ? IdiomIcon
           : null;
   return (
     <div data-section-icon={Icon ? sectionGroup : undefined} className="mb-2">
@@ -689,7 +696,7 @@ const contentPresentation: Record<
   "usage-pattern": {
     sectionGroup: "usage",
     labelKey: "senseCard.sections.usagePattern",
-    borderClassName: "border-l-[3px] border-amber-400",
+    borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
       "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
   },
@@ -703,14 +710,14 @@ const contentPresentation: Record<
   idiom: {
     sectionGroup: "idioms",
     labelKey: "senseCard.sections.idioms",
-    borderClassName: "border-l-[3px] border-violet-400",
+    borderClassName: "border-l-[3px] border-amber-400",
     textClassName:
       "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
   },
   "idiom-explanation": {
     sectionGroup: "idioms",
     labelKey: null,
-    borderClassName: "border-l-[3px] border-violet-300",
+    borderClassName: "border-l-[3px] border-amber-300",
     textClassName:
       "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
   },
@@ -769,29 +776,11 @@ function AudioIcon() {
 
 type SmallIconProps = { className: string };
 
-function BracesIcon({ className }: SmallIconProps) {
-  return (
-    <SmallIcon className={className}>
-      <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1" />
-      <path d="M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1" />
-    </SmallIcon>
-  );
-}
-
 function ListIcon({ className }: SmallIconProps) {
   return (
     <SmallIcon className={className}>
       <path d="M8 6h13M8 12h13M8 18h13" />
       <path d="M3 6h.01M3 12h.01M3 18h.01" />
-    </SmallIcon>
-  );
-}
-
-function QuoteIcon({ className }: SmallIconProps) {
-  return (
-    <SmallIcon className={className}>
-      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2H4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
-      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2h-4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
     </SmallIcon>
   );
 }

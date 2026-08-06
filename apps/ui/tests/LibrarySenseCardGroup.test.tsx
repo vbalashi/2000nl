@@ -33,12 +33,16 @@ describe("LibrarySenseCardGroup", () => {
     expect(headword.querySelectorAll("wbr")).toHaveLength(9);
     expect(headword.querySelectorAll(".whitespace-nowrap")).toHaveLength(10);
     const metadata = screen.getByTestId("sense-card-metadata");
+    const scrollRegion = screen.getByTestId(
+      "library-sense-card-scroll-region",
+    );
     expect(within(metadata).getByText("существительное")).toBeInTheDocument();
     expect(
       metadata.compareDocumentPosition(headword) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(headword).toHaveAttribute("data-long-headword", "true");
+    expect(scrollRegion).not.toContainElement(headword);
     expect(headword.className).toContain("text-[1.75rem]");
     expect(headword.className).not.toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
@@ -75,10 +79,17 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
-    expect(screen.getByText(/3×/)).toBeInTheDocument();
+    const exposureBadge = screen.getByLabelText("3×");
+    expect(exposureBadge).toBeInTheDocument();
+    expect(exposureBadge).toHaveClass("h-6");
     expect(
-      screen.queryByText("Bij welke bank hebt u een rekening?"),
-    ).not.toBeInTheDocument();
+      screen
+        .getByText("Bij welke bank hebt u een rekening?")
+        .closest('[aria-hidden="true"]'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand meaning" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
@@ -86,6 +97,9 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       screen.getByText("Bij welke bank hebt u een rekening?"),
     ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Collapse meaning" }),
+    ).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Learn" }));
     expect(onAction).toHaveBeenCalledWith(
@@ -216,7 +230,9 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     await waitFor(() =>
-      expect(screen.queryByText("bench · sofa")).not.toBeInTheDocument(),
+      expect(
+        screen.getByText("bench · sofa").closest('[aria-hidden="true"]'),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -287,6 +303,14 @@ describe("LibrarySenseCardGroup", () => {
       (usagePattern as Element).compareDocumentPosition(example as Node) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(usagePattern?.querySelector("div[class*='border-l']")).toHaveClass(
+      "border-slate-400",
+    );
+    expect(
+      container
+        .querySelector('[data-content-kind="idiom"]')
+        ?.querySelector("div[class*='border-l']"),
+    ).toHaveClass("border-amber-400");
   });
 
   test("shows completed known state instead of new", () => {
