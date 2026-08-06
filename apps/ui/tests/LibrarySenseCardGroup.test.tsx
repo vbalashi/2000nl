@@ -111,9 +111,11 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("7")).not.toBeInTheDocument();
   });
 
-  test("keeps the quiet known action beside review controls", () => {
+  test("keeps Library actions and never renders Training grading controls", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const markKnown = model.meanings[1].markKnown;
+    const onOpenCollections = vi.fn();
+    const onReport = vi.fn();
     render(
       <LibrarySenseCardGroup
         model={{
@@ -121,13 +123,31 @@ describe("LibrarySenseCardGroup", () => {
           meanings: [{ ...model.meanings[0], markKnown }, model.meanings[1]],
         }}
         interfaceLanguage="en"
+        collectionCounts={{ "entry-bank-furniture": 2 }}
+        onOpenCollections={onOpenCollections}
+        onReport={onReport}
         onAction={vi.fn()}
       />,
     );
 
+    expect(screen.queryByRole("button", { name: "Again" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Easy" })).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Mark as known/ }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collections · 2" }));
+    expect(onOpenCollections).toHaveBeenCalledWith(
+      expect.objectContaining({ entryId: "entry-bank-furniture" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    expect(onReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionId: "report-content",
+        target: expect.objectContaining({ entryId: "entry-bank-furniture" }),
+      }),
+    );
   });
 
   test("resets local translation state when card type changes", async () => {
@@ -232,7 +252,6 @@ describe("LibrarySenseCardGroup", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const knownMeaning = {
       ...model.meanings[0],
-      reviewActions: [],
       markKnown: null,
       undoKnown: {
         actionId: "undo-known" as const,

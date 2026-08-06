@@ -24,15 +24,14 @@ export type LibraryUndoKnownCapability = Extract<
   PlatformSenseCardCapabilityV2,
   { actionId: "undo-known" }
 >;
-export type LibraryReviewCapability = Extract<
+export type LibraryReportCapability = Extract<
   PlatformSenseCardCapabilityV2,
-  { actionId: "review-card" }
+  { actionId: "report-content" }
 >;
 export type LibraryMutationCapability =
   | LibraryStartLearningCapability
   | LibraryMarkKnownCapability
-  | LibraryUndoKnownCapability
-  | LibraryReviewCapability;
+  | LibraryUndoKnownCapability;
 
 export type LibrarySenseContent = {
   contentNodeId: string;
@@ -58,7 +57,7 @@ export type LibrarySenseCardModel = {
   startLearning: LibraryStartLearningCapability | null;
   markKnown: LibraryMarkKnownCapability | null;
   undoKnown: LibraryUndoKnownCapability | null;
-  reviewActions: LibraryReviewCapability[];
+  reportCapability: LibraryReportCapability | null;
 };
 
 export type LibrarySenseCardGroupModel = {
@@ -203,10 +202,12 @@ function buildMeaning(
     startLearning: capability(entry, "start-learning"),
     markKnown: capability(entry, "mark-known"),
     undoKnown: capability(entry, "undo-known"),
-    reviewActions: entry.capabilities.filter(
-      (candidate): candidate is LibraryReviewCapability =>
-        candidate.actionId === "review-card",
-    ),
+    reportCapability:
+      entry.capabilities.find(
+        (candidate): candidate is LibraryReportCapability =>
+          candidate.actionId === "report-content" &&
+          candidate.target.kind === "entry",
+      ) ?? null,
   };
 }
 

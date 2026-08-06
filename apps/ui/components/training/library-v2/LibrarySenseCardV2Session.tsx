@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   fetchPlatformV2MultiSenseGroup,
   requestPlatformV2LibraryTranslation,
@@ -10,9 +11,20 @@ import {
   performPlatformV2TrainingAction,
   resolvePlatformV2Audio,
 } from "@/lib/platform/platformV2TrainingClient";
+import {
+  addWordsToUserList,
+  createUserList,
+  fetchEntryListMemberships,
+  removeWordsFromUserList,
+} from "@/lib/trainingService";
+import type {
+  EntryLearningListMembership,
+  WordListSummary,
+} from "@/lib/types";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
+import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
 import {
   buildLibrarySenseCardGroupModel,
   librarySenseCardIdentity,
@@ -26,6 +38,10 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
+  userId?: string;
+  userLists?: WordListSummary[];
+  onListsUpdated?: () => Promise<void> | void;
+  onTrainWord?: (entryId: string) => void;
   fallback: React.ReactNode;
 };
 
@@ -36,6 +52,10 @@ export function LibrarySenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
+  userId,
+  userLists = [],
+  onListsUpdated,
+  onTrainWord,
   fallback,
 }: Props) {
   const translationLanguage =
@@ -51,6 +71,18 @@ export function LibrarySenseCardV2Session({
     Record<string, "pending" | "failed">
   >({});
   const [error, setError] = React.useState<string | null>(null);
+  const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
+    Record<string, EntryLearningListMembership[]>
+  >({});
+  const [collectionsEntryId, setCollectionsEntryId] = React.useState<
+    string | null
+  >(null);
+  const [collectionBusyListId, setCollectionBusyListId] = React.useState<
+    string | null
+  >(null);
+  const [collectionStatus, setCollectionStatus] = React.useState<string | null>(
+    null,
+  );
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
 
@@ -104,6 +136,34 @@ export function LibrarySenseCardV2Session({
     [cardTypeId, group, interfaceLanguage],
   );
 
+  const loadMemberships = React.useCallback(
+    async (entryIds: string[]) => {
+      if (!userId || !entryIds.length) {
+        setMembershipsByEntryId({});
+        return;
+      }
+      try {
+        const memberships = await fetchEntryListMemberships(entryIds);
+        setMembershipsByEntryId(
+          Object.fromEntries(
+            entryIds.map((meaningEntryId) => [
+              meaningEntryId,
+              memberships.get(meaningEntryId) ?? [],
+            ]),
+          ),
+        );
+      } catch {
+        setMembershipsByEntryId({});
+      }
+    },
+    [userId],
+  );
+
+  React.useEffect(() => {
+    if (!model) return;
+    void loadMemberships(model.meanings.map((meaning) => meaning.entryId));
+  }, [loadMemberships, model]);
+
   const handleAction = async (capability: LibraryMutationCapability) => {
     setBusyIdentity(
       librarySenseCardIdentity(
@@ -137,6 +197,68 @@ export function LibrarySenseCardV2Session({
       setError(cause instanceof Error ? cause.message : "audio_failed");
     } finally {
       setAudioBusy(false);
+    }
+  };
+
+  const collectionsMeaning = model?.meanings.find(
+    (meaning) => meaning.entryId === collectionsEntryId,
+  );
+
+  const refreshMemberships = React.useCallback(async () => {
+    if (!model) return;
+    await loadMemberships(model.meanings.map((meaning) => meaning.entryId));
+  }, [loadMemberships, model]);
+
+  const handleToggleList = async (
+    list: WordListSummary,
+    included: boolean,
+  ) => {
+    if (!collectionsEntryId) return;
+    setCollectionBusyListId(list.id);
+    setCollectionStatus(null);
+    try {
+      const result = included
+        ? await removeWordsFromUserList(list.id, [collectionsEntryId])
+        : await addWordsToUserList(list.id, [collectionsEntryId]);
+      if (result.error) throw result.error;
+      await refreshMemberships();
+      await onListsUpdated?.();
+      setCollectionStatus(
+        platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
+      );
+    } catch {
+      setCollectionStatus(
+        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+      );
+    } finally {
+      setCollectionBusyListId(null);
+    }
+  };
+
+  const handleCreateList = async (name: string) => {
+    if (!userId || !collectionsEntryId) return;
+    setCollectionBusyListId("__new__");
+    setCollectionStatus(null);
+    try {
+      const created = await createUserList({
+        userId,
+        name,
+        language_code: contentLanguageCode,
+      });
+      if (!created?.id) throw new Error("create_list_failed");
+      const result = await addWordsToUserList(created.id, [collectionsEntryId]);
+      if (result.error) throw result.error;
+      await refreshMemberships();
+      await onListsUpdated?.();
+      setCollectionStatus(
+        platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
+      );
+    } catch {
+      setCollectionStatus(
+        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+      );
+    } finally {
+      setCollectionBusyListId(null);
     }
   };
 
@@ -262,6 +384,12 @@ export function LibrarySenseCardV2Session({
         }
         translationEnabled={Boolean(translationLanguage)}
         translationStates={translationStates}
+        collectionCounts={Object.fromEntries(
+          Object.entries(membershipsByEntryId).map(([meaningEntryId, lists]) => [
+            meaningEntryId,
+            lists.length,
+          ]),
+        )}
         onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
           void handleRequestTranslation(
             meaningEntryId,
@@ -271,7 +399,37 @@ export function LibrarySenseCardV2Session({
             ] === "failed",
           )
         }
+        onOpenCollections={
+          userId
+            ? (meaning) => {
+                setCollectionStatus(null);
+                setCollectionsEntryId(meaning.entryId);
+              }
+            : undefined
+        }
+        onTrainNext={
+          onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
+        }
         onAction={(capability) => void handleAction(capability)}
+      />
+      <LibraryCollectionsPicker
+        open={Boolean(collectionsMeaning)}
+        headword={model.headword}
+        definition={collectionsMeaning?.definition?.text ?? ""}
+        interfaceLanguage={interfaceLanguage}
+        userLists={userLists}
+        memberships={
+          collectionsMeaning
+            ? (membershipsByEntryId[collectionsMeaning.entryId] ?? [])
+            : []
+        }
+        busyListId={collectionBusyListId}
+        status={collectionStatus}
+        onClose={() => setCollectionsEntryId(null)}
+        onToggleList={(list, included) =>
+          void handleToggleList(list, included)
+        }
+        onCreateList={(name) => void handleCreateList(name)}
       />
       {error ? (
         <p

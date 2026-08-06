@@ -76,6 +76,10 @@ export function WordDetailDrawer({
           contentLanguageCode={entry.language_code ?? contentLanguageCode}
           translationTargetLanguageCode={translationLang}
           interfaceLanguage={interfaceLanguage}
+          userId={userId}
+          userLists={userLists}
+          onListsUpdated={onListsUpdated}
+          onTrainWord={onTrainWord}
           viewport="mobile"
           fallback={
             <WordDetailPanel

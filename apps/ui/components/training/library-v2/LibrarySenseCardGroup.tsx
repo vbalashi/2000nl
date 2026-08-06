@@ -10,18 +10,12 @@ import type {
   LibrarySenseCardModel,
   LibrarySenseCardViewState,
   LibraryMutationCapability,
+  LibraryReportCapability,
 } from "./librarySenseCardModel";
 import {
   reconcileLibrarySenseCardViewState,
   librarySenseCardIdentity,
 } from "./librarySenseCardModel";
-
-const reviewTone = {
-  fail: "before:bg-rose-300 text-rose-700 dark:text-rose-300",
-  hard: "before:bg-lime-300 text-lime-700 dark:text-lime-300",
-  success: "before:bg-emerald-300 text-emerald-700 dark:text-emerald-300",
-  easy: "before:bg-teal-200 text-teal-700 dark:text-teal-200",
-} as const;
 
 type Props = {
   model: LibrarySenseCardGroupModel;
@@ -31,7 +25,11 @@ type Props = {
   onPlayAudio?: () => void;
   translationEnabled?: boolean;
   translationStates?: Record<string, "pending" | "failed">;
+  collectionCounts?: Record<string, number>;
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
+  onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
+  onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (capability: LibraryReportCapability) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 };
 
@@ -43,7 +41,11 @@ export function LibrarySenseCardGroup({
   onPlayAudio,
   translationEnabled = false,
   translationStates = {},
+  collectionCounts = {},
   onRequestTranslation,
+  onOpenCollections,
+  onTrainNext,
+  onReport,
   onAction,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
@@ -143,6 +145,7 @@ export function LibrarySenseCardGroup({
               busy={busyIdentity === identity}
               translationEnabled={translationEnabled}
               translationState={translationStates[identity] ?? null}
+              collectionCount={collectionCounts[meaning.entryId] ?? 0}
               onToggleExpanded={() =>
                 updateEntry(identity, (current) => ({
                   ...current,
@@ -163,6 +166,9 @@ export function LibrarySenseCardGroup({
                   onRequestTranslation?.(meaning.entryId, meaning.cardTypeId);
                 }
               }}
+              onOpenCollections={onOpenCollections}
+              onTrainNext={onTrainNext}
+              onReport={onReport}
               onAction={onAction}
             />
           );
@@ -180,8 +186,12 @@ function MeaningCard({
   busy,
   translationEnabled,
   translationState,
+  collectionCount,
   onToggleExpanded,
   onToggleTranslation,
+  onOpenCollections,
+  onTrainNext,
+  onReport,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
@@ -191,8 +201,12 @@ function MeaningCard({
   busy: boolean;
   translationEnabled: boolean;
   translationState: "pending" | "failed" | null;
+  collectionCount: number;
   onToggleExpanded: () => void;
   onToggleTranslation: () => void;
+  onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
+  onTrainNext?: (meaning: LibrarySenseCardModel) => void;
+  onReport?: (capability: LibraryReportCapability) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
@@ -328,7 +342,18 @@ function MeaningCard({
               </div>
             ) : null}
 
-            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+            {meaning.startLearning ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(meaning.startLearning!)}
+                className="mt-5 w-full rounded-xl border border-indigo-500 bg-indigo-500/10 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-500/15 disabled:opacity-50 dark:text-indigo-200"
+              >
+                {t(meaning.startLearning.messageKey)}
+              </button>
+            ) : null}
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
               {translationEnabled ? (
                 <button
                   type="button"
@@ -338,24 +363,52 @@ function MeaningCard({
                   aria-pressed={state.translationVisible}
                   onClick={onToggleTranslation}
                   disabled={translationState === "pending"}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-lg text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-300"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-300"
                 >
                   <TranslateIcon />
                 </button>
               ) : null}
-              <div className="min-w-[12rem] flex-1">
-                <MeaningActions
-                  meaning={meaning}
-                  interfaceLanguage={interfaceLanguage}
-                  busy={busy}
-                  onAction={onAction}
-                />
-              </div>
+              {meaning.reportCapability && onReport ? (
+                <button
+                  type="button"
+                  onClick={() => onReport(meaning.reportCapability!)}
+                  className="font-semibold text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  {t(meaning.reportCapability.messageKey)}
+                </button>
+              ) : null}
+              {onOpenCollections ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenCollections(meaning)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-200"
+                >
+                  <ListIcon className="h-3.5 w-3.5" />
+                  {t("senseCard.collections.label")}
+                  {collectionCount > 0 ? ` · ${collectionCount}` : ""}
+                </button>
+              ) : null}
+              {onTrainNext ? (
+                <button
+                  type="button"
+                  onClick={() => onTrainNext(meaning)}
+                  className="font-semibold text-slate-500 transition hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-200"
+                >
+                  {t("senseCard.training.next")}
+                </button>
+              ) : null}
+              <div className="min-w-0 flex-1" />
+              <KnownAction
+                meaning={meaning}
+                interfaceLanguage={interfaceLanguage}
+                busy={busy}
+                onAction={onAction}
+              />
               <button
                 type="button"
                 aria-label={t("senseCard.collapse")}
                 onClick={onToggleExpanded}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
               >
                 ↑
               </button>
@@ -386,7 +439,7 @@ function MeaningCard({
   );
 }
 
-function MeaningActions({
+function KnownAction({
   meaning,
   interfaceLanguage,
   busy,
@@ -404,65 +457,22 @@ function MeaningActions({
         type="button"
         disabled={busy}
         onClick={() => onAction(meaning.undoKnown!)}
-        className="w-full rounded-xl border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-50 dark:text-emerald-300"
+        className="rounded-lg border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-700 disabled:opacity-50 dark:text-emerald-300"
       >
         {t("senseCard.known.marked")} · {t(meaning.undoKnown.messageKey)}
       </button>
     );
   }
-  if (meaning.reviewActions.length) {
-    return (
-      <div className="space-y-2">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
-          {meaning.reviewActions.map((action) => (
-            <button
-              key={action.reviewResult}
-              type="button"
-              disabled={busy}
-              onClick={() => onAction(action)}
-              className={`relative overflow-hidden rounded-xl border border-slate-300 px-2 py-2 text-sm font-semibold before:absolute before:inset-y-0 before:left-0 before:w-1 disabled:opacity-50 dark:border-slate-600 ${reviewTone[action.reviewResult]}`}
-            >
-              {t(action.messageKey)}
-            </button>
-          ))}
-        </div>
-        {meaning.markKnown ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onAction(meaning.markKnown!)}
-            className="w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline disabled:opacity-50 dark:text-slate-400"
-          >
-            ✓ {t(meaning.markKnown.messageKey)}
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-  if (!meaning.startLearning && !meaning.markKnown) return null;
+  if (!meaning.markKnown) return null;
   return (
-    <div className="space-y-2">
-      {meaning.startLearning ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => onAction(meaning.startLearning!)}
-          className="w-full rounded-xl border border-indigo-500 bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-50 dark:text-indigo-200"
-        >
-          {t(meaning.startLearning.messageKey)}
-        </button>
-      ) : null}
-      {meaning.markKnown ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => onAction(meaning.markKnown!)}
-          className="w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline dark:text-slate-400"
-        >
-          ✓ {t(meaning.markKnown.messageKey)}
-        </button>
-      ) : null}
-    </div>
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => onAction(meaning.markKnown!)}
+      className="font-semibold text-slate-500 transition hover:text-emerald-700 disabled:opacity-50 dark:text-slate-400 dark:hover:text-emerald-300"
+    >
+      ✓ {t(meaning.markKnown.messageKey)}
+    </button>
   );
 }
 

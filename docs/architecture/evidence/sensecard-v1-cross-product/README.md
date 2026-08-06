@@ -12,7 +12,8 @@ different product contexts. It does not require identical outer shells:
 
 - 2000NL Training presents one exact `entryId` at a time as Face → Answer.
 - 2000NL Library presents all entries in one `headwordGroupId`, while every
-  meaning keeps independent expansion, translation and learning state.
+  meaning keeps independent expansion, translation, collection membership and
+  learning state. Review grading remains exclusive to Training.
 - AudioFilms presents the same headword group inside an extension overlay,
   with independent controls per `entryId` and selected-word context around it.
 
@@ -79,7 +80,7 @@ Executed on 2026-08-05 against the exact baselines above:
 
 Re-executed after the 2026-08-06 presentation synchronization:
 
-- 2000NL complete UI suite: 58 files passed, 2 skipped; 423 tests passed,
+- 2000NL complete UI suite: 59 files passed, 2 skipped; 424 tests passed,
   74 skipped.
 - 2000NL focused SenseCard suite: 5 files, 25 tests passed; typecheck and
   lint passed.
@@ -108,6 +109,9 @@ render its product-owned presentation and DOM adapters through
 | `screenshots/2000nl-mobile-library-single-on.png` | 390px single-sense Narrow card, translation on and Russian UI |
 | `screenshots/2000nl-mobile-long-headword-full.png` | 390px long compound in the Full Library composition |
 | `screenshots/2000nl-mobile-long-headword.png` | 390px localized long compound in the Narrow composition |
+| `screenshots/2000nl-library-canonical-desktop.png` | corrected Library multi-sense detail: no Training grading, meaning-scoped collections and actions |
+| `screenshots/2000nl-library-canonical-mobile.png` | the corrected Library composition at 390×844 |
+| `screenshots/2000nl-library-collections-picker.png` | meaning-scoped collection picker opened from the first `bank` meaning |
 | `screenshots/audiofilms-desktop-fixtures.png` | AudioFilms Full/Narrow, single/multi, translation and long-headword matrix |
 | `screenshots/audiofilms-mobile-fixtures.png` | the same AudioFilms fixture at 390px |
 | `screenshots/audiofilms-280-fixtures.png` | extreme-width regression for container-responsive service labels and controls |
@@ -189,11 +193,12 @@ rollback must never be implemented as a database rollback.
 - `vbalashi/2000nl#114`: automate this screenshot/accessibility harness after
   the manual gate proves stable; keep pixel diffs advisory initially.
 
-The responsive gate found one implementation blocker in 2000NL: review buttons
-inside a Narrow Library container used a viewport breakpoint and clipped their
-labels when embedded in a wide desktop layout. The component now uses an
-auto-fitting grid based on its actual available width. Re-capture shows two
-columns in Narrow and four in Full, with no button text overflow.
+Owner review found a product-context defect in 2000NL: the Library renderer had
+inherited Training review grades. Those controls are now removed from Library.
+Its per-meaning footer exposes Library actions only: report when the backend
+capability is available, collection membership, queueing the exact entry as the
+next training card, and Known/Undo. The collection picker mutates membership by
+`entryId`; it never applies a list change to the whole headword group.
 
 Independent QA also found a shared long-headword defect: generic word wrapping
 could split a syllable even when `displayPronunciation` supplied safe `·`

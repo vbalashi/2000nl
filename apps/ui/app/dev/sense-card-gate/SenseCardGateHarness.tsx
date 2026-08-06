@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+import { LibraryCollectionsPicker } from "@/components/training/library-v2/LibraryCollectionsPicker";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
@@ -12,6 +14,8 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 export function SenseCardGateHarness() {
+  const [collectionsOpen, setCollectionsOpen] = React.useState(false);
+  const [collectionIds, setCollectionIds] = React.useState(["daily-review"]);
   const trainingModel = buildTrainingSenseCardModel({
     group: gateSingleSenseGroup,
     entry: gateFurnitureEntry,
@@ -33,13 +37,64 @@ export function SenseCardGateHarness() {
         </Fixture>
 
         <Fixture title="SC-03 · Library · multi sense · full">
-          <div className="min-h-[680px] min-w-0 rounded-3xl">
+          <div className="relative min-h-[680px] min-w-0 rounded-3xl">
             <LibrarySenseCardGroup
               model={buildLibrarySenseCardGroupModel(gateBankGroup, "nl")}
               interfaceLanguage="nl"
               translationEnabled
+              collectionCounts={{
+                "entry-bank-furniture": 2,
+                "entry-bank-finance": 1,
+              }}
               onPlayAudio={() => undefined}
+              onOpenCollections={() => setCollectionsOpen(true)}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
+            />
+            <LibraryCollectionsPicker
+              open={collectionsOpen}
+              headword="bank"
+              definition="een meubelstuk waarop je met meer personen kunt zitten"
+              interfaceLanguage="nl"
+              userLists={[
+                {
+                  id: "daily-review",
+                  name: "Dagelijkse herhaling",
+                  type: "user",
+                  item_count: 24,
+                },
+                {
+                  id: "youtube-week",
+                  name: "YouTube · deze week",
+                  type: "user",
+                  item_count: 17,
+                },
+                {
+                  id: "difficult-words",
+                  name: "Moeilijke woorden",
+                  type: "user",
+                  item_count: 9,
+                },
+              ]}
+              memberships={collectionIds.map((listId) => ({
+                listId,
+                listType: "user",
+                name: listId,
+                editable: true,
+                isActiveTrainingList: false,
+              }))}
+              busyListId={null}
+              status={null}
+              onClose={() => setCollectionsOpen(false)}
+              onToggleList={(list, included) => {
+                setCollectionIds((current) =>
+                  included
+                    ? current.filter((id) => id !== list.id)
+                    : [...current, list.id],
+                );
+              }}
+              onCreateList={() => undefined}
             />
           </div>
         </Fixture>
@@ -50,7 +105,14 @@ export function SenseCardGateHarness() {
               model={buildLibrarySenseCardGroupModel(gateBankGroup, "nl")}
               interfaceLanguage="nl"
               translationEnabled
+              collectionCounts={{
+                "entry-bank-furniture": 2,
+                "entry-bank-finance": 1,
+              }}
               onPlayAudio={() => undefined}
+              onOpenCollections={() => undefined}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
             />
           </div>
@@ -66,6 +128,9 @@ export function SenseCardGateHarness() {
               interfaceLanguage="nl"
               translationEnabled
               onPlayAudio={() => undefined}
+              onOpenCollections={() => undefined}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
             />
           </div>
@@ -81,6 +146,9 @@ export function SenseCardGateHarness() {
               interfaceLanguage="ru"
               translationEnabled
               onPlayAudio={() => undefined}
+              onOpenCollections={() => undefined}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
             />
           </div>
@@ -96,6 +164,9 @@ export function SenseCardGateHarness() {
               interfaceLanguage="nl"
               translationEnabled
               onPlayAudio={() => undefined}
+              onOpenCollections={() => undefined}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
             />
           </div>
@@ -111,6 +182,9 @@ export function SenseCardGateHarness() {
               interfaceLanguage="ru"
               translationEnabled
               onPlayAudio={() => undefined}
+              onOpenCollections={() => undefined}
+              onTrainNext={() => undefined}
+              onReport={() => undefined}
               onAction={() => undefined}
             />
           </div>

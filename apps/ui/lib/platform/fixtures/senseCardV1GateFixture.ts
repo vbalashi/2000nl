@@ -96,22 +96,16 @@ function makeEntry(input: {
       translationPolicyVersion: "cross-product-gate-v1",
       isFresh: true,
     },
-    capabilities:
-      input.phase === "not-started"
-        ? [
+    capabilities: [
+      ...(input.phase === "not-started"
+        ? ([
             {
               actionId: "start-learning",
               elementId: "sense-card.learning.start",
               messageKey: "senseCard.learning.start",
               target,
             },
-            {
-              actionId: "mark-known",
-              elementId: "sense-card.known.mark",
-              messageKey: "senseCard.known.mark",
-              target,
-            },
-          ]
+          ] satisfies PlatformSenseCardEntryV2["capabilities"])
         : (["fail", "hard", "success", "easy"] as const).map(
             (reviewResult) => ({
               actionId: "review-card" as const,
@@ -120,7 +114,24 @@ function makeEntry(input: {
               target,
               reviewResult,
             }),
-          ),
+          )),
+      {
+        actionId: "mark-known",
+        elementId: "sense-card.known.mark",
+        messageKey: "senseCard.known.mark",
+        target,
+      },
+      {
+        actionId: "report-content",
+        elementId: "sense-card.report",
+        messageKey: "senseCard.report",
+        target: {
+          kind: "entry",
+          entryId: input.entryId,
+          contentRevision: `content-${input.entryId}`,
+        },
+      },
+    ],
   };
 }
 
