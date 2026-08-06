@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import type { WordListSummary } from "@/lib/types";
 import { platformV2LibraryUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { LibrarySenseCardV2Session } from "./LibrarySenseCardV2Session";
 
@@ -11,6 +12,10 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
+  userId?: string;
+  userLists?: WordListSummary[];
+  onListsUpdated?: () => Promise<void> | void;
+  onTrainWord?: (entryId: string) => void;
   fallback: React.ReactNode;
   viewport?: "all" | "desktop" | "mobile";
 };
@@ -21,6 +26,10 @@ export function LibraryWordDetail({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
+  userId,
+  userLists,
+  onListsUpdated,
+  onTrainWord,
   fallback,
   viewport = "all",
 }: Props) {
@@ -51,6 +60,10 @@ export function LibraryWordDetail({
       contentLanguageCode={contentLanguageCode}
       translationTargetLanguageCode={translationTargetLanguageCode}
       interfaceLanguage={interfaceLanguage}
+      userId={userId}
+      userLists={userLists}
+      onListsUpdated={onListsUpdated}
+      onTrainWord={onTrainWord}
       fallback={fallback}
     />
   );

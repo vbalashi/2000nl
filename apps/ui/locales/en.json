@@ -1,6 +1,7 @@
 {
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "done": "Done"
   },
   "onboarding": {
     "steps": [
@@ -104,7 +105,22 @@
       "retry": "Retry"
     },
     "collapse": "Collapse meaning",
+    "expand": "Expand meaning",
     "report": "Report",
+    "collections": {
+      "label": "Collections",
+      "title": "Collections for this meaning",
+      "search": "Search collections",
+      "createPlaceholder": "New collection name",
+      "create": "Create",
+      "items": "items",
+      "empty": "No collections found",
+      "saved": "Collection membership updated",
+      "failed": "Collections could not be updated"
+    },
+    "training": {
+      "next": "Train next"
+    },
     "wordDetails": {
       "open": "Word details"
     }

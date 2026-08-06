@@ -841,6 +841,13 @@ export function DictionarySearchTab({
                   }
                   translationTargetLanguageCode={translationLang}
                   interfaceLanguage={interfaceLanguage}
+                  userId={userId}
+                  userLists={userLists}
+                  onListsUpdated={async () => {
+                    await reloadLists();
+                    notifyListsUpdated();
+                  }}
+                  onTrainWord={onTrainWord}
                   viewport="desktop"
                   fallback={
                     <WordDetailPanel

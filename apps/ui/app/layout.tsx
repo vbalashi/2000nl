@@ -1,7 +1,22 @@
 import "../styles/globals.css";
 import type { ReactNode } from "react";
+import { Inter, Newsreader } from "next/font/google";
 import { SystemThemeEffect } from "@/components/theme/SystemThemeEffect";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
+
+const senseSans = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-sense-sans",
+  display: "swap",
+});
+
+const senseSerif = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-sense-serif",
+  style: ["normal", "italic"],
+  display: "swap",
+  adjustFontFallback: false,
+});
 
 export const metadata = {
   title: "NT2 Training",
@@ -12,7 +27,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="nl">
+    <html lang="nl" className={`${senseSans.variable} ${senseSerif.variable}`}>
       <head>
         <meta name="theme-color" content="#0f172a" />
         <meta name="mobile-web-app-capable" content="yes" />

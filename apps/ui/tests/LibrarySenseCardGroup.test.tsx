@@ -10,8 +10,63 @@ import { describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
+import {
+  gateLongHeadwordGroup,
+  gateSingleSenseGroup,
+} from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("keeps a localized long headword usable in the single-sense fixture", () => {
+    render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(gateLongHeadwordGroup, "ru")}
+        interfaceLanguage="ru"
+        translationEnabled
+        onAction={vi.fn()}
+      />,
+    );
+
+    const headword = screen.getByRole("heading", {
+      name: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring",
+    });
+    expect(headword).toBeInTheDocument();
+    expect(headword.querySelectorAll("wbr")).toHaveLength(9);
+    expect(headword.querySelectorAll(".whitespace-nowrap")).toHaveLength(10);
+    const metadata = screen.getByTestId("sense-card-metadata");
+    const scrollRegion = screen.getByTestId(
+      "library-sense-card-scroll-region",
+    );
+    expect(within(metadata).getByText("существительное")).toBeInTheDocument();
+    expect(
+      metadata.compareDocumentPosition(headword) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(headword).toHaveAttribute("data-long-headword", "true");
+    expect(scrollRegion).not.toContainElement(headword);
+    expect(headword.className).toContain("text-[1.75rem]");
+    expect(headword.className).not.toContain("cqw");
+    expect(screen.queryByText("Значения")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Перевести" }),
+    ).toBeInTheDocument();
+  });
+
+  test("does not create a meaning ordinal badge for a one-sense group", () => {
+    const { container } = render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(gateSingleSenseGroup, "nl")}
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(
+      container.querySelector(
+        "[data-testid='library-sense-card-entry-bank-furniture'] > span",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   test("expands and acts on each meaning independently", () => {
     const onAction = vi.fn();
     render(
@@ -23,18 +78,42 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.getByText("Meanings")).toBeInTheDocument();
-    expect(screen.getByText(/3×/)).toBeInTheDocument();
+    expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
+    const exposureBadge = screen.getByLabelText("3×");
+    expect(exposureBadge).toBeInTheDocument();
+    expect(exposureBadge).toHaveClass("h-6");
     expect(
-      screen.queryByText("Bij welke bank hebt u een rekening?"),
-    ).not.toBeInTheDocument();
+      screen
+        .getByText("Bij welke bank hebt u een rekening?")
+        .closest('[aria-hidden="true"]'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand meaning" }),
+    ).toBeInTheDocument();
+    const financeCard = screen.getByTestId(
+      "library-sense-card-entry-bank-finance",
+    );
+    expect(financeCard).toHaveClass("py-2.5");
+    expect(
+      within(financeCard).getByTestId("library-sense-card-lead"),
+    ).toHaveClass("grid", "items-start");
+    expect(
+      within(financeCard).getByTestId("sense-card-top-actions"),
+    ).not.toHaveClass("float-right");
+    const furnitureDetails = screen
+      .getByText("Margriet en Ellie zaten op de bank televisie te kijken.")
+      .closest('[aria-hidden="false"]');
+    expect(furnitureDetails).toHaveClass("mt-3");
 
     fireEvent.click(
-      screen.getByTestId("library-sense-card-entry-bank-finance"),
+      financeCard,
     );
     expect(
       screen.getByText("Bij welke bank hebt u een rekening?"),
     ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Collapse meaning" }),
+    ).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Learn" }));
     expect(onAction).toHaveBeenCalledWith(
@@ -46,18 +125,18 @@ describe("LibrarySenseCardGroup", () => {
       }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Show translation for meaning 2",
-      }),
+    expect(screen.getAllByRole("button", { name: "Translate" })).toHaveLength(
+      1,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    expect(furnitureDetails).toHaveClass("mt-4");
     expect(
       screen.getByText("bank · financial institution"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("bench · sofa")).not.toBeInTheDocument();
+    expect(screen.getByText("bench · sofa")).toBeInTheDocument();
   });
 
-  test("renders the authoritative group count", () => {
+  test("does not render the aggregate group count as card chrome", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     render(
       <LibrarySenseCardGroup
@@ -67,12 +146,14 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.queryByText("7")).not.toBeInTheDocument();
   });
 
-  test("keeps the quiet known action beside review controls", () => {
+  test("keeps Library actions and never renders Training grading controls", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const markKnown = model.meanings[1].markKnown;
+    const onOpenCollections = vi.fn();
+    const onReport = vi.fn();
     render(
       <LibrarySenseCardGroup
         model={{
@@ -80,13 +161,57 @@ describe("LibrarySenseCardGroup", () => {
           meanings: [{ ...model.meanings[0], markKnown }, model.meanings[1]],
         }}
         interfaceLanguage="en"
+        collectionCounts={{ "entry-bank-furniture": 2 }}
+        onOpenCollections={onOpenCollections}
+        onReport={onReport}
         onAction={vi.fn()}
       />,
     );
 
     expect(
+      screen.queryByRole("button", { name: "Again" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Hard" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Good" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Easy" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: /Mark as known/ }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collections · 2" }));
+    expect(onOpenCollections).toHaveBeenCalledWith(
+      expect.objectContaining({ entryId: "entry-bank-furniture" }),
+    );
+    const firstCard = screen.getByTestId(
+      "library-sense-card-entry-bank-furniture",
+    );
+    expect(
+      within(firstCard).getByTestId("library-primary-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Collections · 2" }),
+    );
+    expect(
+      within(firstCard).getByTestId("sense-card-top-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Collapse meaning" }),
+    );
+    expect(
+      within(firstCard).getByTestId("library-service-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Report" }),
+    );
+    fireEvent.click(within(firstCard).getByRole("button", { name: "Report" }));
+    expect(onReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionId: "report-content",
+        target: expect.objectContaining({ entryId: "entry-bank-furniture" }),
+      }),
+    );
   });
 
   test("resets local translation state when card type changes", async () => {
@@ -98,11 +223,7 @@ describe("LibrarySenseCardGroup", () => {
         onAction={vi.fn()}
       />,
     );
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Show translation for meaning 1",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
     expect(screen.getByText("bench · sofa")).toBeInTheDocument();
 
     rerender(
@@ -124,7 +245,9 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     await waitFor(() =>
-      expect(screen.queryByText("bench · sofa")).not.toBeInTheDocument(),
+      expect(
+        screen.getByText("bench · sofa").closest('[aria-hidden="true"]'),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -176,13 +299,39 @@ describe("LibrarySenseCardGroup", () => {
     expect(
       container.querySelector('[data-content-kind="idiom"]'),
     ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="usage"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="examples"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="idioms"]'),
+    ).toBeInTheDocument();
+    const usagePattern = container.querySelector(
+      '[data-content-kind="usage-pattern"]',
+    );
+    const example = container.querySelector('[data-content-kind="example"]');
+    expect(usagePattern).toBeInTheDocument();
+    expect(example).toBeInTheDocument();
+    expect(
+      (usagePattern as Element).compareDocumentPosition(example as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(usagePattern?.querySelector("div[class*='border-l']")).toHaveClass(
+      "border-slate-400",
+    );
+    expect(
+      container
+        .querySelector('[data-content-kind="idiom"]')
+        ?.querySelector("div[class*='border-l']"),
+    ).toHaveClass("border-amber-400");
   });
 
   test("shows completed known state instead of new", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const knownMeaning = {
       ...model.meanings[0],
-      reviewActions: [],
       markKnown: null,
       undoKnown: {
         actionId: "undo-known" as const,
@@ -213,5 +362,22 @@ describe("LibrarySenseCardGroup", () => {
       0,
     );
     expect(within(firstCard).queryByText("New")).not.toBeInTheDocument();
+  });
+
+  test("renders the new state with the same bordered exposure chrome", () => {
+    render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en")}
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const financeCard = screen.getByTestId(
+      "library-sense-card-entry-bank-finance",
+    );
+    const badge = within(financeCard).getByText("New").closest("span");
+    expect(badge).toHaveClass("border");
+    expect(badge?.querySelector("svg")).toBeInTheDocument();
   });
 });

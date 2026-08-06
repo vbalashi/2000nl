@@ -21,7 +21,12 @@ describe("Library multi-sense model", () => {
     expect(model.meanings[0]).toMatchObject({
       repeatCount: 3,
     });
-    expect(model.meanings[0].reviewActions).toHaveLength(4);
+    expect(model.meanings[0].reportCapability).toEqual(
+      expect.objectContaining({
+        actionId: "report-content",
+        target: expect.objectContaining({ entryId: "entry-bank-furniture" }),
+      }),
+    );
     expect(model.meanings[1]).toMatchObject({
       repeatCount: 0,
     });

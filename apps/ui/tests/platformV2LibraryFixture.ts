@@ -63,9 +63,9 @@ const makeEntry = (input: {
     translationPolicyVersion: "policy-1",
     isFresh: true,
   },
-  capabilities:
-    input.phase === "not-started"
-      ? [
+  capabilities: [
+    ...(input.phase === "not-started"
+      ? ([
           {
             actionId: "start-learning",
             elementId: "sense-card.learning.start",
@@ -88,7 +88,7 @@ const makeEntry = (input: {
               stateRevision: `state-${input.entryId}`,
             },
           },
-        ]
+        ] satisfies PlatformSenseCardEntryV2["capabilities"])
       : (["fail", "hard", "success", "easy"] as const).map(
           (reviewResult) => ({
             actionId: "review-card" as const,
@@ -102,7 +102,18 @@ const makeEntry = (input: {
             },
             reviewResult,
           }),
-        ),
+        )),
+    {
+      actionId: "report-content",
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry",
+        entryId: input.entryId,
+        contentRevision: `content-${input.entryId}`,
+      },
+    },
+  ],
 });
 
 export const furnitureEntry = makeEntry({

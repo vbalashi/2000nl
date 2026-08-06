@@ -34,6 +34,9 @@ const audioQualityDefault =
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // Local preview wrappers use a dedicated cache directory so a concurrent
+  // production build cannot overwrite chunks served by `next dev`.
+  distDir: envNonEmpty(process.env.NEXT_DIST_DIR) ?? ".next",
   // Enables a minimal production bundle for Docker images:
   // `next build` will create `.next/standalone` with only needed deps.
   output: "standalone",

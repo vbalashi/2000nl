@@ -1,6 +1,7 @@
 {
   "common": {
-    "close": "Sluiten"
+    "close": "Sluiten",
+    "done": "Gereed"
   },
   "onboarding": {
     "steps": [
@@ -104,7 +105,22 @@
       "retry": "Opnieuw proberen"
     },
     "collapse": "Betekenis inklappen",
-    "report": "Probleem melden",
+    "expand": "Betekenis uitklappen",
+    "report": "Melden",
+    "collections": {
+      "label": "Collecties",
+      "title": "Collecties voor deze betekenis",
+      "search": "Zoek collecties",
+      "createPlaceholder": "Naam van nieuwe collectie",
+      "create": "Maken",
+      "items": "items",
+      "empty": "Geen collecties gevonden",
+      "saved": "Collecties bijgewerkt",
+      "failed": "Collecties konden niet worden bijgewerkt"
+    },
+    "training": {
+      "next": "Hierna trainen"
+    },
     "wordDetails": {
       "open": "Woorddetails"
     }

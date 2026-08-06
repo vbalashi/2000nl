@@ -63,13 +63,13 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Show translation for meaning 2",
+        name: "Translate",
       }),
     );
     expect(
@@ -99,7 +99,9 @@ describe("LibrarySenseCardV2Session", () => {
     );
 
     expect(screen.getByText("Legacy detail")).toBeInTheDocument();
-    expect(await screen.findByText("Meanings")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("library-sense-card-group"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
   });
 
@@ -115,13 +117,13 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     expect(fetchGroup).toHaveBeenCalledWith(
       expect.objectContaining({ translationTargetLanguageCode: null }),
     );
     expect(
       screen.queryByRole("button", {
-        name: "Show translation for meaning 1",
+        name: "Translate",
       }),
     ).not.toBeInTheDocument();
   });
@@ -153,7 +155,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -185,7 +187,7 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -202,7 +204,7 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: "Show translation for meaning 2",
+          name: "Translate",
         }),
       );
     });
@@ -235,7 +237,7 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -244,7 +246,7 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: "Show translation for meaning 2",
+          name: "Translate",
         }),
       );
     });
@@ -295,13 +297,13 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Show translation for meaning 2",
+        name: "Translate",
       }),
     );
     expect(requestTranslation).toHaveBeenCalledTimes(1);
@@ -334,7 +336,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
