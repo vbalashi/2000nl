@@ -1,6 +1,6 @@
 # Cross-Product SenseCard V1 Rollout Gate
 
-Status: active
+Status: completed
 Issue: `vbalashi/2000nl#79`
 Branch: `codex/issue-79-cross-product-sensecard-gate`
 Worktree: `/Users/khrustal/adhoc/2000nl-issue-79-cross-product-sensecard-gate`
@@ -71,5 +71,19 @@ recorded. A failed gate is a valid outcome if its blockers are explicit.
 - [x] Recover the rejected 2000NL visual set against the explicit contract
       matrix: stable Training shell, shared headword/section chrome, correct
       Library per-sense controls and action hierarchy, and responsive long type.
-- [ ] Product-owner approval of synchronized 2000NL evidence recorded.
-- [ ] Both review-ready branches integrated and reverified on their main branches.
+- [x] Product-owner approval of synchronized 2000NL evidence recorded.
+- [x] Both review-ready branches integrated and reverified on their main branches.
+
+## Integrated result
+
+- 2000NL merged main: `a0df9d690303386a3d0a477c04a2b43a16c35092`.
+- AudioFilms merged main: `95c7b2fc56d9c295bed0f4533063edf6e7543347`.
+- 2000NL exact-main validation: typecheck, lint, 60 test files passed,
+  427 tests passed and 74 skipped; local browser Face → Hint → Answer smoke
+  passed with no console errors.
+- AudioFilms exact-main validation: extension unit smoke, changed JavaScript
+  syntax checks, and diff check passed.
+- Independent final visual QA: PASS across desktop, 390px, and 280px evidence;
+  no High, Medium, or Low findings.
+- Feature flags remain off. Rollout stays reversible and requires no database
+  rollback.
