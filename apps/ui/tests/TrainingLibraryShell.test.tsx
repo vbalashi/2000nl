@@ -11,8 +11,10 @@ vi.mock("@/components/training/TrainingScreen", () => ({
     onRequestDestination,
     onNavigationBlockedChange,
   }: {
-    destination?: "training" | "library";
-    onRequestDestination?: (destination: "training" | "library") => void;
+    destination?: "training" | "library" | "statistics" | "settings";
+    onRequestDestination?: (
+      destination: "training" | "library" | "statistics" | "settings",
+    ) => void;
     onNavigationBlockedChange?: (blocked: boolean) => void;
   }) => {
     const mountNumber = useRef<number>();
@@ -26,6 +28,12 @@ vi.mock("@/components/training/TrainingScreen", () => ({
         <p>training mount {mountNumber.current}</p>
         <p>destination {destination ?? "legacy"}</p>
         <button onClick={() => onRequestDestination?.("library")}>Library</button>
+        <button onClick={() => onRequestDestination?.("statistics")}>
+          Statistics
+        </button>
+        <button onClick={() => onRequestDestination?.("settings")}>
+          Settings
+        </button>
         <button onClick={() => onNavigationBlockedChange?.(true)}>Block</button>
       </div>
     );
@@ -90,4 +98,45 @@ test("disabled rollout preserves the legacy Training entry point", () => {
 
   expect(screen.getByText("destination legacy")).toBeInTheDocument();
   expect(window.location.search).toBe("?destination=library");
+});
+
+test("extended destinations share the mounted Training session and browser history", () => {
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Statistics" }));
+  expect(window.location.search).toBe("?destination=statistics");
+  expect(screen.getByText("destination statistics")).toBeInTheDocument();
+  expect(screen.getByText("training mount 1")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  expect(window.location.search).toBe("?destination=settings");
+  expect(screen.getByText("destination settings")).toBeInTheDocument();
+
+  act(() => {
+    window.history.pushState({}, "", "/?destination=statistics");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  expect(screen.getByText("destination statistics")).toBeInTheDocument();
+  expect(trainingMounts).toBe(1);
+});
+
+test("extended destination flag off normalizes unsupported direct links to Training", () => {
+  window.history.replaceState({}, "", "/?destination=statistics");
+
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled={false}
+    />,
+  );
+
+  expect(screen.getByText("destination training")).toBeInTheDocument();
+  expect(window.location.search).toBe("");
 });

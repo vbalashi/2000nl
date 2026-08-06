@@ -91,10 +91,9 @@ export function useTrainingOnboarding(params: {
     [],
   );
 
-  const handleLanguageSelect = useCallback(
+  const saveOnboardingLanguageChoice = useCallback(
     async (lang: OnboardingLanguage) => {
       setOnboardingLanguageChoice(lang);
-      setShowLanguageSelection(false);
 
       if (userId) {
         try {
@@ -105,10 +104,18 @@ export function useTrainingOnboarding(params: {
           console.error("[Onboarding] Failed to save language:", e);
         }
       }
+    },
+    [setOnboardingLanguageChoice, userId],
+  );
+
+  const handleLanguageSelect = useCallback(
+    async (lang: OnboardingLanguage) => {
+      await saveOnboardingLanguageChoice(lang);
+      setShowLanguageSelection(false);
 
       setRunTour(true);
     },
-    [setOnboardingLanguageChoice, userId],
+    [saveOnboardingLanguageChoice],
   );
 
   const startOnboarding = useCallback(() => {
@@ -154,6 +161,7 @@ export function useTrainingOnboarding(params: {
     onboardingCompleted,
     onboardingLang,
     runTour,
+    saveOnboardingLanguageChoice,
     setOnboardingLanguageChoice,
     setShowLanguageSelection,
     showLanguageSelection,
