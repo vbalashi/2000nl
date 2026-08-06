@@ -19,6 +19,10 @@ different product contexts. It does not require identical outer shells:
 The group is presentation context. The learnable and mutable unit is always a
 single SenseCard target: `entryId + cardTypeId + stateRevision`.
 
+Visual ordinal rule: a one-sense group has no meaning ordinal. In a multi-sense
+group the ordinal is plain text on a small background cutout that interrupts
+the meaning-card top border; it has no independent outline or chip border.
+
 ## Shared scenario manifest
 
 The two repositories use product-owned adapters, but the scenarios below are

@@ -229,7 +229,7 @@ function MeaningCard({
       className="relative rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-[#20252f] dark:shadow-none"
     >
       {meaning.displayOrdinal != null ? (
-        <span className="absolute -left-px -top-px flex h-10 w-10 -translate-x-1/4 -translate-y-1/4 items-center justify-center rounded-full bg-slate-50 font-mono text-lg text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+        <span className="absolute -left-px -top-px flex h-7 w-7 -translate-x-1/4 -translate-y-1/4 items-center justify-center bg-slate-50 font-mono text-lg text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
           {meaning.displayOrdinal}
         </span>
       ) : null}
