@@ -122,14 +122,6 @@ export function LibrarySenseCardGroup({
         </div>
       </header>
 
-      <div className="mb-3 flex items-center gap-3 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400 sm:px-2">
-        <span>{model.meaningCountLabel}</span>
-        <span className="h-px flex-1 bg-slate-300 dark:bg-slate-700" />
-        <span className="flex h-7 min-w-7 items-center justify-center rounded-full border border-slate-300 px-2 font-mono tracking-normal dark:border-slate-700">
-          {model.senseCount}
-        </span>
-      </div>
-
       <div className="space-y-3">
         {model.meanings.map((meaning) => {
           const identity = librarySenseCardIdentity(
@@ -267,8 +259,9 @@ function MeaningCard({
               {t("senseCard.known.marked")}
             </span>
           ) : meaning.repeatCount > 0 ? (
-            <span className="shrink-0 rounded-xl border border-slate-300 px-2.5 py-1 font-mono text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              ↔ {meaning.repeatCount}×
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1 font-mono text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              <RepeatIcon className="h-3.5 w-3.5" />
+              {meaning.repeatCount}×
             </span>
           ) : (
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -302,9 +295,15 @@ function MeaningCard({
                       data-content-kind={item.kind}
                     >
                       {showLabel && presentation.labelKey ? (
-                        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                          {t(presentation.labelKey)}
-                        </h3>
+                        <ContentSectionHeader
+                          label={t(presentation.labelKey)}
+                          sectionGroup={presentation.sectionGroup}
+                          count={meaning.details.filter(
+                            (candidate) =>
+                              contentPresentation[candidate.kind].sectionGroup ===
+                              presentation.sectionGroup,
+                          ).length}
+                        />
                       ) : null}
                       <p className={presentation.textClassName}>{item.text}</p>
                       {state.translationVisible && item.translation ? (
@@ -516,6 +515,40 @@ function NestedContent({
   );
 }
 
+function ContentSectionHeader({
+  label,
+  sectionGroup,
+  count,
+}: {
+  label: string;
+  sectionGroup: string;
+  count: number;
+}) {
+  const Icon =
+    sectionGroup === "usage"
+      ? BracesIcon
+      : sectionGroup === "examples"
+        ? ListIcon
+        : sectionGroup === "idioms"
+          ? QuoteIcon
+          : null;
+  return (
+    <h3
+      data-section-icon={Icon ? sectionGroup : undefined}
+      className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400"
+    >
+      {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
+      <span>{label}</span>
+      <span className="h-px flex-1 bg-slate-300/60 dark:bg-slate-700/60" />
+      {count > 1 ? (
+        <span className="font-mono text-[10px] font-medium tracking-normal">
+          {count}
+        </span>
+      ) : null}
+    </h3>
+  );
+}
+
 function initialViewState(
   model: LibrarySenseCardGroupModel,
 ): LibrarySenseCardViewState {
@@ -579,5 +612,65 @@ function AudioIcon() {
       <path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z" />
       <path d="M15 9a4 4 0 0 1 0 6M17.5 6.5a7.5 7.5 0 0 1 0 11" />
     </svg>
+  );
+}
+
+type SmallIconProps = { className: string };
+
+function SmallIcon({
+  className,
+  children,
+}: SmallIconProps & { children: React.ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function RepeatIcon({ className }: SmallIconProps) {
+  return (
+    <SmallIcon className={className}>
+      <path d="m17 2 4 4-4 4" />
+      <path d="M3 11V9a3 3 0 0 1 3-3h15" />
+      <path d="m7 22-4-4 4-4" />
+      <path d="M21 13v2a3 3 0 0 1-3 3H3" />
+    </SmallIcon>
+  );
+}
+
+function BracesIcon({ className }: SmallIconProps) {
+  return (
+    <SmallIcon className={className}>
+      <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1" />
+      <path d="M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1" />
+    </SmallIcon>
+  );
+}
+
+function ListIcon({ className }: SmallIconProps) {
+  return (
+    <SmallIcon className={className}>
+      <path d="M8 6h13M8 12h13M8 18h13" />
+      <path d="M3 6h.01M3 12h.01M3 18h.01" />
+    </SmallIcon>
+  );
+}
+
+function QuoteIcon({ className }: SmallIconProps) {
+  return (
+    <SmallIcon className={className}>
+      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2H4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
+      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.75-2-2-2h-4c-1.25 0-2 .75-2 1.97V11c0 1.25.75 2 2 2h3c0 3-1 5-4 6v2Z" />
+    </SmallIcon>
   );
 }

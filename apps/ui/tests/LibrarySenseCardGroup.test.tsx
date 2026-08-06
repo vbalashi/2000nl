@@ -33,7 +33,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(headword.querySelectorAll("wbr")).toHaveLength(9);
     expect(headword.querySelectorAll(".whitespace-nowrap")).toHaveLength(10);
     expect(screen.getByText("существительное")).toBeInTheDocument();
-    expect(screen.getByText("Значения")).toBeInTheDocument();
+    expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Показать перевод значения 1" }),
     ).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.getByText("Meanings")).toBeInTheDocument();
+    expect(screen.queryByText("Meanings")).not.toBeInTheDocument();
     expect(screen.getByText(/3×/)).toBeInTheDocument();
     expect(
       screen.queryByText("Bij welke bank hebt u een rekening?"),
@@ -98,7 +98,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(screen.queryByText("bench · sofa")).not.toBeInTheDocument();
   });
 
-  test("renders the authoritative group count", () => {
+  test("does not render the aggregate group count as card chrome", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     render(
       <LibrarySenseCardGroup
@@ -108,7 +108,7 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(screen.queryByText("7")).not.toBeInTheDocument();
   });
 
   test("keeps the quiet known action beside review controls", () => {
@@ -216,6 +216,15 @@ describe("LibrarySenseCardGroup", () => {
     ).toBeInTheDocument();
     expect(
       container.querySelector('[data-content-kind="idiom"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="usage"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="examples"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-section-icon="idioms"]'),
     ).toBeInTheDocument();
   });
 

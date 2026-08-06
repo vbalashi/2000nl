@@ -67,5 +67,6 @@ recorded. A failed gate is a valid outcome if its blockers are explicit.
 - [x] Full/Narrow, single/multi, translation and long-headword evidence captured.
 - [x] Independent visual QA passes with no findings.
 - [x] Rollout, rollback and follow-up ownership documented.
-- [ ] Product-owner approval recorded.
+- [x] AudioFilms presentation approved by the product owner.
+- [ ] Product-owner approval of synchronized 2000NL evidence recorded.
 - [ ] Both review-ready branches integrated and reverified on their main branches.

@@ -63,7 +63,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -99,7 +99,9 @@ describe("LibrarySenseCardV2Session", () => {
     );
 
     expect(screen.getByText("Legacy detail")).toBeInTheDocument();
-    expect(await screen.findByText("Meanings")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("library-sense-card-group"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
   });
 
@@ -115,7 +117,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     expect(fetchGroup).toHaveBeenCalledWith(
       expect.objectContaining({ translationTargetLanguageCode: null }),
     );
@@ -153,7 +155,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -185,7 +187,7 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -235,7 +237,7 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -295,7 +297,7 @@ describe("LibrarySenseCardV2Session", () => {
         fallback={<p>Legacy detail</p>}
       />,
     );
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );
@@ -334,7 +336,7 @@ describe("LibrarySenseCardV2Session", () => {
       />,
     );
 
-    await screen.findByText("Meanings");
+    await screen.findByTestId("library-sense-card-group");
     fireEvent.click(
       screen.getByTestId("library-sense-card-entry-bank-finance"),
     );

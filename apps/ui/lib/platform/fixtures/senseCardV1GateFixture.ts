@@ -5,7 +5,7 @@ import type {
 
 function makeContentNode(
   entryId: string,
-  kind: "definition" | "example",
+  kind: "definition" | "example" | "usage-pattern" | "idiom",
   order: number,
   text: string,
   translation: string,
@@ -137,6 +137,23 @@ export const gateFurnitureEntry = makeEntry({
   phase: "reviewing",
   repeatCount: 3,
 });
+
+gateFurnitureEntry.contentNodes.push(
+  makeContentNode(
+    gateFurnitureEntry.entryId,
+    "usage-pattern",
+    2,
+    "op de bank zitten",
+    "сидеть на диване",
+  ),
+  makeContentNode(
+    gateFurnitureEntry.entryId,
+    "idiom",
+    3,
+    "door de bank genomen",
+    "в среднем · в общем и целом",
+  ),
+);
 
 export const gateFinanceEntry = makeEntry({
   entryId: "entry-bank-finance",

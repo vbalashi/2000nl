@@ -1,6 +1,6 @@
 # SenseCard v1 cross-product gate
 
-Status: review ready; product-owner approval pending  
+Status: review ready; AudioFilms approved, synchronized 2000NL owner review pending
 Gate owner: `vbalashi/2000nl#79`  
 2000NL baseline: `870bff926c3709be49550b69dcc25b795ab8f997`  
 AudioFilms baseline: `efe7aae771c0bb5f2b70cd8d30f732a25fb30ff5`
@@ -19,10 +19,17 @@ different product contexts. It does not require identical outer shells:
 The group is presentation context. The learnable and mutable unit is always a
 single SenseCard target: `entryId + cardTypeId + stateRevision`.
 
-Visual ordinal rule: a one-sense group has no meaning ordinal and its standalone
-header does not repeat a redundant `1 meaning` label. In a multi-sense group the
-ordinal is plain text on a small background cutout that interrupts the
-meaning-card top border; it has no independent outline or chip border.
+Visual ordinal rule: a one-sense group has no meaning ordinal. Neither a
+one-sense nor a multi-sense composition renders an aggregate `Meaning(s)`
+header/count row. In a multi-sense group the ordinal is plain text on a small
+background cutout that interrupts the meaning-card top border; it has no
+independent outline or chip border. Repeat exposure is sense-local and appears
+inside that meaning card, never as a headword-group count.
+
+Information markers follow the same vocabulary in both products: usage patterns
+use braces, examples use a list marker, and the quotation mark is reserved for
+idioms/expressions. Audio playback is adjacent to the headword. These are
+presentation rules only; they do not change entry or content-node identity.
 
 ## Shared scenario manifest
 
@@ -69,6 +76,15 @@ Executed on 2026-08-05 against the exact baselines above:
 - 2000NL focused SenseCard suite: 8 files, 39 tests passed.
 - AudioFilms dictionary suite: 14 files, 58 tests passed.
 - AudioFilms extension unit smoke: passed.
+
+Re-executed after the 2026-08-06 presentation synchronization:
+
+- 2000NL complete UI suite: 58 files passed, 2 skipped; 423 tests passed,
+  74 skipped.
+- 2000NL focused SenseCard suite: 5 files, 25 tests passed; typecheck and
+  lint passed.
+- AudioFilms extension unit smoke and extension JavaScript syntax checks:
+  passed.
 
 These checks cover projection, independent multi-sense interaction,
 translation visibility/failure, localization, Known/Undo, report targeting and
@@ -125,9 +141,11 @@ product CSS change was made.
 - [x] Capture matched Full and Narrow screenshots for `SC-01`, `SC-03`,
       `SC-06` and translation off/on.
 - [x] Record keyboard/focus/accessible-name checks for the interactive fixture.
-- [x] Complete independent visual QA on the exact 12-screenshot set (latest
-      PASS on 2026-08-06; no High, Medium or Low findings).
-- [ ] Record product-owner approval.
+- [x] Re-capture the synchronized presentation after removal of the aggregate
+      Meaning(s) row and addition of sense-local rich-content markers.
+- [x] Complete independent visual QA on the exact 12-screenshot set (final
+      re-review PASS on 2026-08-06; no High, Medium or Low findings).
+- [ ] Record final product-owner approval of the synchronized cross-product set.
 - [x] Publish rollout, rollback and follow-up decisions.
 
 ## Rollout boundary (draft)

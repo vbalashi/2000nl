@@ -67,7 +67,6 @@ export type LibrarySenseCardGroupModel = {
   audioCapability: PlatformAudioCapabilityV2 | null;
   partOfSpeech: string | null;
   coreVocabularyLabel: string | null;
-  meaningCountLabel: string;
   senseCount: number;
   meanings: LibrarySenseCardModel[];
 };
@@ -130,7 +129,6 @@ export function buildLibrarySenseCardGroupModel(
         : t(partOfSpeech.messageKey)
       : null,
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
-    meaningCountLabel: t("senseCard.sections.meanings"),
     senseCount: group.senseCount,
     meanings: senseEntries.map((entry) =>
       buildMeaning(
