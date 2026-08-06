@@ -93,6 +93,7 @@ render its product-owned presentation and DOM adapters through
 | `screenshots/2000nl-mobile-long-headword.png` | 390px localized long compound in the Narrow composition |
 | `screenshots/audiofilms-desktop-fixtures.png` | AudioFilms Full/Narrow, single/multi, translation and long-headword matrix |
 | `screenshots/audiofilms-mobile-fixtures.png` | the same AudioFilms fixture at 390px |
+| `screenshots/audiofilms-280-fixtures.png` | extreme-width regression for container-responsive service labels and controls |
 
 Automated browser assertions:
 
@@ -107,7 +108,10 @@ Automated browser assertions:
 - the long compound stays within its Narrow container in both products;
 - its ten pronunciation segments remain single-line units, with nine explicit
   break opportunities after `·`, and neither 390px page has horizontal
-  overflow.
+  overflow;
+- at a 280px AudioFilms viewport, service labels scale against the actual card
+  container, the review question remains inside its section header, and neither
+  the header nor the document overflows horizontally.
 
 One apparent 2000NL mobile collapse was reproduced only in a clipped slice of
 an unusually tall full-page screenshot. A normal 390×844 viewport and computed
@@ -120,8 +124,8 @@ product CSS change was made.
 - [x] Capture matched Full and Narrow screenshots for `SC-01`, `SC-03`,
       `SC-06` and translation off/on.
 - [x] Record keyboard/focus/accessible-name checks for the interactive fixture.
-- [x] Complete independent visual QA on the exact screenshot set (PASS on
-      2026-08-05; no High, Medium or Low findings).
+- [x] Complete independent visual QA on the exact 12-screenshot set (latest
+      PASS on 2026-08-06; no High, Medium or Low findings).
 - [ ] Record product-owner approval.
 - [x] Publish rollout, rollback and follow-up decisions.
 
