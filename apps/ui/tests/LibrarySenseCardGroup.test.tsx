@@ -32,7 +32,14 @@ describe("LibrarySenseCardGroup", () => {
     expect(headword).toBeInTheDocument();
     expect(headword.querySelectorAll("wbr")).toHaveLength(9);
     expect(headword.querySelectorAll(".whitespace-nowrap")).toHaveLength(10);
-    expect(screen.getByText("существительное")).toBeInTheDocument();
+    const metadata = screen.getByTestId("sense-card-metadata");
+    expect(within(metadata).getByText("существительное")).toBeInTheDocument();
+    expect(
+      metadata.compareDocumentPosition(headword) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(headword).toHaveAttribute("data-long-headword", "true");
+    expect(headword.className).toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Показать перевод значения 1" }),
@@ -49,7 +56,9 @@ describe("LibrarySenseCardGroup", () => {
     );
 
     expect(
-      container.querySelector("[data-testid='library-sense-card-entry-bank-furniture'] > span"),
+      container.querySelector(
+        "[data-testid='library-sense-card-entry-bank-furniture'] > span",
+      ),
     ).not.toBeInTheDocument();
   });
 
@@ -130,10 +139,18 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "Again" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Hard" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Good" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Easy" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Again" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Hard" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Good" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Easy" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Mark as known/ }),
     ).toBeInTheDocument();
@@ -141,7 +158,25 @@ describe("LibrarySenseCardGroup", () => {
     expect(onOpenCollections).toHaveBeenCalledWith(
       expect.objectContaining({ entryId: "entry-bank-furniture" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    const firstCard = screen.getByTestId(
+      "library-sense-card-entry-bank-furniture",
+    );
+    expect(
+      within(firstCard).getByTestId("library-primary-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Collections · 2" }),
+    );
+    expect(
+      within(firstCard).getByTestId("sense-card-top-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Collapse meaning" }),
+    );
+    expect(
+      within(firstCard).getByTestId("library-service-actions"),
+    ).toContainElement(
+      within(firstCard).getByRole("button", { name: "Report" }),
+    );
+    fireEvent.click(within(firstCard).getByRole("button", { name: "Report" }));
     expect(onReport).toHaveBeenCalledWith(
       expect.objectContaining({
         actionId: "report-content",

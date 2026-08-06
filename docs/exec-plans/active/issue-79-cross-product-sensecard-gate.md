@@ -68,7 +68,8 @@ recorded. A failed gate is a valid outcome if its blockers are explicit.
 - [x] Independent visual QA passes with no findings.
 - [x] Rollout, rollback and follow-up ownership documented.
 - [x] AudioFilms presentation approved by the product owner.
-- [x] 2000NL Library corrected against Pen 30.50: Training grades removed and
-      meaning-scoped collection management implemented and recaptured.
+- [x] Recover the rejected 2000NL visual set against the explicit contract
+      matrix: stable Training shell, shared headword/section chrome, correct
+      Library per-sense controls and action hierarchy, and responsive long type.
 - [ ] Product-owner approval of synchronized 2000NL evidence recorded.
 - [ ] Both review-ready branches integrated and reverified on their main branches.

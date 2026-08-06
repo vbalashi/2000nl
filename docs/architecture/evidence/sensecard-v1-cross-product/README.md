@@ -1,9 +1,17 @@
 # SenseCard v1 cross-product gate
 
-Status: review ready; AudioFilms approved, synchronized 2000NL owner review pending
+Status: 2000NL visual recovery review-ready; owner re-review pending; AudioFilms approved
 Gate owner: `vbalashi/2000nl#79`  
 2000NL baseline: `870bff926c3709be49550b69dcc25b795ab8f997`  
 AudioFilms baseline: `efe7aae771c0bb5f2b70cd8d30f732a25fb30ff5`
+
+Implementation lookup: [`visual-contract.md`](visual-contract.md). The
+2026-08-06 owner review rejected the previous 2000NL screenshot set because the
+Library/Training implementation mixed stale light-theme and product-flow
+references. The implementation has since been recovered against the explicit
+matrix and passed an independent desktop/mobile visual QA. Product-owner
+approval remains open; the earlier screenshots are historical evidence, not
+current approval evidence.
 
 ## Decision boundary
 

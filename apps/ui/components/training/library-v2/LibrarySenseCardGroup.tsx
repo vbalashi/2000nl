@@ -2,9 +2,14 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { HeadwordWithPronunciationBreaks } from "../HeadwordWithPronunciationBreaks";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  ExposureBadge,
+  FlagIcon,
+  SenseCardHeadwordLockup,
+  SenseSectionHeader,
+} from "../SenseCardChrome";
 import type {
   LibrarySenseCardGroupModel,
   LibrarySenseCardModel,
@@ -78,50 +83,33 @@ export function LibrarySenseCardGroup({
   return (
     <section
       data-testid="library-sense-card-group"
-      className="h-full overflow-y-auto bg-slate-50 px-3 py-4 text-slate-900 dark:bg-[#11151d] dark:text-slate-100 sm:px-5"
+      className="h-full overflow-y-auto bg-slate-50 px-3 py-4 text-slate-900 [container-type:inline-size] dark:bg-[#11151d] dark:text-slate-100 sm:px-5"
       style={{ scrollbarColor: "rgb(100 116 139 / 0.55) transparent" }}
     >
       <header className="mb-5 px-1 sm:px-2">
-        <div className="flex min-w-0 items-baseline gap-2.5 font-serif">
-          {model.article ? (
-            <span className="shrink-0 text-2xl leading-none text-slate-500 dark:text-slate-400">
-              {model.article}
-            </span>
-          ) : null}
-          <h2
-            aria-label={model.headword}
-            className="min-w-0 break-words text-[clamp(2.6rem,8vw,4rem)] font-normal leading-[0.92] tracking-[-0.035em]"
-          >
-            <HeadwordWithPronunciationBreaks text={model.headword} />
-          </h2>
-          {onPlayAudio && model.audioCapability ? (
-            <button
-              type="button"
-              disabled={audioBusy}
-              aria-label={platformV2Message(
-                interfaceLanguage,
-                "senseCard.audio.play",
-              )}
-              onClick={onPlayAudio}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-            >
-              <AudioIcon />
-            </button>
-          ) : null}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          {model.partOfSpeech ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {model.partOfSpeech}
-            </span>
-          ) : null}
-          {model.coreVocabularyLabel ? (
-            <span className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:text-indigo-200">
-              {model.coreVocabularyLabel}
-            </span>
-          ) : null}
-        </div>
+        <SenseCardHeadwordLockup
+          article={model.article}
+          headword={model.headword}
+          partOfSpeech={model.partOfSpeech}
+          coreVocabularyLabel={model.coreVocabularyLabel}
+          tone="light"
+          inlineAction={
+            onPlayAudio && model.audioCapability ? (
+              <button
+                type="button"
+                disabled={audioBusy}
+                aria-label={platformV2Message(
+                  interfaceLanguage,
+                  "senseCard.audio.play",
+                )}
+                onClick={onPlayAudio}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+              >
+                <AudioIcon />
+              </button>
+            ) : null
+          }
+        />
       </header>
 
       <div className="space-y-3">
@@ -268,20 +256,52 @@ function MeaningCard({
               </div>
             ) : null}
           </div>
-          {meaning.undoKnown ? (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
-              {t("senseCard.known.marked")}
-            </span>
-          ) : meaning.repeatCount > 0 ? (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1 font-mono text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              <RepeatIcon className="h-3.5 w-3.5" />
-              {meaning.repeatCount}×
-            </span>
-          ) : (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-              {t("senseCard.state.new")}
-            </span>
-          )}
+          <div
+            className="flex shrink-0 items-center gap-2"
+            data-testid="sense-card-top-actions"
+          >
+            {meaning.undoKnown ? (
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600 dark:text-emerald-300">
+                {t("senseCard.known.marked")}
+              </span>
+            ) : meaning.repeatCount > 0 ? (
+              <ExposureBadge count={meaning.repeatCount} tone="light" />
+            ) : (
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                {t("senseCard.state.new")}
+              </span>
+            )}
+            {translationEnabled ? (
+              <button
+                type="button"
+                aria-label={t("senseCard.translation.forMeaning", {
+                  number: ordinal,
+                })}
+                aria-pressed={state.translationVisible}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleTranslation();
+                }}
+                disabled={translationState === "pending"}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+              >
+                <TranslateIcon />
+              </button>
+            ) : null}
+            {state.expanded ? (
+              <button
+                type="button"
+                aria-label={t("senseCard.collapse")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleExpanded();
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
+              >
+                ↑
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {meaning.partOfSpeech && meaning.partOfSpeech !== groupPartOfSpeech ? (
@@ -294,7 +314,7 @@ function MeaningCard({
         {state.expanded ? (
           <div className="mt-5" onClick={(event) => event.stopPropagation()}>
             {meaning.details.length ? (
-              <div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+              <div className="space-y-4">
                 {meaning.details.map((item, index) => {
                   const presentation = contentPresentation[item.kind];
                   const previous = meaning.details[index - 1];
@@ -312,11 +332,13 @@ function MeaningCard({
                         <ContentSectionHeader
                           label={t(presentation.labelKey)}
                           sectionGroup={presentation.sectionGroup}
-                          count={meaning.details.filter(
-                            (candidate) =>
-                              contentPresentation[candidate.kind].sectionGroup ===
-                              presentation.sectionGroup,
-                          ).length}
+                          count={
+                            meaning.details.filter(
+                              (candidate) =>
+                                contentPresentation[candidate.kind]
+                                  .sectionGroup === presentation.sectionGroup,
+                            ).length
+                          }
                         />
                       ) : null}
                       <p className={presentation.textClassName}>{item.text}</p>
@@ -342,59 +364,56 @@ function MeaningCard({
               </div>
             ) : null}
 
-            {meaning.startLearning ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onAction(meaning.startLearning!)}
-                className="mt-5 w-full rounded-xl border border-indigo-500 bg-indigo-500/10 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-500/15 disabled:opacity-50 dark:text-indigo-200"
-              >
-                {t(meaning.startLearning.messageKey)}
-              </button>
-            ) : null}
-
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
-              {translationEnabled ? (
-                <button
-                  type="button"
-                  aria-label={t("senseCard.translation.forMeaning", {
-                    number: ordinal,
-                  })}
-                  aria-pressed={state.translationVisible}
-                  onClick={onToggleTranslation}
-                  disabled={translationState === "pending"}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-300"
-                >
-                  <TranslateIcon />
-                </button>
-              ) : null}
-              {meaning.reportCapability && onReport ? (
-                <button
-                  type="button"
-                  onClick={() => onReport(meaning.reportCapability!)}
-                  className="font-semibold text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                  {t(meaning.reportCapability.messageKey)}
-                </button>
-              ) : null}
+            <div
+              data-testid="library-primary-actions"
+              className="mt-5 grid grid-cols-[minmax(0,3fr)_minmax(7.5rem,1fr)] gap-2 border-t border-slate-200 pt-4 text-xs dark:border-slate-700"
+            >
               {onOpenCollections ? (
                 <button
                   type="button"
                   onClick={() => onOpenCollections(meaning)}
-                  className="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-200"
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 font-semibold text-slate-600 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-600 dark:text-slate-300 dark:hover:text-indigo-200"
                 >
                   <ListIcon className="h-3.5 w-3.5" />
                   {t("senseCard.collections.label")}
                   {collectionCount > 0 ? ` · ${collectionCount}` : ""}
                 </button>
-              ) : null}
+              ) : (
+                <span />
+              )}
               {onTrainNext ? (
                 <button
                   type="button"
                   onClick={() => onTrainNext(meaning)}
-                  className="font-semibold text-slate-500 transition hover:text-indigo-700 dark:text-slate-400 dark:hover:text-indigo-200"
+                  className="min-h-10 rounded-xl border border-indigo-400 bg-indigo-500/10 px-3 font-semibold text-indigo-700 transition hover:bg-indigo-500/15 dark:text-indigo-200"
                 >
                   {t("senseCard.training.next")}
+                </button>
+              ) : null}
+            </div>
+
+            <div
+              data-testid="library-service-actions"
+              className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs"
+            >
+              {meaning.reportCapability && onReport ? (
+                <button
+                  type="button"
+                  onClick={() => onReport(meaning.reportCapability!)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+                >
+                  <FlagIcon className="h-3.5 w-3.5" />
+                  {t("senseCard.report")}
+                </button>
+              ) : null}
+              {meaning.startLearning ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(meaning.startLearning!)}
+                  className="font-semibold text-slate-500 transition hover:text-indigo-700 disabled:opacity-50 dark:text-slate-400 dark:hover:text-indigo-200"
+                >
+                  {t(meaning.startLearning.messageKey)}
                 </button>
               ) : null}
               <div className="min-w-0 flex-1" />
@@ -404,14 +423,6 @@ function MeaningCard({
                 busy={busy}
                 onAction={onAction}
               />
-              <button
-                type="button"
-                aria-label={t("senseCard.collapse")}
-                onClick={onToggleExpanded}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-[#171b22] dark:text-slate-300"
-              >
-                ↑
-              </button>
             </div>
             {translationState ? (
               <div
@@ -543,19 +554,14 @@ function ContentSectionHeader({
           ? QuoteIcon
           : null;
   return (
-    <h3
-      data-section-icon={Icon ? sectionGroup : undefined}
-      className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400"
-    >
-      {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
-      <span>{label}</span>
-      <span className="h-px flex-1 bg-slate-300/60 dark:bg-slate-700/60" />
-      {count > 1 ? (
-        <span className="font-mono text-[10px] font-medium tracking-normal">
-          {count}
-        </span>
-      ) : null}
-    </h3>
+    <div data-section-icon={Icon ? sectionGroup : undefined} className="mb-2">
+      <SenseSectionHeader
+        label={label}
+        icon={Icon ? <Icon className="h-3 w-3" /> : undefined}
+        count={count > 1 ? count : undefined}
+        tone="light"
+      />
+    </div>
   );
 }
 
@@ -644,17 +650,6 @@ function SmallIcon({
     >
       {children}
     </svg>
-  );
-}
-
-function RepeatIcon({ className }: SmallIconProps) {
-  return (
-    <SmallIcon className={className}>
-      <path d="m17 2 4 4-4 4" />
-      <path d="M3 11V9a3 3 0 0 1 3-3h15" />
-      <path d="m7 22-4-4 4-4" />
-      <path d="M21 13v2a3 3 0 0 1-3 3H3" />
-    </SmallIcon>
   );
 }
 
