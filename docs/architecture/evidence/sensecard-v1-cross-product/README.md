@@ -19,9 +19,10 @@ different product contexts. It does not require identical outer shells:
 The group is presentation context. The learnable and mutable unit is always a
 single SenseCard target: `entryId + cardTypeId + stateRevision`.
 
-Visual ordinal rule: a one-sense group has no meaning ordinal. In a multi-sense
-group the ordinal is plain text on a small background cutout that interrupts
-the meaning-card top border; it has no independent outline or chip border.
+Visual ordinal rule: a one-sense group has no meaning ordinal and its standalone
+header does not repeat a redundant `1 meaning` label. In a multi-sense group the
+ordinal is plain text on a small background cutout that interrupts the
+meaning-card top border; it has no independent outline or chip border.
 
 ## Shared scenario manifest
 
