@@ -82,7 +82,11 @@
       "example": "Hint · example"
     },
     "answer": {
-      "show": "Show answer"
+      "show": "Show answer",
+      "prompt": "What does this word mean?",
+      "reversePrompt": "Which word matches this meaning?",
+      "revealed": "Answer shown",
+      "hidden": "Answer hidden"
     },
     "sections": {
       "meaning": "Meaning",
@@ -104,6 +108,9 @@
       "failed": "Translation could not be loaded.",
       "retry": "Retry"
     },
+    "scroll": {
+      "more": "Show more card content"
+    },
     "collapse": "Collapse meaning",
     "expand": "Expand meaning",
     "report": "Report",
@@ -119,7 +126,8 @@
       "failed": "Collections could not be updated"
     },
     "training": {
-      "next": "Train next"
+      "next": "Train next",
+      "cardChanged": "Next training card"
     },
     "wordDetails": {
       "open": "Word details"

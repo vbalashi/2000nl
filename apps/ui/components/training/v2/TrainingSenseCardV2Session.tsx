@@ -11,9 +11,7 @@ import {
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
 import type { TrainingMode, TrainingWord } from "@/lib/types";
-import type {
-  PlatformSenseCardCapabilityV2,
-} from "../../../../../packages/shared/types/platformV2";
+import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 
@@ -25,6 +23,7 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   fallback: React.ReactNode;
   onPlayResolvedAudio?: (url: string, label: string) => void;
+  onOpenDetails?: () => void;
   onAvailabilityChange: (available: boolean) => void;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
@@ -47,12 +46,14 @@ export function TrainingSenseCardV2Session({
   interfaceLanguage,
   fallback,
   onPlayResolvedAudio,
+  onOpenDetails,
   onAvailabilityChange,
   onProgressActionAccepted,
 }: Props) {
-  const [result, setResult] = React.useState<Awaited<
-    ReturnType<typeof fetchPlatformV2TrainingEntry>
-  >>(null);
+  const [result, setResult] =
+    React.useState<Awaited<ReturnType<typeof fetchPlatformV2TrainingEntry>>>(
+      null,
+    );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -102,8 +103,8 @@ export function TrainingSenseCardV2Session({
   );
   const presentationAvailable = Boolean(
     model &&
-      (mode !== "definition-to-word" ||
-        model.definitions.some((item) => item.kind === "definition")),
+    (mode !== "definition-to-word" ||
+      model.definitions.some((item) => item.kind === "definition")),
   );
 
   React.useEffect(() => {
@@ -183,6 +184,7 @@ export function TrainingSenseCardV2Session({
             ? () => void handlePlayAudio()
             : undefined
         }
+        onOpenDetails={onOpenDetails}
         onAction={(capability) => void handleAction(capability)}
       />
       <SessionError error={error} />

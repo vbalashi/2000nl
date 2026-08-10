@@ -25,6 +25,7 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   busy?: boolean;
   onPlayAudio?: () => void;
+  onOpenDetails?: () => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 };
 
@@ -41,28 +42,57 @@ export function TrainingSenseCardStage({
   interfaceLanguage,
   busy = false,
   onPlayAudio,
+  onOpenDetails,
   onAction,
 }: Props) {
   const [answerVisible, setAnswerVisible] = React.useState(false);
   const [hintVisible, setHintVisible] = React.useState(false);
   const [translationVisible, setTranslationVisible] = React.useState(false);
-  const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const stageRef = React.useRef<HTMLElement>(null);
+  const answerPromptRef = React.useRef<HTMLParagraphElement>(null);
+  const showAnswerRef = React.useRef<HTMLButtonElement>(null);
+  const previousEntryIdRef = React.useRef(model.entryId);
+  const previousAnswerVisibleRef = React.useRef(answerVisible);
+  const [announcement, setAnnouncement] = React.useState("");
+  const t = React.useCallback(
+    (key: string) => platformV2Message(interfaceLanguage, key),
+    [interfaceLanguage],
+  );
   const hint = model.examples[0];
   const reversePrompt = model.definitions.find(
     (item) => item.kind === "definition",
   );
 
   React.useEffect(() => {
+    const entryChanged = previousEntryIdRef.current !== model.entryId;
+    previousEntryIdRef.current = model.entryId;
     setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
-  }, [model.entryId]);
+    if (entryChanged) {
+      setAnnouncement(t("senseCard.training.cardChanged"));
+      window.requestAnimationFrame(() => stageRef.current?.focus());
+    }
+  }, [model.entryId, t]);
+
+  React.useEffect(() => {
+    if (previousAnswerVisibleRef.current === answerVisible) return;
+    previousAnswerVisibleRef.current = answerVisible;
+    setAnnouncement(
+      t(
+        answerVisible ? "senseCard.answer.revealed" : "senseCard.answer.hidden",
+      ),
+    );
+    window.requestAnimationFrame(() => {
+      if (answerVisible) answerPromptRef.current?.focus();
+      else showAnswerRef.current?.focus();
+    });
+  }, [answerVisible, t]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
+        isInteractiveTarget(event.target) ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
@@ -87,12 +117,14 @@ export function TrainingSenseCardStage({
         return;
       }
       if (!answerVisible) return;
-      const reviewResult = ({
-        h: "fail",
-        j: "hard",
-        k: "success",
-        l: "easy",
-      } as const)[key as "h" | "j" | "k" | "l"];
+      const reviewResult = (
+        {
+          h: "fail",
+          j: "hard",
+          k: "success",
+          l: "easy",
+        } as const
+      )[key as "h" | "j" | "k" | "l"];
       const capability = model.reviewCapabilities.find(
         (candidate) => candidate.reviewResult === reviewResult,
       );
@@ -106,13 +138,19 @@ export function TrainingSenseCardStage({
 
   return (
     <section
+      ref={stageRef}
+      tabIndex={-1}
+      aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
       className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-100 [container-type:inline-size]"
     >
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </span>
       <article
         data-testid="training-sense-card-shell"
-        className="relative flex min-h-0 max-h-[500px] flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-600 bg-[#1d222b] shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
+        className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-600 bg-[#1d222b] shadow-[0_22px_70px_rgba(0,0,0,0.22)] sm:max-h-[500px]"
       >
         {answerVisible ? (
           <>
@@ -123,10 +161,12 @@ export function TrainingSenseCardStage({
               translationLabel={t("senseCard.translation.request")}
               audioLabel={t("senseCard.audio.play")}
               busy={busy}
+              moreLabel={t("senseCard.wordDetails.open")}
               onToggleTranslation={() =>
                 setTranslationVisible((visible) => !visible)
               }
               onPlayAudio={model.audioCapability ? onPlayAudio : undefined}
+              onOpenDetails={onOpenDetails}
             />
             <AnswerBody
               model={model}
@@ -138,6 +178,7 @@ export function TrainingSenseCardStage({
           <FaceBody
             model={model}
             mode={mode}
+            interfaceLanguage={interfaceLanguage}
             reversePrompt={reversePrompt}
             hint={hint}
             hintVisible={hintVisible}
@@ -151,13 +192,14 @@ export function TrainingSenseCardStage({
 
       <footer
         data-testid="training-sense-card-dock"
-        className="h-[104px] min-h-[104px] shrink-0 px-1 sm:h-20 sm:min-h-20"
+        className="h-[132px] min-h-[132px] shrink-0 px-1 sm:h-24 sm:min-h-24"
       >
         {answerVisible ? (
           <AnswerDock
             model={model}
             busy={busy}
             interfaceLanguage={interfaceLanguage}
+            promptRef={answerPromptRef}
             onAction={onAction}
           />
         ) : (
@@ -168,8 +210,10 @@ export function TrainingSenseCardStage({
             showHintLabel={t("senseCard.hint.show")}
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
+            promptLabel={t("senseCard.answer.prompt")}
             onToggleHint={() => setHintVisible((visible) => !visible)}
             onShowAnswer={() => setAnswerVisible(true)}
+            showAnswerRef={showAnswerRef}
           />
         )}
       </footer>
@@ -183,18 +227,22 @@ function EntityHeader({
   translationAvailable,
   translationLabel,
   audioLabel,
+  moreLabel,
   busy,
   onToggleTranslation,
   onPlayAudio,
+  onOpenDetails,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   translationAvailable: boolean;
   translationLabel: string;
   audioLabel: string;
+  moreLabel: string;
   busy: boolean;
   onToggleTranslation: () => void;
   onPlayAudio?: () => void;
+  onOpenDetails?: () => void;
 }) {
   return (
     <header className="relative z-10 shrink-0 bg-[#1d222b] px-6 pb-2 pt-7 sm:px-9 sm:pt-8">
@@ -231,6 +279,15 @@ function EntityHeader({
                 <TranslateIcon />
               </IconButton>
             ) : null}
+            {onOpenDetails ? (
+              <IconButton
+                label={moreLabel}
+                disabled={busy}
+                onClick={onOpenDetails}
+              >
+                <MoreIcon />
+              </IconButton>
+            ) : null}
           </>
         }
       />
@@ -251,6 +308,7 @@ function EntityHeader({
 function FaceBody({
   model,
   mode,
+  interfaceLanguage,
   reversePrompt,
   hint,
   hintVisible,
@@ -261,6 +319,7 @@ function FaceBody({
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
+  interfaceLanguage: OnboardingLanguage;
   reversePrompt?: TrainingSenseCardContent;
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
@@ -272,33 +331,43 @@ function FaceBody({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
-        {mode === "definition-to-word" ? (
-          <p
-            data-testid="reverse-prompt"
-            className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-50"
-          >
-            {reversePrompt?.text}
+        <div className="flex flex-col items-center gap-4 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            {mode === "definition-to-word"
+              ? platformV2Message(
+                  interfaceLanguage,
+                  "senseCard.answer.reversePrompt",
+                )
+              : platformV2Message(interfaceLanguage, "senseCard.answer.prompt")}
           </p>
-        ) : (
-          <SenseCardHeadwordLockup
-            article={model.article}
-            headword={model.headword}
-            tone="dark"
-            showMetadata={false}
-            inlineAction={
-              onPlayAudio ? (
-                <IconButton
-                  label={audioLabel}
-                  disabled={busy}
-                  onClick={onPlayAudio}
-                  compact
-                >
-                  <SpeakerIcon />
-                </IconButton>
-              ) : null
-            }
-          />
-        )}
+          {mode === "definition-to-word" ? (
+            <p
+              data-testid="reverse-prompt"
+              className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-50"
+            >
+              {reversePrompt?.text}
+            </p>
+          ) : (
+            <SenseCardHeadwordLockup
+              article={model.article}
+              headword={model.headword}
+              tone="dark"
+              showMetadata={false}
+              inlineAction={
+                onPlayAudio ? (
+                  <IconButton
+                    label={audioLabel}
+                    disabled={busy}
+                    onClick={onPlayAudio}
+                    compact
+                  >
+                    <SpeakerIcon />
+                  </IconButton>
+                ) : null
+              }
+            />
+          )}
+        </div>
       </div>
       {hint && hintVisible ? (
         <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-700 bg-[#191e27] px-4 py-3 sm:inset-x-9">
@@ -323,6 +392,11 @@ function AnswerBody({
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
 }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = React.useState({
+    top: false,
+    bottom: false,
+  });
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const definitions = model.definitions.filter(
     (item) => item.kind === "definition",
@@ -335,80 +409,126 @@ function AnswerBody({
   const idioms = model.examples.filter(
     (item) => item.kind === "idiom" || item.kind === "idiom-explanation",
   );
+  const updateScrollState = React.useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const maxScroll = Math.max(0, node.scrollHeight - node.clientHeight);
+    setScrollState({
+      top: node.scrollTop > 2,
+      bottom: maxScroll - node.scrollTop > 2,
+    });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    updateScrollState();
+    const node = scrollRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(node);
+    if (node.firstElementChild) observer.observe(node.firstElementChild);
+    return () => observer.disconnect();
+  }, [model.entryId, translationVisible, updateScrollState]);
+
+  const maskImage = scrollMask(scrollState.top, scrollState.bottom);
   return (
-    <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-0 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%-22px),transparent_100%)] [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden">
-      {definitions.length ? (
-        <div className="space-y-4 pt-2">
-          {definitions.map((item) => (
-            <ContentItem
-              key={item.contentNodeId}
-              item={item}
-              translationVisible={translationVisible}
-            />
-          ))}
-        </div>
-      ) : null}
-      {usagePatterns.length ? (
-        <ContentSection
-          section="usage"
-          title={t("senseCard.sections.usagePattern")}
-          count={usagePatterns.length}
-          icon={<UsagePatternIcon className="h-3 w-3" />}
+    <div className="relative min-h-0 flex-1">
+      <div
+        ref={scrollRef}
+        data-testid="training-answer-scroll"
+        data-scroll-top={scrollState.top ? "faded" : "clear"}
+        data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
+        onScroll={updateScrollState}
+        style={{ maskImage, WebkitMaskImage: maskImage }}
+        className="h-full overflow-y-auto px-6 pb-8 pt-0 [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden"
+      >
+        {definitions.length ? (
+          <div className="space-y-4 pt-2">
+            {definitions.map((item) => (
+              <ContentItem
+                key={item.contentNodeId}
+                item={item}
+                translationVisible={translationVisible}
+              />
+            ))}
+          </div>
+        ) : null}
+        {usagePatterns.length ? (
+          <ContentSection
+            section="usage"
+            title={t("senseCard.sections.usagePattern")}
+            count={usagePatterns.length}
+            icon={<UsagePatternIcon className="h-3 w-3" />}
+          >
+            {usagePatterns.map((item) => (
+              <ContentItem
+                key={item.contentNodeId}
+                item={item}
+                translationVisible={translationVisible}
+                accent="usage"
+              />
+            ))}
+          </ContentSection>
+        ) : null}
+        {examples.length ? (
+          <ContentSection
+            section="examples"
+            title={t("senseCard.sections.examples")}
+            count={examples.length}
+            icon={<ListMarkerIcon className="h-3 w-3" />}
+          >
+            {examples.map((item) => (
+              <ContentItem
+                key={item.contentNodeId}
+                item={item}
+                translationVisible={translationVisible}
+                accent="example"
+              />
+            ))}
+          </ContentSection>
+        ) : null}
+        {idioms.length ? (
+          <ContentSection
+            section="idioms"
+            title={t("senseCard.sections.idioms")}
+            count={idioms.length}
+            icon={<IdiomIcon className="h-3 w-3" />}
+          >
+            {idioms.map((item) => (
+              <ContentItem
+                key={item.contentNodeId}
+                item={item}
+                translationVisible={translationVisible}
+                accent="idiom"
+              />
+            ))}
+          </ContentSection>
+        ) : null}
+        {notes.length ? (
+          <ContentSection section="notes" title={t("senseCard.sections.notes")}>
+            {notes.map((item) => (
+              <ContentItem
+                key={item.contentNodeId}
+                item={item}
+                translationVisible={translationVisible}
+              />
+            ))}
+          </ContentSection>
+        ) : null}
+      </div>
+      {scrollState.bottom ? (
+        <button
+          type="button"
+          aria-label={t("senseCard.scroll.more")}
+          onClick={() =>
+            scrollRef.current?.scrollBy({
+              top: Math.max(120, scrollRef.current.clientHeight * 0.65),
+              behavior: "smooth",
+            })
+          }
+          className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-600 bg-[#171b22]/95 text-slate-300 shadow-lg hover:border-slate-400 hover:text-white"
         >
-          {usagePatterns.map((item) => (
-            <ContentItem
-              key={item.contentNodeId}
-              item={item}
-              translationVisible={translationVisible}
-              accent="usage"
-            />
-          ))}
-        </ContentSection>
-      ) : null}
-      {examples.length ? (
-        <ContentSection
-          section="examples"
-          title={t("senseCard.sections.examples")}
-          count={examples.length}
-          icon={<ListMarkerIcon className="h-3 w-3" />}
-        >
-          {examples.map((item) => (
-            <ContentItem
-              key={item.contentNodeId}
-              item={item}
-              translationVisible={translationVisible}
-              accent="example"
-            />
-          ))}
-        </ContentSection>
-      ) : null}
-      {idioms.length ? (
-        <ContentSection
-          section="idioms"
-          title={t("senseCard.sections.idioms")}
-          count={idioms.length}
-          icon={<IdiomIcon className="h-3 w-3" />}
-        >
-          {idioms.map((item) => (
-            <ContentItem
-              key={item.contentNodeId}
-              item={item}
-              translationVisible={translationVisible}
-              accent="idiom"
-            />
-          ))}
-        </ContentSection>
-      ) : null}
-      {notes.length ? (
-        <ContentSection section="notes" title={t("senseCard.sections.notes")}>
-          {notes.map((item) => (
-            <ContentItem
-              key={item.contentNodeId}
-              item={item}
-              translationVisible={translationVisible}
-            />
-          ))}
-        </ContentSection>
+          <ChevronDownIcon />
+        </button>
       ) : null}
     </div>
   );
@@ -453,7 +573,7 @@ function ContentItem({
         ? "border-l-[3px] border-indigo-400 pl-4"
         : accent === "idiom"
           ? "border-l-[3px] border-amber-400 pl-4"
-        : "";
+          : "";
   return (
     <div className={border}>
       <p
@@ -486,8 +606,10 @@ function FaceDock({
   showHintLabel,
   hideHintLabel,
   showAnswerLabel,
+  promptLabel,
   onToggleHint,
   onShowAnswer,
+  showAnswerRef,
 }: {
   busy: boolean;
   hintAvailable: boolean;
@@ -495,30 +617,40 @@ function FaceDock({
   showHintLabel: string;
   hideHintLabel: string;
   showAnswerLabel: string;
+  promptLabel: string;
   onToggleHint: () => void;
   onShowAnswer: () => void;
+  showAnswerRef: React.RefObject<HTMLButtonElement>;
 }) {
   return (
-    <div className="flex gap-3">
-      {hintAvailable ? (
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex gap-3">
+        {hintAvailable ? (
+          <button
+            type="button"
+            aria-label={hintVisible ? hideHintLabel : showHintLabel}
+            disabled={busy}
+            onClick={onToggleHint}
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-600 bg-[#171b22] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-[#201f36] disabled:opacity-50"
+          >
+            <HintIcon />
+          </button>
+        ) : null}
         <button
+          ref={showAnswerRef}
           type="button"
-          aria-label={hintVisible ? hideHintLabel : showHintLabel}
+          aria-label={showAnswerLabel}
           disabled={busy}
-          onClick={onToggleHint}
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-600 bg-[#171b22] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-[#201f36] disabled:opacity-50"
+          onClick={onShowAnswer}
+          className="h-14 flex-1 rounded-xl border border-[#6259b2] bg-[#292650] px-4 text-sm font-semibold text-indigo-50 transition hover:bg-[#332f60] disabled:opacity-50"
         >
-          <HintIcon />
+          <span>{showAnswerLabel}</span>
+          <kbd className="ml-2 rounded border border-indigo-300/30 bg-black/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-100/80">
+            Space
+          </kbd>
         </button>
-      ) : null}
-      <button
-        type="button"
-        disabled={busy}
-        onClick={onShowAnswer}
-        className="h-14 flex-1 rounded-xl border border-[#6259b2] bg-[#292650] px-4 text-sm font-semibold text-indigo-50 transition hover:bg-[#332f60] disabled:opacity-50"
-      >
-        {showAnswerLabel}
-      </button>
+      </div>
+      <p className="sr-only">{promptLabel}</p>
     </div>
   );
 }
@@ -527,11 +659,13 @@ function AnswerDock({
   model,
   busy,
   interfaceLanguage,
+  promptRef,
   onAction,
 }: {
   model: TrainingSenseCardModel;
   busy: boolean;
   interfaceLanguage: OnboardingLanguage;
+  promptRef: React.RefObject<HTMLParagraphElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
@@ -568,23 +702,46 @@ function AnswerDock({
       ) : null}
 
       {model.reviewCapabilities.length ? (
-        <div className="grid h-[84px] grid-cols-2 gap-2 sm:h-14 sm:grid-cols-4">
-          {model.reviewCapabilities.map((capability) => (
-            <button
-              key={capability.reviewResult}
-              type="button"
-              disabled={busy}
-              onClick={() => onAction(capability)}
-              className={`relative min-h-[38px] overflow-hidden rounded-xl border border-slate-600 bg-[#171b22] px-2 text-xs font-semibold transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-[#202630] disabled:opacity-50 sm:h-14 ${reviewTone[capability.reviewResult]}`}
-            >
-              {t(capability.messageKey)}
-            </button>
-          ))}
+        <div
+          role="group"
+          aria-labelledby="training-review-prompt"
+          className="flex flex-1 flex-col gap-1.5"
+        >
+          <p
+            ref={promptRef}
+            id="training-review-prompt"
+            tabIndex={-1}
+            className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 outline-none"
+          >
+            {t("senseCard.sections.reviewPrompt")}
+          </p>
+          <div className="grid h-[84px] grid-cols-2 gap-2 sm:h-14 sm:grid-cols-4">
+            {model.reviewCapabilities.map((capability) => (
+              <button
+                key={capability.reviewResult}
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(capability)}
+                className={`relative min-h-[38px] overflow-hidden rounded-xl border border-slate-600 bg-[#171b22] px-2 text-xs font-semibold transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-[#202630] disabled:opacity-50 sm:h-14 ${reviewTone[capability.reviewResult]}`}
+              >
+                {t(capability.messageKey)}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
       <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-400">
-        <span />
+        {model.reportCapabilities.length ? (
+          <span
+            className="inline-flex items-center gap-1.5 text-slate-500"
+            aria-disabled="true"
+          >
+            <FlagIcon /> {t("senseCard.report")}
+          </span>
+        ) : (
+          <span />
+        )}
         {model.markKnownCapability ? (
           <button
             type="button"
@@ -605,6 +762,30 @@ function hasTranslation(model: TrainingSenseCardModel) {
     model.entryTranslation ||
     [...model.definitions, ...model.examples].some((item) => item.translation),
   );
+}
+
+function isInteractiveTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    Boolean(
+      target.closest(
+        "button, a, input, textarea, select, summary, [role='button'], [contenteditable='true']",
+      ),
+    )
+  );
+}
+
+function scrollMask(top: boolean, bottom: boolean) {
+  if (top && bottom) {
+    return "linear-gradient(to bottom, transparent 0, black 18px, black calc(100% - 22px), transparent 100%)";
+  }
+  if (top) {
+    return "linear-gradient(to bottom, transparent 0, black 18px, black 100%)";
+  }
+  if (bottom) {
+    return "linear-gradient(to bottom, black 0, black calc(100% - 22px), transparent 100%)";
+  }
+  return "none";
 }
 
 function IconButton({
@@ -670,6 +851,51 @@ function TranslateIcon() {
     >
       <path d="M4 5h9M8.5 3v2M6 8c1.5 2.5 3.5 4.5 6 6M12 8c-1.5 3-4 5.5-7 7" />
       <path d="m14 19 3-8 3 8M15.2 16h3.6" />
+    </svg>
+  );
+}
+
+function MoreIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <circle cx="5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="19" cy="12" r="1.5" />
+    </svg>
+  );
+}
+
+function FlagIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      <path d="M6 21V4m0 1h10l-2 3 2 3H6" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path d="m7 10 5 5 5-5" />
     </svg>
   );
 }

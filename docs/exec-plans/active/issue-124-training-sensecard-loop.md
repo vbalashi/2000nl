@@ -67,6 +67,13 @@ These seams were agreed in the owner-approved sequence for this slice:
   the next queue card.
 - [x] Focused and full UI tests, typecheck, lint, production build, and visual
   QA pass.
+- [x] Compared the runtime against Pen board `30.90` (`Oiksc`) with three
+  clean-context reviews covering visual fidelity, responsive state, and
+  keyboard/accessibility flow.
+- [x] Added the missing session context/exit chrome, compact responsive
+  progress footer, mobile fill geometry, scroll-state fades/continuation,
+  visible Face/Answer prompts, More/Report affordances, and deterministic
+  focus/keyboard transitions.
 - [ ] Independent Standards and Spec review of the exact pushed SHA.
 
 ## Local QA note
@@ -83,3 +90,6 @@ production data or schema was changed by that operational preparation.
 - Saved Training Plans and advanced filters.
 - Listening cards and other non-understanding training presentations.
 - New scheduler/count APIs or data-model changes.
+- Durable report submission UI. Training exposes the capability visually but
+  keeps it unavailable until the existing typed `report-content` capability
+  has an owned mutation/dialog contract; this slice must not invent one.

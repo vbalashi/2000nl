@@ -55,7 +55,7 @@ describe("TrainingSenseCardStage", () => {
     expect(faceShell.className).toContain("max-h-[500px]");
     const dock = screen.getByTestId("training-sense-card-dock");
     expect(dock.className).toContain("shrink-0");
-    expect(dock.className).toContain("sm:h-20");
+    expect(dock.className).toContain("sm:h-24");
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();
@@ -83,7 +83,7 @@ describe("TrainingSenseCardStage", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Hoe goed ken je deze betekenis?"),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(screen.queryByText("Betekenis")).not.toBeInTheDocument();
     expect(
       container.querySelector(
@@ -102,8 +102,7 @@ describe("TrainingSenseCardStage", () => {
     expect(
       (usageSection as Element).compareDocumentPosition(
         examplesSection as Node,
-      ) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(idiomsSection).toBeInTheDocument();
     expect(
@@ -214,5 +213,81 @@ describe("TrainingSenseCardStage", () => {
     ).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "k" });
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
+  });
+
+  test("keeps Space available for a focused review button instead of hiding Answer", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const good = screen.getByRole("button", { name: "Goed" });
+    good.focus();
+    fireEvent.keyDown(good, { key: " " });
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+    expect(good).toBeInTheDocument();
+  });
+
+  test("adds the top fade only after the lexical body has scrolled", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const scroll = screen.getByTestId("training-answer-scroll");
+    Object.defineProperty(scroll, "clientHeight", {
+      value: 120,
+      configurable: true,
+    });
+    Object.defineProperty(scroll, "scrollHeight", {
+      value: 480,
+      configurable: true,
+    });
+    Object.defineProperty(scroll, "scrollTop", {
+      value: 0,
+      writable: true,
+      configurable: true,
+    });
+    fireEvent.scroll(scroll);
+
+    expect(scroll).toHaveAttribute("data-scroll-top", "clear");
+    expect(scroll).toHaveAttribute("data-scroll-bottom", "faded");
+    expect(
+      screen.getByRole("button", { name: "Meer kaartinhoud tonen" }),
+    ).toBeInTheDocument();
+
+    Object.defineProperty(scroll, "scrollTop", {
+      value: 80,
+      writable: true,
+      configurable: true,
+    });
+    fireEvent.scroll(scroll);
+    expect(scroll).toHaveAttribute("data-scroll-top", "faded");
   });
 });

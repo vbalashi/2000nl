@@ -55,6 +55,10 @@ import {
   TrainingKnownUndoNotice,
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
+import {
+  TrainingSessionChrome,
+  TrainingSessionMobileUtilities,
+} from "./v2/TrainingSessionChrome";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingClient";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
@@ -220,12 +224,12 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 export function TrainingScreen({
   user,
   destination = "training",
-  extendedDestinationsEnabled =
-    process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
+  extendedDestinationsEnabled = process.env
+    .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
   onRequestDestination,
   onNavigationBlockedChange,
-  trainingTodaySetupEnabled =
-    process.env.NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
+  trainingTodaySetupEnabled = process.env
+    .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -331,7 +335,9 @@ export function TrainingScreen({
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
-  const [trainingLoadError, setTrainingLoadError] = useState<string | null>(null);
+  const [trainingLoadError, setTrainingLoadError] = useState<string | null>(
+    null,
+  );
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
@@ -590,14 +596,16 @@ export function TrainingScreen({
   );
 
   const persistCurrentTrainingScope = useCallback(
-    (overrides: {
-      listId?: string | null;
-      listType?: WordListType | null;
-      activeScenario?: string;
-      cardFilter?: CardFilter;
-      modesEnabled?: TrainingMode[];
-      newReviewRatio?: number;
-    } = {}) => {
+    (
+      overrides: {
+        listId?: string | null;
+        listType?: WordListType | null;
+        activeScenario?: string;
+        cardFilter?: CardFilter;
+        modesEnabled?: TrainingMode[];
+        newReviewRatio?: number;
+      } = {},
+    ) => {
       if (!user?.id) return;
       void updateActiveTrainingScope({
         userId: user.id,
@@ -671,57 +679,69 @@ export function TrainingScreen({
     setReviewCounter(0);
   }, []);
 
-  const handleTrainingDateWindowChange = useCallback((value: string) => {
-    resetFocusQueueState();
-    setTrainingFocusFilter((current) => ({
-      ...current,
-      dateWindow: value === "today" || value === "yesterday" || value === "daysAgo"
-        ? value
-        : "all",
-      ...(value === "daysAgo" ? { daysAgo: current.daysAgo ?? 7 } : { daysAgo: undefined }),
-    }));
-  }, [resetFocusQueueState]);
+  const handleTrainingDateWindowChange = useCallback(
+    (value: string) => {
+      resetFocusQueueState();
+      setTrainingFocusFilter((current) => ({
+        ...current,
+        dateWindow:
+          value === "today" || value === "yesterday" || value === "daysAgo"
+            ? value
+            : "all",
+        ...(value === "daysAgo"
+          ? { daysAgo: current.daysAgo ?? 7 }
+          : { daysAgo: undefined }),
+      }));
+    },
+    [resetFocusQueueState],
+  );
 
-  const handleTrainingDaysAgoChange = useCallback((value: string) => {
-    resetFocusQueueState();
-    const daysAgo = Math.max(0, Math.min(365, Number(value) || 0));
-    setTrainingFocusFilter((current) => ({
-      ...current,
-      dateWindow: "daysAgo",
-      daysAgo,
-    }));
-  }, [resetFocusQueueState]);
+  const handleTrainingDaysAgoChange = useCallback(
+    (value: string) => {
+      resetFocusQueueState();
+      const daysAgo = Math.max(0, Math.min(365, Number(value) || 0));
+      setTrainingFocusFilter((current) => ({
+        ...current,
+        dateWindow: "daysAgo",
+        daysAgo,
+      }));
+    },
+    [resetFocusQueueState],
+  );
 
-  const handleTrainingSourceFilterChange = useCallback((value: string) => {
-    resetFocusQueueState();
-    setTrainingFocusFilter((current) => {
-      if (value === "all") {
-        return {
-          ...current,
-          sourceId: undefined,
-          sourceKind: undefined,
-          externalId: undefined,
-        };
-      }
-      if (value === "kind:youtube") {
-        return {
-          ...current,
-          sourceId: undefined,
-          sourceKind: "youtube",
-          externalId: undefined,
-        };
-      }
-      if (value.startsWith("source:")) {
-        return {
-          ...current,
-          sourceId: value.slice("source:".length),
-          sourceKind: undefined,
-          externalId: undefined,
-        };
-      }
-      return current;
-    });
-  }, [resetFocusQueueState]);
+  const handleTrainingSourceFilterChange = useCallback(
+    (value: string) => {
+      resetFocusQueueState();
+      setTrainingFocusFilter((current) => {
+        if (value === "all") {
+          return {
+            ...current,
+            sourceId: undefined,
+            sourceKind: undefined,
+            externalId: undefined,
+          };
+        }
+        if (value === "kind:youtube") {
+          return {
+            ...current,
+            sourceId: undefined,
+            sourceKind: "youtube",
+            externalId: undefined,
+          };
+        }
+        if (value.startsWith("source:")) {
+          return {
+            ...current,
+            sourceId: value.slice("source:".length),
+            sourceKind: undefined,
+            externalId: undefined,
+          };
+        }
+        return current;
+      });
+    },
+    [resetFocusQueueState],
+  );
 
   const clearTrainingFocusFilter = useCallback(() => {
     resetFocusQueueState();
@@ -1054,7 +1074,9 @@ export function TrainingScreen({
       setNextCardOverrideNotice("Dit woord wordt als volgende kaart geladen.");
       setShowSettings(false);
       void loadNextWord({
-        excludeWordIds: [currentWord?.id].filter((x): x is string => Boolean(x)),
+        excludeWordIds: [currentWord?.id].filter((x): x is string =>
+          Boolean(x),
+        ),
       });
     },
     [currentWord?.id, loadNextWord],
@@ -1062,8 +1084,8 @@ export function TrainingScreen({
 
   // ... (keep useEffect for initial load)
 
-  const beginAcceptedCardTransition = useCallback(
-    (): AcceptedCardTransition | null => {
+  const beginAcceptedCardTransition =
+    useCallback((): AcceptedCardTransition | null => {
       if (!user?.id || !currentWord) return null;
       const word = currentWord;
       const wordMode = word.mode ?? enabledModes[0];
@@ -1103,8 +1125,7 @@ export function TrainingScreen({
       }
 
       return transition;
-    },
-    [
+    }, [
       advanceQueueTurn,
       audioModeEnabled,
       currentWord,
@@ -1112,8 +1133,7 @@ export function TrainingScreen({
       presentWord,
       preloadAudioForWord,
       user?.id,
-    ],
-  );
+    ]);
 
   const finishAcceptedCardTransition = useCallback(
     async (
@@ -1502,11 +1522,14 @@ export function TrainingScreen({
     [],
   );
 
-  const handleUserDictionaryEntryCreated = useCallback((entry: DictionaryEntry) => {
-    setDetailEntry(entry);
-    setSelectedEntry(entry);
-    setSidebarTab("details");
-  }, []);
+  const handleUserDictionaryEntryCreated = useCallback(
+    (entry: DictionaryEntry) => {
+      setDetailEntry(entry);
+      setSelectedEntry(entry);
+      setSidebarTab("details");
+    },
+    [],
+  );
 
   const cycleThemePreference = useCallback(() => {
     const next =
@@ -2136,7 +2159,9 @@ export function TrainingScreen({
       ? "kind:youtube"
       : "all";
   const activeSourceFilterLabel = trainingFocusFilter.sourceId
-    ? trainingFilterSources.find((source) => source.sourceId === trainingFocusFilter.sourceId)?.label
+    ? trainingFilterSources.find(
+        (source) => source.sourceId === trainingFocusFilter.sourceId,
+      )?.label
     : trainingFocusFilter.sourceKind === "youtube"
       ? "YouTube"
       : null;
@@ -2148,10 +2173,9 @@ export function TrainingScreen({
         : trainingFocusFilter.dateWindow === "daysAgo"
           ? `${trainingFocusFilter.daysAgo ?? 7} dagen geleden`
           : null;
-  const activeFilterCopy = [
-    dateFilterLabel,
-    activeSourceFilterLabel,
-  ].filter(Boolean).join(" · ");
+  const activeFilterCopy = [dateFilterLabel, activeSourceFilterLabel]
+    .filter(Boolean)
+    .join(" · ");
   const pilotSourceOptions = trainingFilterSources.map((source) => ({
     value: `source:${source.sourceId}`,
     label: source.label,
@@ -2214,33 +2238,529 @@ export function TrainingScreen({
     "interfaceLanguage" | "settingsActive" | "historyActive"
   >;
 
+  const v2SessionChromeVisible = Boolean(
+    trainingSessionV2Enabled &&
+    currentWord &&
+    trainingPilot.surface === "session",
+  );
+  const sessionReviewTotal =
+    initialReviewDue ?? stats.reviewCardsDone + stats.reviewCardsDue;
+  const sessionQueueTotal = Math.max(
+    1,
+    cardFilter === "new"
+      ? stats.dailyNewLimit
+      : cardFilter === "review"
+        ? sessionReviewTotal
+        : stats.dailyNewLimit + sessionReviewTotal,
+  );
+  const sessionCompleted =
+    (cardFilter === "review" ? 0 : stats.newCardsToday) +
+    (cardFilter === "new" ? 0 : stats.reviewCardsDone);
+  const sessionPosition = Math.min(sessionQueueTotal, sessionCompleted + 1);
+
   return (
     <>
-    <div
-      aria-hidden={destination !== "training"}
-      data-training-today-setup={trainingTodaySetupEnabled ? "enabled" : "disabled"}
-      data-training-pilot-surface={trainingPilot.surface}
-      className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
-    >
-      <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-        <div className="flex min-w-0 items-center gap-2 justify-self-start">
-          <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
-            <BrandLogo />
+      <div
+        aria-hidden={destination !== "training"}
+        data-training-today-setup={
+          trainingTodaySetupEnabled ? "enabled" : "disabled"
+        }
+        data-training-pilot-surface={trainingPilot.surface}
+        className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
+      >
+        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+          <div className="flex min-w-0 items-center gap-2 justify-self-start">
+            <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
+              <BrandLogo />
+            </div>
+            {trainingTodaySetupEnabled &&
+            trainingPilot.surface === "session" &&
+            !v2SessionChromeVisible ? (
+              <button
+                type="button"
+                aria-label="Terug naar Vandaag"
+                onClick={trainingPilot.returnToToday}
+                className="ml-1 min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                <span aria-hidden="true">←</span>
+                <span className="hidden sm:inline"> Vandaag</span>
+              </button>
+            ) : null}
           </div>
-          {trainingTodaySetupEnabled && trainingPilot.surface === "session" ? (
-            <button
-              type="button"
-              aria-label="Terug naar Vandaag"
-              onClick={trainingPilot.returnToToday}
-              className="ml-1 min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              <span aria-hidden="true">←</span>
-              <span className="hidden sm:inline"> Vandaag</span>
-            </button>
-          ) : null}
-        </div>
-        {onRequestDestination ? (
-          <div className="hidden justify-self-center md:block">
+          {onRequestDestination ? (
+            <div className="hidden justify-self-center md:block">
+              <AppDestinationNav
+                active="training"
+                interfaceLanguage={onboardingLang}
+                disabled={actionLoading}
+                extendedDestinationsEnabled={extendedDestinationsEnabled}
+                onNavigate={onRequestDestination}
+              />
+            </div>
+          ) : (
+            <div />
+          )}
+          {destination === "training" ? (
+            v2SessionChromeVisible ? (
+              <>
+                <div className="hidden md:block">
+                  <AppUtilityNav
+                    interfaceLanguage={onboardingLang}
+                    themePreference={themePreference}
+                    historyActive={trainingSidebarPinned}
+                    userEmail={user.email ?? ""}
+                    onCycleTheme={cycleThemePreference}
+                    onOpenSearch={openSearch}
+                    onOpenSettings={openAppSettings}
+                    onOpenHelp={() => setShowHotkeys(true)}
+                    onOpenHistory={toggleRecentPanel}
+                    onOpenStatistics={
+                      extendedDestinationsEnabled && onRequestDestination
+                        ? () => onRequestDestination("statistics")
+                        : undefined
+                    }
+                    onSignOut={handleSignOut}
+                  />
+                </div>
+                <TrainingSessionMobileUtilities
+                  interfaceLanguage={onboardingLang}
+                  historyActive={trainingSidebarPinned}
+                  onOpenHistory={toggleRecentPanel}
+                  onClose={trainingPilot.returnToToday}
+                />
+              </>
+            ) : (
+              <AppUtilityNav
+                interfaceLanguage={onboardingLang}
+                themePreference={themePreference}
+                historyActive={trainingSidebarPinned}
+                userEmail={user.email ?? ""}
+                onCycleTheme={cycleThemePreference}
+                onOpenSearch={openSearch}
+                onOpenSettings={openAppSettings}
+                onOpenHelp={() => setShowHotkeys(true)}
+                onOpenHistory={toggleRecentPanel}
+                onOpenStatistics={
+                  extendedDestinationsEnabled && onRequestDestination
+                    ? () => onRequestDestination("statistics")
+                    : undefined
+                }
+                onSignOut={handleSignOut}
+              />
+            )
+          ) : (
+            <div />
+          )}
+        </header>
+
+        {v2SessionChromeVisible ? (
+          <TrainingSessionChrome
+            interfaceLanguage={onboardingLang}
+            scenario={activeScenario}
+            mode={currentMode}
+            position={sessionPosition}
+            total={sessionQueueTotal}
+            onClose={trainingPilot.returnToToday}
+          />
+        ) : null}
+
+        {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
+          <TrainingTodaySetup
+            interfaceLanguage={onboardingLang}
+            status={trainingPilot.status}
+            initialDraft={trainingPilot.initialDraft}
+            stats={stats}
+            scenarios={trainingPilot.scenarioOptions}
+            lists={listOptions}
+            sources={trainingPilot.sourceOptions}
+            startPending={trainingPilot.startPending}
+            scenarioLoading={trainingPilot.scenarioLoading}
+            activeSessionLabel={wordListLabel || undefined}
+            onContinue={trainingPilot.continueSession}
+            onStart={trainingPilot.startSession}
+            onRetry={() => void trainingPilot.retry()}
+          />
+        ) : (
+          <>
+            <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
+              {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
+              {/* Adjusted max-width and gap to keep things tight and focused */}
+              <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
+                {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
+                <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
+                  {/* 1. Scrollable Card Area */}
+                  <div
+                    data-testid="training-card-scroll-region"
+                    className={`flex flex-1 flex-col px-2 md:px-4 ${
+                      v2CardAvailable
+                        ? "min-h-0 overflow-clip"
+                        : "overflow-y-auto overflow-x-visible scrollbar-hide"
+                    }`}
+                  >
+                    {/* Card Container */}
+                    <div
+                      className={`flex flex-col justify-start md:justify-center ${
+                        v2CardAvailable
+                          ? "h-full min-h-0 py-0"
+                          : "min-h-full py-2 md:py-4"
+                      }`}
+                    >
+                      {nextCardOverrideNotice ? (
+                        <div
+                          role="status"
+                          className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
+                        >
+                          {nextCardOverrideNotice}
+                        </div>
+                      ) : null}
+                      {!trainingShellV2Enabled && !onRequestDestination ? (
+                        <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
+                          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                            <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              Periode
+                              <select
+                                value={trainingFocusFilter.dateWindow}
+                                onChange={(event) =>
+                                  handleTrainingDateWindowChange(
+                                    event.target.value,
+                                  )
+                                }
+                                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                              >
+                                <option value="all">Alle dagen</option>
+                                <option value="today">Vandaag</option>
+                                <option value="yesterday">Gisteren</option>
+                                <option value="daysAgo">N dagen geleden</option>
+                              </select>
+                            </label>
+                            {trainingFocusFilter.dateWindow === "daysAgo" ? (
+                              <label className="flex w-full flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 md:w-28">
+                                Dagen
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={365}
+                                  value={trainingFocusFilter.daysAgo ?? 7}
+                                  onChange={(event) =>
+                                    handleTrainingDaysAgoChange(
+                                      event.target.value,
+                                    )
+                                  }
+                                  className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                />
+                              </label>
+                            ) : null}
+                            <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              Bron
+                              <select
+                                value={sourceFilterValue}
+                                onChange={(event) =>
+                                  handleTrainingSourceFilterChange(
+                                    event.target.value,
+                                  )
+                                }
+                                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                              >
+                                <option value="all">Alle bronnen</option>
+                                <option value="kind:youtube">YouTube</option>
+                                {trainingFilterSources.map((source) => (
+                                  <option
+                                    key={source.sourceId}
+                                    value={`source:${source.sourceId}`}
+                                  >
+                                    {source.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            {trainingFocusFilterActive ? (
+                              <button
+                                type="button"
+                                onClick={clearTrainingFocusFilter}
+                                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900 md:self-end"
+                              >
+                                Wissen
+                              </button>
+                            ) : null}
+                          </div>
+                          {trainingFocusFilterActive ? (
+                            <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                              Gefilterde training:{" "}
+                              {activeFilterCopy || "aangepaste selectie"}.
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {trainingFocusFilterActive &&
+                      !loadingWord &&
+                      !currentWord ? (
+                        <div
+                          role="status"
+                          className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+                        >
+                          Geen kaarten gevonden voor{" "}
+                          {activeFilterCopy || "dit filter"}.
+                        </div>
+                      ) : null}
+                      {/* Desktop: 16/10 aspect-ratio.
+                   Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
+                      <div
+                        data-testid="training-card-frame"
+                        className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
+                          v2CardAvailable
+                            ? "min-h-0 flex-1 overflow-hidden"
+                            : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
+                        }`}
+                      >
+                        <div
+                          ref={cardSwipeRef}
+                          data-testid="training-card-swipe-wrapper"
+                          className={`relative h-full ${
+                            v2CardAvailable ? "min-h-0 overflow-hidden" : ""
+                          }`}
+                          style={swipeCardStyle}
+                          onTouchStart={handleCardTouchStart}
+                          onTouchMove={handleCardTouchMove}
+                          onTouchEnd={handleCardTouchEnd}
+                          onTouchCancel={handleCardTouchEnd}
+                        >
+                          {swipeTintColor && swipeTintOpacity > 0 && (
+                            <div
+                              className="pointer-events-none absolute inset-0 z-10 rounded-3xl"
+                              style={{
+                                backgroundColor: swipeTintColor,
+                                opacity: swipeTintOpacity,
+                              }}
+                            />
+                          )}
+                          {swipeIndicator && (
+                            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                              <div
+                                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicator.indicatorClass}`}
+                                style={{ opacity: swipeIndicatorOpacity }}
+                              >
+                                {swipeIndicator.label}
+                              </div>
+                            </div>
+                          )}
+                          {trainingSessionV2Enabled && currentWord ? (
+                            <TrainingSenseCardV2Session
+                              word={currentWord}
+                              mode={currentMode}
+                              contentLanguageCode={currentTrainingLanguage}
+                              translationTargetLanguageCode={
+                                translationLang === "off"
+                                  ? null
+                                  : translationLang
+                              }
+                              interfaceLanguage={onboardingLang}
+                              fallback={legacyTrainingCard}
+                              onPlayResolvedAudio={(url, label) =>
+                                playAudio(url, label)
+                              }
+                              onOpenDetails={handleShowCurrentWordDetails}
+                              onAvailabilityChange={setV2CardAvailable}
+                              onProgressActionAccepted={
+                                handleV2ProgressActionAccepted
+                              }
+                            />
+                          ) : (
+                            legacyTrainingCard
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Fixed Buttons Area (Always Visible) */}
+                  {!v2CardAvailable ? (
+                    <div className="flex-none pt-4 pb-2 z-10">
+                      {/* Translucent container for buttons */}
+                      <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
+                        <div data-tour="rating-buttons">
+                          {revealed ? (
+                            <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                              {showFirstTimeButtons ? (
+                                <FirstTimeButtonGroup
+                                  onStartLearning={handleFirstTimeStart}
+                                  onAlreadyKnow={handleFirstTimeAlreadyKnow}
+                                  disabled={actionLoading}
+                                  swipeDirection={swipeDirection}
+                                  swipeIntensity={swipeFeedbackIntensity}
+                                />
+                              ) : (
+                                <div
+                                  className={`grid gap-2 md:gap-3 w-full ${
+                                    currentMode === "listen-recognize"
+                                      ? "grid-cols-2"
+                                      : "grid-cols-2 md:grid-cols-4"
+                                  }`}
+                                >
+                                  {(currentMode === "listen-recognize"
+                                    ? (["fail", "success"] as ReviewResult[])
+                                    : ([
+                                        "fail",
+                                        "hard",
+                                        "success",
+                                        "easy",
+                                      ] as ReviewResult[])
+                                  ).map((actionKey) => {
+                                    const defaultAction =
+                                      ACTION_LABELS[actionKey];
+                                    const label =
+                                      currentMode === "listen-recognize" &&
+                                      actionKey === "fail"
+                                        ? "Niet herkend"
+                                        : currentMode === "listen-recognize" &&
+                                            actionKey === "success"
+                                          ? "Herkend"
+                                          : defaultAction.label;
+                                    const { keyHint, tone } = defaultAction;
+                                    const swipeButtonHighlight =
+                                      actionKey === "fail" &&
+                                      swipeDirection === "left"
+                                        ? swipeFeedbackIntensity
+                                        : actionKey === "success" &&
+                                            swipeDirection === "right"
+                                          ? swipeFeedbackIntensity
+                                          : 0;
+                                    const swipeButtonRgb =
+                                      actionKey === "fail"
+                                        ? "239, 68, 68" // red-500
+                                        : "16, 185, 129"; // emerald-500
+                                    const swipeButtonColor =
+                                      actionKey === "fail"
+                                        ? "rgb(239 68 68)" // red-500
+                                        : "rgb(16 185 129)"; // emerald-500
+                                    return (
+                                      <button
+                                        key={actionKey}
+                                        type="button"
+                                        disabled={actionLoading}
+                                        onClick={() => handleAction(actionKey)}
+                                        style={
+                                          swipeButtonHighlight > 0
+                                            ? {
+                                                outline: `2px solid rgba(${swipeButtonRgb}, ${0.65 * swipeButtonHighlight})`,
+                                                outlineOffset: 2,
+                                              }
+                                            : undefined
+                                        }
+                                        className={`relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
+                                      >
+                                        {(actionKey === "fail" ||
+                                          actionKey === "success") && (
+                                          <span
+                                            aria-hidden="true"
+                                            className="pointer-events-none absolute inset-0 rounded-xl"
+                                            style={{
+                                              backgroundColor: swipeButtonColor,
+                                              opacity:
+                                                0.22 * swipeButtonHighlight,
+                                            }}
+                                          />
+                                        )}
+                                        <span className="relative z-10">
+                                          {label}
+                                        </span>
+                                        <span className="relative z-10 text-[10px] md:text-xs font-normal opacity-70">
+                                          ({keyHint})
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            /* Show Answer Button - Wide, colored, distinct */
+                            <button
+                              type="button"
+                              onClick={() => {
+                                revealAnswer();
+                              }}
+                              className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
+                            >
+                              Antwoord Tonen
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+
+                {/* Sidebar Section: Fixed Width, adjacent to Main */}
+                {trainingSidebarPinned && (
+                  <aside className="hidden h-full w-[300px] shrink-0 flex-col lg:flex xl:w-[350px]">
+                    <Sidebar
+                      selectedEntry={selectedEntry}
+                      recentEntries={recentEntries}
+                      onSelectEntry={handleRecentSelect}
+                      onWordClick={handleDefinitionClick}
+                      detailEntry={detailEntry}
+                      onShowDetails={handleShowDetails}
+                      activeTab={sidebarTab}
+                      onTabChange={setSidebarTab}
+                      userId={user.id}
+                      translationLang={translationLang}
+                      userLists={availableLists.filter(
+                        (l) => l.type === "user",
+                      )}
+                      onListsUpdated={handleListsUpdated}
+                      onOpenListMembership={openMembershipList}
+                      onUserDictionaryEntryCreated={
+                        handleUserDictionaryEntryCreated
+                      }
+                      onTrainWord={handleTrainWord}
+                      currentTrainingEntryId={currentWord?.id ?? null}
+                      onTrainingAction={(result) => void handleAction(result)}
+                      trainingActionDisabled={!revealed || actionLoading}
+                    />
+                  </aside>
+                )}
+              </div>
+            </main>
+
+            <FooterStats
+              stats={stats}
+              enabledModes={enabledModes}
+              cardFilter={cardFilter}
+              onModesChange={handleModesChange}
+              onCardFilterChange={handleCardFilterChange}
+              language={currentTrainingLanguage}
+              onLanguageChange={handleTrainingLanguageChange}
+              languageOptions={trainingLanguageOptions}
+              activeList={activeList}
+              activeListName={wordListLabel}
+              activeListValue={activeListValue}
+              listOptions={listOptions}
+              onListChange={handleFooterListChange}
+              onOpenSettings={() => {
+                setSettingsInitialViewedListScope(null);
+                setShowSettings(true);
+              }}
+              activeScenarioName={
+                activeScenario === "understanding"
+                  ? "Begrip"
+                  : activeScenario === "listening"
+                    ? "Luisteren"
+                    : activeScenario === "conjugation"
+                      ? "Vervoegingen"
+                      : activeScenario
+              }
+              initialReviewDue={initialReviewDue}
+              inlineControlsEnabled={!trainingTodaySetupEnabled}
+              compact={v2CardAvailable}
+              interfaceLanguage={onboardingLang}
+            />
+          </>
+        )}
+
+        {trainingTodaySetupEnabled &&
+        trainingPilot.surface !== "session" &&
+        onRequestDestination ? (
+          <div className="flex-none border-t border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
             <AppDestinationNav
               active="training"
               interfaceLanguage={onboardingLang}
@@ -2249,601 +2769,202 @@ export function TrainingScreen({
               onNavigate={onRequestDestination}
             />
           </div>
-        ) : (
-          <div />
-        )}
-        {destination === "training" ? (
-          <AppUtilityNav
-            interfaceLanguage={onboardingLang}
+        ) : null}
+
+        {trainingShellV2Enabled ? (
+          <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
+        ) : null}
+
+        <TrainingSidebarDrawer
+          open={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+          title={sidebarTab === "recent" ? "Recent" : "Details"}
+          showOnDesktop={!trainingSidebarPinned}
+        >
+          <Sidebar
+            selectedEntry={selectedEntry}
+            recentEntries={recentEntries}
+            onSelectEntry={(entry) => {
+              // On mobile: tapping a recent item should actually open its details,
+              // otherwise it looks like "nothing happens".
+              setSelectedEntry(entry);
+              handleShowDetails(entry);
+            }}
+            onWordClick={handleDefinitionClick}
+            detailEntry={detailEntry}
+            onShowDetails={handleShowDetails}
+            activeTab={sidebarTab}
+            onTabChange={setSidebarTab}
+            userId={user.id}
+            translationLang={translationLang}
+            userLists={availableLists.filter((l) => l.type === "user")}
+            onListsUpdated={handleListsUpdated}
+            onOpenListMembership={openMembershipList}
+            onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+            onTrainWord={handleTrainWord}
+            currentTrainingEntryId={currentWord?.id ?? null}
+            onTrainingAction={(result) => void handleAction(result)}
+            trainingActionDisabled={!revealed || actionLoading}
+          />
+        </TrainingSidebarDrawer>
+
+        {showSettings && !extendedDestinationsEnabled && (
+          <SettingsModal
+            open={showSettings}
+            onClose={() => {
+              setShowSettings(false);
+              setSettingsInitialTab("instellingen");
+              setSettingsInitialViewedListScope(null);
+              setSettingsAutoFocusWordSearch(false);
+            }}
+            initialTab={settingsInitialTab}
+            autoFocusWordSearch={settingsAutoFocusWordSearch}
+            initialViewedListScope={settingsInitialViewedListScope}
+            onListsUpdated={handleListsUpdated}
             themePreference={themePreference}
-            historyActive={trainingSidebarPinned}
+            onThemeChange={setTheme}
+            audioQuality={audioQuality}
+            onAudioQualityChange={setAudioQuality}
+            onboardingLanguage={onboardingLang}
+            onOnboardingLanguageChange={saveOnboardingLanguageChoice}
+            onStartOnboarding={() => {
+              setShowSettings(false);
+              setSettingsInitialTab("instellingen");
+              setSettingsInitialViewedListScope(null);
+              setSettingsAutoFocusWordSearch(false);
+              startOnboarding();
+            }}
+            language={currentTrainingLanguage}
+            onLanguageChange={handleTrainingLanguageChange}
+            languageOptions={trainingLanguageOptions}
+            defaultLanguage={language}
+            onDefaultLanguageChange={setLanguage}
+            translationLang={translationLang}
+            onTranslationLangChange={setTranslationLang}
+            wordListId={wordListId}
+            wordListType={wordListType}
+            activeTrainingList={activeList}
+            onMakeActiveForTraining={handleMakeActiveTrainingList}
+            onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+            enabledModes={enabledModes}
+            cardFilter={cardFilter}
+            onModesChange={handleModesChange}
+            onCardFilterChange={handleCardFilterChange}
+            newReviewRatio={newReviewRatio}
+            onNewReviewRatioChange={handleNewReviewRatioChange}
+            stats={stats}
             userEmail={user.email ?? ""}
-            onCycleTheme={cycleThemePreference}
-            onOpenSearch={openSearch}
-            onOpenSettings={openAppSettings}
-            onOpenHelp={() => setShowHotkeys(true)}
-            onOpenHistory={toggleRecentPanel}
-            onOpenStatistics={
-              extendedDestinationsEnabled && onRequestDestination
-                ? () => onRequestDestination("statistics")
-                : undefined
-            }
-            onSignOut={handleSignOut}
+            userId={user.id}
+            activeScenario={activeScenario}
+            onScenarioChange={handleScenarioChange}
+            onTrainWord={handleTrainWord}
           />
-        ) : (
-          <div />
         )}
-      </header>
 
-      {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
-        <TrainingTodaySetup
+        {/* Language Selection Modal */}
+        <LanguageSelectionModal
+          open={showLanguageSelection}
+          onSelectLanguage={handleLanguageSelect}
+        />
+
+        {/* Onboarding Tour */}
+        <Joyride
+          steps={buildJoyrideSteps(onboardingLang)}
+          run={runTour}
+          continuous
+          showProgress
+          showSkipButton
+          callback={handleJoyrideCallback}
+          locale={getOnboardingTranslation(onboardingLang).onboarding.buttons}
+          styles={{
+            options: {
+              primaryColor: "#3b82f6",
+              zIndex: 10000,
+              backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+              textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
+              arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
+            },
+            tooltip: {
+              backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
+              color: isDarkMode ? "#e2e8f0" : "#1f2937",
+              borderRadius: 8,
+            },
+            tooltipTitle: {
+              color: isDarkMode ? "#f1f5f9" : "#111827",
+            },
+            tooltipContent: {
+              color: isDarkMode ? "#e2e8f0" : "#374151",
+            },
+            buttonNext: {
+              backgroundColor: "#3b82f6",
+              color: "#ffffff",
+            },
+            buttonBack: {
+              color: isDarkMode ? "#94a3b8" : "#6b7280",
+            },
+            buttonSkip: {
+              color: isDarkMode ? "#94a3b8" : "#6b7280",
+            },
+          }}
+        />
+      </div>
+      {showHotkeys && (
+        <HotkeyDialog
           interfaceLanguage={onboardingLang}
-          status={trainingPilot.status}
-          initialDraft={trainingPilot.initialDraft}
-          stats={stats}
-          scenarios={trainingPilot.scenarioOptions}
-          lists={listOptions}
-          sources={trainingPilot.sourceOptions}
-          startPending={trainingPilot.startPending}
-          scenarioLoading={trainingPilot.scenarioLoading}
-          activeSessionLabel={wordListLabel || undefined}
-          onContinue={trainingPilot.continueSession}
-          onStart={trainingPilot.startSession}
-          onRetry={() => void trainingPilot.retry()}
+          onClose={() => setShowHotkeys(false)}
         />
-      ) : (
-      <>
-      <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
-        {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
-        {/* Adjusted max-width and gap to keep things tight and focused */}
-        <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
-          {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
-          <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
-            {/* 1. Scrollable Card Area */}
-            <div
-              data-testid="training-card-scroll-region"
-              className={`flex flex-1 flex-col px-2 md:px-4 ${
-                v2CardAvailable
-                  ? "min-h-0 overflow-clip"
-                  : "overflow-y-auto overflow-x-visible scrollbar-hide"
-              }`}
-            >
-              {/* Card Container */}
-              <div
-                className={`flex flex-col justify-start md:justify-center ${
-                  v2CardAvailable
-                    ? "h-full min-h-0 py-0"
-                    : "min-h-full py-2 md:py-4"
-                }`}
-              >
-                {nextCardOverrideNotice ? (
-                  <div
-                    role="status"
-                    className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
-                  >
-                    {nextCardOverrideNotice}
-                  </div>
-                ) : null}
-                {!trainingShellV2Enabled && !onRequestDestination ? (
-                <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                    <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      Periode
-                      <select
-                        value={trainingFocusFilter.dateWindow}
-                        onChange={(event) => handleTrainingDateWindowChange(event.target.value)}
-                        className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      >
-                        <option value="all">Alle dagen</option>
-                        <option value="today">Vandaag</option>
-                        <option value="yesterday">Gisteren</option>
-                        <option value="daysAgo">N dagen geleden</option>
-                      </select>
-                    </label>
-                    {trainingFocusFilter.dateWindow === "daysAgo" ? (
-                      <label className="flex w-full flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 md:w-28">
-                        Dagen
-                        <input
-                          type="number"
-                          min={0}
-                          max={365}
-                          value={trainingFocusFilter.daysAgo ?? 7}
-                          onChange={(event) => handleTrainingDaysAgoChange(event.target.value)}
-                          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                        />
-                      </label>
-                    ) : null}
-                    <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      Bron
-                      <select
-                        value={sourceFilterValue}
-                        onChange={(event) => handleTrainingSourceFilterChange(event.target.value)}
-                        className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      >
-                        <option value="all">Alle bronnen</option>
-                        <option value="kind:youtube">YouTube</option>
-                        {trainingFilterSources.map((source) => (
-                          <option key={source.sourceId} value={`source:${source.sourceId}`}>
-                            {source.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {trainingFocusFilterActive ? (
-                      <button
-                        type="button"
-                        onClick={clearTrainingFocusFilter}
-                        className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900 md:self-end"
-                      >
-                        Wissen
-                      </button>
-                    ) : null}
-                  </div>
-                  {trainingFocusFilterActive ? (
-                    <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Gefilterde training: {activeFilterCopy || "aangepaste selectie"}.
-                    </p>
-                  ) : null}
-                </div>
-                ) : null}
-                {trainingFocusFilterActive && !loadingWord && !currentWord ? (
-                  <div
-                    role="status"
-                    className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
-                  >
-                    Geen kaarten gevonden voor {activeFilterCopy || "dit filter"}.
-                  </div>
-                ) : null}
-                {/* Desktop: 16/10 aspect-ratio.
-                   Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
-                <div
-                  data-testid="training-card-frame"
-                  className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
-                    v2CardAvailable
-                      ? "min-h-0 flex-1 overflow-hidden"
-                      : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
-                  }`}
-                >
-                  <div
-                    ref={cardSwipeRef}
-                    data-testid="training-card-swipe-wrapper"
-                    className={`relative h-full ${
-                      v2CardAvailable ? "min-h-0 overflow-hidden" : ""
-                    }`}
-                    style={swipeCardStyle}
-                    onTouchStart={handleCardTouchStart}
-                    onTouchMove={handleCardTouchMove}
-                    onTouchEnd={handleCardTouchEnd}
-                    onTouchCancel={handleCardTouchEnd}
-                  >
-                    {swipeTintColor && swipeTintOpacity > 0 && (
-                      <div
-                        className="pointer-events-none absolute inset-0 z-10 rounded-3xl"
-                        style={{
-                          backgroundColor: swipeTintColor,
-                          opacity: swipeTintOpacity,
-                        }}
-                      />
-                    )}
-                    {swipeIndicator && (
-                      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                        <div
-                          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicator.indicatorClass}`}
-                          style={{ opacity: swipeIndicatorOpacity }}
-                        >
-                          {swipeIndicator.label}
-                        </div>
-                      </div>
-                    )}
-                    {trainingSessionV2Enabled && currentWord ? (
-                      <TrainingSenseCardV2Session
-                        word={currentWord}
-                        mode={currentMode}
-                        contentLanguageCode={currentTrainingLanguage}
-                        translationTargetLanguageCode={
-                          translationLang === "off" ? null : translationLang
-                        }
-                        interfaceLanguage={onboardingLang}
-                        fallback={legacyTrainingCard}
-                        onPlayResolvedAudio={(url, label) =>
-                          playAudio(url, label)
-                        }
-                        onAvailabilityChange={setV2CardAvailable}
-                        onProgressActionAccepted={
-                          handleV2ProgressActionAccepted
-                        }
-                      />
-                    ) : (
-                      legacyTrainingCard
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Fixed Buttons Area (Always Visible) */}
-            {!v2CardAvailable ? (
-            <div className="flex-none pt-4 pb-2 z-10">
-              {/* Translucent container for buttons */}
-              <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
-                <div data-tour="rating-buttons">
-                  {revealed ? (
-                    <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      {showFirstTimeButtons ? (
-                        <FirstTimeButtonGroup
-                          onStartLearning={handleFirstTimeStart}
-                          onAlreadyKnow={handleFirstTimeAlreadyKnow}
-                          disabled={actionLoading}
-                          swipeDirection={swipeDirection}
-                          swipeIntensity={swipeFeedbackIntensity}
-                        />
-                      ) : (
-                        <div
-                          className={`grid gap-2 md:gap-3 w-full ${
-                            currentMode === "listen-recognize"
-                              ? "grid-cols-2"
-                              : "grid-cols-2 md:grid-cols-4"
-                          }`}
-                        >
-                          {(
-                            currentMode === "listen-recognize"
-                              ? (["fail", "success"] as ReviewResult[])
-                              : ([
-                                  "fail",
-                                  "hard",
-                                  "success",
-                                  "easy",
-                                ] as ReviewResult[])
-                          ).map((actionKey) => {
-                            const defaultAction = ACTION_LABELS[actionKey];
-                            const label =
-                              currentMode === "listen-recognize" &&
-                              actionKey === "fail"
-                                ? "Niet herkend"
-                                : currentMode === "listen-recognize" &&
-                                    actionKey === "success"
-                                  ? "Herkend"
-                                  : defaultAction.label;
-                            const { keyHint, tone } = defaultAction;
-                            const swipeButtonHighlight =
-                              actionKey === "fail" && swipeDirection === "left"
-                                ? swipeFeedbackIntensity
-                                : actionKey === "success" &&
-                                    swipeDirection === "right"
-                                  ? swipeFeedbackIntensity
-                                  : 0;
-                            const swipeButtonRgb =
-                              actionKey === "fail"
-                                ? "239, 68, 68" // red-500
-                                : "16, 185, 129"; // emerald-500
-                            const swipeButtonColor =
-                              actionKey === "fail"
-                                ? "rgb(239 68 68)" // red-500
-                                : "rgb(16 185 129)"; // emerald-500
-                            return (
-                              <button
-                                key={actionKey}
-                                type="button"
-                                disabled={actionLoading}
-                                onClick={() => handleAction(actionKey)}
-                                style={
-                                  swipeButtonHighlight > 0
-                                    ? {
-                                        outline: `2px solid rgba(${swipeButtonRgb}, ${0.65 * swipeButtonHighlight})`,
-                                        outlineOffset: 2,
-                                      }
-                                    : undefined
-                                }
-                                className={`relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
-                              >
-                                {(actionKey === "fail" ||
-                                  actionKey === "success") && (
-                                  <span
-                                    aria-hidden="true"
-                                    className="pointer-events-none absolute inset-0 rounded-xl"
-                                    style={{
-                                      backgroundColor: swipeButtonColor,
-                                      opacity: 0.22 * swipeButtonHighlight,
-                                    }}
-                                  />
-                                )}
-                                <span className="relative z-10">{label}</span>
-                                <span className="relative z-10 text-[10px] md:text-xs font-normal opacity-70">
-                                  ({keyHint})
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* Show Answer Button - Wide, colored, distinct */
-                    <button
-                      type="button"
-                      onClick={() => {
-                        revealAnswer();
-                      }}
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
-                    >
-                      Antwoord Tonen
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            ) : null}
-          </section>
-
-          {/* Sidebar Section: Fixed Width, adjacent to Main */}
-          {trainingSidebarPinned && (
-            <aside className="hidden h-full w-[300px] shrink-0 flex-col lg:flex xl:w-[350px]">
-              <Sidebar
-                selectedEntry={selectedEntry}
-                recentEntries={recentEntries}
-                onSelectEntry={handleRecentSelect}
-                onWordClick={handleDefinitionClick}
-                detailEntry={detailEntry}
-                onShowDetails={handleShowDetails}
-                activeTab={sidebarTab}
-                onTabChange={setSidebarTab}
-                userId={user.id}
-                translationLang={translationLang}
-                userLists={availableLists.filter((l) => l.type === "user")}
-                onListsUpdated={handleListsUpdated}
-                onOpenListMembership={openMembershipList}
-                onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-                onTrainWord={handleTrainWord}
-                currentTrainingEntryId={currentWord?.id ?? null}
-                onTrainingAction={(result) => void handleAction(result)}
-                trainingActionDisabled={!revealed || actionLoading}
-              />
-            </aside>
-          )}
-        </div>
-      </main>
-
-      <FooterStats
-        stats={stats}
-        enabledModes={enabledModes}
-        cardFilter={cardFilter}
-        onModesChange={handleModesChange}
-        onCardFilterChange={handleCardFilterChange}
-        language={currentTrainingLanguage}
-        onLanguageChange={handleTrainingLanguageChange}
-        languageOptions={trainingLanguageOptions}
-        activeList={activeList}
-        activeListName={wordListLabel}
-        activeListValue={activeListValue}
-        listOptions={listOptions}
-        onListChange={handleFooterListChange}
-        onOpenSettings={() => {
-          setSettingsInitialViewedListScope(null);
-          setShowSettings(true);
-        }}
-        activeScenarioName={
-          activeScenario === "understanding"
-            ? "Begrip"
-            : activeScenario === "listening"
-              ? "Luisteren"
-              : activeScenario === "conjugation"
-                ? "Vervoegingen"
-                : activeScenario
-        }
-        initialReviewDue={initialReviewDue}
-        inlineControlsEnabled={!trainingTodaySetupEnabled}
-      />
-      </>
       )}
-
-      {trainingTodaySetupEnabled &&
-      trainingPilot.surface !== "session" &&
-      onRequestDestination ? (
-        <div className="flex-none border-t border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
-          <AppDestinationNav
-            active="training"
-            interfaceLanguage={onboardingLang}
-            disabled={actionLoading}
-            extendedDestinationsEnabled={extendedDestinationsEnabled}
-            onNavigate={onRequestDestination}
-          />
-        </div>
-      ) : null}
-
-      {trainingShellV2Enabled ? (
-        <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
-      ) : null}
-
-      <TrainingSidebarDrawer
-        open={mobileSidebarOpen}
-        onClose={() => setMobileSidebarOpen(false)}
-        title={sidebarTab === "recent" ? "Recent" : "Details"}
-        showOnDesktop={!trainingSidebarPinned}
-      >
-        <Sidebar
-          selectedEntry={selectedEntry}
-          recentEntries={recentEntries}
-          onSelectEntry={(entry) => {
-            // On mobile: tapping a recent item should actually open its details,
-            // otherwise it looks like "nothing happens".
-            setSelectedEntry(entry);
-            handleShowDetails(entry);
-          }}
-          onWordClick={handleDefinitionClick}
-          detailEntry={detailEntry}
-          onShowDetails={handleShowDetails}
-          activeTab={sidebarTab}
-          onTabChange={setSidebarTab}
+      {onRequestDestination ? (
+        <LibraryDestination
+          open={destination === "library"}
           userId={user.id}
-          translationLang={translationLang}
-          userLists={availableLists.filter((l) => l.type === "user")}
-          onListsUpdated={handleListsUpdated}
-          onOpenListMembership={openMembershipList}
-          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-          onTrainWord={handleTrainWord}
-          currentTrainingEntryId={currentWord?.id ?? null}
-          onTrainingAction={(result) => void handleAction(result)}
-          trainingActionDisabled={!revealed || actionLoading}
-        />
-      </TrainingSidebarDrawer>
-
-      {showSettings && !extendedDestinationsEnabled && (
-        <SettingsModal
-          open={showSettings}
-          onClose={() => {
-            setShowSettings(false);
-            setSettingsInitialTab("instellingen");
-            setSettingsInitialViewedListScope(null);
-            setSettingsAutoFocusWordSearch(false);
-          }}
-          initialTab={settingsInitialTab}
-          autoFocusWordSearch={settingsAutoFocusWordSearch}
-          initialViewedListScope={settingsInitialViewedListScope}
-          onListsUpdated={handleListsUpdated}
-          themePreference={themePreference}
-          onThemeChange={setTheme}
-          audioQuality={audioQuality}
-          onAudioQualityChange={setAudioQuality}
-          onboardingLanguage={onboardingLang}
-          onOnboardingLanguageChange={saveOnboardingLanguageChoice}
-          onStartOnboarding={() => {
-            setShowSettings(false);
-            setSettingsInitialTab("instellingen");
-            setSettingsInitialViewedListScope(null);
-            setSettingsAutoFocusWordSearch(false);
-            startOnboarding();
-          }}
           language={currentTrainingLanguage}
-          onLanguageChange={handleTrainingLanguageChange}
-          languageOptions={trainingLanguageOptions}
-          defaultLanguage={language}
-          onDefaultLanguageChange={setLanguage}
           translationLang={translationLang}
-          onTranslationLangChange={setTranslationLang}
-          wordListId={wordListId}
-          wordListType={wordListType}
-          activeTrainingList={activeList}
-          onMakeActiveForTraining={handleMakeActiveTrainingList}
+          interfaceLanguage={onboardingLang}
+          lists={availableLists}
+          activeList={activeList ?? null}
+          onReloadLists={handleListsUpdated}
+          extendedDestinationsEnabled={extendedDestinationsEnabled}
+          onNavigate={onRequestDestination}
+          utilityNav={destinationUtilityNav}
+          onOpenListMembership={(membership) => {
+            onRequestDestination("training");
+            openMembershipList(membership);
+          }}
           onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-          enabledModes={enabledModes}
-          cardFilter={cardFilter}
-          onModesChange={handleModesChange}
-          onCardFilterChange={handleCardFilterChange}
-          newReviewRatio={newReviewRatio}
-          onNewReviewRatioChange={handleNewReviewRatioChange}
-          stats={stats}
-          userEmail={user.email ?? ""}
-          userId={user.id}
-          activeScenario={activeScenario}
-          onScenarioChange={handleScenarioChange}
-          onTrainWord={handleTrainWord}
+          onTrainWord={(wordId) => {
+            handleTrainWord(wordId);
+            onRequestDestination("training");
+          }}
         />
-      )}
-
-      {/* Language Selection Modal */}
-      <LanguageSelectionModal
-        open={showLanguageSelection}
-        onSelectLanguage={handleLanguageSelect}
-      />
-
-      {/* Onboarding Tour */}
-      <Joyride
-        steps={buildJoyrideSteps(onboardingLang)}
-        run={runTour}
-        continuous
-        showProgress
-        showSkipButton
-        callback={handleJoyrideCallback}
-        locale={getOnboardingTranslation(onboardingLang).onboarding.buttons}
-        styles={{
-          options: {
-            primaryColor: "#3b82f6",
-            zIndex: 10000,
-            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
-            textColor: isDarkMode ? "#e2e8f0" : "#1f2937",
-            arrowColor: isDarkMode ? "#1e293b" : "#ffffff",
-          },
-          tooltip: {
-            backgroundColor: isDarkMode ? "#1e293b" : "#ffffff",
-            color: isDarkMode ? "#e2e8f0" : "#1f2937",
-            borderRadius: 8,
-          },
-          tooltipTitle: {
-            color: isDarkMode ? "#f1f5f9" : "#111827",
-          },
-          tooltipContent: {
-            color: isDarkMode ? "#e2e8f0" : "#374151",
-          },
-          buttonNext: {
-            backgroundColor: "#3b82f6",
-            color: "#ffffff",
-          },
-          buttonBack: {
-            color: isDarkMode ? "#94a3b8" : "#6b7280",
-          },
-          buttonSkip: {
-            color: isDarkMode ? "#94a3b8" : "#6b7280",
-          },
-        }}
-      />
-    </div>
-    {showHotkeys && (
-      <HotkeyDialog
-        interfaceLanguage={onboardingLang}
-        onClose={() => setShowHotkeys(false)}
-      />
-    )}
-    {onRequestDestination ? (
-      <LibraryDestination
-        open={destination === "library"}
-        userId={user.id}
-        language={currentTrainingLanguage}
-        translationLang={translationLang}
-        interfaceLanguage={onboardingLang}
-        lists={availableLists}
-        activeList={activeList ?? null}
-        onReloadLists={handleListsUpdated}
-        extendedDestinationsEnabled={extendedDestinationsEnabled}
-        onNavigate={onRequestDestination}
-        utilityNav={destinationUtilityNav}
-        onOpenListMembership={(membership) => {
-          onRequestDestination("training");
-          openMembershipList(membership);
-        }}
-        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-        onTrainWord={(wordId) => {
-          handleTrainWord(wordId);
-          onRequestDestination("training");
-        }}
-      />
-    ) : null}
-    {onRequestDestination && extendedDestinationsEnabled ? (
-      <StatisticsDestination
-        open={destination === "statistics"}
-        interfaceLanguage={onboardingLang}
-        stats={stats}
-        onNavigate={onRequestDestination}
-        utilityNav={destinationUtilityNav}
-      />
-    ) : null}
-    {onRequestDestination && extendedDestinationsEnabled ? (
-      <SettingsDestination
-        open={destination === "settings"}
-        interfaceLanguage={onboardingLang}
-        themePreference={themePreference}
-        translationLanguage={translationLang}
-        onThemeChange={setTheme}
-        onInterfaceLanguageChange={saveOnboardingLanguageChoice}
-        onTranslationLanguageChange={setTranslationLang}
-        onNavigate={onRequestDestination}
-        onOpenSearch={openSearch}
-        onOpenSettings={openAppSettings}
-        onOpenHelp={() => setShowHotkeys(true)}
-        onOpenHistory={openHistoryFromDestination}
-        userEmail={user.email ?? ""}
-        onSignOut={handleSignOut}
-      />
-    ) : null}
+      ) : null}
+      {onRequestDestination && extendedDestinationsEnabled ? (
+        <StatisticsDestination
+          open={destination === "statistics"}
+          interfaceLanguage={onboardingLang}
+          stats={stats}
+          onNavigate={onRequestDestination}
+          utilityNav={destinationUtilityNav}
+        />
+      ) : null}
+      {onRequestDestination && extendedDestinationsEnabled ? (
+        <SettingsDestination
+          open={destination === "settings"}
+          interfaceLanguage={onboardingLang}
+          themePreference={themePreference}
+          translationLanguage={translationLang}
+          onThemeChange={setTheme}
+          onInterfaceLanguageChange={saveOnboardingLanguageChoice}
+          onTranslationLanguageChange={setTranslationLang}
+          onNavigate={onRequestDestination}
+          onOpenSearch={openSearch}
+          onOpenSettings={openAppSettings}
+          onOpenHelp={() => setShowHotkeys(true)}
+          onOpenHistory={openHistoryFromDestination}
+          userEmail={user.email ?? ""}
+          onSignOut={handleSignOut}
+        />
+      ) : null}
     </>
   );
 }
