@@ -14,6 +14,7 @@ import type {
   WordListSummary,
 } from "@/lib/types";
 import { AppDestinationNav } from "./AppDestinationNav";
+import type { AppDestination } from "./appDestination";
 
 const copy: Record<
   OnboardingLanguage,
@@ -45,7 +46,8 @@ type Props = {
   lists: WordListSummary[];
   activeList: WordListSummary | null;
   onReloadLists: () => Promise<void>;
-  onBack: () => void;
+  extendedDestinationsEnabled?: boolean;
+  onNavigate: (destination: AppDestination) => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
@@ -60,7 +62,8 @@ export function LibraryDestination({
   lists,
   activeList,
   onReloadLists,
-  onBack,
+  extendedDestinationsEnabled = false,
+  onNavigate,
   onOpenListMembership,
   onUserDictionaryEntryCreated,
   onTrainWord,
@@ -88,14 +91,13 @@ export function LibraryDestination({
           <AppDestinationNav
             active="library"
             interfaceLanguage={interfaceLanguage}
-            onNavigate={(destination) => {
-              if (destination === "training") onBack();
-            }}
+            extendedDestinationsEnabled={extendedDestinationsEnabled}
+            onNavigate={onNavigate}
           />
         </div>
         <button
           type="button"
-          onClick={onBack}
+          onClick={() => onNavigate("training")}
           aria-label={text.back}
           className="flex h-10 w-10 items-center justify-center justify-self-end rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:invisible sm:pointer-events-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
         >
