@@ -444,6 +444,7 @@ export function TrainingScreen({
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
   const [sessionCardOrdinal, setSessionCardOrdinal] = useState(1);
+  const [sessionCardLimit, setSessionCardLimit] = useState(1);
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
@@ -1103,7 +1104,6 @@ export function TrainingScreen({
       };
 
       reviewedInSessionRef.current.add(currentCardKey);
-      setSessionCardOrdinal((ordinal) => ordinal + 1);
       const candidate = nextWordPrefetchRef.current;
       if (
         candidate &&
@@ -2201,16 +2201,46 @@ export function TrainingScreen({
     onRetry: () => loadNextWord(),
   });
   const previousPilotSurfaceRef = useRef(trainingPilot.surface);
+  const sessionPresentedCardKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const enteringSession =
       previousPilotSurfaceRef.current !== "session" &&
       trainingPilot.surface === "session";
     previousPilotSurfaceRef.current = trainingPilot.surface;
+    if (trainingPilot.surface !== "session") {
+      sessionPresentedCardKeyRef.current = null;
+      return;
+    }
     if (!enteringSession) return;
     reviewedInSessionRef.current.clear();
     setSessionCardOrdinal(1);
-  }, [trainingPilot.surface]);
+    sessionPresentedCardKeyRef.current = currentWord
+      ? trainingCardKey(currentWord, currentMode)
+      : null;
+    const newRemaining = Math.max(0, stats.dailyNewLimit - stats.newCardsToday);
+    const reviewRemaining = Math.max(0, stats.reviewCardsDue);
+    setSessionCardLimit(
+      Math.max(
+        1,
+        cardFilter === "new"
+          ? newRemaining
+          : cardFilter === "review"
+            ? reviewRemaining
+            : newRemaining + reviewRemaining,
+      ),
+    );
+  }, [cardFilter, currentMode, currentWord, stats, trainingPilot.surface]);
+
+  useEffect(() => {
+    if (trainingPilot.surface !== "session" || !currentWord) return;
+    const presentedCardKey = trainingCardKey(currentWord, currentMode);
+    const previousCardKey = sessionPresentedCardKeyRef.current;
+    if (previousCardKey && previousCardKey !== presentedCardKey) {
+      setSessionCardOrdinal((ordinal) => ordinal + 1);
+    }
+    sessionPresentedCardKeyRef.current = presentedCardKey;
+  }, [currentMode, currentWord, trainingPilot.surface]);
 
   const legacyTrainingCard = (
     <TrainingCard
@@ -2358,6 +2388,7 @@ export function TrainingScreen({
             scenario={activeScenario}
             mode={currentMode}
             position={sessionCardOrdinal}
+            limit={sessionCardLimit}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}

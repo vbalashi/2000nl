@@ -14,6 +14,7 @@ const copy = {
     close: "Sessie sluiten",
     history: "Geschiedenis",
     card: "Kaart",
+    max: "max.",
     modes: {
       "word-to-definition": "woord → betekenis",
       "definition-to-word": "betekenis → woord",
@@ -30,6 +31,7 @@ const copy = {
     close: "Close session",
     history: "History",
     card: "Card",
+    max: "max",
     modes: {
       "word-to-definition": "word → meaning",
       "definition-to-word": "meaning → word",
@@ -46,6 +48,7 @@ const copy = {
     close: "Закрыть сессию",
     history: "История",
     card: "Карточка",
+    max: "макс.",
     modes: {
       "word-to-definition": "слово → значение",
       "definition-to-word": "значение → слово",
@@ -60,6 +63,7 @@ const copy = {
     close: string;
     history: string;
     card: string;
+    max: string;
     modes: Record<TrainingMode, string>;
   }
 >;
@@ -69,12 +73,14 @@ export function TrainingSessionChrome({
   scenario,
   mode,
   position,
+  limit,
   onClose,
 }: {
   interfaceLanguage: OnboardingLanguage;
   scenario: string;
   mode: TrainingMode;
   position: number;
+  limit: number;
   onClose: () => void;
 }) {
   const text = copy[interfaceLanguage];
@@ -90,7 +96,7 @@ export function TrainingSessionChrome({
           {scenarioLabel} · {text.modes[mode]}
         </span>
         <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-300">
-          {text.card} {position}
+          {text.card} {position} · {text.max} {limit}
         </span>
         <button
           type="button"
