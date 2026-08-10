@@ -37,7 +37,6 @@ import type {
   WordListType,
 } from "@/lib/types";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Tooltip } from "@/components/Tooltip";
 import { useCardParams } from "@/lib/cardParams";
 import {
   generateReviewTurnId,
@@ -66,9 +65,21 @@ import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
+import {
+  AppUtilityNav,
+  type AppUtilityNavProps,
+} from "@/components/navigation/AppUtilityNav";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
+import {
+  TrainingTodaySetup,
+  type TrainingSetupDraft,
+} from "./pilot/TrainingTodaySetup";
+import {
+  useCommitTrainingPilotDraft,
+  useTrainingPilotController,
+} from "./pilot/useTrainingPilotController";
 import type { AppDestination } from "@/components/navigation/appDestination";
 import {
   getOnboardingTranslation,
@@ -81,6 +92,7 @@ type Props = {
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
+  trainingTodaySetupEnabled?: boolean;
 };
 
 type AcceptedCardTransition = {
@@ -92,6 +104,18 @@ type AcceptedCardTransition = {
   nextQueueTurn: QueueTurn;
   prefetched: TrainingWord | null;
 };
+
+type LoadNextWordRequest = {
+  excludeWordIds?: string[];
+  scope?: { listId?: string | null; listType?: WordListType | null };
+  queueTurn?: QueueTurn;
+  scenario?: string;
+  excludeCardKeys?: string[];
+  cardFilter?: CardFilter;
+  focusFilter?: TrainingFocusFilter;
+};
+
+type LoadNextWordResult = "loaded" | "empty" | "error" | "skipped";
 
 const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
   "word-to-definition",
@@ -200,6 +224,8 @@ export function TrainingScreen({
     process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
   onRequestDestination,
   onNavigationBlockedChange,
+  trainingTodaySetupEnabled =
+    process.env.NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
@@ -295,6 +321,7 @@ export function TrainingScreen({
       cancelled = true;
     };
   }, [user?.id]);
+
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null,
   );
@@ -304,6 +331,7 @@ export function TrainingScreen({
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
+  const [trainingLoadError, setTrainingLoadError] = useState<string | null>(null);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
@@ -355,7 +383,6 @@ export function TrainingScreen({
     useState<{ id: string; type: WordListType } | null>(null);
   const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
     useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const {
     audioModeEnabled,
     playAudio,
@@ -365,7 +392,6 @@ export function TrainingScreen({
     setAudioModeEnabled,
     ttsLoading,
   } = useTrainingAudio(audioQuality);
-  const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const cardSwipeRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const swipeTrackingRef = useRef(false);
@@ -418,6 +444,7 @@ export function TrainingScreen({
   const {
     activeList,
     activeListValue,
+    applyListLocal,
     availableLists,
     handleListSelectValue,
     handleListsUpdated: refreshListsAfterUpdate,
@@ -425,6 +452,7 @@ export function TrainingScreen({
     listHydrated,
     listOptions,
     persistListChange,
+    resolveListValue,
     wordListId,
     wordListLabel,
     wordListType,
@@ -787,15 +815,17 @@ export function TrainingScreen({
   }, [user?.id]);
 
   const loadNextWord = useCallback(
-    async (
-      excludeWordIds: string[] = [],
-      scope?: { listId?: string | null; listType?: WordListType | null },
-      overrideQueueTurn?: QueueTurn,
-      overrideScenario?: string,
-      excludeCardKeys: string[] = [],
-    ) => {
+    async ({
+      excludeWordIds = [],
+      scope,
+      queueTurn: requestedQueueTurn,
+      scenario,
+      excludeCardKeys = [],
+      cardFilter: requestedCardFilter,
+      focusFilter,
+    }: LoadNextWordRequest = {}): Promise<LoadNextWordResult> => {
       if (!user?.id) {
-        return;
+        return "skipped";
       }
 
       // Prevent concurrent calls - if already loading, skip this call
@@ -804,7 +834,7 @@ export function TrainingScreen({
           "%c loadNextWord skipped (already loading)",
           "color: #f59e0b",
         );
-        return;
+        return "skipped";
       }
       loadingInProgress.current = true;
       setLoadingWord(true);
@@ -818,9 +848,12 @@ export function TrainingScreen({
             list.id === effectiveListId &&
             list.type === (effectiveListType ?? "curated"),
         ) ?? activeList;
-      const effectiveQueueTurn = overrideQueueTurn ?? queueTurn;
-      const effectiveScenario = overrideScenario ?? activeScenario;
+      const effectiveQueueTurn = requestedQueueTurn ?? queueTurn;
+      const effectiveScenario = scenario ?? activeScenario;
+      const effectiveCardFilter = requestedCardFilter ?? cardFilter;
+      const effectiveFocusFilter = focusFilter ?? trainingFocusFilter;
       const restrictedModes = resolveRestrictedListModes(effectiveList);
+      setTrainingLoadError(null);
       try {
         const overrideWordId = nextCardOverrideWordIdRef.current;
         if (overrideWordId) {
@@ -853,7 +886,7 @@ export function TrainingScreen({
             setNextCardOverrideNotice(
               `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
             );
-            return;
+            return "loaded";
           }
           setNextCardOverrideNotice(
             "Kon dit woord niet laden; normale training gaat verder.",
@@ -870,11 +903,13 @@ export function TrainingScreen({
             listId: effectiveListId ?? undefined,
             listType: effectiveListType ?? undefined,
           },
-          cardFilter,
+          effectiveCardFilter,
           effectiveQueueTurn,
           excludeCardKeys,
           restrictedModes,
-          trainingFocusFilterActive ? trainingFocusFilter : null,
+          isTrainingFocusFilterActive(effectiveFocusFilter)
+            ? effectiveFocusFilter
+            : null,
         );
         if (nextWord) {
           // Fire and forget view recording, or await if we want strict consistency
@@ -889,6 +924,13 @@ export function TrainingScreen({
         } else {
           presentWord(null);
         }
+        return nextWord ? "loaded" : "empty";
+      } catch (error) {
+        if (!trainingTodaySetupEnabled) throw error;
+        setTrainingLoadError(
+          error instanceof Error ? error.message : "training_load_failed",
+        );
+        return "error";
       } finally {
         loadingInProgress.current = false;
         setLoadingWord(false);
@@ -905,7 +947,7 @@ export function TrainingScreen({
       presentWord,
       queueTurn,
       trainingFocusFilter,
-      trainingFocusFilterActive,
+      trainingTodaySetupEnabled,
       user?.id,
       wordListId,
       wordListType,
@@ -1009,9 +1051,9 @@ export function TrainingScreen({
       nextCardOverrideWordIdRef.current = wordId;
       setNextCardOverrideNotice("Dit woord wordt als volgende kaart geladen.");
       setShowSettings(false);
-      void loadNextWord(
-        [currentWord?.id].filter((x): x is string => Boolean(x)),
-      );
+      void loadNextWord({
+        excludeWordIds: [currentWord?.id].filter((x): x is string => Boolean(x)),
+      });
     },
     [currentWord?.id, loadNextWord],
   );
@@ -1086,16 +1128,13 @@ export function TrainingScreen({
         setNextCardOverrideNotice(null);
       }
       if (!transition.prefetched) {
-        await loadNextWord(
-          [],
-          undefined,
-          transition.nextQueueTurn,
-          undefined,
-          [
+        await loadNextWord({
+          queueTurn: transition.nextQueueTurn,
+          excludeCardKeys: [
             ...reviewedInSessionRef.current,
             transition.currentCardKey,
           ],
-        );
+        });
       }
     },
     [loadNextWord, loadRecentHistory, loadStats],
@@ -1443,6 +1482,11 @@ export function TrainingScreen({
     setShowSettings(true);
   }, [extendedDestinationsEnabled, onRequestDestination]);
 
+  const openHistoryFromDestination = useCallback(() => {
+    onRequestDestination?.("training");
+    toggleRecentPanel();
+  }, [onRequestDestination, toggleRecentPanel]);
+
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
       setSettingsInitialTab("lijsten");
@@ -1727,12 +1771,10 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord(
-        [],
-        { listId: list.id, listType: list.type },
-        undefined,
-        nextScenario,
-      );
+      void loadNextWord({
+        scope: { listId: list.id, listType: list.type },
+        scenario: nextScenario,
+      });
     },
     [
       activeScenario,
@@ -1759,12 +1801,7 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats(scope);
-      void loadNextWord(
-        [],
-        scope,
-        undefined,
-        nextScenario,
-      );
+      void loadNextWord({ scope, scenario: nextScenario });
     },
     [
       activeScenario,
@@ -1787,12 +1824,10 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord(
-        [],
-        { listId: list.id, listType: list.type },
-        undefined,
-        nextScenario,
-      );
+      void loadNextWord({
+        scope: { listId: list.id, listType: list.type },
+        scenario: nextScenario,
+      });
     };
 
     await refreshListsAfterUpdate({
@@ -1828,12 +1863,10 @@ export function TrainingScreen({
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
       // Load next word with the new scenario
-      void loadNextWord(
-        [],
-        { listId: wordListId, listType: wordListType },
-        undefined,
-        newScenario,
-      );
+      void loadNextWord({
+        scope: { listId: wordListId, listType: wordListType },
+        scenario: newScenario,
+      });
     },
     [
       setActiveScenario,
@@ -1858,6 +1891,34 @@ export function TrainingScreen({
     },
     [persistCurrentTrainingScope, setNewReviewRatio],
   );
+
+  const applyPilotPreferences = useCallback(
+    (draft: TrainingSetupDraft) => {
+      setActiveScenario(draft.scenarioId, { persist: false });
+      setEnabledModes(draft.modes, { persist: false });
+      setCardFilterPreference(draft.cardFilter, { persist: false });
+      setNewReviewRatio(draft.newReviewRatio, { persist: false });
+    },
+    [
+      setActiveScenario,
+      setCardFilterPreference,
+      setEnabledModes,
+      setNewReviewRatio,
+    ],
+  );
+  const commitPilotSessionDraft = useCommitTrainingPilotDraft({
+    userId: user?.id,
+    languageCode: currentTrainingLanguage,
+    currentScope: { listId: wordListId, listType: wordListType },
+    resolveList: resolveListValue,
+    applyListLocally: applyListLocal,
+    applyPreferences: applyPilotPreferences,
+    applyFocusFilter: setTrainingFocusFilter,
+    resetQueue: resetFocusQueueState,
+    loadStats: (scope) => void loadStats(scope),
+    loadWord: loadNextWord,
+    reportError: setTrainingLoadError,
+  });
 
   const canSwipe =
     revealed && !actionLoading && !loadingWord && Boolean(currentWord);
@@ -2001,117 +2062,6 @@ export function TrainingScreen({
     }
   };
 
-  useEffect(() => {
-    if (!accountMenuOpen) return;
-
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (!accountMenuRef.current) return;
-      if (accountMenuRef.current.contains(target)) return;
-      setAccountMenuOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAccountMenuOpen(false);
-    };
-
-    window.addEventListener("mousedown", handlePointerDown);
-    window.addEventListener("touchstart", handlePointerDown);
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("mousedown", handlePointerDown);
-      window.removeEventListener("touchstart", handlePointerDown);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [accountMenuOpen]);
-
-  const themeTitle =
-    themePreference === "light"
-      ? "Thema: Licht"
-      : themePreference === "dark"
-        ? "Thema: Donker"
-        : "Thema: Systeem";
-
-  const renderThemeIcon = () => {
-    if (themePreference === "dark") {
-      return (
-        <svg
-          className="h-5 w-5 pointer-events-none"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
-          />
-        </svg>
-      );
-    }
-
-    if (themePreference === "system") {
-      // Sun/moon split icon with diagonal divider
-      return (
-        <svg
-          className="h-5 w-5 pointer-events-none"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {/* Sun half (left side) */}
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 3v1m0 0a8 8 0 010 16m0-16a8 8 0 000 16m0 0v1"
-          />
-          {/* Sun rays on left */}
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4.22 4.22l.7.7M3 12h1M4.22 19.78l.7-.7"
-          />
-          {/* Diagonal divider */}
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M6 18L18 6"
-          />
-          {/* Moon on right side */}
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 12a4 4 0 01-4 4"
-            fill="currentColor"
-            fillOpacity={0.3}
-          />
-        </svg>
-      );
-    }
-
-    return (
-      <svg
-        className="w-5 h-5 pointer-events-none"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-        />
-      </svg>
-    );
-  };
-
   const swipeUi = showFirstTimeButtons
     ? {
         left: {
@@ -2184,6 +2134,28 @@ export function TrainingScreen({
     dateFilterLabel,
     activeSourceFilterLabel,
   ].filter(Boolean).join(" · ");
+  const pilotSourceOptions = trainingFilterSources.map((source) => ({
+    value: `source:${source.sourceId}`,
+    label: source.label,
+  }));
+  const trainingPilot = useTrainingPilotController({
+    enabled: trainingTodaySetupEnabled,
+    interfaceLanguage: onboardingLang,
+    listHydrated,
+    loadingWord,
+    hasCurrentWord: Boolean(currentWord),
+    loadError: trainingLoadError,
+    activeScenario,
+    enabledModes,
+    cardFilter,
+    activeListValue,
+    newReviewRatio,
+    focusFilter: trainingFocusFilter,
+    listOptions,
+    sourceOptions: pilotSourceOptions,
+    onCommitDraft: commitPilotSessionDraft,
+    onRetry: () => loadNextWord(),
+  });
 
   const legacyTrainingCard = (
     <TrainingCard
@@ -2206,10 +2178,30 @@ export function TrainingScreen({
     />
   );
 
+  const destinationUtilityNav = {
+    themePreference,
+    userEmail: user.email ?? "",
+    onCycleTheme: cycleThemePreference,
+    onOpenSearch: openSearch,
+    onOpenSettings: openAppSettings,
+    onOpenHelp: () => setShowHotkeys(true),
+    onOpenHistory: openHistoryFromDestination,
+    onOpenStatistics:
+      extendedDestinationsEnabled && onRequestDestination
+        ? () => onRequestDestination("statistics")
+        : undefined,
+    onSignOut: handleSignOut,
+  } satisfies Omit<
+    AppUtilityNavProps,
+    "interfaceLanguage" | "settingsActive" | "historyActive"
+  >;
+
   return (
     <>
     <div
       aria-hidden={destination !== "training"}
+      data-training-today-setup={trainingTodaySetupEnabled ? "enabled" : "disabled"}
+      data-training-pilot-surface={trainingPilot.surface}
       className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
     >
       <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
@@ -2217,6 +2209,17 @@ export function TrainingScreen({
           <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
             <BrandLogo />
           </div>
+          {trainingTodaySetupEnabled && trainingPilot.surface === "session" ? (
+            <button
+              type="button"
+              aria-label="Terug naar Vandaag"
+              onClick={trainingPilot.returnToToday}
+              className="ml-1 min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <span aria-hidden="true">←</span>
+              <span className="hidden sm:inline"> Vandaag</span>
+            </button>
+          ) : null}
         </div>
         {onRequestDestination ? (
           <div className="hidden justify-self-center md:block">
@@ -2231,224 +2234,47 @@ export function TrainingScreen({
         ) : (
           <div />
         )}
-        <div className="flex items-center gap-2 justify-self-end text-sm text-slate-500 dark:text-slate-300">
-          <Tooltip content={themeTitle} side="bottom" showOnFocus={false}>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={themeTitle}
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              onClick={cycleThemePreference}
-              onKeyDown={(e) => e.key === "Enter" && cycleThemePreference()}
-            >
-              {renderThemeIcon()}
-              <span className="absolute inset-0 rounded-full" />
-            </div>
-          </Tooltip>
-
-          <Tooltip content="Zoeken" side="bottom" showOnFocus={false}>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Zoeken"
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              data-tour="search-button"
-              onClick={openSearch}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                openSearch();
-              }}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <span className="absolute inset-0 rounded-full" />
-            </div>
-          </Tooltip>
-
-          <Tooltip content="Instellingen" side="bottom" showOnFocus={false}>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Instellingen"
-              className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              data-tour="settings-button"
-              onClick={openAppSettings}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                openAppSettings();
-              }}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <span className="absolute inset-0 rounded-full" />
-            </div>
-          </Tooltip>
-
-          <Tooltip content="Hotkeys" side="bottom" showOnFocus={false}>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Hotkeys"
-              className="relative z-10 hidden md:flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              onClick={() => setShowHotkeys(true)}
-              onKeyDown={(e) => e.key === "Enter" && setShowHotkeys(true)}
-            >
-              <span className="text-base font-semibold">?</span>
-              <span className="absolute inset-0 rounded-full" />
-            </div>
-          </Tooltip>
-
-          {/* Mobile-only: open Recent/Details drawer */}
-          <Tooltip
-            content={
-              trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"
+        {destination === "training" ? (
+          <AppUtilityNav
+            interfaceLanguage={onboardingLang}
+            themePreference={themePreference}
+            historyActive={trainingSidebarPinned}
+            userEmail={user.email ?? ""}
+            onCycleTheme={cycleThemePreference}
+            onOpenSearch={openSearch}
+            onOpenSettings={openAppSettings}
+            onOpenHelp={() => setShowHotkeys(true)}
+            onOpenHistory={toggleRecentPanel}
+            onOpenStatistics={
+              extendedDestinationsEnabled && onRequestDestination
+                ? () => onRequestDestination("statistics")
+                : undefined
             }
-            side="bottom"
-            showOnFocus={false}
-          >
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={
-                trainingSidebarPinned ? "Sidebar verbergen" : "Sidebar tonen"
-              }
-              className={`relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border shadow-sm cursor-pointer transition ${
-                trainingSidebarPinned
-                  ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/25 dark:text-blue-200 dark:hover:bg-blue-900/35"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              }`}
-              data-tour="sidebar-toggle"
-              onClick={toggleRecentPanel}
-              onKeyDown={(e) => e.key === "Enter" && toggleRecentPanel()}
-            >
-              <svg
-                className="h-5 w-5 pointer-events-none"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 2"
-                />
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-              </svg>
-              <span className="absolute inset-0 rounded-full" />
-            </div>
-          </Tooltip>
-
-          <div ref={accountMenuRef} className="relative z-50">
-            <Tooltip content="Account" side="bottom" showOnFocus={false}>
-              <button
-                type="button"
-                aria-label="Account"
-                aria-haspopup="menu"
-                aria-expanded={accountMenuOpen}
-                className="relative z-10 flex shrink-0 items-center justify-center h-9 w-9 md:h-10 md:w-10 rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm cursor-pointer transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                onClick={() => setAccountMenuOpen((v) => !v)}
-              >
-                <svg
-                  className="h-5 w-5 pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 21a9 9 0 110-18 9 9 0 010 18z"
-                  />
-                </svg>
-                <span className="absolute inset-0 rounded-full" />
-              </button>
-            </Tooltip>
-
-            {accountMenuOpen && (
-              <div
-                role="menu"
-                aria-label="Account menu"
-                className="absolute right-0 mt-2 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 backdrop-blur dark:border-slate-800 dark:bg-slate-900"
-              >
-                <div className="px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                    Ingelogd als
-                  </p>
-                  <p className="mt-0.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {user.email}
-                  </p>
-                </div>
-                <div className="border-t border-slate-100 dark:border-slate-800" />
-                {extendedDestinationsEnabled && onRequestDestination ? (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setAccountMenuOpen(false);
-                      onRequestDestination("statistics");
-                    }}
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    Statistieken
-                    <span aria-hidden="true">→</span>
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={async () => {
-                    setAccountMenuOpen(false);
-                    await handleSignOut();
-                  }}
-                  className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
-                >
-                  Afmelden
-                  <span className="text-xs font-bold uppercase tracking-wide opacity-60">
-                    ↵
-                  </span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+            onSignOut={handleSignOut}
+          />
+        ) : (
+          <div />
+        )}
       </header>
 
+      {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
+        <TrainingTodaySetup
+          interfaceLanguage={onboardingLang}
+          status={trainingPilot.status}
+          initialDraft={trainingPilot.initialDraft}
+          stats={stats}
+          scenarios={trainingPilot.scenarioOptions}
+          lists={listOptions}
+          sources={trainingPilot.sourceOptions}
+          startPending={trainingPilot.startPending}
+          scenarioLoading={trainingPilot.scenarioLoading}
+          activeSessionLabel={wordListLabel || undefined}
+          onContinue={trainingPilot.continueSession}
+          onStart={trainingPilot.startSession}
+          onRetry={() => void trainingPilot.retry()}
+        />
+      ) : (
+      <>
       <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
         {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
         {/* Adjusted max-width and gap to keep things tight and focused */}
@@ -2775,6 +2601,22 @@ export function TrainingScreen({
         }
         initialReviewDue={initialReviewDue}
       />
+      </>
+      )}
+
+      {trainingTodaySetupEnabled &&
+      trainingPilot.surface !== "session" &&
+      onRequestDestination ? (
+        <div className="flex-none border-t border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
+          <AppDestinationNav
+            active="training"
+            interfaceLanguage={onboardingLang}
+            disabled={actionLoading}
+            extendedDestinationsEnabled={extendedDestinationsEnabled}
+            onNavigate={onRequestDestination}
+          />
+        </div>
+      ) : null}
 
       {trainingShellV2Enabled ? (
         <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
@@ -2813,12 +2655,6 @@ export function TrainingScreen({
         />
       </TrainingSidebarDrawer>
 
-      {showHotkeys && (
-        <HotkeyDialog
-          interfaceLanguage={onboardingLang}
-          onClose={() => setShowHotkeys(false)}
-        />
-      )}
       {showSettings && !extendedDestinationsEnabled && (
         <SettingsModal
           open={showSettings}
@@ -2919,6 +2755,12 @@ export function TrainingScreen({
         }}
       />
     </div>
+    {showHotkeys && (
+      <HotkeyDialog
+        interfaceLanguage={onboardingLang}
+        onClose={() => setShowHotkeys(false)}
+      />
+    )}
     {onRequestDestination ? (
       <LibraryDestination
         open={destination === "library"}
@@ -2931,6 +2773,7 @@ export function TrainingScreen({
         onReloadLists={handleListsUpdated}
         extendedDestinationsEnabled={extendedDestinationsEnabled}
         onNavigate={onRequestDestination}
+        utilityNav={destinationUtilityNav}
         onOpenListMembership={(membership) => {
           onRequestDestination("training");
           openMembershipList(membership);
@@ -2948,6 +2791,7 @@ export function TrainingScreen({
         interfaceLanguage={onboardingLang}
         stats={stats}
         onNavigate={onRequestDestination}
+        utilityNav={destinationUtilityNav}
       />
     ) : null}
     {onRequestDestination && extendedDestinationsEnabled ? (
@@ -2960,6 +2804,12 @@ export function TrainingScreen({
         onInterfaceLanguageChange={saveOnboardingLanguageChoice}
         onTranslationLanguageChange={setTranslationLang}
         onNavigate={onRequestDestination}
+        onOpenSearch={openSearch}
+        onOpenSettings={openAppSettings}
+        onOpenHelp={() => setShowHotkeys(true)}
+        onOpenHistory={openHistoryFromDestination}
+        userEmail={user.email ?? ""}
+        onSignOut={handleSignOut}
       />
     ) : null}
     </>

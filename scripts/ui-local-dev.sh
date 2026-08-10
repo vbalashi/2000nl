@@ -6,13 +6,18 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 
 port="${PORT:-3100}"
 host="${HOST:-0.0.0.0}"
+pilot=false
 
 usage() {
   cat <<'EOF'
-Usage: scripts/ui-local-dev.sh [--port PORT]
+Usage: scripts/ui-local-dev.sh [--pilot] [--port PORT]
 
 Start apps/ui against the local Supabase stack, overriding any production
 Supabase values from .env.local for this process only.
+
+Options:
+  --pilot          Enable the complete owner-review UI profile.
+  --port PORT      UI port. Default: 3100.
 
 Environment:
   PORT            UI port. Default: 3100.
@@ -23,6 +28,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --pilot)
+      pilot=true
+      shift
+      ;;
     --port)
       port="${2:?Missing value for --port}"
       shift 2
@@ -79,12 +88,20 @@ export TEST_USER_EMAIL="${TEST_USER_EMAIL:-test@2000nl.local}"
 export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
+if [[ "$pilot" == true ]]; then
+  export NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI=true
+  export NEXT_PUBLIC_NAVIGATION_SHELL_V1=true
+  export NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1=true
+  export NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1=true
+fi
+
 echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"
 echo "  Supabase: $NEXT_PUBLIC_SUPABASE_URL"
 echo "  Dev auth: http://localhost:$port/dev/test-login?redirectTo=/"
 echo "  Health:   http://localhost:$port/api/health?deep=1"
 echo "  Cache:    $NEXT_DIST_DIR"
+echo "  Profile:  $([[ "$pilot" == true ]] && printf 'pilot' || printf 'legacy')"
 
 cd "$repo_root/apps/ui"
 exec npm run dev -- --port "$port"

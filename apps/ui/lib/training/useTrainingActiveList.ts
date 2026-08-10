@@ -149,6 +149,18 @@ export function useTrainingActiveList(params: {
     [availableLists],
   );
 
+  const resolveListValue = useCallback(
+    (value: string) => {
+      const [type, id] = value.split(":") as [WordListType, string];
+      return (
+        trainingAvailableLists.find(
+          (list) => list.id === id && list.type === type,
+        ) ?? null
+      );
+    },
+    [trainingAvailableLists],
+  );
+
   useEffect(() => {
     if (listHydrated && !wordListId && trainingAvailableLists.length > 0) {
       applyList(trainingAvailableLists[0]);
@@ -183,14 +195,11 @@ export function useTrainingActiveList(params: {
 
   const handleListSelectValue = useCallback(
     async (value: string) => {
-      const [type, id] = value.split(":") as [WordListType, string];
-      const found = trainingAvailableLists.find(
-        (list) => list.id === id && list.type === type,
-      );
+      const found = resolveListValue(value);
       if (!found) return null;
       return persistListChange(found);
     },
-    [trainingAvailableLists, persistListChange],
+    [persistListChange, resolveListValue],
   );
 
   const handleListsUpdated = useCallback(
@@ -262,6 +271,8 @@ export function useTrainingActiveList(params: {
     listOptions,
     persistListChange,
     refreshAvailableLists,
+    applyListLocal: applyList,
+    resolveListValue,
     wordListId,
     wordListLabel,
     wordListType,

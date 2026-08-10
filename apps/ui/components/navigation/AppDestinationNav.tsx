@@ -8,13 +8,21 @@ const labels: Record<
   OnboardingLanguage,
   Record<Exclude<AppDestination, "settings">, string>
 > = {
-  nl: { training: "Training", library: "Bibliotheek", statistics: "Statistieken" },
+  nl: {
+    training: "Training",
+    library: "Bibliotheek",
+    statistics: "Statistieken",
+  },
   en: { training: "Training", library: "Library", statistics: "Statistics" },
-  ru: { training: "Тренировка", library: "Библиотека", statistics: "Статистика" },
+  ru: {
+    training: "Тренировка",
+    library: "Библиотека",
+    statistics: "Статистика",
+  },
 };
 
 type Props = {
-  active: AppDestination;
+  active: Exclude<AppDestination, "settings"> | null;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
   extendedDestinationsEnabled?: boolean;
@@ -34,7 +42,10 @@ export function AppDestinationNav({
       : ["training", "library"];
 
   return (
-    <nav aria-label="Primary" className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-sm dark:border-slate-700 dark:bg-slate-800/80">
+    <nav
+      aria-label="Primary"
+      className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-sm dark:border-slate-700 dark:bg-slate-800/80"
+    >
       {destinations.map((destination) => (
         <button
           key={destination}
