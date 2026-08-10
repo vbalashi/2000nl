@@ -1991,7 +1991,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(frame.className).not.toContain("h-[580px]");
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /Today\s*0 \/ 10/,
+      /Card 1/,
     );
     const compactFooter = document.querySelector('footer[data-compact="true"]');
     expect(compactFooter).toBeInTheDocument();

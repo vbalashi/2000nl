@@ -120,6 +120,8 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     await screen.findByRole("heading", { name: "hand" });
+    const liveRegion = view.container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
     view.rerender(
       <TrainingSenseCardV2Session
         word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
@@ -134,6 +136,9 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     await screen.findByRole("heading", { name: "bank" });
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(
+      liveRegion,
+    );
     expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),

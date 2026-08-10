@@ -443,6 +443,7 @@ export function TrainingScreen({
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
+  const [sessionCardOrdinal, setSessionCardOrdinal] = useState(1);
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
@@ -1102,6 +1103,7 @@ export function TrainingScreen({
       };
 
       reviewedInSessionRef.current.add(currentCardKey);
+      setSessionCardOrdinal((ordinal) => ordinal + 1);
       const candidate = nextWordPrefetchRef.current;
       if (
         candidate &&
@@ -2198,6 +2200,17 @@ export function TrainingScreen({
     onCommitDraft: commitPilotSessionDraft,
     onRetry: () => loadNextWord(),
   });
+  const previousPilotSurfaceRef = useRef(trainingPilot.surface);
+
+  useEffect(() => {
+    const enteringSession =
+      previousPilotSurfaceRef.current !== "session" &&
+      trainingPilot.surface === "session";
+    previousPilotSurfaceRef.current = trainingPilot.surface;
+    if (!enteringSession) return;
+    reviewedInSessionRef.current.clear();
+    setSessionCardOrdinal(1);
+  }, [trainingPilot.surface]);
 
   const legacyTrainingCard = (
     <TrainingCard
@@ -2244,21 +2257,6 @@ export function TrainingScreen({
     currentWord &&
     trainingPilot.surface === "session",
   );
-  const sessionReviewTotal =
-    initialReviewDue ?? stats.reviewCardsDone + stats.reviewCardsDue;
-  const sessionQueueTotal = Math.max(
-    1,
-    cardFilter === "new"
-      ? stats.dailyNewLimit
-      : cardFilter === "review"
-        ? sessionReviewTotal
-        : stats.dailyNewLimit + sessionReviewTotal,
-  );
-  const sessionCompleted =
-    (cardFilter === "review" ? 0 : stats.newCardsToday) +
-    (cardFilter === "new" ? 0 : stats.reviewCardsDone);
-  const sessionTodayProgress = Math.min(sessionQueueTotal, sessionCompleted);
-
   return (
     <>
       <div
@@ -2359,8 +2357,7 @@ export function TrainingScreen({
             interfaceLanguage={onboardingLang}
             scenario={activeScenario}
             mode={currentMode}
-            todayProgress={sessionTodayProgress}
-            todayTarget={sessionQueueTotal}
+            position={sessionCardOrdinal}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}
@@ -2754,7 +2751,11 @@ export function TrainingScreen({
               inlineControlsEnabled={!trainingTodaySetupEnabled}
               compact={v2CardAvailable}
               interfaceLanguage={onboardingLang}
-              onAdjustSession={trainingPilot.returnToToday}
+              onAdjustSession={
+                trainingTodaySetupEnabled
+                  ? trainingPilot.returnToToday
+                  : undefined
+              }
             />
           </>
         )}

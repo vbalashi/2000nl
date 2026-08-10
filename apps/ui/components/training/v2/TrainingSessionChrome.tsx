@@ -13,7 +13,7 @@ const copy = {
     },
     close: "Sessie sluiten",
     history: "Geschiedenis",
-    today: "Vandaag",
+    card: "Kaart",
     modes: {
       "word-to-definition": "woord → betekenis",
       "definition-to-word": "betekenis → woord",
@@ -29,7 +29,7 @@ const copy = {
     },
     close: "Close session",
     history: "History",
-    today: "Today",
+    card: "Card",
     modes: {
       "word-to-definition": "word → meaning",
       "definition-to-word": "meaning → word",
@@ -45,7 +45,7 @@ const copy = {
     },
     close: "Закрыть сессию",
     history: "История",
-    today: "Сегодня",
+    card: "Карточка",
     modes: {
       "word-to-definition": "слово → значение",
       "definition-to-word": "значение → слово",
@@ -59,7 +59,7 @@ const copy = {
     scenarios: Record<"understanding" | "listening" | "conjugation", string>;
     close: string;
     history: string;
-    today: string;
+    card: string;
     modes: Record<TrainingMode, string>;
   }
 >;
@@ -68,15 +68,13 @@ export function TrainingSessionChrome({
   interfaceLanguage,
   scenario,
   mode,
-  todayProgress,
-  todayTarget,
+  position,
   onClose,
 }: {
   interfaceLanguage: OnboardingLanguage;
   scenario: string;
   mode: TrainingMode;
-  todayProgress: number;
-  todayTarget: number;
+  position: number;
   onClose: () => void;
 }) {
   const text = copy[interfaceLanguage];
@@ -92,10 +90,7 @@ export function TrainingSessionChrome({
           {scenarioLabel} · {text.modes[mode]}
         </span>
         <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-300">
-          <span className="mr-1.5 text-slate-400 dark:text-slate-500">
-            {text.today}
-          </span>
-          {todayProgress} / {todayTarget}
+          {text.card} {position}
         </span>
         <button
           type="button"

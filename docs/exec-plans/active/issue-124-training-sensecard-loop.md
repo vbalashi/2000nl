@@ -90,6 +90,10 @@ production data or schema was changed by that operational preparation.
 - Saved Training Plans and advanced filters.
 - Listening cards and other non-understanding training presentations.
 - New scheduler/count APIs or data-model changes.
+- Exact queue-total display in session chrome. The current Training owner can
+  state the local card ordinal truthfully, but has no authoritative count API
+  for the filtered one-card-at-a-time queue; the UI must not present daily
+  targets as an exact queue total.
 - Durable report submission UI. Training exposes the capability visually but
   keeps it unavailable until the existing typed `report-content` capability
   has an owned mutation/dialog contract; this slice must not invent one.

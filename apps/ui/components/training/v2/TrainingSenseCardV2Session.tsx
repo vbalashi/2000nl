@@ -184,9 +184,16 @@ export function TrainingSenseCardV2Session({
     }
   };
 
+  const cardAnnouncementRegion = (
+    <span className="sr-only" aria-live="polite" aria-atomic="true">
+      {cardAnnouncement}
+    </span>
+  );
+
   if (!result || !model || !presentationAvailable) {
     return (
       <>
+        {cardAnnouncementRegion}
         {fallback}
         <SessionError error={error} />
       </>
@@ -195,9 +202,7 @@ export function TrainingSenseCardV2Session({
 
   return (
     <>
-      <span className="sr-only" aria-live="polite" aria-atomic="true">
-        {cardAnnouncement}
-      </span>
+      {cardAnnouncementRegion}
       <TrainingSenseCardStage
         model={model}
         mode={mode}
