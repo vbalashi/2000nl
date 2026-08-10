@@ -56,6 +56,10 @@ export function TrainingSenseCardV2Session({
     );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [focusStageOnPresentation, setFocusStageOnPresentation] =
+    React.useState(false);
+  const [cardAnnouncement, setCardAnnouncement] = React.useState("");
+  const presentedEntryIdRef = React.useRef<string | null>(null);
 
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
@@ -67,11 +71,28 @@ export function TrainingSenseCardV2Session({
         translationTargetLanguageCode,
         signal,
       });
+      const nextEntryId = next?.entry.entryId ?? null;
+      const cardChanged = Boolean(
+        nextEntryId &&
+        presentedEntryIdRef.current &&
+        presentedEntryIdRef.current !== nextEntryId,
+      );
+      setFocusStageOnPresentation(cardChanged);
+      if (cardChanged) {
+        setCardAnnouncement(
+          platformV2Message(
+            interfaceLanguage,
+            "senseCard.training.cardChanged",
+          ),
+        );
+      }
+      if (nextEntryId) presentedEntryIdRef.current = nextEntryId;
       setResult(next);
       return next;
     },
     [
       contentLanguageCode,
+      interfaceLanguage,
       mode,
       translationTargetLanguageCode,
       word.headword,
@@ -174,11 +195,15 @@ export function TrainingSenseCardV2Session({
 
   return (
     <>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {cardAnnouncement}
+      </span>
       <TrainingSenseCardStage
         model={model}
         mode={mode}
         interfaceLanguage={interfaceLanguage}
         busy={busy}
+        focusOnMount={focusStageOnPresentation}
         onPlayAudio={
           result.group.header.audio && onPlayResolvedAudio
             ? () => void handlePlayAudio()

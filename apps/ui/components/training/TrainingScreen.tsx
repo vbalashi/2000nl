@@ -2239,6 +2239,7 @@ export function TrainingScreen({
   >;
 
   const v2SessionChromeVisible = Boolean(
+    trainingTodaySetupEnabled &&
     trainingSessionV2Enabled &&
     currentWord &&
     trainingPilot.surface === "session",
@@ -2256,7 +2257,7 @@ export function TrainingScreen({
   const sessionCompleted =
     (cardFilter === "review" ? 0 : stats.newCardsToday) +
     (cardFilter === "new" ? 0 : stats.reviewCardsDone);
-  const sessionPosition = Math.min(sessionQueueTotal, sessionCompleted + 1);
+  const sessionTodayProgress = Math.min(sessionQueueTotal, sessionCompleted);
 
   return (
     <>
@@ -2358,8 +2359,8 @@ export function TrainingScreen({
             interfaceLanguage={onboardingLang}
             scenario={activeScenario}
             mode={currentMode}
-            position={sessionPosition}
-            total={sessionQueueTotal}
+            todayProgress={sessionTodayProgress}
+            todayTarget={sessionQueueTotal}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}
@@ -2753,6 +2754,7 @@ export function TrainingScreen({
               inlineControlsEnabled={!trainingTodaySetupEnabled}
               compact={v2CardAvailable}
               interfaceLanguage={onboardingLang}
+              onAdjustSession={trainingPilot.returnToToday}
             />
           </>
         )}

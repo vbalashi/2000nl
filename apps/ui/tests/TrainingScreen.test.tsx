@@ -1971,7 +1971,14 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
   try {
-    render(<TrainingScreen user={user} />);
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Continue session|Sessie doorgaan/,
+      }),
+    );
 
     await screen.findByTestId("mock-training-sense-card-v2");
     const scrollRegion = await screen.findByTestId(
@@ -1983,9 +1990,28 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(frame.className).toContain("flex-1");
     expect(frame.className).not.toContain("h-[580px]");
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
+      /Today\s*0 \/ 10/,
+    );
+    const compactFooter = document.querySelector('footer[data-compact="true"]');
+    expect(compactFooter).toBeInTheDocument();
     expect(
-      document.querySelector('footer[data-compact="true"]'),
+      within(compactFooter as HTMLElement).getByRole("button", {
+        name: "Adjust",
+      }),
     ).toBeInTheDocument();
+    fireEvent.click(
+      within(screen.getByTestId("training-session-chrome")).getByRole(
+        "button",
+        { name: "Close session" },
+      ),
+    );
+    expect(
+      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("training-session-chrome"),
+    ).not.toBeInTheDocument();
   } finally {
     vi.unstubAllEnvs();
   }

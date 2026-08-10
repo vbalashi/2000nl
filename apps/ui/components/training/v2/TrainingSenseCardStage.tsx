@@ -24,6 +24,7 @@ type Props = {
   mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
   busy?: boolean;
+  focusOnMount?: boolean;
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
@@ -41,6 +42,7 @@ export function TrainingSenseCardStage({
   mode,
   interfaceLanguage,
   busy = false,
+  focusOnMount = false,
   onPlayAudio,
   onOpenDetails,
   onAction,
@@ -50,6 +52,7 @@ export function TrainingSenseCardStage({
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const stageRef = React.useRef<HTMLElement>(null);
   const answerPromptRef = React.useRef<HTMLParagraphElement>(null);
+  const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
   const previousEntryIdRef = React.useRef(model.entryId);
   const previousAnswerVisibleRef = React.useRef(answerVisible);
@@ -62,6 +65,11 @@ export function TrainingSenseCardStage({
   const reversePrompt = model.definitions.find(
     (item) => item.kind === "definition",
   );
+
+  React.useEffect(() => {
+    if (!focusOnMount) return;
+    window.requestAnimationFrame(() => stageRef.current?.focus());
+  }, [focusOnMount]);
 
   React.useEffect(() => {
     const entryChanged = previousEntryIdRef.current !== model.entryId;
@@ -84,7 +92,9 @@ export function TrainingSenseCardStage({
       ),
     );
     window.requestAnimationFrame(() => {
-      if (answerVisible) answerPromptRef.current?.focus();
+      if (answerVisible) {
+        (answerPromptRef.current ?? primaryAnswerActionRef.current)?.focus();
+      }
       else showAnswerRef.current?.focus();
     });
   }, [answerVisible, t]);
@@ -143,7 +153,7 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
-      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-100 [container-type:inline-size]"
+      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-100 sm:justify-center [container-type:inline-size]"
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -200,6 +210,7 @@ export function TrainingSenseCardStage({
             busy={busy}
             interfaceLanguage={interfaceLanguage}
             promptRef={answerPromptRef}
+            primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
           />
         ) : (
@@ -660,12 +671,14 @@ function AnswerDock({
   busy,
   interfaceLanguage,
   promptRef,
+  primaryActionRef,
   onAction,
 }: {
   model: TrainingSenseCardModel;
   busy: boolean;
   interfaceLanguage: OnboardingLanguage;
   promptRef: React.RefObject<HTMLParagraphElement>;
+  primaryActionRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
@@ -677,6 +690,7 @@ function AnswerDock({
           <CheckIcon /> {t("senseCard.known.marked")}
         </span>
         <button
+          ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.undoKnownCapability!)}
@@ -692,6 +706,7 @@ function AnswerDock({
     <div className="flex h-full flex-col gap-2">
       {model.learnCapability ? (
         <button
+          ref={primaryActionRef}
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}

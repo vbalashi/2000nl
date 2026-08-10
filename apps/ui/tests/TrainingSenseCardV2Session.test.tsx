@@ -87,6 +87,59 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
   });
 
+  test("announces and focuses the replacement card after the queue advances", async () => {
+    const nextEntry = {
+      ...singleSenseEntry,
+      entryId: "entry-bank-1",
+      contentRevision: "content-bank-1",
+    };
+    const nextGroup = {
+      ...singleSenseGroup,
+      headwordGroupId: "group-bank",
+      header: {
+        ...singleSenseGroup.header,
+        text: "bank",
+        displayPronunciation: "bank",
+      },
+      entries: [nextEntry],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ group: nextGroup, entry: nextEntry });
+    const view = render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    view.rerender(
+      <TrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "bank" });
+    expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),
+    );
+  });
+
   test("keeps a durable undo after marking the previous card known and advancing", async () => {
     const onProgressActionAccepted = vi.fn();
     const markKnown = singleSenseEntry.capabilities.find(

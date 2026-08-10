@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
@@ -241,6 +241,42 @@ describe("TrainingSenseCardStage", () => {
       "answer",
     );
     expect(good).toBeInTheDocument();
+  });
+
+  test("moves focus to the learn action when a first-encounter answer has no review prompt", async () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const model = {
+      ...baseModel,
+      learnCapability: {
+        actionId: "start-learning" as const,
+        elementId: "sense-card.learn.start",
+        messageKey: "senseCard.learning.start",
+        target: {
+          kind: "sense-card" as const,
+          entryId: baseModel.entryId,
+          cardTypeId: "word-to-definition" as const,
+          stateRevision: "state-new",
+        },
+      },
+      reviewCapabilities: [],
+    };
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const learn = screen.getByRole("button", { name: "Leren" });
+    await waitFor(() => expect(learn).toHaveFocus());
   });
 
   test("adds the top fade only after the lexical body has scrolled", () => {

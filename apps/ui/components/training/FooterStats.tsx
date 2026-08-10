@@ -38,15 +38,16 @@ type Props = {
   /** Compact Oiksc session footer: progress only, with stable stage height. */
   compact?: boolean;
   interfaceLanguage?: OnboardingLanguage;
+  onAdjustSession?: () => void;
 };
 
 const footerCopy = {
-  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal" },
-  en: { new: "New", review: "Review", total: "Total" },
-  ru: { new: "Новые", review: "Повторение", total: "Всего" },
+  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal", adjust: "Wijzigen" },
+  en: { new: "New", review: "Review", total: "Total", adjust: "Adjust" },
+  ru: { new: "Новые", review: "Повторение", total: "Всего", adjust: "Изменить" },
 } satisfies Record<
   OnboardingLanguage,
-  { new: string; review: string; total: string }
+  { new: string; review: string; total: string; adjust: string }
 >;
 
 // Progress stat with bar and numbers
@@ -104,6 +105,7 @@ export function FooterStats({
   inlineControlsEnabled = true,
   compact = false,
   interfaceLanguage = "nl",
+  onAdjustSession,
 }: Props) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
@@ -128,6 +130,60 @@ export function FooterStats({
     { value: "review", label: "Alleen herhaling" },
   ];
 
+  const progress = (
+    <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
+      <ProgressStat
+        label={text.new}
+        value={newCardsToday}
+        total={dailyNewLimit}
+        colorClass="text-blue-500 dark:text-blue-400"
+        barColorClass="bg-blue-500 dark:bg-blue-400"
+      />
+      <ProgressStat
+        label={text.review}
+        value={reviewCardsDone}
+        total={reviewTotal}
+        colorClass="text-amber-500 dark:text-amber-400"
+        barColorClass="bg-amber-500 dark:bg-amber-400"
+      />
+      <ProgressStat
+        label={text.total}
+        value={totalWordsLearned}
+        total={totalWordsInList}
+        colorClass="text-emerald-500 dark:text-emerald-400"
+        barColorClass="bg-emerald-500 dark:bg-emerald-400"
+      />
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <footer
+        data-compact="true"
+        className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75"
+      >
+        <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-5 px-4 lg:px-6">
+          <div className="min-w-0 flex-1">{progress}</div>
+          <div className="hidden shrink-0 items-center gap-3 md:flex">
+            <p className="max-w-[360px] truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              {language.toUpperCase()} · {activeListName ?? "VanDale 2k"} ·{" "}
+              {activeScenarioName ?? "Begrip"}
+            </p>
+            {onAdjustSession ? (
+              <button
+                type="button"
+                onClick={onAdjustSession}
+                className="rounded-lg border border-slate-300 bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white"
+              >
+                {text.adjust}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer
       data-compact={compact ? "true" : "false"}
@@ -142,34 +198,7 @@ export function FooterStats({
           }`}
         >
           {/* Stats Row - Horizontal grid on mobile, flex on desktop */}
-          <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
-            {/* New cards today */}
-            <ProgressStat
-              label={text.new}
-              value={newCardsToday}
-              total={dailyNewLimit}
-              colorClass="text-blue-500 dark:text-blue-400"
-              barColorClass="bg-blue-500 dark:bg-blue-400"
-            />
-
-            {/* Review cards today */}
-            <ProgressStat
-              label={text.review}
-              value={reviewCardsDone}
-              total={reviewTotal}
-              colorClass="text-amber-500 dark:text-amber-400"
-              barColorClass="bg-amber-500 dark:bg-amber-400"
-            />
-
-            {/* Total progress */}
-            <ProgressStat
-              label={text.total}
-              value={totalWordsLearned}
-              total={totalWordsInList}
-              colorClass="text-emerald-500 dark:text-emerald-400"
-              barColorClass="bg-emerald-500 dark:bg-emerald-400"
-            />
-          </div>
+          {progress}
 
           {!compact ? (
             <div
