@@ -572,7 +572,7 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
 
   await expect(page.locator("h1")).toHaveText(/huis/i);
 
-  await page.getByLabel("Zoeken").click();
+  await page.getByLabel(/^(Search|Zoeken)$/).click();
   await expect(page.locator("button").filter({ hasText: "Zoeken" })).toHaveClass(
     /border-primary/,
   );

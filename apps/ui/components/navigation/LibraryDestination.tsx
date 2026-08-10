@@ -14,6 +14,7 @@ import type {
   WordListSummary,
 } from "@/lib/types";
 import { AppDestinationNav } from "./AppDestinationNav";
+import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 
 const copy: Record<
@@ -48,6 +49,10 @@ type Props = {
   onReloadLists: () => Promise<void>;
   extendedDestinationsEnabled?: boolean;
   onNavigate: (destination: AppDestination) => void;
+  utilityNav: Omit<
+    AppUtilityNavProps,
+    "interfaceLanguage" | "settingsActive" | "historyActive"
+  >;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
@@ -64,6 +69,7 @@ export function LibraryDestination({
   onReloadLists,
   extendedDestinationsEnabled = false,
   onNavigate,
+  utilityNav,
   onOpenListMembership,
   onUserDictionaryEntryCreated,
   onTrainWord,
@@ -95,14 +101,14 @@ export function LibraryDestination({
             onNavigate={onNavigate}
           />
         </div>
-        <button
-          type="button"
-          onClick={() => onNavigate("training")}
-          aria-label={text.back}
-          className="flex h-10 w-10 items-center justify-center justify-self-end rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:invisible sm:pointer-events-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
+        {open ? (
+          <AppUtilityNav
+            interfaceLanguage={interfaceLanguage}
+            {...utilityNav}
+          />
+        ) : (
+          <div />
+        )}
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8">

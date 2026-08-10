@@ -230,6 +230,9 @@ const fetchTrainingScenarios = vi.fn().mockResolvedValue([
     nameNl: "Begrip",
     nameEn: "Understanding",
     description: null,
+    cardModes: ["word-to-definition"],
+    graduationThreshold: 0,
+    sortOrder: 0,
   },
   {
     id: "listening",
@@ -237,6 +240,9 @@ const fetchTrainingScenarios = vi.fn().mockResolvedValue([
     nameNl: "Luisteren",
     nameEn: "Listening",
     description: null,
+    cardModes: ["listen-recognize"],
+    graduationThreshold: 0,
+    sortOrder: 1,
   },
 ]);
 const fetchTrainingFilterSources = vi.fn().mockResolvedValue([
@@ -370,7 +376,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
 
   await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   const searchTab = screen
@@ -412,7 +418,7 @@ test("shell Library replaces the visible destination without remounting the curr
   fireEvent.keyDown(window, { key: " " });
   await screen.findByRole("button", { name: /opnieuw/i });
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
 
   expect(
     await screen.findByRole("heading", { name: /Bibliotheek|Library/ }),
@@ -420,9 +426,7 @@ test("shell Library replaces the visible destination without remounting the curr
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
 
-  fireEvent.click(
-    screen.getByRole("button", { name: /Terug naar Training|Back to Training/ }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Training" }));
 
   expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
@@ -461,17 +465,281 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
   fireEvent.click(screen.getByRole("button", { name: "Training" }));
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
 
-  fireEvent.click(screen.getByLabelText("Instellingen"));
+  fireEvent.click(screen.getByLabelText("Settings"));
   expect(
     await screen.findByRole("heading", { name: /Instellingen|Settings/ }),
   ).toBeInTheDocument();
   expect(screen.queryByText(/Audio kwaliteit/i)).not.toBeInTheDocument();
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Terug naar Training|Back to Training/ }),
+    within(screen.getByRole("navigation", { name: "Primary" })).getByRole(
+      "button",
+      { name: "Training" },
+    ),
   );
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
   expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(trainingFetchCount);
+});
+
+test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  await waitFor(() => expect(fetchNextTrainingWordByScenario).toHaveBeenCalled());
+  expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+  );
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Terug naar Vandaag" }));
+  expect(
+    screen.getByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+});
+
+test("rollout-off keeps the legacy Training card as the entry surface", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+
+  expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).not.toBeInTheDocument();
+});
+
+test("pilot Start persists the complete selection in one scope update", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {
+      id: "understanding",
+      enabled: true,
+      nameNl: "Begrip",
+      nameEn: "Understanding",
+      description: null,
+      cardModes: ["word-to-definition", "definition-to-word"],
+      graduationThreshold: 0,
+      sortOrder: 0,
+    },
+  ]);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  updateActiveTrainingScope.mockClear();
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Reverse|Omgekeerd/ }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /1 new · 3 review|1 nieuw · 3 herhaling/ }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Start training|Training starten/ }),
+  );
+
+  await waitFor(() => expect(updateActiveTrainingScope).toHaveBeenCalledOnce());
+  expect(updateActiveTrainingScope).toHaveBeenCalledWith({
+    userId: user.id,
+    languageCode: "nl",
+    listId: defaultAvailableList.id,
+    listType: defaultAvailableList.type,
+    activeScenario: "understanding",
+    cardFilter: "both",
+    modesEnabled: ["word-to-definition", "definition-to-word"],
+    newReviewRatio: 3,
+  });
+});
+
+test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  fetchNextTrainingWordByScenario.mockRejectedValueOnce(
+    new Error("replacement_queue_failed"),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Start training|Training starten/ }),
+  );
+
+  expect(
+    await screen.findByRole("heading", {
+      name: /Training could not be loaded|Training kon niet worden geladen/,
+    }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+});
+
+test("pilot Start shows empty recovery when the replacement queue has no cards", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  fetchNextTrainingWordByScenario.mockResolvedValueOnce(null);
+  fireEvent.click(
+    screen.getByRole("button", { name: /Start training|Training starten/ }),
+  );
+
+  expect(
+    await screen.findByRole("heading", {
+      name: /No cards match this setup|Geen kaarten voor deze selectie/,
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", {
+      name: /Training could not be loaded|Training kon niet worden geladen/,
+    }),
+  ).not.toBeInTheDocument();
+});
+
+test("pilot Setup shows Listening as unavailable without enabling it", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {
+      id: "understanding",
+      enabled: true,
+      nameNl: "Begrip",
+      nameEn: "Understanding",
+      description: null,
+      cardModes: ["word-to-definition"],
+      graduationThreshold: 0,
+      sortOrder: 0,
+    },
+    {
+      id: "listening",
+      enabled: false,
+      nameNl: "Luisteren",
+      nameEn: "Listening",
+      description: null,
+      cardModes: ["listen-recognize"],
+      graduationThreshold: 0,
+      sortOrder: 1,
+    },
+  ]);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  expect(
+    await screen.findByRole("button", { name: /Listening|Luisteren/ }),
+  ).toBeDisabled();
+});
+
+test("pilot cannot start a scenario before backend capabilities resolve", async () => {
+  let resolveScenarios: (value: Awaited<ReturnType<typeof fetchTrainingScenarios>>) => void =
+    () => undefined;
+  fetchTrainingScenarios.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveScenarios = resolve;
+      }),
+  );
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  expect(
+    screen.getByRole("button", { name: /Loading Training|Training laden/ }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole("button", { name: /Listening|Luisteren/ }),
+  ).toBeDisabled();
+
+  await act(async () => {
+    resolveScenarios([
+      {
+        id: "understanding",
+        enabled: true,
+        nameNl: "Begrip",
+        nameEn: "Understanding",
+        description: null,
+        cardModes: ["word-to-definition"],
+        graduationThreshold: 0,
+        sortOrder: 0,
+      },
+    ]);
+  });
+  expect(
+    await screen.findByRole("button", {
+      name: /Start training|Training starten/,
+    }),
+  ).toBeEnabled();
+});
+
+test("pilot cannot start when no authoritative scenario is available", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([]);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  const unavailableStart = await screen.findByRole("button", {
+    name: /Choose a training goal|Kies een trainingsdoel/,
+  });
+  expect(unavailableStart).toBeDisabled();
+  updateActiveTrainingScope.mockClear();
+  fireEvent.click(unavailableStart);
+  expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+});
+
+test("pilot does not start a card mode omitted by the authoritative scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValueOnce({
+    ...defaultActiveTrainingScope,
+    modesEnabled: ["definition-to-word"],
+    hasSavedScope: true,
+  });
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {
+      id: "understanding",
+      enabled: true,
+      nameNl: "Begrip",
+      nameEn: "Understanding",
+      description: null,
+      cardModes: ["word-to-definition"],
+      graduationThreshold: 0,
+      sortOrder: 0,
+    },
+  ]);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  const unavailableStart = await screen.findByRole("button", {
+    name: /Choose a training goal|Kies een trainingsdoel/,
+  });
+  expect(unavailableStart).toBeDisabled();
+  updateActiveTrainingScope.mockClear();
+  fireEvent.click(unavailableStart);
+  expect(updateActiveTrainingScope).not.toHaveBeenCalled();
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  expect(
+    screen.queryByRole("button", { name: /Reverse|Omgekeerd/ }),
+  ).not.toBeInTheDocument();
+  const normalizedStart = await screen.findByRole("button", {
+    name: /Start training|Training starten/,
+  });
+  expect(normalizedStart).toBeEnabled();
+  fireEvent.click(normalizedStart);
+  await waitFor(() =>
+    expect(updateActiveTrainingScope).toHaveBeenCalledWith(
+      expect.objectContaining({ modesEnabled: ["word-to-definition"] }),
+    ),
+  );
 });
 
 test("training focus filters pass date and source scope to card selection", async () => {
@@ -512,7 +780,7 @@ test("dictionary search scope changes lookup language without changing training"
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
   await screen.findByText("Zoekbereik");
 
   const languageSelect = screen.getByLabelText("Leertaal");
@@ -550,7 +818,7 @@ test("dictionary search can create a private user dictionary entry", async () =>
 
     await waitForInitialTrainingFetches();
     updateActiveTrainingScope.mockClear();
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
 
     fireEvent.click(await screen.findByRole("button", { name: "Eigen entry toevoegen" }));
     fireEvent.change(screen.getByLabelText("Hoofdwoord"), {
@@ -615,7 +883,7 @@ test("dictionary lookup state persists while switching settings modal tabs", asy
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
 
   const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   fireEvent.change(queryInput, { target: { value: "huis" } });
@@ -629,7 +897,7 @@ test("dictionary lookup state persists while switching settings modal tabs", asy
   fireEvent.click(screen.getByRole("button", { name: "Lijsten" }));
   await screen.findAllByRole("button", { name: "Lijstinhoud" });
 
-  fireEvent.click(screen.getAllByRole("button", { name: "Zoeken" })[1]);
+  fireEvent.click(screen.getByRole("button", { name: "Zoeken" }));
 
   const restoredInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   expect(restoredInput).toHaveValue("huis");
@@ -651,7 +919,7 @@ test("current training card and reveal state survive settings navigation", async
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
 
   await act(async () => {
-    await interaction.click(screen.getByLabelText("Instellingen"));
+    await interaction.click(screen.getByLabelText("Settings"));
   });
   await screen.findByRole("button", { name: /begrip/i });
   await act(async () => {
@@ -698,7 +966,7 @@ test("search detail opens a containing membership list without changing active t
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
       target: { value: "huis" },
     });
@@ -728,7 +996,7 @@ test("dictionary lookup state resets after closing the settings modal", async ()
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
   const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   fireEvent.change(queryInput, { target: { value: "huis" } });
   await screen.findByText("Details");
@@ -740,7 +1008,7 @@ test("dictionary lookup state resets after closing the settings modal", async ()
     ).not.toBeInTheDocument(),
   );
 
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
   const reopenedInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   expect(reopenedInput).toHaveValue("");
   expect(
@@ -759,7 +1027,7 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
 
     const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
     fireEvent.change(queryInput, { target: { value: "huis" } });
@@ -799,7 +1067,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
 
     const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
     fireEvent.change(queryInput, { target: { value: "ste" } });
@@ -864,7 +1132,7 @@ test("dictionary lookup shows backend match labels and preserves ranked order", 
   render(<TrainingScreen user={user} />);
 
   await screen.findByRole("heading", { name: "huis" });
-  fireEvent.click(screen.getByLabelText("Zoeken"));
+  fireEvent.click(screen.getByLabelText("Search"));
 
   const queryInput = await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   fireEvent.change(queryInput, { target: { value: "huis" } });
@@ -888,7 +1156,7 @@ test("lists tab opens the dedicated list management surface", async () => {
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Instellingen"));
+  fireEvent.click(screen.getByLabelText("Settings"));
   const listsTab = await screen.findByRole("button", { name: "Lijsten" });
   fireEvent.click(listsTab);
 
@@ -910,7 +1178,7 @@ test("lists tab keeps dictionary source separate from list browsing", async () =
 
     await screen.findByRole("heading", { name: "huis" });
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
 
     await screen.findByText("Trainingslijsten");
@@ -940,7 +1208,7 @@ test("lists tab groups mixed-language user lists separately", async () => {
 
     await screen.findByRole("heading", { name: "huis" });
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
 
     await screen.findByText("Mijn lijsten");
@@ -965,7 +1233,7 @@ test("list-filtered search empty state names the viewed-list filter", async () =
 
     await screen.findByRole("heading", { name: "huis" });
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
 
     const filterInput = (
@@ -993,7 +1261,7 @@ test("dictionary lookup empty state names the dictionary source search", async (
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
       target: { value: "zzzz" },
     });
@@ -1024,7 +1292,7 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
     updateActiveTrainingScope.mockClear();
     fetchStats.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
 
     const secondaryListButton = await screen.findByRole("button", {
@@ -1062,7 +1330,7 @@ test("explicit list action makes the viewed list active for training", async () 
     updateActiveTrainingScope.mockClear();
     fetchStats.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
     fireEvent.click(
       await screen.findByRole("button", { name: /secondary list/i }),
@@ -1243,7 +1511,7 @@ test("search detail trains a selected entry as the next card without changing ac
     fetchNextTrainingWordByScenario.mockClear();
     updateActiveTrainingScope.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
       target: { value: "boom" },
     });
@@ -1302,7 +1570,7 @@ test("search detail copies a trusted entry into the user dictionary", async () =
     await waitForInitialTrainingFetches();
     updateActiveTrainingScope.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
       target: { value: "huis" },
     });
@@ -1353,7 +1621,7 @@ test("next-card override is one-shot and normal training resumes after review", 
 
     await screen.findByRole("heading", { name: "huis" });
 
-    fireEvent.click(screen.getByLabelText("Zoeken"));
+    fireEvent.click(screen.getByLabelText("Search"));
     fireEvent.change(await screen.findByPlaceholderText(/zoek in het woordenboek/i), {
       target: { value: "boom" },
     });
@@ -1424,7 +1692,7 @@ test("settings training section repeats the effective training scope without usi
 
     await waitForInitialTrainingFetches();
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
 
     const scopeSummaries = await screen.findAllByRole("region", {
       name: "Training",
@@ -1478,7 +1746,7 @@ test("settings training controls persist to the current language training scope"
     updateActiveTrainingScope.mockClear();
     updateUserPreferences.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Instellingen"));
+    fireEvent.click(screen.getByLabelText("Settings"));
     fireEvent.click(await screen.findByRole("button", { name: "Luisteren" }));
 
     await waitFor(() =>

@@ -6,6 +6,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import { getTrainingHotkeys } from "@/components/training/trainingHotkeys";
 import { AppDestinationNav } from "./AppDestinationNav";
+import { AppUtilityNav } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 
 const copy = {
@@ -24,6 +25,13 @@ const copy = {
     off: "Uit",
     keyboardShortcuts: "Sneltoetsen",
     keyboardShortcutsHint: "De toetsen die nu in Training actief zijn.",
+    search: "Zoeken",
+    settings: "Instellingen",
+    help: "Help",
+    history: "Geschiedenis",
+    account: "Account",
+    signedInAs: "Ingelogd als",
+    signOut: "Afmelden",
   },
   en: {
     title: "Settings",
@@ -40,6 +48,13 @@ const copy = {
     off: "Off",
     keyboardShortcuts: "Keyboard shortcuts",
     keyboardShortcutsHint: "The shortcuts currently active in Training.",
+    search: "Search",
+    settings: "Settings",
+    help: "Help",
+    history: "History",
+    account: "Account",
+    signedInAs: "Signed in as",
+    signOut: "Sign out",
   },
   ru: {
     title: "Настройки",
@@ -56,6 +71,13 @@ const copy = {
     off: "Выключен",
     keyboardShortcuts: "Горячие клавиши",
     keyboardShortcutsHint: "Сочетания, которые сейчас действуют в тренировке.",
+    search: "Поиск",
+    settings: "Настройки",
+    help: "Помощь",
+    history: "История",
+    account: "Аккаунт",
+    signedInAs: "Выполнен вход",
+    signOut: "Выйти",
   },
 } satisfies Record<OnboardingLanguage, Record<string, string>>;
 
@@ -65,9 +87,17 @@ type Props = {
   themePreference: ThemePreference;
   translationLanguage: string | null;
   onThemeChange: (theme: ThemePreference) => void;
-  onInterfaceLanguageChange: (language: OnboardingLanguage) => void | Promise<void>;
+  onInterfaceLanguageChange: (
+    language: OnboardingLanguage,
+  ) => void | Promise<void>;
   onTranslationLanguageChange: (language: string | null) => void;
   onNavigate: (destination: AppDestination) => void;
+  onOpenSearch: () => void;
+  onOpenSettings: () => void;
+  onOpenHelp: () => void;
+  onOpenHistory: () => void;
+  userEmail: string;
+  onSignOut: () => void | Promise<void>;
 };
 
 export function SettingsDestination({
@@ -79,6 +109,12 @@ export function SettingsDestination({
   onInterfaceLanguageChange,
   onTranslationLanguageChange,
   onNavigate,
+  onOpenSearch,
+  onOpenSettings,
+  onOpenHelp,
+  onOpenHistory,
+  userEmail,
+  onSignOut,
 }: Props) {
   const text = copy[interfaceLanguage];
   const themeOptions: Array<{ value: ThemePreference; label: string }> = [
@@ -87,6 +123,11 @@ export function SettingsDestination({
     { value: "system", label: text.system },
   ];
   const hotkeys = getTrainingHotkeys(interfaceLanguage);
+  const cycleTheme = () => {
+    const options: ThemePreference[] = ["system", "light", "dark"];
+    const currentIndex = options.indexOf(themePreference);
+    onThemeChange(options[(currentIndex + 1) % options.length]);
+  };
 
   return (
     <section
@@ -94,29 +135,46 @@ export function SettingsDestination({
       className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
     >
       <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
-        <div className="min-w-0 justify-self-start"><BrandLogo /></div>
+        <div className="min-w-0 justify-self-start">
+          <BrandLogo />
+        </div>
         <div className="hidden justify-self-center sm:block">
           <AppDestinationNav
-            active="settings"
+            active={null}
             interfaceLanguage={interfaceLanguage}
             onNavigate={onNavigate}
           />
         </div>
-        <button
-          type="button"
-          aria-label={text.back}
-          onClick={() => onNavigate("training")}
-          className="flex h-10 w-10 items-center justify-center justify-self-end rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:invisible sm:pointer-events-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
+        {open ? (
+          <AppUtilityNav
+            interfaceLanguage={interfaceLanguage}
+            themePreference={themePreference}
+            settingsActive
+            userEmail={userEmail}
+            onCycleTheme={cycleTheme}
+            onOpenSearch={onOpenSearch}
+            onOpenSettings={onOpenSettings}
+            onOpenHelp={onOpenHelp}
+            onOpenHistory={onOpenHistory}
+            onOpenStatistics={() => onNavigate("statistics")}
+            onSignOut={onSignOut}
+          />
+        ) : (
+          <div />
+        )}
       </header>
 
       <main className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-5xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">{text.eyebrow}</p>
-          <h1 className="mt-1 text-3xl font-bold text-slate-950 dark:text-white">{text.title}</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{text.subtitle}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+            {text.eyebrow}
+          </p>
+          <h1 className="mt-1 text-3xl font-bold text-slate-950 dark:text-white">
+            {text.title}
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            {text.subtitle}
+          </p>
 
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -148,7 +206,11 @@ export function SettingsDestination({
                   <select
                     aria-label={text.interfaceLanguage}
                     value={interfaceLanguage}
-                    onChange={(event) => void onInterfaceLanguageChange(event.target.value as OnboardingLanguage)}
+                    onChange={(event) =>
+                      void onInterfaceLanguageChange(
+                        event.target.value as OnboardingLanguage,
+                      )
+                    }
                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950"
                   >
                     <option value="nl">Nederlands</option>
@@ -161,7 +223,13 @@ export function SettingsDestination({
                   <select
                     aria-label={text.translationLanguage}
                     value={translationLanguage ?? "off"}
-                    onChange={(event) => onTranslationLanguageChange(event.target.value === "off" ? null : event.target.value)}
+                    onChange={(event) =>
+                      onTranslationLanguageChange(
+                        event.target.value === "off"
+                          ? null
+                          : event.target.value,
+                      )
+                    }
                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-950"
                   >
                     <option value="off">{text.off}</option>
@@ -173,7 +241,10 @@ export function SettingsDestination({
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+            <section
+              id="settings-hotkeys"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-800 dark:bg-slate-900"
+            >
               <h2 className="text-base font-bold">{text.keyboardShortcuts}</h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {text.keyboardShortcutsHint}
