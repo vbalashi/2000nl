@@ -548,7 +548,9 @@ export function TrainingScreen({
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
   const trainingShellV2Enabled = platformV2TrainingUiEnabled();
   const trainingSessionV2Enabled =
-    trainingShellV2Enabled && currentMode === "word-to-definition";
+    trainingShellV2Enabled &&
+    (currentMode === "word-to-definition" ||
+      currentMode === "definition-to-word");
 
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
@@ -1529,6 +1531,21 @@ export function TrainingScreen({
 
       const normalized = event.key.toLowerCase();
 
+      if (
+        v2CardAvailable &&
+        (normalized === "t" ||
+          normalized === "h" ||
+          normalized === "j" ||
+          normalized === "k" ||
+          normalized === "l" ||
+          normalized === "f" ||
+          normalized === "x" ||
+          (normalized === "i" && !event.shiftKey) ||
+          event.key === " ")
+      ) {
+        return;
+      }
+
       if (normalized === "t") {
         if (!revealed) return;
         event.preventDefault();
@@ -1600,6 +1617,7 @@ export function TrainingScreen({
     revealed,
     toggleRecentPanel,
     toggleHint,
+    v2CardAvailable,
   ]);
 
   const handleDefinitionClick = useCallback(
@@ -2282,9 +2300,22 @@ export function TrainingScreen({
           {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
           <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
             {/* 1. Scrollable Card Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-visible scrollbar-hide flex flex-col px-2 md:px-4">
+            <div
+              data-testid="training-card-scroll-region"
+              className={`flex flex-1 flex-col px-2 md:px-4 ${
+                v2CardAvailable
+                  ? "min-h-0 overflow-clip"
+                  : "overflow-y-auto overflow-x-visible scrollbar-hide"
+              }`}
+            >
               {/* Card Container */}
-              <div className="flex min-h-full flex-col justify-start md:justify-center py-2 md:py-4">
+              <div
+                className={`flex flex-col justify-start md:justify-center ${
+                  v2CardAvailable
+                    ? "h-full min-h-0 py-0"
+                    : "min-h-full py-2 md:py-4"
+                }`}
+              >
                 {nextCardOverrideNotice ? (
                   <div
                     role="status"
@@ -2369,7 +2400,7 @@ export function TrainingScreen({
                   data-testid="training-card-frame"
                   className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
                     v2CardAvailable
-                      ? "h-[580px] min-h-0 max-h-[calc(100dvh-156px)] shrink-0 overflow-hidden md:h-[592px] md:max-h-[calc(100dvh-192px)]"
+                      ? "min-h-0 flex-1 overflow-hidden"
                       : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
                   }`}
                 >
@@ -2600,6 +2631,7 @@ export function TrainingScreen({
                 : activeScenario
         }
         initialReviewDue={initialReviewDue}
+        inlineControlsEnabled={!trainingTodaySetupEnabled}
       />
       </>
       )}

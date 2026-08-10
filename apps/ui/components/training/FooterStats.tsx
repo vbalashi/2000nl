@@ -32,6 +32,8 @@ type Props = {
   activeScenarioName?: string;
   /** Fixed Y value for HERHALING - set at session start, never changes */
   initialReviewDue?: number | null;
+  /** Hide the duplicate legacy chooser when Today/Setup owns session setup. */
+  inlineControlsEnabled?: boolean;
 };
 
 // Progress stat with bar and numbers
@@ -86,6 +88,7 @@ export function FooterStats({
   onOpenSettings,
   activeScenarioName,
   initialReviewDue,
+  inlineControlsEnabled = true,
 }: Props) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
@@ -145,7 +148,13 @@ export function FooterStats({
             />
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div
+            className={
+              inlineControlsEnabled
+                ? "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                : "grid gap-2"
+            }
+          >
             <EffectiveTrainingScopeSummary
               activeList={activeList ?? null}
               activeScenarioName={activeScenarioName ?? "Begrip"}
@@ -154,19 +163,21 @@ export function FooterStats({
               showFooterSelectorHint
               className="rounded-xl p-2.5 shadow-none"
             />
-            <button
-              type="button"
-              onClick={() => setControlsOpen((open) => !open)}
-              aria-expanded={controlsOpen}
-              aria-controls="training-footer-controls"
-              className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800"
-            >
-              Wijzigen
-            </button>
+            {inlineControlsEnabled ? (
+              <button
+                type="button"
+                onClick={() => setControlsOpen((open) => !open)}
+                aria-expanded={controlsOpen}
+                aria-controls="training-footer-controls"
+                className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800"
+              >
+                Wijzigen
+              </button>
+            ) : null}
           </div>
 
           {/* Controls Row */}
-          {controlsOpen ? (
+          {inlineControlsEnabled && controlsOpen ? (
             <div
               id="training-footer-controls"
               className="border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60"

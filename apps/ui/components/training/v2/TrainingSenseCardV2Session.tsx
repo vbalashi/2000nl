@@ -4,7 +4,7 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
-  fetchPlatformV2SingleSense,
+  fetchPlatformV2TrainingEntry,
   isPlatformV2TrainingActionCapability,
   performPlatformV2TrainingAction,
   resolvePlatformV2Audio,
@@ -51,14 +51,14 @@ export function TrainingSenseCardV2Session({
   onProgressActionAccepted,
 }: Props) {
   const [result, setResult] = React.useState<Awaited<
-    ReturnType<typeof fetchPlatformV2SingleSense>
+    ReturnType<typeof fetchPlatformV2TrainingEntry>
   >>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
-      const next = await fetchPlatformV2SingleSense({
+      const next = await fetchPlatformV2TrainingEntry({
         query: word.headword,
         entryId: word.id,
         cardTypeId: mode,
@@ -89,9 +89,26 @@ export function TrainingSenseCardV2Session({
     return () => controller.abort();
   }, [load]);
 
+  const model = React.useMemo(
+    () =>
+      result
+        ? buildTrainingSenseCardModel({
+            group: result.group,
+            entry: result.entry,
+            interfaceLanguage,
+          })
+        : null,
+    [interfaceLanguage, result],
+  );
+  const presentationAvailable = Boolean(
+    model &&
+      (mode !== "definition-to-word" ||
+        model.definitions.some((item) => item.kind === "definition")),
+  );
+
   React.useEffect(() => {
-    onAvailabilityChange(Boolean(result));
-  }, [onAvailabilityChange, result]);
+    onAvailabilityChange(presentationAvailable);
+  }, [onAvailabilityChange, presentationAvailable]);
 
   React.useEffect(
     () => () => onAvailabilityChange(false),
@@ -145,7 +162,7 @@ export function TrainingSenseCardV2Session({
     }
   };
 
-  if (!result) {
+  if (!result || !model || !presentationAvailable) {
     return (
       <>
         {fallback}
@@ -157,11 +174,8 @@ export function TrainingSenseCardV2Session({
   return (
     <>
       <TrainingSenseCardStage
-        model={buildTrainingSenseCardModel({
-          group: result.group,
-          entry: result.entry,
-          interfaceLanguage,
-        })}
+        model={model}
+        mode={mode}
         interfaceLanguage={interfaceLanguage}
         busy={busy}
         onPlayAudio={

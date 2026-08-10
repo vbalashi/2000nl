@@ -10,7 +10,7 @@ import type {
   PlatformSenseCardEntryV2,
 } from "../../../../packages/shared/types/platformV2";
 
-export type PlatformV2SingleSenseResult = {
+export type PlatformV2TrainingEntryResult = {
   group: PlatformHeadwordGroupV2;
   entry: PlatformSenseCardEntryV2;
 };
@@ -61,14 +61,14 @@ export function buildPlatformV2TrainingActionRequest(
   };
 }
 
-export async function fetchPlatformV2SingleSense(input: {
+export async function fetchPlatformV2TrainingEntry(input: {
   query: string;
   entryId: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
-}): Promise<PlatformV2SingleSenseResult | null> {
+}): Promise<PlatformV2TrainingEntryResult | null> {
   const response = await fetch("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -88,15 +88,14 @@ export async function fetchPlatformV2SingleSense(input: {
   const payload = (await response.json()) as PlatformLookupV2Response;
   if (payload.contractVersion !== "platform-lookup-v2") return null;
 
-  return selectPlatformV2SingleSense(payload, input.entryId);
+  return selectPlatformV2TrainingEntry(payload, input.entryId);
 }
 
-export function selectPlatformV2SingleSense(
+export function selectPlatformV2TrainingEntry(
   payload: PlatformLookupV2Response,
   entryId: string,
-): PlatformV2SingleSenseResult | null {
+): PlatformV2TrainingEntryResult | null {
   for (const group of payload.groups) {
-    if (group.senseCount !== 1) continue;
     const entry = group.entries.find(
       (candidate): candidate is PlatformSenseCardEntryV2 =>
         candidate.kind === "sense-card" && candidate.entryId === entryId,

@@ -38,6 +38,7 @@ export function SenseCardGateHarness() {
             <div className="min-h-[680px] min-w-0">
               <TrainingSenseCardStage
                 model={trainingModel}
+                mode="word-to-definition"
                 interfaceLanguage="nl"
                 onPlayAudio={() => undefined}
                 onAction={() => undefined}

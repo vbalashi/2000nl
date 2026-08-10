@@ -2,10 +2,10 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ExposureBadge,
-  FlagIcon,
   IdiomIcon,
   ListMarkerIcon,
   SenseCardReveal,
@@ -21,6 +21,7 @@ import type {
 
 type Props = {
   model: TrainingSenseCardModel;
+  mode: TrainingMode;
   interfaceLanguage: OnboardingLanguage;
   busy?: boolean;
   onPlayAudio?: () => void;
@@ -36,6 +37,7 @@ const reviewTone = {
 
 export function TrainingSenseCardStage({
   model,
+  mode,
   interfaceLanguage,
   busy = false,
   onPlayAudio,
@@ -46,12 +48,61 @@ export function TrainingSenseCardStage({
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
   const hint = model.examples[0];
+  const reversePrompt = model.definitions.find(
+    (item) => item.kind === "definition",
+  );
 
   React.useEffect(() => {
     setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
   }, [model.entryId]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        busy
+      ) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (event.key === " ") {
+        event.preventDefault();
+        setAnswerVisible((visible) => !visible);
+        return;
+      }
+      if (key === "i" && !event.shiftKey && !answerVisible && hint) {
+        event.preventDefault();
+        setHintVisible((visible) => !visible);
+        return;
+      }
+      if (key === "t" && answerVisible && hasTranslation(model)) {
+        event.preventDefault();
+        setTranslationVisible((visible) => !visible);
+        return;
+      }
+      if (!answerVisible) return;
+      const reviewResult = ({
+        h: "fail",
+        j: "hard",
+        k: "success",
+        l: "easy",
+      } as const)[key as "h" | "j" | "k" | "l"];
+      const capability = model.reviewCapabilities.find(
+        (candidate) => candidate.reviewResult === reviewResult,
+      );
+      if (!capability) return;
+      event.preventDefault();
+      onAction(capability);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [answerVisible, busy, hint, model, onAction]);
 
   return (
     <section
@@ -61,7 +112,7 @@ export function TrainingSenseCardStage({
     >
       <article
         data-testid="training-sense-card-shell"
-        className="relative flex h-[clamp(360px,58dvh,500px)] min-h-[360px] shrink-0 flex-col overflow-hidden rounded-[24px] border border-slate-600 bg-[#1d222b] shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
+        className="relative flex min-h-0 max-h-[500px] flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-600 bg-[#1d222b] shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
       >
         {answerVisible ? (
           <>
@@ -86,6 +137,8 @@ export function TrainingSenseCardStage({
         ) : (
           <FaceBody
             model={model}
+            mode={mode}
+            reversePrompt={reversePrompt}
             hint={hint}
             hintVisible={hintVisible}
             hintLabel={t("senseCard.hint.example")}
@@ -96,7 +149,10 @@ export function TrainingSenseCardStage({
         )}
       </article>
 
-      <footer className="h-[104px] min-h-[104px] shrink-0 px-1 sm:h-20 sm:min-h-20">
+      <footer
+        data-testid="training-sense-card-dock"
+        className="h-[104px] min-h-[104px] shrink-0 px-1 sm:h-20 sm:min-h-20"
+      >
         {answerVisible ? (
           <AnswerDock
             model={model}
@@ -194,6 +250,8 @@ function EntityHeader({
 
 function FaceBody({
   model,
+  mode,
+  reversePrompt,
   hint,
   hintVisible,
   hintLabel,
@@ -202,6 +260,8 @@ function FaceBody({
   onPlayAudio,
 }: {
   model: TrainingSenseCardModel;
+  mode: TrainingMode;
+  reversePrompt?: TrainingSenseCardContent;
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
   hintLabel: string;
@@ -212,24 +272,33 @@ function FaceBody({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
-        <SenseCardHeadwordLockup
-          article={model.article}
-          headword={model.headword}
-          tone="dark"
-          showMetadata={false}
-          inlineAction={
-            onPlayAudio ? (
-              <IconButton
-                label={audioLabel}
-                disabled={busy}
-                onClick={onPlayAudio}
-                compact
-              >
-                <SpeakerIcon />
-              </IconButton>
-            ) : null
-          }
-        />
+        {mode === "definition-to-word" ? (
+          <p
+            data-testid="reverse-prompt"
+            className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-50"
+          >
+            {reversePrompt?.text}
+          </p>
+        ) : (
+          <SenseCardHeadwordLockup
+            article={model.article}
+            headword={model.headword}
+            tone="dark"
+            showMetadata={false}
+            inlineAction={
+              onPlayAudio ? (
+                <IconButton
+                  label={audioLabel}
+                  disabled={busy}
+                  onClick={onPlayAudio}
+                  compact
+                >
+                  <SpeakerIcon />
+                </IconButton>
+              ) : null
+            }
+          />
+        )}
       </div>
       {hint && hintVisible ? (
         <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-700 bg-[#191e27] px-4 py-3 sm:inset-x-9">
@@ -515,18 +584,7 @@ function AnswerDock({
       ) : null}
 
       <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-400">
-        {model.reportCapabilities[0] ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onAction(model.reportCapabilities[0])}
-            className="flex items-center gap-1.5 hover:text-slate-100 disabled:opacity-50"
-          >
-            <FlagIcon className="h-3.5 w-3.5" /> {t("senseCard.report")}
-          </button>
-        ) : (
-          <span />
-        )}
+        <span />
         {model.markKnownCapability ? (
           <button
             type="button"

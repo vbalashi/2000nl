@@ -323,6 +323,21 @@ vi.mock("@/lib/supabaseClient", () => ({
   }
 }));
 
+vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
+  TrainingSenseCardV2Session: ({
+    onAvailabilityChange,
+  }: {
+    onAvailabilityChange: (available: boolean) => void;
+  }) => {
+    React.useEffect(() => {
+      onAvailabilityChange(true);
+      return () => onAvailabilityChange(false);
+    }, [onAvailabilityChange]);
+    return <div data-testid="mock-training-sense-card-v2" />;
+  },
+  TrainingKnownUndoNotice: () => null,
+}));
+
 const { TrainingScreen } = await import("@/components/training/TrainingScreen");
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
@@ -494,6 +509,9 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
     screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
   );
   expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Wijzigen" }),
+  ).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Terug naar Vandaag" }));
   expect(
@@ -1830,6 +1848,25 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
   // Desktop behavior remains aspect-ratio driven.
   expect(frame.className).toContain("md:aspect-[16/10]");
   expect(frame.className).toContain("md:h-auto");
+});
+
+test("V2 card owns scrolling without a second legacy scroll region", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByTestId("mock-training-sense-card-v2");
+    const scrollRegion = await screen.findByTestId(
+      "training-card-scroll-region",
+    );
+    expect(scrollRegion.className).toContain("overflow-clip");
+    expect(scrollRegion.className).not.toContain("overflow-y-auto");
+    const frame = screen.getByTestId("training-card-frame");
+    expect(frame.className).toContain("flex-1");
+    expect(frame.className).not.toContain("h-[580px]");
+  } finally {
+    vi.unstubAllEnvs();
+  }
 });
 
 test("first encounter: swipe right triggers Start learning (fail)", async () => {

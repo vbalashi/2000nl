@@ -89,6 +89,9 @@ export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
 if [[ "$pilot" == true ]]; then
+  export PLATFORM_V2_LOOKUP_ENABLED=1
+  export PLATFORM_V2_ACTIONS_ENABLED=1
+  export NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI=true
   export NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI=true
   export NEXT_PUBLIC_NAVIGATION_SHELL_V1=true
   export NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1=true

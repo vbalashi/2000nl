@@ -16,7 +16,7 @@ const performAction = vi.fn();
 const resolveAudio = vi.fn();
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
-  fetchPlatformV2SingleSense: (...args: unknown[]) => fetchSingleSense(...args),
+  fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
   isPlatformV2TrainingActionCapability: (capability: { actionId: string }) =>
     ["start-learning", "mark-known", "undo-known", "review-card"].includes(
       capability.actionId,
@@ -258,5 +258,39 @@ describe("TrainingSenseCardV2Session", () => {
       "state_conflict",
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+  });
+
+  test("falls back instead of exposing the answer when reverse content has no definition", async () => {
+    fetchSingleSense.mockResolvedValue({
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        contentNodes: singleSenseEntry.contentNodes.filter(
+          (node) => node.kind !== "definition",
+        ),
+      },
+    });
+    const onAvailabilityChange = vi.fn();
+
+    render(
+      <TrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={onAvailabilityChange}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText("Legacy card")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(onAvailabilityChange).toHaveBeenLastCalledWith(false),
+    );
+    expect(
+      screen.queryByRole("heading", { name: singleSenseGroup.header.text }),
+    ).not.toBeInTheDocument();
   });
 });

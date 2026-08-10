@@ -42,6 +42,7 @@ describe("TrainingSenseCardStage", () => {
     const { container } = render(
       <TrainingSenseCardStage
         model={model}
+        mode="word-to-definition"
         interfaceLanguage="nl"
         onPlayAudio={onPlayAudio}
         onAction={onAction}
@@ -50,6 +51,11 @@ describe("TrainingSenseCardStage", () => {
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
+    expect(faceShell.className).toContain("flex-1");
+    expect(faceShell.className).toContain("max-h-[500px]");
+    const dock = screen.getByTestId("training-sense-card-dock");
+    expect(dock.className).toContain("shrink-0");
+    expect(dock.className).toContain("sm:h-20");
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();
@@ -72,6 +78,9 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByTestId("training-sense-card-shell")).toBe(faceShell);
     expect(screen.getByText(model.definitions[0].text)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Melden" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Hoe goed ken je deze betekenis?"),
     ).not.toBeInTheDocument();
@@ -124,6 +133,86 @@ describe("TrainingSenseCardStage", () => {
     ).not.toHaveClass("text-[#dbc47e]");
 
     fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+    expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
+  });
+
+  test("keeps the headword hidden on a reverse Face and reveals the same exact sense on Answer", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="definition-to-word"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(
+      model.definitions[0].text,
+    );
+    expect(
+      screen.queryByRole("heading", { name: model.headword }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
+  });
+
+  test("uses the actual definition for reverse mode and routes review hotkeys through V2 capabilities", () => {
+    const onAction = vi.fn();
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const actualDefinition = baseModel.definitions.find(
+      (item) => item.kind === "definition",
+    )!;
+    const model = {
+      ...baseModel,
+      definitions: [
+        {
+          contentNodeId: "usage-before-definition",
+          kind: "usage-pattern" as const,
+          text: "iemand geeft iemand een hand",
+        },
+        ...baseModel.definitions,
+      ],
+    };
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="definition-to-word"
+        interfaceLanguage="nl"
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(
+      actualDefinition.text,
+    );
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.queryByRole("heading", { name: model.headword }),
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "k" });
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
   });
 });
