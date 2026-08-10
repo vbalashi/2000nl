@@ -444,7 +444,6 @@ export function TrainingScreen({
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
   const [sessionCardOrdinal, setSessionCardOrdinal] = useState(1);
-  const [sessionCardLimit, setSessionCardLimit] = useState(1);
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
@@ -2218,19 +2217,7 @@ export function TrainingScreen({
     sessionPresentedCardKeyRef.current = currentWord
       ? trainingCardKey(currentWord, currentMode)
       : null;
-    const newRemaining = Math.max(0, stats.dailyNewLimit - stats.newCardsToday);
-    const reviewRemaining = Math.max(0, stats.reviewCardsDue);
-    setSessionCardLimit(
-      Math.max(
-        1,
-        cardFilter === "new"
-          ? newRemaining
-          : cardFilter === "review"
-            ? reviewRemaining
-            : newRemaining + reviewRemaining,
-      ),
-    );
-  }, [cardFilter, currentMode, currentWord, stats, trainingPilot.surface]);
+  }, [currentMode, currentWord, trainingPilot.surface]);
 
   useEffect(() => {
     if (trainingPilot.surface !== "session" || !currentWord) return;
@@ -2388,7 +2375,6 @@ export function TrainingScreen({
             scenario={activeScenario}
             mode={currentMode}
             position={sessionCardOrdinal}
-            limit={sessionCardLimit}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}
