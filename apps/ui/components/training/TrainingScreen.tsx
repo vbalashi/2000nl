@@ -59,6 +59,8 @@ import {
   TrainingSessionChrome,
   TrainingSessionMobileUtilities,
 } from "./v2/TrainingSessionChrome";
+import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
+import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingClient";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
@@ -443,7 +445,6 @@ export function TrainingScreen({
   // Queue rotation state for round-robin between new and review queues
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
-  const [sessionCardOrdinal, setSessionCardOrdinal] = useState(1);
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
@@ -2199,35 +2200,16 @@ export function TrainingScreen({
     onCommitDraft: commitPilotSessionDraft,
     onRetry: () => loadNextWord(),
   });
-  const previousPilotSurfaceRef = useRef(trainingPilot.surface);
-  const sessionPresentedCardKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const enteringSession =
-      previousPilotSurfaceRef.current !== "session" &&
-      trainingPilot.surface === "session";
-    previousPilotSurfaceRef.current = trainingPilot.surface;
-    if (trainingPilot.surface !== "session") {
-      sessionPresentedCardKeyRef.current = null;
-      return;
-    }
-    if (!enteringSession) return;
+  const handleEnterTrainingSession = useCallback(() => {
     reviewedInSessionRef.current.clear();
-    setSessionCardOrdinal(1);
-    sessionPresentedCardKeyRef.current = currentWord
+  }, []);
+  const { cardOrdinal: sessionCardOrdinal } = useTrainingSessionPresentation({
+    surface: trainingPilot.surface,
+    presentedCardKey: currentWord
       ? trainingCardKey(currentWord, currentMode)
-      : null;
-  }, [currentMode, currentWord, trainingPilot.surface]);
-
-  useEffect(() => {
-    if (trainingPilot.surface !== "session" || !currentWord) return;
-    const presentedCardKey = trainingCardKey(currentWord, currentMode);
-    const previousCardKey = sessionPresentedCardKeyRef.current;
-    if (previousCardKey && previousCardKey !== presentedCardKey) {
-      setSessionCardOrdinal((ordinal) => ordinal + 1);
-    }
-    sessionPresentedCardKeyRef.current = presentedCardKey;
-  }, [currentMode, currentWord, trainingPilot.surface]);
+      : null,
+    onEnterSession: handleEnterTrainingSession,
+  });
 
   const legacyTrainingCard = (
     <TrainingCard
@@ -2755,15 +2737,11 @@ export function TrainingScreen({
                 setSettingsInitialViewedListScope(null);
                 setShowSettings(true);
               }}
-              activeScenarioName={
-                activeScenario === "understanding"
-                  ? "Begrip"
-                  : activeScenario === "listening"
-                    ? "Luisteren"
-                    : activeScenario === "conjugation"
-                      ? "Vervoegingen"
-                      : activeScenario
-              }
+              activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
+              compactScenarioName={trainingScenarioLabel(
+                onboardingLang,
+                activeScenario,
+              )}
               initialReviewDue={initialReviewDue}
               inlineControlsEnabled={!trainingTodaySetupEnabled}
               compact={v2CardAvailable}

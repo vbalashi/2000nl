@@ -3,14 +3,10 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
+import { trainingScenarioLabel } from "./trainingSessionLabels";
 
 const copy = {
   nl: {
-    scenarios: {
-      understanding: "Begrip",
-      listening: "Luisteren",
-      conjugation: "Vervoegingen",
-    },
     close: "Sessie sluiten",
     history: "Geschiedenis",
     card: "Kaart",
@@ -23,11 +19,6 @@ const copy = {
     },
   },
   en: {
-    scenarios: {
-      understanding: "Understanding",
-      listening: "Listening",
-      conjugation: "Conjugation",
-    },
     close: "Close session",
     history: "History",
     card: "Card",
@@ -40,11 +31,6 @@ const copy = {
     },
   },
   ru: {
-    scenarios: {
-      understanding: "Понимание",
-      listening: "Аудирование",
-      conjugation: "Спряжение",
-    },
     close: "Закрыть сессию",
     history: "История",
     card: "Карточка",
@@ -59,7 +45,6 @@ const copy = {
 } satisfies Record<
   OnboardingLanguage,
   {
-    scenarios: Record<"understanding" | "listening" | "conjugation", string>;
     close: string;
     history: string;
     card: string;
@@ -82,8 +67,7 @@ export function TrainingSessionChrome({
   onClose: () => void;
 }) {
   const text = copy[interfaceLanguage];
-  const scenarioLabel =
-    text.scenarios[scenario as keyof typeof text.scenarios] ?? scenario;
+  const scenarioLabel = trainingScenarioLabel(interfaceLanguage, scenario);
   return (
     <div
       data-testid="training-session-chrome"

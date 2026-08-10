@@ -31,6 +31,8 @@ type Props = {
   onOpenSettings?: () => void;
   /** Current active scenario name for display */
   activeScenarioName?: string;
+  /** Interface-localized scenario name for the compact session footer. */
+  compactScenarioName?: string;
   /** Fixed Y value for HERHALING - set at session start, never changes */
   initialReviewDue?: number | null;
   /** Hide the duplicate legacy chooser when Today/Setup owns session setup. */
@@ -101,6 +103,7 @@ export function FooterStats({
   onListChange,
   onOpenSettings,
   activeScenarioName,
+  compactScenarioName,
   initialReviewDue,
   inlineControlsEnabled = true,
   compact = false,
@@ -167,7 +170,7 @@ export function FooterStats({
           <div className="hidden shrink-0 items-center gap-3 md:flex">
             <p className="max-w-[360px] truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
               {language.toUpperCase()} · {activeListName ?? "VanDale 2k"} ·{" "}
-              {activeScenarioName ?? "Begrip"}
+              {compactScenarioName ?? activeScenarioName ?? "Begrip"}
             </p>
             {onAdjustSession ? (
               <button

@@ -148,11 +148,22 @@ export function TrainingSenseCardV2Session({
         if (result?.entry.entryId === capability.target.entryId) await load();
       } else {
         if (capability.actionId === "mark-known") {
-          const refreshed = await load();
-          const undoKnown = refreshed?.entry.capabilities.find(
-            (candidate): candidate is UndoKnownCapability =>
-              candidate.actionId === "undo-known",
-          );
+          const knownMark = response.card.knownMark;
+          const undoKnown: UndoKnownCapability | null = knownMark
+            ? {
+                actionId: "undo-known",
+                elementId: "sense-card.known.undo",
+                messageKey: "senseCard.known.undo",
+                target: {
+                  kind: "sense-card",
+                  entryId: capability.target.entryId,
+                  cardTypeId: response.card.cardTypeId,
+                  stateRevision: response.card.stateRevision,
+                  activeKnownMarkId: knownMark.markId,
+                  knownMarkRevision: knownMark.revision,
+                },
+              }
+            : null;
           rememberPendingKnownUndo(undoKnown ?? null);
         } else {
           rememberPendingKnownUndo(null);

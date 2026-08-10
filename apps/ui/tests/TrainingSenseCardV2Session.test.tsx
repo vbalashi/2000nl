@@ -260,6 +260,51 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
+  test("advances after mark-known without depending on a post-action lookup", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+
+    await waitFor(() =>
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown),
+    );
+    expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
   test("resolves and plays audio from the DTO header capability", async () => {
     const onPlayResolvedAudio = vi.fn();
 
