@@ -279,7 +279,7 @@ describe("TrainingSenseCardStage", () => {
     await waitFor(() => expect(learn).toHaveFocus());
   });
 
-  test("adds the top fade only after the lexical body has scrolled", () => {
+  test("adds scroll fades and transfers continuation focus to review at the end", async () => {
     const model = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
@@ -310,6 +310,10 @@ describe("TrainingSenseCardStage", () => {
       writable: true,
       configurable: true,
     });
+    Object.defineProperty(scroll, "scrollBy", {
+      value: vi.fn(),
+      configurable: true,
+    });
     fireEvent.scroll(scroll);
 
     expect(scroll).toHaveAttribute("data-scroll-top", "clear");
@@ -318,12 +322,19 @@ describe("TrainingSenseCardStage", () => {
       screen.getByRole("button", { name: "Meer kaartinhoud tonen" }),
     ).toBeInTheDocument();
 
-    Object.defineProperty(scroll, "scrollTop", {
-      value: 80,
-      writable: true,
-      configurable: true,
+    const more = screen.getByRole("button", {
+      name: "Meer kaartinhoud tonen",
     });
+    more.focus();
+    fireEvent.click(more);
+    expect(scroll.scrollBy).toHaveBeenCalled();
+
+    scroll.scrollTop = 360;
     fireEvent.scroll(scroll);
     expect(scroll).toHaveAttribute("data-scroll-top", "faded");
+    expect(scroll).toHaveAttribute("data-scroll-bottom", "clear");
+    await waitFor(() =>
+      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+    );
   });
 });

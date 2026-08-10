@@ -182,6 +182,11 @@ export function TrainingSenseCardStage({
               model={model}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
+              onReachEnd={() =>
+                (
+                  answerPromptRef.current ?? primaryAnswerActionRef.current
+                )?.focus()
+              }
             />
           </>
         ) : (
@@ -398,12 +403,15 @@ function AnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
+  onReachEnd,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
+  onReachEnd: () => void;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
     top: false,
     bottom: false,
@@ -439,6 +447,12 @@ function AnswerBody({
     if (node.firstElementChild) observer.observe(node.firstElementChild);
     return () => observer.disconnect();
   }, [model.entryId, translationVisible, updateScrollState]);
+
+  React.useEffect(() => {
+    if (scrollState.bottom || !continuationFocusPendingRef.current) return;
+    continuationFocusPendingRef.current = false;
+    window.requestAnimationFrame(onReachEnd);
+  }, [onReachEnd, scrollState.bottom]);
 
   const maskImage = scrollMask(scrollState.top, scrollState.bottom);
   return (
@@ -530,12 +544,13 @@ function AnswerBody({
         <button
           type="button"
           aria-label={t("senseCard.scroll.more")}
-          onClick={() =>
+          onClick={() => {
+            continuationFocusPendingRef.current = true;
             scrollRef.current?.scrollBy({
               top: Math.max(120, scrollRef.current.clientHeight * 0.65),
               behavior: "smooth",
-            })
-          }
+            });
+          }}
           className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-600 bg-[#171b22]/95 text-slate-300 shadow-lg hover:border-slate-400 hover:text-white"
         >
           <ChevronDownIcon />
