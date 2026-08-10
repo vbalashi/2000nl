@@ -1,6 +1,6 @@
 # First-pilot Training Today, Setup, and recovery states
 
-Status: active
+Status: completed — PR #122 merged as `f3e06a6d5bdc582d2324fb49d631fd53d94b6b7e`
 Issue: `vbalashi/2000nl#121`
 Branch: `codex/121-training-today-setup`
 Base: `b010bf67b03c306dd7e4832120643495c1c87f1e`
@@ -85,6 +85,11 @@ change.
 6. Run focused and full validation, then independent Standards/Spec review.
 
 ## Completion evidence
+
+Integrated on 2026-08-10. The exact merged-main commit passed the UI pipeline
+and deployed successfully to the NUC. Issues #72, #73, #75, and #121 were
+closed after owner pilot acceptance. The local owner-review runtime is now a
+single opt-in command: `scripts/ui-local-dev.sh --pilot --port 3100`.
 
 Pre-merge evidence (2026-08-10):
 
