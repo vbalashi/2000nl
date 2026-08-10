@@ -1,10 +1,11 @@
 # Settings and Statistics destination strangler
 
-Status: active
+Status: completed
 Issue: `vbalashi/2000nl#117`
-Branch: `codex/117-settings-statistics-destinations`
-Worktree: `/Users/khrustal/adhoc/2000nl-issue-117-settings-statistics`
-Base: `51657eecab67cc3eb11930cbeba93ed14e2d67dd`
+Implementation PR: `vbalashi/2000nl#118`
+Feature SHA: `1a4bc6156abaad59dfbd82f95fcdc5307c05bbab`
+Integrated main SHA: `29c3989828eb76fd0b80d6f8dee1c278bef840fe`
+Completed: 2026-08-10
 
 ## Goal
 
@@ -19,7 +20,7 @@ training session.
 - app-preference persistence through the existing onboarding/settings hook;
 - destination content and return actions rendered from real in-memory data.
 
-## In scope
+## Delivered scope
 
 - destinations `training`, `library`, `statistics`, and `settings`;
 - an independent off-by-default rollout flag;
@@ -28,36 +29,44 @@ training session.
 - read-only keyboard shortcut inventory shared with the Training help dialog;
 - Statistics subset backed by current `DetailedStats` values;
 - interface-language persistence without starting onboarding;
-- focused tests, browser smoke, visual comparison, and review.
+- focused tests, browser smoke, visual comparison, and owner review.
 
-## Out of scope
+## Deferred scope
 
 - profile/subscription and provider/audio controls;
 - Training Setup extraction or legacy modal retirement;
-- editable keyboard shortcut persistence;
+- editable keyboard shortcut persistence, conflict handling, and reset;
 - saved training plans;
-- new statistics RPCs for streak, retention, or weekly series;
+- new statistics contracts for period/activity history, streak, on-time rate,
+  queue breakdown, or recent progress;
 - scheduler, card action, dictionary, or database changes.
 
-## Sequence
+The owner explicitly approved the truthful reduced first-pilot contract on
+2026-08-10. Richer Pen concepts `30.70.10–13` remain post-pilot hypotheses and
+must not be described as implemented without the deferred contracts above.
 
-1. Characterize destination parsing/history, retained Training state, and the
-   interface-language persistence gap with failing tests.
-2. Extend the destination codec and persistent shell behind the nested flag.
-3. Add responsive Settings and Statistics destinations using existing
-   preference handlers and real statistics data only.
-4. Keep the compatibility Settings modal authoritative when the flag is off.
-5. Run focused tests, typecheck, lint, local browser smoke, and independent
-   Standards/Spec review.
-6. Push a clean review-ready branch and record the exact SHA in issue #117.
+## Verification
+
+Before merge, on feature SHA `1a4bc6156abaad59dfbd82f95fcdc5307c05bbab`:
+
+- full UI suite: 433 passed, 74 skipped;
+- TypeScript typecheck: pass;
+- lint: pass;
+- production build with navigation and destination flags enabled: pass;
+- desktop/mobile browser smoke and visual audit: pass.
+
+After squash merge:
+
+- stable patch ID matched the reviewed feature diff;
+- integrated main SHA: `29c3989828eb76fd0b80d6f8dee1c278bef840fe`;
+- focused destination/Training/onboarding suite: 49 passed;
+- TypeScript typecheck and diff check: pass.
+
+Existing React `act(...)`, Next runtime-export, and local dictionary-index
+warnings were unchanged and were not introduced by this slice.
 
 ## Rollback
 
 Set `NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1=false`. The existing
 Training/Library shell and overloaded Settings modal remain available; this
 slice changes no database schema or learning state and needs no data rollback.
-
-## Completion
-
-This plan moves to `completed/` only after the exact integrated main SHA passes
-the required checks. Review-ready work remains active.
