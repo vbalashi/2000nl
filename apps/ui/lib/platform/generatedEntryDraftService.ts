@@ -312,6 +312,7 @@ async function callOpenAiGeneratedEntry(params: {
   contextText: string | null;
 }) {
   const includeModel = !/\/openai\/deployments\//i.test(params.apiUrl);
+  const isGpt5 = params.model.startsWith("gpt-5");
   const response = await fetch(params.apiUrl, {
     method: "POST",
     headers: {
@@ -322,7 +323,8 @@ async function callOpenAiGeneratedEntry(params: {
     },
     body: JSON.stringify({
       ...(includeModel ? { model: params.model } : {}),
-      temperature: 0.2,
+      ...(!isGpt5 ? { temperature: 0.2 } : {}),
+      ...(isGpt5 ? { reasoning_effort: "none" } : {}),
       response_format: { type: "json_object" },
       messages: [
         {

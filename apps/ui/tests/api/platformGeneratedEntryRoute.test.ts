@@ -496,6 +496,10 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
         }),
       }),
     );
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const requestBody = JSON.parse(String(init.body));
+    expect(requestBody.temperature).toBe(0.2);
+    expect(requestBody.reasoning_effort).toBeUndefined();
     const payload = await response.json();
     expect(payload).toEqual(
       expect.objectContaining({
@@ -569,6 +573,46 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
         nextActions: ["save-and-start-learning"],
       }),
     );
+  });
+
+  test("uses GPT-5-compatible sampling parameters for generated Luna drafts", async () => {
+    const { POST } = await import(
+      "@/app/api/platform/v1/user-dictionary/generated-entry/draft/route"
+    );
+    process.env.OPENAI_MODEL = "gpt-5.6-luna";
+    mockAuthenticatedUser();
+    mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                definition: "Een situatie die veel moeite geeft.",
+                example: "Wat een gedoe.",
+                partOfSpeech: "zn",
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    const response = await POST(
+      request({
+        clickedForm: "gedoe",
+        languageCode: "nl",
+        contextText: "Wat een gedoe.",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    expect(body.temperature).toBeUndefined();
+    expect(body.reasoning_effort).toBe("none");
+    expect(body.response_format).toEqual({ type: "json_object" });
   });
 
   test("keeps regenerated candidates in the requested draft set", async () => {

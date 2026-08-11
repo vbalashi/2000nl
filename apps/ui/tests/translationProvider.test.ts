@@ -196,12 +196,15 @@ describe("OpenAITranslator", () => {
       text: async () => "",
     });
 
-    const translator = new OpenAITranslator({ apiKey: "key" });
+    const translator = new OpenAITranslator({ apiKey: "key", model: "gpt-4.1" });
     const translated = await translator.translate("hello", "en");
     expect(translated).toBe("Hallo");
 
     const [, init] = fetchMock.mock.calls[0] as [string, any];
     expect(init.headers.Authorization).toBe("Bearer key");
+    const body = JSON.parse(init.body);
+    expect(body.temperature).toBe(0);
+    expect(body.reasoning_effort).toBeUndefined();
   });
 
   it("uses Azure api-key header when calling an Azure OpenAI endpoint", async () => {
@@ -232,6 +235,36 @@ describe("OpenAITranslator", () => {
     const [, init] = fetchMock.mock.calls[0] as [string, any];
     expect(init.headers["api-key"]).toBe("azure-key");
     expect(init.headers.Authorization).toBeUndefined();
+  });
+
+  it("uses GPT-5-compatible sampling parameters for Luna", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({ translations: ["Hallo"], note: null }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({
+      apiKey: "azure-key",
+      apiUrl: "https://example.openai.azure.com/openai/v1/chat/completions",
+      model: "gpt-5.6-luna",
+    });
+    await translator.translate("hello", "en");
+
+    const [, init] = fetchMock.mock.calls[0] as [string, any];
+    const body = JSON.parse(init.body);
+    expect(body.temperature).toBeUndefined();
+    expect(body.reasoning_effort).toBe("none");
   });
 
   it("omits model in request body for Azure deployments endpoint URLs", async () => {

@@ -243,13 +243,14 @@ export class OpenAITranslator implements ITranslator {
 
       try {
         const includeModel = !isAzure || !/\/openai\/deployments\//i.test(this.apiUrl);
+        const isGpt5 = this.model.startsWith("gpt-5");
         const body: Record<string, any> = {
-          temperature: 0,
+          ...(!isGpt5 ? { temperature: 0 } : {}),
           messages: buildMessages(texts, targetLang, context),
         };
         if (includeModel) body.model = this.model;
-        // GPT-5.x supports reasoning_effort; keep it off for translation.
-        if (this.model.startsWith("gpt-5")) {
+        // GPT-5.x does not support temperature; keep reasoning off for translation.
+        if (isGpt5) {
           body.reasoning_effort = "none";
         }
 
