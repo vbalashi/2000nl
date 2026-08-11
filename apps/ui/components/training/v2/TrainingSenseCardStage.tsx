@@ -52,7 +52,6 @@ export function TrainingSenseCardStage({
   const [hintVisible, setHintVisible] = React.useState(false);
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const stageRef = React.useRef<HTMLElement>(null);
-  const answerPromptRef = React.useRef<HTMLParagraphElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
   const previousEntryIdRef = React.useRef(model.entryId);
@@ -97,7 +96,7 @@ export function TrainingSenseCardStage({
     );
     window.requestAnimationFrame(() => {
       if (answerVisible) {
-        (answerPromptRef.current ?? primaryAnswerActionRef.current)?.focus();
+        primaryAnswerActionRef.current?.focus();
       }
       else showAnswerRef.current?.focus();
     });
@@ -199,11 +198,7 @@ export function TrainingSenseCardStage({
               model={model}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
-              onReachEnd={() =>
-                (
-                  answerPromptRef.current ?? primaryAnswerActionRef.current
-                )?.focus()
-              }
+              onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
           </>
         ) : (
@@ -227,14 +222,19 @@ export function TrainingSenseCardStage({
 
       <footer
         data-testid="training-sense-card-dock"
-        className="h-[132px] min-h-[132px] shrink-0 px-1 sm:h-24 sm:min-h-24"
+        className={`shrink-0 px-1 ${
+          answerVisible
+            ? model.reviewCapabilities.length
+              ? "h-24 min-h-24 sm:h-16 sm:min-h-16"
+              : "h-16 min-h-16"
+            : "h-11 min-h-11"
+        }`}
       >
         {answerVisible ? (
           <AnswerDock
             model={model}
             busy={busy}
             interfaceLanguage={interfaceLanguage}
-            promptRef={answerPromptRef}
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
           />
@@ -330,7 +330,7 @@ function EntityHeader({
         <SenseCardReveal open={translationVisible}>
           <p
             data-testid="entry-translation"
-            className="mt-2 font-sense-serif text-base italic text-amber-700 dark:text-[#dbc47e]"
+            className="mt-2 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]"
           >
             {model.entryTranslation}
           </p>
@@ -638,7 +638,7 @@ function ContentItem({
         <SenseCardReveal open={translationVisible}>
           <p
             data-content-translation="true"
-            className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-500 dark:text-slate-400"
+            className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400"
           >
             {item.translation}
           </p>
@@ -678,7 +678,7 @@ function FaceDock({
             aria-label={hintVisible ? hideHintLabel : showHintLabel}
             disabled={busy}
             onClick={onToggleHint}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:text-indigo-200 dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:text-indigo-200 dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
           >
             <HintIcon />
           </button>
@@ -689,7 +689,7 @@ function FaceDock({
           aria-label={showAnswerLabel}
           disabled={busy}
           onClick={onShowAnswer}
-          className="h-14 flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-semibold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#6259b2] dark:bg-[#292650] dark:text-indigo-50 dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
+          className="h-11 flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-semibold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#6259b2] dark:bg-[#292650] dark:text-indigo-50 dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
         >
           <span>{showAnswerLabel}</span>
           <kbd className="ml-2 rounded border border-white/30 bg-black/10 px-1.5 py-0.5 text-[10px] font-medium text-white/90 dark:border-indigo-300/30 dark:bg-black/20 dark:text-indigo-100/80">
@@ -705,14 +705,12 @@ function AnswerDock({
   model,
   busy,
   interfaceLanguage,
-  promptRef,
   primaryActionRef,
   onAction,
 }: {
   model: TrainingSenseCardModel;
   busy: boolean;
   interfaceLanguage: OnboardingLanguage;
-  promptRef: React.RefObject<HTMLParagraphElement>;
   primaryActionRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 }) {
@@ -745,7 +743,7 @@ function AnswerDock({
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className="mx-auto block h-14 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
+          className="mx-auto block h-11 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
         >
           {t(model.learnCapability.messageKey)}
         </button>
@@ -754,25 +752,18 @@ function AnswerDock({
       {model.reviewCapabilities.length ? (
         <div
           role="group"
-          aria-labelledby="training-review-prompt"
-          className="flex flex-1 flex-col gap-1.5"
+          aria-label={t("senseCard.sections.reviewPrompt")}
+          className="flex flex-1 flex-col"
         >
-          <p
-            ref={promptRef}
-            id="training-review-prompt"
-            tabIndex={-1}
-            className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 outline-none dark:text-slate-400"
-          >
-            {t("senseCard.sections.reviewPrompt")}
-          </p>
-          <div className="grid h-[84px] grid-cols-2 gap-2 sm:h-14 sm:grid-cols-4">
-            {model.reviewCapabilities.map((capability) => (
+          <div className="grid h-[76px] grid-cols-2 gap-2 sm:h-10 sm:grid-cols-4">
+            {model.reviewCapabilities.map((capability, index) => (
               <button
                 key={capability.reviewResult}
+                ref={index === 0 ? primaryActionRef : undefined}
                 type="button"
                 disabled={busy}
                 onClick={() => onAction(capability)}
-                className={`relative min-h-[38px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-semibold outline-none transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] sm:h-14 ${reviewTone[capability.reviewResult]}`}
+                className={`relative min-h-[34px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-semibold outline-none transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] sm:h-11 ${reviewTone[capability.reviewResult]}`}
               >
                 {t(capability.messageKey)}
               </button>

@@ -51,7 +51,19 @@ describe("TrainingSenseCardStage", () => {
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
     expect(screen.queryByText("Wat betekent dit woord?")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
+    const headword = screen.getByRole("heading", { name: "hand" });
+    const faceAudio = screen.getByRole("button", { name: "Afspelen" });
+    expect(faceAudio).toBeInTheDocument();
+    expect(
+      headword.compareDocumentPosition(faceAudio) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      headword.closest("[data-testid='sense-card-headword-lockup']"),
+    ).toContainElement(faceAudio);
+    expect(faceAudio.parentElement?.previousElementSibling).toContainElement(
+      headword,
+    );
     expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
     expect(faceShell.className).toContain("flex-1");
@@ -64,7 +76,10 @@ describe("TrainingSenseCardStage", () => {
     expect(faceShell.className).toContain("dark:bg-[#1d222b]");
     const dock = screen.getByTestId("training-sense-card-dock");
     expect(dock.className).toContain("shrink-0");
-    expect(dock.className).toContain("sm:h-24");
+    expect(dock.className).toContain("h-11");
+    expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveClass(
+      "h-11",
+    );
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();
@@ -93,7 +108,13 @@ describe("TrainingSenseCardStage", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Hoe goed ken je deze betekenis?"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Hoe goed ken je deze betekenis?" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Goed" })).toHaveClass(
+      "sm:h-11",
+    );
     expect(screen.queryByText("Betekenis")).not.toBeInTheDocument();
     expect(
       container.querySelector(
@@ -140,6 +161,18 @@ describe("TrainingSenseCardStage", () => {
     expect(
       container.querySelector('[data-content-translation="true"]'),
     ).not.toHaveClass("text-[#dbc47e]");
+    expect(
+      container.querySelector('[data-testid="entry-translation"]'),
+    ).toHaveClass("text-sm", "font-[650]");
+    expect(
+      container.querySelector('[data-testid="entry-translation"]'),
+    ).not.toHaveClass("font-sense-serif", "italic");
+    expect(
+      container.querySelector('[data-content-translation="true"]'),
+    ).toHaveClass("text-[12.5px]", "leading-[1.45]");
+    expect(
+      container.querySelector('[data-content-translation="true"]'),
+    ).not.toHaveClass("font-sense-serif", "italic");
 
     fireEvent.click(screen.getByRole("button", { name: "Goed" }));
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
@@ -366,7 +399,7 @@ describe("TrainingSenseCardStage", () => {
       "answer",
     );
     await waitFor(() =>
-      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+      expect(screen.getByRole("button", { name: "Opnieuw" })).toHaveFocus(),
     );
   });
 
@@ -432,6 +465,7 @@ describe("TrainingSenseCardStage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
     const learn = screen.getByRole("button", { name: "Leren" });
+    expect(learn).toHaveClass("h-11");
     await waitFor(() => expect(learn).toHaveFocus());
   });
 
@@ -490,7 +524,7 @@ describe("TrainingSenseCardStage", () => {
     expect(scroll).toHaveAttribute("data-scroll-top", "faded");
     expect(scroll).toHaveAttribute("data-scroll-bottom", "clear");
     await waitFor(() =>
-      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+      expect(screen.getByRole("button", { name: "Opnieuw" })).toHaveFocus(),
     );
   });
 });
