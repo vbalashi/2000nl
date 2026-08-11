@@ -1,6 +1,6 @@
 # Van Dale NT2 Image Downloader
 
-Status: active
+Status: completed
 Work reference: `vandale-image-downloader-2026-08-11`
 Owner: Codex worktree `codex/vandale-image-downloader`
 Started: 2026-08-11
@@ -39,4 +39,12 @@ resuming without downloading existing files again.
   validation, bounded concurrency, atomic file writes, PNG validation, hashes,
   trial limits, and explicit failure records.
 - 2026-08-11: downloaded two real CDN assets into a temporary directory and
-  verified that a second run reused both files. All 24 scraper tests pass.
+  verified that a second run reused both files.
+- 2026-08-11: exact code commit
+  `9acaaefcd15992479866545153faf7ab0273e2f5` passed all 24 scraper tests,
+  Python bytecode compilation, `git diff --check`, real-corpus discovery of 622
+  URLs, and a resumability check against two downloaded CDN assets.
+- 2026-08-11: independent Standards and Spec reviews completed. Spec had no
+  findings. The Standards lifecycle-evidence finding was resolved by recording
+  the tested SHA above; two optional design smells were reviewed and accepted
+  for this narrow operational command.
