@@ -1573,11 +1573,13 @@ test("footer language selector switches current training language without changi
         languageCode: "en",
       }),
     );
-    expect(
-      within(footerScope).getByText(
-        "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(footerScope).getByText(
+          "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
+        ),
+      ).toBeInTheDocument(),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
     fireEvent.click(await screen.findByRole("button", { name: /Nederlands/ }));
@@ -1588,11 +1590,13 @@ test("footer language selector switches current training language without changi
         languageCode: "nl",
       }),
     );
-    expect(
-      within(footerScope).getByText(
-        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(footerScope).getByText(
+          "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
+        ),
+      ).toBeInTheDocument(),
+    );
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(updateUserPreferences).not.toHaveBeenCalledWith(
       expect.objectContaining({ languageCode: "en" }),
