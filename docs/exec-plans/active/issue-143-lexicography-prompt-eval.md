@@ -223,4 +223,5 @@ exportable as JSON and CSV. The page makes no network requests.
 - [x] Implement prompt comparison and plateau reporting.
 - [x] Implement local blind review with interleaved swapped repeats.
 - [x] Run the pilot and complete independent reviews.
-- [ ] Finish review-ready handoff.
+- [x] Finish review-ready handoff in draft PR #144; final validation checkpoint
+  is recorded on issue #143.
