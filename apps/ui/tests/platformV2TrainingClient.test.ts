@@ -2,13 +2,17 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   buildPlatformV2TrainingActionRequest,
   resolvePlatformV2Audio,
-  selectPlatformV2SingleSense,
+  selectPlatformV2TrainingEntry,
 } from "@/lib/platform/platformV2TrainingClient";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
 import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+import {
+  financeEntry,
+  multiSenseBankGroup,
+} from "./platformV2LibraryFixture";
 
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
@@ -110,13 +114,13 @@ describe("Platform V2 media and translation clients", () => {
   });
 });
 
-describe("selectPlatformV2SingleSense", () => {
+describe("selectPlatformV2TrainingEntry", () => {
   test("accepts a new single-sense entry before scheduler state exists", () => {
     const entry = { ...singleSenseEntry, card: null };
     const group = { ...singleSenseGroup, entries: [entry] };
 
     expect(
-      selectPlatformV2SingleSense(
+      selectPlatformV2TrainingEntry(
         {
           contractVersion: "platform-lookup-v2",
           query: "hand",
@@ -132,5 +136,25 @@ describe("selectPlatformV2SingleSense", () => {
         entry.entryId,
       ),
     ).toEqual({ group, entry });
+  });
+
+  test("selects the exact trained meaning from a multi-sense headword group", () => {
+    expect(
+      selectPlatformV2TrainingEntry(
+        {
+          contractVersion: "platform-lookup-v2",
+          query: "bank",
+          request: {
+            contentLanguageCode: "nl",
+            translationTargetLanguageCode: "en",
+            cardTypeId: "word-to-definition",
+            intent: "training-review",
+          },
+          groups: [multiSenseBankGroup],
+          page: { selectedTierComplete: true, nextGroupCursor: null },
+        },
+        financeEntry.entryId,
+      ),
+    ).toEqual({ group: multiSenseBankGroup, entry: financeEntry });
   });
 });

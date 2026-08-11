@@ -7,13 +7,17 @@ import type {
   PlatformContentNodeV2,
   PlatformContentNodeTranslationV2,
   PlatformEntryTranslationStateV2,
+  PlatformAudioCapabilityV2,
   PlatformLookupV2Response,
   PlatformSemanticTermV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardStateV2,
   PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
-import type { PlatformV2ContentSectionInput } from "../platformV2RichContent";
+import {
+  learnerDisplayPronunciation,
+  type PlatformV2ContentSectionInput,
+} from "../platformV2RichContent";
 
 export type ProjectionCardState = {
   stateRevision: string;
@@ -63,6 +67,7 @@ export type PlatformLookupV2ProjectionEntry = {
   crossReferenceQuery?: string | null;
   cardState?: ProjectionCardState | null;
   entryTranslation?: PlatformEntryTranslationStateV2 | null;
+  audioCapability?: PlatformAudioCapabilityV2;
   wordDetails?: PlatformWordDetailsV2;
   allowWordDetailsCapability?: boolean;
 };
@@ -138,7 +143,7 @@ function projectHeadwordGroup(
   const displayPronunciation = uniformString(
     entries.map((item) => {
       const sourceMeta = asRecord(item.entry.content.sourceMeta);
-      return asString(
+      return learnerDisplayPronunciation(
         sourceMeta.pronunciation_with_stress ??
           sourceMeta.displayPronunciation,
       );
@@ -163,6 +168,7 @@ function projectHeadwordGroup(
   const learnableEntries = entries.filter(
     (item) => !item.crossReferenceQuery,
   );
+  const groupAudio = uniformAudio(entries);
 
   return {
     headwordGroupId,
@@ -184,6 +190,7 @@ function projectHeadwordGroup(
       ...(uniformPartOfSpeech
         ? { partOfSpeech: semanticTerm("part-of-speech", uniformPartOfSpeech) }
         : {}),
+      ...(groupAudio ? { audio: groupAudio } : {}),
     },
     senseCount: learnableEntries.length,
     entryCount: entries.length,
@@ -285,6 +292,8 @@ function projectSenseCard(
       entryTarget,
       contentNodes,
       entryTranslation: item.entryTranslation ?? null,
+      audioCapability: item.audioCapability,
+      translationTargetLanguageCode: request.translationTargetLanguageCode,
       hasWordDetails: Boolean(item.wordDetails),
       allowWordDetails:
         item.allowWordDetailsCapability !== false,
@@ -360,6 +369,8 @@ function capabilitiesFor(params: {
   };
   contentNodes: PlatformContentNodeV2[];
   entryTranslation: PlatformEntryTranslationStateV2 | null;
+  audioCapability?: PlatformAudioCapabilityV2;
+  translationTargetLanguageCode: string | null;
   hasWordDetails: boolean;
   allowWordDetails: boolean;
   allowMutations: boolean;
@@ -427,6 +438,19 @@ function capabilitiesFor(params: {
     }
   }
   if (params.allowMutations) {
+    if (
+      params.entryTarget.contentRevision &&
+      params.entryTranslation?.status !== "ready" &&
+      params.translationTargetLanguageCode
+    ) {
+      capabilities.push({
+        actionId: "request-translation",
+        elementId: "sense-card.translation.request",
+        messageKey: "senseCard.translation.request",
+        target: params.entryTarget,
+        targetLanguageCode: params.translationTargetLanguageCode,
+      });
+    }
     capabilities.push({
       actionId: "report-content",
       elementId: "sense-card.report",
@@ -484,6 +508,25 @@ function capabilitiesFor(params: {
     });
   }
   return capabilities;
+}
+
+function uniformAudio(
+  entries: PlatformLookupV2ProjectionEntry[],
+): PlatformAudioCapabilityV2 | null {
+  const capabilities = entries
+    .filter((entry) => !entry.crossReferenceQuery)
+    .map((entry) => entry.audioCapability)
+    .filter((capability): capability is PlatformAudioCapabilityV2 => Boolean(capability));
+  if (capabilities.length === 0) return null;
+  const first = capabilities[0];
+  return capabilities.every(
+    (capability) =>
+      capability.audioId === first.audioId &&
+      capability.actionId === first.actionId &&
+      capability.contentLanguageCode === first.contentLanguageCode,
+  )
+    ? first
+    : null;
 }
 
 function publicContentKind(

@@ -82,7 +82,11 @@
       "example": "Hint · voorbeeld"
     },
     "answer": {
-      "show": "Antwoord tonen"
+      "show": "Antwoord tonen",
+      "prompt": "Wat betekent dit woord?",
+      "reversePrompt": "Welk woord hoort bij deze betekenis?",
+      "revealed": "Antwoord getoond",
+      "hidden": "Antwoord verborgen"
     },
     "sections": {
       "meaning": "Betekenis",
@@ -104,6 +108,9 @@
       "failed": "Vertaling kon niet worden geladen.",
       "retry": "Opnieuw proberen"
     },
+    "scroll": {
+      "more": "Meer kaartinhoud tonen"
+    },
     "collapse": "Betekenis inklappen",
     "expand": "Betekenis uitklappen",
     "report": "Melden",
@@ -119,7 +126,8 @@
       "failed": "Collecties konden niet worden bijgewerkt"
     },
     "training": {
-      "next": "Hierna trainen"
+      "next": "Hierna trainen",
+      "cardChanged": "Volgende trainingskaart"
     },
     "wordDetails": {
       "open": "Woorddetails"

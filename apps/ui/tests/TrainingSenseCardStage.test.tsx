@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
@@ -42,6 +42,7 @@ describe("TrainingSenseCardStage", () => {
     const { container } = render(
       <TrainingSenseCardStage
         model={model}
+        mode="word-to-definition"
         interfaceLanguage="nl"
         onPlayAudio={onPlayAudio}
         onAction={onAction}
@@ -49,7 +50,21 @@ describe("TrainingSenseCardStage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByText("Wat betekent dit woord?")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
+    expect(faceShell.className).toContain("flex-1");
+    expect(faceShell.className).toContain("max-h-[500px]");
+    expect(faceShell.className).not.toContain("sm:max-h-[500px]");
+    expect(faceShell.className).toContain(
+      "[@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]",
+    );
+    expect(faceShell.className).toContain("bg-slate-50");
+    expect(faceShell.className).toContain("dark:bg-[#1d222b]");
+    const dock = screen.getByTestId("training-sense-card-dock");
+    expect(dock.className).toContain("shrink-0");
+    expect(dock.className).toContain("sm:h-24");
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();
@@ -72,9 +87,13 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByTestId("training-sense-card-shell")).toBe(faceShell);
     expect(screen.getByText(model.definitions[0].text)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
+    expect(screen.getByText("2K")).toHaveClass("dark:text-indigo-200");
+    expect(
+      screen.queryByRole("button", { name: "Melden" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Hoe goed ken je deze betekenis?"),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(screen.queryByText("Betekenis")).not.toBeInTheDocument();
     expect(
       container.querySelector(
@@ -93,8 +112,7 @@ describe("TrainingSenseCardStage", () => {
     expect(
       (usageSection as Element).compareDocumentPosition(
         examplesSection as Node,
-      ) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(idiomsSection).toBeInTheDocument();
     expect(
@@ -125,5 +143,354 @@ describe("TrainingSenseCardStage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Goed" }));
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
+  });
+
+  test("keeps translation off the Face while retaining audio there", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const model = {
+      ...baseModel,
+      requestTranslationCapability: {
+        actionId: "request-translation" as const,
+        elementId: "sense-card.translation.request",
+        messageKey: "senseCard.translation.request",
+        target: {
+          kind: "entry" as const,
+          entryId: "entry-1",
+          contentRevision: "revision-1",
+        },
+        targetLanguageCode: "en",
+      },
+    };
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Play audio" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Translate" })).not.toBeInTheDocument();
+  });
+
+  test("renders the canonical headword instead of pronunciation metadata", () => {
+    const model = buildTrainingSenseCardModel({
+      group: {
+        ...singleSenseGroup,
+        header: {
+          ...singleSenseGroup.header,
+          text: "record",
+          displayPronunciation: "re·ˈcord",
+          pronunciation: "[rəkoːr]",
+        },
+      },
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+
+    expect(model.headword).toBe("re·ˈcord");
+  });
+
+  test("keeps reverse Face quiet without an audio action", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const onPlayAudio = vi.fn();
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="definition-to-word"
+        interfaceLanguage="nl"
+        onPlayAudio={onPlayAudio}
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(
+      model.definitions[0].text,
+    );
+    expect(
+      screen.queryByText("Welk woord hoort bij deze betekenis?"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Afspelen" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: model.headword }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
+    expect(onPlayAudio).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
+  });
+
+  test("does not offer a Face translation toggle when only answer content is translated", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const { entryTranslation: _entryTranslation, ...model } = baseModel;
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByRole("button", { name: "Vertalen" })).toBeInTheDocument();
+  });
+
+  test("uses the actual definition for reverse mode and routes review hotkeys through V2 capabilities", () => {
+    const onAction = vi.fn();
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const actualDefinition = baseModel.definitions.find(
+      (item) => item.kind === "definition",
+    )!;
+    const model = {
+      ...baseModel,
+      definitions: [
+        {
+          contentNodeId: "usage-before-definition",
+          kind: "usage-pattern" as const,
+          text: "iemand geeft iemand een hand",
+        },
+        ...baseModel.definitions,
+      ],
+    };
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="definition-to-word"
+        interfaceLanguage="nl"
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(
+      actualDefinition.text,
+    );
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.queryByRole("heading", { name: model.headword }),
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: " " });
+    expect(
+      screen.getByRole("heading", { name: model.headword }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "k" });
+    expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
+  });
+
+  test("keeps Space owned by the card when a review button is focused", async () => {
+    const onAction = vi.fn();
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={onAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const good = screen.getByRole("button", { name: "Goed" });
+    good.focus();
+    fireEvent.keyDown(good, { key: " " });
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    expect(onAction).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveFocus(),
+    );
+  });
+
+  test("Space reveals the answer instead of activating a focused Hint button", async () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const hint = screen.getByRole("button", { name: "Hint tonen" });
+    hint.focus();
+    fireEvent.keyDown(hint, { key: " " });
+
+    expect(document.querySelector("aside")).not.toBeInTheDocument();
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+    );
+  });
+
+  test("keeps modified Space and controls outside the card native", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <>
+        <button type="button">Outside action</button>
+        <TrainingSenseCardStage
+          model={model}
+          mode="word-to-definition"
+          interfaceLanguage="nl"
+          onAction={vi.fn()}
+        />
+      </>,
+    );
+
+    const stage = screen.getByTestId("training-sense-card-stage");
+    fireEvent.keyDown(stage, { key: " ", shiftKey: true });
+    expect(stage).toHaveAttribute("data-side", "face");
+
+    const outside = screen.getByRole("button", { name: "Outside action" });
+    outside.focus();
+    fireEvent.keyDown(outside, { key: " " });
+    expect(stage).toHaveAttribute("data-side", "face");
+  });
+
+  test("moves focus to the learn action when a first-encounter answer has no review prompt", async () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const model = {
+      ...baseModel,
+      learnCapability: {
+        actionId: "start-learning" as const,
+        elementId: "sense-card.learn.start",
+        messageKey: "senseCard.learning.start",
+        target: {
+          kind: "sense-card" as const,
+          entryId: baseModel.entryId,
+          cardTypeId: "word-to-definition" as const,
+          stateRevision: "state-new",
+        },
+      },
+      reviewCapabilities: [],
+    };
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const learn = screen.getByRole("button", { name: "Leren" });
+    await waitFor(() => expect(learn).toHaveFocus());
+  });
+
+  test("adds scroll fades and transfers continuation focus to review at the end", async () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const scroll = screen.getByTestId("training-answer-scroll");
+    Object.defineProperty(scroll, "clientHeight", {
+      value: 120,
+      configurable: true,
+    });
+    Object.defineProperty(scroll, "scrollHeight", {
+      value: 480,
+      configurable: true,
+    });
+    Object.defineProperty(scroll, "scrollTop", {
+      value: 0,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(scroll, "scrollBy", {
+      value: vi.fn(),
+      configurable: true,
+    });
+    fireEvent.scroll(scroll);
+
+    expect(scroll).toHaveAttribute("data-scroll-top", "clear");
+    expect(scroll).toHaveAttribute("data-scroll-bottom", "faded");
+    expect(
+      screen.getByRole("button", { name: "Meer kaartinhoud tonen" }),
+    ).toBeInTheDocument();
+
+    const more = screen.getByRole("button", {
+      name: "Meer kaartinhoud tonen",
+    });
+    more.focus();
+    fireEvent.click(more);
+    expect(scroll.scrollBy).toHaveBeenCalled();
+
+    scroll.scrollTop = 360;
+    fireEvent.scroll(scroll);
+    expect(scroll).toHaveAttribute("data-scroll-top", "faded");
+    expect(scroll).toHaveAttribute("data-scroll-bottom", "clear");
+    await waitFor(() =>
+      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+    );
   });
 });

@@ -25,7 +25,7 @@ is the nearest light reference.
 | `20.71`             | HISTORICAL REFERENCE · PARTIALLY SUPERSEDED | Narrow and long-headword geometry | retain pronunciation-boundary wrapping; Full and Narrow use the same viewport-responsive headword scale, not independent container-width scales; do not copy its old Meaning(s), grading or footer chrome                          |
 | `30.50.02`          | REVIEW                                      | Library two-pane word detail      | no grading controls; Library actions remain meaning-scoped                                                                                                                                                                       |
 | `30.50.05`          | REVIEW                                      | collection membership             | Collections is a primary Library action and opens a meaning-scoped picker                                                                                                                                                        |
-| `30.80`             | REVIEW/WORKING                              | Training Face → Answer            | one exact meaning per training card; Face and Answer share one stable outer shell and fixed action dock                                                                                                                          |
+| `30.80`             | REVIEW/WORKING                              | Training Face → Answer            | one exact meaning per training card; Face and Answer share one stable outer shell and fixed action dock; current owner decisions below supersede stale prompt/footer chrome                                                       |
 | `10.30.01–03`       | WORKING                                     | light tokens only                 | map the accepted structure to light colors; do not copy stale labels or action placement                                                                                                                                         |
 
 ## Shared component rules
@@ -41,6 +41,22 @@ is the nearest light reference.
   rule, examples use indigo, and idioms use amber.
 - Training: no `Betekenis` header; translated definition/example text is muted;
   only the short entry translation uses the warm accent.
+- Training Face: direct word-to-definition cards do not show an explanatory
+  “what is this word?” label. Audio remains beside the headword when the
+  platform advertises audio; the headword-level translation action is available
+  when fresh translation content exists.
+- Training keyboard: unmodified Space owns Face/Answer reveal even when a card
+  button has focus; text-entry controls retain native typing. Enter remains the
+  activation key for the focused button.
+- Training responsive geometry: coarse/no-hover narrow devices may fill the
+  available card height. Fine-pointer/hover desktop windows retain the 500 px
+  card cap even when the window is narrower than the normal desktop breakpoint.
+- Training theme: the stage uses light colors by default and the same shared
+  structure switches through `dark:` tokens; dark-only card chrome is not a
+  separate implementation.
+- Training session footer: show only the compact centered New/Review/Total
+  progress cluster. Session description and Adjust are omitted because the
+  session close action already returns to Today/Setup.
 - Library group controls: one translation toggle sits in the headword header and
   shows or hides translations for all meanings. Translation requests and
   rendered content remain bound to each exact entry/content node.

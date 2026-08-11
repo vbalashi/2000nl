@@ -16,7 +16,7 @@ const performAction = vi.fn();
 const resolveAudio = vi.fn();
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
-  fetchPlatformV2SingleSense: (...args: unknown[]) => fetchSingleSense(...args),
+  fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
   isPlatformV2TrainingActionCapability: (capability: { actionId: string }) =>
     ["start-learning", "mark-known", "undo-known", "review-card"].includes(
       capability.actionId,
@@ -85,6 +85,64 @@ describe("TrainingSenseCardV2Session", () => {
     );
     await waitFor(() => expect(performAction).toHaveBeenCalledWith(capability));
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
+  });
+
+  test("announces and focuses the replacement card after the queue advances", async () => {
+    const nextEntry = {
+      ...singleSenseEntry,
+      entryId: "entry-bank-1",
+      contentRevision: "content-bank-1",
+    };
+    const nextGroup = {
+      ...singleSenseGroup,
+      headwordGroupId: "group-bank",
+      header: {
+        ...singleSenseGroup.header,
+        text: "bank",
+        displayPronunciation: "bank",
+      },
+      entries: [nextEntry],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ group: nextGroup, entry: nextEntry });
+    const view = render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    const liveRegion = view.container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+    view.rerender(
+      <TrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "bank" });
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(
+      liveRegion,
+    );
+    expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),
+    );
   });
 
   test("keeps a durable undo after marking the previous card known and advancing", async () => {
@@ -202,6 +260,51 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
+  test("advances after mark-known without depending on a post-action lookup", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+
+    await waitFor(() =>
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown),
+    );
+    expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
   test("resolves and plays audio from the DTO header capability", async () => {
     const onPlayResolvedAudio = vi.fn();
 
@@ -258,5 +361,39 @@ describe("TrainingSenseCardV2Session", () => {
       "state_conflict",
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+  });
+
+  test("falls back instead of exposing the answer when reverse content has no definition", async () => {
+    fetchSingleSense.mockResolvedValue({
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        contentNodes: singleSenseEntry.contentNodes.filter(
+          (node) => node.kind !== "definition",
+        ),
+      },
+    });
+    const onAvailabilityChange = vi.fn();
+
+    render(
+      <TrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={onAvailabilityChange}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText("Legacy card")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(onAvailabilityChange).toHaveBeenLastCalledWith(false),
+    );
+    expect(
+      screen.queryByRole("heading", { name: singleSenseGroup.header.text }),
+    ).not.toBeInTheDocument();
   });
 });

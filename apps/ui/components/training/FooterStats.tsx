@@ -10,6 +10,7 @@ import { Tooltip } from "@/components/Tooltip";
 import { DropUpSelect } from "./DropUpSelect";
 import { appVersionInfo } from "@/lib/appVersion";
 import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
 type Props = {
   stats: DetailedStats;
@@ -32,7 +33,21 @@ type Props = {
   activeScenarioName?: string;
   /** Fixed Y value for HERHALING - set at session start, never changes */
   initialReviewDue?: number | null;
+  /** Hide the duplicate legacy chooser when Today/Setup owns session setup. */
+  inlineControlsEnabled?: boolean;
+  /** Compact Oiksc session footer: progress only, with stable stage height. */
+  compact?: boolean;
+  interfaceLanguage?: OnboardingLanguage;
 };
+
+const footerCopy = {
+  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal" },
+  en: { new: "New", review: "Review", total: "Total" },
+  ru: { new: "Новые", review: "Повторение", total: "Всего" },
+} satisfies Record<
+  OnboardingLanguage,
+  { new: string; review: string; total: string }
+>;
 
 // Progress stat with bar and numbers
 function ProgressStat({
@@ -86,9 +101,13 @@ export function FooterStats({
   onOpenSettings,
   activeScenarioName,
   initialReviewDue,
+  inlineControlsEnabled = true,
+  compact = false,
+  interfaceLanguage = "nl",
 }: Props) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
+  const text = footerCopy[interfaceLanguage];
   const {
     newCardsToday,
     dailyNewLimit,
@@ -101,9 +120,7 @@ export function FooterStats({
   const reviewTotal =
     initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue;
 
-  const fallbackLanguageOptions = [
-    { value: "nl", label: "Nederlands" },
-  ];
+  const fallbackLanguageOptions = [{ value: "nl", label: "Nederlands" }];
 
   const cardFilterOptions: { value: CardFilter; label: string }[] = [
     { value: "both", label: "Nieuw + Herhaling" },
@@ -111,128 +128,165 @@ export function FooterStats({
     { value: "review", label: "Alleen herhaling" },
   ];
 
+  const progress = (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex-nowrap sm:gap-x-5">
+      <ProgressStat
+        label={text.new}
+        value={newCardsToday}
+        total={dailyNewLimit}
+        colorClass="text-blue-500 dark:text-blue-400"
+        barColorClass="bg-blue-500 dark:bg-blue-400"
+      />
+      <ProgressStat
+        label={text.review}
+        value={reviewCardsDone}
+        total={reviewTotal}
+        colorClass="text-amber-500 dark:text-amber-400"
+        barColorClass="bg-amber-500 dark:bg-amber-400"
+      />
+      <ProgressStat
+        label={text.total}
+        value={totalWordsLearned}
+        total={totalWordsInList}
+        colorClass="text-emerald-500 dark:text-emerald-400"
+        barColorClass="bg-emerald-500 dark:bg-emerald-400"
+      />
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <footer
+        data-compact="true"
+        className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75"
+      >
+        <div className="mx-auto flex w-full items-center justify-center px-4 lg:px-6">
+          <div className="w-fit max-w-full">{progress}</div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
-    <footer className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 sm:py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75">
+    <footer
+      data-compact={compact ? "true" : "false"}
+      className={`sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75 ${
+        compact ? "py-2" : "py-2 sm:py-3"
+      }`}
+    >
       <div className="mx-auto flex w-full max-w-[1200px] justify-center px-2 sm:px-4 lg:px-6">
-        <div className="flex w-full max-w-2xl flex-col gap-2 p-3 sm:p-3">
+        <div
+          className={`flex w-full max-w-2xl flex-col ${
+            compact ? "justify-center px-2 py-1" : "gap-2 p-3 sm:p-3"
+          }`}
+        >
           {/* Stats Row - Horizontal grid on mobile, flex on desktop */}
-          <div className="grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex sm:items-center sm:justify-between sm:gap-3">
-            {/* New cards today */}
-            <ProgressStat
-              label="Nieuw"
-              value={newCardsToday}
-              total={dailyNewLimit}
-              colorClass="text-blue-500 dark:text-blue-400"
-              barColorClass="bg-blue-500 dark:bg-blue-400"
-            />
+          {progress}
 
-            {/* Review cards today */}
-            <ProgressStat
-              label="Herhaling"
-              value={reviewCardsDone}
-              total={reviewTotal}
-              colorClass="text-amber-500 dark:text-amber-400"
-              barColorClass="bg-amber-500 dark:bg-amber-400"
-            />
-
-            {/* Total progress */}
-            <ProgressStat
-              label="Totaal"
-              value={totalWordsLearned}
-              total={totalWordsInList}
-              colorClass="text-emerald-500 dark:text-emerald-400"
-              barColorClass="bg-emerald-500 dark:bg-emerald-400"
-            />
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <EffectiveTrainingScopeSummary
-              activeList={activeList ?? null}
-              activeScenarioName={activeScenarioName ?? "Begrip"}
-              cardFilter={cardFilter}
-              language={language}
-              showFooterSelectorHint
-              className="rounded-xl p-2.5 shadow-none"
-            />
-            <button
-              type="button"
-              onClick={() => setControlsOpen((open) => !open)}
-              aria-expanded={controlsOpen}
-              aria-controls="training-footer-controls"
-              className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800"
+          {!compact ? (
+            <div
+              className={
+                inlineControlsEnabled
+                  ? "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                  : "grid gap-2"
+              }
             >
-              Wijzigen
-            </button>
-          </div>
+              <EffectiveTrainingScopeSummary
+                activeList={activeList ?? null}
+                activeScenarioName={activeScenarioName ?? "Begrip"}
+                cardFilter={cardFilter}
+                language={language}
+                showFooterSelectorHint
+                className="rounded-xl p-2.5 shadow-none"
+              />
+              {inlineControlsEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => setControlsOpen((open) => !open)}
+                  aria-expanded={controlsOpen}
+                  aria-controls="training-footer-controls"
+                  className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  Wijzigen
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* Controls Row */}
-          {controlsOpen ? (
+          {!compact && inlineControlsEnabled && controlsOpen ? (
             <div
               id="training-footer-controls"
               className="border-t border-slate-100 pt-2 text-xs dark:border-slate-800/60"
             >
               <div className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <DropUpSelect
-                label="Leertaal"
-                showLabel={false}
-                uppercase={false}
-                buttonClassName="w-full justify-between px-3 py-2"
-                value={language}
-                options={languageOptions?.length ? languageOptions : fallbackLanguageOptions}
-                onChange={onLanguageChange}
-              />
-              {listOptions?.length && activeListValue && onListChange ? (
                 <DropUpSelect
-                  label="Trainingslijst"
+                  label="Leertaal"
                   showLabel={false}
                   uppercase={false}
                   buttonClassName="w-full justify-between px-3 py-2"
-                  value={activeListValue}
-                  options={listOptions}
-                  onChange={onListChange}
+                  value={language}
+                  options={
+                    languageOptions?.length
+                      ? languageOptions
+                      : fallbackLanguageOptions
+                  }
+                  onChange={onLanguageChange}
                 />
-              ) : (
-                <Tooltip content="Wijzig lijst in Instellingen" side="top">
+                {listOptions?.length && activeListValue && onListChange ? (
+                  <DropUpSelect
+                    label="Trainingslijst"
+                    showLabel={false}
+                    uppercase={false}
+                    buttonClassName="w-full justify-between px-3 py-2"
+                    value={activeListValue}
+                    options={listOptions}
+                    onChange={onListChange}
+                  />
+                ) : (
+                  <Tooltip content="Wijzig lijst in Instellingen" side="top">
+                    <button
+                      type="button"
+                      onClick={onOpenSettings}
+                      className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
+                      aria-label="Wijzig trainingslijst in Instellingen"
+                    >
+                      <span className="text-slate-800 dark:text-white">
+                        {activeListName ?? "VanDale 2k"}
+                      </span>
+                    </button>
+                  </Tooltip>
+                )}
+                <Tooltip content="Wijzig scenario in Instellingen" side="top">
                   <button
                     type="button"
                     onClick={onOpenSettings}
-                    className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
-                    aria-label="Wijzig trainingslijst in Instellingen"
+                    className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
+                    aria-label="Wijzig scenario in Instellingen"
                   >
-                    <span className="text-slate-800 dark:text-white">
-                      {activeListName ?? "VanDale 2k"}
+                    <span className="font-semibold text-slate-800 dark:text-white">
+                      {activeScenarioName ?? "Begrip"}
                     </span>
                   </button>
                 </Tooltip>
-              )}
-              <Tooltip content="Wijzig scenario in Instellingen" side="top">
-                <button
-                  type="button"
-                  onClick={onOpenSettings}
-                  className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
-                  aria-label="Wijzig scenario in Instellingen"
-                >
-                  <span className="font-semibold text-slate-800 dark:text-white">
-                    {activeScenarioName ?? "Begrip"}
-                  </span>
-                </button>
-              </Tooltip>
-              <DropUpSelect
-                label="Kaarten"
-                showLabel={false}
-                uppercase={false}
-                buttonClassName="w-full justify-between px-3 py-2"
-                value={cardFilter}
-                options={cardFilterOptions}
-                onChange={(value) => onCardFilterChange(value as CardFilter)}
-              />
+                <DropUpSelect
+                  label="Kaarten"
+                  showLabel={false}
+                  uppercase={false}
+                  buttonClassName="w-full justify-between px-3 py-2"
+                  value={cardFilter}
+                  options={cardFilterOptions}
+                  onChange={(value) => onCardFilterChange(value as CardFilter)}
+                />
+              </div>
             </div>
-          </div>
           ) : null}
 
-          <div className="text-center text-[10px] text-slate-400 sm:text-right dark:text-slate-500">
-            {versionInfo.display}
-          </div>
+          {!compact ? (
+            <div className="text-center text-[10px] text-slate-400 sm:text-right dark:text-slate-500">
+              {versionInfo.display}
+            </div>
+          ) : null}
         </div>
       </div>
     </footer>

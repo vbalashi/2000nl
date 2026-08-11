@@ -22,6 +22,10 @@ export type TrainingSenseCardModel = {
   partOfSpeech?: string;
   coreVocabularyLabel?: "2K";
   entryTranslation?: string;
+  requestTranslationCapability?: Extract<
+    PlatformSenseCardCapabilityV2,
+    { actionId: "request-translation" }
+  >;
   definitions: TrainingSenseCardContent[];
   examples: TrainingSenseCardContent[];
   repeatCount: number;
@@ -108,6 +112,9 @@ export function buildTrainingSenseCardModel({
       : {}),
     ...(has2k ? { coreVocabularyLabel: "2K" as const } : {}),
     ...(entryTranslation ? { entryTranslation } : {}),
+    ...(capability("request-translation")
+      ? { requestTranslationCapability: capability("request-translation") }
+      : {}),
     definitions: nodes.filter((node) => definitionKinds.has(node.kind)).map(content),
     examples: nodes.filter((node) => exampleKinds.has(node.kind)).map(content),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,

@@ -4,16 +4,15 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
-  fetchPlatformV2SingleSense,
+  fetchPlatformV2TrainingEntry,
   isPlatformV2TrainingActionCapability,
   performPlatformV2TrainingAction,
+  requestPlatformV2Translation,
   resolvePlatformV2Audio,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
 import type { TrainingMode, TrainingWord } from "@/lib/types";
-import type {
-  PlatformSenseCardCapabilityV2,
-} from "../../../../../packages/shared/types/platformV2";
+import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 
@@ -25,6 +24,7 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   fallback: React.ReactNode;
   onPlayResolvedAudio?: (url: string, label: string) => void;
+  onOpenDetails?: () => void;
   onAvailabilityChange: (available: boolean) => void;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
@@ -47,18 +47,24 @@ export function TrainingSenseCardV2Session({
   interfaceLanguage,
   fallback,
   onPlayResolvedAudio,
+  onOpenDetails,
   onAvailabilityChange,
   onProgressActionAccepted,
 }: Props) {
-  const [result, setResult] = React.useState<Awaited<
-    ReturnType<typeof fetchPlatformV2SingleSense>
-  >>(null);
+  const [result, setResult] =
+    React.useState<Awaited<ReturnType<typeof fetchPlatformV2TrainingEntry>>>(
+      null,
+    );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [focusStageOnPresentation, setFocusStageOnPresentation] =
+    React.useState(false);
+  const [cardAnnouncement, setCardAnnouncement] = React.useState("");
+  const presentedEntryIdRef = React.useRef<string | null>(null);
 
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
-      const next = await fetchPlatformV2SingleSense({
+      const next = await fetchPlatformV2TrainingEntry({
         query: word.headword,
         entryId: word.id,
         cardTypeId: mode,
@@ -66,11 +72,28 @@ export function TrainingSenseCardV2Session({
         translationTargetLanguageCode,
         signal,
       });
+      const nextEntryId = next?.entry.entryId ?? null;
+      const cardChanged = Boolean(
+        nextEntryId &&
+        presentedEntryIdRef.current &&
+        presentedEntryIdRef.current !== nextEntryId,
+      );
+      setFocusStageOnPresentation(cardChanged);
+      if (cardChanged) {
+        setCardAnnouncement(
+          platformV2Message(
+            interfaceLanguage,
+            "senseCard.training.cardChanged",
+          ),
+        );
+      }
+      if (nextEntryId) presentedEntryIdRef.current = nextEntryId;
       setResult(next);
       return next;
     },
     [
       contentLanguageCode,
+      interfaceLanguage,
       mode,
       translationTargetLanguageCode,
       word.headword,
@@ -89,9 +112,26 @@ export function TrainingSenseCardV2Session({
     return () => controller.abort();
   }, [load]);
 
+  const model = React.useMemo(
+    () =>
+      result
+        ? buildTrainingSenseCardModel({
+            group: result.group,
+            entry: result.entry,
+            interfaceLanguage,
+          })
+        : null,
+    [interfaceLanguage, result],
+  );
+  const presentationAvailable = Boolean(
+    model &&
+    (mode !== "definition-to-word" ||
+      model.definitions.some((item) => item.kind === "definition")),
+  );
+
   React.useEffect(() => {
-    onAvailabilityChange(Boolean(result));
-  }, [onAvailabilityChange, result]);
+    onAvailabilityChange(presentationAvailable);
+  }, [onAvailabilityChange, presentationAvailable]);
 
   React.useEffect(
     () => () => onAvailabilityChange(false),
@@ -102,6 +142,11 @@ export function TrainingSenseCardV2Session({
     setBusy(true);
     setError(null);
     try {
+      if (capability.actionId === "request-translation") {
+        await requestPlatformV2Translation(capability);
+        await load();
+        return;
+      }
       if (!isPlatformV2TrainingActionCapability(capability)) return;
       const response = await performPlatformV2TrainingAction(capability);
       if (capability.actionId === "undo-known") {
@@ -109,11 +154,22 @@ export function TrainingSenseCardV2Session({
         if (result?.entry.entryId === capability.target.entryId) await load();
       } else {
         if (capability.actionId === "mark-known") {
-          const refreshed = await load();
-          const undoKnown = refreshed?.entry.capabilities.find(
-            (candidate): candidate is UndoKnownCapability =>
-              candidate.actionId === "undo-known",
-          );
+          const knownMark = response.card.knownMark;
+          const undoKnown: UndoKnownCapability | null = knownMark
+            ? {
+                actionId: "undo-known",
+                elementId: "sense-card.known.undo",
+                messageKey: "senseCard.known.undo",
+                target: {
+                  kind: "sense-card",
+                  entryId: capability.target.entryId,
+                  cardTypeId: response.card.cardTypeId,
+                  stateRevision: response.card.stateRevision,
+                  activeKnownMarkId: knownMark.markId,
+                  knownMarkRevision: knownMark.revision,
+                },
+              }
+            : null;
           rememberPendingKnownUndo(undoKnown ?? null);
         } else {
           rememberPendingKnownUndo(null);
@@ -145,9 +201,16 @@ export function TrainingSenseCardV2Session({
     }
   };
 
-  if (!result) {
+  const cardAnnouncementRegion = (
+    <span className="sr-only" aria-live="polite" aria-atomic="true">
+      {cardAnnouncement}
+    </span>
+  );
+
+  if (!result || !model || !presentationAvailable) {
     return (
       <>
+        {cardAnnouncementRegion}
         {fallback}
         <SessionError error={error} />
       </>
@@ -156,19 +219,19 @@ export function TrainingSenseCardV2Session({
 
   return (
     <>
+      {cardAnnouncementRegion}
       <TrainingSenseCardStage
-        model={buildTrainingSenseCardModel({
-          group: result.group,
-          entry: result.entry,
-          interfaceLanguage,
-        })}
+        model={model}
+        mode={mode}
         interfaceLanguage={interfaceLanguage}
         busy={busy}
+        focusOnMount={focusStageOnPresentation}
         onPlayAudio={
           result.group.header.audio && onPlayResolvedAudio
             ? () => void handlePlayAudio()
             : undefined
         }
+        onOpenDetails={onOpenDetails}
         onAction={(capability) => void handleAction(capability)}
       />
       <SessionError error={error} />

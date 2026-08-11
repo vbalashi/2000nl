@@ -301,6 +301,18 @@ export async function performPlatformV2Lookup(
             const content = await verifyDictionaryContentAudioLinks(
               normalizeDictionaryContent(entry),
             );
+            const audioLink = content.audioLinks?.[entry.language_code ?? ""];
+            const audioLanguage = entry.language_code?.trim().toLowerCase();
+            const isDutchAudio =
+              audioLanguage === "nl" || audioLanguage?.startsWith("nl-");
+            const audioCapability =
+              audioLink || isDutchAudio
+              ? {
+                  audioId: `${identity.headwordGroupId}:headword:${entry.language_code}`,
+                  actionId: "play-audio" as const,
+                  contentLanguageCode: entry.language_code ?? "",
+                }
+              : undefined;
             const contentNodeBindings = identity.contentNodeBindings.map(
               (binding) => ({
                 ...binding,
@@ -385,6 +397,7 @@ export async function performPlatformV2Lookup(
                   : null,
               entryTranslation:
                 translations?.entryTranslation ?? null,
+              audioCapability,
               ...(wordDetails ? { wordDetails } : {}),
             };
           }),
