@@ -25,10 +25,6 @@ const copy = {
     off: "Uit",
     keyboardShortcuts: "Sneltoetsen",
     keyboardShortcutsHint: "De toetsen die nu in Training actief zijn.",
-    search: "Zoeken",
-    settings: "Instellingen",
-    help: "Help",
-    history: "Geschiedenis",
     account: "Account",
     signedInAs: "Ingelogd als",
     signOut: "Afmelden",
@@ -48,10 +44,6 @@ const copy = {
     off: "Off",
     keyboardShortcuts: "Keyboard shortcuts",
     keyboardShortcutsHint: "The shortcuts currently active in Training.",
-    search: "Search",
-    settings: "Settings",
-    help: "Help",
-    history: "History",
     account: "Account",
     signedInAs: "Signed in as",
     signOut: "Sign out",
@@ -71,10 +63,6 @@ const copy = {
     off: "Выключен",
     keyboardShortcuts: "Горячие клавиши",
     keyboardShortcutsHint: "Сочетания, которые сейчас действуют в тренировке.",
-    search: "Поиск",
-    settings: "Настройки",
-    help: "Помощь",
-    history: "История",
     account: "Аккаунт",
     signedInAs: "Выполнен вход",
     signOut: "Выйти",
@@ -92,10 +80,6 @@ type Props = {
   ) => void | Promise<void>;
   onTranslationLanguageChange: (language: string | null) => void;
   onNavigate: (destination: AppDestination) => void;
-  onOpenSearch: () => void;
-  onOpenSettings: () => void;
-  onOpenHelp: () => void;
-  onOpenHistory: () => void;
   userEmail: string;
   onSignOut: () => void | Promise<void>;
 };
@@ -109,10 +93,6 @@ export function SettingsDestination({
   onInterfaceLanguageChange,
   onTranslationLanguageChange,
   onNavigate,
-  onOpenSearch,
-  onOpenSettings,
-  onOpenHelp,
-  onOpenHistory,
   userEmail,
   onSignOut,
 }: Props) {
@@ -134,11 +114,11 @@ export function SettingsDestination({
       aria-hidden={!open}
       className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
     >
-      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
+      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
         <div className="min-w-0 justify-self-start">
           <BrandLogo />
         </div>
-        <div className="hidden justify-self-center sm:block">
+        <div className="justify-self-center">
           <AppDestinationNav
             active={null}
             interfaceLanguage={interfaceLanguage}
@@ -150,14 +130,8 @@ export function SettingsDestination({
             interfaceLanguage={interfaceLanguage}
             themePreference={themePreference}
             settingsActive
-            userEmail={userEmail}
             onCycleTheme={cycleTheme}
-            onOpenSearch={onOpenSearch}
-            onOpenSettings={onOpenSettings}
-            onOpenHelp={onOpenHelp}
-            onOpenHistory={onOpenHistory}
-            onOpenStatistics={() => onNavigate("statistics")}
-            onSignOut={onSignOut}
+            onOpenSettings={() => onNavigate("settings")}
           />
         ) : (
           <div />
@@ -263,6 +237,25 @@ export function SettingsDestination({
                     </kbd>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-base font-bold">{text.account}</h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                {text.signedInAs}
+              </p>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="min-w-0 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {userEmail}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void onSignOut()}
+                  className="min-h-10 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 dark:border-red-900 dark:bg-slate-950 dark:text-red-300 dark:hover:bg-red-950/40"
+                >
+                  {text.signOut}
+                </button>
               </div>
             </section>
           </div>

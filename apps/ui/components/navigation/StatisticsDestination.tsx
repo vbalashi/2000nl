@@ -49,10 +49,7 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   stats: DetailedStats;
   onNavigate: (destination: AppDestination) => void;
-  utilityNav: Omit<
-    AppUtilityNavProps,
-    "interfaceLanguage" | "settingsActive" | "historyActive"
-  >;
+  utilityNav: Omit<AppUtilityNavProps, "interfaceLanguage">;
 };
 
 export function StatisticsDestination({
@@ -86,11 +83,11 @@ export function StatisticsDestination({
       aria-hidden={!open}
       className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
     >
-      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
+      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
         <div className="min-w-0 justify-self-start">
           <BrandLogo />
         </div>
-        <div className="hidden justify-self-center sm:block">
+        <div className="justify-self-center">
           <AppDestinationNav
             active="statistics"
             interfaceLanguage={interfaceLanguage}

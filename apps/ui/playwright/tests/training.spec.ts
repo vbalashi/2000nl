@@ -555,7 +555,6 @@ test("training flow persists review and dictionary lookup", async ({
   // Clicking a linked word should open the Details tab for that entry.
   const drawer = page.locator("div.fixed.inset-0.z-40");
   await expect(drawer).toBeVisible();
-  await drawer.getByRole("button", { name: "Bekijk details" }).click();
   await expect(
     page.getByRole("heading", { level: 2, name: /gracht/i })
   ).toBeVisible();
@@ -572,7 +571,8 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
 
   await expect(page.locator("h1")).toHaveText(/huis/i);
 
-  await page.getByLabel(/^(Search|Zoeken)$/).click();
+  await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
+  await page.getByRole("button", { name: "Zoeken", exact: true }).click();
   await expect(page.locator("button").filter({ hasText: "Zoeken" })).toHaveClass(
     /border-primary/,
   );

@@ -346,6 +346,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
 }));
 
 const { TrainingScreen } = await import("@/components/training/TrainingScreen");
+const { getOnboardingTranslation } = await import("@/lib/onboardingI18n");
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
 
@@ -402,7 +403,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
 
   await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   const searchTab = screen
@@ -418,6 +419,61 @@ test("search action opens the dedicated dictionary search surface", async () => 
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
   ).not.toBeInTheDocument();
   expect(searchWordEntries).not.toHaveBeenCalled();
+});
+
+test("onboarding copy matches the five reachable tour targets", () => {
+  for (const language of ["nl", "en", "ru"] as const) {
+    expect(getOnboardingTranslation(language).onboarding.steps).toHaveLength(5);
+  }
+});
+
+test("does not expose Recent through the global R shortcut or a stale pinned preference", async () => {
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["word-to-definition"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: null,
+    trainingSidebarPinned: true,
+    preferences: {
+      onboardingCompleted: true,
+      onboardingLanguage: "nl",
+    },
+  });
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  expect(
+    document.querySelector("[data-tour='settings-button']"),
+  ).toBeInTheDocument();
+  expect(
+    document.querySelector("[data-tour='sidebar-toggle']"),
+  ).not.toBeInTheDocument();
+  expect(
+    document.querySelector("[data-tour='search-button']"),
+  ).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "r" });
+
+  expect(
+    screen.queryByRole("button", { name: "Recent" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Sluiten" }),
+  ).not.toBeInTheDocument();
+
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["word-to-definition"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: null,
+    trainingSidebarPinned: false,
+  });
 });
 
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
@@ -442,7 +498,7 @@ test("shell Library replaces the visible destination without remounting the curr
   fireEvent.keyDown(window, { key: " " });
   await screen.findByRole("button", { name: /opnieuw/i });
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
 
   expect(
     await screen.findByRole("heading", { name: /Bibliotheek|Library/ }),
@@ -828,7 +884,7 @@ test("dictionary search scope changes lookup language without changing training"
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
   await screen.findByText("Zoekbereik");
 
   const languageSelect = screen.getByLabelText("Leertaal");
@@ -868,7 +924,7 @@ test("dictionary search can create a private user dictionary entry", async () =>
 
     await waitForInitialTrainingFetches();
     updateActiveTrainingScope.mockClear();
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Eigen entry toevoegen" }),
@@ -943,7 +999,7 @@ test("dictionary lookup state persists while switching settings modal tabs", asy
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
 
   const queryInput = await screen.findByPlaceholderText(
     /zoek in het woordenboek/i,
@@ -1036,7 +1092,7 @@ test("search detail opens a containing membership list without changing active t
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
       await screen.findByPlaceholderText(/zoek in het woordenboek/i),
       {
@@ -1070,7 +1126,7 @@ test("dictionary lookup state resets after closing the settings modal", async ()
 
   await screen.findByRole("heading", { name: "huis" });
 
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
   const queryInput = await screen.findByPlaceholderText(
     /zoek in het woordenboek/i,
   );
@@ -1084,7 +1140,7 @@ test("dictionary lookup state resets after closing the settings modal", async ()
     ).not.toBeInTheDocument(),
   );
 
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
   const reopenedInput = await screen.findByPlaceholderText(
     /zoek in het woordenboek/i,
   );
@@ -1106,7 +1162,7 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
 
     const queryInput = await screen.findByPlaceholderText(
       /zoek in het woordenboek/i,
@@ -1154,7 +1210,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
 
     const queryInput = await screen.findByPlaceholderText(
       /zoek in het woordenboek/i,
@@ -1223,7 +1279,7 @@ test("dictionary lookup shows backend match labels and preserves ranked order", 
   render(<TrainingScreen user={user} />);
 
   await screen.findByRole("heading", { name: "huis" });
-  fireEvent.click(screen.getByLabelText("Search"));
+  fireEvent.keyDown(window, { key: "s" });
 
   const queryInput = await screen.findByPlaceholderText(
     /zoek in het woordenboek/i,
@@ -1366,7 +1422,7 @@ test("dictionary lookup empty state names the dictionary source search", async (
     render(<TrainingScreen user={user} />);
 
     await screen.findByRole("heading", { name: "huis" });
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
       await screen.findByPlaceholderText(/zoek in het woordenboek/i),
       {
@@ -1627,7 +1683,7 @@ test("search detail trains a selected entry as the next card without changing ac
     fetchNextTrainingWordByScenario.mockClear();
     updateActiveTrainingScope.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
       await screen.findByPlaceholderText(/zoek in het woordenboek/i),
       {
@@ -1692,7 +1748,7 @@ test("search detail copies a trusted entry into the user dictionary", async () =
     await waitForInitialTrainingFetches();
     updateActiveTrainingScope.mockClear();
 
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
       await screen.findByPlaceholderText(/zoek in het woordenboek/i),
       {
@@ -1753,7 +1809,7 @@ test("next-card override is one-shot and normal training resumes after review", 
 
     await screen.findByRole("heading", { name: "huis" });
 
-    fireEvent.click(screen.getByLabelText("Search"));
+    fireEvent.keyDown(window, { key: "s" });
     fireEvent.change(
       await screen.findByPlaceholderText(/zoek in het woordenboek/i),
       {
@@ -1997,6 +2053,27 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
       /Card 1 · open session/,
     );
+    expect(
+      screen.getByRole("button", { name: "Theme: System" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Settings" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Search" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Help" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "History" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Account" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Close session" }),
+    ).toHaveLength(1);
     const compactFooter = document.querySelector('footer[data-compact="true"]');
     expect(compactFooter).toBeInTheDocument();
     expect(

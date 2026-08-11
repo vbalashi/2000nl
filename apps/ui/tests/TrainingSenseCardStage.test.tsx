@@ -9,6 +9,44 @@ import {
 } from "./platformV2TrainingFixture";
 
 describe("TrainingSenseCardStage", () => {
+  test("renders Report as an actionable, keyboard-focusable button", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: baseModel.entryId,
+        contentRevision: "content-report-test",
+      },
+    };
+    const onAction = vi.fn();
+
+    render(
+      <TrainingSenseCardStage
+        model={{ ...baseModel, reportCapabilities: [reportCapability] }}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    const report = screen.getByRole("button", { name: "Report" });
+    expect(report.tagName).toBe("BUTTON");
+    expect(report).toHaveClass("hover:bg-slate-100");
+    expect(report).toHaveClass("focus-visible:ring-2");
+    report.focus();
+    expect(report).toHaveFocus();
+    fireEvent.click(report);
+    expect(onAction).toHaveBeenCalledWith(reportCapability);
+  });
+
   test("keeps one exact sense hidden on Face, supports a hint, then reveals Answer actions", () => {
     const onPlayAudio = vi.fn();
     const onAction = vi.fn();

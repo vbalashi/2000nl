@@ -774,12 +774,14 @@ function AnswerDock({
 
       <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
         {model.reportCapabilities.length ? (
-          <span
-            className="inline-flex items-center gap-1.5 text-slate-500"
-            aria-disabled="true"
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onAction(model.reportCapabilities[0])}
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-transparent px-2 text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
           >
             <FlagIcon /> {t("senseCard.report")}
-          </span>
+          </button>
         ) : (
           <span />
         )}

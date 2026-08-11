@@ -6,7 +6,6 @@ type TrainingHotkeyId =
   | "details"
   | "translation"
   | "search"
-  | "recent"
   | "again"
   | "hard"
   | "good"
@@ -21,7 +20,6 @@ const hotkeys: Array<{ key: string; id: TrainingHotkeyId }> = [
   { key: "Shift+I", id: "details" },
   { key: "T", id: "translation" },
   { key: "S", id: "search" },
-  { key: "R", id: "recent" },
   { key: "H", id: "again" },
   { key: "J", id: "hard" },
   { key: "K", id: "good" },
@@ -41,7 +39,6 @@ const labels: Record<
     details: "Woorddetails openen",
     translation: "Vertaling tonen of verbergen",
     search: "Zoeken",
-    recent: "Recente woorden openen of sluiten",
     again: "Opnieuw",
     hard: "Moeilijk",
     good: "Goed",
@@ -56,7 +53,6 @@ const labels: Record<
     details: "Open word details",
     translation: "Show or hide the translation",
     search: "Search",
-    recent: "Open or close recent words",
     again: "Again",
     hard: "Hard",
     good: "Good",
@@ -71,7 +67,6 @@ const labels: Record<
     details: "Открыть подробности слова",
     translation: "Показать или скрыть перевод",
     search: "Поиск",
-    recent: "Открыть или закрыть недавние слова",
     again: "Снова",
     hard: "Трудно",
     good: "Хорошо",

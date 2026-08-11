@@ -57,7 +57,6 @@ import {
 } from "./v2/TrainingSenseCardV2Session";
 import {
   TrainingSessionChrome,
-  TrainingSessionMobileUtilities,
 } from "./v2/TrainingSessionChrome";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
@@ -201,6 +200,16 @@ const trainingFilterKey = (filter: TrainingFocusFilter) =>
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
 
+const dictionaryLookupNotice = (
+  language: OnboardingLanguage,
+  word: string,
+) =>
+  ({
+    nl: `Geen woordenboekvermelding gevonden voor “${word}”.`,
+    en: `No dictionary entry found for “${word}”.`,
+    ru: `Словарная статья для «${word}» не найдена.`,
+  })[language];
+
 const STEP_TARGETS: Array<{
   target: string;
   placement: "center" | "bottom" | "top" | "right" | "left";
@@ -209,8 +218,7 @@ const STEP_TARGETS: Array<{
   { target: "[data-tour='training-card']", placement: "bottom" },
   { target: "[data-tour='rating-buttons']", placement: "top" },
   { target: "[data-tour='card-toolbar']", placement: "right" },
-  { target: "[data-tour='sidebar-toggle']", placement: "left" },
-  { target: "[data-tour='search-button']", placement: "left" },
+  { target: "[data-tour='settings-button']", placement: "left" },
 ];
 
 function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
@@ -247,7 +255,6 @@ export function TrainingScreen({
     language,
     newReviewRatio,
     themePreference,
-    trainingSidebarPinned,
     translationLang,
     setActiveScenario,
     setAudioQuality,
@@ -256,7 +263,6 @@ export function TrainingScreen({
     setLanguage,
     setNewReviewRatio,
     setTheme,
-    setTrainingSidebarPinned: setTrainingSidebarPinnedPreference,
     setTranslationLang,
   } = useTrainingPreferences(user?.id);
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
@@ -340,6 +346,7 @@ export function TrainingScreen({
   const [trainingLoadError, setTrainingLoadError] = useState<string | null>(
     null,
   );
+  const [wordLookupNotice, setWordLookupNotice] = useState<string | null>(null);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
   // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
@@ -590,13 +597,6 @@ export function TrainingScreen({
     setSwipeActive(false);
   }, []);
 
-  const setTrainingSidebarPinned = useCallback(
-    (pinned: boolean) => {
-      setTrainingSidebarPinnedPreference(pinned);
-    },
-    [setTrainingSidebarPinnedPreference],
-  );
-
   const persistCurrentTrainingScope = useCallback(
     (
       overrides: {
@@ -631,34 +631,6 @@ export function TrainingScreen({
       wordListType,
     ],
   );
-
-  const toggleTrainingSidebarPinned = useCallback(() => {
-    setTrainingSidebarPinnedPreference(!trainingSidebarPinned);
-
-    if (typeof window !== "undefined") {
-      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-      // Switching pin state should close the drawer to avoid double UI.
-      if (isDesktop) {
-        setMobileSidebarOpen(false);
-      }
-    }
-  }, [setTrainingSidebarPinnedPreference, trainingSidebarPinned]);
-
-  const toggleRecentPanel = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-
-    if (isDesktop) {
-      // Desktop: toggle the pinned sidebar on/off (persisted).
-      setSidebarTab("recent");
-      toggleTrainingSidebarPinned();
-      return;
-    }
-
-    // Mobile/tablet: toggle the drawer open/closed (not persisted).
-    setSidebarTab("recent");
-    setMobileSidebarOpen((prev) => !prev);
-  }, [toggleTrainingSidebarPinned]);
 
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
@@ -1463,23 +1435,6 @@ export function TrainingScreen({
     handleShowDetails(entry);
   }, [currentWord, handleShowDetails]);
 
-  const openMobileRecent = useCallback(() => {
-    // Kept for backwards compatibility with existing handlers.
-    toggleRecentPanel();
-  }, [toggleRecentPanel]);
-
-  const openMobileSidebarTab = useCallback(
-    (tab: SidebarTab) => {
-      if (typeof window === "undefined") return;
-      const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-      // On desktop, only open the drawer when the sidebar is NOT pinned.
-      if (isDesktop && trainingSidebarPinned) return;
-      setSidebarTab(tab);
-      setMobileSidebarOpen(true);
-    },
-    [trainingSidebarPinned],
-  );
-
   const openSearch = useCallback(() => {
     if (onRequestDestination) {
       if (!actionLoadingRef.current) {
@@ -1505,11 +1460,6 @@ export function TrainingScreen({
     setSettingsAutoFocusWordSearch(false);
     setShowSettings(true);
   }, [extendedDestinationsEnabled, onRequestDestination]);
-
-  const openHistoryFromDestination = useCallback(() => {
-    onRequestDestination?.("training");
-    toggleRecentPanel();
-  }, [onRequestDestination, toggleRecentPanel]);
 
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
@@ -1578,15 +1528,6 @@ export function TrainingScreen({
         return;
       }
 
-      if (normalized === "r") {
-        // Toggle Recent panel:
-        // - Desktop: show/hide sidebar (persisted)
-        // - Tablet/mobile: open/close drawer
-        event.preventDefault();
-        toggleRecentPanel();
-        return;
-      }
-
       // Arrow keys should not close translation overlay (they're used for scrolling)
       if (
         event.key === "ArrowUp" ||
@@ -1640,7 +1581,6 @@ export function TrainingScreen({
     handleShowCurrentWordDetails,
     openSearch,
     revealed,
-    toggleRecentPanel,
     toggleHint,
     v2CardAvailable,
   ]);
@@ -1649,13 +1589,6 @@ export function TrainingScreen({
     async (clickedWord: string) => {
       trainingDebug.log("🔍 Word clicked:", clickedWord);
       setTranslationTooltipOpen(false);
-
-      if (
-        sidebarTab === "details" &&
-        (trainingSidebarPinned || mobileSidebarOpen)
-      ) {
-        setSidebarTab("recent");
-      }
 
       if (!user?.id) {
         trainingDebug.log("❌ No user ID");
@@ -1669,13 +1602,11 @@ export function TrainingScreen({
       const entry = await fetchDictionaryEntry(clickedWord, user.id);
 
       if (!entry) {
-        // Word not found in dictionary - still add to sidebar with "not found" indicator
         trainingDebug.log("No dictionary entry found for:", clickedWord);
+        setWordLookupNotice(
+          dictionaryLookupNotice(onboardingLang, clickedWord),
+        );
 
-        // On mobile, open the Recent drawer so the user sees that something happened.
-        openMobileSidebarTab("recent");
-
-        // Add a placeholder entry to the sidebar showing the word wasn't found
         setRecentEntries((prev) => {
           const notFoundItem: SidebarHistoryItem = {
             id: `not-found-${clickedWord}-${Date.now()}`,
@@ -1704,9 +1635,9 @@ export function TrainingScreen({
       }
 
       trainingDebug.log("✅ Found entry:", entry.headword);
+      setWordLookupNotice(null);
       setSelectedEntry(entry);
-      // On mobile, open the Recent drawer so the user sees that something happened.
-      openMobileSidebarTab("recent");
+      handleShowDetails(entry);
       setRecentEntries((prev) => {
         const historyItem: SidebarHistoryItem = {
           ...entry,
@@ -1737,10 +1668,8 @@ export function TrainingScreen({
     [
       currentWord?.mode,
       enabledModes,
-      mobileSidebarOpen,
-      openMobileSidebarTab,
-      sidebarTab,
-      trainingSidebarPinned,
+      handleShowDetails,
+      onboardingLang,
       user?.id,
     ],
   );
@@ -2234,21 +2163,9 @@ export function TrainingScreen({
 
   const destinationUtilityNav = {
     themePreference,
-    userEmail: user.email ?? "",
     onCycleTheme: cycleThemePreference,
-    onOpenSearch: openSearch,
     onOpenSettings: openAppSettings,
-    onOpenHelp: () => setShowHotkeys(true),
-    onOpenHistory: openHistoryFromDestination,
-    onOpenStatistics:
-      extendedDestinationsEnabled && onRequestDestination
-        ? () => onRequestDestination("statistics")
-        : undefined,
-    onSignOut: handleSignOut,
-  } satisfies Omit<
-    AppUtilityNavProps,
-    "interfaceLanguage" | "settingsActive" | "historyActive"
-  >;
+  } satisfies Omit<AppUtilityNavProps, "interfaceLanguage">;
 
   const v2SessionChromeVisible = Boolean(
     trainingTodaySetupEnabled &&
@@ -2266,7 +2183,7 @@ export function TrainingScreen({
         data-training-pilot-surface={trainingPilot.surface}
         className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
       >
-        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2.5 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
           <div className="flex min-w-0 items-center gap-2 justify-self-start">
             <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
               <BrandLogo />
@@ -2286,7 +2203,7 @@ export function TrainingScreen({
             ) : null}
           </div>
           {onRequestDestination ? (
-            <div className="hidden justify-self-center md:block">
+            <div className="justify-self-center">
               <AppDestinationNav
                 active="training"
                 interfaceLanguage={onboardingLang}
@@ -2299,53 +2216,12 @@ export function TrainingScreen({
             <div />
           )}
           {destination === "training" ? (
-            v2SessionChromeVisible ? (
-              <>
-                <div className="hidden md:block">
-                  <AppUtilityNav
-                    interfaceLanguage={onboardingLang}
-                    themePreference={themePreference}
-                    historyActive={trainingSidebarPinned}
-                    userEmail={user.email ?? ""}
-                    onCycleTheme={cycleThemePreference}
-                    onOpenSearch={openSearch}
-                    onOpenSettings={openAppSettings}
-                    onOpenHelp={() => setShowHotkeys(true)}
-                    onOpenHistory={toggleRecentPanel}
-                    onOpenStatistics={
-                      extendedDestinationsEnabled && onRequestDestination
-                        ? () => onRequestDestination("statistics")
-                        : undefined
-                    }
-                    onSignOut={handleSignOut}
-                  />
-                </div>
-                <TrainingSessionMobileUtilities
-                  interfaceLanguage={onboardingLang}
-                  historyActive={trainingSidebarPinned}
-                  onOpenHistory={toggleRecentPanel}
-                  onClose={trainingPilot.returnToToday}
-                />
-              </>
-            ) : (
-              <AppUtilityNav
-                interfaceLanguage={onboardingLang}
-                themePreference={themePreference}
-                historyActive={trainingSidebarPinned}
-                userEmail={user.email ?? ""}
-                onCycleTheme={cycleThemePreference}
-                onOpenSearch={openSearch}
-                onOpenSettings={openAppSettings}
-                onOpenHelp={() => setShowHotkeys(true)}
-                onOpenHistory={toggleRecentPanel}
-                onOpenStatistics={
-                  extendedDestinationsEnabled && onRequestDestination
-                    ? () => onRequestDestination("statistics")
-                    : undefined
-                }
-                onSignOut={handleSignOut}
-              />
-            )
+            <AppUtilityNav
+              interfaceLanguage={onboardingLang}
+              themePreference={themePreference}
+              onCycleTheme={cycleThemePreference}
+              onOpenSettings={openAppSettings}
+            />
           ) : (
             <div />
           )}
@@ -2687,35 +2563,6 @@ export function TrainingScreen({
                   ) : null}
                 </section>
 
-                {/* Sidebar Section: Fixed Width, adjacent to Main */}
-                {trainingSidebarPinned && (
-                  <aside className="hidden h-full w-[300px] shrink-0 flex-col lg:flex xl:w-[350px]">
-                    <Sidebar
-                      selectedEntry={selectedEntry}
-                      recentEntries={recentEntries}
-                      onSelectEntry={handleRecentSelect}
-                      onWordClick={handleDefinitionClick}
-                      detailEntry={detailEntry}
-                      onShowDetails={handleShowDetails}
-                      activeTab={sidebarTab}
-                      onTabChange={setSidebarTab}
-                      userId={user.id}
-                      translationLang={translationLang}
-                      userLists={availableLists.filter(
-                        (l) => l.type === "user",
-                      )}
-                      onListsUpdated={handleListsUpdated}
-                      onOpenListMembership={openMembershipList}
-                      onUserDictionaryEntryCreated={
-                        handleUserDictionaryEntryCreated
-                      }
-                      onTrainWord={handleTrainWord}
-                      currentTrainingEntryId={currentWord?.id ?? null}
-                      onTrainingAction={(result) => void handleAction(result)}
-                      trainingActionDisabled={!revealed || actionLoading}
-                    />
-                  </aside>
-                )}
               </div>
             </main>
 
@@ -2755,6 +2602,7 @@ export function TrainingScreen({
               interfaceLanguage={onboardingLang}
               disabled={actionLoading}
               extendedDestinationsEnabled={extendedDestinationsEnabled}
+              mobileVariant="tabs"
               onNavigate={onRequestDestination}
             />
           </div>
@@ -2764,11 +2612,20 @@ export function TrainingScreen({
           <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
         ) : null}
 
+        {wordLookupNotice ? (
+          <div
+            role="status"
+            className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-xl dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+          >
+            {wordLookupNotice}
+          </div>
+        ) : null}
+
         <TrainingSidebarDrawer
           open={mobileSidebarOpen}
           onClose={() => setMobileSidebarOpen(false)}
           title={sidebarTab === "recent" ? "Recent" : "Details"}
-          showOnDesktop={!trainingSidebarPinned}
+          showOnDesktop
         >
           <Sidebar
             selectedEntry={selectedEntry}
@@ -2946,10 +2803,6 @@ export function TrainingScreen({
           onInterfaceLanguageChange={saveOnboardingLanguageChoice}
           onTranslationLanguageChange={setTranslationLang}
           onNavigate={onRequestDestination}
-          onOpenSearch={openSearch}
-          onOpenSettings={openAppSettings}
-          onOpenHelp={() => setShowHotkeys(true)}
-          onOpenHistory={openHistoryFromDestination}
           userEmail={user.email ?? ""}
           onSignOut={handleSignOut}
         />
