@@ -1,4 +1,5 @@
 const { version: baseVersion } = require("./package.json");
+const rolloutProfiles = require("./config/rollout-profiles.json");
 
 const envNonEmpty = (value) => {
   if (typeof value !== "string") return undefined;
@@ -30,6 +31,25 @@ const audioQualityDefault =
   envNonEmpty(process.env.AUDIO_QUALITY_DEFAULT) ??
   "free";
 
+const rolloutProfileName =
+  envNonEmpty(process.env.APP_ROLLOUT_PROFILE) ?? "legacy";
+const rolloutProfile = rolloutProfiles[rolloutProfileName];
+
+if (!rolloutProfile) {
+  throw new Error(
+    `Unknown APP_ROLLOUT_PROFILE "${rolloutProfileName}". Expected one of: ${Object.keys(
+      rolloutProfiles,
+    ).join(", ")}.`,
+  );
+}
+
+const rolloutEnv = Object.fromEntries(
+  Object.entries(rolloutProfile).map(([name, enabled]) => [
+    name,
+    enabled ? "true" : "false",
+  ]),
+);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -45,6 +65,8 @@ const nextConfig = {
     NEXT_PUBLIC_APP_COMMIT: commitHash,
     NEXT_PUBLIC_BUILD_TIMESTAMP: buildTimestamp,
     NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT: audioQualityDefault,
+    NEXT_PUBLIC_APP_ROLLOUT_PROFILE: rolloutProfileName,
+    ...rolloutEnv,
   },
 };
 

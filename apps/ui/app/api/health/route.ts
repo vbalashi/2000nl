@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { appVersionInfo } from "@/lib/appVersion";
+import { rolloutProfileDiagnostics } from "@/lib/platform/platformV2Rollout";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -222,6 +223,7 @@ export async function GET(req: Request) {
     database: {
       target: databaseTargetLabel(process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL),
     },
+    rollout: rolloutProfileDiagnostics(),
     ...(deep ? { checks } : null),
   };
 

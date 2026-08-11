@@ -81,7 +81,41 @@ describe("/api/health", () => {
     expect(response.status).toBe(200);
     expect(body.status).toBe("ok");
     expect(body.checks).toBeUndefined();
+    expect(body.rollout).toEqual({
+      profile: "legacy",
+      approvedPilot: false,
+      flags: expect.any(Object),
+    });
     expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("reports the active approved pilot profile and flags", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ROLLOUT_PROFILE", "pilot");
+    vi.stubEnv("PLATFORM_V2_LOOKUP_ENABLED", "true");
+    vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+    vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI", "true");
+    vi.stubEnv("NEXT_PUBLIC_NAVIGATION_SHELL_V1", "true");
+    vi.stubEnv("NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1", "true");
+    vi.stubEnv("NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1", "true");
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request());
+    const body = await response.json();
+
+    expect(body.rollout).toEqual({
+      profile: "pilot",
+      approvedPilot: true,
+      flags: {
+        platformV2Lookup: true,
+        platformV2Actions: true,
+        platformV2TrainingUi: true,
+        platformV2LibraryUi: true,
+        navigationShellV1: true,
+        settingsStatisticsDestinationsV1: true,
+        trainingTodaySetupV1: true,
+      },
+    });
   });
 
   test("warns when the platform RPC contract is missing", async () => {
