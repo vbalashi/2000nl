@@ -188,6 +188,7 @@ export function LibrarySenseCardV2Session({
     setError(null);
     try {
       const url = await resolvePlatformV2Audio({
+        cacheOwnerId: userId ?? "library-anonymous",
         capability: group.header.audio,
         text: group.header.text,
       });

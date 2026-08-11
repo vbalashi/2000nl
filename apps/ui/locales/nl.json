@@ -110,6 +110,7 @@
     "collapse": "Betekenis inklappen",
     "expand": "Betekenis uitklappen",
     "report": "Melden",
+    "dismiss": "Melding sluiten",
     "reportUnavailable": "Melden is nog niet beschikbaar.",
     "collections": {
       "label": "Collecties",
@@ -127,6 +128,9 @@
       "cardChanged": "Volgende trainingskaart",
       "loading": "Trainingskaart laden…",
       "loadFailed": "Deze trainingskaart kon niet worden geladen.",
+      "stateRefreshed": "De kaart is elders gewijzigd. De nieuwste staat wordt nu getoond.",
+      "temporaryFailure": "De verbinding werd onderbroken. Probeer het opnieuw.",
+      "exit": "Terug naar Vandaag",
       "retry": "Opnieuw proberen"
     },
     "wordDetails": {

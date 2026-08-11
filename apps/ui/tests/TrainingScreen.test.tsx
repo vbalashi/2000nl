@@ -156,6 +156,10 @@ const fetchStats = vi.fn().mockResolvedValue({
   totalWordsInList: 2000,
 });
 const fetchRecentHistory = vi.fn().mockResolvedValue([]);
+const prefetchPlatformV2TrainingEntry = vi.fn();
+const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
+const clearPlatformV2TrainingClientCaches = vi.fn();
+const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
   {
@@ -336,17 +340,45 @@ vi.mock("@/lib/supabaseClient", () => ({
   },
 }));
 
+vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+  prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
+    prefetchPlatformV2TrainingEntry(...args),
+  preloadPlatformV2Audio: (...args: unknown[]) =>
+    preloadPlatformV2Audio(...args),
+  clearPlatformV2TrainingClientCaches: (...args: unknown[]) =>
+    clearPlatformV2TrainingClientCaches(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2Rollout", () => ({
+  platformV2TrainingUiEnabled: () => platformV2TrainingUiEnabled(),
+  platformV2LibraryUiEnabled: () => false,
+}));
+
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
+    word,
     onAvailabilityChange,
+    onProgressActionAccepted,
   }: {
-    onAvailabilityChange: (state: "loading") => void;
+    word: { headword: string };
+    onAvailabilityChange: (state: "loading" | "ready") => void;
+    onProgressActionAccepted: (capability: { actionId: string }) => void;
   }) => {
     React.useEffect(() => {
-      onAvailabilityChange("loading");
+      onAvailabilityChange("ready");
       return () => onAvailabilityChange("loading");
     }, [onAvailabilityChange]);
-    return <div data-testid="mock-training-sense-card-v2" />;
+    return (
+      <div data-testid="mock-training-sense-card-v2">
+        <h2>{word.headword}</h2>
+        <button
+          type="button"
+          onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+        >
+          Mock V2 grade
+        </button>
+      </div>
+    );
   },
   TrainingKnownUndoNotice: () => null,
 }));
@@ -1751,6 +1783,81 @@ test("search detail trains a selected entry as the next card without changing ac
   }
 });
 
+test("keeps the current V2 card when a selected-word warm fails", async () => {
+  let resolveOverrideLookup!: (value: unknown) => void;
+  const readyLookup = (entryId: string, text: string) => ({
+    state: "ready",
+    group: { header: { audio: null, text } },
+    entry: { entryId },
+  });
+
+  useTwoListScope();
+  searchDictionaryGroups.mockResolvedValue({
+    items: [dictionaryBoom],
+    total: 1,
+  });
+  fetchTrainingWordByLookup.mockClear();
+  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      input.entryId === overrideWord.id
+        ? new Promise((resolve) => {
+            resolveOverrideLookup = resolve;
+          })
+        : Promise.resolve(readyLookup(input.entryId, "huis")),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      { target: { value: "boom" } },
+    );
+    await screen.findAllByText("boom");
+
+    const detailActions = await screen.findAllByText("Meer acties");
+    fireEvent.click(detailActions[detailActions.length - 1]);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(fetchTrainingWordByLookup).toHaveBeenCalledWith(
+        overrideWord.id,
+        user.id,
+      ),
+    );
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveOverrideLookup({ state: "lookup-http-error", status: 503 });
+    });
+    expect(
+      await screen.findByText("Kon dit woord niet laden; probeer het opnieuw."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    restoreDefaultSearchResults();
+    restoreDefaultListScope();
+    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
+  }
+});
+
 test("search detail copies a trusted entry into the user dictionary", async () => {
   useTwoListScope();
   searchDictionaryGroups.mockResolvedValue({
@@ -2060,6 +2167,13 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
 
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
@@ -2077,7 +2191,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(scrollRegion.className).toContain("overflow-clip");
     expect(scrollRegion.className).not.toContain("overflow-y-auto");
     const frame = screen.getByTestId("training-card-frame");
-    expect(frame).toHaveAttribute("data-training-v2-state", "loading");
+    expect(frame).toHaveAttribute("data-training-v2-state", "ready");
     expect(frame.className).toContain("flex-1");
     expect(frame.className).not.toContain("h-[580px]");
     expect(
@@ -2132,12 +2246,15 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
       screen.queryByTestId("training-session-chrome"),
     ).not.toBeInTheDocument();
   } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
     vi.unstubAllEnvs();
   }
 });
 
 test("classifies the listening renderer as an explicit legacy exception", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchActiveTrainingScope.mockResolvedValueOnce({
     ...defaultActiveTrainingScope,
     activeScenario: "listening",
@@ -2165,6 +2282,7 @@ test("classifies the listening renderer as an explicit legacy exception", async 
       "listening-mode",
     );
   } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
     vi.unstubAllEnvs();
   }
 });
@@ -2328,6 +2446,120 @@ test("uses prefetched next card for instant transition on answer", async () => {
     if (typeof (vi as any).unstubAllGlobals === "function") {
       (vi as any).unstubAllGlobals();
     }
+  }
+});
+
+test("keeps the current V2 card visible until the prefetched DTO is ready", async () => {
+  let resolveNextLookup!: (value: unknown) => void;
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: "word-1" },
+  };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      input.entryId === word2.id
+        ? new Promise((resolve) => {
+            resolveNextLookup = resolve;
+          })
+        : Promise.resolve(readyLookup),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveNextLookup({
+        ...readyLookup,
+        group: { header: { audio: null, text: "boom" } },
+        entry: { entryId: word2.id },
+      });
+    });
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("keeps the current V2 card when the on-demand scheduler warm fails", async () => {
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValueOnce(null)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      Promise.resolve(
+        input.entryId === word2.id
+          ? { state: "lookup-http-error", status: 503 }
+          : {
+              state: "ready",
+              group: { header: { audio: null, text: "huis" } },
+              entry: { entryId: word1.id },
+            },
+      ),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /Training could not be loaded/i }),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
 });
 
@@ -2508,6 +2740,7 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   expect(fetchNextTrainingWordByScenario.mock.calls[0][1]).toBe("listening");
   expect(fetchNextTrainingWordByScenario.mock.calls[0][2]).toEqual([]);
   expect(fetchNextTrainingWordByScenario.mock.calls[0][6]).toEqual([]);
+  expect(fetchNextTrainingWordByScenario.mock.calls[0][7]).toBeUndefined();
 
   // The fresh load should also clear the session-reviewed set.
   await waitFor(() => {
