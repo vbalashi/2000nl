@@ -252,14 +252,27 @@ export type PlatformHeadwordGroupV2 = {
   entries: PlatformEntryPresentationV2[];
 };
 
-export type PlatformLookupV2Request = {
-  query: string;
+type PlatformLookupV2RequestBase = {
   contentLanguageCode?: string | null;
   translationTargetLanguageCode?: string | null;
   cardTypeId: CardTypeId;
-  intent?: LookupIntent;
-  cursor?: string | null;
 };
+
+export type PlatformLookupV2Request = PlatformLookupV2RequestBase &
+  (
+    | {
+        query: string;
+        entryId?: never;
+        intent?: LookupIntent;
+        cursor?: string | null;
+      }
+    | {
+        entryId: string;
+        query?: never;
+        intent: "training-review";
+        cursor?: never;
+      }
+  );
 
 export type PlatformLookupV2Response = {
   contractVersion: "platform-lookup-v2";

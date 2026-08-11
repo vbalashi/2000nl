@@ -340,11 +340,11 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     onAvailabilityChange,
   }: {
-    onAvailabilityChange: (available: boolean) => void;
+    onAvailabilityChange: (state: "loading") => void;
   }) => {
     React.useEffect(() => {
-      onAvailabilityChange(true);
-      return () => onAvailabilityChange(false);
+      onAvailabilityChange("loading");
+      return () => onAvailabilityChange("loading");
     }, [onAvailabilityChange]);
     return <div data-testid="mock-training-sense-card-v2" />;
   },
@@ -2077,8 +2077,15 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(scrollRegion.className).toContain("overflow-clip");
     expect(scrollRegion.className).not.toContain("overflow-y-auto");
     const frame = screen.getByTestId("training-card-frame");
+    expect(frame).toHaveAttribute("data-training-v2-state", "loading");
     expect(frame.className).toContain("flex-1");
     expect(frame.className).not.toContain("h-[580px]");
+    expect(
+      screen.queryByRole("button", { name: /Antwoord tonen|Show answer/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Opnieuw|Again/ }),
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
       /Card 1 · open session/,
@@ -2124,6 +2131,39 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(
       screen.queryByTestId("training-session-chrome"),
     ).not.toBeInTheDocument();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
+
+test("classifies the listening renderer as an explicit legacy exception", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  fetchActiveTrainingScope.mockResolvedValueOnce({
+    ...defaultActiveTrainingScope,
+    activeScenario: "listening",
+    modesEnabled: ["listen-recognize"],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValueOnce({
+    ...mockWord,
+    mode: "listen-recognize",
+  });
+
+  try {
+    const { container } = render(<TrainingScreen user={user} />);
+
+    await waitFor(() =>
+      expect(
+        container.querySelector('[data-training-v2-state="listening-mode"]'),
+      ).toBeInTheDocument(),
+    );
+    const renderer = container.querySelector(
+      '[data-training-v2-state="listening-mode"]',
+    );
+    expect(renderer).toHaveAttribute("data-training-renderer", "legacy");
+    expect(renderer).toHaveAttribute(
+      "data-training-v2-state",
+      "listening-mode",
+    );
   } finally {
     vi.unstubAllEnvs();
   }

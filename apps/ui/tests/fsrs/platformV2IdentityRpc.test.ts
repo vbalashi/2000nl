@@ -179,6 +179,89 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     }, userId);
   });
 
+  test("reads a complete source training group directly by scheduled entry", async () => {
+    const userId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const firstEntryId = await insertWord(
+        client,
+        `platform-v2-training-group-a-${Date.now()}`,
+      );
+      const secondEntryId = await insertWord(
+        client,
+        `platform-v2-training-group-b-${Date.now()}`,
+      );
+      await bindSourceEntries(client, [firstEntryId, secondEntryId]);
+
+      const privileges = await client.query(
+        `select
+           has_function_privilege(
+             'authenticated',
+             'public.read_platform_v2_training_group(uuid,uuid,integer)',
+             'EXECUTE'
+           ) as authenticated_execute,
+           has_function_privilege(
+             'service_role',
+             'public.read_platform_v2_training_group(uuid,uuid,integer)',
+             'EXECUTE'
+           ) as service_execute`,
+      );
+      expect(privileges.rows).toEqual([
+        { authenticated_execute: false, service_execute: true },
+      ]);
+
+      await client.query("set local role service_role");
+      const { rows } = await client.query(
+        `select read_platform_v2_training_group($1, $2, 50) as result`,
+        [userId, firstEntryId],
+      );
+      expect(rows[0].result.error).toBeUndefined();
+      expect(
+        rows[0].result.items.map((item: { id: string }) => item.id),
+      ).toEqual([firstEntryId, secondEntryId]);
+    }, userId);
+  });
+
+  test("keeps a direct user training group private and singleton", async () => {
+    const ownerId = randomUUID();
+    const otherUserId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, ownerId);
+      await ensureUserWithSettings(client, otherUserId);
+      const { rows: createRows } = await client.query(
+        `select create_user_dictionary_entry(
+           $1,
+           NULL,
+           jsonb_build_object(
+             'headword', $2::text,
+             'languageCode', 'nl',
+             'definition', 'private definition'
+           )
+         ) as entry_id`,
+        [ownerId, `platform-v2-training-private-${Date.now()}`],
+      );
+      const entryId = createRows[0].entry_id as string;
+
+      await client.query("set local role service_role");
+      const ownerRead = await client.query(
+        `select read_platform_v2_training_group($1, $2, 50) as result`,
+        [ownerId, entryId],
+      );
+      expect(ownerRead.rows[0].result.items).toHaveLength(1);
+      expect(ownerRead.rows[0].result.items[0].id).toBe(entryId);
+
+      const foreignRead = await client.query(
+        `select read_platform_v2_training_group($1, $2, 50) as result`,
+        [otherUserId, entryId],
+      );
+      expect(foreignRead.rows[0].result).toEqual({
+        error: "entry_not_accessible",
+      });
+    }, ownerId);
+  });
+
   test("preserves Content Node IDs through reorder and source-native text edits", async () => {
     const userId = randomUUID();
 

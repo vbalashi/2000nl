@@ -11,9 +11,21 @@ import type {
 } from "../../../../packages/shared/types/platformV2";
 
 export type PlatformV2TrainingEntryResult = {
+  state: "ready";
   group: PlatformHeadwordGroupV2;
   entry: PlatformSenseCardEntryV2;
 };
+
+type PlatformV2TrainingEntrySelection = Omit<
+  PlatformV2TrainingEntryResult,
+  "state"
+>;
+
+export type PlatformV2TrainingLookupResult =
+  | PlatformV2TrainingEntryResult
+  | { state: "lookup-http-error"; status: number }
+  | { state: "contract-mismatch" }
+  | { state: "entry-not-found" };
 
 export type PlatformV2TrainingActionCapability =
   PlatformSenseCardCapabilityV2 & {
@@ -62,13 +74,12 @@ export function buildPlatformV2TrainingActionRequest(
 }
 
 export async function fetchPlatformV2TrainingEntry(input: {
-  query: string;
   entryId: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
-}): Promise<PlatformV2TrainingEntryResult | null> {
+}): Promise<PlatformV2TrainingLookupResult> {
   const response = await fetch("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -76,25 +87,38 @@ export async function fetchPlatformV2TrainingEntry(input: {
     signal: input.signal,
     headers: await platformV2AuthenticatedJsonHeaders(),
     body: JSON.stringify({
-      query: input.query,
+      entryId: input.entryId,
       cardTypeId: input.cardTypeId,
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "training-review",
     }),
   });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return { state: "lookup-http-error", status: response.status };
+  }
 
-  const payload = (await response.json()) as PlatformLookupV2Response;
-  if (payload.contractVersion !== "platform-lookup-v2") return null;
+  const payload = (await response.json()) as Partial<PlatformLookupV2Response>;
+  if (
+    payload.contractVersion !== "platform-lookup-v2" ||
+    !Array.isArray(payload.groups)
+  ) {
+    return { state: "contract-mismatch" };
+  }
 
-  return selectPlatformV2TrainingEntry(payload, input.entryId);
+  const selected = selectPlatformV2TrainingEntry(
+    payload as PlatformLookupV2Response,
+    input.entryId,
+  );
+  return selected
+    ? { state: "ready", ...selected }
+    : { state: "entry-not-found" };
 }
 
 export function selectPlatformV2TrainingEntry(
   payload: PlatformLookupV2Response,
   entryId: string,
-): PlatformV2TrainingEntryResult | null {
+): PlatformV2TrainingEntrySelection | null {
   for (const group of payload.groups) {
     const entry = group.entries.find(
       (candidate): candidate is PlatformSenseCardEntryV2 =>

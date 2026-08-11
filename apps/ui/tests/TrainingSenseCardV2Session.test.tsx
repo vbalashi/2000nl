@@ -42,6 +42,7 @@ describe("TrainingSenseCardV2Session", () => {
     resolveAudio.mockReset();
     resolveAudio.mockResolvedValue("/audio/hand.mp3");
     fetchSingleSense.mockResolvedValue({
+      state: "ready",
       group: singleSenseGroup,
       entry: singleSenseEntry,
     });
@@ -71,9 +72,17 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    expect(screen.getByText("Legacy card")).toBeInTheDocument();
+    expect(screen.getByTestId("training-v2-loading")).toHaveAttribute(
+      "data-training-v2-state",
+      "loading",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     await screen.findByRole("heading", { name: "hand" });
-    expect(onAvailabilityChange).toHaveBeenCalledWith(true);
+    expect(onAvailabilityChange).toHaveBeenCalledWith("ready");
+    expect(screen.getByTestId("training-sense-card-v2")).toHaveAttribute(
+      "data-training-v2-state",
+      "ready",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
     fireEvent.click(screen.getByRole("button", { name: "Goed" }));
@@ -85,6 +94,87 @@ describe("TrainingSenseCardV2Session", () => {
     );
     await waitFor(() => expect(performAction).toHaveBeenCalledWith(capability));
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
+  });
+
+  test("shows an explicit V2 error instead of the legacy card when lookup returns HTTP 500", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "lookup-http-error",
+      status: 500,
+    });
+
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    const errorState = await screen.findByRole("alert");
+    expect(errorState).toHaveAttribute("data-training-renderer", "v2");
+    expect(errorState).toHaveAttribute(
+      "data-training-v2-state",
+      "lookup-http-error",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Opnieuw proberen" })).toBeInTheDocument();
+  });
+
+  test.each(["contract-mismatch", "entry-not-found"] as const)(
+    "shows retryable V2 state %s without legacy content",
+    async (state) => {
+      fetchSingleSense.mockResolvedValue({ state });
+      render(
+        <TrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          fallback={<p>Legacy card</p>}
+          onAvailabilityChange={vi.fn()}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      expect(await screen.findByRole("alert")).toHaveAttribute(
+        "data-training-v2-state",
+        state,
+      );
+      expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    },
+  );
+
+  test("retries a failed V2 lookup", async () => {
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "entry-not-found" })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(fetchSingleSense).toHaveBeenCalledTimes(2);
   });
 
   test("gives explicit feedback when durable reporting is unavailable", async () => {
@@ -99,6 +189,7 @@ describe("TrainingSenseCardV2Session", () => {
       },
     };
     fetchSingleSense.mockResolvedValue({
+      state: "ready",
       group: singleSenseGroup,
       entry: {
         ...singleSenseEntry,
@@ -146,8 +237,8 @@ describe("TrainingSenseCardV2Session", () => {
       entries: [nextEntry],
     };
     fetchSingleSense
-      .mockResolvedValueOnce({ group: singleSenseGroup, entry: singleSenseEntry })
-      .mockResolvedValueOnce({ group: nextGroup, entry: nextEntry });
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ state: "ready", group: nextGroup, entry: nextEntry });
     const view = render(
       <TrainingSenseCardV2Session
         word={word}
@@ -178,8 +269,8 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     await screen.findByRole("heading", { name: "bank" });
-    expect(view.container.querySelector('[aria-live="polite"]')).toBe(
-      liveRegion,
+    expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
+      "Volgende trainingskaart",
     );
     expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
     await waitFor(() =>
@@ -218,8 +309,8 @@ describe("TrainingSenseCardV2Session", () => {
       capabilities: [undoKnown],
     };
     fetchSingleSense
-      .mockResolvedValueOnce({ group: singleSenseGroup, entry: singleSenseEntry })
-      .mockResolvedValueOnce({ group: singleSenseGroup, entry: knownEntry });
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry })
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: knownEntry });
     performAction
       .mockResolvedValueOnce({
         contractVersion: "platform-action-v2",
@@ -405,8 +496,9 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
   });
 
-  test("falls back instead of exposing the answer when reverse content has no definition", async () => {
+  test("shows an explicit error when reverse content has no definition", async () => {
     fetchSingleSense.mockResolvedValue({
+      state: "ready",
       group: singleSenseGroup,
       entry: {
         ...singleSenseEntry,
@@ -430,12 +522,77 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
 
-    expect(await screen.findByText("Legacy card")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveAttribute(
+      "data-training-v2-state",
+      "reverse-definition-missing",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     await waitFor(() =>
-      expect(onAvailabilityChange).toHaveBeenLastCalledWith(false),
+      expect(onAvailabilityChange).toHaveBeenLastCalledWith(
+        "reverse-definition-missing",
+      ),
     );
     expect(
       screen.queryByRole("heading", { name: singleSenseGroup.header.text }),
     ).not.toBeInTheDocument();
   });
+
+  test("classifies an invalid V2 presentation model", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: {
+        ...singleSenseGroup,
+        header: { ...singleSenseGroup.header, text: "", displayPronunciation: null },
+      },
+      entry: singleSenseEntry,
+    });
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveAttribute(
+      "data-training-v2-state",
+      "model-invalid",
+    );
+    expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
+  });
+
+  test.each(["listen-recognize", "listen-type"] as const)(
+    "keeps %s on an explicitly classified listening renderer",
+    async (mode) => {
+      const onAvailabilityChange = vi.fn();
+      render(
+        <TrainingSenseCardV2Session
+          word={{ ...word, mode }}
+          mode={mode}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          fallback={<p>Legacy listening card</p>}
+          onAvailabilityChange={onAvailabilityChange}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText("Legacy listening card").parentElement).toHaveAttribute(
+        "data-training-v2-state",
+        "listening-mode",
+      );
+      expect(screen.getByText("Legacy listening card").parentElement).toHaveAttribute(
+        "data-training-renderer",
+        "legacy",
+      );
+      expect(fetchSingleSense).not.toHaveBeenCalled();
+      expect(onAvailabilityChange).toHaveBeenCalledWith("listening-mode");
+    },
+  );
 });

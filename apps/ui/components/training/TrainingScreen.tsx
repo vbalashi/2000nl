@@ -54,6 +54,7 @@ import { TrainingCard } from "./TrainingCard";
 import {
   TrainingKnownUndoNotice,
   TrainingSenseCardV2Session,
+  type TrainingV2SessionState,
 } from "./v2/TrainingSenseCardV2Session";
 import {
   TrainingSessionChrome,
@@ -249,7 +250,8 @@ export function TrainingScreen({
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [v2CardAvailable, setV2CardAvailable] = useState(false);
+  const [v2SessionState, setV2SessionState] =
+    useState<TrainingV2SessionState>("loading");
   const {
     activeScenario,
     audioQuality,
@@ -569,6 +571,7 @@ export function TrainingScreen({
     trainingShellV2Enabled &&
     (currentMode === "word-to-definition" ||
       currentMode === "definition-to-word");
+  const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
@@ -1510,7 +1513,7 @@ export function TrainingScreen({
       const normalized = event.key.toLowerCase();
 
       if (
-        v2CardAvailable &&
+        v2SessionOwned &&
         (normalized === "t" ||
           normalized === "h" ||
           normalized === "j" ||
@@ -1585,7 +1588,7 @@ export function TrainingScreen({
     openSearch,
     revealed,
     toggleHint,
-    v2CardAvailable,
+    v2SessionOwned,
   ]);
 
   const handleDefinitionClick = useCallback(
@@ -2268,7 +2271,7 @@ export function TrainingScreen({
                   <div
                     data-testid="training-card-scroll-region"
                     className={`flex flex-1 flex-col px-2 md:px-4 ${
-                      v2CardAvailable
+                      v2SessionOwned
                         ? "min-h-0 overflow-clip"
                         : "overflow-y-auto overflow-x-visible scrollbar-hide"
                     }`}
@@ -2276,7 +2279,7 @@ export function TrainingScreen({
                     {/* Card Container */}
                     <div
                       className={`flex flex-col justify-start md:justify-center ${
-                        v2CardAvailable
+                        v2SessionOwned
                           ? "h-full min-h-0 py-0"
                           : "min-h-full py-2 md:py-4"
                       }`}
@@ -2382,8 +2385,11 @@ export function TrainingScreen({
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                       <div
                         data-testid="training-card-frame"
+                        data-training-v2-state={
+                          v2SessionOwned ? v2SessionState : undefined
+                        }
                         className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
-                          v2CardAvailable
+                          v2SessionOwned
                             ? "min-h-0 flex-1 overflow-hidden"
                             : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
                         }`}
@@ -2392,7 +2398,7 @@ export function TrainingScreen({
                           ref={cardSwipeRef}
                           data-testid="training-card-swipe-wrapper"
                           className={`relative h-full ${
-                            v2CardAvailable ? "min-h-0 overflow-hidden" : ""
+                            v2SessionOwned ? "min-h-0 overflow-hidden" : ""
                           }`}
                           style={swipeCardStyle}
                           onTouchStart={handleCardTouchStart}
@@ -2421,6 +2427,7 @@ export function TrainingScreen({
                           )}
                           {trainingSessionV2Enabled && currentWord ? (
                             <TrainingSenseCardV2Session
+                              key={`${currentWord.id}:${currentMode}`}
                               word={currentWord}
                               mode={currentMode}
                               contentLanguageCode={currentTrainingLanguage}
@@ -2435,13 +2442,23 @@ export function TrainingScreen({
                                 playAudio(url, label)
                               }
                               onOpenDetails={handleShowCurrentWordDetails}
-                              onAvailabilityChange={setV2CardAvailable}
+                              onAvailabilityChange={setV2SessionState}
                               onProgressActionAccepted={
                                 handleV2ProgressActionAccepted
                               }
                             />
                           ) : (
-                            legacyTrainingCard
+                            <div
+                              className="contents"
+                              data-training-renderer="legacy"
+                              data-training-v2-state={
+                                currentMode === "listen-recognize"
+                                  ? "listening-mode"
+                                  : "pilot-disabled"
+                              }
+                            >
+                              {legacyTrainingCard}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -2449,7 +2466,7 @@ export function TrainingScreen({
                   </div>
 
                   {/* 2. Fixed Buttons Area (Always Visible) */}
-                  {!v2CardAvailable ? (
+                  {!v2SessionOwned ? (
                     <div className="flex-none pt-4 pb-2 z-10">
                       {/* Translucent container for buttons */}
                       <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
@@ -2590,7 +2607,7 @@ export function TrainingScreen({
               activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
               initialReviewDue={initialReviewDue}
               inlineControlsEnabled={!trainingTodaySetupEnabled}
-              compact={v2CardAvailable}
+              compact={v2SessionOwned}
               interfaceLanguage={onboardingLang}
             />
           </>

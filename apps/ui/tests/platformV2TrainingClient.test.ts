@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   buildPlatformV2TrainingActionRequest,
+  fetchPlatformV2TrainingEntry,
   resolvePlatformV2Audio,
   selectPlatformV2TrainingEntry,
 } from "@/lib/platform/platformV2TrainingClient";
@@ -156,5 +157,93 @@ describe("selectPlatformV2TrainingEntry", () => {
         financeEntry.entryId,
       ),
     ).toEqual({ group: multiSenseBankGroup, entry: financeEntry });
+  });
+});
+
+describe("fetchPlatformV2TrainingEntry", () => {
+  test("sends the scheduler entry id and preserves an HTTP lookup failure", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "lookup_failed" }), {
+        status: 500,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const request = fetchPlatformV2TrainingEntry({
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+
+    await expect(request).resolves.toMatchObject({
+      state: "lookup-http-error",
+      status: 500,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v2/lookup",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          entryId: singleSenseEntry.entryId,
+          cardTypeId: "word-to-definition",
+          contentLanguageCode: "nl",
+          translationTargetLanguageCode: "en",
+          intent: "training-review",
+        }),
+      }),
+    );
+  });
+
+  test("classifies an incompatible response contract", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ contractVersion: "unexpected" }), {
+          status: 200,
+        }),
+      ),
+    );
+
+    await expect(
+      fetchPlatformV2TrainingEntry({
+        entryId: singleSenseEntry.entryId,
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).resolves.toEqual({ state: "contract-mismatch" });
+  });
+
+  test("classifies a valid response that excludes the scheduler entry", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            contractVersion: "platform-lookup-v2",
+            query: "hand",
+            request: {
+              contentLanguageCode: "nl",
+              translationTargetLanguageCode: "en",
+              cardTypeId: "word-to-definition",
+              intent: "training-review",
+            },
+            groups: [],
+            page: { selectedTierComplete: true, nextGroupCursor: null },
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(
+      fetchPlatformV2TrainingEntry({
+        entryId: singleSenseEntry.entryId,
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).resolves.toEqual({ state: "entry-not-found" });
   });
 });

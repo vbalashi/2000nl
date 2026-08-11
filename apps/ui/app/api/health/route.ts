@@ -19,6 +19,14 @@ const requiredPlatformRpcs = [
     args: { p_entry_id: "00000000-0000-4000-8000-000000000000" },
   },
   {
+    name: "read_platform_v2_training_group",
+    args: {
+      p_user_id: "00000000-0000-4000-8000-000000000000",
+      p_entry_id: "00000000-0000-4000-8000-000000000000",
+      p_group_entry_bound: 1,
+    },
+  },
+  {
     name: "lookup_dictionary_entries_v3",
     args: {
       p_query: "__health_missing__",
