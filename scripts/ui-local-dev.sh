@@ -88,15 +88,7 @@ export TEST_USER_EMAIL="${TEST_USER_EMAIL:-test@2000nl.local}"
 export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
-if [[ "$pilot" == true ]]; then
-  export PLATFORM_V2_LOOKUP_ENABLED=1
-  export PLATFORM_V2_ACTIONS_ENABLED=1
-  export NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI=true
-  export NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI=true
-  export NEXT_PUBLIC_NAVIGATION_SHELL_V1=true
-  export NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1=true
-  export NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1=true
-fi
+export APP_ROLLOUT_PROFILE="$([[ "$pilot" == true ]] && printf 'pilot' || printf 'legacy')"
 
 echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"
@@ -104,7 +96,7 @@ echo "  Supabase: $NEXT_PUBLIC_SUPABASE_URL"
 echo "  Dev auth: http://localhost:$port/dev/test-login?redirectTo=/"
 echo "  Health:   http://localhost:$port/api/health?deep=1"
 echo "  Cache:    $NEXT_DIST_DIR"
-echo "  Profile:  $([[ "$pilot" == true ]] && printf 'pilot' || printf 'legacy')"
+echo "  Profile:  $APP_ROLLOUT_PROFILE"
 
 cd "$repo_root/apps/ui"
 exec npm run dev -- --port "$port"

@@ -29,6 +29,7 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       DEPLOY_SERVER_NAME: NUC (2000.dilum.io)
+      APP_ROLLOUT_PROFILE: pilot
     steps:
       - name: Deploy with Telegram notifications
         shell: bash
