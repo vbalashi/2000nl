@@ -87,6 +87,48 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
   });
 
+  test("gives explicit feedback when durable reporting is unavailable", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+
+    expect(
+      await screen.findByText("Melden is nog niet beschikbaar."),
+    ).toHaveAttribute("role", "status");
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
   test("announces and focuses the replacement card after the queue advances", async () => {
     const nextEntry = {
       ...singleSenseEntry,

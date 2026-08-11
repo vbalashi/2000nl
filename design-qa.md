@@ -116,3 +116,66 @@ Browser console/runtime: no unhandled runtime error was visible during the final
 ## Final result
 
 final result: passed
+
+---
+
+# Design QA — issue #134 responsive shell
+
+Status: PASS
+Date: 2026-08-11
+
+## Evidence
+
+- Approved source: Pen node `fhnVs`, `30.10.09 · MOBILE HEADER SELECTOR
+  STATES · v0.1 · [REVIEW]`, exported to
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/fhnVs.png`.
+- Mobile implementation, closed selector (390×844):
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/03-mobile-selector-closed.png`.
+- Mobile implementation, open selector (390×844):
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/04-mobile-selector-open.png`.
+- Desktop implementation (1440×900):
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/05-desktop-shell.png`.
+- Narrow mobile implementation (320×844):
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/07-mobile-320.png`.
+- Combined source/implementation comparison:
+  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/06-pen-vs-implementation.png`.
+
+## Result
+
+- PASS: the mobile header replaces the three peer labels with one 132×36
+  destination selector and retains Theme + Settings as the only quick actions.
+- PASS: the selector exposes localized accessible names, announces expanded
+  state, moves focus with ArrowUp/ArrowDown/Home/End, restores trigger focus on
+  Escape, and navigates to exact destinations.
+- PASS: desktop retains Training / Library / Statistics with Lucide icons.
+- PASS: account identity and Sign out are available inside Settings instead of
+  a separate header action.
+- PASS: the Training Report affordance is a native button with hover, focus,
+  active, busy and keyboard behavior. Until a durable submission contract is
+  implemented, activation returns explicit localized unavailable feedback
+  instead of silently discarding the action.
+- PASS: the separate bottom mobile navigation remains present. Its destination
+  icons are hidden at this compact breakpoint, preserving the prior tab layout;
+  measured width is 364/364 px with document width 390/390 px.
+- PASS: at 320 px the compact logo and selector retain a measured 10.9 px gap;
+  the bottom tabs measure 294/294 px and the document 320/320 px.
+- PASS: no global Search, Help, History, or Account action remains in the
+  responsive header. The legacy `R` shortcut and persisted pinned-History entry
+  path are also removed; definition clicks resolve into Details rather than
+  Recent. Recent remains reachable from the Answer-card details drawer.
+- PASS: the five-step onboarding tour targets only controls that remain in the
+  shell; removed Search and History targets are absent from both DOM and copy.
+- PASS: a dictionary miss from an interactive card word produces localized
+  visible `role=status` feedback instead of silently updating hidden history.
+
+## Intentional differences
+
+- The approved Pen reference uses English copy; the final browser check used
+  the Russian interface. The fixed-width selector truncates the current Russian
+  label in its closed state while the complete label remains available as its
+  accessible name and in the open menu.
+- Spacing between the session bar and Training card remains outside issue #134.
+
+## Final result
+
+final result: passed

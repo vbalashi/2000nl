@@ -6,7 +6,7 @@ type Props = {
 };
 
 export function BrandLogo({
-  className = "truncate text-3xl md:text-[36px] leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-75 dark:opacity-80",
+  className = "truncate text-2xl min-[360px]:text-3xl md:text-[36px] leading-none font-black tracking-tight text-slate-900 dark:text-white opacity-75 dark:opacity-80",
   accentClassName = "text-blue-600 dark:text-blue-400",
 }: Props) {
   return (

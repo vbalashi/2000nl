@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { X } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { trainingScenarioLabel } from "./trainingSessionLabels";
@@ -84,60 +85,11 @@ export function TrainingSessionChrome({
           type="button"
           onClick={onClose}
           aria-label={text.close}
-          className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-base leading-none text-slate-500 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-white sm:flex"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-white"
         >
-          ×
+          <X aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
-    </div>
-  );
-}
-
-export function TrainingSessionMobileUtilities({
-  interfaceLanguage,
-  historyActive,
-  onOpenHistory,
-  onClose,
-}: {
-  interfaceLanguage: OnboardingLanguage;
-  historyActive: boolean;
-  onOpenHistory: () => void;
-  onClose: () => void;
-}) {
-  const text = copy[interfaceLanguage];
-  const buttonClass =
-    "flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-800";
-  return (
-    <div className="flex items-center gap-1.5 md:hidden">
-      <button
-        type="button"
-        aria-label={text.history}
-        aria-pressed={historyActive}
-        onClick={onOpenHistory}
-        className={buttonClass}
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="h-[18px] w-[18px]"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M12 8v4l3 2" />
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        aria-label={text.close}
-        onClick={onClose}
-        className={buttonClass}
-      >
-        <span aria-hidden="true" className="text-xl leading-none">
-          ×
-        </span>
-      </button>
     </div>
   );
 }

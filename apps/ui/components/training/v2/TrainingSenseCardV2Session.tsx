@@ -147,6 +147,15 @@ export function TrainingSenseCardV2Session({
         await load();
         return;
       }
+      if (capability.actionId === "report-content") {
+        setError(
+          platformV2Message(
+            interfaceLanguage,
+            "senseCard.reportUnavailable",
+          ),
+        );
+        return;
+      }
       if (!isPlatformV2TrainingActionCapability(capability)) return;
       const response = await performPlatformV2TrainingAction(capability);
       if (capability.actionId === "undo-known") {

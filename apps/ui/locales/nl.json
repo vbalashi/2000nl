@@ -7,7 +7,7 @@
     "steps": [
       {
         "title": "Welkom bij 2000NL",
-        "content": "Klaar om te starten? In 6 korte stappen ontdek je hoe je woorden leert."
+        "content": "Klaar om te starten? In 5 korte stappen ontdek je hoe je woorden leert."
       },
       {
         "title": "Onthul het woord",
@@ -18,16 +18,12 @@
         "content": "Kies hoe goed je het woord kent zodat het juiste herhaalschema volgt."
       },
       {
-        "title": "Audio & vertaling",
-        "content": "Gebruik audio en vertaling om uitspraak en betekenis te oefenen."
+        "title": "Kaartfuncties",
+        "content": "Gebruik audio, vertaling en woorddetails vanaf de antwoordkaart."
       },
       {
-        "title": "Recent & details",
-        "content": "Bekijk recente woorden en open details via de sidebar."
-      },
-      {
-        "title": "Zoeken & instellingen",
-        "content": "Zoek woorden op en pas voorkeuren aan in Instellingen."
+        "title": "Bibliotheek & instellingen",
+        "content": "Zoek woorden in Bibliotheek en pas voorkeuren aan in Instellingen."
       }
     ],
     "buttons": {
@@ -114,6 +110,7 @@
     "collapse": "Betekenis inklappen",
     "expand": "Betekenis uitklappen",
     "report": "Melden",
+    "reportUnavailable": "Melden is nog niet beschikbaar.",
     "collections": {
       "label": "Collecties",
       "title": "Collecties voor deze betekenis",

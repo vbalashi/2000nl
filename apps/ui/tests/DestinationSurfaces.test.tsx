@@ -6,24 +6,15 @@ import { StatisticsDestination } from "@/components/navigation/StatisticsDestina
 
 const utilityNav = {
   themePreference: "system" as const,
-  userEmail: "learner@example.com",
   onCycleTheme: vi.fn(),
-  onOpenSearch: vi.fn(),
   onOpenSettings: vi.fn(),
-  onOpenHelp: vi.fn(),
-  onOpenHistory: vi.fn(),
-  onOpenStatistics: vi.fn(),
-  onSignOut: vi.fn(),
 };
 
-test("App Settings exposes only application preferences", () => {
+test("App Settings exposes application preferences and the signed-in account", () => {
   const onThemeChange = vi.fn();
   const onInterfaceLanguageChange = vi.fn();
   const onTranslationLanguageChange = vi.fn();
-  const onOpenSearch = vi.fn();
-  const onOpenSettings = vi.fn();
-  const onOpenHelp = vi.fn();
-  const onOpenHistory = vi.fn();
+  const onSignOut = vi.fn();
 
   render(
     <SettingsDestination
@@ -35,12 +26,8 @@ test("App Settings exposes only application preferences", () => {
       onInterfaceLanguageChange={onInterfaceLanguageChange}
       onTranslationLanguageChange={onTranslationLanguageChange}
       onNavigate={vi.fn()}
-      onOpenSearch={onOpenSearch}
-      onOpenSettings={onOpenSettings}
-      onOpenHelp={onOpenHelp}
-      onOpenHistory={onOpenHistory}
       userEmail="learner@example.com"
-      onSignOut={vi.fn()}
+      onSignOut={onSignOut}
     />,
   );
 
@@ -50,8 +37,6 @@ test("App Settings exposes only application preferences", () => {
   expect(
     screen.getByRole("heading", { name: "Keyboard shortcuts" }),
   ).toBeInTheDocument();
-  expect(screen.getByText("Open or close recent words")).toBeInTheDocument();
-  expect(screen.getByText("R")).toBeInTheDocument();
   expect(screen.queryByText(/audio quality/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/subscription/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/training setup/i)).not.toBeInTheDocument();
@@ -68,14 +53,14 @@ test("App Settings exposes only application preferences", () => {
     "aria-current",
     "page",
   );
-  expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Account" })).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole("button", { name: "Search" }));
-  expect(onOpenSearch).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole("button", { name: "History" }));
-  expect(onOpenHistory).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Account" })).toBeInTheDocument();
+  expect(screen.getByText("learner@example.com")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  expect(onSignOut).toHaveBeenCalledOnce();
 
   fireEvent.click(screen.getByRole("button", { name: "Dark" }));
   expect(onThemeChange).toHaveBeenCalledWith("dark");
@@ -116,10 +101,11 @@ test("Statistics uses real available counters and returns to Training", () => {
   expect(screen.getByText("120 / 2000")).toBeInTheDocument();
   expect(screen.queryByText(/retention/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/streak/i)).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Account" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Statistics" })).toHaveAttribute(
     "aria-current",
     "page",
