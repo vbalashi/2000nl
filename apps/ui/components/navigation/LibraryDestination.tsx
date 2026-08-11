@@ -13,7 +13,10 @@ import type {
   EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
-import { AppDestinationNav } from "./AppDestinationNav";
+import {
+  AppDestinationNav,
+  MobileAppDestinationNav,
+} from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 
@@ -139,6 +142,12 @@ export function LibraryDestination({
           />
         </div>
       </div>
+      <MobileAppDestinationNav
+        active="library"
+        interfaceLanguage={interfaceLanguage}
+        extendedDestinationsEnabled={extendedDestinationsEnabled}
+        onNavigate={onNavigate}
+      />
     </section>
   );
 }

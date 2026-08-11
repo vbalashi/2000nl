@@ -106,10 +106,15 @@ test("Statistics uses real available counters and returns to Training", () => {
   expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Statistics" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  const primaryNavigations = screen.getAllByRole("navigation", {
+    name: "Primary",
+  });
+  expect(primaryNavigations).toHaveLength(2);
+  for (const navigation of primaryNavigations) {
+    expect(
+      within(navigation).getByRole("button", { name: "Statistics" }),
+    ).toHaveAttribute("aria-current", "page");
+  }
 
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onNavigate).toHaveBeenCalledWith("training");
