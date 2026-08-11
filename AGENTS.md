@@ -42,6 +42,8 @@ promotes a boundary change.
 - [docs/architecture/post-provenance-review/platform-engineering-principles.md](./docs/architecture/post-provenance-review/platform-engineering-principles.md) - required guardrail for substantial Platform, dictionary, provenance, learning-state, external-client, and refactor work.
 - [docs/intent/index.md](./docs/intent/index.md) - product and workflow intent.
 - [docs/tech-debt/index.md](./docs/tech-debt/index.md) - known structural debt.
+- [docs/runbooks/project-logbook.md](./docs/runbooks/project-logbook.md) - daily
+  human-readable project logbook and agent/worktree review rule.
 - [docs/runbooks](./docs/runbooks) - operational notes for Supabase auth, production debugging, and audio/TTS workflows.
 - [packages/docs/README.md](./packages/docs/README.md) - deeper data-flow and contract docs.
 
