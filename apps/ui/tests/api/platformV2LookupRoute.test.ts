@@ -376,6 +376,233 @@ describe("/api/platform/v2/lookup", () => {
     expect(JSON.stringify(payload)).not.toContain("undo-known");
   });
 
+  test("resolves an authenticated training entry exactly and returns its complete readable group", async () => {
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    const targetEntryId = "00000000-0000-4000-8000-000000000101";
+    const siblingEntryId = "00000000-0000-4000-8000-000000000102";
+    const decoyEntryId = "00000000-0000-4000-8000-000000000201";
+    const dictionary = {
+      id: "dict-1",
+      language_code: "nl",
+      slug: "nl-vandale",
+      name: "Van Dale",
+      kind: "curated",
+      visibility: "system",
+      owner_user_id: null,
+      is_editable: false,
+      schema_key: "nl-vandale-v2",
+      schema_version: 1,
+    };
+    const entry = (
+      id: string,
+      meaningId: number,
+      definition: string,
+      sourceDictionary = dictionary,
+    ) => ({
+      id,
+      dictionary_id: sourceDictionary.id,
+      language_code: "nl",
+      headword: "bank",
+      meaning_id: meaningId,
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition }] },
+      dictionary: sourceDictionary,
+    });
+    const target = entry(targetEntryId, 1, "zitmeubel");
+    const sibling = entry(siblingEntryId, 2, "financiële instelling");
+
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "read_platform_v2_training_group") {
+        expect(args).toEqual({
+          p_user_id: "user-1",
+          p_entry_id: targetEntryId,
+          p_group_entry_bound: 50,
+        });
+        return Promise.resolve({
+          data: {
+            items: [target, sibling],
+            page: {
+              selectedTierComplete: true,
+              nextGroupCursor: null,
+            },
+          },
+          error: null,
+        });
+      }
+      if (name === "read_platform_v2_presentation_identity") {
+        const ids = args.p_entry_ids as string[];
+        return Promise.resolve({
+          data: {
+            entries: ids.map((id) => ({
+              entryId: id,
+              headwordGroupId:
+                id === decoyEntryId ? "group-decoy" : "group-target",
+              meaningOrdinal: id === siblingEntryId ? 2 : 1,
+              contentNodeBindings: [
+                {
+                  contentNodeId: `node-${id}`,
+                  sourcePath: "raw.meanings[0].definition",
+                  kind: "definition",
+                  parentContentNodeId: null,
+                  sourceTextFingerprint: `fingerprint-${id}`,
+                },
+              ],
+            })),
+          },
+          error: null,
+        });
+      }
+      if (name === "get_platform_v2_card_states_for_entries") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      authenticatedRequest({
+        entryId: targetEntryId,
+        contentLanguageCode: "nl",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await response.json();
+    expect(payload.query).toBe("bank");
+    expect(payload.groups).toHaveLength(1);
+    expect(payload.groups[0]).toEqual(
+      expect.objectContaining({
+        headwordGroupId: "group-target",
+        entryCount: 2,
+        senseCount: 2,
+      }),
+    );
+    expect(payload.groups[0].entries.map((item: any) => item.entryId)).toEqual([
+      targetEntryId,
+      siblingEntryId,
+    ]);
+    expect(JSON.stringify(payload)).not.toContain(decoyEntryId);
+    expect(JSON.stringify(payload)).not.toContain("dict-2");
+    expect(rpc).not.toHaveBeenCalledWith(
+      "lookup_platform_v2_entries",
+      expect.anything(),
+    );
+  });
+
+  test("returns a stable error when the direct exact-group RPC fails", async () => {
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    const targetEntryId = "00000000-0000-4000-8000-000000000501";
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "private database detail" },
+    });
+
+    const response = await POST(
+      authenticatedRequest({
+        entryId: targetEntryId,
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "exact_group_lookup_failed",
+    });
+  });
+
+  test("does not expose an inaccessible exact training entry", async () => {
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    const entryId = "00000000-0000-4000-8000-000000000301";
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string, args: any) => {
+      if (name === "read_platform_v2_training_group") {
+        expect(args).toEqual({
+          p_user_id: "user-1",
+          p_entry_id: entryId,
+          p_group_entry_bound: 50,
+        });
+        return Promise.resolve({
+          data: { error: "entry_not_accessible" },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const response = await POST(
+      authenticatedRequest({
+        entryId,
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "entry_not_accessible",
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "lookup_platform_v2_entries",
+      expect.anything(),
+    );
+  });
+
+  test.each([
+    {
+      name: "ordinary authenticated lookup",
+      importRoute: () => import("@/app/api/platform/v2/lookup/route"),
+      request: authenticatedRequest,
+      authenticate: () =>
+        getUser.mockResolvedValueOnce({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      intent: "dictionary-lookup",
+    },
+    {
+      name: "catalog lookup",
+      importRoute: () =>
+        import("@/app/api/platform/v2/catalog/lookup/route"),
+      request: catalogRequest,
+      authenticate: () => undefined,
+      intent: "training-review",
+    },
+  ])(
+    "rejects entryId on $name",
+    async ({ importRoute, request, authenticate, intent }) => {
+      const { POST } = await importRoute();
+      authenticate();
+
+      const response = await POST(
+        request({
+          query: "bank",
+          entryId: "00000000-0000-4000-8000-000000000401",
+          cardTypeId: "word-to-definition",
+          intent,
+        }),
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error: "entry_id_not_allowed",
+      });
+      expect(rpc).not.toHaveBeenCalled();
+    },
+  );
+
   test("requires an explicit cardTypeId", async () => {
     const { POST } = await import("@/app/api/platform/v2/lookup/route");
     getUser.mockResolvedValueOnce({

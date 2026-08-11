@@ -124,7 +124,10 @@
     },
     "training": {
       "next": "Hierna trainen",
-      "cardChanged": "Volgende trainingskaart"
+      "cardChanged": "Volgende trainingskaart",
+      "loading": "Trainingskaart laden…",
+      "loadFailed": "Deze trainingskaart kon niet worden geladen.",
+      "retry": "Opnieuw proberen"
     },
     "wordDetails": {
       "open": "Woorddetails"

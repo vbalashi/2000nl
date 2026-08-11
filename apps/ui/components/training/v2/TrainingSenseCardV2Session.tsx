@@ -10,6 +10,7 @@ import {
   requestPlatformV2Translation,
   resolvePlatformV2Audio,
   type PlatformV2TrainingActionCapability,
+  type PlatformV2TrainingLookupResult,
 } from "@/lib/platform/platformV2TrainingClient";
 import type { TrainingMode, TrainingWord } from "@/lib/types";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
@@ -25,7 +26,7 @@ type Props = {
   fallback: React.ReactNode;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
-  onAvailabilityChange: (available: boolean) => void;
+  onAvailabilityChange: (state: TrainingV2SessionState) => void;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
   ) => void | Promise<void>;
@@ -35,6 +36,16 @@ type UndoKnownCapability = Extract<
   PlatformSenseCardCapabilityV2,
   { actionId: "undo-known" }
 >;
+
+export type TrainingV2SessionState =
+  | "loading"
+  | "ready"
+  | "lookup-http-error"
+  | "contract-mismatch"
+  | "entry-not-found"
+  | "model-invalid"
+  | "reverse-definition-missing"
+  | "listening-mode";
 
 const PENDING_KNOWN_UNDO_STORAGE_KEY = "2000nl.training.pendingKnownUndo.v2";
 const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
@@ -51,10 +62,11 @@ export function TrainingSenseCardV2Session({
   onAvailabilityChange,
   onProgressActionAccepted,
 }: Props) {
-  const [result, setResult] =
-    React.useState<Awaited<ReturnType<typeof fetchPlatformV2TrainingEntry>>>(
-      null,
-    );
+  const supportedMode =
+    mode === "word-to-definition" || mode === "definition-to-word";
+  const [lookup, setLookup] = React.useState<PlatformV2TrainingLookupResult | null>(
+    null,
+  );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [focusStageOnPresentation, setFocusStageOnPresentation] =
@@ -64,15 +76,17 @@ export function TrainingSenseCardV2Session({
 
   const load = React.useCallback(
     async (signal?: AbortSignal) => {
+      if (!supportedMode) return null;
+      setLookup(null);
+      setError(null);
       const next = await fetchPlatformV2TrainingEntry({
-        query: word.headword,
         entryId: word.id,
         cardTypeId: mode,
         contentLanguageCode,
         translationTargetLanguageCode,
         signal,
       });
-      const nextEntryId = next?.entry.entryId ?? null;
+      const nextEntryId = next.state === "ready" ? next.entry.entryId : null;
       const cardChanged = Boolean(
         nextEntryId &&
         presentedEntryIdRef.current &&
@@ -88,7 +102,7 @@ export function TrainingSenseCardV2Session({
         );
       }
       if (nextEntryId) presentedEntryIdRef.current = nextEntryId;
-      setResult(next);
+      setLookup(next);
       return next;
     },
     [
@@ -96,45 +110,52 @@ export function TrainingSenseCardV2Session({
       interfaceLanguage,
       mode,
       translationTargetLanguageCode,
-      word.headword,
       word.id,
+      supportedMode,
     ],
   );
 
   React.useEffect(() => {
     const controller = new AbortController();
-    setResult(null);
+    setLookup(null);
     setError(null);
+    if (!supportedMode) return () => controller.abort();
     void load(controller.signal).catch((cause) => {
       if (controller.signal.aborted) return;
+      setLookup({ state: "lookup-http-error", status: 0 });
       setError(cause instanceof Error ? cause.message : "lookup_failed");
     });
     return () => controller.abort();
-  }, [load]);
+  }, [load, supportedMode]);
+
+  const result = lookup?.state === "ready" ? lookup : null;
 
   const model = React.useMemo(
     () =>
       result
-        ? buildTrainingSenseCardModel({
-            group: result.group,
-            entry: result.entry,
-            interfaceLanguage,
-          })
+        ? safelyBuildTrainingSenseCardModel(result, interfaceLanguage)
         : null,
     [interfaceLanguage, result],
   );
-  const presentationAvailable = Boolean(
-    model &&
-    (mode !== "definition-to-word" ||
-      model.definitions.some((item) => item.kind === "definition")),
-  );
+  const sessionState: TrainingV2SessionState = !supportedMode
+    ? "listening-mode"
+    : !lookup
+      ? "loading"
+      : lookup.state !== "ready"
+        ? lookup.state
+        : !model
+          ? "model-invalid"
+          : mode === "definition-to-word" &&
+              !model.definitions.some((item) => item.kind === "definition")
+            ? "reverse-definition-missing"
+            : "ready";
 
   React.useEffect(() => {
-    onAvailabilityChange(presentationAvailable);
-  }, [onAvailabilityChange, presentationAvailable]);
+    onAvailabilityChange(sessionState);
+  }, [onAvailabilityChange, sessionState]);
 
   React.useEffect(
-    () => () => onAvailabilityChange(false),
+    () => () => onAvailabilityChange("loading"),
     [onAvailabilityChange],
   );
 
@@ -216,18 +237,50 @@ export function TrainingSenseCardV2Session({
     </span>
   );
 
-  if (!result || !model || !presentationAvailable) {
+  if (!supportedMode) {
     return (
-      <>
-        {cardAnnouncementRegion}
+      <div data-training-renderer="legacy" data-training-v2-state="listening-mode">
         {fallback}
-        <SessionError error={error} />
-      </>
+      </div>
+    );
+  }
+
+  if (sessionState === "loading") {
+    return (
+      <div
+        role="status"
+        data-testid="training-v2-loading"
+        data-training-renderer="v2"
+        data-training-v2-state="loading"
+        className="grid h-full place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-sm font-medium text-slate-600 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-300"
+      >
+        {platformV2Message(interfaceLanguage, "senseCard.training.loading")}
+      </div>
+    );
+  }
+
+  if (sessionState !== "ready" || !result || !model) {
+    const failureState = sessionState as Exclude<
+      TrainingV2SessionState,
+      "loading" | "ready" | "listening-mode"
+    >;
+    return (
+      <SessionV2Failure
+        state={failureState}
+        interfaceLanguage={interfaceLanguage}
+        detail={error}
+        onRetry={() => void load()}
+      />
     );
   }
 
   return (
-    <>
+    <div
+      className="contents"
+      data-testid="training-sense-card-v2"
+      data-training-renderer="v2"
+      data-training-v2-state="ready"
+    >
       {cardAnnouncementRegion}
       <TrainingSenseCardStage
         model={model}
@@ -244,7 +297,7 @@ export function TrainingSenseCardV2Session({
         onAction={(capability) => void handleAction(capability)}
       />
       <SessionError error={error} />
-    </>
+    </div>
   );
 }
 
@@ -344,7 +397,62 @@ function rememberPendingKnownUndo(capability: UndoKnownCapability | null) {
   }
 }
 
-function SessionError({ error }: { error: string | null }) {
+function safelyBuildTrainingSenseCardModel(
+  result: Extract<PlatformV2TrainingLookupResult, { state: "ready" }>,
+  interfaceLanguage: OnboardingLanguage,
+) {
+  try {
+    const model = buildTrainingSenseCardModel({
+      group: result.group,
+      entry: result.entry,
+      interfaceLanguage,
+    });
+    return model.entryId && model.headword.trim() ? model : null;
+  } catch {
+    return null;
+  }
+}
+
+function SessionV2Failure({
+  state,
+  interfaceLanguage,
+  detail,
+  onRetry,
+}: {
+  state: Exclude<TrainingV2SessionState, "loading" | "ready" | "listening-mode">;
+  interfaceLanguage: OnboardingLanguage;
+  detail: string | null;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      data-training-renderer="v2"
+      data-training-v2-state={state}
+      className="grid h-full place-items-center rounded-3xl border border-rose-300 bg-rose-50 px-6 text-center text-slate-900 dark:border-rose-900/60 dark:bg-[#261b22] dark:text-rose-50"
+    >
+      <div className="flex max-w-sm flex-col items-center gap-4">
+        <p className="text-sm font-medium">
+          {platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
+        </p>
+        {detail ? <span className="sr-only">{detail}</span> : null}
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-800 dark:border-rose-700 dark:bg-[#171b22] dark:text-rose-100"
+        >
+          {platformV2Message(interfaceLanguage, "senseCard.training.retry")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SessionError({
+  error,
+}: {
+  error: string | null;
+}) {
   return error ? (
     <div
       role="status"

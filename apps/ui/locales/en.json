@@ -124,7 +124,10 @@
     },
     "training": {
       "next": "Train next",
-      "cardChanged": "Next training card"
+      "cardChanged": "Next training card",
+      "loading": "Loading training card…",
+      "loadFailed": "This training card could not be loaded.",
+      "retry": "Try again"
     },
     "wordDetails": {
       "open": "Word details"

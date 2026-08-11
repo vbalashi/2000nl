@@ -344,3 +344,6 @@
 
 -- Service-principal adapter for Platform V2 scheduler actions
 \i db/migrations/114_platform_v2_service_principal_actions.sql
+
+-- Deterministic Platform V2 training group lookup by scheduled entry
+\i db/migrations/115_platform_v2_training_group_by_entry.sql

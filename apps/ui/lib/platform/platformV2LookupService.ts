@@ -78,30 +78,36 @@ export async function performPlatformV2Lookup(
           `${entry.name};dur=${Math.max(0, entry.durationMs).toFixed(1)}`,
       )
       .join(", ");
-  const query = request.query.trim();
+  const query = request.query?.trim() ?? "";
   const intent = validIntent(request.intent);
 
-  if (!query) {
+  if (!request.entryId && !query) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
   if (!request.cardTypeId.trim()) {
     return { payload: { error: "missing_card_type_id" }, status: 400 };
   }
-  const lookupResult = await measure<RpcResult>(
-    timings,
-    "lookup.db",
-    async () =>
-      await context.service.supabase.rpc("lookup_platform_v2_entries", {
-        p_user_id:
-          context.kind === "authenticated" ? context.auth.user.id : null,
-        p_catalog: context.kind === "catalog",
-        p_query: query,
-        p_language_code: request.contentLanguageCode ?? null,
-        p_cursor: request.cursor ?? null,
-        p_group_limit: LOOKUP_GROUP_PAGE_SIZE,
-        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
-      }),
-  );
+  const lookupResolution = request.entryId
+    ? await resolveExactTrainingGroup(context, request, timings)
+      : {
+        ok: true as const,
+        query,
+        result: await measure<RpcResult>(timings, "lookup.db", async () =>
+          await context.service.supabase.rpc("lookup_platform_v2_entries", {
+            p_user_id:
+              context.kind === "authenticated" ? context.auth.user.id : null,
+            p_catalog: context.kind === "catalog",
+            p_query: query,
+            p_language_code: request.contentLanguageCode ?? null,
+            p_cursor: request.cursor ?? null,
+            p_group_limit: LOOKUP_GROUP_PAGE_SIZE,
+            p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+          }),
+        ),
+      };
+  if (!lookupResolution.ok) return lookupResolution.result;
+  const lookupResult = lookupResolution.result;
+  const responseQuery = lookupResolution.query;
 
   if (lookupResult.error) {
     return {
@@ -110,7 +116,6 @@ export async function performPlatformV2Lookup(
           context.kind === "authenticated"
             ? "lookup_failed"
             : "catalog_lookup_failed",
-        detail: errorMessage(lookupResult.error),
       },
       status: 500,
       serverTiming: serverTiming(),
@@ -166,7 +171,7 @@ export async function performPlatformV2Lookup(
   if (entries.length === 0) {
     return {
       payload: projectPlatformLookupV2({
-        query,
+        query: responseQuery,
         request: responseRequest,
         entries: [],
         page,
@@ -213,7 +218,6 @@ export async function performPlatformV2Lookup(
     return {
       payload: {
         error: "presentation_identity_failed",
-        detail: errorMessage(identityResult.error),
       },
       status: 500,
       serverTiming: serverTiming(),
@@ -223,7 +227,6 @@ export async function performPlatformV2Lookup(
     return {
       payload: {
         error: "user_state_failed",
-        detail: errorMessage(stateResult.error),
       },
       status: 500,
       serverTiming: serverTiming(),
@@ -406,7 +409,7 @@ export async function performPlatformV2Lookup(
 
     return {
       payload: projectPlatformLookupV2({
-        query,
+        query: responseQuery,
         request: responseRequest,
         entries: projectionEntries,
         page,
@@ -428,12 +431,93 @@ export async function performPlatformV2Lookup(
     return {
       payload: {
         error: "presentation_projection_failed",
-        detail: error instanceof Error ? error.message : String(error),
       },
       status: 500,
       serverTiming: serverTiming(),
     };
   }
+}
+
+async function resolveExactTrainingGroup(
+  context: PlatformV2LookupContext,
+  request: PlatformLookupV2Request,
+  timings: Array<{ name: string; durationMs: number }>,
+): Promise<
+  | { ok: true; result: RpcResult; query: string }
+  | { ok: false; result: PlatformV2LookupOperationResult }
+> {
+  if (
+    context.kind !== "authenticated" ||
+    request.intent !== "training-review" ||
+    !request.entryId
+  ) {
+    return {
+      ok: false,
+      result: { payload: { error: "entry_id_not_allowed" }, status: 400 },
+    };
+  }
+
+  const exactGroupResult = await measure<RpcResult>(
+    timings,
+    "lookup.exact-group",
+    async () =>
+      await context.service.supabase.rpc("read_platform_v2_training_group", {
+        p_user_id: context.auth.user.id,
+        p_entry_id: request.entryId,
+        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+      }),
+  );
+  if (exactGroupResult.error) {
+    return {
+      ok: false,
+      result: {
+        payload: { error: "exact_group_lookup_failed" },
+        status: 500,
+      },
+    };
+  }
+  const payload = asRecord(exactGroupResult.data);
+  if (payload.error === "entry_not_accessible") {
+    return {
+      ok: false,
+      result: { payload: { error: "entry_not_accessible" }, status: 404 },
+    };
+  }
+  if (payload.error === "presentation_identity_incomplete") {
+    return {
+      ok: false,
+      result: {
+        payload: { error: "presentation_identity_incomplete" },
+        status: 409,
+      },
+    };
+  }
+  if (payload.error === "group-too-large") {
+    return {
+      ok: false,
+      result: { payload, status: 422 },
+    };
+  }
+  if (payload.error || lookupEntries(exactGroupResult.data).length === 0) {
+    return {
+      ok: false,
+      result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
+    };
+  }
+  const exactEntry = lookupEntries(exactGroupResult.data).find(
+    (entry) => entry.id === request.entryId,
+  );
+  if (!exactEntry || !exactEntry.headword.trim()) {
+    return {
+      ok: false,
+      result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
+    };
+  }
+  return {
+    ok: true,
+    query: exactEntry.headword,
+    result: exactGroupResult,
+  };
 }
 
 function validIntent(intent: LookupIntent | undefined): LookupIntent {
