@@ -18,7 +18,6 @@ const requestTranslation = vi.fn();
 const peekPrefetched = vi.fn();
 const consumePrefetched = vi.fn();
 const preloadAudio = vi.fn();
-const preloadTranslation = vi.fn();
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
@@ -32,9 +31,17 @@ vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
     performAction(...args),
   resolvePlatformV2Audio: (...args: unknown[]) => resolveAudio(...args),
   preloadPlatformV2Audio: (...args: unknown[]) => preloadAudio(...args),
-  preloadPlatformV2Translation: (...args: unknown[]) => preloadTranslation(...args),
   requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
 }));
+
+function TestTrainingSenseCardV2Session(
+  props: Omit<
+    React.ComponentProps<typeof TrainingSenseCardV2Session>,
+    "cacheOwnerId"
+  >,
+) {
+  return <TrainingSenseCardV2Session cacheOwnerId="test-user" {...props} />;
+}
 
 const word: TrainingWord = {
   id: singleSenseEntry.entryId,
@@ -54,12 +61,10 @@ describe("TrainingSenseCardV2Session", () => {
     peekPrefetched.mockReset();
     consumePrefetched.mockReset();
     preloadAudio.mockReset();
-    preloadTranslation.mockReset();
     peekPrefetched.mockReturnValue(null);
     consumePrefetched.mockReturnValue(null);
     requestTranslation.mockResolvedValue(undefined);
     preloadAudio.mockResolvedValue(undefined);
-    preloadTranslation.mockResolvedValue(undefined);
     resolveAudio.mockResolvedValue("/audio/hand.mp3");
     fetchSingleSense.mockResolvedValue({
       state: "ready",
@@ -80,7 +85,7 @@ describe("TrainingSenseCardV2Session", () => {
     const onProgressActionAccepted = vi.fn();
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -123,7 +128,7 @@ describe("TrainingSenseCardV2Session", () => {
     });
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -150,7 +155,7 @@ describe("TrainingSenseCardV2Session", () => {
     async (state) => {
       fetchSingleSense.mockResolvedValue({ state });
       render(
-        <TrainingSenseCardV2Session
+        <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
           contentLanguageCode="nl"
@@ -180,7 +185,7 @@ describe("TrainingSenseCardV2Session", () => {
         entry: singleSenseEntry,
       });
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -202,7 +207,7 @@ describe("TrainingSenseCardV2Session", () => {
       .mockResolvedValueOnce({ state: "entry-not-found" })
       .mockRejectedValueOnce(new Error("Failed to fetch"));
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -244,7 +249,7 @@ describe("TrainingSenseCardV2Session", () => {
     });
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -289,7 +294,7 @@ describe("TrainingSenseCardV2Session", () => {
       .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry: singleSenseEntry })
       .mockResolvedValueOnce({ state: "ready", group: nextGroup, entry: nextEntry });
     const view = render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -305,7 +310,7 @@ describe("TrainingSenseCardV2Session", () => {
     const liveRegion = view.container.querySelector('[aria-live="polite"]');
     expect(liveRegion).toBeInTheDocument();
     view.rerender(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -390,7 +395,7 @@ describe("TrainingSenseCardV2Session", () => {
 
     const firstRender = render(
       <>
-        <TrainingSenseCardV2Session
+        <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
           contentLanguageCode="nl"
@@ -412,7 +417,7 @@ describe("TrainingSenseCardV2Session", () => {
     firstRender.unmount();
     render(
       <>
-        <TrainingSenseCardV2Session
+        <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
           contentLanguageCode="nl"
@@ -465,7 +470,7 @@ describe("TrainingSenseCardV2Session", () => {
     });
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -491,7 +496,7 @@ describe("TrainingSenseCardV2Session", () => {
     const onPlayResolvedAudio = vi.fn();
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -507,6 +512,7 @@ describe("TrainingSenseCardV2Session", () => {
     await screen.findByRole("heading", { name: "hand" });
     await waitFor(() =>
       expect(preloadAudio).toHaveBeenCalledWith({
+        cacheOwnerId: "test-user",
         capability: singleSenseGroup.header.audio,
         text: "hand",
       }),
@@ -515,6 +521,7 @@ describe("TrainingSenseCardV2Session", () => {
 
     await waitFor(() =>
       expect(resolveAudio).toHaveBeenCalledWith({
+        cacheOwnerId: "test-user",
         capability: singleSenseGroup.header.audio,
         text: "hand",
       }),
@@ -529,7 +536,7 @@ describe("TrainingSenseCardV2Session", () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -551,13 +558,47 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
   });
 
+  test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {
+    performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      })
+      .mockResolvedValueOnce({ state: "lookup-http-error", status: 503 });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The connection was interrupted. Please try again.",
+    );
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByTestId("training-v2-failure")).not.toBeInTheDocument();
+  });
+
   test("submits only one action for two immediate grade clicks", async () => {
     let resolveAction!: (value: unknown) => void;
     performAction.mockImplementationOnce(
       () => new Promise((resolve) => { resolveAction = resolve; }),
     );
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -589,7 +630,7 @@ describe("TrainingSenseCardV2Session", () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
     try {
       render(
-        <TrainingSenseCardV2Session
+        <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
           contentLanguageCode="nl"
@@ -637,6 +678,10 @@ describe("TrainingSenseCardV2Session", () => {
     const untranslatedEntry = {
       ...singleSenseEntry,
       translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map((node) => ({
+        ...node,
+        translations: [],
+      })),
       capabilities: [...singleSenseEntry.capabilities, requestCapability],
     };
     fetchSingleSense
@@ -650,7 +695,7 @@ describe("TrainingSenseCardV2Session", () => {
       );
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -662,8 +707,13 @@ describe("TrainingSenseCardV2Session", () => {
       />,
     );
     await screen.findByRole("heading", { name: "hand" });
+    expect(requestTranslation).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
-    await waitFor(() => expect(preloadTranslation).toHaveBeenCalled());
+    expect(requestTranslation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    await waitFor(() =>
+      expect(requestTranslation).toHaveBeenCalledWith(requestCapability),
+    );
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
     expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
@@ -675,6 +725,70 @@ describe("TrainingSenseCardV2Session", () => {
         entry: singleSenseEntry,
       });
     });
+  });
+
+  test("ignores a stale lookup that resolves after the card context changes", async () => {
+    let resolveOld!: (value: unknown) => void;
+    fetchSingleSense.mockImplementation(
+      (input: { translationTargetLanguageCode: string }) =>
+        input.translationTargetLanguageCode === "en"
+          ? new Promise((resolve) => {
+              resolveOld = resolve;
+            })
+          : Promise.resolve({
+              state: "ready",
+              group: {
+                ...singleSenseGroup,
+                header: {
+                  ...singleSenseGroup.header,
+                  text: "new-hand",
+                  displayPronunciation: "new-hand",
+                },
+              },
+              entry: singleSenseEntry,
+            }),
+    );
+
+    const view = render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(fetchSingleSense).toHaveBeenCalledWith(
+        expect.objectContaining({ translationTargetLanguageCode: "en" }),
+      ),
+    );
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="ru"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "new-hand" })).toBeInTheDocument();
+    await act(async () => {
+      resolveOld({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    });
+    expect(screen.getByRole("heading", { name: "new-hand" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "hand" })).not.toBeInTheDocument();
   });
 
   test("shows an explicit error when reverse content has no definition", async () => {
@@ -691,7 +805,7 @@ describe("TrainingSenseCardV2Session", () => {
     const onAvailabilityChange = vi.fn();
 
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={{ ...word, mode: "definition-to-word" }}
         mode="definition-to-word"
         contentLanguageCode="nl"
@@ -728,7 +842,7 @@ describe("TrainingSenseCardV2Session", () => {
       entry: singleSenseEntry,
     });
     render(
-      <TrainingSenseCardV2Session
+      <TestTrainingSenseCardV2Session
         word={word}
         mode="word-to-definition"
         contentLanguageCode="nl"
@@ -752,7 +866,7 @@ describe("TrainingSenseCardV2Session", () => {
     async (mode) => {
       const onAvailabilityChange = vi.fn();
       render(
-        <TrainingSenseCardV2Session
+        <TestTrainingSenseCardV2Session
           word={{ ...word, mode }}
           mode={mode}
           contentLanguageCode="nl"

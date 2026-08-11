@@ -10,7 +10,6 @@ import {
   peekPrefetchedPlatformV2TrainingEntry,
   performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
-  preloadPlatformV2Translation,
   requestPlatformV2Translation,
   resolvePlatformV2Audio,
   type PlatformV2TrainingActionCapability,
@@ -22,6 +21,7 @@ import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 
 type Props = {
+  cacheOwnerId: string;
   word: TrainingWord;
   mode: TrainingMode;
   contentLanguageCode: string;
@@ -56,6 +56,7 @@ const PENDING_KNOWN_UNDO_STORAGE_KEY = "2000nl.training.pendingKnownUndo.v2";
 const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
 
 export function TrainingSenseCardV2Session({
+  cacheOwnerId,
   word,
   mode,
   contentLanguageCode,
@@ -76,8 +77,9 @@ export function TrainingSenseCardV2Session({
       cardTypeId: mode,
       contentLanguageCode,
       translationTargetLanguageCode,
+      cacheOwnerId,
     }),
-    [contentLanguageCode, mode, translationTargetLanguageCode, word.id],
+    [cacheOwnerId, contentLanguageCode, mode, translationTargetLanguageCode, word.id],
   );
   const [lookup, setLookup] = React.useState<PlatformV2TrainingLookupResult | null>(
     () =>
@@ -93,7 +95,7 @@ export function TrainingSenseCardV2Session({
   const [cardAnnouncement, setCardAnnouncement] = React.useState("");
   const presentedEntryIdRef = React.useRef<string | null>(null);
   const interactionBusyRef = React.useRef(false);
-  const warmedTranslationRef = React.useRef<string | null>(null);
+  const loadGenerationRef = React.useRef(0);
 
   const load = React.useCallback(
     async (
@@ -101,6 +103,7 @@ export function TrainingSenseCardV2Session({
       options: { preserveCard?: boolean; usePrefetch?: boolean } = {},
     ) => {
       if (!supportedMode) return null;
+      const generation = (loadGenerationRef.current += 1);
       setError(null);
       if (!options.preserveCard) {
         const prefetched = peekPrefetchedPlatformV2TrainingEntry(lookupInput);
@@ -114,6 +117,12 @@ export function TrainingSenseCardV2Session({
         prefetchedRequest ??
         fetchPlatformV2TrainingEntry({ ...lookupInput, signal })
       );
+      if (signal?.aborted || generation !== loadGenerationRef.current) {
+        return null;
+      }
+      if (options.preserveCard && next.state !== "ready") {
+        return next;
+      }
       const nextEntryId = next.state === "ready" ? next.entry.entryId : null;
       const cardChanged = Boolean(
         nextEntryId &&
@@ -149,18 +158,22 @@ export function TrainingSenseCardV2Session({
       setLookup({ state: "lookup-http-error", status: 0 });
       setError(cause instanceof Error ? cause.message : "lookup_failed");
     });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      loadGenerationRef.current += 1;
+    };
   }, [load, supportedMode]);
 
   React.useEffect(() => {
     if (lookup?.state !== "ready" || !lookup.group.header.audio) return;
     void preloadPlatformV2Audio({
+      cacheOwnerId,
       capability: lookup.group.header.audio,
       text: lookup.group.header.text,
     }).catch(() => {
       // Preloading is best-effort; an explicit play still reports failures.
     });
-  }, [lookup]);
+  }, [cacheOwnerId, lookup]);
 
   React.useEffect(() => {
     if (!error) return;
@@ -178,18 +191,6 @@ export function TrainingSenseCardV2Session({
     [interfaceLanguage, result],
   );
 
-  React.useEffect(() => {
-    const capability = model?.requestTranslationCapability;
-    if (!capability || model?.entryTranslation) return;
-    const key = `${capability.target.entryId}:${capability.target.contentRevision}:${capability.targetLanguageCode}`;
-    if (warmedTranslationRef.current === key) return;
-    warmedTranslationRef.current = key;
-    void preloadPlatformV2Translation(capability)
-      .then(() => load(undefined, { preserveCard: true, usePrefetch: false }))
-      .catch(() => {
-        // A deliberate click can retry and owns any visible failure.
-      });
-  }, [load, model]);
   const sessionState: TrainingV2SessionState = !supportedMode
     ? "listening-mode"
     : !lookup
@@ -220,7 +221,14 @@ export function TrainingSenseCardV2Session({
     try {
       if (capability.actionId === "request-translation") {
         await requestPlatformV2Translation(capability);
-        await load(undefined, { preserveCard: true, usePrefetch: false });
+        const refreshed = await load(undefined, {
+          preserveCard: true,
+          usePrefetch: false,
+        });
+        if (refreshed?.state !== "ready") {
+          setNoticeTone("error");
+          setError(temporaryFailureMessage(interfaceLanguage));
+        }
         return;
       }
       if (capability.actionId === "report-content") {
@@ -267,22 +275,22 @@ export function TrainingSenseCardV2Session({
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
       if (code === "state_conflict") {
-        await load(undefined, { preserveCard: true, usePrefetch: false }).catch(
-          () => undefined,
-        );
+        const refreshed = await load(undefined, {
+          preserveCard: true,
+          usePrefetch: false,
+        }).catch(() => null);
         setError(
-          platformV2Message(
-            interfaceLanguage,
-            "senseCard.training.stateRefreshed",
-          ),
+          refreshed?.state === "ready"
+            ? platformV2Message(
+                interfaceLanguage,
+                "senseCard.training.stateRefreshed",
+              )
+            : temporaryFailureMessage(interfaceLanguage),
         );
       } else {
         setError(
-          code === "Failed to fetch"
-            ? platformV2Message(
-                interfaceLanguage,
-                "senseCard.training.temporaryFailure",
-              )
+          code === "Failed to fetch" || code === "platform_request_timeout"
+            ? temporaryFailureMessage(interfaceLanguage)
             : code,
         );
       }
@@ -301,6 +309,7 @@ export function TrainingSenseCardV2Session({
     setError(null);
     try {
       const url = await resolvePlatformV2Audio({
+        cacheOwnerId,
         capability,
         text: result.group.header.text,
       });
@@ -597,4 +606,11 @@ function SessionError({
       </div>
     </div>
   ) : null;
+}
+
+function temporaryFailureMessage(interfaceLanguage: OnboardingLanguage) {
+  return platformV2Message(
+    interfaceLanguage,
+    "senseCard.training.temporaryFailure",
+  );
 }

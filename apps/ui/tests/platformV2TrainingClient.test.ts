@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   buildPlatformV2TrainingActionRequest,
+  clearPlatformV2TrainingClientCaches,
   consumePrefetchedPlatformV2TrainingEntry,
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
@@ -30,7 +31,9 @@ vi.mock("@/lib/supabaseClient", () => ({
 }));
 
 afterEach(() => {
+  clearPlatformV2TrainingClientCaches();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("buildPlatformV2TrainingActionRequest", () => {
@@ -100,6 +103,7 @@ describe("Platform V2 media and translation clients", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const url = await resolvePlatformV2Audio({
+      cacheOwnerId: "test-user",
       capability: singleSenseGroup.header.audio!,
       text: singleSenseGroup.header.text,
     });
@@ -136,11 +140,13 @@ describe("Platform V2 media and translation clients", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await preloadPlatformV2Audio({
+      cacheOwnerId: "test-user",
       capability: singleSenseGroup.header.audio!,
       text: singleSenseGroup.header.text,
     });
     await expect(
       resolvePlatformV2Audio({
+        cacheOwnerId: "test-user",
         capability: singleSenseGroup.header.audio!,
         text: singleSenseGroup.header.text,
       }),
@@ -214,6 +220,7 @@ describe("fetchPlatformV2TrainingEntry", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
     const input = {
+      cacheOwnerId: "test-user",
       entryId: singleSenseEntry.entryId,
       cardTypeId: "word-to-definition" as const,
       contentLanguageCode: "nl",
@@ -231,6 +238,99 @@ describe("fetchPlatformV2TrainingEntry", () => {
       entry: { entryId: singleSenseEntry.entryId },
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("partitions prefetched lookup state by browser cache owner", async () => {
+    const payload = {
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [singleSenseGroup],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    };
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const input = {
+      cacheOwnerId: "user-a",
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    };
+
+    await prefetchPlatformV2TrainingEntry(input);
+    await prefetchPlatformV2TrainingEntry({
+      ...input,
+      cacheOwnerId: "user-b",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("aborts a stalled lookup instead of leaving the card loading forever", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+        }),
+      ),
+    );
+    const lookup = prefetchPlatformV2TrainingEntry({
+      cacheOwnerId: "test-user",
+      entryId: "stalled-entry",
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+    const rejection = expect(lookup).rejects.toThrow("platform_request_timeout");
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(12_000);
+
+    await rejection;
+  });
+
+  test("forwards caller cancellation to an in-flight prefetch", async () => {
+    const fetchMock = vi.fn((_url, init) =>
+      new Promise((_resolve, reject) => {
+        const rejectAbort = () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        };
+        if (init?.signal?.aborted) rejectAbort();
+        else init?.signal?.addEventListener("abort", rejectAbort);
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    const lookup = prefetchPlatformV2TrainingEntry({
+      cacheOwnerId: "test-user",
+      entryId: "cancelled-entry",
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      signal: controller.signal,
+    });
+    const rejection = expect(lookup).rejects.toMatchObject({
+      name: "AbortError",
+    });
+
+    controller.abort();
+
+    await rejection;
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toHaveProperty(
+      "aborted",
+      true,
+    );
   });
 
   test("sends the scheduler entry id and preserves an HTTP lookup failure", async () => {

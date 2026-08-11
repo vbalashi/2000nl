@@ -63,6 +63,7 @@ import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import {
+  clearPlatformV2TrainingClientCaches,
   prefetchPlatformV2TrainingEntry,
   preloadPlatformV2Audio,
   type PlatformV2TrainingActionCapability,
@@ -116,6 +117,7 @@ type AcceptedCardTransition = {
   isNextCardOverride: boolean;
   nextQueueTurn: QueueTurn;
   prefetched: TrainingWord | null;
+  prefetchedReady: Promise<boolean> | null;
 };
 
 type LoadNextWordRequest = {
@@ -549,6 +551,8 @@ export function TrainingScreen({
 
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
+  const statsRequestGenerationRef = useRef(0);
+  const historyRequestGenerationRef = useRef(0);
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
   // Ref to prevent concurrent loadNextWord calls
   const loadingInProgress = useRef(false);
@@ -568,6 +572,7 @@ export function TrainingScreen({
     forCardKey: string;
     queueTurn: QueueTurn;
     word: TrainingWord | null;
+    v2Ready: Promise<boolean> | null;
   } | null>(null);
 
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
@@ -581,33 +586,52 @@ export function TrainingScreen({
   const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
   const warmTrainingV2Word = useCallback(
-    (word: TrainingWord) => {
+    async (word: TrainingWord, signal?: AbortSignal) => {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) return;
-      void prefetchPlatformV2TrainingEntry({
-        entryId: word.id,
-        cardTypeId: mode,
-        contentLanguageCode: currentTrainingLanguage,
-        translationTargetLanguageCode:
-          translationLang === "off" ? null : translationLang,
-      })
-        .then((lookup) => {
-          if (lookup.state !== "ready" || !lookup.group.header.audio) return;
-          return preloadPlatformV2Audio({
+      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
+        return true;
+      }
+      try {
+        const lookup = await prefetchPlatformV2TrainingEntry({
+          cacheOwnerId: user.id,
+          entryId: word.id,
+          cardTypeId: mode,
+          contentLanguageCode: currentTrainingLanguage,
+          translationTargetLanguageCode:
+            translationLang === "off" ? null : translationLang,
+          signal,
+        });
+        if (signal?.aborted) return false;
+        if (lookup.state !== "ready") return false;
+        if (lookup.group.header.audio) {
+          void preloadPlatformV2Audio({
+            cacheOwnerId: user.id,
             capability: lookup.group.header.audio,
             text: lookup.group.header.text,
+            signal,
+          }).catch(() => {
+            // The ready DTO is still useful if optional audio warming fails.
           });
-        })
-        .catch(() => {
-          // Warming is best-effort; the mounted session owns visible errors.
-        });
+        }
+        return true;
+      } catch {
+        return false;
+      }
     }, [
       currentTrainingLanguage,
       enabledModes,
       trainingShellV2Enabled,
       translationLang,
+      user.id,
     ],
   );
+
+  useEffect(() => {
+    const cacheOwnerId = user?.id;
+    return () => {
+      if (cacheOwnerId) clearPlatformV2TrainingClientCaches(cacheOwnerId);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
@@ -816,6 +840,7 @@ export function TrainingScreen({
       if (!user?.id) {
         return;
       }
+      const generation = (statsRequestGenerationRef.current += 1);
       const effectiveListId = scope?.listId ?? wordListId;
       const effectiveListType = scope?.listType ?? wordListType;
       const fresh = await fetchStats(
@@ -827,6 +852,7 @@ export function TrainingScreen({
         },
         logContext,
       );
+      if (generation !== statsRequestGenerationRef.current) return;
 
       // On initial load, capture the fixed Y value for HERHALING
       // This should not change during the session
@@ -848,7 +874,9 @@ export function TrainingScreen({
     if (!user?.id) {
       return;
     }
+    const generation = (historyRequestGenerationRef.current += 1);
     const history = await fetchRecentHistory(user.id);
+    if (generation !== historyRequestGenerationRef.current) return;
     setRecentEntries(history);
   }, [user?.id]);
 
@@ -915,15 +943,26 @@ export function TrainingScreen({
                 mode,
               });
             }
-            warmTrainingV2Word({ ...overrideWord, mode });
-            presentWord({
+            const preparedOverrideWord = {
               ...overrideWord,
               ...(typeof firstEncounter === "boolean"
                 ? { isFirstEncounter: firstEncounter }
                 : {}),
               mode,
               debugStats: { source: "next-card-override", mode },
-            });
+            };
+            const overrideReady = await warmTrainingV2Word(
+              preparedOverrideWord,
+            );
+            if (!overrideReady) {
+              nextCardOverrideActiveKeyRef.current = null;
+              setNextCardOverrideNotice(
+                "Kon dit woord niet laden; probeer het opnieuw.",
+              );
+              setTrainingLoadError("platform_v2_lookup_failed");
+              return "error";
+            }
+            presentWord(preparedOverrideWord);
             setNextCardOverrideNotice(
               `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
             );
@@ -947,7 +986,7 @@ export function TrainingScreen({
           effectiveCardFilter,
           effectiveQueueTurn,
           excludeCardKeys,
-          restrictedModes ?? enabledModes,
+          restrictedModes,
           isTrainingFocusFilterActive(effectiveFocusFilter)
             ? effectiveFocusFilter
             : null,
@@ -963,7 +1002,11 @@ export function TrainingScreen({
               mode: wordMode,
             });
           }
-          warmTrainingV2Word(nextWord);
+          const nextWordReady = await warmTrainingV2Word(nextWord);
+          if (!nextWordReady) {
+            setTrainingLoadError("platform_v2_lookup_failed");
+            return "error";
+          }
           presentWord(nextWord);
         } else {
           presentWord(null);
@@ -1022,9 +1065,11 @@ export function TrainingScreen({
       forCardKey,
       queueTurn: predictedQueueTurn,
       word: null,
+      v2Ready: null,
     };
 
     let cancelled = false;
+    const controller = new AbortController();
 
     const run = async () => {
       try {
@@ -1039,21 +1084,27 @@ export function TrainingScreen({
           cardFilter,
           predictedQueueTurn,
           [...reviewedInSessionRef.current, forCardKey],
-          resolveRestrictedListModes(activeList) ?? enabledModes,
+          resolveRestrictedListModes(activeList),
           trainingFocusFilterActive ? trainingFocusFilter : null,
         );
 
         if (cancelled) return;
         if (nextWordPrefetchTokenRef.current !== token) return;
 
+        const nextMode = next?.mode ?? enabledModes[0] ?? "word-to-definition";
+        const v2Ready =
+          next &&
+          trainingShellV2Enabled &&
+          isPlatformV2TrainingMode(nextMode)
+            ? warmTrainingV2Word(next, controller.signal)
+            : null;
         nextWordPrefetchRef.current = {
           forWordId,
           forCardKey,
           queueTurn: predictedQueueTurn,
           word: next,
+          v2Ready,
         };
-
-        if (next) warmTrainingV2Word(next);
 
         if (audioModeEnabled && next) {
           preloadAudioForWord(next);
@@ -1072,6 +1123,7 @@ export function TrainingScreen({
         nextWordPrefetchTokenRef.current += 1;
       }
       if (nextWordPrefetchRef.current?.forWordId === forWordId) {
+        controller.abort();
         nextWordPrefetchRef.current = null;
       }
     };
@@ -1090,6 +1142,7 @@ export function TrainingScreen({
     reviewCounter,
     trainingFocusFilter,
     trainingFocusFilterActive,
+    trainingShellV2Enabled,
     user?.id,
     wordListId,
     wordListType,
@@ -1112,6 +1165,32 @@ export function TrainingScreen({
 
   // ... (keep useEffect for initial load)
 
+  const presentPrefetchedCandidate = useCallback(
+    (word: TrainingWord) => {
+      setLoadingWord(false);
+      setRevealed(false);
+      setHintRevealed(false);
+      presentWord(word);
+      const nextMode = word.mode ?? enabledModes[0] ?? "word-to-definition";
+      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(nextMode)) {
+        void recordWordView({
+          userId: user.id,
+          wordId: word.id,
+          mode: nextMode,
+        });
+      }
+      if (audioModeEnabled) preloadAudioForWord(word);
+    },
+    [
+      audioModeEnabled,
+      enabledModes,
+      preloadAudioForWord,
+      presentWord,
+      trainingShellV2Enabled,
+      user.id,
+    ],
+  );
+
   const beginAcceptedCardTransition =
     useCallback((): AcceptedCardTransition | null => {
       if (!user?.id || !currentWord) return null;
@@ -1127,6 +1206,7 @@ export function TrainingScreen({
           nextCardOverrideActiveKeyRef.current === currentCardKey,
         nextQueueTurn: advanceQueueTurn(),
         prefetched: null,
+        prefetchedReady: null,
       };
 
       reviewedInSessionRef.current.add(currentCardKey);
@@ -1138,31 +1218,16 @@ export function TrainingScreen({
       ) {
         nextWordPrefetchRef.current = null;
         transition.prefetched = candidate.word;
-        setLoadingWord(false);
-        setRevealed(false);
-        setHintRevealed(false);
-        presentWord(candidate.word);
-        const nextMode =
-          candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
-        if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(nextMode)) {
-          void recordWordView({
-            userId: user.id,
-            wordId: candidate.word.id,
-            mode: nextMode,
-          });
-        }
-        if (audioModeEnabled) preloadAudioForWord(candidate.word);
+        transition.prefetchedReady = candidate.v2Ready;
+        if (!candidate.v2Ready) presentPrefetchedCandidate(candidate.word);
       }
 
       return transition;
     }, [
       advanceQueueTurn,
-      audioModeEnabled,
       currentWord,
       enabledModes,
-      presentWord,
-      preloadAudioForWord,
-      trainingShellV2Enabled,
+      presentPrefetchedCandidate,
       user?.id,
     ]);
 
@@ -1182,6 +1247,14 @@ export function TrainingScreen({
         nextCardOverrideActiveKeyRef.current = null;
         setNextCardOverrideNotice(null);
       }
+      if (transition.prefetched && transition.prefetchedReady) {
+        const ready = await transition.prefetchedReady.catch(() => false);
+        if (ready) {
+          presentPrefetchedCandidate(transition.prefetched);
+        } else {
+          transition.prefetched = null;
+        }
+      }
       if (!transition.prefetched) {
         await loadNextWord({
           queueTurn: transition.nextQueueTurn,
@@ -1193,7 +1266,12 @@ export function TrainingScreen({
       }
       void refreshBackground;
     },
-    [loadNextWord, loadRecentHistory, loadStats],
+    [
+      loadNextWord,
+      loadRecentHistory,
+      loadStats,
+      presentPrefetchedCandidate,
+    ],
   );
 
   const handleAction = useCallback(
@@ -2481,7 +2559,8 @@ export function TrainingScreen({
                           )}
                           {trainingSessionV2Enabled && currentWord ? (
                             <TrainingSenseCardV2Session
-                              key={`${currentWord.id}:${currentMode}`}
+                              key={`${user.id}:${currentWord.id}:${currentMode}:${currentTrainingLanguage}:${translationLang}`}
+                              cacheOwnerId={user.id}
                               word={currentWord}
                               mode={currentMode}
                               contentLanguageCode={currentTrainingLanguage}

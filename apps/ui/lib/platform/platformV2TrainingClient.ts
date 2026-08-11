@@ -1,4 +1,9 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
+import {
+  forwardAbortSignal,
+  platformFetchWithTimeout,
+} from "./platformFetchWithTimeout";
+import { clearPlatformV2TrainingMediaCache } from "./platformV2TrainingMediaClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformActionV2Request,
@@ -11,9 +16,9 @@ import type {
 
 export {
   preloadPlatformV2Audio,
-  preloadPlatformV2Translation,
   requestPlatformV2Translation,
   resolvePlatformV2Audio,
+  clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
 
 export type PlatformV2TrainingEntryResult = {
@@ -41,10 +46,19 @@ export type PlatformV2TrainingLookupInput = {
   signal?: AbortSignal;
 };
 
+export type PlatformV2TrainingPrefetchInput =
+  PlatformV2TrainingLookupInput & {
+    // This partitions browser memory only; server authentication remains authoritative.
+    cacheOwnerId: string;
+  };
+
 type PrefetchedLookup = {
+  cacheOwnerId: string;
   promise: Promise<PlatformV2TrainingLookupResult>;
   result: PlatformV2TrainingLookupResult | null;
   expiresAt: number;
+  controller: AbortController;
+  consumed: boolean;
 };
 
 const PREFETCH_TTL_MS = 30_000;
@@ -100,7 +114,7 @@ export function buildPlatformV2TrainingActionRequest(
 export async function fetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingLookupInput,
 ): Promise<PlatformV2TrainingLookupResult> {
-  const response = await fetch("/api/platform/v2/lookup", {
+  const response = await platformFetchWithTimeout("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
@@ -136,28 +150,42 @@ export async function fetchPlatformV2TrainingEntry(
 }
 
 export function prefetchPlatformV2TrainingEntry(
-  input: PlatformV2TrainingLookupInput,
+  input: PlatformV2TrainingPrefetchInput,
 ): Promise<PlatformV2TrainingLookupResult> {
   const key = trainingLookupKey(input);
   const existing = validPrefetch(key);
   if (existing) return existing.promise;
 
   const record: PrefetchedLookup = {
+    cacheOwnerId: input.cacheOwnerId,
     promise: Promise.resolve({ state: "entry-not-found" }),
     result: null,
     expiresAt: Date.now() + PREFETCH_TTL_MS,
+    controller: new AbortController(),
+    consumed: false,
   };
-  record.promise = fetchPlatformV2TrainingEntry(input).then(
+  const detachInputSignal = forwardAbortSignal(input.signal, record.controller);
+  record.promise = fetchPlatformV2TrainingEntry({
+    ...input,
+    signal: record.controller.signal,
+  }).then(
     (result) => {
+      detachInputSignal();
       if (result.state === "ready") {
         record.result = result;
-      } else {
+        if (record.consumed && prefetchedLookups.get(key) === record) {
+          prefetchedLookups.delete(key);
+        }
+      } else if (prefetchedLookups.get(key) === record) {
         prefetchedLookups.delete(key);
       }
       return result;
     },
     (error) => {
-      prefetchedLookups.delete(key);
+      detachInputSignal();
+      if (prefetchedLookups.get(key) === record) {
+        prefetchedLookups.delete(key);
+      }
       throw error;
     },
   );
@@ -167,18 +195,21 @@ export function prefetchPlatformV2TrainingEntry(
 }
 
 export function peekPrefetchedPlatformV2TrainingEntry(
-  input: PlatformV2TrainingLookupInput,
+  input: PlatformV2TrainingPrefetchInput,
 ): PlatformV2TrainingLookupResult | null {
   return validPrefetch(trainingLookupKey(input))?.result ?? null;
 }
 
 export function consumePrefetchedPlatformV2TrainingEntry(
-  input: PlatformV2TrainingLookupInput,
+  input: PlatformV2TrainingPrefetchInput,
 ): Promise<PlatformV2TrainingLookupResult> | null {
   const key = trainingLookupKey(input);
   const record = validPrefetch(key);
   if (!record) return null;
-  prefetchedLookups.delete(key);
+  record.consumed = true;
+  if (record.result && prefetchedLookups.get(key) === record) {
+    prefetchedLookups.delete(key);
+  }
   return record.promise;
 }
 
@@ -203,7 +234,7 @@ export async function performPlatformV2TrainingAction(
     capability,
     crypto.randomUUID(),
   );
-  const response = await fetch("/api/platform/v2/actions", {
+  const response = await platformFetchWithTimeout("/api/platform/v2/actions", {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
@@ -228,8 +259,18 @@ export async function performPlatformV2TrainingAction(
   return payload;
 }
 
-function trainingLookupKey(input: PlatformV2TrainingLookupInput) {
+export function clearPlatformV2TrainingClientCaches(cacheOwnerId?: string) {
+  for (const [key, record] of prefetchedLookups) {
+    if (cacheOwnerId && record.cacheOwnerId !== cacheOwnerId) continue;
+    record.controller.abort();
+    prefetchedLookups.delete(key);
+  }
+  clearPlatformV2TrainingMediaCache(cacheOwnerId);
+}
+
+function trainingLookupKey(input: PlatformV2TrainingPrefetchInput) {
   return [
+    input.cacheOwnerId,
     input.entryId,
     input.cardTypeId,
     input.contentLanguageCode,
@@ -241,6 +282,7 @@ function validPrefetch(key: string) {
   const record = prefetchedLookups.get(key);
   if (!record) return null;
   if (record.expiresAt <= Date.now()) {
+    record.controller.abort();
     prefetchedLookups.delete(key);
     return null;
   }
@@ -251,6 +293,7 @@ function trimPrefetchedLookups() {
   while (prefetchedLookups.size > MAX_PREFETCHED_LOOKUPS) {
     const oldestKey = prefetchedLookups.keys().next().value;
     if (typeof oldestKey !== "string") return;
+    prefetchedLookups.get(oldestKey)?.controller.abort();
     prefetchedLookups.delete(oldestKey);
   }
 }
