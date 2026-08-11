@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   TrainingKnownUndoNotice,
@@ -14,9 +14,16 @@ import {
 const fetchSingleSense = vi.fn();
 const performAction = vi.fn();
 const resolveAudio = vi.fn();
+const requestTranslation = vi.fn();
+const peekPrefetched = vi.fn();
+const consumePrefetched = vi.fn();
+const preloadAudio = vi.fn();
+const preloadTranslation = vi.fn();
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
+  peekPrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => peekPrefetched(...args),
+  consumePrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => consumePrefetched(...args),
   isPlatformV2TrainingActionCapability: (capability: { actionId: string }) =>
     ["start-learning", "mark-known", "undo-known", "review-card"].includes(
       capability.actionId,
@@ -24,6 +31,9 @@ vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   performPlatformV2TrainingAction: (...args: unknown[]) =>
     performAction(...args),
   resolvePlatformV2Audio: (...args: unknown[]) => resolveAudio(...args),
+  preloadPlatformV2Audio: (...args: unknown[]) => preloadAudio(...args),
+  preloadPlatformV2Translation: (...args: unknown[]) => preloadTranslation(...args),
+  requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
 }));
 
 const word: TrainingWord = {
@@ -40,6 +50,16 @@ describe("TrainingSenseCardV2Session", () => {
     fetchSingleSense.mockReset();
     performAction.mockReset();
     resolveAudio.mockReset();
+    requestTranslation.mockReset();
+    peekPrefetched.mockReset();
+    consumePrefetched.mockReset();
+    preloadAudio.mockReset();
+    preloadTranslation.mockReset();
+    peekPrefetched.mockReturnValue(null);
+    consumePrefetched.mockReturnValue(null);
+    requestTranslation.mockResolvedValue(undefined);
+    preloadAudio.mockResolvedValue(undefined);
+    preloadTranslation.mockResolvedValue(undefined);
     resolveAudio.mockResolvedValue("/audio/hand.mp3");
     fetchSingleSense.mockResolvedValue({
       state: "ready",
@@ -78,7 +98,7 @@ describe("TrainingSenseCardV2Session", () => {
     );
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     await screen.findByRole("heading", { name: "hand" });
-    expect(onAvailabilityChange).toHaveBeenCalledWith("ready");
+    await waitFor(() => expect(onAvailabilityChange).toHaveBeenCalledWith("ready"));
     expect(screen.getByTestId("training-sense-card-v2")).toHaveAttribute(
       "data-training-v2-state",
       "ready",
@@ -177,6 +197,32 @@ describe("TrainingSenseCardV2Session", () => {
     expect(fetchSingleSense).toHaveBeenCalledTimes(2);
   });
 
+  test("keeps a rejected retry recoverable instead of getting stuck loading", async () => {
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "entry-not-found" })
+      .mockRejectedValueOnce(new Error("Failed to fetch"));
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("alert")).toHaveAttribute(
+      "data-training-v2-state",
+      "lookup-http-error",
+    );
+    expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+  });
+
   test("gives explicit feedback when durable reporting is unavailable", async () => {
     const reportCapability = {
       actionId: "report-content" as const,
@@ -216,7 +262,10 @@ describe("TrainingSenseCardV2Session", () => {
 
     expect(
       await screen.findByText("Melden is nog niet beschikbaar."),
-    ).toHaveAttribute("role", "status");
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Melden is nog niet beschikbaar.",
+    );
     expect(performAction).not.toHaveBeenCalled();
   });
 
@@ -456,6 +505,12 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     await screen.findByRole("heading", { name: "hand" });
+    await waitFor(() =>
+      expect(preloadAudio).toHaveBeenCalledWith({
+        capability: singleSenseGroup.header.audio,
+        text: "hand",
+      }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
 
     await waitFor(() =>
@@ -490,10 +545,136 @@ describe("TrainingSenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
     fireEvent.click(screen.getByRole("button", { name: "Good" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "state_conflict",
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The card changed elsewhere. Its latest state is now shown.",
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+  });
+
+  test("submits only one action for two immediate grade clicks", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+
+    expect(performAction).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-1",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+  });
+
+  test("clears a transient action error instead of leaving it forever", async () => {
+    performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    try {
+      render(
+        <TrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          fallback={<p>Legacy card</p>}
+          onAvailabilityChange={vi.fn()}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      vi.useFakeTimers();
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Good" }));
+      });
+      expect(
+        screen.getByText("The card changed elsewhere. Its latest state is now shown."),
+      ).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(6000);
+      });
+      expect(
+        screen.queryByText("The card changed elsewhere. Its latest state is now shown."),
+      ).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("keeps the current card mounted while translation refreshes", async () => {
+    let resolveRefresh!: (value: unknown) => void;
+    const requestCapability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+      targetLanguageCode: "en",
+    };
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      capabilities: [...singleSenseEntry.capabilities, requestCapability],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: { ...singleSenseGroup, entries: [untranslatedEntry] },
+        entry: untranslatedEntry,
+      })
+      .mockImplementationOnce(
+        () => new Promise((resolve) => { resolveRefresh = resolve; }),
+      );
+
+    render(
+      <TrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    await waitFor(() => expect(preloadTranslation).toHaveBeenCalled());
+
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveRefresh({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      });
+    });
   });
 
   test("shows an explicit error when reverse content has no definition", async () => {

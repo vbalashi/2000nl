@@ -9,6 +9,31 @@ import {
 } from "./platformV2TrainingFixture";
 
 describe("TrainingSenseCardStage", () => {
+  test("keeps the audio control in the upper-left corner away from long headwords", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    render(
+      <TrainingSenseCardStage
+        model={{
+          ...baseModel,
+          headword: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring",
+        }}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    const corner = screen.getByTestId("training-card-audio-corner");
+    expect(corner).toContainElement(screen.getByRole("button", { name: "Play audio" }));
+    expect(screen.getByTestId("sense-card-headword-lockup")).not.toContainElement(
+      screen.getByRole("button", { name: "Play audio" }),
+    );
+  });
   test("renders Report as an actionable, keyboard-focusable button", () => {
     const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,
@@ -92,16 +117,12 @@ describe("TrainingSenseCardStage", () => {
     const headword = screen.getByRole("heading", { name: "hand" });
     const faceAudio = screen.getByRole("button", { name: "Afspelen" });
     expect(faceAudio).toBeInTheDocument();
-    expect(
-      headword.compareDocumentPosition(faceAudio) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(screen.getByTestId("training-card-audio-corner")).toContainElement(
+      faceAudio,
+    );
     expect(
       headword.closest("[data-testid='sense-card-headword-lockup']"),
-    ).toContainElement(faceAudio);
-    expect(faceAudio.parentElement?.previousElementSibling).toContainElement(
-      headword,
-    );
+    ).not.toContainElement(faceAudio);
     expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
     expect(faceShell.className).toContain("flex-1");
@@ -249,6 +270,63 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.queryByRole("button", { name: "Translate" })).not.toBeInTheDocument();
   });
 
+  test("reveals a requested translation as soon as the refreshed model arrives", () => {
+    const translatedModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const requestTranslationCapability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: translatedModel.entryId,
+        contentRevision: "revision-1",
+      },
+      targetLanguageCode: "en",
+    };
+    const pendingModel = {
+      ...translatedModel,
+      entryTranslation: undefined,
+      definitions: translatedModel.definitions.map((item) => ({
+        ...item,
+        translation: undefined,
+      })),
+      examples: translatedModel.examples.map((item) => ({
+        ...item,
+        translation: undefined,
+      })),
+      requestTranslationCapability,
+    };
+    const onAction = vi.fn();
+    const { rerender } = render(
+      <TrainingSenseCardStage
+        model={pendingModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    expect(onAction).toHaveBeenCalledWith(requestTranslationCapability);
+
+    rerender(
+      <TrainingSenseCardStage
+        model={{ ...translatedModel, requestTranslationCapability }}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+    expect(screen.getByTestId("entry-translation")).toHaveTextContent(
+      translatedModel.entryTranslation!,
+    );
+  });
+
   test("renders the canonical headword instead of pronunciation metadata", () => {
     const model = buildTrainingSenseCardModel({
       group: {
@@ -301,9 +379,8 @@ describe("TrainingSenseCardStage", () => {
     expect(
       screen.getByRole("heading", { name: model.headword }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
-    expect(onPlayAudio).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Afspelen" })).not.toBeInTheDocument();
+    expect(onPlayAudio).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
   });
 

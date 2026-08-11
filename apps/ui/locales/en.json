@@ -110,6 +110,7 @@
     "collapse": "Collapse meaning",
     "expand": "Expand meaning",
     "report": "Report",
+    "dismiss": "Dismiss notification",
     "reportUnavailable": "Reporting is not available yet.",
     "collections": {
       "label": "Collections",
@@ -127,6 +128,9 @@
       "cardChanged": "Next training card",
       "loading": "Loading training card…",
       "loadFailed": "This training card could not be loaded.",
+      "stateRefreshed": "The card changed elsewhere. Its latest state is now shown.",
+      "temporaryFailure": "The connection was interrupted. Please try again.",
+      "exit": "Back to Today",
       "retry": "Try again"
     },
     "wordDetails": {

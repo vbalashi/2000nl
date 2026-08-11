@@ -3,12 +3,18 @@ import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformActionV2Request,
   PlatformActionV2Response,
-  PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformLookupV2Response,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../packages/shared/types/platformV2";
+
+export {
+  preloadPlatformV2Audio,
+  preloadPlatformV2Translation,
+  requestPlatformV2Translation,
+  resolvePlatformV2Audio,
+} from "./platformV2TrainingMediaClient";
 
 export type PlatformV2TrainingEntryResult = {
   state: "ready";
@@ -26,6 +32,24 @@ export type PlatformV2TrainingLookupResult =
   | { state: "lookup-http-error"; status: number }
   | { state: "contract-mismatch" }
   | { state: "entry-not-found" };
+
+export type PlatformV2TrainingLookupInput = {
+  entryId: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  signal?: AbortSignal;
+};
+
+type PrefetchedLookup = {
+  promise: Promise<PlatformV2TrainingLookupResult>;
+  result: PlatformV2TrainingLookupResult | null;
+  expiresAt: number;
+};
+
+const PREFETCH_TTL_MS = 30_000;
+const MAX_PREFETCHED_LOOKUPS = 24;
+const prefetchedLookups = new Map<string, PrefetchedLookup>();
 
 export type PlatformV2TrainingActionCapability =
   PlatformSenseCardCapabilityV2 & {
@@ -73,13 +97,9 @@ export function buildPlatformV2TrainingActionRequest(
   };
 }
 
-export async function fetchPlatformV2TrainingEntry(input: {
-  entryId: string;
-  cardTypeId: CardTypeId;
-  contentLanguageCode: string;
-  translationTargetLanguageCode: string | null;
-  signal?: AbortSignal;
-}): Promise<PlatformV2TrainingLookupResult> {
+export async function fetchPlatformV2TrainingEntry(
+  input: PlatformV2TrainingLookupInput,
+): Promise<PlatformV2TrainingLookupResult> {
   const response = await fetch("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -113,6 +133,53 @@ export async function fetchPlatformV2TrainingEntry(input: {
   return selected
     ? { state: "ready", ...selected }
     : { state: "entry-not-found" };
+}
+
+export function prefetchPlatformV2TrainingEntry(
+  input: PlatformV2TrainingLookupInput,
+): Promise<PlatformV2TrainingLookupResult> {
+  const key = trainingLookupKey(input);
+  const existing = validPrefetch(key);
+  if (existing) return existing.promise;
+
+  const record: PrefetchedLookup = {
+    promise: Promise.resolve({ state: "entry-not-found" }),
+    result: null,
+    expiresAt: Date.now() + PREFETCH_TTL_MS,
+  };
+  record.promise = fetchPlatformV2TrainingEntry(input).then(
+    (result) => {
+      if (result.state === "ready") {
+        record.result = result;
+      } else {
+        prefetchedLookups.delete(key);
+      }
+      return result;
+    },
+    (error) => {
+      prefetchedLookups.delete(key);
+      throw error;
+    },
+  );
+  prefetchedLookups.set(key, record);
+  trimPrefetchedLookups();
+  return record.promise;
+}
+
+export function peekPrefetchedPlatformV2TrainingEntry(
+  input: PlatformV2TrainingLookupInput,
+): PlatformV2TrainingLookupResult | null {
+  return validPrefetch(trainingLookupKey(input))?.result ?? null;
+}
+
+export function consumePrefetchedPlatformV2TrainingEntry(
+  input: PlatformV2TrainingLookupInput,
+): Promise<PlatformV2TrainingLookupResult> | null {
+  const key = trainingLookupKey(input);
+  const record = validPrefetch(key);
+  if (!record) return null;
+  prefetchedLookups.delete(key);
+  return record.promise;
 }
 
 export function selectPlatformV2TrainingEntry(
@@ -161,56 +228,29 @@ export async function performPlatformV2TrainingAction(
   return payload;
 }
 
-export async function requestPlatformV2Translation(
-  capability: Extract<
-    PlatformSenseCardCapabilityV2,
-    { actionId: "request-translation" }
-  >,
-): Promise<void> {
-  const response = await fetch("/api/platform/translation", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
-      entryId: capability.target.entryId,
-      targetLang: capability.targetLanguageCode,
-    }),
-  });
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as {
-      error?: string;
-    } | null;
-    throw new Error(payload?.error ?? "translation_failed");
-  }
+function trainingLookupKey(input: PlatformV2TrainingLookupInput) {
+  return [
+    input.entryId,
+    input.cardTypeId,
+    input.contentLanguageCode,
+    input.translationTargetLanguageCode ?? "off",
+  ].join(":");
 }
 
-export async function resolvePlatformV2Audio(input: {
-  capability: PlatformAudioCapabilityV2;
-  text: string;
-}): Promise<string> {
-  const response = await fetch("/api/platform/v1/audio/resolve", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
-      text: input.text,
-      languageCode: input.capability.contentLanguageCode,
-      purpose: "dictionary-headword",
-    }),
-  });
-  const payload = (await response.json().catch(() => null)) as
-    | { asset?: { url?: string }; error?: string | { code?: string } }
-    | null;
-  const url = payload?.asset?.url;
-  if (!response.ok || !url) {
-    const error = payload?.error;
-    throw new Error(
-      typeof error === "string"
-        ? error
-        : error?.code ?? "platform_v2_audio_failed",
-    );
+function validPrefetch(key: string) {
+  const record = prefetchedLookups.get(key);
+  if (!record) return null;
+  if (record.expiresAt <= Date.now()) {
+    prefetchedLookups.delete(key);
+    return null;
   }
-  return url;
+  return record;
+}
+
+function trimPrefetchedLookups() {
+  while (prefetchedLookups.size > MAX_PREFETCHED_LOOKUPS) {
+    const oldestKey = prefetchedLookups.keys().next().value;
+    if (typeof oldestKey !== "string") return;
+    prefetchedLookups.delete(oldestKey);
+  }
 }

@@ -62,7 +62,11 @@ import {
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
-import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingClient";
+import {
+  prefetchPlatformV2TrainingEntry,
+  preloadPlatformV2Audio,
+  type PlatformV2TrainingActionCapability,
+} from "@/lib/platform/platformV2TrainingClient";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -143,6 +147,9 @@ const resolveRestrictedListModes = (
 
 const trainingCardKey = (word: TrainingWord, fallbackMode: TrainingMode) =>
   `${word.id}:${word.mode ?? fallbackMode}`;
+
+const isPlatformV2TrainingMode = (mode: TrainingMode) =>
+  mode === "word-to-definition" || mode === "definition-to-word";
 
 const ACTION_LABELS: Record<
   ReviewResult,
@@ -573,6 +580,35 @@ export function TrainingScreen({
       currentMode === "definition-to-word");
   const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
+  const warmTrainingV2Word = useCallback(
+    (word: TrainingWord) => {
+      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
+      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) return;
+      void prefetchPlatformV2TrainingEntry({
+        entryId: word.id,
+        cardTypeId: mode,
+        contentLanguageCode: currentTrainingLanguage,
+        translationTargetLanguageCode:
+          translationLang === "off" ? null : translationLang,
+      })
+        .then((lookup) => {
+          if (lookup.state !== "ready" || !lookup.group.header.audio) return;
+          return preloadPlatformV2Audio({
+            capability: lookup.group.header.audio,
+            text: lookup.group.header.text,
+          });
+        })
+        .catch(() => {
+          // Warming is best-effort; the mounted session owns visible errors.
+        });
+    }, [
+      currentTrainingLanguage,
+      enabledModes,
+      trainingShellV2Enabled,
+      translationLang,
+    ],
+  );
+
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
       autoPlayedAudioCardRef.current = null;
@@ -872,11 +908,14 @@ export function TrainingScreen({
               currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
             const overrideCardKey = `${overrideWord.id}:${mode}`;
             nextCardOverrideActiveKeyRef.current = overrideCardKey;
-            void recordWordView({
-              userId: user.id,
-              wordId: overrideWord.id,
-              mode,
-            });
+            if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
+              void recordWordView({
+                userId: user.id,
+                wordId: overrideWord.id,
+                mode,
+              });
+            }
+            warmTrainingV2Word({ ...overrideWord, mode });
             presentWord({
               ...overrideWord,
               ...(typeof firstEncounter === "boolean"
@@ -908,7 +947,7 @@ export function TrainingScreen({
           effectiveCardFilter,
           effectiveQueueTurn,
           excludeCardKeys,
-          restrictedModes,
+          restrictedModes ?? enabledModes,
           isTrainingFocusFilterActive(effectiveFocusFilter)
             ? effectiveFocusFilter
             : null,
@@ -917,11 +956,14 @@ export function TrainingScreen({
           // Fire and forget view recording, or await if we want strict consistency
           // Use the mode from the fetched word (or fallback to first enabled mode)
           const wordMode = nextWord.mode ?? enabledModes[0];
-          void recordWordView({
-            userId: user.id,
-            wordId: nextWord.id,
-            mode: wordMode,
-          });
+          if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(wordMode)) {
+            void recordWordView({
+              userId: user.id,
+              wordId: nextWord.id,
+              mode: wordMode,
+            });
+          }
+          warmTrainingV2Word(nextWord);
           presentWord(nextWord);
         } else {
           presentWord(null);
@@ -949,10 +991,12 @@ export function TrainingScreen({
       presentWord,
       queueTurn,
       trainingFocusFilter,
+      trainingShellV2Enabled,
       trainingTodaySetupEnabled,
       user?.id,
       wordListId,
       wordListType,
+      warmTrainingV2Word,
     ],
   );
 
@@ -995,7 +1039,7 @@ export function TrainingScreen({
           cardFilter,
           predictedQueueTurn,
           [...reviewedInSessionRef.current, forCardKey],
-          resolveRestrictedListModes(activeList),
+          resolveRestrictedListModes(activeList) ?? enabledModes,
           trainingFocusFilterActive ? trainingFocusFilter : null,
         );
 
@@ -1008,6 +1052,8 @@ export function TrainingScreen({
           queueTurn: predictedQueueTurn,
           word: next,
         };
+
+        if (next) warmTrainingV2Word(next);
 
         if (audioModeEnabled && next) {
           preloadAudioForWord(next);
@@ -1037,6 +1083,7 @@ export function TrainingScreen({
     currentWord?.id,
     currentWord?.mode,
     currentMode,
+    enabledModes,
     newReviewRatio,
     preloadAudioForWord,
     queueTurn,
@@ -1046,6 +1093,7 @@ export function TrainingScreen({
     user?.id,
     wordListId,
     wordListType,
+    warmTrainingV2Word,
   ]);
 
   const handleTrainWord = useCallback(
@@ -1096,11 +1144,13 @@ export function TrainingScreen({
         presentWord(candidate.word);
         const nextMode =
           candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
-        void recordWordView({
-          userId: user.id,
-          wordId: candidate.word.id,
-          mode: nextMode,
-        });
+        if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(nextMode)) {
+          void recordWordView({
+            userId: user.id,
+            wordId: candidate.word.id,
+            mode: nextMode,
+          });
+        }
         if (audioModeEnabled) preloadAudioForWord(candidate.word);
       }
 
@@ -1112,6 +1162,7 @@ export function TrainingScreen({
       enabledModes,
       presentWord,
       preloadAudioForWord,
+      trainingShellV2Enabled,
       user?.id,
     ]);
 
@@ -1120,10 +1171,12 @@ export function TrainingScreen({
       transition: AcceptedCardTransition,
       options: { statsLabel: string; refreshHistory?: boolean },
     ) => {
-      await Promise.all([
+      const refreshBackground = Promise.all([
         loadStats(undefined, options.statsLabel),
         options.refreshHistory ? loadRecentHistory() : Promise.resolve(),
-      ]);
+      ]).catch((error) => {
+        trainingDebug.log("Training counters refresh failed", error);
+      });
 
       if (transition.isNextCardOverride) {
         nextCardOverrideActiveKeyRef.current = null;
@@ -1138,6 +1191,7 @@ export function TrainingScreen({
           ],
         });
       }
+      void refreshBackground;
     },
     [loadNextWord, loadRecentHistory, loadStats],
   );
@@ -2446,6 +2500,7 @@ export function TrainingScreen({
                               onProgressActionAccepted={
                                 handleV2ProgressActionAccepted
                               }
+                              onExit={trainingPilot.returnToToday}
                             />
                           ) : (
                             <div

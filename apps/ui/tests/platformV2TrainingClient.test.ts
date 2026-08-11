@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   buildPlatformV2TrainingActionRequest,
+  consumePrefetchedPlatformV2TrainingEntry,
   fetchPlatformV2TrainingEntry,
+  peekPrefetchedPlatformV2TrainingEntry,
+  prefetchPlatformV2TrainingEntry,
+  preloadPlatformV2Audio,
   resolvePlatformV2Audio,
   selectPlatformV2TrainingEntry,
 } from "@/lib/platform/platformV2TrainingClient";
@@ -113,6 +117,37 @@ describe("Platform V2 media and translation clients", () => {
       }),
     );
   });
+
+  test("deduplicates audio resolution while preloading and playing", async () => {
+    const load = vi.fn();
+    vi.stubGlobal(
+      "Audio",
+      class {
+        preload = "";
+        load = load;
+      },
+    );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ asset: { url: "/api/platform/audio/asset/test" } }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await preloadPlatformV2Audio({
+      capability: singleSenseGroup.header.audio!,
+      text: singleSenseGroup.header.text,
+    });
+    await expect(
+      resolvePlatformV2Audio({
+        capability: singleSenseGroup.header.audio!,
+        text: singleSenseGroup.header.text,
+      }),
+    ).resolves.toBe("/api/platform/audio/asset/test");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("selectPlatformV2TrainingEntry", () => {
@@ -161,6 +196,43 @@ describe("selectPlatformV2TrainingEntry", () => {
 });
 
 describe("fetchPlatformV2TrainingEntry", () => {
+  test("prefetches the exact next card and exposes it synchronously to the session", async () => {
+    const payload = {
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [singleSenseGroup],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const input = {
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    };
+
+    await prefetchPlatformV2TrainingEntry(input);
+
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toMatchObject({
+      state: "ready",
+      entry: { entryId: singleSenseEntry.entryId },
+    });
+    await expect(consumePrefetchedPlatformV2TrainingEntry(input)).resolves.toMatchObject({
+      state: "ready",
+      entry: { entryId: singleSenseEntry.entryId },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test("sends the scheduler entry id and preserves an HTTP lookup failure", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: "lookup_failed" }), {

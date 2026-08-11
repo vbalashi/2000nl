@@ -112,4 +112,33 @@ describe("platform dictionary content audio links", () => {
       },
     });
   });
+
+  test("does not let a slow public audio probe block dictionary content", async () => {
+    vi.useFakeTimers();
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      })),
+    );
+
+    try {
+      const verification = verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+      await vi.advanceTimersByTimeAsync(1_200);
+
+      await expect(verification).resolves.toEqual({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
