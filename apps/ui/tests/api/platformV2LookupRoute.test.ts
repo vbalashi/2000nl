@@ -276,6 +276,11 @@ describe("/api/platform/v2/lookup", () => {
         header: expect.objectContaining({
           displayPronunciation: "ˈhuis",
           pronunciation: "huis",
+          audio: {
+            audioId: "group-1:headword:nl",
+            actionId: "play-audio",
+            contentLanguageCode: "nl",
+          },
         }),
       }),
     );

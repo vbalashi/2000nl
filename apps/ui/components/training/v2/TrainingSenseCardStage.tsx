@@ -66,6 +66,9 @@ export function TrainingSenseCardStage({
   const reversePrompt = model.definitions.find(
     (item) => item.kind === "definition",
   );
+  const translationActionAvailable = Boolean(
+    model.requestTranslationCapability,
+  );
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -175,14 +178,20 @@ export function TrainingSenseCardStage({
             <EntityHeader
               model={model}
               translationVisible={translationVisible}
-              translationAvailable={hasTranslation(model)}
+              translationAvailable={
+                hasTranslation(model) || translationActionAvailable
+              }
               translationLabel={t("senseCard.translation.request")}
               audioLabel={t("senseCard.audio.play")}
               busy={busy}
               moreLabel={t("senseCard.wordDetails.open")}
-              onToggleTranslation={() =>
-                setTranslationVisible((visible) => !visible)
-              }
+              onToggleTranslation={() => {
+                if (!hasTranslation(model) && model.requestTranslationCapability) {
+                  onAction(model.requestTranslationCapability);
+                  return;
+                }
+                setTranslationVisible((visible) => !visible);
+              }}
               onPlayAudio={model.audioCapability ? onPlayAudio : undefined}
               onOpenDetails={onOpenDetails}
             />
@@ -201,19 +210,16 @@ export function TrainingSenseCardStage({
           <FaceBody
             model={model}
             mode={mode}
-            interfaceLanguage={interfaceLanguage}
             reversePrompt={reversePrompt}
             hint={hint}
             hintVisible={hintVisible}
-            translationVisible={translationVisible}
-            translationAvailable={Boolean(model.entryTranslation)}
             hintLabel={t("senseCard.hint.example")}
-            translationLabel={t("senseCard.translation.request")}
             audioLabel={t("senseCard.audio.play")}
             busy={busy}
-            onPlayAudio={model.audioCapability ? onPlayAudio : undefined}
-            onToggleTranslation={() =>
-              setTranslationVisible((visible) => !visible)
+            onPlayAudio={
+              mode === "word-to-definition" && model.audioCapability
+                ? onPlayAudio
+                : undefined
             }
           />
         )}
@@ -337,53 +343,49 @@ function EntityHeader({
 function FaceBody({
   model,
   mode,
-  interfaceLanguage,
   reversePrompt,
   hint,
   hintVisible,
-  translationVisible,
-  translationAvailable,
   hintLabel,
-  translationLabel,
   audioLabel,
   busy,
   onPlayAudio,
-  onToggleTranslation,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
-  interfaceLanguage: OnboardingLanguage;
   reversePrompt?: TrainingSenseCardContent;
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
-  translationVisible: boolean;
-  translationAvailable: boolean;
   hintLabel: string;
-  translationLabel: string;
   audioLabel: string;
   busy: boolean;
   onPlayAudio?: () => void;
-  onToggleTranslation: () => void;
 }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
         <div className="flex flex-col items-center gap-4 text-center">
           {mode === "definition-to-word" ? (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-              {platformV2Message(
-                interfaceLanguage,
-                "senseCard.answer.reversePrompt",
-              )}
-            </p>
-          ) : null}
-          {mode === "definition-to-word" ? (
-            <p
-              data-testid="reverse-prompt"
-              className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
-            >
-              {reversePrompt?.text}
-            </p>
+            <>
+              <div className="absolute right-0 top-0 flex gap-2">
+                {onPlayAudio ? (
+                  <IconButton
+                    label={audioLabel}
+                    disabled={busy}
+                    onClick={onPlayAudio}
+                    compact
+                  >
+                    <SpeakerIcon />
+                  </IconButton>
+                ) : null}
+              </div>
+              <p
+                data-testid="reverse-prompt"
+                className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
+              >
+                {reversePrompt?.text}
+              </p>
+            </>
           ) : (
             <SenseCardHeadwordLockup
               article={model.article}
@@ -402,27 +404,8 @@ function FaceBody({
                   </IconButton>
                 ) : null
               }
-              topActions={
-                translationAvailable ? (
-                  <IconButton
-                    label={translationLabel}
-                    active={translationVisible}
-                    disabled={busy}
-                    onClick={onToggleTranslation}
-                  >
-                    <TranslateIcon />
-                  </IconButton>
-                ) : null
-              }
             />
           )}
-          {mode !== "definition-to-word" && model.entryTranslation ? (
-            <SenseCardReveal open={translationVisible}>
-              <p className="font-sense-serif text-base italic text-amber-700 dark:text-[#dbc47e]">
-                {model.entryTranslation}
-              </p>
-            </SenseCardReveal>
-          ) : null}
         </div>
       </div>
       {hint && hintVisible ? (

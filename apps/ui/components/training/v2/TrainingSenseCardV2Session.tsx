@@ -7,6 +7,7 @@ import {
   fetchPlatformV2TrainingEntry,
   isPlatformV2TrainingActionCapability,
   performPlatformV2TrainingAction,
+  requestPlatformV2Translation,
   resolvePlatformV2Audio,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
@@ -141,6 +142,11 @@ export function TrainingSenseCardV2Session({
     setBusy(true);
     setError(null);
     try {
+      if (capability.actionId === "request-translation") {
+        await requestPlatformV2Translation(capability);
+        await load();
+        return;
+      }
       if (!isPlatformV2TrainingActionCapability(capability)) return;
       const response = await performPlatformV2TrainingAction(capability);
       if (capability.actionId === "undo-known") {

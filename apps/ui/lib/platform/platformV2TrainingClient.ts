@@ -137,6 +137,30 @@ export async function performPlatformV2TrainingAction(
   return payload;
 }
 
+export async function requestPlatformV2Translation(
+  capability: Extract<
+    PlatformSenseCardCapabilityV2,
+    { actionId: "request-translation" }
+  >,
+): Promise<void> {
+  const response = await fetch("/api/platform/translation", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: await platformV2AuthenticatedJsonHeaders(),
+    body: JSON.stringify({
+      entryId: capability.target.entryId,
+      targetLang: capability.targetLanguageCode,
+    }),
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(payload?.error ?? "translation_failed");
+  }
+}
+
 export async function resolvePlatformV2Audio(input: {
   capability: PlatformAudioCapabilityV2;
   text: string;

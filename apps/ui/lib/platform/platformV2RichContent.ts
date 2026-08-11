@@ -19,6 +19,11 @@ export type PlatformV2HeaderEvidence = {
   homographNumber: number | null;
 };
 
+export function learnerDisplayPronunciation(value: unknown): string | null {
+  const text = asString(value);
+  return text ? text.replace(/\s*\[[^\]]+\]\s*$/, "").trim() || null : null;
+}
+
 export function platformV2HeaderEvidence(
   entry: DictionaryLookupPayload,
 ): PlatformV2HeaderEvidence {
@@ -26,7 +31,7 @@ export function platformV2HeaderEvidence(
   const sourceIdentity = asRecord(raw.source_identity);
   const source = asRecord(raw._source);
   return {
-    displayPronunciation: asString(
+    displayPronunciation: learnerDisplayPronunciation(
       raw.pronunciation_with_stress ?? raw.displayPronunciation,
     ),
     pronunciation: asString(

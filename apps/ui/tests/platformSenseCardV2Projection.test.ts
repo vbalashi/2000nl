@@ -2,6 +2,65 @@ import { describe, expect, test } from "vitest";
 import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
 
 describe("Platform V2 SenseCard projection", () => {
+  test("publishes verified group audio and a request-translation capability", () => {
+    const input = projectionInput({
+      stateRevision: "state-translation",
+      knownMark: null,
+    });
+    input.request.translationTargetLanguageCode = "en";
+    input.entries[0].audioCapability = {
+      audioId: "entry-known:headword:nl",
+      actionId: "play-audio",
+      contentLanguageCode: "nl",
+    };
+    input.entries[0].allowMutationCapabilities = true;
+
+    const response = projectPlatformLookupV2(input);
+    expect(response.groups[0].header.audio).toEqual({
+      audioId: "entry-known:headword:nl",
+      actionId: "play-audio",
+      contentLanguageCode: "nl",
+    });
+    expect(response.groups[0].entries[0]).toEqual(
+      expect.objectContaining({
+        capabilities: expect.arrayContaining([
+          expect.objectContaining({
+            actionId: "request-translation",
+            targetLanguageCode: "en",
+          }),
+        ]),
+      }),
+    );
+  });
+
+  test("keeps headword audio on a multi-sense group", () => {
+    const input = projectionInput({
+      stateRevision: "state-multi-sense-audio",
+      knownMark: null,
+    });
+    input.entries[0].audioCapability = {
+      audioId: "group-known:headword:nl",
+      actionId: "play-audio",
+      contentLanguageCode: "nl",
+    };
+    input.entries.push({
+      ...input.entries[0],
+      entry: {
+        ...input.entries[0].entry,
+        id: "entry-known-2",
+        meaningId: 2,
+      },
+      contentNodeBindings: input.entries[0].contentNodeBindings.map((binding) => ({
+        ...binding,
+        contentNodeId: `${binding.contentNodeId}-2`,
+      })),
+    });
+
+    expect(projectPlatformLookupV2(input).groups[0].header.audio).toEqual(
+      input.entries[0].audioCapability,
+    );
+  });
+
   test("offers Start Learning and Mark Known for an untracked card", () => {
     const response = projectPlatformLookupV2(
       projectionInput({
@@ -347,6 +406,17 @@ describe("Platform V2 SenseCard projection", () => {
                     cardTypeId: "word-to-definition",
                     stateRevision: "state-revision-1",
                   },
+                },
+                {
+                  actionId: "request-translation",
+                  elementId: "sense-card.translation.request",
+                  messageKey: "senseCard.translation.request",
+                  target: {
+                    kind: "entry",
+                    entryId: "entry-1",
+                    contentRevision: "content-revision-1",
+                  },
+                  targetLanguageCode: "ru",
                 },
                 {
                   actionId: "report-content",
