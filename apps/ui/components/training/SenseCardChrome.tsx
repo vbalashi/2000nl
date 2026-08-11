@@ -53,7 +53,7 @@ export function SenseCardHeadwordLockup({
               className={`rounded-md px-2 py-0.5 font-semibold ${
                 tone === "dark"
                   ? "bg-indigo-400/10 text-indigo-200"
-                  : "bg-indigo-500/10 text-indigo-700"
+                  : "bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200"
               }`}
             >
               {coreVocabularyLabel}

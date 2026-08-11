@@ -1996,10 +1996,11 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     const compactFooter = document.querySelector('footer[data-compact="true"]');
     expect(compactFooter).toBeInTheDocument();
     expect(
-      within(compactFooter as HTMLElement).getByRole("button", {
+      within(compactFooter as HTMLElement).queryByRole("button", {
         name: "Adjust",
       }),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
+    expect(compactFooter).not.toHaveTextContent(/VanDale 2k|Begrip/);
     fireEvent.click(
       within(screen.getByTestId("training-session-chrome")).getByRole(
         "button",

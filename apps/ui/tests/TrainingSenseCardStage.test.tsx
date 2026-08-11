@@ -50,9 +50,18 @@ describe("TrainingSenseCardStage", () => {
     );
 
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(screen.queryByText("Wat betekent dit woord?")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vertalen" })).toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
     expect(faceShell.className).toContain("flex-1");
     expect(faceShell.className).toContain("max-h-[500px]");
+    expect(faceShell.className).not.toContain("sm:max-h-[500px]");
+    expect(faceShell.className).toContain(
+      "[@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]",
+    );
+    expect(faceShell.className).toContain("bg-slate-50");
+    expect(faceShell.className).toContain("dark:bg-[#1d222b]");
     const dock = screen.getByTestId("training-sense-card-dock");
     expect(dock.className).toContain("shrink-0");
     expect(dock.className).toContain("sm:h-24");
@@ -66,6 +75,14 @@ describe("TrainingSenseCardStage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
     expect(onPlayAudio).toHaveBeenCalledTimes(1);
 
+    fireEvent.click(screen.getByRole("button", { name: "Vertalen" }));
+    expect(
+      container.querySelector(
+        '[data-testid="training-sense-card-shell"] [aria-hidden="false"] p',
+      ),
+    ).toHaveTextContent(model.entryTranslation!);
+    fireEvent.click(screen.getByRole("button", { name: "Vertalen" }));
+
     fireEvent.click(screen.getByRole("button", { name: "Hint tonen" }));
     const hint = screen.getByText(model.examples[0].text).closest("aside");
     expect(hint).toBeInTheDocument();
@@ -78,6 +95,7 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByTestId("training-sense-card-shell")).toBe(faceShell);
     expect(screen.getByText(model.definitions[0].text)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
+    expect(screen.getByText("2K")).toHaveClass("dark:text-indigo-200");
     expect(
       screen.queryByRole("button", { name: "Melden" }),
     ).not.toBeInTheDocument();
@@ -165,6 +183,28 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
   });
 
+  test("does not offer a Face translation toggle when only answer content is translated", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+    const { entryTranslation: _entryTranslation, ...model } = baseModel;
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByRole("button", { name: "Vertalen" })).toBeInTheDocument();
+  });
+
   test("uses the actual definition for reverse mode and routes review hotkeys through V2 capabilities", () => {
     const onAction = vi.fn();
     const baseModel = buildTrainingSenseCardModel({
@@ -215,7 +255,39 @@ describe("TrainingSenseCardStage", () => {
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
   });
 
-  test("keeps Space available for a focused review button instead of hiding Answer", () => {
+  test("keeps Space owned by the card when a review button is focused", async () => {
+    const onAction = vi.fn();
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="nl"
+        onAction={onAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const good = screen.getByRole("button", { name: "Goed" });
+    good.focus();
+    fireEvent.keyDown(good, { key: " " });
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    expect(onAction).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveFocus(),
+    );
+  });
+
+  test("Space reveals the answer instead of activating a focused Hint button", async () => {
     const model = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
@@ -231,16 +303,47 @@ describe("TrainingSenseCardStage", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
-    const good = screen.getByRole("button", { name: "Goed" });
-    good.focus();
-    fireEvent.keyDown(good, { key: " " });
+    const hint = screen.getByRole("button", { name: "Hint tonen" });
+    hint.focus();
+    fireEvent.keyDown(hint, { key: " " });
 
+    expect(document.querySelector("aside")).not.toBeInTheDocument();
     expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
       "data-side",
       "answer",
     );
-    expect(good).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("Hoe goed ken je deze betekenis?")).toHaveFocus(),
+    );
+  });
+
+  test("keeps modified Space and controls outside the card native", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "nl",
+    });
+
+    render(
+      <>
+        <button type="button">Outside action</button>
+        <TrainingSenseCardStage
+          model={model}
+          mode="word-to-definition"
+          interfaceLanguage="nl"
+          onAction={vi.fn()}
+        />
+      </>,
+    );
+
+    const stage = screen.getByTestId("training-sense-card-stage");
+    fireEvent.keyDown(stage, { key: " ", shiftKey: true });
+    expect(stage).toHaveAttribute("data-side", "face");
+
+    const outside = screen.getByRole("button", { name: "Outside action" });
+    outside.focus();
+    fireEvent.keyDown(outside, { key: " " });
+    expect(stage).toHaveAttribute("data-side", "face");
   });
 
   test("moves focus to the learn action when a first-encounter answer has no review prompt", async () => {

@@ -2738,19 +2738,10 @@ export function TrainingScreen({
                 setShowSettings(true);
               }}
               activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
-              compactScenarioName={trainingScenarioLabel(
-                onboardingLang,
-                activeScenario,
-              )}
               initialReviewDue={initialReviewDue}
               inlineControlsEnabled={!trainingTodaySetupEnabled}
               compact={v2CardAvailable}
               interfaceLanguage={onboardingLang}
-              onAdjustSession={
-                trainingTodaySetupEnabled
-                  ? trainingPilot.returnToToday
-                  : undefined
-              }
             />
           </>
         )}

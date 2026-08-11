@@ -31,10 +31,11 @@ type Props = {
 };
 
 const reviewTone = {
-  fail: "text-rose-300 before:bg-rose-300",
-  hard: "text-lime-300 before:bg-lime-300",
-  success: "text-emerald-300 before:bg-emerald-300",
-  easy: "text-teal-200 before:bg-teal-200",
+  fail: "text-rose-600 before:bg-rose-400 dark:text-rose-300 dark:before:bg-rose-300",
+  hard: "text-lime-700 before:bg-lime-500 dark:text-lime-300 dark:before:bg-lime-300",
+  success:
+    "text-emerald-700 before:bg-emerald-500 dark:text-emerald-300 dark:before:bg-emerald-300",
+  easy: "text-teal-700 before:bg-teal-400 dark:text-teal-200 dark:before:bg-teal-200",
 } as const;
 
 export function TrainingSenseCardStage({
@@ -102,7 +103,6 @@ export function TrainingSenseCardStage({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        isInteractiveTarget(event.target) ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
@@ -110,12 +110,20 @@ export function TrainingSenseCardStage({
       ) {
         return;
       }
-      const key = event.key.toLowerCase();
-      if (event.key === " ") {
+      const targetInsideStage =
+        event.target instanceof Node && stageRef.current?.contains(event.target);
+      if (
+        event.key === " " &&
+        !event.shiftKey &&
+        !isTextEntryTarget(event.target) &&
+        (!isInteractiveTarget(event.target) || targetInsideStage)
+      ) {
         event.preventDefault();
         setAnswerVisible((visible) => !visible);
         return;
       }
+      if (isInteractiveTarget(event.target)) return;
+      const key = event.key.toLowerCase();
       if (key === "i" && !event.shiftKey && !answerVisible && hint) {
         event.preventDefault();
         setHintVisible((visible) => !visible);
@@ -153,14 +161,14 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
-      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-100 sm:justify-center [container-type:inline-size]"
+      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-900 dark:text-slate-100 [@media(hover:hover)_and_(pointer:fine)]:justify-center [container-type:inline-size]"
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </span>
       <article
         data-testid="training-sense-card-shell"
-        className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-600 bg-[#1d222b] shadow-[0_22px_70px_rgba(0,0,0,0.22)] sm:max-h-[500px]"
+        className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-slate-600 dark:bg-[#1d222b] dark:shadow-[0_22px_70px_rgba(0,0,0,0.22)] [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
       >
         {answerVisible ? (
           <>
@@ -197,10 +205,16 @@ export function TrainingSenseCardStage({
             reversePrompt={reversePrompt}
             hint={hint}
             hintVisible={hintVisible}
+            translationVisible={translationVisible}
+            translationAvailable={Boolean(model.entryTranslation)}
             hintLabel={t("senseCard.hint.example")}
+            translationLabel={t("senseCard.translation.request")}
             audioLabel={t("senseCard.audio.play")}
             busy={busy}
             onPlayAudio={model.audioCapability ? onPlayAudio : undefined}
+            onToggleTranslation={() =>
+              setTranslationVisible((visible) => !visible)
+            }
           />
         )}
       </article>
@@ -226,7 +240,6 @@ export function TrainingSenseCardStage({
             showHintLabel={t("senseCard.hint.show")}
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
-            promptLabel={t("senseCard.answer.prompt")}
             onToggleHint={() => setHintVisible((visible) => !visible)}
             onShowAnswer={() => setAnswerVisible(true)}
             showAnswerRef={showAnswerRef}
@@ -261,13 +274,13 @@ function EntityHeader({
   onOpenDetails?: () => void;
 }) {
   return (
-    <header className="relative z-10 shrink-0 bg-[#1d222b] px-6 pb-2 pt-7 sm:px-9 sm:pt-8">
+    <header className="relative z-10 shrink-0 bg-slate-50 px-6 pb-2 pt-7 dark:bg-[#1d222b] sm:px-9 sm:pt-8">
       <SenseCardHeadwordLockup
         article={model.article}
         headword={model.headword}
         partOfSpeech={model.partOfSpeech}
         coreVocabularyLabel={model.coreVocabularyLabel}
-        tone="dark"
+        tone="light"
         inlineAction={
           onPlayAudio ? (
             <IconButton
@@ -283,7 +296,7 @@ function EntityHeader({
         topActions={
           <>
             {model.repeatCount > 0 ? (
-              <ExposureBadge count={model.repeatCount} tone="dark" />
+              <ExposureBadge count={model.repeatCount} tone="light" />
             ) : null}
             {translationAvailable ? (
               <IconButton
@@ -311,7 +324,7 @@ function EntityHeader({
         <SenseCardReveal open={translationVisible}>
           <p
             data-testid="entry-translation"
-            className="mt-2 font-sense-serif text-base italic text-[#dbc47e]"
+            className="mt-2 font-sense-serif text-base italic text-amber-700 dark:text-[#dbc47e]"
           >
             {model.entryTranslation}
           </p>
@@ -328,10 +341,14 @@ function FaceBody({
   reversePrompt,
   hint,
   hintVisible,
+  translationVisible,
+  translationAvailable,
   hintLabel,
+  translationLabel,
   audioLabel,
   busy,
   onPlayAudio,
+  onToggleTranslation,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -339,27 +356,31 @@ function FaceBody({
   reversePrompt?: TrainingSenseCardContent;
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
+  translationVisible: boolean;
+  translationAvailable: boolean;
   hintLabel: string;
+  translationLabel: string;
   audioLabel: string;
   busy: boolean;
   onPlayAudio?: () => void;
+  onToggleTranslation: () => void;
 }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
         <div className="flex flex-col items-center gap-4 text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            {mode === "definition-to-word"
-              ? platformV2Message(
-                  interfaceLanguage,
-                  "senseCard.answer.reversePrompt",
-                )
-              : platformV2Message(interfaceLanguage, "senseCard.answer.prompt")}
-          </p>
+          {mode === "definition-to-word" ? (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              {platformV2Message(
+                interfaceLanguage,
+                "senseCard.answer.reversePrompt",
+              )}
+            </p>
+          ) : null}
           {mode === "definition-to-word" ? (
             <p
               data-testid="reverse-prompt"
-              className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-50"
+              className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
             >
               {reversePrompt?.text}
             </p>
@@ -367,7 +388,7 @@ function FaceBody({
             <SenseCardHeadwordLockup
               article={model.article}
               headword={model.headword}
-              tone="dark"
+              tone="light"
               showMetadata={false}
               inlineAction={
                 onPlayAudio ? (
@@ -381,16 +402,35 @@ function FaceBody({
                   </IconButton>
                 ) : null
               }
+              topActions={
+                translationAvailable ? (
+                  <IconButton
+                    label={translationLabel}
+                    active={translationVisible}
+                    disabled={busy}
+                    onClick={onToggleTranslation}
+                  >
+                    <TranslateIcon />
+                  </IconButton>
+                ) : null
+              }
             />
           )}
+          {mode !== "definition-to-word" && model.entryTranslation ? (
+            <SenseCardReveal open={translationVisible}>
+              <p className="font-sense-serif text-base italic text-amber-700 dark:text-[#dbc47e]">
+                {model.entryTranslation}
+              </p>
+            </SenseCardReveal>
+          ) : null}
         </div>
       </div>
       {hint && hintVisible ? (
-        <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-700 bg-[#191e27] px-4 py-3 sm:inset-x-9">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-300 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#191e27] sm:inset-x-9">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
             {hintLabel}
           </p>
-          <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-200">
+          <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-800 dark:text-slate-200">
             {hint.text}
           </p>
         </aside>
@@ -551,7 +591,7 @@ function AnswerBody({
               behavior: "smooth",
             });
           }}
-          className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-600 bg-[#171b22]/95 text-slate-300 shadow-lg hover:border-slate-400 hover:text-white"
+          className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"
         >
           <ChevronDownIcon />
         </button>
@@ -575,7 +615,7 @@ function ContentSection({
 }) {
   return (
     <section className="mt-5 first:mt-0" data-section={section}>
-      <SenseSectionHeader label={title} icon={icon} count={count} tone="dark" />
+      <SenseSectionHeader label={title} icon={icon} count={count} tone="light" />
       <div className="space-y-4">{children}</div>
     </section>
   );
@@ -594,7 +634,7 @@ function ContentItem({
     accent === "usage" || accent === "example" || accent === "idiom";
   const border =
     accent === "usage"
-      ? "border-l-[3px] border-slate-500 pl-4"
+      ? "border-l-[3px] border-slate-400 pl-4 dark:border-slate-500"
       : accent === "example"
         ? "border-l-[3px] border-indigo-400 pl-4"
         : accent === "idiom"
@@ -605,8 +645,8 @@ function ContentItem({
       <p
         className={
           literary
-            ? "font-sense-serif text-lg italic leading-7 text-slate-100"
-            : "text-[17px] leading-7 text-slate-100"
+            ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
+            : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
         }
       >
         {item.text}
@@ -615,7 +655,7 @@ function ContentItem({
         <SenseCardReveal open={translationVisible}>
           <p
             data-content-translation="true"
-            className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-400"
+            className="mt-1 font-sense-serif text-[15px] italic leading-6 text-slate-500 dark:text-slate-400"
           >
             {item.translation}
           </p>
@@ -632,7 +672,6 @@ function FaceDock({
   showHintLabel,
   hideHintLabel,
   showAnswerLabel,
-  promptLabel,
   onToggleHint,
   onShowAnswer,
   showAnswerRef,
@@ -643,7 +682,6 @@ function FaceDock({
   showHintLabel: string;
   hideHintLabel: string;
   showAnswerLabel: string;
-  promptLabel: string;
   onToggleHint: () => void;
   onShowAnswer: () => void;
   showAnswerRef: React.RefObject<HTMLButtonElement>;
@@ -657,7 +695,7 @@ function FaceDock({
             aria-label={hintVisible ? hideHintLabel : showHintLabel}
             disabled={busy}
             onClick={onToggleHint}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-600 bg-[#171b22] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-[#201f36] disabled:opacity-50"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:text-indigo-200 dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
           >
             <HintIcon />
           </button>
@@ -668,15 +706,14 @@ function FaceDock({
           aria-label={showAnswerLabel}
           disabled={busy}
           onClick={onShowAnswer}
-          className="h-14 flex-1 rounded-xl border border-[#6259b2] bg-[#292650] px-4 text-sm font-semibold text-indigo-50 transition hover:bg-[#332f60] disabled:opacity-50"
+          className="h-14 flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-semibold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#6259b2] dark:bg-[#292650] dark:text-indigo-50 dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
         >
           <span>{showAnswerLabel}</span>
-          <kbd className="ml-2 rounded border border-indigo-300/30 bg-black/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-100/80">
+          <kbd className="ml-2 rounded border border-white/30 bg-black/10 px-1.5 py-0.5 text-[10px] font-medium text-white/90 dark:border-indigo-300/30 dark:bg-black/20 dark:text-indigo-100/80">
             Space
           </kbd>
         </button>
       </div>
-      <p className="sr-only">{promptLabel}</p>
     </div>
   );
 }
@@ -700,8 +737,8 @@ function AnswerDock({
 
   if (model.isKnown && model.undoKnownCapability) {
     return (
-      <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-[#18352b] px-4 py-2 text-sm">
-        <span className="inline-flex items-center gap-2 font-semibold text-emerald-200">
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
+        <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
           <CheckIcon /> {t("senseCard.known.marked")}
         </span>
         <button
@@ -709,7 +746,7 @@ function AnswerDock({
           type="button"
           disabled={busy}
           onClick={() => onAction(model.undoKnownCapability!)}
-          className="text-indigo-200 hover:text-white disabled:opacity-50"
+          className="text-indigo-700 hover:text-indigo-900 disabled:opacity-50 dark:text-indigo-200 dark:hover:text-white"
         >
           {t(model.undoKnownCapability.messageKey)}
         </button>
@@ -725,7 +762,7 @@ function AnswerDock({
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className="mx-auto block h-14 w-[94%] rounded-xl border border-indigo-400/60 bg-[#292650] text-sm font-semibold text-indigo-100 hover:bg-[#332f60] disabled:opacity-50"
+          className="mx-auto block h-14 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
         >
           {t(model.learnCapability.messageKey)}
         </button>
@@ -741,7 +778,7 @@ function AnswerDock({
             ref={promptRef}
             id="training-review-prompt"
             tabIndex={-1}
-            className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 outline-none"
+            className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 outline-none dark:text-slate-400"
           >
             {t("senseCard.sections.reviewPrompt")}
           </p>
@@ -752,7 +789,7 @@ function AnswerDock({
                 type="button"
                 disabled={busy}
                 onClick={() => onAction(capability)}
-                className={`relative min-h-[38px] overflow-hidden rounded-xl border border-slate-600 bg-[#171b22] px-2 text-xs font-semibold transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-[#202630] disabled:opacity-50 sm:h-14 ${reviewTone[capability.reviewResult]}`}
+                className={`relative min-h-[38px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-semibold outline-none transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] sm:h-14 ${reviewTone[capability.reviewResult]}`}
               >
                 {t(capability.messageKey)}
               </button>
@@ -761,7 +798,7 @@ function AnswerDock({
         </div>
       ) : null}
 
-      <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-400">
+      <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
         {model.reportCapabilities.length ? (
           <span
             className="inline-flex items-center gap-1.5 text-slate-500"
@@ -777,7 +814,7 @@ function AnswerDock({
             type="button"
             disabled={busy}
             onClick={() => onAction(model.markKnownCapability!)}
-            className="flex items-center gap-2 hover:text-slate-100 disabled:opacity-50"
+            className="flex items-center gap-2 hover:text-slate-900 disabled:opacity-50 dark:hover:text-slate-100"
           >
             <CheckIcon /> {t(model.markKnownCapability.messageKey)}
           </button>
@@ -800,6 +837,17 @@ function isInteractiveTarget(target: EventTarget | null) {
     Boolean(
       target.closest(
         "button, a, input, textarea, select, summary, [role='button'], [contenteditable='true']",
+      ),
+    )
+  );
+}
+
+function isTextEntryTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    Boolean(
+      target.closest(
+        "input, textarea, select, [contenteditable='true'], [role='textbox']",
       ),
     )
   );
@@ -840,12 +888,12 @@ function IconButton({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`flex shrink-0 items-center justify-center rounded-xl border transition disabled:opacity-50 ${
+      className={`flex shrink-0 items-center justify-center rounded-xl border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
         compact ? "h-9 w-9" : "h-10 w-10"
       } ${
         active
-          ? "border-indigo-300 bg-indigo-400/10 text-indigo-200"
-          : "border-slate-600 text-slate-300 hover:border-slate-400"
+          ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
+          : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"
       }`}
     >
       {children}
