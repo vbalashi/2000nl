@@ -7,6 +7,8 @@ Canonical repo docs:
 - `ARCHITECTURE.md` - system boundaries and safe change patterns
 - `docs/intent/index.md` - product/runtime intent
 - `docs/tech-debt/index.md` - structural debt tracker
+- `docs/runbooks/project-logbook.md` - daily logbook policy; the readable log is
+  `/Users/khrustal/adhoc/2000nl-project-log.html`
 
 Deployed locally on `nuc` via Docker Compose. Caddy is a separate stack in `/srv/caddy` and proxies this app at `http://2000.nuc`.
 

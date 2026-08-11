@@ -13,6 +13,12 @@ This folder is organized by document role rather than by creation date.
 - `exec-plans/` - active and completed implementation plans.
 - `tech-debt/` - debt tracking and longer-running cleanup plans.
 
+Human-facing daily overview:
+
+- [`runbooks/project-logbook.md`](./runbooks/project-logbook.md) - rules for
+  maintaining the readable project logbook at
+  `/Users/khrustal/adhoc/2000nl-project-log.html`.
+
 ## Canonical Entry Points
 
 - Root `AGENTS.md` - repo map and validation commands.
