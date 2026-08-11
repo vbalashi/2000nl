@@ -12,6 +12,8 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `process_raw_words.py` – parse Vandale HTML (`data/word_list.json`) into structured `data/words_content/` when run from a source-data directory such as `packages/ingestion/nl/vandale-nt2/`.
 - `import_words_db.py` – load structured entries into a dictionary in Postgres and seed the NT2 list.
 - `import_word_forms.py` – populate `word_forms` lookup from structured entries.
+- `lexicography_eval.py` – run the local clean-room prompt benchmark and blind
+  review workflow described in `lexicography_eval/README.md`.
 
 `process_raw_words.py` produces a checksummed `vandale-structured-v2`
 manifest. The supported Van Dale import path requires that manifest and uses
