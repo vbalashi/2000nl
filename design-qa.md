@@ -119,6 +119,96 @@ final result: passed
 
 ---
 
+# Design QA — issue #137 mobile primary navigation
+
+Status: PASS
+Date: 2026-08-11
+
+## Evidence
+
+- Source visual truth: Pen node `vZigu`, `30.10.10 · MOBILE PRIMARY
+  NAVIGATION · BOTTOM TABS + FOCUSED SESSION · NARROW · v0.1 · [REVIEW]`,
+  exported at 1× to
+  `/Users/khrustal/adhoc/2000nl-issue-137-mobile-bottom-nav/design-qa-evidence/vZigu.png`
+  (`1042 × 432`).
+- Browser implementation: authenticated local pilot at `http://localhost:3100/`,
+  captured through the in-app browser at a `390 × 844` CSS viewport,
+  `deviceScaleFactor: 1`:
+  - `mobile-today-390x844-cdp.png`
+  - `mobile-library-390x844-cdp.png`
+  - `mobile-statistics-390x844-cdp.png`
+  - `mobile-session-390x844-cdp.png`
+- Narrow responsive check: `mobile-today-320x844.png`; measured document width
+  equals the `320 px` viewport width.
+- Desktop check: `desktop-today-1440x1000.png`; the visible primary navigation
+  remains the desktop variant and contains three Lucide icons.
+- Combined source/implementation comparison:
+  `/Users/khrustal/adhoc/2000nl-issue-137-mobile-bottom-nav/design-qa-evidence/navigation-comparison.png`
+  (`1042 × 854`). The four implementation captures were normalized to
+  `195 × 422` each and placed together below the Pen board.
+
+## Findings
+
+No actionable P0/P1/P2 mismatch remains.
+
+- Fonts and typography: destination labels preserve the compact sans hierarchy;
+  mobile tabs remain readable at 320 and 390 px. The Pen board uses English
+  specimen copy while the browser check uses the real Russian locale; this is
+  expected localization, not typography drift.
+- Spacing and layout rhythm: Today, Library and Statistics use one bottom tab
+  bar with equal-width destinations. It stays at the bottom without horizontal
+  overflow. The focused session removes the bar and gives the card the full
+  vertical stage.
+- Colors and visual tokens: active tabs use the existing white selected surface,
+  quiet slate inactive text and the established bordered shell in both Pen and
+  code.
+- Image quality and assets: the contract contains no raster imagery. Desktop
+  destination icons come from the existing Lucide library; compact mobile tabs
+  intentionally omit icons.
+- Copy and content: the three localized destination names map directly to
+  Today/Training, Library and Statistics. No duplicate header selector remains.
+- Behavior and accessibility: the visible mobile tab has `aria-current=page`;
+  the hidden desktop/mobile alternatives use mutually exclusive responsive
+  display rules. Close in the focused session returns to Today.
+
+## Comparison history
+
+1. The first component run exposed only virtual-DOM query ambiguity because the
+   test environment does not compute responsive CSS. Tests were scoped to the
+   explicit `data-variant` contract; no browser layout change was required.
+2. The browser pass verified Today, Library, Statistics and focused Session at
+   390 px, then verified overflow at 320 px and desktop icons at 1440 px.
+3. The combined Pen/browser comparison found no P0/P1/P2 visual drift, so no
+   post-comparison visual fix was required.
+
+## Focused region comparison
+
+No separate crop was needed: the combined comparison keeps all four navigation
+regions readable and shows the full header, tab bar and focused-session close
+control for each state.
+
+## Primary interactions and runtime
+
+- Mobile tabs navigate directly among Training, Library and Statistics.
+- Continue opens the focused session without mobile tabs.
+- Close returns to Today and restores the tab bar.
+- No horizontal overflow at 320 or 390 px.
+- Local health gate reports `status: ok`, `database.target: local`, and the
+  approved pilot profile. No unhandled browser error was observed in the final
+  cycle.
+
+## Follow-up polish
+
+- P3: add a browser-level viewport regression test so the 320/390 px overflow
+  and single visible navigation landmark are protected automatically rather
+  than only by component tests plus visual QA.
+
+## Final result
+
+final result: passed
+
+---
+
 # Design QA — issue #134 responsive shell
 
 Status: PASS

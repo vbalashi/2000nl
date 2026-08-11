@@ -4,7 +4,10 @@ import React from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { DetailedStats } from "@/lib/types";
-import { AppDestinationNav } from "./AppDestinationNav";
+import {
+  AppDestinationNav,
+  MobileAppDestinationNav,
+} from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 
@@ -157,6 +160,11 @@ export function StatisticsDestination({
           </section>
         </div>
       </main>
+      <MobileAppDestinationNav
+        active="statistics"
+        interfaceLanguage={interfaceLanguage}
+        onNavigate={onNavigate}
+      />
     </section>
   );
 }

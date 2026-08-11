@@ -11,6 +11,12 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 
+function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
+  return screen
+    .getAllByRole("navigation", { name: "Primary" })
+    .find((navigation) => navigation.getAttribute("data-variant") === variant)!;
+}
+
 const mockWord = {
   id: "word-1",
   headword: "huis",
@@ -508,7 +514,11 @@ test("shell Library replaces the visible destination without remounting the curr
     trainingFetchCount,
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "Training" }));
+  fireEvent.click(
+    within(getPrimaryNavigation("desktop")).getByRole("button", {
+      name: "Training",
+    }),
+  );
 
   expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
@@ -540,13 +550,19 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
 
   fireEvent.click(
-    screen.getByRole("button", { name: /Statistieken|Statistics/ }),
+    within(getPrimaryNavigation("desktop")).getByRole("button", {
+      name: /Statistieken|Statistics/,
+    }),
   );
   expect(
     await screen.findByRole("heading", { name: /Statistieken|Statistics/ }),
   ).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("button", { name: "Training" }));
+  fireEvent.click(
+    within(getPrimaryNavigation("desktop")).getByRole("button", {
+      name: "Training",
+    }),
+  );
   expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
 
   fireEvent.click(screen.getByLabelText("Settings"));
@@ -556,7 +572,7 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
   expect(screen.queryByText(/Audio kwaliteit/i)).not.toBeInTheDocument();
 
   fireEvent.click(
-    within(screen.getByRole("navigation", { name: "Primary" })).getByRole(
+    within(getPrimaryNavigation("desktop")).getByRole(
       "button",
       { name: "Training" },
     ),
@@ -568,11 +584,19 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
 });
 
 test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
-  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  render(
+    <TrainingScreen
+      user={user}
+      trainingTodaySetupEnabled
+      extendedDestinationsEnabled
+      onRequestDestination={vi.fn()}
+    />,
+  );
 
   expect(
     await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
   ).toBeInTheDocument();
+  expect(getPrimaryNavigation("mobile-tabs")).toBeInTheDocument();
   await waitFor(() =>
     expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
   );
@@ -587,6 +611,11 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
     await screen.findByRole("heading", { name: "huis" }),
   ).toBeInTheDocument();
   expect(
+    screen.queryByRole("navigation", { name: "Primary" })?.getAttribute(
+      "data-variant",
+    ),
+  ).toBe("desktop");
+  expect(
     screen.queryByRole("button", { name: "Wijzigen" }),
   ).not.toBeInTheDocument();
 
@@ -594,6 +623,7 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   expect(
     screen.getByRole("heading", { name: /Good morning|Goedemorgen/ }),
   ).toBeInTheDocument();
+  expect(getPrimaryNavigation("mobile-tabs")).toBeInTheDocument();
 });
 
 test("rollout-off keeps the legacy Training card as the entry surface", async () => {

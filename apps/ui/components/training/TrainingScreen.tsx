@@ -69,7 +69,10 @@ import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
-import { AppDestinationNav } from "@/components/navigation/AppDestinationNav";
+import {
+  AppDestinationNav,
+  MobileAppDestinationNav,
+} from "@/components/navigation/AppDestinationNav";
 import {
   AppUtilityNav,
   type AppUtilityNavProps,
@@ -2596,16 +2599,13 @@ export function TrainingScreen({
         {trainingTodaySetupEnabled &&
         trainingPilot.surface !== "session" &&
         onRequestDestination ? (
-          <div className="flex-none border-t border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
-            <AppDestinationNav
-              active="training"
-              interfaceLanguage={onboardingLang}
-              disabled={actionLoading}
-              extendedDestinationsEnabled={extendedDestinationsEnabled}
-              mobileVariant="tabs"
-              onNavigate={onRequestDestination}
-            />
-          </div>
+          <MobileAppDestinationNav
+            active="training"
+            interfaceLanguage={onboardingLang}
+            disabled={actionLoading}
+            extendedDestinationsEnabled={extendedDestinationsEnabled}
+            onNavigate={onRequestDestination}
+          />
         ) : null}
 
         {trainingShellV2Enabled ? (
