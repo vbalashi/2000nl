@@ -174,26 +174,16 @@ function mockAuthenticatedClients() {
     auth: { getUser },
     rpc,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(platformUserClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
 }
 
 function mockAuthenticatedClientsWithPreference(targetLang = "en") {
@@ -202,26 +192,16 @@ function mockAuthenticatedClientsWithPreference(targetLang = "en") {
     rpc,
     from,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(preferenceClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
   from.mockImplementationOnce((table: string) => {
     if (table === "user_settings") {
       return queryChain({
@@ -374,6 +354,8 @@ describe("/api/platform/v1/translation", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledTimes(1);
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "https://client.example",
     );
@@ -381,6 +363,31 @@ describe("/api/platform/v1/translation", () => {
       entryId: ENTRY_ID,
       targetLang: "ru",
       status: "pending",
+    });
+  });
+
+  test("does not create the service cache client before gated entry authorization", async () => {
+    const platformUserClient = { auth: { getUser }, rpc };
+    createClient.mockReturnValueOnce(platformUserClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(404);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_entry_id: ENTRY_ID,
+    });
+    expect(createClient).toHaveBeenCalledTimes(1);
+    expect(from).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru",
+      error: "word_entry_not_found",
     });
   });
 

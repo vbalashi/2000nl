@@ -159,7 +159,8 @@ describe("/api/translation", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    createClient.mockReturnValueOnce({ auth: { getUser } });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
+    createClient.mockReturnValueOnce({ auth: { getUser }, rpc });
 
     const { GET } = await import("@/app/api/translation/route");
     const response = await GET(request("token-1"));

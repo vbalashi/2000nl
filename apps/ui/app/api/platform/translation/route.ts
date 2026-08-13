@@ -6,8 +6,10 @@ import {
   requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
-import { GET as getTranslation } from "@/app/api/translation/route";
+import type { AuthenticatedSupabase } from "@/lib/platform/serverSupabase";
 import { asString } from "@/lib/platform/platformApi";
+import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
+import { coordinateDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCoordinator";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
@@ -44,9 +46,10 @@ export function OPTIONS(request: NextRequest) {
 
 async function resolveTargetLang(
   request: NextRequest,
-  explicitTargetLang: string | null,
-): Promise<{ targetLang: string } | { response: Response }> {
-  if (explicitTargetLang) return { targetLang: explicitTargetLang };
+): Promise<
+  | { targetLang: string; auth: AuthenticatedSupabase }
+  | { response: Response }
+> {
 
   const auth = await getAuthenticatedSupabase(request);
   if (auth instanceof Response) {
@@ -80,7 +83,7 @@ async function resolveTargetLang(
     return { response: jsonNoStore({ error: "translation_disabled" }, 400) };
   }
 
-  return { targetLang };
+  return { targetLang, auth };
 }
 
 export async function POST(request: NextRequest) {
@@ -121,8 +124,44 @@ export async function POST(request: NextRequest) {
         scopeError.status,
       );
     }
+    const targetLang = explicitTargetLang.trim();
+    const dbLang = targetLang.replace("_", "-").toLowerCase();
+    if (dbLang === "off") {
+      return reply({ entryId, targetLang, error: "translation_disabled" }, 400);
+    }
+    if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(dbLang)) {
+      return reply({ entryId, targetLang, error: "Invalid lang" }, 400);
+    }
+    if (item) {
+      const draftTranslation = await translateDraftItem(item, targetLang);
+      return reply(draftTranslation.payload, draftTranslation.status);
+    }
+    if (!entryId) return reply({ error: "missing_entry_id" }, 400);
+    const { data: entry, error } = await auth.supabase.rpc(
+      "fetch_dictionary_entry_by_id_gated",
+      { p_entry_id: entryId },
+    );
+    if (error) return reply({ entryId, targetLang, error: error.message }, 500);
+    if (!entry?.raw) {
+      return reply({ entryId, targetLang, error: "word_entry_not_found" }, 404);
+    }
+    const result = await coordinateDictionaryMeaningTranslation({
+      wordEntryId: entryId,
+      word: entry as DictionaryLookupPayload,
+      targetLang,
+      dbLang,
+      force: boolParam(body?.force),
+      debug: boolParam(body?.debug),
+    });
+    const response = reply({ entryId, targetLang, ...result.payload }, result.status);
+    response.headers.set("X-Platform-Cache", result.cacheStatus);
+    response.headers.set(
+      "Server-Timing",
+      `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,
+    );
+    return response;
   }
-  const resolved = await resolveTargetLang(request, explicitTargetLang);
+  const resolved = await resolveTargetLang(request);
   if ("response" in resolved) {
     const errorResponse = resolved.response;
     const payload = await errorResponse.json().catch(() => null);
@@ -145,34 +184,23 @@ export async function POST(request: NextRequest) {
     return reply({ error: "missing_entry_id" }, 400);
   }
 
-  const url = new URL(request.url);
-  url.pathname = "/api/translation";
-  url.search = "";
-  url.searchParams.set("word_id", entryId);
-  url.searchParams.set("lang", targetLang);
-  if (boolParam(body?.force)) url.searchParams.set("force", "1");
-  if (boolParam(body?.debug)) url.searchParams.set("debug", "1");
-
-  const translationResponse = await getTranslation(
-    new NextRequest(url, {
-      method: "GET",
-      headers: request.headers,
-    }),
+  const dbLang = targetLang.trim().replace("_", "-").toLowerCase();
+  const { data: entry, error } = await resolved.auth.supabase.rpc(
+    "fetch_dictionary_entry_by_id_gated",
+    { p_entry_id: entryId },
   );
-  const payload = await translationResponse.json().catch(() => null);
-
-  const response = reply(
-    {
-      entryId,
-      targetLang,
-      ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
-    },
-    translationResponse.status,
-  );
-  response.headers.set(
-    "X-Platform-Cache",
-    translationResponse.headers.get("x-translation-cache") ?? "unknown",
-  );
+  if (error) return reply({ entryId, targetLang, error: error.message }, 500);
+  if (!entry?.raw) return reply({ entryId, targetLang, error: "word_entry_not_found" }, 404);
+  const result = await coordinateDictionaryMeaningTranslation({
+    wordEntryId: entryId,
+    word: entry as DictionaryLookupPayload,
+    targetLang,
+    dbLang,
+    force: boolParam(body?.force),
+    debug: boolParam(body?.debug),
+  });
+  const response = reply({ entryId, targetLang, ...result.payload }, result.status);
+  response.headers.set("X-Platform-Cache", result.cacheStatus);
   response.headers.set(
     "Server-Timing",
     `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,
