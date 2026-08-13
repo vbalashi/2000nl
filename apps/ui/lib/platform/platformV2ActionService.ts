@@ -11,6 +11,7 @@ import type {
 export type PlatformV2ActionOperationResult = {
   payload: unknown;
   status: number;
+  receiptStatus?: "accepted" | "duplicate";
 };
 
 export async function performPlatformV2Action(
@@ -62,7 +63,11 @@ export async function performPlatformV2Action(
     accepted: true,
     card,
   };
-  return { payload, status: 200 };
+  return {
+    payload,
+    status: 200,
+    receiptStatus: result.status as "accepted" | "duplicate",
+  };
 }
 
 function actionError(error: unknown): PlatformV2ActionOperationResult {
