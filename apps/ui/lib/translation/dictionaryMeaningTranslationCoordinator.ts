@@ -1,5 +1,5 @@
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
-import { getPlatformServiceSupabase } from "@/lib/platform/serverSupabase";
+import { getTranslationServiceSupabase } from "@/lib/platform/serverSupabase";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
@@ -69,40 +69,96 @@ function attachOverlayMeta(
   }) ?? {};
 }
 
-export type DictionaryMeaningTranslationCoordinatorResult = {
-  outcome: "ready" | "pending" | "failed" | "error";
-  payload: {
+type CoordinatorPayloadBase = {
+  overlay?: TranslationOverlay | null;
+  note?: string | null;
+  error?: string | null;
+  missing?: { supabaseUrl?: boolean; serviceKey?: boolean };
+  debug?: Record<string, unknown>;
+};
+
+export type DictionaryMeaningTranslationCoordinatorResult =
+  | {
+      outcome: "ready";
+      payload: CoordinatorPayloadBase & {
+        status: "ready";
+        overlay: TranslationOverlay | null;
+      };
+      httpStatus: 200;
+      cacheStatus: "hit" | "provider";
+    }
+  | {
+      outcome: "pending";
+      payload: CoordinatorPayloadBase & { status: "pending" };
+      httpStatus: 200;
+      cacheStatus: "pending";
+    }
+  | {
+      outcome: "failed";
+      payload: CoordinatorPayloadBase & { status: "failed"; error: string };
+      httpStatus: 502;
+      cacheStatus: "provider";
+    }
+  | {
+      outcome: "error";
+      payload: {
+        error: string;
+        missing?: { supabaseUrl?: boolean; serviceKey?: boolean };
+        debug?: Record<string, unknown>;
+      };
+      httpStatus: number;
+      cacheStatus: "unknown";
+    };
+
+type CoordinatorPayload = CoordinatorPayloadBase & {
     status?: WordEntryTranslationStatus;
     overlay?: TranslationOverlay | null;
-    note?: string | null;
-    error?: string | null;
-    missing?: { supabaseUrl?: boolean; serviceKey?: boolean };
-    debug?: Record<string, unknown>;
-  };
-  status: number;
-  cacheStatus: "hit" | "pending" | "provider" | "unknown";
 };
 
 function coordinatorResult(
-  payload: DictionaryMeaningTranslationCoordinatorResult["payload"],
+  payload: CoordinatorPayload,
   init: {
     status?: number;
     cacheStatus?: DictionaryMeaningTranslationCoordinatorResult["cacheStatus"];
   } = {},
 ): DictionaryMeaningTranslationCoordinatorResult {
-  const outcome =
-    payload.status === "ready"
-      ? "ready"
-      : payload.status === "pending"
-        ? "pending"
-        : payload.status === "failed"
-          ? "failed"
-          : "error";
+  if (payload.status === "ready") {
+    return {
+      outcome: "ready",
+      payload: { ...payload, status: "ready", overlay: payload.overlay ?? null },
+      httpStatus: 200,
+      cacheStatus: init.cacheStatus === "provider" ? "provider" : "hit",
+    };
+  }
+  if (payload.status === "pending") {
+    return {
+      outcome: "pending",
+      payload: { ...payload, status: "pending" },
+      httpStatus: 200,
+      cacheStatus: "pending",
+    };
+  }
+  if (payload.status === "failed") {
+    return {
+      outcome: "failed",
+      payload: {
+        ...payload,
+        status: "failed",
+        error: payload.error ?? "translation_failed",
+      },
+      httpStatus: 502,
+      cacheStatus: "provider",
+    };
+  }
   return {
-    outcome,
-    payload,
-    status: init.status ?? 200,
-    cacheStatus: init.cacheStatus ?? "unknown",
+    outcome: "error",
+    payload: {
+      error: payload.error ?? "translation_failed",
+      ...(payload.missing ? { missing: payload.missing } : {}),
+      ...(payload.debug ? { debug: payload.debug } : {}),
+    },
+    httpStatus: init.status ?? 500,
+    cacheStatus: "unknown",
   };
 }
 
@@ -157,11 +213,21 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     );
   }
 
-  const service = getPlatformServiceSupabase();
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
+  const service = getTranslationServiceSupabase();
   if (service instanceof Response) {
     return coordinatorResult(
       {
         error: "Server is not configured",
+        missing: {
+          supabaseUrl: !supabaseUrl,
+          serviceKey: !serviceKey,
+        },
         ...(debug
           ? {
               debug: {
@@ -174,10 +240,8 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     );
   }
 
-  const supabaseUrl =
-    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseProject = (() => {
-    const m = supabaseUrl.match(/^https:\/\/([^.]+)\.supabase\.co/);
+    const m = supabaseUrl?.match(/^https:\/\/([^.]+)\.supabase\.co/);
     return m?.[1] ?? null;
   })();
 

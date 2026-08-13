@@ -65,5 +65,5 @@ export async function GET(req: NextRequest) {
     force,
     debug,
   });
-  return json(result.payload, result.status, result.cacheStatus);
+  return json(result.payload, result.httpStatus, result.cacheStatus);
 }

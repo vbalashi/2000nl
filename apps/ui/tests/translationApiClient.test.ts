@@ -79,4 +79,34 @@ describe("translationApiClient", () => {
     await rejection;
     vi.useRealTimers();
   });
+
+  test("bounds stalled session acquisition before fetch starts", async () => {
+    vi.useFakeTimers();
+    getSession.mockReturnValueOnce(new Promise(() => undefined));
+
+    const pending = fetchDictionaryMeaningTranslation({
+      entryId: "entry-1",
+      targetLanguageCode: "ru",
+      timeoutMs: 10,
+    });
+    const rejection = expect(pending).rejects.toThrow("platform_request_timeout");
+    await vi.advanceTimersByTimeAsync(10);
+    await rejection;
+    expect(fetch).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  test("honors caller abort while session acquisition is pending", async () => {
+    getSession.mockReturnValueOnce(new Promise(() => undefined));
+    const controller = new AbortController();
+    const pending = fetchDictionaryMeaningTranslation({
+      entryId: "entry-1",
+      targetLanguageCode: "ru",
+      signal: controller.signal,
+    });
+    const rejection = expect(pending).rejects.toThrow("AbortError");
+    controller.abort();
+    await rejection;
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

@@ -171,6 +171,27 @@ describe("/api/translation", () => {
     expect(body.error).toMatch(/^provider_unknown_error:[a-f0-9]{24}$/);
   });
 
+  test("preserves legacy missing-service configuration diagnostics", async () => {
+    delete process.env.SUPABASE_SECRET_KEY;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.SUPABASE_SERVICE_KEY;
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
+    createClient.mockReturnValueOnce({ auth: { getUser }, rpc });
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "Server is not configured",
+      missing: { supabaseUrl: false, serviceKey: true },
+    });
+  });
+
   test("does not require connected-client principal schema for first-party translation", async () => {
     process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
     const userClient = {

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     force: boolParam(body?.force),
     debug: boolParam(body?.debug),
   });
-  const response = reply({ entryId, targetLang, ...result.payload }, result.status);
+  const response = reply({ entryId, targetLang, ...result.payload }, result.httpStatus);
   response.headers.set("X-Platform-Cache", result.cacheStatus);
   response.headers.set(
     "Server-Timing",
