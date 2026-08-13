@@ -9,25 +9,19 @@ import { trainingDebug } from "@/lib/trainingDebug";
 import {
   fetchDictionaryEntry,
   fetchAvailableLearningLanguages,
-  fetchNextTrainingWord,
-  fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
-  fetchTrainingWordByLookup,
   fetchStats,
   fetchRecentHistory,
   isTrainingFocusFilterActive,
   updateActiveTrainingScope,
-  recordReview,
-  recordWordView,
-  fetchLastReviewDebug,
-  ReviewResult,
+  type ReviewResult,
 } from "@/lib/trainingService";
 import type {
+  ActiveTrainingScope,
   CardFilter,
   DetailedStats,
   DictionaryEntry,
   EntryLearningListMembership,
-  QueueTurn,
   TrainingFocusFilter,
   TrainingFilterSource,
   TrainingMode,
@@ -38,10 +32,6 @@ import type {
 } from "@/lib/types";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useCardParams } from "@/lib/cardParams";
-import {
-  generateReviewTurnId,
-  getNextQueueTransition,
-} from "@/lib/training/trainingQueue";
 import {
   useTrainingPreferences,
   type ThemePreference,
@@ -60,15 +50,10 @@ import {
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
-import {
-  markTrainingEntryPresentationStarted,
-  measureTrainingTransitionStage,
-} from "@/lib/training/trainingTransitionTiming";
-import {
-  clearPlatformV2TrainingClientCaches,
-  type PlatformV2TrainingActionCapability,
-} from "@/lib/platform/platformV2TrainingClient";
-import { usePreparedNextTrainingTurn } from "./v2/usePreparedNextTrainingTurn";
+import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
+import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
+import { useTrainingTurnController } from "./useTrainingTurnController";
+import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -109,50 +94,6 @@ type Props = {
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
 };
-
-type AcceptedCardTransition = {
-  word: TrainingWord;
-  wordMode: TrainingMode;
-  currentCardKey: string;
-  turnIdForReview: string | null;
-  isNextCardOverride: boolean;
-  nextQueueTurn: QueueTurn;
-  prefetched: TrainingWord | null;
-  prefetchedReady: Promise<boolean> | null;
-};
-
-type LoadNextWordRequest = {
-  excludeWordIds?: string[];
-  scope?: { listId?: string | null; listType?: WordListType | null };
-  queueTurn?: QueueTurn;
-  scenario?: string;
-  excludeCardKeys?: string[];
-  cardFilter?: CardFilter;
-  focusFilter?: TrainingFocusFilter;
-};
-
-type LoadNextWordResult = "loaded" | "empty" | "error" | "skipped";
-
-const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
-  "word-to-definition",
-  "definition-to-word",
-  "listen-recognize",
-]);
-
-const resolveRestrictedListModes = (
-  list?: WordListSummary | null,
-): TrainingMode[] | undefined => {
-  if (list?.card_policy !== "restrict") return undefined;
-  return (list.card_type_ids ?? []).filter((mode): mode is TrainingMode =>
-    SUPPORTED_LIST_CARD_MODES.has(mode as TrainingMode),
-  );
-};
-
-const trainingCardKey = (word: TrainingWord, fallbackMode: TrainingMode) =>
-  `${word.id}:${word.mode ?? fallbackMode}`;
-
-const isPlatformV2TrainingMode = (mode: TrainingMode) =>
-  mode === "word-to-definition" || mode === "definition-to-word";
 
 const ACTION_LABELS: Record<
   ReviewResult,
@@ -284,12 +225,8 @@ export function TrainingScreen({
     DEFAULT_LANGUAGE_OPTIONS,
   );
   const trainingLanguageManuallyChangedRef = useRef(false);
-
-  useEffect(() => {
-    if (!trainingLanguageManuallyChangedRef.current) {
-      setCurrentTrainingLanguage(language);
-    }
-  }, [language]);
+  const languageHydrationPendingRef = useRef(false);
+  const languageHydrationObservedNotReadyRef = useRef(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -325,11 +262,6 @@ export function TrainingScreen({
     };
   }, [currentTrainingLanguage, user?.id]);
 
-  const handleTrainingLanguageChange = useCallback((value: string) => {
-    trainingLanguageManuallyChangedRef.current = true;
-    setCurrentTrainingLanguage(value);
-  }, []);
-
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
@@ -356,9 +288,6 @@ export function TrainingScreen({
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
-  const [trainingLoadError, setTrainingLoadError] = useState<string | null>(
-    null,
-  );
   const [wordLookupNotice, setWordLookupNotice] = useState<string | null>(null);
   // Sidebar tabs: "recent" for history, "details" for word detail panel
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
@@ -380,29 +309,6 @@ export function TrainingScreen({
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
-  const [loadingWord, setLoadingWord] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  // `actionLoading` is React state (async to update). Keep a ref for immediate,
-  // synchronous guards against double-submit from rapid keypresses/touches.
-  const actionLoadingRef = useRef(false);
-
-  useEffect(() => {
-    onNavigationBlockedChange?.(actionLoading);
-    return () => onNavigationBlockedChange?.(false);
-  }, [actionLoading, onNavigationBlockedChange]);
-  const currentTurnIdRef = useRef<string | null>(null);
-  // Track reviewed cards by entry+mode so another mode for the same entry can
-  // still appear in the same session.
-  const reviewedInSessionRef = useRef<Set<string>>(new Set());
-
-  const presentWord = useCallback(
-    (word: TrainingWord | null) => {
-      if (word) markTrainingEntryPresentationStarted(word.id);
-      setCurrentWord(word);
-      currentTurnIdRef.current = word ? generateReviewTurnId() : null;
-    },
-    [setCurrentWord],
-  );
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
@@ -463,9 +369,6 @@ export function TrainingScreen({
     setHintRevealed((prev) => !prev);
   }, []);
 
-  // Queue rotation state for round-robin between new and review queues
-  const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
-  const [reviewCounter, setReviewCounter] = useState(0);
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
@@ -475,7 +378,6 @@ export function TrainingScreen({
     activeListValue,
     applyListLocal,
     availableLists,
-    handleListSelectValue,
     handleListsUpdated: refreshListsAfterUpdate,
     activeTrainingScope,
     listHydrated,
@@ -492,78 +394,33 @@ export function TrainingScreen({
   });
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!activeTrainingScope) return;
-    setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
-    setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
-    setEnabledModes(activeTrainingScope.modesEnabled as TrainingMode[], {
-      persist: false,
-    });
-    setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
-  }, [
-    activeTrainingScope,
-    setActiveScenario,
-    setCardFilterPreference,
-    setEnabledModes,
-    setNewReviewRatio,
-  ]);
-
-  useEffect(() => {
-    if (!activeList?.default_scenario_id) {
-      appliedDefaultScenarioListRef.current = null;
-      return;
-    }
-    if (activeTrainingScope?.hasSavedScope) return;
-    if (appliedDefaultScenarioListRef.current === activeList.id) return;
-
-    appliedDefaultScenarioListRef.current = activeList.id;
-    setActiveScenario(activeList.default_scenario_id, { persist: false });
-  }, [
-    activeList?.default_scenario_id,
-    activeList?.id,
-    activeTrainingScope?.hasSavedScope,
-    setActiveScenario,
-  ]);
+  const lastAppliedActiveTrainingScopeRef = useRef<ActiveTrainingScope | null>(
+    null,
+  );
+  const localTrainingPreferencesRef = useRef({
+    activeScenario,
+    cardFilter,
+    enabledModes,
+    newReviewRatio,
+  });
+  localTrainingPreferencesRef.current = {
+    activeScenario,
+    cardFilter,
+    enabledModes,
+    newReviewRatio,
+  };
 
   const enabledModesKey = enabledModes.join("|");
-
-  // Session boundary: list selection or mode/scenario changes should reset the
-  // session-reviewed set so the new session starts fresh.
-  useEffect(() => {
-    reviewedInSessionRef.current.clear();
-  }, [
-    activeScenario,
-    currentTrainingLanguage,
-    enabledModesKey,
-    trainingFocusFilterKey,
-    wordListId,
-    wordListType,
-  ]);
-
-  // Also clear on unmount to avoid leaking state across mounts in tests/dev.
-  useEffect(() => {
-    const reviewedInSession = reviewedInSessionRef.current;
-    return () => {
-      reviewedInSession.clear();
-    };
-  }, []);
 
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
   const statsRequestGenerationRef = useRef(0);
   const historyRequestGenerationRef = useRef(0);
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
-  // Ref to prevent concurrent loadNextWord calls
-  const loadingInProgress = useRef(false);
-  // Ref: when set, present this entry as the next card once without changing
-  // the active training scope, viewed list, or list membership.
-  const nextCardOverrideWordIdRef = useRef<string | null>(null);
-  const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
-  const [nextCardOverrideNotice, setNextCardOverrideNotice] = useState<
-    string | null
-  >(null);
   const autoPlayedAudioCardRef = useRef<string | null>(null);
+  const lastReloadedLanguageModeScopeRef = useRef(
+    `${currentTrainingLanguage}|${enabledModesKey}`,
+  );
 
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
@@ -575,70 +432,13 @@ export function TrainingScreen({
       currentMode === "definition-to-word");
   const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
-  const selectPrefetchedNextWord = useCallback(
-    (predictedQueueTurn: QueueTurn, currentCardKey: string) =>
-      fetchNextTrainingWordByScenario(
-        user.id,
-        activeScenario,
-        [],
-        {
-          listId: wordListId ?? undefined,
-          listType: wordListType ?? undefined,
-        },
-        cardFilter,
-        predictedQueueTurn,
-        [...reviewedInSessionRef.current, currentCardKey],
-        resolveRestrictedListModes(activeList),
-        trainingFocusFilterActive ? trainingFocusFilter : null,
-      ),
-    [
-      activeList,
-      activeScenario,
-      cardFilter,
-      trainingFocusFilter,
-      trainingFocusFilterActive,
-      user.id,
-      wordListId,
-      wordListType,
-    ],
-  );
-
-  const {
-    warmWord: warmTrainingV2Word,
-    consumeForCard: consumePreparedNextTurn,
-    reset: resetPreparedNextTurn,
-    nextTransitionId,
-  } = usePreparedNextTrainingTurn({
-    cacheOwnerId: user.id,
-    currentWord,
-    currentMode,
-    enabledModes,
-    contentLanguageCode: currentTrainingLanguage,
-    translationTargetLanguageCode:
-      translationLang === "off" ? null : translationLang,
-    queueTurn,
-    cardFilter,
-    reviewCounter,
-    newReviewRatio,
-    selectNext: selectPrefetchedNextWord,
-    audioEnabled: audioModeEnabled,
-    preloadAudio: preloadAudioForWord,
-  });
-
-  useEffect(() => {
-    const cacheOwnerId = user?.id;
-    return () => {
-      if (cacheOwnerId) clearPlatformV2TrainingClientCaches(cacheOwnerId);
-    };
-  }, [user?.id]);
-
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
       autoPlayedAudioCardRef.current = null;
       return;
     }
 
-    const cardKey = trainingCardKey(currentWord, currentMode);
+    const cardKey = getTrainingCardKey(currentWord, currentMode);
     if (autoPlayedAudioCardRef.current === cardKey) return;
     autoPlayedAudioCardRef.current = cardKey;
 
@@ -697,25 +497,255 @@ export function TrainingScreen({
     ],
   );
 
+  const loadStats = useCallback(
+    async (
+      scope?: { listId?: string | null; listType?: WordListType | null },
+      logContext?: string,
+      isInitialLoad?: boolean,
+    ) => {
+      if (!user?.id) return;
+      const generation = (statsRequestGenerationRef.current += 1);
+      const effectiveListId = scope?.listId ?? wordListId;
+      const effectiveListType = scope?.listType ?? wordListType;
+      const fresh = await fetchStats(
+        user.id,
+        enabledModes,
+        {
+          listId: effectiveListId ?? undefined,
+          listType: effectiveListType ?? undefined,
+        },
+        logContext,
+      );
+      if (generation !== statsRequestGenerationRef.current) return;
+
+      if (isInitialLoad || initialReviewDue === null) {
+        const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
+        setInitialReviewDue(totalReviewDue);
+        trainingDebug.log(
+          `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
+          "color: #f59e0b; font-weight: bold;",
+        );
+      }
+      setStats(fresh);
+    },
+    [user?.id, enabledModes, wordListId, wordListType, initialReviewDue],
+  );
+
+  const loadRecentHistory = useCallback(async () => {
+    if (!user?.id) return;
+    const generation = (historyRequestGenerationRef.current += 1);
+    const history = await fetchRecentHistory(user.id);
+    if (generation !== historyRequestGenerationRef.current) return;
+    setRecentEntries(history);
+  }, [user?.id]);
+
+  const selectionPort = useTrainingTurnSelectionPort({
+    userId: user.id,
+    activeScenario,
+    activeList,
+    availableLists,
+    wordListId,
+    wordListType,
+    cardFilter,
+    focusFilter: trainingFocusFilter,
+  });
+  const reviewLegacy = useLegacyTrainingReviewPort({
+    userId: user.id,
+    stats,
+    setRecentEntries,
+  });
+  const resetCardPresentation = useCallback(() => {
+    setRevealed(false);
+    setHintRevealed(false);
+  }, []);
+  const refreshAfterAccepted = useCallback(
+    async ({
+      statsLabel,
+      refreshHistory,
+    }: {
+      statsLabel: string;
+      refreshHistory: boolean;
+    }) => {
+      await Promise.all([
+        loadStats(undefined, statsLabel),
+        refreshHistory ? loadRecentHistory() : Promise.resolve(),
+      ]);
+    },
+    [loadRecentHistory, loadStats],
+  );
+  const sessionScopeKey = [
+    activeScenario,
+    currentTrainingLanguage,
+    enabledModesKey,
+    trainingFocusFilterKey,
+    wordListId ?? "",
+    wordListType ?? "",
+  ].join("|");
+  const {
+    loadingWord,
+    actionLoading,
+    loadError: trainingLoadError,
+    reportLoadError: setTrainingLoadError,
+    nextTransitionId,
+    nextCardOverrideNotice,
+    loadNextWord,
+    beginSessionScopeChange,
+    replaceSessionScopeAndLoad,
+    requestNextCardOverride,
+    resetFocusQueue,
+    resetQueueForFilter,
+    clearReviewedSession,
+    submitLegacyReview: handleAction,
+    acceptPlatformProgressAction: handleV2ProgressActionAccepted,
+  } = useTrainingTurnController({
+    userId: user.id,
+    currentWord,
+    setCurrentWord,
+    enabledModes,
+    contentLanguageCode: currentTrainingLanguage,
+    translationTargetLanguageCode:
+      translationLang === "off" ? null : translationLang,
+    cardFilter,
+    newReviewRatio,
+    firstEncounter,
+    trainingShellV2Enabled,
+    recoverLoadErrors: trainingTodaySetupEnabled,
+    focusFilter: trainingFocusFilter,
+    sessionScopeKey,
+    selection: selectionPort,
+    audioEnabled: audioModeEnabled,
+    preloadAudio: preloadAudioForWord,
+    resetCardPresentation,
+    reviewLegacy,
+    refreshAfterAccepted,
+  });
+
+  useEffect(() => {
+    if (
+      !trainingLanguageManuallyChangedRef.current &&
+      currentTrainingLanguage !== language
+    ) {
+      beginSessionScopeChange();
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
+      setCurrentTrainingLanguage(language);
+    }
+  }, [
+    beginSessionScopeChange,
+    currentTrainingLanguage,
+    language,
+  ]);
+
+  useEffect(() => {
+    if (!activeTrainingScope) return;
+    if (lastAppliedActiveTrainingScopeRef.current === activeTrainingScope) return;
+    lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+    const current = localTrainingPreferencesRef.current;
+    const nextModes = activeTrainingScope.modesEnabled as TrainingMode[];
+    const scopeChanged =
+      current.activeScenario !== activeTrainingScope.activeScenario ||
+      current.cardFilter !== activeTrainingScope.cardFilter ||
+      current.enabledModes.join("|") !== nextModes.join("|");
+    if (scopeChanged) beginSessionScopeChange();
+    if (current.activeScenario !== activeTrainingScope.activeScenario) {
+      setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
+    }
+    if (current.cardFilter !== activeTrainingScope.cardFilter) {
+      setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
+    }
+    if (current.enabledModes.join("|") !== nextModes.join("|")) {
+      setEnabledModes(nextModes, { persist: false });
+    }
+    if (current.newReviewRatio !== activeTrainingScope.newReviewRatio) {
+      setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
+    }
+  }, [
+    activeTrainingScope,
+    beginSessionScopeChange,
+    setActiveScenario,
+    setCardFilterPreference,
+    setEnabledModes,
+    setNewReviewRatio,
+  ]);
+
+  useEffect(() => {
+    if (!activeList?.default_scenario_id) {
+      appliedDefaultScenarioListRef.current = null;
+      return;
+    }
+    if (activeTrainingScope?.hasSavedScope) return;
+    if (appliedDefaultScenarioListRef.current === activeList.id) return;
+
+    appliedDefaultScenarioListRef.current = activeList.id;
+    if (activeScenario !== activeList.default_scenario_id) {
+      beginSessionScopeChange();
+      setActiveScenario(activeList.default_scenario_id, { persist: false });
+      if (initialLoadDone.current) {
+        void replaceSessionScopeAndLoad({
+          scope: { listId: wordListId, listType: wordListType },
+          scenario: activeList.default_scenario_id,
+        });
+      }
+    }
+  }, [
+    activeList?.default_scenario_id,
+    activeList?.id,
+    activeScenario,
+    activeTrainingScope?.hasSavedScope,
+    beginSessionScopeChange,
+    replaceSessionScopeAndLoad,
+    setActiveScenario,
+    wordListId,
+    wordListType,
+  ]);
+
+  const handleTrainingLanguageChange = useCallback(
+    (value: string) => {
+      beginSessionScopeChange();
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
+      trainingLanguageManuallyChangedRef.current = true;
+      setCurrentTrainingLanguage(value);
+    },
+    [beginSessionScopeChange],
+  );
+
+  useEffect(() => {
+    const nextKey = `${currentTrainingLanguage}|${enabledModesKey}`;
+    if (lastReloadedLanguageModeScopeRef.current === nextKey) return;
+    if (languageHydrationPendingRef.current) {
+      if (!listHydrated) {
+        languageHydrationObservedNotReadyRef.current = true;
+        return;
+      }
+      if (!languageHydrationObservedNotReadyRef.current) return;
+      languageHydrationPendingRef.current = false;
+      languageHydrationObservedNotReadyRef.current = false;
+    } else if (!listHydrated) {
+      return;
+    }
+    if (!initialLoadDone.current) return;
+    lastReloadedLanguageModeScopeRef.current = nextKey;
+    void loadNextWord();
+  }, [currentTrainingLanguage, enabledModesKey, listHydrated, loadNextWord]);
+
+  useEffect(() => {
+    onNavigationBlockedChange?.(actionLoading);
+    return () => onNavigationBlockedChange?.(false);
+  }, [actionLoading, onNavigationBlockedChange]);
+
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
       setCardFilterPreference(newFilter, { persist: false });
       persistCurrentTrainingScope({ cardFilter: newFilter });
-      // Reset queue rotation when switching to 'both' to start interleave cycle
-      if (newFilter === "both") {
-        setQueueTurn("new");
-        setReviewCounter(0);
-      }
+      resetQueueForFilter(newFilter);
     },
-    [persistCurrentTrainingScope, setCardFilterPreference],
+    [persistCurrentTrainingScope, resetQueueForFilter, setCardFilterPreference],
   );
 
   const resetFocusQueueState = useCallback(() => {
-    reviewedInSessionRef.current.clear();
-    resetPreparedNextTurn();
-    setQueueTurn("new");
-    setReviewCounter(0);
-  }, [resetPreparedNextTurn]);
+    resetFocusQueue();
+  }, [resetFocusQueue]);
 
   const handleTrainingDateWindowChange = useCallback(
     (value: string) => {
@@ -786,20 +816,6 @@ export function TrainingScreen({
     setTrainingFocusFilter(DEFAULT_TRAINING_FOCUS_FILTER);
   }, [resetFocusQueueState]);
 
-  // Advance queue turn for round-robin between new and review
-  const advanceQueueTurn = useCallback(() => {
-    const transition = getNextQueueTransition({
-      cardFilter,
-      queueTurn,
-      reviewCounter,
-      newReviewRatio,
-    });
-
-    setQueueTurn(transition.queueTurn);
-    setReviewCounter(transition.reviewCounter);
-    return transition.queueTurn;
-  }, [cardFilter, queueTurn, reviewCounter, newReviewRatio]);
-
   // Apply theme to document (client-side only)
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -829,222 +845,9 @@ export function TrainingScreen({
     return () => mediaQuery.removeEventListener("change", handleSystemChange);
   }, [themePreference]);
 
-  const loadStats = useCallback(
-    async (
-      scope?: { listId?: string | null; listType?: WordListType | null },
-      logContext?: string,
-      isInitialLoad?: boolean,
-    ) => {
-      if (!user?.id) {
-        return;
-      }
-      const generation = (statsRequestGenerationRef.current += 1);
-      const effectiveListId = scope?.listId ?? wordListId;
-      const effectiveListType = scope?.listType ?? wordListType;
-      const fresh = await fetchStats(
-        user.id,
-        enabledModes,
-        {
-          listId: effectiveListId ?? undefined,
-          listType: effectiveListType ?? undefined,
-        },
-        logContext,
-      );
-      if (generation !== statsRequestGenerationRef.current) return;
-
-      // On initial load, capture the fixed Y value for HERHALING
-      // This should not change during the session
-      if (isInitialLoad || initialReviewDue === null) {
-        const totalReviewDue = fresh.reviewCardsDone + fresh.reviewCardsDue;
-        setInitialReviewDue(totalReviewDue);
-        trainingDebug.log(
-          `%c 📌 Fixed HERHALING Y = ${totalReviewDue} (session start)`,
-          "color: #f59e0b; font-weight: bold;",
-        );
-      }
-
-      setStats(fresh);
-    },
-    [user?.id, enabledModes, wordListId, wordListType, initialReviewDue],
-  );
-
-  const loadRecentHistory = useCallback(async () => {
-    if (!user?.id) {
-      return;
-    }
-    const generation = (historyRequestGenerationRef.current += 1);
-    const history = await fetchRecentHistory(user.id);
-    if (generation !== historyRequestGenerationRef.current) return;
-    setRecentEntries(history);
-  }, [user?.id]);
-
-  const loadNextWord = useCallback(
-    async ({
-      excludeWordIds = [],
-      scope,
-      queueTurn: requestedQueueTurn,
-      scenario,
-      excludeCardKeys = [],
-      cardFilter: requestedCardFilter,
-      focusFilter,
-    }: LoadNextWordRequest = {}): Promise<LoadNextWordResult> => {
-      if (!user?.id) {
-        return "skipped";
-      }
-
-      // Prevent concurrent calls - if already loading, skip this call
-      if (loadingInProgress.current) {
-        trainingDebug.log(
-          "%c loadNextWord skipped (already loading)",
-          "color: #f59e0b",
-        );
-        return "skipped";
-      }
-      loadingInProgress.current = true;
-      setLoadingWord(true);
-      setRevealed(false); // Reset reveal state for new word
-      setHintRevealed(false); // Reset hint state for new word
-      const effectiveListId = scope?.listId ?? wordListId;
-      const effectiveListType = scope?.listType ?? wordListType;
-      const effectiveList =
-        availableLists.find(
-          (list) =>
-            list.id === effectiveListId &&
-            list.type === (effectiveListType ?? "curated"),
-        ) ?? activeList;
-      const effectiveQueueTurn = requestedQueueTurn ?? queueTurn;
-      const effectiveScenario = scenario ?? activeScenario;
-      const effectiveCardFilter = requestedCardFilter ?? cardFilter;
-      const effectiveFocusFilter = focusFilter ?? trainingFocusFilter;
-      const restrictedModes = resolveRestrictedListModes(effectiveList);
-      setTrainingLoadError(null);
-      try {
-        const overrideWordId = nextCardOverrideWordIdRef.current;
-        if (overrideWordId) {
-          nextCardOverrideWordIdRef.current = null;
-          const overrideWord = await fetchTrainingWordByLookup(
-            overrideWordId,
-            user.id,
-          );
-          if (overrideWord) {
-            // This one-shot override does not ask the scheduler for a new card,
-            // so keep the card mode as close as possible to the current training
-            // flow. Normal scenario/list selection resumes after this card.
-            const mode =
-              currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
-            const overrideCardKey = `${overrideWord.id}:${mode}`;
-            nextCardOverrideActiveKeyRef.current = overrideCardKey;
-            if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
-              void recordWordView({
-                userId: user.id,
-                wordId: overrideWord.id,
-                mode,
-              });
-            }
-            const preparedOverrideWord = {
-              ...overrideWord,
-              ...(typeof firstEncounter === "boolean"
-                ? { isFirstEncounter: firstEncounter }
-                : {}),
-              mode,
-              debugStats: { source: "next-card-override", mode },
-            };
-            const overrideReady = await warmTrainingV2Word(
-              preparedOverrideWord,
-            );
-            if (!overrideReady) {
-              nextCardOverrideActiveKeyRef.current = null;
-              setNextCardOverrideNotice(
-                "Kon dit woord niet laden; probeer het opnieuw.",
-              );
-              setTrainingLoadError("platform_v2_lookup_failed");
-              return "error";
-            }
-            presentWord(preparedOverrideWord);
-            setNextCardOverrideNotice(
-              `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
-            );
-            return "loaded";
-          }
-          setNextCardOverrideNotice(
-            "Kon dit woord niet laden; normale training gaat verder.",
-          );
-          // If we couldn't fetch it, fall back to normal selection.
-        }
-
-        // Use scenario-based word selection
-        const nextWord = await fetchNextTrainingWordByScenario(
-          user.id,
-          effectiveScenario,
-          excludeWordIds,
-          {
-            listId: effectiveListId ?? undefined,
-            listType: effectiveListType ?? undefined,
-          },
-          effectiveCardFilter,
-          effectiveQueueTurn,
-          excludeCardKeys,
-          restrictedModes,
-          isTrainingFocusFilterActive(effectiveFocusFilter)
-            ? effectiveFocusFilter
-            : null,
-        );
-        if (nextWord) {
-          // Fire and forget view recording, or await if we want strict consistency
-          // Use the mode from the fetched word (or fallback to first enabled mode)
-          const wordMode = nextWord.mode ?? enabledModes[0];
-          if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(wordMode)) {
-            void recordWordView({
-              userId: user.id,
-              wordId: nextWord.id,
-              mode: wordMode,
-            });
-          }
-          const nextWordReady = await warmTrainingV2Word(nextWord);
-          if (!nextWordReady) {
-            setTrainingLoadError("platform_v2_lookup_failed");
-            return "error";
-          }
-          presentWord(nextWord);
-        } else {
-          presentWord(null);
-        }
-        return nextWord ? "loaded" : "empty";
-      } catch (error) {
-        if (!trainingTodaySetupEnabled) throw error;
-        setTrainingLoadError(
-          error instanceof Error ? error.message : "training_load_failed",
-        );
-        return "error";
-      } finally {
-        loadingInProgress.current = false;
-        setLoadingWord(false);
-      }
-    },
-    [
-      activeList,
-      activeScenario,
-      availableLists,
-      enabledModes,
-      cardFilter,
-      currentWord?.mode,
-      firstEncounter,
-      presentWord,
-      queueTurn,
-      trainingFocusFilter,
-      trainingShellV2Enabled,
-      trainingTodaySetupEnabled,
-      user?.id,
-      wordListId,
-      wordListType,
-      warmTrainingV2Word,
-    ],
-  );
-
   const handleTrainWord = useCallback(
     (wordId: string) => {
-      nextCardOverrideWordIdRef.current = wordId;
-      setNextCardOverrideNotice("Dit woord wordt als volgende kaart geladen.");
+      requestNextCardOverride(wordId);
       setShowSettings(false);
       void loadNextWord({
         excludeWordIds: [currentWord?.id].filter((x): x is string =>
@@ -1052,334 +855,10 @@ export function TrainingScreen({
         ),
       });
     },
-    [currentWord?.id, loadNextWord],
+    [currentWord?.id, loadNextWord, requestNextCardOverride],
   );
 
   // ... (keep useEffect for initial load)
-
-  const presentPrefetchedCandidate = useCallback(
-    (word: TrainingWord) => {
-      setLoadingWord(false);
-      setRevealed(false);
-      setHintRevealed(false);
-      presentWord(word);
-      const nextMode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(nextMode)) {
-        void recordWordView({
-          userId: user.id,
-          wordId: word.id,
-          mode: nextMode,
-        });
-      }
-      if (audioModeEnabled) preloadAudioForWord(word);
-    },
-    [
-      audioModeEnabled,
-      enabledModes,
-      preloadAudioForWord,
-      presentWord,
-      trainingShellV2Enabled,
-      user.id,
-    ],
-  );
-
-  const beginAcceptedCardTransition =
-    useCallback((): AcceptedCardTransition | null => {
-      if (!user?.id || !currentWord) return null;
-      const word = currentWord;
-      const wordMode = word.mode ?? enabledModes[0];
-      const currentCardKey = trainingCardKey(word, wordMode);
-      const transition: AcceptedCardTransition = {
-        word,
-        wordMode,
-        currentCardKey,
-        turnIdForReview: currentTurnIdRef.current,
-        isNextCardOverride:
-          nextCardOverrideActiveKeyRef.current === currentCardKey,
-        nextQueueTurn: advanceQueueTurn(),
-        prefetched: null,
-        prefetchedReady: null,
-      };
-
-      reviewedInSessionRef.current.add(currentCardKey);
-      const candidate = consumePreparedNextTurn(currentCardKey);
-      if (candidate) {
-        transition.prefetched = candidate.word;
-        transition.prefetchedReady = candidate.v2Ready;
-        if (!candidate.v2Ready) presentPrefetchedCandidate(candidate.word);
-      }
-
-      return transition;
-    }, [
-      advanceQueueTurn,
-      currentWord,
-      consumePreparedNextTurn,
-      enabledModes,
-      presentPrefetchedCandidate,
-      user?.id,
-    ]);
-
-  const finishAcceptedCardTransition = useCallback(
-    async (
-      transition: AcceptedCardTransition,
-      options: { statsLabel: string; refreshHistory?: boolean },
-    ) => {
-      const refreshBackground = Promise.all([
-        loadStats(undefined, options.statsLabel),
-        options.refreshHistory ? loadRecentHistory() : Promise.resolve(),
-      ]).catch((error) => {
-        trainingDebug.log("Training counters refresh failed", error);
-      });
-
-      if (transition.isNextCardOverride) {
-        nextCardOverrideActiveKeyRef.current = null;
-        setNextCardOverrideNotice(null);
-      }
-      if (transition.prefetched && transition.prefetchedReady) {
-        const ready = await transition.prefetchedReady.catch(() => false);
-        if (ready) {
-          presentPrefetchedCandidate(transition.prefetched);
-        } else {
-          transition.prefetched = null;
-        }
-      }
-      if (!transition.prefetched) {
-        await loadNextWord({
-          queueTurn: transition.nextQueueTurn,
-          excludeCardKeys: [
-            ...reviewedInSessionRef.current,
-            transition.currentCardKey,
-          ],
-        });
-      }
-      void refreshBackground;
-    },
-    [
-      loadNextWord,
-      loadRecentHistory,
-      loadStats,
-      presentPrefetchedCandidate,
-    ],
-  );
-
-  const handleAction = useCallback(
-    async (result: ReviewResult) => {
-      if (!user?.id || !currentWord) {
-        return;
-      }
-
-      if (actionLoadingRef.current) return;
-      actionLoadingRef.current = true;
-      setActionLoading(true);
-      try {
-        const transition = beginAcceptedCardTransition();
-        if (!transition) return;
-        const { turnIdForReview, wordMode } = transition;
-
-        // Capture BEFORE values from current word's debugStats
-        const beforeInterval = currentWord.debugStats?.interval;
-        const beforeStability = currentWord.debugStats?.ef;
-        const cardSource = currentWord.debugStats?.source ?? "unknown";
-
-        // Log before stats
-        trainingDebug.log(
-          `%c 📊 Stats [BEFORE ${currentWord.headword}]:`,
-          "color: #8b5cf6; font-weight: bold;",
-          `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
-          `| HERHALING: ${stats.reviewCardsDone}/${
-            stats.reviewCardsDone + stats.reviewCardsDue
-          }`,
-          `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`,
-        );
-
-        const recordMutation = () =>
-          recordReview({
-            userId: user.id,
-            wordId: currentWord.id,
-            mode: wordMode,
-            result,
-            turnId: turnIdForReview,
-          });
-        const updatedStatus = nextTransitionId
-          ? await measureTrainingTransitionStage(
-              nextTransitionId,
-              "review.mutation",
-              recordMutation,
-              () => "accepted",
-            )
-          : await recordMutation();
-
-        // Log interval/stability changes to console
-        if (
-          updatedStatus &&
-          ["fail", "hard", "success", "easy"].includes(result)
-        ) {
-          const afterInterval = updatedStatus.interval;
-          const afterStability = updatedStatus.stability;
-
-          const formatDelta = (
-            before: number | undefined,
-            after: number | null | undefined,
-            suffix = "",
-          ) => {
-            if (before == null && after == null) return null;
-            if (before == null) return `→${after?.toFixed(2)}${suffix}`;
-            if (after == null) return `${before.toFixed(2)}${suffix}→?`;
-            return `${before.toFixed(2)}→${after.toFixed(2)}${suffix}`;
-          };
-
-          const intervalDelta = formatDelta(beforeInterval, afterInterval, "d");
-          const stabilityDelta = formatDelta(beforeStability, afterStability);
-
-          // Determine if this card graduated (was new/learning, now has interval >= 1 day)
-          const wasNew = cardSource === "new";
-          const wasLearning = cardSource === "learning";
-          const isGraduated = (afterInterval ?? 0) >= 1.0;
-          const graduationNote =
-            (wasNew || wasLearning) && isGraduated
-              ? ` → GRADUATED to review queue`
-              : "";
-
-          trainingDebug.log(
-            `%c ✓ Review: ${currentWord.headword} (${cardSource} → ${result})`,
-            "color: #10b981; font-weight: bold;",
-            intervalDelta ? `int:${intervalDelta}` : "",
-            stabilityDelta ? `S:${stabilityDelta}` : "",
-            graduationNote,
-          );
-
-          // Optional FSRS debug: only enabled when explicitly requested.
-          // This hits an optional RPC (`get_last_review_debug`) that is not exposed in
-          // most environments; calling it unconditionally creates noisy 404s in the
-          // browser console and in automation runs.
-          const enableFsrsDebug =
-            process.env.NODE_ENV !== "production" &&
-            process.env.NEXT_PUBLIC_ENABLE_FSRS_DEBUG === "1";
-          if (enableFsrsDebug) {
-            const debug = await fetchLastReviewDebug({
-              userId: user.id,
-              wordId: currentWord.id,
-              mode: wordMode,
-            });
-            const meta = debug?.metadata ?? null;
-            if (meta) {
-              const r =
-                typeof meta.retrievability === "number"
-                  ? meta.retrievability
-                  : undefined;
-              const elapsed =
-                typeof meta.elapsed_days === "number"
-                  ? meta.elapsed_days
-                  : undefined;
-              const sameDay =
-                typeof meta.same_day === "boolean" ? meta.same_day : undefined;
-              trainingDebug.log(
-                `%c   ↳ FSRS debug:`,
-                "color: #6b7280;",
-                elapsed != null ? `elapsed=${elapsed.toFixed(4)}d` : "",
-                r != null ? `R=${r.toFixed(4)}` : "",
-                sameDay != null ? `same_day=${sameDay}` : "",
-                debug?.scheduled_at ? `scheduled_at=${debug.scheduled_at}` : "",
-                debug?.reviewed_at ? `reviewed_at=${debug.reviewed_at}` : "",
-              );
-            }
-          }
-
-          // Explain what should happen to stats
-          if (wasNew) {
-            trainingDebug.log(
-              `%c   → review_type='new' logged → NIEUW counter should +1`,
-              "color: #6b7280;",
-            );
-          } else {
-            trainingDebug.log(
-              `%c   → review_type='review' logged → HERHALING done counter should +1`,
-              "color: #6b7280;",
-            );
-          }
-        }
-
-        // Add to sidebar history for graded review actions
-        if (
-          result === "fail" ||
-          result === "hard" ||
-          result === "success" ||
-          result === "easy"
-        ) {
-          setRecentEntries((prev) => {
-            // Compute interval: use FSRS interval, or calculate from learning_due_at for learning phase
-            let displayInterval = updatedStatus?.interval ?? undefined;
-            if (
-              displayInterval == null &&
-              updatedStatus?.in_learning &&
-              updatedStatus?.learning_due_at
-            ) {
-              // Calculate interval in days from now to learning_due_at
-              const dueAt = new Date(updatedStatus.learning_due_at).getTime();
-              const now = Date.now();
-              displayInterval = Math.max(
-                0,
-                (dueAt - now) / (1000 * 60 * 60 * 24),
-              );
-            }
-
-            // Preserve the original source from the card (new/learning/review/practice/fallback)
-            const sourceLabel = currentWord.debugStats?.source ?? "review";
-
-            // Create history item with UPDATED stats from the review, including before values for delta display
-            const historyItem: SidebarHistoryItem = {
-              id: currentWord.id,
-              headword: currentWord.headword,
-              part_of_speech: currentWord.part_of_speech,
-              gender: currentWord.gender,
-              raw: currentWord.raw,
-              source: "review",
-              result,
-              is_nt2_2000: currentWord.is_nt2_2000,
-              meanings_count: currentWord.meanings_count,
-              stats: {
-                click_count:
-                  updatedStatus?.clicks ?? currentWord.debugStats?.clicks ?? 0,
-                last_seen_at: new Date().toISOString(),
-              },
-              debugStats: {
-                source: sourceLabel,
-                mode: wordMode,
-                interval: displayInterval,
-                reps: updatedStatus?.reps ?? undefined,
-                ef: updatedStatus?.stability ?? undefined,
-                clicks: updatedStatus?.clicks ?? undefined,
-                next_review:
-                  updatedStatus?.next_review ??
-                  updatedStatus?.learning_due_at ??
-                  undefined,
-                // Include before values for delta display in sidebar
-                previousInterval: beforeInterval,
-                previousStability: beforeStability,
-              },
-            };
-            // Prepend
-            return [historyItem, ...prev].slice(0, 50); // Keep last 50
-          });
-        }
-
-        await finishAcceptedCardTransition(transition, {
-          statsLabel: `AFTER ${currentWord.headword} (${result})`,
-        });
-      } finally {
-        actionLoadingRef.current = false;
-        setActionLoading(false);
-      }
-    },
-    [
-      beginAcceptedCardTransition,
-      currentWord,
-      finishAcceptedCardTransition,
-      nextTransitionId,
-      stats,
-      user?.id,
-    ],
-  );
 
   const handleFirstTimeStart = useCallback(() => {
     void handleAction("fail");
@@ -1389,38 +868,18 @@ export function TrainingScreen({
     void handleAction("hide");
   }, [handleAction]);
 
-  const handleV2ProgressActionAccepted = useCallback(
-    async (_capability: PlatformV2TrainingActionCapability) => {
-      if (!user?.id || !currentWord || actionLoadingRef.current) return;
-      actionLoadingRef.current = true;
-      setActionLoading(true);
-      try {
-        const transition = beginAcceptedCardTransition();
-        if (!transition) return;
-        await finishAcceptedCardTransition(transition, {
-          statsLabel: `AFTER ${currentWord.headword} (platform-v2)`,
-          refreshHistory: true,
-        });
-      } finally {
-        actionLoadingRef.current = false;
-        setActionLoading(false);
-      }
-    },
-    [
-      beginAcceptedCardTransition,
-      currentWord,
-      finishAcceptedCardTransition,
-      user?.id,
-    ],
-  );
-
   useEffect(() => {
     // New card => close translation overlay.
     setTranslationTooltipOpen(false);
   }, [currentWord?.id]);
 
   useEffect(() => {
-    if (!user?.id || !listHydrated) {
+    const awaitingDefaultScenario = Boolean(
+      activeList?.default_scenario_id &&
+        !activeTrainingScope?.hasSavedScope &&
+        activeScenario !== activeList.default_scenario_id,
+    );
+    if (!user?.id || !listHydrated || awaitingDefaultScenario) {
       return;
     }
     // Prevent double-loading due to loadNextWord changing when queueTurn changes
@@ -1429,13 +888,20 @@ export function TrainingScreen({
     }
     initialLoadDone.current = true;
     if (wordId) {
-      nextCardOverrideWordIdRef.current = wordId;
+      requestNextCardOverride(wordId, false);
     }
     loadNextWord();
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, listHydrated, wordId]);
+  }, [
+    activeList?.default_scenario_id,
+    activeScenario,
+    activeTrainingScope?.hasSavedScope,
+    user?.id,
+    listHydrated,
+    wordId,
+  ]);
 
   useEffect(() => {
     if (!user?.id || !listHydrated || !initialLoadDone.current) {
@@ -1473,7 +939,7 @@ export function TrainingScreen({
 
   const openSearch = useCallback(() => {
     if (onRequestDestination) {
-      if (!actionLoadingRef.current) {
+      if (!actionLoading) {
         onRequestDestination("library");
       }
       return;
@@ -1482,11 +948,11 @@ export function TrainingScreen({
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(true);
     setShowSettings(true);
-  }, [onRequestDestination]);
+  }, [actionLoading, onRequestDestination]);
 
   const openAppSettings = useCallback(() => {
     if (extendedDestinationsEnabled && onRequestDestination) {
-      if (!actionLoadingRef.current) {
+      if (!actionLoading) {
         onRequestDestination("settings");
       }
       return;
@@ -1495,7 +961,7 @@ export function TrainingScreen({
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(false);
     setShowSettings(true);
-  }, [extendedDestinationsEnabled, onRequestDestination]);
+  }, [actionLoading, extendedDestinationsEnabled, onRequestDestination]);
 
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
@@ -1538,7 +1004,7 @@ export function TrainingScreen({
         return;
       }
 
-      if (actionLoadingRef.current) return;
+      if (actionLoading) return;
 
       const normalized = event.key.toLowerCase();
 
@@ -1613,6 +1079,7 @@ export function TrainingScreen({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
+    actionLoading,
     handleAction,
     handleShowCurrentWordDetails,
     openSearch,
@@ -1769,26 +1236,24 @@ export function TrainingScreen({
 
   const handleMakeActiveTrainingList = useCallback(
     async (list: WordListSummary) => {
-      const scope = await persistListChange(list);
-      if (!scope) return;
       const nextScenario = list.default_scenario_id ?? activeScenario;
-      setActiveScenario(nextScenario, { persist: false });
-      persistCurrentTrainingScope({
-        listId: list.id,
-        listType: list.type,
+      beginSessionScopeChange();
+      const scope = await persistListChange(list, {
         activeScenario: nextScenario,
       });
+      if (!scope) return;
+      setActiveScenario(nextScenario, { persist: false });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: list.id, listType: list.type },
         scenario: nextScenario,
       });
     },
     [
       activeScenario,
+      beginSessionScopeChange,
       loadStats,
-      loadNextWord,
-      persistCurrentTrainingScope,
+      replaceSessionScopeAndLoad,
       persistListChange,
       setActiveScenario,
     ],
@@ -1796,34 +1261,39 @@ export function TrainingScreen({
 
   const handleFooterListChange = useCallback(
     async (value: string) => {
-      const scope = await handleListSelectValue(value);
-      if (!scope) return;
-      const list = availableLists.find(
-        (item) => item.id === scope.listId && item.type === scope.listType,
-      );
+      const list = resolveListValue(value);
+      if (!list) return;
       const nextScenario = list?.default_scenario_id ?? activeScenario;
-      setActiveScenario(nextScenario, { persist: false });
-      persistCurrentTrainingScope({
-        listId: scope.listId,
-        listType: scope.listType,
+      beginSessionScopeChange();
+      const scope = await persistListChange(list, {
         activeScenario: nextScenario,
       });
+      if (!scope) return;
+      setActiveScenario(nextScenario, { persist: false });
       void loadStats(scope);
-      void loadNextWord({ scope, scenario: nextScenario });
+      void replaceSessionScopeAndLoad({ scope, scenario: nextScenario });
     },
     [
       activeScenario,
-      availableLists,
-      handleListSelectValue,
-      loadNextWord,
+      beginSessionScopeChange,
+      replaceSessionScopeAndLoad,
       loadStats,
-      persistCurrentTrainingScope,
+      persistListChange,
+      resolveListValue,
       setActiveScenario,
     ],
   );
 
   const handleListsUpdated = useCallback(async () => {
-    const reloadForList = (list: WordListSummary) => {
+    beginSessionScopeChange();
+    const reloadForList = (
+      list: WordListSummary,
+      refreshedScope: ActiveTrainingScope,
+    ) => {
+      // This exact snapshot belongs to the refresh transaction. The list's
+      // default scenario below is authoritative for the replacement request,
+      // so the hydration effect must not replay the intermediate snapshot.
+      lastAppliedActiveTrainingScopeRef.current = refreshedScope;
       const nextScenario = list.default_scenario_id ?? activeScenario;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
@@ -1832,7 +1302,7 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: list.id, listType: list.type },
         scenario: nextScenario,
       });
@@ -1844,8 +1314,9 @@ export function TrainingScreen({
     });
   }, [
     activeScenario,
-    loadNextWord,
+    beginSessionScopeChange,
     loadStats,
+    replaceSessionScopeAndLoad,
     persistCurrentTrainingScope,
     refreshListsAfterUpdate,
     setActiveScenario,
@@ -1857,11 +1328,12 @@ export function TrainingScreen({
 
   const handleModesChange = useCallback(
     (newModes: TrainingMode[]) => {
+      beginSessionScopeChange();
       setRevealed(false);
       setEnabledModes(newModes, { persist: false });
       persistCurrentTrainingScope({ modesEnabled: newModes });
     },
-    [persistCurrentTrainingScope, setEnabledModes],
+    [beginSessionScopeChange, persistCurrentTrainingScope, setEnabledModes],
   );
 
   const handleScenarioChange = useCallback(
@@ -1870,8 +1342,7 @@ export function TrainingScreen({
       setRevealed(false);
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
-      // Load next word with the new scenario
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: wordListId, listType: wordListType },
         scenario: newScenario,
       });
@@ -1879,7 +1350,7 @@ export function TrainingScreen({
     [
       setActiveScenario,
       persistCurrentTrainingScope,
-      loadNextWord,
+      replaceSessionScopeAndLoad,
       wordListId,
       wordListType,
     ],
@@ -1981,7 +1452,7 @@ export function TrainingScreen({
   );
 
   const handleCardTouchEnd = useCallback(() => {
-    if (actionLoadingRef.current) {
+    if (actionLoading) {
       resetSwipe();
       return;
     }
@@ -2021,7 +1492,14 @@ export function TrainingScreen({
     setSwipeActive(false);
     swipeTrackingRef.current = false;
     swipeStartRef.current = null;
-  }, [canSwipe, handleAction, resetSwipe, showFirstTimeButtons, swipeOffset]);
+  }, [
+    actionLoading,
+    canSwipe,
+    handleAction,
+    resetSwipe,
+    showFirstTimeButtons,
+    swipeOffset,
+  ]);
 
   useEffect(() => {
     resetSwipe();
@@ -2166,15 +1644,15 @@ export function TrainingScreen({
     onRetry: () => loadNextWord(),
   });
   const handleEnterTrainingSession = useCallback(() => {
-    reviewedInSessionRef.current.clear();
-  }, []);
+    clearReviewedSession();
+  }, [clearReviewedSession]);
   const {
     cardOrdinal: sessionCardOrdinal,
     isSubsequentCard: isSubsequentSessionCard,
   } = useTrainingSessionPresentation({
     surface: trainingPilot.surface,
     presentedCardKey: currentWord
-      ? trainingCardKey(currentWord, currentMode)
+      ? getTrainingCardKey(currentWord, currentMode)
       : null,
     onEnterSession: handleEnterTrainingSession,
   });

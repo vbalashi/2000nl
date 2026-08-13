@@ -10,7 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
-import type { DictionaryEntry } from "@/lib/types";
+import type { ActiveTrainingScope, DictionaryEntry } from "@/lib/types";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -197,7 +197,7 @@ const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
     entryCount: 2000,
   },
 ]);
-const defaultActiveTrainingScope = {
+const defaultActiveTrainingScope: ActiveTrainingScope = {
   languageCode: "nl",
   activeListId: null,
   activeListType: null,
@@ -1631,7 +1631,12 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
     );
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(fetchStats).not.toHaveBeenCalled();
-    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
     expect(screen.getAllByText("Active list").length).toBeGreaterThan(0);
   } finally {
     restoreDefaultListScope();
@@ -1670,6 +1675,7 @@ test("explicit list action makes the viewed list active for training", async () 
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
       }),
     );
     await waitFor(() =>
@@ -1695,14 +1701,43 @@ test("footer list selector still changes active training scope", async () => {
   fetchNextTrainingWordByScenario.mockClear();
   updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
+  let resolveOldSelection!: (word: typeof mockWord) => void;
+  const oldSelection = new Promise<typeof mockWord>((resolve) => {
+    resolveOldSelection = resolve;
+  });
+  let resolveSecondary!: (word: typeof overrideWord) => void;
+  const secondarySelection = new Promise<typeof overrideWord>((resolve) => {
+    resolveSecondary = resolve;
+  });
+  let resolvePersistence!: (result: {
+    scope: ActiveTrainingScope;
+    error: null;
+  }) => void;
+  const persistence = new Promise<{
+    scope: ActiveTrainingScope;
+    error: null;
+  }>((resolve) => {
+    resolvePersistence = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      scope: { listId?: string } = {},
+    ) =>
+      scope.listId === secondaryList.id
+        ? secondarySelection
+        : oldSelection,
+  );
+  updateActiveTrainingScope.mockReturnValue(persistence);
 
   try {
     render(<TrainingScreen user={user} />);
 
-    await waitForInitialTrainingFetches();
-    fetchNextTrainingWordByScenario.mockClear();
-    updateActiveTrainingScope.mockClear();
-    fetchStats.mockClear();
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+    );
 
     expect(
       screen.queryByRole("button", { name: /active list/i }),
@@ -1721,6 +1756,23 @@ test("footer list selector still changes active training scope", async () => {
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
+      }),
+    );
+    await act(async () => resolveOldSelection(mockWord));
+    expect(
+      screen.queryByRole("heading", { name: "huis" }),
+    ).not.toBeInTheDocument();
+    await act(async () =>
+      resolvePersistence({
+        scope: {
+          ...defaultActiveTrainingScope,
+          activeListId: secondaryList.id,
+          activeListType: secondaryList.type,
+          activeScenario: "listening",
+          hasSavedScope: true,
+        },
+        error: null,
       }),
     );
     expect(
@@ -1733,14 +1785,54 @@ test("footer list selector still changes active training scope", async () => {
         );
       }),
     ).toBe(true);
+    await act(async () => resolveSecondary(overrideWord));
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
+  }
+});
+
+test("initial load waits for an unsaved list default scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: secondaryList.id,
+    activeListType: secondaryList.type,
+    activeScenario: "understanding",
+    hasSavedScope: false,
+  });
+  fetchListSummaryById.mockResolvedValue(secondaryList);
+  fetchAvailableLists.mockResolvedValue([secondaryList]);
+  fetchNextTrainingWordByScenario.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.every(
+        (call) => call[1] === "listening",
+      ),
+    ).toBe(true);
   } finally {
     restoreDefaultListScope();
   }
 });
 
 test("footer language selector switches current training language without changing defaults", async () => {
+  let resolveEnglishScope!: (scope: ActiveTrainingScope) => void;
+  const englishScope = new Promise<ActiveTrainingScope>(
+    (resolve) => {
+      resolveEnglishScope = resolve;
+    },
+  );
   fetchActiveTrainingScope.mockImplementation(
-    async ({ languageCode }: { languageCode: string }) => ({
+    async ({ languageCode }: { languageCode: string }) => {
+      const scope = {
       ...defaultActiveTrainingScope,
       languageCode,
       activeListId: languageCode === "en" ? secondaryList.id : activeList.id,
@@ -1751,7 +1843,9 @@ test("footer language selector switches current training language without changi
         languageCode === "en" ? ["listen-recognize"] : ["word-to-definition"],
       newReviewRatio: languageCode === "en" ? 1 : 2,
       hasSavedScope: true,
-    }),
+      };
+      return languageCode === "en" ? englishScope : scope;
+    },
   );
   fetchListSummaryById.mockImplementation(
     async ({ listId }: { listId: string }) =>
@@ -1779,6 +1873,7 @@ test("footer language selector switches current training language without changi
 
     fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
     fireEvent.click(screen.getByRole("button", { name: /Nederlands/ }));
+    fetchNextTrainingWordByScenario.mockClear();
     fireEvent.click(await screen.findByRole("button", { name: /English/ }));
 
     await waitFor(() =>
@@ -1787,12 +1882,39 @@ test("footer language selector switches current training language without changi
         languageCode: "en",
       }),
     );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
+    await act(async () =>
+      resolveEnglishScope({
+        ...defaultActiveTrainingScope,
+        languageCode: "en",
+        activeListId: secondaryList.id,
+        activeListType: "curated",
+        activeScenario: "listening",
+        cardFilter: "review",
+        modesEnabled: ["listen-recognize"],
+        newReviewRatio: 1,
+        hasSavedScope: true,
+      }),
+    );
     await waitFor(() =>
       expect(
         within(footerScope).getByText(
           "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
         ),
       ).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+          const scope = call[3] as { listId?: string };
+          return call[1] === "listening" && scope.listId === secondaryList.id;
+        }),
+      ).toBe(true),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
@@ -2190,9 +2312,45 @@ test("settings training controls persist to the current language training scope"
         }),
       ),
     );
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
     expect(updateUserPreferences).not.toHaveBeenCalledWith(
       expect.objectContaining({ activeScenario: "listening" }),
     );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard nieuw\/herhaling/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Alleen herhaling" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard herhalingmix/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "1:3 (1 nieuw, 3 herhalingen)" }),
+    );
+
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    ).toHaveClass("bg-primary/10");
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard nieuw\/herhaling.*Alleen herhaling/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard herhalingmix.*1:3/i,
+      }),
+    ).toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
   }

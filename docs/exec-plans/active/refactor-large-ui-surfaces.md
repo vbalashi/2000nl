@@ -2,13 +2,13 @@
 
 ## Goal
 
-Prepare a low-risk refactor plan for the largest UI files without changing the training experience before the planned designer review is incorporated.
+Reduce the largest UI surfaces through behavior-preserving domain hooks without changing the rendered training experience. The August Platform V2 design work has now reopened the non-visual Training lifecycle slice; visual decomposition remains separately gated.
 
 ## Context
 
 Current large files:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - roughly 2.2k lines after non-visual hook extraction; still owns session orchestration, sidebars, queue/load sequencing, and action handling.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,861 lines before #172; still owns presentation, sidebars, settings, gestures, and destination composition after lifecycle extraction.
 - `apps/ui/components/training/TrainingCard.tsx` - roughly 1.1k lines after pure text and translation hook extraction; still owns card rendering across modes, examples, idioms, badges, audio affordances, and reveal states.
 - `apps/ui/lib/trainingService.ts` - compatibility barrel; implementation now lives in focused modules under `apps/ui/lib/training/`.
 
@@ -73,19 +73,24 @@ Recommended initial extraction candidates:
 - 2026-05-16: Started the pre-designer `TrainingCard` work by extracting pure text helpers into `apps/ui/lib/training/trainingCardText.ts` and adding direct masking tests; no visual JSX/classes changed.
 - 2026-05-16: Completed the pre-designer `TrainingCard` translation slice by adding characterization tests for preload, pending polling, failed state, long-press force refresh, and timer cleanup, then moving translation state/effects into `apps/ui/lib/training/useTrainingTranslation.ts`.
 - 2026-05-16: Audit update: pre-designer non-visual work is complete through Stage 9. Remaining work should stop at the designer-review boundary unless a new approved plan explicitly reopens session or visual extraction.
+- 2026-08-14: #171 removed duplicate Training V2 transition ownership and reached independent spec/architecture review plateau in production.
+- 2026-08-14: #172 explicitly reopened Stage 10 as a non-visual lifecycle extraction. The controller-level matrix now covers fast prepared, DTO-pending, on-demand, Platform reconciliation boundary, reset, and stale completion cases.
 
 ## Analysis Output
 
-Snapshot date: 2026-05-16.
+Snapshot date: 2026-08-14 (#172 working state).
 
 Current measured sizes:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - 2,165 lines.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,339 lines at the final #172 review point, down from 2,861 at the #172 base.
+- `apps/ui/components/training/useTrainingTurnController.ts` - 518 lines; one deep non-visual lifecycle owner.
+- `apps/ui/components/training/useLegacyTrainingReviewPort.ts` - 242 lines; legacy mutation/history adapter.
+- `apps/ui/components/training/useTrainingTurnSelectionPort.ts` - 122 lines; scheduler/list-scope adapter.
 - `apps/ui/components/training/TrainingCard.tsx` - 1,142 lines.
 - `apps/ui/lib/trainingService.ts` - 43 lines, compatibility barrel only.
 - `apps/ui/lib/training/*.ts` - focused service/helper/hook modules.
 
-This plan intentionally favors mechanical extraction and service decomposition over visual component changes. The pending designer review makes JSX/layout movement the highest-risk category.
+This plan intentionally favors mechanical extraction and service decomposition over visual component changes. Current Stage 10 authorization does not authorize JSX/layout changes or legacy renderer retirement.
 
 ## Architect Review Decision
 
@@ -533,12 +538,15 @@ Risks:
 
 Files:
 
-- Add `apps/ui/lib/training/useTrainingSession.ts` only after stages 0-9 are complete, green, and a new review explicitly approves continuing past the current stop point.
-- Move current word, reveal/hint state, queue turn, prefetch, stats/history loading, review submission, and first encounter handlers.
+- #172 is the explicit approval to continue this non-visual slice after #171.
+- Add `apps/ui/components/training/useTrainingTurnController.ts` as the single owner of queue rotation, next-card selection/preparation, accepted-transition consume/cancel, reset invalidation, review double-submit protection, and both legacy/Platform accepted paths.
+- Keep rendering state (`currentWord`, reveal/hint, layout) in `TrainingScreen`; inject narrow selection, legacy-review, refresh, audio, and presentation ports.
+- Add `useTrainingTurnSelectionPort.ts` and `useLegacyTrainingReviewPort.ts` so the controller does not absorb scheduler query construction or history/debug projection.
 
 Protected by:
 
 - Stage 0 session tests.
+- `apps/ui/tests/useTrainingTurnController.test.tsx` transition matrix.
 - `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
 - `cd apps/ui && npm run lint`
 - FSRS DB-backed tests when DB access is available:
@@ -546,7 +554,7 @@ Protected by:
 
 Risks:
 
-- This is the riskiest screen extraction. It combines current card state, reveal state, queue turn, `reviewedInSessionRef`, prefetch, turn-id idempotency, stats refresh, recent history, first-encounter behavior, list scope, and action double-submit protection.
+- This remains the riskiest non-visual screen extraction. The controller owns lifecycle state but deliberately does not own JSX, reveal/hint presentation, stats projection, or provider/media implementation.
 - `handleScenarioChange` currently sets scenario state and immediately calls `loadNextWord`; pin intended behavior with a test before extracting.
 - Initial load suppresses exhaustive dependencies intentionally; hook extraction must not introduce double-loading.
 

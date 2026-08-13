@@ -13,8 +13,14 @@ type SelectedListScope = {
 };
 
 type ListUpdatedCallbacks = {
-  onResolvedActiveList?: (list: WordListSummary) => void;
-  onPrimaryFallback?: (list: WordListSummary) => void;
+  onResolvedActiveList?: (
+    list: WordListSummary,
+    scope: ActiveTrainingScope,
+  ) => void;
+  onPrimaryFallback?: (
+    list: WordListSummary,
+    scope: ActiveTrainingScope,
+  ) => void;
 };
 
 const isDictionarySourceList = (list: WordListSummary | null | undefined) =>
@@ -39,6 +45,8 @@ export function useTrainingActiveList(params: {
   const [listHydrated, setListHydrated] = useState(false);
   const currentLanguageRef = useRef(language);
   const listRequestIdRef = useRef(0);
+  const scopeRefreshIdRef = useRef(0);
+  const languageGenerationRef = useRef(0);
 
   const applyList = useCallback((list: WordListSummary) => {
     setWordListId(list.id);
@@ -57,6 +65,8 @@ export function useTrainingActiveList(params: {
   useEffect(() => {
     currentLanguageRef.current = language;
     listRequestIdRef.current += 1;
+    scopeRefreshIdRef.current += 1;
+    languageGenerationRef.current += 1;
     setAvailableLists([]);
     setListHydrated(false);
     setActiveTrainingScope(null);
@@ -168,7 +178,10 @@ export function useTrainingActiveList(params: {
   }, [applyList, trainingAvailableLists, listHydrated, wordListId]);
 
   const persistListChange = useCallback(
-    async (list: WordListSummary) => {
+    async (
+      list: WordListSummary,
+      scopeOverrides: { activeScenario?: string } = {},
+    ) => {
       if (!isTrainingEligibleList(list)) return null;
 
       applyList(list);
@@ -179,6 +192,7 @@ export function useTrainingActiveList(params: {
           languageCode: language,
           listId: list.id,
           listType: list.type,
+          activeScenario: scopeOverrides.activeScenario,
         });
         if (result.scope) {
           setActiveTrainingScope(result.scope);
@@ -193,31 +207,30 @@ export function useTrainingActiveList(params: {
     [applyList, language, userId],
   );
 
-  const handleListSelectValue = useCallback(
-    async (value: string) => {
-      const found = resolveListValue(value);
-      if (!found) return null;
-      return persistListChange(found);
-    },
-    [persistListChange, resolveListValue],
-  );
-
   const handleListsUpdated = useCallback(
     async (callbacks: ListUpdatedCallbacks = {}) => {
       if (!userId) return null;
+      // The authoritative post-mutation snapshot supersedes any older
+      // list-only query, while later list-only observations remain allowed.
+      listRequestIdRef.current += 1;
+      const refreshId = ++scopeRefreshIdRef.current;
+      const languageGeneration = languageGenerationRef.current;
+      const requestedLanguage = language;
+      const isCurrentRequest = () =>
+        refreshId === scopeRefreshIdRef.current &&
+        languageGeneration === languageGenerationRef.current &&
+        requestedLanguage === currentLanguageRef.current;
 
       const lists = await fetchAvailableLists(userId, language);
-      if (language === currentLanguageRef.current) {
-        setAvailableLists(lists);
-      }
+      if (!isCurrentRequest()) return null;
+      setAvailableLists(lists);
 
       const active = await fetchActiveTrainingScope({
         userId,
         languageCode: language,
       });
-      if (language === currentLanguageRef.current) {
-        setActiveTrainingScope(active);
-      }
+      if (!isCurrentRequest()) return null;
+      setActiveTrainingScope(active);
       if (active.activeListId) {
         const listType = active.activeListType ?? "curated";
         const resolved = await fetchListSummaryById({
@@ -225,9 +238,10 @@ export function useTrainingActiveList(params: {
           listId: active.activeListId,
           listType,
         });
+        if (!isCurrentRequest()) return null;
         if (resolved && isTrainingEligibleList(resolved)) {
           applyList(resolved);
-          callbacks.onResolvedActiveList?.(resolved);
+          callbacks.onResolvedActiveList?.(resolved, active);
           return resolved;
         }
       }
@@ -235,7 +249,7 @@ export function useTrainingActiveList(params: {
       const primary = lists.find(isTrainingEligibleList);
       if (primary) {
         applyList(primary);
-        callbacks.onPrimaryFallback?.(primary);
+        callbacks.onPrimaryFallback?.(primary, active);
         return primary;
       }
 
@@ -265,7 +279,6 @@ export function useTrainingActiveList(params: {
     activeTrainingScope,
     activeListValue,
     availableLists,
-    handleListSelectValue,
     handleListsUpdated,
     listHydrated,
     listOptions,
