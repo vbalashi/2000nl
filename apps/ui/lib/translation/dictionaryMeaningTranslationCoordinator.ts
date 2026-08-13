@@ -96,8 +96,8 @@ export type DictionaryMeaningTranslationCoordinatorResult =
   | {
       outcome: "failed";
       payload: CoordinatorPayloadBase & { status: "failed"; error: string };
-      httpStatus: 502;
-      cacheStatus: "provider";
+      httpStatus: 200 | 502;
+      cacheStatus: "pending" | "provider";
     }
   | {
       outcome: "error";
@@ -146,8 +146,8 @@ function coordinatorResult(
         status: "failed",
         error: payload.error ?? "translation_failed",
       },
-      httpStatus: 502,
-      cacheStatus: "provider",
+      httpStatus: init.status === 502 ? 502 : 200,
+      cacheStatus: init.cacheStatus === "provider" ? "provider" : "pending",
     };
   }
   return {

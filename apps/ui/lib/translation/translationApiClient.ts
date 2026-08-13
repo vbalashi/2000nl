@@ -23,9 +23,17 @@ export async function fetchDictionaryMeaningTranslation(input: {
     controller.abort();
   }, input.timeoutMs ?? DEFAULT_TRANSLATION_TIMEOUT_MS);
   const aborted = new Promise<never>((_resolve, reject) => {
+    const abortError = () =>
+      timedOut
+        ? new Error("platform_request_timeout")
+        : new DOMException("The operation was aborted", "AbortError");
+    if (controller.signal.aborted) {
+      reject(abortError());
+      return;
+    }
     controller.signal.addEventListener(
       "abort",
-      () => reject(new Error(timedOut ? "platform_request_timeout" : "AbortError")),
+      () => reject(abortError()),
       { once: true },
     );
   });

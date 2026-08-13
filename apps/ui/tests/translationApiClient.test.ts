@@ -104,9 +104,24 @@ describe("translationApiClient", () => {
       targetLanguageCode: "ru",
       signal: controller.signal,
     });
-    const rejection = expect(pending).rejects.toThrow("AbortError");
+    const rejection = expect(pending).rejects.toMatchObject({ name: "AbortError" });
     controller.abort();
     await rejection;
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  test("rejects a pre-aborted request before stalled session acquisition", async () => {
+    getSession.mockReturnValueOnce(new Promise(() => undefined));
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      fetchDictionaryMeaningTranslation({
+        entryId: "entry-1",
+        targetLanguageCode: "ru",
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: "AbortError" });
     expect(fetch).not.toHaveBeenCalled();
   });
 });
