@@ -322,7 +322,17 @@ export type TranslationOverlay = {
     providerSelected?: "deepl" | "openai" | "gemini";
     providerUsed?: "deepl" | "openai" | "gemini";
     usedFallback?: boolean | null;
-    primaryError?: string | null;
+    primaryFailure?: {
+      code:
+        | "provider_http_error"
+        | "provider_response_error"
+        | "provider_empty_response"
+        | "provider_timeout"
+        | "provider_network_error"
+        | "provider_fallback_error"
+        | "provider_unknown_error";
+      fingerprint: string;
+    } | null;
     promptFingerprint?: string | null;
     translatedPaths?: Array<Array<string | number>>;
   };

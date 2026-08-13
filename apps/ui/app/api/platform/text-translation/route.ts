@@ -13,6 +13,10 @@ import {
   loadTranslationConfigFromEnv,
 } from "@/lib/translation/translationProvider";
 import { asString } from "@/lib/platform/platformApi";
+import {
+  sanitizeStoredTranslationError,
+} from "@/lib/translation/translationArtifactSafety";
+import { normalizeTranslationProviderError } from "@/lib/translation/translationProviderFailure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,7 +87,9 @@ function artifactResponse(row: TextTranslationCacheRow, cached = true) {
     ),
     translationPolicyVersion: row.translation_policy_version,
     cached,
-    ...(row.error_message ? { error: row.error_message } : {}),
+    ...(sanitizeStoredTranslationError(row.error_message)
+      ? { error: sanitizeStoredTranslationError(row.error_message) }
+      : {}),
   };
 }
 
@@ -254,8 +260,8 @@ export async function POST(request: NextRequest) {
         resolvedTargetLanguageCode,
       );
     }
-  } catch (err: any) {
-    const errorMessage = String(err?.message ?? err ?? "translation_failed");
+  } catch (err: unknown) {
+    const errorMessage = normalizeTranslationProviderError(err).message;
     await service.supabase
       .from("platform_text_translations")
       .update({

@@ -163,6 +163,30 @@ describe("DeepLTranslator", () => {
     const translated = await translator.translate(["hello", "world"], "en");
     expect(translated).toEqual(["Hallo", "Wereld"]);
   });
+
+  it("does not expose a DeepL response body in its error", async () => {
+    const providerSecret = "deepl-provider-body-with-token";
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      text: async () => providerSecret,
+    });
+
+    const translator = new DeepLTranslator({
+      apiKey: "key",
+      apiUrl: "https://example.com",
+    });
+    const error = await translator.translate("hello", "en").catch((value) => value);
+
+    expect(String(error)).not.toContain(providerSecret);
+    expect(error).toMatchObject({
+      failure: {
+        code: "provider_http_error",
+        fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+      },
+    });
+  });
 });
 
 describe("OpenAITranslator", () => {
@@ -408,11 +432,12 @@ describe("OpenAITranslator", () => {
   });
 
   it("falls back when OpenAI fails", async () => {
+    const providerSecret = "sk-provider-secret-from-response";
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
-      text: async () => "boom",
+      text: async () => providerSecret,
     });
 
     const fallback = {
@@ -421,10 +446,20 @@ describe("OpenAITranslator", () => {
       ),
     } as any;
 
-    const translator = new OpenAITranslator({ apiKey: "key", fallback });
+    const translator = new OpenAITranslator({ apiKey: "key", fallback, maxRetries: 0 });
     const translated = await translator.translate("hello", "en");
     expect(translated).toBe("Fallback");
     expect(fallback.translate).toHaveBeenCalled();
+    expect(JSON.stringify(warnSpy.mock.calls)).not.toContain(providerSecret);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[translation] OpenAI failed; using DeepL fallback",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        }),
+      }),
+    );
   });
 
   it("preserves structured dictionary artifacts when OpenAI falls back", async () => {
@@ -478,6 +513,10 @@ describe("OpenAITranslator", () => {
         providerSelected: "openai",
         providerUsed: "deepl",
         usedFallback: true,
+        primaryFailure: {
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        },
       },
     });
   });
@@ -529,11 +568,12 @@ describe("GeminiTranslator", () => {
   });
 
   it("falls back when Gemini fails", async () => {
+    const providerSecret = "gemini-provider-secret-from-response";
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
-      text: async () => "boom",
+      text: async () => providerSecret,
     });
 
     const fallback = {
@@ -542,9 +582,19 @@ describe("GeminiTranslator", () => {
       ),
     } as any;
 
-    const translator = new GeminiTranslator({ apiKey: "key", fallback });
+    const translator = new GeminiTranslator({ apiKey: "key", fallback, maxRetries: 0 });
     const translated = await translator.translate("hello", "en");
     expect(translated).toBe("Fallback");
     expect(fallback.translate).toHaveBeenCalled();
+    expect(JSON.stringify(warnSpy.mock.calls)).not.toContain(providerSecret);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[translation] Gemini failed; using DeepL fallback",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        }),
+      }),
+    );
   });
 });

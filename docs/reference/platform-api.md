@@ -1087,6 +1087,13 @@ Response when a ready overlay is available:
       }
     ],
     "__meta": {
+      "providerSelected": "openai",
+      "providerUsed": "deepl",
+      "usedFallback": true,
+      "primaryFailure": {
+        "code": "provider_http_error",
+        "fingerprint": "8f5d95f46f901c63f61f2e1a"
+      },
       "translatedPaths": [["headword"], ["meanings", 0, "definition"]]
     }
   },
@@ -1139,6 +1146,13 @@ private user-dictionary entries remain visible only to authorized users.
 Ready overlays include best-effort `overlay.__meta.translatedPaths` so
 line-level clients can correlate translated values with stable lookup content
 paths without parsing provider diagnostics.
+
+Provider failures never expose or persist the provider response body or error
+message. When a fallback succeeds, `overlay.__meta.primaryFailure` may contain
+only a closed failure `code` and a 24-character hexadecimal SHA-256 prefix for
+correlation. The fingerprint is non-reversible and clients must not interpret
+it as user-facing error text. Historical cached `primaryError` values and
+unrecognized metadata are removed at the read boundary.
 
 ## `POST /text-translation`
 

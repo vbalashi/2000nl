@@ -1127,7 +1127,8 @@ describe("/api/platform/v1/translation", () => {
   });
 
   test("returns failed text translation artifact identity when provider fails", async () => {
-    translate.mockRejectedValueOnce(new Error("provider down"));
+    const providerSecret = "provider-body-with-private-subtitle-and-token";
+    translate.mockRejectedValueOnce(new Error(providerSecret));
     const userClient = {
       auth: { getUser },
       from,
@@ -1179,7 +1180,9 @@ describe("/api/platform/v1/translation", () => {
     expect(failedUpdateChain.update).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "failed",
-        error_message: "provider down",
+        error_message: expect.stringMatching(
+          /^provider_unknown_error:[a-f0-9]{24}$/,
+        ),
       }),
     );
     await expect(response.json()).resolves.toEqual({
@@ -1190,7 +1193,10 @@ describe("/api/platform/v1/translation", () => {
       targetLanguageCode: "en",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
-      error: "provider down",
+      error: expect.stringMatching(/^provider_unknown_error:[a-f0-9]{24}$/),
     });
+    expect(JSON.stringify(failedUpdateChain.update.mock.calls)).not.toContain(
+      providerSecret,
+    );
   });
 });

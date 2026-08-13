@@ -2,12 +2,13 @@ import type {
   DictionaryMeaningTranslationRequestV1,
   DictionaryMeaningTranslationResultV1,
 } from "./dictionaryMeaningTranslationContract";
+import type { TranslationProviderFailure } from "./translationProviderFailure";
 
 export type DictionaryMeaningTranslationMeta = {
   providerSelected?: "deepl" | "openai" | "gemini";
   providerUsed?: "deepl" | "openai" | "gemini";
   usedFallback?: boolean;
-  primaryError?: string;
+  primaryFailure?: TranslationProviderFailure;
   openaiKeyHash?: string;
   model?: string;
 };

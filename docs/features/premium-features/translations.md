@@ -69,7 +69,12 @@ The app persists translation metadata under `overlay.__meta`:
 - `providerSelected`
 - `providerUsed`
 - `usedFallback`
-- `primaryError`
+- `primaryFailure.code`
+- `primaryFailure.fingerprint`
+
+Provider response bodies and messages are never stored or returned. The closed
+failure code supports classification, while the 24-hex SHA-256 prefix supports
+correlation without exposing the underlying provider diagnostic.
 
 The Translate button reflects `providerUsed`, and long-press forces re-translation.
 
