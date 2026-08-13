@@ -3,6 +3,10 @@ import {
   forwardAbortSignal,
   platformFetchWithTimeout,
 } from "./platformFetchWithTimeout";
+import {
+  recordTrainingTransitionResponse,
+  recordTrainingTransitionTiming,
+} from "../training/trainingTransitionTiming";
 import type {
   PlatformAudioCapabilityV2,
   PlatformSenseCardCapabilityV2,
@@ -19,6 +23,7 @@ type PlatformV2AudioRequest = {
   cacheOwnerId: string;
   capability: PlatformAudioCapabilityV2;
   text: string;
+  transitionId?: string;
   signal?: AbortSignal;
 };
 
@@ -31,8 +36,9 @@ export async function requestPlatformV2Translation(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
+  context: { transitionId?: string; signal?: AbortSignal } = {},
 ): Promise<void> {
-  return requestPlatformV2TranslationUncached(capability);
+  return requestPlatformV2TranslationUncached(capability, context);
 }
 
 async function requestPlatformV2TranslationUncached(
@@ -40,13 +46,16 @@ async function requestPlatformV2TranslationUncached(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
+  context: { transitionId?: string; signal?: AbortSignal },
 ): Promise<void> {
+  const startedAt = performance.now();
   const response = await platformFetchWithTimeout(
     "/api/platform/translation",
     {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
+      signal: context.signal,
       headers: await platformV2AuthenticatedJsonHeaders(),
       body: JSON.stringify({
         entryId: capability.target.entryId,
@@ -54,6 +63,24 @@ async function requestPlatformV2TranslationUncached(
       }),
     },
   );
+  if (context.transitionId) {
+    const cacheOutcome = response.headers.get("x-platform-cache");
+    const stage =
+      cacheOutcome === "hit" || cacheOutcome === "pending"
+        ? "translation.cache"
+        : cacheOutcome === "provider"
+          ? "translation.provider"
+          : "translation.unknown";
+    recordTrainingTransitionResponse(
+      context.transitionId,
+      stage,
+      startedAt,
+      response,
+      response.ok
+        ? (response.headers.get("x-platform-cache") ?? "ready")
+        : `http-${response.status}`,
+    );
+  }
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as {
       error?: string;
@@ -69,6 +96,14 @@ export async function resolvePlatformV2Audio(
   const prefetched = validPreload(preloadedAudio, key);
   if (prefetched) {
     preloadedAudio.delete(key);
+    if (input.transitionId) {
+      recordTrainingTransitionTiming({
+        transitionId: input.transitionId,
+        stage: "audio.cache",
+        durationMs: 0,
+        outcome: "client-preload-hit",
+      });
+    }
     return prefetched.promise;
   }
   return resolvePlatformV2AudioUncached(input);
@@ -79,7 +114,17 @@ export async function preloadPlatformV2Audio(
 ): Promise<string> {
   const key = platformAudioKey(input);
   const existing = validPreload(preloadedAudio, key);
-  if (existing) return existing.promise;
+  if (existing) {
+    if (input.transitionId) {
+      recordTrainingTransitionTiming({
+        transitionId: input.transitionId,
+        stage: "audio.cache",
+        durationMs: 0,
+        outcome: "client-preload-hit",
+      });
+    }
+    return existing.promise;
+  }
   const record: PreloadedPromise<string> = {
     cacheOwnerId: input.cacheOwnerId,
     promise: Promise.resolve(""),
@@ -118,6 +163,7 @@ async function resolvePlatformV2AudioUncached(
   input: PlatformV2AudioRequest,
   signal?: AbortSignal,
 ): Promise<string> {
+  const startedAt = performance.now();
   const response = await platformFetchWithTimeout(
     "/api/platform/v1/audio/resolve",
     {
@@ -133,6 +179,18 @@ async function resolvePlatformV2AudioUncached(
       }),
     },
   );
+  if (input.transitionId) {
+    const cacheOutcome = response.headers.get("x-platform-cache");
+    recordTrainingTransitionResponse(
+      input.transitionId,
+      cacheOutcome === "hit" ? "audio.cache" : "audio.provider",
+      startedAt,
+      response,
+      response.ok
+        ? (response.headers.get("x-platform-cache") ?? "ready")
+        : `http-${response.status}`,
+    );
+  }
   const payload = (await response.json().catch(() => null)) as
     | { asset?: { url?: string }; error?: string | { code?: string } }
     | null;

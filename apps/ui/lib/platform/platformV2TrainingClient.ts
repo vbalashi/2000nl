@@ -3,7 +3,12 @@ import {
   forwardAbortSignal,
   platformFetchWithTimeout,
 } from "./platformFetchWithTimeout";
-import { clearPlatformV2TrainingMediaCache } from "./platformV2TrainingMediaClient";
+import {
+  clearPlatformV2TrainingMediaCache,
+} from "./platformV2TrainingMediaClient";
+import {
+  recordTrainingTransitionResponse,
+} from "../training/trainingTransitionTiming";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformHeadwordGroupV2,
@@ -47,6 +52,7 @@ export type PlatformV2TrainingLookupInput = {
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
+  transitionId?: string;
   signal?: AbortSignal;
 };
 
@@ -54,6 +60,7 @@ export type PlatformV2TrainingPrefetchInput =
   PlatformV2TrainingLookupInput & {
     // This partitions browser memory only; server authentication remains authoritative.
     cacheOwnerId: string;
+    bypassCache?: boolean;
   };
 
 type PrefetchedLookup = {
@@ -72,6 +79,7 @@ const prefetchedLookups = new Map<string, PrefetchedLookup>();
 export async function fetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingLookupInput,
 ): Promise<PlatformV2TrainingLookupResult> {
+  const startedAt = performance.now();
   const response = await platformFetchWithTimeout("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -86,6 +94,15 @@ export async function fetchPlatformV2TrainingEntry(
       intent: "training-review",
     }),
   });
+  if (input.transitionId) {
+    recordTrainingTransitionResponse(
+      input.transitionId,
+      "next-card.lookup",
+      startedAt,
+      response,
+      response.ok ? "ready" : `http-${response.status}`,
+    );
+  }
   if (!response.ok) {
     return { state: "lookup-http-error", status: response.status };
   }
@@ -111,8 +128,9 @@ export function prefetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingPrefetchInput,
 ): Promise<PlatformV2TrainingLookupResult> {
   const key = trainingLookupKey(input);
-  const existing = validPrefetch(key);
+  const existing = input.bypassCache ? null : validPrefetch(key);
   if (existing) return existing.promise;
+  if (input.bypassCache) prefetchedLookups.delete(key);
 
   const record: PrefetchedLookup = {
     cacheOwnerId: input.cacheOwnerId,

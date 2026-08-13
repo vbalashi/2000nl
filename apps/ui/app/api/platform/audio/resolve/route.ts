@@ -71,6 +71,7 @@ function consumeRateLimit(key: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const startedAt = performance.now();
   const reply = (payload: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(payload, status));
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       text,
       quality: body?.quality,
     });
-    return reply({
+    const response = reply({
       status: "ready",
       asset: {
         assetId: `tts_${artifact.cacheKey}`,
@@ -138,6 +139,12 @@ export async function POST(request: NextRequest) {
         purpose,
       },
     });
+    response.headers.set("X-Platform-Cache", artifact.cached ? "hit" : "miss");
+    response.headers.set(
+      "Server-Timing",
+      `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,
+    );
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message === "invalid_audio_quality") {
