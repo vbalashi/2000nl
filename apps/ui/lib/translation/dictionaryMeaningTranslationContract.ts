@@ -5,6 +5,18 @@ import { dictionaryTranslationContext } from "./dictionaryTranslationContext";
 export const DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION =
   "dictionary-meaning-translation-v1" as const;
 
+export const DICTIONARY_MEANING_TRANSLATION_LIMITS = {
+  headwordCharacters: 120,
+  contentItems: 24,
+  contentItemCharacters: 600,
+  contentCharacters: 6_000,
+  contentTokenUpperBound: 2_500,
+  entryTranslationCharacters: 300,
+  alternativeTexts: 5,
+  contentTranslationCharacters: 1_200,
+  noteCharacters: 800,
+} as const;
+
 export type DictionaryMeaningContentRole =
   | "definition"
   | "usage-pattern"
@@ -60,13 +72,34 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     typeof word.part_of_speech === "string" ? word.part_of_speech : null;
   const context = dictionaryTranslationContext(partOfSpeechCode);
   const content: DictionaryMeaningTranslationRequestV1["content"] = [];
+  let remainingContentCharacters =
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters;
+  let remainingContentTokenUpperBound =
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTokenUpperBound;
   const push = (
     fieldId: string,
     role: DictionaryMeaningContentRole,
     value: unknown,
   ) => {
-    if (typeof value !== "string" || !value.trim()) return;
-    content.push({ fieldId, role, text: value.trim() });
+    if (
+      content.length >= DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItems ||
+      remainingContentCharacters <= 0 ||
+      remainingContentTokenUpperBound <= 0
+    ) {
+      return;
+    }
+    const text = boundedString(
+      value,
+      Math.min(
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters,
+        remainingContentCharacters,
+      ),
+      remainingContentTokenUpperBound,
+    );
+    if (!text) return;
+    content.push({ fieldId, role, text });
+    remainingContentCharacters -= unicodeLength(text);
+    remainingContentTokenUpperBound -= tokenUpperBound(text);
   };
 
   push("definition", "definition", meaning.definition);
@@ -99,7 +132,11 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     sourceLanguageCode: params.sourceLanguageCode,
     targetLanguageCode: params.targetLanguageCode,
     headword: {
-      text: requiredString(word.headword, "headword"),
+      text: requiredTruncatedString(
+        word.headword,
+        "headword",
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.headwordCharacters,
+      ),
       article:
         typeof word.gender === "string" && word.gender.trim()
           ? word.gender.trim()
@@ -169,15 +206,26 @@ export function parseDictionaryMeaningTranslationResult(
       ["primaryText", "alternativeTexts", "baseText", "note"],
       "entryTranslation",
     );
-    const primaryText = requiredString(
+    const primaryText = requiredBoundedString(
       entry.primaryText,
       "entryTranslation.primaryText",
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
     );
     if (!Array.isArray(entry.alternativeTexts)) {
       throw new Error("entryTranslation.alternativeTexts must be an array");
     }
+    if (
+      entry.alternativeTexts.length >
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.alternativeTexts
+    ) {
+      throw new Error("entryTranslation.alternativeTexts exceeds the limit");
+    }
     const alternativeTexts = entry.alternativeTexts.map((value, index) =>
-      requiredString(value, `entryTranslation.alternativeTexts[${index}]`),
+      requiredBoundedString(
+        value,
+        `entryTranslation.alternativeTexts[${index}]`,
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
+      ),
     );
     const normalizedAlternatives = new Set<string>();
     for (const alternative of alternativeTexts) {
@@ -193,8 +241,16 @@ export function parseDictionaryMeaningTranslationResult(
     entryTranslation = {
       primaryText,
       alternativeTexts,
-      baseText: nullableString(entry.baseText, "entryTranslation.baseText"),
-      note: nullableString(entry.note, "entryTranslation.note"),
+      baseText: nullableBoundedString(
+        entry.baseText,
+        "entryTranslation.baseText",
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.entryTranslationCharacters,
+      ),
+      note: nullableBoundedString(
+        entry.note,
+        "entryTranslation.note",
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.noteCharacters,
+      ),
     };
   }
 
@@ -215,7 +271,11 @@ export function parseDictionaryMeaningTranslationResult(
     }
     return {
       fieldId,
-      text: requiredString(item.text, `contentTranslations[${index}].text`),
+      text: requiredBoundedString(
+        item.text,
+        `contentTranslations[${index}].text`,
+        DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTranslationCharacters,
+      ),
     };
   });
 
@@ -252,9 +312,54 @@ function requiredString(value: unknown, label: string) {
   return value.trim();
 }
 
-function nullableString(value: unknown, label: string) {
+function requiredBoundedString(value: unknown, label: string, limit: number) {
+  const text = requiredString(value, label);
+  if (unicodeLength(text) > limit) {
+    throw new Error(`${label} exceeds the ${limit}-character limit`);
+  }
+  return text;
+}
+
+function requiredTruncatedString(value: unknown, label: string, limit: number) {
+  const text = boundedString(value, limit);
+  if (!text) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return text;
+}
+
+function nullableBoundedString(value: unknown, label: string, limit: number) {
   if (value === null) return null;
-  return requiredString(value, label);
+  return requiredBoundedString(value, label, limit);
+}
+
+function boundedString(
+  value: unknown,
+  characterLimit: number,
+  tokenLimit = Number.POSITIVE_INFINITY,
+) {
+  if (typeof value !== "string" || characterLimit <= 0 || tokenLimit <= 0) {
+    return "";
+  }
+  const text = value.trim();
+  if (!text) return "";
+  const output: string[] = [];
+  let tokens = 0;
+  for (const character of Array.from(text).slice(0, characterLimit)) {
+    const characterTokens = tokenUpperBound(character);
+    if (tokens + characterTokens > tokenLimit) break;
+    output.push(character);
+    tokens += characterTokens;
+  }
+  return output.join("");
+}
+
+function unicodeLength(value: string) {
+  return Array.from(value).length;
+}
+
+export function tokenUpperBound(value: string) {
+  return new TextEncoder().encode(value).length;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

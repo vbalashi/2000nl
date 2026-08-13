@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
-import crypto from "crypto";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
@@ -20,16 +19,12 @@ import {
   normalizeDictionaryContent,
   verifyDictionaryContentAudioLinks,
 } from "@/lib/platform/projections/dictionaryContent";
-import {
-  extractTranslatableTexts,
-  type ExtractedItem,
-} from "@/lib/translation/extractTranslatableTexts";
-import {
-  dictionaryTranslationContext,
-  normalizePartOfSpeechCode,
-} from "@/lib/translation/dictionaryTranslationContext";
 import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
-import { buildDictionaryMeaningTranslationArtifact } from "@/lib/translation/dictionaryMeaningTranslationArtifact";
+import {
+  dictionaryMeaningTranslationFingerprint,
+  dictionaryMeaningTranslatedPaths,
+  resolveDictionaryMeaningTranslation,
+} from "@/lib/translation/dictionaryMeaningTranslationService";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -68,35 +63,6 @@ function normalizeLangForDb(lang: string) {
   return lang.trim().replace("_", "-").toLowerCase();
 }
 
-function buildOverlay(items: ExtractedItem[], translated: string[]): TranslationOverlay {
-  const overlay: any = { meanings: [{}] };
-
-  const setAtPath = (path: Array<string | number>, value: string) => {
-    let cur: any = overlay;
-    for (let i = 0; i < path.length; i++) {
-      const key = path[i];
-      const isLast = i === path.length - 1;
-
-      if (isLast) {
-        cur[key as any] = value;
-        return;
-      }
-
-      const nextKey = path[i + 1];
-      if (cur[key as any] == null) {
-        cur[key as any] = typeof nextKey === "number" ? [] : {};
-      }
-      cur = cur[key as any];
-    }
-  };
-
-  items.forEach((item, idx) => {
-    setAtPath(item.path, translated[idx] ?? "");
-  });
-
-  return overlay;
-}
-
 function attachOverlayMeta(
   overlay: TranslationOverlay,
   meta: TranslationOverlay["__meta"]
@@ -108,12 +74,6 @@ function attachOverlayMeta(
       ...(meta ?? {}),
     },
   };
-}
-
-function computeFingerprint(items: ExtractedItem[]) {
-  // Stable hash of what we sent to the translation provider (paths + texts)
-  const payload = items.map((it) => ({ path: it.path, text: it.text }));
-  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 export async function GET(req: NextRequest) {
@@ -304,9 +264,26 @@ export async function GET(req: NextRequest) {
   const sourceContentRevision = contentFingerprint(sourceContent);
   const currentTranslationPolicyVersion = translationPolicyVersion(provider);
   const selectedProviderRevision = getTranslationPromptFingerprint(provider);
+  const meaningRequest = buildDictionaryMeaningTranslationRequest({
+    entryId: wordEntryId,
+    sourceContentFingerprint: sourceContentRevision,
+    sourceLanguageCode:
+      typeof (word as any)?.language_code === "string"
+        ? (word as any).language_code
+        : "nl",
+    targetLanguageCode: dbLang,
+    word,
+  });
+  const fingerprint = dictionaryMeaningTranslationFingerprint({
+    request: meaningRequest,
+    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    provider,
+    promptFingerprint: selectedProviderRevision,
+  });
   const pendingFreshForMs = 15_000;
   if (
     existing?.status === "pending" &&
+    existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
     existing.translation_policy_version === currentTranslationPolicyVersion &&
     isFresh(existing.updated_at, pendingFreshForMs)
@@ -337,16 +314,6 @@ export async function GET(req: NextRequest) {
       }
     );
   }
-
-  const items = extractTranslatableTexts(word);
-  // Include POS in the fingerprint so changes to word_entries.part_of_speech retrigger translation.
-  const posCode = normalizePartOfSpeechCode((word as any)?.part_of_speech);
-  const fingerprint = computeFingerprint([
-    ...items,
-    { path: ["__part_of_speech__"], text: posCode || "" },
-    { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
-    { path: ["__translation_prompt_fingerprint__", provider], text: getTranslationPromptFingerprint(provider) },
-  ]);
 
   // Fast-path: return cached overlay only if it matches the current fingerprint.
   if (
@@ -582,102 +549,12 @@ export async function GET(req: NextRequest) {
       }
     }
   }
-  if (items.length === 0) {
-    const overlay: TranslationOverlay = attachOverlayMeta(
-      { headword: "", meanings: [{}] },
-      {
-        providerSelected: provider,
-        providerUsed: provider,
-        usedFallback: false,
-        primaryError: null,
-        promptFingerprint: getTranslationPromptFingerprint(provider),
-        translatedPaths: items.map((item) => item.path),
-      }
-    );
-    await supabase
-      .from("word_entry_translations")
-      .update({
-        status: "ready",
-        overlay,
-        note: null,
-        source_fingerprint: fingerprint,
-        source_content_revision: sourceContentRevision,
-        translation_policy_version: currentTranslationPolicyVersion,
-        provider_revision: selectedProviderRevision,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
-
-    return NextResponse.json(
-      { status: "ready" as const, overlay, note: null },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "hit",
-        },
-      }
-    );
-  }
-
   try {
-    const texts = items.map((i) => i.text);
-    const hasContextTranslate =
-      typeof (translator as any)?.translateWithContext === "function";
-    const hasContextTranslateAndNote =
-      typeof (translator as any)?.translateWithContextAndNote === "function";
-    const hasDictionaryMeaningTranslate =
-      typeof (translator as any)?.translateDictionaryMeaning === "function";
-
-    const context = dictionaryTranslationContext(posCode);
-
-    let translatedTexts: string[] = [];
-    let note: string | null = null;
-    let providerUsed: string | null = null;
-    let usedFallback: boolean | null = null;
-    let primaryError: string | null = null;
-    let overlay: TranslationOverlay;
-
-    if (hasDictionaryMeaningTranslate) {
-      const result = await (translator as any).translateDictionaryMeaning(
-        buildDictionaryMeaningTranslationRequest({
-          entryId: wordEntryId,
-          sourceContentFingerprint: sourceContentRevision,
-          sourceLanguageCode:
-            typeof (word as any)?.language_code === "string"
-              ? (word as any).language_code
-              : "nl",
-          targetLanguageCode: dbLang,
-          word,
-        }),
-      );
-      overlay = buildDictionaryMeaningTranslationArtifact(result);
-      note = result.entryTranslation?.note ?? null;
-      providerUsed = result.meta?.providerUsed ?? null;
-      usedFallback = result.meta?.usedFallback ?? false;
-      primaryError = result.meta?.primaryError ?? null;
-    } else if (hasContextTranslateAndNote) {
-      const result = await (translator as any).translateWithContextAndNote(
-        texts,
-        targetLang,
-        context
-      );
-      translatedTexts = result?.translations ?? [];
-      note = typeof result?.note === "string" ? result.note : null;
-      providerUsed = typeof result?.meta?.providerUsed === "string" ? result.meta.providerUsed : null;
-      usedFallback = typeof result?.meta?.usedFallback === "boolean" ? result.meta.usedFallback : null;
-      primaryError = typeof result?.meta?.primaryError === "string" ? result.meta.primaryError : null;
-      overlay = buildOverlay(items, translatedTexts);
-    } else {
-      translatedTexts = hasContextTranslate
-        ? await (translator as any).translateWithContext(texts, targetLang, context)
-        : await translator.translate(texts, targetLang);
-      note = null;
-      overlay = buildOverlay(items, translatedTexts);
-    }
+    const { overlay, note, meta } =
+      await resolveDictionaryMeaningTranslation(translator, meaningRequest);
+    const providerUsed = meta.providerUsed ?? null;
+    const usedFallback = meta.usedFallback ?? false;
+    const primaryError = meta.primaryError ?? null;
 
     const used =
       providerUsed === "deepl" || providerUsed === "openai" || providerUsed === "gemini"
@@ -689,7 +566,7 @@ export async function GET(req: NextRequest) {
       usedFallback,
       primaryError,
       promptFingerprint: getTranslationPromptFingerprint(used),
-      translatedPaths: items.map((item) => item.path),
+      translatedPaths: dictionaryMeaningTranslatedPaths(meaningRequest),
     });
 
     const { error: updateError } = await supabase
@@ -792,7 +669,13 @@ export async function GET(req: NextRequest) {
             }
           : null),
       },
-      { status: 502, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 502,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "provider",
+        },
+      }
     );
   }
 }

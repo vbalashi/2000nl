@@ -1,4 +1,4 @@
-import { ITranslator } from "./ITranslator";
+import type { ITranslator } from "./ITranslator";
 import crypto from "crypto";
 import {
   buildOpenAITranslationMessages,
@@ -12,6 +12,7 @@ import {
   type DictionaryMeaningTranslationRequestV1,
   type DictionaryMeaningTranslationResultV1,
 } from "./dictionaryMeaningTranslationContract";
+import { translateDictionaryMeaningWithGenericProvider } from "./dictionaryMeaningTranslationService";
 
 type OpenAITranslatorOptions = {
   apiKey: string;
@@ -206,24 +207,47 @@ export class OpenAITranslator implements ITranslator {
     if (!this.apiKey) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
-    const result = await this.withRetries(async () =>
-      parseDictionaryMeaningTranslationResult(
-        await this.requestChatContent(
-          buildDictionaryMeaningTranslationMessages(request),
+    try {
+      const result = await this.withRetries(async () =>
+        parseDictionaryMeaningTranslationResult(
+          await this.requestChatContent(
+            buildDictionaryMeaningTranslationMessages(request),
+          ),
+          request,
         ),
-        request,
-      ),
-    );
-    return {
-      ...result,
-      meta: {
-        providerSelected: "openai",
-        providerUsed: "openai",
-        usedFallback: false,
-        openaiKeyHash: keyHash(this.apiKey),
-        model: this.model,
-      },
-    };
+      );
+      return {
+        ...result,
+        meta: {
+          providerSelected: "openai",
+          providerUsed: "openai",
+          usedFallback: false,
+          openaiKeyHash: keyHash(this.apiKey),
+          model: this.model,
+        },
+      };
+    } catch (primaryError) {
+      if (!this.fallback) throw primaryError;
+      const fallbackResult =
+        await translateDictionaryMeaningWithGenericProvider(
+          this.fallback,
+          request,
+          {
+            providerSelected: "openai",
+            providerUsed: "deepl",
+            usedFallback: true,
+            primaryError: String(primaryError),
+            openaiKeyHash: keyHash(this.apiKey),
+            model: this.model,
+          },
+        );
+      return {
+        ...fallbackResult,
+        meta: fallbackResult.meta as NonNullable<
+          OpenAITranslationResult["meta"]
+        >,
+      };
+    }
   }
 
   private async withRetries<T>(operation: () => Promise<T>): Promise<T> {

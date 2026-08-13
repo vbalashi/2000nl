@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
   buildDictionaryMeaningTranslationMessages,
   buildDictionaryMeaningTranslationRequest,
+  DICTIONARY_MEANING_TRANSLATION_LIMITS,
   parseDictionaryMeaningTranslationResult,
   type DictionaryMeaningTranslationRequestV1,
+  tokenUpperBound,
 } from "@/lib/translation/dictionaryMeaningTranslationContract";
 
 const request: DictionaryMeaningTranslationRequestV1 = {
@@ -88,6 +90,61 @@ describe("dictionary meaning translation contract", () => {
     });
   });
 
+  test("bounds oversized context deterministically without splitting Unicode", () => {
+    const oversized = buildDictionaryMeaningTranslationRequest({
+      entryId: "entry-large",
+      sourceContentFingerprint: "source-large",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: {
+        headword: "🧀".repeat(200),
+        part_of_speech: "zn",
+        raw: {
+          meanings: [
+            {
+              definition: "😀".repeat(1_000),
+              examples: Array.from({ length: 50 }, (_, index) =>
+                `${index}:${"x".repeat(1_000)}`,
+              ),
+              idioms: [],
+              note: "n".repeat(1_000),
+            },
+          ],
+        },
+      },
+    });
+
+    expect(Array.from(oversized.headword.text)).toHaveLength(
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.headwordCharacters,
+    );
+    expect(oversized.content.length).toBeGreaterThan(0);
+    expect(oversized.content.length).toBeLessThanOrEqual(
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItems,
+    );
+    expect(
+      oversized.content.reduce(
+        (sum, item) => sum + Array.from(item.text).length,
+        0,
+      ),
+    ).toBeLessThanOrEqual(
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters,
+    );
+    expect(
+      Math.max(...oversized.content.map((item) => Array.from(item.text).length)),
+    ).toBeLessThanOrEqual(
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters,
+    );
+    expect(oversized.headword.text.endsWith("🧀")).toBe(true);
+    expect(
+      oversized.content.reduce(
+        (sum, item) => sum + tokenUpperBound(item.text),
+        0,
+      ),
+    ).toBeLessThanOrEqual(
+      DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTokenUpperBound,
+    );
+  });
+
   test("strictly parses aligned entry and content translations", () => {
     expect(
       parseDictionaryMeaningTranslationResult(
@@ -139,6 +196,56 @@ describe("dictionary meaning translation contract", () => {
         request,
       ),
     ).toThrow("alternativeTexts");
+  });
+
+  test("rejects provider output that exceeds response limits", () => {
+    expect(() =>
+      parseDictionaryMeaningTranslationResult(
+        JSON.stringify({
+          entryTranslation: {
+            primaryText: "бельё",
+            alternativeTexts: Array.from(
+              {
+                length:
+                  DICTIONARY_MEANING_TRANSLATION_LIMITS.alternativeTexts + 1,
+              },
+              (_, index) => `вариант ${index}`,
+            ),
+            baseText: null,
+            note: null,
+          },
+          contentTranslations: request.content.map((item) => ({
+            fieldId: item.fieldId,
+            text: "перевод",
+          })),
+        }),
+        request,
+      ),
+    ).toThrow("alternativeTexts exceeds");
+
+    expect(() =>
+      parseDictionaryMeaningTranslationResult(
+        JSON.stringify({
+          entryTranslation: {
+            primaryText: "бельё",
+            alternativeTexts: [],
+            baseText: null,
+            note: null,
+          },
+          contentTranslations: request.content.map((item, index) => ({
+            fieldId: item.fieldId,
+            text:
+              index === 0
+                ? "x".repeat(
+                    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTranslationCharacters +
+                      1,
+                  )
+                : "перевод",
+          })),
+        }),
+        request,
+      ),
+    ).toThrow("contentTranslations[0].text exceeds");
   });
 
   test("allows no entry translation for an idiom-only meaning", () => {

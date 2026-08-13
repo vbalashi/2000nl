@@ -5,7 +5,12 @@ import {
   contentFingerprint,
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
-import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+import {
+  TRANSLATION_PIPELINE_VERSION,
+  translationPolicyVersion,
+} from "@/lib/translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { dictionaryMeaningTranslationFingerprint } from "@/lib/translation/dictionaryMeaningTranslationService";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
@@ -75,6 +80,24 @@ const accessibleEntry = () => ({
   raw: { meanings: [{ definition: "woning" }] },
 });
 
+const translationFingerprint = (entry: ReturnType<typeof accessibleEntry>) => {
+  const sourceContentRevision = contentFingerprint(
+    normalizeDictionaryContent(entry as any),
+  );
+  return dictionaryMeaningTranslationFingerprint({
+    request: buildDictionaryMeaningTranslationRequest({
+      entryId: entry.id,
+      sourceContentFingerprint: sourceContentRevision,
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: entry,
+    }),
+    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    provider: "openai",
+    promptFingerprint: "prompt-fingerprint",
+  });
+};
+
 const currentPendingTranslation = () => ({
   status: "pending",
   overlay: null,
@@ -82,6 +105,7 @@ const currentPendingTranslation = () => ({
   source_content_revision: contentFingerprint(
     normalizeDictionaryContent(accessibleEntry() as any),
   ),
+  source_fingerprint: translationFingerprint(accessibleEntry()),
   translation_policy_version: translationPolicyVersion("openai"),
   provider_revision: "prompt-fingerprint",
   updated_at: new Date().toISOString(),
@@ -288,6 +312,7 @@ describe("/api/platform/v1/translation", () => {
             source_content_revision: contentFingerprint(
               normalizeDictionaryContent(entry as any),
             ),
+            source_fingerprint: translationFingerprint(entry),
             translation_policy_version:
               translationPolicyVersion("openai"),
             provider_revision: "prompt-fingerprint",

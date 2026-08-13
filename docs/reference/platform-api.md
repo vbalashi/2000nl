@@ -1075,6 +1075,12 @@ Response when a ready overlay is available:
   "status": "ready",
   "overlay": {
     "headword": "дом",
+    "entryTranslation": {
+      "primaryText": "дом",
+      "alternativeTexts": ["жилище"],
+      "baseText": "дом",
+      "note": null
+    },
     "meanings": [
       {
         "definition": "здание для жилья"
@@ -1087,6 +1093,19 @@ Response when a ready overlay is available:
   "note": null
 }
 ```
+
+`overlay.entryTranslation` is the meaning-specific entry artifact shared by
+Library and Training. `primaryText` is the preferred contextual translation;
+`alternativeTexts` contains zero or more distinct, non-invented alternatives
+and an empty array is valid; `baseText` is a context-independent dictionary
+translation when useful, otherwise `null`; `note` is a short disambiguation
+note when needed, otherwise `null`. These fields are derived translation data
+and never modify source dictionary content.
+
+Platform V2 lookup projects the same artifact as `entry.translation.text`,
+`alternativeTexts`, `baseText`, and `note`. Optional fields may be absent for
+older or non-ready artifacts; when present, `alternativeTexts` may be empty and
+`baseText`/`note` may be `null`.
 
 Response when another request is already producing the same overlay:
 ```json
@@ -1105,6 +1124,9 @@ Every successful response includes `X-Platform-Cache` with one of these values:
 - `provider`: this request performed provider-backed translation work;
 - `unknown`: the worker did not return authoritative cache metadata. This is a
   fail-closed diagnostic value and must not be counted as provider work.
+
+A failed provider attempt returns the same `provider` classification together
+with the non-2xx status; the header classifies work performed, not success.
 
 `force: true` refreshes the overlay even when a ready cached row exists. The
 result is therefore classified as `X-Platform-Cache: provider` when the refresh

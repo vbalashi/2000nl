@@ -5,6 +5,9 @@ import {
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
 import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+import { TRANSLATION_PIPELINE_VERSION } from "@/lib/translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { dictionaryMeaningTranslationFingerprint } from "@/lib/translation/dictionaryMeaningTranslationService";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
@@ -55,6 +58,24 @@ const accessibleWord = {
   raw: { meanings: [{ definition: "woning" }] },
 };
 
+const translationFingerprint = (word: any) => {
+  const sourceContentRevision = contentFingerprint(
+    normalizeDictionaryContent(word as any),
+  );
+  return dictionaryMeaningTranslationFingerprint({
+    request: buildDictionaryMeaningTranslationRequest({
+      entryId: word.id,
+      sourceContentFingerprint: sourceContentRevision,
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "en",
+      word,
+    }),
+    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    provider: "openai",
+    promptFingerprint: "prompt-fingerprint",
+  });
+};
+
 const currentPendingTranslation = () => ({
   status: "pending",
   overlay: null,
@@ -62,6 +83,7 @@ const currentPendingTranslation = () => ({
   source_content_revision: contentFingerprint(
     normalizeDictionaryContent(accessibleWord as any),
   ),
+  source_fingerprint: translationFingerprint(accessibleWord),
   translation_policy_version: translationPolicyVersion("openai"),
   provider_revision: "prompt-fingerprint",
   updated_at: new Date().toISOString(),
@@ -371,5 +393,117 @@ describe("/api/translation", () => {
         },
       },
     });
+  });
+
+  test.each(["pending", "ready"])(
+    "invalidates a fresh %s artifact when only the usage note changes",
+    async (status) => {
+      const oldWord = {
+        ...accessibleWord,
+        raw: {
+          meanings: [{ definition: "woning", note: "oude toelichting" }],
+        },
+      };
+      const changedWord = {
+        ...accessibleWord,
+        raw: {
+          meanings: [{ definition: "woning", note: "nieuwe toelichting" }],
+        },
+      };
+      const userClient = { auth: { getUser }, rpc };
+      const serviceClient = { from };
+      createClient
+        .mockReturnValueOnce(userClient)
+        .mockReturnValueOnce(serviceClient);
+      getUser.mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      });
+      rpc.mockResolvedValueOnce({ data: changedWord, error: null });
+      translateDictionaryMeaning.mockResolvedValueOnce({
+        entryTranslation: {
+          primaryText: "house",
+          alternativeTexts: [],
+          baseText: "house",
+          note: null,
+        },
+        contentTranslations: [
+          { fieldId: "definition", text: "dwelling" },
+          { fieldId: "usage-note", text: "new explanation" },
+        ],
+        meta: { providerUsed: "openai", usedFallback: false },
+      });
+      const existing = {
+        ...currentPendingTranslation(),
+        status,
+        overlay:
+          status === "ready"
+            ? { headword: "house", meanings: [{ definition: "dwelling" }] }
+            : null,
+        source_fingerprint: translationFingerprint(oldWord),
+        updated_at: new Date().toISOString(),
+      };
+      const lookupChain = queryChain({ data: existing, error: null });
+      const claimChain = queryChain({
+        data: { word_entry_id: accessibleWord.id },
+        error: null,
+      });
+      const readyChain = queryChain({ data: null, error: null });
+      from
+        .mockReturnValueOnce(lookupChain)
+        .mockReturnValueOnce(claimChain)
+        .mockReturnValueOnce(readyChain);
+
+      const { GET } = await import("@/app/api/translation/route");
+      const response = await GET(request("token-1"));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("x-translation-cache")).toBe("provider");
+      expect(translateDictionaryMeaning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              fieldId: "usage-note",
+              text: "nieuwe toelichting",
+            }),
+          ]),
+        }),
+      );
+    },
+  );
+
+  test("classifies a provider failure as provider work", async () => {
+    const userClient = { auth: { getUser }, rpc };
+    const serviceClient = { from };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
+    translateDictionaryMeaning.mockRejectedValueOnce(
+      new Error("provider unavailable"),
+    );
+    const stalePending = {
+      ...currentPendingTranslation(),
+      updated_at: "2020-01-01T00:00:00.000Z",
+    };
+    from
+      .mockReturnValueOnce(queryChain({ data: stalePending, error: null }))
+      .mockReturnValueOnce(
+        queryChain({
+          data: { word_entry_id: accessibleWord.id },
+          error: null,
+        }),
+      )
+      .mockReturnValueOnce(queryChain({ data: null, error: null }));
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(502);
+    expect(response.headers.get("x-translation-cache")).toBe("provider");
   });
 });

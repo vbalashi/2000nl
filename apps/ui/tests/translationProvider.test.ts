@@ -426,6 +426,61 @@ describe("OpenAITranslator", () => {
     expect(translated).toBe("Fallback");
     expect(fallback.translate).toHaveBeenCalled();
   });
+
+  it("preserves structured dictionary artifacts when OpenAI falls back", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      text: async () => "boom",
+    });
+    const fallback = {
+      translate: vi.fn(async () => ["бельё", "ткань; одежда"]),
+    } as any;
+    const translator = new OpenAITranslator({
+      apiKey: "key",
+      fallback,
+      maxRetries: 0,
+    });
+
+    const result = await translator.translateDictionaryMeaning({
+      contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+      entryId: "entry-goed-cloth",
+      sourceContentFingerprint: "source-revision-1",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      headword: {
+        text: "goed",
+        article: "het",
+        partOfSpeech: "zelfstandig naamwoord",
+        partOfSpeechCode: "zn",
+      },
+      content: [
+        {
+          fieldId: "definition",
+          role: "definition",
+          text: "de stof; de kleren",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      entryTranslation: {
+        primaryText: "бельё",
+        alternativeTexts: [],
+        baseText: "бельё",
+        note: null,
+      },
+      contentTranslations: [
+        { fieldId: "definition", text: "ткань; одежда" },
+      ],
+      meta: {
+        providerSelected: "openai",
+        providerUsed: "deepl",
+        usedFallback: true,
+      },
+    });
+  });
 });
 
 describe("GeminiTranslator", () => {
