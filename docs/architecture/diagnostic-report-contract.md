@@ -63,8 +63,10 @@ Platform V2 types:
   `review-card` and `null` otherwise, plus observed outcome (`accepted`,
   `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
   `unknown`). For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
-  required UUIDs; for every other action both are explicit `null`;
-- `app-operation`: route, allowlisted stage (1–64 identifier characters),
+  required UUIDs; for every other action both are explicit `null`. A separate
+  required `contentRevision` binds any attached card atoms but is not part of
+  the historical Platform action identity;
+- `app-operation`: route, stage from the observation-stage enum below,
   required `operationCorrelationId` UUID, and optional related `entryId`. This
   is the only target for loading/reportable operations that fail before a card
   exists; it never borrows the previous visible card identity.
@@ -73,20 +75,38 @@ Source paths, visible headwords, array positions, card text, device data, timest
 
 ### Connected-client source context
 
-`sourceContext` is `null` for first-party reports. For connected clients it is
-either `null` or `diagnostic-source-context-v1`, a strict projection derived
-from an already validated `PlatformSourceContextV2`; source-context v1 and
-unknown versions are rejected. The server runs the existing principal-bound
-Platform parser, verifies that any client identity is the authenticated
-connected client, then applies this narrower projection and accepts no arbitrary
-URL. For YouTube the durable
-Feedback Item retains only `source.kind: youtube_video`, `provider: youtube`,
-the validated 11-character `externalId`, optional language code, and bounded
-caption location (`startMs`, `endMs`, `phraseIndex`, locator confidence).
-Artifact revision identifiers, hashes, selection offsets/hashes, and other
-validated V2 evidence remain in the 90-day envelope. Free-form `contextText`,
-`observation`, `diagnostics`, legacy `url`, and unknown properties are rejected
-for Diagnostic Report v1 even if another older Platform route accepts them.
+`sourceContext` is `null` for first-party reports. Connected clients may send
+only this exact object (all listed keys required; nullable values explicit):
+
+```text
+{
+  contractVersion: "diagnostic-source-context-v1",
+  source: {
+    kind: "youtube_video",
+    provider: "youtube",
+    externalId: /^[A-Za-z0-9_-]{11}$/,
+    languageCode: BCP-47 (2–35 ASCII characters) | null
+  },
+  location: null | {
+    kind: "caption_phrase",
+    startMs: integer 0..86400000 | null,
+    endMs: integer 0..86400000 | null,
+    phraseIndex: integer 0..2147483647 | null,
+    locatorConfidence: "canonical" | "derived" | "approximate" | null
+  }
+}
+```
+
+When both times exist, `endMs >= startMs`. A connected client may derive this
+projection from its `PlatformSourceContextV2`, but the diagnostic route performs
+independent strict raw-key validation at the root and every nested object
+*before* normalization; it does not rely on the existing permissive Platform
+parser, which may strip unknown keys. It also verifies the connected principal.
+Non-YouTube sources, source-context v1/unknown versions, artifact/selection
+objects, free-form context/observation/diagnostics, URLs, and every unknown key
+are rejected. The complete accepted object is durable on the Feedback Item as
+the bounded useful YouTube identity/location; no broader source evidence is
+stored by Diagnostic Report v1.
 
 ### Feedback classification
 
@@ -146,12 +166,28 @@ For an offline report whose frozen revision is no longer resolvable, the server
 returns the permanent `stale-target` rejection; v1 does not persist unverifiable
 historical text as automatic card content.
 
+For a `training-action` target, action verification is deliberately historical,
+not a comparison with the current card state. The server looks up the
+principal-scoped immutable action receipt/history by `clientEventId`, compares
+the submitted action ID, original SenseCard target, review result, and
+undo-known fields with the recorded request, and derives accepted/duplicate
+outcome from that record. A later `stateRevision` is expected after a committed
+action and does not invalidate the report. If no receipt exists, the report may
+retain only the client-observed `network`, `timeout`, `server-error`, or
+`unknown` outcome. Any cross-user receipt, mismatched target/event pair, or
+client claim of accepted/duplicate without a matching receipt is rejected.
+Attached card atoms are verified separately against `contentRevision`.
+
 ### Technical observations
 
-- `appVersion` (1–32 printable ASCII characters) and `buildVersion` (1–64);
+The canonical `observations` object contains exactly the following. App/build
+version and connected-client identity/version are not client strings: the
+server derives them from the deployed build and authenticated client registry,
+then stores them as server metadata beside the accepted envelope.
+
 - `capturedAt` as UTC RFC 3339 with milliseconds, timezone offset as an integer
   from -840 through 840 minutes, and an IANA timezone name of at most 64 ASCII
-  characters;
+  characters that must canonicalize through the runtime timezone registry;
 - route from `training`, `library`, `statistics`, `settings`, or `unknown`;
 - browser family from `chromium`, `safari`, `firefox`, or `unknown`, browser
   major version as a non-negative integer or `null`, OS family from `android`,
@@ -193,19 +229,22 @@ Routes are selected from an app-owned enum/template map. Browser/OS values are r
 At most four causes are stored. Each cause may contain only:
 
 - category: `network`, `timeout`, `auth`, `validation`, `provider`, `render`, `storage`, or `unknown`;
-- allowlisted application stage and safe error code;
+- observation stage and safe error code from the closed enums below;
 - HTTP status only, without headers or body;
 - correlation ID;
-- at most eight app-owned stack frames containing function name and relative build path.
+- at most eight lower-case SHA-256 `appFrameFingerprint` values. Raw function
+  names and paths are never accepted.
 
 An unknown error stores `unknown` plus a fingerprint of cleaned app-only frames. Raw messages and values are forbidden.
 
-The error chain contains at most four causes. A safe code and stage are
-allowlisted identifiers of at most 64 characters; correlation IDs are UUIDs;
-HTTP status is an integer from 100 through 599 or `null`; frame function names
-are at most 128 printable ASCII characters and relative build paths at most 256
-characters under an allowlisted application prefix. A cause has at most eight
-frames.
+The observation-stage enum is `lookup-selection`, `lookup-fetch`,
+`translation-cache`, `translation-provider`, `audio-cache`, `audio-provider`,
+`review-mutation`, `transition-render`, `report-capture`, `report-persist`, and
+`report-send`. The safe-code enum is `network-interrupted`, `timeout`,
+`unauthorized`, `forbidden`, `validation-rejected`, `provider-unavailable`,
+`render-failed`, `storage-failed`, and `unknown`. Correlation IDs are UUIDs;
+HTTP status is an integer from 100 through 599 or `null`. No automatically
+collected free-form string slot remains.
 
 ## Recent-event ring and performance
 
@@ -342,14 +381,22 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
   and private-entry negative cases;
 - action-union fixtures for review and undo-known, translation-union fixtures
   for entry/content-node fingerprints, and source-context fixtures for accepted
-  YouTube v2 plus rejected v1/arbitrary URL/context text;
+  YouTube projection plus rejected v1, non-YouTube, arbitrary URL/context text,
+  and unknown keys at every nesting level;
 - offline submit, restart/lease recovery, online/resume/auth recovery, backoff, Background Sync equivalence when present, and 30-day expiry;
 - commit-then-disconnect followed by duplicate receipt, concurrent duplicate delivery, and same-ID/different-payload conflict;
+- training-action receipt verification for accepted-then-disconnect, duplicate,
+  unknown/uncommitted action, mismatched target/clientEventId, and cross-user
+  receipt access;
 - local deletion only after verified receipt;
 - atomic creation of Feedback Item + Diagnostic Envelope and 90-day cleanup that preserves the Feedback Item;
 - authenticated submit, server-derived user identity, non-admin denial, admin review access, and no direct browser table access;
 - connected-client submit requires `platform:write`; missing/wrong scope is
   denied before validation or persistence;
+- smuggling negatives cover every automatically collected string position;
+  app/build/client versions are server-derived, stage/code/browser/OS are enums,
+  timezone names must resolve canonically, frame values are SHA-256 only, and
+  source context is strict raw-key validated;
 - transient queued/sent/failed notices and uninterrupted Training/navigation;
 - ring-buffer memory bound, event-write p95, envelope size, and enabled/disabled Training transition comparison on target mobile and desktop profiles.
 
