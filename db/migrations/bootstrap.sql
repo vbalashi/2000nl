@@ -350,3 +350,6 @@
 
 -- Authoritative receipt read after ambiguous Platform V2 action transport
 \i db/migrations/116_platform_v2_action_receipt_reconciliation.sql
+
+-- Pointer-only dictionary records are Library navigation, never Training cards
+\i db/migrations/117_exclude_pointer_only_entries_from_training.sql
