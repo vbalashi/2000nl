@@ -98,6 +98,7 @@ export function LibrarySenseCardV2Session({
   );
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
+  const groupRequestSequence = React.useRef(0);
 
   React.useEffect(() => {
     translationSession.current += 1;
@@ -110,6 +111,7 @@ export function LibrarySenseCardV2Session({
 
   const load = React.useCallback(
     async (signal?: AbortSignal, expectedTranslationSession?: number) => {
+      const requestSequence = ++groupRequestSequence.current;
       const next = await fetchPlatformV2MultiSenseGroup({
         query: headword,
         entryId,
@@ -120,6 +122,7 @@ export function LibrarySenseCardV2Session({
       });
       if (
         signal?.aborted ||
+        requestSequence !== groupRequestSequence.current ||
         (expectedTranslationSession != null &&
           expectedTranslationSession !== translationSession.current)
       ) {
@@ -142,13 +145,23 @@ export function LibrarySenseCardV2Session({
     return () => controller.abort();
   }, [compatibleInitialGroup, load]);
 
-  const model = React.useMemo(
-    () =>
-      group
-        ? buildLibrarySenseCardGroupModel(group, interfaceLanguage, cardTypeId)
-        : null,
-    [cardTypeId, group, interfaceLanguage],
-  );
+  const model = React.useMemo(() => {
+    const compatibleGroup = group?.entries.some(
+      (candidate) =>
+        candidate.kind === "sense-card" &&
+        candidate.entryId === entryId &&
+        candidate.card?.cardTypeId === cardTypeId,
+    )
+      ? group
+      : null;
+    return compatibleGroup
+      ? buildLibrarySenseCardGroupModel(
+          compatibleGroup,
+          interfaceLanguage,
+          cardTypeId,
+        )
+      : null;
+  }, [cardTypeId, entryId, group, interfaceLanguage]);
 
   const loadMemberships = React.useCallback(
     async (entryIds: string[]) => {

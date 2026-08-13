@@ -9,10 +9,50 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
+import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 const fetchGroup = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
+function singleSenseGroup(
+  headwordGroupId: string,
+  entryId: string,
+  headword: string,
+  definition: string,
+): PlatformHeadwordGroupV2 {
+  return {
+    ...multiSenseBankGroup,
+    headwordGroupId,
+    header: {
+      ...multiSenseBankGroup.header,
+      text: headword,
+      displayPronunciation: headword,
+    },
+    senseCount: 1,
+    entryCount: 1,
+    entries: [
+      {
+        ...financeEntry,
+        entryId,
+        contentRevision: `content-${entryId}`,
+        contentNodes: financeEntry.contentNodes.map((node, index) => ({
+          ...node,
+          contentNodeId: `${node.kind}-${entryId}`,
+          text: index === 0 ? definition : node.text,
+        })),
+      },
+    ],
+  };
+}
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2MultiSenseGroup: (...args: unknown[]) => fetchGroup(...args),
@@ -103,6 +143,111 @@ describe("LibrarySenseCardV2Session", () => {
       await screen.findByTestId("library-sense-card-group"),
     ).toBeInTheDocument();
     expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
+  });
+
+  test("never presents an older group during rapid selections with out-of-order responses", async () => {
+    const bankRequest = deferred<PlatformHeadwordGroupV2>();
+    const bridgeRequest = deferred<PlatformHeadwordGroupV2>();
+    const canalRequest = deferred<PlatformHeadwordGroupV2>();
+    const requests = {
+      [financeEntry.entryId]: bankRequest,
+      "entry-bridge": bridgeRequest,
+      "entry-canal": canalRequest,
+    };
+    fetchGroup.mockImplementation(
+      ({ entryId }: { entryId: keyof typeof requests }) =>
+        requests[entryId].promise,
+    );
+
+    const committedFrames: Array<{ entryId: string; text: string }> = [];
+
+    function SelectionHarness() {
+      const [selection, setSelection] = React.useState({
+        entryId: financeEntry.entryId,
+        headword: "bank",
+      });
+
+      React.useLayoutEffect(() => {
+        committedFrames.push({
+          entryId: selection.entryId,
+          text: document.body.textContent ?? "",
+        });
+      }, [selection]);
+
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              setSelection({ entryId: "entry-bridge", headword: "brug" })
+            }
+          >
+            Select bridge
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setSelection({ entryId: "entry-canal", headword: "gracht" })
+            }
+          >
+            Select canal
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={selection.entryId}
+            headword={selection.headword}
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+            fallback={<p>Loading {selection.headword} details</p>}
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await act(async () => {
+      bankRequest.resolve(multiSenseBankGroup);
+    });
+    expect(await screen.findByText("bank")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Select bridge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select canal" }));
+
+    expect(
+      committedFrames.find(({ entryId }) => entryId === "entry-bridge")?.text,
+    ).toContain("Loading brug details");
+    expect(
+      committedFrames.find(({ entryId }) => entryId === "entry-canal")?.text,
+    ).toContain("Loading gracht details");
+
+    await act(async () => {
+      canalRequest.resolve(
+        singleSenseGroup(
+          "group-canal",
+          "entry-canal",
+          "gracht",
+          "a canal in a city",
+        ),
+      );
+    });
+    expect(
+      await screen.findByRole("heading", { name: "gracht" }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      bridgeRequest.resolve(
+        singleSenseGroup(
+          "group-bridge",
+          "entry-bridge",
+          "brug",
+          "a structure over water",
+        ),
+      );
+    });
+    expect(screen.getByRole("heading", { name: "gracht" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "brug" }),
+    ).not.toBeInTheDocument();
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {
