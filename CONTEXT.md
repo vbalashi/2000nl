@@ -102,5 +102,5 @@ One intentional learner submission that combines a Feedback Item with bounded ev
 _Avoid_: telemetry event, log bundle, crash dump
 
 **Diagnostic Envelope**:
-The temporary, size-bounded evidence attached to a Diagnostic Report for internal review. It contains only classified card content and allowlisted 2000NL observations and is not the durable Feedback Item or a GitHub issue body.
+The temporary, size-bounded evidence attached to a Diagnostic Report for internal review. It contains the bounded learner comment, exact authorized current-card projection, and allowlisted 2000NL observations; it is not the durable Feedback Item or a GitHub issue body.
 _Avoid_: browser snapshot, raw request, console log

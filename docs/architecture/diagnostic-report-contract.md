@@ -61,9 +61,7 @@ Platform V2 types:
   `cardTypeId`, `stateRevision` UUID/`untracked`), semantic Platform `actionId`
   (`start-learning`, `mark-known`, `undo-known`, or `review-card`), the reused
   `clientEventId` UUID, `reviewResult` (`fail`, `hard`, `success`, or `easy`) for
-  `review-card` and `null` otherwise, plus `clientObservedOutcome` (`accepted`,
-  `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
-  `unknown`). For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
+  `review-card` and `null` otherwise. For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
   required UUIDs; for every other action both are explicit `null`. A separate
   required `contentRevision` binds any attached card atoms but is not part of
   the historical Platform action identity;
@@ -180,7 +178,8 @@ principal-scoped immutable action receipt/history by `clientEventId`, compares
 the submitted action ID, original SenseCard target, review result, and
 undo-known fields with the recorded request, and derives server enrichment
 `commitState: committed` from that record. `commitState` is never a client
-request field and is excluded from canonical payload bytes/hash. A later
+request field or target property and is excluded from canonical payload
+bytes/hash. A forged `commitState` is rejected as an unknown field. A later
 `stateRevision` is expected after a
 committed action and does not invalidate the report. The receipt does not claim
 whether the client saw the first accepted response or a duplicate retry, so the
@@ -195,7 +194,11 @@ card atoms are verified separately against `contentRevision`.
 
 ### Technical observations
 
-The canonical `observations` object contains exactly the following. App/build
+The canonical `observations` object contains exactly the following. For a
+`training-action` target it also contains required `actionObservation` with
+exactly `clientObservedOutcome` (`accepted`, `duplicate`, `state-conflict`,
+`network`, `timeout`, `server-error`, or `unknown`); for every other target
+`actionObservation` is `null`. App/build
 version and connected-client identity/version are not client strings: the
 server derives them from the deployed build and authenticated client registry,
 then stores them as server metadata beside the accepted envelope.
