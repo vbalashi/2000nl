@@ -165,13 +165,12 @@ export function selectPlatformV2CrossReferenceTarget(
     );
   }
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  return (
-    payload.groups.find(
+  const exactGroups = payload.groups.filter(
       (group) =>
         group.header.text.trim().toLocaleLowerCase() === normalizedQuery &&
         (!sourceDictionaryId ||
           group.dictionary.dictionaryId === sourceDictionaryId) &&
         group.entries.some((entry) => entry.kind === "sense-card"),
-    ) ?? null
   );
+  return exactGroups.length === 1 ? exactGroups[0] : null;
 }

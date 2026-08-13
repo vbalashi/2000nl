@@ -13,6 +13,8 @@ type CrossReferenceSource = {
   query: string;
 };
 
+const CROSS_REFERENCE_ENRICHMENT_BUDGET = 8;
+
 export async function resolvePlatformV2CrossReferenceTargets(
   service: ServiceSupabase,
   input: {
@@ -37,8 +39,12 @@ export async function resolvePlatformV2CrossReferenceTargets(
   }
 
   const exactCandidatesByLookup = new Map<string, DictionaryLookupPayload[]>();
+  const budgetedLookups = Array.from(sourcesByLookup).slice(
+    0,
+    CROSS_REFERENCE_ENRICHMENT_BUDGET,
+  );
   await Promise.all(
-    Array.from(sourcesByLookup, async ([key, sources]) => {
+    budgetedLookups.map(async ([key, sources]) => {
       const source = sources[0];
       const result = await service.supabase.rpc("lookup_platform_v2_entries", {
         p_user_id: input.userId,
@@ -50,6 +56,8 @@ export async function resolvePlatformV2CrossReferenceTargets(
         p_group_entry_bound: 50,
       });
       if (result.error) return;
+      const page = asRecord(asRecord(result.data).page);
+      if (page.selectedTierComplete !== true) return;
       const candidates = lookupEntries(result.data).filter(
         (candidate) =>
           candidate.dictionary_id === source.sourceDictionaryId &&

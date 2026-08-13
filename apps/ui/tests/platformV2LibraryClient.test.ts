@@ -137,6 +137,43 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     ).toBe(targetGroup);
   });
 
+  test("fails closed when an unresolved query matches multiple homograph groups", () => {
+    const first = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-a",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+    const second = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-b",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        { ...payload, query: "daar-", groups: [first, second] },
+        "daar-",
+        "vandale",
+      ),
+    ).toBeNull();
+  });
+
+  test("uses the strict query fallback when it has one exact group", () => {
+    const targetGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-only",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        { ...payload, query: "daar-", groups: [targetGroup] },
+        "daar-",
+        "vandale",
+      ),
+    ).toBe(targetGroup);
+  });
+
   test("looks up the pointer query and returns the full target group", async () => {
     const targetGroup = {
       ...multiSenseBankGroup,

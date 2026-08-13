@@ -18,6 +18,7 @@ describe("resolvePlatformV2CrossReferenceTargets", () => {
               entry("entry-target-1", "dict-vandale", "daar-"),
               entry("entry-target-2", "dict-vandale", "daar-"),
             ],
+            page: { selectedTierComplete: true, nextGroupCursor: null },
           },
           error: null,
         };
@@ -58,6 +59,7 @@ describe("resolvePlatformV2CrossReferenceTargets", () => {
                 entry("entry-target-1", "dict-vandale", "daar-"),
                 entry("entry-target-2", "dict-vandale", "daar-"),
               ],
+              page: { selectedTierComplete: true, nextGroupCursor: null },
             },
             error: null,
           }
@@ -83,6 +85,60 @@ describe("resolvePlatformV2CrossReferenceTargets", () => {
     );
 
     expect(targets.get(source.sourceEntryId)).toEqual({ query: "daar-" });
+  });
+
+  test("keeps query fallback when the selected tier is incomplete", async () => {
+    const rpc = vi.fn(async () => ({
+      data: {
+        items: [entry("entry-target-1", "dict-vandale", "daar-")],
+        page: {
+          selectedTierComplete: false,
+          nextGroupCursor: "more-groups",
+        },
+      },
+      error: null,
+    }));
+
+    const targets = await resolvePlatformV2CrossReferenceTargets(
+      { supabase: { rpc } } as any,
+      {
+        sources: [source],
+        userId: null,
+        catalog: true,
+        contentLanguageCode: "nl",
+      },
+    );
+
+    expect(targets.get(source.sourceEntryId)).toEqual({ query: "daar-" });
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  test("bounds lookup fan-out and leaves overflow as query fallbacks", async () => {
+    const sources = Array.from({ length: 12 }, (_, index) => ({
+      sourceEntryId: `source-${index}`,
+      sourceDictionaryId: "dict-vandale",
+      query: `target-${index}`,
+    }));
+    const rpc = vi.fn(async () => ({
+      data: {
+        items: [],
+        page: { selectedTierComplete: true, nextGroupCursor: null },
+      },
+      error: null,
+    }));
+
+    const targets = await resolvePlatformV2CrossReferenceTargets(
+      { supabase: { rpc } } as any,
+      {
+        sources,
+        userId: null,
+        catalog: true,
+        contentLanguageCode: "nl",
+      },
+    );
+
+    expect(rpc).toHaveBeenCalledTimes(8);
+    expect(targets.get("source-11")).toEqual({ query: "target-11" });
   });
 });
 

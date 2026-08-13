@@ -790,6 +790,7 @@ describe("/api/platform/v2/lookup", () => {
                   raw: { meanings: [{ definition: "target definition" }] },
                 },
               ],
+              page: { selectedTierComplete: true, nextGroupCursor: null },
             },
             error: null,
           });
