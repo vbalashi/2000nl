@@ -13,6 +13,7 @@ import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 const fetchGroup = vi.fn();
+const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 
@@ -57,6 +58,8 @@ function singleSenseGroup(
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2MultiSenseGroup: (...args: unknown[]) => fetchGroup(...args),
+  fetchPlatformV2CrossReferenceTarget: (...args: unknown[]) =>
+    fetchCrossReferenceTarget(...args),
   requestPlatformV2LibraryTranslation: (...args: unknown[]) =>
     requestTranslation(...args),
 }));
@@ -69,6 +72,7 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
 describe("LibrarySenseCardV2Session", () => {
   beforeEach(() => {
     fetchGroup.mockReset();
+    fetchCrossReferenceTarget.mockReset();
     performAction.mockReset();
     requestTranslation.mockReset();
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
@@ -276,6 +280,68 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.queryByRole("heading", { name: "brug" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("follows a pointer-only Library detail to the real target content", async () => {
+    fetchGroup.mockResolvedValue({
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar" },
+      senseCount: 0,
+      entryCount: 1,
+      entries: [
+        {
+          kind: "cross-reference",
+          crossReferenceId: "entry-daar-2",
+          label: {
+            termId: "cross-reference.see",
+            messageKey: "crossReference.see",
+          },
+          text: "daar-",
+          target: { query: "daar-" },
+          capabilities: [
+            {
+              actionId: "follow-cross-reference",
+              elementId: "cross-reference.follow",
+              messageKey: "crossReference.follow",
+            },
+          ],
+        },
+      ],
+    });
+    fetchCrossReferenceTarget.mockResolvedValue({
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [financeEntry],
+    });
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId="entry-daar-2"
+        headword="daar"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    expect(await screen.findByText("daar-")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Learn" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark known" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open reference" }));
+
+    await waitFor(() =>
+      expect(fetchCrossReferenceTarget).toHaveBeenCalledWith(
+        expect.objectContaining({ query: "daar-" }),
+      ),
+    );
+    expect(
+      await screen.findByText(
+        "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {

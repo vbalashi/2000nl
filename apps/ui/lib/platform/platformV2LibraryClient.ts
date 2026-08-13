@@ -78,6 +78,34 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
 }
 
+export async function fetchPlatformV2CrossReferenceTarget(input: {
+  query: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformHeadwordGroupV2 | null> {
+  const response = await fetch("/api/platform/v2/lookup", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    signal: input.signal,
+    headers: await platformV2AuthenticatedJsonHeaders(),
+    body: JSON.stringify({
+      query: input.query,
+      cardTypeId: input.cardTypeId,
+      contentLanguageCode: input.contentLanguageCode,
+      translationTargetLanguageCode: input.translationTargetLanguageCode,
+      intent: "dictionary-lookup",
+    }),
+  });
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as PlatformLookupV2Response;
+  if (payload.contractVersion !== "platform-lookup-v2") return null;
+  return selectPlatformV2CrossReferenceTarget(payload);
+}
+
 export async function requestPlatformV2LibraryTranslation(input: {
   entryId: string;
   targetLanguageCode: string;
@@ -105,10 +133,23 @@ export function selectPlatformV2MultiSenseGroup(
   return (
     payload.groups.find(
       (group) =>
-        group.senseCount > 1 &&
+        (group.senseCount > 1 || group.senseCount === 0) &&
         group.entries.some(
-          (entry) => entry.kind === "sense-card" && entry.entryId === entryId,
+          (entry) =>
+            (entry.kind === "sense-card" && entry.entryId === entryId) ||
+            (entry.kind === "cross-reference" &&
+              entry.crossReferenceId === entryId),
         ),
+    ) ?? null
+  );
+}
+
+export function selectPlatformV2CrossReferenceTarget(
+  payload: PlatformLookupV2Response,
+): PlatformHeadwordGroupV2 | null {
+  return (
+    payload.groups.find((group) =>
+      group.entries.some((entry) => entry.kind === "sense-card"),
     ) ?? null
   );
 }

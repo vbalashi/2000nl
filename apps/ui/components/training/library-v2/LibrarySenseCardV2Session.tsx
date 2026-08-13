@@ -4,6 +4,7 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
+  fetchPlatformV2CrossReferenceTarget,
   fetchPlatformV2MultiSenseGroup,
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
@@ -79,6 +80,9 @@ export function LibrarySenseCardV2Session({
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     compatibleInitialGroup,
   );
+  const [activeReferenceQuery, setActiveReferenceQuery] = React.useState<
+    string | null
+  >(null);
   const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
   const [audioBusy, setAudioBusy] = React.useState(false);
   const [translationStates, setTranslationStates] = React.useState<
@@ -110,17 +114,29 @@ export function LibrarySenseCardV2Session({
     setTranslationStates({});
   }, [cardTypeId, entryId, translationLanguage]);
 
+  React.useEffect(() => {
+    setActiveReferenceQuery(null);
+  }, [entryId]);
+
   const load = React.useCallback(
     async (signal?: AbortSignal, expectedTranslationSession?: number) => {
       const requestSequence = ++groupRequestSequence.current;
-      const next = await fetchPlatformV2MultiSenseGroup({
-        query: headword,
-        entryId,
-        cardTypeId,
-        contentLanguageCode,
-        translationTargetLanguageCode: translationLanguage,
-        signal,
-      });
+      const next = activeReferenceQuery
+        ? await fetchPlatformV2CrossReferenceTarget({
+            query: activeReferenceQuery,
+            cardTypeId,
+            contentLanguageCode,
+            translationTargetLanguageCode: translationLanguage,
+            signal,
+          })
+        : await fetchPlatformV2MultiSenseGroup({
+            query: headword,
+            entryId,
+            cardTypeId,
+            contentLanguageCode,
+            translationTargetLanguageCode: translationLanguage,
+            signal,
+          });
       if (
         signal?.aborted ||
         requestSequence !== groupRequestSequence.current ||
@@ -132,7 +148,14 @@ export function LibrarySenseCardV2Session({
       setGroup(next);
       return next;
     },
-    [cardTypeId, contentLanguageCode, entryId, headword, translationLanguage],
+    [
+      activeReferenceQuery,
+      cardTypeId,
+      contentLanguageCode,
+      entryId,
+      headword,
+      translationLanguage,
+    ],
   );
 
   React.useEffect(() => {
@@ -417,7 +440,9 @@ export function LibrarySenseCardV2Session({
         onPlayAudio={
           model.audioCapability ? () => void handlePlayAudio() : undefined
         }
-        translationEnabled={Boolean(translationLanguage)}
+        translationEnabled={
+          Boolean(translationLanguage) && model.meanings.length > 0
+        }
         translationStates={translationStates}
         collectionCounts={Object.fromEntries(
           Object.entries(membershipsByEntryId).map(([meaningEntryId, lists]) => [
@@ -446,6 +471,7 @@ export function LibrarySenseCardV2Session({
           onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
         }
         onReport={handleReport}
+        onFollowCrossReference={setActiveReferenceQuery}
         onAction={(capability) => void handleAction(capability)}
       />
       <LibraryCollectionsPicker

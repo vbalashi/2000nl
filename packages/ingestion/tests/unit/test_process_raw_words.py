@@ -258,3 +258,101 @@ def test_cli_refuses_to_mix_a_new_run_with_existing_output(
     assert result.returncode != 0
     assert "must be empty" in result.stderr
     assert (output_dir / "stale.json").read_text(encoding="utf-8") == "{}"
+
+
+def test_cli_promotes_only_resolvable_pointer_only_meanings(
+    tmp_path: Path,
+) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    pointer_article = """
+    <span id="a2476" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2h"><span class="f2e">daar</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m"><span class="f3i">op die plaats</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m"><span class="f3i">daar-</span></span>
+      </span>
+    </span>
+    """
+    target_article = """
+    <span id="a2478" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2h"><span class="f2e">daar-</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m">
+          <span class="f3i">samen met een voorzetsel gebruikt</span>
+          <span class="f2s"><span class="f1k">wat bedoel je daarmee?</span></span>
+        </span>
+      </span>
+    </span>
+    """
+    hyphenated_literal = _named_article(
+        "a3000",
+        "koppel-teken",
+        "een niet-lege definitie met een koppelteken",
+    )
+    (data_dir / "word_list.json").write_text(
+        json.dumps(
+            [
+                {
+                    "headword": "daar<sup>1</sup> <i>(bw)</i>",
+                    "content": pointer_article,
+                    "dictionaryId": "fnt",
+                    "index": 2506,
+                },
+                {
+                    "headword": "daar-",
+                    "content": target_article,
+                    "dictionaryId": "fnt",
+                    "index": 2508,
+                },
+                {
+                    "headword": "koppelteken <i>(zn)</i>",
+                    "content": hyphenated_literal,
+                    "dictionaryId": "fnt",
+                    "index": 3000,
+                },
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        [sys.executable, str(PROCESS_SCRIPT)],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(SCRAPER_ROOT)},
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    output_dir = data_dir / "words_content"
+    pointer = json.loads(
+        next(output_dir.glob("*_daar_bw_2.json")).read_text(encoding="utf-8")
+    )[0]
+    target = json.loads(
+        next(output_dir.glob("*_daar-_vv_1.json")).read_text(encoding="utf-8")
+    )[0]
+    literal = json.loads(
+        next(output_dir.glob("*_koppelteken_zn_1.json")).read_text(
+            encoding="utf-8"
+        )
+    )[0]
+
+    assert pointer["cross_reference"] == "daar-"
+    assert pointer["meanings"] == []
+    assert target["cross_reference"] is None
+    assert target["meanings"][0]["definition"] == (
+        "samen met een voorzetsel gebruikt"
+    )
+    assert target["meanings"][0]["examples"] == ["wat bedoel je daarmee?"]
+    assert literal["cross_reference"] is None
+    assert literal["meanings"][0]["definition"] == (
+        "een niet-lege definitie met een koppelteken"
+    )

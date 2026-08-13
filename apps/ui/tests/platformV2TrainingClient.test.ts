@@ -658,6 +658,51 @@ describe("selectPlatformV2TrainingEntry", () => {
       ),
     ).toEqual({ group: multiSenseBankGroup, entry: financeEntry });
   });
+
+  test("cannot select a pointer-only record into Training", () => {
+    const pointerGroup = {
+      ...singleSenseGroup,
+      senseCount: 0,
+      entryCount: 1,
+      entries: [
+        {
+          kind: "cross-reference" as const,
+          crossReferenceId: "entry-daar-2",
+          label: {
+            termId: "cross-reference.see",
+            messageKey: "crossReference.see",
+          },
+          text: "daar-",
+          target: { query: "daar-" },
+          capabilities: [
+            {
+              actionId: "follow-cross-reference" as const,
+              elementId: "cross-reference.follow",
+              messageKey: "crossReference.follow",
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      selectPlatformV2TrainingEntry(
+        {
+          contractVersion: "platform-lookup-v2",
+          query: "daar",
+          request: {
+            contentLanguageCode: "nl",
+            translationTargetLanguageCode: "en",
+            cardTypeId: "word-to-definition",
+            intent: "training-review",
+          },
+          groups: [pointerGroup],
+          page: { selectedTierComplete: true, nextGroupCursor: null },
+        },
+        "entry-daar-2",
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("fetchPlatformV2TrainingEntry", () => {

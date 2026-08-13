@@ -41,6 +41,7 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (capability: LibraryReportCapability) => void;
+  onFollowCrossReference?: (query: string) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 };
 
@@ -57,6 +58,7 @@ export function LibrarySenseCardGroup({
   onOpenCollections,
   onTrainNext,
   onReport,
+  onFollowCrossReference,
   onAction,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
@@ -213,6 +215,27 @@ export function LibrarySenseCardGroup({
           className="h-full overflow-y-auto px-3 pb-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
         >
           <div className="space-y-3">
+            {model.crossReferences.map((reference) => (
+              <article
+                key={reference.crossReferenceId}
+                className="rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm dark:border-slate-600 dark:bg-[#20252f]"
+              >
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {reference.label}
+                </p>
+                <p className="mt-1 font-sense-serif text-2xl text-slate-900 dark:text-slate-100">
+                  {reference.text}
+                </p>
+                <button
+                  type="button"
+                  aria-label={reference.followLabel}
+                  onClick={() => onFollowCrossReference?.(reference.targetQuery)}
+                  className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                >
+                  {reference.followLabel}
+                </button>
+              </article>
+            ))}
             {model.meanings.map((meaning) => {
               const identity = librarySenseCardIdentity(
                 meaning.entryId,

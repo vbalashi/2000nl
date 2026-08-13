@@ -69,6 +69,13 @@ export type LibrarySenseCardGroupModel = {
   coreVocabularyLabel: string | null;
   senseCount: number;
   meanings: LibrarySenseCardModel[];
+  crossReferences: Array<{
+    crossReferenceId: string;
+    label: string | null;
+    text: string;
+    targetQuery: string;
+    followLabel: string;
+  }>;
 };
 
 export type LibrarySenseCardViewState = Record<
@@ -118,6 +125,22 @@ export function buildLibrarySenseCardGroupModel(
   const coreVocabulary = group.indicators.find(
     (indicator) => indicator.indicatorId === "core-vocabulary",
   );
+  const crossReferences = group.entries
+    .filter((entry) => entry.kind === "cross-reference")
+    .map((entry) => ({
+      crossReferenceId: entry.crossReferenceId,
+      label: entry.label
+        ? platformV2Message(interfaceLanguage, entry.label.messageKey)
+        : null,
+      text: entry.text,
+      targetQuery: entry.target.query,
+      followLabel: platformV2Message(
+        interfaceLanguage,
+        entry.capabilities.find(
+          (capability) => capability.actionId === "follow-cross-reference",
+        )?.messageKey ?? "crossReference.follow",
+      ),
+    }));
 
   return {
     article: group.header.article ?? null,
@@ -130,6 +153,7 @@ export function buildLibrarySenseCardGroupModel(
       : null,
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     senseCount: group.senseCount,
+    crossReferences,
     meanings: senseEntries.map((entry) =>
       buildMeaning(
         entry,

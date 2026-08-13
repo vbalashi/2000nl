@@ -14,8 +14,10 @@ sys.path.insert(
     0,
     str(Path(__file__).resolve().parents[2] / "scraper"),
 )
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vandale_html_parser import parse_vandale_entry_fixed
+from importer.pointer_meanings import promote_resolvable_pointer_only_meaning
 
 INPUT_FILE = Path("data/word_list.json")
 OUTPUT_DIR = Path("data/words_content")
@@ -48,6 +50,7 @@ def normalize_headword_and_pronunciation(entry: dict) -> dict:
         if pron_fragment:
             entry["pronunciation"] = pron_fragment
     return entry
+
 
 def extract_clean_filename(headword, parsed_pos):
     """
@@ -175,24 +178,18 @@ def process_words(input_file: Path = INPUT_FILE, output_dir: Path = OUTPUT_DIR):
     
     print(f"Loaded {len(word_list)} words from {input_file}")
     
-    saved_count = 0
-    seen_source_entry_keys = set()
-    seen_output_paths = set()
-    manifest_records = []
-    
+    parsed_records = []
     for i, raw_data in enumerate(word_list):
         headword = raw_data.get('headword')
         content = raw_data.get('content')
-        
+
         if not headword or not content:
             print(f"Skipping index {i}: missing headword or content")
             continue
-            
-        # Parse
-        parsed = parse_vandale_entry_fixed(content, headword)
-        parsed = normalize_headword_and_pronunciation(parsed)
-        
-        # Add metadata
+
+        parsed = normalize_headword_and_pronunciation(
+            parse_vandale_entry_fixed(content, headword)
+        )
         parsed['_metadata'] = {
             'search_term': headword,
             'headword_raw': headword,
@@ -200,7 +197,20 @@ def process_words(input_file: Path = INPUT_FILE, output_dir: Path = OUTPUT_DIR):
             'dictionaryId': raw_data.get('dictionaryId')
         }
         parsed['_raw_html'] = content
-        
+        parsed_records.append((raw_data, headword, parsed))
+
+    available_headwords = {
+        parsed["headword"].strip()
+        for _, _, parsed in parsed_records
+        if isinstance(parsed.get("headword"), str) and parsed["headword"].strip()
+    }
+
+    saved_count = 0
+    seen_source_entry_keys = set()
+    seen_output_paths = set()
+    manifest_records = []
+
+    for raw_data, headword, parsed in parsed_records:
         # Save
         base_word, pos_suffix = extract_clean_filename(headword, parsed.get('part_of_speech'))
         pos_label = sanitize_filename(pos_suffix or parsed.get('part_of_speech') or "nopos")
@@ -214,6 +224,10 @@ def process_words(input_file: Path = INPUT_FILE, output_dir: Path = OUTPUT_DIR):
                 entry_copy = deepcopy(parsed)
                 entry_copy["meanings"] = [] if meaning is None else [meaning]
                 entry_copy["meaning_id"] = meaning_id
+                promote_resolvable_pointer_only_meaning(
+                    entry_copy,
+                    available_headwords,
+                )
                 entry_copy["_source"] = _source_identity(
                     parsed,
                     raw_data,
@@ -244,6 +258,10 @@ def process_words(input_file: Path = INPUT_FILE, output_dir: Path = OUTPUT_DIR):
             entry_copy = deepcopy(parsed)
             entry_copy["meanings"] = meanings if meanings != [None] else []
             entry_copy["meaning_id"] = 1
+            promote_resolvable_pointer_only_meaning(
+                entry_copy,
+                available_headwords,
+            )
             entry_copy["_source"] = _source_identity(parsed, raw_data, 1)
 
             article_id = entry_copy["_source"]["provider_article_id"]
