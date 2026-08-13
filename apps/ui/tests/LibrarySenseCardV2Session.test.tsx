@@ -178,6 +178,46 @@ describe("LibrarySenseCardV2Session", () => {
     expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
   });
 
+  test.each([
+    ["lookup_http_403", "lookup_http_403"],
+    ["lookup_http_503", "lookup_http_503"],
+    ["contract-mismatch", "contract-mismatch"],
+    ["platform_request_timeout", "lookup_timeout"],
+  ])("surfaces detail lookup failure %s", async (failure, expected) => {
+    fetchGroup.mockRejectedValueOnce(new Error(failure));
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(expected);
+  });
+
+  test("ignores detail lookup cancellation", async () => {
+    fetchGroup.mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   test("never presents an older group during rapid selections with out-of-order responses", async () => {
     const bankRequest = deferred<PlatformHeadwordGroupV2>();
     const bridgeRequest = deferred<PlatformHeadwordGroupV2>();

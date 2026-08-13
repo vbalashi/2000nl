@@ -66,16 +66,14 @@ export function useLibraryHeadwordGroupSearch({
       });
       if (!isCurrentSearch(requestId)) return false;
 
-      const nextGroups = buildLibraryHeadwordGroupResults(
-        result?.groups ?? [],
-      ).filter(
+      const nextGroups = buildLibraryHeadwordGroupResults(result.groups).filter(
         (group) =>
           !dictionaryId ||
           group.group.dictionary.dictionaryId === dictionaryId,
       );
       setState((current) => {
         const nextCursors = current.groupPageCursors.slice(0, current.page);
-        nextCursors[current.page] = result?.nextGroupCursor ?? null;
+        nextCursors[current.page] = result.nextGroupCursor;
         const selectedStillVisible = nextGroups.find(
           (group) =>
             group.headwordGroupId === current.selectedHeadwordGroupId,
@@ -85,7 +83,7 @@ export function useLibraryHeadwordGroupSearch({
           ...current,
           groupResults: nextGroups,
           groupPageCursors: nextCursors,
-          groupHasMore: Boolean(result?.nextGroupCursor),
+          groupHasMore: Boolean(result.nextGroupCursor),
           selectedHeadwordGroupId:
             current.detailEntry && !selectedStillVisible
               ? current.selectedHeadwordGroupId

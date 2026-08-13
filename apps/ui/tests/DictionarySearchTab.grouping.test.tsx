@@ -136,6 +136,16 @@ const nextPageGroup = goedGroup(
   [sense("entry-goed-next", "bn")],
 );
 
+const deferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+  return { promise, resolve, reject };
+};
+
 function Harness() {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
@@ -209,5 +219,58 @@ describe("DictionarySearchTab Headword Group results", () => {
     const mobileDetail = await screen.findByTestId("library-detail-mobile");
     await waitFor(() => expect(mobileDetail).toHaveAttribute("data-group-id", "group-goed-main"));
     expect(mobileDetail).toHaveAttribute("data-entry-count", "2");
+  });
+
+  test.each([
+    ["HTTP 403", new Error("lookup_http_403"), "tijdelijk niet beschikbaar"],
+    ["HTTP 503", new Error("lookup_http_503"), "tijdelijk niet beschikbaar"],
+    ["contract mismatch", new Error("contract-mismatch"), "tijdelijk niet beschikbaar"],
+    ["timeout", new Error("platform_request_timeout"), "duurde te lang"],
+  ])("shows a retryable Library error for %s", async (_label, error, message) => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({
+        groups: [firstGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+
+    render(<Harness />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    expect(await screen.findByTestId("library-headword-group-group-goed-main")).toBeInTheDocument();
+  });
+
+  test("ignores a caller abort without presenting a failure", async () => {
+    fetchGroupPage.mockReset();
+    fetchGroupPage.mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
+
+    render(<Harness />);
+
+    await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  test("does not let a stale rejection replace newer successful results", async () => {
+    fetchGroupPage.mockReset();
+    const oldSearch = deferred<never>();
+    fetchGroupPage
+      .mockReturnValueOnce(oldSearch.promise)
+      .mockResolvedValueOnce({
+        groups: [nextPageGroup],
+        selectedTierComplete: true,
+        nextGroupCursor: null,
+      });
+
+    render(<Harness />);
+    fireEvent.change(screen.getByPlaceholderText("Zoek in het woordenboek..."), {
+      target: { value: "gracht" },
+    });
+
+    expect(await screen.findByTestId("library-headword-group-group-goed-next-page")).toBeInTheDocument();
+    oldSearch.reject(new Error("lookup_http_503"));
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
 });

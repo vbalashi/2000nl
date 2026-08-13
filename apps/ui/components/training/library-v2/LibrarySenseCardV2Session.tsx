@@ -168,8 +168,24 @@ export function LibrarySenseCardV2Session({
     if (compatibleInitialGroup && !activeReferenceTarget) {
       return () => controller.abort();
     }
-    void load(controller.signal).catch(() => {
-      if (!controller.signal.aborted) setGroup(null);
+    void load(controller.signal).catch((cause) => {
+      const aborted =
+        controller.signal.aborted ||
+        Boolean(
+          cause &&
+            typeof cause === "object" &&
+            "name" in cause &&
+            cause.name === "AbortError",
+        );
+      if (!aborted) {
+        setError(
+          cause instanceof Error && cause.message === "platform_request_timeout"
+            ? "lookup_timeout"
+            : cause instanceof Error
+              ? cause.message
+              : "lookup_failed",
+        );
+      }
     });
     return () => controller.abort();
   }, [activeReferenceTarget, compatibleInitialGroup, load]);
@@ -430,7 +446,23 @@ export function LibrarySenseCardV2Session({
     [],
   );
 
-  if (!model) return <>{fallback}</>;
+  const errorNotice = error ? (
+    <p
+      role="alert"
+      className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
+    >
+      {error}
+    </p>
+  ) : null;
+
+  if (!model) {
+    return (
+      <div className="relative h-full min-h-0">
+        {fallback}
+        {errorNotice}
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full min-h-0">
@@ -492,14 +524,7 @@ export function LibrarySenseCardV2Session({
         onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}
       />
-      {error ? (
-        <p
-          role="alert"
-          className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
-        >
-          {error}
-        </p>
-      ) : null}
+      {errorNotice}
     </div>
   );
 }

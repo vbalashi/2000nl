@@ -23,7 +23,7 @@ type PlatformV2LibraryLookupInput = {
 
 async function fetchPlatformV2LibraryLookup(
   input: PlatformV2LibraryLookupInput,
-): Promise<PlatformLookupV2Response | null> {
+): Promise<PlatformLookupV2Response> {
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
     body: {
@@ -61,12 +61,11 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
-}): Promise<PlatformV2LibraryGroupPage | null> {
+}): Promise<PlatformV2LibraryGroupPage> {
   const payload = await fetchPlatformV2LibraryLookup({
     ...input,
     cursor: input.cursor ?? null,
   });
-  if (!payload || !Array.isArray(payload.groups)) return null;
   return {
     groups: payload.groups,
     selectedTierComplete: payload.page.selectedTierComplete,
@@ -83,7 +82,6 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
   const payload = await fetchPlatformV2LibraryLookup(input);
-  if (!payload) return null;
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
 }
 
@@ -98,7 +96,6 @@ export async function fetchPlatformV2CrossReferenceTarget(input: {
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
   const payload = await fetchPlatformV2LibraryLookup(input);
-  if (!payload) return null;
   return selectPlatformV2CrossReferenceTarget(
     payload,
     input.query,

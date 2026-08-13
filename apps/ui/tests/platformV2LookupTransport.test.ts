@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { requestPlatformV2Lookup } from "@/lib/platform/platformV2LookupTransport";
+import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
 
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
@@ -82,6 +83,100 @@ describe("requestPlatformV2Lookup", () => {
     await expect(requestPlatformV2Lookup({ body })).resolves.toMatchObject({
       state: "contract-mismatch",
     });
+  });
+
+  test.each([
+    { request: {} },
+    { groups: [{}] },
+    { groups: [{ entries: [null] }] },
+    { page: { selectedTierComplete: "yes", nextGroupCursor: null } },
+  ])("rejects malformed nested contract data %#", async (override) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({
+          contractVersion: "platform-lookup-v2",
+          query: "hand",
+          request: body,
+          groups: [],
+          page: { selectedTierComplete: true, nextGroupCursor: null },
+          ...override,
+        }), { status: 200 }),
+      ),
+    );
+    await expect(requestPlatformV2Lookup({ body })).resolves.toMatchObject({
+      state: "contract-mismatch",
+    });
+  });
+
+  test.each([
+    {
+      label: "card",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{ ...financeEntry, card: {} }],
+      },
+    },
+    {
+      label: "content-node translation",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{
+          ...financeEntry,
+          contentNodes: [{
+            ...financeEntry.contentNodes[0],
+            translations: [{ status: "ready" }],
+          }],
+        }],
+      },
+    },
+    {
+      label: "capability target",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{
+          ...financeEntry,
+          capabilities: [{
+            actionId: "start-learning",
+            elementId: "learn",
+            messageKey: "learn",
+            target: {},
+          }],
+        }],
+      },
+    },
+  ])("rejects a malformed nested $label before consumers run", async ({ group }) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({
+          contractVersion: "platform-lookup-v2",
+          query: "bank",
+          request: body,
+          groups: [group],
+          page: { selectedTierComplete: true, nextGroupCursor: null },
+        }), { status: 200 }),
+      ),
+    );
+
+    await expect(requestPlatformV2Lookup({ body })).resolves.toMatchObject({
+      state: "contract-mismatch",
+    });
+  });
+
+  test("bounds stalled authentication before fetch begins", async () => {
+    vi.useFakeTimers();
+    const { supabase } = await import("@/lib/supabaseClient");
+    vi.mocked(supabase.auth.getSession).mockReturnValueOnce(
+      new Promise(() => undefined) as ReturnType<typeof supabase.auth.getSession>,
+    );
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const request = requestPlatformV2Lookup({ body, timeoutMs: 20 });
+    const assertion = expect(request).rejects.toThrow("platform_request_timeout");
+    await vi.advanceTimersByTimeAsync(20);
+    await assertion;
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("times out stalled requests and forwards caller aborts", async () => {
