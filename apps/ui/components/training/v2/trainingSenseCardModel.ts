@@ -1,25 +1,17 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  localizePlatformSemanticTerm,
+  projectPlatformV2SenseContent,
+  type PlatformV2SenseContentNode,
+} from "@/lib/platform/projections/platformV2SenseContent";
 import type {
-  PlatformContentNodeV2,
   PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../../packages/shared/types/platformV2";
 
-export type TrainingSenseCardContent = {
-  contentNodeId: string;
-  parentContentNodeId: string | null;
-  kind: PlatformContentNodeV2["kind"];
-  text: string;
-  translation?: string;
-  reportCapability?: Extract<
-    PlatformSenseCardCapabilityV2,
-    { actionId: "report-content" }
-  >;
-  children: TrainingSenseCardContent[];
-};
+export type TrainingSenseCardContent = PlatformV2SenseContentNode;
 
 export type TrainingSenseCardModel = {
   entryId: string;
@@ -57,12 +49,12 @@ export type TrainingSenseCardModel = {
 };
 
 const reviewOrder = ["fail", "hard", "success", "easy"] as const;
-const definitionKinds = new Set<PlatformContentNodeV2["kind"]>([
+const definitionKinds = new Set<PlatformV2SenseContentNode["kind"]>([
   "definition",
   "usage-pattern",
   "usage-note",
 ]);
-const exampleKinds = new Set<PlatformContentNodeV2["kind"]>([
+const exampleKinds = new Set<PlatformV2SenseContentNode["kind"]>([
   "example",
   "idiom",
   "idiom-explanation",
@@ -77,40 +69,7 @@ export function buildTrainingSenseCardModel({
   entry: PlatformSenseCardEntryV2;
   interfaceLanguage: OnboardingLanguage;
 }): TrainingSenseCardModel {
-  const nodes = [...entry.contentNodes].sort((left, right) => left.order - right.order);
-  const reportByContentNodeId = new Map(
-    entry.capabilities.flatMap((candidate) =>
-      candidate.actionId === "report-content" &&
-      candidate.target.kind === "content-node"
-        ? [[candidate.target.contentNodeId, candidate] as const]
-        : [],
-    ),
-  );
-  const contentById = new Map<string, TrainingSenseCardContent>();
-  for (const node of nodes) {
-    const translation = node.translations.find(
-      (candidate) => candidate.status === "ready" && candidate.text,
-    )?.text;
-    contentById.set(node.contentNodeId, {
-      contentNodeId: node.contentNodeId,
-      parentContentNodeId: node.parentContentNodeId,
-      kind: node.kind,
-      text: node.text,
-      ...(translation ? { translation } : {}),
-      ...(reportByContentNodeId.get(node.contentNodeId)
-        ? { reportCapability: reportByContentNodeId.get(node.contentNodeId) }
-        : {}),
-      children: [],
-    });
-  }
-  for (const item of contentById.values()) {
-    if (!item.parentContentNodeId) continue;
-    contentById.get(item.parentContentNodeId)?.children.push(item);
-  }
-  const rootContent = [...contentById.values()].filter(
-    (item) =>
-      !item.parentContentNodeId || !contentById.has(item.parentContentNodeId),
-  );
+  const { rootNodes: rootContent } = projectPlatformV2SenseContent(entry);
   const capability = <T extends PlatformSenseCardCapabilityV2["actionId"]>(
     actionId: T,
   ) =>
@@ -120,6 +79,7 @@ export function buildTrainingSenseCardModel({
       } => candidate.actionId === actionId,
     );
   const pos = entry.partOfSpeech ?? group.header.partOfSpeech;
+  const partOfSpeech = localizePlatformSemanticTerm(pos, interfaceLanguage);
   const has2k = group.indicators.some(
     (indicator) =>
       indicator.indicatorId === "core-vocabulary.nt2-2000" ||
@@ -136,9 +96,7 @@ export function buildTrainingSenseCardModel({
     entryId: entry.entryId,
     headword: group.header.displayPronunciation ?? group.header.text,
     ...(group.header.article ? { article: group.header.article } : {}),
-    ...(pos
-      ? { partOfSpeech: platformV2Message(interfaceLanguage, pos.messageKey) }
-      : {}),
+    ...(partOfSpeech ? { partOfSpeech } : {}),
     ...(has2k ? { coreVocabularyLabel: "2K" as const } : {}),
     ...(entryTranslation ? { entryTranslation } : {}),
     entryTranslationAlternatives:
