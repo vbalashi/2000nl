@@ -532,8 +532,9 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
-  test("shows action failures without replacing the rendered card", async () => {
+  test("refreshes a genuinely newer remote state without advancing", async () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    const onProgressActionAccepted = vi.fn();
 
     render(
       <TestTrainingSenseCardV2Session
@@ -544,7 +545,7 @@ describe("TrainingSenseCardV2Session", () => {
         interfaceLanguage="en"
         fallback={<p>Legacy card</p>}
         onAvailabilityChange={vi.fn()}
-        onProgressActionAccepted={vi.fn()}
+        onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
 
@@ -556,6 +557,8 @@ describe("TrainingSenseCardV2Session", () => {
       "The card changed elsewhere. Its latest state is now shown.",
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(fetchSingleSense).toHaveBeenCalledTimes(2);
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
   test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {

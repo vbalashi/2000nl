@@ -234,13 +234,16 @@ export async function performPlatformV2TrainingAction(
     capability,
     crypto.randomUUID(),
   );
-  const response = await platformFetchWithTimeout("/api/platform/v2/actions", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify(request),
-  });
+  const headers = await platformV2AuthenticatedJsonHeaders();
+  let response: Response;
+  try {
+    response = await submitPlatformV2TrainingAction(request, headers, 1);
+  } catch (error) {
+    if (capability.actionId !== "review-card" || !isAmbiguousTransportError(error)) {
+      throw error;
+    }
+    response = await submitPlatformV2TrainingAction(request, headers, 2);
+  }
   const payload = (await response.json()) as
     | PlatformActionV2Response
     | { error?: string };
@@ -257,6 +260,30 @@ export async function performPlatformV2TrainingAction(
     );
   }
   return payload;
+}
+
+function submitPlatformV2TrainingAction(
+  request: PlatformActionV2Request,
+  headers: HeadersInit,
+  attempt: 1 | 2,
+) {
+  const correlatedHeaders = Object.fromEntries(new Headers(headers).entries());
+  return platformFetchWithTimeout("/api/platform/v2/actions", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: {
+      ...correlatedHeaders,
+      "x-platform-action-attempt": String(attempt),
+    },
+    body: JSON.stringify(request),
+  });
+}
+
+function isAmbiguousTransportError(error: unknown) {
+  if (error instanceof TypeError) return true;
+  const message = error instanceof Error ? error.message : String(error);
+  return message === "Failed to fetch" || message === "platform_request_timeout";
 }
 
 export function clearPlatformV2TrainingClientCaches(cacheOwnerId?: string) {

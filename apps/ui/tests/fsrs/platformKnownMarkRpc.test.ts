@@ -1226,6 +1226,63 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
+  test("returns one receipt and applies one review for a duplicate client event", async () => {
+    const userId = randomUUID();
+    const clientEventId = randomUUID();
+
+    await withTransaction(
+      pool,
+      async (client) => {
+        await ensureUserWithSettings(client, userId);
+        const entryId = await insertWord(
+          client,
+          `platform-review-idempotency-${Date.now()}`,
+        );
+        await client.query(
+          "select start_learning_entry_card($1::uuid, $2::uuid, $3::text)",
+          [userId, entryId, cardTypeId],
+        );
+        const state = await client.query(
+          `select state_revision
+             from user_card_status
+            where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+          [userId, entryId, cardTypeId],
+        );
+        const values = [
+          userId,
+          entryId,
+          cardTypeId,
+          state.rows[0].state_revision,
+          clientEventId,
+        ];
+        const statement = `select perform_platform_v2_card_action(
+          $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+          null, null, 'success', $5::uuid, null, 'first_party', null
+        ) as result`;
+
+        const accepted = await client.query(statement, values);
+        const duplicate = await client.query(statement, values);
+
+        expect(duplicate.rows[0].result).toEqual({
+          ...accepted.rows[0].result,
+          status: "duplicate",
+        });
+        const counts = await client.query(
+          `select
+             (select count(*)::int from user_card_action_events
+               where user_id = $1 and client_event_id = $2::text) as events,
+             (select count(*)::int from user_review_log
+               where user_id = $1 and turn_id = $2::uuid) as reviews,
+             (select fsrs_reps from user_card_status
+               where user_id = $1 and entry_id = $3 and card_type_id = $4) as reps`,
+          [userId, clientEventId, entryId, cardTypeId],
+        );
+        expect(counts.rows).toEqual([{ events: 1, reviews: 1, reps: 1 }]);
+      },
+      userId,
+    );
+  });
+
   test("rejects an Undo for a cleared mark after a replacement mark exists", async () => {
     const userId = randomUUID();
 
