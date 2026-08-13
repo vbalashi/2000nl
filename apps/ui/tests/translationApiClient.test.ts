@@ -57,4 +57,26 @@ describe("translationApiClient", () => {
       }),
     );
   });
+
+  test("bounds a stalled translation request", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+        }),
+      ),
+    );
+
+    const pending = fetchDictionaryMeaningTranslation({
+      entryId: "entry-1",
+      targetLanguageCode: "ru",
+      timeoutMs: 10,
+    });
+    const rejection = expect(pending).rejects.toThrow("platform_request_timeout");
+    await vi.advanceTimersByTimeAsync(10);
+    await rejection;
+    vi.useRealTimers();
+  });
 });

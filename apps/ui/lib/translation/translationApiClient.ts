@@ -1,4 +1,5 @@
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
+import { platformFetchWithTimeout } from "@/lib/platform/platformFetchWithTimeout";
 
 export async function translationRequestHeaders(): Promise<HeadersInit> {
   return authenticatedJsonHeaders();
@@ -10,8 +11,9 @@ export async function fetchDictionaryMeaningTranslation(input: {
   force?: boolean;
   debug?: boolean;
   signal?: AbortSignal;
+  timeoutMs?: number;
 }): Promise<Response> {
-  return fetch("/api/platform/translation", {
+  return platformFetchWithTimeout("/api/platform/translation", {
     method: "POST",
     cache: "no-store",
     credentials: "same-origin",
@@ -23,5 +25,5 @@ export async function fetchDictionaryMeaningTranslation(input: {
       ...(input.force ? { force: true } : {}),
       ...(input.debug ? { debug: true } : {}),
     }),
-  });
+  }, input.timeoutMs);
 }

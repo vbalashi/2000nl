@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
+import { getPlatformServiceSupabase } from "@/lib/platform/serverSupabase";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
@@ -70,23 +70,39 @@ function attachOverlayMeta(
 }
 
 export type DictionaryMeaningTranslationCoordinatorResult = {
-  payload: Record<string, unknown>;
+  outcome: "ready" | "pending" | "failed" | "error";
+  payload: {
+    status?: WordEntryTranslationStatus;
+    overlay?: TranslationOverlay | null;
+    note?: string | null;
+    error?: string | null;
+    missing?: { supabaseUrl?: boolean; serviceKey?: boolean };
+    debug?: Record<string, unknown>;
+  };
   status: number;
   cacheStatus: "hit" | "pending" | "provider" | "unknown";
 };
 
 function coordinatorResult(
-  payload: Record<string, unknown>,
-  init: { status?: number; headers?: Record<string, string> } = {},
+  payload: DictionaryMeaningTranslationCoordinatorResult["payload"],
+  init: {
+    status?: number;
+    cacheStatus?: DictionaryMeaningTranslationCoordinatorResult["cacheStatus"];
+  } = {},
 ): DictionaryMeaningTranslationCoordinatorResult {
-  const cacheStatus = init.headers?.["X-Translation-Cache"];
+  const outcome =
+    payload.status === "ready"
+      ? "ready"
+      : payload.status === "pending"
+        ? "pending"
+        : payload.status === "failed"
+          ? "failed"
+          : "error";
   return {
+    outcome,
     payload,
     status: init.status ?? 200,
-    cacheStatus:
-      cacheStatus === "hit" || cacheStatus === "pending" || cacheStatus === "provider"
-        ? cacheStatus
-        : "unknown",
+    cacheStatus: init.cacheStatus ?? "unknown",
   };
 }
 
@@ -141,50 +157,31 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     );
   }
 
-  const supabaseUrl =
-    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  // Supabase is transitioning away from legacy JWT keys.
-  // Prefer the new "secret key (default)" (store it as SUPABASE_SECRET_KEY),
-  // but keep legacy env var name as fallback for existing setups.
-  const serviceKey =
-    process.env.SUPABASE_SECRET_KEY ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SERVICE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
+  const service = getPlatformServiceSupabase();
+  if (service instanceof Response) {
     return coordinatorResult(
       {
         error: "Server is not configured",
-        missing: {
-          supabaseUrl: !supabaseUrl,
-          serviceKey: !serviceKey,
-        },
         ...(debug
           ? {
               debug: {
-                hasSupabaseUrl: Boolean(supabaseUrl),
-                hasServiceKey: Boolean(serviceKey),
+                serviceStatus: service.status,
               },
             }
           : null),
       },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
+      { status: 500 }
     );
   }
 
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseProject = (() => {
     const m = supabaseUrl.match(/^https:\/\/([^.]+)\.supabase\.co/);
     return m?.[1] ?? null;
   })();
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    // Next.js can cache fetch() calls in server contexts; ensure Supabase reads aren't cached
-    // (otherwise we can get stuck seeing a stale "no rows" result forever).
-    global: {
-      fetch: (input, init) => fetch(input as any, { ...(init ?? {}), cache: "no-store" }),
-    },
-  });
+  const supabase = service.supabase;
 
   const lookup = () =>
     supabase
@@ -213,7 +210,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
             }
           : null),
       },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
+      { status: 500 }
     );
   }
 
@@ -286,10 +283,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
       },
       {
         status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "pending",
-        },
+        cacheStatus: "pending",
       }
     );
   }
@@ -326,10 +320,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
       },
       {
         status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "hit",
-        },
+        cacheStatus: "hit",
       }
     );
   }
@@ -377,7 +368,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
               }
             : null),
         },
-        { status: 500, headers: { "Cache-Control": "no-store" } }
+        { status: 500 }
       );
     }
 
@@ -400,7 +391,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
               }
             : null),
           },
-          { status: 500, headers: { "Cache-Control": "no-store" } }
+          { status: 500 }
         );
       }
       if (existingAfter) {
@@ -428,11 +419,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
           },
           {
             status: 200,
-            headers: {
-              "Cache-Control": "no-store",
-              "X-Translation-Cache":
-                existingAfter.status === "ready" ? "hit" : "pending",
-            },
+            cacheStatus: existingAfter.status === "ready" ? "hit" : "pending",
           }
         );
       }
@@ -454,10 +441,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
         },
         {
           status: 200,
-          headers: {
-            "Cache-Control": "no-store",
-            "X-Translation-Cache": "pending",
-          },
+          cacheStatus: "pending",
         }
       );
     }
@@ -504,7 +488,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
       if (claimError) {
         return coordinatorResult(
           { error: claimError.message },
-          { status: 500, headers: { "Cache-Control": "no-store" } }
+          { status: 500 }
         );
       }
 
@@ -514,7 +498,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
         if (existingAfterError) {
           return coordinatorResult(
             { error: existingAfterError.message },
-            { status: 500, headers: { "Cache-Control": "no-store" } }
+            { status: 500 }
           );
         }
         return coordinatorResult(
@@ -526,11 +510,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
           },
           {
             status: 200,
-            headers: {
-              "Cache-Control": "no-store",
-              "X-Translation-Cache":
-                existingAfter?.status === "ready" ? "hit" : "pending",
-            },
+            cacheStatus: existingAfter?.status === "ready" ? "hit" : "pending",
           }
         );
       }
@@ -540,7 +520,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
   if (!claimUpdatedAt) {
     return coordinatorResult(
       { error: "translation_claim_not_owned" },
-      { status: 409, headers: { "Cache-Control": "no-store" } },
+      { status: 409 },
     );
   }
   try {
@@ -589,7 +569,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
     if (updateError) {
       return coordinatorResult(
         { error: updateError.message },
-        { status: 500, headers: { "Cache-Control": "no-store" } }
+        { status: 500 }
       );
     }
 
@@ -622,10 +602,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
       },
       {
         status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "provider",
-        },
+        cacheStatus: "provider",
       }
     );
   } catch (err: unknown) {
@@ -677,10 +654,7 @@ export async function coordinateDictionaryMeaningTranslation(input: {
       },
       {
         status: 502,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "provider",
-        },
+        cacheStatus: "provider",
       }
     );
   }

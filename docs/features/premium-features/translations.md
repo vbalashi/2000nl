@@ -9,7 +9,10 @@ Translation uses `ITranslator` plus a factory in `apps/ui/lib/translation/transl
 - Model default: `gpt-5.2`
 - Alternate providers: DeepL and Gemini
 
-The route `apps/ui/app/api/translation/route.ts` handles provider selection, caching, and fingerprinting.
+`apps/ui/lib/translation/dictionaryMeaningTranslationCoordinator.ts` owns
+provider selection, cache leasing/CAS, policy and fingerprinting. The legacy
+`apps/ui/app/api/translation/route.ts` and Platform translation route are thin
+authenticated adapters over that coordinator.
 
 ## Env Vars
 
@@ -106,7 +109,9 @@ select * from word_entry_translations where status in ('pending', 'error') limit
 
 | Purpose | Path |
 |---|---|
-| Translation route | `apps/ui/app/api/translation/route.ts` |
+| Translation coordinator | `apps/ui/lib/translation/dictionaryMeaningTranslationCoordinator.ts` |
+| Legacy translation adapter | `apps/ui/app/api/translation/route.ts` |
+| Platform translation adapter | `apps/ui/app/api/platform/translation/route.ts` |
 | Translation provider factory | `apps/ui/lib/translation/translationProvider.ts` |
 | OpenAI translator | `apps/ui/lib/translation/openaiTranslator.ts` |
 | Gemini translator | `apps/ui/lib/translation/geminiTranslator.ts` |

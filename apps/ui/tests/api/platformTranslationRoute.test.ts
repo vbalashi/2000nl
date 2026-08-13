@@ -391,6 +391,32 @@ describe("/api/platform/v1/translation", () => {
     });
   });
 
+  test("rejects an invalid target language loaded from user settings", async () => {
+    const preferenceClient = { auth: { getUser }, rpc, from };
+    createClient.mockReturnValueOnce(preferenceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementationOnce((table: string) => {
+      if (table === "user_settings") {
+        return queryChain({ data: { translation_lang: "ru;ignore" }, error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID }));
+
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru;ignore",
+      error: "Invalid lang",
+    });
+  });
+
   test("classifies a lost insert race as pending without provider work", async () => {
     mockAuthenticatedClients();
     rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });

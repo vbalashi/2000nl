@@ -6,7 +6,6 @@ import {
   requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
-import type { AuthenticatedSupabase } from "@/lib/platform/serverSupabase";
 import { asString } from "@/lib/platform/platformApi";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
 import { coordinateDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCoordinator";
@@ -40,50 +39,18 @@ function boolParam(value: unknown) {
   return value === true || value === "true" || value === "1";
 }
 
-export function OPTIONS(request: NextRequest) {
-  return platformCorsPreflight(request);
+function normalizeTargetLanguage(value: string) {
+  const targetLang = value.trim();
+  const dbLang = targetLang.replace("_", "-").toLowerCase();
+  if (dbLang === "off") return { error: "translation_disabled" as const };
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(dbLang)) {
+    return { error: "Invalid lang" as const };
+  }
+  return { targetLang, dbLang };
 }
 
-async function resolveTargetLang(
-  request: NextRequest,
-): Promise<
-  | { targetLang: string; auth: AuthenticatedSupabase }
-  | { response: Response }
-> {
-
-  const auth = await getAuthenticatedSupabase(request);
-  if (auth instanceof Response) {
-    if (auth.status === 401) {
-      return {
-        response: jsonNoStore({ error: "authentication_required" }, 401),
-      };
-    }
-    return { response: auth };
-  }
-  const scopeError = requirePlatformScope(auth, "platform:write");
-  if (scopeError) return { response: scopeError };
-
-  const { data, error } = await auth.supabase
-    .from("user_settings")
-    .select("translation_lang")
-    .eq("user_id", auth.user.id)
-    .maybeSingle();
-
-  if (error) {
-    return {
-      response: jsonNoStore(
-        { error: "translation_preference_failed", detail: error.message },
-        500,
-      ),
-    };
-  }
-
-  const targetLang = data?.translation_lang ?? "en";
-  if (targetLang === "off") {
-    return { response: jsonNoStore({ error: "translation_disabled" }, 400) };
-  }
-
-  return { targetLang, auth };
+export function OPTIONS(request: NextRequest) {
+  return platformCorsPreflight(request);
 }
 
 export async function POST(request: NextRequest) {
@@ -99,82 +66,58 @@ export async function POST(request: NextRequest) {
   if (!entryId && !item) {
     return reply({ error: "missing_entry_id" }, 400);
   }
-  if (explicitTargetLang) {
-    const auth = await getAuthenticatedSupabase(request);
-    if (auth instanceof Response) {
-      const payload = await auth.json().catch(() => null);
-      return reply(
-        {
-          entryId,
-          targetLang: explicitTargetLang,
-          ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
-        },
-        auth.status,
-      );
-    }
-    const scopeError = requirePlatformScope(auth, "platform:write");
-    if (scopeError) {
-      const payload = await scopeError.json().catch(() => null);
-      return reply(
-        {
-          entryId,
-          targetLang: explicitTargetLang,
-          ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
-        },
-        scopeError.status,
-      );
-    }
-    const targetLang = explicitTargetLang.trim();
-    const dbLang = targetLang.replace("_", "-").toLowerCase();
-    if (dbLang === "off") {
-      return reply({ entryId, targetLang, error: "translation_disabled" }, 400);
-    }
-    if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(dbLang)) {
-      return reply({ entryId, targetLang, error: "Invalid lang" }, 400);
-    }
-    if (item) {
-      const draftTranslation = await translateDraftItem(item, targetLang);
-      return reply(draftTranslation.payload, draftTranslation.status);
-    }
-    if (!entryId) return reply({ error: "missing_entry_id" }, 400);
-    const { data: entry, error } = await auth.supabase.rpc(
-      "fetch_dictionary_entry_by_id_gated",
-      { p_entry_id: entryId },
-    );
-    if (error) return reply({ entryId, targetLang, error: error.message }, 500);
-    if (!entry?.raw) {
-      return reply({ entryId, targetLang, error: "word_entry_not_found" }, 404);
-    }
-    const result = await coordinateDictionaryMeaningTranslation({
-      wordEntryId: entryId,
-      word: entry as DictionaryLookupPayload,
-      targetLang,
-      dbLang,
-      force: boolParam(body?.force),
-      debug: boolParam(body?.debug),
-    });
-    const response = reply({ entryId, targetLang, ...result.payload }, result.status);
-    response.headers.set("X-Platform-Cache", result.cacheStatus);
-    response.headers.set(
-      "Server-Timing",
-      `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,
-    );
-    return response;
-  }
-  const resolved = await resolveTargetLang(request);
-  if ("response" in resolved) {
-    const errorResponse = resolved.response;
-    const payload = await errorResponse.json().catch(() => null);
+  const auth = await getAuthenticatedSupabase(request);
+  if (auth instanceof Response) {
+    const payload =
+      !explicitTargetLang && auth.status === 401
+        ? { error: "authentication_required" }
+        : await auth.json().catch(() => null);
     return reply(
       {
         entryId,
         targetLang: explicitTargetLang,
         ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
       },
-      errorResponse.status,
+      auth.status,
     );
   }
-  const targetLang = resolved.targetLang;
+  const scopeError = requirePlatformScope(auth, "platform:write");
+  if (scopeError) {
+    const payload = await scopeError.json().catch(() => null);
+    return reply(
+      {
+        entryId,
+        targetLang: explicitTargetLang,
+        ...(payload && typeof payload === "object" ? payload : { error: "translation_failed" }),
+      },
+      scopeError.status,
+    );
+  }
+
+  let requestedTargetLang = explicitTargetLang;
+  if (!requestedTargetLang) {
+    const { data, error } = await auth.supabase
+      .from("user_settings")
+      .select("translation_lang")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    if (error) {
+      return reply(
+        { entryId, targetLang: null, error: "translation_preference_failed", detail: error.message },
+        500,
+      );
+    }
+    requestedTargetLang = data?.translation_lang ?? "en";
+  }
+
+  const language = normalizeTargetLanguage(requestedTargetLang ?? "en");
+  if ("error" in language) {
+    return reply(
+      { entryId, targetLang: requestedTargetLang, error: language.error },
+      400,
+    );
+  }
+  const { targetLang, dbLang } = language;
 
   if (item) {
     const draftTranslation = await translateDraftItem(item, targetLang);
@@ -184,8 +127,7 @@ export async function POST(request: NextRequest) {
     return reply({ error: "missing_entry_id" }, 400);
   }
 
-  const dbLang = targetLang.trim().replace("_", "-").toLowerCase();
-  const { data: entry, error } = await resolved.auth.supabase.rpc(
+  const { data: entry, error } = await auth.supabase.rpc(
     "fetch_dictionary_entry_by_id_gated",
     { p_entry_id: entryId },
   );
