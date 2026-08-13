@@ -197,7 +197,7 @@ const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
     entryCount: 2000,
   },
 ]);
-const defaultActiveTrainingScope = {
+const defaultActiveTrainingScope: ActiveTrainingScope = {
   languageCode: "nl",
   activeListId: null,
   activeListType: null,
@@ -1675,6 +1675,7 @@ test("explicit list action makes the viewed list active for training", async () 
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
       }),
     );
     await waitFor(() =>
@@ -1700,9 +1701,23 @@ test("footer list selector still changes active training scope", async () => {
   fetchNextTrainingWordByScenario.mockClear();
   updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
+  let resolveOldSelection!: (word: typeof mockWord) => void;
+  const oldSelection = new Promise<typeof mockWord>((resolve) => {
+    resolveOldSelection = resolve;
+  });
   let resolveSecondary!: (word: typeof overrideWord) => void;
   const secondarySelection = new Promise<typeof overrideWord>((resolve) => {
     resolveSecondary = resolve;
+  });
+  let resolvePersistence!: (result: {
+    scope: ActiveTrainingScope;
+    error: null;
+  }) => void;
+  const persistence = new Promise<{
+    scope: ActiveTrainingScope;
+    error: null;
+  }>((resolve) => {
+    resolvePersistence = resolve;
   });
   fetchNextTrainingWordByScenario.mockImplementation(
     async (
@@ -1713,26 +1728,16 @@ test("footer list selector still changes active training scope", async () => {
     ) =>
       scope.listId === secondaryList.id
         ? secondarySelection
-        : Promise.resolve(mockWord),
+        : oldSelection,
   );
-  updateActiveTrainingScope.mockResolvedValue({
-    scope: {
-      ...defaultActiveTrainingScope,
-      activeListId: secondaryList.id,
-      activeListType: secondaryList.type,
-      activeScenario: "listening",
-      hasSavedScope: true,
-    },
-    error: null,
-  });
+  updateActiveTrainingScope.mockReturnValue(persistence);
 
   try {
     render(<TrainingScreen user={user} />);
 
-    await waitForInitialTrainingFetches();
-    fetchNextTrainingWordByScenario.mockClear();
-    updateActiveTrainingScope.mockClear();
-    fetchStats.mockClear();
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+    );
 
     expect(
       screen.queryByRole("button", { name: /active list/i }),
@@ -1751,6 +1756,23 @@ test("footer list selector still changes active training scope", async () => {
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
+      }),
+    );
+    await act(async () => resolveOldSelection(mockWord));
+    expect(
+      screen.queryByRole("heading", { name: "huis" }),
+    ).not.toBeInTheDocument();
+    await act(async () =>
+      resolvePersistence({
+        scope: {
+          ...defaultActiveTrainingScope,
+          activeListId: secondaryList.id,
+          activeListType: secondaryList.type,
+          activeScenario: "listening",
+          hasSavedScope: true,
+        },
+        error: null,
       }),
     );
     expect(
@@ -1771,6 +1793,33 @@ test("footer list selector still changes active training scope", async () => {
     restoreDefaultListScope();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
     updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
+  }
+});
+
+test("initial load waits for an unsaved list default scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: secondaryList.id,
+    activeListType: secondaryList.type,
+    activeScenario: "understanding",
+    hasSavedScope: false,
+  });
+  fetchListSummaryById.mockResolvedValue(secondaryList);
+  fetchAvailableLists.mockResolvedValue([secondaryList]);
+  fetchNextTrainingWordByScenario.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.every(
+        (call) => call[1] === "listening",
+      ),
+    ).toBe(true);
+  } finally {
+    restoreDefaultListScope();
   }
 });
 
@@ -2263,9 +2312,45 @@ test("settings training controls persist to the current language training scope"
         }),
       ),
     );
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
     expect(updateUserPreferences).not.toHaveBeenCalledWith(
       expect.objectContaining({ activeScenario: "listening" }),
     );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard nieuw\/herhaling/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Alleen herhaling" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard herhalingmix/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "1:3 (1 nieuw, 3 herhalingen)" }),
+    );
+
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    ).toHaveClass("bg-primary/10");
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard nieuw\/herhaling.*Alleen herhaling/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard herhalingmix.*1:3/i,
+      }),
+    ).toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
   }

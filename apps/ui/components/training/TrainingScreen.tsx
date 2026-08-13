@@ -17,6 +17,7 @@ import {
   type ReviewResult,
 } from "@/lib/trainingService";
 import type {
+  ActiveTrainingScope,
   CardFilter,
   DetailedStats,
   DictionaryEntry,
@@ -377,7 +378,6 @@ export function TrainingScreen({
     activeListValue,
     applyListLocal,
     availableLists,
-    handleListSelectValue,
     handleListsUpdated: refreshListsAfterUpdate,
     activeTrainingScope,
     listHydrated,
@@ -394,6 +394,21 @@ export function TrainingScreen({
   });
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
+  const lastAppliedActiveTrainingScopeRef = useRef<ActiveTrainingScope | null>(
+    null,
+  );
+  const localTrainingPreferencesRef = useRef({
+    activeScenario,
+    cardFilter,
+    enabledModes,
+    newReviewRatio,
+  });
+  localTrainingPreferencesRef.current = {
+    activeScenario,
+    cardFilter,
+    enabledModes,
+    newReviewRatio,
+  };
 
   const enabledModesKey = enabledModes.join("|");
 
@@ -623,31 +638,30 @@ export function TrainingScreen({
 
   useEffect(() => {
     if (!activeTrainingScope) return;
+    if (lastAppliedActiveTrainingScopeRef.current === activeTrainingScope) return;
+    lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+    const current = localTrainingPreferencesRef.current;
     const nextModes = activeTrainingScope.modesEnabled as TrainingMode[];
     const scopeChanged =
-      activeScenario !== activeTrainingScope.activeScenario ||
-      cardFilter !== activeTrainingScope.cardFilter ||
-      enabledModes.join("|") !== nextModes.join("|");
+      current.activeScenario !== activeTrainingScope.activeScenario ||
+      current.cardFilter !== activeTrainingScope.cardFilter ||
+      current.enabledModes.join("|") !== nextModes.join("|");
     if (scopeChanged) beginSessionScopeChange();
-    if (activeScenario !== activeTrainingScope.activeScenario) {
+    if (current.activeScenario !== activeTrainingScope.activeScenario) {
       setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
     }
-    if (cardFilter !== activeTrainingScope.cardFilter) {
+    if (current.cardFilter !== activeTrainingScope.cardFilter) {
       setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
     }
-    if (enabledModes.join("|") !== nextModes.join("|")) {
+    if (current.enabledModes.join("|") !== nextModes.join("|")) {
       setEnabledModes(nextModes, { persist: false });
     }
-    if (newReviewRatio !== activeTrainingScope.newReviewRatio) {
+    if (current.newReviewRatio !== activeTrainingScope.newReviewRatio) {
       setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
     }
   }, [
-    activeScenario,
     activeTrainingScope,
     beginSessionScopeChange,
-    cardFilter,
-    enabledModes,
-    newReviewRatio,
     setActiveScenario,
     setCardFilterPreference,
     setEnabledModes,
@@ -666,6 +680,12 @@ export function TrainingScreen({
     if (activeScenario !== activeList.default_scenario_id) {
       beginSessionScopeChange();
       setActiveScenario(activeList.default_scenario_id, { persist: false });
+      if (initialLoadDone.current) {
+        void replaceSessionScopeAndLoad({
+          scope: { listId: wordListId, listType: wordListType },
+          scenario: activeList.default_scenario_id,
+        });
+      }
     }
   }, [
     activeList?.default_scenario_id,
@@ -673,7 +693,10 @@ export function TrainingScreen({
     activeScenario,
     activeTrainingScope?.hasSavedScope,
     beginSessionScopeChange,
+    replaceSessionScopeAndLoad,
     setActiveScenario,
+    wordListId,
+    wordListType,
   ]);
 
   const handleTrainingLanguageChange = useCallback(
@@ -851,7 +874,12 @@ export function TrainingScreen({
   }, [currentWord?.id]);
 
   useEffect(() => {
-    if (!user?.id || !listHydrated) {
+    const awaitingDefaultScenario = Boolean(
+      activeList?.default_scenario_id &&
+        !activeTrainingScope?.hasSavedScope &&
+        activeScenario !== activeList.default_scenario_id,
+    );
+    if (!user?.id || !listHydrated || awaitingDefaultScenario) {
       return;
     }
     // Prevent double-loading due to loadNextWord changing when queueTurn changes
@@ -866,7 +894,14 @@ export function TrainingScreen({
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, listHydrated, wordId]);
+  }, [
+    activeList?.default_scenario_id,
+    activeScenario,
+    activeTrainingScope?.hasSavedScope,
+    user?.id,
+    listHydrated,
+    wordId,
+  ]);
 
   useEffect(() => {
     if (!user?.id || !listHydrated || !initialLoadDone.current) {
@@ -1201,9 +1236,12 @@ export function TrainingScreen({
 
   const handleMakeActiveTrainingList = useCallback(
     async (list: WordListSummary) => {
-      const scope = await persistListChange(list);
-      if (!scope) return;
       const nextScenario = list.default_scenario_id ?? activeScenario;
+      beginSessionScopeChange();
+      const scope = await persistListChange(list, {
+        activeScenario: nextScenario,
+      });
+      if (!scope) return;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
         listId: list.id,
@@ -1218,6 +1256,7 @@ export function TrainingScreen({
     },
     [
       activeScenario,
+      beginSessionScopeChange,
       loadStats,
       replaceSessionScopeAndLoad,
       persistCurrentTrainingScope,
@@ -1228,12 +1267,14 @@ export function TrainingScreen({
 
   const handleFooterListChange = useCallback(
     async (value: string) => {
-      const scope = await handleListSelectValue(value);
-      if (!scope) return;
-      const list = availableLists.find(
-        (item) => item.id === scope.listId && item.type === scope.listType,
-      );
+      const list = resolveListValue(value);
+      if (!list) return;
       const nextScenario = list?.default_scenario_id ?? activeScenario;
+      beginSessionScopeChange();
+      const scope = await persistListChange(list, {
+        activeScenario: nextScenario,
+      });
+      if (!scope) return;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
         listId: scope.listId,
@@ -1245,11 +1286,12 @@ export function TrainingScreen({
     },
     [
       activeScenario,
-      availableLists,
-      handleListSelectValue,
+      beginSessionScopeChange,
       replaceSessionScopeAndLoad,
       loadStats,
       persistCurrentTrainingScope,
+      persistListChange,
+      resolveListValue,
       setActiveScenario,
     ],
   );

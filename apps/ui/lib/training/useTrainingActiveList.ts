@@ -168,7 +168,10 @@ export function useTrainingActiveList(params: {
   }, [applyList, trainingAvailableLists, listHydrated, wordListId]);
 
   const persistListChange = useCallback(
-    async (list: WordListSummary) => {
+    async (
+      list: WordListSummary,
+      scopeOverrides: { activeScenario?: string } = {},
+    ) => {
       if (!isTrainingEligibleList(list)) return null;
 
       applyList(list);
@@ -179,6 +182,7 @@ export function useTrainingActiveList(params: {
           languageCode: language,
           listId: list.id,
           listType: list.type,
+          activeScenario: scopeOverrides.activeScenario,
         });
         if (result.scope) {
           setActiveTrainingScope(result.scope);
