@@ -41,7 +41,6 @@ import { useCardParams } from "@/lib/cardParams";
 import {
   generateReviewTurnId,
   getNextQueueTransition,
-  predictNextQueueTurn,
 } from "@/lib/training/trainingQueue";
 import {
   useTrainingPreferences,
@@ -62,16 +61,12 @@ import {
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
-import {
-  createTrainingTransitionId,
-  measureTrainingTransitionStage,
-} from "@/lib/training/trainingTransitionTiming";
+import { markTrainingEntryPresentationStarted } from "@/lib/training/trainingTransitionTiming";
 import {
   clearPlatformV2TrainingClientCaches,
-  preparePlatformV2TrainingEntry,
-  prefetchPlatformV2TrainingEntry,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
+import { usePreparedNextTrainingTurn } from "./v2/usePreparedNextTrainingTurn";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -402,6 +397,7 @@ export function TrainingScreen({
 
   const presentWord = useCallback(
     (word: TrainingWord | null) => {
+      if (word) markTrainingEntryPresentationStarted(word.id);
       setCurrentWord(word);
       currentTurnIdRef.current = word ? generateReviewTurnId() : null;
     },
@@ -569,18 +565,6 @@ export function TrainingScreen({
   >(null);
   const autoPlayedAudioCardRef = useRef<string | null>(null);
 
-  // Next-card prefetch state (kept in refs so it never blocks rendering).
-  const nextWordPrefetchTokenRef = useRef(0);
-  const activeNextTransitionIdRef = useRef<string | null>(null);
-  const nextWordPrefetchRef = useRef<{
-    forWordId: string;
-    forCardKey: string;
-    queueTurn: QueueTurn;
-    word: TrainingWord | null;
-    v2Ready: Promise<boolean> | null;
-    transitionId: string;
-  } | null>(null);
-
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
@@ -591,47 +575,55 @@ export function TrainingScreen({
       currentMode === "definition-to-word");
   const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
-  const warmTrainingV2Word = useCallback(
-    async (
-      word: TrainingWord,
-      signal?: AbortSignal,
-      transitionId = createTrainingTransitionId(),
-    ) => {
-      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
-        return true;
-      }
-      try {
-        const input = {
-          cacheOwnerId: user.id,
-          entryId: word.id,
-          cardTypeId: mode,
-          contentLanguageCode: currentTrainingLanguage,
-          translationTargetLanguageCode:
-            translationLang === "off" ? null : translationLang,
-          transitionId,
-          generateMissingTranslation: true,
-          signal,
-        };
-        const lookupRequest = prefetchPlatformV2TrainingEntry(input);
-        void preparePlatformV2TrainingEntry(input).catch(() => {
-          // Optional preparation never replaces or blocks a healthy card.
-        });
-        const lookup = await lookupRequest;
-        if (signal?.aborted) return false;
-        if (lookup.state !== "ready") return false;
-        return true;
-      } catch {
-        return false;
-      }
-    }, [
-      currentTrainingLanguage,
-      enabledModes,
-      trainingShellV2Enabled,
-      translationLang,
+  const selectPrefetchedNextWord = useCallback(
+    (predictedQueueTurn: QueueTurn, currentCardKey: string) =>
+      fetchNextTrainingWordByScenario(
+        user.id,
+        activeScenario,
+        [],
+        {
+          listId: wordListId ?? undefined,
+          listType: wordListType ?? undefined,
+        },
+        cardFilter,
+        predictedQueueTurn,
+        [...reviewedInSessionRef.current, currentCardKey],
+        resolveRestrictedListModes(activeList),
+        trainingFocusFilterActive ? trainingFocusFilter : null,
+      ),
+    [
+      activeList,
+      activeScenario,
+      cardFilter,
+      trainingFocusFilter,
+      trainingFocusFilterActive,
       user.id,
+      wordListId,
+      wordListType,
     ],
   );
+
+  const {
+    warmWord: warmTrainingV2Word,
+    consumeForCard: consumePreparedNextTurn,
+    reset: resetPreparedNextTurn,
+    nextTransitionId,
+  } = usePreparedNextTrainingTurn({
+    cacheOwnerId: user.id,
+    currentWord,
+    currentMode,
+    enabledModes,
+    contentLanguageCode: currentTrainingLanguage,
+    translationTargetLanguageCode:
+      translationLang === "off" ? null : translationLang,
+    queueTurn,
+    cardFilter,
+    reviewCounter,
+    newReviewRatio,
+    selectNext: selectPrefetchedNextWord,
+    audioEnabled: audioModeEnabled,
+    preloadAudio: preloadAudioForWord,
+  });
 
   useEffect(() => {
     const cacheOwnerId = user?.id;
@@ -720,11 +712,10 @@ export function TrainingScreen({
 
   const resetFocusQueueState = useCallback(() => {
     reviewedInSessionRef.current.clear();
-    nextWordPrefetchRef.current = null;
-    nextWordPrefetchTokenRef.current += 1;
+    resetPreparedNextTurn();
     setQueueTurn("new");
     setReviewCounter(0);
-  }, []);
+  }, [resetPreparedNextTurn]);
 
   const handleTrainingDateWindowChange = useCallback(
     (value: string) => {
@@ -1050,122 +1041,6 @@ export function TrainingScreen({
     ],
   );
 
-  // Background prefetch of the next card while the user is viewing the current card.
-  // This is best-effort: any failures fall back to on-demand fetch in handleAction/loadNextWord.
-  useEffect(() => {
-    if (!user?.id) return;
-    if (!currentWord?.id) return;
-
-    const forWordId = currentWord.id;
-    const forCardKey = `${currentWord.id}:${currentWord.mode ?? currentMode}`;
-    const predictedQueueTurn = predictNextQueueTurn({
-      cardFilter,
-      queueTurn,
-      reviewCounter,
-      newReviewRatio,
-    });
-    const transitionId = createTrainingTransitionId();
-    activeNextTransitionIdRef.current = transitionId;
-
-    // Invalidate any prior prefetch work.
-    const token = (nextWordPrefetchTokenRef.current += 1);
-    nextWordPrefetchRef.current = {
-      forWordId,
-      forCardKey,
-      queueTurn: predictedQueueTurn,
-      word: null,
-      v2Ready: null,
-      transitionId,
-    };
-
-    let cancelled = false;
-    const controller = new AbortController();
-
-    const run = async () => {
-      try {
-        const next = await measureTrainingTransitionStage(
-          transitionId,
-          "next-card.selection",
-          () =>
-            fetchNextTrainingWordByScenario(
-              user.id,
-              activeScenario,
-              [],
-              {
-                listId: wordListId ?? undefined,
-                listType: wordListType ?? undefined,
-              },
-              cardFilter,
-              predictedQueueTurn,
-              [...reviewedInSessionRef.current, forCardKey],
-              resolveRestrictedListModes(activeList),
-              trainingFocusFilterActive ? trainingFocusFilter : null,
-            ),
-          (selected) => (selected ? "ready" : "empty"),
-        );
-
-        if (cancelled) return;
-        if (nextWordPrefetchTokenRef.current !== token) return;
-
-        const nextMode = next?.mode ?? enabledModes[0] ?? "word-to-definition";
-        const v2Ready =
-          next &&
-          trainingShellV2Enabled &&
-          isPlatformV2TrainingMode(nextMode)
-            ? warmTrainingV2Word(next, controller.signal, transitionId)
-            : null;
-        nextWordPrefetchRef.current = {
-          forWordId,
-          forCardKey,
-          queueTurn: predictedQueueTurn,
-          word: next,
-          v2Ready,
-          transitionId,
-        };
-
-        if (audioModeEnabled && next) {
-          preloadAudioForWord(next);
-        }
-      } catch {
-        // Silent fallback: prefetch isn't critical, loadNextWord will still work.
-      }
-    };
-
-    void run();
-
-    return () => {
-      cancelled = true;
-      // Cancel pending prefetch on unmount/navigation by invalidating the token.
-      if (nextWordPrefetchTokenRef.current === token) {
-        nextWordPrefetchTokenRef.current += 1;
-      }
-      if (nextWordPrefetchRef.current?.forWordId === forWordId) {
-        controller.abort();
-        nextWordPrefetchRef.current = null;
-      }
-    };
-  }, [
-    activeScenario,
-    activeList,
-    audioModeEnabled,
-    cardFilter,
-    currentWord?.id,
-    currentWord?.mode,
-    currentMode,
-    enabledModes,
-    newReviewRatio,
-    preloadAudioForWord,
-    queueTurn,
-    reviewCounter,
-    trainingFocusFilter,
-    trainingFocusFilterActive,
-    trainingShellV2Enabled,
-    user?.id,
-    wordListId,
-    wordListType,
-    warmTrainingV2Word,
-  ]);
-
   const handleTrainWord = useCallback(
     (wordId: string) => {
       nextCardOverrideWordIdRef.current = wordId;
@@ -1227,13 +1102,8 @@ export function TrainingScreen({
       };
 
       reviewedInSessionRef.current.add(currentCardKey);
-      const candidate = nextWordPrefetchRef.current;
-      if (
-        candidate &&
-        candidate.forCardKey === currentCardKey &&
-        candidate.word
-      ) {
-        nextWordPrefetchRef.current = null;
+      const candidate = consumePreparedNextTurn(currentCardKey);
+      if (candidate) {
         transition.prefetched = candidate.word;
         transition.prefetchedReady = candidate.v2Ready;
         if (!candidate.v2Ready) presentPrefetchedCandidate(candidate.word);
@@ -1243,6 +1113,7 @@ export function TrainingScreen({
     }, [
       advanceQueueTurn,
       currentWord,
+      consumePreparedNextTurn,
       enabledModes,
       presentPrefetchedCandidate,
       user?.id,
@@ -2578,9 +2449,7 @@ export function TrainingScreen({
                             <TrainingSenseCardV2Session
                               key={`${user.id}:${currentWord.id}:${currentMode}:${currentTrainingLanguage}:${translationLang}`}
                               cacheOwnerId={user.id}
-                              nextTransitionId={
-                                activeNextTransitionIdRef.current ?? undefined
-                              }
+                              nextTransitionId={nextTransitionId ?? undefined}
                               word={currentWord}
                               mode={currentMode}
                               contentLanguageCode={currentTrainingLanguage}

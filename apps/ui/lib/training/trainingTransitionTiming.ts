@@ -2,8 +2,10 @@ export type TrainingTransitionStage =
   | "next-card.selection"
   | "review.mutation"
   | "next-card.lookup"
-  | "translation.cache-or-provider"
-  | "audio.cache-or-provider"
+  | "translation.cache"
+  | "translation.provider"
+  | "audio.cache"
+  | "audio.provider"
   | "network.transfer"
   | "card.render"
   | "preparation.total";
@@ -19,7 +21,7 @@ export type TrainingTransitionTiming = {
 
 const preparedEntryTransitions = new Map<
   string,
-  { transitionId: string; startedAt: number }
+  { transitionId: string; renderStartedAt: number | null }
 >();
 let transitionSequence = 0;
 
@@ -31,19 +33,27 @@ export function createTrainingTransitionId() {
 export function registerTrainingEntryTransition(
   entryId: string,
   transitionId: string,
-  startedAt = performance.now(),
 ) {
-  preparedEntryTransitions.set(entryId, { transitionId, startedAt });
+  preparedEntryTransitions.set(entryId, {
+    transitionId,
+    renderStartedAt: null,
+  });
+}
+
+export function markTrainingEntryPresentationStarted(entryId: string) {
+  const transition = preparedEntryTransitions.get(entryId);
+  if (!transition) return;
+  transition.renderStartedAt = performance.now();
 }
 
 export function recordTrainingEntryRendered(entryId: string) {
   const transition = preparedEntryTransitions.get(entryId);
-  if (!transition) return;
+  if (!transition || transition.renderStartedAt === null) return;
   preparedEntryTransitions.delete(entryId);
   recordTrainingTransitionTiming({
     transitionId: transition.transitionId,
     stage: "card.render",
-    durationMs: performance.now() - transition.startedAt,
+    durationMs: performance.now() - transition.renderStartedAt,
     outcome: "ready",
   });
 }

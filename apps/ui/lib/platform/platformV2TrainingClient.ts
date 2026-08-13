@@ -5,12 +5,8 @@ import {
 } from "./platformFetchWithTimeout";
 import {
   clearPlatformV2TrainingMediaCache,
-  preloadPlatformV2Audio,
-  requestPlatformV2Translation,
 } from "./platformV2TrainingMediaClient";
 import {
-  registerTrainingEntryTransition,
-  recordTrainingTransitionTiming,
   recordTrainingTransitionResponse,
 } from "../training/trainingTransitionTiming";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
@@ -64,20 +60,8 @@ export type PlatformV2TrainingPrefetchInput =
   PlatformV2TrainingLookupInput & {
     // This partitions browser memory only; server authentication remains authoritative.
     cacheOwnerId: string;
+    bypassCache?: boolean;
   };
-
-export type PlatformV2TrainingPreparationInput =
-  PlatformV2TrainingPrefetchInput & {
-    transitionId: string;
-    generateMissingTranslation?: boolean;
-  };
-
-export type PlatformV2TrainingPreparationResult =
-  | (PlatformV2TrainingEntryResult & {
-      translation: "cached" | "generated" | "not-requested" | "failed";
-      audio: "ready" | "unavailable" | "failed";
-    })
-  | Exclude<PlatformV2TrainingLookupResult, PlatformV2TrainingEntryResult>;
 
 type PrefetchedLookup = {
   cacheOwnerId: string;
@@ -144,8 +128,9 @@ export function prefetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingPrefetchInput,
 ): Promise<PlatformV2TrainingLookupResult> {
   const key = trainingLookupKey(input);
-  const existing = validPrefetch(key);
+  const existing = input.bypassCache ? null : validPrefetch(key);
   if (existing) return existing.promise;
+  if (input.bypassCache) prefetchedLookups.delete(key);
 
   const record: PrefetchedLookup = {
     cacheOwnerId: input.cacheOwnerId,
@@ -183,82 +168,6 @@ export function prefetchPlatformV2TrainingEntry(
   prefetchedLookups.set(key, record);
   trimPrefetchedLookups();
   return record.promise;
-}
-
-export async function preparePlatformV2TrainingEntry(
-  input: PlatformV2TrainingPreparationInput,
-): Promise<PlatformV2TrainingPreparationResult> {
-  const startedAt = performance.now();
-  const initialLookup = await prefetchPlatformV2TrainingEntry(input);
-  if (initialLookup.state !== "ready") return initialLookup;
-  registerTrainingEntryTransition(
-    initialLookup.entry.entryId,
-    input.transitionId,
-    startedAt,
-  );
-  let lookup = initialLookup;
-  let translation: "cached" | "generated" | "not-requested" | "failed" =
-    lookup.entry.translation?.status === "ready"
-      ? "cached"
-      : "not-requested";
-  if (input.generateMissingTranslation && translation !== "cached") {
-    const capability = lookup.entry.capabilities.find(
-      (candidate) =>
-        candidate.actionId === "request-translation" &&
-        candidate.target.entryId === input.entryId &&
-        candidate.targetLanguageCode === input.translationTargetLanguageCode,
-    );
-    if (capability?.actionId === "request-translation") {
-      try {
-        await requestPlatformV2Translation(capability, {
-          transitionId: input.transitionId,
-          signal: input.signal,
-        });
-        prefetchedLookups.delete(trainingLookupKey(input));
-        const refreshed = await prefetchPlatformV2TrainingEntry(input);
-        if (refreshed.state === "ready") {
-          lookup = refreshed;
-          translation =
-            refreshed.entry.translation?.status === "ready"
-              ? "generated"
-              : "failed";
-        } else {
-          translation = "failed";
-        }
-      } catch {
-        translation = "failed";
-      }
-    }
-  }
-
-  let audio: "ready" | "unavailable" | "failed" = "unavailable";
-  if (lookup.group.header.audio) {
-    try {
-      await preloadPlatformV2Audio({
-        cacheOwnerId: input.cacheOwnerId,
-        capability: lookup.group.header.audio,
-        text: lookup.group.header.text,
-        transitionId: input.transitionId,
-        signal: input.signal,
-      });
-      audio = "ready";
-    } catch {
-      audio = "failed";
-    }
-  }
-
-  const result: PlatformV2TrainingPreparationResult = {
-    ...lookup,
-    translation,
-    audio,
-  };
-  recordTrainingTransitionTiming({
-    transitionId: input.transitionId,
-    stage: "preparation.total",
-    durationMs: performance.now() - startedAt,
-    outcome: `${result.translation}:${result.audio}`,
-  });
-  return result;
 }
 
 export function peekPrefetchedPlatformV2TrainingEntry(

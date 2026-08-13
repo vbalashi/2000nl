@@ -3,7 +3,10 @@ import {
   forwardAbortSignal,
   platformFetchWithTimeout,
 } from "./platformFetchWithTimeout";
-import { recordTrainingTransitionResponse } from "../training/trainingTransitionTiming";
+import {
+  recordTrainingTransitionResponse,
+  recordTrainingTransitionTiming,
+} from "../training/trainingTransitionTiming";
 import type {
   PlatformAudioCapabilityV2,
   PlatformSenseCardCapabilityV2,
@@ -63,7 +66,7 @@ async function requestPlatformV2TranslationUncached(
   if (context.transitionId) {
     recordTrainingTransitionResponse(
       context.transitionId,
-      "translation.cache-or-provider",
+      "translation.provider",
       startedAt,
       response,
       response.ok
@@ -86,6 +89,14 @@ export async function resolvePlatformV2Audio(
   const prefetched = validPreload(preloadedAudio, key);
   if (prefetched) {
     preloadedAudio.delete(key);
+    if (input.transitionId) {
+      recordTrainingTransitionTiming({
+        transitionId: input.transitionId,
+        stage: "audio.cache",
+        durationMs: 0,
+        outcome: "client-preload-hit",
+      });
+    }
     return prefetched.promise;
   }
   return resolvePlatformV2AudioUncached(input);
@@ -96,7 +107,17 @@ export async function preloadPlatformV2Audio(
 ): Promise<string> {
   const key = platformAudioKey(input);
   const existing = validPreload(preloadedAudio, key);
-  if (existing) return existing.promise;
+  if (existing) {
+    if (input.transitionId) {
+      recordTrainingTransitionTiming({
+        transitionId: input.transitionId,
+        stage: "audio.cache",
+        durationMs: 0,
+        outcome: "client-preload-hit",
+      });
+    }
+    return existing.promise;
+  }
   const record: PreloadedPromise<string> = {
     cacheOwnerId: input.cacheOwnerId,
     promise: Promise.resolve(""),
@@ -152,9 +173,10 @@ async function resolvePlatformV2AudioUncached(
     },
   );
   if (input.transitionId) {
+    const cacheOutcome = response.headers.get("x-platform-cache");
     recordTrainingTransitionResponse(
       input.transitionId,
-      "audio.cache-or-provider",
+      cacheOutcome === "hit" ? "audio.cache" : "audio.provider",
       startedAt,
       response,
       response.ok

@@ -429,14 +429,17 @@ vi.mock("@/lib/supabaseClient", () => ({
 }));
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
-  preparePlatformV2TrainingEntry: (...args: unknown[]) =>
-    preparePlatformV2TrainingEntry(...args),
   prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
     prefetchPlatformV2TrainingEntry(...args),
   preloadPlatformV2Audio: (...args: unknown[]) =>
     preloadPlatformV2Audio(...args),
   clearPlatformV2TrainingClientCaches: (...args: unknown[]) =>
     clearPlatformV2TrainingClientCaches(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
+  preparePlatformV2TrainingEntry: (...args: unknown[]) =>
+    preparePlatformV2TrainingEntry(...args),
 }));
 
 vi.mock("@/lib/platform/platformV2Rollout", () => ({

@@ -5,7 +5,6 @@ import {
   consumePrefetchedPlatformV2TrainingEntry,
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
-  preparePlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
   performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
@@ -13,6 +12,7 @@ import {
   selectPlatformV2TrainingEntry,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
+import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
 import {
   singleSenseEntry,
@@ -392,11 +392,15 @@ describe("preparePlatformV2TrainingEntry", () => {
           }),
           {
             status: 200,
-            headers: { "x-request-id": "audio-cached" },
+            headers: {
+              "x-request-id": "audio-cached",
+              "x-platform-cache": "hit",
+            },
           },
         ),
       );
     vi.stubGlobal("fetch", fetchMock);
+    const dispatch = vi.spyOn(window, "dispatchEvent");
 
     await expect(preparePlatformV2TrainingEntry(input)).resolves.toMatchObject({
       state: "ready",
@@ -410,6 +414,17 @@ describe("preparePlatformV2TrainingEntry", () => {
       "/api/platform/v2/lookup",
       "/api/platform/v1/audio/resolve",
     ]);
+    expect(transitionStages(dispatch)).toEqual(
+      expect.arrayContaining([
+        "next-card.lookup",
+        "translation.cache",
+        "audio.cache",
+        "preparation.total",
+      ]),
+    );
+    expect(transitionStages(dispatch)).not.toEqual(
+      expect.arrayContaining(["translation.provider", "audio.provider"]),
+    );
   });
 
   test("generates one missing translation for the selected next turn and refreshes its DTO", async () => {
@@ -463,10 +478,11 @@ describe("preparePlatformV2TrainingEntry", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({ asset: { url: "/audio/hand.mp3", cache: "hit" } }),
-          { status: 200 },
+          { status: 200, headers: { "x-platform-cache": "hit" } },
         ),
       );
     vi.stubGlobal("fetch", fetchMock);
+    const dispatch = vi.spyOn(window, "dispatchEvent");
 
     await expect(
       preparePlatformV2TrainingEntry({
@@ -485,6 +501,14 @@ describe("preparePlatformV2TrainingEntry", () => {
       "/api/platform/v2/lookup",
       "/api/platform/v1/audio/resolve",
     ]);
+    expect(transitionStages(dispatch)).toEqual(
+      expect.arrayContaining([
+        "translation.provider",
+        "audio.cache",
+        "preparation.total",
+      ]),
+    );
+    expect(transitionStages(dispatch)).not.toContain("translation.cache");
   });
 
   test("keeps the healthy next-card DTO when optional translation preparation fails", async () => {
@@ -548,6 +572,14 @@ describe("preparePlatformV2TrainingEntry", () => {
   });
 
 });
+
+function transitionStages(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) => {
+    if (!(event instanceof CustomEvent)) return [];
+    if (event.type !== "2000nl:training-transition-timing") return [];
+    return [event.detail.stage as string];
+  });
+}
 
 describe("selectPlatformV2TrainingEntry", () => {
   test("accepts a new single-sense entry before scheduler state exists", () => {
