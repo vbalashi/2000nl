@@ -278,11 +278,61 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         contentLanguageCode: "nl",
         translationTargetLanguageCode: "en",
       }),
-    ).resolves.toBeNull();
+    ).rejects.toMatchObject({
+      name: "PlatformV2LibraryLookupError",
+      kind: "contract-mismatch",
+    });
   });
 });
 
 describe("fetchPlatformV2LibraryGroupPage", () => {
+  test.each([403, 503])("preserves HTTP %s as a typed Library failure", async (status) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("{}", { status })),
+    );
+
+    await expect(
+      fetchPlatformV2LibraryGroupPage({
+        query: "goed",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).rejects.toMatchObject({
+      name: "PlatformV2LibraryLookupError",
+      kind: "http-error",
+      status,
+    });
+  });
+
+  test("forwards caller cancellation instead of converting it to an empty page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) =>
+        new Promise((_resolve, reject) => {
+          const rejectAbort = () =>
+            reject(new DOMException("Aborted", "AbortError"));
+          if (init?.signal?.aborted) rejectAbort();
+          else init?.signal?.addEventListener("abort", rejectAbort);
+        }),
+      ),
+    );
+    const controller = new AbortController();
+    const request = fetchPlatformV2LibraryGroupPage({
+      query: "goed",
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      signal: controller.signal,
+    });
+    const rejection = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    controller.abort();
+    await rejection;
+  });
+
   test("requests the next opaque group page without supplying an entry limit", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: true,

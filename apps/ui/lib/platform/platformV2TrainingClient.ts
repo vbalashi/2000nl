@@ -1,8 +1,7 @@
-import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 import {
   forwardAbortSignal,
-  platformFetchWithTimeout,
 } from "./platformFetchWithTimeout";
+import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import {
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
@@ -80,43 +79,38 @@ export async function fetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingLookupInput,
 ): Promise<PlatformV2TrainingLookupResult> {
   const startedAt = performance.now();
-  const response = await platformFetchWithTimeout("/api/platform/v2/lookup", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
+  const result = await requestPlatformV2Lookup({
     signal: input.signal,
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
+    body: {
       entryId: input.entryId,
       cardTypeId: input.cardTypeId,
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "training-review",
-    }),
+    },
   });
   if (input.transitionId) {
     recordTrainingTransitionResponse(
       input.transitionId,
       "next-card.lookup",
       startedAt,
-      response,
-      response.ok ? "ready" : `http-${response.status}`,
+      result.response,
+      result.state === "ready"
+        ? "ready"
+        : result.state === "http-error"
+          ? `http-${result.status}`
+          : "contract-mismatch",
     );
   }
-  if (!response.ok) {
-    return { state: "lookup-http-error", status: response.status };
+  if (result.state === "http-error") {
+    return { state: "lookup-http-error", status: result.status };
   }
-
-  const payload = (await response.json()) as Partial<PlatformLookupV2Response>;
-  if (
-    payload.contractVersion !== "platform-lookup-v2" ||
-    !Array.isArray(payload.groups)
-  ) {
+  if (result.state === "contract-mismatch") {
     return { state: "contract-mismatch" };
   }
 
   const selected = selectPlatformV2TrainingEntry(
-    payload as PlatformLookupV2Response,
+    result.payload,
     input.entryId,
   );
   return selected

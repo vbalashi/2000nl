@@ -1,4 +1,4 @@
-import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
+import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
@@ -24,25 +24,34 @@ type PlatformV2LibraryLookupInput = {
 async function fetchPlatformV2LibraryLookup(
   input: PlatformV2LibraryLookupInput,
 ): Promise<PlatformLookupV2Response | null> {
-  const response = await fetch("/api/platform/v2/lookup", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
+  const result = await requestPlatformV2Lookup({
     signal: input.signal,
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
+    body: {
       query: input.query,
       cardTypeId: input.cardTypeId,
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "dictionary-lookup",
       ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
-    }),
+    },
   });
-  if (!response.ok) return null;
+  if (result.state === "http-error") {
+    throw new PlatformV2LibraryLookupError("http-error", result.status);
+  }
+  if (result.state === "contract-mismatch") {
+    throw new PlatformV2LibraryLookupError("contract-mismatch");
+  }
+  return result.payload;
+}
 
-  const payload = (await response.json()) as PlatformLookupV2Response;
-  return payload.contractVersion === "platform-lookup-v2" ? payload : null;
+export class PlatformV2LibraryLookupError extends Error {
+  constructor(
+    readonly kind: "http-error" | "contract-mismatch",
+    readonly status?: number,
+  ) {
+    super(kind === "http-error" ? `lookup_http_${status}` : kind);
+    this.name = "PlatformV2LibraryLookupError";
+  }
 }
 
 export async function fetchPlatformV2LibraryGroupPage(input: {
