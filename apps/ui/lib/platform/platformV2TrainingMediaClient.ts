@@ -3,6 +3,7 @@ import {
   forwardAbortSignal,
   platformFetchWithTimeout,
 } from "./platformFetchWithTimeout";
+import { recordTrainingTransitionResponse } from "../training/trainingTransitionTiming";
 import type {
   PlatformAudioCapabilityV2,
   PlatformSenseCardCapabilityV2,
@@ -19,6 +20,7 @@ type PlatformV2AudioRequest = {
   cacheOwnerId: string;
   capability: PlatformAudioCapabilityV2;
   text: string;
+  transitionId?: string;
   signal?: AbortSignal;
 };
 
@@ -31,8 +33,9 @@ export async function requestPlatformV2Translation(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
+  context: { transitionId?: string; signal?: AbortSignal } = {},
 ): Promise<void> {
-  return requestPlatformV2TranslationUncached(capability);
+  return requestPlatformV2TranslationUncached(capability, context);
 }
 
 async function requestPlatformV2TranslationUncached(
@@ -40,13 +43,16 @@ async function requestPlatformV2TranslationUncached(
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
   >,
+  context: { transitionId?: string; signal?: AbortSignal },
 ): Promise<void> {
+  const startedAt = performance.now();
   const response = await platformFetchWithTimeout(
     "/api/platform/translation",
     {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",
+      signal: context.signal,
       headers: await platformV2AuthenticatedJsonHeaders(),
       body: JSON.stringify({
         entryId: capability.target.entryId,
@@ -54,6 +60,17 @@ async function requestPlatformV2TranslationUncached(
       }),
     },
   );
+  if (context.transitionId) {
+    recordTrainingTransitionResponse(
+      context.transitionId,
+      "translation.cache-or-provider",
+      startedAt,
+      response,
+      response.ok
+        ? (response.headers.get("x-platform-cache") ?? "ready")
+        : `http-${response.status}`,
+    );
+  }
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as {
       error?: string;
@@ -118,6 +135,7 @@ async function resolvePlatformV2AudioUncached(
   input: PlatformV2AudioRequest,
   signal?: AbortSignal,
 ): Promise<string> {
+  const startedAt = performance.now();
   const response = await platformFetchWithTimeout(
     "/api/platform/v1/audio/resolve",
     {
@@ -133,6 +151,17 @@ async function resolvePlatformV2AudioUncached(
       }),
     },
   );
+  if (input.transitionId) {
+    recordTrainingTransitionResponse(
+      input.transitionId,
+      "audio.cache-or-provider",
+      startedAt,
+      response,
+      response.ok
+        ? (response.headers.get("x-platform-cache") ?? "ready")
+        : `http-${response.status}`,
+    );
+  }
   const payload = (await response.json().catch(() => null)) as
     | { asset?: { url?: string }; error?: string | { code?: string } }
     | null;

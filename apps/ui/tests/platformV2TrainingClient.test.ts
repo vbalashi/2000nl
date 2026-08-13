@@ -5,6 +5,7 @@ import {
   consumePrefetchedPlatformV2TrainingEntry,
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
+  preparePlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
   performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
@@ -342,6 +343,210 @@ describe("Platform V2 media and translation clients", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+});
+
+describe("preparePlatformV2TrainingEntry", () => {
+  const input = {
+    cacheOwnerId: "test-user",
+    entryId: singleSenseEntry.entryId,
+    cardTypeId: "word-to-definition" as const,
+    contentLanguageCode: "nl",
+    translationTargetLanguageCode: "en",
+    transitionId: "transition-148",
+  };
+
+  test("keeps cached translation and audio on provider-free fast paths", async () => {
+    vi.stubGlobal("Audio", class { preload = ""; load() {} });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            contractVersion: "platform-lookup-v2",
+            query: "hand",
+            request: {
+              contentLanguageCode: "nl",
+              translationTargetLanguageCode: "en",
+              cardTypeId: "word-to-definition",
+              intent: "training-review",
+            },
+            groups: [singleSenseGroup],
+            page: { selectedTierComplete: true, nextGroupCursor: null },
+          }),
+          {
+            status: 200,
+            headers: {
+              "x-request-id": "lookup-cached",
+              "server-timing": "lookup.translations;dur=4.0, route.total;dur=8.0",
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            asset: {
+              url: "/api/platform/audio/asset/cached",
+              cache: "hit",
+            },
+          }),
+          {
+            status: 200,
+            headers: { "x-request-id": "audio-cached" },
+          },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(preparePlatformV2TrainingEntry(input)).resolves.toMatchObject({
+      state: "ready",
+      translation: "cached",
+      audio: "ready",
+      entry: { entryId: singleSenseEntry.entryId },
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/lookup",
+      "/api/platform/v1/audio/resolve",
+    ]);
+  });
+
+  test("generates one missing translation for the selected next turn and refreshes its DTO", async () => {
+    vi.stubGlobal("Audio", class { preload = ""; load() {} });
+    const requestTranslation = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+      targetLanguageCode: "en",
+    };
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      contentNodes: singleSenseEntry.contentNodes.map((node) => ({
+        ...node,
+        translations: [],
+      })),
+      capabilities: [...singleSenseEntry.capabilities, requestTranslation],
+    };
+    const payload = (entry: typeof singleSenseEntry) => ({
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [{ ...singleSenseGroup, entries: [entry] }],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(payload(untranslatedEntry)), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: "ready" }), {
+          status: 200,
+          headers: { "x-platform-cache": "miss" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(payload(singleSenseEntry)), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ asset: { url: "/audio/hand.mp3", cache: "hit" } }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      preparePlatformV2TrainingEntry({
+        ...input,
+        generateMissingTranslation: true,
+      }),
+    ).resolves.toMatchObject({
+      state: "ready",
+      translation: "generated",
+      audio: "ready",
+      entry: { translation: { status: "ready" } },
+    });
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/lookup",
+      "/api/platform/translation",
+      "/api/platform/v2/lookup",
+      "/api/platform/v1/audio/resolve",
+    ]);
+  });
+
+  test("keeps the healthy next-card DTO when optional translation preparation fails", async () => {
+    vi.stubGlobal("Audio", class { preload = ""; load() {} });
+    const requestTranslation = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+      targetLanguageCode: "en",
+    };
+    const untranslatedEntry = {
+      ...singleSenseEntry,
+      translation: null,
+      capabilities: [...singleSenseEntry.capabilities, requestTranslation],
+    };
+    const payload = {
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [{ ...singleSenseGroup, entries: [untranslatedEntry] }],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "provider_unavailable" }), {
+          status: 502,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ asset: { url: "/audio/hand.mp3", cache: "hit" } }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      preparePlatformV2TrainingEntry({
+        ...input,
+        generateMissingTranslation: true,
+      }),
+    ).resolves.toMatchObject({
+      state: "ready",
+      translation: "failed",
+      audio: "ready",
+      entry: { entryId: singleSenseEntry.entryId, translation: null },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
 });
 
 describe("selectPlatformV2TrainingEntry", () => {

@@ -63,9 +63,13 @@ import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import {
+  createTrainingTransitionId,
+  measureTrainingTransitionStage,
+} from "@/lib/training/trainingTransitionTiming";
+import {
   clearPlatformV2TrainingClientCaches,
+  preparePlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
-  preloadPlatformV2Audio,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
@@ -567,12 +571,14 @@ export function TrainingScreen({
 
   // Next-card prefetch state (kept in refs so it never blocks rendering).
   const nextWordPrefetchTokenRef = useRef(0);
+  const activeNextTransitionIdRef = useRef<string | null>(null);
   const nextWordPrefetchRef = useRef<{
     forWordId: string;
     forCardKey: string;
     queueTurn: QueueTurn;
     word: TrainingWord | null;
     v2Ready: Promise<boolean> | null;
+    transitionId: string;
   } | null>(null);
 
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
@@ -586,33 +592,34 @@ export function TrainingScreen({
   const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
 
   const warmTrainingV2Word = useCallback(
-    async (word: TrainingWord, signal?: AbortSignal) => {
+    async (
+      word: TrainingWord,
+      signal?: AbortSignal,
+      transitionId = createTrainingTransitionId(),
+    ) => {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
       if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
         return true;
       }
       try {
-        const lookup = await prefetchPlatformV2TrainingEntry({
+        const input = {
           cacheOwnerId: user.id,
           entryId: word.id,
           cardTypeId: mode,
           contentLanguageCode: currentTrainingLanguage,
           translationTargetLanguageCode:
             translationLang === "off" ? null : translationLang,
+          transitionId,
+          generateMissingTranslation: true,
           signal,
+        };
+        const lookupRequest = prefetchPlatformV2TrainingEntry(input);
+        void preparePlatformV2TrainingEntry(input).catch(() => {
+          // Optional preparation never replaces or blocks a healthy card.
         });
+        const lookup = await lookupRequest;
         if (signal?.aborted) return false;
         if (lookup.state !== "ready") return false;
-        if (lookup.group.header.audio) {
-          void preloadPlatformV2Audio({
-            cacheOwnerId: user.id,
-            capability: lookup.group.header.audio,
-            text: lookup.group.header.text,
-            signal,
-          }).catch(() => {
-            // The ready DTO is still useful if optional audio warming fails.
-          });
-        }
         return true;
       } catch {
         return false;
@@ -1057,6 +1064,8 @@ export function TrainingScreen({
       reviewCounter,
       newReviewRatio,
     });
+    const transitionId = createTrainingTransitionId();
+    activeNextTransitionIdRef.current = transitionId;
 
     // Invalidate any prior prefetch work.
     const token = (nextWordPrefetchTokenRef.current += 1);
@@ -1066,6 +1075,7 @@ export function TrainingScreen({
       queueTurn: predictedQueueTurn,
       word: null,
       v2Ready: null,
+      transitionId,
     };
 
     let cancelled = false;
@@ -1073,19 +1083,25 @@ export function TrainingScreen({
 
     const run = async () => {
       try {
-        const next = await fetchNextTrainingWordByScenario(
-          user.id,
-          activeScenario,
-          [],
-          {
-            listId: wordListId ?? undefined,
-            listType: wordListType ?? undefined,
-          },
-          cardFilter,
-          predictedQueueTurn,
-          [...reviewedInSessionRef.current, forCardKey],
-          resolveRestrictedListModes(activeList),
-          trainingFocusFilterActive ? trainingFocusFilter : null,
+        const next = await measureTrainingTransitionStage(
+          transitionId,
+          "next-card.selection",
+          () =>
+            fetchNextTrainingWordByScenario(
+              user.id,
+              activeScenario,
+              [],
+              {
+                listId: wordListId ?? undefined,
+                listType: wordListType ?? undefined,
+              },
+              cardFilter,
+              predictedQueueTurn,
+              [...reviewedInSessionRef.current, forCardKey],
+              resolveRestrictedListModes(activeList),
+              trainingFocusFilterActive ? trainingFocusFilter : null,
+            ),
+          (selected) => (selected ? "ready" : "empty"),
         );
 
         if (cancelled) return;
@@ -1096,7 +1112,7 @@ export function TrainingScreen({
           next &&
           trainingShellV2Enabled &&
           isPlatformV2TrainingMode(nextMode)
-            ? warmTrainingV2Word(next, controller.signal)
+            ? warmTrainingV2Word(next, controller.signal, transitionId)
             : null;
         nextWordPrefetchRef.current = {
           forWordId,
@@ -1104,6 +1120,7 @@ export function TrainingScreen({
           queueTurn: predictedQueueTurn,
           word: next,
           v2Ready,
+          transitionId,
         };
 
         if (audioModeEnabled && next) {
@@ -2561,6 +2578,9 @@ export function TrainingScreen({
                             <TrainingSenseCardV2Session
                               key={`${user.id}:${currentWord.id}:${currentMode}:${currentTrainingLanguage}:${translationLang}`}
                               cacheOwnerId={user.id}
+                              nextTransitionId={
+                                activeNextTransitionIdRef.current ?? undefined
+                              }
                               word={currentWord}
                               mode={currentMode}
                               contentLanguageCode={currentTrainingLanguage}

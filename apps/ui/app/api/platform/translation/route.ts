@@ -83,6 +83,7 @@ async function resolveTargetLang(
 }
 
 export async function POST(request: NextRequest) {
+  const startedAt = performance.now();
   const reply = (payload: unknown, status = 200) =>
     withPlatformCors(request, jsonNoStore(payload, status));
 
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
   );
   const payload = await translationResponse.json().catch(() => null);
 
-  return reply(
+  const response = reply(
     {
       entryId,
       targetLang,
@@ -167,6 +168,12 @@ export async function POST(request: NextRequest) {
     },
     translationResponse.status,
   );
+  response.headers.set("X-Platform-Cache", "provider-or-refresh");
+  response.headers.set(
+    "Server-Timing",
+    `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,
+  );
+  return response;
 }
 
 async function translateDraftItem(
