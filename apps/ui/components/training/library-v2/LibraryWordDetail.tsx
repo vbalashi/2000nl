@@ -3,11 +3,13 @@
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { WordListSummary } from "@/lib/types";
+import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { platformV2LibraryUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { LibrarySenseCardV2Session } from "./LibrarySenseCardV2Session";
 
 type Props = {
   entryId: string;
+  initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
@@ -22,6 +24,7 @@ type Props = {
 
 export function LibraryWordDetail({
   entryId,
+  initialGroup,
   headword,
   contentLanguageCode,
   translationTargetLanguageCode,
@@ -56,6 +59,7 @@ export function LibraryWordDetail({
   return (
     <LibrarySenseCardV2Session
       entryId={entryId}
+      initialGroup={initialGroup}
       headword={headword}
       contentLanguageCode={contentLanguageCode}
       translationTargetLanguageCode={translationTargetLanguageCode}
