@@ -583,7 +583,12 @@ function ContentItem({
           ? "border-l-[3px] border-amber-400 pl-4"
           : "";
   return (
-    <div className={border}>
+    <div
+      className={border}
+      data-content-node-id={item.contentNodeId}
+      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
+      data-content-kind={item.kind}
+    >
       <p
         className={
           literary
@@ -603,8 +608,29 @@ function ContentItem({
           </p>
         </SenseCardReveal>
       ) : null}
+      {item.children?.length ? (
+        <div className="mt-2 space-y-2 pl-4">
+          {item.children.map((child) => (
+            <ContentItem
+              key={child.contentNodeId}
+              item={child}
+              translationVisible={translationVisible}
+              accent={contentAccent(child.kind)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function contentAccent(
+  kind: TrainingSenseCardContent["kind"],
+): "none" | "usage" | "example" | "idiom" {
+  if (kind === "usage-pattern") return "usage";
+  if (kind === "example") return "example";
+  if (kind === "idiom") return "idiom";
+  return "none";
 }
 
 function FaceDock({
@@ -762,7 +788,13 @@ function AnswerDock({
 function hasTranslation(model: TrainingSenseCardModel) {
   return Boolean(
     model.entryTranslation ||
-    [...model.definitions, ...model.examples].some((item) => item.translation),
+    [...model.definitions, ...model.examples].some(hasContentTranslation),
+  );
+}
+
+function hasContentTranslation(item: TrainingSenseCardContent): boolean {
+  return Boolean(
+    item.translation || item.children?.some(hasContentTranslation),
   );
 }
 

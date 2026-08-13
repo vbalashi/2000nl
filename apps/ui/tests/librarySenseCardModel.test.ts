@@ -9,8 +9,38 @@ import {
   furnitureEntry,
   multiSenseBankGroup,
 } from "./platformV2LibraryFixture";
+import {
+  goedEntry,
+  goedGroup,
+} from "./platformV2IdiomHierarchyFixture";
 
 describe("Library multi-sense model", () => {
+  test("keeps the reordered goed explanation and example nested under the expression", () => {
+    const model = buildLibrarySenseCardGroupModel(goedGroup, "nl");
+    const idiom = model.meanings[0].details.find(
+      (item) => item.contentNodeId === "idiom-goed",
+    );
+
+    expect(goedEntry.contentNodes[0].contentNodeId).toBe("idiom-example-goed");
+    expect(idiom).toEqual(
+      expect.objectContaining({
+        parentContentNodeId: null,
+        text: "iets komt ten goede aan iemand of iets",
+        children: [
+          expect.objectContaining({
+            contentNodeId: "idiom-explanation-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "idiom-explanation",
+          }),
+          expect.objectContaining({
+            contentNodeId: "idiom-example-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "example",
+          }),
+        ],
+      }),
+    );
+  });
   test("keeps learning state and actions on their exact entry", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
 

@@ -407,6 +407,10 @@ function MeaningCard({
                       <section
                         key={item.contentNodeId}
                         data-content-kind={item.kind}
+                        data-content-node-id={item.contentNodeId}
+                        data-parent-content-node-id={
+                          item.parentContentNodeId ?? undefined
+                        }
                       >
                         {showLabel && presentation.labelKey ? (
                           <ContentSectionHeader
@@ -593,7 +597,11 @@ function NestedContent({
   translationVisible: boolean;
 }) {
   return (
-    <div data-content-kind={item.kind}>
+    <div
+      data-content-kind={item.kind}
+      data-content-node-id={item.contentNodeId}
+      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
+    >
       <ContentText item={item} translationVisible={translationVisible} />
       {item.children.length ? (
         <div className="mt-2 space-y-2 pl-4">

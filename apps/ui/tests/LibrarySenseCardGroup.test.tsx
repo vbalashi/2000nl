@@ -10,12 +10,35 @@ import { describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
+import { goedGroup } from "./platformV2IdiomHierarchyFixture";
 import {
   gateLongHeadwordGroup,
   gateSingleSenseGroup,
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 describe("LibrarySenseCardGroup", () => {
+  test("renders the goed expression, explanation, and example as one owned hierarchy", () => {
+    const { container } = render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(goedGroup, "en")}
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const expression = container.querySelector('[data-content-node-id="idiom-goed"]');
+    const explanation = container.querySelector(
+      '[data-content-node-id="idiom-explanation-goed"]',
+    );
+    const example = container.querySelector(
+      '[data-content-node-id="idiom-example-goed"]',
+    );
+    expect(expression).toContainElement(explanation as HTMLElement);
+    expect(expression).toContainElement(example as HTMLElement);
+    expect(expression?.querySelector(":scope > div > p")).toHaveClass("italic");
+    expect(explanation?.querySelector(":scope > div > p")).not.toHaveClass("italic");
+    expect(example?.querySelector(":scope > div > p")).toHaveClass("italic");
+  });
   test("keeps a localized long headword usable in the single-sense fixture", () => {
     render(
       <LibrarySenseCardGroup
