@@ -179,10 +179,10 @@ describe("LibrarySenseCardV2Session", () => {
   });
 
   test.each([
-    ["lookup_http_403", "lookup_http_403"],
-    ["lookup_http_503", "lookup_http_503"],
-    ["contract-mismatch", "contract-mismatch"],
-    ["platform_request_timeout", "lookup_timeout"],
+    ["lookup_http_403", "You do not have access"],
+    ["lookup_http_503", "temporarily unavailable"],
+    ["contract-mismatch", "unsupported format"],
+    ["platform_request_timeout", "too long to load"],
   ])("surfaces detail lookup failure %s", async (failure, expected) => {
     fetchGroup.mockRejectedValueOnce(new Error(failure));
 
@@ -198,6 +198,28 @@ describe("LibrarySenseCardV2Session", () => {
     );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(expected);
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  test("retries a failed detail lookup and presents the recovered group", async () => {
+    fetchGroup
+      .mockRejectedValueOnce(new Error("lookup_http_503"))
+      .mockResolvedValueOnce(multiSenseBankGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    expect(await screen.findByTestId("library-sense-card-group")).toBeInTheDocument();
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
   });
 
   test("ignores detail lookup cancellation", async () => {

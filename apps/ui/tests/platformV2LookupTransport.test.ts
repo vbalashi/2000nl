@@ -145,6 +145,62 @@ describe("requestPlatformV2Lookup", () => {
         }],
       },
     },
+    {
+      label: "content-node kind",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{
+          ...financeEntry,
+          contentNodes: [{ ...financeEntry.contentNodes[0], kind: "script" }],
+        }],
+      },
+    },
+    {
+      label: "translation status",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{
+          ...financeEntry,
+          contentNodes: [{
+            ...financeEntry.contentNodes[0],
+            translations: [{
+              translationId: "translation-1",
+              targetLanguageCode: "en",
+              status: "invented",
+              sourceTextFingerprint: "fingerprint-1",
+              translationPolicyVersion: "v1",
+            }],
+          }],
+        }],
+      },
+    },
+    {
+      label: "word details",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{ ...financeEntry, wordDetails: { forms: null } }],
+      },
+    },
+    {
+      label: "action-target pairing",
+      group: {
+        ...multiSenseBankGroup,
+        entries: [{
+          ...financeEntry,
+          capabilities: [{
+            actionId: "review-card",
+            elementId: "review",
+            messageKey: "review",
+            reviewResult: "success",
+            target: {
+              kind: "entry",
+              entryId: financeEntry.entryId,
+              contentRevision: financeEntry.contentRevision,
+            },
+          }],
+        }],
+      },
+    },
   ])("rejects a malformed nested $label before consumers run", async ({ group }) => {
     vi.stubGlobal(
       "fetch",
@@ -162,6 +218,46 @@ describe("requestPlatformV2Lookup", () => {
     await expect(requestPlatformV2Lookup({ body })).resolves.toMatchObject({
       state: "contract-mismatch",
     });
+  });
+
+  test("accepts the complete optional word-details subtree", async () => {
+    const group = {
+      ...multiSenseBankGroup,
+      entries: [{
+        ...financeEntry,
+        wordDetails: {
+          entryId: financeEntry.entryId,
+          lexicalRelations: [{ relationId: "relation-1", kind: "synonym", text: "geldbank" }],
+          labels: [{ termId: "label.formal", messageKey: "label.formal", sourceValue: "formeel" }],
+          grammarNotes: [{ detailId: "grammar-1", text: "grammar" }],
+          usageNotes: [{ detailId: "usage-1", text: "usage", contentNodeId: "definition-bank-finance" }],
+          pronunciationNotes: [],
+          forms: [{
+            formId: "form-1",
+            kind: { termId: "form.plural", messageKey: "form.plural" },
+            text: "banken",
+            features: [],
+          }],
+          references: [{
+            referenceId: "reference-1",
+            kind: { termId: "reference.see", messageKey: "reference.see" },
+            text: "bankieren",
+          }],
+        },
+      }],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({
+        contractVersion: "platform-lookup-v2",
+        query: "bank",
+        request: body,
+        groups: [group],
+        page: { selectedTierComplete: true, nextGroupCursor: null },
+      }), { status: 200 })),
+    );
+
+    await expect(requestPlatformV2Lookup({ body })).resolves.toMatchObject({ state: "ready" });
   });
 
   test("bounds stalled authentication before fetch begins", async () => {

@@ -89,6 +89,10 @@ export function LibrarySenseCardV2Session({
     Record<string, "pending" | "failed">
   >({});
   const [error, setError] = React.useState<string | null>(null);
+  const [lookupError, setLookupError] = React.useState<
+    "forbidden" | "timeout" | "contract" | "unavailable" | null
+  >(null);
+  const [lookupRetry, setLookupRetry] = React.useState(0);
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
@@ -165,6 +169,7 @@ export function LibrarySenseCardV2Session({
     const controller = new AbortController();
     setGroup(compatibleInitialGroup);
     setError(null);
+    setLookupError(null);
     if (compatibleInitialGroup && !activeReferenceTarget) {
       return () => controller.abort();
     }
@@ -178,17 +183,20 @@ export function LibrarySenseCardV2Session({
             cause.name === "AbortError",
         );
       if (!aborted) {
-        setError(
-          cause instanceof Error && cause.message === "platform_request_timeout"
-            ? "lookup_timeout"
-            : cause instanceof Error
-              ? cause.message
-              : "lookup_failed",
+        const message = cause instanceof Error ? cause.message : "";
+        setLookupError(
+          message === "platform_request_timeout"
+            ? "timeout"
+            : message === "contract-mismatch"
+              ? "contract"
+              : message === "lookup_http_401" || message === "lookup_http_403"
+                ? "forbidden"
+                : "unavailable",
         );
       }
     });
     return () => controller.abort();
-  }, [activeReferenceTarget, compatibleInitialGroup, load]);
+  }, [activeReferenceTarget, compatibleInitialGroup, load, lookupRetry]);
 
   const model = React.useMemo(() => {
     const matchesSelectedEntry = group?.entries.some((candidate) =>
@@ -446,12 +454,38 @@ export function LibrarySenseCardV2Session({
     [],
   );
 
-  const errorNotice = error ? (
+  const lookupErrorText = lookupError
+    ? interfaceLanguage === "nl"
+      ? lookupError === "timeout"
+        ? "De woordenboekkaart duurde te lang om te laden."
+        : lookupError === "forbidden"
+          ? "Je hebt geen toegang tot deze woordenboekkaart."
+          : lookupError === "contract"
+            ? "De woordenboekkaart heeft een onbekend formaat."
+            : "De woordenboekkaart is tijdelijk niet beschikbaar."
+      : lookupError === "timeout"
+        ? "The dictionary card took too long to load."
+        : lookupError === "forbidden"
+          ? "You do not have access to this dictionary card."
+          : lookupError === "contract"
+            ? "The dictionary card has an unsupported format."
+            : "The dictionary card is temporarily unavailable."
+    : null;
+  const errorNotice = lookupErrorText || error ? (
     <p
       role="alert"
       className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
     >
-      {error}
+      {lookupErrorText ?? error}
+      {lookupError ? (
+        <button
+          type="button"
+          className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
+          onClick={() => setLookupRetry((current) => current + 1)}
+        >
+          {interfaceLanguage === "nl" ? "Opnieuw proberen" : "Retry"}
+        </button>
+      ) : null}
     </p>
   ) : null;
 
