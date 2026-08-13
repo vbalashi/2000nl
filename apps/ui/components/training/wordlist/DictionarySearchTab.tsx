@@ -23,11 +23,17 @@ import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
+import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
+import { useLibraryHeadwordGroupSearch } from "./useLibraryHeadwordGroupSearch";
 import {
-  buildLibraryHeadwordGroupResults,
-  type LibraryHeadwordGroupResult,
-} from "./libraryHeadwordGroupResults";
+  createDictionarySearchTabState,
+  type DictionarySearchTabState,
+} from "./dictionarySearchTabState";
+
+export {
+  createDictionarySearchTabState,
+  type DictionarySearchTabState,
+} from "./dictionarySearchTabState";
 
 type Props = {
   open: boolean;
@@ -50,38 +56,6 @@ type Props = {
     React.SetStateAction<DictionarySearchTabState>
   >;
 };
-
-export type DictionarySearchTabState = {
-  query: string;
-  applyListFilter: boolean;
-  wordResults: DictionaryEntry[];
-  groupResults: LibraryHeadwordGroupResult[];
-  groupPageCursors: Array<string | null>;
-  groupHasMore: boolean;
-  selectedHeadwordGroupId: string | null;
-  wordTotal: number;
-  page: number;
-  languageCode: string | null;
-  dictionaryId: string | null;
-  detailEntry: DictionaryEntry | null;
-  mobileDetailOpen: boolean;
-};
-
-export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
-  query: "",
-  applyListFilter: false,
-  wordResults: [],
-  groupResults: [],
-  groupPageCursors: [null],
-  groupHasMore: false,
-  selectedHeadwordGroupId: null,
-  wordTotal: 0,
-  page: 1,
-  languageCode: null,
-  dictionaryId: null,
-  detailEntry: null,
-  mobileDetailOpen: false,
-});
 
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
@@ -190,7 +164,6 @@ export function DictionarySearchTab({
     null,
   );
   const queryRef = useRef<HTMLInputElement | null>(null);
-  const latestSearchRequestRef = useRef(0);
   const latestDetailRequestRef = useRef(0);
   const pageSize = 20;
   const updateSearchState = useCallback(
@@ -210,14 +183,20 @@ export function DictionarySearchTab({
       ? "VanDale woordenboek"
       : `${languageLabel(searchLanguage)} woordenboekbronnen`;
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
-  const groupCursor = groupPageCursors[page - 1] ?? null;
-  const selectedGroupResult = useMemo(
-    () =>
-      groupResults.find(
-        (result) => result.headwordGroupId === selectedHeadwordGroupId,
-      ) ?? null,
-    [groupResults, selectedHeadwordGroupId],
-  );
+  const {
+    beginSearch,
+    clearGroupSearch,
+    isCurrentSearch,
+    openGroupDetail,
+    runGroupSearch,
+    selectedGroupResult,
+  } = useLibraryHeadwordGroupSearch({
+    state: searchState,
+    setState: onSearchStateChange,
+    contentLanguageCode: searchLanguage,
+    translationLanguageCode: translationLang,
+    dictionaryId,
+  });
   const detailEntryInCurrentResults = useMemo(
     () =>
       Boolean(
@@ -231,8 +210,7 @@ export function DictionarySearchTab({
 
   const runSearch = useCallback(async () => {
     if (!open) return;
-    const requestId = latestSearchRequestRef.current + 1;
-    latestSearchRequestRef.current = requestId;
+    const requestId = beginSearch();
     const hasQuery = Boolean(query.trim());
     if (!hasQuery && !useViewedListFilter) {
       updateSearchState({
@@ -251,45 +229,7 @@ export function DictionarySearchTab({
     try {
       const trimmedQuery = query.trim() || undefined;
       if (!useViewedListFilter) {
-        const result = await fetchPlatformV2LibraryGroupPage({
-          query: trimmedQuery!,
-          cardTypeId: "word-to-definition",
-          contentLanguageCode: searchLanguage,
-          translationTargetLanguageCode:
-            translationLang === "off" ? null : translationLang,
-          cursor: groupCursor,
-        });
-        if (latestSearchRequestRef.current !== requestId) return;
-
-        const nextGroupResults = buildLibraryHeadwordGroupResults(
-          result?.groups ?? [],
-        ).filter(
-          (groupResult) =>
-            !dictionaryId ||
-            groupResult.group.dictionary.dictionaryId === dictionaryId,
-        );
-        onSearchStateChange((current) => {
-          const nextCursors = current.groupPageCursors.slice(0, page);
-          nextCursors[page] = result?.nextGroupCursor ?? null;
-          const selectedStillVisible = nextGroupResults.find(
-            (groupResult) =>
-              groupResult.headwordGroupId === current.selectedHeadwordGroupId,
-          );
-          const selected = selectedStillVisible ?? nextGroupResults[0] ?? null;
-          return {
-            ...current,
-            groupResults: nextGroupResults,
-            groupPageCursors: nextCursors,
-            groupHasMore: Boolean(result?.nextGroupCursor),
-            selectedHeadwordGroupId:
-              current.detailEntry && !selectedStillVisible
-                ? current.selectedHeadwordGroupId
-                : selected?.headwordGroupId ?? null,
-            wordResults: [],
-            wordTotal: nextGroupResults.length,
-            detailEntry: current.detailEntry ?? selected?.detailEntry ?? null,
-          };
-        });
+        await runGroupSearch(trimmedQuery!, requestId);
         return;
       }
 
@@ -311,22 +251,24 @@ export function DictionarySearchTab({
             pageSize,
           });
 
-      if (latestSearchRequestRef.current !== requestId) return;
+      if (!isCurrentSearch(requestId)) return;
+      clearGroupSearch();
       onSearchStateChange((current) => ({
         ...current,
         wordResults: result.items,
-        groupResults: [],
-        groupHasMore: false,
         wordTotal: result.total,
         detailEntry: current.detailEntry ?? result.items[0] ?? null,
       }));
     } finally {
-      if (latestSearchRequestRef.current === requestId) {
+      if (isCurrentSearch(requestId)) {
         setSearchLoading(false);
       }
     }
   }, [
     open,
+    beginSearch,
+    clearGroupSearch,
+    isCurrentSearch,
     onSearchStateChange,
     page,
     query,
@@ -334,22 +276,10 @@ export function DictionarySearchTab({
     useViewedListFilter,
     searchLanguage,
     dictionaryId,
-    groupCursor,
-    translationLang,
+    runGroupSearch,
     viewedList?.type,
     viewedListId,
   ]);
-
-  const openGroupDetail = useCallback(
-    (result: LibraryHeadwordGroupResult) => {
-      updateSearchState({
-        selectedHeadwordGroupId: result.headwordGroupId,
-        detailEntry: result.detailEntry,
-        mobileDetailOpen: true,
-      });
-    },
-    [updateSearchState],
-  );
 
   const openEntryDetail = useCallback(
     async (entry: DictionaryEntry) => {
@@ -781,59 +711,11 @@ export function DictionarySearchTab({
             ))}
           </div>
         ) : groupedSearchActive && groupResults.length ? (
-          <div className="space-y-2">
-            {groupResults.map((result) => {
-              const selected =
-                result.headwordGroupId === selectedHeadwordGroupId;
-              const meaningCount =
-                result.meaningCount === 1
-                  ? "1 betekenis"
-                  : `${result.meaningCount} betekenissen`;
-              const context = [
-                result.partOfSpeechLabels.join(" · "),
-                result.dictionaryLabel,
-                result.homographNumber
-                  ? `homoniem ${result.homographNumber}`
-                  : null,
-                meaningCount,
-              ]
-                .filter(Boolean)
-                .join(" · ");
-              return (
-                <div key={result.headwordGroupId} data-testid="library-headword-group-row">
-                  <button
-                    type="button"
-                    data-testid={`library-headword-group-${result.headwordGroupId}`}
-                    onClick={() => openGroupDetail(result)}
-                    className={`w-full rounded-2xl border p-3 text-left transition ${
-                      selected
-                        ? "border-primary/50 bg-primary/5 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-baseline gap-2">
-                          <span className="font-semibold text-slate-900 dark:text-white">
-                            {result.headword}
-                          </span>
-                          {result.homographNumber ? (
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              {result.homographNumber}
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {context}
-                        </div>
-                      </div>
-                      <span className="hidden text-slate-400 sm:inline">...</span>
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <LibraryHeadwordGroupResultsList
+            results={groupResults}
+            selectedHeadwordGroupId={selectedHeadwordGroupId}
+            onSelect={openGroupDetail}
+          />
         ) : wordResults.length ? (
           <div className="space-y-2">
             {wordResults.map((entry, index) => {

@@ -12,14 +12,18 @@ export type PlatformV2LibraryGroupPage = {
   nextGroupCursor: string | null;
 };
 
-export async function fetchPlatformV2LibraryGroupPage(input: {
+type PlatformV2LibraryLookupInput = {
   query: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
-}): Promise<PlatformV2LibraryGroupPage | null> {
+};
+
+async function fetchPlatformV2LibraryLookup(
+  input: PlatformV2LibraryLookupInput,
+): Promise<PlatformLookupV2Response | null> {
   const response = await fetch("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -32,18 +36,28 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "dictionary-lookup",
-      cursor: input.cursor ?? null,
+      ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
     }),
   });
   if (!response.ok) return null;
 
   const payload = (await response.json()) as PlatformLookupV2Response;
-  if (
-    payload.contractVersion !== "platform-lookup-v2" ||
-    !Array.isArray(payload.groups)
-  ) {
-    return null;
-  }
+  return payload.contractVersion === "platform-lookup-v2" ? payload : null;
+}
+
+export async function fetchPlatformV2LibraryGroupPage(input: {
+  query: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  cursor?: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformV2LibraryGroupPage | null> {
+  const payload = await fetchPlatformV2LibraryLookup({
+    ...input,
+    cursor: input.cursor ?? null,
+  });
+  if (!payload || !Array.isArray(payload.groups)) return null;
   return {
     groups: payload.groups,
     selectedTierComplete: payload.page.selectedTierComplete,
@@ -59,24 +73,8 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
-  const response = await fetch("/api/platform/v2/lookup", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: input.signal,
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
-      query: input.query,
-      cardTypeId: input.cardTypeId,
-      contentLanguageCode: input.contentLanguageCode,
-      translationTargetLanguageCode: input.translationTargetLanguageCode,
-      intent: "dictionary-lookup",
-    }),
-  });
-  if (!response.ok) return null;
-
-  const payload = (await response.json()) as PlatformLookupV2Response;
-  if (payload.contractVersion !== "platform-lookup-v2") return null;
+  const payload = await fetchPlatformV2LibraryLookup(input);
+  if (!payload) return null;
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
 }
 
