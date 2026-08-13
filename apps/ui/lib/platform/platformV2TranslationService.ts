@@ -12,6 +12,7 @@ import type { PlatformContentNodeBindingV2Input } from "./projections/senseCardV
 import type { ServiceSupabase } from "./serverSupabase";
 import type { DictionaryLookupPayload } from "./lookupService";
 import { translationPolicyVersion } from "../translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "../translation/dictionaryMeaningTranslationContract";
 import type { TranslationProviderName } from "../translation/types";
 
 type TranslationRow = {
@@ -99,7 +100,17 @@ export async function resolvePlatformV2Translations(
       normalizeDictionaryContent(entry),
     );
     const currentContentRevision = contentFingerprint(content);
-    const currentPolicyVersion = translationPolicyVersion(provider);
+    const meaningRequest = buildDictionaryMeaningTranslationRequest({
+      entryId: entry.id,
+      sourceContentFingerprint: currentContentRevision,
+      sourceLanguageCode: entry.language_code ?? "nl",
+      targetLanguageCode,
+      word: entry,
+    });
+    const currentPolicyVersion = translationPolicyVersion(
+      provider,
+      meaningRequest,
+    );
     const isFresh =
       row.source_content_revision === currentContentRevision &&
       row.translation_policy_version === currentPolicyVersion;

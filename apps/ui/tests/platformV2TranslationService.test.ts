@@ -200,4 +200,67 @@ describe("Platform V2 translation projection", () => {
       isFresh: false,
     });
   });
+
+  test("invalidates a v1 idiom-only artifact without invalidating ordinary meanings", async () => {
+    const entry = {
+      id: "entry-idiom-only",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          {
+            definition: "",
+            idioms: [
+              {
+                expression: "zich te goed doen aan iets",
+                explanation: "iets lekker opeten of opdrinken",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-idiom-only",
+          word_entry_id: entry.id,
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            entryTranslation: {
+              primaryText: "добро",
+              alternativeTexts: [],
+              baseText: null,
+              note: null,
+            },
+          },
+          source_content_revision: revision,
+          translation_policy_version: translationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({
+      status: "not-available",
+      errorCode: "stale-source",
+      isFresh: false,
+    });
+  });
 });

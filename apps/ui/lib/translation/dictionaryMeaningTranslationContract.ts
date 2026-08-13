@@ -255,8 +255,9 @@ export function parseDictionaryMeaningTranslationResult(
     "entryTranslation",
     "contentTranslations",
   ], "response");
+  const isIdiomOnly = isIdiomOnlyDictionaryMeaningRequest(request);
   let entryTranslation: DictionaryMeaningTranslationResultV1["entryTranslation"] = null;
-  if (payload.entryTranslation !== null) {
+  if (!isIdiomOnly && payload.entryTranslation !== null) {
     const entry = strictRecord(
       payload.entryTranslation,
       ["primaryText", "alternativeTexts", "baseText", "note"],
@@ -336,9 +337,7 @@ export function parseDictionaryMeaningTranslationResult(
   });
 
   return {
-    entryTranslation: isIdiomOnlyDictionaryMeaningRequest(request)
-      ? null
-      : entryTranslation,
+    entryTranslation,
     contentTranslations,
   };
 }
