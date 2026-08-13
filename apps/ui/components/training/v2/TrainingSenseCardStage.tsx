@@ -212,6 +212,7 @@ export function TrainingSenseCardStage({
               model={model}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
+              onReport={onAction}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
           </>
@@ -385,11 +386,18 @@ function AnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
+  onReport,
   onReachEnd,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
+  onReport: (
+    capability: Extract<
+      PlatformSenseCardCapabilityV2,
+      { actionId: "report-content" }
+    >,
+  ) => void;
   onReachEnd: () => void;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -455,6 +463,8 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -472,6 +482,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="usage"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -489,6 +501,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="example"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -506,6 +520,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="idiom"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -517,6 +533,8 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -566,10 +584,19 @@ function ContentSection({
 function ContentItem({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
   accent = "none",
 }: {
   item: TrainingSenseCardContent;
   translationVisible: boolean;
+  onReport: (
+    capability: Extract<
+      PlatformSenseCardCapabilityV2,
+      { actionId: "report-content" }
+    >,
+  ) => void;
+  reportLabel: string;
   accent?: "none" | "usage" | "example" | "idiom";
 }) {
   const literary =
@@ -583,16 +610,33 @@ function ContentItem({
           ? "border-l-[3px] border-amber-400 pl-4"
           : "";
   return (
-    <div className={border}>
-      <p
-        className={
-          literary
-            ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
-            : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
-        }
-      >
-        {item.text}
-      </p>
+    <div
+      className={border}
+      data-content-node-id={item.contentNodeId}
+      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
+      data-content-kind={item.kind}
+    >
+      <div className="flex items-start gap-2">
+        <p
+          className={`min-w-0 flex-1 ${
+            literary
+              ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
+              : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
+          }`}
+        >
+          {item.text}
+        </p>
+        {item.reportCapability ? (
+          <button
+            type="button"
+            aria-label={`${reportLabel}: ${item.text}`}
+            onClick={() => onReport(item.reportCapability!)}
+            className="mt-1 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <FlagIcon />
+          </button>
+        ) : null}
+      </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
           <p
@@ -603,8 +647,31 @@ function ContentItem({
           </p>
         </SenseCardReveal>
       ) : null}
+      {item.children?.length ? (
+        <div className="mt-2 space-y-2 pl-4">
+          {item.children.map((child) => (
+            <ContentItem
+              key={child.contentNodeId}
+              item={child}
+              translationVisible={translationVisible}
+              accent={contentAccent(child.kind)}
+              onReport={onReport}
+              reportLabel={reportLabel}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function contentAccent(
+  kind: TrainingSenseCardContent["kind"],
+): "none" | "usage" | "example" | "idiom" {
+  if (kind === "usage-pattern") return "usage";
+  if (kind === "example") return "example";
+  if (kind === "idiom") return "idiom";
+  return "none";
 }
 
 function FaceDock({
@@ -762,7 +829,13 @@ function AnswerDock({
 function hasTranslation(model: TrainingSenseCardModel) {
   return Boolean(
     model.entryTranslation ||
-    [...model.definitions, ...model.examples].some((item) => item.translation),
+    [...model.definitions, ...model.examples].some(hasContentTranslation),
+  );
+}
+
+function hasContentTranslation(item: TrainingSenseCardContent): boolean {
+  return Boolean(
+    item.translation || item.children?.some(hasContentTranslation),
   );
 }
 

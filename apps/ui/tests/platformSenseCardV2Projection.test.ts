@@ -1,7 +1,71 @@
 import { describe, expect, test } from "vitest";
 import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
+import { goedEntry } from "./platformV2IdiomHierarchyFixture";
 
 describe("Platform V2 SenseCard projection", () => {
+  test("preserves the goed parent identities when bindings arrive reordered", () => {
+    const input = projectionInput({
+      stateRevision: "state-goed-hierarchy",
+      knownMark: null,
+    });
+    input.query = "goed";
+    input.entries[0].entry = {
+      ...input.entries[0].entry,
+      id: goedEntry.entryId,
+      headword: "goed",
+      contentFingerprint: goedEntry.contentRevision,
+    };
+    input.entries[0].contentSections = [...goedEntry.contentNodes]
+      .sort((left, right) => left.order - right.order)
+      .map((item) => ({
+        sourcePath: `fixture.${item.contentNodeId}`,
+        kind: item.kind,
+        text: item.text,
+      }));
+    input.entries[0].contentNodeBindings = goedEntry.contentNodes.map((item) => ({
+      contentNodeId: item.contentNodeId,
+      sourcePath: `fixture.${item.contentNodeId}`,
+      kind: item.kind,
+      parentContentNodeId: item.parentContentNodeId,
+      sourceTextFingerprint: item.sourceTextFingerprint,
+    }));
+    input.entries[0].allowMutationCapabilities = true;
+
+    const senseCard = projectPlatformLookupV2(input).groups[0].entries[0];
+    expect(senseCard.kind).toBe("sense-card");
+    if (senseCard.kind !== "sense-card") throw new Error("Expected SenseCard");
+    expect(
+      senseCard.contentNodes.filter((item) => item.parentContentNodeId === "idiom-goed"),
+    ).toEqual([
+      expect.objectContaining({
+        contentNodeId: "idiom-explanation-goed",
+        kind: "idiom-explanation",
+      }),
+      expect.objectContaining({
+        contentNodeId: "idiom-example-goed",
+        kind: "example",
+      }),
+    ]);
+    expect(
+      senseCard.capabilities
+        .filter(
+          (capability) =>
+            capability.actionId === "report-content" &&
+            capability.target.kind === "content-node",
+        )
+        .map((capability) =>
+          capability.target.kind === "content-node"
+            ? capability.target.contentNodeId
+            : null,
+        ),
+    ).toEqual(
+      expect.arrayContaining([
+        "idiom-goed",
+        "idiom-explanation-goed",
+        "idiom-example-goed",
+      ]),
+    );
+  });
   test("publishes verified group audio and a request-translation capability", () => {
     const input = projectionInput({
       stateRevision: "state-translation",

@@ -7,8 +7,82 @@ import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+import {
+  goedEntry,
+  goedGroup,
+  nodigEntry,
+  nodigGroup,
+} from "./platformV2IdiomHierarchyFixture";
 
 describe("TrainingSenseCardStage", () => {
+  test("renders two nodig idioms and the goed expression hierarchy", () => {
+    const nodigModel = buildTrainingSenseCardModel({
+      group: nodigGroup,
+      entry: nodigEntry,
+      interfaceLanguage: "en",
+    });
+    const { container, rerender } = render(
+      <TrainingSenseCardStage
+        model={nodigModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+    const nodigIdioms = container.querySelector('[data-section="idioms"]');
+    expect(nodigIdioms).toBeInTheDocument();
+    expect(
+      nodigIdioms?.querySelector('[data-testid="sense-section-header"]'),
+    ).toHaveTextContent("Idioms2");
+    expect(nodigIdioms?.querySelectorAll('[data-content-kind="idiom"]')).toHaveLength(2);
+    expect(
+      nodigIdioms?.querySelectorAll('[data-content-kind="idiom-explanation"]'),
+    ).toHaveLength(2);
+
+    const goedModel = buildTrainingSenseCardModel({
+      group: goedGroup,
+      entry: goedEntry,
+      interfaceLanguage: "en",
+    });
+    const onAction = vi.fn();
+    rerender(
+      <TrainingSenseCardStage
+        model={goedModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+    const expression = container.querySelector('[data-content-node-id="idiom-goed"]');
+    const explanation = container.querySelector(
+      '[data-content-node-id="idiom-explanation-goed"]',
+    );
+    const example = container.querySelector(
+      '[data-content-node-id="idiom-example-goed"]',
+    );
+    expect(expression).toContainElement(explanation as HTMLElement);
+    expect(expression).toContainElement(example as HTMLElement);
+    expect(expression?.querySelector("p")).toHaveClass("italic");
+    expect(explanation?.querySelector("p")).not.toHaveClass("italic");
+    expect(example?.querySelector("p")).toHaveClass("italic");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Report: het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+      }),
+    );
+    expect(onAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({
+          kind: "content-node",
+          contentNodeId: "idiom-example-goed",
+        }),
+      }),
+    );
+  });
   test("keeps the audio control in the upper-left corner away from long headwords", () => {
     const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,
@@ -86,18 +160,22 @@ describe("TrainingSenseCardStage", () => {
         ...baseModel.definitions,
         {
           contentNodeId: "usage-pattern-1",
+          parentContentNodeId: null,
           kind: "usage-pattern" as const,
           text: "iemand de hand geven",
           translation: "to shake someone's hand",
+          children: [],
         },
       ],
       examples: [
         ...baseModel.examples,
         {
           contentNodeId: "idiom-1",
+          parentContentNodeId: null,
           kind: "idiom" as const,
           text: "door de bank genomen",
           translation: "on average",
+          children: [],
         },
       ],
     };
@@ -421,8 +499,10 @@ describe("TrainingSenseCardStage", () => {
       definitions: [
         {
           contentNodeId: "usage-before-definition",
+          parentContentNodeId: null,
           kind: "usage-pattern" as const,
           text: "iemand geeft iemand een hand",
+          children: [],
         },
         ...baseModel.definitions,
       ],

@@ -10,9 +10,15 @@ import type {
 
 export type TrainingSenseCardContent = {
   contentNodeId: string;
+  parentContentNodeId: string | null;
   kind: PlatformContentNodeV2["kind"];
   text: string;
   translation?: string;
+  reportCapability?: Extract<
+    PlatformSenseCardCapabilityV2,
+    { actionId: "report-content" }
+  >;
+  children: TrainingSenseCardContent[];
 };
 
 export type TrainingSenseCardModel = {
@@ -71,17 +77,39 @@ export function buildTrainingSenseCardModel({
   interfaceLanguage: OnboardingLanguage;
 }): TrainingSenseCardModel {
   const nodes = [...entry.contentNodes].sort((left, right) => left.order - right.order);
-  const content = (node: PlatformContentNodeV2): TrainingSenseCardContent => {
+  const reportByContentNodeId = new Map(
+    entry.capabilities.flatMap((candidate) =>
+      candidate.actionId === "report-content" &&
+      candidate.target.kind === "content-node"
+        ? [[candidate.target.contentNodeId, candidate] as const]
+        : [],
+    ),
+  );
+  const contentById = new Map<string, TrainingSenseCardContent>();
+  for (const node of nodes) {
     const translation = node.translations.find(
       (candidate) => candidate.status === "ready" && candidate.text,
     )?.text;
-    return {
+    contentById.set(node.contentNodeId, {
       contentNodeId: node.contentNodeId,
+      parentContentNodeId: node.parentContentNodeId,
       kind: node.kind,
       text: node.text,
       ...(translation ? { translation } : {}),
-    };
-  };
+      ...(reportByContentNodeId.get(node.contentNodeId)
+        ? { reportCapability: reportByContentNodeId.get(node.contentNodeId) }
+        : {}),
+      children: [],
+    });
+  }
+  for (const item of contentById.values()) {
+    if (!item.parentContentNodeId) continue;
+    contentById.get(item.parentContentNodeId)?.children.push(item);
+  }
+  const rootContent = [...contentById.values()].filter(
+    (item) =>
+      !item.parentContentNodeId || !contentById.has(item.parentContentNodeId),
+  );
   const capability = <T extends PlatformSenseCardCapabilityV2["actionId"]>(
     actionId: T,
   ) =>
@@ -115,8 +143,8 @@ export function buildTrainingSenseCardModel({
     ...(capability("request-translation")
       ? { requestTranslationCapability: capability("request-translation") }
       : {}),
-    definitions: nodes.filter((node) => definitionKinds.has(node.kind)).map(content),
-    examples: nodes.filter((node) => exampleKinds.has(node.kind)).map(content),
+    definitions: rootContent.filter((item) => definitionKinds.has(item.kind)),
+    examples: rootContent.filter((item) => exampleKinds.has(item.kind)),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     isKnown: Boolean(entry.card?.knownMark),
     ...(group.header.audio ? { audioCapability: group.header.audio } : {}),

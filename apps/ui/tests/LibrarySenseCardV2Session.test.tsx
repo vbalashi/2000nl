@@ -9,6 +9,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
+import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 const fetchGroup = vi.fn();
@@ -78,6 +79,33 @@ describe("LibrarySenseCardV2Session", () => {
       accepted: true,
       card: financeEntry.card,
     });
+  });
+
+  test("routes an exact idiom node report through the real Library session", async () => {
+    fetchGroup.mockResolvedValue(goedGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={goedEntry.entryId}
+        headword="goed"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Report: iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("Reporting is not available yet.");
+    expect(performAction).not.toHaveBeenCalled();
   });
 
   test("keeps translation failure local and offers a retry", async () => {
