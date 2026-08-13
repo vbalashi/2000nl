@@ -12,6 +12,15 @@ describe("dictionary meaning translation completion ownership", () => {
     expect(Date.parse(revision)).toBe(now.getTime());
   });
 
+  test("a reclaimed revision differs even when random entropy collides", () => {
+    const now = new Date("2026-08-13T18:00:00.123Z");
+    const previous = "2026-08-13T18:00:00.123007Z";
+
+    expect(
+      newDictionaryMeaningTranslationClaimRevision(now, previous, 7),
+    ).toBe("2026-08-13T18:00:00.123008Z");
+  });
+
   test("a late obsolete completion cannot overwrite a newer exact-request claim", async () => {
     const row: Record<string, unknown> = {
       word_entry_id: "entry-1",

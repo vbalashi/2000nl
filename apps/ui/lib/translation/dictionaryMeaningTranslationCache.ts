@@ -6,10 +6,18 @@ export type DictionaryMeaningTranslationCacheKey = {
   claimUpdatedAt: string;
 };
 
-export function newDictionaryMeaningTranslationClaimRevision(now = new Date()) {
+export function newDictionaryMeaningTranslationClaimRevision(
+  now = new Date(),
+  excludedRevision: string | null = null,
+  randomSuffix = crypto.getRandomValues(new Uint16Array(1))[0] % 1_000,
+) {
   const iso = now.toISOString();
-  const entropy = crypto.getRandomValues(new Uint16Array(1))[0] % 1_000;
-  return iso.replace("Z", `${entropy.toString().padStart(3, "0")}Z`);
+  const candidate = (suffix: number) =>
+    iso.replace("Z", `${suffix.toString().padStart(3, "0")}Z`);
+  const first = candidate(randomSuffix);
+  return first === excludedRevision
+    ? candidate((randomSuffix + 1) % 1_000)
+    : first;
 }
 
 /**

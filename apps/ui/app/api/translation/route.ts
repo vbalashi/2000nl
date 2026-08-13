@@ -510,7 +510,10 @@ export async function GET(req: NextRequest) {
       existing.translation_policy_version !== currentTranslationPolicyVersion;
 
     if (needsWork) {
-      const nowIso = newDictionaryMeaningTranslationClaimRevision();
+      const nowIso = newDictionaryMeaningTranslationClaimRevision(
+        new Date(),
+        existing.updated_at,
+      );
       const { data: claimed, error: claimError } = await supabase
         .from("word_entry_translations")
         .update({
