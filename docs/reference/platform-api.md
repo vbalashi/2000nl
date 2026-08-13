@@ -1087,6 +1087,13 @@ Response when a ready overlay is available:
       }
     ],
     "__meta": {
+      "providerSelected": "openai",
+      "providerUsed": "deepl",
+      "usedFallback": true,
+      "primaryFailure": {
+        "code": "provider_http_error",
+        "fingerprint": "8f5d95f46f901c63f61f2e1a"
+      },
       "translatedPaths": [["headword"], ["meanings", 0, "definition"]]
     }
   },
@@ -1140,6 +1147,19 @@ Ready overlays include best-effort `overlay.__meta.translatedPaths` so
 line-level clients can correlate translated values with stable lookup content
 paths without parsing provider diagnostics.
 
+Provider failures never expose or persist the provider response body or error
+message. When a fallback succeeds, `overlay.__meta.primaryFailure` may contain
+only a closed failure `code` and a 24-character hexadecimal SHA-256 prefix for
+aggregate correlation. The fingerprint is derived from the versioned closed
+failure class only, never from provider-controlled text, and clients must not
+interpret it as user-facing error text. Historical cached `primaryError` values and
+unrecognized metadata are removed at the read boundary.
+
+Text-translation artifacts preserve `providerUsed` and `usedFallback` on both
+fresh and cached responses. Migration
+`118_platform_text_translation_provider_provenance.sql` must be applied before
+deploying code that reads or writes those fields.
+
 ## `POST /text-translation`
 
 Provider-backed free-text or phrase translation. This endpoint is separate from
@@ -1174,7 +1194,9 @@ Response:
   "literalTranslatedText": "I go to house",
   "translatorComment": "In this sentence, the phrase is a normal motion phrase; the literal wording is less natural.",
   "translationPolicyVersion": "platform-text-translation-v2",
-  "cached": false
+  "cached": false,
+  "providerUsed": "deepl",
+  "usedFallback": true
 }
 ```
 
@@ -1192,6 +1214,10 @@ text, and `translatorComment`, a short explanation for learners and reviewers.
 The endpoint persists generic text translation artifacts in
 `platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
 return with `cached: true`; a fresh provider call returns with `cached: false`.
+`providerUsed` identifies the provider that produced the artifact and
+`usedFallback` records whether it differed from the selected provider.
+Both fields are omitted for historical rows whose provenance was not recorded;
+absence means unknown and must not be interpreted as `usedFallback: false`.
 
 ## `POST /actions`
 

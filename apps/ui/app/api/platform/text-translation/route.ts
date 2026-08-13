@@ -13,6 +13,10 @@ import {
   loadTranslationConfigFromEnv,
 } from "@/lib/translation/translationProvider";
 import { asString } from "@/lib/platform/platformApi";
+import {
+  sanitizeStoredTranslationError,
+} from "@/lib/translation/translationArtifactSafety";
+import { normalizeTranslationProviderError } from "@/lib/translation/translationProviderFailure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +32,7 @@ type TextTranslationBody = {
 
 const TRANSLATION_POLICY_VERSION = "platform-text-translation-v2";
 const TEXT_TRANSLATION_CACHE_COLUMNS =
-  "translation_id, status, translated_text, literal_translated_text, translator_comment, error_message, provider, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
+  "translation_id, status, translated_text, literal_translated_text, translator_comment, error_message, provider, provider_used, used_fallback, source_text_hash, context_text_hash, source_language_code, target_language_code, purpose, translation_policy_version";
 
 type TextTranslationCacheRow = {
   translation_id: string;
@@ -38,6 +42,8 @@ type TextTranslationCacheRow = {
   translator_comment?: string | null;
   error_message: string | null;
   provider?: string | null;
+  provider_used?: string | null;
+  used_fallback?: boolean | null;
   source_text_hash: string;
   context_text_hash?: string | null;
   source_language_code: string;
@@ -83,8 +89,22 @@ function artifactResponse(row: TextTranslationCacheRow, cached = true) {
     ),
     translationPolicyVersion: row.translation_policy_version,
     cached,
-    ...(row.error_message ? { error: row.error_message } : {}),
+    ...(closedProvider(row.provider_used)
+      ? { providerUsed: closedProvider(row.provider_used) }
+      : {}),
+    ...(typeof row.used_fallback === "boolean"
+      ? { usedFallback: row.used_fallback }
+      : {}),
+    ...(sanitizeStoredTranslationError(row.error_message)
+      ? { error: sanitizeStoredTranslationError(row.error_message) }
+      : {}),
   };
+}
+
+function closedProvider(value: unknown): "deepl" | "openai" | "gemini" | null {
+  return value === "deepl" || value === "openai" || value === "gemini"
+    ? value
+    : null;
 }
 
 export async function POST(request: NextRequest) {
@@ -220,42 +240,25 @@ export async function POST(request: NextRequest) {
   let translatedText: string;
   let literalTranslatedText: string | undefined;
   let translatorComment: string | undefined;
+  let providerUsed: string | undefined;
+  let usedFallback = false;
   try {
     const resolved = createTranslator(config);
     provider = resolved.provider;
-    const translator: any = resolved.translator;
-
-    if (typeof translator.translateWithContextAndNote === "function") {
-      const result = await translator.translateWithContextAndNote(
-        [text],
-        resolvedTargetLanguageCode,
-        {
-          sourceLanguageCode,
-          purpose,
-          contextText,
-        },
-      );
-      translatedText = result.translations?.[0] ?? "";
-      literalTranslatedText = result.literalTranslations?.[0];
-      translatorComment = result.note ?? undefined;
-    } else if (typeof translator.translateWithContext === "function") {
-      [translatedText] = await translator.translateWithContext(
-        [text],
-        resolvedTargetLanguageCode,
-        {
-          sourceLanguageCode,
-          purpose,
-          contextText,
-        },
-      );
-    } else {
-      [translatedText] = await resolved.translator.translate(
-        [text],
-        resolvedTargetLanguageCode,
-      );
-    }
-  } catch (err: any) {
-    const errorMessage = String(err?.message ?? err ?? "translation_failed");
+    const result = await resolved.translator.translateText({
+      texts: [text],
+      targetLanguageCode: resolvedTargetLanguageCode,
+      sourceLanguageCode,
+      purpose,
+      contextText,
+    });
+    translatedText = result.translations[0] ?? "";
+    literalTranslatedText = result.literalTranslations?.[0];
+    translatorComment = result.note ?? undefined;
+    providerUsed = result.meta?.providerUsed;
+    usedFallback = result.meta?.usedFallback === true;
+  } catch (err: unknown) {
+    const errorMessage = normalizeTranslationProviderError(err).message;
     await service.supabase
       .from("platform_text_translations")
       .update({
@@ -289,6 +292,8 @@ export async function POST(request: NextRequest) {
       literal_translated_text: literalTranslatedText ?? null,
       translator_comment: translatorComment ?? null,
       provider,
+      provider_used: providerUsed ?? provider,
+      used_fallback: usedFallback,
       error_message: null,
       updated_at: new Date().toISOString(),
     })
@@ -312,5 +317,7 @@ export async function POST(request: NextRequest) {
     ...richTranslationResponseFields(literalTranslatedText, translatorComment),
     translationPolicyVersion: TRANSLATION_POLICY_VERSION,
     cached: false,
+    providerUsed: providerUsed ?? provider,
+    usedFallback,
   });
 }

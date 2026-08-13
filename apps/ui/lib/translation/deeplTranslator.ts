@@ -1,4 +1,12 @@
-import { ITranslator } from "./ITranslator";
+import {
+  ITranslator,
+  type TranslationProviderTextRequest,
+  type TranslationProviderTextResult,
+} from "./ITranslator";
+import {
+  normalizeTranslationProviderError,
+  safeTranslationProviderError,
+} from "./translationProviderFailure";
 
 type DeepLTranslatorOptions = {
   apiKey: string;
@@ -64,6 +72,23 @@ export class DeepLTranslator implements ITranslator {
     this.apiUrl = options.apiUrl ?? "https://api-free.deepl.com/v2/translate";
   }
 
+  async translateText(
+    request: TranslationProviderTextRequest,
+  ): Promise<TranslationProviderTextResult> {
+    const translations = await this.translate(
+      request.texts,
+      request.targetLanguageCode,
+    );
+    return {
+      translations,
+      meta: {
+        providerSelected: "deepl",
+        providerUsed: "deepl",
+        usedFallback: false,
+      },
+    };
+  }
+
   async translate(text: string, targetLang: string): Promise<string>;
   async translate(texts: string[], targetLang: string): Promise<string[]>;
   async translate(textOrTexts: string | string[], targetLang: string) {
@@ -78,27 +103,34 @@ export class DeepLTranslator implements ITranslator {
     params.set("preserve_formatting", "1");
     params.append("text", buildContextXml(texts));
 
-    const res = await fetch(this.apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `DeepL-Auth-Key ${this.apiKey}`,
-      },
-      body: params.toString(),
-    });
+    try {
+      const res = await fetch(this.apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `DeepL-Auth-Key ${this.apiKey}`,
+        },
+        body: params.toString(),
+      });
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`DeepL error ${res.status}: ${body || res.statusText}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw safeTranslationProviderError("provider_http_error", {
+          status: res.status,
+          diagnostic: body || res.statusText,
+        });
+      }
+
+      const data = (await res.json()) as { translations?: Array<{ text: string }> };
+      const translatedXml = data.translations?.[0]?.text ?? "";
+      if (!translatedXml.trim()) {
+        throw safeTranslationProviderError("provider_empty_response", "empty");
+      }
+
+      const translated = parseContextXml(translatedXml, texts.length);
+      return Array.isArray(textOrTexts) ? translated : translated[0] ?? "";
+    } catch (error) {
+      throw normalizeTranslationProviderError(error, "provider_network_error");
     }
-
-    const data = (await res.json()) as { translations?: Array<{ text: string }> };
-    const translatedXml = data.translations?.[0]?.text ?? "";
-    if (!translatedXml.trim()) {
-      throw new Error("DeepL returned an empty translation");
-    }
-
-    const translated = parseContextXml(translatedXml, texts.length);
-    return Array.isArray(textOrTexts) ? translated : translated[0] ?? "";
   }
 }

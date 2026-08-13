@@ -1,4 +1,7 @@
-import type { ITranslator } from "./ITranslator";
+import type {
+  ITranslator,
+  TranslationProviderTextRequest,
+} from "./ITranslator";
 import crypto from "crypto";
 import {
   buildOpenAITranslationMessages,
@@ -13,6 +16,11 @@ import {
   type DictionaryMeaningTranslationResultV1,
 } from "./dictionaryMeaningTranslationContract";
 import { translateDictionaryMeaningWithGenericProvider } from "./dictionaryMeaningTranslationService";
+import {
+  normalizeTranslationProviderError,
+  safeTranslationProviderError,
+  type TranslationProviderFailure,
+} from "./translationProviderFailure";
 
 type OpenAITranslatorOptions = {
   apiKey: string;
@@ -34,7 +42,7 @@ export type OpenAITranslationResult = {
     providerSelected: "openai";
     providerUsed: "openai" | "deepl";
     usedFallback: boolean;
-    primaryError?: string;
+    primaryFailure?: TranslationProviderFailure;
     openaiKeyHash?: string;
     model?: string;
   };
@@ -111,6 +119,18 @@ export class OpenAITranslator implements ITranslator {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
+  async translateText(request: TranslationProviderTextRequest) {
+    return this.translateWithContextAndNote(
+      request.texts,
+      request.targetLanguageCode,
+      {
+        sourceLanguageCode: request.sourceLanguageCode,
+        purpose: request.purpose,
+        contextText: request.contextText ?? undefined,
+      },
+    );
+  }
+
   async translateWithContext(
     text: string,
     targetLang: string,
@@ -164,7 +184,10 @@ export class OpenAITranslator implements ITranslator {
         },
       };
     } catch (error) {
-      lastError = error;
+      lastError = normalizeTranslationProviderError(
+        error,
+        "provider_response_error",
+      );
     }
 
     if (this.fallback) {
@@ -173,7 +196,7 @@ export class OpenAITranslator implements ITranslator {
         console.warn("[translation] OpenAI failed; using DeepL fallback", {
           openaiKeyHash,
           model: this.model,
-          error: String(lastError),
+          failure: normalizeTranslationProviderError(lastError).failure,
         });
 
         const fallbackResult = await this.fallback.translate(texts, targetLang);
@@ -184,21 +207,20 @@ export class OpenAITranslator implements ITranslator {
             providerSelected: "openai",
             providerUsed: "deepl",
             usedFallback: true,
-            primaryError: String(lastError),
+            primaryFailure: normalizeTranslationProviderError(lastError).failure,
             openaiKeyHash,
             model: this.model,
           },
         };
       } catch (fallbackErr) {
-        throw new Error(
-          `OpenAI failed (${String(lastError)}) and fallback failed (${String(
-            fallbackErr
-          )})`
-        );
+        throw safeTranslationProviderError("provider_fallback_error", {
+          primary: normalizeTranslationProviderError(lastError).failure,
+          fallback: normalizeTranslationProviderError(fallbackErr).failure,
+        });
       }
     }
 
-    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+    throw normalizeTranslationProviderError(lastError);
   }
 
   async translateDictionaryMeaning(
@@ -227,7 +249,11 @@ export class OpenAITranslator implements ITranslator {
         },
       };
     } catch (primaryError) {
-      if (!this.fallback) throw primaryError;
+      const primaryFailure = normalizeTranslationProviderError(
+        primaryError,
+        "provider_response_error",
+      );
+      if (!this.fallback) throw primaryFailure;
       const fallbackResult =
         await translateDictionaryMeaningWithGenericProvider(
           this.fallback,
@@ -236,7 +262,7 @@ export class OpenAITranslator implements ITranslator {
             providerSelected: "openai",
             providerUsed: "deepl",
             usedFallback: true,
-            primaryError: String(primaryError),
+            primaryFailure: primaryFailure.failure,
             openaiKeyHash: keyHash(this.apiKey),
             model: this.model,
           },
@@ -256,13 +282,16 @@ export class OpenAITranslator implements ITranslator {
       try {
         return await operation();
       } catch (error) {
-        lastError = error;
+        lastError = normalizeTranslationProviderError(
+          error,
+          "provider_response_error",
+        );
         if (attempt < this.maxRetries) {
           await delay(300 * Math.pow(2, attempt));
         }
       }
     }
-    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+    throw normalizeTranslationProviderError(lastError);
   }
 
   private async requestChatContent(
@@ -293,19 +322,28 @@ export class OpenAITranslator implements ITranslator {
       });
       if (!response.ok) {
         const responseBody = await response.text().catch(() => "");
-        throw new Error(
-          `OpenAI error ${response.status}: ${responseBody || response.statusText}`,
-        );
+        throw safeTranslationProviderError("provider_http_error", {
+          status: response.status,
+          diagnostic: responseBody || response.statusText,
+        });
       }
       const data = (await response.json()) as OpenAIChatResponse;
       if (data?.error?.message) {
-        throw new Error(`OpenAI error: ${data.error.message}`);
+        throw safeTranslationProviderError(
+          "provider_response_error",
+          data.error.message,
+        );
       }
       const content = data?.choices?.[0]?.message?.content ?? "";
       if (!content.trim()) {
-        throw new Error("OpenAI returned an empty translation");
+        throw safeTranslationProviderError("provider_empty_response", "empty");
       }
       return content;
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw safeTranslationProviderError("provider_timeout", error);
+      }
+      throw normalizeTranslationProviderError(error, "provider_network_error");
     } finally {
       clearTimeout(timeout);
     }

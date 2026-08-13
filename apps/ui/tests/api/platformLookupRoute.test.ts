@@ -988,7 +988,7 @@ describe("/api/platform/lookup", () => {
         translationId: "translation-failed",
         error: {
           code: "translation_failed",
-          message: "provider timeout",
+        message: "provider_unknown_error:a916ee424eb2d8d4630b04a1",
         },
       },
     },

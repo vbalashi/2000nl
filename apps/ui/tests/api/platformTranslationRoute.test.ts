@@ -16,17 +16,57 @@ const getUser = vi.fn();
 const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
-const translate = vi.fn(async (texts: string[]) =>
+const translate = vi.fn(async (texts: string[], _target?: string) =>
   texts.map((text) => `translated:${text}`),
 );
-const translateWithContext = vi.fn(async (texts: string[]) =>
+const translateWithContext = vi.fn(async (texts: string[], _target?: string, _context?: unknown) =>
   texts.map((text) => `translated-with-context:${text}`),
 );
-const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
+const translateWithContextAndNote = vi.fn(async (texts: string[], _target?: string, _context?: unknown) => ({
   translations: texts.map((text) => `translated-with-context:${text}`),
   literalTranslations: texts.map((text) => `literal:${text}`),
   note: "translator note",
+  meta: {
+    providerSelected: "openai",
+    providerUsed: "deepl",
+    usedFallback: true,
+  },
 }));
+const translateText = vi.fn(async (request: {
+  texts: string[];
+  targetLanguageCode: string;
+  sourceLanguageCode?: string;
+  purpose?: string;
+  contextText?: string | null;
+}) => {
+  const context = {
+    sourceLanguageCode: request.sourceLanguageCode,
+    purpose: request.purpose,
+    contextText: request.contextText,
+  };
+  if (useRichTranslateWithContext) {
+    return translateWithContextAndNote(
+      request.texts,
+      request.targetLanguageCode,
+      context,
+    );
+  }
+  const translations = useTranslateWithContext
+    ? await translateWithContext(
+        request.texts,
+        request.targetLanguageCode,
+        context,
+      )
+    : await translate(request.texts, request.targetLanguageCode);
+  return {
+    translations,
+    meta: {
+      providerSelected: "openai",
+      providerUsed: "openai",
+      usedFallback: false,
+    },
+  };
+});
 let useTranslateWithContext = false;
 let useRichTranslateWithContext = false;
 
@@ -37,11 +77,15 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
-    translator: useTranslateWithContext
-      ? useRichTranslateWithContext
-        ? { translate, translateWithContext, translateWithContextAndNote }
-        : { translate, translateWithContext }
-      : { translate },
+    translator: {
+      translate,
+      translateText,
+      ...(useTranslateWithContext
+        ? useRichTranslateWithContext
+          ? { translateWithContext, translateWithContextAndNote }
+          : { translateWithContext }
+        : {}),
+    },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
@@ -668,6 +712,8 @@ describe("/api/platform/v1/translation", () => {
         status: "ready",
         translated_text: "translated:ik ga naar huis",
         provider: "openai",
+        provider_used: "openai",
+        used_fallback: false,
       }),
     );
     expect(translate).toHaveBeenCalledWith(["ik ga naar huis"], "en");
@@ -680,6 +726,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "translated:ik ga naar huis",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
+      providerUsed: "openai",
+      usedFallback: false,
     });
   });
 
@@ -842,12 +890,17 @@ describe("/api/platform/v1/translation", () => {
         translated_text: "translated-with-context:enorm toe.",
         literal_translated_text: "literal:enorm toe.",
         translator_comment: "translator note",
+        provider: "openai",
+        provider_used: "deepl",
+        used_fallback: true,
       }),
     );
     await expect(response.json()).resolves.toMatchObject({
       translatedText: "translated-with-context:enorm toe.",
       literalTranslatedText: "literal:enorm toe.",
       translatorComment: "translator note",
+      providerUsed: "deepl",
+      usedFallback: true,
     });
 
     useRichTranslateWithContext = false;
@@ -942,6 +995,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: "see you tomorrow",
             error_message: null,
             provider: "openai",
+            provider_used: "deepl",
+            used_fallback: true,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",
@@ -981,6 +1036,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "see you tomorrow",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
+      providerUsed: "deepl",
+      usedFallback: true,
     });
   });
 
@@ -1008,6 +1065,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: null,
             error_message: null,
             provider: null,
+            provider_used: "future-provider-must-not-project",
+            used_fallback: null,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",
@@ -1127,7 +1186,8 @@ describe("/api/platform/v1/translation", () => {
   });
 
   test("returns failed text translation artifact identity when provider fails", async () => {
-    translate.mockRejectedValueOnce(new Error("provider down"));
+    const providerSecret = "provider-body-with-private-subtitle-and-token";
+    translate.mockRejectedValueOnce(new Error(providerSecret));
     const userClient = {
       auth: { getUser },
       from,
@@ -1179,7 +1239,9 @@ describe("/api/platform/v1/translation", () => {
     expect(failedUpdateChain.update).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "failed",
-        error_message: "provider down",
+        error_message: expect.stringMatching(
+          /^provider_unknown_error:[a-f0-9]{24}$/,
+        ),
       }),
     );
     await expect(response.json()).resolves.toEqual({
@@ -1190,7 +1252,10 @@ describe("/api/platform/v1/translation", () => {
       targetLanguageCode: "en",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
-      error: "provider down",
+      error: expect.stringMatching(/^provider_unknown_error:[a-f0-9]{24}$/),
     });
+    expect(JSON.stringify(failedUpdateChain.update.mock.calls)).not.toContain(
+      providerSecret,
+    );
   });
 });

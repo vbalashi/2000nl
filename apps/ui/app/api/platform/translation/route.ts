@@ -12,6 +12,7 @@ import {
   createTranslator,
   loadTranslationConfigFromEnv,
 } from "@/lib/translation/translationProvider";
+import { normalizeTranslationProviderError } from "@/lib/translation/translationProviderFailure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -211,13 +212,14 @@ async function translateDraftItem(
       targetLang,
     );
   } catch (error) {
+    const failure = normalizeTranslationProviderError(error).message;
     return {
       payload: {
         targetLang,
         status: "failed",
         error: {
           code: "translation_failed",
-          message: error instanceof Error ? error.message : String(error),
+          message: failure,
         },
       },
       status: 502,

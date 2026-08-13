@@ -25,6 +25,11 @@ import {
   dictionaryMeaningTranslatedPaths,
   resolveDictionaryMeaningTranslation,
 } from "@/lib/translation/dictionaryMeaningTranslationService";
+import { normalizeTranslationProviderError } from "@/lib/translation/translationProviderFailure";
+import {
+  sanitizeStoredTranslationError,
+  sanitizeTranslationOverlay,
+} from "@/lib/translation/translationArtifactSafety";
 import {
   newDictionaryMeaningTranslationClaimRevision,
   updateOwnedDictionaryMeaningTranslation,
@@ -71,13 +76,14 @@ function attachOverlayMeta(
   overlay: TranslationOverlay,
   meta: TranslationOverlay["__meta"]
 ): TranslationOverlay {
-  return {
-    ...(overlay ?? {}),
+  const safeOverlay = sanitizeTranslationOverlay(overlay) ?? {};
+  return sanitizeTranslationOverlay({
+    ...safeOverlay,
     __meta: {
-      ...(overlay as any)?.__meta,
+      ...(safeOverlay.__meta ?? {}),
       ...(meta ?? {}),
     },
-  };
+  }) ?? {};
 }
 
 export async function GET(req: NextRequest) {
@@ -127,8 +133,8 @@ export async function GET(req: NextRequest) {
     const resolved = createTranslator(config);
     provider = resolved.provider;
     translator = resolved.translator;
-  } catch (err: any) {
-    const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
+  } catch (err: unknown) {
+    const message = normalizeTranslationProviderError(err).message;
     return NextResponse.json(
       {
         error: message,
@@ -344,7 +350,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         status: existing.status,
-        overlay: existing.overlay,
+        overlay: sanitizeTranslationOverlay(existing.overlay),
         note: (existing as TranslationRow).note ?? null,
         ...(debug
           ? {
@@ -442,9 +448,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           {
             status: existingAfter.status,
-            overlay: existingAfter.overlay,
+            overlay: sanitizeTranslationOverlay(existingAfter.overlay),
             note: (existingAfter as TranslationRow).note ?? null,
-            error: existingAfter.error_message,
+            error: sanitizeStoredTranslationError(existingAfter.error_message),
             ...(debug
               ? {
                   debug: {
@@ -555,9 +561,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           {
             status: existingAfter?.status ?? ("pending" as const),
-            overlay: existingAfter?.overlay ?? null,
+            overlay: sanitizeTranslationOverlay(existingAfter?.overlay),
             note: (existingAfter as any)?.note ?? null,
-            error: existingAfter?.error_message ?? null,
+            error: sanitizeStoredTranslationError(existingAfter?.error_message),
           },
           {
             status: 200,
@@ -583,7 +589,7 @@ export async function GET(req: NextRequest) {
       await resolveDictionaryMeaningTranslation(translator, meaningRequest);
     const providerUsed = meta.providerUsed ?? null;
     const usedFallback = meta.usedFallback ?? false;
-    const primaryError = meta.primaryError ?? null;
+    const primaryFailure = meta.primaryFailure ?? null;
 
     const used =
       providerUsed === "deepl" || providerUsed === "openai" || providerUsed === "gemini"
@@ -593,7 +599,7 @@ export async function GET(req: NextRequest) {
       providerSelected: provider,
       providerUsed: used,
       usedFallback,
-      primaryError,
+      primaryFailure,
       promptFingerprint: getDictionaryMeaningPromptFingerprint(used),
       translatedPaths: dictionaryMeaningTranslatedPaths(meaningRequest),
     });
@@ -642,7 +648,7 @@ export async function GET(req: NextRequest) {
                   providerSelected: provider,
                   providerUsed: used,
                   usedFallback,
-                  primaryError,
+                  primaryFailure,
                   providerEnv: config.provider,
                   fallbackEnv: config.fallback ?? null,
                   hasKeys: {
@@ -663,8 +669,9 @@ export async function GET(req: NextRequest) {
         },
       }
     );
-  } catch (err: any) {
-    const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
+  } catch (err: unknown) {
+    const failure = normalizeTranslationProviderError(err).failure;
+    const message = `${failure.code}:${failure.fingerprint}`;
 
     await updateOwnedDictionaryMeaningTranslation(
       supabase,

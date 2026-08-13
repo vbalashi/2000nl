@@ -17,19 +17,14 @@ const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
 const translateDictionaryMeaning = vi.hoisted(() => vi.fn());
+const createTranslator = vi.hoisted(() => vi.fn());
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
 }));
 
 vi.mock("@/lib/translation/translationProvider", () => ({
-  createTranslator: vi.fn(() => ({
-    provider: "openai",
-    translator: {
-      translate: vi.fn(async () => []),
-      translateDictionaryMeaning,
-    },
-  })),
+  createTranslator,
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
     fallback: null,
@@ -117,6 +112,15 @@ describe("/api/translation", () => {
     from.mockReset();
     createClient.mockReset();
     translateDictionaryMeaning.mockReset();
+    createTranslator.mockReset();
+    createTranslator.mockReturnValue({
+      provider: "openai",
+      translator: {
+        translate: vi.fn(async () => []),
+        translateText: vi.fn(async () => ({ translations: [], meta: {} })),
+        translateDictionaryMeaning,
+      },
+    });
   });
 
   test("requires a bearer token before reading translation state", async () => {
@@ -144,6 +148,26 @@ describe("/api/translation", () => {
     expect(createClient).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
     expect(translateDictionaryMeaning).not.toHaveBeenCalled();
+  });
+
+  test("normalizes translator construction failures in the legacy response", async () => {
+    const providerSecret = "configuration-error-with-secret-token";
+    createTranslator.mockImplementationOnce(() => {
+      throw new Error(providerSecret);
+    });
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    createClient.mockReturnValueOnce({ auth: { getUser } });
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(body)).not.toContain(providerSecret);
+    expect(body.error).toMatch(/^provider_unknown_error:[a-f0-9]{24}$/);
   });
 
   test("does not require connected-client principal schema for first-party translation", async () => {
@@ -349,7 +373,12 @@ describe("/api/translation", () => {
       ],
       meta: {
         providerUsed: "openai",
-        usedFallback: false,
+        usedFallback: true,
+        primaryFailure: {
+          code: "provider_http_error",
+          fingerprint: "0123456789abcdef01234567",
+        },
+        primaryError: "legacy-provider-secret-must-not-persist",
       },
     });
 
@@ -397,8 +426,18 @@ describe("/api/translation", () => {
             baseText: "дом",
             note: null,
           },
+          __meta: expect.objectContaining({
+            usedFallback: true,
+            primaryFailure: {
+              code: "provider_http_error",
+              fingerprint: "0123456789abcdef01234567",
+            },
+          }),
         }),
       }),
+    );
+    expect(JSON.stringify(readyChain.update.mock.calls)).not.toContain(
+      "legacy-provider-secret-must-not-persist",
     );
     expect(readyChain.eq).toHaveBeenCalledWith(
       "source_fingerprint",
@@ -415,6 +454,48 @@ describe("/api/translation", () => {
           note: null,
         },
       },
+    });
+  });
+
+  test("removes legacy raw provider errors from cached responses", async () => {
+    const providerSecret = "legacy-provider-body-with-token";
+    const userClient = { auth: { getUser }, rpc };
+    const serviceClient = { from };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
+    from.mockReturnValueOnce(
+      queryChain({
+        data: {
+          ...currentPendingTranslation(),
+          status: "ready",
+          overlay: {
+            headword: "house",
+            __meta: {
+              providerUsed: "openai",
+              usedFallback: true,
+              primaryError: providerSecret,
+            },
+          },
+        },
+        error: null,
+      }),
+    );
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(JSON.stringify(body)).not.toContain(providerSecret);
+    expect(body.overlay.__meta).toEqual({
+      providerUsed: "openai",
+      usedFallback: true,
     });
   });
 
@@ -585,6 +666,7 @@ describe("/api/translation", () => {
   );
 
   test("classifies a provider failure as provider work", async () => {
+    const providerSecret = "provider-body-with-private-card-and-token";
     const userClient = { auth: { getUser }, rpc };
     const serviceClient = { from };
     createClient
@@ -596,7 +678,7 @@ describe("/api/translation", () => {
     });
     rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
     translateDictionaryMeaning.mockRejectedValueOnce(
-      new Error("provider unavailable"),
+      new Error(providerSecret),
     );
     const stalePending = {
       ...currentPendingTranslation(),
@@ -617,7 +699,16 @@ describe("/api/translation", () => {
 
     expect(response.status).toBe(502);
     expect(response.headers.get("x-translation-cache")).toBe("provider");
+    const body = await response.json();
+    expect(JSON.stringify(body)).not.toContain(providerSecret);
     const failedUpdateChain = from.mock.results.at(-1)?.value;
+    const failedWrite = failedUpdateChain.update.mock.calls[0]?.[0];
+    expect(JSON.stringify(failedWrite)).not.toContain(providerSecret);
+    expect(failedWrite).toMatchObject({
+      error_message: expect.stringMatching(
+        /^provider_unknown_error:[a-f0-9]{24}$/,
+      ),
+    });
     expect(failedUpdateChain.eq).toHaveBeenCalledWith(
       "source_fingerprint",
       translationFingerprint(accessibleWord),

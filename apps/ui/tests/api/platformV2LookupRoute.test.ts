@@ -150,6 +150,16 @@ describe("/api/platform/v2/lookup", () => {
                 status: "ready",
                 overlay: {
                   headword: "дом",
+                  __meta: {
+                    providerUsed: "deepl",
+                    usedFallback: true,
+                    primaryFailure: {
+                      code: "provider_http_error",
+                      fingerprint: "0123456789abcdef01234567",
+                    },
+                    primaryError: "legacy-provider-secret",
+                    unknownMetadata: "must-not-cross-v2",
+                  },
                   meanings: [
                     {
                       definition: "здание для проживания",
@@ -251,6 +261,9 @@ describe("/api/platform/v2/lookup", () => {
 
     expect(response.status).toBe(200);
     const payload = await response.json();
+    expect(JSON.stringify(payload)).not.toContain("legacy-provider-secret");
+    expect(JSON.stringify(payload)).not.toContain("unknownMetadata");
+    expect(JSON.stringify(payload)).not.toContain("primaryFailure");
     expect(payload).toEqual(
       expect.objectContaining({
         contractVersion: "platform-lookup-v2",

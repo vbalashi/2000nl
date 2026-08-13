@@ -71,10 +71,14 @@ export async function translateDictionaryMeaningWithGenericProvider(
   const sourceHeadword = [request.headword.article, request.headword.text]
     .filter(Boolean)
     .join(" ");
-  const translated = await translator.translate(
-    [sourceHeadword, ...request.content.map((item) => item.text)],
-    request.targetLanguageCode,
-  );
+  const texts = [sourceHeadword, ...request.content.map((item) => item.text)];
+  const providerResult = await translator.translateText({
+    texts,
+    targetLanguageCode: request.targetLanguageCode,
+    sourceLanguageCode: request.sourceLanguageCode,
+    purpose: "dictionary-meaning",
+  });
+  const translated = providerResult.translations;
   const values = Array.isArray(translated) ? translated : [translated];
   if (values.length !== request.content.length + 1) {
     throw new Error("Generic provider returned an unaligned meaning translation");
@@ -93,7 +97,10 @@ export async function translateDictionaryMeaningWithGenericProvider(
   };
   return {
     ...parseDictionaryMeaningTranslationResult(JSON.stringify(result), request),
-    meta,
+    meta: {
+      ...(providerResult?.meta ?? {}),
+      ...meta,
+    },
   };
 }
 
