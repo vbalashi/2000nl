@@ -21,25 +21,26 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
 
 The request is a closed, versioned schema. Unknown fields are rejected. Every field belongs to one classification; there is no extension metadata bag.
 
-The top-level request contains exactly `schemaVersion`, `reportId`, `payloadHash`,
-`feedback`, `target`, `cardContent`, and `observations`. `schemaVersion` is the
-literal `diagnostic-report-v1`; `reportId` is a UUID; and `payloadHash` is a
-lower-case SHA-256 hex digest of the canonical request with `payloadHash`
-omitted. Optional properties below are present as explicit `null`, never
-omitted. Arrays preserve source order. Canonical JSON recursively sorts object
-keys, uses UTF-8 without a byte-order mark or insignificant whitespace, and
-uses JSON integer syntax for numbers. The server reconstructs and verifies the
-canonical bytes and hash before persistence.
+The canonical payload contains exactly `schemaVersion`, `reportId`, `feedback`,
+`target`, `cardContent`, and `observations`; `schemaVersion` is the literal
+`diagnostic-report-v1` and `reportId` is a UUID. Transport adds `payloadHash`, a
+lower-case SHA-256 hex digest of those canonical payload bytes. Optional
+properties below are present as explicit `null`, never omitted. Arrays preserve
+source order. Canonical JSON recursively sorts object keys, uses UTF-8 without
+a byte-order mark or insignificant whitespace, and uses JSON integer syntax for
+numbers. The server reconstructs the canonical payload bytes and verifies the
+transport hash before persistence.
 
 ### Stable target
 
 Exactly one primary target is required. IDs described as UUIDs must be canonical
-lower-case UUID strings; fingerprints and revisions are lower-case 64-character
-SHA-256 hex strings:
+lower-case UUID strings; content/source fingerprints are lower-case
+64-character SHA-256 hex strings. Platform-owned fields retain their existing
+Platform V2 types:
 
 - `entry`: `entryId` UUID and required `contentRevision`;
 - `sense-card`: `entryId`, `cardTypeId` (1–64 ASCII identifier characters),
-  required `contentRevision`, and `cardStateRevision` (revision or `null`);
+  required `contentRevision`, and `stateRevision` (UUID or literal `untracked`);
 - `content-node`: `entryId`, `contentNodeId` (1–128 ASCII identifier
   characters), `nodeKind` from the Platform V2 enum, and required
   `sourceTextFingerprint`;
@@ -47,11 +48,17 @@ SHA-256 hex strings:
   `translationId` UUID, BCP-47 `targetLanguageCode` (2–35 characters),
   `translationPolicyVersion` (1–128 printable ASCII characters), and
   `providerRevision` (same bound or `null`);
-- `training-action`: `entryId`, `cardTypeId`, required `contentRevision`,
-  required `cardStateRevision`, `actionId` UUID, `actionCorrelationId` UUID,
-  `action` (`again`, `hard`, `good`, `easy`, `learn`, or `mark-known`), and
-  `result` (`accepted`, `duplicate`, `state-conflict`, `network`, `timeout`,
-  `server-error`, or `unknown`).
+- `training-action`: the exact Platform SenseCard target (`entryId`,
+  `cardTypeId`, `stateRevision` UUID/`untracked`), semantic Platform `actionId`
+  (`start-learning`, `mark-known`, `undo-known`, or `review-card`), the reused
+  `clientEventId` UUID, `reviewResult` (`fail`, `hard`, `success`, or `easy`) for
+  `review-card` and `null` otherwise, plus observed outcome (`accepted`,
+  `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
+  `unknown`);
+- `app-operation`: route, allowlisted stage (1–64 identifier characters),
+  required `operationCorrelationId` UUID, and optional related `entryId`. This
+  is the only target for loading/reportable operations that fail before a card
+  exists; it never borrows the previous visible card identity.
 
 Source paths, visible headwords, array positions, card text, device data, timestamps, and diagnostics never constitute target identity.
 
@@ -83,9 +90,11 @@ scalar values / 4,096 UTF-8 bytes and is never derived automatically.
 
 ### Automatically attached card content
 
-Submitting the report automatically includes the content of the currently reported card; there is no second consent checkbox. Permitted fields are the visible headword, definition, Usage Pattern, examples, idioms/notes, and displayed translations for the exact target card. Each field remains classified by semantic role and is independently bounded.
+Submitting the report automatically includes the content of the currently reported card; there is no second consent checkbox. Permitted fields are the visible headword, definition, Usage Pattern, examples, idioms/notes, and displayed translations for the exact target card. Each field remains classified by semantic role and is independently bounded. For an `app-operation` that failed before a card existed, there is no card to attach and `cardContent` is `null`; the Report UI states that only operation diagnostics will be sent.
 
-`cardContent` is an ordered array of typed atoms. Atom roles are `headword`,
+`cardContent` is either `null` or an object `{ atoms, omittedAtomCount }`. It is
+`null` only for an `app-operation` with no current-card target. `atoms` is an
+ordered array of typed atoms. Atom roles are `headword`,
 `definition`, `usage-pattern`, `example`, `idiom`, `idiom-explanation`,
 `usage-note`, and `displayed-translation`. Every atom contains `role`, stable
 `contentNodeId` or `null`, NFC `text`, and `truncated`. The maximums are 32
@@ -96,7 +105,8 @@ each idiom root followed by its owned explanation and examples in source order;
 standalone examples; usage notes; displayed translations. It clips arrays to
 the first items in that order, truncates an over-limit atom at a Unicode-scalar
 and UTF-8 boundary, sets `truncated: true`, and stops before the next atom once
-the 48 KiB budget is exhausted. `omittedAtomCount` records the exact remainder.
+the 48 KiB budget is exhausted. `omittedAtomCount` inside `cardContent` records
+the exact remainder.
 
 The collector receives an already-owned typed SenseCard projection. It must not inspect the DOM, clipboard, browser page, caches, another card, raw dictionary/provider payload, or neighboring application state. Total serialized envelope size is at most 64 KiB; overflow is truncated per field with explicit truncation flags, never by adding broader source data.
 
@@ -121,6 +131,11 @@ literal `2000nl-web` for the first-party app or the authenticated connected
 client ID for Platform callers. Neither is accepted from the request. The
 review queue may expose only an internal user pseudonym. Client IP is not copied
 into the report.
+
+The first-party session route uses the existing authenticated web principal.
+Connected-client submission requires `platform:write`; missing or wrong scope
+returns 403 before validation or persistence. A future narrower feedback scope
+requires its own contract revision rather than silently weakening this rule.
 
 ## Hard redaction boundary
 
@@ -174,9 +189,25 @@ Performance and UX invariants:
 - local save and network delivery are asynchronous and never gate navigation, training, PWA close, or card transition;
 - diagnostic failures are isolated and never fail the product operation being observed;
 - the complete canonical envelope is at most 65,536 UTF-8 bytes; the client
-  builder must satisfy this after the deterministic clipping above and the
+  builder must satisfy this after the deterministic final pass below and the
   server rejects any larger request;
 - comparative Training measurements with diagnostics enabled/disabled show no user-visible transition regression.
+
+### Final envelope byte budget
+
+The builder first materializes all fixed metadata, target, feedback (including
+the bounded comment), and error chain. If those fixed fields alone exceed
+65,536 bytes, local submission is rejected as `payload-too-large`. It then adds
+card atoms in the priority order above, testing the exact canonical payload
+size after each candidate. Finally it adds recent events newest-first under the
+same exact-size test. It records `omittedAtomCount` and `omittedEventCount`;
+these counters are part of `cardContent` and `observations` respectively and
+are recalculated before every size test. A candidate is retained only when the
+resulting canonical payload is at most 65,536 bytes. No approximate reservation
+or post-freeze repair is used.
+This single final pass supersedes component maxima when their sum is larger;
+there is no server-valid combination that the client freezes above the total
+limit.
 
 ## Consent and learner visibility
 
@@ -265,12 +296,15 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
 
 - closed-schema allowlist and oversized-field/total-byte rejection;
 - adversarial proof that tokens, cookies, headers, URL query/fragment, referrer, raw UA, DOM, clipboard, console/network logs, arbitrary errors, and unrelated card/browser data cannot be represented or persisted;
-- exact target binding for entry, SenseCard, Content Node, translation artifact, and Training action;
+- exact target binding for entry, SenseCard, Content Node, translation artifact,
+  Training action, and pre-card app operation without borrowing a stale card;
 - offline submit, restart/lease recovery, online/resume/auth recovery, backoff, Background Sync equivalence when present, and 30-day expiry;
 - commit-then-disconnect followed by duplicate receipt, concurrent duplicate delivery, and same-ID/different-payload conflict;
 - local deletion only after verified receipt;
 - atomic creation of Feedback Item + Diagnostic Envelope and 90-day cleanup that preserves the Feedback Item;
 - authenticated submit, server-derived user identity, non-admin denial, admin review access, and no direct browser table access;
+- connected-client submit requires `platform:write`; missing/wrong scope is
+  denied before validation or persistence;
 - transient queued/sent/failed notices and uninterrupted Training/navigation;
 - ring-buffer memory bound, event-write p95, envelope size, and enabled/disabled Training transition comparison on target mobile and desktop profiles.
 
