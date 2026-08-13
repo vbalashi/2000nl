@@ -65,6 +65,14 @@ _Avoid_: headword translation, POS-disambiguated translation
 A reusable target-language rendering bound to one exact Dictionary Meaning or Content Node and kept distinct from source dictionary content.
 _Avoid_: translated dictionary entry, UI translation string, source data
 
+**Alternative Translation**:
+A model-generated additional target-language rendering of the same exact Dictionary Meaning. It belongs only to the Translation Artifact, never to source dictionary content; the absence of a useful alternative is represented by an empty list.
+_Avoid_: source synonym, punctuation-delimited translation, required filler
+
+**Base Translation**:
+An optional context-free rendering of a headword stored alongside, but distinct from, the primary Sense-aware Translation.
+_Avoid_: literal fragment translation, primary translation, source gloss
+
 **Usage Pattern**:
 A schematic construction or valency pattern that shows how a Dictionary Meaning is used, such as `iemand of iets ligt iemand`. It is not a natural-language example sentence.
 _Avoid_: example, usage note, definition

@@ -322,7 +322,10 @@ function EntityHeader({
             data-testid="entry-translation"
             className="mt-2 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]"
           >
-            {model.entryTranslation}
+            {[
+              model.entryTranslation,
+              ...(model.entryTranslationAlternatives ?? []),
+            ].join(" · ")}
           </p>
         </SenseCardReveal>
       ) : null}

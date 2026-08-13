@@ -3,6 +3,7 @@ import { createTranslator, loadTranslationConfigFromEnv } from "@/lib/translatio
 import { DeepLTranslator } from "@/lib/translation/deeplTranslator";
 import { GeminiTranslator } from "@/lib/translation/geminiTranslator";
 import { OpenAITranslator } from "@/lib/translation/openaiTranslator";
+import { DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION } from "@/lib/translation/dictionaryMeaningTranslationContract";
 
 const makeConfig = () => ({
   provider: "deepl" as const,
@@ -343,6 +344,67 @@ describe("OpenAITranslator", () => {
     });
     expect(userMessage.instructions).toContain("Write 'note' in commentLanguage");
     expect(userMessage.instructions).toContain("For targetLanguageCode 'ru'");
+  });
+
+  it("translates an exact dictionary meaning with structured alternatives", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                entryTranslation: {
+                  primaryText: "бельё",
+                  alternativeTexts: ["одежда", "текстиль"],
+                  baseText: "добро",
+                  note: "Здесь имеется в виду одежда для стирки.",
+                },
+                contentTranslations: [
+                  { fieldId: "definition", text: "ткань; одежда" },
+                ],
+              }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({ apiKey: "key" });
+    const result = await translator.translateDictionaryMeaning({
+      contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+      entryId: "entry-goed-cloth",
+      sourceContentFingerprint: "source-revision-1",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      headword: {
+        text: "goed",
+        article: "het",
+        partOfSpeech: "zelfstandig naamwoord",
+        partOfSpeechCode: "zn",
+      },
+      content: [
+        {
+          fieldId: "definition",
+          role: "definition",
+          text: "de stof; de kleren",
+        },
+      ],
+    });
+
+    expect(result.entryTranslation).toEqual({
+      primaryText: "бельё",
+      alternativeTexts: ["одежда", "текстиль"],
+      baseText: "добро",
+      note: "Здесь имеется в виду одежда для стирки.",
+    });
+    expect(result.meta).toMatchObject({
+      providerUsed: "openai",
+      usedFallback: false,
+    });
   });
 
   it("falls back when OpenAI fails", async () => {

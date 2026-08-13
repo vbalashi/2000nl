@@ -10,6 +10,40 @@ This note describes the intended loop:
 
 The goal is fast iteration with minimal DB/UI involvement.
 
+## Dictionary Meaning Translation V1
+
+Dictionary overlays use `dictionary-meaning-translation-v1`. The request binds
+one exact `entryId` and `sourceContentFingerprint` to a bounded headword,
+definition, Usage Pattern, examples, idioms, explanations, and notes payload.
+Each content item has a semantic role and stable request-local `fieldId`.
+
+The strict response separates the entry rendering from translations of its
+content:
+
+```json
+{
+  "entryTranslation": {
+    "primaryText": "бельё",
+    "alternativeTexts": ["одежда", "текстиль"],
+    "baseText": "товар",
+    "note": "Здесь имеется в виду одежда для стирки."
+  },
+  "contentTranslations": [
+    { "fieldId": "definition", "text": "ткань; одежда" }
+  ]
+}
+```
+
+`alternativeTexts` contains model-generated additional headword renderings,
+not source-dictionary synonyms. The field is always present; `[]` means the
+model found no additional high-quality equivalent. Source content is never
+modified. Library and Training consume the same stored Platform V2 artifact
+and may render the array with an approved separator.
+
+The legacy selected-fragment contract remains separate. Its
+`literalTranslatedText` means a fragment translated without surrounding text;
+dictionary `baseText` is a context-free headword rendering.
+
 ## Where The OpenAI Prompt Lives
 
 The OpenAI translator builds chat messages in code, but the editable prompt text is now split into standalone files:
@@ -35,7 +69,7 @@ This is not a perfect oracle, but it makes iteration much faster and creates an 
 ### Fixtures (What We Translate)
 
 Curated cases live in:
-- `apps/ui/scripts/translation-eval-cases.js`
+- `apps/ui/scripts/translationEvalCases.ts`
 
 These should include known-problematic items (examples from backlog):
 - POS disambiguation: `vaak` (adverb) vs article noise (`de vaak`)
@@ -48,7 +82,13 @@ Add more cases whenever a user reports a bad translation.
 
 Run:
 ```bash
-node apps/ui/scripts/eval-translation-prompt.js --case hoeven_negative_context
+cd apps/ui && npm run eval:translation -- --case hoeven_negative_context
+```
+
+Inspect the production request without network calls:
+
+```bash
+cd apps/ui && npm run eval:translation -- --case-prefix goed_zn_ --meaning-contract --dry-run
 ```
 
 Useful flags:
@@ -71,7 +111,7 @@ Notes:
 1. Edit prompt files:
    - `apps/ui/lib/translation/prompts/openai_translation_system_v1.txt`
    - `apps/ui/lib/translation/prompts/openai_translation_user_instructions_v1.txt`
-2. Re-run `apps/ui/scripts/eval-translation-prompt.js`.
+2. Re-run `cd apps/ui && npm run eval:translation`.
 3. Repeat until the weakest cases pass and the average score is acceptable.
 
 Keep changes small and targeted:

@@ -24,6 +24,12 @@ import {
   extractTranslatableTexts,
   type ExtractedItem,
 } from "@/lib/translation/extractTranslatableTexts";
+import {
+  dictionaryTranslationContext,
+  normalizePartOfSpeechCode,
+} from "@/lib/translation/dictionaryTranslationContext";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { buildDictionaryMeaningTranslationArtifact } from "@/lib/translation/dictionaryMeaningTranslationArtifact";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -108,26 +114,6 @@ function computeFingerprint(items: ExtractedItem[]) {
   // Stable hash of what we sent to the translation provider (paths + texts)
   const payload = items.map((it) => ({ path: it.path, text: it.text }));
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-}
-
-const POS_DUTCH_LABELS: Record<string, string> = {
-  zn: "zelfstandig naamwoord",
-  ww: "werkwoord",
-  bn: "bijvoeglijk naamwoord",
-  bw: "bijwoord",
-  vz: "voorzetsel",
-  lidw: "lidwoord",
-  vnw: "voornaamwoord",
-  tw: "telwoord",
-};
-
-function normalizePosCode(pos: unknown) {
-  if (typeof pos !== "string") return "";
-  return pos.trim().toLowerCase();
-}
-
-function posDutchLabelFromCode(posCode: string) {
-  return POS_DUTCH_LABELS[posCode] ?? "";
 }
 
 export async function GET(req: NextRequest) {
@@ -296,8 +282,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const overlayHasHeadword =
-    Boolean(existing?.overlay) && "headword" in ((existing?.overlay ?? {}) as any);
+  const overlayHasEntryArtifact =
+    Boolean(existing?.overlay) &&
+    ("headword" in ((existing?.overlay ?? {}) as any) ||
+      "entryTranslation" in ((existing?.overlay ?? {}) as any));
   // NOTE:
   // We intentionally delay the "ready" fast-path until after we compute the
   // current source_fingerprint, so cached overlays get refreshed when the
@@ -352,7 +340,7 @@ export async function GET(req: NextRequest) {
 
   const items = extractTranslatableTexts(word);
   // Include POS in the fingerprint so changes to word_entries.part_of_speech retrigger translation.
-  const posCode = normalizePosCode((word as any)?.part_of_speech);
+  const posCode = normalizePartOfSpeechCode((word as any)?.part_of_speech);
   const fingerprint = computeFingerprint([
     ...items,
     { path: ["__part_of_speech__"], text: posCode || "" },
@@ -366,7 +354,7 @@ export async function GET(req: NextRequest) {
     existing &&
     existing.status === "ready" &&
     existing.overlay &&
-    overlayHasHeadword &&
+    overlayHasEntryArtifact &&
     existing.source_fingerprint &&
     existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
@@ -532,7 +520,7 @@ export async function GET(req: NextRequest) {
     const needsWork =
       force ||
       existing.status !== "ready" ||
-      (existing.status === "ready" && !overlayHasHeadword) ||
+      (existing.status === "ready" && !overlayHasEntryArtifact) ||
       !existing.source_fingerprint ||
       existing.source_fingerprint !== fingerprint ||
       existing.source_content_revision !== sourceContentRevision ||
@@ -637,24 +625,41 @@ export async function GET(req: NextRequest) {
 
   try {
     const texts = items.map((i) => i.text);
-    const posLabel = posDutchLabelFromCode(posCode);
     const hasContextTranslate =
       typeof (translator as any)?.translateWithContext === "function";
     const hasContextTranslateAndNote =
       typeof (translator as any)?.translateWithContextAndNote === "function";
+    const hasDictionaryMeaningTranslate =
+      typeof (translator as any)?.translateDictionaryMeaning === "function";
 
-    const context = {
-      partOfSpeech: posLabel || null,
-      partOfSpeechCode: posCode || null,
-    };
+    const context = dictionaryTranslationContext(posCode);
 
     let translatedTexts: string[] = [];
     let note: string | null = null;
     let providerUsed: string | null = null;
     let usedFallback: boolean | null = null;
     let primaryError: string | null = null;
+    let overlay: TranslationOverlay;
 
-    if (hasContextTranslateAndNote) {
+    if (hasDictionaryMeaningTranslate) {
+      const result = await (translator as any).translateDictionaryMeaning(
+        buildDictionaryMeaningTranslationRequest({
+          entryId: wordEntryId,
+          sourceContentFingerprint: sourceContentRevision,
+          sourceLanguageCode:
+            typeof (word as any)?.language_code === "string"
+              ? (word as any).language_code
+              : "nl",
+          targetLanguageCode: dbLang,
+          word,
+        }),
+      );
+      overlay = buildDictionaryMeaningTranslationArtifact(result);
+      note = result.entryTranslation?.note ?? null;
+      providerUsed = result.meta?.providerUsed ?? null;
+      usedFallback = result.meta?.usedFallback ?? false;
+      primaryError = result.meta?.primaryError ?? null;
+    } else if (hasContextTranslateAndNote) {
       const result = await (translator as any).translateWithContextAndNote(
         texts,
         targetLang,
@@ -665,14 +670,15 @@ export async function GET(req: NextRequest) {
       providerUsed = typeof result?.meta?.providerUsed === "string" ? result.meta.providerUsed : null;
       usedFallback = typeof result?.meta?.usedFallback === "boolean" ? result.meta.usedFallback : null;
       primaryError = typeof result?.meta?.primaryError === "string" ? result.meta.primaryError : null;
+      overlay = buildOverlay(items, translatedTexts);
     } else {
       translatedTexts = hasContextTranslate
         ? await (translator as any).translateWithContext(texts, targetLang, context)
         : await translator.translate(texts, targetLang);
       note = null;
+      overlay = buildOverlay(items, translatedTexts);
     }
 
-    const overlay = buildOverlay(items, translatedTexts);
     const used =
       providerUsed === "deepl" || providerUsed === "openai" || providerUsed === "gemini"
         ? (providerUsed as TranslationProviderName)

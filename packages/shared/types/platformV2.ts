@@ -70,6 +70,9 @@ export type PlatformEntryTranslationStateV2 = {
   targetLanguageCode: string;
   status: "ready" | "pending" | "failed" | "not-available";
   text?: string;
+  alternativeTexts?: string[];
+  baseText?: string | null;
+  note?: string | null;
   sourceContentFingerprint: string;
   translationPolicyVersion: string;
   providerRevision?: string;

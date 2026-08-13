@@ -10,6 +10,7 @@ const getUser = vi.fn();
 const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
+const translateDictionaryMeaning = vi.hoisted(() => vi.fn());
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
@@ -18,7 +19,10 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
-    translator: { translate: vi.fn(async () => []) },
+    translator: {
+      translate: vi.fn(async () => []),
+      translateDictionaryMeaning,
+    },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
@@ -86,6 +90,7 @@ describe("/api/translation", () => {
     rpc.mockReset();
     from.mockReset();
     createClient.mockReset();
+    translateDictionaryMeaning.mockReset();
   });
 
   test("requires a bearer token before reading translation state", async () => {
@@ -277,6 +282,94 @@ describe("/api/translation", () => {
         targetLang: "en",
         provider: "openai",
       }),
+    });
+  });
+
+  test("stores a sense-aware artifact with generated alternatives", async () => {
+    const userClient = { auth: { getUser }, rpc };
+    const serviceClient = { from };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: accessibleWord, error: null });
+    translateDictionaryMeaning.mockResolvedValueOnce({
+      entryTranslation: {
+        primaryText: "дом",
+        alternativeTexts: ["жилище"],
+        baseText: "дом",
+        note: null,
+      },
+      contentTranslations: [
+        { fieldId: "definition", text: "жилое помещение" },
+      ],
+      meta: {
+        providerUsed: "openai",
+        usedFallback: false,
+      },
+    });
+
+    const stalePending = {
+      ...currentPendingTranslation(),
+      updated_at: "2020-01-01T00:00:00.000Z",
+    };
+    const lookupChain = queryChain({ data: stalePending, error: null });
+    const claimChain = queryChain({
+      data: { word_entry_id: accessibleWord.id },
+      error: null,
+    });
+    const readyChain = queryChain({ data: null, error: null });
+    from
+      .mockReturnValueOnce(lookupChain)
+      .mockReturnValueOnce(claimChain)
+      .mockReturnValueOnce(readyChain);
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(200);
+    expect(translateDictionaryMeaning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contractVersion: "dictionary-meaning-translation-v1",
+        entryId: accessibleWord.id,
+        headword: expect.objectContaining({ text: "huis" }),
+        content: [
+          expect.objectContaining({
+            fieldId: "definition",
+            role: "definition",
+            text: "woning",
+          }),
+        ],
+      }),
+    );
+    expect(readyChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "ready",
+        overlay: expect.objectContaining({
+          headword: "дом",
+          entryTranslation: {
+            primaryText: "дом",
+            alternativeTexts: ["жилище"],
+            baseText: "дом",
+            note: null,
+          },
+        }),
+      }),
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      status: "ready",
+      overlay: {
+        headword: "дом",
+        entryTranslation: {
+          primaryText: "дом",
+          alternativeTexts: ["жилище"],
+          baseText: "дом",
+          note: null,
+        },
+      },
     });
   });
 });

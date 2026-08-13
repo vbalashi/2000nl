@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolvePlatformV2Translations } from "@/lib/platform/platformV2TranslationService";
+import {
+  contentFingerprint,
+  normalizeDictionaryContent,
+} from "@/lib/platform/projections/dictionaryContent";
+import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
 
 const translationQuery = (data: unknown[]) => {
   const query: any = {
@@ -83,5 +88,59 @@ describe("Platform V2 translation projection", () => {
       result.byEntryId.get("entry-1")?.nodeTranslationsById.size,
     ).toBe(0);
     expect(JSON.stringify(result)).not.toContain("устаревший перевод");
+  });
+
+  test("projects the same structured entry artifact for every V2 consumer", async () => {
+    const entry = {
+      id: "entry-1",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "de stof; de kleren" }] },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-1",
+          word_entry_id: "entry-1",
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            headword: "бельё",
+            entryTranslation: {
+              primaryText: "бельё",
+              alternativeTexts: ["одежда", "текстиль"],
+              baseText: "товар",
+              note: "Здесь имеется в виду одежда для стирки.",
+            },
+            meanings: [{ definition: "ткань; одежда" }],
+          },
+          source_content_revision: revision,
+          translation_policy_version: translationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get("entry-1")?.entryTranslation).toMatchObject({
+      text: "бельё",
+      alternativeTexts: ["одежда", "текстиль"],
+      baseText: "товар",
+      note: "Здесь имеется в виду одежда для стирки.",
+    });
   });
 });

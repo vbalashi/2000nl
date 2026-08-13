@@ -63,9 +63,9 @@ in #143?
 - The eval duplicates message building, parsing, and extraction. It omits the
   production source language, purpose, context, literal response field, and
   literal parsing. Its three fixtures contain no `goed` senses. See
-  [`apps/ui/scripts/eval-translation-prompt.js`](../../apps/ui/scripts/eval-translation-prompt.js)
+  [`apps/ui/scripts/eval-translation-prompt.ts`](../../apps/ui/scripts/eval-translation-prompt.ts)
   and
-  [`apps/ui/scripts/translation-eval-cases.js`](../../apps/ui/scripts/translation-eval-cases.js).
+  [`apps/ui/scripts/translationEvalCases.ts`](../../apps/ui/scripts/translationEvalCases.ts).
 - Therefore prompt comparison is not trustworthy until production and eval use
   one versioned, testable message/parser seam.
 
@@ -113,20 +113,40 @@ See [2000nl #143](https://github.com/vbalashi/2000nl/issues/143) and
    receive the same stored artifact and may only choose presentation, not infer
    alternatives by splitting punctuation.
 
-## Contract decisions still required from product review
+## Product-reviewed contract decision
 
-| Decision | Why it blocks TDD/prompt changes | Recommended default |
-| --- | --- | --- |
-| Scope of structured alternatives | It is unclear whether alternatives belong only to the entry/headword translation or to every Content Node translation. | Entry-level only for the first slice; node translations remain one contextual text. |
-| Alternative value shape | `string[]` is sufficient for rendering, but cannot express register, preference reason, or provenance per alternative. | Start with ordered, deduplicated `string[]`; add metadata only for a demonstrated UX need. |
-| `literal` versus `base` | Existing selected-fragment translation defines literal as context-free; a dictionary headword “base” rendering is a different concept. The issue uses `literal/base` without choosing one. | Use `baseText` for the entry-level context-free headword rendering; keep `literalTranslatedText` semantics confined to selected-fragment translation. |
-| Entry text for idiom-only meanings | Deriving a headword translation from an idiom may fabricate an entry sense. | Allow entry translation to be unavailable; translate exact idiom nodes. |
-| Public TDD seam | Tests must target a stable public interface shared by production and eval. | A pure versioned request builder + strict response parser used by both `OpenAITranslator` and the eval runner. |
+| Decision | Approved v1 |
+| --- | --- |
+| Scope of structured alternatives | Entry-level only for the first slice; node translations remain one contextual text. |
+| Alternative value shape | Ordered, deduplicated `string[]`; always present, with `[]` preferred to invented variants. Alternatives are model-generated derived data even when the source has none. |
+| `literal` versus `base` | Use `baseText` for the entry-level context-free headword rendering; keep `literalTranslatedText` confined to selected-fragment translation. |
+| Entry text for idiom-only meanings | Allow entry translation to be unavailable; translate exact idiom nodes. |
+| Public TDD seam | A pure versioned request builder + strict response parser used by both `OpenAITranslator` and the eval runner. |
 
-Until these choices are accepted, changing prompts would optimize against an
-unstable response contract. The safe next step is product review, followed by
-one red-green slice for the shared request/parser seam and the three-case `goed`
-fixture before any prompt edit.
+The owner approved this package on 2026-08-13 with the clarification that the
+model should consider additional headword translations even when the source
+contains none. The resulting Translation Artifact remains separate from source
+dictionary content.
+
+## Three-sense tracer result
+
+The current production contract was run first, before changing prompts. The
+same private Azure GPT-4.1 deployment then ran the approved meaning contract.
+No database writes or bulk translation occurred; detailed run artifacts stayed
+in `/tmp`.
+
+| `goed` noun sense | Existing production primary | Meaning-v1 primary | Meaning-v1 alternatives |
+| --- | --- | --- | --- |
+| things/goods | `товар` | `товар` | `[]` |
+| moral good | `добро` | `добро` | `[]` |
+| cloth/clothes | `бельё` | `бельё` | `[]` |
+
+All three outputs preserved their required sense and avoided the two forbidden
+senses recorded per fixture. Meaning-v1 returned the required structured array
+for every entry. Empty arrays are a successful result here: the model considered
+alternatives but did not invent weaker variants. Because the baseline already
+had good semantic fidelity, the new prompt stays focused on exact meaning
+binding and response structure instead of adding a large corrective checklist.
 
 ## Advisory handoff assessment
 

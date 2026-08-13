@@ -28,6 +28,7 @@ export type TrainingSenseCardModel = {
   partOfSpeech?: string;
   coreVocabularyLabel?: "2K";
   entryTranslation?: string;
+  entryTranslationAlternatives?: string[];
   requestTranslationCapability?: Extract<
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
@@ -140,6 +141,10 @@ export function buildTrainingSenseCardModel({
       : {}),
     ...(has2k ? { coreVocabularyLabel: "2K" as const } : {}),
     ...(entryTranslation ? { entryTranslation } : {}),
+    entryTranslationAlternatives:
+      entry.translation?.status === "ready" && entry.translation.isFresh
+        ? (entry.translation.alternativeTexts ?? [])
+        : [],
     ...(capability("request-translation")
       ? { requestTranslationCapability: capability("request-translation") }
       : {}),

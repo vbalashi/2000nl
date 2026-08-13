@@ -372,7 +372,10 @@ function MeaningCard({
             {meaning.entryTranslation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
-                  {meaning.entryTranslation}
+                  {[
+                    meaning.entryTranslation,
+                    ...(meaning.entryTranslationAlternatives ?? []),
+                  ].join(" · ")}
                 </p>
               </SenseCardReveal>
             ) : null}
