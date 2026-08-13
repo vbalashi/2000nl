@@ -80,6 +80,7 @@ function renderController(overrides: {
   selectNext?: (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>;
   reviewLegacy?: (request: LegacyTrainingReviewRequest) => Promise<unknown>;
   setCurrentWord?: (word: TrainingWord | null) => void;
+  lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -93,12 +94,20 @@ function renderController(overrides: {
     (word: TrainingWord | null) => void
   >;
   const refreshAfterAccepted = vi.fn().mockResolvedValue(undefined);
-  const lookupOverride = vi.fn().mockResolvedValue(null);
+  const lookupOverride = vi.fn(overrides.lookupOverride ?? (() => Promise.resolve(null)));
   const resetCardPresentation = vi.fn();
-  const hook = renderHook(() =>
-    useTrainingTurnController({
+  const initialCurrentWord = overrides.currentWord ?? word1;
+  const hook = renderHook(
+    ({
+      sessionScopeKey,
+      currentWord,
+    }: {
+      sessionScopeKey: string;
+      currentWord: TrainingWord | null;
+    }) =>
+      useTrainingTurnController({
       userId: "user-1",
-      currentWord: overrides.currentWord ?? word1,
+      currentWord,
       setCurrentWord,
       enabledModes: ["word-to-definition"],
       contentLanguageCode: "nl",
@@ -108,14 +117,20 @@ function renderController(overrides: {
       trainingShellV2Enabled: false,
       recoverLoadErrors: true,
       focusFilter: { dateWindow: "all" },
-      sessionScopeKey: "default",
+      sessionScopeKey,
       selection: { selectNext, lookupOverride },
       audioEnabled: false,
       preloadAudio: vi.fn(),
       resetCardPresentation,
       reviewLegacy,
       refreshAfterAccepted,
-    }),
+      }),
+    {
+      initialProps: {
+        sessionScopeKey: "default",
+        currentWord: initialCurrentWord,
+      },
+    },
   );
   return {
     ...hook,
@@ -247,19 +262,17 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.result.current.loadingWord).toBe(false);
   });
 
-  test("scope replacement cancels the old selection and presents exactly one new-scope result", async () => {
+  test("scope-key replacement cancels the old selection and presents exactly one new-scope result", async () => {
     const oldSelection = deferred<TrainingWord | null>();
     const newSelection = deferred<TrainingWord | null>();
     const oldWord = { ...word2, id: "word-old", headword: "oud" };
-    const selectNext = vi.fn((request: TrainingTurnSelectionRequest) =>
-      request.scenario === "new-scope"
-        ? newSelection.promise
-        : oldSelection.promise,
-    );
+    const selectNext = vi
+      .fn<[TrainingTurnSelectionRequest], Promise<TrainingWord | null>>()
+      .mockImplementationOnce(() => oldSelection.promise)
+      .mockImplementationOnce(() => newSelection.promise);
     const controller = renderController({ selectNext });
 
     let oldLoad!: Promise<string>;
-    let newLoad!: Promise<string>;
     act(() => {
       oldLoad = controller.result.current.loadNextWord({
         scenario: "old-scope",
@@ -268,22 +281,54 @@ describe("useTrainingTurnController transition matrix", () => {
     await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(1));
 
     act(() => {
-      newLoad = controller.result.current.replaceSessionScopeAndLoad({
-        scenario: "new-scope",
+      controller.result.current.beginSessionScopeChange();
+      controller.rerender({
+        sessionScopeKey: "new-scope",
+        currentWord: word1,
       });
+    });
+    act(() => {
+      void controller.result.current.loadNextWord();
     });
     await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(2));
 
     await act(async () => newSelection.resolve(word2));
-    await expect(newLoad).resolves.toBe("loaded");
     await act(async () => oldSelection.resolve(oldWord));
     await expect(oldLoad).resolves.toBe("skipped");
 
-    expect(selectNext).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ scenario: "new-scope" }),
-    );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
+  });
+
+  test("override identity uses the presented mode and clears its notice after review", async () => {
+    prepared.consume.mockReturnValue(null);
+    const overrideWord = {
+      ...word2,
+      mode: "listen-recognize" as const,
+    };
+    const controller = renderController({
+      lookupOverride: vi.fn().mockResolvedValue(overrideWord),
+    });
+
+    act(() => controller.result.current.requestNextCardOverride(overrideWord.id));
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: overrideWord.id,
+        mode: "word-to-definition",
+      }),
+    );
+
+    controller.rerender({
+      sessionScopeKey: "default",
+      currentWord: { ...overrideWord, mode: "word-to-definition" },
+    });
+    await act(async () => {
+      await controller.result.current.submitLegacyReview("success");
+    });
+
+    expect(controller.result.current.nextCardOverrideNotice).toBeNull();
   });
 });

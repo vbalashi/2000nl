@@ -191,12 +191,6 @@ export function useTrainingTurnController(input: Inputs) {
   }, []);
 
   useEffect(() => {
-    if (sessionScopeKeyRef.current === sessionScopeKey) return;
-    sessionScopeKeyRef.current = sessionScopeKey;
-    clearReviewedSession();
-  }, [clearReviewedSession, sessionScopeKey]);
-
-  useEffect(() => {
     const reviewed = reviewedCardKeysRef.current;
     return () => reviewed.clear();
   }, []);
@@ -261,8 +255,6 @@ export function useTrainingTurnController(input: Inputs) {
           if (generation !== loadGenerationRef.current) return "skipped";
           if (overrideWord) {
             const mode = currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
-            const overrideCardKey = getTrainingCardKey(overrideWord, mode);
-            nextCardOverrideActiveKeyRef.current = overrideCardKey;
             const preparedOverrideWord: TrainingWord = {
               ...overrideWord,
               ...(typeof firstEncounter === "boolean"
@@ -271,6 +263,10 @@ export function useTrainingTurnController(input: Inputs) {
               mode,
               debugStats: { source: "next-card-override", mode },
             };
+            nextCardOverrideActiveKeyRef.current = getTrainingCardKey(
+              preparedOverrideWord,
+              mode,
+            );
             recordPresentation(preparedOverrideWord, mode);
             const overrideReady = await warmWord(preparedOverrideWord);
             if (generation !== loadGenerationRef.current) return "skipped";
@@ -349,6 +345,12 @@ export function useTrainingTurnController(input: Inputs) {
     },
     [beginSessionScopeChange, loadNextWord],
   );
+
+  useEffect(() => {
+    if (sessionScopeKeyRef.current === sessionScopeKey) return;
+    sessionScopeKeyRef.current = sessionScopeKey;
+    clearReviewedSession();
+  }, [clearReviewedSession, sessionScopeKey]);
 
   const requestNextCardOverride = useCallback(
     (wordId: string, announce = true) => {
@@ -504,6 +506,7 @@ export function useTrainingTurnController(input: Inputs) {
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
+    beginSessionScopeChange,
     replaceSessionScopeAndLoad,
     requestNextCardOverride,
     resetFocusQueue,

@@ -224,12 +224,17 @@ export function TrainingScreen({
     DEFAULT_LANGUAGE_OPTIONS,
   );
   const trainingLanguageManuallyChangedRef = useRef(false);
+  const beginSessionScopeChangeRef = useRef<() => void>(() => undefined);
 
   useEffect(() => {
-    if (!trainingLanguageManuallyChangedRef.current) {
+    if (
+      !trainingLanguageManuallyChangedRef.current &&
+      currentTrainingLanguage !== language
+    ) {
+      beginSessionScopeChangeRef.current();
       setCurrentTrainingLanguage(language);
     }
-  }, [language]);
+  }, [currentTrainingLanguage, language]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -264,11 +269,6 @@ export function TrainingScreen({
       cancelled = true;
     };
   }, [currentTrainingLanguage, user?.id]);
-
-  const handleTrainingLanguageChange = useCallback((value: string) => {
-    trainingLanguageManuallyChangedRef.current = true;
-    setCurrentTrainingLanguage(value);
-  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -406,6 +406,7 @@ export function TrainingScreen({
 
   useEffect(() => {
     if (!activeTrainingScope) return;
+    beginSessionScopeChangeRef.current();
     setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
     setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
     setEnabledModes(activeTrainingScope.modesEnabled as TrainingMode[], {
@@ -429,6 +430,7 @@ export function TrainingScreen({
     if (appliedDefaultScenarioListRef.current === activeList.id) return;
 
     appliedDefaultScenarioListRef.current = activeList.id;
+    beginSessionScopeChangeRef.current();
     setActiveScenario(activeList.default_scenario_id, { persist: false });
   }, [
     activeList?.default_scenario_id,
@@ -445,6 +447,9 @@ export function TrainingScreen({
   const historyRequestGenerationRef = useRef(0);
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
   const autoPlayedAudioCardRef = useRef<string | null>(null);
+  const lastReloadedLanguageModeScopeRef = useRef(
+    `${currentTrainingLanguage}|${enabledModesKey}`,
+  );
 
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
@@ -613,6 +618,7 @@ export function TrainingScreen({
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
+    beginSessionScopeChange,
     replaceSessionScopeAndLoad,
     requestNextCardOverride,
     resetFocusQueue,
@@ -642,6 +648,24 @@ export function TrainingScreen({
     reviewLegacy,
     refreshAfterAccepted,
   });
+  beginSessionScopeChangeRef.current = beginSessionScopeChange;
+
+  const handleTrainingLanguageChange = useCallback(
+    (value: string) => {
+      beginSessionScopeChange();
+      trainingLanguageManuallyChangedRef.current = true;
+      setCurrentTrainingLanguage(value);
+    },
+    [beginSessionScopeChange],
+  );
+
+  useEffect(() => {
+    const nextKey = `${currentTrainingLanguage}|${enabledModesKey}`;
+    if (lastReloadedLanguageModeScopeRef.current === nextKey) return;
+    lastReloadedLanguageModeScopeRef.current = nextKey;
+    if (!initialLoadDone.current || !listHydrated) return;
+    void loadNextWord();
+  }, [currentTrainingLanguage, enabledModesKey, listHydrated, loadNextWord]);
 
   useEffect(() => {
     onNavigationBlockedChange?.(actionLoading);
@@ -1213,8 +1237,8 @@ export function TrainingScreen({
     });
   }, [
     activeScenario,
-    replaceSessionScopeAndLoad,
     loadStats,
+    replaceSessionScopeAndLoad,
     persistCurrentTrainingScope,
     refreshListsAfterUpdate,
     setActiveScenario,
@@ -1226,11 +1250,12 @@ export function TrainingScreen({
 
   const handleModesChange = useCallback(
     (newModes: TrainingMode[]) => {
+      beginSessionScopeChange();
       setRevealed(false);
       setEnabledModes(newModes, { persist: false });
       persistCurrentTrainingScope({ modesEnabled: newModes });
     },
-    [persistCurrentTrainingScope, setEnabledModes],
+    [beginSessionScopeChange, persistCurrentTrainingScope, setEnabledModes],
   );
 
   const handleScenarioChange = useCallback(
@@ -1239,7 +1264,6 @@ export function TrainingScreen({
       setRevealed(false);
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
-      // Load next word with the new scenario
       void replaceSessionScopeAndLoad({
         scope: { listId: wordListId, listType: wordListType },
         scenario: newScenario,
