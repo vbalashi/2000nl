@@ -174,6 +174,30 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     ).toBe(targetGroup);
   });
 
+  test("fails closed when the query fallback tier is incomplete", () => {
+    const visibleGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-visible",
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+    };
+
+    expect(
+      selectPlatformV2CrossReferenceTarget(
+        {
+          ...payload,
+          query: "daar-",
+          groups: [visibleGroup],
+          page: {
+            selectedTierComplete: false,
+            nextGroupCursor: "hidden-homograph",
+          },
+        },
+        "daar-",
+        "vandale",
+      ),
+    ).toBeNull();
+  });
+
   test("looks up the pointer query and returns the full target group", async () => {
     const targetGroup = {
       ...multiSenseBankGroup,

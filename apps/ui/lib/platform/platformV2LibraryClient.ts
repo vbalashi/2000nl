@@ -164,6 +164,7 @@ export function selectPlatformV2CrossReferenceTarget(
       ) ?? null
     );
   }
+  if (payload.page.selectedTierComplete !== true) return null;
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const exactGroups = payload.groups.filter(
       (group) =>
