@@ -36,6 +36,7 @@ describe("dictionary meaning translation policy", () => {
         {
           expression: "zich te goed doen aan iets",
           explanation: "iets lekker opeten of opdrinken",
+          examples: ["de kat deed zich te goed aan de kaas"],
         },
       ],
     });
@@ -49,10 +50,17 @@ describe("dictionary meaning translation policy", () => {
     expect(translationPipelineVersion(idiomOnly)).toBe(
       IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION,
     );
-    expect(idiomOnly.content[0]).toMatchObject({
-      fieldId: "idiom:0",
-      role: "idiom",
-    });
+    expect(idiomOnly.content.slice(0, 3)).toEqual([
+      expect.objectContaining({ fieldId: "idiom:0", role: "idiom" }),
+      expect.objectContaining({
+        fieldId: "idiom:0:explanation",
+        role: "idiom-explanation",
+      }),
+      expect.objectContaining({
+        fieldId: "idiom:0:example:0",
+        role: "example",
+      }),
+    ]);
     expect(translationPolicyVersion("openai", idiomOnly)).not.toBe(
       translationPolicyVersion("openai", ordinary),
     );

@@ -8,6 +8,7 @@ import {
   ordinaryTranslationPolicyVersion,
   translationPolicyVersion,
 } from "@/lib/translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
 
 const translationQuery = (data: unknown[]) => {
   const query: any = {
@@ -221,6 +222,7 @@ describe("Platform V2 translation projection", () => {
               {
                 expression: "zich te goed doen aan iets",
                 explanation: "iets lekker opeten of opdrinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
               },
             ],
           },
@@ -268,5 +270,106 @@ describe("Platform V2 translation projection", () => {
       errorCode: "stale-source",
       isFresh: false,
     });
+  });
+
+  test("projects a fresh bounded idiom subtree while suppressing its entry artifact", async () => {
+    const entry = {
+      id: "entry-idiom-current",
+      language_code: "nl",
+      headword: "goed",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          {
+            definition: "",
+            examples: Array.from({ length: 40 }, (_, index) =>
+              `standalone example ${index} ${"x".repeat(600)}`,
+            ),
+            idioms: [
+              {
+                expression: "zich te goed doen aan iets",
+                explanation: "iets lekker opeten of opdrinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const revision = contentFingerprint(normalizeDictionaryContent(entry as any));
+    const request = buildDictionaryMeaningTranslationRequest({
+      entryId: entry.id,
+      sourceContentFingerprint: revision,
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: entry,
+    });
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-idiom-current",
+          word_entry_id: entry.id,
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: {
+            entryTranslation: null,
+            meanings: [
+              {
+                idioms: [
+                  {
+                    expression: "полакомиться чем-либо",
+                    explanation: "с удовольствием съесть что-либо",
+                    examples: ["кошка полакомилась сыром"],
+                  },
+                ],
+              },
+            ],
+          },
+          source_content_revision: revision,
+          translation_policy_version: translationPolicyVersion(
+            "openai",
+            request,
+          ),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+    const bindings = [
+      ["idiom", "raw.meanings[0].idioms[0].expression"],
+      ["explanation", "raw.meanings[0].idioms[0].explanation"],
+      ["example", "raw.meanings[0].idioms[0].examples[0]"],
+    ].map(([contentNodeId, sourcePath]) => ({
+      contentNodeId,
+      sourcePath,
+      kind: "idiom" as const,
+      sourceTextFingerprint: `${contentNodeId}-fingerprint`,
+    }));
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [entry],
+        bindingsByEntryId: new Map([[entry.id, bindings]]),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get(entry.id)?.entryTranslation).toMatchObject({
+      status: "not-available",
+      isFresh: true,
+    });
+    expect(
+      [...(result.byEntryId.get(entry.id)?.nodeTranslationsById.values() ?? [])]
+        .flat()
+        .map((translation) => translation.text),
+    ).toEqual([
+      "полакомиться чем-либо",
+      "с удовольствием съесть что-либо",
+      "кошка полакомилась сыром",
+    ]);
   });
 });

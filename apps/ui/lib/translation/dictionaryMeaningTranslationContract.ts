@@ -170,37 +170,10 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     remainingContentTokenUpperBound -=
       metadataTokenUpperBound + tokenUpperBound(text);
   };
-
-  push("definition", "definition", meaning.definition);
-  push("usage-pattern", "usage-pattern", meaning.context);
-  // Preserve the semantic classification even when preceding standalone
-  // examples would otherwise exhaust the bounded provider payload.
-  if (sourceIsIdiomOnly) {
-    pushIdiomRoot(
-      push,
-      idiomValues[reservedIdiomIndex],
-      reservedIdiomIndex,
-    );
-  }
-  for (const [index, example] of asArray(meaning.examples).entries()) {
-    push(`example:${index}`, "example", example);
-  }
-  for (const [index, idiomValue] of idiomValues.entries()) {
-    if (sourceIsIdiomOnly && index === reservedIdiomIndex) {
-      const idiom = asRecord(idiomValue);
-      push(
-        `idiom:${index}:explanation`,
-        "idiom-explanation",
-        idiom.explanation,
-      );
-      for (const [exampleIndex, example] of asArray(idiom.examples).entries()) {
-        push(`idiom:${index}:example:${exampleIndex}`, "example", example);
-      }
-      continue;
-    }
+  const pushIdiom = (idiomValue: unknown, index: number) => {
     if (typeof idiomValue === "string") {
       push(`idiom:${index}`, "idiom", idiomValue);
-      continue;
+      return;
     }
     const idiom = asRecord(idiomValue);
     push(`idiom:${index}`, "idiom", idiom.expression);
@@ -212,6 +185,23 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     for (const [exampleIndex, example] of asArray(idiom.examples).entries()) {
       push(`idiom:${index}:example:${exampleIndex}`, "example", example);
     }
+  };
+
+  push("definition", "definition", meaning.definition);
+  push("usage-pattern", "usage-pattern", meaning.context);
+  // Preserve the semantic classification and its owned subtree even when
+  // standalone examples would otherwise exhaust the bounded provider payload.
+  if (sourceIsIdiomOnly) {
+    pushIdiom(idiomValues[reservedIdiomIndex], reservedIdiomIndex);
+  }
+  for (const [index, example] of asArray(meaning.examples).entries()) {
+    push(`example:${index}`, "example", example);
+  }
+  for (const [index, idiomValue] of idiomValues.entries()) {
+    if (sourceIsIdiomOnly && index === reservedIdiomIndex) {
+      continue;
+    }
+    pushIdiom(idiomValue, index);
   }
   push("usage-note", "usage-note", meaning.note);
 
@@ -229,20 +219,6 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     },
     content,
   };
-}
-
-function pushIdiomRoot(
-  push: (fieldId: string, role: DictionaryMeaningContentRole, value: unknown) => void,
-  idiomValue: unknown,
-  index: number,
-) {
-  push(
-    `idiom:${index}`,
-    "idiom",
-    typeof idiomValue === "string"
-      ? idiomValue
-      : asRecord(idiomValue).expression,
-  );
 }
 
 function hasText(value: unknown) {
@@ -308,7 +284,7 @@ export function parseDictionaryMeaningTranslationResult(
   ], "response");
   const isIdiomOnly = isIdiomOnlyDictionaryMeaningRequest(request);
   let entryTranslation: DictionaryMeaningTranslationResultV1["entryTranslation"] = null;
-  if (!isIdiomOnly && payload.entryTranslation !== null) {
+  if (payload.entryTranslation !== null) {
     const entry = strictRecord(
       payload.entryTranslation,
       ["primaryText", "alternativeTexts", "baseText", "note"],
@@ -360,6 +336,10 @@ export function parseDictionaryMeaningTranslationResult(
         DICTIONARY_MEANING_TRANSLATION_LIMITS.noteCharacters,
       ),
     };
+  }
+
+  if (isIdiomOnly) {
+    entryTranslation = null;
   }
 
   if (!Array.isArray(payload.contentTranslations)) {

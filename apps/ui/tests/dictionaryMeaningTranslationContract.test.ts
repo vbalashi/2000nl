@@ -376,7 +376,7 @@ describe("dictionary meaning translation contract", () => {
       ],
     });
 
-    expect(
+    expect(() =>
       parseDictionaryMeaningTranslationResult(
         JSON.stringify({
           entryTranslation: "provider-invented malformed artifact",
@@ -394,20 +394,7 @@ describe("dictionary meaning translation contract", () => {
         }),
         idiomRequest,
       ),
-    ).toEqual({
-      entryTranslation: null,
-      contentTranslations: [
-        { fieldId: "idiom:0", text: "полакомиться чем-либо" },
-        {
-          fieldId: "idiom:0:explanation",
-          text: "с удовольствием съесть или выпить что-либо",
-        },
-        {
-          fieldId: "idiom:0:example:0",
-          text: "Кошка с удовольствием съела сыр.",
-        },
-      ],
-    });
+    ).toThrow("entryTranslation must be an object");
   });
 });
 

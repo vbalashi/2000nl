@@ -433,6 +433,7 @@ describe("/api/translation", () => {
               {
                 expression: "zich te goed doen aan iets",
                 explanation: "iets lekker opeten of opdrinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
               },
             ],
           },
@@ -486,6 +487,14 @@ describe("/api/translation", () => {
       expect.objectContaining({
         content: expect.arrayContaining([
           expect.objectContaining({ fieldId: "idiom:0", role: "idiom" }),
+          expect.objectContaining({
+            fieldId: "idiom:0:explanation",
+            role: "idiom-explanation",
+          }),
+          expect.objectContaining({
+            fieldId: "idiom:0:example:0",
+            role: "example",
+          }),
         ]),
       }),
     );
