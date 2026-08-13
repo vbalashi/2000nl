@@ -1,6 +1,18 @@
-import { ITranslator } from "./ITranslator";
-import { loadPromptText } from "./prompts/promptLoader";
+import type { ITranslator } from "./ITranslator";
 import crypto from "crypto";
+import {
+  buildOpenAITranslationMessages,
+  parseOpenAITranslationResult,
+  type OpenAITranslationContext,
+  type OpenAITranslationMessage,
+} from "./openaiTranslationContract";
+import {
+  buildDictionaryMeaningTranslationMessages,
+  parseDictionaryMeaningTranslationResult,
+  type DictionaryMeaningTranslationRequestV1,
+  type DictionaryMeaningTranslationResultV1,
+} from "./dictionaryMeaningTranslationContract";
+import { translateDictionaryMeaningWithGenericProvider } from "./dictionaryMeaningTranslationService";
 
 type OpenAITranslatorOptions = {
   apiKey: string;
@@ -11,13 +23,7 @@ type OpenAITranslatorOptions = {
   timeoutMs?: number;
 };
 
-export type OpenAITranslationContext = {
-  partOfSpeech?: string | null;
-  partOfSpeechCode?: string | null;
-  sourceLanguageCode?: string | null;
-  purpose?: string | null;
-  contextText?: string | null;
-};
+export type { OpenAITranslationContext } from "./openaiTranslationContract";
 
 export type OpenAITranslationResult = {
   translations: string[];
@@ -33,6 +39,11 @@ export type OpenAITranslationResult = {
     model?: string;
   };
 };
+
+export type OpenAIDictionaryMeaningTranslationResult =
+  DictionaryMeaningTranslationResultV1 & {
+    meta: NonNullable<OpenAITranslationResult["meta"]>;
+  };
 
 type OpenAIChatResponse = {
   choices?: Array<{
@@ -50,23 +61,6 @@ const DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_MODEL = "gpt-5.2";
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_MAX_RETRIES = 2;
-
-const LANGUAGE_LABELS: Record<string, string> = {
-  en: "English",
-  "en-us": "English",
-  "en-gb": "English",
-  nl: "Dutch",
-  ru: "Russian",
-};
-
-function normalizeLang(lang: string) {
-  return lang.trim().toLowerCase().replace("_", "-");
-}
-
-function targetLanguageLabel(targetLang: string) {
-  const normalized = normalizeLang(targetLang);
-  return LANGUAGE_LABELS[normalized] ?? targetLang.trim();
-}
 
 function looksLikeAzureOpenAI(apiUrl: string) {
   // Azure OpenAI endpoints commonly use:
@@ -89,93 +83,6 @@ function resolveChatCompletionsUrl(apiUrl: string) {
     return `${trimmed.replace(/\/+$/, "")}/chat/completions`;
   }
   return trimmed;
-}
-
-function buildMessages(texts: string[], targetLang: string, context?: OpenAITranslationContext) {
-  const label = targetLanguageLabel(targetLang);
-  const pos = context?.partOfSpeech?.trim() || null;
-  const posCode = context?.partOfSpeechCode?.trim() || null;
-  const sourceLanguageCode = context?.sourceLanguageCode?.trim() || null;
-  const purpose = context?.purpose?.trim() || null;
-  const contextText = context?.contextText?.trim() || null;
-
-  const systemPrompt =
-    loadPromptText("openai_translation_system_v1.txt").trim() ||
-    "You are a translation engine. Translate all input texts faithfully, keeping punctuation and formatting. If partOfSpeech is provided, use it to disambiguate the headword sense. Also provide a brief contextual note (1-2 sentences) about the most common meaning of the headword vs its meaning in the specific example/context, when different.";
-  const userInstructions =
-    loadPromptText("openai_translation_user_instructions_v1.txt").trim() ||
-    "Return only valid JSON with top-level keys: 'translations' (array aligned to input order) and 'note' (string or null). Keep 'note' to 1-2 sentences max; use null if no meaningful note applies.";
-
-  return [
-    {
-      role: "system",
-      content:
-        systemPrompt,
-    },
-    {
-      role: "user",
-      content: JSON.stringify({
-        targetLanguage: label,
-        targetLanguageCode: targetLang,
-        commentLanguage: label,
-        sourceLanguageCode,
-        purpose,
-        partOfSpeech: pos,
-        partOfSpeechCode: posCode,
-        texts,
-        contextText,
-        responseFormat: {
-          translations: ["string"],
-          literalTranslations: ["string"],
-          note: "string | null",
-        },
-        instructions: userInstructions,
-      }),
-    },
-  ];
-}
-
-function parseTranslationResult(content: string, expectedCount: number): OpenAITranslationResult {
-  let payload: any = null;
-  try {
-    payload = JSON.parse(content);
-  } catch {
-    throw new Error("OpenAI returned invalid JSON");
-  }
-
-  const translations = payload?.translations;
-  if (!Array.isArray(translations)) {
-    throw new Error("OpenAI response missing translations array");
-  }
-  if (translations.length !== expectedCount) {
-    throw new Error(
-      `OpenAI returned ${translations.length} translations for ${expectedCount} inputs`
-    );
-  }
-
-  const literalTranslationsRaw = payload?.literalTranslations;
-  const literalTranslations = Array.isArray(literalTranslationsRaw)
-    ? literalTranslationsRaw.map((item) =>
-        typeof item === "string" ? item : String(item),
-      )
-    : undefined;
-
-  const noteRaw = payload?.note;
-  const note =
-    typeof noteRaw === "string" ? noteRaw.trim().slice(0, 800) : null;
-
-  return {
-    translations: translations.map((item) =>
-      typeof item === "string" ? item : String(item)
-    ),
-    ...(literalTranslations?.length === expectedCount ? { literalTranslations } : {}),
-    note: note && note.length > 0 ? note : null,
-    meta: {
-      providerSelected: "openai",
-      providerUsed: "openai",
-      usedFallback: false,
-    },
-  };
 }
 
 function keyHash(apiKey: string) {
@@ -236,77 +143,28 @@ export class OpenAITranslator implements ITranslator {
     }
 
     const openaiKeyHash = keyHash(this.apiKey);
-    const isAzure = looksLikeAzureOpenAI(this.apiUrl);
-    const attemptTranslate = async () => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
-
-      try {
-        const includeModel = !isAzure || !/\/openai\/deployments\//i.test(this.apiUrl);
-        const body: Record<string, any> = {
-          temperature: 0,
-          messages: buildMessages(texts, targetLang, context),
-        };
-        if (includeModel) body.model = this.model;
-        // GPT-5.x supports reasoning_effort; keep it off for translation.
-        if (this.model.startsWith("gpt-5")) {
-          body.reasoning_effort = "none";
-        }
-
-        const res = await fetch(this.apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(isAzure
-              ? { "api-key": this.apiKey }
-              : { Authorization: `Bearer ${this.apiKey}` }),
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const body = await res.text().catch(() => "");
-          throw new Error(`OpenAI error ${res.status}: ${body || res.statusText}`);
-        }
-
-        const data = (await res.json()) as OpenAIChatResponse;
-        if (data?.error?.message) {
-          throw new Error(`OpenAI error: ${data.error.message}`);
-        }
-
-        const content = data?.choices?.[0]?.message?.content ?? "";
-        if (!content.trim()) {
-          throw new Error("OpenAI returned an empty translation");
-        }
-
-        return parseTranslationResult(content, texts.length);
-      } finally {
-        clearTimeout(timeout);
-      }
-    };
-
     let lastError: unknown = null;
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      try {
-        const result = await attemptTranslate();
-        return {
-          ...result,
-          meta: {
-            providerSelected: "openai",
-            providerUsed: "openai",
-            usedFallback: false,
-            openaiKeyHash,
-            model: this.model,
-          },
-        };
-      } catch (err) {
-        lastError = err;
-        if (attempt < this.maxRetries) {
-          await delay(300 * Math.pow(2, attempt));
-          continue;
-        }
-      }
+    try {
+      const result = await this.withRetries(async () =>
+        parseOpenAITranslationResult(
+          await this.requestChatContent(
+            buildOpenAITranslationMessages(texts, targetLang, context),
+          ),
+          texts.length,
+        ),
+      );
+      return {
+        ...result,
+        meta: {
+          providerSelected: "openai" as const,
+          providerUsed: "openai" as const,
+          usedFallback: false,
+          openaiKeyHash,
+          model: this.model,
+        },
+      };
+    } catch (error) {
+      lastError = error;
     }
 
     if (this.fallback) {
@@ -341,6 +199,116 @@ export class OpenAITranslator implements ITranslator {
     }
 
     throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  async translateDictionaryMeaning(
+    request: DictionaryMeaningTranslationRequestV1,
+  ): Promise<OpenAIDictionaryMeaningTranslationResult> {
+    if (!this.apiKey) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+    try {
+      const result = await this.withRetries(async () =>
+        parseDictionaryMeaningTranslationResult(
+          await this.requestChatContent(
+            buildDictionaryMeaningTranslationMessages(request),
+          ),
+          request,
+        ),
+      );
+      return {
+        ...result,
+        meta: {
+          providerSelected: "openai",
+          providerUsed: "openai",
+          usedFallback: false,
+          openaiKeyHash: keyHash(this.apiKey),
+          model: this.model,
+        },
+      };
+    } catch (primaryError) {
+      if (!this.fallback) throw primaryError;
+      const fallbackResult =
+        await translateDictionaryMeaningWithGenericProvider(
+          this.fallback,
+          request,
+          {
+            providerSelected: "openai",
+            providerUsed: "deepl",
+            usedFallback: true,
+            primaryError: String(primaryError),
+            openaiKeyHash: keyHash(this.apiKey),
+            model: this.model,
+          },
+        );
+      return {
+        ...fallbackResult,
+        meta: fallbackResult.meta as NonNullable<
+          OpenAITranslationResult["meta"]
+        >,
+      };
+    }
+  }
+
+  private async withRetries<T>(operation: () => Promise<T>): Promise<T> {
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        if (attempt < this.maxRetries) {
+          await delay(300 * Math.pow(2, attempt));
+        }
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  private async requestChatContent(
+    messages: OpenAITranslationMessage[],
+  ): Promise<string> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const isAzure = looksLikeAzureOpenAI(this.apiUrl);
+    try {
+      const includeModel = !isAzure || !/\/openai\/deployments\//i.test(this.apiUrl);
+      const body: Record<string, unknown> = {
+        temperature: 0,
+        messages,
+      };
+      if (includeModel) body.model = this.model;
+      if (this.model.startsWith("gpt-5")) body.reasoning_effort = "none";
+
+      const response = await fetch(this.apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(isAzure
+            ? { "api-key": this.apiKey }
+            : { Authorization: `Bearer ${this.apiKey}` }),
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        const responseBody = await response.text().catch(() => "");
+        throw new Error(
+          `OpenAI error ${response.status}: ${responseBody || response.statusText}`,
+        );
+      }
+      const data = (await response.json()) as OpenAIChatResponse;
+      if (data?.error?.message) {
+        throw new Error(`OpenAI error: ${data.error.message}`);
+      }
+      const content = data?.choices?.[0]?.message?.content ?? "";
+      if (!content.trim()) {
+        throw new Error("OpenAI returned an empty translation");
+      }
+      return content;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async translate(text: string, targetLang: string): Promise<string>;

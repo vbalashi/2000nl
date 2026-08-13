@@ -348,11 +348,20 @@ export type PlatformTranslationApiRequest = {
 
 export type PlatformTranslationOverlay = {
   headword?: string;
+  entryTranslation?: {
+    primaryText: string;
+    alternativeTexts: string[];
+    baseText: string | null;
+    note: string | null;
+  } | null;
   meanings?: Array<{
     definition?: string;
     context?: string;
+    note?: string;
     examples?: string[];
-    idioms?: Array<string | { expression?: string; explanation?: string }>;
+    idioms?: Array<
+      string | { expression?: string; explanation?: string; examples?: string[] }
+    >;
   }>;
   __meta?: {
     providerSelected?: "deepl" | "openai" | "gemini";

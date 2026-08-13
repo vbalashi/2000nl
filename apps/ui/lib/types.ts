@@ -301,11 +301,20 @@ export type ScenarioStats = {
 
 export type TranslationOverlay = {
   headword?: string;
+  entryTranslation?: {
+    primaryText: string;
+    alternativeTexts: string[];
+    baseText: string | null;
+    note: string | null;
+  } | null;
   meanings?: Array<{
     definition?: string;
     context?: string;
+    note?: string;
     examples?: string[];
-    idioms?: Array<string | { expression?: string; explanation?: string }>;
+    idioms?: Array<
+      string | { expression?: string; explanation?: string; examples?: string[] }
+    >;
   }>;
   // Optional provenance/debug metadata. Persisted in DB as part of `overlay` JSON.
   // This is intentionally best-effort: older cached translations may not have it.

@@ -3,7 +3,7 @@
   "query": "huis",
   "request": {
     "contentLanguageCode": "nl",
-    "translationTargetLanguageCode": null,
+    "translationTargetLanguageCode": "ru",
     "cardTypeId": "word-to-definition",
     "intent": "external-click"
   },
@@ -52,7 +52,22 @@
               "translations": []
             }
           ],
-          "translation": null,
+          "translation": {
+            "translationId": "fixture-translation-huis-ru",
+            "entryId": "fixture-entry-huis-1",
+            "targetLanguageCode": "ru",
+            "status": "ready",
+            "text": "дом",
+            "alternativeTexts": [
+              "жилище"
+            ],
+            "baseText": "дом",
+            "note": null,
+            "sourceContentFingerprint": "fixture-content-revision-huis-1",
+            "translationPolicyVersion": "translation-policy-v1",
+            "providerRevision": "fixture-provider-revision",
+            "isFresh": true
+          },
           "capabilities": []
         }
       ]

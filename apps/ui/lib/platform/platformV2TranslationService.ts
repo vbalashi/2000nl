@@ -131,6 +131,10 @@ export async function resolvePlatformV2Translations(
       row.status === "ready"
         ? translatedTextAtSourcePath(row.overlay, "raw.headword")
         : null;
+    const structuredEntry = asRecord(row.overlay?.entryTranslation);
+    const alternativeTexts = asStringArray(structuredEntry.alternativeTexts);
+    const baseText = asNullableString(structuredEntry.baseText);
+    const note = asNullableString(structuredEntry.note);
     const status =
       row.status === "ready" && !entryText
         ? "not-available"
@@ -147,6 +151,9 @@ export async function resolvePlatformV2Translations(
       targetLanguageCode,
       status,
       ...(entryText ? { text: entryText } : {}),
+      ...(alternativeTexts ? { alternativeTexts } : {}),
+      ...(structuredEntry.baseText !== undefined ? { baseText } : {}),
+      ...(structuredEntry.note !== undefined ? { note } : {}),
       sourceContentFingerprint: currentContentRevision,
       translationPolicyVersion: currentPolicyVersion,
       ...(row.provider_revision
@@ -244,6 +251,19 @@ function pathTokens(path: string): Array<string | number> {
     if (match[2]) tokens.push(Number(match[2]));
   }
   return tokens;
+}
+
+function asStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const strings = value.filter(
+    (item): item is string => typeof item === "string" && Boolean(item.trim()),
+  );
+  return strings.length === value.length ? strings.map((item) => item.trim()) : null;
+}
+
+function asNullableString(value: unknown): string | null {
+  if (value === null) return null;
+  return asString(value);
 }
 
 function contentNodeTranslationId(

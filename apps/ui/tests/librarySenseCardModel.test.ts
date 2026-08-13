@@ -166,6 +166,29 @@ describe("Library multi-sense model", () => {
     expect(model.meanings[0].displayOrdinal).toBeNull();
   });
 
+  test("keeps structured entry alternatives separate from the primary text", () => {
+    const model = buildLibrarySenseCardGroupModel(
+      {
+        ...multiSenseBankGroup,
+        entries: [
+          {
+            ...furnitureEntry,
+            translation: {
+              ...furnitureEntry.translation!,
+              alternativeTexts: ["скамья", "верстак"],
+            },
+          },
+        ],
+      },
+      "ru",
+    );
+
+    expect(model.meanings[0].entryTranslationAlternatives).toEqual([
+      "скамья",
+      "верстак",
+    ]);
+  });
+
   test("keeps server-owned meaning count and entry-level part of speech", () => {
     const model = buildLibrarySenseCardGroupModel(
       {

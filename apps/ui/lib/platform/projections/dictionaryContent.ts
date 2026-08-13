@@ -61,6 +61,7 @@ export function normalizeDictionaryContent(
                   ? item.text
                   : null,
             context: typeof item.context === "string" ? item.context : null,
+            ...(typeof item.note === "string" ? { note: item.note } : {}),
             examples: asStringArray(item.examples),
             translations: asRecord(item.translations),
             idioms: Array.isArray(item.idioms) ? item.idioms : undefined,

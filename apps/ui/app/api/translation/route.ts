@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { TranslationOverlay, WordEntryTranslationStatus } from "@/lib/types";
-import crypto from "crypto";
 import {
   createTranslator,
   loadTranslationConfigFromEnv,
 } from "@/lib/translation/translationProvider";
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
-import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
+import { getDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
 import {
   TRANSLATION_PIPELINE_VERSION,
   translationPolicyVersion,
@@ -20,10 +19,16 @@ import {
   normalizeDictionaryContent,
   verifyDictionaryContentAudioLinks,
 } from "@/lib/platform/projections/dictionaryContent";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
 import {
-  extractTranslatableTexts,
-  type ExtractedItem,
-} from "@/lib/translation/extractTranslatableTexts";
+  dictionaryMeaningTranslationFingerprint,
+  dictionaryMeaningTranslatedPaths,
+  resolveDictionaryMeaningTranslation,
+} from "@/lib/translation/dictionaryMeaningTranslationService";
+import {
+  newDictionaryMeaningTranslationClaimRevision,
+  updateOwnedDictionaryMeaningTranslation,
+} from "@/lib/translation/dictionaryMeaningTranslationCache";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -62,35 +67,6 @@ function normalizeLangForDb(lang: string) {
   return lang.trim().replace("_", "-").toLowerCase();
 }
 
-function buildOverlay(items: ExtractedItem[], translated: string[]): TranslationOverlay {
-  const overlay: any = { meanings: [{}] };
-
-  const setAtPath = (path: Array<string | number>, value: string) => {
-    let cur: any = overlay;
-    for (let i = 0; i < path.length; i++) {
-      const key = path[i];
-      const isLast = i === path.length - 1;
-
-      if (isLast) {
-        cur[key as any] = value;
-        return;
-      }
-
-      const nextKey = path[i + 1];
-      if (cur[key as any] == null) {
-        cur[key as any] = typeof nextKey === "number" ? [] : {};
-      }
-      cur = cur[key as any];
-    }
-  };
-
-  items.forEach((item, idx) => {
-    setAtPath(item.path, translated[idx] ?? "");
-  });
-
-  return overlay;
-}
-
 function attachOverlayMeta(
   overlay: TranslationOverlay,
   meta: TranslationOverlay["__meta"]
@@ -102,32 +78,6 @@ function attachOverlayMeta(
       ...(meta ?? {}),
     },
   };
-}
-
-function computeFingerprint(items: ExtractedItem[]) {
-  // Stable hash of what we sent to the translation provider (paths + texts)
-  const payload = items.map((it) => ({ path: it.path, text: it.text }));
-  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-}
-
-const POS_DUTCH_LABELS: Record<string, string> = {
-  zn: "zelfstandig naamwoord",
-  ww: "werkwoord",
-  bn: "bijvoeglijk naamwoord",
-  bw: "bijwoord",
-  vz: "voorzetsel",
-  lidw: "lidwoord",
-  vnw: "voornaamwoord",
-  tw: "telwoord",
-};
-
-function normalizePosCode(pos: unknown) {
-  if (typeof pos !== "string") return "";
-  return pos.trim().toLowerCase();
-}
-
-function posDutchLabelFromCode(posCode: string) {
-  return POS_DUTCH_LABELS[posCode] ?? "";
 }
 
 export async function GET(req: NextRequest) {
@@ -155,6 +105,14 @@ export async function GET(req: NextRequest) {
       { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
+  const dbLang = normalizeLangForDb(lang);
+  const targetLang = lang.trim();
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(dbLang)) {
+    return NextResponse.json(
+      { error: "Invalid lang" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   const authResult = await getAuthenticatedUserSupabase(req);
   if (authResult instanceof NextResponse) {
@@ -162,8 +120,6 @@ export async function GET(req: NextRequest) {
   }
   const userSupabase = authResult.supabase;
 
-  const dbLang = normalizeLangForDb(lang);
-  const targetLang = lang.trim();
   let provider: TranslationProviderName;
   let translator: ITranslator;
   const config = loadTranslationConfigFromEnv();
@@ -296,8 +252,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const overlayHasHeadword =
-    Boolean(existing?.overlay) && "headword" in ((existing?.overlay ?? {}) as any);
+  const overlayHasEntryArtifact =
+    Boolean(existing?.overlay) &&
+    ("headword" in ((existing?.overlay ?? {}) as any) ||
+      "entryTranslation" in ((existing?.overlay ?? {}) as any));
   // NOTE:
   // We intentionally delay the "ready" fast-path until after we compute the
   // current source_fingerprint, so cached overlays get refreshed when the
@@ -315,10 +273,28 @@ export async function GET(req: NextRequest) {
   );
   const sourceContentRevision = contentFingerprint(sourceContent);
   const currentTranslationPolicyVersion = translationPolicyVersion(provider);
-  const selectedProviderRevision = getTranslationPromptFingerprint(provider);
+  const selectedProviderRevision =
+    getDictionaryMeaningPromptFingerprint(provider);
+  const meaningRequest = buildDictionaryMeaningTranslationRequest({
+    entryId: wordEntryId,
+    sourceContentFingerprint: sourceContentRevision,
+    sourceLanguageCode:
+      typeof (word as any)?.language_code === "string"
+        ? (word as any).language_code
+        : "nl",
+    targetLanguageCode: dbLang,
+    word,
+  });
+  const fingerprint = dictionaryMeaningTranslationFingerprint({
+    request: meaningRequest,
+    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    provider,
+    promptFingerprint: selectedProviderRevision,
+  });
   const pendingFreshForMs = 15_000;
   if (
     existing?.status === "pending" &&
+    existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
     existing.translation_policy_version === currentTranslationPolicyVersion &&
     isFresh(existing.updated_at, pendingFreshForMs)
@@ -350,23 +326,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const items = extractTranslatableTexts(word);
-  // Include POS in the fingerprint so changes to word_entries.part_of_speech retrigger translation.
-  const posCode = normalizePosCode((word as any)?.part_of_speech);
-  const fingerprint = computeFingerprint([
-    ...items,
-    { path: ["__part_of_speech__"], text: posCode || "" },
-    { path: ["__translation_pipeline_version__"], text: TRANSLATION_PIPELINE_VERSION },
-    { path: ["__translation_prompt_fingerprint__", provider], text: getTranslationPromptFingerprint(provider) },
-  ]);
-
   // Fast-path: return cached overlay only if it matches the current fingerprint.
   if (
     !force &&
     existing &&
     existing.status === "ready" &&
     existing.overlay &&
-    overlayHasHeadword &&
+    overlayHasEntryArtifact &&
     existing.source_fingerprint &&
     existing.source_fingerprint === fingerprint &&
     existing.source_content_revision === sourceContentRevision &&
@@ -401,7 +367,10 @@ export async function GET(req: NextRequest) {
   }
 
   // Ensure row exists; if it doesn't, create pending row (race guard via unique constraint).
+  let claimUpdatedAt: string | null = null;
   if (!existing) {
+    const insertClaimUpdatedAt =
+      newDictionaryMeaningTranslationClaimRevision();
     const { data: inserted, error: insertError } = await supabase
       .from("word_entry_translations")
       .upsert(
@@ -417,6 +386,7 @@ export async function GET(req: NextRequest) {
           translation_policy_version: currentTranslationPolicyVersion,
           provider_revision: selectedProviderRevision,
           error_message: null,
+          updated_at: insertClaimUpdatedAt,
         },
         { onConflict: "word_entry_id,target_lang,provider", ignoreDuplicates: true }
       )
@@ -523,6 +493,7 @@ export async function GET(req: NextRequest) {
         }
       );
     }
+    claimUpdatedAt = insertClaimUpdatedAt;
   }
 
   // If a row exists but isn't ready (or is ready-but-missing-headword), mark it pending and re-run translation.
@@ -532,14 +503,17 @@ export async function GET(req: NextRequest) {
     const needsWork =
       force ||
       existing.status !== "ready" ||
-      (existing.status === "ready" && !overlayHasHeadword) ||
+      (existing.status === "ready" && !overlayHasEntryArtifact) ||
       !existing.source_fingerprint ||
       existing.source_fingerprint !== fingerprint ||
       existing.source_content_revision !== sourceContentRevision ||
       existing.translation_policy_version !== currentTranslationPolicyVersion;
 
     if (needsWork) {
-      const nowIso = new Date().toISOString();
+      const nowIso = newDictionaryMeaningTranslationClaimRevision(
+        new Date(),
+        existing.updated_at,
+      );
       const { data: claimed, error: claimError } = await supabase
         .from("word_entry_translations")
         .update({
@@ -592,87 +566,22 @@ export async function GET(req: NextRequest) {
           }
         );
       }
+      claimUpdatedAt = nowIso;
     }
   }
-  if (items.length === 0) {
-    const overlay: TranslationOverlay = attachOverlayMeta(
-      { headword: "", meanings: [{}] },
-      {
-        providerSelected: provider,
-        providerUsed: provider,
-        usedFallback: false,
-        primaryError: null,
-        promptFingerprint: getTranslationPromptFingerprint(provider),
-        translatedPaths: items.map((item) => item.path),
-      }
-    );
-    await supabase
-      .from("word_entry_translations")
-      .update({
-        status: "ready",
-        overlay,
-        note: null,
-        source_fingerprint: fingerprint,
-        source_content_revision: sourceContentRevision,
-        translation_policy_version: currentTranslationPolicyVersion,
-        provider_revision: selectedProviderRevision,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
-
+  if (!claimUpdatedAt) {
     return NextResponse.json(
-      { status: "ready" as const, overlay, note: null },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Translation-Cache": "hit",
-        },
-      }
+      { error: "translation_claim_not_owned" },
+      { status: 409, headers: { "Cache-Control": "no-store" } },
     );
   }
-
   try {
-    const texts = items.map((i) => i.text);
-    const posLabel = posDutchLabelFromCode(posCode);
-    const hasContextTranslate =
-      typeof (translator as any)?.translateWithContext === "function";
-    const hasContextTranslateAndNote =
-      typeof (translator as any)?.translateWithContextAndNote === "function";
+    const { overlay, note, meta } =
+      await resolveDictionaryMeaningTranslation(translator, meaningRequest);
+    const providerUsed = meta.providerUsed ?? null;
+    const usedFallback = meta.usedFallback ?? false;
+    const primaryError = meta.primaryError ?? null;
 
-    const context = {
-      partOfSpeech: posLabel || null,
-      partOfSpeechCode: posCode || null,
-    };
-
-    let translatedTexts: string[] = [];
-    let note: string | null = null;
-    let providerUsed: string | null = null;
-    let usedFallback: boolean | null = null;
-    let primaryError: string | null = null;
-
-    if (hasContextTranslateAndNote) {
-      const result = await (translator as any).translateWithContextAndNote(
-        texts,
-        targetLang,
-        context
-      );
-      translatedTexts = result?.translations ?? [];
-      note = typeof result?.note === "string" ? result.note : null;
-      providerUsed = typeof result?.meta?.providerUsed === "string" ? result.meta.providerUsed : null;
-      usedFallback = typeof result?.meta?.usedFallback === "boolean" ? result.meta.usedFallback : null;
-      primaryError = typeof result?.meta?.primaryError === "string" ? result.meta.primaryError : null;
-    } else {
-      translatedTexts = hasContextTranslate
-        ? await (translator as any).translateWithContext(texts, targetLang, context)
-        : await translator.translate(texts, targetLang);
-      note = null;
-    }
-
-    const overlay = buildOverlay(items, translatedTexts);
     const used =
       providerUsed === "deepl" || providerUsed === "openai" || providerUsed === "gemini"
         ? (providerUsed as TranslationProviderName)
@@ -682,26 +591,32 @@ export async function GET(req: NextRequest) {
       providerUsed: used,
       usedFallback,
       primaryError,
-      promptFingerprint: getTranslationPromptFingerprint(used),
-      translatedPaths: items.map((item) => item.path),
+      promptFingerprint: getDictionaryMeaningPromptFingerprint(used),
+      translatedPaths: dictionaryMeaningTranslatedPaths(meaningRequest),
     });
 
-    const { error: updateError } = await supabase
-      .from("word_entry_translations")
-      .update({
+    const { error: updateError } =
+      await updateOwnedDictionaryMeaningTranslation(
+        supabase,
+        {
+          wordEntryId,
+          targetLanguageCode: dbLang,
+          provider,
+          sourceFingerprint: fingerprint,
+          claimUpdatedAt,
+        },
+        {
         status: "ready",
         overlay: overlayWithMeta,
         note,
         source_fingerprint: fingerprint,
         source_content_revision: sourceContentRevision,
         translation_policy_version: currentTranslationPolicyVersion,
-        provider_revision: getTranslationPromptFingerprint(used),
+        provider_revision: getDictionaryMeaningPromptFingerprint(used),
         error_message: null,
         updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
+        },
+      );
 
     if (updateError) {
       return NextResponse.json(
@@ -748,9 +663,16 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
 
-    await supabase
-      .from("word_entry_translations")
-      .update({
+    await updateOwnedDictionaryMeaningTranslation(
+      supabase,
+      {
+        wordEntryId,
+        targetLanguageCode: dbLang,
+        provider,
+        sourceFingerprint: fingerprint,
+        claimUpdatedAt,
+      },
+      {
         status: "failed",
         source_fingerprint: fingerprint,
         source_content_revision: sourceContentRevision,
@@ -758,10 +680,8 @@ export async function GET(req: NextRequest) {
         provider_revision: selectedProviderRevision,
         error_message: message,
         updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
+      },
+    );
 
     return NextResponse.json(
       {
@@ -786,7 +706,13 @@ export async function GET(req: NextRequest) {
             }
           : null),
       },
-      { status: 502, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 502,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "provider",
+        },
+      }
     );
   }
 }

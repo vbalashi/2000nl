@@ -113,4 +113,21 @@ describe("buildTrainingSenseCardModel", () => {
       }),
     );
   });
+
+  test("keeps structured entry alternatives separate from the primary text", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        translation: {
+          ...singleSenseEntry.translation!,
+          alternativeTexts: ["palm", "mitt"],
+        },
+      },
+      interfaceLanguage: "en",
+    });
+
+    expect(model.entryTranslation).toBe("hand");
+    expect(model.entryTranslationAlternatives).toEqual(["palm", "mitt"]);
+  });
 });

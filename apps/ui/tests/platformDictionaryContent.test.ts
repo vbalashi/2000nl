@@ -57,6 +57,28 @@ describe("platform dictionary content audio links", () => {
     expect(content.audioLinks).toBeUndefined();
   });
 
+  test("keeps learner-visible meaning notes in canonical content", () => {
+    const content = normalizeDictionaryContent({
+      id: "entry-1",
+      language_code: "nl",
+      headword: "huis",
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "alleen figuurlijk gebruikt" },
+        ],
+      },
+    });
+
+    expect(content.meanings[0]).toMatchObject({
+      note: "alleen figuurlijk gebruikt",
+    });
+    expect(content.sections).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourcePath: "raw.meanings[0].note" }),
+      ]),
+    );
+  });
+
   test("rejects encoded traversal in local audio links", () => {
     expect(localAudioAssetExists("/audio/%2E%2E/secret.mp3")).toBe(false);
   });
