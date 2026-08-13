@@ -63,8 +63,7 @@ Platform V2 types:
   `clientEventId` UUID, `reviewResult` (`fail`, `hard`, `success`, or `easy`) for
   `review-card` and `null` otherwise, plus `clientObservedOutcome` (`accepted`,
   `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
-  `unknown`) and server-derived `commitState` (`committed` or `not-found`). For
-  `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
+  `unknown`). For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
   required UUIDs; for every other action both are explicit `null`. A separate
   required `contentRevision` binds any attached card atoms but is not part of
   the historical Platform action identity;
@@ -179,12 +178,15 @@ For a `training-action` target, action verification is deliberately historical,
 not a comparison with the current card state. The server looks up the
 principal-scoped immutable action receipt/history by `clientEventId`, compares
 the submitted action ID, original SenseCard target, review result, and
-undo-known fields with the recorded request, and derives `commitState:
-committed` from that record. A later `stateRevision` is expected after a
+undo-known fields with the recorded request, and derives server enrichment
+`commitState: committed` from that record. `commitState` is never a client
+request field and is excluded from canonical payload bytes/hash. A later
+`stateRevision` is expected after a
 committed action and does not invalidate the report. The receipt does not claim
 whether the client saw the first accepted response or a duplicate retry, so the
 separate bounded `clientObservedOutcome` retains either observation. If no
-receipt exists, the server derives `commitState: not-found` and may retain the
+receipt exists, the server enriches the stored record with `commitState:
+not-found` and may retain the
 client-observed `state-conflict`, `network`, `timeout`, `server-error`, or
 `unknown`; `accepted` or `duplicate` without a receipt is rejected. A 409 state
 or known-mark conflict is therefore reportable but explicitly non-authoritative.
@@ -369,6 +371,9 @@ created/updated timestamps. Resolution, duplicate relation, and GitHub link are
 initially `null`. This is the #51
 durable classification; broad `kind` supports queue partitioning and
 `problemType` preserves its granular translation/content problem types.
+For `training-action`, the server also stores derived `commitState` as
+`committed` or `not-found` beside—not inside—the immutable submitted target and
+may return it in the acceptance receipt.
 For a validated YouTube source it also retains the durable source/location
 subset defined above; all other source-context evidence expires with the
 envelope.
@@ -410,6 +415,9 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
   no-receipt state/known-mark conflict, unknown/uncommitted action, mismatched
   target/clientEventId, forged accepted/duplicate without receipt, and
   cross-user receipt access;
+- commit-then-disconnect freezes a network/timeout observation; server receipt
+  lookup stores `commitState: committed` without modifying canonical payload
+  bytes/hash, and duplicate delivery returns the same enrichment;
 - local deletion only after verified receipt;
 - atomic creation of Feedback Item + Diagnostic Envelope and 90-day cleanup that preserves the Feedback Item;
 - authenticated submit, server-derived user identity, non-admin denial, admin review access, and no direct browser table access;
