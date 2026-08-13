@@ -7,7 +7,7 @@ import {
 } from "@/lib/translation/translationProvider";
 import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
-import { getTranslationPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
+import { getDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
 import {
   TRANSLATION_PIPELINE_VERSION,
   translationPolicyVersion,
@@ -25,6 +25,7 @@ import {
   dictionaryMeaningTranslatedPaths,
   resolveDictionaryMeaningTranslation,
 } from "@/lib/translation/dictionaryMeaningTranslationService";
+import { updateOwnedDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCache";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -101,6 +102,14 @@ export async function GET(req: NextRequest) {
       { status: 400, headers: { "Cache-Control": "no-store" } }
     );
   }
+  const dbLang = normalizeLangForDb(lang);
+  const targetLang = lang.trim();
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(dbLang)) {
+    return NextResponse.json(
+      { error: "Invalid lang" },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
   const authResult = await getAuthenticatedUserSupabase(req);
   if (authResult instanceof NextResponse) {
@@ -108,8 +117,6 @@ export async function GET(req: NextRequest) {
   }
   const userSupabase = authResult.supabase;
 
-  const dbLang = normalizeLangForDb(lang);
-  const targetLang = lang.trim();
   let provider: TranslationProviderName;
   let translator: ITranslator;
   const config = loadTranslationConfigFromEnv();
@@ -263,7 +270,8 @@ export async function GET(req: NextRequest) {
   );
   const sourceContentRevision = contentFingerprint(sourceContent);
   const currentTranslationPolicyVersion = translationPolicyVersion(provider);
-  const selectedProviderRevision = getTranslationPromptFingerprint(provider);
+  const selectedProviderRevision =
+    getDictionaryMeaningPromptFingerprint(provider);
   const meaningRequest = buildDictionaryMeaningTranslationRequest({
     entryId: wordEntryId,
     sourceContentFingerprint: sourceContentRevision,
@@ -565,26 +573,31 @@ export async function GET(req: NextRequest) {
       providerUsed: used,
       usedFallback,
       primaryError,
-      promptFingerprint: getTranslationPromptFingerprint(used),
+      promptFingerprint: getDictionaryMeaningPromptFingerprint(used),
       translatedPaths: dictionaryMeaningTranslatedPaths(meaningRequest),
     });
 
-    const { error: updateError } = await supabase
-      .from("word_entry_translations")
-      .update({
+    const { error: updateError } =
+      await updateOwnedDictionaryMeaningTranslation(
+        supabase,
+        {
+          wordEntryId,
+          targetLanguageCode: dbLang,
+          provider,
+          sourceFingerprint: fingerprint,
+        },
+        {
         status: "ready",
         overlay: overlayWithMeta,
         note,
         source_fingerprint: fingerprint,
         source_content_revision: sourceContentRevision,
         translation_policy_version: currentTranslationPolicyVersion,
-        provider_revision: getTranslationPromptFingerprint(used),
+        provider_revision: getDictionaryMeaningPromptFingerprint(used),
         error_message: null,
         updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
+        },
+      );
 
     if (updateError) {
       return NextResponse.json(
@@ -631,9 +644,15 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
 
-    await supabase
-      .from("word_entry_translations")
-      .update({
+    await updateOwnedDictionaryMeaningTranslation(
+      supabase,
+      {
+        wordEntryId,
+        targetLanguageCode: dbLang,
+        provider,
+        sourceFingerprint: fingerprint,
+      },
+      {
         status: "failed",
         source_fingerprint: fingerprint,
         source_content_revision: sourceContentRevision,
@@ -641,10 +660,8 @@ export async function GET(req: NextRequest) {
         provider_revision: selectedProviderRevision,
         error_message: message,
         updated_at: new Date().toISOString(),
-      })
-      .eq("word_entry_id", wordEntryId)
-      .eq("target_lang", dbLang)
-      .eq("provider", provider);
+      },
+    );
 
     return NextResponse.json(
       {

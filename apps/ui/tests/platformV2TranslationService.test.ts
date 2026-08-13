@@ -143,4 +143,61 @@ describe("Platform V2 translation projection", () => {
       note: "Здесь имеется в виду одежда для стирки.",
     });
   });
+
+  test("fails closed when only a learner-visible usage note changed", async () => {
+    const oldEntry = {
+      id: "entry-1",
+      language_code: "nl",
+      headword: "huis",
+      part_of_speech: "zn",
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "oude gebruikstoelichting" },
+        ],
+      },
+    };
+    const changedEntry = {
+      ...oldEntry,
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "nieuwe gebruikstoelichting" },
+        ],
+      },
+    };
+    const from = vi.fn(() =>
+      translationQuery([
+        {
+          id: "translation-note-1",
+          word_entry_id: "entry-1",
+          target_lang: "ru",
+          provider: "openai",
+          status: "ready",
+          overlay: { headword: "дом", meanings: [{ definition: "здание" }] },
+          source_content_revision: contentFingerprint(
+            normalizeDictionaryContent(oldEntry as any),
+          ),
+          translation_policy_version: translationPolicyVersion("openai"),
+          provider_revision: "meaning-prompt-v1",
+          error_message: null,
+        },
+      ]),
+    );
+
+    const result = await resolvePlatformV2Translations(
+      { supabase: { from } } as any,
+      {
+        entries: [changedEntry],
+        bindingsByEntryId: new Map(),
+        targetLanguageCode: "ru",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.byEntryId.get("entry-1")?.entryTranslation).toMatchObject({
+      status: "not-available",
+      errorCode: "stale-source",
+      isFresh: false,
+    });
+  });
 });

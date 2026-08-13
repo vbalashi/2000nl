@@ -9,12 +9,22 @@ function sha256(text: string) {
 export function getOpenAiTranslationPromptFingerprint() {
   const system = loadPromptText("openai_translation_system_v1.txt");
   const userInstructions = loadPromptText("openai_translation_user_instructions_v1.txt");
+  return sha256([system, userInstructions].join("\n---\n"));
+}
+
+export function getOpenAiDictionaryMeaningPromptFingerprint() {
   const meaningSystem = loadPromptText("openai_dictionary_meaning_system_v1.txt");
   const meaningInstructions = loadPromptText("openai_dictionary_meaning_user_v1.txt");
-  // Include filenames implicitly via concatenation order.
-  return sha256(
-    [system, userInstructions, meaningSystem, meaningInstructions].join("\n---\n"),
-  );
+  return sha256([meaningSystem, meaningInstructions].join("\n---\n"));
+}
+
+export function getDictionaryMeaningPromptFingerprint(
+  provider: TranslationProviderName,
+) {
+  if (provider === "openai") {
+    return getOpenAiDictionaryMeaningPromptFingerprint();
+  }
+  return "builtin_dictionary_meaning_v1";
 }
 
 export function getTranslationPromptFingerprint(provider: TranslationProviderName) {

@@ -6,11 +6,19 @@ export const DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION =
   "dictionary-meaning-translation-v1" as const;
 
 export const DICTIONARY_MEANING_TRANSLATION_LIMITS = {
+  entryIdCharacters: 128,
+  sourceContentFingerprintCharacters: 128,
+  languageCodeCharacters: 35,
   headwordCharacters: 120,
+  articleCharacters: 32,
+  partOfSpeechCharacters: 120,
+  partOfSpeechCodeCharacters: 32,
   contentItems: 24,
   contentItemCharacters: 600,
   contentCharacters: 6_000,
   contentTokenUpperBound: 2_500,
+  requestStringCharacters: 6_600,
+  requestStringTokenUpperBound: 3_000,
   entryTranslationCharacters: 300,
   alternativeTexts: 5,
   contentTranslationCharacters: 1_200,
@@ -71,20 +79,74 @@ export function buildDictionaryMeaningTranslationRequest(params: {
   const partOfSpeechCode =
     typeof word.part_of_speech === "string" ? word.part_of_speech : null;
   const context = dictionaryTranslationContext(partOfSpeechCode);
+  const entryId = requiredBoundedString(
+    params.entryId,
+    "entryId",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.entryIdCharacters,
+  );
+  const sourceContentFingerprint = requiredBoundedString(
+    params.sourceContentFingerprint,
+    "sourceContentFingerprint",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.sourceContentFingerprintCharacters,
+  );
+  const sourceLanguageCode = normalizeSourceLanguageCode(
+    params.sourceLanguageCode,
+  );
+  const targetLanguageCode = normalizeLanguageCode(
+    params.targetLanguageCode,
+    "targetLanguageCode",
+  );
+  const headword = requiredTruncatedString(
+    word.headword,
+    "headword",
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.headwordCharacters,
+  );
+  const article = nullableTruncatedString(
+    word.gender,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.articleCharacters,
+  );
+  const normalizedPartOfSpeech = nullableTruncatedString(
+    context.partOfSpeech,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.partOfSpeechCharacters,
+  );
+  const normalizedPartOfSpeechCode = nullableTruncatedString(
+    context.partOfSpeechCode,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.partOfSpeechCodeCharacters,
+  );
+  const fixedStrings = [
+    DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+    entryId,
+    sourceContentFingerprint,
+    sourceLanguageCode,
+    targetLanguageCode,
+    headword,
+    article,
+    normalizedPartOfSpeech,
+    normalizedPartOfSpeechCode,
+  ].filter((value): value is string => value !== null);
   const content: DictionaryMeaningTranslationRequestV1["content"] = [];
-  let remainingContentCharacters =
-    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters;
-  let remainingContentTokenUpperBound =
-    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTokenUpperBound;
+  let remainingContentCharacters = Math.min(
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringCharacters -
+      fixedStrings.reduce((sum, value) => sum + unicodeLength(value), 0),
+  );
+  let remainingContentTokenUpperBound = Math.min(
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.contentTokenUpperBound,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringTokenUpperBound -
+      fixedStrings.reduce((sum, value) => sum + tokenUpperBound(value), 0),
+  );
   const push = (
     fieldId: string,
     role: DictionaryMeaningContentRole,
     value: unknown,
   ) => {
+    const metadataCharacters = unicodeLength(fieldId) + unicodeLength(role);
+    const metadataTokenUpperBound =
+      tokenUpperBound(fieldId) + tokenUpperBound(role);
     if (
       content.length >= DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItems ||
-      remainingContentCharacters <= 0 ||
-      remainingContentTokenUpperBound <= 0
+      remainingContentCharacters <= metadataCharacters ||
+      remainingContentTokenUpperBound <= metadataTokenUpperBound
     ) {
       return;
     }
@@ -92,14 +154,15 @@ export function buildDictionaryMeaningTranslationRequest(params: {
       value,
       Math.min(
         DICTIONARY_MEANING_TRANSLATION_LIMITS.contentItemCharacters,
-        remainingContentCharacters,
+        remainingContentCharacters - metadataCharacters,
       ),
-      remainingContentTokenUpperBound,
+      remainingContentTokenUpperBound - metadataTokenUpperBound,
     );
     if (!text) return;
     content.push({ fieldId, role, text });
-    remainingContentCharacters -= unicodeLength(text);
-    remainingContentTokenUpperBound -= tokenUpperBound(text);
+    remainingContentCharacters -= metadataCharacters + unicodeLength(text);
+    remainingContentTokenUpperBound -=
+      metadataTokenUpperBound + tokenUpperBound(text);
   };
 
   push("definition", "definition", meaning.definition);
@@ -127,22 +190,15 @@ export function buildDictionaryMeaningTranslationRequest(params: {
 
   return {
     contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
-    entryId: params.entryId,
-    sourceContentFingerprint: params.sourceContentFingerprint,
-    sourceLanguageCode: params.sourceLanguageCode,
-    targetLanguageCode: params.targetLanguageCode,
+    entryId,
+    sourceContentFingerprint,
+    sourceLanguageCode,
+    targetLanguageCode,
     headword: {
-      text: requiredTruncatedString(
-        word.headword,
-        "headword",
-        DICTIONARY_MEANING_TRANSLATION_LIMITS.headwordCharacters,
-      ),
-      article:
-        typeof word.gender === "string" && word.gender.trim()
-          ? word.gender.trim()
-          : null,
-      partOfSpeech: context.partOfSpeech ?? null,
-      partOfSpeechCode: context.partOfSpeechCode ?? null,
+      text: headword,
+      article,
+      partOfSpeech: normalizedPartOfSpeech,
+      partOfSpeechCode: normalizedPartOfSpeechCode,
     },
     content,
   };
@@ -331,6 +387,33 @@ function requiredTruncatedString(value: unknown, label: string, limit: number) {
 function nullableBoundedString(value: unknown, label: string, limit: number) {
   if (value === null) return null;
   return requiredBoundedString(value, label, limit);
+}
+
+function nullableTruncatedString(value: unknown, limit: number) {
+  const text = boundedString(value, limit);
+  return text || null;
+}
+
+function normalizeLanguageCode(value: unknown, label: string) {
+  const normalized = requiredBoundedString(
+    value,
+    label,
+    DICTIONARY_MEANING_TRANSLATION_LIMITS.languageCodeCharacters,
+  )
+    .replace(/_/g, "-")
+    .toLowerCase();
+  if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,3}$/.test(normalized)) {
+    throw new Error(`${label} must be a supported language-code shape`);
+  }
+  return normalized;
+}
+
+function normalizeSourceLanguageCode(value: unknown) {
+  try {
+    return normalizeLanguageCode(value, "sourceLanguageCode");
+  } catch {
+    return "und";
+  }
 }
 
 function boundedString(

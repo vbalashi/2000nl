@@ -39,6 +39,7 @@ vi.mock("@/lib/translation/translationProvider", () => ({
 }));
 
 vi.mock("@/lib/translation/prompts/promptFingerprint", () => ({
+  getDictionaryMeaningPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
   getTranslationPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
 }));
 
@@ -125,6 +126,21 @@ describe("/api/translation", () => {
       error: "missing_bearer_token",
     });
     expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("rejects invalid target language metadata before provider work", async () => {
+    const { GET } = await import("@/app/api/translation/route");
+    const invalidRequest = new NextRequest(
+      "http://localhost/api/translation?word_id=00000000-0000-4000-8000-000000000001&lang=ru%3Bignore",
+      { headers: { authorization: "Bearer token-1" } },
+    );
+
+    const response = await GET(invalidRequest);
+
+    expect(response.status).toBe(400);
+    expect(createClient).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(translateDictionaryMeaning).not.toHaveBeenCalled();
   });
 
   test("does not require connected-client principal schema for first-party translation", async () => {
@@ -381,6 +397,10 @@ describe("/api/translation", () => {
         }),
       }),
     );
+    expect(readyChain.eq).toHaveBeenCalledWith(
+      "source_fingerprint",
+      translationFingerprint(accessibleWord),
+    );
     await expect(response.json()).resolves.toMatchObject({
       status: "ready",
       overlay: {
@@ -505,5 +525,10 @@ describe("/api/translation", () => {
 
     expect(response.status).toBe(502);
     expect(response.headers.get("x-translation-cache")).toBe("provider");
+    const failedUpdateChain = from.mock.results.at(-1)?.value;
+    expect(failedUpdateChain.eq).toHaveBeenCalledWith(
+      "source_fingerprint",
+      translationFingerprint(accessibleWord),
+    );
   });
 });

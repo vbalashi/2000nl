@@ -55,6 +55,7 @@ vi.mock("@/lib/translation/translationProvider", () => ({
 }));
 
 vi.mock("@/lib/translation/prompts/promptFingerprint", () => ({
+  getDictionaryMeaningPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
   getTranslationPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
 }));
 

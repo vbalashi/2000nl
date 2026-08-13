@@ -16,6 +16,9 @@ Dictionary overlays use `dictionary-meaning-translation-v1`. The request binds
 one exact `entryId` and `sourceContentFingerprint` to a bounded headword,
 definition, Usage Pattern, examples, idioms, explanations, and notes payload.
 Each content item has a semantic role and stable request-local `fieldId`.
+The contract applies explicit item, per-field, aggregate character, and
+conservative UTF-8 byte/token upper bounds to every dynamic request string;
+language codes are normalized and allowlisted by shape.
 
 The strict response separates the entry rendering from translations of its
 content:
@@ -123,7 +126,10 @@ Keep changes small and targeted:
 
 The translation API route caches translations per `(word_entry_id, target_lang, provider)` and uses a fingerprint to decide whether to retranslate.
 
-We include a prompt hash in the fingerprint, so edits to the OpenAI prompt files automatically invalidate cached translations:
+Each translation contract has its own prompt hash. Dictionary-meaning prompt
+edits invalidate dictionary artifacts, while selected-fragment prompt edits do
+not cause paid regeneration of unrelated dictionary translations (and vice
+versa):
 - `apps/ui/app/api/translation/route.ts`
 - `apps/ui/lib/translation/prompts/promptFingerprint.ts`
 

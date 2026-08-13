@@ -61,6 +61,7 @@ export function normalizeDictionaryContent(
                   ? item.text
                   : null,
             context: typeof item.context === "string" ? item.context : null,
+            ...(typeof item.note === "string" ? { note: item.note } : {}),
             examples: asStringArray(item.examples),
             translations: asRecord(item.translations),
             idioms: Array.isArray(item.idioms) ? item.idioms : undefined,
@@ -448,6 +449,21 @@ function buildContentSections(
         sourcePath,
         kind: "context",
         text: item.context,
+        ...(overlayTranslation ? { translation: overlayTranslation } : {}),
+      });
+    }
+
+    if (typeof item.note === "string") {
+      const sourcePath = `raw.meanings[${meaningIndex}].note`;
+      const overlayTranslation = overlayTranslationAtSourcePath(
+        translationOverlay,
+        sourcePath,
+      );
+      sections.push({
+        id: sectionId("note", meaningIndex),
+        sourcePath,
+        kind: "note",
+        text: item.note,
         ...(overlayTranslation ? { translation: overlayTranslation } : {}),
       });
     }
