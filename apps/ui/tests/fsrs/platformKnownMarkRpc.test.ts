@@ -1283,6 +1283,58 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
+  test("reads the committed review receipt through the service-principal reconciliation boundary", async () => {
+    const userId = randomUUID();
+    const clientEventId = randomUUID();
+
+    await withTransaction(
+      pool,
+      async (client) => {
+        await ensureUserWithSettings(client, userId);
+        const entryId = await insertWord(
+          client,
+          `platform-review-reconcile-${Date.now()}`,
+        );
+        await client.query(
+          "select start_learning_entry_card($1::uuid, $2::uuid, $3::text)",
+          [userId, entryId, cardTypeId],
+        );
+        const state = await client.query(
+          `select state_revision
+             from user_card_status
+            where user_id = $1 and entry_id = $2 and card_type_id = $3`,
+          [userId, entryId, cardTypeId],
+        );
+        const accepted = await client.query(
+          `select perform_platform_v2_card_action(
+             $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+             null, null, 'success', $5::uuid, null, 'first_party', null
+           ) as result`,
+          [
+            userId,
+            entryId,
+            cardTypeId,
+            state.rows[0].state_revision,
+            clientEventId,
+          ],
+        );
+
+        await client.query(
+          "select set_config('request.jwt.claim.role', 'service_role', true)",
+        );
+        const reconciled = await client.query(
+          `select reconcile_platform_v2_action_receipt_as_principal(
+             $1::uuid, $2::uuid
+           ) as result`,
+          [userId, clientEventId],
+        );
+
+        expect(reconciled.rows[0].result).toEqual(accepted.rows[0].result);
+      },
+      userId,
+    );
+  });
+
   test("rejects an Undo for a cleared mark after a replacement mark exists", async () => {
     const userId = randomUUID();
 

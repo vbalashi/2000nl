@@ -60,7 +60,7 @@ vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
     requestTranslation(...args),
 }));
 
-vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
   performPlatformV2TrainingAction: (...args: unknown[]) =>
     performAction(...args),
 }));

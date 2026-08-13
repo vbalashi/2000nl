@@ -206,6 +206,64 @@ describe("performPlatformV2TrainingAction", () => {
     ).resolves.toEqual(acceptedResponse);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  test("reads the authoritative receipt when both review responses disconnect", async () => {
+    const capability = reviewCapability("success");
+    const eventId = "f838d536-98cf-48a9-8c65-e360d025d4b8";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2" as const,
+      actionId: "review-card" as const,
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card!,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Load failed"))
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(acceptedResponse);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions/reconcile",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toEqual({
+      clientEventId: eventId,
+    });
+  });
+
+  test("reports a typed recoverable outcome when neither ambiguous attempt committed", async () => {
+    const capability = reviewCapability("hard");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(
+      "66fe664a-f76f-4800-a52f-af49b7dc0a3b",
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValueOnce(new Error("platform_request_timeout"))
+        .mockRejectedValueOnce(new TypeError("Load failed"))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "action_receipt_not_found" }), {
+            status: 404,
+          }),
+        ),
+    );
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).rejects.toThrow("action_receipt_not_found");
+  });
 });
 
 function reviewCapability(

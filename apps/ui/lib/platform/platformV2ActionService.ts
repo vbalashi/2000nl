@@ -70,6 +70,50 @@ export async function performPlatformV2Action(
   };
 }
 
+export async function reconcilePlatformV2ActionReceipt(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  clientEventId: string,
+): Promise<PlatformV2ActionOperationResult> {
+  const { data, error } = await service.supabase.rpc(
+    "reconcile_platform_v2_action_receipt_as_principal",
+    {
+      p_user_id: auth.user.id,
+      p_client_event_id: clientEventId,
+    },
+  );
+  if (error) return actionError(error);
+  if (data === null) {
+    return {
+      payload: { error: "action_receipt_not_found" },
+      status: 404,
+    };
+  }
+
+  const result = asRecord(data);
+  const cardTypeId = asString(asRecord(result.card).cardTypeId);
+  const card = cardTypeId ? platformCardState(result.card, cardTypeId) : null;
+  if (
+    result.actionId !== "review-card" ||
+    result.clientEventId !== clientEventId ||
+    !card
+  ) {
+    return {
+      payload: { error: "invalid_platform_v2_action_receipt" },
+      status: 500,
+    };
+  }
+
+  const payload: PlatformActionV2Response = {
+    contractVersion: "platform-action-v2",
+    actionId: "review-card",
+    clientEventId,
+    accepted: true,
+    card,
+  };
+  return { payload, status: 200, receiptStatus: "duplicate" };
+}
+
 function actionError(error: unknown): PlatformV2ActionOperationResult {
   const message = errorMessage(error);
   if (message.includes("platform_action_idempotency_conflict")) {

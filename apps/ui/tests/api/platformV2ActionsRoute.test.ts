@@ -359,4 +359,99 @@ describe("/api/platform/v2/actions", () => {
       }),
     );
   });
+
+  test("reads an authoritative review receipt after both mutation responses disconnect", async () => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "reviewing", repeatCount: 4 },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/reconcile/route"
+    );
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer user-token",
+          "content-type": "application/json",
+          origin: "chrome-extension://abc",
+        },
+        body: JSON.stringify({
+          clientEventId: "00000000-0000-4000-8000-000000000002",
+        }),
+      }),
+    );
+
+    expect(rpc).toHaveBeenCalledWith(
+      "reconcile_platform_v2_action_receipt_as_principal",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_client_event_id: "00000000-0000-4000-8000-000000000002",
+      },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-review-outcome")).toBe(
+      "authoritative_receipt",
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        accepted: true,
+      }),
+    );
+    expect(telemetry).toHaveBeenCalledWith(
+      "[platform.training.review]",
+      expect.objectContaining({
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        outcome: "authoritative_receipt",
+      }),
+    );
+  });
+
+  test("reports that no authoritative receipt exists without exposing another user", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/reconcile/route"
+    );
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer user-token",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          clientEventId: "00000000-0000-4000-8000-000000000099",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "action_receipt_not_found",
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "reconcile_platform_v2_action_receipt_as_principal",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_client_event_id: "00000000-0000-4000-8000-000000000099",
+      },
+    );
+  });
 });
