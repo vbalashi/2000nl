@@ -143,9 +143,10 @@ the old UI cannot present a cross-reference-only record safely.
 
 1. Create a fresh production database backup, verify that `pg_restore --list`
    can read it, and preserve the previously imported generated corpus.
-2. Deploy application code that understands the explicit cross-reference DTO.
-   Confirm `/api/health` reports that exact commit before changing dictionary
-   data.
+2. Deploy application code that understands the explicit cross-reference DTO
+   together with migration `117_exclude_pointer_only_entries_from_training.sql`.
+   Confirm `/api/health` reports that exact commit and both Training scheduler
+   wrappers exclude a pointer-only fixture before changing dictionary data.
 3. Regenerate the corpus cleanly from the source list. Run
    `audit_pointer_meanings.py` over the complete pre-generation source corpus;
    require zero unresolved pointer shapes and review every resolvable candidate.

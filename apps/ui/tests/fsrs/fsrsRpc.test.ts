@@ -2598,6 +2598,100 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("training schedulers exclude pointer-only dictionary entries", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 10,
+        daily_review_limit: 10,
+      });
+      const pointerId = await insertWord(
+        client,
+        `fsrs-pointer-only-${Date.now()}`,
+        { is_nt2_2000: false },
+      );
+      await client.query(
+        `update word_entries
+         set raw = jsonb_build_object(
+           'cross_reference', 'target-',
+           'meanings', '[]'::jsonb
+         )
+         where id = $1`,
+        [pointerId],
+      );
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Pointer-only scheduler list ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
+        pointerId,
+      ]);
+
+      const { rows: unfilteredRows } = await client.query(
+        `select get_next_card(
+          $1::uuid,
+          ARRAY[$2]::text[],
+          ARRAY[]::uuid[],
+          $3::uuid,
+          'user',
+          'both',
+          'new',
+          ARRAY[]::text[]
+        ) as item`,
+        [userId, mode, listId],
+      );
+      expect(unfilteredRows[0]?.item).toBeUndefined();
+
+      const { rows: filteredRows } = await client.query(
+        `select get_next_filtered_card(
+          $1::uuid,
+          ARRAY[$2]::text[],
+          ARRAY[]::uuid[],
+          $3::uuid,
+          'user',
+          'both',
+          'new',
+          ARRAY[]::text[],
+          '{}'::jsonb
+        ) as item`,
+        [userId, mode, listId],
+      );
+      expect(filteredRows[0]?.item).toBeUndefined();
+
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled,
+          next_review_at, last_seen_at
+        ) values (
+          $1, $2, $3, 1.0, 5.0, 1, 0, 1.0, 3, true,
+          now() - interval '1 day', now() - interval '1 day'
+        )`,
+        [userId, pointerId, mode],
+      );
+      const { rows: reviewRows } = await client.query(
+        `select get_next_card(
+          $1::uuid,
+          ARRAY[$2]::text[],
+          ARRAY[]::uuid[],
+          $3::uuid,
+          'user',
+          'review',
+          'review',
+          ARRAY[]::text[]
+        ) as item`,
+        [userId, mode, listId],
+      );
+      expect(reviewRows[0]?.item).toBeUndefined();
+    }, userId);
+  });
+
   test("get_next_card honors overdue order and daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

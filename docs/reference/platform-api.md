@@ -158,7 +158,7 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `116` before the V2 code that may call the
+1. deploy migrations `105` through `117` before the V2 code that may call the
    receipt-reconciliation RPC, with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
@@ -177,6 +177,12 @@ rolling deployment must apply it before code that can call
 `/api/platform/v2/actions/reconcile`; otherwise a second lost mutation response
 cannot be resolved authoritatively. The route remains fail-closed while
 `PLATFORM_V2_ACTIONS_ENABLED` is absent.
+
+Migration `117` keeps explicit pointer-only dictionary records at the Library
+navigation boundary. Apply it before importing a manifest that promotes those
+records: both ordinary and filtered Training schedulers then exclude them,
+including pre-existing due card state, while Library lookup can still project
+and follow their cross-reference capabilities.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes
