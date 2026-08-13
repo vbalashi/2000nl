@@ -147,6 +147,7 @@ export function DictionarySearchTab({
     mobileDetailOpen,
   } = searchState;
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
@@ -226,6 +227,7 @@ export function DictionarySearchTab({
       return;
     }
     setSearchLoading(true);
+    setSearchError(null);
     try {
       const trimmedQuery = query.trim() || undefined;
       if (!useViewedListFilter) {
@@ -259,6 +261,22 @@ export function DictionarySearchTab({
         wordTotal: result.total,
         detailEntry: current.detailEntry ?? result.items[0] ?? null,
       }));
+    } catch (cause) {
+      if (
+        isCurrentSearch(requestId) &&
+        !(
+          cause &&
+          typeof cause === "object" &&
+          "name" in cause &&
+          cause.name === "AbortError"
+        )
+      ) {
+        setSearchError(
+          cause instanceof Error && cause.message === "platform_request_timeout"
+            ? "De woordenboekzoekopdracht duurde te lang. Probeer opnieuw."
+            : "De woordenboekzoekopdracht is tijdelijk niet beschikbaar. Probeer opnieuw.",
+        );
+      }
     } finally {
       if (isCurrentSearch(requestId)) {
         setSearchLoading(false);
@@ -704,7 +722,14 @@ export function DictionarySearchTab({
       </div>
 
       <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3">
-        {searchLoading ? (
+        {searchError ? (
+          <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+            <p>{searchError}</p>
+            <button type="button" className="mt-3 rounded-full border border-current px-3 py-1.5 font-semibold" onClick={() => void runSearch()}>
+              Opnieuw proberen
+            </button>
+          </div>
+        ) : searchLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />

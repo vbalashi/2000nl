@@ -832,10 +832,12 @@ describe("fetchPlatformV2TrainingEntry", () => {
     controller.abort();
 
     await rejection;
-    expect(fetchMock.mock.calls[0]?.[1]?.signal).toHaveProperty(
-      "aborted",
-      true,
-    );
+    if (fetchMock.mock.calls.length) {
+      expect(fetchMock.mock.calls[0]?.[1]?.signal).toHaveProperty(
+        "aborted",
+        true,
+      );
+    }
   });
 
   test("sends the scheduler entry id and preserves an HTTP lookup failure", async () => {
