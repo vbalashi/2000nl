@@ -1243,11 +1243,6 @@ export function TrainingScreen({
       });
       if (!scope) return;
       setActiveScenario(nextScenario, { persist: false });
-      persistCurrentTrainingScope({
-        listId: list.id,
-        listType: list.type,
-        activeScenario: nextScenario,
-      });
       void loadStats({ listId: list.id, listType: list.type });
       void replaceSessionScopeAndLoad({
         scope: { listId: list.id, listType: list.type },
@@ -1259,7 +1254,6 @@ export function TrainingScreen({
       beginSessionScopeChange,
       loadStats,
       replaceSessionScopeAndLoad,
-      persistCurrentTrainingScope,
       persistListChange,
       setActiveScenario,
     ],
@@ -1276,11 +1270,6 @@ export function TrainingScreen({
       });
       if (!scope) return;
       setActiveScenario(nextScenario, { persist: false });
-      persistCurrentTrainingScope({
-        listId: scope.listId,
-        listType: scope.listType,
-        activeScenario: nextScenario,
-      });
       void loadStats(scope);
       void replaceSessionScopeAndLoad({ scope, scenario: nextScenario });
     },
@@ -1289,7 +1278,6 @@ export function TrainingScreen({
       beginSessionScopeChange,
       replaceSessionScopeAndLoad,
       loadStats,
-      persistCurrentTrainingScope,
       persistListChange,
       resolveListValue,
       setActiveScenario,
@@ -1297,7 +1285,15 @@ export function TrainingScreen({
   );
 
   const handleListsUpdated = useCallback(async () => {
-    const reloadForList = (list: WordListSummary) => {
+    beginSessionScopeChange();
+    const reloadForList = (
+      list: WordListSummary,
+      refreshedScope: ActiveTrainingScope,
+    ) => {
+      // This exact snapshot belongs to the refresh transaction. The list's
+      // default scenario below is authoritative for the replacement request,
+      // so the hydration effect must not replay the intermediate snapshot.
+      lastAppliedActiveTrainingScopeRef.current = refreshedScope;
       const nextScenario = list.default_scenario_id ?? activeScenario;
       setActiveScenario(nextScenario, { persist: false });
       persistCurrentTrainingScope({
@@ -1318,6 +1314,7 @@ export function TrainingScreen({
     });
   }, [
     activeScenario,
+    beginSessionScopeChange,
     loadStats,
     replaceSessionScopeAndLoad,
     persistCurrentTrainingScope,

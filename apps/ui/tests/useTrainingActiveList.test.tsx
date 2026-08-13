@@ -311,11 +311,23 @@ describe("useTrainingActiveList", () => {
     await waitFor(() => expect(result.current.listHydrated).toBe(true));
 
     await result.current.handleListsUpdated({ onResolvedActiveList });
-    expect(onResolvedActiveList).toHaveBeenCalledWith(userList);
+    expect(onResolvedActiveList).toHaveBeenCalledWith(
+      userList,
+      expect.objectContaining({
+        activeListId: "user-1",
+        activeScenario: "understanding",
+      }),
+    );
     await waitFor(() => expect(result.current.wordListId).toBe("user-1"));
 
     await result.current.handleListsUpdated({ onPrimaryFallback });
-    expect(onPrimaryFallback).toHaveBeenCalledWith(curatedList);
+    expect(onPrimaryFallback).toHaveBeenCalledWith(
+      curatedList,
+      expect.objectContaining({
+        activeListId: "missing",
+        activeScenario: "understanding",
+      }),
+    );
     expect(updateActiveTrainingScope).not.toHaveBeenCalledWith(
       expect.objectContaining({
         listId: "curated-1",

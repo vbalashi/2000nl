@@ -13,8 +13,14 @@ type SelectedListScope = {
 };
 
 type ListUpdatedCallbacks = {
-  onResolvedActiveList?: (list: WordListSummary) => void;
-  onPrimaryFallback?: (list: WordListSummary) => void;
+  onResolvedActiveList?: (
+    list: WordListSummary,
+    scope: ActiveTrainingScope,
+  ) => void;
+  onPrimaryFallback?: (
+    list: WordListSummary,
+    scope: ActiveTrainingScope,
+  ) => void;
 };
 
 const isDictionarySourceList = (list: WordListSummary | null | undefined) =>
@@ -231,7 +237,7 @@ export function useTrainingActiveList(params: {
         });
         if (resolved && isTrainingEligibleList(resolved)) {
           applyList(resolved);
-          callbacks.onResolvedActiveList?.(resolved);
+          callbacks.onResolvedActiveList?.(resolved, active);
           return resolved;
         }
       }
@@ -239,7 +245,7 @@ export function useTrainingActiveList(params: {
       const primary = lists.find(isTrainingEligibleList);
       if (primary) {
         applyList(primary);
-        callbacks.onPrimaryFallback?.(primary);
+        callbacks.onPrimaryFallback?.(primary, active);
         return primary;
       }
 

@@ -82,7 +82,7 @@ Snapshot date: 2026-08-14 (#172 working state).
 
 Current measured sizes:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - 2,239 lines, down from 2,861 at the #172 base.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,339 lines at the final #172 review point, down from 2,861 at the #172 base.
 - `apps/ui/components/training/useTrainingTurnController.ts` - 502 lines; one deep non-visual lifecycle owner.
 - `apps/ui/components/training/useLegacyTrainingReviewPort.ts` - 242 lines; legacy mutation/history adapter.
 - `apps/ui/components/training/useTrainingTurnSelectionPort.ts` - 122 lines; scheduler/list-scope adapter.
