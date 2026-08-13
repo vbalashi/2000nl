@@ -25,7 +25,10 @@ import {
   dictionaryMeaningTranslatedPaths,
   resolveDictionaryMeaningTranslation,
 } from "@/lib/translation/dictionaryMeaningTranslationService";
-import { updateOwnedDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationCache";
+import {
+  newDictionaryMeaningTranslationClaimRevision,
+  updateOwnedDictionaryMeaningTranslation,
+} from "@/lib/translation/dictionaryMeaningTranslationCache";
 
 export const runtime = "nodejs";
 // This route performs read-modify-write against Supabase and must never be cached.
@@ -364,7 +367,10 @@ export async function GET(req: NextRequest) {
   }
 
   // Ensure row exists; if it doesn't, create pending row (race guard via unique constraint).
+  let claimUpdatedAt: string | null = null;
   if (!existing) {
+    const insertClaimUpdatedAt =
+      newDictionaryMeaningTranslationClaimRevision();
     const { data: inserted, error: insertError } = await supabase
       .from("word_entry_translations")
       .upsert(
@@ -380,6 +386,7 @@ export async function GET(req: NextRequest) {
           translation_policy_version: currentTranslationPolicyVersion,
           provider_revision: selectedProviderRevision,
           error_message: null,
+          updated_at: insertClaimUpdatedAt,
         },
         { onConflict: "word_entry_id,target_lang,provider", ignoreDuplicates: true }
       )
@@ -486,6 +493,7 @@ export async function GET(req: NextRequest) {
         }
       );
     }
+    claimUpdatedAt = insertClaimUpdatedAt;
   }
 
   // If a row exists but isn't ready (or is ready-but-missing-headword), mark it pending and re-run translation.
@@ -502,7 +510,7 @@ export async function GET(req: NextRequest) {
       existing.translation_policy_version !== currentTranslationPolicyVersion;
 
     if (needsWork) {
-      const nowIso = new Date().toISOString();
+      const nowIso = newDictionaryMeaningTranslationClaimRevision();
       const { data: claimed, error: claimError } = await supabase
         .from("word_entry_translations")
         .update({
@@ -555,7 +563,14 @@ export async function GET(req: NextRequest) {
           }
         );
       }
+      claimUpdatedAt = nowIso;
     }
+  }
+  if (!claimUpdatedAt) {
+    return NextResponse.json(
+      { error: "translation_claim_not_owned" },
+      { status: 409, headers: { "Cache-Control": "no-store" } },
+    );
   }
   try {
     const { overlay, note, meta } =
@@ -585,6 +600,7 @@ export async function GET(req: NextRequest) {
           targetLanguageCode: dbLang,
           provider,
           sourceFingerprint: fingerprint,
+          claimUpdatedAt,
         },
         {
         status: "ready",
@@ -651,6 +667,7 @@ export async function GET(req: NextRequest) {
         targetLanguageCode: dbLang,
         provider,
         sourceFingerprint: fingerprint,
+        claimUpdatedAt,
       },
       {
         status: "failed",

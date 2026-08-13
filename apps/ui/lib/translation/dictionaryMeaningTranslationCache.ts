@@ -3,12 +3,20 @@ export type DictionaryMeaningTranslationCacheKey = {
   targetLanguageCode: string;
   provider: string;
   sourceFingerprint: string;
+  claimUpdatedAt: string;
 };
+
+export function newDictionaryMeaningTranslationClaimRevision(now = new Date()) {
+  const iso = now.toISOString();
+  const entropy = crypto.getRandomValues(new Uint16Array(1))[0] % 1_000;
+  return iso.replace("Z", `${entropy.toString().padStart(3, "0")}Z`);
+}
 
 /**
  * Completes only the exact translation claim that produced `values`.
- * A newer source/prompt claim changes source_fingerprint and makes this update
- * a no-op, so late provider success or failure cannot overwrite newer work.
+ * Both the exact source/prompt fingerprint and this attempt's lease revision
+ * must still match, so neither a different request nor a same-fingerprint
+ * lease successor can be overwritten by late provider completion.
  */
 export async function updateOwnedDictionaryMeaningTranslation(
   supabase: any,
@@ -21,5 +29,6 @@ export async function updateOwnedDictionaryMeaningTranslation(
     .eq("word_entry_id", key.wordEntryId)
     .eq("target_lang", key.targetLanguageCode)
     .eq("provider", key.provider)
-    .eq("source_fingerprint", key.sourceFingerprint);
+    .eq("source_fingerprint", key.sourceFingerprint)
+    .eq("updated_at", key.claimUpdatedAt);
 }
