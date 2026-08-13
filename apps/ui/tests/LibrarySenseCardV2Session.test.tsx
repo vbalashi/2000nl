@@ -298,12 +298,17 @@ describe("LibrarySenseCardV2Session", () => {
         {
           kind: "cross-reference",
           crossReferenceId: "entry-daar-2",
+          meaningOrdinal: 2,
           label: {
             termId: "cross-reference.see",
             messageKey: "crossReference.see",
           },
           text: "daar-",
-          target: { query: "daar-" },
+          target: {
+            query: "daar-",
+            headwordGroupId: "group-daar-target",
+            entryId: "entry-daar-target",
+          },
           capabilities: [
             {
               actionId: "follow-cross-reference",
@@ -335,6 +340,13 @@ describe("LibrarySenseCardV2Session", () => {
 
     expect(await screen.findByText("daar-")).toBeInTheDocument();
     const pointer = screen.getByTestId("library-cross-reference-entry-daar-2");
+    const meaning = screen.getByTestId("library-sense-card-entry-daar-1");
+    expect(
+      meaning.compareDocumentPosition(pointer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(within(meaning).getByText("1")).toBeInTheDocument();
+    expect(within(pointer).getByText("2")).toBeInTheDocument();
     expect(
       within(pointer).queryByRole("button", { name: "Learn" }),
     ).not.toBeInTheDocument();
@@ -348,6 +360,8 @@ describe("LibrarySenseCardV2Session", () => {
         expect.objectContaining({
           query: "daar-",
           sourceDictionaryId: "vandale",
+          targetHeadwordGroupId: "group-daar-target",
+          targetEntryId: "entry-daar-target",
         }),
       ),
     );

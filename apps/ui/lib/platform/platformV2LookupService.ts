@@ -33,6 +33,7 @@ import {
   projectPlatformV2WordDetails,
 } from "./platformV2RichContent";
 import { platformV2ActionsEnabled } from "./platformV2Rollout";
+import { resolvePlatformV2CrossReferenceTargets } from "./platformV2CrossReferenceResolver";
 
 const LOOKUP_GROUP_PAGE_SIZE = 10;
 const LOOKUP_GROUP_ENTRY_SAFETY_BOUND = 50;
@@ -285,6 +286,27 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
+  const crossReferenceTargets = await measure(
+    timings,
+    "lookup.cross-references",
+    () =>
+      resolvePlatformV2CrossReferenceTargets(context.service, {
+        sources: entries.flatMap((entry) => {
+          const query = platformV2CrossReferenceQuery(entry);
+          return query && entry.dictionary_id
+            ? [{
+                sourceEntryId: entry.id,
+                sourceDictionaryId: entry.dictionary_id,
+                query,
+              }]
+            : [];
+        }),
+        userId:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        catalog: context.kind === "catalog",
+        contentLanguageCode: request.contentLanguageCode ?? null,
+      }),
+  );
 
   try {
     const projectionEntries = await measure(
@@ -392,6 +414,7 @@ export async function performPlatformV2Lookup(
               contentNodeBindings,
               contentSections,
               crossReferenceQuery,
+              crossReferenceTarget: crossReferenceTargets.get(entry.id),
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(

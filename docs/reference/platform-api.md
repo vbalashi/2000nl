@@ -133,6 +133,9 @@ Important V2 rules:
   cross-reference-only records;
 - redirect-only dictionary records use `kind: "cross-reference"` and expose no
   learning, review, Known, translation, reporting, or Word Details state;
+- cross-reference entries retain their source `meaningOrdinal`; a resolved
+  target carries its opaque `headwordGroupId` (and `entryId` when unambiguous),
+  while `query` is the strict-lookup fallback for unresolved references;
 - translations are attached to exact Content Node IDs and are renderable only
   when source content and translation policy revisions match;
 - lookup reads cached translations but never starts a paid provider call;

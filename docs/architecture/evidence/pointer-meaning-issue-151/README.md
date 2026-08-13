@@ -53,3 +53,28 @@ release gate for importing the regenerated corpus after compatible application
 code is deployed.
 
 The full result is committed in [audit-full.json](./audit-full.json).
+
+## Production-like upgrade rehearsal
+
+The release candidate was rehearsed on 2026-08-13 against a fresh local
+Supabase schema using the currently deployed corpus first, followed by the
+regenerated corpus:
+
+- current manifest: `45fc68e1dee018f3e778d88ec22d7805fb90588b1d1dacd226e3ae6024b621ce`;
+- regenerated manifest: `53496b238a88473891ecedd4a1f95151a05383d39c7a51d333bdb48a6e69b08b`;
+- both manifests contain 18,163 artifacts and share input checksum
+  `1d9236554fd35f49ca9fa274045d84a5ee3ea04035a85f89a21391878b685173`;
+- upgrading reported 0 inserts and exactly 6 UUID-preserving updates;
+- the six before/after entry UUID lists were byte-identical;
+- all six updated rows had the expected top-level `cross_reference` and an
+  empty meanings array;
+- representative ordinary hyphenated definitions (`aanhef`, `AIVD`, and
+  `audioapparatuur`) remained ordinary definitions;
+- word-form regeneration produced 68,102 rows with no missing headword;
+- replaying the regenerated manifest verified all 18,163 artifacts as a true
+  no-op;
+- local schema probes and 78 DB/RPC tests passed.
+
+This rehearsal validates the content-only upgrade path used by the production
+runbook. It does not replace the fresh production backup or the post-import
+Library and Training smoke.

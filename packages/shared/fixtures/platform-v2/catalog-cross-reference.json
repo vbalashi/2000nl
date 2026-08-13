@@ -31,13 +31,16 @@
         {
           "kind": "cross-reference",
           "crossReferenceId": "fixture-entry-selder-1",
+          "meaningOrdinal": 1,
           "label": {
             "termId": "cross-reference.see",
             "messageKey": "crossReference.see"
           },
           "text": "selderie",
           "target": {
-            "query": "selderie"
+            "query": "selderie",
+            "headwordGroupId": "fixture-group-selderie",
+            "entryId": "fixture-entry-selderie-1"
           },
           "capabilities": [
             {

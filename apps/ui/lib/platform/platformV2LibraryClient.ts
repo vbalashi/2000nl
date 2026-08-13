@@ -81,6 +81,8 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
 export async function fetchPlatformV2CrossReferenceTarget(input: {
   query: string;
   sourceDictionaryId: string;
+  targetHeadwordGroupId?: string | null;
+  targetEntryId?: string | null;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
@@ -92,6 +94,8 @@ export async function fetchPlatformV2CrossReferenceTarget(input: {
     payload,
     input.query,
     input.sourceDictionaryId,
+    input.targetHeadwordGroupId,
+    input.targetEntryId,
   );
 }
 
@@ -140,7 +144,26 @@ export function selectPlatformV2CrossReferenceTarget(
   payload: PlatformLookupV2Response,
   query: string = payload.query,
   sourceDictionaryId?: string,
+  targetHeadwordGroupId?: string | null,
+  targetEntryId?: string | null,
 ): PlatformHeadwordGroupV2 | null {
+  if (targetHeadwordGroupId) {
+    return (
+      payload.groups.find(
+        (group) => group.headwordGroupId === targetHeadwordGroupId,
+      ) ?? null
+    );
+  }
+  if (targetEntryId) {
+    return (
+      payload.groups.find((group) =>
+        group.entries.some(
+          (entry) =>
+            entry.kind === "sense-card" && entry.entryId === targetEntryId,
+        ),
+      ) ?? null
+    );
+  }
   const normalizedQuery = query.trim().toLocaleLowerCase();
   return (
     payload.groups.find(

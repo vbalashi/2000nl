@@ -668,6 +668,7 @@ describe("selectPlatformV2TrainingEntry", () => {
         {
           kind: "cross-reference" as const,
           crossReferenceId: "entry-daar-2",
+          meaningOrdinal: 2,
           label: {
             termId: "cross-reference.see",
             messageKey: "crossReference.see",

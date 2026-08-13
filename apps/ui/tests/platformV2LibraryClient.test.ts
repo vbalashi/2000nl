@@ -80,6 +80,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         {
           kind: "cross-reference" as const,
           crossReferenceId: "entry-daar-2",
+          meaningOrdinal: 2,
           label: {
             termId: "cross-reference.see",
             messageKey: "crossReference.see",
@@ -109,10 +110,6 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     const misleadingGroup = {
       ...multiSenseBankGroup,
       headwordGroupId: "group-daar-fuzzy",
-      dictionary: {
-        ...multiSenseBankGroup.dictionary,
-        dictionaryId: "other-dictionary",
-      },
       header: { ...multiSenseBankGroup.header, text: "daar-" },
       senseCount: 1,
       entryCount: 1,
@@ -135,6 +132,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         },
         "daar-",
         "vandale",
+        targetGroup.headwordGroupId,
       ),
     ).toBe(targetGroup);
   });
@@ -156,10 +154,6 @@ describe("selectPlatformV2MultiSenseGroup", () => {
             {
               ...multiSenseBankGroup,
               headwordGroupId: "group-daar-fuzzy",
-              dictionary: {
-                ...multiSenseBankGroup.dictionary,
-                dictionaryId: "other-dictionary",
-              },
               header: { ...multiSenseBankGroup.header, text: "daar-" },
             },
             targetGroup,
@@ -174,6 +168,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
       fetchPlatformV2CrossReferenceTarget({
         query: "daar-",
         sourceDictionaryId: "vandale",
+        targetHeadwordGroupId: targetGroup.headwordGroupId,
         cardTypeId: "word-to-definition",
         contentLanguageCode: "nl",
         translationTargetLanguageCode: "en",
@@ -217,6 +212,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
       fetchPlatformV2CrossReferenceTarget({
         query: "daar-",
         sourceDictionaryId: "vandale",
+        targetHeadwordGroupId: null,
         cardTypeId: "word-to-definition",
         contentLanguageCode: "nl",
         translationTargetLanguageCode: "en",

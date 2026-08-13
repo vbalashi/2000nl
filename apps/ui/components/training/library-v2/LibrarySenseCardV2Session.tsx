@@ -80,6 +80,8 @@ export function LibrarySenseCardV2Session({
   const [activeReferenceTarget, setActiveReferenceTarget] = React.useState<{
     query: string;
     sourceDictionaryId: string;
+    targetHeadwordGroupId: string | null;
+    targetEntryId: string | null;
   } | null>(null);
   const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
   const [audioBusy, setAudioBusy] = React.useState(false);
@@ -123,6 +125,8 @@ export function LibrarySenseCardV2Session({
         ? await fetchPlatformV2CrossReferenceTarget({
             query: activeReferenceTarget.query,
             sourceDictionaryId: activeReferenceTarget.sourceDictionaryId,
+            targetHeadwordGroupId: activeReferenceTarget.targetHeadwordGroupId,
+            targetEntryId: activeReferenceTarget.targetEntryId,
             cardTypeId,
             contentLanguageCode,
             translationTargetLanguageCode: translationLanguage,

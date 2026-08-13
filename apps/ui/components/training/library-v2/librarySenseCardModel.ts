@@ -61,6 +61,22 @@ export type LibrarySenseCardModel = {
   reportCapability: LibraryReportCapability | null;
 };
 
+export type LibraryCrossReferenceModel = {
+  crossReferenceId: string;
+  displayOrdinal: number | null;
+  label: string | null;
+  text: string;
+  targetQuery: string;
+  targetHeadwordGroupId: string | null;
+  targetEntryId: string | null;
+  sourceDictionaryId: string;
+  followLabel: string;
+};
+
+export type LibraryGroupPresentation =
+  | { kind: "sense-card"; meaning: LibrarySenseCardModel }
+  | { kind: "cross-reference"; reference: LibraryCrossReferenceModel };
+
 export type LibrarySenseCardGroupModel = {
   article: string | null;
   headword: string;
@@ -69,14 +85,8 @@ export type LibrarySenseCardGroupModel = {
   coreVocabularyLabel: string | null;
   senseCount: number;
   meanings: LibrarySenseCardModel[];
-  crossReferences: Array<{
-    crossReferenceId: string;
-    label: string | null;
-    text: string;
-    targetQuery: string;
-    sourceDictionaryId: string;
-    followLabel: string;
-  }>;
+  crossReferences: LibraryCrossReferenceModel[];
+  presentations: LibraryGroupPresentation[];
 };
 
 export type LibrarySenseCardViewState = Record<
@@ -130,11 +140,14 @@ export function buildLibrarySenseCardGroupModel(
     .filter((entry) => entry.kind === "cross-reference")
     .map((entry) => ({
       crossReferenceId: entry.crossReferenceId,
+      displayOrdinal: group.entryCount > 1 ? entry.meaningOrdinal : null,
       label: entry.label
         ? platformV2Message(interfaceLanguage, entry.label.messageKey)
         : null,
       text: entry.text,
       targetQuery: entry.target.query,
+      targetHeadwordGroupId: entry.target.headwordGroupId ?? null,
+      targetEntryId: entry.target.entryId ?? null,
       sourceDictionaryId: group.dictionary.dictionaryId,
       followLabel: platformV2Message(
         interfaceLanguage,
@@ -144,6 +157,20 @@ export function buildLibrarySenseCardGroupModel(
       ),
     }));
 
+  const meanings = senseEntries.map((entry) =>
+    buildMeaning(
+      entry,
+      group.entryCount,
+      requestedCardTypeId,
+      interfaceLanguage,
+    ),
+  );
+  const meaningById = new Map(
+    meanings.map((meaning) => [meaning.entryId, meaning]),
+  );
+  const referenceById = new Map(
+    crossReferences.map((reference) => [reference.crossReferenceId, reference]),
+  );
   return {
     article: group.header.article ?? null,
     headword: group.header.displayPronunciation ?? group.header.text,
@@ -156,20 +183,32 @@ export function buildLibrarySenseCardGroupModel(
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     senseCount: group.senseCount,
     crossReferences,
-    meanings: senseEntries.map((entry) =>
-      buildMeaning(
-        entry,
-        group.senseCount,
-        requestedCardTypeId,
-        interfaceLanguage,
-      ),
+    meanings,
+    presentations: group.entries.flatMap<LibraryGroupPresentation>((entry) =>
+      entry.kind === "sense-card"
+        ? meaningById.has(entry.entryId)
+          ? [
+              {
+                kind: "sense-card" as const,
+                meaning: meaningById.get(entry.entryId)!,
+              },
+            ]
+          : []
+        : referenceById.has(entry.crossReferenceId)
+          ? [
+              {
+                kind: "cross-reference" as const,
+                reference: referenceById.get(entry.crossReferenceId)!,
+              },
+            ]
+          : [],
     ),
   };
 }
 
 function buildMeaning(
   entry: PlatformSenseCardEntryV2,
-  senseCount: number,
+  entryCount: number,
   requestedCardTypeId: CardTypeId,
   interfaceLanguage: OnboardingLanguage,
 ): LibrarySenseCardModel {
@@ -215,7 +254,7 @@ function buildMeaning(
   return {
     entryId: entry.entryId,
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
-    displayOrdinal: senseCount > 1 ? entry.meaningOrdinal : null,
+    displayOrdinal: entryCount > 1 ? entry.meaningOrdinal : null,
     partOfSpeech: entry.partOfSpeech
       ? platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey) ===
         entry.partOfSpeech.messageKey

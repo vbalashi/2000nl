@@ -49,10 +49,9 @@ describe("Library multi-sense model", () => {
     );
 
     expect(idioms).toHaveLength(2);
-    expect(idioms.map((item) => item.children.map((child) => child.kind))).toEqual([
-      ["idiom-explanation"],
-      ["idiom-explanation"],
-    ]);
+    expect(
+      idioms.map((item) => item.children.map((child) => child.kind)),
+    ).toEqual([["idiom-explanation"], ["idiom-explanation"]]);
   });
   test("keeps learning state and actions on their exact entry", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
@@ -178,6 +177,7 @@ describe("Library multi-sense model", () => {
           {
             kind: "cross-reference" as const,
             crossReferenceId: "xref-bank",
+            meaningOrdinal: 3,
             label: null,
             text: "bankieren",
             target: { query: "bankieren" },
@@ -194,9 +194,12 @@ describe("Library multi-sense model", () => {
     expect(model.crossReferences).toEqual([
       {
         crossReferenceId: "xref-bank",
+        displayOrdinal: 3,
         label: null,
         text: "bankieren",
         targetQuery: "bankieren",
+        targetHeadwordGroupId: null,
+        targetEntryId: null,
         sourceDictionaryId: "vandale",
         followLabel: "Open reference",
       },

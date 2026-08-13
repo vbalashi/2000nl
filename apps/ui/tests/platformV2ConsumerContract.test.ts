@@ -109,7 +109,13 @@ describe("Platform V2 shared consumer contract", () => {
       entries: [
         {
           headwordGroupId: "fixture-group-selder",
+          meaningOrdinal: 1,
           crossReferenceQuery: "selderie",
+          crossReferenceTarget: {
+            query: "selderie",
+            headwordGroupId: "fixture-group-selderie",
+            entryId: "fixture-entry-selderie-1",
+          },
           allowMutationCapabilities: false,
           allowWordDetailsCapability: false,
           entry: {
