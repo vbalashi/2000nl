@@ -1,0 +1,54 @@
+{
+  "candidates": [
+    {
+      "artifact": "daar_bw_2.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "daar",
+      "meaningId": 2,
+      "target": "daar-"
+    },
+    {
+      "artifact": "er_bw_4.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "er",
+      "meaningId": 4,
+      "target": "er-"
+    },
+    {
+      "artifact": "erbij_bw_1.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "erbij",
+      "meaningId": 1,
+      "target": "er-"
+    },
+    {
+      "artifact": "erop_bw_1.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "erop",
+      "meaningId": 1,
+      "target": "er-"
+    },
+    {
+      "artifact": "hier_bw_2.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "hier",
+      "meaningId": 2,
+      "target": "hier-"
+    },
+    {
+      "artifact": "waar_bw_2.json",
+      "classification": "resolvable-pointer-only",
+      "headword": "waar",
+      "meaningId": 2,
+      "target": "waar-"
+    }
+  ],
+  "corpusEntries": 17959,
+  "counts": {
+    "hyphenatedContent": 186,
+    "resolvablePointerOnly": 6,
+    "unresolvedPointerShape": 0
+  },
+  "sampleLimit": 17959,
+  "sampledEntries": 17959
+}

@@ -35,3 +35,21 @@ Projection continues to consume explicit lexical semantics; it does not infer
 redirects from definition punctuation.
 
 The committed audit output is in [audit-5000.json](./audit-5000.json).
+
+## Full-corpus release audit
+
+Before release, the same audit was repeated without a sample limit across all
+17,959 artifacts. It classified 186 records as ordinary hyphenated content,
+six as resolvable pointer-only records, and none as an unresolved
+pointer-shaped record. The two additional records outside the bounded sample
+were `hier` meaning 2 ->
+`hier-` and `waar` meaning 2 -> `waar-`.
+
+A clean regeneration from the source list produced 18,163 entries with
+`vandale-structured-v2` format and the `vandale-provider-article-v1` identity
+scheme. The six audited records were emitted with an explicit
+`cross_reference`, an empty meanings list, and the expected target. This is the
+release gate for importing the regenerated corpus after compatible application
+code is deployed.
+
+The full result is committed in [audit-full.json](./audit-full.json).

@@ -170,14 +170,14 @@ export function LibrarySenseCardV2Session({
   }, [compatibleInitialGroup, load]);
 
   const model = React.useMemo(() => {
-    const compatibleGroup = group?.entries.some(
-      (candidate) =>
-        candidate.kind === "sense-card" &&
-        candidate.entryId === entryId &&
-        candidate.card?.cardTypeId === cardTypeId,
-    )
-      ? group
-      : null;
+    const matchesSelectedEntry = group?.entries.some((candidate) =>
+      candidate.kind === "sense-card"
+        ? candidate.entryId === entryId &&
+          candidate.card?.cardTypeId === cardTypeId
+        : candidate.crossReferenceId === entryId,
+    );
+    const compatibleGroup =
+      group && (activeReferenceQuery || matchesSelectedEntry) ? group : null;
     return compatibleGroup
       ? buildLibrarySenseCardGroupModel(
           compatibleGroup,
@@ -185,7 +185,7 @@ export function LibrarySenseCardV2Session({
           cardTypeId,
         )
       : null;
-  }, [cardTypeId, entryId, group, interfaceLanguage]);
+  }, [activeReferenceQuery, cardTypeId, entryId, group, interfaceLanguage]);
 
   const loadMemberships = React.useCallback(
     async (entryIds: string[]) => {
