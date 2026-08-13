@@ -21,7 +21,7 @@ import {
   performPlatformV2TrainingAction,
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingActionClient";
-import type { TrainingMode, TrainingWord } from "@/lib/types";
+import type { TrainingWord } from "@/lib/types";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
@@ -30,15 +30,14 @@ type Props = {
   cacheOwnerId: string;
   nextTransitionId?: string;
   word: TrainingWord;
-  mode: TrainingMode;
+  mode: "word-to-definition" | "definition-to-word";
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
-  fallback: React.ReactNode;
+  focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
   onExit?: () => void;
-  onAvailabilityChange: (state: TrainingV2SessionState) => void;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
   ) => void | Promise<void>;
@@ -49,15 +48,14 @@ type UndoKnownCapability = Extract<
   { actionId: "undo-known" }
 >;
 
-export type TrainingV2SessionState =
+type TrainingV2SessionState =
   | "loading"
   | "ready"
   | "lookup-http-error"
   | "contract-mismatch"
   | "entry-not-found"
   | "model-invalid"
-  | "reverse-definition-missing"
-  | "listening-mode";
+  | "reverse-definition-missing";
 
 const PENDING_KNOWN_UNDO_STORAGE_KEY = "2000nl.training.pendingKnownUndo.v2";
 const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
@@ -70,15 +68,12 @@ export function TrainingSenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
-  fallback,
+  focusOnPresentation = false,
   onPlayResolvedAudio,
   onOpenDetails,
   onExit,
-  onAvailabilityChange,
   onProgressActionAccepted,
 }: Props) {
-  const supportedMode =
-    mode === "word-to-definition" || mode === "definition-to-word";
   const lookupInput = React.useMemo(
     () => ({
       entryId: word.id,
@@ -91,17 +86,11 @@ export function TrainingSenseCardV2Session({
   );
   const [lookup, setLookup] = React.useState<PlatformV2TrainingLookupResult | null>(
     () =>
-      supportedMode
-        ? peekPrefetchedPlatformV2TrainingEntry(lookupInput)
-        : null,
+      peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
-  const [focusStageOnPresentation, setFocusStageOnPresentation] =
-    React.useState(false);
-  const [cardAnnouncement, setCardAnnouncement] = React.useState("");
-  const presentedEntryIdRef = React.useRef<string | null>(null);
   const interactionBusyRef = React.useRef(false);
   const loadGenerationRef = React.useRef(0);
 
@@ -110,7 +99,6 @@ export function TrainingSenseCardV2Session({
       signal?: AbortSignal,
       options: { preserveCard?: boolean; usePrefetch?: boolean } = {},
     ) => {
-      if (!supportedMode) return null;
       const generation = (loadGenerationRef.current += 1);
       setError(null);
       if (!options.preserveCard) {
@@ -131,36 +119,15 @@ export function TrainingSenseCardV2Session({
       if (options.preserveCard && next.state !== "ready") {
         return next;
       }
-      const nextEntryId = next.state === "ready" ? next.entry.entryId : null;
-      const cardChanged = Boolean(
-        nextEntryId &&
-        presentedEntryIdRef.current &&
-        presentedEntryIdRef.current !== nextEntryId,
-      );
-      setFocusStageOnPresentation(cardChanged);
-      if (cardChanged) {
-        setCardAnnouncement(
-          platformV2Message(
-            interfaceLanguage,
-            "senseCard.training.cardChanged",
-          ),
-        );
-      }
-      if (nextEntryId) presentedEntryIdRef.current = nextEntryId;
       setLookup(next);
       return next;
     },
-    [
-      interfaceLanguage,
-      lookupInput,
-      supportedMode,
-    ],
+    [lookupInput],
   );
 
   React.useEffect(() => {
     const controller = new AbortController();
     setError(null);
-    if (!supportedMode) return () => controller.abort();
     void load(controller.signal).catch((cause) => {
       if (controller.signal.aborted) return;
       setLookup({ state: "lookup-http-error", status: 0 });
@@ -170,7 +137,7 @@ export function TrainingSenseCardV2Session({
       controller.abort();
       loadGenerationRef.current += 1;
     };
-  }, [load, supportedMode]);
+  }, [load]);
 
   React.useEffect(() => {
     if (lookup?.state !== "ready" || !lookup.group.header.audio) return;
@@ -199,9 +166,7 @@ export function TrainingSenseCardV2Session({
     [interfaceLanguage, result],
   );
 
-  const sessionState: TrainingV2SessionState = !supportedMode
-    ? "listening-mode"
-    : !lookup
+  const sessionState: TrainingV2SessionState = !lookup
       ? "loading"
       : lookup.state !== "ready"
         ? lookup.state
@@ -217,15 +182,6 @@ export function TrainingSenseCardV2Session({
       recordTrainingEntryRendered(result.entry.entryId);
     }
   }, [result, sessionState]);
-
-  React.useEffect(() => {
-    onAvailabilityChange(sessionState);
-  }, [onAvailabilityChange, sessionState]);
-
-  React.useEffect(
-    () => () => onAvailabilityChange("loading"),
-    [onAvailabilityChange],
-  );
 
   const handleAction = async (capability: PlatformSenseCardCapabilityV2) => {
     if (interactionBusyRef.current) return;
@@ -347,17 +303,11 @@ export function TrainingSenseCardV2Session({
 
   const cardAnnouncementRegion = (
     <span className="sr-only" aria-live="polite" aria-atomic="true">
-      {cardAnnouncement}
+      {focusOnPresentation
+        ? platformV2Message(interfaceLanguage, "senseCard.training.cardChanged")
+        : ""}
     </span>
   );
-
-  if (!supportedMode) {
-    return (
-      <div data-training-renderer="legacy" data-training-v2-state="listening-mode">
-        {fallback}
-      </div>
-    );
-  }
 
   if (sessionState === "loading") {
     return (
@@ -379,7 +329,7 @@ export function TrainingSenseCardV2Session({
   if (sessionState !== "ready" || !result || !model) {
     const failureState = sessionState as Exclude<
       TrainingV2SessionState,
-      "loading" | "ready" | "listening-mode"
+      "loading" | "ready"
     >;
     return (
       <SessionV2Failure
@@ -410,7 +360,7 @@ export function TrainingSenseCardV2Session({
         mode={mode}
         interfaceLanguage={interfaceLanguage}
         busy={busy}
-        focusOnMount={focusStageOnPresentation}
+        focusOnMount={focusOnPresentation}
         onPlayAudio={
           result.group.header.audio && onPlayResolvedAudio
             ? () => void handlePlayAudio()

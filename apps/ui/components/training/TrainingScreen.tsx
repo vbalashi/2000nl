@@ -53,7 +53,6 @@ import { TrainingCard } from "./TrainingCard";
 import {
   TrainingKnownUndoNotice,
   TrainingSenseCardV2Session,
-  type TrainingV2SessionState,
 } from "./v2/TrainingSenseCardV2Session";
 import {
   TrainingSessionChrome,
@@ -261,8 +260,6 @@ export function TrainingScreen({
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [v2SessionState, setV2SessionState] =
-    useState<TrainingV2SessionState>("loading");
   const {
     activeScenario,
     audioQuality,
@@ -2418,9 +2415,6 @@ export function TrainingScreen({
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                       <div
                         data-testid="training-card-frame"
-                        data-training-v2-state={
-                          v2SessionOwned ? v2SessionState : undefined
-                        }
                         className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
                           v2SessionOwned
                             ? "min-h-0 flex-1 overflow-hidden"
@@ -2472,12 +2466,13 @@ export function TrainingScreen({
                                   : translationLang
                               }
                               interfaceLanguage={onboardingLang}
-                              fallback={legacyTrainingCard}
+                              focusOnPresentation={
+                                reviewedInSessionRef.current.size > 0
+                              }
                               onPlayResolvedAudio={(url, label) =>
                                 playAudio(url, label)
                               }
                               onOpenDetails={handleShowCurrentWordDetails}
-                              onAvailabilityChange={setV2SessionState}
                               onProgressActionAccepted={
                                 handleV2ProgressActionAccepted
                               }
