@@ -78,6 +78,27 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
 }
 
+export async function fetchPlatformV2CrossReferenceTarget(input: {
+  query: string;
+  sourceDictionaryId: string;
+  targetHeadwordGroupId?: string | null;
+  targetEntryId?: string | null;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformHeadwordGroupV2 | null> {
+  const payload = await fetchPlatformV2LibraryLookup(input);
+  if (!payload) return null;
+  return selectPlatformV2CrossReferenceTarget(
+    payload,
+    input.query,
+    input.sourceDictionaryId,
+    input.targetHeadwordGroupId,
+    input.targetEntryId,
+  );
+}
+
 export async function requestPlatformV2LibraryTranslation(input: {
   entryId: string;
   targetLanguageCode: string;
@@ -103,12 +124,54 @@ export function selectPlatformV2MultiSenseGroup(
   entryId: string,
 ): PlatformHeadwordGroupV2 | null {
   return (
-    payload.groups.find(
-      (group) =>
-        group.senseCount > 1 &&
-        group.entries.some(
-          (entry) => entry.kind === "sense-card" && entry.entryId === entryId,
-        ),
-    ) ?? null
+    payload.groups.find((group) => {
+      const selectedEntry = group.entries.find((entry) =>
+        entry.kind === "sense-card"
+          ? entry.entryId === entryId
+          : entry.crossReferenceId === entryId,
+      );
+      if (!selectedEntry) return false;
+      if (selectedEntry.kind === "cross-reference") return true;
+      return (
+        group.senseCount > 1 ||
+        group.entries.some((entry) => entry.kind === "cross-reference")
+      );
+    }) ?? null
   );
+}
+
+export function selectPlatformV2CrossReferenceTarget(
+  payload: PlatformLookupV2Response,
+  query: string = payload.query,
+  sourceDictionaryId?: string,
+  targetHeadwordGroupId?: string | null,
+  targetEntryId?: string | null,
+): PlatformHeadwordGroupV2 | null {
+  if (targetHeadwordGroupId) {
+    return (
+      payload.groups.find(
+        (group) => group.headwordGroupId === targetHeadwordGroupId,
+      ) ?? null
+    );
+  }
+  if (targetEntryId) {
+    return (
+      payload.groups.find((group) =>
+        group.entries.some(
+          (entry) =>
+            entry.kind === "sense-card" && entry.entryId === targetEntryId,
+        ),
+      ) ?? null
+    );
+  }
+  if (payload.page.selectedTierComplete !== true) return null;
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const exactGroups = payload.groups.filter(
+      (group) =>
+        group.header.text.trim().toLocaleLowerCase() === normalizedQuery &&
+        (!sourceDictionaryId ||
+          group.dictionary.dictionaryId === sourceDictionaryId) &&
+        group.entries.some((entry) => entry.kind === "sense-card"),
+  );
+  return exactGroups.length === 1 ? exactGroups[0] : null;
 }

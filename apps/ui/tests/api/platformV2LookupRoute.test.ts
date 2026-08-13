@@ -774,8 +774,27 @@ describe("/api/platform/v2/lookup", () => {
     const { POST } = await import(
       "@/app/api/platform/v2/catalog/lookup/route"
     );
-    rpc.mockImplementation((name: string) => {
+    rpc.mockImplementation((name: string, args: Record<string, unknown>) => {
       if (name === "lookup_platform_v2_entries") {
+        if (args.p_query === "selderie") {
+          return Promise.resolve({
+            data: {
+              items: [
+                {
+                  id: "entry-selderie-1",
+                  dictionary_id: "dict-1",
+                  language_code: "nl",
+                  headword: "selderie",
+                  meaning_id: 1,
+                  part_of_speech: "zn",
+                  raw: { meanings: [{ definition: "target definition" }] },
+                },
+              ],
+              page: { selectedTierComplete: true, nextGroupCursor: null },
+            },
+            error: null,
+          });
+        }
         return Promise.resolve({
           data: {
             items: [
@@ -813,6 +832,24 @@ describe("/api/platform/v2/lookup", () => {
         });
       }
       if (name === "read_platform_v2_presentation_identity") {
+        if (
+          Array.isArray(args.p_entry_ids) &&
+          args.p_entry_ids.includes("entry-selderie-1")
+        ) {
+          return Promise.resolve({
+            data: {
+              entries: [
+                {
+                  entryId: "entry-selderie-1",
+                  headwordGroupId: "group-selderie-1",
+                  meaningOrdinal: 1,
+                  contentNodeBindings: [],
+                },
+              ],
+            },
+            error: null,
+          });
+        }
         return Promise.resolve({
           data: {
             entries: [
@@ -851,12 +888,17 @@ describe("/api/platform/v2/lookup", () => {
       {
         kind: "cross-reference",
         crossReferenceId: "entry-selder-1",
+        meaningOrdinal: 1,
         label: {
           termId: "cross-reference.see",
           messageKey: "crossReference.see",
         },
         text: "selderie",
-        target: { query: "selderie" },
+        target: {
+          query: "selderie",
+          headwordGroupId: "group-selderie-1",
+          entryId: "entry-selderie-1",
+        },
         capabilities: [
           {
             actionId: "follow-cross-reference",

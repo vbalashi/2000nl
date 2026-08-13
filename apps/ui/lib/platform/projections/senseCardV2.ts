@@ -18,6 +18,7 @@ import {
   learnerDisplayPronunciation,
   type PlatformV2ContentSectionInput,
 } from "../platformV2RichContent";
+import type { ResolvedPlatformV2CrossReferenceTarget } from "../platformV2CrossReferenceResolver";
 
 export type ProjectionCardState = {
   stateRevision: string;
@@ -65,6 +66,7 @@ export type PlatformLookupV2ProjectionEntry = {
   contentNodeBindings: PlatformContentNodeBindingV2Input[];
   contentSections?: PlatformV2ContentSectionInput[];
   crossReferenceQuery?: string | null;
+  crossReferenceTarget?: ResolvedPlatformV2CrossReferenceTarget | null;
   cardState?: ProjectionCardState | null;
   entryTranslation?: PlatformEntryTranslationStateV2 | null;
   audioCapability?: PlatformAudioCapabilityV2;
@@ -207,7 +209,10 @@ function projectHeadwordGroup(
       : [],
     entries: entries.map((item) =>
       item.crossReferenceQuery
-        ? projectCrossReference(item, item.crossReferenceQuery)
+        ? projectCrossReference(
+            item,
+            item.crossReferenceTarget ?? { query: item.crossReferenceQuery },
+          )
         : projectSenseCard(item, request),
     ),
   };
@@ -305,17 +310,18 @@ function projectSenseCard(
 
 function projectCrossReference(
   item: PlatformLookupV2ProjectionEntry,
-  query: string,
+  target: ResolvedPlatformV2CrossReferenceTarget,
 ): PlatformLookupV2Response["groups"][number]["entries"][number] {
   return {
     kind: "cross-reference",
     crossReferenceId: item.entry.id,
+    meaningOrdinal: item.meaningOrdinal ?? null,
     label: {
       termId: "cross-reference.see",
       messageKey: "crossReference.see",
     },
-    text: query,
-    target: { query },
+    text: target.query,
+    target,
     capabilities: [
       {
         actionId: "follow-cross-reference",

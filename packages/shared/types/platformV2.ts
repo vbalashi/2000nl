@@ -224,6 +224,7 @@ export type PlatformSenseCardEntryV2 = {
 export type PlatformCrossReferenceEntryV2 = {
   kind: "cross-reference";
   crossReferenceId: string;
+  meaningOrdinal: number | null;
   label: PlatformSemanticTermV2 | null;
   text: string;
   target: {

@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
@@ -13,6 +14,7 @@ import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 const fetchGroup = vi.fn();
+const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 
@@ -57,6 +59,8 @@ function singleSenseGroup(
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2MultiSenseGroup: (...args: unknown[]) => fetchGroup(...args),
+  fetchPlatformV2CrossReferenceTarget: (...args: unknown[]) =>
+    fetchCrossReferenceTarget(...args),
   requestPlatformV2LibraryTranslation: (...args: unknown[]) =>
     requestTranslation(...args),
 }));
@@ -69,6 +73,7 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
 describe("LibrarySenseCardV2Session", () => {
   beforeEach(() => {
     fetchGroup.mockReset();
+    fetchCrossReferenceTarget.mockReset();
     performAction.mockReset();
     requestTranslation.mockReset();
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
@@ -102,9 +107,9 @@ describe("LibrarySenseCardV2Session", () => {
       }),
     );
 
-    expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent("Reporting is not available yet.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Reporting is not available yet.",
+    );
     expect(performAction).not.toHaveBeenCalled();
   });
 
@@ -276,6 +281,97 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.queryByRole("heading", { name: "brug" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
+    const mixedDaarGroup: PlatformHeadwordGroupV2 = {
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar" },
+      senseCount: 1,
+      entryCount: 2,
+      entries: [
+        {
+          ...financeEntry,
+          entryId: "entry-daar-1",
+          meaningOrdinal: 1,
+        },
+        {
+          kind: "cross-reference",
+          crossReferenceId: "entry-daar-2",
+          meaningOrdinal: 2,
+          label: {
+            termId: "cross-reference.see",
+            messageKey: "crossReference.see",
+          },
+          text: "daar-",
+          target: {
+            query: "daar-",
+            headwordGroupId: "group-daar-target",
+            entryId: "entry-daar-target",
+          },
+          capabilities: [
+            {
+              actionId: "follow-cross-reference",
+              elementId: "cross-reference.follow",
+              messageKey: "crossReference.follow",
+            },
+          ],
+        },
+      ],
+    };
+    fetchGroup.mockResolvedValue(mixedDaarGroup);
+    fetchCrossReferenceTarget.mockResolvedValue({
+      ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [financeEntry],
+    });
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId="entry-daar-2"
+        headword="daar"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        initialGroup={mixedDaarGroup}
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    expect(await screen.findByText("daar-")).toBeInTheDocument();
+    const pointer = screen.getByTestId("library-cross-reference-entry-daar-2");
+    const meaning = screen.getByTestId("library-sense-card-entry-daar-1");
+    expect(
+      meaning.compareDocumentPosition(pointer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(within(meaning).getByText("1")).toBeInTheDocument();
+    expect(within(pointer).getByText("2")).toBeInTheDocument();
+    expect(
+      within(pointer).queryByRole("button", { name: "Learn" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(pointer).queryByRole("button", { name: "Mark known" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open reference" }));
+
+    await waitFor(() =>
+      expect(fetchCrossReferenceTarget).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: "daar-",
+          sourceDictionaryId: "vandale",
+          targetHeadwordGroupId: "group-daar-target",
+          targetEntryId: "entry-daar-target",
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText(
+        "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
+      ),
+    ).toBeInTheDocument();
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {

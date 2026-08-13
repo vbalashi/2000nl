@@ -565,6 +565,7 @@ become SenseCards.
 type CrossReferenceEntryV2 = {
   kind: "cross-reference";
   crossReferenceId: string;
+  meaningOrdinal: number | null;
   label: SemanticTermV2 | null;
   text: string;
   target: {
