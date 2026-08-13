@@ -64,9 +64,14 @@ async function requestPlatformV2TranslationUncached(
     },
   );
   if (context.transitionId) {
+    const cacheOutcome = response.headers.get("x-platform-cache");
+    const stage =
+      cacheOutcome === "hit" || cacheOutcome === "pending"
+        ? "translation.cache"
+        : "translation.provider";
     recordTrainingTransitionResponse(
       context.transitionId,
-      "translation.provider",
+      stage,
       startedAt,
       response,
       response.ok

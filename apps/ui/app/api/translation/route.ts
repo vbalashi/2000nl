@@ -340,7 +340,13 @@ export async function GET(req: NextRequest) {
             }
           : null),
       },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "pending",
+        },
+      }
     );
   }
 
@@ -384,7 +390,13 @@ export async function GET(req: NextRequest) {
             }
           : null),
       },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "hit",
+        },
+      }
     );
   }
 
@@ -593,7 +605,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       { status: "ready" as const, overlay, note: null },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "hit",
+        },
+      }
     );
   }
 
@@ -699,7 +717,13 @@ export async function GET(req: NextRequest) {
             }
           : null),
       },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Translation-Cache": "provider",
+        },
+      }
     );
   } catch (err: any) {
     const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);

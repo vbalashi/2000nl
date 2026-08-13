@@ -13,6 +13,7 @@ import {
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
 import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
+import { requestPlatformV2Translation } from "@/lib/platform/platformV2TrainingMediaClient";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
 import {
   singleSenseEntry,
@@ -264,6 +265,39 @@ describe("performPlatformV2TrainingAction", () => {
     await expect(
       performPlatformV2TrainingAction(capability),
     ).rejects.toThrow("action_receipt_not_found");
+  });
+});
+
+describe("requestPlatformV2Translation", () => {
+  test("classifies a server-side artifact hit as cache work", async () => {
+    const capability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: singleSenseEntry.entryId,
+        contentRevision: singleSenseEntry.contentRevision,
+      },
+      targetLanguageCode: "en",
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ status: "ready" }), {
+          status: 200,
+          headers: { "x-platform-cache": "hit" },
+        }),
+      ),
+    );
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+
+    await requestPlatformV2Translation(capability, {
+      transitionId: "transition-cache-hit",
+    });
+
+    expect(transitionStages(dispatch)).toContain("translation.cache");
+    expect(transitionStages(dispatch)).not.toContain("translation.provider");
   });
 });
 

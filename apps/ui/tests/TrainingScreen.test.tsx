@@ -2196,6 +2196,7 @@ test("settings training controls persist to the current language training scope"
 });
 
 test("hotkey triggers recordReview like button click", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
   render(<TrainingScreen user={user} />);
 
   await waitFor(() =>
@@ -2214,6 +2215,15 @@ test("hotkey triggers recordReview like button click", async () => {
       expect.objectContaining({ result: "success" }),
     ),
   );
+  expect(
+    dispatch.mock.calls.some(
+      ([event]) =>
+        event instanceof CustomEvent &&
+        event.type === "2000nl:training-transition-timing" &&
+        event.detail.stage === "review.mutation" &&
+        event.detail.outcome === "accepted",
+    ),
+  ).toBe(true);
 });
 
 test("rapid hotkeys while review is in-flight trigger only one review (US-093.5)", async () => {
@@ -2575,12 +2585,18 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
         expect.objectContaining({ entryId: word2.id }),
       ),
     );
+    const schedulerCallsBeforeGrade =
+      fetchNextTrainingWordByScenario.mock.calls.length;
 
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
     expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "boom" }),
     ).not.toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      schedulerCallsBeforeGrade,
+    );
 
     await act(async () => {
       resolveNextLookup({

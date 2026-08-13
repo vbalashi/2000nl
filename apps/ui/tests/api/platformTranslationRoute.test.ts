@@ -283,6 +283,7 @@ describe("/api/platform/v1/translation", () => {
     const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "https://client.example",
     );
@@ -319,6 +320,7 @@ describe("/api/platform/v1/translation", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("provider");
     expect(translate).toHaveBeenCalledWith(["het huis", "woning"], "ru");
     expect(insertChain.upsert).toHaveBeenCalledWith(
       expect.objectContaining({

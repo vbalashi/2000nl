@@ -61,7 +61,10 @@ import {
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
-import { markTrainingEntryPresentationStarted } from "@/lib/training/trainingTransitionTiming";
+import {
+  markTrainingEntryPresentationStarted,
+  measureTrainingTransitionStage,
+} from "@/lib/training/trainingTransitionTiming";
 import {
   clearPlatformV2TrainingClientCaches,
   type PlatformV2TrainingActionCapability,
@@ -1192,13 +1195,22 @@ export function TrainingScreen({
           `| TOTAAL: ${stats.totalWordsLearned}/${stats.totalWordsInList}`,
         );
 
-        const updatedStatus = await recordReview({
-          userId: user.id,
-          wordId: currentWord.id,
-          mode: wordMode,
-          result,
-          turnId: turnIdForReview,
-        });
+        const recordMutation = () =>
+          recordReview({
+            userId: user.id,
+            wordId: currentWord.id,
+            mode: wordMode,
+            result,
+            turnId: turnIdForReview,
+          });
+        const updatedStatus = nextTransitionId
+          ? await measureTrainingTransitionStage(
+              nextTransitionId,
+              "review.mutation",
+              recordMutation,
+              () => "accepted",
+            )
+          : await recordMutation();
 
         // Log interval/stability changes to console
         if (
@@ -1366,6 +1378,7 @@ export function TrainingScreen({
       beginAcceptedCardTransition,
       currentWord,
       finishAcceptedCardTransition,
+      nextTransitionId,
       stats,
       user?.id,
     ],

@@ -64,6 +64,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
   const [nextTransitionId, setNextTransitionId] = useState<string | null>(null);
   const candidateRef = useRef<PreparedNextTrainingTurn | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const ownedForCardKeyRef = useRef<string | null>(null);
   const trainingV2Enabled = platformV2TrainingUiEnabled();
 
   const warmWord = useCallback(
@@ -101,13 +102,18 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     ],
   );
 
-  const reset = useCallback(() => {
+  const cancelCurrent = useCallback(() => {
     tokenRef.current += 1;
     controllerRef.current?.abort();
     controllerRef.current = null;
     candidateRef.current = null;
     setNextTransitionId(null);
   }, []);
+
+  const reset = useCallback(() => {
+    ownedForCardKeyRef.current = null;
+    cancelCurrent();
+  }, [cancelCurrent]);
 
   const consumeForCard = useCallback((cardKey: string) => {
     const candidate = candidateRef.current;
@@ -117,14 +123,17 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     // controller so the next queue-turn effect cannot abort work that the
     // current transition is explicitly waiting for.
     controllerRef.current = null;
+    ownedForCardKeyRef.current = cardKey;
     return candidate;
   }, []);
 
   useEffect(() => {
     if (!currentWord?.id) return;
-    reset();
     const forWordId = currentWord.id;
     const forCardKey = `${forWordId}:${currentWord.mode ?? currentMode}`;
+    if (ownedForCardKeyRef.current === forCardKey) return;
+    ownedForCardKeyRef.current = null;
+    cancelCurrent();
     const predictedQueueTurn = predictNextQueueTurn({
       cardFilter,
       queueTurn,
@@ -160,7 +169,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       if (audioEnabled) preloadAudio(word);
     }).catch(() => undefined);
 
-    return reset;
+    return cancelCurrent;
   }, [
     audioEnabled,
     cardFilter,
@@ -172,7 +181,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     queueTurn,
     reviewCounter,
     selectNext,
-    reset,
+    cancelCurrent,
     trainingV2Enabled,
     warmWord,
   ]);

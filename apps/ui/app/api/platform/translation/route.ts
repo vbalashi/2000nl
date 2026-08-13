@@ -168,7 +168,10 @@ export async function POST(request: NextRequest) {
     },
     translationResponse.status,
   );
-  response.headers.set("X-Platform-Cache", "provider-or-refresh");
+  response.headers.set(
+    "X-Platform-Cache",
+    translationResponse.headers.get("x-translation-cache") ?? "provider",
+  );
   response.headers.set(
     "Server-Timing",
     `route.total;dur=${Math.max(0, performance.now() - startedAt).toFixed(1)}`,

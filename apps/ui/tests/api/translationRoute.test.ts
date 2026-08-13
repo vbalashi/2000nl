@@ -141,6 +141,7 @@ describe("/api/translation", () => {
     const response = await GET(request("token-1"));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-translation-cache")).toBe("pending");
     expect(from).not.toHaveBeenCalledWith("connected_client_sessions");
     expect(from).toHaveBeenCalledWith("word_entry_translations");
     await expect(response.json()).resolves.toEqual({
