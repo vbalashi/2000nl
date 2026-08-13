@@ -103,8 +103,8 @@ describe("TrainingCard translation behavior", () => {
         cache: "no-store",
         credentials: "same-origin",
         headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
+          accept: "application/json",
+          "content-type": "application/json",
         },
         body: JSON.stringify({ entryId: "word-1", targetLang: "en" }),
       }),
