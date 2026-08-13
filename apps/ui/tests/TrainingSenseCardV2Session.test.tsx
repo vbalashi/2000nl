@@ -322,9 +322,8 @@ describe("TrainingSenseCardV2Session", () => {
     document.body.append(settingsControl);
     settingsControl.focus();
     fetchSingleSense.mockResolvedValueOnce({
-      state: "ready",
-      group: nextGroup,
-      entry: nextEntry,
+      state: "lookup-http-error",
+      status: 503,
     });
     view.rerender(
       <TestTrainingSenseCardV2Session
@@ -332,17 +331,29 @@ describe("TrainingSenseCardV2Session", () => {
         mode="word-to-definition"
         contentLanguageCode="nl"
         translationTargetLanguageCode="ru"
-        interfaceLanguage="nl"
+        interfaceLanguage="en"
         focusOnPresentation
         onProgressActionAccepted={vi.fn()}
       />,
     );
 
     await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(3));
+    await screen.findByRole("alert");
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
+    expect(settingsControl).toHaveFocus();
+
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: nextGroup,
+      entry: nextEntry,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(4));
     await screen.findByRole("heading", { name: "bank" });
-    expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
-      "Volgende trainingskaart",
-    );
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
     expect(settingsControl).toHaveFocus();
     settingsControl.remove();
   });

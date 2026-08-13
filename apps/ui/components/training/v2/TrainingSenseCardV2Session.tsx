@@ -91,6 +91,8 @@ export function TrainingSenseCardV2Session({
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
+  const [presentationAnnouncement, setPresentationAnnouncement] =
+    React.useState<string>("");
   const interactionBusyRef = React.useRef(false);
   const loadGenerationRef = React.useRef(0);
   const presentationHandledRef = React.useRef(false);
@@ -197,7 +199,10 @@ export function TrainingSenseCardV2Session({
   React.useEffect(() => {
     if (!handlePresentation) return;
     presentationHandledRef.current = true;
-  }, [handlePresentation]);
+    setPresentationAnnouncement(
+      platformV2Message(interfaceLanguage, "senseCard.training.cardChanged"),
+    );
+  }, [handlePresentation, interfaceLanguage]);
 
   const handleAction = async (capability: PlatformSenseCardCapabilityV2) => {
     if (interactionBusyRef.current) return;
@@ -319,26 +324,27 @@ export function TrainingSenseCardV2Session({
 
   const cardAnnouncementRegion = (
     <span className="sr-only" aria-live="polite" aria-atomic="true">
-      {focusOnPresentation
-        ? platformV2Message(interfaceLanguage, "senseCard.training.cardChanged")
-        : ""}
+      {presentationAnnouncement}
     </span>
   );
 
   if (sessionState === "loading") {
     return (
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 [@media(hover:hover)_and_(pointer:fine)]:justify-center">
-        <div
-          role="status"
-          data-testid="training-v2-loading"
-          data-training-renderer="v2"
-          data-training-v2-state="loading"
-          className="grid min-h-0 max-h-none flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-sm font-medium text-slate-600 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-300 [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
-        >
-          {platformV2Message(interfaceLanguage, "senseCard.training.loading")}
+      <>
+        {cardAnnouncementRegion}
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 [@media(hover:hover)_and_(pointer:fine)]:justify-center">
+          <div
+            role="status"
+            data-testid="training-v2-loading"
+            data-training-renderer="v2"
+            data-training-v2-state="loading"
+            className="grid min-h-0 max-h-none flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-sm font-medium text-slate-600 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-300 [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
+          >
+            {platformV2Message(interfaceLanguage, "senseCard.training.loading")}
+          </div>
+          <div aria-hidden="true" className="h-11 min-h-11 shrink-0" />
         </div>
-        <div aria-hidden="true" className="h-11 min-h-11 shrink-0" />
-      </div>
+      </>
     );
   }
 
@@ -348,50 +354,55 @@ export function TrainingSenseCardV2Session({
       "loading" | "ready"
     >;
     return (
-      <SessionV2Failure
-        state={failureState}
-        interfaceLanguage={interfaceLanguage}
-        detail={error}
-        onExit={onExit}
-        onRetry={() => {
-          void load(undefined, { usePrefetch: false }).catch((cause) => {
-            setLookup({ state: "lookup-http-error", status: 0 });
-            setError(cause instanceof Error ? cause.message : "lookup_failed");
-          });
-        }}
-      />
+      <>
+        {cardAnnouncementRegion}
+        <SessionV2Failure
+          state={failureState}
+          interfaceLanguage={interfaceLanguage}
+          detail={error}
+          onExit={onExit}
+          onRetry={() => {
+            void load(undefined, { usePrefetch: false }).catch((cause) => {
+              setLookup({ state: "lookup-http-error", status: 0 });
+              setError(cause instanceof Error ? cause.message : "lookup_failed");
+            });
+          }}
+        />
+      </>
     );
   }
 
   return (
-    <div
-      className="contents"
-      data-testid="training-sense-card-v2"
-      data-training-renderer="v2"
-      data-training-v2-state="ready"
-    >
+    <>
       {cardAnnouncementRegion}
-      <TrainingSenseCardStage
-        model={model}
-        mode={mode}
-        interfaceLanguage={interfaceLanguage}
-        busy={busy}
-        focusOnMount={handlePresentation}
-        onPlayAudio={
-          result.group.header.audio && onPlayResolvedAudio
-            ? () => void handlePlayAudio()
-            : undefined
-        }
-        onOpenDetails={onOpenDetails}
-        onAction={(capability) => void handleAction(capability)}
-      />
-      <SessionError
-        error={error}
-        tone={noticeTone}
-        dismissLabel={platformV2Message(interfaceLanguage, "senseCard.dismiss")}
-        onDismiss={() => setError(null)}
-      />
-    </div>
+      <div
+        className="contents"
+        data-testid="training-sense-card-v2"
+        data-training-renderer="v2"
+        data-training-v2-state="ready"
+      >
+        <TrainingSenseCardStage
+          model={model}
+          mode={mode}
+          interfaceLanguage={interfaceLanguage}
+          busy={busy}
+          focusOnMount={handlePresentation}
+          onPlayAudio={
+            result.group.header.audio && onPlayResolvedAudio
+              ? () => void handlePlayAudio()
+              : undefined
+          }
+          onOpenDetails={onOpenDetails}
+          onAction={(capability) => void handleAction(capability)}
+        />
+        <SessionError
+          error={error}
+          tone={noticeTone}
+          dismissLabel={platformV2Message(interfaceLanguage, "senseCard.dismiss")}
+          onDismiss={() => setError(null)}
+        />
+      </div>
+    </>
   );
 }
 
