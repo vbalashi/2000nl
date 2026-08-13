@@ -213,7 +213,9 @@ describe("useTrainingActiveList", () => {
 
     await waitFor(() => expect(result.current.listOptions).toHaveLength(2));
 
-    await result.current.handleListSelectValue("user:user-1");
+    const selected = result.current.resolveListValue("user:user-1");
+    expect(selected).toBe(userList);
+    await result.current.persistListChange(selected!);
 
     expect(updateActiveTrainingScope).toHaveBeenCalledWith({
       userId: "user-1",
@@ -246,7 +248,10 @@ describe("useTrainingActiveList", () => {
       ]),
     );
 
-    const scope = await result.current.handleListSelectValue("curated:source-1");
+    const selected = result.current.resolveListValue("curated:source-1");
+    const scope = selected
+      ? await result.current.persistListChange(selected)
+      : null;
 
     expect(scope).toBeNull();
     expect(updateActiveTrainingScope).not.toHaveBeenCalledWith({
@@ -334,5 +339,52 @@ describe("useTrainingActiveList", () => {
         listType: "curated",
       }),
     );
+  });
+
+  test("discards a late list refresh after the language changes", async () => {
+    let resolveOldLists!: (lists: typeof curatedList[]) => void;
+    const oldLists = new Promise<typeof curatedList[]>((resolve) => {
+      resolveOldLists = resolve;
+    });
+    fetchAvailableLists.mockImplementation(async (_userId, language) =>
+      language === "nl" ? oldLists : [englishList],
+    );
+    fetchActiveTrainingScope.mockImplementation(async ({ languageCode }) => ({
+      languageCode,
+      activeListId: languageCode === "en" ? englishList.id : curatedList.id,
+      activeListType: "curated",
+      activeScenario: "understanding",
+      cardFilter: "both",
+      modesEnabled: ["word-to-definition"],
+      newReviewRatio: 2,
+      hasSavedScope: true,
+      isValid: true,
+    }));
+    fetchListSummaryById.mockImplementation(async ({ listId }) =>
+      listId === englishList.id ? englishList : curatedList,
+    );
+    const onResolvedActiveList = vi.fn();
+
+    const { result, rerender } = renderHook(
+      ({ language }) =>
+        useTrainingActiveList({
+          userId: "user-1",
+          language,
+          showSettings: false,
+        }),
+      { initialProps: { language: "nl" } },
+    );
+
+    const staleRefresh = result.current.handleListsUpdated({
+      onResolvedActiveList,
+    });
+    rerender({ language: "en" });
+    await waitFor(() => expect(result.current.wordListId).toBe(englishList.id));
+    resolveOldLists([curatedList]);
+    await staleRefresh;
+
+    expect(onResolvedActiveList).not.toHaveBeenCalled();
+    expect(result.current.wordListId).toBe(englishList.id);
+    expect(result.current.wordListLabel).toBe(englishList.name);
   });
 });

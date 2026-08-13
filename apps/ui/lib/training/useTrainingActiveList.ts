@@ -203,31 +203,25 @@ export function useTrainingActiveList(params: {
     [applyList, language, userId],
   );
 
-  const handleListSelectValue = useCallback(
-    async (value: string) => {
-      const found = resolveListValue(value);
-      if (!found) return null;
-      return persistListChange(found);
-    },
-    [persistListChange, resolveListValue],
-  );
-
   const handleListsUpdated = useCallback(
     async (callbacks: ListUpdatedCallbacks = {}) => {
       if (!userId) return null;
+      const requestId = ++listRequestIdRef.current;
+      const requestedLanguage = language;
+      const isCurrentRequest = () =>
+        requestId === listRequestIdRef.current &&
+        requestedLanguage === currentLanguageRef.current;
 
       const lists = await fetchAvailableLists(userId, language);
-      if (language === currentLanguageRef.current) {
-        setAvailableLists(lists);
-      }
+      if (!isCurrentRequest()) return null;
+      setAvailableLists(lists);
 
       const active = await fetchActiveTrainingScope({
         userId,
         languageCode: language,
       });
-      if (language === currentLanguageRef.current) {
-        setActiveTrainingScope(active);
-      }
+      if (!isCurrentRequest()) return null;
+      setActiveTrainingScope(active);
       if (active.activeListId) {
         const listType = active.activeListType ?? "curated";
         const resolved = await fetchListSummaryById({
@@ -235,6 +229,7 @@ export function useTrainingActiveList(params: {
           listId: active.activeListId,
           listType,
         });
+        if (!isCurrentRequest()) return null;
         if (resolved && isTrainingEligibleList(resolved)) {
           applyList(resolved);
           callbacks.onResolvedActiveList?.(resolved, active);
@@ -275,7 +270,6 @@ export function useTrainingActiveList(params: {
     activeTrainingScope,
     activeListValue,
     availableLists,
-    handleListSelectValue,
     handleListsUpdated,
     listHydrated,
     listOptions,
