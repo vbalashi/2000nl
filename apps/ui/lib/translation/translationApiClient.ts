@@ -1,22 +1,7 @@
-import { supabase } from "@/lib/supabaseClient";
+import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 
 export async function translationRequestHeaders(): Promise<HeadersInit> {
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-
-  if (typeof window === "undefined") {
-    return headers;
-  }
-
-  const { data } = await supabase.auth.getSession();
-  const accessToken = data.session?.access_token;
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-  }
-
-  return headers;
+  return authenticatedJsonHeaders();
 }
 
 export async function fetchDictionaryMeaningTranslation(input: {

@@ -30,7 +30,7 @@ describe("translationApiClient", () => {
     );
 
     await expect(translationRequestHeaders()).resolves.toMatchObject({
-      Authorization: "Bearer session-token",
+      authorization: "Bearer session-token",
     });
     expect(getSession).toHaveBeenCalledTimes(1);
   });
@@ -47,7 +47,7 @@ describe("translationApiClient", () => {
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
-          Authorization: "Bearer session-token",
+          authorization: "Bearer session-token",
         }),
         body: JSON.stringify({
           entryId: "entry-1",
