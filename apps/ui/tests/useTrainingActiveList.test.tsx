@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
+import type { WordListSummary } from "@/lib/types";
 
 const {
   fetchActiveTrainingScope,
@@ -386,5 +387,64 @@ describe("useTrainingActiveList", () => {
     expect(onResolvedActiveList).not.toHaveBeenCalled();
     expect(result.current.wordListId).toBe(englishList.id);
     expect(result.current.wordListLabel).toBe(englishList.name);
+  });
+
+  test("ordinary list refresh does not cancel authoritative scope refresh", async () => {
+    let resolveScopeLists!: (lists: WordListSummary[]) => void;
+    const scopeLists = new Promise<WordListSummary[]>((resolve) => {
+      resolveScopeLists = resolve;
+    });
+    fetchAvailableLists
+      .mockResolvedValueOnce([curatedList])
+      .mockReturnValueOnce(scopeLists)
+      .mockResolvedValueOnce([curatedList, userList]);
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: userList.id,
+        activeListType: userList.type,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      });
+    fetchListSummaryById.mockResolvedValue(userList);
+    const onResolvedActiveList = vi.fn();
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    const scopeRefresh = result.current.handleListsUpdated({
+      onResolvedActiveList,
+    });
+    await result.current.refreshAvailableLists();
+    resolveScopeLists([curatedList, userList]);
+    await scopeRefresh;
+
+    expect(onResolvedActiveList).toHaveBeenCalledTimes(1);
+    expect(onResolvedActiveList).toHaveBeenCalledWith(
+      userList,
+      expect.objectContaining({ activeListId: userList.id }),
+    );
+    expect(result.current.wordListId).toBe(userList.id);
   });
 });

@@ -45,6 +45,8 @@ export function useTrainingActiveList(params: {
   const [listHydrated, setListHydrated] = useState(false);
   const currentLanguageRef = useRef(language);
   const listRequestIdRef = useRef(0);
+  const scopeRefreshIdRef = useRef(0);
+  const languageGenerationRef = useRef(0);
 
   const applyList = useCallback((list: WordListSummary) => {
     setWordListId(list.id);
@@ -63,6 +65,8 @@ export function useTrainingActiveList(params: {
   useEffect(() => {
     currentLanguageRef.current = language;
     listRequestIdRef.current += 1;
+    scopeRefreshIdRef.current += 1;
+    languageGenerationRef.current += 1;
     setAvailableLists([]);
     setListHydrated(false);
     setActiveTrainingScope(null);
@@ -206,10 +210,12 @@ export function useTrainingActiveList(params: {
   const handleListsUpdated = useCallback(
     async (callbacks: ListUpdatedCallbacks = {}) => {
       if (!userId) return null;
-      const requestId = ++listRequestIdRef.current;
+      const refreshId = ++scopeRefreshIdRef.current;
+      const languageGeneration = languageGenerationRef.current;
       const requestedLanguage = language;
       const isCurrentRequest = () =>
-        requestId === listRequestIdRef.current &&
+        refreshId === scopeRefreshIdRef.current &&
+        languageGeneration === languageGenerationRef.current &&
         requestedLanguage === currentLanguageRef.current;
 
       const lists = await fetchAvailableLists(userId, language);
