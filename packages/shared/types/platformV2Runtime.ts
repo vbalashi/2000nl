@@ -7,13 +7,9 @@ import type {
   PlatformSenseCardCapabilityV2,
   PlatformWordDetailsV2,
 } from "./platformV2";
+import { PLATFORM_V2_CARD_TYPE_IDS } from "./platformV2";
 
-const CARD_TYPES = new Set([
-  "word-to-definition",
-  "definition-to-word",
-  "listen-recognize",
-  "listen-type",
-]);
+const CARD_TYPES = new Set<string>(PLATFORM_V2_CARD_TYPE_IDS);
 const INTENTS = new Set(["dictionary-lookup", "training-review", "external-click"]);
 const NODE_KINDS = new Set([
   "definition", "usage-pattern", "example", "idiom", "idiom-explanation", "usage-note",

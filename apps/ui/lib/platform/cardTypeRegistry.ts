@@ -1,11 +1,8 @@
 import type { TrainingMode } from "@/lib/types";
+import { PLATFORM_V2_CARD_TYPE_IDS } from "../../../../packages/shared/types/platformV2";
 
-export const PLATFORM_CARD_TYPE_IDS = [
-  "word-to-definition",
-  "definition-to-word",
-  "listen-recognize",
-  "listen-type",
-] as const satisfies readonly TrainingMode[];
+export const PLATFORM_CARD_TYPE_IDS =
+  PLATFORM_V2_CARD_TYPE_IDS satisfies readonly TrainingMode[];
 
 const platformCardTypeIds = new Set<string>(PLATFORM_CARD_TYPE_IDS);
 

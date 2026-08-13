@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { requestPlatformV2Lookup } from "@/lib/platform/platformV2LookupTransport";
+import { PLATFORM_CARD_TYPE_IDS } from "@/lib/platform/cardTypeRegistry";
+import { PLATFORM_V2_CARD_TYPE_IDS } from "../../../packages/shared/types/platformV2";
 import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
 
 vi.mock("@/lib/supabaseClient", () => ({
@@ -26,6 +28,10 @@ const body = {
 };
 
 describe("requestPlatformV2Lookup", () => {
+  test("uses the same supported card types for requests and response validation", () => {
+    expect(PLATFORM_CARD_TYPE_IDS).toEqual(PLATFORM_V2_CARD_TYPE_IDS);
+  });
+
   test("returns a validated V2 payload and authenticated response", async () => {
     vi.stubGlobal(
       "fetch",

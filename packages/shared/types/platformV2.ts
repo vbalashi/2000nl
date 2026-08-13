@@ -1,5 +1,14 @@
 import type { CardTypeId, LookupIntent, PlatformSourceContextV2 } from "./platform";
 
+export const PLATFORM_V2_CARD_TYPE_IDS = [
+  "word-to-definition",
+  "definition-to-word",
+  "listen-recognize",
+  "listen-type",
+] as const;
+
+export type PlatformV2CardTypeId = (typeof PLATFORM_V2_CARD_TYPE_IDS)[number];
+
 export type PlatformSemanticTermV2 = {
   termId: string;
   messageKey: string;
