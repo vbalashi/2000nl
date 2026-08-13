@@ -246,4 +246,44 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
     expect(controller.result.current.loadingWord).toBe(false);
   });
+
+  test("scope replacement cancels the old selection and presents exactly one new-scope result", async () => {
+    const oldSelection = deferred<TrainingWord | null>();
+    const newSelection = deferred<TrainingWord | null>();
+    const oldWord = { ...word2, id: "word-old", headword: "oud" };
+    const selectNext = vi.fn((request: TrainingTurnSelectionRequest) =>
+      request.scenario === "new-scope"
+        ? newSelection.promise
+        : oldSelection.promise,
+    );
+    const controller = renderController({ selectNext });
+
+    let oldLoad!: Promise<string>;
+    let newLoad!: Promise<string>;
+    act(() => {
+      oldLoad = controller.result.current.loadNextWord({
+        scenario: "old-scope",
+      });
+    });
+    await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      newLoad = controller.result.current.replaceSessionScopeAndLoad({
+        scenario: "new-scope",
+      });
+    });
+    await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(2));
+
+    await act(async () => newSelection.resolve(word2));
+    await expect(newLoad).resolves.toBe("loaded");
+    await act(async () => oldSelection.resolve(oldWord));
+    await expect(oldLoad).resolves.toBe("skipped");
+
+    expect(selectNext).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ scenario: "new-scope" }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
+  });
 });

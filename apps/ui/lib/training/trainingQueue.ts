@@ -1,4 +1,11 @@
-import type { CardFilter, QueueTurn } from "../types";
+import type { CardFilter, QueueTurn, TrainingMode, TrainingWord } from "../types";
+
+export function getTrainingCardKey(
+  word: TrainingWord,
+  fallbackMode: TrainingMode,
+): string {
+  return `${word.id}:${word.mode ?? fallbackMode}`;
+}
 
 export type QueueTransitionInput = {
   cardFilter: CardFilter;

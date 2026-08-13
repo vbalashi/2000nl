@@ -9,7 +9,6 @@ import { trainingDebug } from "@/lib/trainingDebug";
 import {
   fetchDictionaryEntry,
   fetchAvailableLearningLanguages,
-  fetchNextTrainingWord,
   fetchTrainingFilterSources,
   fetchStats,
   fetchRecentHistory,
@@ -53,6 +52,7 @@ import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
 import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
 import { useTrainingTurnController } from "./useTrainingTurnController";
+import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -93,9 +93,6 @@ type Props = {
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
 };
-
-const trainingCardKey = (word: TrainingWord, fallbackMode: TrainingMode) =>
-  `${word.id}:${word.mode ?? fallbackMode}`;
 
 const ACTION_LABELS: Record<
   ReviewResult,
@@ -465,7 +462,7 @@ export function TrainingScreen({
       return;
     }
 
-    const cardKey = trainingCardKey(currentWord, currentMode);
+    const cardKey = getTrainingCardKey(currentWord, currentMode);
     if (autoPlayedAudioCardRef.current === cardKey) return;
     autoPlayedAudioCardRef.current = cardKey;
 
@@ -616,6 +613,7 @@ export function TrainingScreen({
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
+    replaceSessionScopeAndLoad,
     requestNextCardOverride,
     resetFocusQueue,
     resetQueueForFilter,
@@ -1150,7 +1148,7 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: list.id, listType: list.type },
         scenario: nextScenario,
       });
@@ -1158,7 +1156,7 @@ export function TrainingScreen({
     [
       activeScenario,
       loadStats,
-      loadNextWord,
+      replaceSessionScopeAndLoad,
       persistCurrentTrainingScope,
       persistListChange,
       setActiveScenario,
@@ -1180,13 +1178,13 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats(scope);
-      void loadNextWord({ scope, scenario: nextScenario });
+      void replaceSessionScopeAndLoad({ scope, scenario: nextScenario });
     },
     [
       activeScenario,
       availableLists,
       handleListSelectValue,
-      loadNextWord,
+      replaceSessionScopeAndLoad,
       loadStats,
       persistCurrentTrainingScope,
       setActiveScenario,
@@ -1203,7 +1201,7 @@ export function TrainingScreen({
         activeScenario: nextScenario,
       });
       void loadStats({ listId: list.id, listType: list.type });
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: list.id, listType: list.type },
         scenario: nextScenario,
       });
@@ -1215,7 +1213,7 @@ export function TrainingScreen({
     });
   }, [
     activeScenario,
-    loadNextWord,
+    replaceSessionScopeAndLoad,
     loadStats,
     persistCurrentTrainingScope,
     refreshListsAfterUpdate,
@@ -1242,7 +1240,7 @@ export function TrainingScreen({
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
       // Load next word with the new scenario
-      void loadNextWord({
+      void replaceSessionScopeAndLoad({
         scope: { listId: wordListId, listType: wordListType },
         scenario: newScenario,
       });
@@ -1250,7 +1248,7 @@ export function TrainingScreen({
     [
       setActiveScenario,
       persistCurrentTrainingScope,
-      loadNextWord,
+      replaceSessionScopeAndLoad,
       wordListId,
       wordListType,
     ],
@@ -1552,7 +1550,7 @@ export function TrainingScreen({
   } = useTrainingSessionPresentation({
     surface: trainingPilot.surface,
     presentedCardKey: currentWord
-      ? trainingCardKey(currentWord, currentMode)
+      ? getTrainingCardKey(currentWord, currentMode)
       : null,
     onEnterSession: handleEnterTrainingSession,
   });

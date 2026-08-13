@@ -11,6 +11,7 @@ import {
 } from "@/lib/training/trainingTransitionTiming";
 import {
   generateReviewTurnId,
+  getTrainingCardKey,
   getNextQueueTransition,
 } from "@/lib/training/trainingQueue";
 import type {
@@ -72,9 +73,6 @@ type Inputs = {
     refreshHistory: boolean;
   }) => Promise<void>;
 };
-
-const trainingCardKey = (word: TrainingWord, mode: TrainingMode) =>
-  `${word.id}:${mode}`;
 
 const isPlatformV2TrainingMode = (
   mode: TrainingMode,
@@ -180,6 +178,12 @@ export function useTrainingTurnController(input: Inputs) {
     setReviewCounter(0);
   }, [cancelActiveSelection, clearReviewedSession, resetPreparedNextTurn]);
 
+  const beginSessionScopeChange = useCallback(() => {
+    clearReviewedSession();
+    cancelActiveSelection();
+    resetPreparedNextTurn();
+  }, [cancelActiveSelection, clearReviewedSession, resetPreparedNextTurn]);
+
   const resetQueueForFilter = useCallback((nextFilter: CardFilter) => {
     if (nextFilter !== "both") return;
     setQueueTurn("new");
@@ -257,7 +261,7 @@ export function useTrainingTurnController(input: Inputs) {
           if (generation !== loadGenerationRef.current) return "skipped";
           if (overrideWord) {
             const mode = currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
-            const overrideCardKey = trainingCardKey(overrideWord, mode);
+            const overrideCardKey = getTrainingCardKey(overrideWord, mode);
             nextCardOverrideActiveKeyRef.current = overrideCardKey;
             const preparedOverrideWord: TrainingWord = {
               ...overrideWord,
@@ -338,6 +342,14 @@ export function useTrainingTurnController(input: Inputs) {
     ],
   );
 
+  const replaceSessionScopeAndLoad = useCallback(
+    (request: LoadNextTrainingTurnRequest) => {
+      beginSessionScopeChange();
+      return loadNextWord(request);
+    },
+    [beginSessionScopeChange, loadNextWord],
+  );
+
   const requestNextCardOverride = useCallback(
     (wordId: string, announce = true) => {
       nextCardOverrideWordIdRef.current = wordId;
@@ -351,7 +363,7 @@ export function useTrainingTurnController(input: Inputs) {
   const beginAcceptedCardTransition = useCallback(() => {
     if (!currentWord) return null;
     const wordMode = currentWord.mode ?? enabledModes[0] ?? "word-to-definition";
-    const currentCardKey = trainingCardKey(currentWord, wordMode);
+    const currentCardKey = getTrainingCardKey(currentWord, wordMode);
     const turnIdForReview = currentTurnIdRef.current;
     const queue = getNextQueueTransition({
       cardFilter,
@@ -492,6 +504,7 @@ export function useTrainingTurnController(input: Inputs) {
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
+    replaceSessionScopeAndLoad,
     requestNextCardOverride,
     resetFocusQueue,
     resetQueueForFilter,
