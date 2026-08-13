@@ -453,21 +453,6 @@ function buildContentSections(
       });
     }
 
-    if (typeof item.note === "string") {
-      const sourcePath = `raw.meanings[${meaningIndex}].note`;
-      const overlayTranslation = overlayTranslationAtSourcePath(
-        translationOverlay,
-        sourcePath,
-      );
-      sections.push({
-        id: sectionId("note", meaningIndex),
-        sourcePath,
-        kind: "note",
-        text: item.note,
-        ...(overlayTranslation ? { translation: overlayTranslation } : {}),
-      });
-    }
-
     const pushExampleSection = (example: string, exampleIndex: number) => {
       const sourcePath = `raw.meanings[${meaningIndex}].examples[${exampleIndex}]`;
       const overlayTranslation = overlayTranslationAtSourcePath(

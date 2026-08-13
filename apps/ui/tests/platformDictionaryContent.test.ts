@@ -72,13 +72,9 @@ describe("platform dictionary content audio links", () => {
     expect(content.meanings[0]).toMatchObject({
       note: "alleen figuurlijk gebruikt",
     });
-    expect(content.sections).toEqual(
+    expect(content.sections).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          sourcePath: "raw.meanings[0].note",
-          kind: "note",
-          text: "alleen figuurlijk gebruikt",
-        }),
+        expect.objectContaining({ sourcePath: "raw.meanings[0].note" }),
       ]),
     );
   });
