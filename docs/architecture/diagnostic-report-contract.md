@@ -9,8 +9,11 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
 ## Domain boundary
 
 - One Report action creates one `Diagnostic Report` with a UUID `reportId`.
-- The durable `Feedback Item` owns category, stable target, optional learner comment, review state, resolution, duplicate links, and optional GitHub follow-up.
-- The temporary `Diagnostic Envelope` owns bounded card content and technical observations.
+- The durable `Feedback Item` owns category, stable target, whether a learner
+  comment was supplied, an optional admin-authored sanitized summary, review
+  state, resolution, duplicate links, and optional GitHub follow-up.
+- The temporary `Diagnostic Envelope` owns the untrusted bounded learner
+  comment, bounded card content, and technical observations.
 - A Diagnostic Report is not a Platform card mutation and does not reuse a review `clientEventId` or `turnId`.
 - The server derives the authenticated user identity. The client never supplies a user ID.
 
@@ -18,39 +21,106 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
 
 The request is a closed, versioned schema. Unknown fields are rejected. Every field belongs to one classification; there is no extension metadata bag.
 
+The top-level request contains exactly `schemaVersion`, `reportId`, `payloadHash`,
+`feedback`, `target`, `cardContent`, and `observations`. `schemaVersion` is the
+literal `diagnostic-report-v1`; `reportId` is a UUID; and `payloadHash` is a
+lower-case SHA-256 hex digest of the canonical request with `payloadHash`
+omitted. Optional properties below are present as explicit `null`, never
+omitted. Arrays preserve source order. Canonical JSON recursively sorts object
+keys, uses UTF-8 without a byte-order mark or insignificant whitespace, and
+uses JSON integer syntax for numbers. The server reconstructs and verifies the
+canonical bytes and hash before persistence.
+
 ### Stable target
 
-Exactly one primary target is required:
+Exactly one primary target is required. IDs described as UUIDs must be canonical
+lower-case UUID strings; fingerprints and revisions are lower-case 64-character
+SHA-256 hex strings:
 
-- `entry`: `entryId` plus content revision when available;
-- `sense-card`: `entryId`, `cardTypeId`, and content/state revision when available;
-- `content-node`: `entryId`, `contentNodeId`, node kind, and source-text fingerprint when available;
-- `translation-artifact`: entry or content-node target, translation artifact ID, target language, and translation revision/policy identity when available;
-- `training-action`: exact SenseCard target, action ID, action correlation ID, and result/error classification.
+- `entry`: `entryId` UUID and required `contentRevision`;
+- `sense-card`: `entryId`, `cardTypeId` (1–64 ASCII identifier characters),
+  required `contentRevision`, and `cardStateRevision` (revision or `null`);
+- `content-node`: `entryId`, `contentNodeId` (1–128 ASCII identifier
+  characters), `nodeKind` from the Platform V2 enum, and required
+  `sourceTextFingerprint`;
+- `translation-artifact`: `entryId`, `contentNodeId` (identifier or `null`),
+  `translationId` UUID, BCP-47 `targetLanguageCode` (2–35 characters),
+  `translationPolicyVersion` (1–128 printable ASCII characters), and
+  `providerRevision` (same bound or `null`);
+- `training-action`: `entryId`, `cardTypeId`, required `contentRevision`,
+  required `cardStateRevision`, `actionId` UUID, `actionCorrelationId` UUID,
+  `action` (`again`, `hard`, `good`, `easy`, `learn`, or `mark-known`), and
+  `result` (`accepted`, `duplicate`, `state-conflict`, `network`, `timeout`,
+  `server-error`, or `unknown`).
 
 Source paths, visible headwords, array positions, card text, device data, timestamps, and diagnostics never constitute target identity.
 
 ### Feedback classification
 
-`kind` is one of `content-quality`, `translation-quality`, `rendering`, `loading`, `training-action`, or `other`. A bounded optional learner comment is allowed. The implementation must select and document a Unicode-aware character/byte limit within the 64 KiB total envelope; the recommended v1 limit is 1,000 characters and 4 KiB UTF-8.
+`feedback` contains `kind`, `problemType`, and `comment`. `kind` is one of
+`content-quality`, `translation-quality`, `rendering`, `loading`,
+`training-action`, or `other`. `problemType` must belong to the selected kind:
+
+- content: `wrong-sense`, `bad-generated-definition`, `other-content`;
+- translation: `bad-headword-translation`, `bad-definition-translation`,
+  `bad-example-translation`, `other-translation`;
+- rendering: `rendering-layout-issue`;
+- loading: `loading-failure`;
+- training action: `training-action-failure`;
+- other: `other`.
+
+`comment` is `null` or at most 1,000 Unicode scalar values and 4,096 UTF-8
+bytes after NFC normalization. Over-limit comments are rejected rather than
+silently truncated.
+
+The comment is the only intentionally free-form, untrusted field. The Report
+dialog warns: “Describe the problem; do not include passwords, tokens, contact
+details, or private links.” The comment is never copied into the durable
+Feedback Item, logs, telemetry, search indexes, or GitHub. It remains only in
+the access-controlled 90-day envelope. An admin may write a separate sanitized
+review summary after inspection; that summary is bounded to 1,000 Unicode
+scalar values / 4,096 UTF-8 bytes and is never derived automatically.
 
 ### Automatically attached card content
 
 Submitting the report automatically includes the content of the currently reported card; there is no second consent checkbox. Permitted fields are the visible headword, definition, Usage Pattern, examples, idioms/notes, and displayed translations for the exact target card. Each field remains classified by semantic role and is independently bounded.
 
+`cardContent` is an ordered array of typed atoms. Atom roles are `headword`,
+`definition`, `usage-pattern`, `example`, `idiom`, `idiom-explanation`,
+`usage-note`, and `displayed-translation`. Every atom contains `role`, stable
+`contentNodeId` or `null`, NFC `text`, and `truncated`. The maximums are 32
+atoms, 1,500 Unicode scalar values and 6,000 UTF-8 bytes per atom, and 48 KiB
+for the canonical serialized `cardContent` value. The builder considers atoms
+in this deterministic priority order: headword; definition; Usage Pattern;
+each idiom root followed by its owned explanation and examples in source order;
+standalone examples; usage notes; displayed translations. It clips arrays to
+the first items in that order, truncates an over-limit atom at a Unicode-scalar
+and UTF-8 boundary, sets `truncated: true`, and stops before the next atom once
+the 48 KiB budget is exhausted. `omittedAtomCount` records the exact remainder.
+
 The collector receives an already-owned typed SenseCard projection. It must not inspect the DOM, clipboard, browser page, caches, another card, raw dictionary/provider payload, or neighboring application state. Total serialized envelope size is at most 64 KiB; overflow is truncated per field with explicit truncation flags, never by adding broader source data.
 
 ### Technical observations
 
-- app and build version;
-- client capture timestamp and timezone offset/name;
-- normalized app route template such as `/training` or `/library`;
-- recognized browser/OS family and major version, PWA mode, and online status;
-- request/action/transition correlation IDs already owned by 2000NL;
+- `appVersion` (1–32 printable ASCII characters) and `buildVersion` (1–64);
+- `capturedAt` as UTC RFC 3339 with milliseconds, timezone offset as an integer
+  from -840 through 840 minutes, and an IANA timezone name of at most 64 ASCII
+  characters;
+- route from `training`, `library`, `statistics`, `settings`, or `unknown`;
+- browser family from `chromium`, `safari`, `firefox`, or `unknown`, browser
+  major version as a non-negative integer or `null`, OS family from `android`,
+  `ios`, `macos`, `windows`, `linux`, or `unknown`, OS major version as a
+  non-negative integer or `null`, plus Boolean PWA and online states;
+- at most eight UUID request/action/transition correlation IDs already owned by
+  2000NL;
 - a bounded typed error chain;
 - the allowlisted recent-event ring described below.
 
-The server binds the authenticated principal and may expose only an internal pseudonym in the review queue. Client IP is not copied into the report.
+The server binds the authenticated principal and durable `sourceClient`: the
+literal `2000nl-web` for the first-party app or the authenticated connected
+client ID for Platform callers. Neither is accepted from the request. The
+review queue may expose only an internal user pseudonym. Client IP is not copied
+into the report.
 
 ## Hard redaction boundary
 
@@ -58,7 +128,10 @@ Safety comes from construction, not from attempting to scrub arbitrary input aft
 
 The schema has no fields capable of accepting:
 
-- passwords, access/refresh tokens, API/provider credentials, cookies, authorization headers, or arbitrary headers;
+- passwords, access/refresh tokens, API/provider credentials, cookies,
+  authorization headers, or arbitrary headers in automatically collected
+  fields (the separately classified untrusted learner comment may contain text
+  the learner types and is handled by its warning/access/retention boundary);
 - `window.location.href`, query strings, fragments, referrer, browser history, other tabs, clipboard, DOM, screenshots, form values, storage dumps, console logs, HAR/network logs, or service-worker caches;
 - raw request/response bodies, raw provider payloads, arbitrary URLs, raw User-Agent, or raw exception values/messages.
 
@@ -76,9 +149,22 @@ At most four causes are stored. Each cause may contain only:
 
 An unknown error stores `unknown` plus a fingerprint of cleaned app-only frames. Raw messages and values are forbidden.
 
+The error chain contains at most four causes. A safe code and stage are
+allowlisted identifiers of at most 64 characters; correlation IDs are UUIDs;
+HTTP status is an integer from 100 through 599 or `null`; frame function names
+are at most 128 printable ASCII characters and relative build paths at most 256
+characters under an allowlisted application prefix. A cause has at most eight
+frames.
+
 ## Recent-event ring and performance
 
 The app maintains an in-memory ring of at most 30 events covering at most the last two minutes and using at most 32 KiB. An event contains only an allowlisted stage, relative/duration timing, outcome, safe code, and correlation ID. It never contains arbitrary strings, content, URLs, request data, or response data.
+
+Relative and duration timings are integer milliseconds from 0 through 120,000.
+Outcome is `started`, `succeeded`, `failed`, `cancelled`, or `unknown`; safe code
+and correlation identity use the bounds above. At report time the builder keeps
+the newest 30 eligible events, then drops oldest events until their canonical
+array is at most 32 KiB.
 
 Performance and UX invariants:
 
@@ -87,7 +173,9 @@ Performance and UX invariants:
 - card content is projected and the envelope serialized only after Report;
 - local save and network delivery are asynchronous and never gate navigation, training, PWA close, or card transition;
 - diagnostic failures are isolated and never fail the product operation being observed;
-- the complete envelope is at most 64 KiB;
+- the complete canonical envelope is at most 65,536 UTF-8 bytes; the client
+  builder must satisfy this after the deterministic clipping above and the
+  server rejects any larger request;
 - comparative Training measurements with diagnostics enabled/disabled show no user-visible transition regression.
 
 ## Consent and learner visibility
@@ -115,12 +203,11 @@ sending -- offline/timeout/5xx --> retry_wait
 sending -- auth unavailable --> retry_wait until session recovery
 sending -- permanent schema/validation 4xx --> rejected
 retry_wait -- due + online + authenticated --> sending
-rejected -- newer app/schema version --> queued
 queued|retry_wait|rejected -- age reaches 30 days --> delete locally
 sending -- lease expires after crash/restart --> retry_wait
 ```
 
-The application attempts delivery on submit, `online`, authenticated session recovery, and active-app resume. Background Sync is optional and invokes the same transition logic. Retries use exponential backoff with jitter, a floor of 60 seconds while active, and a cap of one hour. Only one sender may hold a record's lease.
+The application attempts delivery on submit, `online`, authenticated session recovery, and active-app resume. Background Sync is optional and invokes the same transition logic. Retries use exponential backoff with jitter, a floor of 60 seconds while active, and a cap of one hour. Only one sender may hold a record's lease. `rejected` is terminal for the frozen record; an app upgrade does not retry it. A later intentional Report action creates a new `reportId` and current-schema payload.
 
 ## Idempotency
 
@@ -139,7 +226,10 @@ The client treats both the first accepted receipt and a matching duplicate recei
 - Accepted reports are deleted from IndexedDB immediately after a verified receipt.
 - Undelivered local records expire after 30 days.
 - The full server Diagnostic Envelope expires after 90 days.
-- The durable Feedback Item remains after envelope deletion with category, stable target, review status, resolution, duplicate relationship, and optional GitHub link.
+- The durable Feedback Item remains after envelope deletion with category,
+  stable target, `commentPresent`, optional admin-authored sanitized summary,
+  review status, resolution, duplicate relationship, and optional GitHub link;
+  the raw learner comment expires with the envelope.
 - Only an internal server-side review endpoint may read envelopes. Initial access is restricted to authenticated `admin` users; browser clients receive no direct table grants.
 - The submitting learner cannot list or retrieve reports under v1.
 
@@ -148,6 +238,14 @@ Retention cleanup must be testable and must not depend on a reviewer manually cl
 ## #51 review-queue integration
 
 There is one queue, not a diagnostic queue beside a feedback queue. Each accepted report creates one Feedback Item with the shared statuses `new`, `triaged`, `linked-to-github`, `fixed`, or `ignored`. Reviewers can filter by kind, target, date, status, source client, build version, and safe error code; envelope contents are displayed separately and expire independently.
+
+The atomically created Feedback Item stores `reportId`, server-derived reporter
+identity and `sourceClient`, `kind`, `problemType`, the complete stable target,
+`commentPresent`, nullable admin-authored `sanitizedSummary`, status `new`, and
+created/updated timestamps. Resolution, duplicate relation, and GitHub link are
+initially `null`. This is the #51
+durable classification; broad `kind` supports queue partitioning and
+`problemType` preserves its granular translation/content problem types.
 
 GitHub is never an automatic destination or raw diagnostic store. A reviewer may manually create a sanitized GitHub issue, then attach its URL to one or more Feedback Items and set `linked-to-github`. Raw envelope content, learner comments, user pseudonyms, and diagnostic dumps are not copied automatically.
 
@@ -178,7 +276,7 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
 
 ## Prototype verdict
 
-A throwaway in-memory reducer/TUI exercised accepted deletion, temporary failure and retry, expired sending-lease recovery after restart, version-gated retry of a permanent schema rejection, and 30-day expiry. The model remained representable with four persisted states (`queued`, `sending`, `retry_wait`, `rejected`) and no locally persisted success state. The prototype was deleted after this verdict was captured.
+A throwaway in-memory reducer/TUI exercised accepted deletion, temporary failure and retry, expired sending-lease recovery after restart, terminal permanent schema rejection, and 30-day expiry. The model remained representable with four persisted states (`queued`, `sending`, `retry_wait`, `rejected`) and no locally persisted success state. The prototype was deleted after this verdict was captured.
 
 ## Definition of ready
 

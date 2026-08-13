@@ -28,6 +28,13 @@ changes, learning preferences that affect scheduling, and platform-facing
 lookup/action contracts. These paths must not rely on frontend-owned table
 mutations.
 
+Diagnostic reporting uses a separate explicit mutation boundary: a closed,
+bounded client envelope is validated again by the server and atomically creates
+one durable Feedback Item plus one expiring Diagnostic Envelope. It must not
+reuse review mutations or accept general logs/browser state. See
+[`docs/adr/0006-bounded-diagnostic-reports-feed-the-feedback-queue.md`](docs/adr/0006-bounded-diagnostic-reports-feed-the-feedback-queue.md)
+and the linked full contract.
+
 `user_settings` intentionally contains two classes of settings:
 
 - Learning preferences that affect scheduling/training semantics. These are

@@ -94,7 +94,7 @@ A dictionary lookup record that redirects to another headword or meaning and has
 _Avoid_: empty SenseCard, synonym
 
 **Feedback Item**:
-A durable, reviewable learner report about one classified product or content problem. It retains the stable target, category, optional learner comment, review status, and any manually linked follow-up after temporary diagnostics expire.
+A durable, reviewable learner report about one classified product or content problem. It retains the stable target, category, whether a learner comment was supplied, an optional admin-authored sanitized summary, review status, and any manually linked follow-up after temporary diagnostics expire; raw learner prose expires with its Diagnostic Envelope.
 _Avoid_: diagnostic dump, GitHub issue, support ticket
 
 **Diagnostic Report**:
