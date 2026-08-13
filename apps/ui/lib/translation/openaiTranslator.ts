@@ -1,4 +1,7 @@
-import type { ITranslator } from "./ITranslator";
+import type {
+  ITranslator,
+  TranslationProviderTextRequest,
+} from "./ITranslator";
 import crypto from "crypto";
 import {
   buildOpenAITranslationMessages,
@@ -114,6 +117,18 @@ export class OpenAITranslator implements ITranslator {
     this.fallback = options.fallback;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
+
+  async translateText(request: TranslationProviderTextRequest) {
+    return this.translateWithContextAndNote(
+      request.texts,
+      request.targetLanguageCode,
+      {
+        sourceLanguageCode: request.sourceLanguageCode,
+        purpose: request.purpose,
+        contextText: request.contextText ?? undefined,
+      },
+    );
   }
 
   async translateWithContext(

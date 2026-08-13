@@ -34,6 +34,8 @@ evidence artifact.
 ## Required rollout order
 
 1. Apply migration `118_platform_text_translation_provider_provenance.sql`.
+   Historical rows remain `NULL`/unknown; the migration never invents negative
+   fallback provenance.
 2. Deploy the compatible application code that stops new raw writes and
    sanitizes every read path.
 3. Smoke a cached translation, a provider-backed translation, and a fallback

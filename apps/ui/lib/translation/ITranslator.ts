@@ -25,13 +25,20 @@ export type TranslationProviderTextResult = {
   meta?: DictionaryMeaningTranslationMeta;
 };
 
+export type TranslationProviderTextRequest = {
+  texts: string[];
+  targetLanguageCode: string;
+  sourceLanguageCode?: string;
+  purpose?: string;
+  contextText?: string | null;
+};
+
 export interface ITranslator {
+  translateText(
+    request: TranslationProviderTextRequest,
+  ): Promise<TranslationProviderTextResult>;
   translate(text: string, targetLang: string): Promise<string>;
   translate(texts: string[], targetLang: string): Promise<string[]>;
-  translateWithMetadata?(
-    texts: string[],
-    targetLang: string,
-  ): Promise<TranslationProviderTextResult>;
   translateDictionaryMeaning?(
     request: DictionaryMeaningTranslationRequestV1,
   ): Promise<DictionaryMeaningTranslationProviderResult>;

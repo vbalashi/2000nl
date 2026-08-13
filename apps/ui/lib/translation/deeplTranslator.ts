@@ -1,4 +1,8 @@
-import { ITranslator } from "./ITranslator";
+import {
+  ITranslator,
+  type TranslationProviderTextRequest,
+  type TranslationProviderTextResult,
+} from "./ITranslator";
 import {
   normalizeTranslationProviderError,
   safeTranslationProviderError,
@@ -66,6 +70,23 @@ export class DeepLTranslator implements ITranslator {
   constructor(options: DeepLTranslatorOptions) {
     this.apiKey = options.apiKey;
     this.apiUrl = options.apiUrl ?? "https://api-free.deepl.com/v2/translate";
+  }
+
+  async translateText(
+    request: TranslationProviderTextRequest,
+  ): Promise<TranslationProviderTextResult> {
+    const translations = await this.translate(
+      request.texts,
+      request.targetLanguageCode,
+    );
+    return {
+      translations,
+      meta: {
+        providerSelected: "deepl",
+        providerUsed: "deepl",
+        usedFallback: false,
+      },
+    };
   }
 
   async translate(text: string, targetLang: string): Promise<string>;

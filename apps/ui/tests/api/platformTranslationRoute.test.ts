@@ -16,13 +16,13 @@ const getUser = vi.fn();
 const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
-const translate = vi.fn(async (texts: string[]) =>
+const translate = vi.fn(async (texts: string[], _target?: string) =>
   texts.map((text) => `translated:${text}`),
 );
-const translateWithContext = vi.fn(async (texts: string[]) =>
+const translateWithContext = vi.fn(async (texts: string[], _target?: string, _context?: unknown) =>
   texts.map((text) => `translated-with-context:${text}`),
 );
-const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
+const translateWithContextAndNote = vi.fn(async (texts: string[], _target?: string, _context?: unknown) => ({
   translations: texts.map((text) => `translated-with-context:${text}`),
   literalTranslations: texts.map((text) => `literal:${text}`),
   note: "translator note",
@@ -32,6 +32,41 @@ const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
     usedFallback: true,
   },
 }));
+const translateText = vi.fn(async (request: {
+  texts: string[];
+  targetLanguageCode: string;
+  sourceLanguageCode?: string;
+  purpose?: string;
+  contextText?: string | null;
+}) => {
+  const context = {
+    sourceLanguageCode: request.sourceLanguageCode,
+    purpose: request.purpose,
+    contextText: request.contextText,
+  };
+  if (useRichTranslateWithContext) {
+    return translateWithContextAndNote(
+      request.texts,
+      request.targetLanguageCode,
+      context,
+    );
+  }
+  const translations = useTranslateWithContext
+    ? await translateWithContext(
+        request.texts,
+        request.targetLanguageCode,
+        context,
+      )
+    : await translate(request.texts, request.targetLanguageCode);
+  return {
+    translations,
+    meta: {
+      providerSelected: "openai",
+      providerUsed: "openai",
+      usedFallback: false,
+    },
+  };
+});
 let useTranslateWithContext = false;
 let useRichTranslateWithContext = false;
 
@@ -42,11 +77,15 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
-    translator: useTranslateWithContext
-      ? useRichTranslateWithContext
-        ? { translate, translateWithContext, translateWithContextAndNote }
-        : { translate, translateWithContext }
-      : { translate },
+    translator: {
+      translate,
+      translateText,
+      ...(useTranslateWithContext
+        ? useRichTranslateWithContext
+          ? { translateWithContext, translateWithContextAndNote }
+          : { translateWithContext }
+        : {}),
+    },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
@@ -1026,6 +1065,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: null,
             error_message: null,
             provider: null,
+            provider_used: "future-provider-must-not-project",
+            used_fallback: null,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",

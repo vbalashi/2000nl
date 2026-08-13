@@ -488,6 +488,14 @@ describe("OpenAITranslator", () => {
     });
     const fallback = {
       translate: vi.fn(async () => ["бельё", "ткань; одежда"]),
+      translateText: vi.fn(async () => ({
+        translations: ["бельё", "ткань; одежда"],
+        meta: {
+          providerSelected: "deepl",
+          providerUsed: "deepl",
+          usedFallback: false,
+        },
+      })),
     } as any;
     const translator = new OpenAITranslator({
       apiKey: "key",
@@ -600,7 +608,10 @@ describe("GeminiTranslator", () => {
     } as any;
 
     const translator = new GeminiTranslator({ apiKey: "key", fallback, maxRetries: 0 });
-    const translated = await translator.translateWithMetadata(["hello"], "en");
+    const translated = await translator.translateText({
+      texts: ["hello"],
+      targetLanguageCode: "en",
+    });
     expect(translated).toMatchObject({
       translations: ["Fallback"],
       meta: {

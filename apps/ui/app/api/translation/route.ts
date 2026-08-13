@@ -133,8 +133,8 @@ export async function GET(req: NextRequest) {
     const resolved = createTranslator(config);
     provider = resolved.provider;
     translator = resolved.translator;
-  } catch (err: any) {
-    const message = String(err?.message ?? err ?? "Unknown error").slice(0, 2000);
+  } catch (err: unknown) {
+    const message = normalizeTranslationProviderError(err).message;
     return NextResponse.json(
       {
         error: message,

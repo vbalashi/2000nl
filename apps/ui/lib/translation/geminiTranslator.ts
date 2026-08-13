@@ -1,4 +1,8 @@
-import { ITranslator, type TranslationProviderTextResult } from "./ITranslator";
+import {
+  ITranslator,
+  type TranslationProviderTextRequest,
+  type TranslationProviderTextResult,
+} from "./ITranslator";
 import crypto from "crypto";
 import {
   normalizeTranslationProviderError,
@@ -129,16 +133,20 @@ export class GeminiTranslator implements ITranslator {
   async translate(textOrTexts: string | string[], targetLang: string) {
     const texts = Array.isArray(textOrTexts) ? textOrTexts : [textOrTexts];
     if (texts.length === 0) return Array.isArray(textOrTexts) ? [] : "";
-    const result = await this.translateWithMetadata(texts, targetLang);
+    const result = await this.translateText({
+      texts,
+      targetLanguageCode: targetLang,
+    });
     return Array.isArray(textOrTexts)
       ? result.translations
       : result.translations[0] ?? "";
   }
 
-  async translateWithMetadata(
-    texts: string[],
-    targetLang: string,
+  async translateText(
+    request: TranslationProviderTextRequest,
   ): Promise<TranslationProviderTextResult> {
+    const texts = request.texts;
+    const targetLang = request.targetLanguageCode;
     if (!this.apiKey) {
       throw new Error("GEMINI_API_KEY is not configured");
     }

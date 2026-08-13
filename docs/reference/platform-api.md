@@ -1216,6 +1216,8 @@ The endpoint persists generic text translation artifacts in
 return with `cached: true`; a fresh provider call returns with `cached: false`.
 `providerUsed` identifies the provider that produced the artifact and
 `usedFallback` records whether it differed from the selected provider.
+Both fields are omitted for historical rows whose provenance was not recorded;
+absence means unknown and must not be interpreted as `usedFallback: false`.
 
 ## `POST /actions`
 

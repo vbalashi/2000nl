@@ -17,19 +17,14 @@ const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
 const translateDictionaryMeaning = vi.hoisted(() => vi.fn());
+const createTranslator = vi.hoisted(() => vi.fn());
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient,
 }));
 
 vi.mock("@/lib/translation/translationProvider", () => ({
-  createTranslator: vi.fn(() => ({
-    provider: "openai",
-    translator: {
-      translate: vi.fn(async () => []),
-      translateDictionaryMeaning,
-    },
-  })),
+  createTranslator,
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
     fallback: null,
@@ -117,6 +112,15 @@ describe("/api/translation", () => {
     from.mockReset();
     createClient.mockReset();
     translateDictionaryMeaning.mockReset();
+    createTranslator.mockReset();
+    createTranslator.mockReturnValue({
+      provider: "openai",
+      translator: {
+        translate: vi.fn(async () => []),
+        translateText: vi.fn(async () => ({ translations: [], meta: {} })),
+        translateDictionaryMeaning,
+      },
+    });
   });
 
   test("requires a bearer token before reading translation state", async () => {
@@ -144,6 +148,26 @@ describe("/api/translation", () => {
     expect(createClient).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
     expect(translateDictionaryMeaning).not.toHaveBeenCalled();
+  });
+
+  test("normalizes translator construction failures in the legacy response", async () => {
+    const providerSecret = "configuration-error-with-secret-token";
+    createTranslator.mockImplementationOnce(() => {
+      throw new Error(providerSecret);
+    });
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    createClient.mockReturnValueOnce({ auth: { getUser } });
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(body)).not.toContain(providerSecret);
+    expect(body.error).toMatch(/^provider_unknown_error:[a-f0-9]{24}$/);
   });
 
   test("does not require connected-client principal schema for first-party translation", async () => {
