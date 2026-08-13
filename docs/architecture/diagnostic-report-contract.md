@@ -12,8 +12,9 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
 - The durable `Feedback Item` owns category, stable target, whether a learner
   comment was supplied, an optional admin-authored sanitized summary, review
   state, resolution, duplicate links, and optional GitHub follow-up.
-- The temporary `Diagnostic Envelope` owns the untrusted bounded learner
-  comment, bounded card content, and technical observations.
+- The temporary `Diagnostic Envelope` owns two untrusted-but-consented evidence
+  classes—the bounded learner comment and exact authorized current-card
+  content—plus allowlisted technical observations.
 - A Diagnostic Report is not a Platform card mutation: `reportId` is its sole
   delivery/idempotency identity and it never uses a review `clientEventId` or
   `turnId` as that identity. A `training-action` target references the already
@@ -60,9 +61,10 @@ Platform V2 types:
   `cardTypeId`, `stateRevision` UUID/`untracked`), semantic Platform `actionId`
   (`start-learning`, `mark-known`, `undo-known`, or `review-card`), the reused
   `clientEventId` UUID, `reviewResult` (`fail`, `hard`, `success`, or `easy`) for
-  `review-card` and `null` otherwise, plus observed outcome (`accepted`,
+  `review-card` and `null` otherwise, plus `clientObservedOutcome` (`accepted`,
   `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
-  `unknown`). For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
+  `unknown`) and server-derived `commitState` (`committed` or `not-found`). For
+  `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
   required UUIDs; for every other action both are explicit `null`. A separate
   required `contentRevision` binds any attached card atoms but is not part of
   the historical Platform action identity;
@@ -138,6 +140,13 @@ scalar values / 4,096 UTF-8 bytes and is never derived automatically.
 
 Submitting the report automatically includes the content of the currently reported card; there is no second consent checkbox. Permitted fields are the visible headword, definition, Usage Pattern, examples, idioms/notes, and displayed translations for the exact target card. Each field remains classified by semantic role and is independently bounded. For an `app-operation` that failed before a card existed, there is no card to attach and `cardContent` is `null`; the Report UI states that only operation diagnostics will be sent.
 
+Exact authorized card text is untrusted-but-consented 90-day evidence. A source
+dictionary or private user entry can legitimately contain a URL, credential-like
+word, or other arbitrary lexical text. The privacy guarantee is provenance:
+the collector and server include only the exact authorized current-card
+projection and never inspect credentials, browser/storage state, or unrelated
+content. Card text is never copied into the durable Feedback Item or GitHub.
+
 `cardContent` is either `null` or an object `{ atoms, omittedAtomCount }`. It is
 `null` only for an `app-operation` with no current-card target. `atoms` is an
 ordered array of typed atoms. Atom roles are `headword`,
@@ -170,13 +179,17 @@ For a `training-action` target, action verification is deliberately historical,
 not a comparison with the current card state. The server looks up the
 principal-scoped immutable action receipt/history by `clientEventId`, compares
 the submitted action ID, original SenseCard target, review result, and
-undo-known fields with the recorded request, and derives accepted/duplicate
-outcome from that record. A later `stateRevision` is expected after a committed
-action and does not invalidate the report. If no receipt exists, the report may
-retain only the client-observed `network`, `timeout`, `server-error`, or
-`unknown` outcome. Any cross-user receipt, mismatched target/event pair, or
-client claim of accepted/duplicate without a matching receipt is rejected.
-Attached card atoms are verified separately against `contentRevision`.
+undo-known fields with the recorded request, and derives `commitState:
+committed` from that record. A later `stateRevision` is expected after a
+committed action and does not invalidate the report. The receipt does not claim
+whether the client saw the first accepted response or a duplicate retry, so the
+separate bounded `clientObservedOutcome` retains either observation. If no
+receipt exists, the server derives `commitState: not-found` and may retain the
+client-observed `state-conflict`, `network`, `timeout`, `server-error`, or
+`unknown`; `accepted` or `duplicate` without a receipt is rejected. A 409 state
+or known-mark conflict is therefore reportable but explicitly non-authoritative.
+Any cross-user receipt or mismatched target/event pair is rejected. Attached
+card atoms are verified separately against `contentRevision`.
 
 ### Technical observations
 
@@ -213,7 +226,7 @@ requires its own contract revision rather than silently weakening this rule.
 
 Safety comes from construction, not from attempting to scrub arbitrary input afterward.
 
-The schema has no fields capable of accepting:
+Automatically collected technical fields have no slots capable of accepting:
 
 - passwords, access/refresh tokens, API/provider credentials, cookies,
   authorization headers, or arbitrary headers in automatically collected
@@ -221,6 +234,10 @@ The schema has no fields capable of accepting:
   the learner types and is handled by its warning/access/retention boundary);
 - `window.location.href`, query strings, fragments, referrer, browser history, other tabs, clipboard, DOM, screenshots, form values, storage dumps, console logs, HAR/network logs, or service-worker caches;
 - raw request/response bodies, raw provider payloads, arbitrary URLs, raw User-Agent, or raw exception values/messages.
+
+This statement does not inspect or ban lexical substrings inside the two
+explicit untrusted evidence classes (learner comment and exact authorized card
+text). Their warning/provenance/access/90-day retention rules apply instead.
 
 Routes are selected from an app-owned enum/template map. Browser/OS values are reduced to recognized categories. A typed builder accepts only explicit fields; it must not recursively serialize an error, HTTP object, component props, application state, or environment object. The server independently validates the closed schema, field limits, enum values, and total byte limit before persistence.
 
@@ -373,7 +390,11 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
 ## Required tests and evidence
 
 - closed-schema allowlist and oversized-field/total-byte rejection;
-- adversarial proof that tokens, cookies, headers, URL query/fragment, referrer, raw UA, DOM, clipboard, console/network logs, arbitrary errors, and unrelated card/browser data cannot be represented or persisted;
+- adversarial proof that tokens, cookies, headers, URL query/fragment, referrer,
+  raw UA, DOM, clipboard, console/network logs, arbitrary errors, and unrelated
+  card/browser data cannot be collected from or smuggled through automatic
+  technical fields; exact authorized card atoms and the warned learner comment
+  remain the only untrusted 90-day evidence classes;
 - exact target binding for entry, SenseCard, Content Node, translation artifact,
   Training action, and pre-card app operation without borrowing a stale card;
 - target authorization and server-side atom reconstruction/exact-match,
@@ -386,8 +407,9 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
 - offline submit, restart/lease recovery, online/resume/auth recovery, backoff, Background Sync equivalence when present, and 30-day expiry;
 - commit-then-disconnect followed by duplicate receipt, concurrent duplicate delivery, and same-ID/different-payload conflict;
 - training-action receipt verification for accepted-then-disconnect, duplicate,
-  unknown/uncommitted action, mismatched target/clientEventId, and cross-user
-  receipt access;
+  no-receipt state/known-mark conflict, unknown/uncommitted action, mismatched
+  target/clientEventId, forged accepted/duplicate without receipt, and
+  cross-user receipt access;
 - local deletion only after verified receipt;
 - atomic creation of Feedback Item + Diagnostic Envelope and 90-day cleanup that preserves the Feedback Item;
 - authenticated submit, server-derived user identity, non-admin denial, admin review access, and no direct browser table access;
