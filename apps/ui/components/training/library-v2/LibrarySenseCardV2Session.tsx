@@ -165,12 +165,14 @@ export function LibrarySenseCardV2Session({
     const controller = new AbortController();
     setGroup(compatibleInitialGroup);
     setError(null);
-    if (compatibleInitialGroup) return () => controller.abort();
+    if (compatibleInitialGroup && !activeReferenceTarget) {
+      return () => controller.abort();
+    }
     void load(controller.signal).catch(() => {
       if (!controller.signal.aborted) setGroup(null);
     });
     return () => controller.abort();
-  }, [compatibleInitialGroup, load]);
+  }, [activeReferenceTarget, compatibleInitialGroup, load]);
 
   const model = React.useMemo(() => {
     const matchesSelectedEntry = group?.entries.some((candidate) =>

@@ -284,7 +284,7 @@ describe("LibrarySenseCardV2Session", () => {
   });
 
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
-    fetchGroup.mockResolvedValue({
+    const mixedDaarGroup: PlatformHeadwordGroupV2 = {
       ...multiSenseBankGroup,
       header: { ...multiSenseBankGroup.header, text: "daar" },
       senseCount: 1,
@@ -318,7 +318,8 @@ describe("LibrarySenseCardV2Session", () => {
           ],
         },
       ],
-    });
+    };
+    fetchGroup.mockResolvedValue(mixedDaarGroup);
     fetchCrossReferenceTarget.mockResolvedValue({
       ...multiSenseBankGroup,
       header: { ...multiSenseBankGroup.header, text: "daar-" },
@@ -334,6 +335,7 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
+        initialGroup={mixedDaarGroup}
         fallback={<p>Legacy detail</p>}
       />,
     );
