@@ -503,7 +503,7 @@ describe("preparePlatformV2TrainingEntry", () => {
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ status: "ready" }), {
           status: 200,
-          headers: { "x-platform-cache": "miss" },
+          headers: { "x-platform-cache": "provider" },
         }),
       )
       .mockResolvedValueOnce(

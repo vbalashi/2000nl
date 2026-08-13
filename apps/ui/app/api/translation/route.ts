@@ -488,7 +488,14 @@ export async function GET(req: NextRequest) {
                 }
               : null),
           },
-          { status: 200, headers: { "Cache-Control": "no-store" } }
+          {
+            status: 200,
+            headers: {
+              "Cache-Control": "no-store",
+              "X-Translation-Cache":
+                existingAfter.status === "ready" ? "hit" : "pending",
+            },
+          }
         );
       }
 
@@ -507,7 +514,13 @@ export async function GET(req: NextRequest) {
               }
             : null),
         },
-        { status: 200, headers: { "Cache-Control": "no-store" } }
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "no-store",
+            "X-Translation-Cache": "pending",
+          },
+        }
       );
     }
   }
@@ -569,7 +582,14 @@ export async function GET(req: NextRequest) {
             note: (existingAfter as any)?.note ?? null,
             error: existingAfter?.error_message ?? null,
           },
-          { status: 200, headers: { "Cache-Control": "no-store" } }
+          {
+            status: 200,
+            headers: {
+              "Cache-Control": "no-store",
+              "X-Translation-Cache":
+                existingAfter?.status === "ready" ? "hit" : "pending",
+            },
+          }
         );
       }
     }

@@ -67,6 +67,26 @@ const request = (body: unknown, token = "token-1") =>
     body: JSON.stringify(body),
   });
 
+const accessibleEntry = () => ({
+  id: ENTRY_ID,
+  headword: "huis",
+  gender: "het",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "woning" }] },
+});
+
+const currentPendingTranslation = () => ({
+  status: "pending",
+  overlay: null,
+  note: null,
+  source_content_revision: contentFingerprint(
+    normalizeDictionaryContent(accessibleEntry() as any),
+  ),
+  translation_policy_version: translationPolicyVersion("openai"),
+  provider_revision: "prompt-fingerprint",
+  updated_at: new Date().toISOString(),
+});
+
 const queryChain = (result: { data?: unknown; error?: unknown }) => {
   const query: any = {
     select: vi.fn(() => query),
@@ -292,6 +312,50 @@ describe("/api/platform/v1/translation", () => {
       targetLang: "ru",
       status: "pending",
     });
+  });
+
+  test("classifies a lost insert race as pending without provider work", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    from
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(
+        queryChain({ data: currentPendingTranslation(), error: null }),
+      );
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("classifies a failed conditional claim as a cache hit", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    const stale = {
+      ...currentPendingTranslation(),
+      source_content_revision: "stale-revision",
+      updated_at: "2026-08-13T00:00:00.000Z",
+    };
+    const ready = {
+      ...currentPendingTranslation(),
+      status: "ready",
+      overlay: { headword: "дом", meanings: [{ definition: "жилище" }] },
+    };
+    from
+      .mockReturnValueOnce(queryChain({ data: stale, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: ready, error: null }));
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("hit");
+    expect(translate).not.toHaveBeenCalled();
   });
 
   test("generates and stores a missing translation overlay", async () => {

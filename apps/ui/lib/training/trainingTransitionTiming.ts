@@ -4,6 +4,7 @@ export type TrainingTransitionStage =
   | "next-card.lookup"
   | "translation.cache"
   | "translation.provider"
+  | "translation.unknown"
   | "audio.cache"
   | "audio.provider"
   | "network.transfer"

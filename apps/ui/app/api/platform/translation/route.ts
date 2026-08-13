@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
   );
   response.headers.set(
     "X-Platform-Cache",
-    translationResponse.headers.get("x-translation-cache") ?? "provider",
+    translationResponse.headers.get("x-translation-cache") ?? "unknown",
   );
   response.headers.set(
     "Server-Timing",

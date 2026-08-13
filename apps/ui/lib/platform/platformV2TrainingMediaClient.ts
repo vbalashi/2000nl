@@ -68,7 +68,9 @@ async function requestPlatformV2TranslationUncached(
     const stage =
       cacheOutcome === "hit" || cacheOutcome === "pending"
         ? "translation.cache"
-        : "translation.provider";
+        : cacheOutcome === "provider"
+          ? "translation.provider"
+          : "translation.unknown";
     recordTrainingTransitionResponse(
       context.transitionId,
       stage,
