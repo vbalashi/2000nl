@@ -29,6 +29,7 @@ import {
   buildLibrarySenseCardGroupModel,
   librarySenseCardIdentity,
   type LibraryMutationCapability,
+  type LibraryReportCapability,
 } from "./librarySenseCardModel";
 
 type Props = {
@@ -207,6 +208,12 @@ export function LibrarySenseCardV2Session({
     } finally {
       setBusyIdentity(null);
     }
+  };
+
+  const handleReport = (_capability: LibraryReportCapability) => {
+    setError(
+      platformV2Message(interfaceLanguage, "senseCard.reportUnavailable"),
+    );
   };
 
   const handlePlayAudio = async () => {
@@ -438,6 +445,7 @@ export function LibrarySenseCardV2Session({
         onTrainNext={
           onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
         }
+        onReport={handleReport}
         onAction={(capability) => void handleAction(capability)}
       />
       <LibraryCollectionsPicker
