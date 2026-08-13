@@ -157,6 +157,11 @@ const fetchStats = vi.fn().mockResolvedValue({
 });
 const fetchRecentHistory = vi.fn().mockResolvedValue([]);
 const prefetchPlatformV2TrainingEntry = vi.fn();
+const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
+  state: "ready",
+  translation: "cached",
+  audio: "ready",
+});
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
@@ -341,6 +346,8 @@ vi.mock("@/lib/supabaseClient", () => ({
 }));
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+  preparePlatformV2TrainingEntry: (...args: unknown[]) =>
+    preparePlatformV2TrainingEntry(...args),
   prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
     prefetchPlatformV2TrainingEntry(...args),
   preloadPlatformV2Audio: (...args: unknown[]) =>

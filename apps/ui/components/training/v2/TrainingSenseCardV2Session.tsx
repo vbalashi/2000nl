@@ -4,6 +4,10 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
+  measureTrainingTransitionStage,
+  recordTrainingEntryRendered,
+} from "@/lib/training/trainingTransitionTiming";
+import {
   fetchPlatformV2TrainingEntry,
   consumePrefetchedPlatformV2TrainingEntry,
   isPlatformV2TrainingActionCapability,
@@ -22,6 +26,7 @@ import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 
 type Props = {
   cacheOwnerId: string;
+  nextTransitionId?: string;
   word: TrainingWord;
   mode: TrainingMode;
   contentLanguageCode: string;
@@ -57,6 +62,7 @@ const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
 
 export function TrainingSenseCardV2Session({
   cacheOwnerId,
+  nextTransitionId,
   word,
   mode,
   contentLanguageCode,
@@ -205,6 +211,12 @@ export function TrainingSenseCardV2Session({
             : "ready";
 
   React.useEffect(() => {
+    if (sessionState === "ready" && result) {
+      recordTrainingEntryRendered(result.entry.entryId);
+    }
+  }, [result, sessionState]);
+
+  React.useEffect(() => {
     onAvailabilityChange(sessionState);
   }, [onAvailabilityChange, sessionState]);
 
@@ -243,7 +255,14 @@ export function TrainingSenseCardV2Session({
       }
       if (!isPlatformV2TrainingActionCapability(capability)) return;
       setNoticeTone("error");
-      const response = await performPlatformV2TrainingAction(capability);
+      const response = nextTransitionId
+        ? await measureTrainingTransitionStage(
+            nextTransitionId,
+            "review.mutation",
+            () => performPlatformV2TrainingAction(capability),
+            () => "accepted",
+          )
+        : await performPlatformV2TrainingAction(capability);
       if (capability.actionId === "undo-known") {
         rememberPendingKnownUndo(null);
         if (result?.entry.entryId === capability.target.entryId) await load();
