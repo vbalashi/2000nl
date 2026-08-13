@@ -4,7 +4,10 @@ import {
   contentFingerprint,
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
-import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+import {
+  ordinaryTranslationPolicyVersion,
+  translationPolicyVersion,
+} from "@/lib/translation/translationPolicy";
 
 const translationQuery = (data: unknown[]) => {
   const query: any = {
@@ -118,7 +121,7 @@ describe("Platform V2 translation projection", () => {
             meanings: [{ definition: "ткань; одежда" }],
           },
           source_content_revision: revision,
-          translation_policy_version: translationPolicyVersion("openai"),
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
           provider_revision: "meaning-prompt-v1",
           error_message: null,
         },
@@ -176,7 +179,7 @@ describe("Platform V2 translation projection", () => {
           source_content_revision: contentFingerprint(
             normalizeDictionaryContent(oldEntry as any),
           ),
-          translation_policy_version: translationPolicyVersion("openai"),
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
           provider_revision: "meaning-prompt-v1",
           error_message: null,
         },
@@ -211,6 +214,9 @@ describe("Platform V2 translation projection", () => {
         meanings: [
           {
             definition: "",
+            examples: Array.from({ length: 40 }, (_, index) =>
+              `standalone example ${index} ${"x".repeat(600)}`,
+            ),
             idioms: [
               {
                 expression: "zich te goed doen aan iets",
@@ -239,7 +245,7 @@ describe("Platform V2 translation projection", () => {
             },
           },
           source_content_revision: revision,
-          translation_policy_version: translationPolicyVersion("openai"),
+          translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
           provider_revision: "meaning-prompt-v1",
           error_message: null,
         },

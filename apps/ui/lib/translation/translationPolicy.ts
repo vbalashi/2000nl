@@ -10,18 +10,26 @@ export const IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION =
   "dictionary_meaning_idiom_only_v2";
 
 export function translationPipelineVersion(
-  request?: DictionaryMeaningTranslationRequestV1,
+  request: DictionaryMeaningTranslationRequestV1,
 ) {
-  return request && isIdiomOnlyDictionaryMeaningRequest(request)
+  return isIdiomOnlyDictionaryMeaningRequest(request)
     ? IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION
     : TRANSLATION_PIPELINE_VERSION;
 }
 
 export function translationPolicyVersion(
   provider: TranslationProviderName,
-  request?: DictionaryMeaningTranslationRequestV1,
+  request: DictionaryMeaningTranslationRequestV1,
 ) {
   return `${translationPipelineVersion(request)}:${getDictionaryMeaningPromptFingerprint(
+    provider,
+  )}`;
+}
+
+export function ordinaryTranslationPolicyVersion(
+  provider: TranslationProviderName,
+) {
+  return `${TRANSLATION_PIPELINE_VERSION}:${getDictionaryMeaningPromptFingerprint(
     provider,
   )}`;
 }

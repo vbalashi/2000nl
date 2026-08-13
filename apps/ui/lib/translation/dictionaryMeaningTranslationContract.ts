@@ -125,6 +125,12 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     normalizedPartOfSpeechCode,
   ].filter((value): value is string => value !== null);
   const content: DictionaryMeaningTranslationRequestV1["content"] = [];
+  const idiomValues = asArray(meaning.idioms);
+  const reservedIdiomIndex = idiomValues.findIndex(hasTextualIdiom);
+  const sourceIsIdiomOnly =
+    reservedIdiomIndex >= 0 &&
+    !hasText(meaning.definition) &&
+    !hasText(meaning.context);
   let remainingContentCharacters = Math.min(
     DICTIONARY_MEANING_TRANSLATION_LIMITS.contentCharacters,
     DICTIONARY_MEANING_TRANSLATION_LIMITS.requestStringCharacters -
@@ -167,10 +173,31 @@ export function buildDictionaryMeaningTranslationRequest(params: {
 
   push("definition", "definition", meaning.definition);
   push("usage-pattern", "usage-pattern", meaning.context);
+  // Preserve the semantic classification even when preceding standalone
+  // examples would otherwise exhaust the bounded provider payload.
+  if (sourceIsIdiomOnly) {
+    pushIdiomRoot(
+      push,
+      idiomValues[reservedIdiomIndex],
+      reservedIdiomIndex,
+    );
+  }
   for (const [index, example] of asArray(meaning.examples).entries()) {
     push(`example:${index}`, "example", example);
   }
-  for (const [index, idiomValue] of asArray(meaning.idioms).entries()) {
+  for (const [index, idiomValue] of idiomValues.entries()) {
+    if (sourceIsIdiomOnly && index === reservedIdiomIndex) {
+      const idiom = asRecord(idiomValue);
+      push(
+        `idiom:${index}:explanation`,
+        "idiom-explanation",
+        idiom.explanation,
+      );
+      for (const [exampleIndex, example] of asArray(idiom.examples).entries()) {
+        push(`idiom:${index}:example:${exampleIndex}`, "example", example);
+      }
+      continue;
+    }
     if (typeof idiomValue === "string") {
       push(`idiom:${index}`, "idiom", idiomValue);
       continue;
@@ -202,6 +229,30 @@ export function buildDictionaryMeaningTranslationRequest(params: {
     },
     content,
   };
+}
+
+function pushIdiomRoot(
+  push: (fieldId: string, role: DictionaryMeaningContentRole, value: unknown) => void,
+  idiomValue: unknown,
+  index: number,
+) {
+  push(
+    `idiom:${index}`,
+    "idiom",
+    typeof idiomValue === "string"
+      ? idiomValue
+      : asRecord(idiomValue).expression,
+  );
+}
+
+function hasText(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasTextualIdiom(value: unknown) {
+  return typeof value === "string"
+    ? hasText(value)
+    : hasText(asRecord(value).expression);
 }
 
 export function buildDictionaryMeaningTranslationMessages(

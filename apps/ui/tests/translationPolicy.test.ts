@@ -5,6 +5,7 @@ import {
 import {
   IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION,
   TRANSLATION_PIPELINE_VERSION,
+  ordinaryTranslationPolicyVersion,
   translationPipelineVersion,
   translationPolicyVersion,
 } from "@/lib/translation/translationPolicy";
@@ -28,6 +29,9 @@ describe("dictionary meaning translation policy", () => {
     const ordinary = requestFor({ definition: "de dingen; de voorwerpen" });
     const idiomOnly = requestFor({
       definition: "",
+      examples: Array.from({ length: 40 }, (_, index) =>
+        `standalone example ${index} ${"x".repeat(600)}`,
+      ),
       idioms: [
         {
           expression: "zich te goed doen aan iets",
@@ -40,11 +44,15 @@ describe("dictionary meaning translation policy", () => {
       TRANSLATION_PIPELINE_VERSION,
     );
     expect(translationPolicyVersion("openai", ordinary)).toBe(
-      translationPolicyVersion("openai"),
+      ordinaryTranslationPolicyVersion("openai"),
     );
     expect(translationPipelineVersion(idiomOnly)).toBe(
       IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION,
     );
+    expect(idiomOnly.content[0]).toMatchObject({
+      fieldId: "idiom:0",
+      role: "idiom",
+    });
     expect(translationPolicyVersion("openai", idiomOnly)).not.toBe(
       translationPolicyVersion("openai", ordinary),
     );
