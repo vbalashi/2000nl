@@ -1088,7 +1088,20 @@ Response when another request is already producing the same overlay:
 }
 ```
 
+Every successful response includes `X-Platform-Cache` with one of these values:
+
+- `hit`: a ready cached overlay was returned without provider work;
+- `pending`: an existing in-flight translation artifact was returned without
+  starting duplicate provider work;
+- `provider`: this request performed provider-backed translation work.
+
 `force: true` refreshes the overlay even when a ready cached row exists. The
+result is therefore classified as `X-Platform-Cache: provider` when the refresh
+succeeds. The header is part of the Platform response contract and may be used
+for diagnostics and latency classification; clients must still use the JSON
+`status` as the authoritative readiness state.
+
+The
 endpoint gates source entry access before any service-role cache read/write, so
 private user-dictionary entries remain visible only to authorized users.
 Ready overlays include best-effort `overlay.__meta.translatedPaths` so

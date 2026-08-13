@@ -117,7 +117,14 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
 
   const consumeForCard = useCallback((cardKey: string) => {
     const candidate = candidateRef.current;
-    if (!candidate || candidate.forCardKey !== cardKey) return null;
+    if (!candidate || candidate.forCardKey !== cardKey) {
+      // Acceptance closes preparation for the card being left even when its
+      // candidate has not materialized. The on-demand fallback is now the sole
+      // owner of next-card selection, so abort and invalidate the old chain.
+      cancelCurrent();
+      ownedForCardKeyRef.current = cardKey;
+      return null;
+    }
     candidateRef.current = null;
     // The accepted transition now owns this in-flight preparation. Detach its
     // controller so the next queue-turn effect cannot abort work that the
@@ -125,7 +132,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     controllerRef.current = null;
     ownedForCardKeyRef.current = cardKey;
     return candidate;
-  }, []);
+  }, [cancelCurrent]);
 
   useEffect(() => {
     if (!currentWord?.id) return;

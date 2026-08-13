@@ -2617,6 +2617,78 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
   }
 });
 
+test("uses only the on-demand fallback when grading before next-turn selection resolves", async () => {
+  const resolveStaleSelections: Array<
+    (value: typeof mockWord | null) => void
+  > = [];
+  let selectionCall = 0;
+  let allowFallback = false;
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "boom" } },
+    entry: { entryId: word2.id },
+  };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(() => {
+    selectionCall += 1;
+    if (selectionCall === 1) return Promise.resolve(word1);
+    if (allowFallback) return Promise.resolve(word2);
+    return new Promise((resolve) => {
+      resolveStaleSelections.push(resolve);
+    });
+  });
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
+    );
+    const callsBeforeGrade = fetchNextTrainingWordByScenario.mock.calls.length;
+
+    allowFallback = true;
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    const callsAfterGrade = fetchNextTrainingWordByScenario.mock.calls.slice(
+      callsBeforeGrade,
+    );
+    expect(
+      callsAfterGrade.filter((call) => {
+        const excludedCardKeys = call[6] as string[];
+        return (
+          excludedCardKeys.includes("word-1:word-to-definition") &&
+          !excludedCardKeys.includes("word-2:word-to-definition")
+        );
+      }),
+    ).toHaveLength(1);
+    const callsAfterPresentation =
+      fetchNextTrainingWordByScenario.mock.calls.length;
+
+    await act(async () => {
+      resolveStaleSelections.forEach((resolve) => resolve(word2));
+    });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      callsAfterPresentation,
+    );
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
 test("keeps the current V2 card when the on-demand scheduler warm fails", async () => {
   const word1 = { ...mockWord, id: "word-1", headword: "huis" };
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
