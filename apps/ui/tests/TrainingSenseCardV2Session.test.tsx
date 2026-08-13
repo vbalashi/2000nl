@@ -23,15 +23,18 @@ vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
   peekPrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => peekPrefetched(...args),
   consumePrefetchedPlatformV2TrainingEntry: (...args: unknown[]) => consumePrefetched(...args),
+  resolvePlatformV2Audio: (...args: unknown[]) => resolveAudio(...args),
+  preloadPlatformV2Audio: (...args: unknown[]) => preloadAudio(...args),
+  requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
   isPlatformV2TrainingActionCapability: (capability: { actionId: string }) =>
     ["start-learning", "mark-known", "undo-known", "review-card"].includes(
       capability.actionId,
     ),
   performPlatformV2TrainingAction: (...args: unknown[]) =>
     performAction(...args),
-  resolvePlatformV2Audio: (...args: unknown[]) => resolveAudio(...args),
-  preloadPlatformV2Audio: (...args: unknown[]) => preloadAudio(...args),
-  requestPlatformV2Translation: (...args: unknown[]) => requestTranslation(...args),
 }));
 
 function TestTrainingSenseCardV2Session(
@@ -532,8 +535,9 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
-  test("shows action failures without replacing the rendered card", async () => {
+  test("refreshes a genuinely newer remote state without advancing", async () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
+    const onProgressActionAccepted = vi.fn();
 
     render(
       <TestTrainingSenseCardV2Session
@@ -544,7 +548,7 @@ describe("TrainingSenseCardV2Session", () => {
         interfaceLanguage="en"
         fallback={<p>Legacy card</p>}
         onAvailabilityChange={vi.fn()}
-        onProgressActionAccepted={vi.fn()}
+        onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
 
@@ -556,6 +560,8 @@ describe("TrainingSenseCardV2Session", () => {
       "The card changed elsewhere. Its latest state is now shown.",
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
+    expect(fetchSingleSense).toHaveBeenCalledTimes(2);
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
   test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {
@@ -590,6 +596,34 @@ describe("TrainingSenseCardV2Session", () => {
     );
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
     expect(screen.queryByTestId("training-v2-failure")).not.toBeInTheDocument();
+  });
+
+  test("keeps a no-receipt ambiguous review recoverable", async () => {
+    performAction.mockRejectedValueOnce(
+      new Error("action_receipt_not_found"),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy card</p>}
+        onAvailabilityChange={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The connection was interrupted. Please try again.",
+    );
+    expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
   });
 
   test("submits only one action for two immediate grade clicks", async () => {

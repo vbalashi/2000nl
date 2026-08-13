@@ -6,11 +6,8 @@ import {
 import { clearPlatformV2TrainingMediaCache } from "./platformV2TrainingMediaClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
-  PlatformActionV2Request,
-  PlatformActionV2Response,
   PlatformHeadwordGroupV2,
   PlatformLookupV2Response,
-  PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../packages/shared/types/platformV2";
 
@@ -20,6 +17,13 @@ export {
   resolvePlatformV2Audio,
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
+
+export {
+  buildPlatformV2TrainingActionRequest,
+  isPlatformV2TrainingActionCapability,
+  performPlatformV2TrainingAction,
+} from "./platformV2TrainingActionClient";
+export type { PlatformV2TrainingActionCapability } from "./platformV2TrainingActionClient";
 
 export type PlatformV2TrainingEntryResult = {
   state: "ready";
@@ -64,52 +68,6 @@ type PrefetchedLookup = {
 const PREFETCH_TTL_MS = 30_000;
 const MAX_PREFETCHED_LOOKUPS = 24;
 const prefetchedLookups = new Map<string, PrefetchedLookup>();
-
-export type PlatformV2TrainingActionCapability =
-  PlatformSenseCardCapabilityV2 & {
-    actionId:
-      | "start-learning"
-      | "mark-known"
-      | "undo-known"
-      | "review-card";
-  };
-
-export function isPlatformV2TrainingActionCapability(
-  capability: PlatformSenseCardCapabilityV2,
-): capability is PlatformV2TrainingActionCapability {
-  return (
-    capability.actionId === "start-learning" ||
-    capability.actionId === "mark-known" ||
-    capability.actionId === "undo-known" ||
-    capability.actionId === "review-card"
-  );
-}
-
-export function buildPlatformV2TrainingActionRequest(
-  capability: PlatformV2TrainingActionCapability,
-  clientEventId: string,
-): PlatformActionV2Request {
-  if (capability.actionId === "review-card") {
-    return {
-      actionId: capability.actionId,
-      clientEventId,
-      target: capability.target,
-      reviewResult: capability.reviewResult,
-    };
-  }
-  if (capability.actionId === "undo-known") {
-    return {
-      actionId: capability.actionId,
-      clientEventId,
-      target: capability.target,
-    };
-  }
-  return {
-    actionId: capability.actionId,
-    clientEventId,
-    target: capability.target,
-  };
-}
 
 export async function fetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingLookupInput,
@@ -225,38 +183,6 @@ export function selectPlatformV2TrainingEntry(
     if (entry) return { group, entry };
   }
   return null;
-}
-
-export async function performPlatformV2TrainingAction(
-  capability: PlatformV2TrainingActionCapability,
-): Promise<PlatformActionV2Response> {
-  const request = buildPlatformV2TrainingActionRequest(
-    capability,
-    crypto.randomUUID(),
-  );
-  const response = await platformFetchWithTimeout("/api/platform/v2/actions", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify(request),
-  });
-  const payload = (await response.json()) as
-    | PlatformActionV2Response
-    | { error?: string };
-  if (
-    !response.ok ||
-    !("contractVersion" in payload) ||
-    payload.contractVersion !== "platform-action-v2" ||
-    !payload.accepted
-  ) {
-    throw new Error(
-      "error" in payload && payload.error
-        ? payload.error
-        : "platform_v2_action_failed",
-    );
-  }
-  return payload;
 }
 
 export function clearPlatformV2TrainingClientCaches(cacheOwnerId?: string) {

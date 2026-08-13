@@ -12,8 +12,8 @@ import {
   requirePlatformScope,
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
-import { parsePlatformV2ActionRequest } from "@/lib/platform/platformV2ActionRequest";
-import { performPlatformV2Action } from "@/lib/platform/platformV2ActionService";
+import { parsePlatformV2ActionReceiptRequest } from "@/lib/platform/platformV2ActionRequest";
+import { reconcilePlatformV2ActionReceipt } from "@/lib/platform/platformV2ActionService";
 import { platformV2ActionsEnabled } from "@/lib/platform/platformV2Rollout";
 
 export const runtime = "nodejs";
@@ -51,14 +51,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const parsed = parsePlatformV2ActionRequest(auth, await readJson(request));
+  const parsed = parsePlatformV2ActionReceiptRequest(await readJson(request));
   if (!parsed.ok) {
     return appendPlatformRouteHeaders(
       reply({ error: parsed.error }, parsed.status),
       instrumentation,
     );
   }
-
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) {
     return appendPlatformRouteHeaders(
@@ -70,42 +69,23 @@ export async function POST(request: NextRequest) {
   const result = await measureRouteTiming(
     instrumentation,
     "route.operation",
-    () => performPlatformV2Action(auth, service, parsed.request),
+    () => reconcilePlatformV2ActionReceipt(auth, service, parsed.clientEventId),
   );
   const response = reply(result.payload, result.status);
-  if (parsed.request.actionId === "review-card") {
-    const attempt = request.headers.get("x-platform-action-attempt") === "2" ? 2 : 1;
-    const error =
-      result.payload && typeof result.payload === "object" && "error" in result.payload
-        ? String(result.payload.error)
-        : null;
-    const outcome = error === "state_conflict"
-      ? attempt === 2
-        ? "newer_remote_state"
-        : "stale_state"
-      : result.receiptStatus === "duplicate"
-        ? attempt === 2
-          ? "commit_then_disconnect"
-          : "duplicate_retry"
-        : result.receiptStatus === "accepted"
-          ? attempt === 2
-            ? "timeout_before_commit"
-            : "accepted"
-          : "failed";
-    response.headers.set("X-Platform-Review-Outcome", outcome);
-    console.info("[platform.training.review]", {
-      requestId: instrumentation.requestId,
-      clientEventId: parsed.request.clientEventId,
-      actionId: parsed.request.actionId,
-      cardTypeId: parsed.request.target.cardTypeId,
-      attempt,
-      outcome,
-    });
-  }
-  return appendPlatformRouteHeaders(
-    response,
-    instrumentation,
-  );
+  const outcome = result.status === 200
+    ? "authoritative_receipt"
+    : result.status === 404
+      ? "receipt_not_found"
+      : "failed";
+  response.headers.set("X-Platform-Review-Outcome", outcome);
+  console.info("[platform.training.review]", {
+    requestId: instrumentation.requestId,
+    clientEventId: parsed.clientEventId,
+    actionId: "review-card",
+    attempt: "reconcile",
+    outcome,
+  });
+  return appendPlatformRouteHeaders(response, instrumentation);
 }
 
 async function readJson(request: NextRequest): Promise<unknown> {

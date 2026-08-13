@@ -347,3 +347,6 @@
 
 -- Deterministic Platform V2 training group lookup by scheduled entry
 \i db/migrations/115_platform_v2_training_group_by_entry.sql
+
+-- Authoritative receipt read after ambiguous Platform V2 action transport
+\i db/migrations/116_platform_v2_action_receipt_reconciliation.sql

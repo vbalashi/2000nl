@@ -155,7 +155,8 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `113` and the V2 code with both flags absent;
+1. deploy migrations `105` through `116` before the V2 code that may call the
+   receipt-reconciliation RPC, with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
@@ -167,6 +168,12 @@ Deployment order is intentionally fail-closed:
 6. run the Known/Undo database and route smoke, then set
    `PLATFORM_V2_ACTIONS_ENABLED=1`. Removing only this flag hides all V2
    mutation capabilities without deleting accepted Known Marks.
+
+Migration `116` is an additive prerequisite for receipt reconciliation. A
+rolling deployment must apply it before code that can call
+`/api/platform/v2/actions/reconcile`; otherwise a second lost mutation response
+cannot be resolved authoritatively. The route remains fail-closed while
+`PLATFORM_V2_ACTIONS_ENABLED` is absent.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes
@@ -216,6 +223,36 @@ state and excludes the exact card from shared training selection. Undo clears
 only the current mark and reveals the preserved state. Consumers must dispatch
 the returned capability target verbatim and must not simulate either state
 locally.
+
+#### Reconcile an ambiguous V2 action
+
+```http
+POST /api/platform/v2/actions/reconcile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{"clientEventId":"<the original review UUID>"}
+```
+
+Use this read only when a `review-card` response and one same-ID retry both end
+ambiguously at the transport boundary. It requires the same `platform:write`
+scope as the mutation. The server derives the authenticated user, waits for an
+in-flight mutation using that user/event ID, and reads only that user's durable
+receipt. Reuse the original UUID; do not create another review event merely to
+reconcile the first.
+
+- `200`: authoritative `platform-action-v2`; advance as after the accepted
+  mutation;
+- `400`: malformed or non-UUID `clientEventId`;
+- `401`: missing or invalid authentication;
+- `403`: Connected Client lacks `platform:write`;
+- `404 {"error":"action_receipt_not_found"}`: neither attempt committed; keep
+  the current card recoverable and let a later intentional action use a new ID;
+- `503`: V2 actions are disabled or a server dependency is unavailable.
+
+`X-Platform-Review-Outcome` distinguishes `authoritative_receipt`,
+`receipt_not_found`, and `failed`. Telemetry contains correlation and
+categorical outcome fields only, never card text or review content.
 
 Capabilities are the authoritative action state machine, not UI hints.
 `mark-known` is available for not-started, encountered, learning, and reviewing

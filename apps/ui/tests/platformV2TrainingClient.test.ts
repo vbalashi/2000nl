@@ -6,9 +6,11 @@ import {
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
+  performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
   resolvePlatformV2Audio,
   selectPlatformV2TrainingEntry,
+  type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingClient";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
 import {
@@ -91,6 +93,192 @@ describe("buildPlatformV2TrainingActionRequest", () => {
     });
   });
 });
+
+describe("performPlatformV2TrainingAction", () => {
+  test("reuses one event identity when a committed review response disconnects", async () => {
+    const capability = reviewCapability("success");
+    const eventId = "a4dc56fd-c087-47aa-85d2-a20f66ca2822";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const duplicateResponse = {
+      contractVersion: "platform-action-v2",
+      actionId: "review-card",
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Failed to fetch"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(duplicateResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(duplicateResponse);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const submittedEvents = fetchMock.mock.calls.map(([, init]) =>
+      JSON.parse(String(init?.body)).clientEventId,
+    );
+    expect(submittedEvents).toEqual([eventId, eventId]);
+  });
+
+  test("correlates a timeout-before-commit retry with the same event identity", async () => {
+    const capability = reviewCapability("hard");
+    const eventId = "63825d8a-b62e-49ff-a360-0d5ef1ed26bf";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2",
+      actionId: "review-card",
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(acceptedResponse);
+
+    expect(fetchMock.mock.calls.map(([, init]) => init?.headers)).toEqual([
+      expect.objectContaining({ "x-platform-action-attempt": "1" }),
+      expect.objectContaining({ "x-platform-action-attempt": "2" }),
+    ]);
+    expect(
+      fetchMock.mock.calls.map(([, init]) =>
+        JSON.parse(String(init?.body)).clientEventId,
+      ),
+    ).toEqual([eventId, eventId]);
+  });
+
+  test("preserves the event identity when a newer remote state rejects the retry", async () => {
+    const capability = reviewCapability("easy");
+    const eventId = "6b6f3a78-6e8a-4a09-a17b-833ab9591cc2";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Failed to fetch"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "state_conflict" }), { status: 409 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).rejects.toThrow("state_conflict");
+
+    expect(
+      fetchMock.mock.calls.map(([, init]) =>
+        JSON.parse(String(init?.body)).clientEventId,
+      ),
+    ).toEqual([eventId, eventId]);
+  });
+
+  test("reconciles browser network TypeErrors without depending on their localized message", async () => {
+    const capability = reviewCapability("fail");
+    const eventId = "21b776d3-8de1-4f80-99ef-29257b629b8a";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2",
+      actionId: "review-card",
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Load failed"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(acceptedResponse);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("reads the authoritative receipt when both review responses disconnect", async () => {
+    const capability = reviewCapability("success");
+    const eventId = "f838d536-98cf-48a9-8c65-e360d025d4b8";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2" as const,
+      actionId: "review-card" as const,
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card!,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Load failed"))
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(acceptedResponse);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions/reconcile",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toEqual({
+      clientEventId: eventId,
+    });
+  });
+
+  test("reports a typed recoverable outcome when neither ambiguous attempt committed", async () => {
+    const capability = reviewCapability("hard");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(
+      "66fe664a-f76f-4800-a52f-af49b7dc0a3b",
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValueOnce(new Error("platform_request_timeout"))
+        .mockRejectedValueOnce(new TypeError("Load failed"))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "action_receipt_not_found" }), {
+            status: 404,
+          }),
+        ),
+    );
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).rejects.toThrow("action_receipt_not_found");
+  });
+});
+
+function reviewCapability(
+  reviewResult: "fail" | "hard" | "success" | "easy",
+): PlatformV2TrainingActionCapability {
+  const capability = singleSenseEntry.capabilities.find(
+    (candidate) =>
+      candidate.actionId === "review-card" &&
+      candidate.reviewResult === reviewResult,
+  );
+  if (!capability || capability.actionId !== "review-card") {
+    throw new Error(`Missing ${reviewResult} review capability fixture`);
+  }
+  return capability;
+}
 
 describe("Platform V2 media and translation clients", () => {
   test("resolves audio from the DTO language and requested headword", async () => {

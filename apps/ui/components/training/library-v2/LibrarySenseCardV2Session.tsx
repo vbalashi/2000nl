@@ -8,9 +8,9 @@ import {
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
 import {
-  performPlatformV2TrainingAction,
   resolvePlatformV2Audio,
 } from "@/lib/platform/platformV2TrainingClient";
+import { performPlatformV2TrainingAction } from "@/lib/platform/platformV2TrainingActionClient";
 import {
   addWordsToUserList,
   createUserList,

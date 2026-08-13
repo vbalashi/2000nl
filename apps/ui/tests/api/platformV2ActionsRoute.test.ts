@@ -14,19 +14,21 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient,
 }));
 
-const request = (body: unknown) =>
+const request = (body: unknown, extraHeaders: Record<string, string> = {}) =>
   new NextRequest("http://localhost/api/platform/v2/actions", {
     method: "POST",
     headers: {
       authorization: "Bearer user-token",
       "content-type": "application/json",
       origin: "chrome-extension://abc",
+      ...extraHeaders,
     },
     body: JSON.stringify(body),
   });
 
 describe("/api/platform/v2/actions", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
@@ -209,5 +211,247 @@ describe("/api/platform/v2/actions", () => {
       error: "invalid_client_event_id",
     });
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("records a privacy-safe commit-then-disconnect outcome for a duplicate retry", async () => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "duplicate",
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "reviewing", repeatCount: 4 },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request(
+        {
+          actionId: "review-card",
+          clientEventId: "00000000-0000-4000-8000-000000000002",
+          target: {
+            kind: "sense-card",
+            entryId: "00000000-0000-4000-8000-000000000003",
+            cardTypeId: "word-to-definition",
+            stateRevision: "00000000-0000-4000-8000-000000000005",
+          },
+          reviewResult: "success",
+        },
+        { "x-platform-action-attempt": "2" },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-review-outcome")).toBe(
+      "commit_then_disconnect",
+    );
+    expect(telemetry).toHaveBeenCalledWith("[platform.training.review]", {
+      actionId: "review-card",
+      attempt: 2,
+      cardTypeId: "word-to-definition",
+      clientEventId: "00000000-0000-4000-8000-000000000002",
+      outcome: "commit_then_disconnect",
+      requestId: expect.any(String),
+    });
+    expect(JSON.stringify(telemetry.mock.calls)).not.toContain("success");
+  });
+
+  test("records a genuinely newer remote state after an ambiguous attempt", async () => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "platform_card_state_conflict" },
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request(
+        {
+          actionId: "review-card",
+          clientEventId: "00000000-0000-4000-8000-000000000002",
+          target: {
+            kind: "sense-card",
+            entryId: "00000000-0000-4000-8000-000000000003",
+            cardTypeId: "word-to-definition",
+            stateRevision: "00000000-0000-4000-8000-000000000005",
+          },
+          reviewResult: "hard",
+        },
+        { "x-platform-action-attempt": "2" },
+      ),
+    );
+
+    expect(response.status).toBe(409);
+    expect(response.headers.get("x-platform-review-outcome")).toBe(
+      "newer_remote_state",
+    );
+    expect(telemetry).toHaveBeenCalledWith(
+      "[platform.training.review]",
+      expect.objectContaining({
+        attempt: 2,
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        outcome: "newer_remote_state",
+      }),
+    );
+  });
+
+  test.each([
+    {
+      name: "timeout before commit",
+      receiptStatus: "accepted",
+      attempt: "2",
+      outcome: "timeout_before_commit",
+    },
+    {
+      name: "duplicate retry",
+      receiptStatus: "duplicate",
+      attempt: "1",
+      outcome: "duplicate_retry",
+    },
+  ])("records the correlated $name outcome", async ({ receiptStatus, attempt, outcome }) => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: receiptStatus,
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "reviewing", repeatCount: 4 },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request(
+        {
+          actionId: "review-card",
+          clientEventId: "00000000-0000-4000-8000-000000000002",
+          target: {
+            kind: "sense-card",
+            entryId: "00000000-0000-4000-8000-000000000003",
+            cardTypeId: "word-to-definition",
+            stateRevision: "00000000-0000-4000-8000-000000000005",
+          },
+          reviewResult: "success",
+        },
+        { "x-platform-action-attempt": attempt },
+      ),
+    );
+
+    expect(response.headers.get("x-platform-review-outcome")).toBe(outcome);
+    expect(telemetry).toHaveBeenCalledWith(
+      "[platform.training.review]",
+      expect.objectContaining({
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        outcome,
+      }),
+    );
+  });
+
+  test("reads an authoritative review receipt after both mutation responses disconnect", async () => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "reviewing", repeatCount: 4 },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/reconcile/route"
+    );
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer user-token",
+          "content-type": "application/json",
+          origin: "chrome-extension://abc",
+        },
+        body: JSON.stringify({
+          clientEventId: "00000000-0000-4000-8000-000000000002",
+        }),
+      }),
+    );
+
+    expect(rpc).toHaveBeenCalledWith(
+      "reconcile_platform_v2_action_receipt_as_principal",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_client_event_id: "00000000-0000-4000-8000-000000000002",
+      },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-review-outcome")).toBe(
+      "authoritative_receipt",
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        accepted: true,
+      }),
+    );
+    expect(telemetry).toHaveBeenCalledWith(
+      "[platform.training.review]",
+      expect.objectContaining({
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        outcome: "authoritative_receipt",
+      }),
+    );
+  });
+
+  test("reports that no authoritative receipt exists without exposing another user", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/reconcile/route"
+    );
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer user-token",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          clientEventId: "00000000-0000-4000-8000-000000000099",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "action_receipt_not_found",
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "reconcile_platform_v2_action_receipt_as_principal",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_client_event_id: "00000000-0000-4000-8000-000000000099",
+      },
+    );
   });
 });

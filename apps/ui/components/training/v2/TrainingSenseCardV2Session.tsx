@@ -6,15 +6,17 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   fetchPlatformV2TrainingEntry,
   consumePrefetchedPlatformV2TrainingEntry,
-  isPlatformV2TrainingActionCapability,
   peekPrefetchedPlatformV2TrainingEntry,
-  performPlatformV2TrainingAction,
   preloadPlatformV2Audio,
   requestPlatformV2Translation,
   resolvePlatformV2Audio,
-  type PlatformV2TrainingActionCapability,
   type PlatformV2TrainingLookupResult,
 } from "@/lib/platform/platformV2TrainingClient";
+import {
+  isPlatformV2TrainingActionCapability,
+  performPlatformV2TrainingAction,
+  type PlatformV2TrainingActionCapability,
+} from "@/lib/platform/platformV2TrainingActionClient";
 import type { TrainingMode, TrainingWord } from "@/lib/types";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
@@ -289,7 +291,9 @@ export function TrainingSenseCardV2Session({
         );
       } else {
         setError(
-          code === "Failed to fetch" || code === "platform_request_timeout"
+          code === "Failed to fetch" ||
+          code === "platform_request_timeout" ||
+          code === "action_receipt_not_found"
             ? temporaryFailureMessage(interfaceLanguage)
             : code,
         );
