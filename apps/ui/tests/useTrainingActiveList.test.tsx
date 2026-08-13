@@ -445,6 +445,62 @@ describe("useTrainingActiveList", () => {
       userList,
       expect.objectContaining({ activeListId: userList.id }),
     );
-    expect(result.current.wordListId).toBe(userList.id);
+    await waitFor(() => expect(result.current.wordListId).toBe(userList.id));
+  });
+
+  test("authoritative scope refresh supersedes an older list-only result", async () => {
+    let resolveOldLists!: (lists: WordListSummary[]) => void;
+    const oldLists = new Promise<WordListSummary[]>((resolve) => {
+      resolveOldLists = resolve;
+    });
+    fetchAvailableLists
+      .mockResolvedValueOnce([curatedList])
+      .mockReturnValueOnce(oldLists)
+      .mockResolvedValueOnce([curatedList, userList]);
+    fetchActiveTrainingScope
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: null,
+        activeListType: null,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: false,
+        isValid: false,
+      })
+      .mockResolvedValueOnce({
+        languageCode: "nl",
+        activeListId: userList.id,
+        activeListType: userList.type,
+        activeScenario: "understanding",
+        cardFilter: "both",
+        modesEnabled: ["word-to-definition"],
+        newReviewRatio: 2,
+        hasSavedScope: true,
+        isValid: true,
+      });
+    fetchListSummaryById.mockResolvedValue(userList);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+    await waitFor(() => expect(result.current.listHydrated).toBe(true));
+
+    const oldRefresh = result.current.refreshAvailableLists();
+    await result.current.handleListsUpdated();
+    await waitFor(() =>
+      expect(result.current.availableLists).toEqual([curatedList, userList]),
+    );
+
+    resolveOldLists([curatedList]);
+    await oldRefresh;
+    await waitFor(() =>
+      expect(result.current.availableLists).toEqual([curatedList, userList]),
+    );
   });
 });

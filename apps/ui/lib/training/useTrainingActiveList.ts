@@ -210,6 +210,9 @@ export function useTrainingActiveList(params: {
   const handleListsUpdated = useCallback(
     async (callbacks: ListUpdatedCallbacks = {}) => {
       if (!userId) return null;
+      // The authoritative post-mutation snapshot supersedes any older
+      // list-only query, while later list-only observations remain allowed.
+      listRequestIdRef.current += 1;
       const refreshId = ++scopeRefreshIdRef.current;
       const languageGeneration = languageGenerationRef.current;
       const requestedLanguage = language;
