@@ -56,4 +56,3 @@ This cleanup deliberately deletes unsafe diagnostics and has no data rollback.
 Application rollback remains safe because older code tolerates the absent
 best-effort metadata field. If application deployment fails, do not run the
 cleanup until the compatible read boundary is live.
-

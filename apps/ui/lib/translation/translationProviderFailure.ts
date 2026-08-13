@@ -71,4 +71,3 @@ export function normalizeTranslationProviderError(
   if (error instanceof SafeTranslationProviderError) return error;
   return safeTranslationProviderError(fallbackCode, error);
 }
-
