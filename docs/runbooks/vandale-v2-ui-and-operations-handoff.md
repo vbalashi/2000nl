@@ -215,7 +215,7 @@ normal rollback mechanism.
 
 Platform V2 migrations deliberately do not infer source-managed Content Nodes
 from `word_entries.raw`. The checksummed source manifest remains the authority.
-When migrations `105` through `113` are deployed, keep
+When migrations `105` through `119` are deployed, keep
 `PLATFORM_V2_LOOKUP_ENABLED` and `PLATFORM_V2_ACTIONS_ENABLED` unset and run:
 
 ```bash
@@ -238,6 +238,13 @@ created the service-only `lookup_platform_v2_entries` RPC and run a direct
 service-role RPC smoke. Functional route smoke requires the flag: enable it
 temporarily only in an isolated staging environment, run the route checks, and
 keep production disabled until those checks pass.
+
+Migration `119` wraps the same lookup and exact-training RPC signatures so each
+item carries its internal presentation identity without a second PostgREST
+request. Apply it before the compatible application release, then verify a
+non-empty V2 lookup has `lookup.db` timing but no separate `lookup.identity`
+round-trip timing. Rollback may restore the previous application first because
+the older projection ignores the added internal item field.
 
 Only after the verified no-op and V2 smoke checks may the runtime set
 `PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and

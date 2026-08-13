@@ -158,7 +158,7 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `117` before the V2 code that may call the
+1. deploy migrations `105` through `119` before the V2 code that may call the
    receipt-reconciliation RPC, with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
@@ -183,6 +183,13 @@ navigation boundary. Apply it before importing a manifest that promotes those
 records: both ordinary and filtered Training schedulers then exclude them,
 including pre-existing due card state, while Library lookup can still project
 and follow their cross-reference capabilities.
+
+Migration `119` preserves the existing service-only lookup RPC signatures but
+enriches each internal result item with its presentation identity in the same
+database round trip. Apply it before expecting the reduced-latency path; older
+application code safely ignores the internal field, while newer code retains a
+temporary fallback to the standalone identity RPC for rolling compatibility.
+The public `platform-lookup-v2` response does not expose this internal envelope.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes

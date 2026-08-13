@@ -220,6 +220,28 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
       expect(
         rows[0].result.items.map((item: { id: string }) => item.id),
       ).toEqual([firstEntryId, secondEntryId]);
+      expect(
+        rows[0].result.items.map(
+          (item: {
+            platform_v2_identity: {
+              entryId: string;
+              headwordGroupId: string;
+              contentNodeBindings: unknown[];
+            };
+          }) => item.platform_v2_identity,
+        ),
+      ).toEqual([
+        expect.objectContaining({
+          entryId: firstEntryId,
+          headwordGroupId: expect.any(String),
+          contentNodeBindings: [],
+        }),
+        expect.objectContaining({
+          entryId: secondEntryId,
+          headwordGroupId: expect.any(String),
+          contentNodeBindings: [],
+        }),
+      ]);
     }, userId);
   });
 
@@ -621,7 +643,14 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         [userId, query],
       );
       const firstPage = firstRows[0].result as {
-        items: Array<{ id: string }>;
+        items: Array<{
+          id: string;
+          platform_v2_identity: {
+            entryId: string;
+            headwordGroupId: string;
+            contentNodeBindings: unknown[];
+          };
+        }>;
         page: {
           selectedTierComplete: boolean;
           nextGroupCursor: string;
@@ -631,6 +660,16 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         expect.arrayContaining([firstEntryId, firstSiblingId]),
       );
       expect(firstPage.items).toHaveLength(3);
+      expect(
+        firstPage.items.map((entry) => entry.platform_v2_identity.entryId),
+      ).toEqual(firstPage.items.map((entry) => entry.id));
+      expect(
+        firstPage.items.every(
+          (entry) =>
+            typeof entry.platform_v2_identity.headwordGroupId === "string" &&
+            Array.isArray(entry.platform_v2_identity.contentNodeBindings),
+        ),
+      ).toBe(true);
       expect(firstPage.page.selectedTierComplete).toBe(false);
       expect(firstPage.page.nextGroupCursor).toEqual(expect.any(String));
 
