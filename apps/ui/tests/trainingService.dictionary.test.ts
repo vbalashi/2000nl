@@ -48,9 +48,11 @@ const from = vi.fn((table: string) => {
   return createQuery(table, response);
 });
 const rpc = vi.fn();
+const getSession = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
+    auth: { getSession },
     from,
     rpc,
   },
@@ -82,6 +84,10 @@ describe("trainingService dictionary lookup", () => {
   beforeEach(() => {
     from.mockClear();
     rpc.mockClear();
+    getSession.mockReset();
+    getSession.mockResolvedValue({
+      data: { session: { access_token: "token-1" } },
+    });
     fromResponses.clear();
     queries.length = 0;
     window.localStorage.clear();
@@ -309,10 +315,6 @@ describe("trainingService dictionary lookup", () => {
 
   test("createUserDictionaryEntry calls the platform action endpoint", async () => {
     const { createUserDictionaryEntry } = await importService();
-    window.localStorage.setItem(
-      "sb-test-auth-token",
-      JSON.stringify({ access_token: "token-1" }),
-    );
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -349,7 +351,7 @@ describe("trainingService dictionary lookup", () => {
         }),
       }),
     );
-    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer token-1");
+    expect(fetchMock.mock.calls[0][1].headers.authorization).toBe("Bearer token-1");
   });
 
   test("copyEntryToUserDictionary calls the platform copy action", async () => {

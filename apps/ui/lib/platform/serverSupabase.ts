@@ -497,3 +497,16 @@ export function getPlatformServiceSupabase(): ServiceSupabase | NextResponse {
     supabase: getServiceSupabaseClient(supabaseUrl, serviceKey),
   };
 }
+
+export function getTranslationServiceSupabase(): ServiceSupabase | NextResponse {
+  const supabaseUrl =
+    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return jsonNoStore({ error: "supabase_service_not_configured" }, 500);
+  }
+  return { supabase: getServiceSupabaseClient(supabaseUrl, serviceKey) };
+}

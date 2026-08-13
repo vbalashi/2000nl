@@ -131,13 +131,16 @@ Keep changes small and targeted:
 
 ## Cache Invalidation / Prompt Fingerprint
 
-The translation API route caches translations per `(word_entry_id, target_lang, provider)` and uses a fingerprint to decide whether to retranslate.
+The dictionary-meaning translation coordinator caches translations per
+`(word_entry_id, target_lang, provider)` and uses a fingerprint to decide
+whether to retranslate. HTTP routes only authenticate, authorize the requested
+entry, and adapt the coordinator result.
 
 Each translation contract has its own prompt hash. Dictionary-meaning prompt
 edits invalidate dictionary artifacts, while selected-fragment prompt edits do
 not cause paid regeneration of unrelated dictionary translations (and vice
 versa):
-- `apps/ui/app/api/translation/route.ts`
+- `apps/ui/lib/translation/dictionaryMeaningTranslationCoordinator.ts`
 - `apps/ui/lib/translation/prompts/promptFingerprint.ts`
 
 Outcome:

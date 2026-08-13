@@ -29,7 +29,7 @@ const { createClient } = require("@supabase/supabase-js");
 const DEFAULT_OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_OPENAI_MODEL = "gpt-5.2";
 
-// Keep in sync with apps/ui/app/api/translation/route.ts
+// Keep in sync with the dictionary-meaning translation coordinator and policy modules.
 const TRANSLATION_PIPELINE_VERSION = "note_v1";
 
 const POS_DUTCH_LABELS = {

@@ -174,26 +174,16 @@ function mockAuthenticatedClients() {
     auth: { getUser },
     rpc,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(platformUserClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
 }
 
 function mockAuthenticatedClientsWithPreference(targetLang = "en") {
@@ -202,26 +192,16 @@ function mockAuthenticatedClientsWithPreference(targetLang = "en") {
     rpc,
     from,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(preferenceClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
   from.mockImplementationOnce((table: string) => {
     if (table === "user_settings") {
       return queryChain({
@@ -374,6 +354,8 @@ describe("/api/platform/v1/translation", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledTimes(1);
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "https://client.example",
     );
@@ -381,6 +363,57 @@ describe("/api/platform/v1/translation", () => {
       entryId: ENTRY_ID,
       targetLang: "ru",
       status: "pending",
+    });
+  });
+
+  test("does not create the service cache client before gated entry authorization", async () => {
+    const platformUserClient = { auth: { getUser }, rpc };
+    createClient.mockReturnValueOnce(platformUserClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(404);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_entry_id: ENTRY_ID,
+    });
+    expect(createClient).toHaveBeenCalledTimes(1);
+    expect(from).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru",
+      error: "word_entry_not_found",
+    });
+  });
+
+  test("rejects an invalid target language loaded from user settings", async () => {
+    const preferenceClient = { auth: { getUser }, rpc, from };
+    createClient.mockReturnValueOnce(preferenceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementationOnce((table: string) => {
+      if (table === "user_settings") {
+        return queryChain({ data: { translation_lang: "ru;ignore" }, error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID }));
+
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru;ignore",
+      error: "Invalid lang",
     });
   });
 
@@ -392,6 +425,31 @@ describe("/api/platform/v1/translation", () => {
       .mockReturnValueOnce(queryChain({ data: null, error: null }))
       .mockReturnValueOnce(
         queryChain({ data: currentPendingTranslation(), error: null }),
+      );
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("keeps a failed lost-insert race classified as cached pending", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    from
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(
+        queryChain({
+          data: {
+            ...currentPendingTranslation(),
+            status: "failed",
+            error_message: "provider_unknown_error:000000000000000000000000",
+          },
+          error: null,
+        }),
       );
 
     const { POST } = await import("@/app/api/platform/v1/translation/route");
@@ -425,6 +483,32 @@ describe("/api/platform/v1/translation", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-platform-cache")).toBe("hit");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("keeps a failed conditional-claim result classified as cached pending", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    const stale = {
+      ...currentPendingTranslation(),
+      source_content_revision: "stale-revision",
+      updated_at: "2026-08-13T00:00:00.000Z",
+    };
+    const failed = {
+      ...currentPendingTranslation(),
+      status: "failed",
+      error_message: "provider_unknown_error:000000000000000000000000",
+    };
+    from
+      .mockReturnValueOnce(queryChain({ data: stale, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: failed, error: null }));
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
     expect(translate).not.toHaveBeenCalled();
   });
 
