@@ -325,9 +325,21 @@ function MeaningCard({
                 </p>
               </SenseCardReveal>
             ) : null}
-            <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
-              {meaning.definition?.text ?? "—"}
-            </p>
+            <div className="flex items-start gap-2">
+              <p className="min-w-0 flex-1 text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
+                {meaning.definition?.text ?? "—"}
+              </p>
+              {meaning.definition?.reportCapability && onReport ? (
+                <button
+                  type="button"
+                  aria-label={`${t("senseCard.report")}: ${meaning.definition.text}`}
+                  onClick={() => onReport(meaning.definition!.reportCapability!)}
+                  className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                >
+                  <FlagIcon className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
             {meaning.definition?.translation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
@@ -375,6 +387,8 @@ function MeaningCard({
                 key={child.contentNodeId}
                 item={child}
                 translationVisible={state.translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -429,6 +443,8 @@ function MeaningCard({
                         <ContentText
                           item={item}
                           translationVisible={state.translationVisible}
+                          onReport={onReport}
+                          reportLabel={t("senseCard.report")}
                         />
                         {item.children.length ? (
                           <div className="mt-2 space-y-2 pl-4">
@@ -437,6 +453,8 @@ function MeaningCard({
                                 key={child.contentNodeId}
                                 item={child}
                                 translationVisible={state.translationVisible}
+                                onReport={onReport}
+                                reportLabel={t("senseCard.report")}
                               />
                             ))}
                           </div>
@@ -592,9 +610,13 @@ function TranslateIcon() {
 function NestedContent({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
+  onReport?: (capability: LibraryReportCapability) => void;
+  reportLabel: string;
 }) {
   return (
     <div
@@ -602,7 +624,12 @@ function NestedContent({
       data-content-node-id={item.contentNodeId}
       data-parent-content-node-id={item.parentContentNodeId ?? undefined}
     >
-      <ContentText item={item} translationVisible={translationVisible} />
+      <ContentText
+        item={item}
+        translationVisible={translationVisible}
+        onReport={onReport}
+        reportLabel={reportLabel}
+      />
       {item.children.length ? (
         <div className="mt-2 space-y-2 pl-4">
           {item.children.map((child) => (
@@ -610,6 +637,8 @@ function NestedContent({
               key={child.contentNodeId}
               item={child}
               translationVisible={translationVisible}
+              onReport={onReport}
+              reportLabel={reportLabel}
             />
           ))}
         </div>
@@ -621,14 +650,32 @@ function NestedContent({
 function ContentText({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
+  onReport?: (capability: LibraryReportCapability) => void;
+  reportLabel: string;
 }) {
   const presentation = contentPresentation[item.kind];
   return (
     <div className={`pl-3 ${presentation.borderClassName}`}>
-      <p className={presentation.textClassName}>{item.text}</p>
+      <div className="flex items-start gap-2">
+        <p className={`min-w-0 flex-1 ${presentation.textClassName}`}>
+          {item.text}
+        </p>
+        {item.reportCapability && onReport ? (
+          <button
+            type="button"
+            aria-label={`${reportLabel}: ${item.text}`}
+            onClick={() => onReport(item.reportCapability!)}
+            className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <FlagIcon className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
           <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">

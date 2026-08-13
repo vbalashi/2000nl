@@ -10,7 +10,7 @@ import { describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardGroup } from "@/components/training/library-v2/LibrarySenseCardGroup";
 import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v2/librarySenseCardModel";
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
-import { goedGroup } from "./platformV2IdiomHierarchyFixture";
+import { goedGroup, nodigGroup } from "./platformV2IdiomHierarchyFixture";
 import {
   gateLongHeadwordGroup,
   gateSingleSenseGroup,
@@ -18,10 +18,12 @@ import {
 
 describe("LibrarySenseCardGroup", () => {
   test("renders the goed expression, explanation, and example as one owned hierarchy", () => {
+    const onReport = vi.fn();
     const { container } = render(
       <LibrarySenseCardGroup
         model={buildLibrarySenseCardGroupModel(goedGroup, "en")}
         interfaceLanguage="en"
+        onReport={onReport}
         onAction={vi.fn()}
       />,
     );
@@ -35,9 +37,36 @@ describe("LibrarySenseCardGroup", () => {
     );
     expect(expression).toContainElement(explanation as HTMLElement);
     expect(expression).toContainElement(example as HTMLElement);
-    expect(expression?.querySelector(":scope > div > p")).toHaveClass("italic");
-    expect(explanation?.querySelector(":scope > div > p")).not.toHaveClass("italic");
-    expect(example?.querySelector(":scope > div > p")).toHaveClass("italic");
+    expect(expression?.querySelector("p")).toHaveClass("italic");
+    expect(explanation?.querySelector("p")).not.toHaveClass("italic");
+    expect(example?.querySelector("p")).toHaveClass("italic");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Report: iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
+      }),
+    );
+    expect(onReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({
+          kind: "content-node",
+          contentNodeId: "idiom-explanation-goed",
+        }),
+      }),
+    );
+  });
+  test("renders two nodig idiom roots with separate explanations", () => {
+    const { container } = render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(nodigGroup, "en")}
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+
+    const idioms = container.querySelectorAll('[data-content-kind="idiom"]');
+    expect(idioms).toHaveLength(2);
+    expect(idioms[0].querySelectorAll('[data-content-kind="idiom-explanation"]')).toHaveLength(1);
+    expect(idioms[1].querySelectorAll('[data-content-kind="idiom-explanation"]')).toHaveLength(1);
   });
   test("keeps a localized long headword usable in the single-sense fixture", () => {
     render(

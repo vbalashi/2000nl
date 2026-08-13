@@ -48,7 +48,29 @@ function entry(
     // parentContentNodeId, never array adjacency, own the hierarchy.
     contentNodes: [...contentNodes].reverse(),
     translation: null,
-    capabilities: [],
+    capabilities: [
+      {
+        actionId: "report-content",
+        elementId: `sense-card.${entryId}.report`,
+        messageKey: "senseCard.report",
+        target: {
+          kind: "entry",
+          entryId,
+          contentRevision: `content-${entryId}`,
+        },
+      },
+      ...contentNodes.map((contentNode) => ({
+        actionId: "report-content" as const,
+        elementId: `sense-card.${entryId}.${contentNode.contentNodeId}.report`,
+        messageKey: "senseCard.report",
+        target: {
+          kind: "content-node" as const,
+          entryId,
+          contentNodeId: contentNode.contentNodeId,
+          sourceTextFingerprint: contentNode.sourceTextFingerprint,
+        },
+      })),
+    ],
   };
 }
 

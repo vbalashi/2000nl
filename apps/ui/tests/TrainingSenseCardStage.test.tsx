@@ -46,12 +46,13 @@ describe("TrainingSenseCardStage", () => {
       entry: goedEntry,
       interfaceLanguage: "en",
     });
+    const onAction = vi.fn();
     rerender(
       <TrainingSenseCardStage
         model={goedModel}
         mode="word-to-definition"
         interfaceLanguage="en"
-        onAction={vi.fn()}
+        onAction={onAction}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
@@ -65,9 +66,22 @@ describe("TrainingSenseCardStage", () => {
     );
     expect(expression).toContainElement(explanation as HTMLElement);
     expect(expression).toContainElement(example as HTMLElement);
-    expect(expression?.querySelector(":scope > p")).toHaveClass("italic");
-    expect(explanation?.querySelector(":scope > p")).not.toHaveClass("italic");
-    expect(example?.querySelector(":scope > p")).toHaveClass("italic");
+    expect(expression?.querySelector("p")).toHaveClass("italic");
+    expect(explanation?.querySelector("p")).not.toHaveClass("italic");
+    expect(example?.querySelector("p")).toHaveClass("italic");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Report: het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+      }),
+    );
+    expect(onAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({
+          kind: "content-node",
+          contentNodeId: "idiom-example-goed",
+        }),
+      }),
+    );
   });
   test("keeps the audio control in the upper-left corner away from long headwords", () => {
     const baseModel = buildTrainingSenseCardModel({

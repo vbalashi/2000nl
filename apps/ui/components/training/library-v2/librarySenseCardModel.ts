@@ -39,6 +39,7 @@ export type LibrarySenseContent = {
   kind: PlatformContentNodeKindV2;
   text: string;
   translation: string | null;
+  reportCapability: LibraryReportCapability | null;
   children: LibrarySenseContent[];
 };
 
@@ -149,6 +150,14 @@ function buildMeaning(
   const nodes = [...entry.contentNodes].sort(
     (left, right) => left.order - right.order,
   );
+  const reportByContentNodeId = new Map(
+    entry.capabilities.flatMap((candidate) =>
+      candidate.actionId === "report-content" &&
+      candidate.target.kind === "content-node"
+        ? [[candidate.target.contentNodeId, candidate] as const]
+        : [],
+    ),
+  );
   const contentById = new Map<string, LibrarySenseContent>();
   for (const node of nodes) {
     contentById.set(node.contentNodeId, {
@@ -161,6 +170,7 @@ function buildMeaning(
           (translation) =>
             translation.status === "ready" && Boolean(translation.text),
         )?.text ?? null,
+      reportCapability: reportByContentNodeId.get(node.contentNodeId) ?? null,
       children: [],
     });
   }

@@ -14,6 +14,10 @@ export type TrainingSenseCardContent = {
   kind: PlatformContentNodeV2["kind"];
   text: string;
   translation?: string;
+  reportCapability?: Extract<
+    PlatformSenseCardCapabilityV2,
+    { actionId: "report-content" }
+  >;
   children: TrainingSenseCardContent[];
 };
 
@@ -73,6 +77,14 @@ export function buildTrainingSenseCardModel({
   interfaceLanguage: OnboardingLanguage;
 }): TrainingSenseCardModel {
   const nodes = [...entry.contentNodes].sort((left, right) => left.order - right.order);
+  const reportByContentNodeId = new Map(
+    entry.capabilities.flatMap((candidate) =>
+      candidate.actionId === "report-content" &&
+      candidate.target.kind === "content-node"
+        ? [[candidate.target.contentNodeId, candidate] as const]
+        : [],
+    ),
+  );
   const contentById = new Map<string, TrainingSenseCardContent>();
   for (const node of nodes) {
     const translation = node.translations.find(
@@ -84,6 +96,9 @@ export function buildTrainingSenseCardModel({
       kind: node.kind,
       text: node.text,
       ...(translation ? { translation } : {}),
+      ...(reportByContentNodeId.get(node.contentNodeId)
+        ? { reportCapability: reportByContentNodeId.get(node.contentNodeId) }
+        : {}),
       children: [],
     });
   }

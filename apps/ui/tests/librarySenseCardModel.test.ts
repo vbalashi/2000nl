@@ -12,6 +12,7 @@ import {
 import {
   goedEntry,
   goedGroup,
+  nodigGroup,
 } from "./platformV2IdiomHierarchyFixture";
 
 describe("Library multi-sense model", () => {
@@ -40,6 +41,18 @@ describe("Library multi-sense model", () => {
         ],
       }),
     );
+  });
+  test("keeps two nodig expression roots with their own explanations", () => {
+    const model = buildLibrarySenseCardGroupModel(nodigGroup, "nl");
+    const idioms = model.meanings[0].details.filter(
+      (item) => item.kind === "idiom",
+    );
+
+    expect(idioms).toHaveLength(2);
+    expect(idioms.map((item) => item.children.map((child) => child.kind))).toEqual([
+      ["idiom-explanation"],
+      ["idiom-explanation"],
+    ]);
   });
   test("keeps learning state and actions on their exact entry", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
