@@ -1,7 +1,11 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  localizePlatformSemanticTerm,
+  projectPlatformV2SenseContent,
+  type PlatformV2SenseContentNode,
+} from "@/lib/platform/projections/platformV2SenseContent";
 import type {
-  PlatformContentNodeKindV2,
   PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
@@ -33,15 +37,7 @@ export type LibraryMutationCapability =
   | LibraryMarkKnownCapability
   | LibraryUndoKnownCapability;
 
-export type LibrarySenseContent = {
-  contentNodeId: string;
-  parentContentNodeId: string | null;
-  kind: PlatformContentNodeKindV2;
-  text: string;
-  translation: string | null;
-  reportCapability: LibraryReportCapability | null;
-  children: LibrarySenseContent[];
-};
+export type LibrarySenseContent = PlatformV2SenseContentNode;
 
 export type LibrarySenseCardModel = {
   entryId: string;
@@ -176,11 +172,10 @@ export function buildLibrarySenseCardGroupModel(
     article: group.header.article ?? null,
     headword: group.header.displayPronunciation ?? group.header.text,
     audioCapability: group.header.audio ?? null,
-    partOfSpeech: partOfSpeech
-      ? t(partOfSpeech.messageKey) === partOfSpeech.messageKey
-        ? (partOfSpeech.sourceValue ?? null)
-        : t(partOfSpeech.messageKey)
-      : null,
+    partOfSpeech: localizePlatformSemanticTerm(
+      partOfSpeech,
+      interfaceLanguage,
+    ),
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     senseCount: group.senseCount,
     crossReferences,
@@ -213,38 +208,8 @@ function buildMeaning(
   requestedCardTypeId: CardTypeId,
   interfaceLanguage: OnboardingLanguage,
 ): LibrarySenseCardModel {
-  const nodes = [...entry.contentNodes].sort(
-    (left, right) => left.order - right.order,
-  );
-  const reportByContentNodeId = new Map(
-    entry.capabilities.flatMap((candidate) =>
-      candidate.actionId === "report-content" &&
-      candidate.target.kind === "content-node"
-        ? [[candidate.target.contentNodeId, candidate] as const]
-        : [],
-    ),
-  );
-  const contentById = new Map<string, LibrarySenseContent>();
-  for (const node of nodes) {
-    contentById.set(node.contentNodeId, {
-      contentNodeId: node.contentNodeId,
-      parentContentNodeId: node.parentContentNodeId,
-      kind: node.kind,
-      text: node.text,
-      translation:
-        node.translations.find(
-          (translation) =>
-            translation.status === "ready" && Boolean(translation.text),
-        )?.text ?? null,
-      reportCapability: reportByContentNodeId.get(node.contentNodeId) ?? null,
-      children: [],
-    });
-  }
-  for (const node of contentById.values()) {
-    if (!node.parentContentNodeId) continue;
-    contentById.get(node.parentContentNodeId)?.children.push(node);
-  }
-  const content = [...contentById.values()];
+  const { orderedNodes: content, rootNodes } =
+    projectPlatformV2SenseContent(entry);
   const summaryId = entry.summaryContentNodeId;
   const definition =
     content.find((node) => node.contentNodeId === summaryId) ??
@@ -256,12 +221,10 @@ function buildMeaning(
     entryId: entry.entryId,
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
     displayOrdinal: entryCount > 1 ? entry.meaningOrdinal : null,
-    partOfSpeech: entry.partOfSpeech
-      ? platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey) ===
-        entry.partOfSpeech.messageKey
-        ? (entry.partOfSpeech.sourceValue ?? null)
-        : platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey)
-      : null,
+    partOfSpeech: localizePlatformSemanticTerm(
+      entry.partOfSpeech,
+      interfaceLanguage,
+    ),
     definition,
     entryTranslation:
       entry.translation?.status === "ready" && entry.translation.isFresh
@@ -272,11 +235,8 @@ function buildMeaning(
         ? (entry.translation.alternativeTexts ?? [])
         : [],
     translationStatus: entry.translation?.status ?? null,
-    details: content.filter(
-      (node) =>
-        node.contentNodeId !== definition?.contentNodeId &&
-        (!node.parentContentNodeId ||
-          !contentById.has(node.parentContentNodeId)),
+    details: rootNodes.filter(
+      (node) => node.contentNodeId !== definition?.contentNodeId,
     ),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     startLearning: capability(entry, "start-learning"),
