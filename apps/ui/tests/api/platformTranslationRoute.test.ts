@@ -7,7 +7,7 @@ import {
 } from "@/lib/platform/projections/dictionaryContent";
 import {
   TRANSLATION_PIPELINE_VERSION,
-  translationPolicyVersion,
+  ordinaryTranslationPolicyVersion,
 } from "@/lib/translation/translationPolicy";
 import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
 import { dictionaryMeaningTranslationFingerprint } from "@/lib/translation/dictionaryMeaningTranslationService";
@@ -107,7 +107,7 @@ const currentPendingTranslation = () => ({
     normalizeDictionaryContent(accessibleEntry() as any),
   ),
   source_fingerprint: translationFingerprint(accessibleEntry()),
-  translation_policy_version: translationPolicyVersion("openai"),
+  translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
   provider_revision: "prompt-fingerprint",
   updated_at: new Date().toISOString(),
 });
@@ -315,7 +315,7 @@ describe("/api/platform/v1/translation", () => {
             ),
             source_fingerprint: translationFingerprint(entry),
             translation_policy_version:
-              translationPolicyVersion("openai"),
+              ordinaryTranslationPolicyVersion("openai"),
             provider_revision: "prompt-fingerprint",
             updated_at: new Date().toISOString(),
           },

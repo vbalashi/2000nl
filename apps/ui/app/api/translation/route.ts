@@ -9,7 +9,7 @@ import type { ITranslator } from "@/lib/translation/ITranslator";
 import type { TranslationProviderName } from "@/lib/translation/types";
 import { getDictionaryMeaningPromptFingerprint } from "@/lib/translation/prompts/promptFingerprint";
 import {
-  TRANSLATION_PIPELINE_VERSION,
+  translationPipelineVersion,
   translationPolicyVersion,
 } from "@/lib/translation/translationPolicy";
 import { getAuthenticatedUserSupabase } from "@/lib/platform/serverSupabase";
@@ -272,7 +272,6 @@ export async function GET(req: NextRequest) {
     normalizeDictionaryContent(word as DictionaryLookupPayload),
   );
   const sourceContentRevision = contentFingerprint(sourceContent);
-  const currentTranslationPolicyVersion = translationPolicyVersion(provider);
   const selectedProviderRevision =
     getDictionaryMeaningPromptFingerprint(provider);
   const meaningRequest = buildDictionaryMeaningTranslationRequest({
@@ -285,9 +284,13 @@ export async function GET(req: NextRequest) {
     targetLanguageCode: dbLang,
     word,
   });
+  const currentTranslationPolicyVersion = translationPolicyVersion(
+    provider,
+    meaningRequest,
+  );
   const fingerprint = dictionaryMeaningTranslationFingerprint({
     request: meaningRequest,
-    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    pipelineVersion: translationPipelineVersion(meaningRequest),
     provider,
     promptFingerprint: selectedProviderRevision,
   });

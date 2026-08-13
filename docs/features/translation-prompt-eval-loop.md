@@ -43,6 +43,13 @@ model found no additional high-quality equivalent. Source content is never
 modified. Library and Training consume the same stored Platform V2 artifact
 and may render the array with an approved separator.
 
+For an idiom-only source meaning (at least one idiom, with no definition or
+Usage Pattern), production deterministically stores `entryTranslation: null`
+even if a provider invents a headword-level result. Exact idiom, explanation,
+and example translations remain in `contentTranslations`.
+Only idiom-only artifacts use the revised pipeline identity; existing current
+artifacts for ordinary meanings remain fresh and are not regenerated.
+
 The legacy selected-fragment contract remains separate. Its
 `literalTranslatedText` means a fragment translated without surrounding text;
 dictionary `baseText` is a context-free headword rendering.

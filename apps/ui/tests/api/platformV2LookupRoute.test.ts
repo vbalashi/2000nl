@@ -4,7 +4,7 @@ import {
   contentFingerprint,
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
-import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+import { ordinaryTranslationPolicyVersion } from "@/lib/translation/translationPolicy";
 
 const rpc = vi.fn();
 const from = vi.fn();
@@ -159,7 +159,7 @@ describe("/api/platform/v2/lookup", () => {
                 },
                 source_content_revision: sourceContentRevision,
                 translation_policy_version:
-                  translationPolicyVersion("openai"),
+                  ordinaryTranslationPolicyVersion("openai"),
                 provider_revision: "openai:test",
                 error_message: null,
               },

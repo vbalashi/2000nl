@@ -4,8 +4,11 @@ import {
   contentFingerprint,
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
-import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
-import { TRANSLATION_PIPELINE_VERSION } from "@/lib/translation/translationPolicy";
+import { ordinaryTranslationPolicyVersion } from "@/lib/translation/translationPolicy";
+import {
+  IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION,
+  TRANSLATION_PIPELINE_VERSION,
+} from "@/lib/translation/translationPolicy";
 import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
 import { dictionaryMeaningTranslationFingerprint } from "@/lib/translation/dictionaryMeaningTranslationService";
 
@@ -85,7 +88,7 @@ const currentPendingTranslation = () => ({
     normalizeDictionaryContent(accessibleWord as any),
   ),
   source_fingerprint: translationFingerprint(accessibleWord),
-  translation_policy_version: translationPolicyVersion("openai"),
+  translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
   provider_revision: "prompt-fingerprint",
   updated_at: new Date().toISOString(),
 });
@@ -413,6 +416,95 @@ describe("/api/translation", () => {
         },
       },
     });
+  });
+
+  test("reclaims a v1 idiom-only artifact even when examples exhaust the bounded payload", async () => {
+    const idiomOnlyWord = {
+      ...accessibleWord,
+      headword: "goed",
+      raw: {
+        meanings: [
+          {
+            definition: "",
+            examples: Array.from({ length: 40 }, (_, index) =>
+              `standalone example ${index} ${"x".repeat(600)}`,
+            ),
+            idioms: [
+              {
+                expression: "zich te goed doen aan iets",
+                explanation: "iets lekker opeten of opdrinken",
+                examples: ["de kat deed zich te goed aan de kaas"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const userClient = { auth: { getUser }, rpc };
+    const serviceClient = { from };
+    createClient
+      .mockReturnValueOnce(userClient)
+      .mockReturnValueOnce(serviceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: idiomOnlyWord, error: null });
+    translateDictionaryMeaning.mockImplementationOnce(async (meaningRequest) => ({
+      entryTranslation: null,
+      contentTranslations: meaningRequest.content.map((item: any) => ({
+        fieldId: item.fieldId,
+        text: "translation",
+      })),
+      meta: { providerUsed: "openai", usedFallback: false },
+    }));
+    const existing = {
+      ...currentPendingTranslation(),
+      status: "ready",
+      overlay: { entryTranslation: { primaryText: "goods" } },
+      source_content_revision: contentFingerprint(
+        normalizeDictionaryContent(idiomOnlyWord as any),
+      ),
+      source_fingerprint: translationFingerprint(idiomOnlyWord),
+      translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
+    };
+    const lookupChain = queryChain({ data: existing, error: null });
+    const claimChain = queryChain({
+      data: { word_entry_id: idiomOnlyWord.id },
+      error: null,
+    });
+    const readyChain = queryChain({ data: null, error: null });
+    from
+      .mockReturnValueOnce(lookupChain)
+      .mockReturnValueOnce(claimChain)
+      .mockReturnValueOnce(readyChain);
+
+    const { GET } = await import("@/app/api/translation/route");
+    const response = await GET(request("token-1"));
+
+    expect(response.status).toBe(200);
+    expect(translateDictionaryMeaning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.arrayContaining([
+          expect.objectContaining({ fieldId: "idiom:0", role: "idiom" }),
+          expect.objectContaining({
+            fieldId: "idiom:0:explanation",
+            role: "idiom-explanation",
+          }),
+          expect.objectContaining({
+            fieldId: "idiom:0:example:0",
+            role: "example",
+          }),
+        ]),
+      }),
+    );
+    expect(claimChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        translation_policy_version: expect.stringContaining(
+          IDIOM_ONLY_TRANSLATION_PIPELINE_VERSION,
+        ),
+      }),
+    );
   });
 
   test.each(["pending", "ready"])(
