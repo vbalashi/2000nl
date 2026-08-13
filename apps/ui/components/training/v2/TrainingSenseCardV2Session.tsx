@@ -93,6 +93,7 @@ export function TrainingSenseCardV2Session({
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
   const interactionBusyRef = React.useRef(false);
   const loadGenerationRef = React.useRef(0);
+  const presentationHandledRef = React.useRef(false);
 
   const load = React.useCallback(
     async (
@@ -103,7 +104,12 @@ export function TrainingSenseCardV2Session({
       setError(null);
       if (!options.preserveCard) {
         const prefetched = peekPrefetchedPlatformV2TrainingEntry(lookupInput);
-        setLookup(prefetched);
+        setLookup((current) =>
+          prefetched ??
+          (current?.state === "ready" && current.entry.entryId === word.id
+            ? current
+            : null),
+        );
       }
       const prefetchedRequest =
         options.usePrefetch === false
@@ -122,7 +128,7 @@ export function TrainingSenseCardV2Session({
       setLookup(next);
       return next;
     },
-    [lookupInput],
+    [lookupInput, word.id],
   );
 
   React.useEffect(() => {
@@ -176,12 +182,22 @@ export function TrainingSenseCardV2Session({
               !model.definitions.some((item) => item.kind === "definition")
             ? "reverse-definition-missing"
             : "ready";
+  const handlePresentation =
+    sessionState === "ready" &&
+    result?.entry.entryId === word.id &&
+    focusOnPresentation &&
+    !presentationHandledRef.current;
 
   React.useEffect(() => {
     if (sessionState === "ready" && result) {
       recordTrainingEntryRendered(result.entry.entryId);
     }
   }, [result, sessionState]);
+
+  React.useEffect(() => {
+    if (!handlePresentation) return;
+    presentationHandledRef.current = true;
+  }, [handlePresentation]);
 
   const handleAction = async (capability: PlatformSenseCardCapabilityV2) => {
     if (interactionBusyRef.current) return;
@@ -360,7 +376,7 @@ export function TrainingSenseCardV2Session({
         mode={mode}
         interfaceLanguage={interfaceLanguage}
         busy={busy}
-        focusOnMount={focusOnPresentation}
+        focusOnMount={handlePresentation}
         onPlayAudio={
           result.group.header.audio && onPlayResolvedAudio
             ? () => void handlePlayAudio()

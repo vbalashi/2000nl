@@ -316,6 +316,35 @@ describe("TrainingSenseCardV2Session", () => {
     await waitFor(() =>
       expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),
     );
+
+    const settingsControl = document.createElement("button");
+    settingsControl.textContent = "Settings control";
+    document.body.append(settingsControl);
+    settingsControl.focus();
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: nextGroup,
+      entry: nextEntry,
+    });
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="ru"
+        interfaceLanguage="nl"
+        focusOnPresentation
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(3));
+    await screen.findByRole("heading", { name: "bank" });
+    expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
+      "Volgende trainingskaart",
+    );
+    expect(settingsControl).toHaveFocus();
+    settingsControl.remove();
   });
 
   test("keeps a durable undo after marking the previous card known and advancing", async () => {

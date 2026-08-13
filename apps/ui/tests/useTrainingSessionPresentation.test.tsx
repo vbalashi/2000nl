@@ -26,8 +26,8 @@ describe("useTrainingSessionPresentation", () => {
     view.rerender({ surface: "session", cardKey: "entry-2:word-to-definition" });
     expect(view.result.current.isSubsequentCard).toBe(true);
 
-    // The same card remains the same numbered presentation; TrainingScreen's
-    // entry/card-only key prevents configuration changes from remounting it.
+    // The same card remains the same numbered presentation; the stable session
+    // consumes its transition signal only once when it first becomes ready.
     view.rerender({ surface: "session", cardKey: "entry-2:word-to-definition" });
     expect(view.result.current.isSubsequentCard).toBe(true);
     expect(view.result.current.cardOrdinal).toBe(2);
