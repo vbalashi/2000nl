@@ -9,15 +9,12 @@ export type DictionaryMeaningTranslationCacheKey = {
 export function newDictionaryMeaningTranslationClaimRevision(
   now = new Date(),
   excludedRevision: string | null = null,
-  randomSuffix = crypto.getRandomValues(new Uint16Array(1))[0] % 1_000,
 ) {
-  const iso = now.toISOString();
-  const candidate = (suffix: number) =>
-    iso.replace("Z", `${suffix.toString().padStart(3, "0")}Z`);
-  const first = candidate(randomSuffix);
-  return first === excludedRevision
-    ? candidate((randomSuffix + 1) % 1_000)
-    : first;
+  const excludedMs = excludedRevision ? Date.parse(excludedRevision) : NaN;
+  const revisionMs = Number.isFinite(excludedMs)
+    ? Math.max(now.getTime(), excludedMs + 1)
+    : now.getTime();
+  return new Date(revisionMs).toISOString();
 }
 
 /**

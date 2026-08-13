@@ -5,20 +5,26 @@ import {
 } from "@/lib/translation/dictionaryMeaningTranslationCache";
 
 describe("dictionary meaning translation completion ownership", () => {
-  test("claim revisions retain time semantics and add attempt entropy", () => {
+  test("claim revisions retain time semantics", () => {
     const now = new Date("2026-08-13T18:00:00.123Z");
     const revision = newDictionaryMeaningTranslationClaimRevision(now);
-    expect(revision).toMatch(/^2026-08-13T18:00:00\.123\d{3}Z$/);
+    expect(revision).toBe("2026-08-13T18:00:00.123Z");
     expect(Date.parse(revision)).toBe(now.getTime());
   });
 
-  test("a reclaimed revision differs even when random entropy collides", () => {
+  test.each([
+    "2026-08-13T18:00:00.123007Z",
+    "2026-08-13T18:00:00.123007+00:00",
+    "2026-08-13 18:00:00.123007+00",
+  ])("a reclaimed revision advances past predecessor spelling %s", (previous) => {
     const now = new Date("2026-08-13T18:00:00.123Z");
-    const previous = "2026-08-13T18:00:00.123007Z";
 
-    expect(
-      newDictionaryMeaningTranslationClaimRevision(now, previous, 7),
-    ).toBe("2026-08-13T18:00:00.123008Z");
+    const revision = newDictionaryMeaningTranslationClaimRevision(
+      now,
+      previous,
+    );
+    expect(Date.parse(revision)).toBeGreaterThan(Date.parse(previous));
+    expect(revision).toBe("2026-08-13T18:00:00.124Z");
   });
 
   test("a late obsolete completion cannot overwrite a newer exact-request claim", async () => {
