@@ -20,6 +20,7 @@ type QueryRecord = {
 
 const rpc = vi.fn();
 const getUser = vi.fn();
+const getSession = vi.fn();
 const fromResponses = new Map<string, QueryResponse[]>();
 const queries: QueryRecord[] = [];
 
@@ -65,6 +66,7 @@ vi.mock("@/lib/supabaseClient", () => ({
     rpc,
     auth: {
       getUser,
+      getSession,
     },
     from,
   },
@@ -102,6 +104,8 @@ describe("trainingService list and preference characterization", () => {
   beforeEach(() => {
     rpc.mockReset();
     getUser.mockReset();
+    getSession.mockReset();
+    getSession.mockResolvedValue({ data: { session: null } });
     from.mockClear();
     fromResponses.clear();
     queries.length = 0;
