@@ -1,4 +1,5 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
+import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 import {
   forwardAbortSignal,
   platformFetchWithTimeout,
@@ -49,20 +50,11 @@ async function requestPlatformV2TranslationUncached(
   context: { transitionId?: string; signal?: AbortSignal },
 ): Promise<void> {
   const startedAt = performance.now();
-  const response = await platformFetchWithTimeout(
-    "/api/platform/translation",
-    {
-      method: "POST",
-      credentials: "same-origin",
-      cache: "no-store",
-      signal: context.signal,
-      headers: await platformV2AuthenticatedJsonHeaders(),
-      body: JSON.stringify({
-        entryId: capability.target.entryId,
-        targetLang: capability.targetLanguageCode,
-      }),
-    },
-  );
+  const response = await fetchDictionaryMeaningTranslation({
+    entryId: capability.target.entryId,
+    targetLanguageCode: capability.targetLanguageCode,
+    signal: context.signal,
+  });
   if (context.transitionId) {
     const cacheOutcome = response.headers.get("x-platform-cache");
     const stage =

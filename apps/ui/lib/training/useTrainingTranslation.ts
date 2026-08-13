@@ -3,7 +3,7 @@ import type {
   TranslationOverlay,
   WordEntryTranslationStatus,
 } from "@/lib/types";
-import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
+import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 
 type TranslationKind =
   | "definition"
@@ -66,18 +66,11 @@ export function useTrainingTranslation(params: {
         setTranslationOverlay(null);
         setTranslationError(null);
 
-        const res = await fetch(
-          `/api/translation?word_id=${encodeURIComponent(
-            wordId,
-          )}&lang=${encodeURIComponent(translationLang)}${
-            opts?.force ? "&force=1" : ""
-          }`,
-          {
-            cache: "no-store",
-            credentials: "same-origin",
-            headers: await translationRequestHeaders(),
-          },
-        );
+        const res = await fetchDictionaryMeaningTranslation({
+          entryId: wordId,
+          targetLanguageCode: translationLang,
+          force: opts?.force,
+        });
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");

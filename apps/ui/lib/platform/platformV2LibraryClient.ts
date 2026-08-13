@@ -1,5 +1,5 @@
 import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
-import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
+import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
 import type {
   PlatformHeadwordGroupV2,
@@ -110,14 +110,11 @@ export async function requestPlatformV2LibraryTranslation(input: {
   targetLanguageCode: string;
   force?: boolean;
 }): Promise<"ready" | "pending" | "failed"> {
-  const response = await fetch(
-    `/api/translation?word_id=${encodeURIComponent(input.entryId)}&lang=${encodeURIComponent(input.targetLanguageCode)}${input.force ? "&force=1" : ""}`,
-    {
-      cache: "no-store",
-      credentials: "same-origin",
-      headers: await translationRequestHeaders(),
-    },
-  );
+  const response = await fetchDictionaryMeaningTranslation({
+    entryId: input.entryId,
+    targetLanguageCode: input.targetLanguageCode,
+    force: input.force,
+  });
   if (!response.ok) throw new Error("translation_failed");
   const payload = (await response.json().catch(() => null)) as {
     status?: "ready" | "pending" | "failed";
