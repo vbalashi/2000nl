@@ -135,4 +135,71 @@ describe("Platform V2 shared SenseCard content projection", () => {
       ...training.examples,
     ]);
   });
+
+  test("keeps stale node text out of both Library and Training projections", () => {
+    const staleNodeId = "definition-entry-goed";
+    const readyNodeId = "idiom-goed";
+    const entry = {
+      ...goedEntry,
+      contentNodes: goedEntry.contentNodes.map((node) => {
+        if (node.contentNodeId === staleNodeId) {
+          return {
+            ...node,
+            translations: [
+              {
+                translationId: "stale-definition",
+                targetLanguageCode: "en",
+                status: "not-available" as const,
+                text: "stale text must not render",
+                sourceTextFingerprint: node.sourceTextFingerprint,
+                translationPolicyVersion: "old-policy",
+              },
+            ],
+          };
+        }
+        if (node.contentNodeId === readyNodeId) {
+          return {
+            ...node,
+            translations: [
+              {
+                translationId: "ready-idiom",
+                targetLanguageCode: "en",
+                status: "ready" as const,
+                text: "something benefits someone",
+                sourceTextFingerprint: node.sourceTextFingerprint,
+                translationPolicyVersion: "current-policy",
+              },
+            ],
+          };
+        }
+        return node;
+      }),
+    };
+    const group = { ...goedGroup, entries: [entry] };
+    const training = buildTrainingSenseCardModel({
+      group,
+      entry,
+      interfaceLanguage: "en",
+    });
+    const library = buildLibrarySenseCardGroupModel(group, "en");
+    const trainingStale = training.definitions.find(
+      (node) => node.contentNodeId === staleNodeId,
+    );
+    const libraryStale = library.meanings[0].definition;
+    const trainingReady = training.examples.find(
+      (node) => node.contentNodeId === readyNodeId,
+    );
+    const libraryReady = library.meanings[0].details.find(
+      (node) => node.contentNodeId === readyNodeId,
+    );
+
+    expect(trainingStale?.translation).toBeUndefined();
+    expect(libraryStale?.translation).toBeUndefined();
+    expect(trainingReady?.translation).toBe("something benefits someone");
+    expect(libraryReady?.translation).toBe("something benefits someone");
+    expect([library.meanings[0].definition, ...library.meanings[0].details]).toEqual([
+      ...training.definitions,
+      ...training.examples,
+    ]);
+  });
 });
