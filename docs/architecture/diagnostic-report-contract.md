@@ -14,7 +14,11 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
   state, resolution, duplicate links, and optional GitHub follow-up.
 - The temporary `Diagnostic Envelope` owns the untrusted bounded learner
   comment, bounded card content, and technical observations.
-- A Diagnostic Report is not a Platform card mutation and does not reuse a review `clientEventId` or `turnId`.
+- A Diagnostic Report is not a Platform card mutation: `reportId` is its sole
+  delivery/idempotency identity and it never uses a review `clientEventId` or
+  `turnId` as that identity. A `training-action` target references the already
+  owned `clientEventId` only to correlate the report with the original action;
+  it is never regenerated for reporting.
 - The server derives the authenticated user identity. The client never supplies a user ID.
 
 ## Envelope v1
@@ -22,7 +26,7 @@ A signed-in learner can report a card, translation, loading, rendering, or Train
 The request is a closed, versioned schema. Unknown fields are rejected. Every field belongs to one classification; there is no extension metadata bag.
 
 The canonical payload contains exactly `schemaVersion`, `reportId`, `feedback`,
-`target`, `cardContent`, and `observations`; `schemaVersion` is the literal
+`target`, `sourceContext`, `cardContent`, and `observations`; `schemaVersion` is the literal
 `diagnostic-report-v1` and `reportId` is a UUID. Transport adds `payloadHash`, a
 lower-case SHA-256 hex digest of those canonical payload bytes. Optional
 properties below are present as explicit `null`, never omitted. Arrays preserve
@@ -44,23 +48,45 @@ Platform V2 types:
 - `content-node`: `entryId`, `contentNodeId` (1–128 ASCII identifier
   characters), `nodeKind` from the Platform V2 enum, and required
   `sourceTextFingerprint`;
-- `translation-artifact`: `entryId`, `contentNodeId` (identifier or `null`),
-  `translationId` UUID, BCP-47 `targetLanguageCode` (2–35 characters),
-  `translationPolicyVersion` (1–128 printable ASCII characters), and
-  `providerRevision` (same bound or `null`);
+- `translation-artifact` is a discriminated union. An entry translation has
+  `targetKind: entry`, `entryId`, `contentNodeId: null`, `translationId` UUID,
+  required `sourceContentFingerprint`, BCP-47 `targetLanguageCode` (2–35
+  characters), `translationPolicyVersion` (1–128 printable ASCII characters),
+  and `providerRevision` (same bound or `null`). A node translation has
+  `targetKind: content-node`, `entryId`, required `contentNodeId`,
+  `translationId`, required `sourceTextFingerprint`, and the same language and
+  policy fields;
 - `training-action`: the exact Platform SenseCard target (`entryId`,
   `cardTypeId`, `stateRevision` UUID/`untracked`), semantic Platform `actionId`
   (`start-learning`, `mark-known`, `undo-known`, or `review-card`), the reused
   `clientEventId` UUID, `reviewResult` (`fail`, `hard`, `success`, or `easy`) for
   `review-card` and `null` otherwise, plus observed outcome (`accepted`,
   `duplicate`, `state-conflict`, `network`, `timeout`, `server-error`, or
-  `unknown`);
+  `unknown`). For `undo-known`, `activeKnownMarkId` and `knownMarkRevision` are
+  required UUIDs; for every other action both are explicit `null`;
 - `app-operation`: route, allowlisted stage (1–64 identifier characters),
   required `operationCorrelationId` UUID, and optional related `entryId`. This
   is the only target for loading/reportable operations that fail before a card
   exists; it never borrows the previous visible card identity.
 
 Source paths, visible headwords, array positions, card text, device data, timestamps, and diagnostics never constitute target identity.
+
+### Connected-client source context
+
+`sourceContext` is `null` for first-party reports. For connected clients it is
+either `null` or `diagnostic-source-context-v1`, a strict projection derived
+from an already validated `PlatformSourceContextV2`; source-context v1 and
+unknown versions are rejected. The server runs the existing principal-bound
+Platform parser, verifies that any client identity is the authenticated
+connected client, then applies this narrower projection and accepts no arbitrary
+URL. For YouTube the durable
+Feedback Item retains only `source.kind: youtube_video`, `provider: youtube`,
+the validated 11-character `externalId`, optional language code, and bounded
+caption location (`startMs`, `endMs`, `phraseIndex`, locator confidence).
+Artifact revision identifiers, hashes, selection offsets/hashes, and other
+validated V2 evidence remain in the 90-day envelope. Free-form `contextText`,
+`observation`, `diagnostics`, legacy `url`, and unknown properties are rejected
+for Diagnostic Report v1 even if another older Platform route accepts them.
 
 ### Feedback classification
 
@@ -109,6 +135,16 @@ the 48 KiB budget is exhausted. `omittedAtomCount` inside `cardContent` records
 the exact remainder.
 
 The collector receives an already-owned typed SenseCard projection. It must not inspect the DOM, clipboard, browser page, caches, another card, raw dictionary/provider payload, or neighboring application state. Total serialized envelope size is at most 64 KiB; overflow is truncated per field with explicit truncation flags, never by adding broader source data.
+
+The server does not trust submitted atom text. Before persistence it authorizes
+the stable target for the authenticated principal, resolves the exact current
+Platform V2 projection/revision and translation artifact, and reconstructs the
+allowlisted atoms. Submitted atoms must exactly match that ordered projection
+after the specified NFC/truncation algorithm. Inaccessible, stale, unknown,
+duplicate, reordered, or mismatched atoms fail closed and nothing is written.
+For an offline report whose frozen revision is no longer resolvable, the server
+returns the permanent `stale-target` rejection; v1 does not persist unverifiable
+historical text as automatic card content.
 
 ### Technical observations
 
@@ -277,6 +313,9 @@ created/updated timestamps. Resolution, duplicate relation, and GitHub link are
 initially `null`. This is the #51
 durable classification; broad `kind` supports queue partitioning and
 `problemType` preserves its granular translation/content problem types.
+For a validated YouTube source it also retains the durable source/location
+subset defined above; all other source-context evidence expires with the
+envelope.
 
 GitHub is never an automatic destination or raw diagnostic store. A reviewer may manually create a sanitized GitHub issue, then attach its URL to one or more Feedback Items and set `linked-to-github`. Raw envelope content, learner comments, user pseudonyms, and diagnostic dumps are not copied automatically.
 
@@ -298,6 +337,12 @@ Do not combine this work with FSRS semantics, translation generation policy, Sen
 - adversarial proof that tokens, cookies, headers, URL query/fragment, referrer, raw UA, DOM, clipboard, console/network logs, arbitrary errors, and unrelated card/browser data cannot be represented or persisted;
 - exact target binding for entry, SenseCard, Content Node, translation artifact,
   Training action, and pre-card app operation without borrowing a stale card;
+- target authorization and server-side atom reconstruction/exact-match,
+  including inaccessible, stale, reordered, duplicate, translation-mismatch,
+  and private-entry negative cases;
+- action-union fixtures for review and undo-known, translation-union fixtures
+  for entry/content-node fingerprints, and source-context fixtures for accepted
+  YouTube v2 plus rejected v1/arbitrary URL/context text;
 - offline submit, restart/lease recovery, online/resume/auth recovery, backoff, Background Sync equivalence when present, and 30-day expiry;
 - commit-then-disconnect followed by duplicate receipt, concurrent duplicate delivery, and same-ID/different-payload conflict;
 - local deletion only after verified receipt;
