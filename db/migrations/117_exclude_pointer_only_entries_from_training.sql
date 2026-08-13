@@ -7,7 +7,10 @@
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION private.is_pointer_only_dictionary_entry(
+-- This predicate name is deliberately versioned. Its body must never change:
+-- a semantic revision requires a new `_v2` function and a rebuilt/versioned
+-- partial index so stored index membership cannot drift from runtime policy.
+CREATE OR REPLACE FUNCTION private.is_pointer_only_dictionary_entry_v1(
     p_raw jsonb
 )
 RETURNS boolean
@@ -26,14 +29,14 @@ AS $$
     );
 $$;
 
-REVOKE ALL ON FUNCTION private.is_pointer_only_dictionary_entry(jsonb)
+REVOKE ALL ON FUNCTION private.is_pointer_only_dictionary_entry_v1(jsonb)
 FROM PUBLIC, anon, authenticated, service_role;
 
-CREATE INDEX IF NOT EXISTS word_entries_pointer_only_scheduler_exclusion_idx
+CREATE INDEX IF NOT EXISTS word_entries_pointer_only_scheduler_exclusion_v1_idx
 ON public.word_entries (id)
-WHERE private.is_pointer_only_dictionary_entry(raw);
+WHERE private.is_pointer_only_dictionary_entry_v1(raw);
 
-CREATE OR REPLACE FUNCTION private.pointer_only_dictionary_entry_ids()
+CREATE OR REPLACE FUNCTION private.pointer_only_dictionary_entry_ids_v1()
 RETURNS uuid[]
 LANGUAGE sql
 STABLE
@@ -42,10 +45,10 @@ SET search_path = public, private, pg_temp
 AS $$
     SELECT COALESCE(array_agg(entry.id), ARRAY[]::uuid[])
     FROM public.word_entries AS entry
-    WHERE private.is_pointer_only_dictionary_entry(entry.raw);
+    WHERE private.is_pointer_only_dictionary_entry_v1(entry.raw);
 $$;
 
-REVOKE ALL ON FUNCTION private.pointer_only_dictionary_entry_ids()
+REVOKE ALL ON FUNCTION private.pointer_only_dictionary_entry_ids_v1()
 FROM PUBLIC, anon, authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.get_next_card(
@@ -72,7 +75,7 @@ DECLARE
     END;
     v_known_card_keys text[];
     v_pointer_only_entry_ids uuid[] :=
-        private.pointer_only_dictionary_entry_ids();
+        private.pointer_only_dictionary_entry_ids_v1();
 BEGIN
     SELECT COALESCE(
         array_agg(k.entry_id::text || ':' || k.card_type_id),
@@ -126,7 +129,7 @@ DECLARE
     END;
     v_known_card_keys text[];
     v_pointer_only_entry_ids uuid[] :=
-        private.pointer_only_dictionary_entry_ids();
+        private.pointer_only_dictionary_entry_ids_v1();
 BEGIN
     SELECT COALESCE(
         array_agg(k.entry_id::text || ':' || k.card_type_id),

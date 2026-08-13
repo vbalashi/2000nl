@@ -145,8 +145,10 @@ the old UI cannot present a cross-reference-only record safely.
    can read it, and preserve the previously imported generated corpus.
 2. Deploy application code that understands the explicit cross-reference DTO
    together with migration `117_exclude_pointer_only_entries_from_training.sql`.
-   Confirm `/api/health` reports that exact commit and both Training scheduler
-   wrappers exclude a pointer-only fixture before changing dictionary data.
+   Confirm `/api/health` reports that exact commit. Read-only production probes
+   must confirm the versioned predicate/helper and partial index exist; attach
+   staging or transaction-rollback DB-test evidence that both Training scheduler
+   wrappers exclude a pointer-only fixture. Do not create a production fixture.
 3. Regenerate the corpus cleanly from the source list. Run
    `audit_pointer_meanings.py` over the complete pre-generation source corpus;
    require zero unresolved pointer shapes and review every resolvable candidate.
@@ -157,7 +159,8 @@ the old UI cannot present a cross-reference-only record safely.
    `import_words_db.py`. The replay must be a verified no-op.
 6. In production Library, verify that `daar` meaning 2 has only an **Open
    reference** action, cannot be learned or marked known, and opens the full
-   `daar-` entry. Confirm Training does not select the pointer-only record.
+   `daar-` entry. Run the authenticated scheduler smoke against the now-real
+   `daar` pointer and confirm Training does not select the pointer-only record.
 
 If the pointer smoke fails, keep the compatible application deployed and roll
 the data forward by re-importing the preserved previous manifest, then rebuild
