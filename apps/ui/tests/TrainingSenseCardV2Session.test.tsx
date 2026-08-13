@@ -84,7 +84,6 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
   test("uses the exact server capability, then asks the session owner to advance", async () => {
-    const onAvailabilityChange = vi.fn();
     const onProgressActionAccepted = vi.fn();
 
     render(
@@ -94,8 +93,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={onAvailabilityChange}
         onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
@@ -106,7 +103,6 @@ describe("TrainingSenseCardV2Session", () => {
     );
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     await screen.findByRole("heading", { name: "hand" });
-    await waitFor(() => expect(onAvailabilityChange).toHaveBeenCalledWith("ready"));
     expect(screen.getByTestId("training-sense-card-v2")).toHaveAttribute(
       "data-training-v2-state",
       "ready",
@@ -137,8 +133,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -164,8 +158,6 @@ describe("TrainingSenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="en"
-          fallback={<p>Legacy card</p>}
-          onAvailabilityChange={vi.fn()}
           onProgressActionAccepted={vi.fn()}
         />,
       );
@@ -194,8 +186,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -216,8 +206,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -258,8 +246,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -303,8 +289,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -319,8 +303,7 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
+        focusOnPresentation
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -333,6 +316,46 @@ describe("TrainingSenseCardV2Session", () => {
     await waitFor(() =>
       expect(screen.getByTestId("training-sense-card-stage")).toHaveFocus(),
     );
+
+    const settingsControl = document.createElement("button");
+    settingsControl.textContent = "Settings control";
+    document.body.append(settingsControl);
+    settingsControl.focus();
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "lookup-http-error",
+      status: 503,
+    });
+    view.rerender(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: nextEntry.entryId, headword: "bank" }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="ru"
+        interfaceLanguage="en"
+        focusOnPresentation
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(3));
+    await screen.findByRole("alert");
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
+    expect(settingsControl).toHaveFocus();
+
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: nextGroup,
+      entry: nextEntry,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await waitFor(() => expect(fetchSingleSense).toHaveBeenCalledTimes(4));
+    await screen.findByRole("heading", { name: "bank" });
+    expect(view.container.querySelector('[aria-live="polite"]')).toBe(liveRegion);
+    expect(liveRegion).toHaveTextContent("Volgende trainingskaart");
+    expect(settingsControl).toHaveFocus();
+    settingsControl.remove();
   });
 
   test("keeps a durable undo after marking the previous card known and advancing", async () => {
@@ -404,8 +427,6 @@ describe("TrainingSenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
-          fallback={<p>Legacy card</p>}
-          onAvailabilityChange={vi.fn()}
           onProgressActionAccepted={onProgressActionAccepted}
         />
         <TrainingKnownUndoNotice interfaceLanguage="nl" />
@@ -426,8 +447,6 @@ describe("TrainingSenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
-          fallback={<p>Legacy card</p>}
-          onAvailabilityChange={vi.fn()}
           onProgressActionAccepted={onProgressActionAccepted}
         />
         <TrainingKnownUndoNotice interfaceLanguage="nl" />
@@ -479,8 +498,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
@@ -505,9 +522,7 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
         onPlayResolvedAudio={onPlayResolvedAudio}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -546,8 +561,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
@@ -581,8 +594,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -610,8 +621,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -638,8 +647,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -670,8 +677,6 @@ describe("TrainingSenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="en"
-          fallback={<p>Legacy card</p>}
-          onAvailabilityChange={vi.fn()}
           onProgressActionAccepted={vi.fn()}
         />,
       );
@@ -735,8 +740,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -790,8 +793,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -807,8 +808,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="ru"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -836,8 +835,6 @@ describe("TrainingSenseCardV2Session", () => {
         ),
       },
     });
-    const onAvailabilityChange = vi.fn();
-
     render(
       <TestTrainingSenseCardV2Session
         word={{ ...word, mode: "definition-to-word" }}
@@ -845,8 +842,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={onAvailabilityChange}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -856,11 +851,6 @@ describe("TrainingSenseCardV2Session", () => {
       "reverse-definition-missing",
     );
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(onAvailabilityChange).toHaveBeenLastCalledWith(
-        "reverse-definition-missing",
-      ),
-    );
     expect(
       screen.queryByRole("heading", { name: singleSenseGroup.header.text }),
     ).not.toBeInTheDocument();
@@ -882,8 +872,6 @@ describe("TrainingSenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy card</p>}
-        onAvailabilityChange={vi.fn()}
         onProgressActionAccepted={vi.fn()}
       />,
     );
@@ -895,33 +883,4 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
   });
 
-  test.each(["listen-recognize", "listen-type"] as const)(
-    "keeps %s on an explicitly classified listening renderer",
-    async (mode) => {
-      const onAvailabilityChange = vi.fn();
-      render(
-        <TestTrainingSenseCardV2Session
-          word={{ ...word, mode }}
-          mode={mode}
-          contentLanguageCode="nl"
-          translationTargetLanguageCode="en"
-          interfaceLanguage="en"
-          fallback={<p>Legacy listening card</p>}
-          onAvailabilityChange={onAvailabilityChange}
-          onProgressActionAccepted={vi.fn()}
-        />,
-      );
-
-      expect(screen.getByText("Legacy listening card").parentElement).toHaveAttribute(
-        "data-training-v2-state",
-        "listening-mode",
-      );
-      expect(screen.getByText("Legacy listening card").parentElement).toHaveAttribute(
-        "data-training-renderer",
-        "legacy",
-      );
-      expect(fetchSingleSense).not.toHaveBeenCalled();
-      expect(onAvailabilityChange).toHaveBeenCalledWith("listening-mode");
-    },
-  );
 });

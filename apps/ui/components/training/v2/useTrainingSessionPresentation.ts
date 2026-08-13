@@ -16,6 +16,8 @@ export function useTrainingSessionPresentation({
   const [cardOrdinal, setCardOrdinal] = React.useState(1);
   const previousSurfaceRef = React.useRef(surface);
   const previousCardKeyRef = React.useRef<string | null>(null);
+  const isEnteringSession =
+    previousSurfaceRef.current !== "session" && surface === "session";
 
   React.useEffect(() => {
     const enteringSession =
@@ -42,5 +44,9 @@ export function useTrainingSessionPresentation({
     previousCardKeyRef.current = presentedCardKey;
   }, [presentedCardKey, surface]);
 
-  return { cardOrdinal };
+  return {
+    cardOrdinal,
+    isSubsequentCard:
+      surface === "session" && !isEnteringSession && cardOrdinal > 1,
+  };
 }

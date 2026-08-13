@@ -450,19 +450,22 @@ vi.mock("@/lib/platform/platformV2Rollout", () => ({
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     word,
-    onAvailabilityChange,
+    focusOnPresentation,
     onProgressActionAccepted,
   }: {
     word: { headword: string };
-    onAvailabilityChange: (state: "loading" | "ready") => void;
+    focusOnPresentation?: boolean;
     onProgressActionAccepted: (capability: { actionId: string }) => void;
   }) => {
+    const stageRef = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
-      onAvailabilityChange("ready");
-      return () => onAvailabilityChange("loading");
-    }, [onAvailabilityChange]);
+      if (focusOnPresentation) stageRef.current?.focus();
+    }, [focusOnPresentation]);
     return (
-      <div data-testid="mock-training-sense-card-v2">
+      <div ref={stageRef} tabIndex={-1} data-testid="mock-training-sense-card-v2">
+        <span aria-live="polite">
+          {focusOnPresentation ? "Next training card" : ""}
+        </span>
         <h2>{word.headword}</h2>
         <button
           type="button"
@@ -2294,7 +2297,6 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(scrollRegion.className).toContain("overflow-clip");
     expect(scrollRegion.className).not.toContain("overflow-y-auto");
     const frame = screen.getByTestId("training-card-frame");
-    expect(frame).toHaveAttribute("data-training-v2-state", "ready");
     expect(frame.className).toContain("flex-1");
     expect(frame.className).not.toContain("h-[580px]");
     expect(
@@ -2608,6 +2610,8 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
     expect(
       await screen.findByRole("heading", { name: "boom" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Next training card")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveFocus();
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
