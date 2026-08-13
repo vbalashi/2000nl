@@ -423,6 +423,7 @@ export type PlatformTextTranslationApiResponse = {
   translationId: string;
   status: PlatformTranslationStatus;
   sourceTextHash: string;
+  contextTextHash?: string;
   sourceLanguageCode: string;
   targetLanguageCode: string;
   translatedText?: string;
@@ -430,6 +431,8 @@ export type PlatformTextTranslationApiResponse = {
   translatorComment?: string;
   translationPolicyVersion: string;
   cached: boolean;
+  providerUsed?: "deepl" | "openai" | "gemini";
+  usedFallback?: boolean;
   error?: string | null;
 };
 

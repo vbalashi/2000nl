@@ -18,9 +18,20 @@ export type DictionaryMeaningTranslationProviderResult =
     meta?: DictionaryMeaningTranslationMeta;
   };
 
+export type TranslationProviderTextResult = {
+  translations: string[];
+  note?: string | null;
+  literalTranslations?: string[];
+  meta?: DictionaryMeaningTranslationMeta;
+};
+
 export interface ITranslator {
   translate(text: string, targetLang: string): Promise<string>;
   translate(texts: string[], targetLang: string): Promise<string[]>;
+  translateWithMetadata?(
+    texts: string[],
+    targetLang: string,
+  ): Promise<TranslationProviderTextResult>;
   translateDictionaryMeaning?(
     request: DictionaryMeaningTranslationRequestV1,
   ): Promise<DictionaryMeaningTranslationProviderResult>;

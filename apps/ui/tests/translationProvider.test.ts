@@ -4,6 +4,23 @@ import { DeepLTranslator } from "@/lib/translation/deeplTranslator";
 import { GeminiTranslator } from "@/lib/translation/geminiTranslator";
 import { OpenAITranslator } from "@/lib/translation/openaiTranslator";
 import { DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { translationProviderFailure } from "@/lib/translation/translationProviderFailure";
+
+describe("translation provider failure metadata", () => {
+  it("does not derive the public fingerprint from provider-controlled text", () => {
+    const first = translationProviderFailure(
+      "provider_http_error",
+      "guessable-secret-one",
+    );
+    const second = translationProviderFailure(
+      "provider_http_error",
+      "different-secret-two",
+    );
+
+    expect(first).toEqual(second);
+    expect(JSON.stringify(first)).not.toContain("secret");
+  });
+});
 
 const makeConfig = () => ({
   provider: "deepl" as const,
@@ -583,8 +600,19 @@ describe("GeminiTranslator", () => {
     } as any;
 
     const translator = new GeminiTranslator({ apiKey: "key", fallback, maxRetries: 0 });
-    const translated = await translator.translate("hello", "en");
-    expect(translated).toBe("Fallback");
+    const translated = await translator.translateWithMetadata(["hello"], "en");
+    expect(translated).toMatchObject({
+      translations: ["Fallback"],
+      meta: {
+        providerSelected: "gemini",
+        providerUsed: "deepl",
+        usedFallback: true,
+        primaryFailure: {
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        },
+      },
+    });
     expect(fallback.translate).toHaveBeenCalled();
     expect(JSON.stringify(warnSpy.mock.calls)).not.toContain(providerSecret);
     expect(warnSpy).toHaveBeenCalledWith(

@@ -33,11 +33,12 @@ evidence artifact.
 
 ## Required rollout order
 
-1. Deploy the compatible application code that stops new raw writes and
+1. Apply migration `118_platform_text_translation_provider_provenance.sql`.
+2. Deploy the compatible application code that stops new raw writes and
    sanitizes every read path.
-2. Smoke a cached translation, a provider-backed translation, and a fallback
+3. Smoke a cached translation, a provider-backed translation, and a fallback
    translation; verify no `primaryError` key or provider body appears.
-3. Run the following idempotent cleanup in one transaction:
+4. Run the following idempotent cleanup in one transaction:
 
    ```sql
    begin;
@@ -49,7 +50,7 @@ evidence artifact.
    commit;
    ```
 
-4. Verify the legacy-key count is zero and a second execution updates zero
+5. Verify the legacy-key count is zero and a second execution updates zero
    rows.
 
 This cleanup deliberately deletes unsafe diagnostics and has no data rollback.

@@ -1150,9 +1150,15 @@ paths without parsing provider diagnostics.
 Provider failures never expose or persist the provider response body or error
 message. When a fallback succeeds, `overlay.__meta.primaryFailure` may contain
 only a closed failure `code` and a 24-character hexadecimal SHA-256 prefix for
-correlation. The fingerprint is non-reversible and clients must not interpret
-it as user-facing error text. Historical cached `primaryError` values and
+aggregate correlation. The fingerprint is derived from the versioned closed
+failure class only, never from provider-controlled text, and clients must not
+interpret it as user-facing error text. Historical cached `primaryError` values and
 unrecognized metadata are removed at the read boundary.
+
+Text-translation artifacts preserve `providerUsed` and `usedFallback` on both
+fresh and cached responses. Migration
+`118_platform_text_translation_provider_provenance.sql` must be applied before
+deploying code that reads or writes those fields.
 
 ## `POST /text-translation`
 
@@ -1188,7 +1194,9 @@ Response:
   "literalTranslatedText": "I go to house",
   "translatorComment": "In this sentence, the phrase is a normal motion phrase; the literal wording is less natural.",
   "translationPolicyVersion": "platform-text-translation-v2",
-  "cached": false
+  "cached": false,
+  "providerUsed": "deepl",
+  "usedFallback": true
 }
 ```
 
@@ -1206,6 +1214,8 @@ text, and `translatorComment`, a short explanation for learners and reviewers.
 The endpoint persists generic text translation artifacts in
 `platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
 return with `cached: true`; a fresh provider call returns with `cached: false`.
+`providerUsed` identifies the provider that produced the artifact and
+`usedFallback` records whether it differed from the selected provider.
 
 ## `POST /actions`
 

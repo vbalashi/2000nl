@@ -28,28 +28,18 @@ export class SafeTranslationProviderError extends Error {
   }
 }
 
-function diagnosticText(value: unknown): string {
-  if (value instanceof SafeTranslationProviderError) {
-    return `${value.failure.code}:${value.failure.fingerprint}`;
-  }
-  if (value instanceof Error) return `${value.name}:${value.message}`;
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-}
-
 export function translationProviderFailure(
   code: TranslationProviderFailureCode,
-  diagnostic: unknown,
+  _diagnostic?: unknown,
 ): TranslationProviderFailure {
   return {
     code,
     fingerprint: crypto
       .createHash("sha256")
-      .update(`${code}\0${diagnosticText(diagnostic)}`)
+      // The fingerprint deliberately contains no provider-controlled text.
+      // It correlates the closed failure class only; raw diagnostics remain
+      // below this boundary and cannot be guessed from the public artifact.
+      .update(`translation-provider-failure-v1\0${code}`)
       .digest("hex")
       .slice(0, 24),
   };

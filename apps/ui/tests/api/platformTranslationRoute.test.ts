@@ -26,6 +26,11 @@ const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
   translations: texts.map((text) => `translated-with-context:${text}`),
   literalTranslations: texts.map((text) => `literal:${text}`),
   note: "translator note",
+  meta: {
+    providerSelected: "openai",
+    providerUsed: "deepl",
+    usedFallback: true,
+  },
 }));
 let useTranslateWithContext = false;
 let useRichTranslateWithContext = false;
@@ -668,6 +673,8 @@ describe("/api/platform/v1/translation", () => {
         status: "ready",
         translated_text: "translated:ik ga naar huis",
         provider: "openai",
+        provider_used: "openai",
+        used_fallback: false,
       }),
     );
     expect(translate).toHaveBeenCalledWith(["ik ga naar huis"], "en");
@@ -680,6 +687,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "translated:ik ga naar huis",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
+      providerUsed: "openai",
+      usedFallback: false,
     });
   });
 
@@ -842,12 +851,17 @@ describe("/api/platform/v1/translation", () => {
         translated_text: "translated-with-context:enorm toe.",
         literal_translated_text: "literal:enorm toe.",
         translator_comment: "translator note",
+        provider: "openai",
+        provider_used: "deepl",
+        used_fallback: true,
       }),
     );
     await expect(response.json()).resolves.toMatchObject({
       translatedText: "translated-with-context:enorm toe.",
       literalTranslatedText: "literal:enorm toe.",
       translatorComment: "translator note",
+      providerUsed: "deepl",
+      usedFallback: true,
     });
 
     useRichTranslateWithContext = false;
@@ -942,6 +956,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: "see you tomorrow",
             error_message: null,
             provider: "openai",
+            provider_used: "deepl",
+            used_fallback: true,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",
@@ -981,6 +997,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "see you tomorrow",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
+      providerUsed: "deepl",
+      usedFallback: true,
     });
   });
 

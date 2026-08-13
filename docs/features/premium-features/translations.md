@@ -73,8 +73,9 @@ The app persists translation metadata under `overlay.__meta`:
 - `primaryFailure.fingerprint`
 
 Provider response bodies and messages are never stored or returned. The closed
-failure code supports classification, while the 24-hex SHA-256 prefix supports
-correlation without exposing the underlying provider diagnostic.
+failure code supports classification. The 24-hex SHA-256 prefix is derived only
+from the versioned closed failure class—not from provider-controlled text—so it
+supports aggregate correlation without becoming a guessing oracle.
 
 The Translate button reflects `providerUsed`, and long-press forces re-translation.
 

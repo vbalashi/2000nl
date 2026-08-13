@@ -64,4 +64,35 @@ describe("dictionary meaning translation service", () => {
       ["meanings", 0, "idioms", 0, "explanation"],
     ]);
   });
+
+  test("preserves generic-provider fallback provenance", async () => {
+    const translator = {
+      translate: vi.fn(),
+      translateWithMetadata: vi.fn(async () => ({
+        translations: ["бельё", "ткань", "предназначено кому-то"],
+        meta: {
+          providerSelected: "gemini",
+          providerUsed: "deepl",
+          usedFallback: true,
+          primaryFailure: {
+            code: "provider_http_error",
+            fingerprint: "0123456789abcdef01234567",
+          },
+        },
+      })),
+    };
+
+    const result = await translateDictionaryMeaning(translator as any, request);
+
+    expect(result.meta).toEqual({
+      providerSelected: "gemini",
+      providerUsed: "deepl",
+      usedFallback: true,
+      primaryFailure: {
+        code: "provider_http_error",
+        fingerprint: "0123456789abcdef01234567",
+      },
+    });
+    expect(translator.translate).not.toHaveBeenCalled();
+  });
 });

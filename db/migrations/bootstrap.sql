@@ -353,3 +353,6 @@
 
 -- Pointer-only dictionary records are Library navigation, never Training cards
 \i db/migrations/117_exclude_pointer_only_entries_from_training.sql
+
+-- Safe selected/actual provider provenance for text translation artifacts
+\i db/migrations/118_platform_text_translation_provider_provenance.sql
