@@ -6,6 +6,51 @@ import type {
   PlatformLookupV2Response,
 } from "../../../../packages/shared/types/platformV2";
 
+export type PlatformV2LibraryGroupPage = {
+  groups: PlatformHeadwordGroupV2[];
+  selectedTierComplete: boolean;
+  nextGroupCursor: string | null;
+};
+
+export async function fetchPlatformV2LibraryGroupPage(input: {
+  query: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  cursor?: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformV2LibraryGroupPage | null> {
+  const response = await fetch("/api/platform/v2/lookup", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    signal: input.signal,
+    headers: await platformV2AuthenticatedJsonHeaders(),
+    body: JSON.stringify({
+      query: input.query,
+      cardTypeId: input.cardTypeId,
+      contentLanguageCode: input.contentLanguageCode,
+      translationTargetLanguageCode: input.translationTargetLanguageCode,
+      intent: "dictionary-lookup",
+      cursor: input.cursor ?? null,
+    }),
+  });
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as PlatformLookupV2Response;
+  if (
+    payload.contractVersion !== "platform-lookup-v2" ||
+    !Array.isArray(payload.groups)
+  ) {
+    return null;
+  }
+  return {
+    groups: payload.groups,
+    selectedTierComplete: payload.page.selectedTierComplete,
+    nextGroupCursor: payload.page.nextGroupCursor,
+  };
+}
+
 export async function fetchPlatformV2MultiSenseGroup(input: {
   query: string;
   entryId: string;

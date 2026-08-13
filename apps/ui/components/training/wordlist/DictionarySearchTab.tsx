@@ -8,9 +8,7 @@ import {
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
   fetchWordsForList,
-  searchDictionaryGroups,
   searchDictionaryEntriesV2,
-  searchWordEntries,
 } from "@/lib/trainingService";
 import type {
   AvailableDictionarySource,
@@ -25,6 +23,11 @@ import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
+import {
+  buildLibraryHeadwordGroupResults,
+  type LibraryHeadwordGroupResult,
+} from "./libraryHeadwordGroupResults";
 
 type Props = {
   open: boolean;
@@ -52,6 +55,10 @@ export type DictionarySearchTabState = {
   query: string;
   applyListFilter: boolean;
   wordResults: DictionaryEntry[];
+  groupResults: LibraryHeadwordGroupResult[];
+  groupPageCursors: Array<string | null>;
+  groupHasMore: boolean;
+  selectedHeadwordGroupId: string | null;
   wordTotal: number;
   page: number;
   languageCode: string | null;
@@ -64,6 +71,10 @@ export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
   query: "",
   applyListFilter: false,
   wordResults: [],
+  groupResults: [],
+  groupPageCursors: [null],
+  groupHasMore: false,
+  selectedHeadwordGroupId: null,
   wordTotal: 0,
   page: 1,
   languageCode: null,
@@ -150,6 +161,10 @@ export function DictionarySearchTab({
     query,
     applyListFilter,
     wordResults,
+    groupResults,
+    groupPageCursors,
+    groupHasMore,
+    selectedHeadwordGroupId,
     wordTotal,
     page,
     languageCode,
@@ -195,13 +210,23 @@ export function DictionarySearchTab({
       ? "VanDale woordenboek"
       : `${languageLabel(searchLanguage)} woordenboekbronnen`;
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
+  const groupCursor = groupPageCursors[page - 1] ?? null;
+  const selectedGroupResult = useMemo(
+    () =>
+      groupResults.find(
+        (result) => result.headwordGroupId === selectedHeadwordGroupId,
+      ) ?? null,
+    [groupResults, selectedHeadwordGroupId],
+  );
   const detailEntryInCurrentResults = useMemo(
     () =>
       Boolean(
         detailEntry &&
-          wordResults.some((resultEntry) => resultEntry.id === detailEntry.id),
+          (useViewedListFilter
+            ? wordResults.some((resultEntry) => resultEntry.id === detailEntry.id)
+            : selectedGroupResult),
       ),
-    [detailEntry, wordResults],
+    [detailEntry, selectedGroupResult, useViewedListFilter, wordResults],
   );
 
   const runSearch = useCallback(async () => {
@@ -212,6 +237,10 @@ export function DictionarySearchTab({
     if (!hasQuery && !useViewedListFilter) {
       updateSearchState({
         wordResults: [],
+        groupResults: [],
+        groupPageCursors: [null],
+        groupHasMore: false,
+        selectedHeadwordGroupId: null,
         wordTotal: 0,
         detailEntry: null,
         mobileDetailOpen: false,
@@ -221,15 +250,50 @@ export function DictionarySearchTab({
     setSearchLoading(true);
     try {
       const trimmedQuery = query.trim() || undefined;
-      const result =
-        !useViewedListFilter
-          ? await searchDictionaryGroups({
-              query: trimmedQuery,
-              languageCode: searchLanguage,
-              dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
-              limit: 6,
-            })
-          : useDictionarySearchV2
+      if (!useViewedListFilter) {
+        const result = await fetchPlatformV2LibraryGroupPage({
+          query: trimmedQuery!,
+          cardTypeId: "word-to-definition",
+          contentLanguageCode: searchLanguage,
+          translationTargetLanguageCode:
+            translationLang === "off" ? null : translationLang,
+          cursor: groupCursor,
+        });
+        if (latestSearchRequestRef.current !== requestId) return;
+
+        const nextGroupResults = buildLibraryHeadwordGroupResults(
+          result?.groups ?? [],
+        ).filter(
+          (groupResult) =>
+            !dictionaryId ||
+            groupResult.group.dictionary.dictionaryId === dictionaryId,
+        );
+        onSearchStateChange((current) => {
+          const nextCursors = current.groupPageCursors.slice(0, page);
+          nextCursors[page] = result?.nextGroupCursor ?? null;
+          const selectedStillVisible = nextGroupResults.find(
+            (groupResult) =>
+              groupResult.headwordGroupId === current.selectedHeadwordGroupId,
+          );
+          const selected = selectedStillVisible ?? nextGroupResults[0] ?? null;
+          return {
+            ...current,
+            groupResults: nextGroupResults,
+            groupPageCursors: nextCursors,
+            groupHasMore: Boolean(result?.nextGroupCursor),
+            selectedHeadwordGroupId:
+              current.detailEntry && !selectedStillVisible
+                ? current.selectedHeadwordGroupId
+                : selected?.headwordGroupId ?? null,
+            wordResults: [],
+            wordTotal: nextGroupResults.length,
+            detailEntry: current.detailEntry ?? selected?.detailEntry ?? null,
+          };
+        });
+        return;
+      }
+
+      const result = useDictionarySearchV2
         ? await searchDictionaryEntriesV2({
             query: trimmedQuery,
             languageCode: searchLanguage,
@@ -241,16 +305,8 @@ export function DictionarySearchTab({
             includeBodyMatches: true,
             includeFallback: false,
           })
-        : useViewedListFilter
-        ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
+        : await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
             query: trimmedQuery,
-            page,
-            pageSize,
-          })
-        : await searchWordEntries({
-            query: trimmedQuery,
-            languageCode: searchLanguage,
-            dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
             page,
             pageSize,
           });
@@ -259,6 +315,8 @@ export function DictionarySearchTab({
       onSearchStateChange((current) => ({
         ...current,
         wordResults: result.items,
+        groupResults: [],
+        groupHasMore: false,
         wordTotal: result.total,
         detailEntry: current.detailEntry ?? result.items[0] ?? null,
       }));
@@ -276,9 +334,22 @@ export function DictionarySearchTab({
     useViewedListFilter,
     searchLanguage,
     dictionaryId,
+    groupCursor,
+    translationLang,
     viewedList?.type,
     viewedListId,
   ]);
+
+  const openGroupDetail = useCallback(
+    (result: LibraryHeadwordGroupResult) => {
+      updateSearchState({
+        selectedHeadwordGroupId: result.headwordGroupId,
+        detailEntry: result.detailEntry,
+        mobileDetailOpen: true,
+      });
+    },
+    [updateSearchState],
+  );
 
   const openEntryDetail = useCallback(
     async (entry: DictionaryEntry) => {
@@ -412,7 +483,12 @@ export function DictionarySearchTab({
           dictionaryId &&
           !sources.some((source) => source.id === dictionaryId)
         ) {
-          updateSearchState({ dictionaryId: null, page: 1 });
+          updateSearchState({
+            dictionaryId: null,
+            page: 1,
+            groupPageCursors: [null],
+            groupHasMore: false,
+          });
         }
       }
     };
@@ -443,6 +519,7 @@ export function DictionarySearchTab({
       applyListFilter ||
       page !== 1 ||
       detailEntry ||
+      groupResults.length ||
       wordResults.length ||
       wordTotal,
   );
@@ -453,7 +530,7 @@ export function DictionarySearchTab({
   const resultCountLabel = useViewedListFilter
     ? `${wordTotal} woorden gevonden`
     : groupedSearchActive && query.trim()
-      ? `${wordResults.length} snelle resultaten in ${sourceLabel}`
+      ? `${groupResults.length} hoofdwoordgroepen op pagina ${page} in ${sourceLabel}`
     : query.trim()
       ? `${wordTotal} resultaten in ${sourceLabel}`
       : "Typ een woord om te zoeken";
@@ -491,6 +568,8 @@ export function DictionarySearchTab({
               updateSearchState({
                 query: event.target.value,
                 page: 1,
+                groupPageCursors: [null],
+                groupHasMore: false,
               });
             }}
             placeholder="Zoek in het woordenboek..."
@@ -503,6 +582,8 @@ export function DictionarySearchTab({
                 updateSearchState({
                   query: "",
                   page: 1,
+                  groupPageCursors: [null],
+                  groupHasMore: false,
                 });
               }}
               className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -528,6 +609,8 @@ export function DictionarySearchTab({
                   ...current,
                   applyListFilter: !current.applyListFilter,
                   page: 1,
+                  groupPageCursors: [null],
+                  groupHasMore: false,
                 }));
               }}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
@@ -549,6 +632,8 @@ export function DictionarySearchTab({
                     languageCode: event.target.value,
                     dictionaryId: null,
                     page: 1,
+                    groupPageCursors: [null],
+                    groupHasMore: false,
                   });
                 }}
                 disabled={useViewedListFilter}
@@ -573,6 +658,8 @@ export function DictionarySearchTab({
                     dictionaryId:
                       event.target.value === "all" ? null : event.target.value,
                     page: 1,
+                    groupPageCursors: [null],
+                    groupHasMore: false,
                   });
                 }}
                 disabled={useViewedListFilter}
@@ -693,6 +780,60 @@ export function DictionarySearchTab({
               <div key={index} className="h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
             ))}
           </div>
+        ) : groupedSearchActive && groupResults.length ? (
+          <div className="space-y-2">
+            {groupResults.map((result) => {
+              const selected =
+                result.headwordGroupId === selectedHeadwordGroupId;
+              const meaningCount =
+                result.meaningCount === 1
+                  ? "1 betekenis"
+                  : `${result.meaningCount} betekenissen`;
+              const context = [
+                result.partOfSpeechLabels.join(" · "),
+                result.dictionaryLabel,
+                result.homographNumber
+                  ? `homoniem ${result.homographNumber}`
+                  : null,
+                meaningCount,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <div key={result.headwordGroupId} data-testid="library-headword-group-row">
+                  <button
+                    type="button"
+                    data-testid={`library-headword-group-${result.headwordGroupId}`}
+                    onClick={() => openGroupDetail(result)}
+                    className={`w-full rounded-2xl border p-3 text-left transition ${
+                      selected
+                        ? "border-primary/50 bg-primary/5 shadow-sm"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-white">
+                            {result.headword}
+                          </span>
+                          {result.homographNumber ? (
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              {result.homographNumber}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {context}
+                        </div>
+                      </div>
+                      <span className="hidden text-slate-400 sm:inline">...</span>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         ) : wordResults.length ? (
           <div className="space-y-2">
             {wordResults.map((entry, index) => {
@@ -778,10 +919,14 @@ export function DictionarySearchTab({
         )}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+      <div
+        data-testid={groupedSearchActive ? "library-group-pagination" : undefined}
+        className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+      >
         <span>
-          {wordResults.length ? (page - 1) * pageSize + 1 : 0}-
-          {Math.min(wordTotal, page * pageSize)} van {wordTotal}
+          {groupedSearchActive
+            ? `Pagina ${page} · ${groupResults.length} groepen`
+            : `${wordResults.length ? (page - 1) * pageSize + 1 : 0}-${Math.min(wordTotal, page * pageSize)} van ${wordTotal}`}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -792,7 +937,7 @@ export function DictionarySearchTab({
                 page: Math.max(1, current.page - 1),
               }))
             }
-            disabled={page === 1 || groupedSearchActive}
+            disabled={page === 1}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Vorige
@@ -805,7 +950,9 @@ export function DictionarySearchTab({
                 page: current.page + 1,
               }))
             }
-            disabled={groupedSearchActive || page * pageSize >= wordTotal}
+            disabled={
+              groupedSearchActive ? !groupHasMore : page * pageSize >= wordTotal
+            }
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Volgende
@@ -835,6 +982,7 @@ export function DictionarySearchTab({
               <div className="min-h-0 flex-1">
                 <LibraryWordDetail
                   entryId={detailEntry.id}
+                  initialGroup={selectedGroupResult?.group}
                   headword={detailEntry.headword}
                   contentLanguageCode={
                     detailEntry.language_code ?? searchLanguage
@@ -881,6 +1029,7 @@ export function DictionarySearchTab({
       <div className="lg:hidden">
         <WordDetailDrawer
           entry={detailEntry}
+          initialGroup={selectedGroupResult?.group}
           open={mobileDetailOpen && Boolean(detailEntry)}
           onClose={() => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}

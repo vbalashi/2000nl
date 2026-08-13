@@ -33,6 +33,7 @@ import {
 
 type Props = {
   entryId: string;
+  initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
   cardTypeId?: CardTypeId;
   contentLanguageCode: string;
@@ -47,6 +48,7 @@ type Props = {
 
 export function LibrarySenseCardV2Session({
   entryId,
+  initialGroup,
   headword,
   cardTypeId = "word-to-definition",
   contentLanguageCode,
@@ -62,8 +64,19 @@ export function LibrarySenseCardV2Session({
     translationTargetLanguageCode === "off"
       ? null
       : translationTargetLanguageCode;
+  const compatibleInitialGroup = React.useMemo(
+    () =>
+      initialGroup?.senseCount &&
+      initialGroup.senseCount > 1 &&
+      initialGroup.entries.some(
+        (entry) => entry.kind === "sense-card" && entry.entryId === entryId,
+      )
+        ? initialGroup
+        : null,
+    [entryId, initialGroup],
+  );
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
-    null,
+    compatibleInitialGroup,
   );
   const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
   const [audioBusy, setAudioBusy] = React.useState(false);
@@ -120,13 +133,14 @@ export function LibrarySenseCardV2Session({
 
   React.useEffect(() => {
     const controller = new AbortController();
-    setGroup(null);
+    setGroup(compatibleInitialGroup);
     setError(null);
+    if (compatibleInitialGroup) return () => controller.abort();
     void load(controller.signal).catch(() => {
       if (!controller.signal.aborted) setGroup(null);
     });
     return () => controller.abort();
-  }, [load]);
+  }, [compatibleInitialGroup, load]);
 
   const model = React.useMemo(
     () =>
