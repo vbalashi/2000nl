@@ -457,66 +457,77 @@ async function setupAuthenticatedTrainingPage(page: Page) {
     });
   });
 
-  await page.route("**/api/platform/v1/search", async (route: Route) => {
-    const items = entries.map((entry) => ({
-      entry: {
-        id: entry.id,
-        headword: entry.headword,
-        languageCode: "nl",
-        partOfSpeech: entry.part_of_speech,
-        summaryDefinition: entry.raw.meanings[0]?.definition ?? null,
-      },
+  await page.route("**/api/platform/v2/lookup", async (route: Route) => {
+    const body = route.request().postDataJSON?.() ?? {};
+    const query = typeof body.query === "string" ? body.query : "";
+    const matchingEntries = entries.filter((entry) =>
+      entry.headword.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+    );
+
+    const groups = matchingEntries.map((entry) => ({
+      headwordGroupId: `group-${entry.id}`,
       dictionary: {
-        id: "dictionary-1",
-        name: "VanDale Dutch",
-        slug: "vandale-2k",
-        kind: "curated",
+        dictionaryId: "dictionary-1",
+        sourceLanguageCode: "nl",
+        displayName: "VanDale Dutch",
+        messageKey: "dictionary.source",
       },
-      match: {
-        matchedText: entry.headword,
-        sourcePath: "headword",
+      header: {
+        text: entry.headword,
+        partOfSpeech: {
+          termId: `part-of-speech:${entry.part_of_speech}`,
+          messageKey: "partOfSpeech.source",
+          sourceValue: entry.part_of_speech,
+        },
       },
-      displayText: entry.headword,
+      senseCount: entry.raw.meanings.length,
+      entryCount: 1,
+      indicators: [],
+      entries: [
+        {
+          kind: "sense-card",
+          entryId: entry.id,
+          meaningOrdinal: 1,
+          partOfSpeech: {
+            termId: `part-of-speech:${entry.part_of_speech}`,
+            messageKey: "partOfSpeech.source",
+            sourceValue: entry.part_of_speech,
+          },
+          card: null,
+          contentRevision: `revision-${entry.id}`,
+          summaryContentNodeId: `definition-${entry.id}`,
+          contentNodes: [
+            {
+              contentNodeId: `definition-${entry.id}`,
+              parentContentNodeId: null,
+              kind: "definition",
+              order: 0,
+              text: entry.raw.meanings[0]?.definition ?? "",
+              sourceTextFingerprint: `fingerprint-${entry.id}`,
+              translations: [],
+            },
+          ],
+          translation: null,
+          capabilities: [],
+        },
+      ],
     }));
 
     await route.fulfill({
       status: 200,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        groups: [
-          {
-            id: "headwords",
-            label: "Headwords",
-            total: items.length,
-            count: { value: items.length, relation: "exact" },
-            page: { hasMore: false, nextCursor: null },
-            items,
-          },
-          {
-            id: "examples",
-            label: "Example sentences",
-            total: 0,
-            count: { value: 0, relation: "exact" },
-            page: { hasMore: false, nextCursor: null },
-            items: [],
-          },
-          {
-            id: "definitions",
-            label: "Within definitions",
-            total: 0,
-            count: { value: 0, relation: "exact" },
-            page: { hasMore: false, nextCursor: null },
-            items: [],
-          },
-          {
-            id: "alphabetical",
-            label: "Alphabetical",
-            total: 0,
-            count: { value: 0, relation: "exact" },
-            page: { hasMore: false, nextCursor: null },
-            items: [],
-          },
-        ],
+        contractVersion: "platform-lookup-v2",
+        query,
+        request: {
+          contentLanguageCode: body.contentLanguageCode ?? "nl",
+          translationTargetLanguageCode:
+            body.translationTargetLanguageCode ?? null,
+          cardTypeId: body.cardTypeId ?? "word-to-definition",
+          intent: "dictionary-lookup",
+        },
+        groups,
+        page: { selectedTierComplete: true, nextGroupCursor: null },
       }),
     });
   });
@@ -581,11 +592,13 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
     page.getByText("Nederlands · Zoekt in VanDale woordenboek"),
   ).toBeVisible();
   await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
-  const headwordResult = page.getByRole("button", {
-    name: /huis.*Exacte match/i,
-  });
+  const headwordResult = page.getByTestId(
+    "library-headword-group-group-word-1",
+  );
   await expect(headwordResult).toBeVisible();
-  await expect(page.getByText("Hoofdwoorden")).toBeVisible();
+  await expect(headwordResult).toContainText("huis");
+  await expect(headwordResult).toContainText("VanDale Dutch");
+  await expect(headwordResult).toContainText("1 betekenis");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
 

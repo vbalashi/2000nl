@@ -8,9 +8,7 @@ import {
   fetchAvailableLearningLanguages,
   fetchDictionaryEntryById,
   fetchWordsForList,
-  searchDictionaryGroups,
   searchDictionaryEntriesV2,
-  searchWordEntries,
 } from "@/lib/trainingService";
 import type {
   AvailableDictionarySource,
@@ -25,6 +23,17 @@ import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
+import { useLibraryHeadwordGroupSearch } from "./useLibraryHeadwordGroupSearch";
+import {
+  createDictionarySearchTabState,
+  type DictionarySearchTabState,
+} from "./dictionarySearchTabState";
+
+export {
+  createDictionarySearchTabState,
+  type DictionarySearchTabState,
+} from "./dictionarySearchTabState";
 
 type Props = {
   open: boolean;
@@ -47,30 +56,6 @@ type Props = {
     React.SetStateAction<DictionarySearchTabState>
   >;
 };
-
-export type DictionarySearchTabState = {
-  query: string;
-  applyListFilter: boolean;
-  wordResults: DictionaryEntry[];
-  wordTotal: number;
-  page: number;
-  languageCode: string | null;
-  dictionaryId: string | null;
-  detailEntry: DictionaryEntry | null;
-  mobileDetailOpen: boolean;
-};
-
-export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
-  query: "",
-  applyListFilter: false,
-  wordResults: [],
-  wordTotal: 0,
-  page: 1,
-  languageCode: null,
-  dictionaryId: null,
-  detailEntry: null,
-  mobileDetailOpen: false,
-});
 
 const languageLabel = (code: string) => {
   if (code === "nl") return "Nederlands";
@@ -150,6 +135,10 @@ export function DictionarySearchTab({
     query,
     applyListFilter,
     wordResults,
+    groupResults,
+    groupPageCursors,
+    groupHasMore,
+    selectedHeadwordGroupId,
     wordTotal,
     page,
     languageCode,
@@ -175,7 +164,6 @@ export function DictionarySearchTab({
     null,
   );
   const queryRef = useRef<HTMLInputElement | null>(null);
-  const latestSearchRequestRef = useRef(0);
   const latestDetailRequestRef = useRef(0);
   const pageSize = 20;
   const updateSearchState = useCallback(
@@ -195,23 +183,42 @@ export function DictionarySearchTab({
       ? "VanDale woordenboek"
       : `${languageLabel(searchLanguage)} woordenboekbronnen`;
   const useViewedListFilter = applyListFilter && Boolean(viewedListId);
+  const {
+    beginSearch,
+    clearGroupSearch,
+    isCurrentSearch,
+    openGroupDetail,
+    runGroupSearch,
+    selectedGroupResult,
+  } = useLibraryHeadwordGroupSearch({
+    state: searchState,
+    setState: onSearchStateChange,
+    contentLanguageCode: searchLanguage,
+    translationLanguageCode: translationLang,
+    dictionaryId,
+  });
   const detailEntryInCurrentResults = useMemo(
     () =>
       Boolean(
         detailEntry &&
-          wordResults.some((resultEntry) => resultEntry.id === detailEntry.id),
+          (useViewedListFilter
+            ? wordResults.some((resultEntry) => resultEntry.id === detailEntry.id)
+            : selectedGroupResult),
       ),
-    [detailEntry, wordResults],
+    [detailEntry, selectedGroupResult, useViewedListFilter, wordResults],
   );
 
   const runSearch = useCallback(async () => {
     if (!open) return;
-    const requestId = latestSearchRequestRef.current + 1;
-    latestSearchRequestRef.current = requestId;
+    const requestId = beginSearch();
     const hasQuery = Boolean(query.trim());
     if (!hasQuery && !useViewedListFilter) {
       updateSearchState({
         wordResults: [],
+        groupResults: [],
+        groupPageCursors: [null],
+        groupHasMore: false,
+        selectedHeadwordGroupId: null,
         wordTotal: 0,
         detailEntry: null,
         mobileDetailOpen: false,
@@ -221,15 +228,12 @@ export function DictionarySearchTab({
     setSearchLoading(true);
     try {
       const trimmedQuery = query.trim() || undefined;
-      const result =
-        !useViewedListFilter
-          ? await searchDictionaryGroups({
-              query: trimmedQuery,
-              languageCode: searchLanguage,
-              dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
-              limit: 6,
-            })
-          : useDictionarySearchV2
+      if (!useViewedListFilter) {
+        await runGroupSearch(trimmedQuery!, requestId);
+        return;
+      }
+
+      const result = useDictionarySearchV2
         ? await searchDictionaryEntriesV2({
             query: trimmedQuery,
             languageCode: searchLanguage,
@@ -241,21 +245,14 @@ export function DictionarySearchTab({
             includeBodyMatches: true,
             includeFallback: false,
           })
-        : useViewedListFilter
-        ? await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
+        : await fetchWordsForList(viewedListId!, viewedList?.type ?? "curated", {
             query: trimmedQuery,
-            page,
-            pageSize,
-          })
-        : await searchWordEntries({
-            query: trimmedQuery,
-            languageCode: searchLanguage,
-            dictionaryIds: dictionaryId ? [dictionaryId] : undefined,
             page,
             pageSize,
           });
 
-      if (latestSearchRequestRef.current !== requestId) return;
+      if (!isCurrentSearch(requestId)) return;
+      clearGroupSearch();
       onSearchStateChange((current) => ({
         ...current,
         wordResults: result.items,
@@ -263,12 +260,15 @@ export function DictionarySearchTab({
         detailEntry: current.detailEntry ?? result.items[0] ?? null,
       }));
     } finally {
-      if (latestSearchRequestRef.current === requestId) {
+      if (isCurrentSearch(requestId)) {
         setSearchLoading(false);
       }
     }
   }, [
     open,
+    beginSearch,
+    clearGroupSearch,
+    isCurrentSearch,
     onSearchStateChange,
     page,
     query,
@@ -276,6 +276,7 @@ export function DictionarySearchTab({
     useViewedListFilter,
     searchLanguage,
     dictionaryId,
+    runGroupSearch,
     viewedList?.type,
     viewedListId,
   ]);
@@ -412,7 +413,12 @@ export function DictionarySearchTab({
           dictionaryId &&
           !sources.some((source) => source.id === dictionaryId)
         ) {
-          updateSearchState({ dictionaryId: null, page: 1 });
+          updateSearchState({
+            dictionaryId: null,
+            page: 1,
+            groupPageCursors: [null],
+            groupHasMore: false,
+          });
         }
       }
     };
@@ -443,6 +449,7 @@ export function DictionarySearchTab({
       applyListFilter ||
       page !== 1 ||
       detailEntry ||
+      groupResults.length ||
       wordResults.length ||
       wordTotal,
   );
@@ -453,7 +460,7 @@ export function DictionarySearchTab({
   const resultCountLabel = useViewedListFilter
     ? `${wordTotal} woorden gevonden`
     : groupedSearchActive && query.trim()
-      ? `${wordResults.length} snelle resultaten in ${sourceLabel}`
+      ? `${groupResults.length} hoofdwoordgroepen op pagina ${page} in ${sourceLabel}`
     : query.trim()
       ? `${wordTotal} resultaten in ${sourceLabel}`
       : "Typ een woord om te zoeken";
@@ -491,6 +498,8 @@ export function DictionarySearchTab({
               updateSearchState({
                 query: event.target.value,
                 page: 1,
+                groupPageCursors: [null],
+                groupHasMore: false,
               });
             }}
             placeholder="Zoek in het woordenboek..."
@@ -503,6 +512,8 @@ export function DictionarySearchTab({
                 updateSearchState({
                   query: "",
                   page: 1,
+                  groupPageCursors: [null],
+                  groupHasMore: false,
                 });
               }}
               className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -528,6 +539,8 @@ export function DictionarySearchTab({
                   ...current,
                   applyListFilter: !current.applyListFilter,
                   page: 1,
+                  groupPageCursors: [null],
+                  groupHasMore: false,
                 }));
               }}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600"
@@ -549,6 +562,8 @@ export function DictionarySearchTab({
                     languageCode: event.target.value,
                     dictionaryId: null,
                     page: 1,
+                    groupPageCursors: [null],
+                    groupHasMore: false,
                   });
                 }}
                 disabled={useViewedListFilter}
@@ -573,6 +588,8 @@ export function DictionarySearchTab({
                     dictionaryId:
                       event.target.value === "all" ? null : event.target.value,
                     page: 1,
+                    groupPageCursors: [null],
+                    groupHasMore: false,
                   });
                 }}
                 disabled={useViewedListFilter}
@@ -693,6 +710,12 @@ export function DictionarySearchTab({
               <div key={index} className="h-20 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
             ))}
           </div>
+        ) : groupedSearchActive && groupResults.length ? (
+          <LibraryHeadwordGroupResultsList
+            results={groupResults}
+            selectedHeadwordGroupId={selectedHeadwordGroupId}
+            onSelect={openGroupDetail}
+          />
         ) : wordResults.length ? (
           <div className="space-y-2">
             {wordResults.map((entry, index) => {
@@ -778,10 +801,14 @@ export function DictionarySearchTab({
         )}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+      <div
+        data-testid={groupedSearchActive ? "library-group-pagination" : undefined}
+        className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+      >
         <span>
-          {wordResults.length ? (page - 1) * pageSize + 1 : 0}-
-          {Math.min(wordTotal, page * pageSize)} van {wordTotal}
+          {groupedSearchActive
+            ? `Pagina ${page} · ${groupResults.length} groepen`
+            : `${wordResults.length ? (page - 1) * pageSize + 1 : 0}-${Math.min(wordTotal, page * pageSize)} van ${wordTotal}`}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -792,7 +819,7 @@ export function DictionarySearchTab({
                 page: Math.max(1, current.page - 1),
               }))
             }
-            disabled={page === 1 || groupedSearchActive}
+            disabled={page === 1}
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Vorige
@@ -805,7 +832,9 @@ export function DictionarySearchTab({
                 page: current.page + 1,
               }))
             }
-            disabled={groupedSearchActive || page * pageSize >= wordTotal}
+            disabled={
+              groupedSearchActive ? !groupHasMore : page * pageSize >= wordTotal
+            }
             className="rounded-full border border-slate-300 px-3 py-1 font-semibold disabled:opacity-50 dark:border-slate-700"
           >
             Volgende
@@ -835,6 +864,7 @@ export function DictionarySearchTab({
               <div className="min-h-0 flex-1">
                 <LibraryWordDetail
                   entryId={detailEntry.id}
+                  initialGroup={selectedGroupResult?.group}
                   headword={detailEntry.headword}
                   contentLanguageCode={
                     detailEntry.language_code ?? searchLanguage
@@ -881,6 +911,7 @@ export function DictionarySearchTab({
       <div className="lg:hidden">
         <WordDetailDrawer
           entry={detailEntry}
+          initialGroup={selectedGroupResult?.group}
           open={mobileDetailOpen && Boolean(detailEntry)}
           onClose={() => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}

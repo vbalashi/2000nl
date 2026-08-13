@@ -8,9 +8,11 @@ import { WordDetailPanel } from "../WordDetailPanel";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
 type Props = {
   entry: DictionaryEntry | null;
+  initialGroup?: PlatformHeadwordGroupV2;
   open: boolean;
   onClose: () => void;
   userId: string;
@@ -27,6 +29,7 @@ type Props = {
 
 export function WordDetailDrawer({
   entry,
+  initialGroup,
   open,
   onClose,
   userId,
@@ -72,6 +75,7 @@ export function WordDetailDrawer({
         </button>
         <LibraryWordDetail
           entryId={entry.id}
+          initialGroup={initialGroup}
           headword={entry.headword}
           contentLanguageCode={entry.language_code ?? contentLanguageCode}
           translationTargetLanguageCode={translationLang}

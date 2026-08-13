@@ -10,6 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
+import type { DictionaryEntry } from "@/lib/types";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -221,6 +222,79 @@ const searchDictionaryGroups = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const fetchPlatformV2LibraryGroupPage = vi.fn(
+  async ({
+    query,
+    contentLanguageCode,
+  }: {
+    query: string;
+    contentLanguageCode: string;
+  }) => {
+    const result = await searchDictionaryGroups({
+      query,
+      languageCode: contentLanguageCode,
+      dictionaryIds: undefined,
+      limit: 6,
+    });
+    return {
+      groups: result.items.map((entry: DictionaryEntry) => ({
+        headwordGroupId: `group-${entry.id}`,
+        dictionary: {
+          dictionaryId: entry.dictionary_id ?? "dictionary-vandale",
+          sourceLanguageCode: entry.language_code ?? contentLanguageCode,
+          displayName: entry.dictionary_name ?? "Van Dale",
+          messageKey: "dictionary.source",
+        },
+        header: { text: entry.headword },
+        senseCount: 1,
+        entryCount: 1,
+        indicators: entry.is_nt2_2000
+          ? [
+              {
+                indicatorId: "nt2-2000",
+                value: "true",
+                messageKey: "indicator.nt2-2000",
+              },
+            ]
+          : [],
+        entries: [
+          {
+            kind: "sense-card" as const,
+            entryId: entry.id,
+            meaningOrdinal: 1,
+            partOfSpeech: entry.part_of_speech
+              ? {
+                  termId: `pos:${entry.part_of_speech}`,
+                  messageKey: `pos.${entry.part_of_speech}`,
+                  sourceValue: entry.part_of_speech,
+                }
+              : undefined,
+            card: null,
+            contentRevision: `revision-${entry.id}`,
+            summaryContentNodeId: `definition-${entry.id}`,
+            contentNodes: [
+              {
+                contentNodeId: `definition-${entry.id}`,
+                parentContentNodeId: null,
+                kind: "definition" as const,
+                order: 0,
+                text:
+                  entry.raw.meanings?.[0]?.definition ??
+                  "Geen definitie beschikbaar.",
+                sourceTextFingerprint: `fingerprint-${entry.id}`,
+                translations: [],
+              },
+            ],
+            translation: null,
+            capabilities: [],
+          },
+        ],
+      })),
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    };
+  },
+);
 const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -330,6 +404,15 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingWordByLookup,
   fetchUserPreferences,
   updateUserPreferences,
+}));
+
+vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  fetchPlatformV2LibraryGroupPage: (input: {
+    query: string;
+    contentLanguageCode: string;
+  }) => fetchPlatformV2LibraryGroupPage(input),
+  fetchPlatformV2MultiSenseGroup: vi.fn().mockResolvedValue(null),
+  requestPlatformV2LibraryTranslation: vi.fn().mockResolvedValue("failed"),
 }));
 
 vi.mock("@/lib/supabaseClient", () => ({
@@ -1298,7 +1381,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 
     expect(
       await screen.findByRole("button", {
-        name: /ster[\s\S]*Een hemellichaam/i,
+        name: /ster[\s\S]*Van Dale/i,
       }),
     ).toBeInTheDocument();
 
@@ -1308,7 +1391,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     });
 
     expect(
-      screen.getByRole("button", { name: /ster[\s\S]*Een hemellichaam/i }),
+      screen.getByRole("button", { name: /ster[\s\S]*Van Dale/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText("stedelijk")).not.toBeInTheDocument();
     expect(screen.queryByText(/3964 resultaten/i)).not.toBeInTheDocument();
@@ -1317,7 +1400,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
   }
 });
 
-test("dictionary lookup shows backend match labels and preserves ranked order", async () => {
+test("dictionary lookup preserves server Headword Group order", async () => {
   searchDictionaryGroups.mockResolvedValueOnce({
     items: [
       {
@@ -1349,10 +1432,10 @@ test("dictionary lookup shows backend match labels and preserves ranked order", 
   fireEvent.change(queryInput, { target: { value: "huis" } });
 
   const exact = await screen.findByRole("button", {
-    name: /huis[\s\S]*Exacte match/i,
+    name: /^huis[\s\S]*Van Dale NT2/i,
   });
   const compound = screen.getByRole("button", {
-    name: /bejaardenhuis[\s\S]*Samenstelling/i,
+    name: /^bejaardenhuis[\s\S]*Van Dale NT2/i,
   });
 
   expect(

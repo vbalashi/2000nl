@@ -6,14 +6,24 @@ import type {
   PlatformLookupV2Response,
 } from "../../../../packages/shared/types/platformV2";
 
-export async function fetchPlatformV2MultiSenseGroup(input: {
+export type PlatformV2LibraryGroupPage = {
+  groups: PlatformHeadwordGroupV2[];
+  selectedTierComplete: boolean;
+  nextGroupCursor: string | null;
+};
+
+type PlatformV2LibraryLookupInput = {
   query: string;
-  entryId: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
+  cursor?: string | null;
   signal?: AbortSignal;
-}): Promise<PlatformHeadwordGroupV2 | null> {
+};
+
+async function fetchPlatformV2LibraryLookup(
+  input: PlatformV2LibraryLookupInput,
+): Promise<PlatformLookupV2Response | null> {
   const response = await fetch("/api/platform/v2/lookup", {
     method: "POST",
     credentials: "same-origin",
@@ -26,12 +36,45 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "dictionary-lookup",
+      ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
     }),
   });
   if (!response.ok) return null;
 
   const payload = (await response.json()) as PlatformLookupV2Response;
-  if (payload.contractVersion !== "platform-lookup-v2") return null;
+  return payload.contractVersion === "platform-lookup-v2" ? payload : null;
+}
+
+export async function fetchPlatformV2LibraryGroupPage(input: {
+  query: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  cursor?: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformV2LibraryGroupPage | null> {
+  const payload = await fetchPlatformV2LibraryLookup({
+    ...input,
+    cursor: input.cursor ?? null,
+  });
+  if (!payload || !Array.isArray(payload.groups)) return null;
+  return {
+    groups: payload.groups,
+    selectedTierComplete: payload.page.selectedTierComplete,
+    nextGroupCursor: payload.page.nextGroupCursor,
+  };
+}
+
+export async function fetchPlatformV2MultiSenseGroup(input: {
+  query: string;
+  entryId: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  signal?: AbortSignal;
+}): Promise<PlatformHeadwordGroupV2 | null> {
+  const payload = await fetchPlatformV2LibraryLookup(input);
+  if (!payload) return null;
   return selectPlatformV2MultiSenseGroup(payload, input.entryId);
 }
 
