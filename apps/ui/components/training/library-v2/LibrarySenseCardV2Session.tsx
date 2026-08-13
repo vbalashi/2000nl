@@ -8,9 +8,7 @@ import {
   fetchPlatformV2MultiSenseGroup,
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
-import {
-  resolvePlatformV2Audio,
-} from "@/lib/platform/platformV2TrainingClient";
+import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingClient";
 import { performPlatformV2TrainingAction } from "@/lib/platform/platformV2TrainingActionClient";
 import {
   addWordsToUserList,
@@ -18,10 +16,7 @@ import {
   fetchEntryListMemberships,
   removeWordsFromUserList,
 } from "@/lib/trainingService";
-import type {
-  EntryLearningListMembership,
-  WordListSummary,
-} from "@/lib/types";
+import type { EntryLearningListMembership, WordListSummary } from "@/lib/types";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
@@ -66,23 +61,26 @@ export function LibrarySenseCardV2Session({
     translationTargetLanguageCode === "off"
       ? null
       : translationTargetLanguageCode;
-  const compatibleInitialGroup = React.useMemo(
-    () =>
-      initialGroup?.senseCount &&
-      initialGroup.senseCount > 1 &&
-      initialGroup.entries.some(
-        (entry) => entry.kind === "sense-card" && entry.entryId === entryId,
-      )
-        ? initialGroup
-        : null,
-    [entryId, initialGroup],
-  );
+  const compatibleInitialGroup = React.useMemo(() => {
+    const selectedEntry = initialGroup?.entries.find((entry) =>
+      entry.kind === "sense-card"
+        ? entry.entryId === entryId
+        : entry.crossReferenceId === entryId,
+    );
+    if (!initialGroup || !selectedEntry) return null;
+    if (selectedEntry.kind === "cross-reference") return initialGroup;
+    return initialGroup.senseCount > 1 ||
+      initialGroup.entries.some((entry) => entry.kind === "cross-reference")
+      ? initialGroup
+      : null;
+  }, [entryId, initialGroup]);
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     compatibleInitialGroup,
   );
-  const [activeReferenceQuery, setActiveReferenceQuery] = React.useState<
-    string | null
-  >(null);
+  const [activeReferenceTarget, setActiveReferenceTarget] = React.useState<{
+    query: string;
+    sourceDictionaryId: string;
+  } | null>(null);
   const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
   const [audioBusy, setAudioBusy] = React.useState(false);
   const [translationStates, setTranslationStates] = React.useState<
@@ -115,15 +113,16 @@ export function LibrarySenseCardV2Session({
   }, [cardTypeId, entryId, translationLanguage]);
 
   React.useEffect(() => {
-    setActiveReferenceQuery(null);
+    setActiveReferenceTarget(null);
   }, [entryId]);
 
   const load = React.useCallback(
     async (signal?: AbortSignal, expectedTranslationSession?: number) => {
       const requestSequence = ++groupRequestSequence.current;
-      const next = activeReferenceQuery
+      const next = activeReferenceTarget
         ? await fetchPlatformV2CrossReferenceTarget({
-            query: activeReferenceQuery,
+            query: activeReferenceTarget.query,
+            sourceDictionaryId: activeReferenceTarget.sourceDictionaryId,
             cardTypeId,
             contentLanguageCode,
             translationTargetLanguageCode: translationLanguage,
@@ -149,7 +148,7 @@ export function LibrarySenseCardV2Session({
       return next;
     },
     [
-      activeReferenceQuery,
+      activeReferenceTarget,
       cardTypeId,
       contentLanguageCode,
       entryId,
@@ -177,7 +176,7 @@ export function LibrarySenseCardV2Session({
         : candidate.crossReferenceId === entryId,
     );
     const compatibleGroup =
-      group && (activeReferenceQuery || matchesSelectedEntry) ? group : null;
+      group && (activeReferenceTarget || matchesSelectedEntry) ? group : null;
     return compatibleGroup
       ? buildLibrarySenseCardGroupModel(
           compatibleGroup,
@@ -185,7 +184,7 @@ export function LibrarySenseCardV2Session({
           cardTypeId,
         )
       : null;
-  }, [activeReferenceQuery, cardTypeId, entryId, group, interfaceLanguage]);
+  }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage]);
 
   const loadMemberships = React.useCallback(
     async (entryIds: string[]) => {
@@ -267,10 +266,7 @@ export function LibrarySenseCardV2Session({
     await loadMemberships(model.meanings.map((meaning) => meaning.entryId));
   }, [loadMemberships, model]);
 
-  const handleToggleList = async (
-    list: WordListSummary,
-    included: boolean,
-  ) => {
+  const handleToggleList = async (list: WordListSummary, included: boolean) => {
     if (!collectionsEntryId) return;
     setCollectionBusyListId(list.id);
     setCollectionStatus(null);
@@ -445,10 +441,9 @@ export function LibrarySenseCardV2Session({
         }
         translationStates={translationStates}
         collectionCounts={Object.fromEntries(
-          Object.entries(membershipsByEntryId).map(([meaningEntryId, lists]) => [
-            meaningEntryId,
-            lists.length,
-          ]),
+          Object.entries(membershipsByEntryId).map(
+            ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
+          ),
         )}
         onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
           void handleRequestTranslation(
@@ -471,7 +466,7 @@ export function LibrarySenseCardV2Session({
           onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
         }
         onReport={handleReport}
-        onFollowCrossReference={setActiveReferenceQuery}
+        onFollowCrossReference={setActiveReferenceTarget}
         onAction={(capability) => void handleAction(capability)}
       />
       <LibraryCollectionsPicker
@@ -488,9 +483,7 @@ export function LibrarySenseCardV2Session({
         busyListId={collectionBusyListId}
         status={collectionStatus}
         onClose={() => setCollectionsEntryId(null)}
-        onToggleList={(list, included) =>
-          void handleToggleList(list, included)
-        }
+        onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}
       />
       {error ? (

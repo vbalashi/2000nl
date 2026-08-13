@@ -135,6 +135,36 @@ silently deletes or rekeys an entry.
 The obsolete UI-local importer now delegates to the supported ingestion
 command, so there is only one write path.
 
+### Pointer-only content updates
+
+When a parser change converts definition-like source content into an explicit
+top-level `cross_reference`, use this order. The order is a compatibility gate:
+the old UI cannot present a cross-reference-only record safely.
+
+1. Create a fresh production database backup, verify that `pg_restore --list`
+   can read it, and preserve the previously imported generated corpus.
+2. Deploy application code that understands the explicit cross-reference DTO.
+   Confirm `/api/health` reports that exact commit before changing dictionary
+   data.
+3. Regenerate the corpus cleanly from the source list. Run
+   `audit_pointer_meanings.py` over the complete pre-generation source corpus;
+   require zero unresolved pointer shapes and review every resolvable candidate.
+4. Import the regenerated corpus with `import_words_db.py`. The importer must
+   report unchanged membership and UUID-preserving updates; any membership,
+   identity-group, or moved-fingerprint error stops the rollout.
+5. Run `import_word_forms.py`, refresh search documents, and replay
+   `import_words_db.py`. The replay must be a verified no-op.
+6. In production Library, verify that `daar` meaning 2 has only an **Open
+   reference** action, cannot be learned or marked known, and opens the full
+   `daar-` entry. Confirm Training does not select the pointer-only record.
+
+If the pointer smoke fails, keep the compatible application deployed and roll
+the data forward by re-importing the preserved previous manifest, then rebuild
+word forms and search documents. Do not deploy the old application while the
+new cross-reference-only data is active, and do not delete or recreate entry
+UUIDs. A full database restore is reserved for disaster recovery because it
+would also rewind user learning state.
+
 ## Backups And Recovery
 
 Fresh pre-cutover production backup:

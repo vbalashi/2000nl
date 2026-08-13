@@ -40,9 +40,9 @@ const payload = {
 
 describe("selectPlatformV2MultiSenseGroup", () => {
   test("selects the server group containing the exact selected entry", () => {
-    expect(
-      selectPlatformV2MultiSenseGroup(payload, financeEntry.entryId),
-    ).toBe(multiSenseBankGroup);
+    expect(selectPlatformV2MultiSenseGroup(payload, financeEntry.entryId)).toBe(
+      multiSenseBankGroup,
+    );
   });
 
   test("does not replace the existing single-sense detail experience", () => {
@@ -65,15 +65,18 @@ describe("selectPlatformV2MultiSenseGroup", () => {
   });
 
   test("never falls back to matching by ordinal or headword", () => {
-    expect(selectPlatformV2MultiSenseGroup(payload, "missing-entry")).toBeNull();
+    expect(
+      selectPlatformV2MultiSenseGroup(payload, "missing-entry"),
+    ).toBeNull();
   });
 
   test("selects an exact pointer-only Library detail without making it a sense", () => {
     const pointerGroup = {
       ...multiSenseBankGroup,
-      senseCount: 0,
-      entryCount: 1,
+      senseCount: 1,
+      entryCount: 2,
       entries: [
+        furnitureEntry,
         {
           kind: "cross-reference" as const,
           crossReferenceId: "entry-daar-2",
@@ -103,19 +106,36 @@ describe("selectPlatformV2MultiSenseGroup", () => {
   });
 
   test("accepts a real single-sense group after following a cross-reference", () => {
+    const misleadingGroup = {
+      ...multiSenseBankGroup,
+      headwordGroupId: "group-daar-fuzzy",
+      dictionary: {
+        ...multiSenseBankGroup.dictionary,
+        dictionaryId: "other-dictionary",
+      },
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
+      senseCount: 1,
+      entryCount: 1,
+      entries: [financeEntry],
+    };
     const targetGroup = {
       ...multiSenseBankGroup,
+      header: { ...multiSenseBankGroup.header, text: "daar-" },
       senseCount: 1,
       entryCount: 1,
       entries: [furnitureEntry],
     };
 
     expect(
-      selectPlatformV2CrossReferenceTarget({
-        ...payload,
-        query: "daar-",
-        groups: [targetGroup],
-      }),
+      selectPlatformV2CrossReferenceTarget(
+        {
+          ...payload,
+          query: "daar-",
+          groups: [misleadingGroup, targetGroup],
+        },
+        "daar-",
+        "vandale",
+      ),
     ).toBe(targetGroup);
   });
 
@@ -132,7 +152,18 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         JSON.stringify({
           ...payload,
           query: "daar-",
-          groups: [targetGroup],
+          groups: [
+            {
+              ...multiSenseBankGroup,
+              headwordGroupId: "group-daar-fuzzy",
+              dictionary: {
+                ...multiSenseBankGroup.dictionary,
+                dictionaryId: "other-dictionary",
+              },
+              header: { ...multiSenseBankGroup.header, text: "daar-" },
+            },
+            targetGroup,
+          ],
         }),
         { status: 200 },
       ),
@@ -142,6 +173,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     await expect(
       fetchPlatformV2CrossReferenceTarget({
         query: "daar-",
+        sourceDictionaryId: "vandale",
         cardTypeId: "word-to-definition",
         contentLanguageCode: "nl",
         translationTargetLanguageCode: "en",
@@ -165,6 +197,31 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         expect.objectContaining({ kind: "example" }),
       ]),
     );
+  });
+
+  test("rejects a pointer lookup response from an incompatible contract", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ...payload,
+            contractVersion: "platform-lookup-v1",
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    await expect(
+      fetchPlatformV2CrossReferenceTarget({
+        query: "daar-",
+        sourceDictionaryId: "vandale",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).resolves.toBeNull();
   });
 });
 

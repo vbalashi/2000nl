@@ -80,30 +80,19 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
 
 export async function fetchPlatformV2CrossReferenceTarget(input: {
   query: string;
+  sourceDictionaryId: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
-  const response = await fetch("/api/platform/v2/lookup", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: input.signal,
-    headers: await platformV2AuthenticatedJsonHeaders(),
-    body: JSON.stringify({
-      query: input.query,
-      cardTypeId: input.cardTypeId,
-      contentLanguageCode: input.contentLanguageCode,
-      translationTargetLanguageCode: input.translationTargetLanguageCode,
-      intent: "dictionary-lookup",
-    }),
-  });
-  if (!response.ok) return null;
-
-  const payload = (await response.json()) as PlatformLookupV2Response;
-  if (payload.contractVersion !== "platform-lookup-v2") return null;
-  return selectPlatformV2CrossReferenceTarget(payload);
+  const payload = await fetchPlatformV2LibraryLookup(input);
+  if (!payload) return null;
+  return selectPlatformV2CrossReferenceTarget(
+    payload,
+    input.query,
+    input.sourceDictionaryId,
+  );
 }
 
 export async function requestPlatformV2LibraryTranslation(input: {
@@ -131,25 +120,35 @@ export function selectPlatformV2MultiSenseGroup(
   entryId: string,
 ): PlatformHeadwordGroupV2 | null {
   return (
-    payload.groups.find(
-      (group) =>
-        (group.senseCount > 1 || group.senseCount === 0) &&
-        group.entries.some(
-          (entry) =>
-            (entry.kind === "sense-card" && entry.entryId === entryId) ||
-            (entry.kind === "cross-reference" &&
-              entry.crossReferenceId === entryId),
-        ),
-    ) ?? null
+    payload.groups.find((group) => {
+      const selectedEntry = group.entries.find((entry) =>
+        entry.kind === "sense-card"
+          ? entry.entryId === entryId
+          : entry.crossReferenceId === entryId,
+      );
+      if (!selectedEntry) return false;
+      if (selectedEntry.kind === "cross-reference") return true;
+      return (
+        group.senseCount > 1 ||
+        group.entries.some((entry) => entry.kind === "cross-reference")
+      );
+    }) ?? null
   );
 }
 
 export function selectPlatformV2CrossReferenceTarget(
   payload: PlatformLookupV2Response,
+  query: string = payload.query,
+  sourceDictionaryId?: string,
 ): PlatformHeadwordGroupV2 | null {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
   return (
-    payload.groups.find((group) =>
-      group.entries.some((entry) => entry.kind === "sense-card"),
+    payload.groups.find(
+      (group) =>
+        group.header.text.trim().toLocaleLowerCase() === normalizedQuery &&
+        (!sourceDictionaryId ||
+          group.dictionary.dictionaryId === sourceDictionaryId) &&
+        group.entries.some((entry) => entry.kind === "sense-card"),
     ) ?? null
   );
 }

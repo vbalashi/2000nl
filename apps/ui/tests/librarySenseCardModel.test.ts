@@ -197,6 +197,7 @@ describe("Library multi-sense model", () => {
         label: null,
         text: "bankieren",
         targetQuery: "bankieren",
+        sourceDictionaryId: "vandale",
         followLabel: "Open reference",
       },
     ]);

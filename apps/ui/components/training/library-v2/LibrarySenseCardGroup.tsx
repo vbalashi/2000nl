@@ -41,7 +41,10 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (capability: LibraryReportCapability) => void;
-  onFollowCrossReference?: (query: string) => void;
+  onFollowCrossReference?: (target: {
+    query: string;
+    sourceDictionaryId: string;
+  }) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 };
 
@@ -218,6 +221,7 @@ export function LibrarySenseCardGroup({
             {model.crossReferences.map((reference) => (
               <article
                 key={reference.crossReferenceId}
+                data-testid={`library-cross-reference-${reference.crossReferenceId}`}
                 className="rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm dark:border-slate-600 dark:bg-[#20252f]"
               >
                 <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -229,7 +233,12 @@ export function LibrarySenseCardGroup({
                 <button
                   type="button"
                   aria-label={reference.followLabel}
-                  onClick={() => onFollowCrossReference?.(reference.targetQuery)}
+                  onClick={() =>
+                    onFollowCrossReference?.({
+                      query: reference.targetQuery,
+                      sourceDictionaryId: reference.sourceDictionaryId,
+                    })
+                  }
                   className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
                 >
                   {reference.followLabel}
@@ -356,7 +365,9 @@ function MeaningCard({
                 <button
                   type="button"
                   aria-label={`${t("senseCard.report")}: ${meaning.definition.text}`}
-                  onClick={() => onReport(meaning.definition!.reportCapability!)}
+                  onClick={() =>
+                    onReport(meaning.definition!.reportCapability!)
+                  }
                   className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 >
                   <FlagIcon className="h-3.5 w-3.5" />
@@ -457,8 +468,7 @@ function MeaningCard({
                               orderedDetails.filter(
                                 (candidate) =>
                                   contentPresentation[candidate.kind]
-                                    .sectionGroup ===
-                                  presentation.sectionGroup,
+                                    .sectionGroup === presentation.sectionGroup,
                               ).length
                             }
                           />

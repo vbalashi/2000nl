@@ -74,6 +74,7 @@ export type LibrarySenseCardGroupModel = {
     label: string | null;
     text: string;
     targetQuery: string;
+    sourceDictionaryId: string;
     followLabel: string;
   }>;
 };
@@ -134,6 +135,7 @@ export function buildLibrarySenseCardGroupModel(
         : null,
       text: entry.text,
       targetQuery: entry.target.query,
+      sourceDictionaryId: group.dictionary.dictionaryId,
       followLabel: platformV2Message(
         interfaceLanguage,
         entry.capabilities.find(

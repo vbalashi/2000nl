@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
@@ -106,9 +107,9 @@ describe("LibrarySenseCardV2Session", () => {
       }),
     );
 
-    expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent("Reporting is not available yet.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Reporting is not available yet.",
+    );
     expect(performAction).not.toHaveBeenCalled();
   });
 
@@ -282,13 +283,18 @@ describe("LibrarySenseCardV2Session", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("follows a pointer-only Library detail to the real target content", async () => {
+  test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
     fetchGroup.mockResolvedValue({
       ...multiSenseBankGroup,
       header: { ...multiSenseBankGroup.header, text: "daar" },
-      senseCount: 0,
-      entryCount: 1,
+      senseCount: 1,
+      entryCount: 2,
       entries: [
+        {
+          ...financeEntry,
+          entryId: "entry-daar-1",
+          meaningOrdinal: 1,
+        },
         {
           kind: "cross-reference",
           crossReferenceId: "entry-daar-2",
@@ -328,13 +334,21 @@ describe("LibrarySenseCardV2Session", () => {
     );
 
     expect(await screen.findByText("daar-")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Learn" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mark known" })).not.toBeInTheDocument();
+    const pointer = screen.getByTestId("library-cross-reference-entry-daar-2");
+    expect(
+      within(pointer).queryByRole("button", { name: "Learn" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(pointer).queryByRole("button", { name: "Mark known" }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open reference" }));
 
     await waitFor(() =>
       expect(fetchCrossReferenceTarget).toHaveBeenCalledWith(
-        expect.objectContaining({ query: "daar-" }),
+        expect.objectContaining({
+          query: "daar-",
+          sourceDictionaryId: "vandale",
+        }),
       ),
     );
     expect(
