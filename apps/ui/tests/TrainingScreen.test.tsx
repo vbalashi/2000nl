@@ -10,7 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
-import type { DictionaryEntry } from "@/lib/types";
+import type { ActiveTrainingScope, DictionaryEntry } from "@/lib/types";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -1631,7 +1631,12 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
     );
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(fetchStats).not.toHaveBeenCalled();
-    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
     expect(screen.getAllByText("Active list").length).toBeGreaterThan(0);
   } finally {
     restoreDefaultListScope();
@@ -1695,6 +1700,31 @@ test("footer list selector still changes active training scope", async () => {
   fetchNextTrainingWordByScenario.mockClear();
   updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
+  let resolveSecondary!: (word: typeof overrideWord) => void;
+  const secondarySelection = new Promise<typeof overrideWord>((resolve) => {
+    resolveSecondary = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      scope: { listId?: string } = {},
+    ) =>
+      scope.listId === secondaryList.id
+        ? secondarySelection
+        : Promise.resolve(mockWord),
+  );
+  updateActiveTrainingScope.mockResolvedValue({
+    scope: {
+      ...defaultActiveTrainingScope,
+      activeListId: secondaryList.id,
+      activeListType: secondaryList.type,
+      activeScenario: "listening",
+      hasSavedScope: true,
+    },
+    error: null,
+  });
 
   try {
     render(<TrainingScreen user={user} />);
@@ -1733,14 +1763,27 @@ test("footer list selector still changes active training scope", async () => {
         );
       }),
     ).toBe(true);
+    await act(async () => resolveSecondary(overrideWord));
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
   }
 });
 
 test("footer language selector switches current training language without changing defaults", async () => {
+  let resolveEnglishScope!: (scope: ActiveTrainingScope) => void;
+  const englishScope = new Promise<ActiveTrainingScope>(
+    (resolve) => {
+      resolveEnglishScope = resolve;
+    },
+  );
   fetchActiveTrainingScope.mockImplementation(
-    async ({ languageCode }: { languageCode: string }) => ({
+    async ({ languageCode }: { languageCode: string }) => {
+      const scope = {
       ...defaultActiveTrainingScope,
       languageCode,
       activeListId: languageCode === "en" ? secondaryList.id : activeList.id,
@@ -1751,7 +1794,9 @@ test("footer language selector switches current training language without changi
         languageCode === "en" ? ["listen-recognize"] : ["word-to-definition"],
       newReviewRatio: languageCode === "en" ? 1 : 2,
       hasSavedScope: true,
-    }),
+      };
+      return languageCode === "en" ? englishScope : scope;
+    },
   );
   fetchListSummaryById.mockImplementation(
     async ({ listId }: { listId: string }) =>
@@ -1779,6 +1824,7 @@ test("footer language selector switches current training language without changi
 
     fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
     fireEvent.click(screen.getByRole("button", { name: /Nederlands/ }));
+    fetchNextTrainingWordByScenario.mockClear();
     fireEvent.click(await screen.findByRole("button", { name: /English/ }));
 
     await waitFor(() =>
@@ -1787,12 +1833,39 @@ test("footer language selector switches current training language without changi
         languageCode: "en",
       }),
     );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
+    await act(async () =>
+      resolveEnglishScope({
+        ...defaultActiveTrainingScope,
+        languageCode: "en",
+        activeListId: secondaryList.id,
+        activeListType: "curated",
+        activeScenario: "listening",
+        cardFilter: "review",
+        modesEnabled: ["listen-recognize"],
+        newReviewRatio: 1,
+        hasSavedScope: true,
+      }),
+    );
     await waitFor(() =>
       expect(
         within(footerScope).getByText(
           "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
         ),
       ).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+          const scope = call[3] as { listId?: string };
+          return call[1] === "listening" && scope.listId === secondaryList.id;
+        }),
+      ).toBe(true),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /English/ }));

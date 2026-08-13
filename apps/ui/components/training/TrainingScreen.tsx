@@ -224,17 +224,8 @@ export function TrainingScreen({
     DEFAULT_LANGUAGE_OPTIONS,
   );
   const trainingLanguageManuallyChangedRef = useRef(false);
-  const beginSessionScopeChangeRef = useRef<() => void>(() => undefined);
-
-  useEffect(() => {
-    if (
-      !trainingLanguageManuallyChangedRef.current &&
-      currentTrainingLanguage !== language
-    ) {
-      beginSessionScopeChangeRef.current();
-      setCurrentTrainingLanguage(language);
-    }
-  }, [currentTrainingLanguage, language]);
+  const languageHydrationPendingRef = useRef(false);
+  const languageHydrationObservedNotReadyRef = useRef(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -403,41 +394,6 @@ export function TrainingScreen({
   });
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!activeTrainingScope) return;
-    beginSessionScopeChangeRef.current();
-    setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
-    setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
-    setEnabledModes(activeTrainingScope.modesEnabled as TrainingMode[], {
-      persist: false,
-    });
-    setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
-  }, [
-    activeTrainingScope,
-    setActiveScenario,
-    setCardFilterPreference,
-    setEnabledModes,
-    setNewReviewRatio,
-  ]);
-
-  useEffect(() => {
-    if (!activeList?.default_scenario_id) {
-      appliedDefaultScenarioListRef.current = null;
-      return;
-    }
-    if (activeTrainingScope?.hasSavedScope) return;
-    if (appliedDefaultScenarioListRef.current === activeList.id) return;
-
-    appliedDefaultScenarioListRef.current = activeList.id;
-    beginSessionScopeChangeRef.current();
-    setActiveScenario(activeList.default_scenario_id, { persist: false });
-  }, [
-    activeList?.default_scenario_id,
-    activeList?.id,
-    activeTrainingScope?.hasSavedScope,
-    setActiveScenario,
-  ]);
 
   const enabledModesKey = enabledModes.join("|");
 
@@ -648,11 +604,83 @@ export function TrainingScreen({
     reviewLegacy,
     refreshAfterAccepted,
   });
-  beginSessionScopeChangeRef.current = beginSessionScopeChange;
+
+  useEffect(() => {
+    if (
+      !trainingLanguageManuallyChangedRef.current &&
+      currentTrainingLanguage !== language
+    ) {
+      beginSessionScopeChange();
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
+      setCurrentTrainingLanguage(language);
+    }
+  }, [
+    beginSessionScopeChange,
+    currentTrainingLanguage,
+    language,
+  ]);
+
+  useEffect(() => {
+    if (!activeTrainingScope) return;
+    const nextModes = activeTrainingScope.modesEnabled as TrainingMode[];
+    const scopeChanged =
+      activeScenario !== activeTrainingScope.activeScenario ||
+      cardFilter !== activeTrainingScope.cardFilter ||
+      enabledModes.join("|") !== nextModes.join("|");
+    if (scopeChanged) beginSessionScopeChange();
+    if (activeScenario !== activeTrainingScope.activeScenario) {
+      setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
+    }
+    if (cardFilter !== activeTrainingScope.cardFilter) {
+      setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
+    }
+    if (enabledModes.join("|") !== nextModes.join("|")) {
+      setEnabledModes(nextModes, { persist: false });
+    }
+    if (newReviewRatio !== activeTrainingScope.newReviewRatio) {
+      setNewReviewRatio(activeTrainingScope.newReviewRatio, { persist: false });
+    }
+  }, [
+    activeScenario,
+    activeTrainingScope,
+    beginSessionScopeChange,
+    cardFilter,
+    enabledModes,
+    newReviewRatio,
+    setActiveScenario,
+    setCardFilterPreference,
+    setEnabledModes,
+    setNewReviewRatio,
+  ]);
+
+  useEffect(() => {
+    if (!activeList?.default_scenario_id) {
+      appliedDefaultScenarioListRef.current = null;
+      return;
+    }
+    if (activeTrainingScope?.hasSavedScope) return;
+    if (appliedDefaultScenarioListRef.current === activeList.id) return;
+
+    appliedDefaultScenarioListRef.current = activeList.id;
+    if (activeScenario !== activeList.default_scenario_id) {
+      beginSessionScopeChange();
+      setActiveScenario(activeList.default_scenario_id, { persist: false });
+    }
+  }, [
+    activeList?.default_scenario_id,
+    activeList?.id,
+    activeScenario,
+    activeTrainingScope?.hasSavedScope,
+    beginSessionScopeChange,
+    setActiveScenario,
+  ]);
 
   const handleTrainingLanguageChange = useCallback(
     (value: string) => {
       beginSessionScopeChange();
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
       trainingLanguageManuallyChangedRef.current = true;
       setCurrentTrainingLanguage(value);
     },
@@ -662,8 +690,19 @@ export function TrainingScreen({
   useEffect(() => {
     const nextKey = `${currentTrainingLanguage}|${enabledModesKey}`;
     if (lastReloadedLanguageModeScopeRef.current === nextKey) return;
+    if (languageHydrationPendingRef.current) {
+      if (!listHydrated) {
+        languageHydrationObservedNotReadyRef.current = true;
+        return;
+      }
+      if (!languageHydrationObservedNotReadyRef.current) return;
+      languageHydrationPendingRef.current = false;
+      languageHydrationObservedNotReadyRef.current = false;
+    } else if (!listHydrated) {
+      return;
+    }
+    if (!initialLoadDone.current) return;
     lastReloadedLanguageModeScopeRef.current = nextKey;
-    if (!initialLoadDone.current || !listHydrated) return;
     void loadNextWord();
   }, [currentTrainingLanguage, enabledModesKey, listHydrated, loadNextWord]);
 
