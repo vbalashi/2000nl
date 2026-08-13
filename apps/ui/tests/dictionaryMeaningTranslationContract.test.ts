@@ -301,24 +301,62 @@ describe("dictionary meaning translation contract", () => {
     ).toThrow("contentTranslations[0].text exceeds");
   });
 
-  test("allows no entry translation for an idiom-only meaning", () => {
-    const idiomRequest: DictionaryMeaningTranslationRequestV1 = {
-      ...request,
-      content: [
-        {
-          fieldId: "idiom:0",
-          role: "idiom",
-          text: "zich te goed doen aan iets",
+  test("deterministically removes an invented entry translation for an idiom-only meaning", () => {
+    const idiomRequest = buildDictionaryMeaningTranslationRequest({
+      entryId: "1e68e8d1-0cb4-43db-ae1b-eccdd58bd83c",
+      sourceContentFingerprint: "goed-meaning-4-revision",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: {
+        headword: "goed",
+        gender: "het",
+        part_of_speech: "zn",
+        raw: {
+          meanings: [
+            {
+              definition: "",
+              context: "",
+              examples: [],
+              idioms: [
+                {
+                  expression: "zich te goed doen aan iets",
+                  explanation: "iets lekker opeten of opdrinken",
+                  examples: [
+                    "toen ik thuiskwam, zag ik dat de kat zich te goed had gedaan aan de kaas!",
+                  ],
+                },
+              ],
+            },
+          ],
         },
-      ],
-    };
+      },
+    });
+
+    expect(idiomRequest.content.map((item) => item.role)).toEqual([
+      "idiom",
+      "idiom-explanation",
+      "example",
+    ]);
 
     expect(
       parseDictionaryMeaningTranslationResult(
         JSON.stringify({
-          entryTranslation: null,
+          entryTranslation: {
+            primaryText: "добро",
+            alternativeTexts: ["благо"],
+            baseText: "добро",
+            note: null,
+          },
           contentTranslations: [
             { fieldId: "idiom:0", text: "полакомиться чем-либо" },
+            {
+              fieldId: "idiom:0:explanation",
+              text: "с удовольствием съесть или выпить что-либо",
+            },
+            {
+              fieldId: "idiom:0:example:0",
+              text: "Кошка с удовольствием съела сыр.",
+            },
           ],
         }),
         idiomRequest,
@@ -327,6 +365,14 @@ describe("dictionary meaning translation contract", () => {
       entryTranslation: null,
       contentTranslations: [
         { fieldId: "idiom:0", text: "полакомиться чем-либо" },
+        {
+          fieldId: "idiom:0:explanation",
+          text: "с удовольствием съесть или выпить что-либо",
+        },
+        {
+          fieldId: "idiom:0:example:0",
+          text: "Кошка с удовольствием съела сыр.",
+        },
       ],
     });
   });

@@ -336,9 +336,22 @@ export function parseDictionaryMeaningTranslationResult(
   });
 
   return {
-    entryTranslation,
+    entryTranslation: isIdiomOnlyDictionaryMeaningRequest(request)
+      ? null
+      : entryTranslation,
     contentTranslations,
   };
+}
+
+export function isIdiomOnlyDictionaryMeaningRequest(
+  request: DictionaryMeaningTranslationRequestV1,
+) {
+  const roles = new Set(request.content.map((item) => item.role));
+  return (
+    roles.has("idiom") &&
+    !roles.has("definition") &&
+    !roles.has("usage-pattern")
+  );
 }
 
 function strictRecord(
