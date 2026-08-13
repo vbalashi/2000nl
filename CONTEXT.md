@@ -92,3 +92,15 @@ _Avoid_: meaning, headword group, card
 **Cross-reference Entry**:
 A dictionary lookup record that redirects to another headword or meaning and has no independent learnable meaning content.
 _Avoid_: empty SenseCard, synonym
+
+**Feedback Item**:
+A durable, reviewable learner report about one classified product or content problem. It retains the stable target, category, whether a learner comment was supplied, an optional admin-authored sanitized summary, review status, and any manually linked follow-up after temporary diagnostics expire; raw learner prose expires with its Diagnostic Envelope.
+_Avoid_: diagnostic dump, GitHub issue, support ticket
+
+**Diagnostic Report**:
+One intentional learner submission that combines a Feedback Item with bounded evidence about the current 2000NL operation. A retry of its delivery is still the same Diagnostic Report; a later Report action is a new one.
+_Avoid_: telemetry event, log bundle, crash dump
+
+**Diagnostic Envelope**:
+The temporary, size-bounded evidence attached to a Diagnostic Report for internal review. It contains the bounded learner comment, exact authorized current-card projection, and allowlisted 2000NL observations; it is not the durable Feedback Item or a GitHub issue body.
+_Avoid_: browser snapshot, raw request, console log
