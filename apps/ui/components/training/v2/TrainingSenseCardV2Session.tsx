@@ -504,7 +504,7 @@ function SessionV2Failure({
   onRetry,
   onExit,
 }: {
-  state: Exclude<TrainingV2SessionState, "loading" | "ready" | "listening-mode">;
+  state: Exclude<TrainingV2SessionState, "loading" | "ready">;
   interfaceLanguage: OnboardingLanguage;
   detail: string | null;
   onRetry: () => void;

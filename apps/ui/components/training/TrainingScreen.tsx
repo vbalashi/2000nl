@@ -2168,7 +2168,10 @@ export function TrainingScreen({
   const handleEnterTrainingSession = useCallback(() => {
     reviewedInSessionRef.current.clear();
   }, []);
-  const { cardOrdinal: sessionCardOrdinal } = useTrainingSessionPresentation({
+  const {
+    cardOrdinal: sessionCardOrdinal,
+    isSubsequentCard: isSubsequentSessionCard,
+  } = useTrainingSessionPresentation({
     surface: trainingPilot.surface,
     presentedCardKey: currentWord
       ? trainingCardKey(currentWord, currentMode)
@@ -2454,7 +2457,7 @@ export function TrainingScreen({
                           )}
                           {trainingSessionV2Enabled && currentWord ? (
                             <TrainingSenseCardV2Session
-                              key={`${user.id}:${currentWord.id}:${currentMode}:${currentTrainingLanguage}:${translationLang}`}
+                              key={`${user.id}:${currentWord.id}:${currentMode}`}
                               cacheOwnerId={user.id}
                               nextTransitionId={nextTransitionId ?? undefined}
                               word={currentWord}
@@ -2466,9 +2469,7 @@ export function TrainingScreen({
                                   : translationLang
                               }
                               interfaceLanguage={onboardingLang}
-                              focusOnPresentation={
-                                reviewedInSessionRef.current.size > 0
-                              }
+                              focusOnPresentation={isSubsequentSessionCard}
                               onPlayResolvedAudio={(url, label) =>
                                 playAudio(url, label)
                               }

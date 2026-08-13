@@ -54,7 +54,6 @@ export function TrainingSenseCardStage({
   const stageRef = React.useRef<HTMLElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
-  const previousEntryIdRef = React.useRef(model.entryId);
   const previousAnswerVisibleRef = React.useRef(answerVisible);
   const [announcement, setAnnouncement] = React.useState("");
   const t = React.useCallback(
@@ -75,16 +74,10 @@ export function TrainingSenseCardStage({
   }, [focusOnMount]);
 
   React.useEffect(() => {
-    const entryChanged = previousEntryIdRef.current !== model.entryId;
-    previousEntryIdRef.current = model.entryId;
     setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
-    if (entryChanged) {
-      setAnnouncement(t("senseCard.training.cardChanged"));
-      window.requestAnimationFrame(() => stageRef.current?.focus());
-    }
-  }, [model.entryId, t]);
+  }, [model.entryId]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;
