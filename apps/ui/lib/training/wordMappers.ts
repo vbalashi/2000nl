@@ -3,7 +3,6 @@ import type {
   AvailableDictionarySource,
   AvailableLearningLanguage,
   DictionaryEntry,
-  SidebarHistoryItem,
   TrainingScenario,
   WordListSummary,
   WordRaw,
@@ -153,13 +152,3 @@ export const mapScenario = (data: any): TrainingScenario => ({
   enabled: data.enabled ?? true,
   sortOrder: data.sort_order ?? 0,
 });
-
-export const mapEventTypeToResult = (
-  eventType: string,
-): SidebarHistoryItem["result"] => {
-  if (eventType === "review_fail") return "fail";
-  if (eventType === "review_hard") return "hard";
-  if (eventType === "review_success") return "success";
-  if (eventType === "review_easy") return "easy";
-  return "neutral";
-};

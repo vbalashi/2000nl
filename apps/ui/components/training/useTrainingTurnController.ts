@@ -68,10 +68,7 @@ type Inputs = {
   preloadAudio: (word: TrainingWord) => void;
   resetCardPresentation: () => void;
   reviewLegacy: (request: LegacyTrainingReviewRequest) => Promise<unknown>;
-  refreshAfterAccepted: (input: {
-    statsLabel: string;
-    refreshHistory: boolean;
-  }) => Promise<void>;
+  refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
 };
 
 const isPlatformV2TrainingMode = (
@@ -404,7 +401,7 @@ export function useTrainingTurnController(input: Inputs) {
   const finishAcceptedCardTransition = useCallback(
     async (
       transition: AcceptedCardTransition,
-      options: { statsLabel: string; refreshHistory: boolean },
+      options: { statsLabel: string },
     ) => {
       const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
         trainingDebug.log("Training counters refresh failed", cause);
@@ -463,7 +460,6 @@ export function useTrainingTurnController(input: Inputs) {
         }
         await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (${result})`,
-          refreshHistory: false,
         });
       } finally {
         actionLoadingRef.current = false;
@@ -488,7 +484,6 @@ export function useTrainingTurnController(input: Inputs) {
         if (!transition) return;
         await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (platform-v2)`,
-          refreshHistory: true,
         });
       } finally {
         actionLoadingRef.current = false;

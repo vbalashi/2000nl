@@ -13,8 +13,6 @@ export type UserPreferences = {
   activeScenario: string;
   /** Target language for dictionary tooltips (null = disabled) */
   translationLang: string | null;
-  /** Whether the training sidebar is pinned open on desktop */
-  trainingSidebarPinned: boolean;
   /** Flexible JSON preferences for features that don't need dedicated columns */
   preferences: {
     onboardingCompleted?: boolean;
@@ -35,7 +33,7 @@ export async function fetchUserPreferences(
     supabase
       .from("user_settings")
       .select(
-          "theme_preference, audio_quality, translation_lang, training_sidebar_pinned, preferences",
+          "theme_preference, audio_quality, translation_lang, preferences",
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -88,7 +86,6 @@ export async function fetchUserPreferences(
     newReviewRatio: learningData?.new_review_ratio ?? 2,
     activeScenario: learningData?.active_scenario ?? "understanding",
     translationLang,
-    trainingSidebarPinned: Boolean(appData?.training_sidebar_pinned ?? false),
     preferences,
     trainingMode: modesEnabled[0],
   };
@@ -104,7 +101,6 @@ export async function updateUserPreferences(params: {
   newReviewRatio?: number;
   activeScenario?: string;
   translationLang?: string | null;
-  trainingSidebarPinned?: boolean;
   preferences?: Record<string, any>;
   /** @deprecated Use modesEnabled instead */
   trainingMode?: TrainingMode;
@@ -140,9 +136,6 @@ export async function updateUserPreferences(params: {
   }
   if (params.translationLang !== undefined) {
     updates.translation_lang = params.translationLang;
-  }
-  if (params.trainingSidebarPinned !== undefined) {
-    updates.training_sidebar_pinned = params.trainingSidebarPinned;
   }
   // Handle preferences JSONB field
   if (params.preferences !== undefined) {

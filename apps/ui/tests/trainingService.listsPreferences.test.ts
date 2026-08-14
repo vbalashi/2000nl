@@ -973,7 +973,6 @@ describe("trainingService list and preference characterization", () => {
         theme_preference: null,
         audio_quality: null,
         translation_lang: "off",
-        training_sidebar_pinned: null,
         preferences: { onboardingCompleted: true },
       },
       error: null,
@@ -999,7 +998,6 @@ describe("trainingService list and preference characterization", () => {
       newReviewRatio: 2,
       activeScenario: "understanding",
       translationLang: "off",
-      trainingSidebarPinned: false,
       preferences: { onboardingCompleted: true },
       trainingMode: "definition-to-word",
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type Dispatch, type SetStateAction } from "react";
+import { useCallback } from "react";
 import {
   fetchLastReviewDebug,
   recordReview,
@@ -9,7 +9,6 @@ import {
 import { trainingDebug } from "@/lib/trainingDebug";
 import type {
   DetailedStats,
-  SidebarHistoryItem,
   TrainingMode,
   TrainingWord,
 } from "@/lib/types";
@@ -25,13 +24,11 @@ export type LegacyTrainingReviewRequest = {
 type Inputs = {
   userId: string;
   stats: DetailedStats;
-  setRecentEntries: Dispatch<SetStateAction<SidebarHistoryItem[]>>;
 };
 
 export function useLegacyTrainingReviewPort({
   userId,
   stats,
-  setRecentEntries,
 }: Inputs) {
   return useCallback(
     async ({
@@ -78,89 +75,10 @@ export function useLegacyTrainingReviewPort({
         });
       }
 
-      if (isGradedReview(result)) {
-        setRecentEntries((previous) => [
-          buildHistoryItem({
-            word,
-            mode,
-            result,
-            updatedStatus,
-            beforeInterval,
-            beforeStability,
-          }),
-          ...previous,
-        ].slice(0, 50));
-      }
-
       return updatedStatus;
     },
-    [setRecentEntries, stats, userId],
+    [stats, userId],
   );
-}
-
-function isGradedReview(
-  result: ReviewResult,
-): result is "fail" | "hard" | "success" | "easy" {
-  return result === "fail" || result === "hard" || result === "success" || result === "easy";
-}
-
-function buildHistoryItem({
-  word,
-  mode,
-  result,
-  updatedStatus,
-  beforeInterval,
-  beforeStability,
-}: {
-  word: TrainingWord;
-  mode: TrainingMode;
-  result: "fail" | "hard" | "success" | "easy";
-  updatedStatus: WordStatusAfterReview | null;
-  beforeInterval?: number;
-  beforeStability?: number;
-}): SidebarHistoryItem {
-  let displayInterval = updatedStatus?.interval ?? undefined;
-  if (
-    displayInterval == null &&
-    updatedStatus?.in_learning &&
-    updatedStatus.learning_due_at
-  ) {
-    const dueAt = new Date(updatedStatus.learning_due_at).getTime();
-    displayInterval = Math.max(
-      0,
-      (dueAt - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-  }
-
-  return {
-    id: word.id,
-    headword: word.headword,
-    part_of_speech: word.part_of_speech,
-    gender: word.gender,
-    raw: word.raw,
-    source: "review",
-    result,
-    is_nt2_2000: word.is_nt2_2000,
-    meanings_count: word.meanings_count,
-    stats: {
-      click_count: updatedStatus?.clicks ?? word.debugStats?.clicks ?? 0,
-      last_seen_at: new Date().toISOString(),
-    },
-    debugStats: {
-      source: word.debugStats?.source ?? "review",
-      mode,
-      interval: displayInterval,
-      reps: updatedStatus?.reps ?? undefined,
-      ef: updatedStatus?.stability ?? undefined,
-      clicks: updatedStatus?.clicks ?? undefined,
-      next_review:
-        updatedStatus?.next_review ??
-        updatedStatus?.learning_due_at ??
-        undefined,
-      previousInterval: beforeInterval,
-      previousStability: beforeStability,
-    },
-  };
 }
 
 async function logReviewTransition({

@@ -61,6 +61,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Added dictionary lookup characterization and continued Stage 2 by moving training-word/dictionary lookup helpers into `apps/ui/lib/training/dictionaryService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added review side-effect characterization and moved review/view/click/debug helpers into `apps/ui/lib/training/reviewService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added stats/history characterization and moved detailed stats plus recent-history hydration into `apps/ui/lib/training/statsHistoryService.ts` behind the `trainingService.ts` barrel.
+- 2026-08-14: Issue #141 retired the permanent Training sidebar, standalone Recent tab, eager recent-history client load, sidebar-pinning preference, and their client-only DTO/service code. `fetchStats` now lives in `apps/ui/lib/training/statsService.ts`; the legacy DB column/RPC remain only for rollback compatibility and are not called by the current UI.
 - 2026-05-16: Continued Stage 2 by moving list summary and active-list helpers into `apps/ui/lib/training/listService.ts` behind the `trainingService.ts` barrel; search/list words/mutations remain for the next slice.
 - 2026-05-16: Completed the remaining list/search split by moving word search, list word loading, user-list mutations, and membership helpers into `apps/ui/lib/training/listService.ts`; `trainingService.ts` still re-exports the public API and only imports `fetchWordsForList` for legacy next-card fallback.
 - 2026-05-16: Completed the selection split by moving next-card selection, scenario lookup, scenario stats, cross-reference skipping, debug logging, and legacy list fallback into `apps/ui/lib/training/selectionService.ts`; `trainingService.ts` is now a compatibility barrel.
@@ -127,7 +128,7 @@ Current responsibilities:
 - Training-word lookup and next-card RPC selection.
 - Scenario RPCs and scenario stats.
 - Review, click, and optional FSRS debug RPCs.
-- Detailed training stats and recent-history hydration.
+- Detailed training stats.
 - Curated/user list listing, word search, list word search, list membership and active-list persistence.
 - User preferences read/write and defaults.
 - Compatibility fallbacks for older DB/RPC deployments.
@@ -135,27 +136,27 @@ Current responsibilities:
 Main coupling points:
 
 - `TrainingScreen.tsx` imports most exports directly.
-- `SettingsModal`, `Sidebar`, and list-management UI likely depend on list/search/preference exports.
+- `SettingsModal`, the details-only drawer, and list-management UI depend on list/search/preference exports.
 - FSRS tests depend on review/session behavior and RPC signatures.
 
 ### `apps/ui/components/training/TrainingScreen.tsx`
 
 Current responsibilities:
 
-- Training session orchestration: current card, reveal state, first encounter behavior, action submission, prefetch, review history updates.
-- User preference hydration and persistence: modes, filter, language, theme, audio quality, translation language, active scenario, new/review ratio, sidebar pinning.
+- Training session orchestration: current card, reveal state, first encounter behavior, action submission, and prefetch.
+- User preference hydration and persistence: modes, filter, language, theme, audio quality, translation language, active scenario, and new/review ratio.
 - Active list hydration, auto-selection, list switching, settings refresh.
-- Stats and recent-history loading.
+- Stats loading.
 - Onboarding/Joyride state and persistence.
 - Keyboard shortcuts and mobile swipe gestures.
 - Audio URL resolution, audio playback, sentence TTS, audio mode persistence.
-- Sidebar/drawer state, details selection, dictionary click lookup.
+- Details-drawer state, details selection, dictionary click lookup.
 - Full screen/header/card/footer/modal JSX composition.
 
 Main coupling points:
 
 - Calls `trainingService` directly for every data operation.
-- Passes many state slices into `TrainingCard`, `FooterStats`, `Sidebar`, `TrainingSidebarDrawer`, and `SettingsModal`.
+- Passes presentation state into `TrainingCard`, `FooterStats`, `TrainingDetailsDrawer`, `WordDetailPanel`, and `SettingsModal`.
 - Local state changes are intentionally intertwined with current UI behavior, so extraction should start with hooks that preserve the existing prop flow.
 
 ### `apps/ui/components/training/TrainingCard.tsx`
@@ -199,8 +200,8 @@ Medium-risk modules:
   - Move `fetchNextTrainingWord`, `fetchNextTrainingWordByScenario`, cross-reference skipping, RPC payload construction, and list fallback behavior.
 - `apps/ui/lib/training/reviewService.ts`
   - Move `recordReview`, `recordWordView`, `recordDefinitionClick`, and `fetchLastReviewDebug`.
-- `apps/ui/lib/training/statsHistoryService.ts`
-  - Move `fetchStats` and `fetchRecentHistory`.
+- `apps/ui/lib/training/statsService.ts`
+  - Own `fetchStats`; the retired Recent surface has no client history service.
 - Keep `apps/ui/lib/trainingService.ts` as a compatibility barrel during the refactor so existing imports do not churn.
 
 Do not split the Supabase client or replace query logic during this pass.
@@ -210,7 +211,7 @@ Do not split the Supabase client or replace query logic during this pass.
 Low-risk hooks/helpers:
 
 - `apps/ui/lib/training/useTrainingPreferences.ts`
-  - Own preference hydration plus persisted setters for theme, audio quality, modes, filter, language, ratio, translation language, scenario, and sidebar pinning.
+  - Own preference hydration plus persisted setters for theme, audio quality, modes, filter, language, ratio, translation language, and scenario.
   - Preserve existing setter names in the returned object to minimize call-site edits.
 - `apps/ui/lib/training/useTrainingAudio.ts`
   - Own `audioModeEnabled` localStorage persistence, `ttsLoading`, `resolveAudioUrl`, `preloadAudioForWord`, `playAudio`, and `playSentenceTTS`.
@@ -379,7 +380,7 @@ Files:
 - Add `apps/ui/lib/training/preferencesService.ts`.
 - Add `apps/ui/lib/training/selectionService.ts`.
 - Add `apps/ui/lib/training/reviewService.ts`.
-- Add `apps/ui/lib/training/statsHistoryService.ts`.
+- Add `apps/ui/lib/training/statsService.ts`.
 - Keep `apps/ui/lib/trainingService.ts` re-exporting all existing public functions and types.
 - Do not update component imports in the first pass.
 

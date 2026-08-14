@@ -40,7 +40,7 @@ and the linked full contract.
 - Learning preferences that affect scheduling/training semantics. These are
   accessed through RPCs such as `get_learning_preferences` and
   `update_learning_preferences`.
-- App-local UI preferences such as theme, sidebar pinning, translation language,
+- App-local UI preferences such as theme, translation language,
   onboarding JSON, and audio quality. The first-party `apps/ui` service may
   read/write these columns directly under Supabase RLS because they are not a
   dictionary/platform boundary. If any of these settings becomes shared across

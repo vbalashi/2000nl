@@ -5,17 +5,12 @@ import React from "react";
 type Props = {
   open: boolean;
   onClose: () => void;
-  title?: string;
-  /** When true, the drawer can appear on desktop too (>= lg). */
-  showOnDesktop?: boolean;
   children: React.ReactNode;
 };
 
-export function TrainingSidebarDrawer({
+export function TrainingDetailsDrawer({
   open,
   onClose,
-  title = "Recent & details",
-  showOnDesktop = false,
   children,
 }: Props) {
   const [swipeOffset, setSwipeOffset] = React.useState(0);
@@ -91,7 +86,7 @@ export function TrainingSidebarDrawer({
   const overlayOpacity = Math.max(0.1, 0.3 - swipeOffset / 700);
 
   return (
-    <div className={`fixed inset-0 z-40${showOnDesktop ? "" : " lg:hidden"}`}>
+    <div className="fixed inset-0 z-40">
       <div
         className="absolute inset-0 bg-black/30"
         style={{ opacity: overlayOpacity }}
@@ -108,9 +103,9 @@ export function TrainingSidebarDrawer({
           }}
         >
           <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-            {/* Title is intentionally not shown (tabs already label content). */}
-            <span className="sr-only">{title}</span>
-            {/* Spacer so the close button sits on the right (sr-only is absolute). */}
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Details
+            </span>
             <div className="flex-1" />
 
             <button
