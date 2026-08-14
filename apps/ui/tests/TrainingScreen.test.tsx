@@ -156,7 +156,6 @@ const fetchStats = vi.fn().mockResolvedValue({
   totalWordsLearned: 0,
   totalWordsInList: 2000,
 });
-const fetchRecentHistory = vi.fn().mockResolvedValue([]);
 const prefetchPlatformV2TrainingEntry = vi.fn();
 const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
   state: "ready",
@@ -380,7 +379,6 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingScenarios,
   isTrainingFocusFilterActive,
   fetchStats,
-  fetchRecentHistory,
   fetchActiveTrainingScope,
   fetchListSummaryById,
   fetchAvailableLists,
@@ -607,16 +605,6 @@ test("does not expose Recent through the global R shortcut", async () => {
     activeScenario: "understanding",
     translationLang: null,
   });
-});
-
-test("ordinary card presentation does not request recent training history", async () => {
-  fetchRecentHistory.mockClear();
-
-  render(<TrainingScreen user={user} />);
-
-  await screen.findByRole("heading", { name: "huis" });
-  await waitFor(() => expect(fetchStats).toHaveBeenCalled());
-  expect(fetchRecentHistory).not.toHaveBeenCalled();
 });
 
 test("legacy card details open without exposing the retired Recent tab", async () => {

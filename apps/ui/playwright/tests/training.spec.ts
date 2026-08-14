@@ -582,6 +582,7 @@ test("training flow persists review and dictionary lookup", async ({
   // Grade the card to advance to the next word.
   await page.getByRole("button", { name: "Begin met leren" }).click();
   await expect(page.locator("h1")).toHaveText(/gracht/i);
+  expect(recentHistoryRequests).toEqual([]);
 });
 
 test("dictionary search and lists surfaces render", async ({ page }) => {

@@ -1,10 +1,10 @@
 # App Behavior Features: Training UX
 
-### Left-Edge Swipe Navigation (Recent Opgezocht)
+### Left-Edge Swipe Navigation (Details Drawer)
 **Added:** 2026-01-29
 **User Story:** US-071.1
 
-Edge swipe closes the Recent opgezocht panel instead of triggering back navigation.
+Edge swipe closes the on-demand word-details drawer instead of triggering back navigation. The former permanent Recent panel was retired by issue #141.
 
 ### Audio Mode Definition Playback
 **Added:** 2026-01-29
@@ -100,13 +100,13 @@ First encounters use a dedicated two-button flow and W→D direction.
 **Added:** 2026-01-13
 **User Story:** US-001
 
-Unknown taps produce explicit sidebar feedback.
+Unknown taps produce an explicit in-session lookup notice without creating a history/sidebar item.
 
 ### Badge Tooltips
 **Added:** 2026-01-13 and 2026-01-14
 **User Stories:** US-003, US-004
 
-Main card and sidebar badges use shared tooltip styling.
+Main-card and word-detail badges use shared tooltip styling.
 
 ## Recent Changes Summary
 
