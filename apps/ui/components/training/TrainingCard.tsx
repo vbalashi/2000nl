@@ -198,46 +198,21 @@ export function TrainingCard({
   const isWordToDefinition = mode === "word-to-definition";
   const isListenRecognize = mode === "listen-recognize";
 
-  // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
-  // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
-  const definitionPromptText = (() => {
-    const primaryDefinition = revealed
-      ? primaryMeaning.definition
-      : hidePerfectParticiple(primaryMeaning.definition);
-    if (!primaryDefinition) return primaryDefinition;
-    if (isWordToDefinition || revealed) return primaryDefinition;
-    return maskTargetWordInDefinition(primaryDefinition, card.headword);
+  const primaryPrompt = primaryMeaning.prompt;
+  const isIdiomOnlyMeaning = primaryPrompt.kind !== "definition";
+  const promptText: string = (() => {
+    if (primaryPrompt.kind !== "definition") return primaryPrompt.text;
+    const definition = revealed
+      ? primaryPrompt.text
+      : hidePerfectParticiple(primaryPrompt.text) ?? primaryPrompt.text;
+    if (!definition || isWordToDefinition || revealed) return definition;
+    return maskTargetWordInDefinition(definition, card.headword);
   })();
-
-  const definitionSegments = buildSegments(
-    definitionPromptText ?? "",
+  const promptSegments = buildSegments(promptText, primaryMeaning.links);
+  const primaryDefinitionSegments = buildSegments(
+    primaryMeaning.definition,
     primaryMeaning.links
   );
-
-  const primaryIdiom = primaryMeaning.idioms?.[0];
-  const hasPrimaryDefinitionText = Boolean(primaryMeaning.definition?.trim());
-  const isIdiomOnlyMeaning = !hasPrimaryDefinitionText && Boolean(primaryIdiom);
-  const hasPrimaryIdiomExplanationText = Boolean(
-    primaryIdiom?.explanation?.trim()
-  );
-  const hasPrimaryIdiomExpressionText = Boolean(
-    primaryIdiom?.expression?.trim()
-  );
-  const idiomExpressionSegments = primaryIdiom
-    ? buildSegments(primaryIdiom.expression, primaryMeaning.links)
-    : null;
-  const idiomExplanationSegments = primaryIdiom
-    ? buildSegments(primaryIdiom.explanation, primaryMeaning.links)
-    : null;
-  const idiomPromptSegments = hasPrimaryIdiomExplanationText
-    ? idiomExplanationSegments
-    : hasPrimaryIdiomExpressionText
-    ? idiomExpressionSegments
-    : null;
-
-  // If we used the idiom explanation as the "question" prompt, avoid repeating it under the idiom on reveal.
-  const hidePrimaryIdiomExplanationOnReveal =
-    isIdiomOnlyMeaning && hasPrimaryIdiomExplanationText;
 
   const hasHintExample =
     isWordToDefinition && (primaryMeaning.examples?.length ?? 0) > 0;
@@ -585,8 +560,8 @@ export function TrainingCard({
                             ? meaningOrdinal
                             : 1}
                         </div>
-                        {isIdiomOnlyMeaning && idiomPromptSegments ? (
-                          hasPrimaryIdiomExplanationText ? (
+                        {isIdiomOnlyMeaning && primaryPrompt.text ? (
+                          primaryPrompt.kind === "idiom-explanation" ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
                             >
@@ -624,14 +599,14 @@ export function TrainingCard({
                   )}
 
                   <div className="text-left flex-1">
-                    {hasPrimaryDefinitionText ? (
+                    {primaryPrompt.kind === "definition" && primaryPrompt.text.trim() ? (
                       <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
-                          segments={definitionSegments}
+                          segments={promptSegments}
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
                           cursorStyle={wordCursorStyle}
-                          sentence={definitionPromptText ?? ""}
+                          sentence={promptText}
                         />
                         <InlineTranslation
                           align="left"
@@ -639,11 +614,11 @@ export function TrainingCard({
                           text={getTranslated(0, "definition")}
                         />
                       </div>
-                    ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
+                    ) : isIdiomOnlyMeaning && primaryPrompt.text ? (
                       <div className="flex items-start gap-3 flex-wrap">
                         <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                           <InteractiveText
-                            segments={idiomPromptSegments}
+                            segments={promptSegments}
                             highlightedWord={highlightedWord}
                             onWordClick={onWordClick}
                             cursorStyle={wordCursorStyle}
@@ -651,21 +626,11 @@ export function TrainingCard({
                           <InlineTranslation
                             align="left"
                             variant="definition"
-                            text={
-                              hasPrimaryIdiomExplanationText
-                                ? getTranslated(0, {
-                                    idiomIndex: 0,
-                                    idiomField: "explanation",
-                                  })
-                                : getTranslated(0, {
-                                    idiomIndex: 0,
-                                    idiomField: "expression",
-                                  })
-                            }
+                            text={getTranslated(0, primaryPrompt.translationTarget)}
                           />
                         </div>
                         {!showNumber &&
-                          (hasPrimaryIdiomExplanationText ? (
+                          (primaryPrompt.kind === "idiom-explanation" ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
                             >
@@ -936,7 +901,7 @@ export function TrainingCard({
                   {isListenRecognize && primaryMeaning.definition ? (
                     <div className="mx-auto flex w-full max-w-2xl flex-col items-start text-xl md:text-2xl leading-[1.4] font-medium text-slate-800 dark:text-slate-100">
                       <InteractiveText
-                        segments={definitionSegments}
+                        segments={primaryDefinitionSegments}
                         highlightedWord={highlightedWord}
                         onWordClick={onWordClick}
                         cursorStyle={wordCursorStyle}
@@ -1017,7 +982,8 @@ export function TrainingCard({
                                     {/* Explanation with separator */}
                                     {idiom.explanation?.trim() &&
                                       !(
-                                        hidePrimaryIdiomExplanationOnReveal && i === 0
+                                        primaryPrompt.suppressPrimaryIdiomExplanationOnReveal &&
+                                        i === 0
                                       ) && (
                                         <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
                                           <span className="text-slate-500 dark:text-slate-400 mr-2">

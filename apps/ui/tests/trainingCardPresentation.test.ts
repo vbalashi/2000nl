@@ -60,6 +60,12 @@ describe("projectTrainingCardPresentation", () => {
           },
         ],
         links: [{ label: "stad", headword: "stad" }],
+        prompt: {
+          kind: "definition",
+          text: "dat wat goed is",
+          translationTarget: "definition",
+          suppressPrimaryIdiomExplanationOnReveal: false,
+        },
       },
     ]);
   });
@@ -93,6 +99,41 @@ describe("projectTrainingCardPresentation", () => {
           explanation: "iets lekker opeten of opdrinken",
         },
       ],
+      prompt: {
+        kind: "idiom-explanation",
+        text: "iets lekker opeten of opdrinken",
+        translationTarget: { idiomIndex: 0, idiomField: "explanation" },
+        suppressPrimaryIdiomExplanationOnReveal: true,
+      },
+    });
+  });
+
+  test("falls back from an empty idiom explanation to its expression", () => {
+    const presentation = projectTrainingCardPresentation(
+      trainingWord({
+        id: "entry-expression-only",
+        headword: "nodig",
+        raw: {
+          meanings: [
+            {
+              definition: "",
+              idioms: [
+                {
+                  expression: "zo nodig",
+                  explanation: "",
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(presentation.meanings[0].prompt).toEqual({
+      kind: "idiom-expression",
+      text: "zo nodig",
+      translationTarget: { idiomIndex: 0, idiomField: "expression" },
+      suppressPrimaryIdiomExplanationOnReveal: false,
     });
   });
 
@@ -120,6 +161,12 @@ describe("projectTrainingCardPresentation", () => {
         examples: ["Wat een gedoe."],
         idioms: [],
         links: [{ label: "gedoe", headword: undefined }],
+        prompt: {
+          kind: "definition",
+          text: "hassle",
+          translationTarget: "definition",
+          suppressPrimaryIdiomExplanationOnReveal: false,
+        },
       },
     ]);
     expect(presentation.meaningCount).toBe(1);

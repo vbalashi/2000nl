@@ -392,6 +392,96 @@ test("W->D hint examples include left padding so text doesn't hug the edge", () 
   expect(hintSection).toHaveClass("px-2");
 });
 
+const idiomOnlyWord = {
+  id: "idiom-only",
+  headword: "goed",
+  part_of_speech: "zn",
+  raw: {
+    meanings: [
+      {
+        definition: "",
+        examples: [],
+        links: [],
+        idioms: [
+          {
+            expression: "iets komt ten goede aan iemand",
+            explanation: "iets is bestemd voor iemand",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+test("W->D reveal preserves an idiom-only expression and explanation", () => {
+  render(
+    <TrainingCard
+      card={projectTrainingCardPresentation(idiomOnlyWord as any)}
+      mode="word-to-definition"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(document.body).toHaveTextContent("iets is bestemd voor iemand");
+});
+
+test("D->W uses the projected idiom explanation prompt without repeating it on reveal", () => {
+  const card = projectTrainingCardPresentation(idiomOnlyWord as any);
+  const { rerender } = render(
+    <TrainingCard
+      card={card}
+      mode="definition-to-word"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets is bestemd voor iemand");
+  expect(document.body).not.toHaveTextContent("iets komt ten goede aan iemand");
+
+  rerender(
+    <TrainingCard
+      card={card}
+      mode="definition-to-word"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(
+    document.body.textContent?.split("iets is bestemd voor iemand"),
+  ).toHaveLength(2);
+});
+
+test("listening reveal follows the projected idiom explanation suppression", () => {
+  render(
+    <TrainingCard
+      card={projectTrainingCardPresentation(idiomOnlyWord as any)}
+      mode="listen-recognize"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(document.body).not.toHaveTextContent("iets is bestemd voor iemand");
+});
+
 test("renders user-entry-v1 translation-only cards", () => {
   const onWordClick = vi.fn();
   const userEntryWord = {
