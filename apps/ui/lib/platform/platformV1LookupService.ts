@@ -31,11 +31,6 @@ import {
   type PlatformTimingEntry,
 } from "./platformOperationTiming";
 
-function strictLookupRoutesEnabled() {
-  const value = process.env.PLATFORM_STRICT_LOOKUP_ROUTES;
-  return value !== "0" && value !== "false";
-}
-
 export async function performPlatformLookup(
   auth: AuthenticatedSupabase,
   params: {
@@ -72,38 +67,18 @@ export async function performPlatformLookup(
     intent,
   };
 
-  const useStrictLookup = strictLookupRoutesEnabled();
-  const usesSearchSemantics =
-    !useStrictLookup &&
-    (intent === "external-click" || Boolean(languageCode) || Boolean(contextText));
   const { data, error } = await measurePlatformTiming(timings, "lookup.db", () =>
-    useStrictLookup
-      ? rpcWithPlatformLookupTiming(
-          auth.supabase,
-          "lookup_dictionary_entries_v3",
-          {
-            p_query: query,
-            p_language_code: languageCode,
-            p_dictionary_ids: null,
-            p_limit: 10,
-          },
-          "authenticated",
-        )
-    : usesSearchSemantics
-      ? rpcWithPlatformLookupTiming(auth.supabase, "search_word_entries_gated", {
+    rpcWithPlatformLookupTiming(
+      auth.supabase,
+      "lookup_dictionary_entries_v3",
+      {
         p_query: query,
-        p_part_of_speech: null,
-        p_is_nt2: null,
-        p_filter_frozen: null,
-        p_filter_hidden: null,
-        p_page: 1,
-        p_page_size: 10,
         p_language_code: languageCode,
         p_dictionary_ids: null,
-      }, "authenticated")
-      : rpcWithPlatformLookupTiming(auth.supabase, "fetch_dictionary_entry_gated", {
-        p_headword: query,
-      }, "authenticated"),
+        p_limit: 10,
+      },
+      "authenticated",
+    ),
   );
   const serverTiming = () => formatPlatformServerTiming(timings);
 
@@ -115,11 +90,7 @@ export async function performPlatformLookup(
     };
   }
 
-  const rawEntries = useStrictLookup
-    ? (asRecord(data).items ?? data)
-    : usesSearchSemantics
-      ? asRecord(data).items
-      : data;
+  const rawEntries = asRecord(data).items ?? data;
   const entries = Array.isArray(rawEntries)
     ? (rawEntries as DictionaryLookupPayload[])
     : rawEntries
@@ -306,30 +277,17 @@ export async function performPlatformCatalogLookup(
     intent,
   };
 
-  const useStrictLookup = strictLookupRoutesEnabled();
   const { data, error } = await measurePlatformTiming(timings, "lookup.db", () =>
-    useStrictLookup
-      ? rpcWithPlatformLookupTiming(
-          service.supabase,
-          "lookup_public_catalog_entries_v1",
-          {
-            p_query: query,
-            p_language_code: languageCode,
-            p_limit: 10,
-          },
-          "catalog",
-        )
-      : rpcWithPlatformLookupTiming(
-          service.supabase,
-          "search_public_catalog_entries",
-          {
-            p_query: query,
-            p_language_code: languageCode,
-            p_page: 1,
-            p_page_size: 10,
-          },
-          "catalog",
-        ),
+    rpcWithPlatformLookupTiming(
+      service.supabase,
+      "lookup_public_catalog_entries_v1",
+      {
+        p_query: query,
+        p_language_code: languageCode,
+        p_limit: 10,
+      },
+      "catalog",
+    ),
   );
   const serverTiming = () => formatPlatformServerTiming(timings);
 
@@ -430,5 +388,4 @@ export async function performPlatformCatalogLookup(
     serverTiming: serverTiming(),
   };
 }
-
 
