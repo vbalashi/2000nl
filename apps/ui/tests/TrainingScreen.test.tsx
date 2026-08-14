@@ -219,10 +219,6 @@ const searchWordEntries = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
-const searchDictionaryEntriesV2 = vi.fn().mockResolvedValue({
-  items: [dictionaryHuis],
-  total: 1,
-});
 const searchDictionaryGroups = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -392,7 +388,6 @@ vi.mock("@/lib/trainingService", () => ({
   fetchAvailableLearningLanguages,
   fetchAvailableDictionarySources,
   fetchWordsForList,
-  searchDictionaryEntriesV2,
   searchDictionaryGroups,
   searchWordEntries,
   fetchEntryListMemberships,
@@ -1479,6 +1474,36 @@ test("lists tab opens the dedicated list management surface", async () => {
     screen.getAllByRole("button", { name: "Lijstinhoud" }).length,
   ).toBeGreaterThan(0);
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+});
+
+test("list browsing preserves frozen and hidden filters on the gated search path", async () => {
+  fetchWordsForList.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.click(screen.getByLabelText("Settings"));
+  fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+  await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+  fetchWordsForList.mockClear();
+
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /selecteer filters/i }))[0],
+  );
+  fireEvent.click(screen.getAllByLabelText("Frozen")[0]);
+  fireEvent.click(screen.getAllByLabelText("Don't show")[0]);
+
+  await waitFor(() =>
+    expect(fetchWordsForList).toHaveBeenLastCalledWith(
+      "list-1",
+      "curated",
+      expect.objectContaining({
+        filterFrozen: true,
+        filterHidden: true,
+        page: 1,
+      }),
+    ),
+  );
 });
 
 test("lists tab keeps dictionary source separate from list browsing", async () => {

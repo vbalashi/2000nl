@@ -29,6 +29,8 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       DEPLOY_SERVER_NAME: NUC (2000.dilum.io)
+      # Dictionary/list filtering is a stable gated-RPC path, not a rollout flag.
+      # See docs/runbooks/dictionary-search-rollout.md.
       APP_ROLLOUT_PROFILE: pilot
     steps:
       - name: Deploy with Telegram notifications
