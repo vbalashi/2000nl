@@ -54,6 +54,7 @@ import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
 import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
 import { useTrainingTurnController } from "./useTrainingTurnController";
 import { getTrainingCardKey } from "@/lib/training/trainingQueue";
+import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { Sidebar, SidebarTab } from "./Sidebar";
 import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
@@ -1657,9 +1658,14 @@ export function TrainingScreen({
     onEnterSession: handleEnterTrainingSession,
   });
 
+  const legacyTrainingCardPresentation = React.useMemo(
+    () =>
+      currentWord ? projectTrainingCardPresentation(currentWord) : null,
+    [currentWord],
+  );
   const legacyTrainingCard = (
     <TrainingCard
-      word={currentWord}
+      card={legacyTrainingCardPresentation}
       mode={currentMode}
       revealed={revealed}
       hintRevealed={hintRevealed}

@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { vi } from "vitest";
 import { TrainingCard } from "@/components/training/TrainingCard";
+import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 
 const word = {
   id: "1",
@@ -23,7 +24,7 @@ test("renders headword and definition segments", () => {
   const onClick = vi.fn();
   render(
     <TrainingCard
-      word={word as any}
+      card={projectTrainingCardPresentation(word as any)}
       mode="word-to-definition"
       revealed
       hintRevealed={false}
@@ -45,7 +46,7 @@ test("headword click requests audio playback", () => {
   const onWordClick = vi.fn();
   render(
     <TrainingCard
-      word={word as any}
+      card={projectTrainingCardPresentation(word as any)}
       mode="word-to-definition"
       revealed
       hintRevealed={false}
@@ -65,7 +66,7 @@ test("renders audio recognition prompt and requests playback", () => {
 
   render(
     <TrainingCard
-      word={word as any}
+      card={projectTrainingCardPresentation(word as any)}
       mode="listen-recognize"
       revealed={false}
       hintRevealed={false}
@@ -88,7 +89,7 @@ test("audio recognition reveal shows the answer word", () => {
 
   render(
     <TrainingCard
-      word={word as any}
+      card={projectTrainingCardPresentation(word as any)}
       mode="listen-recognize"
       revealed
       hintRevealed={false}
@@ -108,7 +109,7 @@ test("tap/clicking card requests reveal when not revealed", () => {
 
   render(
     <TrainingCard
-      word={word as any}
+      card={projectTrainingCardPresentation(word as any)}
       mode="word-to-definition"
       revealed={false}
       hintRevealed={false}
@@ -142,7 +143,7 @@ test("shows perfect participle in auxiliary metadata after reveal (W->D)", () =>
 
   render(
     <TrainingCard
-      word={verbWord as any}
+      card={projectTrainingCardPresentation(verbWord as any)}
       mode="word-to-definition"
       revealed
       hintRevealed={false}
@@ -174,7 +175,7 @@ test("hides perfect participle in auxiliary metadata (D->W prompt)", () => {
 
   render(
     <TrainingCard
-      word={verbWord as any}
+      card={projectTrainingCardPresentation(verbWord as any)}
       mode="definition-to-word"
       revealed={false}
       hintRevealed={false}
@@ -207,7 +208,7 @@ test("shows perfect participle in auxiliary metadata after reveal (D->W)", () =>
 
   render(
     <TrainingCard
-      word={verbWord as any}
+      card={projectTrainingCardPresentation(verbWord as any)}
       mode="definition-to-word"
       revealed
       hintRevealed={false}
@@ -245,7 +246,7 @@ test("D->W prompt uses fixed-width badge gutter so badge doesn't crowd prompt te
 
   render(
     <TrainingCard
-      word={wordWithMultipleMeanings as any}
+      card={projectTrainingCardPresentation(wordWithMultipleMeanings as any)}
       mode="definition-to-word"
       revealed={false}
       hintRevealed={false}
@@ -282,7 +283,7 @@ test("W->D headword layout allows wrapping without misaligning gender/article", 
 
   render(
     <TrainingCard
-      word={articleWord as any}
+      card={projectTrainingCardPresentation(articleWord as any)}
       mode="word-to-definition"
       revealed={false}
       hintRevealed={false}
@@ -330,7 +331,7 @@ test("D->W revealed examples include left padding so text doesn't hug the edge",
 
   render(
     <TrainingCard
-      word={toeWord as any}
+      card={projectTrainingCardPresentation(toeWord as any)}
       mode="definition-to-word"
       revealed
       hintRevealed={false}
@@ -373,7 +374,7 @@ test("W->D hint examples include left padding so text doesn't hug the edge", () 
 
   render(
     <TrainingCard
-      word={wordWithExample as any}
+      card={projectTrainingCardPresentation(wordWithExample as any)}
       mode="word-to-definition"
       revealed={false}
       hintRevealed
@@ -389,6 +390,96 @@ test("W->D hint examples include left padding so text doesn't hug the edge", () 
     return node.textContent?.includes("Ik ga toe naar huis.") ?? false;
   });
   expect(hintSection).toHaveClass("px-2");
+});
+
+const idiomOnlyWord = {
+  id: "idiom-only",
+  headword: "goed",
+  part_of_speech: "zn",
+  raw: {
+    meanings: [
+      {
+        definition: "",
+        examples: [],
+        links: [],
+        idioms: [
+          {
+            expression: "iets komt ten goede aan iemand",
+            explanation: "iets is bestemd voor iemand",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+test("W->D reveal preserves an idiom-only expression and explanation", () => {
+  render(
+    <TrainingCard
+      card={projectTrainingCardPresentation(idiomOnlyWord as any)}
+      mode="word-to-definition"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(document.body).toHaveTextContent("iets is bestemd voor iemand");
+});
+
+test("D->W uses the projected idiom explanation prompt without repeating it on reveal", () => {
+  const card = projectTrainingCardPresentation(idiomOnlyWord as any);
+  const { rerender } = render(
+    <TrainingCard
+      card={card}
+      mode="definition-to-word"
+      revealed={false}
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets is bestemd voor iemand");
+  expect(document.body).not.toHaveTextContent("iets komt ten goede aan iemand");
+
+  rerender(
+    <TrainingCard
+      card={card}
+      mode="definition-to-word"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(
+    document.body.textContent?.split("iets is bestemd voor iemand"),
+  ).toHaveLength(2);
+});
+
+test("listening reveal follows the projected idiom explanation suppression", () => {
+  render(
+    <TrainingCard
+      card={projectTrainingCardPresentation(idiomOnlyWord as any)}
+      mode="listen-recognize"
+      revealed
+      hintRevealed={false}
+      onWordClick={vi.fn()}
+      userId="test-user"
+      translationLang={null}
+    />,
+  );
+
+  expect(document.body).toHaveTextContent("iets komt ten goede aan iemand");
+  expect(document.body).not.toHaveTextContent("iets is bestemd voor iemand");
 });
 
 test("renders user-entry-v1 translation-only cards", () => {
@@ -417,7 +508,7 @@ test("renders user-entry-v1 translation-only cards", () => {
 
   render(
     <TrainingCard
-      word={userEntryWord as any}
+      card={projectTrainingCardPresentation(userEntryWord as any)}
       mode="word-to-definition"
       revealed
       hintRevealed={false}
@@ -452,7 +543,7 @@ test("D->W user-entry-v1 prompt uses personal translation without revealing head
 
   render(
     <TrainingCard
-      word={userEntryWord as any}
+      card={projectTrainingCardPresentation(userEntryWord as any)}
       mode="definition-to-word"
       revealed={false}
       hintRevealed={false}
