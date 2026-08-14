@@ -123,5 +123,3 @@ export async function performPlatformCatalogSearch(
     serverTiming: serverTiming(),
   };
 }
-
-

@@ -243,7 +243,6 @@ export async function performPlatformLookup(
     serverTiming: serverTiming(),
   };
 }
-
 export async function performPlatformCatalogLookup(
   service: ServiceSupabase,
   params: {
@@ -388,4 +387,3 @@ export async function performPlatformCatalogLookup(
     serverTiming: serverTiming(),
   };
 }
-

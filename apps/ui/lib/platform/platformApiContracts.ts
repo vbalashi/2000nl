@@ -1,5 +1,3 @@
-import type { ListCardPolicy, ReviewResult, TrainingMode } from "@/lib/types";
-
 export type PlatformAction =
   | "fetch-entry"
   | "record-view"
@@ -54,72 +52,3 @@ export function asRecord(value: unknown): Record<string, unknown> {
     ? (value as Record<string, unknown>)
     : {};
 }
-
-export const PLATFORM_TRAINING_MODES = new Set<TrainingMode>([
-  "word-to-definition",
-  "definition-to-word",
-  "listen-recognize",
-  "listen-type",
-]);
-
-export const PLATFORM_REVIEW_RESULTS = new Set<ReviewResult>([
-  "fail",
-  "hard",
-  "success",
-  "easy",
-  "freeze",
-  "hide",
-]);
-
-export function asTrainingMode(value: unknown): TrainingMode | null {
-  const mode = asString(value);
-  return mode && PLATFORM_TRAINING_MODES.has(mode as TrainingMode)
-    ? (mode as TrainingMode)
-    : null;
-}
-
-export function asReviewResult(value: unknown): ReviewResult | null {
-  const result = asString(value);
-  return result && PLATFORM_REVIEW_RESULTS.has(result as ReviewResult)
-    ? (result as ReviewResult)
-    : null;
-}
-
-export function asUuid(value: unknown): string | null {
-  const uuid = asString(value);
-  return uuid &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
-    ? uuid
-    : null;
-}
-
-export function asListCardPolicy(value: unknown): ListCardPolicy | null {
-  const policy = asString(value);
-  return policy && ["inherit", "prefer", "restrict"].includes(policy)
-    ? (policy as ListCardPolicy)
-    : null;
-}
-
-export function asOptionalStringArray(
-  value: unknown,
-): { ok: true; value: string[] | null } | { ok: false } {
-  if (value === undefined || value === null) return { ok: true, value: null };
-  if (!Array.isArray(value)) return { ok: false };
-  if (value.some((item) => !asString(item))) return { ok: false };
-  const values = Array.from(
-    new Set(
-      value
-        .map((item) => asString(item))
-        .filter((item): item is string => Boolean(item)),
-    ),
-  );
-  return { ok: true, value: values.length ? values : null };
-}
-
-export function hasOwnBodyField(
-  body: PlatformActionBody,
-  field: keyof PlatformActionBody,
-) {
-  return Object.prototype.hasOwnProperty.call(body, field);
-}
-

@@ -1,13 +1,41 @@
 import type { AuthenticatedSupabase } from "./serverSupabase";
 import { mapUserListRpcPayload } from "./listService";
 import {
-  asListCardPolicy,
-  asOptionalStringArray,
   asString,
-  hasOwnBodyField,
   type PlatformActionBody,
   type PlatformOperationResult,
 } from "./platformApiContracts";
+import type { ListCardPolicy } from "@/lib/types";
+
+function asListCardPolicy(value: unknown): ListCardPolicy | null {
+  const policy = asString(value);
+  return policy && ["inherit", "prefer", "restrict"].includes(policy)
+    ? (policy as ListCardPolicy)
+    : null;
+}
+
+function asOptionalStringArray(
+  value: unknown,
+): { ok: true; value: string[] | null } | { ok: false } {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (!Array.isArray(value)) return { ok: false };
+  if (value.some((item) => !asString(item))) return { ok: false };
+  const values = Array.from(
+    new Set(
+      value
+        .map((item) => asString(item))
+        .filter((item): item is string => Boolean(item)),
+    ),
+  );
+  return { ok: true, value: values.length ? values : null };
+}
+
+function hasOwnBodyField(
+  body: PlatformActionBody,
+  field: keyof PlatformActionBody,
+) {
+  return Object.prototype.hasOwnProperty.call(body, field);
+}
 
 export type PlatformUserListAction =
   | "create-user-list"
@@ -171,4 +199,3 @@ export async function performPlatformUserListAction(
 
   return { payload: { error: "unsupported_action" }, status: 400 };
 }
-

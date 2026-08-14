@@ -14,13 +14,48 @@ import {
   updateUserDictionaryEntry,
 } from "./userDictionaryService";
 import {
-  asReviewResult,
   asString,
-  asTrainingMode,
-  asUuid,
   type PlatformActionBody,
   type PlatformOperationResult,
 } from "./platformApiContracts";
+import type { ReviewResult, TrainingMode } from "@/lib/types";
+
+const TRAINING_MODES = new Set<TrainingMode>([
+  "word-to-definition",
+  "definition-to-word",
+  "listen-recognize",
+  "listen-type",
+]);
+const REVIEW_RESULTS = new Set<ReviewResult>([
+  "fail",
+  "hard",
+  "success",
+  "easy",
+  "freeze",
+  "hide",
+]);
+
+function asTrainingMode(value: unknown): TrainingMode | null {
+  const mode = asString(value);
+  return mode && TRAINING_MODES.has(mode as TrainingMode)
+    ? (mode as TrainingMode)
+    : null;
+}
+
+function asReviewResult(value: unknown): ReviewResult | null {
+  const result = asString(value);
+  return result && REVIEW_RESULTS.has(result as ReviewResult)
+    ? (result as ReviewResult)
+    : null;
+}
+
+function asUuid(value: unknown): string | null {
+  const uuid = asString(value);
+  return uuid &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+    ? uuid
+    : null;
+}
 
 async function assertEntryReadable(
   supabase: any,

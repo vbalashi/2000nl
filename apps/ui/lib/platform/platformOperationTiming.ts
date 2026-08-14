@@ -42,4 +42,3 @@ export async function rpcWithPlatformLookupTiming(
   }
   return result;
 }
-
