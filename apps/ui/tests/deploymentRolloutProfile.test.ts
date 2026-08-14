@@ -13,9 +13,6 @@ describe("production/test rollout profile wiring", () => {
     const dockerfile = readRepoFile("apps/ui/Dockerfile");
 
     expect(workflow).toContain("APP_ROLLOUT_PROFILE: pilot");
-    expect(workflow).toContain(
-      "Dictionary/list filtering is a stable gated-RPC path, not a rollout flag.",
-    );
     expect(compose).toContain(
       "APP_ROLLOUT_PROFILE: ${APP_ROLLOUT_PROFILE:?APP_ROLLOUT_PROFILE must be set}",
     );

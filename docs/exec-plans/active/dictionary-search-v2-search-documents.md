@@ -1,7 +1,7 @@
 # Dictionary Search V2: Extracted Search Documents
 
-Last updated: 2026-06-16
-Status: active implementation plan
+Last updated: 2026-08-14
+Status: active database/search-document research plan; client rollout retired
 
 ## Decision
 
@@ -101,12 +101,17 @@ list-scoped browse must preserve list order.
 
 Implemented by `db/migrations/072_dictionary_search_v2_rpcs.sql`.
 
-Client wrapper:
+Client rollout decision (2026-08-14, issue #176):
 
-- `apps/ui/lib/training/listService.ts` exposes `searchDictionaryEntriesV2`.
-
-The UI still calls the current production-safe search path until production has
-run a full search-document backfill and the v2 regression corpus is green.
+- migrations 071/072 and `search_dictionary_entries_v2` remain historical
+  provenance and a possible input to a future, separately audited search slice;
+- the unowned `searchDictionaryEntriesV2` browser wrapper and its undocumented
+  flag branch were retired because they were unreachable in repository-defined
+  builds and did not preserve the live Frozen/hidden list filters;
+- Library and list-management UI use the established gated RPC paths. A future
+  search-document rollout must start from a new owner issue, restore filter
+  parity, define a backfill/rollback gate, and add the path explicitly to the
+  rollout profiles before any client code is reintroduced.
 
 Local validation:
 
@@ -195,8 +200,9 @@ Use expected match group and relative ordering, not just "contains":
   `reports/review-packages/...` for handoff archives.
 - Do not make ordinary ingestion unexpectedly run a full search-document
   backfill. Use explicit flags or separate jobs for expensive refresh work.
-- Do not switch the UI to V2 by default until production has a full
-  search-document backfill and the regression corpus is green.
+- Do not recreate or switch the UI to the extracted-document RPC without a new
+  audited rollout: production backfill, regression corpus, Frozen/hidden filter
+  parity, an explicit rollout profile, and a rollback plan are all required.
 
 ### Correct Behavior Going Forward
 
@@ -207,8 +213,9 @@ Use expected match group and relative ordering, not just "contains":
   1. schema and indexed search documents;
   2. controlled backfill;
   3. V2 matcher RPC validation;
-  4. feature-flagged UI switch;
-  5. default UI switch only after production QA.
+  4. a new owner issue and filter-parity characterization;
+  5. an explicit profiled UI rollout;
+  6. default UI switch only after production QA.
 - Use `word_forms` as high-confidence morphology and return the matched form in
   `search_matched_text`.
 - Keep broad fallback off by default; fallback should be explicit or used only
