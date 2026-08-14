@@ -80,8 +80,11 @@ describe("/api/platform/analyze-selection", () => {
 
     expect(response.status).toBe(200);
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+      p_query: "huis",
+      p_language_code: null,
+      p_dictionary_ids: null,
+      p_limit: 10,
     });
     expect(from).not.toHaveBeenCalled();
     for (const name of mutationRpcNames) {
@@ -130,8 +133,11 @@ describe("/api/platform/analyze-selection", () => {
     });
 
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_gated", {
-      p_headword: "huis",
+    expect(rpc).toHaveBeenCalledWith("lookup_dictionary_entries_v3", {
+      p_query: "huis",
+      p_language_code: null,
+      p_dictionary_ids: null,
+      p_limit: 10,
     });
     expect(from).not.toHaveBeenCalled();
     for (const name of mutationRpcNames) {
