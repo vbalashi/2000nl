@@ -339,7 +339,6 @@ const restHandler = async (route: any) => {
           new_review_ratio: 2,
           active_scenario: "understanding",
           translation_lang: "off",
-          training_sidebar_pinned: false,
           preferences: {},
         }),
       });
@@ -555,9 +554,16 @@ async function setupAuthenticatedTrainingPage(page: Page) {
 test("training flow persists review and dictionary lookup", async ({
   page,
 }) => {
+  const recentHistoryRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/rpc/get_recent_training_history")) {
+      recentHistoryRequests.push(request.url());
+    }
+  });
   await setupAuthenticatedTrainingPage(page);
 
   await expect(page.locator("h1")).toHaveText(/huis/i);
+  expect(recentHistoryRequests).toEqual([]);
 
   // Reveal definition so the linked word appears as a clickable button.
   await page.keyboard.press("Space");
@@ -569,6 +575,7 @@ test("training flow persists review and dictionary lookup", async ({
   await expect(
     page.getByRole("heading", { level: 2, name: /gracht/i })
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
   await page.getByRole("button", { name: "Sluiten" }).click();
   await expect(drawer).toBeHidden();
 
@@ -626,6 +633,18 @@ test("dictionary search and stable list filters render on mobile", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setupAuthenticatedTrainingPage(page);
+
+  await expect(page.locator("h1")).toHaveText(/huis/i);
+  await page.keyboard.press("Space");
+  await page.getByRole("button", { name: /^gracht$/i }).click();
+  const detailsDrawer = page.locator("div.fixed.inset-0.z-40");
+  await expect(detailsDrawer).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: /gracht/i }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Sluiten" }).click();
+  await expect(detailsDrawer).toBeHidden();
 
   await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
   await page.getByRole("button", { name: "Zoeken", exact: true }).click();

@@ -24,8 +24,6 @@ export function useTrainingPreferences(userId?: string) {
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null,
   );
-  const [trainingSidebarPinned, setTrainingSidebarPinnedState] =
-    useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -41,24 +39,10 @@ export function useTrainingPreferences(userId?: string) {
       setNewReviewRatioState(prefs.newReviewRatio);
       setActiveScenarioState(prefs.activeScenario);
       setTranslationLangState(prefs.translationLang);
-      setTrainingSidebarPinnedState(Boolean(prefs.trainingSidebarPinned));
     };
 
     void loadPreferences();
   }, [userId]);
-
-  const setTrainingSidebarPinned = useCallback(
-    (pinned: boolean) => {
-      setTrainingSidebarPinnedState(pinned);
-      if (userId) {
-        void updateUserPreferences({
-          userId,
-          trainingSidebarPinned: pinned,
-        });
-      }
-    },
-    [userId],
-  );
 
   const setEnabledModes = useCallback(
     (newModes: TrainingMode[], options: PersistOptions = {}) => {
@@ -180,7 +164,6 @@ export function useTrainingPreferences(userId?: string) {
     language,
     newReviewRatio,
     themePreference,
-    trainingSidebarPinned,
     translationLang,
     setActiveScenario,
     setAudioQuality,
@@ -189,7 +172,6 @@ export function useTrainingPreferences(userId?: string) {
     setLanguage,
     setNewReviewRatio,
     setTheme,
-    setTrainingSidebarPinned,
     setTranslationLang,
   };
 }

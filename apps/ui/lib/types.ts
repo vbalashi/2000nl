@@ -155,18 +155,6 @@ export type UserDictionaryEntry = {
 };
 
 export type ReviewResult = "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
-export type HistorySource = "click" | "review";
-
-export type SidebarHistoryItem = DictionaryEntry & {
-  source: HistorySource;
-  result?: "fail" | "hard" | "success" | "easy" | "neutral";
-  clickedWord?: string;
-  stats?: {
-    click_count: number;
-    last_seen_at: string | null;
-  };
-  debugStats?: DebugStats;
-};
 
 export type WordListType = "curated" | "user";
 export type ListCardPolicy = "inherit" | "prefer" | "restrict";

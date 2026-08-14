@@ -366,7 +366,6 @@ const fetchUserPreferences = vi.fn().mockResolvedValue({
   newReviewRatio: 2,
   activeScenario: "understanding",
   translationLang: null,
-  trainingSidebarPinned: false,
 });
 const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
 
@@ -446,10 +445,12 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     word,
     focusOnPresentation,
+    onOpenDetails,
     onProgressActionAccepted,
   }: {
     word: { headword: string };
     focusOnPresentation?: boolean;
+    onOpenDetails?: () => void;
     onProgressActionAccepted: (capability: { actionId: string }) => void;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
@@ -462,6 +463,11 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           {focusOnPresentation ? "Next training card" : ""}
         </span>
         <h2>{word.headword}</h2>
+        {onOpenDetails ? (
+          <button type="button" onClick={onOpenDetails}>
+            Word details
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
@@ -556,7 +562,7 @@ test("onboarding copy matches the five reachable tour targets", () => {
   }
 });
 
-test("does not expose Recent through the global R shortcut or a stale pinned preference", async () => {
+test("does not expose Recent through the global R shortcut", async () => {
   fetchUserPreferences.mockResolvedValue({
     themePreference: "system",
     modesEnabled: ["word-to-definition"],
@@ -565,7 +571,6 @@ test("does not expose Recent through the global R shortcut or a stale pinned pre
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: null,
-    trainingSidebarPinned: true,
     preferences: {
       onboardingCompleted: true,
       onboardingLanguage: "nl",
@@ -601,8 +606,50 @@ test("does not expose Recent through the global R shortcut or a stale pinned pre
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: null,
-    trainingSidebarPinned: false,
   });
+});
+
+test("ordinary card presentation does not request recent training history", async () => {
+  fetchRecentHistory.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  await waitFor(() => expect(fetchStats).toHaveBeenCalled());
+  expect(fetchRecentHistory).not.toHaveBeenCalled();
+});
+
+test("legacy card details open without exposing the retired Recent tab", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.click(screen.getByRole("button", { name: "Bekijk details" }));
+
+  expect(await screen.findByText("Bron:", { exact: false })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
+});
+
+test("V2 answer-card overflow opens the retained details surface", async () => {
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByTestId("mock-training-sense-card-v2");
+    fireEvent.click(screen.getByRole("button", { name: "Word details" }));
+
+    expect(await screen.findByText("Bron:")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
 });
 
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
@@ -3143,7 +3190,6 @@ test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", as
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: "en",
-    trainingSidebarPinned: false,
     preferences: {
       onboardingCompleted: false,
       onboardingLanguage: null,

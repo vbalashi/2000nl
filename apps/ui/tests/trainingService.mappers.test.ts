@@ -6,7 +6,6 @@ import {
   mapAvailableDictionarySource,
   mapAvailableLearningLanguage,
   mapDictionaryEntry,
-  mapEventTypeToResult,
   mapScenario,
   mapUserListSummary,
   normalizeRaw,
@@ -265,11 +264,4 @@ describe("training word mappers", () => {
     });
   });
 
-  test("mapEventTypeToResult maps review events and defaults to neutral", () => {
-    expect(mapEventTypeToResult("review_fail")).toBe("fail");
-    expect(mapEventTypeToResult("review_hard")).toBe("hard");
-    expect(mapEventTypeToResult("review_success")).toBe("success");
-    expect(mapEventTypeToResult("review_easy")).toBe("easy");
-    expect(mapEventTypeToResult("definition_click")).toBe("neutral");
-  });
 });

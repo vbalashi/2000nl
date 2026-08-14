@@ -11,7 +11,6 @@ import {
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchStats,
-  fetchRecentHistory,
   isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   type ReviewResult,
@@ -26,7 +25,6 @@ import type {
   TrainingFilterSource,
   TrainingMode,
   TrainingWord,
-  SidebarHistoryItem,
   WordListSummary,
   WordListType,
 } from "@/lib/types";
@@ -56,8 +54,8 @@ import { useTrainingTurnController } from "./useTrainingTurnController";
 import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
-import { Sidebar, SidebarTab } from "./Sidebar";
-import { TrainingSidebarDrawer } from "./TrainingSidebarDrawer";
+import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
+import { WordDetailPanel } from "./WordDetailPanel";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { SettingsModal } from "./SettingsModal";
@@ -283,18 +281,13 @@ export function TrainingScreen({
   const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
     null,
   );
-  const [recentEntries, setRecentEntries] = useState<SidebarHistoryItem[]>([]);
   const [trainingFocusFilter, setTrainingFocusFilter] =
     useState<TrainingFocusFilter>(DEFAULT_TRAINING_FOCUS_FILTER);
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
   const [wordLookupNotice, setWordLookupNotice] = useState<string | null>(null);
-  // Sidebar tabs: "recent" for history, "details" for word detail panel
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("recent");
-  // Drawer for sidebar (recent/details). On desktop, it is used when sidebar is not pinned.
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  // Entry to show in the details tab (can be current word or a sidebar card)
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
@@ -416,7 +409,6 @@ export function TrainingScreen({
   // Ref to prevent race conditions: track if initial load has been done
   const initialLoadDone = useRef(false);
   const statsRequestGenerationRef = useRef(0);
-  const historyRequestGenerationRef = useRef(0);
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
   const autoPlayedAudioCardRef = useRef<string | null>(null);
   const lastReloadedLanguageModeScopeRef = useRef(
@@ -532,14 +524,6 @@ export function TrainingScreen({
     [user?.id, enabledModes, wordListId, wordListType, initialReviewDue],
   );
 
-  const loadRecentHistory = useCallback(async () => {
-    if (!user?.id) return;
-    const generation = (historyRequestGenerationRef.current += 1);
-    const history = await fetchRecentHistory(user.id);
-    if (generation !== historyRequestGenerationRef.current) return;
-    setRecentEntries(history);
-  }, [user?.id]);
-
   const selectionPort = useTrainingTurnSelectionPort({
     userId: user.id,
     activeScenario,
@@ -553,26 +537,16 @@ export function TrainingScreen({
   const reviewLegacy = useLegacyTrainingReviewPort({
     userId: user.id,
     stats,
-    setRecentEntries,
   });
   const resetCardPresentation = useCallback(() => {
     setRevealed(false);
     setHintRevealed(false);
   }, []);
   const refreshAfterAccepted = useCallback(
-    async ({
-      statsLabel,
-      refreshHistory,
-    }: {
-      statsLabel: string;
-      refreshHistory: boolean;
-    }) => {
-      await Promise.all([
-        loadStats(undefined, statsLabel),
-        refreshHistory ? loadRecentHistory() : Promise.resolve(),
-      ]);
+    async ({ statsLabel }: { statsLabel: string }) => {
+      await loadStats(undefined, statsLabel);
     },
-    [loadRecentHistory, loadStats],
+    [loadStats],
   );
   const sessionScopeKey = [
     activeScenario,
@@ -893,7 +867,6 @@ export function TrainingScreen({
     }
     loadNextWord();
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
-    void loadRecentHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeList?.default_scenario_id,
@@ -915,11 +888,9 @@ export function TrainingScreen({
     void loadNextWord();
   }, [listHydrated, loadNextWord, trainingFocusFilterKey, user?.id]);
 
-  // Show word details in sidebar (or bottom sheet on mobile)
   const handleShowDetails = useCallback((entry: DictionaryEntry) => {
     setDetailEntry(entry);
-    setSidebarTab("details");
-    setMobileSidebarOpen(true);
+    setDetailsOpen(true);
   }, []);
 
   // Show details for the current training word
@@ -981,7 +952,6 @@ export function TrainingScreen({
     (entry: DictionaryEntry) => {
       setDetailEntry(entry);
       setSelectedEntry(entry);
-      setSidebarTab("details");
     },
     [],
   );
@@ -1099,9 +1069,6 @@ export function TrainingScreen({
         return;
       }
 
-      // Use the current card's mode for the click
-      const clickMode = currentWord?.mode ?? enabledModes[0];
-
       // 1. Try exact match
       const entry = await fetchDictionaryEntry(clickedWord, user.id);
 
@@ -1111,30 +1078,6 @@ export function TrainingScreen({
           dictionaryLookupNotice(onboardingLang, clickedWord),
         );
 
-        setRecentEntries((prev) => {
-          const notFoundItem: SidebarHistoryItem = {
-            id: `not-found-${clickedWord}-${Date.now()}`,
-            headword: clickedWord,
-            raw: {},
-            source: "click",
-            clickedWord: clickedWord,
-            debugStats: {
-              source: "click",
-              mode: clickMode,
-            },
-          };
-
-          // Dedup: avoid adding the same not-found word if it's already at the top
-          if (
-            prev.length > 0 &&
-            prev[0].headword.toLowerCase() === clickedWord.toLowerCase() &&
-            prev[0].id.startsWith("not-found-")
-          ) {
-            return prev;
-          }
-
-          return [notFoundItem, ...prev].slice(0, 50);
-        });
         return;
       }
 
@@ -1142,40 +1085,8 @@ export function TrainingScreen({
       setWordLookupNotice(null);
       setSelectedEntry(entry);
       handleShowDetails(entry);
-      setRecentEntries((prev) => {
-        const historyItem: SidebarHistoryItem = {
-          ...entry,
-          source: "click",
-          clickedWord: clickedWord,
-          is_nt2_2000: entry.is_nt2_2000,
-          stats: entry.stats,
-          debugStats: {
-            source: "click",
-            mode: clickMode,
-          },
-        };
-        // Dedup logic? Maybe not for history log style.
-        // User wants "history log".
-        // But if I click same word twice, do I want two entries?
-        // Let's filter out if it's the VERY top one to avoid accidental double clicks.
-        if (
-          prev.length > 0 &&
-          prev[0].id === entry.id &&
-          prev[0].source === "click"
-        ) {
-          return prev;
-        }
-
-        return [historyItem, ...prev].slice(0, 50);
-      });
     },
-    [
-      currentWord?.mode,
-      enabledModes,
-      handleShowDetails,
-      onboardingLang,
-      user?.id,
-    ],
+    [handleShowDetails, onboardingLang, user?.id],
   );
 
   const handleTrainingWordClick = useCallback(
@@ -1322,10 +1233,6 @@ export function TrainingScreen({
     refreshListsAfterUpdate,
     setActiveScenario,
   ]);
-
-  const handleRecentSelect = (entry: DictionaryEntry) => {
-    setSelectedEntry(entry);
-  };
 
   const handleModesChange = useCallback(
     (newModes: TrainingMode[]) => {
@@ -2154,38 +2061,28 @@ export function TrainingScreen({
           </div>
         ) : null}
 
-        <TrainingSidebarDrawer
-          open={mobileSidebarOpen}
-          onClose={() => setMobileSidebarOpen(false)}
-          title={sidebarTab === "recent" ? "Recent" : "Details"}
-          showOnDesktop
+        <TrainingDetailsDrawer
+          open={detailsOpen}
+          onClose={() => setDetailsOpen(false)}
         >
-          <Sidebar
-            selectedEntry={selectedEntry}
-            recentEntries={recentEntries}
-            onSelectEntry={(entry) => {
-              // On mobile: tapping a recent item should actually open its details,
-              // otherwise it looks like "nothing happens".
-              setSelectedEntry(entry);
-              handleShowDetails(entry);
-            }}
-            onWordClick={handleDefinitionClick}
-            detailEntry={detailEntry}
-            onShowDetails={handleShowDetails}
-            activeTab={sidebarTab}
-            onTabChange={setSidebarTab}
-            userId={user.id}
-            translationLang={translationLang}
-            userLists={availableLists.filter((l) => l.type === "user")}
-            onListsUpdated={handleListsUpdated}
-            onOpenListMembership={openMembershipList}
-            onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-            onTrainWord={handleTrainWord}
-            currentTrainingEntryId={currentWord?.id ?? null}
-            onTrainingAction={(result) => void handleAction(result)}
-            trainingActionDisabled={!revealed || actionLoading}
-          />
-        </TrainingSidebarDrawer>
+          {detailEntry ? (
+            <WordDetailPanel
+              entry={detailEntry}
+              userId={user.id}
+              translationLang={translationLang}
+              userLists={availableLists.filter((list) => list.type === "user")}
+              onListsUpdated={handleListsUpdated}
+              onOpenListMembership={openMembershipList}
+              onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+              onTrainWord={handleTrainWord}
+              showHeader
+              showActions
+              currentTrainingEntryId={currentWord?.id ?? null}
+              onTrainingAction={(result) => void handleAction(result)}
+              trainingActionDisabled={!revealed || actionLoading}
+            />
+          ) : null}
+        </TrainingDetailsDrawer>
 
         {showSettings && !extendedDestinationsEnabled && (
           <SettingsModal
