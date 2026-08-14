@@ -7,9 +7,23 @@ BEGIN;
 DO $$
 BEGIN
     IF to_regprocedure(
-        'public.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)'
+        'private.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)'
     ) IS NULL THEN
-        ALTER FUNCTION public.lookup_platform_v2_entries(
+        IF to_regprocedure(
+            'public.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)'
+        ) IS NULL THEN
+            ALTER FUNCTION public.lookup_platform_v2_entries(
+                uuid,
+                boolean,
+                text,
+                text,
+                text,
+                integer,
+                integer
+            ) RENAME TO lookup_platform_v2_entries_base_v1;
+        END IF;
+
+        ALTER FUNCTION public.lookup_platform_v2_entries_base_v1(
             uuid,
             boolean,
             text,
@@ -17,17 +31,27 @@ BEGIN
             text,
             integer,
             integer
-        ) RENAME TO lookup_platform_v2_entries_base_v1;
+        ) SET SCHEMA private;
     END IF;
 
     IF to_regprocedure(
-        'public.read_platform_v2_training_group_base_v1(uuid,uuid,integer)'
+        'private.read_platform_v2_training_group_base_v1(uuid,uuid,integer)'
     ) IS NULL THEN
-        ALTER FUNCTION public.read_platform_v2_training_group(
+        IF to_regprocedure(
+            'public.read_platform_v2_training_group_base_v1(uuid,uuid,integer)'
+        ) IS NULL THEN
+            ALTER FUNCTION public.read_platform_v2_training_group(
+                uuid,
+                uuid,
+                integer
+            ) RENAME TO read_platform_v2_training_group_base_v1;
+        END IF;
+
+        ALTER FUNCTION public.read_platform_v2_training_group_base_v1(
             uuid,
             uuid,
             integer
-        ) RENAME TO read_platform_v2_training_group_base_v1;
+        ) SET SCHEMA private;
     END IF;
 END;
 $$;
@@ -121,7 +145,7 @@ AS $$
 DECLARE
     v_payload jsonb;
 BEGIN
-    v_payload := public.lookup_platform_v2_entries_base_v1(
+    v_payload := private.lookup_platform_v2_entries_base_v1(
         p_user_id,
         p_catalog,
         p_query,
@@ -153,7 +177,7 @@ AS $$
 DECLARE
     v_payload jsonb;
 BEGIN
-    v_payload := public.read_platform_v2_training_group_base_v1(
+    v_payload := private.read_platform_v2_training_group_base_v1(
         p_user_id,
         p_entry_id,
         p_group_entry_bound
@@ -171,7 +195,23 @@ REVOKE ALL ON FUNCTION private.attach_platform_v2_presentation_identity_v1(
     jsonb,
     uuid,
     boolean
-) FROM PUBLIC, anon, authenticated;
+) FROM PUBLIC, anon, authenticated, service_role;
+
+REVOKE ALL ON FUNCTION private.lookup_platform_v2_entries_base_v1(
+    uuid,
+    boolean,
+    text,
+    text,
+    text,
+    integer,
+    integer
+) FROM PUBLIC, anon, authenticated, service_role;
+
+REVOKE ALL ON FUNCTION private.read_platform_v2_training_group_base_v1(
+    uuid,
+    uuid,
+    integer
+) FROM PUBLIC, anon, authenticated, service_role;
 
 REVOKE EXECUTE ON FUNCTION public.lookup_platform_v2_entries(
     uuid,
