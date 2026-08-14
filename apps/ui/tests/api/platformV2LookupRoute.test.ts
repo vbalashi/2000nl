@@ -130,6 +130,34 @@ describe("/api/platform/v2/lookup", () => {
         schema_key: "nl-vandale-v2",
         schema_version: 1,
       },
+      platform_v2_identity: {
+        entryId: "entry-1",
+        headwordGroupId: "group-1",
+        meaningOrdinal: 1,
+        contentNodeBindings: [
+          {
+            contentNodeId: "node-definition-1",
+            sourcePath: "raw.meanings[0].definition",
+            kind: "definition",
+            parentContentNodeId: null,
+            sourceTextFingerprint: "definition-fingerprint-1",
+          },
+          {
+            contentNodeId: "node-example-1",
+            sourcePath: "raw.meanings[0].examples[0]",
+            kind: "example",
+            parentContentNodeId: null,
+            sourceTextFingerprint: "example-fingerprint-1",
+          },
+          {
+            contentNodeId: "node-note-1",
+            sourcePath: "raw.meanings[0].note",
+            kind: "usage-note",
+            parentContentNodeId: null,
+            sourceTextFingerprint: "note-fingerprint-1",
+          },
+        ],
+      },
     };
     const sourceContentRevision = contentFingerprint(
       normalizeDictionaryContent(entry),
@@ -196,48 +224,6 @@ describe("/api/platform/v2/lookup", () => {
               selectedTierComplete: true,
               nextGroupCursor: null,
             },
-          },
-          error: null,
-        });
-      }
-      if (name === "read_platform_v2_presentation_identity") {
-        expect(args).toEqual({
-          p_user_id: "user-1",
-          p_entry_ids: ["entry-1"],
-          p_catalog: false,
-        });
-        return Promise.resolve({
-          data: {
-            entries: [
-              {
-                entryId: "entry-1",
-                headwordGroupId: "group-1",
-                meaningOrdinal: 1,
-                contentNodeBindings: [
-                  {
-                    contentNodeId: "node-definition-1",
-                    sourcePath: "raw.meanings[0].definition",
-                    kind: "definition",
-                    parentContentNodeId: null,
-                    sourceTextFingerprint: "definition-fingerprint-1",
-                  },
-                  {
-                    contentNodeId: "node-example-1",
-                    sourcePath: "raw.meanings[0].examples[0]",
-                    kind: "example",
-                    parentContentNodeId: null,
-                    sourceTextFingerprint: "example-fingerprint-1",
-                  },
-                  {
-                    contentNodeId: "node-note-1",
-                    sourcePath: "raw.meanings[0].note",
-                    kind: "usage-note",
-                    parentContentNodeId: null,
-                    sourceTextFingerprint: "note-fingerprint-1",
-                  },
-                ],
-              },
-            ],
           },
           error: null,
         });
@@ -387,6 +373,10 @@ describe("/api/platform/v2/lookup", () => {
     expect(JSON.stringify(payload)).not.toContain("providerOnly");
     expect(JSON.stringify(payload)).not.toContain("sourcePath");
     expect(JSON.stringify(payload)).not.toContain("undo-known");
+    expect(rpc).not.toHaveBeenCalledWith(
+      "read_platform_v2_presentation_identity",
+      expect.anything(),
+    );
   });
 
   test("resolves an authenticated training entry exactly and returns its complete readable group", async () => {
@@ -420,6 +410,21 @@ describe("/api/platform/v2/lookup", () => {
       part_of_speech: "zn",
       raw: { meanings: [{ definition }] },
       dictionary: sourceDictionary,
+      platform_v2_identity: {
+        entryId: id,
+        headwordGroupId:
+          sourceDictionary.id === "dict-2" ? "group-decoy" : "group-target",
+        meaningOrdinal: meaningId,
+        contentNodeBindings: [
+          {
+            contentNodeId: `node-${id}`,
+            sourcePath: "raw.meanings[0].definition",
+            kind: "definition",
+            parentContentNodeId: null,
+            sourceTextFingerprint: `fingerprint-${id}`,
+          },
+        ],
+      },
     });
     const target = entry(targetEntryId, 1, "zitmeubel");
     const sibling = entry(siblingEntryId, 2, "financiële instelling");
@@ -442,29 +447,6 @@ describe("/api/platform/v2/lookup", () => {
               selectedTierComplete: true,
               nextGroupCursor: null,
             },
-          },
-          error: null,
-        });
-      }
-      if (name === "read_platform_v2_presentation_identity") {
-        const ids = args.p_entry_ids as string[];
-        return Promise.resolve({
-          data: {
-            entries: ids.map((id) => ({
-              entryId: id,
-              headwordGroupId:
-                id === decoyEntryId ? "group-decoy" : "group-target",
-              meaningOrdinal: id === siblingEntryId ? 2 : 1,
-              contentNodeBindings: [
-                {
-                  contentNodeId: `node-${id}`,
-                  sourcePath: "raw.meanings[0].definition",
-                  kind: "definition",
-                  parentContentNodeId: null,
-                  sourceTextFingerprint: `fingerprint-${id}`,
-                },
-              ],
-            })),
           },
           error: null,
         });
@@ -503,6 +485,10 @@ describe("/api/platform/v2/lookup", () => {
     expect(JSON.stringify(payload)).not.toContain("dict-2");
     expect(rpc).not.toHaveBeenCalledWith(
       "lookup_platform_v2_entries",
+      expect.anything(),
+    );
+    expect(rpc).not.toHaveBeenCalledWith(
+      "read_platform_v2_presentation_identity",
       expect.anything(),
     );
   });

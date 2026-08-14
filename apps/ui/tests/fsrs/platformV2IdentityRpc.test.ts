@@ -140,6 +140,59 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
     ]);
   });
 
+  test("exposes only stable lookup wrappers to service roles", async () => {
+    const { rows } = await pool.query(
+      `select
+         has_function_privilege(
+           'anon',
+           'private.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)',
+           'EXECUTE'
+         ) as anon_lookup_base,
+         has_function_privilege(
+           'authenticated',
+           'private.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)',
+           'EXECUTE'
+         ) as authenticated_lookup_base,
+         has_function_privilege(
+           'service_role',
+           'private.lookup_platform_v2_entries_base_v1(uuid,boolean,text,text,text,integer,integer)',
+           'EXECUTE'
+         ) as service_lookup_base,
+         has_function_privilege(
+           'service_role',
+           'private.read_platform_v2_training_group_base_v1(uuid,uuid,integer)',
+           'EXECUTE'
+         ) as service_training_base,
+         has_function_privilege(
+           'service_role',
+           'private.attach_platform_v2_presentation_identity_v1(jsonb,uuid,boolean)',
+           'EXECUTE'
+         ) as service_identity_helper,
+         has_function_privilege(
+           'service_role',
+           'public.lookup_platform_v2_entries(uuid,boolean,text,text,text,integer,integer)',
+           'EXECUTE'
+         ) as service_lookup_wrapper,
+         has_function_privilege(
+           'service_role',
+           'public.read_platform_v2_training_group(uuid,uuid,integer)',
+           'EXECUTE'
+         ) as service_training_wrapper`,
+    );
+
+    expect(rows).toEqual([
+      {
+        anon_lookup_base: false,
+        authenticated_lookup_base: false,
+        service_lookup_base: false,
+        service_training_base: false,
+        service_identity_helper: false,
+        service_lookup_wrapper: true,
+        service_training_wrapper: true,
+      },
+    ]);
+  });
+
   test("returns one opaque Headword Group for entries in one source group", async () => {
     const userId = randomUUID();
 
@@ -220,6 +273,28 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
       expect(
         rows[0].result.items.map((item: { id: string }) => item.id),
       ).toEqual([firstEntryId, secondEntryId]);
+      expect(
+        rows[0].result.items.map(
+          (item: {
+            platform_v2_identity: {
+              entryId: string;
+              headwordGroupId: string;
+              contentNodeBindings: unknown[];
+            };
+          }) => item.platform_v2_identity,
+        ),
+      ).toEqual([
+        expect.objectContaining({
+          entryId: firstEntryId,
+          headwordGroupId: expect.any(String),
+          contentNodeBindings: [],
+        }),
+        expect.objectContaining({
+          entryId: secondEntryId,
+          headwordGroupId: expect.any(String),
+          contentNodeBindings: [],
+        }),
+      ]);
     }, userId);
   });
 
@@ -621,7 +696,14 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         [userId, query],
       );
       const firstPage = firstRows[0].result as {
-        items: Array<{ id: string }>;
+        items: Array<{
+          id: string;
+          platform_v2_identity: {
+            entryId: string;
+            headwordGroupId: string;
+            contentNodeBindings: unknown[];
+          };
+        }>;
         page: {
           selectedTierComplete: boolean;
           nextGroupCursor: string;
@@ -631,6 +713,16 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
         expect.arrayContaining([firstEntryId, firstSiblingId]),
       );
       expect(firstPage.items).toHaveLength(3);
+      expect(
+        firstPage.items.map((entry) => entry.platform_v2_identity.entryId),
+      ).toEqual(firstPage.items.map((entry) => entry.id));
+      expect(
+        firstPage.items.every(
+          (entry) =>
+            typeof entry.platform_v2_identity.headwordGroupId === "string" &&
+            Array.isArray(entry.platform_v2_identity.contentNodeBindings),
+        ),
+      ).toBe(true);
       expect(firstPage.page.selectedTierComplete).toBe(false);
       expect(firstPage.page.nextGroupCursor).toEqual(expect.any(String));
 
