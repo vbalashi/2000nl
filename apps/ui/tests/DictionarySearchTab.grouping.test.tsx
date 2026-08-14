@@ -58,7 +58,6 @@ vi.mock("@/lib/trainingService", () => ({
   fetchDictionaryEntryById: vi.fn().mockResolvedValue(null),
   fetchWordsForList: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   searchDictionaryGroups: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-  searchDictionaryEntriesV2: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   searchWordEntries: vi.fn().mockResolvedValue({ items: [], total: 0 }),
 }));
 

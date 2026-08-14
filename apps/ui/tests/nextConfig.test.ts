@@ -46,6 +46,7 @@ describe("rollout profile compilation", () => {
 
     expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("legacy");
     expect(env.NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI).toBe("false");
+    expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
   });
 
   test("compiles every approved pilot flag from one profile", () => {
@@ -58,6 +59,7 @@ describe("rollout profile compilation", () => {
     );
 
     expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
+    expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
     expect(flags).toHaveLength(7);
     expect(flags.every(([, value]) => value === "true")).toBe(true);
   });

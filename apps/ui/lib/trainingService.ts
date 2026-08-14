@@ -34,7 +34,6 @@ export {
   fetchUserLists,
   fetchWordsForList,
   searchDictionaryGroups,
-  searchDictionaryEntriesV2,
   searchWordEntries,
   removeWordsFromUserList,
   deleteUserList,

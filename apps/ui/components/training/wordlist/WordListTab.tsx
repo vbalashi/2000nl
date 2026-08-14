@@ -6,7 +6,6 @@ import {
   fetchUserListMembership,
   fetchWordsForList,
   removeWordsFromUserList,
-  searchDictionaryEntriesV2,
   searchWordEntries,
   deleteUserList,
   updateUserList,
@@ -51,9 +50,6 @@ const listDisplayName = (list: WordListSummary | null | undefined, fallback: str
   if (isDictionarySourceList(list)) return "VanDale woordenboek";
   return list.name;
 };
-
-const useDictionarySearchV2 =
-  process.env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2 === "true";
 
 type Props = {
   open: boolean;
@@ -237,20 +233,7 @@ export function WordListTab({
     const useListFilter = applyListFilter && viewedListId;
     const selectedType = viewedList?.type ?? "curated";
 
-    const result = useDictionarySearchV2
-      ? await searchDictionaryEntriesV2({
-          query: query || undefined,
-          languageCode: language,
-          listId: useListFilter ? viewedListId! : undefined,
-          listType: useListFilter ? selectedType : undefined,
-          partOfSpeech: partOfSpeech || undefined,
-          isNt2: nt2Only ? true : undefined,
-          page,
-          pageSize,
-          includeBodyMatches: false,
-          includeFallback: false,
-        })
-      : useListFilter
+    const result = useListFilter
       ? await fetchWordsForList(viewedListId!, selectedType, {
           query: query || undefined,
           partOfSpeech: partOfSpeech || undefined,
@@ -275,7 +258,6 @@ export function WordListTab({
     setSearchLoading(false);
   }, [
     open,
-    language,
     applyListFilter,
     viewedListId,
     viewedList?.type,

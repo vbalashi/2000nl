@@ -620,3 +620,26 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
   await page.getByRole("button", { name: "Trainingsinstellingen" }).click();
   await expect(page.getByText("Actieve kaarttypen")).toBeVisible();
 });
+
+test("dictionary search and stable list filters render on mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await setupAuthenticatedTrainingPage(page);
+
+  await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
+  await page.getByRole("button", { name: "Zoeken", exact: true }).click();
+  await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
+  await expect(
+    page.getByTestId("library-headword-group-group-word-1"),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Lijsten" }).click();
+  await expect(
+    page.getByRole("button", { name: "Lijstinhoud", exact: true }).first(),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Filters", exact: true }).click();
+  await page.getByRole("button", { name: /selecteer filters/i }).first().click();
+  await expect(page.getByLabel("Frozen").first()).toBeVisible();
+  await expect(page.getByLabel("Don't show").first()).toBeVisible();
+});
