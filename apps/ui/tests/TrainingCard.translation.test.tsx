@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TrainingCard } from "@/components/training/TrainingCard";
+import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 
 const word = {
   id: "word-1",
@@ -39,7 +40,9 @@ function renderCard(
 
     return (
       <TrainingCard
-        word={(props.word ?? word) as any}
+        card={
+          props.card ?? projectTrainingCardPresentation(word as any)
+        }
         mode={props.mode ?? "word-to-definition"}
         revealed={props.revealed ?? true}
         hintRevealed={props.hintRevealed ?? false}
