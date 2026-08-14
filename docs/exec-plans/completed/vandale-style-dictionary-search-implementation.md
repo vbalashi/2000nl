@@ -1,7 +1,8 @@
 # Van Dale Style Dictionary Search Implementation Plan
 
 Date: 2026-06-24
-Status: active planning / issue-ready breakdown
+Completed: 2026-08-14
+Status: completed; retained as rollout history
 Primary repo: `vbalashi/2000nl`
 Related client repo: `vbalashi/audiofilms`
 
@@ -59,7 +60,7 @@ AudioFilms compatibility:
 1. Freeze strict lookup policy and grouped result-unit contract.
 2. Add schema/extractor changes required for stable field results.
 3. Implement strict lookup RPCs and wire `/lookup` + `/catalog/lookup`.
-4. Add tests and feature flag/shadow comparison for strict lookup.
+4. Add tests and a temporary feature flag/shadow comparison for strict lookup.
 5. Add search-document readiness/deep-health fields.
 6. Build resumable search-document backfill and freshness policy.
 7. Implement grouped search RPCs and API routes dark-launched.
@@ -183,7 +184,7 @@ Dependencies:
 
 - Issue 1.
 
-### Issue 4: Wire Strict Lookup Into Platform Routes Behind A Feature Flag
+### Issue 4: Wire Strict Lookup Into Platform Routes With A Temporary Feature Flag
 
 Repo: `vbalashi/2000nl`
 Labels: `2000nl`, `platform-api`, `feature-flag`, `testing`
@@ -197,7 +198,7 @@ Scope:
 - Update `apps/ui/lib/platform/platformApi.ts` lookup path.
 - Ensure `intent === "external-click"`, `languageCode`, and `contextText` no
   longer switch to broad search.
-- Add a server-side feature flag for strict lookup route selection.
+- Add a temporary server-side feature flag for strict lookup route selection.
 - Optionally run shadow comparison against current broad RPC in logs/metrics.
 - Preserve `{ query, request, items }` response shape.
 - Keep user-state, list membership, action capability, and translation cache
@@ -208,7 +209,7 @@ Acceptance criteria:
 - Existing Platform API tests pass with updated strict expectations.
 - New route tests assert no alphabetical neighbors for `de`, `oog`, and `huis`.
 - Existing AudioFilms contract shape remains compatible.
-- Rollback is possible by toggling the feature flag.
+- During initial rollout, rollback is possible by toggling the feature flag.
 - Lookup latency instrumentation is available.
 
 Dependencies:
@@ -441,7 +442,7 @@ Create in `vbalashi/2000nl` first:
 1. Freeze Platform lookup/search contracts.
 2. Add stable search field identity and extraction metadata.
 3. Implement strict lookup RPCs.
-4. Wire strict lookup into Platform routes behind a feature flag.
+4. Wire strict lookup into Platform routes behind a temporary feature flag.
 5. Add lookup/search instrumentation.
 6. Build resumable search-document backfill.
 7. Implement grouped search RPCs.
@@ -458,6 +459,21 @@ Add all roadmap-visible issues to the shared GitHub Project:
 AudioFilms / 2000NL Roadmap
 https://github.com/users/vbalashi/projects/2
 ```
+
+## Completion And Current Rollback Strategy
+
+The strict lookup and grouped search rollout is complete. The temporary
+`PLATFORM_STRICT_LOOKUP_ROUTES` rollback branch was retired on 2026-08-14 by
+issue #174 after production evidence confirmed that both strict RPC signatures
+exist, have the expected privileges, and the runtime did not disable strict
+lookup. Platform lookup now uses the strict RPCs unconditionally.
+
+Rollback no longer means toggling a runtime flag. If a regression is found,
+operators redeploy the last compatible application commit while retaining the
+strict RPC migrations, or ship a forward fix behind the stable public route
+facade. The broad lookup RPCs must not be restored as a Platform fallback.
+`search_word_entries_gated` remains intentionally live for Training list search
+and is not part of this retired Platform rollback path.
 
 ## Validation Corpus
 
@@ -498,4 +514,3 @@ Warm request targets at current data scale:
 - 2000NL grouped HTTP endpoint: p95 `<150ms`;
 - AudioFilms browser-to-backend-to-2000NL click lookup: p95 `<250ms`, p99
   `<500ms`.
-
