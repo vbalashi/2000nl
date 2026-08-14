@@ -1032,7 +1032,7 @@ export function TrainingScreen({
       } else if (normalized === "?") {
         setShowHotkeys(true);
       } else if (event.key === "I" && event.shiftKey) {
-        // Shift+I: Show word details in sidebar
+        // Shift+I: Open the current word's details drawer.
         event.preventDefault();
         handleShowCurrentWordDetails();
       } else if (normalized === "i") {
@@ -1686,8 +1686,7 @@ export function TrainingScreen({
         ) : (
           <>
             <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
-              {/* Content Container: Centered Group (Main + Sidebar side-by-side) */}
-              {/* Adjusted max-width and gap to keep things tight and focused */}
+              {/* Center the training card while preserving its established width. */}
               <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
                 {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
                 <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">

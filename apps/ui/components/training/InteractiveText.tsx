@@ -41,10 +41,7 @@ export function InteractiveText({
     // Ignore if same word is already highlighted (optional, but good for perf)
     if (highlightedWord === cleanBox && !isLink) {
       // return;
-      // Actually, standard behavior allows clicking again?
-      // In TrainingCard we ignored it. Let's keep consistent if needed,
-      // but for sidebar, clicking again might not do much unless we want to "re-select".
-      // Let's stick to ignoring if strictly equal to avoid re-fetches.
+      // Ignore the currently selected word to avoid a duplicate detail lookup.
       trainingDebug.log("⏭️ Skipping already highlighted word:", cleanBox);
       return;
     }
