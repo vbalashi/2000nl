@@ -19,7 +19,9 @@ The completed provenance slice is directionally sound: lookup remains read-only,
 
 The remaining risks are mostly maintainability and hardening issues:
 
-- `apps/ui/lib/platform/platformApi.ts` is too broad and should be decomposed by domain.
+- The former broad `platformApi.ts` implementation has been decomposed; keep
+  its route-facing facade shallow and put changes in the focused owning
+  modules.
 - DB-side provenance functions have layered override migrations and need characterization tests before further simplification.
 - AudioFilms YouTube extension code is too large for long-term safe evolution.
 - CI should keep DB/RPC provenance tests and Platform route tests close to any future contract changes.

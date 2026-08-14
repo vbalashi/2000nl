@@ -89,7 +89,6 @@ describe("/api/platform/lookup", () => {
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.TRANSLATION_PROVIDER = "openai";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
-    delete process.env.PLATFORM_STRICT_LOOKUP_ROUTES;
     delete process.env.PLATFORM_LOOKUP_LATENCY_LOGS;
     createClient.mockClear();
     getUser.mockReset();
@@ -564,46 +563,6 @@ describe("/api/platform/lookup", () => {
       matchedForm: "loopt",
       relation: "inflection",
     });
-  });
-
-  test("can roll back external-click lookup to broad search by feature flag", async () => {
-    process.env.PLATFORM_STRICT_LOOKUP_ROUTES = "0";
-    const { POST } = await import("@/app/api/platform/lookup/route");
-    getUser.mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
-    rpc.mockImplementation((name: string) => {
-      if (name === "search_word_entries_gated") {
-        return Promise.resolve({ data: { items: [], total: 0 }, error: null });
-      }
-      return Promise.resolve({ data: null, error: null });
-    });
-
-    const response = await POST(
-      request({
-        query: "huis",
-        languageCode: "nl",
-        intent: "external-click",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("search_word_entries_gated", {
-      p_query: "huis",
-      p_part_of_speech: null,
-      p_is_nt2: null,
-      p_filter_frozen: null,
-      p_filter_hidden: null,
-      p_page: 1,
-      p_page_size: 10,
-      p_language_code: "nl",
-      p_dictionary_ids: null,
-    });
-    expect(rpc).not.toHaveBeenCalledWith(
-      "lookup_dictionary_entries_v3",
-      expect.anything(),
-    );
   });
 
   test.each(["de", "oog", "huis"])(
