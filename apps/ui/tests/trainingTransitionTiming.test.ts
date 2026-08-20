@@ -5,6 +5,7 @@ import {
   recordTrainingTransitionResponse,
   recordTrainingTransitionTiming,
   recordTrainingEntryRendered,
+  recordTrainingEntryTerminalFailure,
   registerTrainingEntryTransition,
 } from "@/lib/training/trainingTransitionTiming";
 
@@ -94,6 +95,43 @@ describe("training transition render timing", () => {
         }),
       ]),
     );
+  });
+
+  test("terminates an accepted transition when the selected card cannot render", () => {
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    const now = vi.spyOn(performance, "now");
+    now.mockReturnValueOnce(100).mockReturnValueOnce(725);
+
+    beginTrainingUserTransition("transition-invalid", "review");
+    registerTrainingEntryTransition("entry-invalid", "transition-invalid");
+    recordTrainingEntryTerminalFailure("entry-invalid", "model-invalid");
+
+    const totals = dispatch.mock.calls
+      .map(([event]) => event)
+      .filter(
+        (event): event is CustomEvent =>
+          event instanceof CustomEvent &&
+          event.type === "2000nl:training-transition-timing" &&
+          event.detail.stage === "transition.total",
+      )
+      .map((event) => event.detail);
+    expect(totals).toEqual([
+      expect.objectContaining({
+        transitionId: "transition-invalid",
+        durationMs: 625,
+        outcome: "review-error-model-invalid",
+      }),
+    ]);
+
+    recordTrainingEntryTerminalFailure("entry-invalid", "model-invalid");
+    expect(
+      dispatch.mock.calls.filter(
+        ([event]) =>
+          event instanceof CustomEvent &&
+          event.type === "2000nl:training-transition-timing" &&
+          event.detail.stage === "transition.total",
+      ),
+    ).toHaveLength(1);
   });
 
   test("keeps browser timing events bounded and strips unsafe response metadata", () => {

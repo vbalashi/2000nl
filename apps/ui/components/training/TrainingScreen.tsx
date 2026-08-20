@@ -42,6 +42,7 @@ import {
   TrainingKnownUndoNotice,
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
+import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
 import {
   TrainingSessionChrome,
 } from "./v2/TrainingSessionChrome";
@@ -569,7 +570,10 @@ export function TrainingScreen({
     loadingWord,
     actionLoading,
     loadError: trainingLoadError,
+    usableCandidatesExhausted,
     reportLoadError: setTrainingLoadError,
+    reportCardLoadFailure,
+    retryCardLoadFailure,
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
@@ -1560,7 +1564,10 @@ export function TrainingScreen({
     sourceOptions: pilotSourceOptions,
     initialTransitionId,
     onCommitDraft: commitPilotSessionDraft,
-    onRetry: () => loadNextWord(),
+    onRetry: async () => {
+      const recovery = await retryCardLoadFailure();
+      if (recovery === "skipped") await loadNextWord();
+    },
   });
   const handleContinueTrainingSession = useCallback(() => {
     if (currentWord) {
@@ -1865,7 +1872,12 @@ export function TrainingScreen({
                               </div>
                             </div>
                           )}
-                          {trainingSessionV2Enabled && currentWord ? (
+                          {usableCandidatesExhausted ? (
+                            <TrainingUsableCandidatesExhausted
+                              interfaceLanguage={onboardingLang}
+                              onExit={trainingPilot.returnToToday}
+                            />
+                          ) : trainingSessionV2Enabled && currentWord ? (
                             <TrainingSenseCardV2Session
                               key={`${user.id}:${currentWord.id}:${currentMode}`}
                               cacheOwnerId={user.id}
@@ -1887,6 +1899,12 @@ export function TrainingScreen({
                               onProgressActionAccepted={
                                 handleV2ProgressActionAccepted
                               }
+                              onLoadFailure={(failure) =>
+                                reportCardLoadFailure(currentWord, failure)
+                              }
+                              onRetryAlternative={() => {
+                                void retryCardLoadFailure();
+                              }}
                               onExit={trainingPilot.returnToToday}
                             />
                           ) : (
@@ -1908,7 +1926,7 @@ export function TrainingScreen({
                   </div>
 
                   {/* 2. Fixed Buttons Area (Always Visible) */}
-                  {!v2SessionOwned ? (
+                  {!v2SessionOwned && !usableCandidatesExhausted ? (
                     <div className="flex-none pt-4 pb-2 z-10">
                       {/* Translucent container for buttons */}
                       <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">

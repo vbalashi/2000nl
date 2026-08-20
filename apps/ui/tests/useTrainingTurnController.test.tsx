@@ -17,21 +17,32 @@ const prepared = vi.hoisted(() => ({
   consume: vi.fn(),
   reset: vi.fn(),
   warm: vi.fn(),
+  selectNext: null as null | ((queueTurn: "new" | "review", cardKey: string) => Promise<TrainingWord | null>),
 }));
 const recordWordView = vi.hoisted(() => vi.fn());
 const transitionTiming = vi.hoisted(() => ({
   begin: vi.fn(),
   measure: vi.fn(),
   record: vi.fn(),
+  finish: vi.fn(),
+  failEntry: vi.fn(),
 }));
 
 vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
-  usePreparedNextTrainingTurn: () => ({
-    warmWord: prepared.warm,
-    consumeForCard: prepared.consume,
-    reset: prepared.reset,
-    nextTransitionId: "transition-1",
-  }),
+  usePreparedNextTrainingTurn: (input: {
+    selectNext: (
+      queueTurn: "new" | "review",
+      cardKey: string,
+    ) => Promise<TrainingWord | null>;
+  }) => {
+    prepared.selectNext = input.selectNext;
+    return {
+      warmWord: prepared.warm,
+      consumeForCard: prepared.consume,
+      reset: prepared.reset,
+      nextTransitionId: "transition-1",
+    };
+  },
 }));
 
 vi.mock("@/lib/trainingService", () => ({
@@ -47,6 +58,10 @@ vi.mock("@/lib/training/trainingTransitionTiming", () => ({
     transitionTiming.begin(...args),
   markTrainingEntryPresentationStarted: vi.fn(),
   createTrainingTransitionId: vi.fn(() => "generated-transition"),
+  finishTrainingUserTransition: (...args: unknown[]) =>
+    transitionTiming.finish(...args),
+  recordTrainingEntryTerminalFailure: (...args: unknown[]) =>
+    transitionTiming.failEntry(...args),
   recordTrainingTransitionTiming: (...args: unknown[]) =>
     transitionTiming.record(...args),
   measureTrainingTransitionStage: async (
@@ -94,6 +109,7 @@ function renderController(overrides: {
   reviewLegacy?: (request: LegacyTrainingReviewRequest) => Promise<unknown>;
   setCurrentWord?: (word: TrainingWord | null) => void;
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
+  recoverLoadErrors?: boolean;
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -128,7 +144,7 @@ function renderController(overrides: {
       cardFilter: "both",
       newReviewRatio: 2,
       trainingShellV2Enabled: false,
-      recoverLoadErrors: true,
+      recoverLoadErrors: overrides.recoverLoadErrors ?? true,
       focusFilter: { dateWindow: "all" },
       sessionScopeKey,
       selection: { selectNext, lookupOverride },
@@ -163,10 +179,13 @@ describe("useTrainingTurnController transition matrix", () => {
     prepared.reset.mockReset();
     prepared.warm.mockReset();
     prepared.warm.mockResolvedValue(true);
+    prepared.selectNext = null;
     recordWordView.mockReset();
     transitionTiming.begin.mockReset();
     transitionTiming.measure.mockReset();
     transitionTiming.record.mockReset();
+    transitionTiming.finish.mockReset();
+    transitionTiming.failEntry.mockReset();
   });
 
   test("fast prepared legacy candidate presents immediately while one mutation remains in flight", async () => {
@@ -291,6 +310,248 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.selectNext).toHaveBeenCalledTimes(1);
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.reviewLegacy).not.toHaveBeenCalled();
+  });
+
+  test("retrying a rejected prepared card performs a fresh authoritative selection", async () => {
+    const recoveredWord = { ...word2, id: "word-due", headword: "leren" };
+    const selectNext = vi.fn().mockResolvedValue(recoveredWord);
+    const controller = renderController({
+      currentWord: word2,
+      selectNext,
+    });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "model-invalid",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(recoveredWord);
+    expect(transitionTiming.begin).toHaveBeenCalledWith(
+      expect.any(String),
+      "retry",
+    );
+    expect(prepared.reset).toHaveBeenCalled();
+
+    controller.rerender({
+      sessionScopeKey: "default",
+      currentWord: recoveredWord,
+    });
+    await act(async () => {
+      await controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+    expect(selectNext).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        excludeCardKeys: expect.arrayContaining([
+          "word-2:word-to-definition",
+          "word-due:word-to-definition",
+        ]),
+      }),
+    );
+  });
+
+  test("background prefetch keeps rejected card keys excluded for the session", async () => {
+    const selectNext = vi.fn().mockResolvedValue(word1);
+    const controller = renderController({ currentWord: word2, selectNext });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "model-invalid",
+      );
+    });
+    await act(async () => {
+      await prepared.selectNext?.(
+        "review",
+        "word-due:word-to-definition",
+      );
+    });
+
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queueTurn: "review",
+        excludeCardKeys: expect.arrayContaining([
+          "word-2:word-to-definition",
+          "word-due:word-to-definition",
+        ]),
+      }),
+    );
+  });
+
+  test.each([
+    ["empty", null, "empty"],
+    ["error", new Error("scheduler unavailable"), "error-selection-failed"],
+  ] as const)(
+    "retry reaches a classified %s terminal outcome",
+    async (_label, selectionResult, outcome) => {
+      const selectNext = vi.fn(() =>
+        selectionResult instanceof Error
+          ? Promise.reject(selectionResult)
+          : Promise.resolve(selectionResult),
+      );
+      const controller = renderController({ currentWord: word2, selectNext });
+
+      act(() => {
+        controller.result.current.reportCardLoadFailure(
+          word2,
+          "model-invalid",
+        );
+      });
+      await act(async () => {
+        await controller.result.current.retryCardLoadFailure();
+      });
+
+      expect(transitionTiming.finish).toHaveBeenCalledWith(
+        "generated-transition",
+        outcome,
+      );
+    },
+  );
+
+  test("retrying after all usable candidates are exhausted exposes honest completion", async () => {
+    const controller = renderController({
+      currentWord: word2,
+      selectNext: vi.fn().mockResolvedValue(null),
+    });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "model-invalid",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(controller.result.current.usableCandidatesExhausted).toBe(true);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
+  });
+
+  test("retry checks due reviews before declaring a new-card queue exhausted", async () => {
+    const dueReview = { ...word1, id: "word-due", headword: "leren" };
+    const selectNext = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(dueReview);
+    const controller = renderController({ currentWord: word2, selectNext });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "model-invalid",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(selectNext).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        queueTurn: "new",
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+    expect(selectNext).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        queueTurn: "auto",
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(null);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(dueReview);
+    expect(transitionTiming.finish).not.toHaveBeenCalledWith(
+      "generated-transition",
+      "empty",
+    );
+  });
+
+  test("rejected-card exclusions are scoped to the current session", async () => {
+    const selectNext = vi.fn().mockResolvedValue(word1);
+    const controller = renderController({ currentWord: word2, selectNext });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word1,
+        "model-invalid",
+      );
+      controller.result.current.clearReviewedSession();
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "model-invalid",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+  });
+
+  test("a failed selected-card warmup is also recoverable through a fresh selection", async () => {
+    const recoveredWord = { ...word1, id: "word-due", headword: "leren" };
+    const selectNext = vi
+      .fn()
+      .mockResolvedValueOnce(word2)
+      .mockResolvedValueOnce(recoveredWord);
+    prepared.warm.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const controller = renderController({ currentWord: word1, selectNext });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        transitionId: "failed-warmup",
+      });
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(selectNext).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(recoveredWord);
+  });
+
+  test("a non-pilot selection failure terminates the accepted transition before rethrowing", async () => {
+    prepared.consume.mockReturnValue(null);
+    const controller = renderController({
+      recoverLoadErrors: false,
+      selectNext: vi.fn().mockRejectedValue(new Error("scheduler unavailable")),
+    });
+
+    await act(async () => {
+      await expect(
+        controller.result.current.submitLegacyReview("success"),
+      ).rejects.toThrow("scheduler unavailable");
+    });
+
+    expect(transitionTiming.begin).toHaveBeenCalledWith(
+      "transition-1",
+      "review",
+    );
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "transition-1",
+      "error-selection-failed",
+    );
   });
 
   test("reset invalidates a slow on-demand completion and releases selection ownership", async () => {

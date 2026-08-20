@@ -195,6 +195,40 @@ describe("TrainingSenseCardV2Session", () => {
     expect(fetchSingleSense).toHaveBeenCalledTimes(2);
   });
 
+  test("classifies a structurally invalid card and asks the session owner for a fresh candidate", async () => {
+    const onLoadFailure = vi.fn();
+    const onRetryAlternative = vi.fn();
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: { ...singleSenseEntry, contentNodes: [] },
+    });
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+        onLoadFailure={onLoadFailure}
+        onRetryAlternative={onRetryAlternative}
+      />,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveAttribute(
+      "data-training-v2-state",
+      "reverse-definition-missing",
+    );
+    expect(onLoadFailure).toHaveBeenCalledWith("reverse-definition-missing");
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetryAlternative).toHaveBeenCalledWith(
+      "reverse-definition-missing",
+    );
+    expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
   test("keeps a rejected retry recoverable instead of getting stuck loading", async () => {
     fetchSingleSense
       .mockResolvedValueOnce({ state: "entry-not-found" })

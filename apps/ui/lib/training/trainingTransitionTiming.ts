@@ -49,9 +49,10 @@ const preparedEntryTransitions = new Map<
   string,
   { transitionId: string; renderStartedAt: number | null }
 >();
+type TrainingUserTransitionAction = "continue" | "learn" | "review" | "retry";
 const activeUserTransitions = new Map<
   string,
-  { startedAt: number; action: "continue" | "learn" | "review" }
+  { startedAt: number; action: TrainingUserTransitionAction }
 >();
 const MAX_ACTIVE_USER_TRANSITIONS = 128;
 let transitionSequence = 0;
@@ -63,7 +64,7 @@ export function createTrainingTransitionId() {
 
 export function beginTrainingUserTransition(
   transitionId: string,
-  action: "continue" | "learn" | "review",
+  action: TrainingUserTransitionAction,
 ) {
   const startedAt = performance.now();
   activeUserTransitions.set(transitionId, {
@@ -114,17 +115,39 @@ export function recordTrainingEntryRendered(entryId: string) {
     monotonicStartedAtMs: transition.renderStartedAt,
     monotonicEndedAtMs: renderedAt,
   });
-  const userTransition = activeUserTransitions.get(transition.transitionId);
-  if (!userTransition) return;
-  activeUserTransitions.delete(transition.transitionId);
+  finishTrainingUserTransition(transition.transitionId, "ready", renderedAt);
+}
+
+export function recordTrainingEntryTerminalFailure(
+  entryId: string,
+  failure: string,
+) {
+  const transition = preparedEntryTransitions.get(entryId);
+  if (!transition) return false;
+  preparedEntryTransitions.delete(entryId);
+  return finishTrainingUserTransition(
+    transition.transitionId,
+    `error-${failure}`,
+  );
+}
+
+export function finishTrainingUserTransition(
+  transitionId: string,
+  outcome: string,
+  endedAt = performance.now(),
+) {
+  const userTransition = activeUserTransitions.get(transitionId);
+  if (!userTransition) return false;
+  activeUserTransitions.delete(transitionId);
   recordTrainingTransitionTiming({
-    transitionId: transition.transitionId,
+    transitionId,
     stage: "transition.total",
-    durationMs: renderedAt - userTransition.startedAt,
-    outcome: `${userTransition.action}-ready`,
+    durationMs: endedAt - userTransition.startedAt,
+    outcome: `${userTransition.action}-${outcome}`,
     monotonicStartedAtMs: userTransition.startedAt,
-    monotonicEndedAtMs: renderedAt,
+    monotonicEndedAtMs: endedAt,
   });
+  return true;
 }
 
 export function recordTrainingTransitionTiming(

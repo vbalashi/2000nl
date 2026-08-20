@@ -8,8 +8,10 @@ import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platform
 import {
   beginTrainingUserTransition,
   createTrainingTransitionId,
+  finishTrainingUserTransition,
   markTrainingEntryPresentationStarted,
   measureTrainingTransitionStage,
+  recordTrainingEntryTerminalFailure,
   recordTrainingTransitionTiming,
 } from "@/lib/training/trainingTransitionTiming";
 import {
@@ -38,7 +40,11 @@ import type {
 export type LoadNextTrainingTurnRequest = Omit<
   TrainingTurnSelectionRequest,
   "queueTurn"
-> & { queueTurn?: QueueTurn; transitionId?: string };
+> & {
+  queueTurn?: QueueTurn;
+  transitionId?: string;
+  fallbackQueueTurnOnEmpty?: QueueTurn;
+};
 
 export type LoadNextTrainingTurnResult = "loaded" | "empty" | "error" | "skipped";
 
@@ -105,6 +111,8 @@ export function useTrainingTurnController(input: Inputs) {
   const [loadingWord, setLoadingWord] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [usableCandidatesExhausted, setUsableCandidatesExhausted] =
+    useState(false);
   const [nextCardOverrideNotice, setNextCardOverrideNotice] = useState<
     string | null
   >(null);
@@ -116,6 +124,8 @@ export function useTrainingTurnController(input: Inputs) {
   const sessionScopeKeyRef = useRef(sessionScopeKey);
   const currentTurnIdRef = useRef<string | null>(null);
   const reviewedCardKeysRef = useRef<Set<string>>(new Set());
+  const rejectedCardKeysRef = useRef<Set<string>>(new Set());
+  const failedCardKeyRef = useRef<string | null>(null);
   const nextCardOverrideWordIdRef = useRef<string | null>(null);
   const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
 
@@ -135,7 +145,13 @@ export function useTrainingTurnController(input: Inputs) {
     (predictedQueueTurn: QueueTurn, currentCardKey: string) =>
       selection.selectNext({
         queueTurn: predictedQueueTurn,
-        excludeCardKeys: [...reviewedCardKeysRef.current, currentCardKey],
+        excludeCardKeys: [
+          ...new Set([
+            ...reviewedCardKeysRef.current,
+            ...rejectedCardKeysRef.current,
+            currentCardKey,
+          ]),
+        ],
       }),
     [selection],
   );
@@ -163,6 +179,9 @@ export function useTrainingTurnController(input: Inputs) {
 
   const clearReviewedSession = useCallback(() => {
     reviewedCardKeysRef.current.clear();
+    rejectedCardKeysRef.current.clear();
+    failedCardKeyRef.current = null;
+    setUsableCandidatesExhausted(false);
   }, []);
 
   const cancelActiveSelection = useCallback(() => {
@@ -193,7 +212,12 @@ export function useTrainingTurnController(input: Inputs) {
 
   useEffect(() => {
     const reviewed = reviewedCardKeysRef.current;
-    return () => reviewed.clear();
+    const rejected = rejectedCardKeysRef.current;
+    return () => {
+      reviewed.clear();
+      rejected.clear();
+      failedCardKeyRef.current = null;
+    };
   }, []);
 
   useEffect(
@@ -229,11 +253,25 @@ export function useTrainingTurnController(input: Inputs) {
     ],
   );
 
+  const rememberRejectedCard = useCallback(
+    (word: TrainingWord, failure: string) => {
+      // Lookup readiness does not guarantee that the selected card is
+      // renderable (for example, a reverse card can lack a definition).
+      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
+      const cardKey = getTrainingCardKey(word, mode);
+      rejectedCardKeysRef.current.add(cardKey);
+      failedCardKeyRef.current = cardKey;
+      recordTrainingEntryTerminalFailure(word.id, failure);
+    },
+    [enabledModes],
+  );
+
   const loadNextWord = useCallback(
     async ({
       excludeWordIds = [],
       queueTurn: requestedQueueTurn,
       transitionId = createTrainingTransitionId(),
+      fallbackQueueTurnOnEmpty,
       ...request
     }: LoadNextTrainingTurnRequest = {}): Promise<LoadNextTrainingTurnResult> => {
       if (loadingInProgressRef.current) {
@@ -241,12 +279,14 @@ export function useTrainingTurnController(input: Inputs) {
           "%c loadNextWord skipped (already loading)",
           "color: #f59e0b",
         );
+        finishTrainingUserTransition(transitionId, "skipped");
         return "skipped";
       }
 
       loadingInProgressRef.current = true;
       const generation = (loadGenerationRef.current += 1);
       setLoadingWord(true);
+      setUsableCandidatesExhausted(false);
       resetCardPresentation();
       setLoadError(null);
       try {
@@ -254,7 +294,10 @@ export function useTrainingTurnController(input: Inputs) {
         if (overrideWordId) {
           nextCardOverrideWordIdRef.current = null;
           const overrideWord = await selection.lookupOverride(overrideWordId);
-          if (generation !== loadGenerationRef.current) return "skipped";
+          if (generation !== loadGenerationRef.current) {
+            finishTrainingUserTransition(transitionId, "cancelled");
+            return "skipped";
+          }
           if (overrideWord) {
             const mode = currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
             const preparedOverrideWord: TrainingWord = {
@@ -275,13 +318,24 @@ export function useTrainingTurnController(input: Inputs) {
               undefined,
               transitionId,
             );
-            if (generation !== loadGenerationRef.current) return "skipped";
+            if (generation !== loadGenerationRef.current) {
+              finishTrainingUserTransition(transitionId, "cancelled");
+              return "skipped";
+            }
             if (!overrideReady) {
+              rememberRejectedCard(
+                preparedOverrideWord,
+                "platform-v2-lookup-failed",
+              );
               nextCardOverrideActiveKeyRef.current = null;
               setNextCardOverrideNotice(
                 "Kon dit woord niet laden; probeer het opnieuw.",
               );
               setLoadError("platform_v2_lookup_failed");
+              finishTrainingUserTransition(
+                transitionId,
+                "error-platform-v2-lookup-failed",
+              );
               return "error";
             }
             presentWord(preparedOverrideWord);
@@ -295,35 +349,71 @@ export function useTrainingTurnController(input: Inputs) {
           );
         }
 
-        const nextWord = await measureTrainingTransitionStage(
-          transitionId,
-          "next-card.selection",
-          () =>
-            selection.selectNext({
-              ...request,
-              excludeWordIds,
-              queueTurn: requestedQueueTurn ?? queueTurn,
-            }),
-          (selected) => (selected ? "ready" : "empty"),
-        );
-        if (generation !== loadGenerationRef.current) return "skipped";
+        const selectForQueueTurn = (selectionQueueTurn: QueueTurn) =>
+          measureTrainingTransitionStage(
+            transitionId,
+            "next-card.selection",
+            () =>
+              selection.selectNext({
+                ...request,
+                excludeWordIds,
+                excludeCardKeys: [
+                  ...new Set([
+                    ...rejectedCardKeysRef.current,
+                    ...(request.excludeCardKeys ?? []),
+                  ]),
+                ],
+                queueTurn: selectionQueueTurn,
+              }),
+            (selected) => (selected ? "ready" : "empty"),
+          );
+        const primaryQueueTurn = requestedQueueTurn ?? queueTurn;
+        let nextWord = await selectForQueueTurn(primaryQueueTurn);
+        if (generation !== loadGenerationRef.current) {
+          finishTrainingUserTransition(transitionId, "cancelled");
+          return "skipped";
+        }
+        if (
+          !nextWord &&
+          fallbackQueueTurnOnEmpty &&
+          fallbackQueueTurnOnEmpty !== primaryQueueTurn
+        ) {
+          nextWord = await selectForQueueTurn(fallbackQueueTurnOnEmpty);
+        }
+        if (generation !== loadGenerationRef.current) {
+          finishTrainingUserTransition(transitionId, "cancelled");
+          return "skipped";
+        }
         if (!nextWord) {
           presentWord(null);
+          finishTrainingUserTransition(transitionId, "empty");
           return "empty";
         }
 
         const mode = nextWord.mode ?? enabledModes[0] ?? "word-to-definition";
         recordPresentation(nextWord, mode);
         const ready = await warmWord(nextWord, undefined, transitionId);
-        if (generation !== loadGenerationRef.current) return "skipped";
+        if (generation !== loadGenerationRef.current) {
+          finishTrainingUserTransition(transitionId, "cancelled");
+          return "skipped";
+        }
         if (!ready) {
+          rememberRejectedCard(nextWord, "platform-v2-lookup-failed");
           setLoadError("platform_v2_lookup_failed");
+          finishTrainingUserTransition(
+            transitionId,
+            "error-platform-v2-lookup-failed",
+          );
           return "error";
         }
         presentWord(nextWord);
         return "loaded";
       } catch (cause) {
-        if (generation !== loadGenerationRef.current) return "skipped";
+        if (generation !== loadGenerationRef.current) {
+          finishTrainingUserTransition(transitionId, "cancelled");
+          return "skipped";
+        }
+        finishTrainingUserTransition(transitionId, "error-selection-failed");
         if (!recoverLoadErrors) throw cause;
         setLoadError(
           cause instanceof Error ? cause.message : "training_load_failed",
@@ -344,11 +434,40 @@ export function useTrainingTurnController(input: Inputs) {
       queueTurn,
       recordPresentation,
       recoverLoadErrors,
+      rememberRejectedCard,
       resetCardPresentation,
       selection,
       warmWord,
     ],
   );
+
+  const reportCardLoadFailure = useCallback(
+    (word: TrainingWord, failure: string) => {
+      rememberRejectedCard(word, failure);
+    },
+    [rememberRejectedCard],
+  );
+
+  const retryCardLoadFailure = useCallback(async () => {
+    if (!failedCardKeyRef.current) return "skipped" as const;
+    // Recovery returns ownership to the authoritative scheduler instead of
+    // repeatedly fetching the same unusable presentation candidate.
+    resetPreparedNextTurn();
+    const transitionId = createTrainingTransitionId();
+    beginTrainingUserTransition(transitionId, "retry");
+    const result = await loadNextWord({
+      transitionId,
+      queueTurn,
+      fallbackQueueTurnOnEmpty: queueTurn === "auto" ? undefined : "auto",
+      excludeCardKeys: [
+        ...reviewedCardKeysRef.current,
+        ...rejectedCardKeysRef.current,
+      ],
+    });
+    setUsableCandidatesExhausted(result === "empty");
+    if (result === "loaded") failedCardKeyRef.current = null;
+    return result;
+  }, [loadNextWord, queueTurn, resetPreparedNextTurn]);
 
   const replaceSessionScopeAndLoad = useCallback(
     (request: LoadNextTrainingTurnRequest) => {
@@ -527,7 +646,10 @@ export function useTrainingTurnController(input: Inputs) {
     loadingWord,
     actionLoading,
     loadError,
+    usableCandidatesExhausted,
     reportLoadError: setLoadError,
+    reportCardLoadFailure,
+    retryCardLoadFailure,
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,

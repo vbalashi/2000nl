@@ -128,6 +128,7 @@
       "cardChanged": "Next training card",
       "loading": "Loading training card…",
       "loadFailed": "This training card could not be loaded.",
+      "exhausted": "No usable training cards remain in this session.",
       "stateRefreshed": "The card changed elsewhere. Its latest state is now shown.",
       "temporaryFailure": "The connection was interrupted. Please try again.",
       "exit": "Back to Today",
