@@ -256,15 +256,15 @@ def test_closed_error_codes_imply_their_non_optional_hard_gate(
     assert fidelity["hardFailures"] == [expected_failure]
 
 
-def test_zero_quality_and_unmatched_fidelity_imply_hard_failures() -> None:
+def test_low_quality_and_fidelity_scores_imply_hard_failures() -> None:
     quality = validate_quality(
         {
             "scores": {
-                "naturalness": 0,
+                "naturalness": 1,
                 "learnerUsefulness": 5,
                 "definitionClarity": 5,
                 "exampleQuality": 5,
-                "grammarAccuracy": 0,
+                "grammarAccuracy": 1,
             },
             "hardFailures": [],
             "errorCodes": [],
@@ -276,10 +276,10 @@ def test_zero_quality_and_unmatched_fidelity_imply_hard_failures() -> None:
     fidelity = validate_fidelity(
         {
             "referenceMatches": [
-                {"referenceId": "ref", "matchedSenseIndexes": [], "fidelity": 0}
+                {"referenceId": "ref", "matchedSenseIndexes": [0], "fidelity": 1}
             ],
             "scores": {
-                "senseCoverage": 0,
+                "senseCoverage": 1,
                 "senseDiscrimination": 5,
                 "independentWording": 5,
             },

@@ -134,6 +134,11 @@ Hard gates precede preference scoring:
 - no exact source example reuse;
 - no suspicious continuous source span or near-copy.
 
+For the closed 0–5 judge scale, naturalness, grammar accuracy, and sense
+coverage below 2 are internally inconsistent with a hard pass and therefore
+imply the corresponding language or semantic hard failure even if a provider
+omits its closed error code.
+
 Separate signals:
 
 1. deterministic exact, token n-gram, longest-common-span, and example-reuse
@@ -172,7 +177,11 @@ source quotations or item-specific rewrites from the source-aware judge.
 - Compare at most two finalists on validation, freeze one prompt, then open the
   holdout exactly once. The ledger permits only one validation comparison, and
   sealed generation rejects partial/limited holdout runs or any prompt/model
-  that does not match the committed finalist decision.
+  that does not match the committed finalist decision. New releases also bind
+  that decision to the canonical ledger and validation-comparison hashes. The
+  already-opened pilot remains reusable only through its immutable run binding
+  and the two hash-bound local validation manifests; historical evidence cannot
+  open another holdout.
 
 ## Blind owner review
 

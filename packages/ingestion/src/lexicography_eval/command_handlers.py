@@ -88,6 +88,18 @@ def _json_result(value: Any) -> None:
     print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
 
 
+def _holdout_tournament_ledger(
+    repo_root: Path, sample: dict[str, Any]
+) -> Path | None:
+    if not sample.get("sealed"):
+        return None
+    return canonical_tournament_ledger_path(
+        output_root=repo_root / "reports/generated/lexicography-eval",
+        benchmark_id=str(sample.get("benchmarkId") or ""),
+        selection_hash=str(sample.get("selectionHash") or ""),
+    )
+
+
 def execute_command(args: Namespace) -> int:
     repo_root = args.repo_root.resolve()
     env_root = (args.env_root or repo_root).resolve()
@@ -134,6 +146,7 @@ def execute_command(args: Namespace) -> int:
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
+            tournament_ledger_path=_holdout_tournament_ledger(repo_root, sample),
             run_id=args.holdout_run_id, prompt_id=prompt.prompt_id,
             prompt_hash=prompt.prompt_hash, model=client.model, generation_run_dir=run_dir,
         )
@@ -168,6 +181,7 @@ def execute_command(args: Namespace) -> int:
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
+            tournament_ledger_path=_holdout_tournament_ledger(repo_root, sample),
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),
             model=generation_manifest.get("model"),
@@ -228,6 +242,7 @@ def execute_command(args: Namespace) -> int:
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
+            tournament_ledger_path=_holdout_tournament_ledger(repo_root, sample),
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),
             model=generation_manifest.get("model"),

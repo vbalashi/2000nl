@@ -174,21 +174,28 @@ def test_sealed_holdout_must_run_the_complete_case_set() -> None:
         require_complete_sealed_holdout(sample=sample, split="holdout", limit=1)
 
 
-def _comparison(path: Path, *, phase: str, decision: str, index: int) -> None:
+def _comparison(
+    path: Path,
+    *,
+    phase: str,
+    decision: str,
+    incumbent_index: int,
+    challenger_index: int,
+) -> None:
     path.write_text(
         json.dumps(
             {
                 "schema": "lexicography-prompt-comparison-v2",
-                "incumbentPromptId": f"prompt-{index}",
-                "challengerPromptId": f"prompt-{index + 1}",
+                "incumbentPromptId": f"prompt-{incumbent_index}",
+                "challengerPromptId": f"prompt-{challenger_index}",
                 "incumbentFinalist": {
-                    "promptId": f"prompt-{index}",
-                    "promptHash": f"{index:064x}",
+                    "promptId": f"prompt-{incumbent_index}",
+                    "promptHash": f"{incumbent_index:064x}",
                     "model": "gpt-4.1",
                 },
                 "challengerFinalist": {
-                    "promptId": f"prompt-{index + 1}",
-                    "promptHash": f"{index + 1:064x}",
+                    "promptId": f"prompt-{challenger_index}",
+                    "promptHash": f"{challenger_index:064x}",
                     "model": "gpt-4.1",
                 },
                 "evaluationProvenance": {
@@ -209,7 +216,10 @@ def test_tournament_ledger_enforces_failure_plateau_round_cap_and_two_finalists(
     failure_ledger = tmp_path / "failure-ledger.json"
     for index in range(3):
         artifact = tmp_path / f"failure-{index}.json"
-        _comparison(artifact, phase="development", decision="reject", index=index)
+        _comparison(
+            artifact, phase="development", decision="reject",
+            incumbent_index=0, challenger_index=index + 1,
+        )
         with tournament_round(ledger_path=failure_ledger, phase="development") as record:
             record(artifact)
     with pytest.raises(ValueError, match="stopping rule"):
@@ -217,14 +227,19 @@ def test_tournament_ledger_enforces_failure_plateau_round_cap_and_two_finalists(
             pass
 
     cap_ledger = tmp_path / "cap-ledger.json"
+    incumbent_index = 0
     for index in range(8):
         artifact = tmp_path / f"cap-{index}.json"
+        challenger_index = index + 1
+        decision = "promote" if index % 3 == 0 else "reject"
         _comparison(
-            artifact, phase="development",
-            decision="promote" if index % 3 == 0 else "reject", index=index,
+            artifact, phase="development", decision=decision,
+            incumbent_index=incumbent_index, challenger_index=challenger_index,
         )
         with tournament_round(ledger_path=cap_ledger, phase="development") as record:
             record(artifact)
+        if decision == "promote":
+            incumbent_index = challenger_index
     with pytest.raises(ValueError, match="stopping rule"):
         with tournament_round(ledger_path=cap_ledger, phase="development"):
             pass
@@ -232,18 +247,44 @@ def test_tournament_ledger_enforces_failure_plateau_round_cap_and_two_finalists(
     validation_ledger = tmp_path / "validation-ledger.json"
     for index in range(3):
         development = tmp_path / f"validation-ledger-development-{index}.json"
-        _comparison(development, phase="development", decision="reject", index=index)
+        _comparison(
+            development, phase="development", decision="reject",
+            incumbent_index=0, challenger_index=index + 1,
+        )
         with tournament_round(ledger_path=validation_ledger, phase="development") as record:
             record(development)
     artifact = tmp_path / "validation.json"
-    _comparison(artifact, phase="validation", decision="promote", index=1)
+    _comparison(
+        artifact, phase="validation", decision="promote",
+        incumbent_index=0, challenger_index=3,
+    )
     with tournament_round(ledger_path=validation_ledger, phase="validation") as record:
         record(artifact)
     ledger = json.loads(validation_ledger.read_text(encoding="utf-8"))
-    assert ledger["finalist"]["promptId"] == "prompt-2"
+    assert ledger["finalist"]["promptId"] == "prompt-3"
     with pytest.raises(ValueError, match="two frozen finalists"):
         with tournament_round(ledger_path=validation_ledger, phase="validation"):
             pass
-    with pytest.raises(ValueError, match="closed after the validation"):
+    with pytest.raises(ValueError, match="stopping rule"):
         with tournament_round(ledger_path=validation_ledger, phase="development"):
             pass
+
+
+def test_tournament_rejects_a_disconnected_incumbent(tmp_path: Path) -> None:
+    ledger_path = tmp_path / "tournament.json"
+    first = tmp_path / "first.json"
+    _comparison(
+        first, phase="development", decision="reject",
+        incumbent_index=0, challenger_index=1,
+    )
+    with tournament_round(ledger_path=ledger_path, phase="development") as record:
+        record(first)
+
+    disconnected = tmp_path / "disconnected.json"
+    _comparison(
+        disconnected, phase="development", decision="promote",
+        incumbent_index=1, challenger_index=2,
+    )
+    with tournament_round(ledger_path=ledger_path, phase="development") as record:
+        with pytest.raises(ValueError, match="previous round winner"):
+            record(disconnected)

@@ -429,15 +429,48 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     sample = json.loads(sample_path.read_text(encoding="utf-8"))
+    incumbent = {"promptId": "finalist-a", "promptHash": "a" * 64, "model": "gpt-4.1"}
+    challenger = {"promptId": "finalist-b", "promptHash": "b" * 64, "model": "gpt-4.1"}
+    development_challengers = [
+        {"promptId": f"challenger-{index}", "promptHash": f"{index:064x}", "model": "gpt-4.1"}
+        for index in range(1, 3)
+    ] + [challenger]
+    tournament_path = tmp_path / "tournament.json"
+    tournament_path.write_text(
+        json.dumps({
+            "schema": "lexicography-tournament-ledger-v2",
+            "benchmarkId": "sealed-test",
+            "selectionHash": "selection-hash",
+            "rounds": [
+                {
+                    "phase": "development", "incumbent": incumbent,
+                    "challenger": development_challengers[index - 1], "decision": "reject",
+                    "comparisonSha256": f"{index:064x}",
+                }
+                for index in range(1, 4)
+            ] + [{
+                "phase": "validation", "incumbent": incumbent,
+                "challenger": challenger, "decision": "promote",
+                "comparisonSha256": f"{4:064x}",
+            }],
+            "currentWinner": incumbent,
+            "validationFinalists": [incumbent, challenger],
+            "finalist": challenger,
+        }),
+        encoding="utf-8",
+    )
     finalist_path = tmp_path / "finalist-decision.json"
     finalist_path.write_text(
         json.dumps({
             "schema": "lexicography-finalist-decision-v1",
             "benchmarkId": "sealed-test",
             "selectionHash": "selection-hash",
+            "selectionProtocol": "tournament-ledger-v2",
+            "tournamentLedgerSha256": hashlib.sha256(tournament_path.read_bytes()).hexdigest(),
+            "validationComparisonSha256": f"{4:064x}",
             "generator": {
                 "promptId": "finalist-b",
-                "promptHash": "prompt-hash-b",
+                "promptHash": "b" * 64,
                 "model": "gpt-4.1",
             },
         }),
@@ -449,23 +482,39 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
         sample=sample,
         ledger_path=ledger_path,
         finalist_path=finalist_path,
+        tournament_ledger_path=tournament_path,
         run_id="finalist-b-v1",
         prompt_id="finalist-b",
-        prompt_hash="prompt-hash-b",
+        prompt_hash="b" * 64,
         model="gpt-4.1",
         generation_run_dir=tmp_path / "generation-finalist-b",
     )
     binding = json.loads((tmp_path / "run-binding.json").read_text())
     assert binding["runId"] == "finalist-b-v1"
 
+    mismatched_finalist = json.loads(finalist_path.read_text(encoding="utf-8"))
+    mismatched_finalist["validationComparisonSha256"] = "f" * 64
+    finalist_path.write_text(json.dumps(mismatched_finalist), encoding="utf-8")
+    with pytest.raises(ValueError, match="canonical validation tournament"):
+        require_holdout_binding(
+            sample_path=sample_path, sample=sample, ledger_path=ledger_path,
+            finalist_path=finalist_path, tournament_ledger_path=tournament_path,
+            run_id="finalist-b-v1", prompt_id="finalist-b",
+            prompt_hash="b" * 64, model="gpt-4.1",
+            generation_run_dir=tmp_path / "generation-finalist-b",
+        )
+    mismatched_finalist["validationComparisonSha256"] = f"{4:064x}"
+    finalist_path.write_text(json.dumps(mismatched_finalist), encoding="utf-8")
+
     require_holdout_binding(
         sample_path=sample_path,
         sample=sample,
         ledger_path=ledger_path,
         finalist_path=finalist_path,
+        tournament_ledger_path=tournament_path,
         run_id="finalist-b-v1",
         prompt_id="finalist-b",
-        prompt_hash="prompt-hash-b",
+        prompt_hash="b" * 64,
         model="gpt-4.1",
         generation_run_dir=tmp_path / "generation-finalist-b",
     )
@@ -475,9 +524,10 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             sample=sample,
             ledger_path=ledger_path,
             finalist_path=finalist_path,
+            tournament_ledger_path=tournament_path,
             run_id="different-run",
             prompt_id="finalist-b",
-            prompt_hash="prompt-hash-b",
+            prompt_hash="b" * 64,
             model="gpt-4.1",
             generation_run_dir=tmp_path / "generation-finalist-b",
         )
@@ -487,6 +537,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             sample=sample,
             ledger_path=ledger_path,
             finalist_path=finalist_path,
+            tournament_ledger_path=tournament_path,
             run_id="finalist-b-v1",
             prompt_id="different-prompt",
             prompt_hash="different-hash",

@@ -2,6 +2,7 @@
   "schema": "lexicography-finalist-decision-v1",
   "benchmarkId": "nl-learner-pilot-v1",
   "selectionHash": "a6d44e4ca38ae23201004bcc4db3157864b28547d99afa4830b293142b307fe4",
+  "selectionProtocol": "historical-human-validation-v1",
   "decision": "human-review-pilot-only",
   "generator": {
     "model": "gpt-4.1",
@@ -25,6 +26,19 @@
       "reviewerCleanCounts": [10, 11],
       "reviewerProblemCounts": [2, 1]
     }
+  },
+  "validationEvidence": {
+    "selectedPromptId": "generator-challenger-k-lexical-unit-gate",
+    "candidateManifests": [
+      {
+        "path": "reports/generated/lexicography-eval/nl-learner-pilot-v1/validation/j-gpt41-validation-generation/run-manifest.json",
+        "sha256": "6888ffc06687585533f3739840cb67b0c695ecfa1f57e4fe3555633e3acebb04"
+      },
+      {
+        "path": "reports/generated/lexicography-eval/nl-learner-pilot-v1/validation/k-gpt41-validation-generation/run-manifest.json",
+        "sha256": "86e37d403a728a24d70ae63762dcbeebfdb24e667a73fc52a2cf1c1ceb05ea51"
+      }
+    ]
   },
   "modelTournament": {
     "tested": ["gpt-4.1", "gpt-5.6-luna", "gpt-5.6-terra"],

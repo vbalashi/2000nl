@@ -55,6 +55,7 @@ IMPLIED_HARD_FAILURES = {
     "wrong_register": "wrong_register",
     "regional_hallucination": "regional_hallucination",
 }
+MINIMUM_HARD_GATE_SCORE = 2.0
 
 
 def _score_map(payload: dict[str, Any], keys: tuple[str, ...]) -> dict[str, float]:
@@ -114,7 +115,10 @@ def validate_quality(payload: dict[str, Any]) -> dict[str, Any]:
     error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
     scores = _score_map(payload, QUALITY_SCORE_KEYS)
     hard_failures = set(_hard_failures(payload, error_codes))
-    if scores["naturalness"] == 0 or scores["grammarAccuracy"] == 0:
+    if (
+        scores["naturalness"] < MINIMUM_HARD_GATE_SCORE
+        or scores["grammarAccuracy"] < MINIMUM_HARD_GATE_SCORE
+    ):
         hard_failures.add("invalid_dutch")
     return {
         "scores": scores,
@@ -181,7 +185,7 @@ def validate_fidelity(
     error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
     scores = _score_map(payload, FIDELITY_SCORE_KEYS)
     hard_failures = set(_hard_failures(payload, error_codes))
-    if scores["senseCoverage"] == 0 or not any(
+    if scores["senseCoverage"] < MINIMUM_HARD_GATE_SCORE or not any(
         match["matchedSenseIndexes"] for match in matches
     ):
         hard_failures.add("semantic_contradiction")

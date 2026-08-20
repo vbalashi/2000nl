@@ -97,7 +97,11 @@ prompt, model, and endpoint; sealed holdout also supplies `--preflight-sample`.
 benchmark/selection identity. The ledger enforces the three-failure/eight-round
 development plateau plus one two-finalist validation comparison and records its
 winner. Sealed holdout commands must match the committed finalist decision's
-benchmark, selection, prompt hash, and model. Provider retries are explicit new invocations, never
+benchmark, selection, prompt hash, model, canonical ledger hash, and validation
+comparison hash. The already-opened 2026 pilot is an explicit compatibility
+case: its immutable run binding is reusable only while both original local
+validation manifests still match the hashes committed in the finalist decision;
+that protocol cannot open another holdout. Provider retries are explicit new invocations, never
 hidden calls outside `--max-requests`. The frozen pilot preparation enforces
 its exact 64 lemmas, 80 senses, split counts, and per-POS lemma/sense quotas.
 
