@@ -126,6 +126,7 @@ const userSession = {
 export async function setupAuthenticatedTrainingAttributionPage(
   page: Page,
   injectedDelayMs: number,
+  options: { invalidEntryIds?: string[] } = {},
 ) {
   let nextEntryIndex = 0;
   let actionCount = 0;
@@ -136,8 +137,11 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let expectOnDemandSelection = false;
   let acceptedScenario: "hit" | "miss" | "fallback" = "hit";
   let slowEligibleCount = 0;
+  const schedulerRequests: Record<string, unknown>[] = [];
+  const statsRequests: Record<string, unknown>[] = [];
   const failFirstLookupForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
+  const invalidEntryIds = new Set(options.invalidEntryIds ?? []);
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
 
   const correlatedHeaders = (surface: string) => {
@@ -198,7 +202,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
           intent: "training-review",
         },
         groups: entry
-          ? [buildLookupGroup(entry, entries.indexOf(entry) < 3)]
+          ? [
+              buildLookupGroup(
+                entry,
+                entries.indexOf(entry) < 3,
+                invalidEntryIds.has(entry.id),
+              ),
+            ]
           : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       },
@@ -256,6 +266,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const body = request.postDataJSON?.() ?? {};
 
     if (pathname.endsWith("/rpc/get_next_card")) {
+      schedulerRequests.push({ ...body });
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
         ? body.p_exclude_card_keys
         : [];
@@ -421,6 +432,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/rpc/get_detailed_training_stats")) {
+      statsRequests.push({ ...body });
       await fulfillJson(
         route,
         {
@@ -501,6 +513,10 @@ export async function setupAuthenticatedTrainingAttributionPage(
   await installSupabaseSession(page, buildFakeSupabaseSession(userSession));
   await page.goto("/");
   return {
+    requests: {
+      scheduler: schedulerRequests,
+      stats: statsRequests,
+    },
     beginMeasuredTransitions() {
       lifecycleScenariosEnabled = true;
     },
@@ -911,7 +927,11 @@ function buildSchedulerEntry(entry: FixtureEntry) {
   };
 }
 
-function buildLookupGroup(entry: FixtureEntry, learn: boolean) {
+function buildLookupGroup(
+  entry: FixtureEntry,
+  learn: boolean,
+  invalid = false,
+) {
   const target = {
     kind: "sense-card" as const,
     entryId: entry.id,
@@ -943,7 +963,7 @@ function buildLookupGroup(entry: FixtureEntry, learn: boolean) {
       messageKey: "dictionary.source",
     },
     header: {
-      text: entry.headword,
+      text: invalid ? "" : entry.headword,
       article: entry.gender,
       partOfSpeech: {
         termId: "part-of-speech:substantief",

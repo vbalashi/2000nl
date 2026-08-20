@@ -39,6 +39,12 @@ type Props = {
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
   onExit?: () => void;
+  onLoadFailure?: (
+    state: Exclude<TrainingV2SessionState, "loading" | "ready">,
+  ) => void;
+  onRetryAlternative?: (
+    state: Exclude<TrainingV2SessionState, "loading" | "ready">,
+  ) => void | Promise<void>;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
   ) => void | Promise<void>;
@@ -73,6 +79,8 @@ export function TrainingSenseCardV2Session({
   onPlayResolvedAudio,
   onOpenDetails,
   onExit,
+  onLoadFailure,
+  onRetryAlternative,
   onProgressActionAccepted,
 }: Props) {
   const lookupInput = React.useMemo(
@@ -196,6 +204,11 @@ export function TrainingSenseCardV2Session({
       recordTrainingEntryRendered(result.entry.entryId);
     }
   }, [result, sessionState]);
+
+  React.useEffect(() => {
+    if (sessionState === "loading" || sessionState === "ready") return;
+    onLoadFailure?.(sessionState);
+  }, [onLoadFailure, sessionState]);
 
   React.useEffect(() => {
     if (!handlePresentation) return;
@@ -376,6 +389,10 @@ export function TrainingSenseCardV2Session({
           detail={error}
           onExit={onExit}
           onRetry={() => {
+            if (onRetryAlternative) {
+              void onRetryAlternative(failureState);
+              return;
+            }
             void load(undefined, { usePrefetch: false }).catch((cause) => {
               setLookup({ state: "lookup-http-error", status: 0 });
               setError(cause instanceof Error ? cause.message : "lookup_failed");

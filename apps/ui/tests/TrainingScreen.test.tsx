@@ -444,17 +444,38 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     word,
     focusOnPresentation,
     onOpenDetails,
+    onLoadFailure,
+    onRetryAlternative,
     onProgressActionAccepted,
   }: {
     word: { headword: string };
     focusOnPresentation?: boolean;
     onOpenDetails?: () => void;
+    onLoadFailure?: (failure: "model-invalid") => void;
+    onRetryAlternative?: (failure: "model-invalid") => void;
     onProgressActionAccepted: (capability: { actionId: string }) => void;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
+    const failed = word.headword === "broken-card";
     React.useEffect(() => {
       if (focusOnPresentation) stageRef.current?.focus();
     }, [focusOnPresentation]);
+    React.useEffect(() => {
+      if (failed) onLoadFailure?.("model-invalid");
+    }, [failed, onLoadFailure]);
+    if (failed) {
+      return (
+        <div role="alert" data-training-v2-state="model-invalid">
+          This training card could not be loaded.
+          <button
+            type="button"
+            onClick={() => onRetryAlternative?.("model-invalid")}
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
     return (
       <div ref={stageRef} tabIndex={-1} data-testid="mock-training-sense-card-v2">
         <span aria-live="polite">
@@ -2958,6 +2979,76 @@ test("keeps the current V2 card when the on-demand scheduler warm fails", async 
     expect(
       screen.queryByRole("heading", { name: /Training could not be loaded/i }),
     ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("a rejected prepared card retries through the scheduler and reaches an available due review", async () => {
+  const firstWord = { ...mockWord, id: "word-new", headword: "new-card" };
+  const brokenWord = {
+    ...mockWord,
+    id: "word-broken",
+    headword: "broken-card",
+  };
+  const dueWord = { ...mockWord, id: "word-due", headword: "due-review" };
+  let initialSelected = false;
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      _scope: unknown,
+      _cardFilter: string,
+      _queueTurn: string,
+      excludeCardKeys: string[] = [],
+    ) => {
+      if (!initialSelected) {
+        initialSelected = true;
+        return firstWord;
+      }
+      if (excludeCardKeys.includes("word-broken:word-to-definition")) {
+        return dueWord;
+      }
+      return brokenWord;
+    },
+  );
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    async (input: { entryId: string }) => ({
+      state: "ready",
+      group: { header: { audio: null, text: input.entryId } },
+      entry: { entryId: input.entryId },
+    }),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "new-card" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This training card could not be loaded.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(
+      await screen.findByRole("heading", { name: "due-review" }),
+    ).toBeInTheDocument();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) =>
+        (call[6] as string[]).includes("word-broken:word-to-definition"),
+      ),
+    ).toBe(true);
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
