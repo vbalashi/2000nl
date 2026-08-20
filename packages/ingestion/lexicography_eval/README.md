@@ -93,9 +93,11 @@ provider calls and reports the selected command, model profile, and budget.
 Any benchmark generation larger than five cases additionally requires
 `--preflight-run-dir` for a completed five-case development run with the same
 prompt, model, and endpoint; sealed holdout also supplies `--preflight-sample`.
-`compare` requires `--tournament-ledger` and `--phase`, and the ledger enforces
-the three-failure/eight-round development plateau plus one two-finalist
-validation comparison. Provider retries are explicit new invocations, never
+`compare` requires `--phase` and derives one canonical ledger from the frozen
+benchmark/selection identity. The ledger enforces the three-failure/eight-round
+development plateau plus one two-finalist validation comparison and records its
+winner. Sealed holdout commands must match the committed finalist decision's
+benchmark, selection, prompt hash, and model. Provider retries are explicit new invocations, never
 hidden calls outside `--max-requests`. The frozen pilot preparation enforces
 its exact 64 lemmas, 80 senses, split counts, and per-POS lemma/sense quotas.
 

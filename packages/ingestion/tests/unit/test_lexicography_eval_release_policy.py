@@ -11,13 +11,13 @@ import pytest
 INGESTION_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(INGESTION_ROOT / "src"))
 
+from lexicography_eval.holdout_policy import require_complete_sealed_holdout  # noqa: E402
 from lexicography_eval.release_policy import (  # noqa: E402
     PILOT_BENCHMARK_ID,
-    require_complete_sealed_holdout,
     require_batch_preflight,
-    tournament_round,
     validate_pilot_selection_contract,
 )
+from lexicography_eval.tournament_policy import tournament_round  # noqa: E402
 from lexicography_eval_fixtures import write_bound_generation_run  # noqa: E402
 
 
@@ -148,6 +148,16 @@ def test_full_development_generation_requires_matching_five_case_preflight(
         endpoint_fingerprint="azure:unit-test",
     )
 
+    foreign_sample = {**sample, "benchmarkId": "other-benchmark"}
+    with pytest.raises(ValueError, match="benchmark selection"):
+        require_batch_preflight(
+            sample=validation_sample, split="validation", limit=None,
+            preflight_run_dir=preflight_run, prompt_id="challenger",
+            prompt_hash=prompt_hash, model="gpt-4.1",
+            endpoint_fingerprint="azure:unit-test",
+            preflight_sample=foreign_sample,
+        )
+
 
 def test_sealed_holdout_must_run_the_complete_case_set() -> None:
     sample = {
@@ -171,6 +181,16 @@ def _comparison(path: Path, *, phase: str, decision: str, index: int) -> None:
                 "schema": "lexicography-prompt-comparison-v2",
                 "incumbentPromptId": f"prompt-{index}",
                 "challengerPromptId": f"prompt-{index + 1}",
+                "incumbentFinalist": {
+                    "promptId": f"prompt-{index}",
+                    "promptHash": f"{index:064x}",
+                    "model": "gpt-4.1",
+                },
+                "challengerFinalist": {
+                    "promptId": f"prompt-{index + 1}",
+                    "promptHash": f"{index + 1:064x}",
+                    "model": "gpt-4.1",
+                },
                 "evaluationProvenance": {
                     "split": phase,
                     "benchmarkId": "benchmark",
@@ -210,10 +230,20 @@ def test_tournament_ledger_enforces_failure_plateau_round_cap_and_two_finalists(
             pass
 
     validation_ledger = tmp_path / "validation-ledger.json"
+    for index in range(3):
+        development = tmp_path / f"validation-ledger-development-{index}.json"
+        _comparison(development, phase="development", decision="reject", index=index)
+        with tournament_round(ledger_path=validation_ledger, phase="development") as record:
+            record(development)
     artifact = tmp_path / "validation.json"
     _comparison(artifact, phase="validation", decision="promote", index=1)
     with tournament_round(ledger_path=validation_ledger, phase="validation") as record:
         record(artifact)
+    ledger = json.loads(validation_ledger.read_text(encoding="utf-8"))
+    assert ledger["finalist"]["promptId"] == "prompt-2"
     with pytest.raises(ValueError, match="two frozen finalists"):
         with tournament_round(ledger_path=validation_ledger, phase="validation"):
+            pass
+    with pytest.raises(ValueError, match="closed after the validation"):
+        with tournament_round(ledger_path=validation_ledger, phase="development"):
             pass

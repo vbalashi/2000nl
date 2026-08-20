@@ -11,6 +11,16 @@ from .candidate_schema import apply_output_policy, validate_generated_content
 
 CANDIDATE_SCHEMA = "lexicography-candidate-v1"
 RUN_MANIFEST_SCHEMA = "lexicography-run-manifest-v1"
+GENERATION_INPUT_KEYS = {"headword", "languageCode", "partOfSpeech", "grammar"}
+GENERATION_GRAMMAR_KEYS = {
+    "gender",
+    "plural",
+    "diminutive",
+    "verb_forms",
+    "inflected_form",
+    "comparative",
+    "superlative",
+}
 
 
 @dataclass(frozen=True)
@@ -149,6 +159,37 @@ def _messages(
     ]
 
 
+def _clean_room_generation_input(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict) or not {
+        "headword", "partOfSpeech"
+    }.issubset(value) or not set(value).issubset(GENERATION_INPUT_KEYS):
+        raise ValueError("Every clean-room generationInput must use the closed schema")
+    normalized: dict[str, Any] = {}
+    for field in ("headword", "languageCode", "partOfSpeech"):
+        if field not in value:
+            continue
+        item = value[field]
+        if not isinstance(item, str) or not item.strip() or len(item) > 128:
+            raise ValueError("Every clean-room generationInput string must be bounded")
+        normalized[field] = item.strip()
+    grammar = value.get("grammar")
+    if grammar is not None:
+        if (
+            not isinstance(grammar, dict)
+            or not grammar
+            or not set(grammar).issubset(GENERATION_GRAMMAR_KEYS)
+            or not all(
+                isinstance(item, str) and item.strip() and len(item) <= 128
+                for item in grammar.values()
+            )
+        ):
+            raise ValueError("Every clean-room generationInput grammar must use the closed schema")
+        normalized["grammar"] = {
+            key: grammar[key].strip() for key in sorted(grammar)
+        }
+    return normalized
+
+
 def _cache_value(
     result: ChatResult,
     generated_at: str,
@@ -231,8 +272,9 @@ def generate_candidates(
     for case in cases:
         case_id = str(case.get("caseId") or "").strip()
         generation_input = case.get("generationInput")
-        if not case_id or not isinstance(generation_input, dict):
+        if not case_id:
             raise ValueError("Every sample case needs caseId and generationInput")
+        generation_input = _clean_room_generation_input(generation_input)
         messages = _messages(prompt=prompt, generation_input=generation_input)
         request_parameters = effective_request_parameters(
             client,

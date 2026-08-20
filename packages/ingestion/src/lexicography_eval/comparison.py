@@ -45,6 +45,30 @@ def _prompt_id(items: dict[str, dict[str, Any]]) -> str:
     return next(iter(values))
 
 
+def _finalist_descriptor(items: dict[str, dict[str, Any]]) -> dict[str, str]:
+    result = {}
+    for source, target in (
+        ("promptId", "promptId"),
+        ("promptHash", "promptHash"),
+        ("candidateModel", "model"),
+    ):
+        values = {str(item.get(source) or "") for item in items.values()}
+        if len(values) != 1 or not next(iter(values)):
+            raise ValueError(f"Every compared run must have one non-empty {source}")
+        result[target] = next(iter(values))
+    return result
+
+
+def comparison_context(run_dir: Path) -> dict[str, str]:
+    items = _load_items(run_dir)
+    first = items[sorted(items)[0]]
+    benchmark_id = str(first.get("benchmarkId") or "")
+    selection_hash = str(first.get("selectionHash") or "")
+    if not benchmark_id or not selection_hash:
+        raise ValueError("Compared run is missing benchmark identity")
+    return {"benchmarkId": benchmark_id, "selectionHash": selection_hash}
+
+
 def _run_binding(items: dict[str, dict[str, Any]]) -> str:
     first = items[sorted(items)[0]]
     records = []
@@ -234,6 +258,8 @@ def compare_prompt_runs(
         "schema": "lexicography-prompt-comparison-v2",
         "incumbentPromptId": incumbent_prompt,
         "challengerPromptId": challenger_prompt,
+        "incumbentFinalist": _finalist_descriptor(incumbent),
+        "challengerFinalist": _finalist_descriptor(challenger),
         "caseCount": len(case_ids),
         "evaluationProvenance": incumbent_provenance,
         "decision": "promote" if promoted else "reject",

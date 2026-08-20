@@ -166,11 +166,13 @@ source quotations or item-specific rewrites from the source-aware judge.
 - Promote only when hard-gate performance does not regress and paired quality
   improves by at least 0.10 on a five-point scale with at least a 60% win rate.
 - Stop after three consecutive challengers fail promotion or after eight
-  challenger rounds. The required local tournament ledger serializes and
-  enforces both stopping conditions.
+  challenger rounds. One benchmark-derived local tournament ledger serializes
+  and enforces both stopping conditions; callers cannot reset the counter by
+  choosing another path.
 - Compare at most two finalists on validation, freeze one prompt, then open the
   holdout exactly once. The ledger permits only one validation comparison, and
-  sealed generation rejects partial/limited holdout runs.
+  sealed generation rejects partial/limited holdout runs or any prompt/model
+  that does not match the committed finalist decision.
 
 ## Blind owner review
 
@@ -227,12 +229,15 @@ exportable as JSON and CSV. The page makes no network requests.
   copyright/evaluation reviews.
 - [x] Record owner decisions and create isolated worktree/branch.
 - [x] Create issue #143 and lifecycle claim.
-- [ ] Add issue #143 to GitHub Project 2; current token lacks `read:project`.
+- [x] Add issue #143 to GitHub Project 2 with P2 / In Progress workflow fields.
 - [x] Implement benchmark preparation and physically separated holdout vault.
 - [x] Implement clean-room generation and prompt contracts.
 - [x] Implement deterministic, quality, optional-claim, and bounded fidelity evaluation.
 - [x] Implement prompt comparison and plateau reporting.
 - [x] Implement local blind review with interleaved swapped repeats.
 - [x] Run the pilot and complete independent reviews.
+- [x] Harden clean-room input, hard-gate consistency, canonical tournament
+  state, and finalist-bound holdout release through repeated spec/standards
+  review cycles.
 - [x] Finish review-ready handoff in draft PR #144; final validation checkpoint
   is recorded on issue #143.

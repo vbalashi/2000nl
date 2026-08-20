@@ -15,8 +15,10 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `lexicography_eval.py` – run the local clean-room prompt benchmark and blind
   review workflow described in `lexicography_eval/README.md`. Its CLI parser is
   intentionally thin; command orchestration lives in
-  `lexicography_eval/command_handlers.py`, while release/holdout/preflight
-  invariants live in `lexicography_eval/release_policy.py`.
+  `lexicography_eval/command_handlers.py`. Pilot selection and preflight policy
+  live in `lexicography_eval/release_policy.py`, tournament state in
+  `lexicography_eval/tournament_policy.py`, and sealed-release/finalist binding
+  in `lexicography_eval/holdout_policy.py`.
 - `audit_pointer_meanings.py` – audit a bounded, deterministic corpus sample for
   resolvable pointer-only meanings without treating arbitrary hyphens as
   redirects.

@@ -1,6 +1,7 @@
 {
   "schema": "lexicography-finalist-decision-v1",
   "benchmarkId": "nl-learner-pilot-v1",
+  "selectionHash": "a6d44e4ca38ae23201004bcc4db3157864b28547d99afa4830b293142b307fe4",
   "decision": "human-review-pilot-only",
   "generator": {
     "model": "gpt-4.1",

@@ -256,6 +256,43 @@ def test_closed_error_codes_imply_their_non_optional_hard_gate(
     assert fidelity["hardFailures"] == [expected_failure]
 
 
+def test_zero_quality_and_unmatched_fidelity_imply_hard_failures() -> None:
+    quality = validate_quality(
+        {
+            "scores": {
+                "naturalness": 0,
+                "learnerUsefulness": 5,
+                "definitionClarity": 5,
+                "exampleQuality": 5,
+                "grammarAccuracy": 0,
+            },
+            "hardFailures": [],
+            "errorCodes": [],
+            "confidence": 1,
+        }
+    )
+    assert quality["hardFailures"] == ["invalid_dutch"]
+
+    fidelity = validate_fidelity(
+        {
+            "referenceMatches": [
+                {"referenceId": "ref", "matchedSenseIndexes": [], "fidelity": 0}
+            ],
+            "scores": {
+                "senseCoverage": 0,
+                "senseDiscrimination": 5,
+                "independentWording": 5,
+            },
+            "hardFailures": [],
+            "errorCodes": [],
+            "confidence": 1,
+        },
+        ["ref"],
+        1,
+    )
+    assert fidelity["hardFailures"] == ["semantic_contradiction"]
+
+
 def _bind_candidate_run(candidate_dir: Path, sample: dict) -> None:
     candidate_path = next(candidate_dir.glob("*.json"))
     candidate = json.loads(candidate_path.read_text())

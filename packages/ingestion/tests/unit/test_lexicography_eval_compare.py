@@ -128,6 +128,16 @@ def test_compare_promotes_only_paired_improvement_without_hard_gate_regression(
     assert result.mean_delta >= 0.1
     saved = json.loads((tmp_path / "comparison.json").read_text(encoding="utf-8"))
     assert saved["schema"] == "lexicography-prompt-comparison-v2"
+    assert saved["incumbentFinalist"] == {
+        "promptId": "baseline-a",
+        "promptHash": "hash-baseline-a",
+        "model": "gpt-4.1",
+    }
+    assert saved["challengerFinalist"] == {
+        "promptId": "challenger-b",
+        "promptHash": "hash-challenger-b",
+        "model": "gpt-4.1",
+    }
     assert saved["decision"] == "promote"
     assert "paired" not in saved
     serialized_saved = json.dumps(saved)

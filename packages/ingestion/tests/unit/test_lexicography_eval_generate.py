@@ -155,6 +155,7 @@ def test_generate_uses_only_clean_room_input_and_reuses_request_cache(
     assert result.generated_count == 1
     assert result.cache_hit_count == 0
     assert len(client.calls) == 1
+
     serialized_request = json.dumps(client.calls[0], ensure_ascii=False)
     assert "bank" in serialized_request
     assert "banken" in serialized_request
@@ -206,6 +207,51 @@ def test_generate_uses_only_clean_room_input_and_reuses_request_cache(
             split="development",
             budget=GenerationBudget(max_requests=1, max_output_tokens=800),
         )
+
+
+@pytest.mark.parametrize(
+    "generation_input",
+    [
+        {
+            "headword": "bank",
+            "languageCode": "nl",
+            "partOfSpeech": "zn",
+            "protectedDefinition": "een verboden brondefinitie",
+        },
+        {
+            "headword": "bank",
+            "languageCode": "nl",
+            "partOfSpeech": "zn",
+            "grammar": {"gender": "de", "rawHtml": "<p>verboden</p>"},
+        },
+    ],
+)
+def test_generate_rejects_non_allowlisted_clean_room_input(
+    tmp_path: Path, generation_input: dict,
+) -> None:
+    sample = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": "clean-room-test",
+        "selectionHash": "selection-hash",
+        "cases": [{
+            "caseId": "lex_bank",
+            "split": "development",
+            "generationInput": generation_input,
+        }],
+    }
+    client = FakeChatClient()
+
+    with pytest.raises(ValueError, match="clean-room generationInput"):
+        generate_candidates(
+            sample=sample,
+            prompt=PromptSpec("prompt", "system", "instructions"),
+            client=client,
+            run_dir=tmp_path / "run",
+            split="development",
+            budget=GenerationBudget(max_requests=1, max_output_tokens=800),
+        )
+
+    assert client.calls == []
 
 
 def test_generate_refuses_corrupt_or_cross_endpoint_cache(tmp_path: Path) -> None:

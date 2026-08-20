@@ -100,7 +100,6 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--challenger", type=Path, required=True)
     compare.add_argument("--pairwise", type=Path, required=True)
     compare.add_argument("--output", type=Path, required=True)
-    compare.add_argument("--tournament-ledger", type=Path, required=True)
     compare.add_argument(
         "--phase", choices=["development", "validation"], required=True
     )

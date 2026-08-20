@@ -272,8 +272,9 @@ def prepare_benchmark(
         )
         source_group_keys = {
             str((payload.get("_source") or {}).get("source_group_key") or "").strip()
-            for _, payload in matches
             if isinstance(payload.get("_source"), dict)
+            else ""
+            for _, payload in matches
         }
         if len(source_group_keys) != 1 or "" in source_group_keys:
             raise ValueError(

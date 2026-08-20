@@ -112,9 +112,13 @@ def validate_quality(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(payload, dict) or set(payload) != allowed_keys:
         raise ValueError("Source-blind judge returned unsupported free-form fields")
     error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
+    scores = _score_map(payload, QUALITY_SCORE_KEYS)
+    hard_failures = set(_hard_failures(payload, error_codes))
+    if scores["naturalness"] == 0 or scores["grammarAccuracy"] == 0:
+        hard_failures.add("invalid_dutch")
     return {
-        "scores": _score_map(payload, QUALITY_SCORE_KEYS),
-        "hardFailures": _hard_failures(payload, error_codes),
+        "scores": scores,
+        "hardFailures": sorted(hard_failures),
         "errorCodes": error_codes,
         "confidence": _confidence(payload),
     }
@@ -175,10 +179,16 @@ def validate_fidelity(
     if set(reference_ids) != seen:
         raise ValueError("Judge must return exactly one match for every reference")
     error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
+    scores = _score_map(payload, FIDELITY_SCORE_KEYS)
+    hard_failures = set(_hard_failures(payload, error_codes))
+    if scores["senseCoverage"] == 0 or not any(
+        match["matchedSenseIndexes"] for match in matches
+    ):
+        hard_failures.add("semantic_contradiction")
     return {
         "referenceMatches": matches,
-        "scores": _score_map(payload, FIDELITY_SCORE_KEYS),
-        "hardFailures": _hard_failures(payload, error_codes),
+        "scores": scores,
+        "hardFailures": sorted(hard_failures),
         "errorCodes": error_codes,
         "confidence": _confidence(payload),
     }

@@ -8,18 +8,17 @@ from typing import Any
 
 from .benchmark import combine_review_bundles, prepare_benchmark
 from .blind import render_blind_review
-from .comparison import compare_prompt_runs
+from .comparison import compare_prompt_runs, comparison_context
 from .generation import GenerationBudget, PromptSpec, generate_candidates
+from .holdout_policy import require_complete_sealed_holdout, require_holdout_binding
 from .judging import JudgeBudget, judge_candidates
 from .pairwise import PairwiseBudget, judge_pairwise_candidates
 from .provider import OpenAIChatClient, load_env_files, provider_config_from_env
 from .release_policy import (
     merge_open_and_holdout_selections,
-    require_complete_sealed_holdout,
     require_batch_preflight,
-    require_holdout_binding,
-    tournament_round,
 )
+from .tournament_policy import canonical_tournament_ledger_path, tournament_round
 from .similarity import SourceTextIndex, source_texts_from_corpus
 
 
@@ -125,12 +124,19 @@ def execute_command(args: Namespace) -> int:
         )
         prompt = _prompt(args.prompt)
         run_dir = _require_local_output(repo_root, args.run_dir)
+        if sample.get("sealed") and (
+            args.holdout_ledger is None or not args.holdout_run_id
+        ):
+            raise ValueError(
+                "The sealed holdout requires its release ledger, run ID, frozen prompt, model, and generation run"
+            )
+        client = _client(env_root, model_profile=args.model_profile)
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
+            finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
             run_id=args.holdout_run_id, prompt_id=prompt.prompt_id,
-            prompt_hash=prompt.prompt_hash, generation_run_dir=run_dir,
+            prompt_hash=prompt.prompt_hash, model=client.model, generation_run_dir=run_dir,
         )
-        client = _client(env_root, model_profile=args.model_profile)
         preflight_run_dir = (
             _require_local_output(repo_root, args.preflight_run_dir)
             if args.preflight_run_dir is not None else None
@@ -158,10 +164,13 @@ def execute_command(args: Namespace) -> int:
         sample = _read_json(args.sample)
         candidate_dir = args.candidate_dir.resolve()
         generation_prompt = (_read_json(candidate_dir.parent / "run-manifest.json").get("prompt") or {})
+        generation_manifest = _read_json(candidate_dir.parent / "run-manifest.json")
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
+            finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),
+            model=generation_manifest.get("model"),
             generation_run_dir=candidate_dir.parent, protected_path=args.protected,
         )
         result = judge_candidates(
@@ -187,7 +196,12 @@ def execute_command(args: Namespace) -> int:
         )
     elif args.command == "compare":
         output_path = _require_local_output(repo_root, args.output)
-        ledger_path = _require_local_output(repo_root, args.tournament_ledger)
+        context = comparison_context(args.incumbent.resolve())
+        ledger_path = canonical_tournament_ledger_path(
+            output_root=repo_root / "reports/generated/lexicography-eval",
+            benchmark_id=context["benchmarkId"],
+            selection_hash=context["selectionHash"],
+        )
         with tournament_round(ledger_path=ledger_path, phase=args.phase) as record:
             result = compare_prompt_runs(
                 incumbent_dir=args.incumbent.resolve(),
@@ -210,10 +224,13 @@ def execute_command(args: Namespace) -> int:
         if sample.get("sealed") and len(candidate_dirs) != 1:
             raise ValueError("A sealed holdout review requires exactly one candidate run")
         generation_prompt = (_read_json(candidate_dirs[0].parent / "run-manifest.json").get("prompt") or {})
+        generation_manifest = _read_json(candidate_dirs[0].parent / "run-manifest.json")
         require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
+            finalist_path=repo_root / "packages/ingestion/lexicography_eval/finalist-decision-v1.json",
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),
+            model=generation_manifest.get("model"),
             generation_run_dir=candidate_dirs[0].parent, protected_path=args.protected,
         )
         result = render_blind_review(

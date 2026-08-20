@@ -15,10 +15,8 @@ from lexicography_eval.command_handlers import (  # noqa: E402
     _require_local_output,
     _sample_for_split,
 )
-from lexicography_eval.release_policy import (  # noqa: E402
-    merge_open_and_holdout_selections,
-    require_holdout_binding,
-)
+from lexicography_eval.holdout_policy import require_holdout_binding  # noqa: E402
+from lexicography_eval.release_policy import merge_open_and_holdout_selections  # noqa: E402
 
 
 def test_generate_and_judge_accept_explicit_model_profiles() -> None:
@@ -81,6 +79,18 @@ def test_pairwise_cli_never_accepts_the_sealed_holdout_split() -> None:
                 "--split", "holdout", "--seed", "seed", "--max-requests", "1",
             ]
         )
+
+
+def test_compare_cli_does_not_accept_a_custom_tournament_ledger() -> None:
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "--repo-root", "/tmp/repo", "compare",
+            "--incumbent", "a", "--challenger", "b",
+            "--pairwise", "pairwise.json", "--output", "comparison.json",
+            "--phase", "development",
+            "--tournament-ledger", "reset-counter.json",
+        ])
 
 
 def test_dry_run_describes_paid_command_without_reading_inputs(
@@ -154,7 +164,7 @@ def test_dry_run_describes_paid_command_without_reading_inputs(
             [
                 "--incumbent", "missing-a", "--challenger", "missing-b",
                 "--pairwise", "missing-pairwise.json", "--output", "missing.json",
-                "--tournament-ledger", "missing-ledger.json", "--phase", "development",
+                "--phase", "development",
             ],
             False,
         ),
@@ -394,6 +404,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             {
                 "schema": "lexicography-sample-v1",
                 "benchmarkId": "sealed-test",
+                "selectionHash": "selection-hash",
                 "sealed": True,
                 "cases": [],
             },
@@ -411,20 +422,37 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             {
                 "schema": "lexicography-holdout-release-ledger-v1",
                 "benchmarkId": "sealed-test",
+                "selectionHash": "selection-hash",
                 "sampleSha256": hashlib.sha256(sample_path.read_bytes()).hexdigest(),
             }
         ),
         encoding="utf-8",
     )
     sample = json.loads(sample_path.read_text(encoding="utf-8"))
+    finalist_path = tmp_path / "finalist-decision.json"
+    finalist_path.write_text(
+        json.dumps({
+            "schema": "lexicography-finalist-decision-v1",
+            "benchmarkId": "sealed-test",
+            "selectionHash": "selection-hash",
+            "generator": {
+                "promptId": "finalist-b",
+                "promptHash": "prompt-hash-b",
+                "model": "gpt-4.1",
+            },
+        }),
+        encoding="utf-8",
+    )
 
     require_holdout_binding(
         sample_path=sample_path,
         sample=sample,
         ledger_path=ledger_path,
+        finalist_path=finalist_path,
         run_id="finalist-b-v1",
         prompt_id="finalist-b",
         prompt_hash="prompt-hash-b",
+        model="gpt-4.1",
         generation_run_dir=tmp_path / "generation-finalist-b",
     )
     binding = json.loads((tmp_path / "run-binding.json").read_text())
@@ -434,9 +462,11 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
         sample_path=sample_path,
         sample=sample,
         ledger_path=ledger_path,
+        finalist_path=finalist_path,
         run_id="finalist-b-v1",
         prompt_id="finalist-b",
         prompt_hash="prompt-hash-b",
+        model="gpt-4.1",
         generation_run_dir=tmp_path / "generation-finalist-b",
     )
     with pytest.raises(ValueError, match="already bound"):
@@ -444,19 +474,23 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             sample_path=sample_path,
             sample=sample,
             ledger_path=ledger_path,
+            finalist_path=finalist_path,
             run_id="different-run",
             prompt_id="finalist-b",
             prompt_hash="prompt-hash-b",
+            model="gpt-4.1",
             generation_run_dir=tmp_path / "generation-finalist-b",
         )
-    with pytest.raises(ValueError, match="already bound"):
+    with pytest.raises(ValueError, match="frozen validation finalist"):
         require_holdout_binding(
             sample_path=sample_path,
             sample=sample,
             ledger_path=ledger_path,
+            finalist_path=finalist_path,
             run_id="finalist-b-v1",
             prompt_id="different-prompt",
             prompt_hash="different-hash",
+            model="gpt-4.1",
             generation_run_dir=tmp_path / "generation-finalist-b",
         )
 
