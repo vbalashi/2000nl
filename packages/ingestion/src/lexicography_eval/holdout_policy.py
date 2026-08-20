@@ -206,6 +206,8 @@ def _validate_historical_evidence(
             path.relative_to(repo_root / "reports/generated/lexicography-eval")
         except ValueError:
             raise ValueError("Historical validation manifest is outside the local evidence root") from None
+        if not path.is_file():
+            raise ValueError("Historical validation manifest is missing")
         if _file_sha256(path) != item["sha256"]:
             raise ValueError("Historical validation manifest no longer matches the finalist decision")
         manifest = _read_json(path)

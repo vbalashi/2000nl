@@ -76,7 +76,7 @@ def _validated_state(ledger: dict[str, Any]) -> dict[str, Any]:
     development_decisions: list[bool] = []
     validation_seen = False
     comparison_hashes: set[str] = set()
-    seen_challengers: list[dict[str, str]] = []
+    seen_participants: list[dict[str, str]] = []
     for item in rounds:
         if (
             not isinstance(item, dict)
@@ -93,9 +93,11 @@ def _validated_state(ledger: dict[str, Any]) -> dict[str, Any]:
         incumbent = _finalist(item["incumbent"])
         challenger = _finalist(item["challenger"])
         if item["phase"] == "development":
-            if challenger == incumbent or challenger in seen_challengers:
-                raise ValueError("Tournament ledger repeats a challenger identity")
-            seen_challengers.append(challenger)
+            if not seen_participants:
+                seen_participants.append(incumbent)
+            if challenger in seen_participants:
+                raise ValueError("Tournament ledger repeats a participant as challenger")
+            seen_participants.append(challenger)
             if validation_seen or frozen_pair is not None:
                 raise ValueError("Tournament ledger contains development after its stopping rule")
             if current_winner is not None and incumbent != current_winner:
@@ -123,7 +125,7 @@ def _validated_state(ledger: dict[str, Any]) -> dict[str, Any]:
         "validationFinalists": frozen_pair,
         "validationSeen": validation_seen,
         "developmentDecisions": development_decisions,
-        "seenChallengers": seen_challengers,
+        "seenParticipants": seen_participants,
     }
 
 
@@ -208,7 +210,7 @@ def tournament_round(
                 if incumbent != state["currentWinner"]:
                     raise ValueError("The next incumbent must be the previous round winner")
             if phase == "development" and (
-                challenger == incumbent or challenger in state["seenChallengers"]
+                challenger in state["seenParticipants"]
             ):
                 raise ValueError("Tournament must use a new challenger identity")
             if phase == "validation" and [incumbent, challenger] != state["validationFinalists"]:
