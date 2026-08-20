@@ -10,6 +10,11 @@ import {
   type TrainingAttributionProfileReport,
 } from "../support/trainingAttributionHarness";
 
+test.skip(
+  process.env.APP_ROLLOUT_PROFILE !== "pilot",
+  "Run the attribution harness through npm run test:e2e:training-attribution.",
+);
+
 test("authenticated Training transition attribution harness", async ({
   browser,
 }, testInfo) => {
