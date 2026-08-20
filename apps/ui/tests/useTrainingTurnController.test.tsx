@@ -17,6 +17,7 @@ const prepared = vi.hoisted(() => ({
   consume: vi.fn(),
   reset: vi.fn(),
   warm: vi.fn(),
+  refresh: vi.fn(),
   selectNext: null as null | ((queueTurn: "new" | "review", cardKey: string) => Promise<TrainingWord | null>),
 }));
 const recordWordView = vi.hoisted(() => vi.fn());
@@ -38,6 +39,7 @@ vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
     prepared.selectNext = input.selectNext;
     return {
       warmWord: prepared.warm,
+      refreshForCard: prepared.refresh,
       consumeForCard: prepared.consume,
       reset: prepared.reset,
       nextTransitionId: "transition-1",
@@ -179,6 +181,7 @@ describe("useTrainingTurnController transition matrix", () => {
     prepared.reset.mockReset();
     prepared.warm.mockReset();
     prepared.warm.mockResolvedValue(true);
+    prepared.refresh.mockReset();
     prepared.selectNext = null;
     recordWordView.mockReset();
     transitionTiming.begin.mockReset();
@@ -186,6 +189,17 @@ describe("useTrainingTurnController transition matrix", () => {
     transitionTiming.record.mockReset();
     transitionTiming.finish.mockReset();
     transitionTiming.failEntry.mockReset();
+  });
+
+  test("refreshes only the exact prepared card before a Platform progress action", () => {
+    const controller = renderController();
+
+    act(() => controller.result.current.preparePlatformProgressAction());
+
+    expect(prepared.refresh).toHaveBeenCalledOnce();
+    expect(prepared.refresh).toHaveBeenCalledWith(
+      "word-1:word-to-definition",
+    );
   });
 
   test("fast prepared legacy candidate presents immediately while one mutation remains in flight", async () => {

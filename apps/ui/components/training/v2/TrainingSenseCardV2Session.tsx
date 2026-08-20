@@ -48,6 +48,7 @@ type Props = {
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
   ) => void | Promise<void>;
+  onProgressActionStarting?: () => void;
 };
 
 type UndoKnownCapability = Extract<
@@ -82,6 +83,7 @@ export function TrainingSenseCardV2Session({
   onLoadFailure,
   onRetryAlternative,
   onProgressActionAccepted,
+  onProgressActionStarting,
 }: Props) {
   const lookupInput = React.useMemo(
     () => ({
@@ -256,6 +258,12 @@ export function TrainingSenseCardV2Session({
           nextTransitionId,
           capability.actionId === "start-learning" ? "learn" : "review",
         );
+      }
+      if (
+        capability.actionId === "start-learning" ||
+        capability.actionId === "review-card"
+      ) {
+        onProgressActionStarting?.();
       }
       setNoticeTone("error");
       const response = nextTransitionId

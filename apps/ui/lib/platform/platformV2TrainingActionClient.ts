@@ -1,5 +1,8 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
-import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
+import {
+  DEFAULT_PLATFORM_FETCH_TIMEOUT_MS,
+  platformFetchWithTimeout,
+} from "./platformFetchWithTimeout";
 import {
   recordTrainingTransitionResponse,
   recordTrainingTransitionTiming,
@@ -18,6 +21,15 @@ export type PlatformV2TrainingActionCapability =
       | "undo-known"
       | "review-card";
   };
+
+const PROGRESS_ACTION_AUTHORITATIVE_REQUEST_COUNT = 2;
+// Bounds auth/session acquisition, client scheduling between attempts and
+// response JSON parsing while still fitting inside a fresh 30s prefetch lease.
+export const PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS = 4_000;
+export const PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS =
+  DEFAULT_PLATFORM_FETCH_TIMEOUT_MS *
+    PROGRESS_ACTION_AUTHORITATIVE_REQUEST_COUNT +
+  PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS;
 
 export function isPlatformV2TrainingActionCapability(
   capability: PlatformSenseCardCapabilityV2,

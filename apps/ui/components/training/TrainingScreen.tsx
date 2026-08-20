@@ -592,6 +592,7 @@ export function TrainingScreen({
     resetQueueForFilter,
     clearReviewedSession,
     submitLegacyReview: handleAction,
+    preparePlatformProgressAction: prepareV2ProgressAction,
     acceptPlatformProgressAction: handleV2ProgressActionAccepted,
   } = useTrainingTurnController({
     userId: user.id,
@@ -1913,6 +1914,9 @@ export function TrainingScreen({
                               onOpenDetails={handleShowCurrentWordDetails}
                               onProgressActionAccepted={
                                 handleV2ProgressActionAccepted
+                              }
+                              onProgressActionStarting={
+                                prepareV2ProgressAction
                               }
                               onLoadFailure={(failure) =>
                                 reportCardLoadFailure(currentWord, failure)

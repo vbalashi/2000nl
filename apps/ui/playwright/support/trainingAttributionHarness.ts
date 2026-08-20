@@ -137,7 +137,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   options: {
     invalidEntryIds?: string[];
     abortFirstActionAfterMs?: number;
+    abortActionNumber?: number;
+    reconcileDelayMs?: number;
     bootstrapReadDelayMs?: number;
+    lookupDelayMs?: number;
+    actionDelayMs?: number;
+    advanceLeaseClockMs?: number;
+    advanceLeaseClockOnAction?: number;
   } = {},
 ) {
   let nextEntryIndex = 0;
@@ -152,7 +158,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const schedulerRequests: Record<string, unknown>[] = [];
   const statsRequests: Record<string, unknown>[] = [];
   const scenarioRequests: Record<string, unknown>[] = [];
-  const failFirstLookupForEntries = new Set<string>();
+  const failWarmupLookupsForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
   const invalidEntryIds = new Set(options.invalidEntryIds ?? []);
   let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
@@ -188,12 +194,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   });
 
   await page.route("**/api/platform/v2/lookup", async (route) => {
+    await wait(options.lookupDelayMs ?? 0);
     const body = route.request().postDataJSON?.() ?? {};
     const entryId = typeof body.entryId === "string" ? body.entryId : "";
     const entry = entries.find((candidate) => candidate.id === entryId);
     const attempt = (lookupAttempts.get(entryId) ?? 0) + 1;
     lookupAttempts.set(entryId, attempt);
-    if (failFirstLookupForEntries.has(entryId) && attempt === 1) {
+    if (failWarmupLookupsForEntries.has(entryId) && attempt <= 2) {
       await fulfillJson(
         route,
         { contractVersion: "fixture-contract-mismatch" },
@@ -234,13 +241,29 @@ export async function setupAuthenticatedTrainingAttributionPage(
   await page.route("**/api/platform/v2/actions", async (route) => {
     const body = route.request().postDataJSON?.() ?? {};
     actionCount += 1;
-    if (abortFirstAction) {
+    if (
+      options.advanceLeaseClockMs &&
+      actionCount === options.advanceLeaseClockOnAction
+    ) {
+      await page.evaluate((advanceMs) => {
+        const clock = window as typeof window & {
+          __trainingLeaseClockOffsetMs?: number;
+        };
+        clock.__trainingLeaseClockOffsetMs =
+          (clock.__trainingLeaseClockOffsetMs ?? 0) + advanceMs;
+      }, options.advanceLeaseClockMs);
+    }
+    if (
+      abortFirstAction &&
+      actionCount === (options.abortActionNumber ?? 1)
+    ) {
       abortFirstAction = false;
       pendingActionReceipt = { ...body };
       await wait(options.abortFirstActionAfterMs ?? 0);
       await route.abort("timedout");
       return;
     }
+    await wait(options.actionDelayMs ?? 0);
     if (acceptedScenario !== "hit") slowEligibleCount += 1;
     const injectThisTransition =
       splitDelayMs > 0 &&
@@ -269,6 +292,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   });
 
   await page.route("**/api/platform/v2/actions/reconcile", async (route) => {
+    await wait(options.reconcileDelayMs ?? 0);
     const body = route.request().postDataJSON?.() ?? {};
     if (
       !pendingActionReceipt ||
@@ -352,7 +376,10 @@ export async function setupAuthenticatedTrainingAttributionPage(
         }
         nextEntryIndex = Math.min(nextEntryIndex + 1, entries.length - 1);
         if (scenario === "fallback") {
-          failFirstLookupForEntries.add(entries[nextEntryIndex]!.id);
+          // Fail both the original background warmup and the pre-action lease
+          // refresh so this lifecycle fixture still exercises consumption's
+          // authoritative on-demand fallback.
+          failWarmupLookupsForEntries.add(entries[nextEntryIndex]!.id);
           expectOnDemandSelection = true;
         }
       } else if (excludedCardKeys.length > 0) {

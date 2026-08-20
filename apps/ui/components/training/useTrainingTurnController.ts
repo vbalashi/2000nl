@@ -158,6 +158,7 @@ export function useTrainingTurnController(input: Inputs) {
 
   const {
     warmWord,
+    refreshForCard: refreshPreparedNextTurn,
     consumeForCard: consumePreparedNextTurn,
     reset: resetPreparedNextTurn,
     nextTransitionId,
@@ -542,6 +543,12 @@ export function useTrainingTurnController(input: Inputs) {
     reviewCounter,
   ]);
 
+  const preparePlatformProgressAction = useCallback(() => {
+    if (!currentWord) return;
+    const wordMode = currentWord.mode ?? enabledModes[0] ?? "word-to-definition";
+    refreshPreparedNextTurn(getTrainingCardKey(currentWord, wordMode));
+  }, [currentWord, enabledModes, refreshPreparedNextTurn]);
+
   const finishAcceptedCardTransition = useCallback(
     async (
       transition: AcceptedCardTransition,
@@ -660,6 +667,7 @@ export function useTrainingTurnController(input: Inputs) {
     resetQueueForFilter,
     clearReviewedSession,
     submitLegacyReview,
+    preparePlatformProgressAction,
     acceptPlatformProgressAction,
   };
 }
