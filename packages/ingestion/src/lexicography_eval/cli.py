@@ -60,6 +60,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Required matching five-case run before generating more than five development cases",
     )
+    generate.add_argument(
+        "--preflight-sample",
+        type=Path,
+        help="Public sample that owns the five development preflight cases (required for sealed holdout)",
+    )
 
     judge = commands.add_parser("judge")
     judge.add_argument("--sample", type=Path, required=True)
@@ -103,6 +108,10 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--challenger", type=Path, required=True)
     compare.add_argument("--pairwise", type=Path, required=True)
     compare.add_argument("--output", type=Path, required=True)
+    compare.add_argument("--tournament-ledger", type=Path, required=True)
+    compare.add_argument(
+        "--phase", choices=["development", "validation"], required=True
+    )
 
     assemble = commands.add_parser("assemble-review")
     assemble.add_argument("--open-sample", type=Path, required=True)

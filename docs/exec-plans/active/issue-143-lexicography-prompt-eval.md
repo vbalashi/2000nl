@@ -151,21 +151,26 @@ source quotations or item-specific rewrites from the source-aware judge.
 - Start with three meaningfully different baseline prompts.
 - Change one documented prompt hypothesis per challenger.
 - Run a five-case preflight before any benchmark batch. The CLI refuses a
-  development run larger than five cases unless `--preflight-run-dir` points
-  to an exact five-case run with the same prompt hash, model, and endpoint.
+  benchmark batch larger than five cases unless `--preflight-run-dir` points
+  to an exact five-case development run with the same prompt hash, model, and
+  endpoint. A sealed holdout also requires its public development sample via
+  `--preflight-sample`.
 - Cache by sanitized request hash and make reruns resumable.
 - Enforce explicit request and output-token budgets; cached serial execution is
-  the current conservative default. Deadline/cost caps and concurrency remain
-  later hardening, not a claim of this pilot.
+  the current conservative default. Provider calls make exactly one HTTP
+  request; a retry requires a new explicit budgeted invocation. Deadline/cost
+  caps and concurrency remain later hardening, not a claim of this pilot.
 - Every public command supports `--dry-run`; a dry run reports intended writes,
   provider use, model profile, and request budget without reading inputs,
   calling a provider, or writing artifacts.
 - Promote only when hard-gate performance does not regress and paired quality
   improves by at least 0.10 on a five-point scale with at least a 60% win rate.
 - Stop after three consecutive challengers fail promotion or after eight
-  challenger rounds; the comparison helper enforces both stopping conditions.
+  challenger rounds. The required local tournament ledger serializes and
+  enforces both stopping conditions.
 - Compare at most two finalists on validation, freeze one prompt, then open the
-  holdout exactly once.
+  holdout exactly once. The ledger permits only one validation comparison, and
+  sealed generation rejects partial/limited holdout runs.
 
 ## Blind owner review
 

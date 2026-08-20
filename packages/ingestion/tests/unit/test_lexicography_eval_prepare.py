@@ -210,3 +210,35 @@ def test_prepare_physically_seals_holdout_cases(tmp_path: Path) -> None:
             holdout_protected_path=holdout_protected_path,
             holdout_ledger_path=holdout_ledger_path,
         )
+
+
+def test_prepare_rejects_meanings_from_different_provider_articles(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    _write_sense(
+        corpus, filename="one.json", meaning_id=1,
+        definition="eerste betekenis", example="Dit is één.",
+    )
+    _write_sense(
+        corpus, filename="two.json", meaning_id=2,
+        definition="tweede betekenis", example="Dit is twee.",
+    )
+    second_path = corpus / "two.json"
+    second = json.loads(second_path.read_text(encoding="utf-8"))
+    second[0]["_source"]["source_group_key"] = "fnt:test:other-bank"
+    second_path.write_text(json.dumps(second), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="provider article groups"):
+        prepare_benchmark(
+            corpus_root=corpus,
+            selection={
+                "schema": "lexicography-selection-v1",
+                "benchmarkId": "test",
+                "lemmas": [{
+                    "headword": "bank", "partOfSpeech": "zn",
+                    "selectedMeaningIds": [1, 2], "split": "development",
+                }],
+            },
+            public_path=tmp_path / "sample.json",
+            protected_path=tmp_path / "protected.json",
+        )

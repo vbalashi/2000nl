@@ -90,10 +90,14 @@ key. Every provider call refuses public OpenAI or a non-Azure endpoint.
 All commands accept `--dry-run`. Put it before the subcommand, for example
 `lexicography_eval.py --dry-run generate ...`; it performs no reads, writes, or
 provider calls and reports the selected command, model profile, and budget.
-Any development generation larger than five cases additionally requires
-`--preflight-run-dir` for a completed five-case run with the same prompt, model,
-and endpoint. The frozen pilot preparation enforces its exact 64 lemmas, 80
-senses, split counts, and POS quotas.
+Any benchmark generation larger than five cases additionally requires
+`--preflight-run-dir` for a completed five-case development run with the same
+prompt, model, and endpoint; sealed holdout also supplies `--preflight-sample`.
+`compare` requires `--tournament-ledger` and `--phase`, and the ledger enforces
+the three-failure/eight-round development plateau plus one two-finalist
+validation comparison. Provider retries are explicit new invocations, never
+hidden calls outside `--max-requests`. The frozen pilot preparation enforces
+its exact 64 lemmas, 80 senses, split counts, and per-POS lemma/sense quotas.
 
 ## Pilot result
 

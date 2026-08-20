@@ -10,7 +10,7 @@ import random
 from typing import Any
 
 from .artifacts import sha256
-from .judgment_provenance import load_bound_candidates
+from .judgment_provenance import bind_protected_cases, load_bound_candidates
 
 
 @dataclass(frozen=True)
@@ -210,11 +210,6 @@ def render_blind_review(
 ) -> BlindReviewResult:
     if sample.get("schema") != "lexicography-sample-v1":
         raise ValueError("Sample must use lexicography-sample-v1")
-    if protected.get("schema") != "lexicography-protected-references-v1":
-        raise ValueError("Protected bundle uses an unsupported schema")
-    protected_by_id = {
-        case.get("caseId"): case for case in protected.get("cases") or []
-    }
     selected = [
         case
         for case in sample.get("cases") or []
@@ -222,6 +217,9 @@ def render_blind_review(
     ]
     if not selected:
         raise ValueError(f"Sample has no cases in split {split}")
+    protected_by_id = bind_protected_cases(
+        sample=sample, protected=protected, cases=selected
+    )
     if not 0 <= repeat_count <= len(selected):
         raise ValueError("repeat_count must fit within the selected cases")
 
@@ -232,6 +230,7 @@ def render_blind_review(
     if not candidate_dirs:
         raise ValueError("At least one candidate directory is required")
     validated_by_root: dict[Path, dict[str, dict[str, Any]]] = {}
+    finalist_bindings = set()
     for root in candidate_dirs:
         run_cases = [
             case for case in selected if (root / f"{case.get('caseId')}.json").is_file()
@@ -240,12 +239,23 @@ def render_blind_review(
         if not run_cases or len(run_splits) != 1:
             raise ValueError("Every blind candidate run must contain exactly one selected split")
         run_split = next(iter(run_splits))
-        validated_by_root[root], _ = load_bound_candidates(
+        validated_by_root[root], manifest = load_bound_candidates(
             sample=sample,
             candidate_dir=root,
             cases=run_cases,
             split=run_split,
         )
+        prompt = manifest.get("prompt") or {}
+        finalist_bindings.add(
+            (
+                prompt.get("promptId"),
+                prompt.get("promptHash"),
+                manifest.get("model"),
+                manifest.get("endpointFingerprint"),
+            )
+        )
+    if len(finalist_bindings) != 1:
+        raise ValueError("Blind review candidate runs must share one frozen finalist")
     entries: list[tuple[dict[str, Any], dict[str, Any]]] = []
     originals = []
     candidates_for_hash = []

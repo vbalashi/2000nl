@@ -9,6 +9,63 @@ from .artifacts import sha256
 from .candidate_schema import apply_output_policy, validate_generated_content
 
 
+def bind_protected_cases(
+    *,
+    sample: dict[str, Any],
+    protected: dict[str, Any],
+    cases: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Bind protected reference text to the exact public selection and cases."""
+    if protected.get("schema") != "lexicography-protected-references-v1":
+        raise ValueError("Protected bundle uses an unsupported schema")
+    for field in ("benchmarkId", "selectionHash"):
+        if protected.get(field) != sample.get(field):
+            raise ValueError(f"Protected bundle {field} does not match the public sample")
+    raw_protected_cases = protected.get("cases")
+    if not isinstance(raw_protected_cases, list):
+        raise ValueError("Protected bundle cases must be an array")
+    protected_by_id: dict[str, dict[str, Any]] = {}
+    for protected_case in raw_protected_cases:
+        if not isinstance(protected_case, dict):
+            raise ValueError("Protected bundle cases must be objects")
+        case_id = protected_case.get("caseId")
+        if not isinstance(case_id, str) or not case_id or case_id in protected_by_id:
+            raise ValueError("Protected bundle case IDs must be unique")
+        protected_by_id[case_id] = protected_case
+
+    result: dict[str, dict[str, Any]] = {}
+    for case in cases:
+        case_id = str(case.get("caseId") or "")
+        protected_case = protected_by_id.get(case_id)
+        generation_input = case.get("generationInput")
+        if not isinstance(protected_case, dict) or not isinstance(generation_input, dict):
+            raise ValueError(f"Missing protected references for {case_id}")
+        if (
+            protected_case.get("split") != case.get("split")
+            or protected_case.get("headword") != generation_input.get("headword")
+            or protected_case.get("partOfSpeech") != generation_input.get("partOfSpeech")
+        ):
+            raise ValueError(f"Protected case {case_id} does not match its public identity")
+        references = protected_case.get("references")
+        reference_ids = case.get("referenceIds") or []
+        if not isinstance(references, list) or not isinstance(reference_ids, list):
+            raise ValueError(f"Protected case {case_id} has invalid references")
+        if reference_ids:
+            derived_ids = [
+                f"ref_{str(reference.get('sourceHash') or '')[:16]}"
+                for reference in references
+                if isinstance(reference, dict)
+            ]
+            if len(derived_ids) != len(references) or derived_ids != reference_ids:
+                raise ValueError(
+                    f"Protected case {case_id} does not match its public reference IDs"
+                )
+        elif references and len(references) != len(reference_ids):
+            raise ValueError(f"Protected case {case_id} has unexpected references")
+        result[case_id] = protected_case
+    return result
+
+
 def sample_for_generation_run(
     sample: dict[str, Any], cases: list[dict[str, Any]], *, split: str
 ) -> dict[str, Any]:

@@ -211,6 +211,10 @@ def _canonical_hash(value: dict) -> str:
         ("wrong_sense", "semantic_contradiction"),
         ("grammar_error", "invalid_dutch"),
         ("morphology_error", "invalid_dutch"),
+        ("invented_idiom", "invented_idiom"),
+        ("valency_error", "invalid_valency"),
+        ("wrong_register", "wrong_register"),
+        ("regional_hallucination", "regional_hallucination"),
     ],
 )
 def test_closed_error_codes_imply_their_non_optional_hard_gate(
@@ -323,9 +327,13 @@ def test_judges_keep_quality_source_blind_and_emit_quote_free_aggregate(
     protected = {
         "schema": "lexicography-protected-references-v1",
         "benchmarkId": "test-benchmark",
+        "selectionHash": "selection-hash",
         "cases": [
             {
                 "caseId": "lex_bank",
+                "split": "development",
+                "headword": "bank",
+                "partOfSpeech": "zn",
                 "references": [
                     {
                         "meaningId": 1,
@@ -335,7 +343,7 @@ def test_judges_keep_quality_source_blind_and_emit_quote_free_aggregate(
                         "idioms": [],
                         "synonyms": [],
                         "usageLabels": [],
-                        "sourceHash": "source-one",
+                        "sourceHash": "one",
                     }
                 ],
             }
@@ -427,6 +435,18 @@ def test_judges_keep_quality_source_blind_and_emit_quote_free_aggregate(
     assert "Zij werkt bij een bank" not in serialized_aggregate
 
 
+def test_judge_rejects_protected_bundle_from_another_selection(tmp_path: Path) -> None:
+    sample, protected, candidate_dir, source_index = _fixture(tmp_path)
+    protected["selectionHash"] = "another-selection"
+    with pytest.raises(ValueError, match="selectionHash"):
+        judge_candidates(
+            sample=sample, protected=protected, candidate_dir=candidate_dir,
+            source_index=source_index, client=FakeJudgeClient(),
+            output_dir=tmp_path / "judgments", split="development",
+            budget=JudgeBudget(max_requests=2, max_output_tokens=500),
+        )
+
+
 def test_source_aware_judging_isolates_references_and_aggregates_results(
     tmp_path: Path,
 ) -> None:
@@ -440,6 +460,7 @@ def test_source_aware_judging_isolates_references_and_aggregates_results(
             "idioms": [],
             "synonyms": [],
             "usageLabels": [],
+            "sourceHash": "two",
         }
     )
     _bind_candidate_run(candidate_dir, sample)
@@ -680,9 +701,13 @@ def _fixture(tmp_path: Path):
     protected = {
         "schema": "lexicography-protected-references-v1",
         "benchmarkId": "test-benchmark",
+        "selectionHash": "selection-hash",
         "cases": [
             {
                 "caseId": "lex_bank",
+                "split": "development",
+                "headword": "bank",
+                "partOfSpeech": "zn",
                 "references": [
                     {
                         "definition": "een bedrijf dat geld bewaart",
@@ -691,6 +716,7 @@ def _fixture(tmp_path: Path):
                         "idioms": [],
                         "synonyms": [],
                         "usageLabels": [],
+                        "sourceHash": "one",
                     }
                 ],
             }

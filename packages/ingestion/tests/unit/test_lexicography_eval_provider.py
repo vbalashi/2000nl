@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from io import BytesIO
 import sys
+from urllib.error import HTTPError
 
 
 INGESTION_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(INGESTION_ROOT / "src"))
 
 import pytest
+import lexicography_eval.provider as provider_module  # noqa: E402
 
 from lexicography_eval.provider import (  # noqa: E402
     OpenAIChatClient,
@@ -211,3 +214,33 @@ def test_gpt_4_1_request_keeps_temperature_and_no_reasoning() -> None:
     assert body["max_tokens"] == 500
     assert "max_completion_tokens" not in body
     assert "reasoning_effort" not in body
+
+
+def test_one_budgeted_provider_call_makes_exactly_one_http_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = provider_config_from_env(
+        {
+            "AZURE_OPENAI_ENDPOINT": "https://example.openai.azure.com/openai/v1/",
+            "AZURE_OPENAI_API_KEY": "azure-key",
+            "OPENAI_MODEL": "gpt-4.1",
+        }
+    )
+    calls = 0
+
+    def fail_once(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise HTTPError(
+            config.api_url, 503, "unavailable", {},
+            BytesIO(b'{"error":{"message":"temporary"}}'),
+        )
+
+    monkeypatch.setattr(provider_module, "urlopen", fail_once)
+    with pytest.raises(RuntimeError, match="503"):
+        OpenAIChatClient(config).chat_json(
+            messages=[{"role": "user", "content": "test"}],
+            temperature=0,
+            max_output_tokens=100,
+        )
+    assert calls == 1

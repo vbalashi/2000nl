@@ -153,6 +153,7 @@ def test_dry_run_describes_paid_command_without_reading_inputs(
             [
                 "--incumbent", "missing-a", "--challenger", "missing-b",
                 "--pairwise", "missing-pairwise.json", "--output", "missing.json",
+                "--tournament-ledger", "missing-ledger.json", "--phase", "development",
             ],
             False,
         ),
@@ -337,11 +338,12 @@ def test_cli_refuses_sealed_holdout_without_stateful_run_binding(tmp_path: Path)
     sealed = tmp_path / "sealed.json"
     sealed.write_text(
         json.dumps(
-            {
-                "schema": "lexicography-sample-v1",
-                "sealed": True,
-                "cases": [],
-            }
+                {
+                    "schema": "lexicography-sample-v1",
+                    "sealed": True,
+                    "caseCount": 1,
+                    "cases": [{"caseId": "one", "split": "holdout"}],
+                }
         ),
         encoding="utf-8",
     )

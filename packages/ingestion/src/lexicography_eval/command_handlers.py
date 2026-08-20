@@ -15,8 +15,10 @@ from .pairwise import PairwiseBudget, judge_pairwise_candidates
 from .provider import OpenAIChatClient, load_env_files, provider_config_from_env
 from .release_policy import (
     merge_open_and_holdout_selections as _merge_open_and_holdout_selections,
-    require_development_preflight,
+    require_complete_sealed_holdout,
+    require_batch_preflight,
     require_holdout_binding as _require_holdout_binding,
+    tournament_round,
 )
 from .similarity import SourceTextIndex, source_texts_from_corpus
 
@@ -118,6 +120,9 @@ def execute_command(args: Namespace) -> int:
         )
     elif args.command == "generate":
         sample = _read_json(args.sample)
+        require_complete_sealed_holdout(
+            sample=sample, split=args.split, limit=args.limit
+        )
         prompt = _prompt(args.prompt)
         run_dir = _require_local_output(repo_root, args.run_dir)
         _require_holdout_binding(
@@ -130,11 +135,16 @@ def execute_command(args: Namespace) -> int:
             _require_local_output(repo_root, args.preflight_run_dir)
             if args.preflight_run_dir is not None else None
         )
-        require_development_preflight(
+        require_batch_preflight(
             sample=sample, split=args.split, limit=args.limit,
             preflight_run_dir=preflight_run_dir, prompt_id=prompt.prompt_id,
             prompt_hash=prompt.prompt_hash, model=client.model,
             endpoint_fingerprint=client.endpoint_fingerprint,
+            preflight_sample=(
+                _read_json(args.preflight_sample)
+                if args.preflight_sample is not None
+                else None
+            ),
         )
         result = generate_candidates(
             sample=_sample_for_split(sample, args.split, args.limit), prompt=prompt,
@@ -176,11 +186,16 @@ def execute_command(args: Namespace) -> int:
             randomization_seed=args.seed,
         )
     elif args.command == "compare":
-        result = compare_prompt_runs(
-            incumbent_dir=args.incumbent.resolve(), challenger_dir=args.challenger.resolve(),
-            pairwise_path=args.pairwise.resolve(),
-            output_path=_require_local_output(repo_root, args.output),
-        )
+        output_path = _require_local_output(repo_root, args.output)
+        ledger_path = _require_local_output(repo_root, args.tournament_ledger)
+        with tournament_round(ledger_path=ledger_path, phase=args.phase) as record:
+            result = compare_prompt_runs(
+                incumbent_dir=args.incumbent.resolve(),
+                challenger_dir=args.challenger.resolve(),
+                pairwise_path=args.pairwise.resolve(),
+                output_path=output_path,
+            )
+            record(output_path)
     elif args.command == "assemble-review":
         result = combine_review_bundles(
             open_sample=_read_json(args.open_sample), holdout_sample=_read_json(args.holdout_sample),

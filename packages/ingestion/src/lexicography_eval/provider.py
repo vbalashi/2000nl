@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import random
 import time
 from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
@@ -177,13 +176,11 @@ class OpenAIChatClient:
         config: ProviderConfig,
         *,
         timeout_seconds: float = 60,
-        max_retries: int = 3,
     ) -> None:
         self._config = config
         self.model = config.model
         self.endpoint_fingerprint = config.endpoint_fingerprint
         self.timeout_seconds = timeout_seconds
-        self.max_retries = max_retries
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -204,65 +201,43 @@ class OpenAIChatClient:
             max_output_tokens=max_output_tokens,
         )
         raw_request = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        retryable_statuses = {429, 500, 502, 503, 504}
-
-        for attempt in range(self.max_retries + 1):
-            started = time.monotonic()
-            request = Request(
-                self._config.api_url,
-                data=raw_request,
-                headers=self._headers(),
-                method="POST",
+        started = time.monotonic()
+        request = Request(
+            self._config.api_url,
+            data=raw_request,
+            headers=self._headers(),
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                raw_response = response.read()
+            latency_ms = int((time.monotonic() - started) * 1000)
+            value = json.loads(raw_response)
+            content = (
+                (((value.get("choices") or [{}])[0]).get("message") or {}).get(
+                    "content"
+                )
+                or ""
             )
-            try:
-                with urlopen(request, timeout=self.timeout_seconds) as response:
-                    raw_response = response.read()
-                latency_ms = int((time.monotonic() - started) * 1000)
-                value = json.loads(raw_response)
-                content = (
-                    (((value.get("choices") or [{}])[0]).get("message") or {}).get(
-                        "content"
-                    )
-                    or ""
-                )
-                if not isinstance(content, str) or not content.strip():
-                    raise RuntimeError("Provider response is missing JSON content")
-                payload = json.loads(content)
-                if not isinstance(payload, dict):
-                    raise RuntimeError("Provider JSON content must be an object")
-                usage = value.get("usage") if isinstance(value.get("usage"), dict) else {}
-                return ChatResult(
-                    payload=payload,
-                    usage={
-                        "prompt_tokens": int(usage.get("prompt_tokens") or 0),
-                        "completion_tokens": int(usage.get("completion_tokens") or 0),
-                    },
-                    latency_ms=latency_ms,
-                    raw_response_hash=hashlib.sha256(raw_response).hexdigest(),
-                )
-            except HTTPError as error:
-                if error.code not in retryable_statuses or attempt >= self.max_retries:
-                    detail = ""
-                    try:
-                        error_payload = json.loads(error.read())
-                        error_value = error_payload.get("error") or {}
-                        if isinstance(error_value, dict):
-                            detail = _clean(error_value.get("message"))
-                    except (json.JSONDecodeError, OSError, AttributeError):
-                        detail = ""
-                    suffix = f": {detail}" if detail else ""
-                    raise RuntimeError(
-                        f"Provider HTTP error {error.code}{suffix}"
-                    ) from error
-                retry_after = _clean(error.headers.get("Retry-After"))
-                delay = float(retry_after) if retry_after.replace(".", "", 1).isdigit() else 0
-            except (URLError, TimeoutError) as error:
-                if attempt >= self.max_retries:
-                    raise RuntimeError("Provider network request failed") from error
-                delay = 0
-            delay = delay or min(8.0, 0.5 * (2**attempt))
-            time.sleep(delay + random.uniform(0, min(0.25, delay / 4)))
-        raise RuntimeError("Provider retry loop exhausted")
+            if not isinstance(content, str) or not content.strip():
+                raise RuntimeError("Provider response is missing JSON content")
+            payload = json.loads(content)
+            if not isinstance(payload, dict):
+                raise RuntimeError("Provider JSON content must be an object")
+            usage = value.get("usage") if isinstance(value.get("usage"), dict) else {}
+            return ChatResult(
+                payload=payload,
+                usage={
+                    "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+                    "completion_tokens": int(usage.get("completion_tokens") or 0),
+                },
+                latency_ms=latency_ms,
+                raw_response_hash=hashlib.sha256(raw_response).hexdigest(),
+            )
+        except HTTPError as error:
+            raise RuntimeError(f"Provider HTTP error {error.code}") from error
+        except (URLError, TimeoutError) as error:
+            raise RuntimeError("Provider network request failed") from error
 
     def request_body(
         self,

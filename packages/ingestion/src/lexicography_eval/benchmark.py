@@ -251,10 +251,14 @@ def prepare_benchmark(
         if (
             not isinstance(raw_meaning_ids, list)
             or not raw_meaning_ids
-            or not all(isinstance(value, int) and value >= 1 for value in raw_meaning_ids)
+            or not all(
+                isinstance(value, int) and not isinstance(value, bool) and value >= 1
+                for value in raw_meaning_ids
+            )
+            or len(set(raw_meaning_ids)) != len(raw_meaning_ids)
         ):
             raise ValueError(f"Selected meaning IDs are invalid for {headword}")
-        meaning_ids = list(dict.fromkeys(raw_meaning_ids))
+        meaning_ids = list(raw_meaning_ids)
         cluster = (headword.casefold(), part_of_speech.casefold())
         if cluster in seen_clusters:
             raise ValueError(f"Duplicate headword cluster in selection: {headword}")
@@ -266,6 +270,15 @@ def prepare_benchmark(
             part_of_speech=part_of_speech,
             meaning_ids=meaning_ids,
         )
+        source_group_keys = {
+            str((payload.get("_source") or {}).get("source_group_key") or "").strip()
+            for _, payload in matches
+            if isinstance(payload.get("_source"), dict)
+        }
+        if len(source_group_keys) != 1 or "" in source_group_keys:
+            raise ValueError(
+                f"Selection {headword}/{part_of_speech} crosses provider article groups"
+            )
         first_payload = matches[0][1]
         references = [_protected_reference(payload) for _, payload in matches]
         case_id = _case_id(headword, part_of_speech)

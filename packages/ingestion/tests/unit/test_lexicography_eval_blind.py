@@ -45,6 +45,7 @@ def test_render_blind_review_hides_origin_and_supports_local_export(tmp_path: Pa
                     "languageCode": "nl",
                     "partOfSpeech": "zn",
                 },
+                "referenceIds": ["ref_one"],
             }
         ],
     }
@@ -54,11 +55,15 @@ def test_render_blind_review_hides_origin_and_supports_local_export(tmp_path: Pa
         "cases": [
             {
                 "caseId": "lex_bank",
+                "split": "holdout",
+                "headword": "bank",
+                "partOfSpeech": "zn",
                 "references": [
                     {
                         "definition": "een bedrijf dat geld bewaart",
                         "examples": ["Zij werkt bij een bank."],
                         "idioms": [],
+                        "sourceHash": "one",
                     }
                 ],
             }
@@ -150,12 +155,19 @@ def test_blind_repeats_are_interleaved_with_minimum_spacing(tmp_path: Path) -> N
                     "languageCode": "nl",
                     "partOfSpeech": "zn",
                 },
+                "referenceIds": [f"ref_source-{index}"],
             }
         )
         protected_cases.append(
             {
                 "caseId": case_id,
-                "references": [{"definition": f"bron {index}", "examples": []}],
+                "split": "validation",
+                "headword": headword,
+                "partOfSpeech": "zn",
+                "references": [{
+                    "definition": f"bron {index}", "examples": [],
+                    "sourceHash": f"source-{index}",
+                }],
             }
         )
         articles[case_id] = _article(headword, f"definitie {index}")
@@ -181,6 +193,7 @@ def test_blind_repeats_are_interleaved_with_minimum_spacing(tmp_path: Path) -> N
         protected={
             "schema": "lexicography-protected-references-v1",
             "benchmarkId": "interleaved",
+            "selectionHash": "selection-hash",
             "cases": protected_cases,
         },
         candidate_dir=candidates,
@@ -202,11 +215,13 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
     sample = {
         "schema": "lexicography-sample-v1",
         "benchmarkId": "all-test",
+        "selectionHash": "selection-hash",
         "cases": [],
     }
     protected = {
         "schema": "lexicography-protected-references-v1",
         "benchmarkId": "all-test",
+        "selectionHash": "selection-hash",
         "cases": [],
     }
     candidate_dirs = []
@@ -218,10 +233,15 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
                 "caseId": case_id,
                 "split": split,
                 "generationInput": {"headword": word, "partOfSpeech": "zn"},
+                "referenceIds": [f"ref_source-{index}"],
             }
         )
         protected["cases"].append(
-            {"caseId": case_id, "references": [{"definition": f"bron {index}"}]}
+            {
+                "caseId": case_id, "split": split, "headword": word,
+                "partOfSpeech": "zn",
+                "references": [{"definition": f"bron {index}", "sourceHash": f"source-{index}"}],
+            }
         )
     for index, split in enumerate(("development", "holdout")):
         case = sample["cases"][index]
@@ -252,11 +272,62 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
     assert result.original_item_count == 2
 
 
+def test_blind_review_rejects_mixed_finalist_prompt_or_model(tmp_path: Path) -> None:
+    sample = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": "mixed-finalist",
+        "selectionHash": "selection-hash",
+        "cases": [],
+    }
+    protected = {
+        "schema": "lexicography-protected-references-v1",
+        "benchmarkId": "mixed-finalist",
+        "selectionHash": "selection-hash",
+        "cases": [],
+    }
+    candidate_dirs = []
+    for index, (split, model) in enumerate(
+        (("development", "gpt-4.1"), ("holdout", "gpt-5.6-terra"))
+    ):
+        case_id = f"case-{index}"
+        headword = f"woord-{index}"
+        case = {
+            "caseId": case_id,
+            "split": split,
+            "generationInput": {"headword": headword, "partOfSpeech": "zn"},
+            "referenceIds": [f"ref_source-{index}"],
+        }
+        sample["cases"].append(case)
+        protected["cases"].append(
+            {
+                "caseId": case_id, "split": split, "headword": headword,
+                "partOfSpeech": "zn",
+                "references": [{"definition": "bron", "sourceHash": f"source-{index}"}],
+            }
+        )
+        candidate_dirs.append(
+            write_bound_generation_run(
+                tmp_path / split, sample=sample, cases=[case], split=split,
+                articles={case_id: _article(headword, "nieuwe definitie")},
+                prompt_id="same-prompt", model=model,
+            )
+        )
+
+    with pytest.raises(ValueError, match="one frozen finalist"):
+        render_blind_review(
+            sample=sample, protected=protected, candidate_dir=candidate_dirs,
+            output_html=tmp_path / "review.html",
+            mapping_path=tmp_path / "mapping.json", split="all", seed="seed",
+            repeat_count=0,
+        )
+
+
 def test_blind_review_rejects_candidate_tampering(tmp_path: Path) -> None:
     case = {
         "caseId": "lex_bank",
         "split": "validation",
         "generationInput": {"headword": "bank", "partOfSpeech": "zn"},
+        "referenceIds": [],
     }
     sample = {
         "schema": "lexicography-sample-v1",
@@ -283,7 +354,11 @@ def test_blind_review_rejects_candidate_tampering(tmp_path: Path) -> None:
             protected={
                 "schema": "lexicography-protected-references-v1",
                 "benchmarkId": "blind-test",
-                "cases": [{"caseId": "lex_bank", "references": []}],
+                "selectionHash": "selection-hash",
+                "cases": [{
+                    "caseId": "lex_bank", "split": "validation",
+                    "headword": "bank", "partOfSpeech": "zn", "references": [],
+                }],
             },
             candidate_dir=candidates,
             output_html=tmp_path / "review.html",

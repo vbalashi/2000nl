@@ -42,11 +42,18 @@ ALLOWED_HARD_FAILURES = {
     "invalid_dutch",
     "source_reproduction",
     "unsupported_optional_claim",
+    "invalid_valency",
+    "wrong_register",
+    "regional_hallucination",
 }
 IMPLIED_HARD_FAILURES = {
     "wrong_sense": "semantic_contradiction",
     "grammar_error": "invalid_dutch",
     "morphology_error": "invalid_dutch",
+    "invented_idiom": "invented_idiom",
+    "valency_error": "invalid_valency",
+    "wrong_register": "wrong_register",
+    "regional_hallucination": "regional_hallucination",
 }
 
 

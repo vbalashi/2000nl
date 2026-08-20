@@ -17,7 +17,11 @@ from .judge_prompts import (
     quality_messages,
 )
 from .judge_requests import cached_judge_call
-from .judgment_provenance import generation_manifest, validate_candidate_binding
+from .judgment_provenance import (
+    bind_protected_cases,
+    generation_manifest,
+    validate_candidate_binding,
+)
 from .judgment_schema import (
     JUDGMENT_SCHEMA,
     QUALITY_SCORE_KEYS,
@@ -68,14 +72,12 @@ def judge_candidates(
 ) -> JudgeResult:
     if sample.get("schema") != "lexicography-sample-v1":
         raise ValueError("Sample must use lexicography-sample-v1")
-    if protected.get("schema") != "lexicography-protected-references-v1":
-        raise ValueError("Protected bundle uses an unsupported schema")
-    protected_by_id = {
-        case.get("caseId"): case for case in protected.get("cases") or []
-    }
     cases = [case for case in sample.get("cases") or [] if case.get("split") == split]
     if not cases:
         raise ValueError(f"Sample has no cases in split {split}")
+    protected_by_id = bind_protected_cases(
+        sample=sample, protected=protected, cases=cases
+    )
     manifest = generation_manifest(
         sample=sample, candidate_dir=candidate_dir, split=split
     )
