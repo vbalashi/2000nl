@@ -19,6 +19,7 @@ import type {
   TrainingSetupOption,
 } from "./TrainingTodaySetup";
 import { isTrainingSetupDraftSupported } from "./TrainingTodaySetup";
+import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
 
 type TrainingScope = {
   listId: string | null;
@@ -62,6 +63,7 @@ type PilotControllerParams = {
   sourceOptions: TrainingSetupOption[];
   onCommitDraft: (draft: TrainingSetupDraft) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
+  initialTransitionId?: string;
 };
 
 const isTrainingMode = (value: string): value is TrainingMode =>
@@ -165,6 +167,7 @@ export function useTrainingPilotController({
   sourceOptions,
   onCommitDraft,
   onRetry,
+  initialTransitionId,
 }: PilotControllerParams) {
   const [surface, setSurface] = useState<"today" | "session">(() =>
     enabled ? "today" : "session",
@@ -173,6 +176,7 @@ export function useTrainingPilotController({
   const [scenariosResolved, setScenariosResolved] = useState(false);
   const [startPending, setStartPending] = useState(false);
   const startPendingRef = useRef(false);
+  const initialScenarioTransitionIdRef = useRef(initialTransitionId);
 
   useEffect(() => {
     if (!enabled) return;
@@ -189,7 +193,15 @@ export function useTrainingPilotController({
         if (!cancelled) setScenariosResolved(true);
       }
     };
-    void loadScenarios();
+    const scenarioTransitionId = initialScenarioTransitionIdRef.current;
+    initialScenarioTransitionIdRef.current = undefined;
+    void (scenarioTransitionId
+      ? measureTrainingTransitionStage(
+          scenarioTransitionId,
+          "training.scenarios",
+          loadScenarios,
+        )
+      : loadScenarios());
     return () => {
       cancelled = true;
     };

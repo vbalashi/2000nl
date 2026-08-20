@@ -1,21 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { TrainingLibraryShell } from "@/components/navigation/TrainingLibraryShell";
 import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
+import {
+  createTrainingTransitionId,
+  measureTrainingTransitionStage,
+} from "@/lib/training/trainingTransitionTiming";
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialTransitionId] = useState(createTrainingTransitionId);
+  const initialAuthRequestStartedRef = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data?.session?.user ?? null);
-      setLoading(false);
-    });
+    if (!initialAuthRequestStartedRef.current) {
+      initialAuthRequestStartedRef.current = true;
+      void measureTrainingTransitionStage(
+        initialTransitionId,
+        "auth.session",
+        () => supabase.auth.getSession(),
+        ({ data }) => (data?.session?.user ? "authenticated" : "anonymous"),
+      ).then(({ data }) => {
+        setUser(data?.session?.user ?? null);
+        setLoading(false);
+      });
+    }
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
@@ -24,7 +38,7 @@ export default function HomePage() {
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, []);
+  }, [initialTransitionId]);
 
   if (loading) {
     return (
@@ -41,7 +55,10 @@ export default function HomePage() {
   return (
     <>
       <DevDatabaseWarning />
-      <TrainingLibraryShell user={user} />
+      <TrainingLibraryShell
+        user={user}
+        initialTransitionId={initialTransitionId}
+      />
     </>
   );
 }

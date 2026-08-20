@@ -6,6 +6,7 @@ import {
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
 import {
+  recordTrainingTransitionTiming,
   recordTrainingTransitionResponse,
 } from "../training/trainingTransitionTiming";
 import type { CardTypeId } from "../../../../packages/shared/types/platform";
@@ -69,6 +70,8 @@ type PrefetchedLookup = {
   expiresAt: number;
   controller: AbortController;
   consumed: boolean;
+  transitionId?: string;
+  terminalOutcomeRecorded: boolean;
 };
 
 const PREFETCH_TTL_MS = 30_000;
@@ -123,8 +126,16 @@ export function prefetchPlatformV2TrainingEntry(
 ): Promise<PlatformV2TrainingLookupResult> {
   const key = trainingLookupKey(input);
   const existing = input.bypassCache ? null : validPrefetch(key);
-  if (existing) return existing.promise;
+  if (existing) {
+    recordPrefetchOutcome(
+      input.transitionId ?? existing.transitionId,
+      existing.result ? "reuse-ready" : "reuse-pending",
+    );
+    return existing.promise;
+  }
   if (input.bypassCache) prefetchedLookups.delete(key);
+
+  recordPrefetchOutcome(input.transitionId, "miss");
 
   const record: PrefetchedLookup = {
     cacheOwnerId: input.cacheOwnerId,
@@ -133,7 +144,14 @@ export function prefetchPlatformV2TrainingEntry(
     expiresAt: Date.now() + PREFETCH_TTL_MS,
     controller: new AbortController(),
     consumed: false,
+    transitionId: input.transitionId,
+    terminalOutcomeRecorded: false,
   };
+  record.controller.signal.addEventListener(
+    "abort",
+    () => recordTerminalPrefetchOutcome(record, "cancelled"),
+    { once: true },
+  );
   const detachInputSignal = forwardAbortSignal(input.signal, record.controller);
   record.promise = fetchPlatformV2TrainingEntry({
     ...input,
@@ -175,7 +193,14 @@ export function consumePrefetchedPlatformV2TrainingEntry(
 ): Promise<PlatformV2TrainingLookupResult> | null {
   const key = trainingLookupKey(input);
   const record = validPrefetch(key);
-  if (!record) return null;
+  if (!record) {
+    recordPrefetchOutcome(input.transitionId, "accepted-miss");
+    return null;
+  }
+  recordPrefetchOutcome(
+    input.transitionId ?? record.transitionId,
+    record.result ? "accepted-hit-ready" : "accepted-hit-pending",
+  );
   record.consumed = true;
   if (record.result && prefetchedLookups.get(key) === record) {
     prefetchedLookups.delete(key);
@@ -200,6 +225,7 @@ export function selectPlatformV2TrainingEntry(
 export function clearPlatformV2TrainingClientCaches(cacheOwnerId?: string) {
   for (const [key, record] of prefetchedLookups) {
     if (cacheOwnerId && record.cacheOwnerId !== cacheOwnerId) continue;
+    recordTerminalPrefetchOutcome(record, "cancelled");
     record.controller.abort();
     prefetchedLookups.delete(key);
   }
@@ -220,6 +246,7 @@ function validPrefetch(key: string) {
   const record = prefetchedLookups.get(key);
   if (!record) return null;
   if (record.expiresAt <= Date.now()) {
+    recordTerminalPrefetchOutcome(record, "expired");
     record.controller.abort();
     prefetchedLookups.delete(key);
     return null;
@@ -231,7 +258,28 @@ function trimPrefetchedLookups() {
   while (prefetchedLookups.size > MAX_PREFETCHED_LOOKUPS) {
     const oldestKey = prefetchedLookups.keys().next().value;
     if (typeof oldestKey !== "string") return;
-    prefetchedLookups.get(oldestKey)?.controller.abort();
+    const record = prefetchedLookups.get(oldestKey);
+    if (record) recordTerminalPrefetchOutcome(record, "evicted");
+    record?.controller.abort();
     prefetchedLookups.delete(oldestKey);
   }
+}
+
+function recordTerminalPrefetchOutcome(
+  record: PrefetchedLookup,
+  outcome: "cancelled" | "expired" | "evicted",
+) {
+  if (record.terminalOutcomeRecorded) return;
+  record.terminalOutcomeRecorded = true;
+  recordPrefetchOutcome(record.transitionId, outcome);
+}
+
+function recordPrefetchOutcome(transitionId: string | undefined, outcome: string) {
+  if (!transitionId) return;
+  recordTrainingTransitionTiming({
+    transitionId,
+    stage: "next-card.prefetch",
+    durationMs: 0,
+    outcome,
+  });
 }

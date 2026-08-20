@@ -87,11 +87,13 @@ describe("useTrainingActiveList", () => {
     });
     fetchListSummaryById.mockResolvedValue(userList);
 
+    const dispatch = vi.spyOn(window, "dispatchEvent");
     const { result } = renderHook(() =>
       useTrainingActiveList({
         userId: "user-1",
         language: "nl",
         showSettings: false,
+        initialTransitionId: "initial-entry-189",
       }),
     );
 
@@ -106,6 +108,13 @@ describe("useTrainingActiveList", () => {
     expect(result.current.wordListType).toBe("user");
     expect(result.current.wordListLabel).toBe("Saved");
     expect(result.current.activeList).toBe(userList);
+    expect(trainingTimingEvents(dispatch)).toContainEqual(
+      expect.objectContaining({
+        transitionId: "initial-entry-189",
+        stage: "training.active-scope-hydration",
+        outcome: "ready",
+      }),
+    );
   });
 
   test("restores the saved active list when switching nl -> en -> nl", async () => {
@@ -504,3 +513,12 @@ describe("useTrainingActiveList", () => {
     );
   });
 });
+
+function trainingTimingEvents(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) =>
+    event instanceof CustomEvent &&
+    event.type === "2000nl:training-transition-timing"
+      ? [event.detail as Record<string, unknown>]
+      : [],
+  );
+}

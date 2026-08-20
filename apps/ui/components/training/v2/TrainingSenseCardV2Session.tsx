@@ -4,6 +4,7 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
+  beginTrainingUserTransition,
   measureTrainingTransitionStage,
   recordTrainingEntryRendered,
 } from "@/lib/training/trainingTransitionTiming";
@@ -233,12 +234,25 @@ export function TrainingSenseCardV2Session({
         return;
       }
       if (!isPlatformV2TrainingActionCapability(capability)) return;
+      if (
+        nextTransitionId &&
+        (capability.actionId === "start-learning" ||
+          capability.actionId === "review-card")
+      ) {
+        beginTrainingUserTransition(
+          nextTransitionId,
+          capability.actionId === "start-learning" ? "learn" : "review",
+        );
+      }
       setNoticeTone("error");
       const response = nextTransitionId
         ? await measureTrainingTransitionStage(
             nextTransitionId,
             "review.mutation",
-            () => performPlatformV2TrainingAction(capability),
+            () =>
+              performPlatformV2TrainingAction(capability, {
+                transitionId: nextTransitionId,
+              }),
             () => "accepted",
           )
         : await performPlatformV2TrainingAction(capability);

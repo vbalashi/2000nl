@@ -7,6 +7,7 @@ import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2Trainin
 import {
   createTrainingTransitionId,
   measureTrainingTransitionStage,
+  recordTrainingTransitionTiming,
 } from "@/lib/training/trainingTransitionTiming";
 import { predictNextQueueTurn } from "@/lib/training/trainingQueue";
 import type {
@@ -64,6 +65,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
   const [nextTransitionId, setNextTransitionId] = useState<string | null>(null);
   const candidateRef = useRef<PreparedNextTrainingTurn | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const activeTransitionIdRef = useRef<string | null>(null);
   const ownedForCardKeyRef = useRef<string | null>(null);
   const trainingV2Enabled = platformV2TrainingUiEnabled();
 
@@ -104,8 +106,17 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
 
   const cancelCurrent = useCallback(() => {
     tokenRef.current += 1;
+    if (controllerRef.current && activeTransitionIdRef.current) {
+      recordTrainingTransitionTiming({
+        transitionId: activeTransitionIdRef.current,
+        stage: "next-card.preparation",
+        durationMs: 0,
+        outcome: "cancelled",
+      });
+    }
     controllerRef.current?.abort();
     controllerRef.current = null;
+    activeTransitionIdRef.current = null;
     candidateRef.current = null;
     setNextTransitionId(null);
   }, []);
@@ -130,6 +141,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     // controller so the next queue-turn effect cannot abort work that the
     // current transition is explicitly waiting for.
     controllerRef.current = null;
+    activeTransitionIdRef.current = null;
     ownedForCardKeyRef.current = cardKey;
     return candidate;
   }, [cancelCurrent]);
@@ -152,6 +164,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     const token = tokenRef.current;
     const controller = new AbortController();
     controllerRef.current = controller;
+    activeTransitionIdRef.current = transitionId;
 
     void measureTrainingTransitionStage(
       transitionId,

@@ -28,12 +28,14 @@ const destinationFromLocation = (
 
 type Props = {
   user: User;
+  initialTransitionId?: string;
   enabled?: boolean;
   extendedDestinationsEnabled?: boolean;
 };
 
 export function TrainingLibraryShell({
   user,
+  initialTransitionId,
   enabled = navigationShellEnabled,
   extendedDestinationsEnabled = settingsStatisticsDestinationsEnabled,
 }: Props) {
@@ -102,12 +104,18 @@ export function TrainingLibraryShell({
   }, [destination, enabled, extendedDestinationsEnabled, navigationBlocked]);
 
   if (!enabled) {
-    return <TrainingScreen user={user} />;
+    return (
+      <TrainingScreen
+        user={user}
+        initialTransitionId={initialTransitionId}
+      />
+    );
   }
 
   return (
     <TrainingScreen
       user={user}
+      initialTransitionId={initialTransitionId}
       destination={destination}
       extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}
