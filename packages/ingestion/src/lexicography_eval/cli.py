@@ -4,15 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from .command_handlers import (
-    _require_local_output,
-    _sample_for_split,
-    execute_command,
-)
-from .release_policy import (
-    merge_open_and_holdout_selections as _merge_open_and_holdout_selections,
-    require_holdout_binding as _require_holdout_binding,
-)
+from .command_handlers import execute_command
 
 
 def build_parser() -> argparse.ArgumentParser:

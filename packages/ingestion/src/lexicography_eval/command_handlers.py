@@ -14,10 +14,10 @@ from .judging import JudgeBudget, judge_candidates
 from .pairwise import PairwiseBudget, judge_pairwise_candidates
 from .provider import OpenAIChatClient, load_env_files, provider_config_from_env
 from .release_policy import (
-    merge_open_and_holdout_selections as _merge_open_and_holdout_selections,
+    merge_open_and_holdout_selections,
     require_complete_sealed_holdout,
     require_batch_preflight,
-    require_holdout_binding as _require_holdout_binding,
+    require_holdout_binding,
     tournament_round,
 )
 from .similarity import SourceTextIndex, source_texts_from_corpus
@@ -109,7 +109,7 @@ def execute_command(args: Namespace) -> int:
         release = _require_local_output(repo_root, args.holdout_release_dir, vault=True)
         result = prepare_benchmark(
             corpus_root=args.corpus_root.resolve(),
-            selection=_merge_open_and_holdout_selections(
+            selection=merge_open_and_holdout_selections(
                 _read_json(args.selection), _read_json(args.holdout_selection)
             ),
             public_path=output / "sample.json",
@@ -125,7 +125,7 @@ def execute_command(args: Namespace) -> int:
         )
         prompt = _prompt(args.prompt)
         run_dir = _require_local_output(repo_root, args.run_dir)
-        _require_holdout_binding(
+        require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             run_id=args.holdout_run_id, prompt_id=prompt.prompt_id,
             prompt_hash=prompt.prompt_hash, generation_run_dir=run_dir,
@@ -158,7 +158,7 @@ def execute_command(args: Namespace) -> int:
         sample = _read_json(args.sample)
         candidate_dir = args.candidate_dir.resolve()
         generation_prompt = (_read_json(candidate_dir.parent / "run-manifest.json").get("prompt") or {})
-        _require_holdout_binding(
+        require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),
@@ -210,7 +210,7 @@ def execute_command(args: Namespace) -> int:
         if sample.get("sealed") and len(candidate_dirs) != 1:
             raise ValueError("A sealed holdout review requires exactly one candidate run")
         generation_prompt = (_read_json(candidate_dirs[0].parent / "run-manifest.json").get("prompt") or {})
-        _require_holdout_binding(
+        require_holdout_binding(
             sample_path=args.sample, sample=sample, ledger_path=args.holdout_ledger,
             run_id=args.holdout_run_id, prompt_id=generation_prompt.get("promptId"),
             prompt_hash=generation_prompt.get("promptHash"),

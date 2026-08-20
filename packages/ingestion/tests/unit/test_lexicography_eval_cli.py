@@ -10,13 +10,14 @@ import pytest
 INGESTION_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(INGESTION_ROOT / "src"))
 
-from lexicography_eval.cli import (  # noqa: E402
-    build_parser,
+from lexicography_eval.cli import build_parser, main  # noqa: E402
+from lexicography_eval.command_handlers import (  # noqa: E402
     _require_local_output,
-    _require_holdout_binding,
     _sample_for_split,
-    _merge_open_and_holdout_selections,
-    main,
+)
+from lexicography_eval.release_policy import (  # noqa: E402
+    merge_open_and_holdout_selections,
+    require_holdout_binding,
 )
 
 
@@ -325,13 +326,13 @@ def test_merge_requires_holdout_identities_to_live_only_in_vault_selection() -> 
         "benchmarkId": "test",
         "lemmas": [{"headword": "huis", "split": "holdout"}],
     }
-    merged = _merge_open_and_holdout_selections(open_selection, holdout)
+    merged = merge_open_and_holdout_selections(open_selection, holdout)
     assert [item["headword"] for item in merged["lemmas"]] == ["bank", "huis"]
 
     leaked = json.loads(json.dumps(open_selection))
     leaked["lemmas"].append({"headword": "huis", "split": "holdout"})
     with pytest.raises(ValueError, match="must not expose"):
-        _merge_open_and_holdout_selections(leaked, holdout)
+        merge_open_and_holdout_selections(leaked, holdout)
 
 
 def test_cli_refuses_sealed_holdout_without_stateful_run_binding(tmp_path: Path) -> None:
@@ -417,7 +418,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
     )
     sample = json.loads(sample_path.read_text(encoding="utf-8"))
 
-    _require_holdout_binding(
+    require_holdout_binding(
         sample_path=sample_path,
         sample=sample,
         ledger_path=ledger_path,
@@ -429,7 +430,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
     binding = json.loads((tmp_path / "run-binding.json").read_text())
     assert binding["runId"] == "finalist-b-v1"
 
-    _require_holdout_binding(
+    require_holdout_binding(
         sample_path=sample_path,
         sample=sample,
         ledger_path=ledger_path,
@@ -439,7 +440,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
         generation_run_dir=tmp_path / "generation-finalist-b",
     )
     with pytest.raises(ValueError, match="already bound"):
-        _require_holdout_binding(
+        require_holdout_binding(
             sample_path=sample_path,
             sample=sample,
             ledger_path=ledger_path,
@@ -449,7 +450,7 @@ def test_holdout_ledger_binds_exactly_one_run_id(tmp_path: Path) -> None:
             generation_run_dir=tmp_path / "generation-finalist-b",
         )
     with pytest.raises(ValueError, match="already bound"):
-        _require_holdout_binding(
+        require_holdout_binding(
             sample_path=sample_path,
             sample=sample,
             ledger_path=ledger_path,
