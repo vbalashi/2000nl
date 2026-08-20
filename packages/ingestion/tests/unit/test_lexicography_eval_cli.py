@@ -69,6 +69,19 @@ def test_generate_and_judge_accept_explicit_model_profiles() -> None:
     assert judged.model_profile == "gpt-5.6-terra"
 
 
+def test_pairwise_cli_never_accepts_the_sealed_holdout_split() -> None:
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "--repo-root", "/tmp/repo", "judge-pairwise",
+                "--sample", "sample.json", "--candidate-one-dir", "a",
+                "--candidate-two-dir", "b", "--output", "out.json",
+                "--split", "holdout", "--seed", "seed", "--max-requests", "1",
+            ]
+        )
+
+
 def test_dry_run_describes_paid_command_without_reading_inputs(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -43,6 +43,11 @@ ALLOWED_HARD_FAILURES = {
     "source_reproduction",
     "unsupported_optional_claim",
 }
+IMPLIED_HARD_FAILURES = {
+    "wrong_sense": "semantic_contradiction",
+    "grammar_error": "invalid_dutch",
+    "morphology_error": "invalid_dutch",
+}
 
 
 def _score_map(payload: dict[str, Any], keys: tuple[str, ...]) -> dict[str, float]:
@@ -85,16 +90,25 @@ def _confidence(payload: dict[str, Any]) -> float:
     return float(value)
 
 
+def _hard_failures(payload: dict[str, Any], error_codes: list[str]) -> list[str]:
+    explicit = _closed_codes(payload, "hardFailures", ALLOWED_HARD_FAILURES)
+    implied = {
+        IMPLIED_HARD_FAILURES[code]
+        for code in error_codes
+        if code in IMPLIED_HARD_FAILURES
+    }
+    return sorted(set(explicit) | implied)
+
+
 def validate_quality(payload: dict[str, Any]) -> dict[str, Any]:
     allowed_keys = {"scores", "hardFailures", "errorCodes", "confidence"}
     if not isinstance(payload, dict) or set(payload) != allowed_keys:
         raise ValueError("Source-blind judge returned unsupported free-form fields")
+    error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
     return {
         "scores": _score_map(payload, QUALITY_SCORE_KEYS),
-        "hardFailures": _closed_codes(
-            payload, "hardFailures", ALLOWED_HARD_FAILURES
-        ),
-        "errorCodes": _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES),
+        "hardFailures": _hard_failures(payload, error_codes),
+        "errorCodes": error_codes,
         "confidence": _confidence(payload),
     }
 
@@ -153,13 +167,12 @@ def validate_fidelity(
         )
     if set(reference_ids) != seen:
         raise ValueError("Judge must return exactly one match for every reference")
+    error_codes = _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES)
     return {
         "referenceMatches": matches,
         "scores": _score_map(payload, FIDELITY_SCORE_KEYS),
-        "hardFailures": _closed_codes(
-            payload, "hardFailures", ALLOWED_HARD_FAILURES
-        ),
-        "errorCodes": _closed_codes(payload, "errorCodes", ALLOWED_ERROR_CODES),
+        "hardFailures": _hard_failures(payload, error_codes),
+        "errorCodes": error_codes,
         "confidence": _confidence(payload),
     }
 

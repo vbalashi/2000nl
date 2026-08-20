@@ -9,6 +9,61 @@ from .artifacts import sha256
 from .candidate_schema import apply_output_policy, validate_generated_content
 
 
+def sample_for_generation_run(
+    sample: dict[str, Any], cases: list[dict[str, Any]], *, split: str
+) -> dict[str, Any]:
+    value = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": sample.get("benchmarkId"),
+        "selectionHash": sample.get("selectionHash"),
+        "caseCount": len(cases),
+        "meaningCount": sum(len(case.get("referenceIds") or []) for case in cases),
+        "cases": cases,
+    }
+    if split == "holdout":
+        value["sealed"] = True
+    return value
+
+
+def load_bound_candidates(
+    *,
+    sample: dict[str, Any],
+    candidate_dir: Path,
+    cases: list[dict[str, Any]],
+    split: str,
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    """Validate every candidate against its manifest and immutable request cache."""
+    scoped_sample = sample_for_generation_run(sample, cases, split=split)
+    manifest = generation_manifest(
+        sample=scoped_sample, candidate_dir=candidate_dir, split=split
+    )
+    expected_ids = {str(case.get("caseId") or "") for case in cases}
+    actual_ids = {path.stem for path in candidate_dir.glob("*.json")}
+    if actual_ids != expected_ids:
+        raise ValueError("Candidate directory must exactly match its generation sample")
+    result: dict[str, dict[str, Any]] = {}
+    for case in cases:
+        case_id = str(case.get("caseId") or "")
+        generation_input = case.get("generationInput")
+        if not case_id or not isinstance(generation_input, dict):
+            raise ValueError("Generation cases require caseId and generationInput")
+        candidate_path = candidate_dir / f"{case_id}.json"
+        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        if not isinstance(candidate, dict) or candidate.get("schema") != "lexicography-candidate-v1":
+            raise ValueError(f"Candidate {case_id} uses an unsupported schema")
+        validate_candidate_binding(
+            candidate,
+            case_id=case_id,
+            candidate_dir=candidate_dir,
+            generation_input=generation_input,
+            sample=scoped_sample,
+            split=split,
+            manifest=manifest,
+        )
+        result[case_id] = candidate
+    return result, manifest
+
+
 def generation_manifest(
     *,
     sample: dict[str, Any],

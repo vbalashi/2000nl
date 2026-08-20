@@ -9,6 +9,9 @@ from pathlib import Path
 import random
 from typing import Any
 
+from .artifacts import sha256
+from .judgment_provenance import load_bound_candidates
+
 
 @dataclass(frozen=True)
 class BlindReviewResult:
@@ -60,13 +63,6 @@ def _candidate_article(candidate: dict[str, Any]) -> dict[str, Any]:
 def _encoded_payload(value: Any) -> str:
     raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return base64.b64encode(raw.encode("utf-8")).decode("ascii")
-
-
-def _canonical_hash(value: Any) -> str:
-    raw = json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
-    return hashlib.sha256(raw).hexdigest()
 
 
 def _shuffle_interleaved(
@@ -235,6 +231,21 @@ def render_blind_review(
     )
     if not candidate_dirs:
         raise ValueError("At least one candidate directory is required")
+    validated_by_root: dict[Path, dict[str, dict[str, Any]]] = {}
+    for root in candidate_dirs:
+        run_cases = [
+            case for case in selected if (root / f"{case.get('caseId')}.json").is_file()
+        ]
+        run_splits = {str(case.get("split") or "") for case in run_cases}
+        if not run_cases or len(run_splits) != 1:
+            raise ValueError("Every blind candidate run must contain exactly one selected split")
+        run_split = next(iter(run_splits))
+        validated_by_root[root], _ = load_bound_candidates(
+            sample=sample,
+            candidate_dir=root,
+            cases=run_cases,
+            split=run_split,
+        )
     entries: list[tuple[dict[str, Any], dict[str, Any]]] = []
     originals = []
     candidates_for_hash = []
@@ -253,7 +264,7 @@ def render_blind_review(
                 f"Expected exactly one candidate {case_id} across review runs"
             )
         candidate_path = matches[0]
-        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        candidate = validated_by_root[candidate_path.parent][case_id]
         baseline = _reference_article(case, protected_case)
         generated = _candidate_article(candidate)
         baseline_on_a = bool(rng.getrandbits(1))
@@ -274,12 +285,12 @@ def render_blind_review(
             "sideB": article_b,
         }
         mapping_item = {
-                "itemId": item_id,
-                "caseId": case_id,
-                "sideA": origin_a,
-                "sideB": origin_b,
-                "repeatedFrom": None,
-            }
+            "itemId": item_id,
+            "caseId": case_id,
+            "sideA": origin_a,
+            "sideB": origin_b,
+            "repeatedFrom": None,
+        }
         entries.append((review_item, mapping_item))
         originals.append((review_item, mapping_item))
         candidates_for_hash.append(candidate)
@@ -310,9 +321,9 @@ def render_blind_review(
     mapping_items = [mapping for _, mapping in entries]
 
     seed_hash = hashlib.sha256(seed.encode("utf-8")).hexdigest()
-    sample_hash = _canonical_hash(sample)
-    protected_hash = _canonical_hash(protected)
-    candidate_bundle_hash = _canonical_hash(candidates_for_hash)
+    sample_hash = sha256(sample)
+    protected_hash = sha256(protected)
+    candidate_bundle_hash = sha256(candidates_for_hash)
     finalist_ids = sorted(
         {
             str(candidate.get("promptId") or "")
@@ -320,7 +331,7 @@ def render_blind_review(
             if candidate.get("promptId")
         }
     )
-    review_bundle_id = "blind_" + _canonical_hash(
+    review_bundle_id = "blind_" + sha256(
         {
             "benchmarkId": sample.get("benchmarkId"),
             "split": split,

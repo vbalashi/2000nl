@@ -4,11 +4,32 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
+
 
 INGESTION_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(INGESTION_ROOT / "src"))
 
 from lexicography_eval.blind import render_blind_review  # noqa: E402
+from lexicography_eval_fixtures import write_bound_generation_run  # noqa: E402
+
+
+def _article(headword: str, definition: str) -> dict:
+    return {
+        "headword": headword,
+        "partOfSpeech": "zn",
+        "senses": [
+            {
+                "definition": definition,
+                "usageNote": None,
+                "usagePattern": None,
+                "examples": [f"Dit is {headword}.", f"Ik ken {headword}."],
+                "collocations": [],
+                "synonyms": [],
+                "idioms": [],
+            }
+        ],
+    }
 
 
 def test_render_blind_review_hides_origin_and_supports_local_export(tmp_path: Path) -> None:
@@ -43,33 +64,32 @@ def test_render_blind_review_hides_origin_and_supports_local_export(tmp_path: Pa
             }
         ],
     }
-    candidates = tmp_path / "candidates"
-    candidates.mkdir()
-    (candidates / "lex_bank.json").write_text(
-        json.dumps(
-            {
-                "schema": "lexicography-candidate-v1",
-                "caseId": "lex_bank",
-                "promptId": "secret-prompt-id",
-                "promptHash": "secret-prompt-hash",
-                "content": {
-                    "headword": "bank",
-                    "partOfSpeech": "zn",
-                    "senses": [
-                        {
-                            "definition": "Een bedrijf waar je geld bewaart of leent.",
-                            "usageNote": None,
-                            "usagePattern": None,
-                            "examples": ["Mijn salaris komt op mijn rekening."],
-                            "collocations": ["geld lenen"],
-                            "synonyms": [],
-                            "idioms": [],
-                        }
-                    ],
-                },
+    candidates = write_bound_generation_run(
+        tmp_path / "generation",
+        sample=sample,
+        cases=sample["cases"],
+        split="holdout",
+        articles={
+            "lex_bank": {
+                **_article("bank", "Een bedrijf waar je geld bewaart of leent."),
+                "senses": [
+                    {
+                        "definition": "Een bedrijf waar je geld bewaart of leent.",
+                        "usageNote": None,
+                        "usagePattern": None,
+                        "examples": [
+                            "Mijn salaris komt op mijn rekening.",
+                            "De bank leent geld aan bedrijven.",
+                        ],
+                        "collocations": ["geld lenen"],
+                        "synonyms": [],
+                        "idioms": [],
+                    }
+                ],
             }
-        ),
-        encoding="utf-8",
+        },
+        prompt_id="secret-prompt-id",
+        prompt_hash="secret-prompt-hash",
     )
     output_html = tmp_path / "review.html"
     mapping_path = tmp_path / "mapping.json"
@@ -117,8 +137,7 @@ def test_render_blind_review_hides_origin_and_supports_local_export(tmp_path: Pa
 def test_blind_repeats_are_interleaved_with_minimum_spacing(tmp_path: Path) -> None:
     cases = []
     protected_cases = []
-    candidates = tmp_path / "candidates"
-    candidates.mkdir()
+    articles = {}
     for index in range(12):
         case_id = f"case-{index}"
         headword = f"woord-{index}"
@@ -139,30 +158,26 @@ def test_blind_repeats_are_interleaved_with_minimum_spacing(tmp_path: Path) -> N
                 "references": [{"definition": f"bron {index}", "examples": []}],
             }
         )
-        (candidates / f"{case_id}.json").write_text(
-            json.dumps(
-                {
-                    "schema": "lexicography-candidate-v1",
-                    "caseId": case_id,
-                    "promptId": "finalist-d",
-                    "promptHash": "prompt-hash",
-                    "content": {
-                        "headword": headword,
-                        "partOfSpeech": "zn",
-                        "senses": [{"definition": f"definitie {index}"}],
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
+        articles[case_id] = _article(headword, f"definitie {index}")
+
+    sample = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": "interleaved",
+        "selectionHash": "selection-hash",
+        "cases": cases,
+    }
+    candidates = write_bound_generation_run(
+        tmp_path / "generation",
+        sample=sample,
+        cases=cases,
+        split="validation",
+        articles=articles,
+        prompt_id="finalist-d",
+        prompt_hash="prompt-hash",
+    )
 
     render_blind_review(
-        sample={
-            "schema": "lexicography-sample-v1",
-            "benchmarkId": "interleaved",
-            "selectionHash": "selection-hash",
-            "cases": cases,
-        },
+        sample=sample,
         protected={
             "schema": "lexicography-protected-references-v1",
             "benchmarkId": "interleaved",
@@ -194,9 +209,7 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
         "benchmarkId": "all-test",
         "cases": [],
     }
-    candidate_dirs = [tmp_path / "development", tmp_path / "holdout"]
-    for root in candidate_dirs:
-        root.mkdir()
+    candidate_dirs = []
     for index, split in enumerate(("development", "holdout")):
         case_id = f"case-{index}"
         word = f"woord-{index}"
@@ -210,20 +223,19 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
         protected["cases"].append(
             {"caseId": case_id, "references": [{"definition": f"bron {index}"}]}
         )
-        (candidate_dirs[index] / f"{case_id}.json").write_text(
-            json.dumps(
-                {
-                    "schema": "lexicography-candidate-v1",
-                    "caseId": case_id,
-                    "promptId": "h",
-                    "content": {
-                        "headword": word,
-                        "partOfSpeech": "zn",
-                        "senses": [{"definition": f"nieuw {index}"}],
-                    },
-                }
-            ),
-            encoding="utf-8",
+    for index, split in enumerate(("development", "holdout")):
+        case = sample["cases"][index]
+        candidate_dirs.append(
+            write_bound_generation_run(
+                tmp_path / split,
+                sample=sample,
+                cases=[case],
+                split=split,
+                articles={case["caseId"]: _article(
+                    case["generationInput"]["headword"], f"nieuw {index}"
+                )},
+                prompt_id="h",
+            )
         )
 
     result = render_blind_review(
@@ -238,3 +250,45 @@ def test_blind_all_split_can_read_candidates_from_multiple_runs(tmp_path: Path) 
     )
 
     assert result.original_item_count == 2
+
+
+def test_blind_review_rejects_candidate_tampering(tmp_path: Path) -> None:
+    case = {
+        "caseId": "lex_bank",
+        "split": "validation",
+        "generationInput": {"headword": "bank", "partOfSpeech": "zn"},
+    }
+    sample = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": "blind-test",
+        "selectionHash": "selection-hash",
+        "cases": [case],
+    }
+    candidates = write_bound_generation_run(
+        tmp_path / "generation",
+        sample=sample,
+        cases=[case],
+        split="validation",
+        articles={"lex_bank": _article("bank", "een financiële instelling")},
+        prompt_id="finalist",
+    )
+    candidate_path = candidates / "lex_bank.json"
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    candidate["content"]["senses"][0]["definition"] = "tampered"
+    candidate_path.write_text(json.dumps(candidate), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="immutable request cache"):
+        render_blind_review(
+            sample=sample,
+            protected={
+                "schema": "lexicography-protected-references-v1",
+                "benchmarkId": "blind-test",
+                "cases": [{"caseId": "lex_bank", "references": []}],
+            },
+            candidate_dir=candidates,
+            output_html=tmp_path / "review.html",
+            mapping_path=tmp_path / "mapping.json",
+            split="validation",
+            seed="seed",
+            repeat_count=0,
+        )

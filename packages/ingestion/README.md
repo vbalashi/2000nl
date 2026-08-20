@@ -13,7 +13,10 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `import_words_db.py` – load structured entries into a dictionary in Postgres and seed the NT2 list.
 - `import_word_forms.py` – populate `word_forms` lookup from structured entries.
 - `lexicography_eval.py` – run the local clean-room prompt benchmark and blind
-  review workflow described in `lexicography_eval/README.md`.
+  review workflow described in `lexicography_eval/README.md`. Its CLI parser is
+  intentionally thin; command orchestration lives in
+  `lexicography_eval/command_handlers.py`, while release/holdout/preflight
+  invariants live in `lexicography_eval/release_policy.py`.
 - `audit_pointer_meanings.py` – audit a bounded, deterministic corpus sample for
   resolvable pointer-only meanings without treating arbitrary hyphens as
   redirects.

@@ -275,8 +275,14 @@ def compare_prompt_runs(
     )
 
 
-def plateau_reached(promotions: Iterable[bool], *, required_failures: int = 3) -> bool:
+def plateau_reached(
+    promotions: Iterable[bool], *, required_failures: int = 3, max_challengers: int = 8
+) -> bool:
     values = list(promotions)
     if required_failures < 1:
         raise ValueError("required_failures must be positive")
-    return len(values) >= required_failures and not any(values[-required_failures:])
+    if max_challengers < 1:
+        raise ValueError("max_challengers must be positive")
+    return len(values) >= max_challengers or (
+        len(values) >= required_failures and not any(values[-required_failures:])
+    )

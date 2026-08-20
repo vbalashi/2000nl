@@ -234,3 +234,5 @@ def test_compare_rejects_reversed_pairwise_run_binding(tmp_path: Path) -> None:
 def test_plateau_requires_three_consecutive_non_promotions() -> None:
     assert plateau_reached([True, False, False]) is False
     assert plateau_reached([True, False, False, False]) is True
+    assert plateau_reached([True, False, True, False, True, False, True]) is False
+    assert plateau_reached([True, False, True, False, True, False, True, False]) is True

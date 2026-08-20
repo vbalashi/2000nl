@@ -15,6 +15,7 @@ from lexicography_eval.pairwise import (  # noqa: E402
     PairwiseBudget,
     judge_pairwise_candidates,
 )
+from lexicography_eval_fixtures import write_bound_generation_run  # noqa: E402
 
 
 class FakePairwiseClient:
@@ -85,26 +86,6 @@ def _article(headword: str, *, variant: str = "") -> dict:
     }
 
 
-def _write_candidate(
-    directory: Path, case_id: str, headword: str, *, variant: str = ""
-) -> None:
-    side = "two" if variant else "one"
-    (directory / f"{case_id}.json").write_text(
-        json.dumps(
-            {
-                "schema": "lexicography-candidate-v1",
-                "caseId": case_id,
-                "promptId": f"prompt-{side}",
-                "promptHash": f"prompt-hash-{side}",
-                "model": "gpt-4.1",
-                "requestHash": ("b" if variant else "a") * 64,
-                "content": _article(headword, variant=variant),
-            }
-        ),
-        encoding="utf-8",
-    )
-
-
 def test_pairwise_judge_blinds_content_aggregates_only_and_adds_swapped_duplicate(
     tmp_path: Path,
 ) -> None:
@@ -134,13 +115,22 @@ def test_pairwise_judge_blinds_content_aggregates_only_and_adds_swapped_duplicat
             },
         ],
     }
-    candidate_one = tmp_path / "candidate-one"
-    candidate_two = tmp_path / "candidate-two"
-    candidate_one.mkdir()
-    candidate_two.mkdir()
-    for case_id, headword in (("lex_alpha", "alpha"), ("lex_beta", "beta")):
-        _write_candidate(candidate_one, case_id, headword)
-        _write_candidate(candidate_two, case_id, headword, variant="andere ")
+    articles_one = {
+        case_id: _article(headword)
+        for case_id, headword in (("lex_alpha", "alpha"), ("lex_beta", "beta"))
+    }
+    articles_two = {
+        case_id: _article(headword, variant="andere ")
+        for case_id, headword in (("lex_alpha", "alpha"), ("lex_beta", "beta"))
+    }
+    candidate_one = write_bound_generation_run(
+        tmp_path / "run-one", sample=sample, cases=sample["cases"], split="development",
+        articles=articles_one, prompt_id="prompt-one",
+    )
+    candidate_two = write_bound_generation_run(
+        tmp_path / "run-two", sample=sample, cases=sample["cases"], split="development",
+        articles=articles_two, prompt_id="prompt-two",
+    )
     client = FakePairwiseClient()
     output_path = tmp_path / "pairwise.json"
 
@@ -230,12 +220,14 @@ def test_pairwise_judge_requires_budget_for_primary_and_duplicate_calls(
             }
         ],
     }
-    candidate_one = tmp_path / "candidate-one"
-    candidate_two = tmp_path / "candidate-two"
-    candidate_one.mkdir()
-    candidate_two.mkdir()
-    _write_candidate(candidate_one, "lex_alpha", "alpha")
-    _write_candidate(candidate_two, "lex_alpha", "alpha")
+    candidate_one = write_bound_generation_run(
+        tmp_path / "run-one", sample=sample, cases=sample["cases"], split="development",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-one",
+    )
+    candidate_two = write_bound_generation_run(
+        tmp_path / "run-two", sample=sample, cases=sample["cases"], split="development",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-two",
+    )
 
     with pytest.raises(ValueError, match="budget"):
         judge_pairwise_candidates(
@@ -272,12 +264,14 @@ def test_pairwise_judge_repairs_an_invalid_closed_verdict_through_cached_call(
             }
         ],
     }
-    candidate_one = tmp_path / "candidate-one"
-    candidate_two = tmp_path / "candidate-two"
-    candidate_one.mkdir()
-    candidate_two.mkdir()
-    _write_candidate(candidate_one, "lex_alpha", "alpha")
-    _write_candidate(candidate_two, "lex_alpha", "alpha", variant="andere ")
+    candidate_one = write_bound_generation_run(
+        tmp_path / "run-one", sample=sample, cases=sample["cases"], split="development",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-one",
+    )
+    candidate_two = write_bound_generation_run(
+        tmp_path / "run-two", sample=sample, cases=sample["cases"], split="development",
+        articles={"lex_alpha": _article("alpha", variant="andere ")}, prompt_id="prompt-two",
+    )
     client = InvalidOncePairwiseClient()
 
     result = judge_pairwise_candidates(
@@ -299,3 +293,64 @@ def test_pairwise_judge_repairs_an_invalid_closed_verdict_through_cached_call(
     assert "closed schema" in client.calls[1]["messages"][-1]["content"]
     artifact = json.loads((tmp_path / "pairwise.json").read_text(encoding="utf-8"))
     assert artifact["primaryVerdicts"]["tie_good"] == 1
+
+
+def test_pairwise_rejects_holdout_and_tampered_candidate_provenance(tmp_path: Path) -> None:
+    case = {
+        "caseId": "lex_alpha",
+        "split": "holdout",
+        "referenceIds": ["ref-1"],
+        "generationInput": {"headword": "alpha", "languageCode": "nl", "partOfSpeech": "zn"},
+    }
+    sample = {
+        "schema": "lexicography-sample-v1",
+        "benchmarkId": "test-benchmark",
+        "selectionHash": "selection-hash",
+        "sealed": True,
+        "cases": [case],
+    }
+    candidate_one = write_bound_generation_run(
+        tmp_path / "run-one", sample=sample, cases=[case], split="holdout",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-one",
+    )
+    candidate_two = write_bound_generation_run(
+        tmp_path / "run-two", sample=sample, cases=[case], split="holdout",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-two",
+    )
+    with pytest.raises(ValueError, match="one split"):
+        judge_pairwise_candidates(
+            sample=sample,
+            candidate_one_dir=candidate_one,
+            candidate_two_dir=candidate_two,
+            client=FakePairwiseClient(),
+            output_path=tmp_path / "pairwise.json",
+            budget=PairwiseBudget(max_requests=1, max_output_tokens=300, swapped_duplicate_count=0),
+            randomization_seed="review-seed",
+        )
+
+    validation_case = {**case, "split": "validation"}
+    validation_sample = {**sample, "sealed": False, "cases": [validation_case]}
+    candidate_one = write_bound_generation_run(
+        tmp_path / "validation-one", sample=validation_sample,
+        cases=[validation_case], split="validation",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-one",
+    )
+    candidate_two = write_bound_generation_run(
+        tmp_path / "validation-two", sample=validation_sample,
+        cases=[validation_case], split="validation",
+        articles={"lex_alpha": _article("alpha")}, prompt_id="prompt-two",
+    )
+    candidate_path = candidate_one / "lex_alpha.json"
+    value = json.loads(candidate_path.read_text())
+    value["content"]["senses"][0]["definition"] = "tampered"
+    candidate_path.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(ValueError, match="immutable request cache"):
+        judge_pairwise_candidates(
+            sample=validation_sample,
+            candidate_one_dir=candidate_one,
+            candidate_two_dir=candidate_two,
+            client=FakePairwiseClient(),
+            output_path=tmp_path / "pairwise.json",
+            budget=PairwiseBudget(max_requests=1, max_output_tokens=300, swapped_duplicate_count=0),
+            randomization_seed="review-seed",
+        )

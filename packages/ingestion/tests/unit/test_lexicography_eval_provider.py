@@ -28,7 +28,6 @@ def test_provider_config_reuses_azure_v1_endpoint_and_gpt_4_1() -> None:
     assert config.model == "gpt-4.1"
     assert config.api_key == "azure-key"
     assert config.api_url == "https://example.openai.azure.com/openai/v1/chat/completions"
-    assert config.auth_header == "api-key"
     assert config.include_model is True
     assert "example.openai.azure.com" not in config.endpoint_fingerprint
 

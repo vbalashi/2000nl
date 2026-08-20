@@ -58,7 +58,10 @@ They are then evaluated by a source-blind learner-quality judge, a conservative
 optional-claims auditor, and a bounded source-aware fidelity judge. Before
 promotion, `judge-pairwise` presents the two generated articles under
 deterministically randomized A/B labels and repeats a subset with swapped
-labels to measure position bias. `compare` consumes this aggregate blind result
+labels to measure position bias. It is unavailable for holdout and rejects any
+candidate not bound to the exact generation manifest and immutable request
+cache. The blind owner bundle applies the same provenance check. `compare`
+consumes this aggregate blind result
 and rejects a challenger on hard-gate regression, insufficient blind wins, or
 strong side bias. Scalar deltas, reference-alignment diagnostics, and bootstrap
 uncertainty are retained as aggregate-only
@@ -66,7 +69,7 @@ uncertainty are retained as aggregate-only
 identities and per-case score pairs. Finalists also receive an independent
 agent review; GPT-4.1 is not treated as the final authority on its own output.
 
-Stop after three consecutive non-promotions. Freeze the finalist before the
+Stop after three consecutive non-promotions or eight challenger rounds. Freeze the finalist before the
 single holdout release. A public or paid corpus build needs a separate
 licensing/database-rights decision; clean-room generation and similarity scores
 are engineering controls, not legal clearance.
@@ -87,6 +90,10 @@ key. Every provider call refuses public OpenAI or a non-Azure endpoint.
 All commands accept `--dry-run`. Put it before the subcommand, for example
 `lexicography_eval.py --dry-run generate ...`; it performs no reads, writes, or
 provider calls and reports the selected command, model profile, and budget.
+Any development generation larger than five cases additionally requires
+`--preflight-run-dir` for a completed five-case run with the same prompt, model,
+and endpoint. The frozen pilot preparation enforces its exact 64 lemmas, 80
+senses, split counts, and POS quotas.
 
 ## Pilot result
 

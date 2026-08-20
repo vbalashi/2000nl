@@ -15,7 +15,6 @@ from urllib.request import Request, urlopen
 from .generation import ChatResult
 
 
-DEFAULT_OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_MODEL = "gpt-4.1"
 SUPPORTED_MODELS = frozenset(
     {"gpt-4.1", "gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"}
@@ -34,7 +33,6 @@ class ProviderConfig:
     api_url: str
     model: str
     request_model: str
-    auth_header: str
     include_model: bool
     endpoint_fingerprint: str
 
@@ -143,17 +141,14 @@ def provider_config_from_env(
         api_url = f"{azure_origin}/openai/v1/chat/completions"
         include_model = True
         api_key = azure_key
-        auth_header = "api-key"
     else:
         api_url, include_model = _azure_url(azure_endpoint, deployment, api_version)
         api_key = azure_key
-        auth_header = "api-key"
     return ProviderConfig(
         api_key=api_key,
         api_url=api_url,
         model=model,
         request_model=deployment or model,
-        auth_header=auth_header,
         include_model=include_model,
         endpoint_fingerprint=_endpoint_fingerprint(api_url),
     )
@@ -191,12 +186,10 @@ class OpenAIChatClient:
         self.max_retries = max_retries
 
     def _headers(self) -> dict[str, str]:
-        headers = {"content-type": "application/json"}
-        if self._config.auth_header == "api-key":
-            headers["api-key"] = self._config.api_key
-        else:
-            headers["authorization"] = f"Bearer {self._config.api_key}"
-        return headers
+        return {
+            "content-type": "application/json",
+            "api-key": self._config.api_key,
+        }
 
     def chat_json(
         self,

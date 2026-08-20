@@ -5,12 +5,18 @@ import hashlib
 from pathlib import Path
 import sys
 
+import pytest
+
 
 INGESTION_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(INGESTION_ROOT / "src"))
 
 from lexicography_eval.generation import ChatResult  # noqa: E402
 from lexicography_eval.judging import JudgeBudget, judge_candidates  # noqa: E402
+from lexicography_eval.judgment_schema import (  # noqa: E402
+    validate_fidelity,
+    validate_quality,
+)
 from lexicography_eval.similarity import SourceText, SourceTextIndex  # noqa: E402
 
 
@@ -197,6 +203,53 @@ def _canonical_hash(value: dict) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+@pytest.mark.parametrize(
+    ("error_code", "expected_failure"),
+    [
+        ("wrong_sense", "semantic_contradiction"),
+        ("grammar_error", "invalid_dutch"),
+        ("morphology_error", "invalid_dutch"),
+    ],
+)
+def test_closed_error_codes_imply_their_non_optional_hard_gate(
+    error_code: str, expected_failure: str
+) -> None:
+    quality = validate_quality(
+        {
+            "scores": {
+                "naturalness": 5,
+                "learnerUsefulness": 5,
+                "definitionClarity": 5,
+                "exampleQuality": 5,
+                "grammarAccuracy": 5,
+            },
+            "hardFailures": [],
+            "errorCodes": [error_code],
+            "confidence": 1,
+        }
+    )
+    assert quality["hardFailures"] == [expected_failure]
+
+    fidelity = validate_fidelity(
+        {
+            "referenceMatches": [
+                {"referenceId": "ref", "matchedSenseIndexes": [0], "fidelity": 5}
+            ],
+            "scores": {
+                "senseCoverage": 5,
+                "senseDiscrimination": 5,
+                "independentWording": 5,
+            },
+            "hardFailures": [],
+            "errorCodes": [error_code],
+            "confidence": 1,
+        },
+        ["ref"],
+        1,
+    )
+    assert fidelity["hardFailures"] == [expected_failure]
 
 
 def _bind_candidate_run(candidate_dir: Path, sample: dict) -> None:

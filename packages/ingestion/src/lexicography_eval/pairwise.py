@@ -5,13 +5,13 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import random
-import re
 from typing import Any
 
 from .artifacts import sha256, write_json
 from .candidate_schema import validate_generated_content
 from .generation import ChatClient
 from .judge_requests import cached_judge_call
+from .judgment_provenance import load_bound_candidates
 
 
 PAIRWISE_SCHEMA = "lexicography-pairwise-aggregate-v1"
@@ -95,58 +95,35 @@ def _load_candidates(
     *,
     candidate_dir: Path,
     generation_inputs: dict[str, dict[str, Any]],
-    benchmark_id: str,
-    selection_hash: str,
+    sample: dict[str, Any],
+    split: str,
 ) -> tuple[dict[str, dict[str, Any]], str]:
     if not candidate_dir.is_dir():
         raise ValueError("Pairwise candidate directory is missing")
     candidates: dict[str, dict[str, Any]] = {}
     binding_records = []
-    for path in sorted(candidate_dir.glob("*.json"), key=lambda item: item.name):
-        raw = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(raw, dict) or raw.get("schema") != "lexicography-candidate-v1":
-            raise ValueError("Pairwise candidate artifact must be an object")
-        case_id = raw.get("caseId")
-        if not isinstance(case_id, str) or case_id not in generation_inputs:
-            raise ValueError("Pairwise candidate has an unknown case ID")
-        if case_id in candidates:
-            raise ValueError("Pairwise candidate directory has duplicate case IDs")
-        content = raw.get("content")
-        if not isinstance(content, dict):
-            raise ValueError("Pairwise candidate is missing content")
-        candidates[case_id] = validate_generated_content(
-            content, generation_inputs[case_id]
+    cases = list(sample.get("cases") or [])
+    bound, _ = load_bound_candidates(
+        sample=sample, candidate_dir=candidate_dir, cases=cases, split=split
+    )
+    for case_id, raw in sorted(bound.items()):
+        content = validate_generated_content(
+            raw.get("content") or {}, generation_inputs[case_id]
         )
-        prompt_id = raw.get("promptId")
-        prompt_hash = raw.get("promptHash")
-        model = raw.get("model")
-        request_hash = raw.get("requestHash")
-        if (
-            not isinstance(prompt_id, str)
-            or not prompt_id
-            or not isinstance(prompt_hash, str)
-            or not prompt_hash
-            or not isinstance(model, str)
-            or not model
-            or not isinstance(request_hash, str)
-            or not re.fullmatch(r"[0-9a-f]{64}", request_hash)
-        ):
-            raise ValueError("Pairwise candidate is missing immutable run provenance")
+        candidates[case_id] = content
         binding_records.append(
             {
                 "caseId": case_id,
-                "promptId": prompt_id,
-                "promptHash": prompt_hash,
-                "model": model,
-                "generationRequestHash": request_hash,
+                "promptId": raw.get("promptId"),
+                "promptHash": raw.get("promptHash"),
+                "model": raw.get("model"),
+                "generationRequestHash": raw.get("requestHash"),
             }
         )
-    if set(candidates) != set(generation_inputs):
-        raise ValueError("Pairwise candidate directories must exactly match the sample")
     binding = sha256(
         {
-            "benchmarkId": benchmark_id,
-            "selectionHash": selection_hash,
+            "benchmarkId": sample.get("benchmarkId"),
+            "selectionHash": sample.get("selectionHash"),
             "candidates": sorted(binding_records, key=lambda value: value["caseId"]),
         }
     )
@@ -234,25 +211,21 @@ def judge_pairwise_candidates(
         for case in sample.get("cases") or []
         if isinstance(case, dict)
     }
-    if len(splits) != 1 or next(iter(splits)) not in {
-        "development",
-        "validation",
-        "holdout",
-    }:
+    if len(splits) != 1 or next(iter(splits)) not in {"development", "validation"}:
         raise ValueError("Pairwise sample must contain exactly one split")
     split = str(next(iter(splits)))
     case_set_hash = sha256(sorted(generation_inputs))
     candidate_one, candidate_one_binding = _load_candidates(
         candidate_dir=candidate_one_dir,
         generation_inputs=generation_inputs,
-        benchmark_id=benchmark_id,
-        selection_hash=selection_hash,
+        sample=sample,
+        split=split,
     )
     candidate_two, candidate_two_binding = _load_candidates(
         candidate_dir=candidate_two_dir,
         generation_inputs=generation_inputs,
-        benchmark_id=benchmark_id,
-        selection_hash=selection_hash,
+        sample=sample,
+        split=split,
     )
     case_ids = sorted(generation_inputs)
     duplicate_case_ids = _duplicate_case_ids(

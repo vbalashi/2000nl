@@ -71,12 +71,15 @@ Claimed semantic resources:
    candidates without protected source text in the model request.
 3. `judge`, `judge-pairwise`, and `compare`: candidates pass deterministic hard
    gates and bounded source-aware/source-blind evaluation. The pairwise judge
-   receives randomized opaque A/B articles, repeats a subset with swapped
-   sides, and exposes aggregate verdicts only. Promotion consumes that blind
-   result plus aggregate scalar gates; independent agent and owner reviews are
-   blinded separately.
+   is development/validation-only, accepts only candidates bound to an exact
+   generation manifest and immutable request cache, receives randomized opaque
+   A/B articles, repeats a subset with swapped sides, and exposes aggregate
+   verdicts only. Promotion consumes that blind result plus aggregate scalar
+   gates; independent agent and owner reviews are blinded separately.
 4. `render-blind`: a frozen finalist and protected references produce a
    local-only randomized A/B review page with autosave and JSON/CSV export.
+   Every finalist artifact is revalidated against its generation manifest and
+   immutable request cache before the bundle is rendered.
 
 ## Benchmark
 
@@ -97,7 +100,8 @@ examples present or absent in the source.
 Split by the complete normalized headword/provider-article cluster, never by a
 sense file: 40 development lemmas, 12 validation lemmas, and 12 locked holdout
 lemmas. The holdout is unavailable to prompt optimization and opens once after
-the finalist prompt is frozen.
+the finalist prompt is frozen. The pilot selection loader enforces the exact
+64-lemma, 80-sense, split, and POS quotas before producing benchmark artifacts.
 
 ## Generated content contract
 
@@ -146,7 +150,9 @@ source quotations or item-specific rewrites from the source-aware judge.
 
 - Start with three meaningfully different baseline prompts.
 - Change one documented prompt hypothesis per challenger.
-- Run a five-case preflight before any benchmark batch.
+- Run a five-case preflight before any benchmark batch. The CLI refuses a
+  development run larger than five cases unless `--preflight-run-dir` points
+  to an exact five-case run with the same prompt hash, model, and endpoint.
 - Cache by sanitized request hash and make reruns resumable.
 - Enforce explicit request and output-token budgets; cached serial execution is
   the current conservative default. Deadline/cost caps and concurrency remain
@@ -157,7 +163,7 @@ source quotations or item-specific rewrites from the source-aware judge.
 - Promote only when hard-gate performance does not regress and paired quality
   improves by at least 0.10 on a five-point scale with at least a 60% win rate.
 - Stop after three consecutive challengers fail promotion or after eight
-  challenger rounds.
+  challenger rounds; the comparison helper enforces both stopping conditions.
 - Compare at most two finalists on validation, freeze one prompt, then open the
   holdout exactly once.
 
