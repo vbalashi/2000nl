@@ -3,6 +3,7 @@ import {
   buildPlatformV2TrainingActionRequest,
   clearPlatformV2TrainingClientCaches,
   consumePrefetchedPlatformV2TrainingEntry,
+  ensurePlatformV2TrainingEntryValidThroughProgressAction,
   fetchPlatformV2TrainingEntry,
   peekPrefetchedPlatformV2TrainingEntry,
   prefetchPlatformV2TrainingEntry,
@@ -14,6 +15,11 @@ import {
 } from "@/lib/platform/platformV2TrainingClient";
 import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
 import { requestPlatformV2Translation } from "@/lib/platform/platformV2TrainingMediaClient";
+import {
+  PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS,
+  PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS,
+} from "@/lib/platform/platformV2TrainingActionClient";
+import { DEFAULT_PLATFORM_FETCH_TIMEOUT_MS } from "@/lib/platform/platformFetchWithTimeout";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
 import {
   singleSenseEntry,
@@ -97,6 +103,14 @@ describe("buildPlatformV2TrainingActionRequest", () => {
 });
 
 describe("performPlatformV2TrainingAction", () => {
+  test("derives the progress-action lease window from transport timeouts plus bounded overhead", () => {
+    expect(PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS).toBe(
+      DEFAULT_PLATFORM_FETCH_TIMEOUT_MS * 2 +
+        PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS,
+    );
+    expect(PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS).toBeLessThan(30_000);
+  });
+
   test("reconciles an ambiguous Learn response without repeating the mutation", async () => {
     const capability = startLearningCapability();
     const eventId = "0b4cd99b-0cc5-4dd4-aa6d-223963f5d0ee";
@@ -919,6 +933,77 @@ describe("fetchPlatformV2TrainingEntry", () => {
           stage: "next-card.prefetch",
           outcome: "accepted-hit-ready",
         }),
+      ]),
+    );
+  });
+
+  test("renews at the exact progress-action threshold and coalesces the replacement", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-21T00:00:00.000Z"));
+    const payload = {
+      contractVersion: "platform-lookup-v2",
+      query: "hand",
+      request: {
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      },
+      groups: [singleSenseGroup],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+    };
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const input = {
+      cacheOwnerId: "test-user",
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      transitionId: "transition-action-window",
+    };
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    await prefetchPlatformV2TrainingEntry(input);
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    await ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toMatchObject({
+      state: "ready",
+    });
+    await vi.advanceTimersByTimeAsync(2_000);
+    let resolveRenewal!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveRenewal = resolve;
+        }),
+    );
+    const renewal = ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
+    const coalesced = ensurePlatformV2TrainingEntryValidThroughProgressAction(input);
+    expect(coalesced).toBe(renewal);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    resolveRenewal(new Response(JSON.stringify(payload), { status: 200 }));
+    await Promise.all([renewal, coalesced]);
+    await vi.advanceTimersByTimeAsync(
+      PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS,
+    );
+    expect(peekPrefetchedPlatformV2TrainingEntry(input)).toMatchObject({
+      state: "ready",
+    });
+
+    const consumed = consumePrefetchedPlatformV2TrainingEntry(input);
+    expect(consumed).not.toBeNull();
+    await expect(consumed!).resolves.toMatchObject({ state: "ready" });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(transitionEvents(dispatch).map((event) => event.outcome)).toEqual(
+      expect.arrayContaining([
+        "renewal-required",
+        "renewal-started",
+        "renewal-ready",
+        "accepted-hit-ready",
       ]),
     );
   });

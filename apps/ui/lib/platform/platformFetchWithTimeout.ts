@@ -1,4 +1,4 @@
-const DEFAULT_PLATFORM_FETCH_TIMEOUT_MS = 12_000;
+export const DEFAULT_PLATFORM_FETCH_TIMEOUT_MS = 12_000;
 
 export function forwardAbortSignal(
   source: AbortSignal | null | undefined,

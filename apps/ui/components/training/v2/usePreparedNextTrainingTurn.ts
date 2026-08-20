@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
-import { prefetchPlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingClient";
+import {
+  ensurePlatformV2TrainingEntryValidThroughProgressAction,
+  prefetchPlatformV2TrainingEntry,
+} from "@/lib/platform/platformV2TrainingClient";
 import { preparePlatformV2TrainingEntry } from "@/lib/platform/platformV2TrainingPreparationClient";
 import {
   createTrainingTransitionId,
@@ -146,6 +149,53 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     return candidate;
   }, [cancelCurrent]);
 
+  const refreshForCard = useCallback(
+    (cardKey: string) => {
+      const candidate = candidateRef.current;
+      if (
+        !candidate ||
+        candidate.forCardKey !== cardKey ||
+        !candidate.v2Ready
+      ) {
+        return null;
+      }
+      recordTrainingTransitionTiming({
+        transitionId: candidate.transitionId,
+        stage: "next-card.prefetch",
+        durationMs: 0,
+        outcome: "proactive-refresh",
+      });
+      const mode =
+        candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
+      const refreshed = ensurePlatformV2TrainingEntryValidThroughProgressAction({
+        cacheOwnerId,
+        entryId: candidate.word.id,
+        cardTypeId: mode,
+        contentLanguageCode,
+        translationTargetLanguageCode,
+        transitionId: candidate.transitionId,
+        signal: controllerRef.current?.signal,
+      }).then((lookup) => {
+        const ready = lookup.state === "ready";
+        recordTrainingTransitionTiming({
+          transitionId: candidate.transitionId,
+          stage: "next-card.prefetch",
+          durationMs: 0,
+          outcome: ready ? "proactive-refresh-ready" : "proactive-refresh-failed",
+        });
+        return ready;
+      });
+      candidate.v2Ready = refreshed;
+      return refreshed;
+    },
+    [
+      cacheOwnerId,
+      contentLanguageCode,
+      enabledModes,
+      translationTargetLanguageCode,
+    ],
+  );
+
   useEffect(() => {
     if (!currentWord?.id) return;
     const forWordId = currentWord.id;
@@ -208,6 +258,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
 
   return {
     warmWord,
+    refreshForCard,
     consumeForCard,
     reset,
     nextTransitionId,

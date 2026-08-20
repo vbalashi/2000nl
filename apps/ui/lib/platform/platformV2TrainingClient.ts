@@ -5,6 +5,7 @@ import { requestPlatformV2Lookup } from "./platformV2LookupTransport";
 import {
   clearPlatformV2TrainingMediaCache,
 } from "./platformV2TrainingMediaClient";
+import { PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS } from "./platformV2TrainingActionClient";
 import {
   recordTrainingTransitionTiming,
   recordTrainingTransitionResponse,
@@ -124,18 +125,51 @@ export async function fetchPlatformV2TrainingEntry(
 export function prefetchPlatformV2TrainingEntry(
   input: PlatformV2TrainingPrefetchInput,
 ): Promise<PlatformV2TrainingLookupResult> {
+  return prefetchPlatformV2TrainingEntryWithLease(input, "ordinary");
+}
+
+export function ensurePlatformV2TrainingEntryValidThroughProgressAction(
+  input: PlatformV2TrainingPrefetchInput,
+): Promise<PlatformV2TrainingLookupResult> {
+  return prefetchPlatformV2TrainingEntryWithLease(input, "progress-action");
+}
+
+function prefetchPlatformV2TrainingEntryWithLease(
+  input: PlatformV2TrainingPrefetchInput,
+  leasePolicy: "ordinary" | "progress-action",
+): Promise<PlatformV2TrainingLookupResult> {
   const key = trainingLookupKey(input);
-  const existing = input.bypassCache ? null : validPrefetch(key);
+  let existing = input.bypassCache ? null : validPrefetch(key);
+  if (
+    existing &&
+    leasePolicy === "progress-action" &&
+    existing.expiresAt - Date.now() <=
+      PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS
+  ) {
+    recordTerminalPrefetchOutcome(existing, "renewal-required");
+    existing.controller.abort();
+    prefetchedLookups.delete(key);
+    existing = null;
+  }
   if (existing) {
     recordPrefetchOutcome(
       input.transitionId ?? existing.transitionId,
-      existing.result ? "reuse-ready" : "reuse-pending",
+      leasePolicy === "progress-action"
+        ? existing.result
+          ? "action-window-reuse-ready"
+          : "action-window-reuse-pending"
+        : existing.result
+          ? "reuse-ready"
+          : "reuse-pending",
     );
     return existing.promise;
   }
   if (input.bypassCache) prefetchedLookups.delete(key);
 
-  recordPrefetchOutcome(input.transitionId, "miss");
+  recordPrefetchOutcome(
+    input.transitionId,
+    leasePolicy === "progress-action" ? "renewal-started" : "miss",
+  );
 
   const record: PrefetchedLookup = {
     cacheOwnerId: input.cacheOwnerId,
@@ -161,6 +195,9 @@ export function prefetchPlatformV2TrainingEntry(
       detachInputSignal();
       if (result.state === "ready") {
         record.result = result;
+        if (leasePolicy === "progress-action") {
+          recordPrefetchOutcome(input.transitionId, "renewal-ready");
+        }
         if (record.consumed && prefetchedLookups.get(key) === record) {
           prefetchedLookups.delete(key);
         }
@@ -267,7 +304,7 @@ function trimPrefetchedLookups() {
 
 function recordTerminalPrefetchOutcome(
   record: PrefetchedLookup,
-  outcome: "cancelled" | "expired" | "evicted",
+  outcome: "cancelled" | "expired" | "evicted" | "renewal-required",
 ) {
   if (record.terminalOutcomeRecorded) return;
   record.terminalOutcomeRecorded = true;
