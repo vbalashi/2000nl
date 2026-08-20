@@ -91,10 +91,11 @@ export async function reconcilePlatformV2ActionReceipt(
   }
 
   const result = asRecord(data);
+  const actionId = platformActionId(result.actionId);
   const cardTypeId = asString(asRecord(result.card).cardTypeId);
   const card = cardTypeId ? platformCardState(result.card, cardTypeId) : null;
   if (
-    result.actionId !== "review-card" ||
+    !actionId ||
     result.clientEventId !== clientEventId ||
     !card
   ) {
@@ -106,12 +107,23 @@ export async function reconcilePlatformV2ActionReceipt(
 
   const payload: PlatformActionV2Response = {
     contractVersion: "platform-action-v2",
-    actionId: "review-card",
+    actionId,
     clientEventId,
     accepted: true,
     card,
   };
   return { payload, status: 200, receiptStatus: "duplicate" };
+}
+
+function platformActionId(
+  value: unknown,
+): PlatformActionV2Request["actionId"] | null {
+  return value === "start-learning" ||
+    value === "mark-known" ||
+    value === "undo-known" ||
+    value === "review-card"
+    ? value
+    : null;
 }
 
 function actionError(error: unknown): PlatformV2ActionOperationResult {

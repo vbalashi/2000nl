@@ -70,31 +70,15 @@ export async function performPlatformV2TrainingAction(
     response = await submitPlatformV2TrainingAction(
       request,
       headers,
-      1,
       context.transitionId,
     );
   } catch (error) {
-    if (
-      capability.actionId !== "review-card" ||
-      !isAmbiguousTransportError(error)
-    ) {
-      throw error;
-    }
-    try {
-      response = await submitPlatformV2TrainingAction(
-        request,
-        headers,
-        2,
-        context.transitionId,
-      );
-    } catch (retryError) {
-      if (!isAmbiguousTransportError(retryError)) throw retryError;
-      response = await reconcilePlatformV2TrainingAction(
-        request.clientEventId,
-        headers,
-        context.transitionId,
-      );
-    }
+    if (!isAmbiguousTransportError(error)) throw error;
+    response = await reconcilePlatformV2TrainingAction(
+      request.clientEventId,
+      headers,
+      context.transitionId,
+    );
   }
   const payload = (await response.json()) as
     | PlatformActionV2Response
@@ -117,14 +101,13 @@ export async function performPlatformV2TrainingAction(
 function submitPlatformV2TrainingAction(
   request: PlatformActionV2Request,
   headers: HeadersInit,
-  attempt: 1 | 2,
   transitionId?: string,
 ) {
   const correlatedHeaders = Object.fromEntries(new Headers(headers).entries());
   return timedActionRequest(
     transitionId,
     "review.mutation.request",
-    `attempt-${attempt}`,
+    "attempt-1",
     () =>
       platformFetchWithTimeout("/api/platform/v2/actions", {
         method: "POST",
@@ -132,7 +115,7 @@ function submitPlatformV2TrainingAction(
         cache: "no-store",
         headers: {
           ...correlatedHeaders,
-          "x-platform-action-attempt": String(attempt),
+          "x-platform-action-attempt": "1",
         },
         body: JSON.stringify(request),
       }),

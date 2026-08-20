@@ -10,7 +10,11 @@ import {
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
-import type { ActiveTrainingScope, DictionaryEntry } from "@/lib/types";
+import type {
+  ActiveTrainingScope,
+  DictionaryEntry,
+  TrainingScenario,
+} from "@/lib/types";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -336,6 +340,24 @@ const fetchTrainingScenarios = vi.fn().mockResolvedValue([
     sortOrder: 1,
   },
 ]);
+const createTrainingScenarioCatalog = vi.fn(() => {
+  let request: ReturnType<typeof fetchTrainingScenarios> | null = null;
+  const fetch = vi.fn(() => {
+    request ??= fetchTrainingScenarios();
+    return request;
+  });
+  const invalidate = vi.fn(() => {
+    request = null;
+  });
+  return {
+    fetch,
+    invalidate,
+    resolveModes: async (scenarioId: string) => {
+      const scenarios = (await fetch()) as TrainingScenario[];
+      return scenarios.find((scenario) => scenario.id === scenarioId)?.cardModes ?? null;
+    },
+  };
+});
 const fetchTrainingFilterSources = vi.fn().mockResolvedValue([
   {
     sourceId: "source-youtube-1",
@@ -369,6 +391,7 @@ const fetchUserPreferences = vi.fn().mockResolvedValue({
 const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/trainingService", () => ({
+  createTrainingScenarioCatalog,
   fetchDictionaryEntry,
   fetchDictionaryEntryById,
   createUserDictionaryEntry,
@@ -3192,7 +3215,11 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
       _cardFilter: unknown,
       _queueTurn: unknown,
       excludeCardKeys: string[] = [],
+      _modeOverride?: unknown,
+      _focusFilter?: unknown,
+      resolveModes?: (scenarioId: string) => Promise<unknown>,
     ) => {
+      await resolveModes?.(_scenarioId);
       return (
         words.find((w) => !excludeCardKeys.includes(`${w.id}:${w.mode}`)) ??
         null
@@ -3211,6 +3238,8 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   await screen.findByRole("button", { name: /opnieuw/i });
   fireEvent.keyDown(window, { key: "k" });
   await screen.findByRole("heading", { name: "boom" });
+  const catalog = createTrainingScenarioCatalog.mock.results.at(-1)?.value;
+  expect(catalog).toBeDefined();
 
   // Open settings from the footer, switch scenario.
   fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
@@ -3223,6 +3252,8 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   const listeningBtn = await screen.findByRole("button", {
     name: /luisteren/i,
   });
+  catalog.invalidate.mockClear();
+  fetchTrainingScenarios.mockClear();
   fetchNextTrainingWordByScenario.mockClear();
   fireEvent.click(listeningBtn);
 
@@ -3235,6 +3266,8 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   expect(fetchNextTrainingWordByScenario.mock.calls[0][2]).toEqual([]);
   expect(fetchNextTrainingWordByScenario.mock.calls[0][6]).toEqual([]);
   expect(fetchNextTrainingWordByScenario.mock.calls[0][7]).toBeUndefined();
+  expect(catalog.invalidate).toHaveBeenCalledOnce();
+  expect(fetchTrainingScenarios).toHaveBeenCalledOnce();
 
   // The fresh load should also clear the session-reviewed set.
   await waitFor(() => {

@@ -422,6 +422,55 @@ describe("/api/platform/v2/actions", () => {
     );
   });
 
+  test("reads an authoritative Learn receipt after its mutation response disconnects", async () => {
+    const telemetry = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "learning", repeatCount: 1 },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000016",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/reconcile/route"
+    );
+
+    const response = await POST(
+      new NextRequest("http://localhost/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer user-token",
+          "content-type": "application/json",
+          origin: "chrome-extension://abc",
+        },
+        body: JSON.stringify({
+          clientEventId: "00000000-0000-4000-8000-000000000012",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        contractVersion: "platform-action-v2",
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        accepted: true,
+      }),
+    );
+    expect(telemetry).toHaveBeenCalledWith(
+      "[platform.training.review]",
+      expect.objectContaining({ actionId: "start-learning" }),
+    );
+  });
+
   test("reports that no authoritative receipt exists without exposing another user", async () => {
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     rpc.mockResolvedValueOnce({ data: null, error: null });

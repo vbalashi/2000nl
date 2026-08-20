@@ -44,12 +44,14 @@ export {
   updateActiveTrainingScope,
 } from "./training/listService";
 export {
+  createTrainingScenarioCatalog,
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
   fetchScenarioStats,
   fetchTrainingScenarios,
   isTrainingFocusFilterActive,
+  type TrainingScenarioCatalog,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import {
   buildTrainingAttributionProfileReport,
@@ -22,6 +24,8 @@ test("authenticated Training transition attribution harness", async ({
   const injectedDelayMs = Number(
     process.env.TRAINING_ATTRIBUTION_INJECT_DELAY_MS ?? 0,
   );
+  const stableEvidence =
+    process.env.TRAINING_ATTRIBUTION_STABLE_EVIDENCE === "true";
   const profiles = [
     { name: "desktop", width: 1440, height: 900 },
     { name: "mobile", width: 390, height: 844 },
@@ -36,6 +40,7 @@ test("authenticated Training transition attribution harness", async ({
     const fixture = await setupAuthenticatedTrainingAttributionPage(
       page,
       injectedDelayMs,
+      { bootstrapReadDelayMs: 80 },
     );
     const startCurrentSettings = page.getByRole("button", {
       name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
@@ -54,7 +59,7 @@ test("authenticated Training transition attribution harness", async ({
     await expect(continueSession).toBeVisible();
     await continueSession.click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
-    fixture.beginMeasuredTransitions();
+    if (!stableEvidence) fixture.beginMeasuredTransitions();
 
     for (let index = 0; index < TRAINING_ATTRIBUTION_TRANSITIONS; index += 1) {
       const reveal = page.getByRole("button", {
@@ -95,17 +100,53 @@ test("authenticated Training transition attribution harness", async ({
     }
 
     const capture = await readTrainingAttributionCapture(page);
-    reports.push(buildTrainingAttributionProfileReport(profile, capture));
+    reports.push(
+      buildTrainingAttributionProfileReport(
+        profile,
+        capture,
+        fixture.requests.scenarios.length,
+      ),
+    );
     await page.close();
   }
 
   const expectedVerdict =
     process.env.TRAINING_ATTRIBUTION_EXPECT === "red" ? "red" : "green";
-  const verdict = reports.some((report) => report.overThreshold.length > 0)
+  const verdict = reports.some(
+    (report) =>
+      report.overThreshold.length > 0 || report.scenarioRequestCount !== 1,
+  )
     ? "red"
     : "green";
+  const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+    encoding: "utf8",
+  }).trim();
+  const relevantPaths = [
+    "apps/ui/components/training/TrainingScreen.tsx",
+    "apps/ui/components/training/useTrainingTurnSelectionPort.ts",
+    "apps/ui/components/training/pilot/useTrainingPilotController.ts",
+    "apps/ui/lib/training/selectionService.ts",
+    "apps/ui/lib/platform/platformV2ActionService.ts",
+    "apps/ui/lib/platform/platformV2TrainingActionClient.ts",
+    "apps/ui/playwright/support/trainingAttributionHarness.ts",
+    "apps/ui/playwright/tests/training-attribution.spec.ts",
+  ];
+  const hash = (value: string | Buffer) =>
+    createHash("sha256").update(value).digest("hex");
+  const relevantSourceSha256 = hash(
+    relevantPaths
+      .map((path) => `${path}\0${readFileSync(`${repoRoot}/${path}`, "utf8")}\0`)
+      .join(""),
+  );
+  const relevantPatchSha256 = hash(
+    execFileSync(
+      "git",
+      ["diff", "--binary", "HEAD", "--", ...relevantPaths],
+      { cwd: repoRoot, encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
+    ),
+  );
   const report = {
-    schemaVersion: "training-transition-attribution-v2",
+    schemaVersion: "training-transition-attribution-v3",
     appCommit: execFileSync("git", ["rev-parse", "HEAD"], {
       encoding: "utf8",
     }).trim(),
@@ -114,6 +155,24 @@ test("authenticated Training transition attribution harness", async ({
         encoding: "utf8",
       }).trim().length > 0,
     thresholdMs: 1_000,
+    fixture: {
+      transitionCount: TRAINING_ATTRIBUTION_TRANSITIONS,
+      injectedTransitionDelayMs: injectedDelayMs,
+      injectedBootstrapReadDelayMs: 80,
+      workload: stableEvidence ? "stable-selection" : "lifecycle-coverage",
+      profiles,
+    },
+    performanceBudget: {
+      acceptedTransitionP95Ms: 1_000,
+      acceptedTransitionMaxMs: 1_000,
+      scenarioRequestsPerBootstrap: 1,
+      unclassifiedOverThreshold: 0,
+    },
+    identity: {
+      relevantPaths,
+      relevantSourceSha256,
+      relevantPatchSha256,
+    },
     expectedVerdict,
     verdict,
     profiles: reports,
@@ -150,19 +209,40 @@ test("authenticated Training transition attribution harness", async ({
     expect(profile.prefetchByTransition).toHaveLength(
       TRAINING_ATTRIBUTION_TRANSITIONS,
     );
+    if (!stableEvidence) {
+      expect(
+        profile.prefetchByTransition.every(
+          ({ outcomes }) =>
+            outcomes.filter((outcome) => outcome === "cancelled").length <= 1 &&
+            outcomes.filter((outcome) => outcome === "preparation-cancelled")
+              .length <= 1,
+        ),
+      ).toBe(true);
+      expect(
+        Object.values(profile.prefetchLifecycleCoverage).every(Boolean),
+      ).toBe(true);
+    }
     expect(
-      profile.prefetchByTransition.every(
-        ({ outcomes }) =>
-          outcomes.filter((outcome) => outcome === "cancelled").length <= 1 &&
-          outcomes.filter((outcome) => outcome === "preparation-cancelled")
-            .length <= 1,
-      ),
-    ).toBe(true);
-    expect(Object.values(profile.prefetchLifecycleCoverage).every(Boolean)).toBe(
-      true,
-    );
-    expect(profile.missingRequiredSurfaces).toEqual([]);
+      stableEvidence
+        ? profile.missingRequiredSurfaces.filter(
+            (surface) =>
+              ![
+                "prefetchMiss",
+                "prefetchCancel",
+                "prefetchFallback",
+              ].includes(surface),
+          )
+        : profile.missingRequiredSurfaces,
+    ).toEqual([]);
     expect(profile.unclassifiedOverThreshold).toEqual([]);
+    if (expectedVerdict === "green") {
+      expect(profile.scenarioRequestCount).toBe(1);
+    } else {
+      expect(profile.scenarioRequestCount).toBeGreaterThan(0);
+    }
+    expect(profile.bootstrapReads.auth).not.toBeNull();
+    expect(profile.bootstrapReads.independent).toHaveLength(3);
+    expect(profile.bootstrapReads.overlapProven).toBe(true);
   }
   if (expectedVerdict === "red") {
     for (const slow of reports.flatMap((profile) => profile.overThreshold)) {
