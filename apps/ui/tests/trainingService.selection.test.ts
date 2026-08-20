@@ -15,6 +15,7 @@ vi.mock("@/lib/supabaseClient", () => ({
 const importService = async () => {
   const service = await import("@/lib/trainingService");
   return {
+    createTrainingScenarioCatalog: service.createTrainingScenarioCatalog,
     fetchNextTrainingWord: service.fetchNextTrainingWord,
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
     fetchScenarioStats: service.fetchScenarioStats,
@@ -24,6 +25,7 @@ const importService = async () => {
 
 describe("trainingService next-word selection", () => {
   beforeEach(() => {
+    vi.resetModules();
     rpc.mockReset();
   });
 
@@ -328,7 +330,6 @@ describe("trainingService next-word selection", () => {
   test("scenario selection can restrict card modes with an explicit override", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 
-    mockScenarioModes(["word-to-definition", "definition-to-word"]);
     rpc.mockResolvedValueOnce({
       data: {
         id: "word-restricted",
@@ -352,7 +353,7 @@ describe("trainingService next-word selection", () => {
     );
 
     expect(rpc).toHaveBeenNthCalledWith(
-      2,
+      1,
       "get_next_card",
       expect.objectContaining({
         p_card_type_ids: ["definition-to-word"],
@@ -360,6 +361,241 @@ describe("trainingService next-word selection", () => {
         p_list_type: "user",
       }),
     );
+  });
+
+  test("authoritative scenario modes supplied by bootstrap skip repeated scenario resolution", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+
+    rpc.mockImplementation(async (rpcName: string) => {
+      if (rpcName === "get_training_scenarios") {
+        return {
+          data: [
+            {
+              id: "understanding",
+              name_en: "Understanding",
+              card_modes: ["word-to-definition"],
+            },
+          ],
+          error: null,
+        };
+      }
+      return {
+        data: {
+          id: "word-ready",
+          headword: "leren",
+          raw: { meanings: [{ definition: "kennis opdoen" }] },
+          mode: "word-to-definition",
+          stats: { source: "review", mode: "word-to-definition" },
+        },
+        error: null,
+      };
+    });
+
+    await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      { listId: "list-1", listType: "curated" },
+      "both",
+      "review",
+      [],
+      ["word-to-definition"],
+    );
+
+    expect(rpc.mock.calls.map(([rpcName]) => rpcName)).toEqual([
+      "get_next_card",
+    ]);
+  });
+
+  test("reuses one scenario catalog resolution across consecutive card selections", async () => {
+    const {
+      createTrainingScenarioCatalog,
+      fetchNextTrainingWordByScenario,
+    } = await importService();
+    const catalog = createTrainingScenarioCatalog();
+    let selectedIndex = 0;
+    rpc.mockImplementation(async (rpcName: string) => {
+      if (rpcName === "get_training_scenarios") {
+        return {
+          data: [
+            {
+              id: "understanding",
+              name_en: "Understanding",
+              card_modes: ["word-to-definition"],
+            },
+          ],
+          error: null,
+        };
+      }
+      selectedIndex += 1;
+      return {
+        data: {
+          id: `word-${selectedIndex}`,
+          headword: `woord${selectedIndex}`,
+          raw: { meanings: [{ definition: `definitie ${selectedIndex}` }] },
+          mode: "word-to-definition",
+          stats: { source: "review", mode: "word-to-definition" },
+        },
+        error: null,
+      };
+    });
+
+    await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      undefined,
+      "both",
+      "auto",
+      [],
+      undefined,
+      undefined,
+      catalog.resolveModes,
+    );
+    await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      undefined,
+      "both",
+      "auto",
+      [],
+      undefined,
+      undefined,
+      catalog.resolveModes,
+    );
+
+    expect(rpc.mock.calls.map(([rpcName]) => rpcName)).toEqual([
+      "get_training_scenarios",
+      "get_next_card",
+      "get_next_card",
+    ]);
+  });
+
+  test("a new Training bootstrap owns a fresh scenario catalog", async () => {
+    const { createTrainingScenarioCatalog } = await importService();
+    rpc.mockResolvedValue({
+      data: [
+        {
+          id: "understanding",
+          name_en: "Understanding",
+          card_modes: ["word-to-definition"],
+        },
+      ],
+      error: null,
+    });
+
+    const firstBootstrap = createTrainingScenarioCatalog();
+    await firstBootstrap.fetch();
+    await firstBootstrap.fetch();
+    const nextBootstrap = createTrainingScenarioCatalog();
+    await nextBootstrap.fetch();
+
+    expect(rpc.mock.calls.map(([rpcName]) => rpcName)).toEqual([
+      "get_training_scenarios",
+      "get_training_scenarios",
+    ]);
+  });
+
+  test("a Training scope revision invalidates its scenario catalog", async () => {
+    const { createTrainingScenarioCatalog } = await importService();
+    rpc.mockResolvedValue({
+      data: [
+        {
+          id: "understanding",
+          name_en: "Understanding",
+          card_modes: ["word-to-definition"],
+        },
+      ],
+      error: null,
+    });
+    const catalog = createTrainingScenarioCatalog();
+
+    await catalog.fetch();
+    await catalog.fetch();
+    catalog.invalidate();
+    await catalog.fetch();
+
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
+  test("an explicit mode override bypasses scenario resolution safely", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+    const resolveModes = vi.fn().mockRejectedValue(new Error("must not run"));
+
+    await fetchNextTrainingWordByScenario(
+      "user-1",
+      "understanding",
+      [],
+      undefined,
+      "both",
+      "auto",
+      [],
+      ["word-to-definition"],
+      undefined,
+      resolveModes,
+    );
+
+    expect(resolveModes).not.toHaveBeenCalled();
+    expect(rpc.mock.calls.map(([rpcName]) => rpcName)).toEqual([
+      "get_next_card",
+    ]);
+  });
+
+  test("a rejected scenario request is not retained by the bootstrap catalog", async () => {
+    const { createTrainingScenarioCatalog } = await importService();
+    rpc
+      .mockRejectedValueOnce(new Error("scenario network failed"))
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "understanding",
+            name_en: "Understanding",
+            card_modes: ["word-to-definition"],
+          },
+        ],
+        error: null,
+      });
+    const catalog = createTrainingScenarioCatalog();
+
+    await expect(catalog.fetch()).rejects.toThrow("scenario network failed");
+    await expect(catalog.fetch()).resolves.toEqual([
+      expect.objectContaining({
+        id: "understanding",
+        cardModes: ["word-to-definition"],
+      }),
+    ]);
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
+  test("a resolved Supabase scenario error is not retained by the bootstrap catalog", async () => {
+    const { createTrainingScenarioCatalog } = await importService();
+    rpc
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: "scenario catalog unavailable" },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "understanding",
+            name_en: "Understanding",
+            card_modes: ["word-to-definition"],
+          },
+        ],
+        error: null,
+      });
+    const catalog = createTrainingScenarioCatalog();
+
+    await expect(Promise.all([catalog.fetch(), catalog.fetch()])).resolves.toEqual([
+      [],
+      [],
+    ]);
+    await expect(catalog.fetch()).resolves.toEqual([
+      expect.objectContaining({ id: "understanding" }),
+    ]);
+    expect(rpc).toHaveBeenCalledTimes(2);
   });
 
   test("scenario selection returns null when an explicit mode override is empty", async () => {
@@ -379,8 +615,7 @@ describe("trainingService next-word selection", () => {
     );
 
     expect(word).toBeNull();
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("get_training_scenarios");
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("fetchTrainingScenarios maps RPC rows with defaults", async () => {

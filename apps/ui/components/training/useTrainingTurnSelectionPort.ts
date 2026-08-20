@@ -40,6 +40,9 @@ type Inputs = {
   wordListType: WordListType | null;
   cardFilter: CardFilter;
   focusFilter: TrainingFocusFilter;
+  resolveScenarioModes: (
+    scenarioId: string,
+  ) => Promise<TrainingMode[] | null>;
 };
 
 const SUPPORTED_LIST_CARD_MODES = new Set<TrainingMode>([
@@ -67,6 +70,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
     wordListType,
     cardFilter,
     focusFilter,
+    resolveScenarioModes,
   } = input;
 
   const selectNext = useCallback(
@@ -96,6 +100,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
         isTrainingFocusFilterActive(effectiveFocusFilter)
           ? effectiveFocusFilter
           : null,
+        resolveScenarioModes,
       );
     },
     [
@@ -104,6 +109,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
       availableLists,
       cardFilter,
       focusFilter,
+      resolveScenarioModes,
       userId,
       wordListId,
       wordListType,

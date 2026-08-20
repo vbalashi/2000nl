@@ -97,6 +97,38 @@ describe("buildPlatformV2TrainingActionRequest", () => {
 });
 
 describe("performPlatformV2TrainingAction", () => {
+  test("reconciles an ambiguous Learn response without repeating the mutation", async () => {
+    const capability = startLearningCapability();
+    const eventId = "0b4cd99b-0cc5-4dd4-aa6d-223963f5d0ee";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2" as const,
+      actionId: "start-learning" as const,
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card!,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      performPlatformV2TrainingAction(capability),
+    ).resolves.toEqual(acceptedResponse);
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions/reconcile",
+    ]);
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
+      clientEventId: eventId,
+    });
+  });
+
   test("reuses one event identity when a committed review response disconnects", async () => {
     const capability = reviewCapability("success");
     const eventId = "a4dc56fd-c087-47aa-85d2-a20f66ca2822";
@@ -173,7 +205,7 @@ describe("performPlatformV2TrainingAction", () => {
     expect(JSON.stringify(transitionEvents(dispatch))).not.toContain(eventId);
   });
 
-  test("correlates a timeout-before-commit retry with the same event identity", async () => {
+  test("reconciles a timeout with the same event identity", async () => {
     const capability = reviewCapability("hard");
     const eventId = "63825d8a-b62e-49ff-a360-0d5ef1ed26bf";
     vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
@@ -196,15 +228,19 @@ describe("performPlatformV2TrainingAction", () => {
       performPlatformV2TrainingAction(capability),
     ).resolves.toEqual(acceptedResponse);
 
-    expect(fetchMock.mock.calls.map(([, init]) => init?.headers)).toEqual([
-      expect.objectContaining({ "x-platform-action-attempt": "1" }),
-      expect.objectContaining({ "x-platform-action-attempt": "2" }),
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/platform/v2/actions",
+      "/api/platform/v2/actions/reconcile",
     ]);
-    expect(
-      fetchMock.mock.calls.map(([, init]) =>
-        JSON.parse(String(init?.body)).clientEventId,
-      ),
-    ).toEqual([eventId, eventId]);
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual(
+      expect.objectContaining({ "x-platform-action-attempt": "1" }),
+    );
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual(
+      expect.objectContaining({ clientEventId: eventId }),
+    );
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
+      clientEventId: eventId,
+    });
   });
 
   test("preserves the event identity when a newer remote state rejects the retry", async () => {
@@ -269,7 +305,6 @@ describe("performPlatformV2TrainingAction", () => {
     const fetchMock = vi
       .fn()
       .mockRejectedValueOnce(new TypeError("Load failed"))
-      .mockRejectedValueOnce(new Error("platform_request_timeout"))
       .mockResolvedValueOnce(
         new Response(JSON.stringify(acceptedResponse), {
           status: 200,
@@ -288,13 +323,12 @@ describe("performPlatformV2TrainingAction", () => {
       }),
     ).resolves.toEqual(acceptedResponse);
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      "/api/platform/v2/actions",
       "/api/platform/v2/actions",
       "/api/platform/v2/actions/reconcile",
     ]);
-    expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toEqual({
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
       clientEventId: eventId,
     });
     expect(transitionEvents(dispatch)).toEqual(
@@ -302,10 +336,6 @@ describe("performPlatformV2TrainingAction", () => {
         expect.objectContaining({
           stage: "review.mutation.request",
           outcome: "attempt-1-transport-error",
-        }),
-        expect.objectContaining({
-          stage: "review.mutation.request",
-          outcome: "attempt-2-transport-error",
         }),
         expect.objectContaining({
           stage: "review.reconciliation.request",
@@ -327,7 +357,6 @@ describe("performPlatformV2TrainingAction", () => {
       vi
         .fn()
         .mockRejectedValueOnce(new Error("platform_request_timeout"))
-        .mockRejectedValueOnce(new TypeError("Load failed"))
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ error: "action_receipt_not_found" }), {
             status: 404,
@@ -386,6 +415,20 @@ function reviewCapability(
     throw new Error(`Missing ${reviewResult} review capability fixture`);
   }
   return capability;
+}
+
+function startLearningCapability(): PlatformV2TrainingActionCapability {
+  return {
+    actionId: "start-learning",
+    elementId: "sense-card.learning.start",
+    messageKey: "senseCard.learning.start",
+    target: {
+      kind: "sense-card",
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition",
+      stateRevision: singleSenseEntry.card!.stateRevision,
+    },
+  };
 }
 
 describe("Platform V2 media and translation clients", () => {

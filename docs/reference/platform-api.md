@@ -174,7 +174,7 @@ Deployment order is intentionally fail-closed:
 
 Migration `116` is an additive prerequisite for receipt reconciliation. A
 rolling deployment must apply it before code that can call
-`/api/platform/v2/actions/reconcile`; otherwise a second lost mutation response
+`/api/platform/v2/actions/reconcile`; otherwise an ambiguous mutation response
 cannot be resolved authoritatively. The route remains fail-closed while
 `PLATFORM_V2_ACTIONS_ENABLED` is absent.
 
@@ -247,22 +247,24 @@ POST /api/platform/v2/actions/reconcile
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
-{"clientEventId":"<the original review UUID>"}
+{"clientEventId":"<the original action UUID>"}
 ```
 
-Use this read only when a `review-card` response and one same-ID retry both end
-ambiguously at the transport boundary. It requires the same `platform:write`
-scope as the mutation. The server derives the authenticated user, waits for an
-in-flight mutation using that user/event ID, and reads only that user's durable
-receipt. Reuse the original UUID; do not create another review event merely to
-reconcile the first.
+Use this read only when an explicit card-action response ends ambiguously at the
+transport boundary. Do not repeat the mutation first: reconcile its durable
+receipt directly. This applies to `start-learning`, `mark-known`, `undo-known`,
+and `review-card`, and requires the same `platform:write` scope as the mutation.
+The server derives the authenticated user, waits for an in-flight mutation
+using that user/event ID, and reads only that user's durable receipt. Reuse the
+original UUID; do not create another action event merely to reconcile the
+first.
 
 - `200`: authoritative `platform-action-v2`; advance as after the accepted
   mutation;
 - `400`: malformed or non-UUID `clientEventId`;
 - `401`: missing or invalid authentication;
 - `403`: Connected Client lacks `platform:write`;
-- `404 {"error":"action_receipt_not_found"}`: neither attempt committed; keep
+- `404 {"error":"action_receipt_not_found"}`: the action did not commit; keep
   the current card recoverable and let a later intentional action use a new ID;
 - `503`: V2 actions are disabled or a server dependency is unavailable.
 

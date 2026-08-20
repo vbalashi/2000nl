@@ -85,6 +85,14 @@ export type TrainingAttributionProfileReport = {
     }
   >;
   unclassifiedOverThreshold: TrainingTimingEvent[];
+  scenarioRequestCount: number;
+  bootstrapReads: {
+    contract: "auth-gates-independent-training-reads";
+    auth: TrainingTimingEvent | null;
+    independent: TrainingTimingEvent[];
+    overlapMs: number;
+    overlapProven: boolean;
+  };
 };
 
 type DurationSummary = {
@@ -126,7 +134,11 @@ const userSession = {
 export async function setupAuthenticatedTrainingAttributionPage(
   page: Page,
   injectedDelayMs: number,
-  options: { invalidEntryIds?: string[] } = {},
+  options: {
+    invalidEntryIds?: string[];
+    abortFirstActionAfterMs?: number;
+    bootstrapReadDelayMs?: number;
+  } = {},
 ) {
   let nextEntryIndex = 0;
   let actionCount = 0;
@@ -139,9 +151,12 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
   const statsRequests: Record<string, unknown>[] = [];
+  const scenarioRequests: Record<string, unknown>[] = [];
   const failFirstLookupForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
   const invalidEntryIds = new Set(options.invalidEntryIds ?? []);
+  let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
+  let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
 
   const correlatedHeaders = (surface: string) => {
@@ -219,6 +234,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   await page.route("**/api/platform/v2/actions", async (route) => {
     const body = route.request().postDataJSON?.() ?? {};
     actionCount += 1;
+    if (abortFirstAction) {
+      abortFirstAction = false;
+      pendingActionReceipt = { ...body };
+      await wait(options.abortFirstActionAfterMs ?? 0);
+      await route.abort("timedout");
+      return;
+    }
     if (acceptedScenario !== "hit") slowEligibleCount += 1;
     const injectThisTransition =
       splitDelayMs > 0 &&
@@ -244,6 +266,39 @@ export async function setupAuthenticatedTrainingAttributionPage(
       },
       "action",
     );
+  });
+
+  await page.route("**/api/platform/v2/actions/reconcile", async (route) => {
+    const body = route.request().postDataJSON?.() ?? {};
+    if (
+      !pendingActionReceipt ||
+      body.clientEventId !== pendingActionReceipt.clientEventId
+    ) {
+      await fulfillJson(
+        route,
+        { error: "action_receipt_not_found" },
+        "action-reconcile",
+        404,
+      );
+      return;
+    }
+    await fulfillJson(
+      route,
+      {
+        contractVersion: "platform-action-v2",
+        actionId: pendingActionReceipt.actionId,
+        clientEventId: pendingActionReceipt.clientEventId,
+        accepted: true,
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "learning", repeatCount: 1 },
+          knownMark: null,
+          stateRevision: `reconciled-${actionCount}`,
+        },
+      },
+      "action-reconcile",
+    );
+    pendingActionReceipt = null;
   });
 
   await page.route("**/api/platform/v1/audio/resolve", async (route) => {
@@ -313,10 +368,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
 
     if (pathname.endsWith("/rpc/get_learning_preferences")) {
+      await wait(options.bootstrapReadDelayMs ?? 0);
       await fulfillJson(route, learningPreferences(), "preferences");
       return;
     }
     if (pathname.endsWith("/rpc/get_training_scenarios")) {
+      scenarioRequests.push({ ...body });
+      await wait(options.bootstrapReadDelayMs ?? 0);
       await fulfillJson(
         route,
         [
@@ -384,6 +442,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/rpc/get_active_training_scope")) {
+      await wait(options.bootstrapReadDelayMs ?? 0);
       await fulfillJson(
         route,
         {
@@ -516,6 +575,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     requests: {
       scheduler: schedulerRequests,
       stats: statsRequests,
+      scenarios: scenarioRequests,
     },
     beginMeasuredTransitions() {
       lifecycleScenariosEnabled = true;
@@ -604,6 +664,7 @@ export async function readTrainingAttributionCapture(
 export function buildTrainingAttributionProfileReport(
   profile: { name: string; width: number; height: number },
   capture: TrainingAttributionCapture,
+  scenarioRequestCount = 0,
 ): TrainingAttributionProfileReport {
   const completed = capture.timings.filter(
     (event) => event.stage === "transition.total" && event.outcome.endsWith("-ready"),
@@ -744,6 +805,24 @@ export function buildTrainingAttributionProfileReport(
       causalAttribution,
     });
   }
+  const auth =
+    capture.timings.find((event) => event.stage === "auth.session") ?? null;
+  const independent = [
+    "training.preferences",
+    "training.active-scope-hydration",
+    "training.scenarios",
+  ].flatMap((stage) => {
+    const event = capture.timings.find((candidate) => candidate.stage === stage);
+    return event ? [event] : [];
+  });
+  const overlapMs = independent.length === 3
+    ? Math.max(
+        0,
+        Math.min(...independent.map((event) => event.monotonicEndedAtMs)) -
+          Math.max(...independent.map((event) => event.monotonicStartedAtMs)),
+      )
+    : 0;
+
   return {
     profile,
     acceptedTransitions: completedIds.length,
@@ -770,6 +849,14 @@ export function buildTrainingAttributionProfileReport(
     ),
     overThreshold,
     unclassifiedOverThreshold,
+    scenarioRequestCount,
+    bootstrapReads: {
+      contract: "auth-gates-independent-training-reads",
+      auth,
+      independent,
+      overlapMs,
+      overlapProven: independent.length === 3 && overlapMs > 0,
+    },
   };
 }
 

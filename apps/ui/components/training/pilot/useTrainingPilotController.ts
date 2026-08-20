@@ -64,6 +64,7 @@ type PilotControllerParams = {
   onCommitDraft: (draft: TrainingSetupDraft) => Promise<boolean>;
   onRetry: () => Promise<unknown> | void;
   initialTransitionId?: string;
+  loadTrainingScenarios?: () => Promise<TrainingScenario[]>;
 };
 
 const isTrainingMode = (value: string): value is TrainingMode =>
@@ -168,6 +169,7 @@ export function useTrainingPilotController({
   onCommitDraft,
   onRetry,
   initialTransitionId,
+  loadTrainingScenarios = fetchTrainingScenarios,
 }: PilotControllerParams) {
   const [surface, setSurface] = useState<"today" | "session">(() =>
     enabled ? "today" : "session",
@@ -183,7 +185,7 @@ export function useTrainingPilotController({
     let cancelled = false;
     const loadScenarios = async () => {
       try {
-        const loaded = await fetchTrainingScenarios();
+        const loaded = await loadTrainingScenarios();
         if (!cancelled) {
           setScenarios(loaded.filter((scenario) => scenario.enabled));
         }
@@ -205,7 +207,7 @@ export function useTrainingPilotController({
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, loadTrainingScenarios]);
 
   const status: TrainingPilotStatus = loadError
     ? "error"

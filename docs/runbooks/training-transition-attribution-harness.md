@@ -35,7 +35,9 @@ must occur. It records:
 - every event at or above the 1,000 ms diagnostic threshold, classified as
   auth, hydration, selection/scheduler, lookup, translation/audio preparation,
   mutation, network, or render;
-- the exact Git HEAD and whether the tested worktree was dirty.
+- the exact Git HEAD and whether the tested worktree was dirty;
+- SHA-256 identities for the relevant source set and patch, the explicit
+  performance budget, scenario-request count, and bootstrap-read chronology.
 
 The JSON report is attached under the Playwright test output directory as
 `training-transition-attribution.json`. The collector retains at most 2,048
@@ -58,6 +60,29 @@ end-to-end transition exceeds the threshold. The test passes only when the
 resulting report says `red` and every event over the threshold has a supported
 attribution category. Without injection, the default expected verdict is
 `green`.
+
+## Compare an exact base with a worktree
+
+For a stable repeated-selection benchmark, run the same harness in each
+worktree with:
+
+```bash
+TRAINING_ATTRIBUTION_STABLE_EVIDENCE=true \
+npm run test:e2e:training-attribution
+```
+
+Use `TRAINING_ATTRIBUTION_EXPECT=red` for a base expected to exceed either the
+latency or one-scenario-request-per-bootstrap budget. Stable evidence keeps the
+same entries, profiles, transition count, and injected delays, while omitting
+the hit/miss/cancel/fallback rotation so an unchanged slow base can complete a
+comparable 20-transition sample.
+
+Authentication is a prerequisite gate. After it resolves, preferences,
+active-scope hydration, and scenario loading are independent. The fixture adds
+the same 80 ms delay to those reads and the test requires their monotonic
+intervals to overlap. This makes the existing startup behavior falsifiable;
+it is not a reason to add another parallelization layer when overlap is already
+observed.
 
 For a slow end-to-end transition, attribution clips same-transition component
 intervals to the monotonic `transition.total` interval. The critical path walks

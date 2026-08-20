@@ -77,15 +77,22 @@ export async function POST(request: NextRequest) {
     : result.status === 404
       ? "receipt_not_found"
       : "failed";
+  const actionId = asActionId(result.payload);
   response.headers.set("X-Platform-Review-Outcome", outcome);
   console.info("[platform.training.review]", {
     requestId: instrumentation.requestId,
     clientEventId: parsed.clientEventId,
-    actionId: "review-card",
+    actionId,
     attempt: "reconcile",
     outcome,
   });
   return appendPlatformRouteHeaders(response, instrumentation);
+}
+
+function asActionId(payload: unknown) {
+  if (!payload || typeof payload !== "object") return "unknown";
+  const actionId = (payload as { actionId?: unknown }).actionId;
+  return typeof actionId === "string" ? actionId : "unknown";
 }
 
 async function readJson(request: NextRequest): Promise<unknown> {

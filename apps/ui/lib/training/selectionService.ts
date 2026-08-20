@@ -25,6 +25,12 @@ const SUPPORTED_CARD_MODES = new Set<TrainingMode>([
   "listen-recognize",
 ]);
 
+export type TrainingScenarioCatalog = {
+  fetch: () => Promise<TrainingScenario[]>;
+  invalidate: () => void;
+  resolveModes: (scenarioId: string) => Promise<TrainingMode[] | null>;
+};
+
 export const isTrainingFocusFilterActive = (
   filter?: TrainingFocusFilter | null,
 ): filter is TrainingFocusFilter => {
@@ -198,10 +204,11 @@ export const fetchTrainingScenarios = async (): Promise<TrainingScenario[]> => {
   return (Array.isArray(data) ? data : [data]).map(mapScenario);
 };
 
-const resolveScenarioModes = async (
+const resolveScenarioModesFrom = async (
+  fetchScenarios: () => Promise<TrainingScenario[]>,
   scenarioId: string,
 ): Promise<TrainingMode[] | null> => {
-  const scenarios = await fetchTrainingScenarios();
+  const scenarios = await fetchScenarios();
   const scenario = scenarios.find((item) => item.id === scenarioId);
 
   if (!scenario) {
@@ -218,6 +225,43 @@ const resolveScenarioModes = async (
     return null;
   }
   return modes.length > 0 ? modes : DEFAULT_SCENARIO_MODES;
+};
+
+const resolveScenarioModes = (scenarioId: string) =>
+  resolveScenarioModesFrom(fetchTrainingScenarios, scenarioId);
+
+export const createTrainingScenarioCatalog = (): TrainingScenarioCatalog => {
+  let request: Promise<TrainingScenario[]> | null = null;
+
+  const fetch = () => {
+    if (request) return request;
+    const currentRequest = fetchTrainingScenarios();
+    request = currentRequest;
+    void currentRequest.then(
+      (scenarios) => {
+        if (scenarios.length === 0 && request === currentRequest) request = null;
+      },
+      () => undefined,
+    );
+    void currentRequest.catch(() => {
+      if (request === currentRequest) request = null;
+    });
+    return currentRequest;
+  };
+
+  const invalidate = () => {
+    request = null;
+  };
+
+  return {
+    fetch,
+    invalidate,
+    resolveModes: async (scenarioId) => {
+      const modes = await resolveScenarioModesFrom(fetch, scenarioId);
+      if (!modes) invalidate();
+      return modes;
+    },
+  };
 };
 
 export const fetchScenarioStats = async (
@@ -263,10 +307,11 @@ export const fetchNextTrainingWordByScenario = async (
   excludeCardKeys: string[] = [],
   modeOverride?: TrainingMode[],
   trainingFilter?: TrainingFocusFilter | null,
+  resolveModes: (scenarioId: string) => Promise<TrainingMode[] | null> =
+    resolveScenarioModes,
 ): Promise<TrainingWord | null> => {
-  const scenarioModes = await resolveScenarioModes(scenarioId);
-  if (!scenarioModes) return null;
-  const modes = modeOverride ?? scenarioModes;
+  const modes = modeOverride ?? (await resolveModes(scenarioId));
+  if (!modes) return null;
   if (modes.length === 0) return null;
 
   const rpcPayload: Record<string, any> = {

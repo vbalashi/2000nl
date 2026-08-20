@@ -1,0 +1,1756 @@
+{
+  "schemaVersion": "training-transition-attribution-v3",
+  "appCommit": "9faff21e23098a286811991026787987aaad1aa1",
+  "worktreeDirty": true,
+  "thresholdMs": 1000,
+  "fixture": {
+    "transitionCount": 20,
+    "injectedTransitionDelayMs": 0,
+    "injectedBootstrapReadDelayMs": 80,
+    "workload": "stable-selection",
+    "profiles": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
+    ]
+  },
+  "performanceBudget": {
+    "acceptedTransitionP95Ms": 1000,
+    "acceptedTransitionMaxMs": 1000,
+    "scenarioRequestsPerBootstrap": 1,
+    "unclassifiedOverThreshold": 0
+  },
+  "identity": {
+    "relevantPaths": [
+      "apps/ui/components/training/TrainingScreen.tsx",
+      "apps/ui/components/training/useTrainingTurnSelectionPort.ts",
+      "apps/ui/components/training/pilot/useTrainingPilotController.ts",
+      "apps/ui/lib/training/selectionService.ts",
+      "apps/ui/lib/platform/platformV2ActionService.ts",
+      "apps/ui/lib/platform/platformV2TrainingActionClient.ts",
+      "apps/ui/playwright/support/trainingAttributionHarness.ts",
+      "apps/ui/playwright/tests/training-attribution.spec.ts"
+    ],
+    "relevantSourceSha256": "e39ae3af4bd4fc98c5d8fd318c38edf2c7d83177a6e9e06644c28817bdcb08cf",
+    "relevantPatchSha256": "464a9174f0d2f0a363d1be3a1bc1363d9c628929dc696214c5ac0f89fe4d2e5e"
+  },
+  "expectedVerdict": "green",
+  "verdict": "green",
+  "profiles": [
+    {
+      "profile": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "acceptedTransitions": 20,
+      "actionPaths": {
+        "learn": 1,
+        "review": 19
+      },
+      "acceptedTransitionSummary": {
+        "count": 20,
+        "p50": 11.8,
+        "p95": 14.2,
+        "max": 15.2
+      },
+      "initialContinue": {
+        "transitionId": "training-mt23tcbu-7",
+        "durationMs": 11.1,
+        "visibleStates": [
+          {
+            "atMs": 983.7,
+            "kind": "loading-state",
+            "text": "Загрузка карточки…"
+          },
+          {
+            "atMs": 992.7,
+            "kind": "loading-state",
+            "text": "(hidden)"
+          },
+          {
+            "atMs": 992.7,
+            "kind": "ready-control",
+            "text": "Показать ответSpace"
+          }
+        ]
+      },
+      "prefetchByTransition": [
+        {
+          "transitionId": "training-mt23tc8q-6",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcfz-8",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tchh-9",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tciv-a",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tckj-b",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcmf-c",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcnz-d",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcpf-e",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcqr-f",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcsd-g",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tctr-h",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcve-i",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcx0-j",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tcym-k",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td09-l",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td1m-m",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td30-n",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td4n-o",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td69-p",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23td7n-q",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        }
+      ],
+      "prefetchLifecycleCoverage": {
+        "hit": true,
+        "miss": false,
+        "cancel": false,
+        "fallback": false
+      },
+      "timingEventCount": 379,
+      "transitionIds": [
+        "training-mt23tc8q-6",
+        "training-mt23tcfz-8",
+        "training-mt23tchh-9",
+        "training-mt23tciv-a",
+        "training-mt23tckj-b",
+        "training-mt23tcmf-c",
+        "training-mt23tcnz-d",
+        "training-mt23tcpf-e",
+        "training-mt23tcqr-f",
+        "training-mt23tcsd-g",
+        "training-mt23tctr-h",
+        "training-mt23tcve-i",
+        "training-mt23tcx0-j",
+        "training-mt23tcym-k",
+        "training-mt23td09-l",
+        "training-mt23td1m-m",
+        "training-mt23td30-n",
+        "training-mt23td4n-o",
+        "training-mt23td69-p",
+        "training-mt23td7n-q"
+      ],
+      "requestIds": [
+        "attribution-lookup-28",
+        "attribution-audio-29",
+        "attribution-lookup-31",
+        "attribution-audio-32",
+        "attribution-lookup-50",
+        "attribution-audio-51",
+        "attribution-action-53",
+        "attribution-lookup-57",
+        "attribution-audio-58",
+        "attribution-action-59",
+        "attribution-lookup-63",
+        "attribution-audio-64",
+        "attribution-action-65",
+        "attribution-lookup-69",
+        "attribution-audio-70",
+        "attribution-action-71",
+        "attribution-lookup-75",
+        "attribution-audio-76",
+        "attribution-action-77",
+        "attribution-lookup-81",
+        "attribution-audio-82",
+        "attribution-action-83",
+        "attribution-lookup-87",
+        "attribution-audio-88",
+        "attribution-action-89",
+        "attribution-lookup-93",
+        "attribution-audio-94",
+        "attribution-action-95",
+        "attribution-lookup-99",
+        "attribution-audio-100",
+        "attribution-action-101",
+        "attribution-lookup-105",
+        "attribution-audio-106",
+        "attribution-action-107",
+        "attribution-lookup-111",
+        "attribution-audio-112",
+        "attribution-action-113",
+        "attribution-lookup-117",
+        "attribution-audio-118",
+        "attribution-action-119",
+        "attribution-lookup-123",
+        "attribution-audio-124",
+        "attribution-action-125",
+        "attribution-lookup-129",
+        "attribution-audio-130",
+        "attribution-action-131",
+        "attribution-lookup-135",
+        "attribution-audio-136",
+        "attribution-action-137",
+        "attribution-lookup-141",
+        "attribution-audio-142",
+        "attribution-action-143",
+        "attribution-lookup-147",
+        "attribution-audio-148",
+        "attribution-action-149",
+        "attribution-lookup-153",
+        "attribution-audio-154",
+        "attribution-action-155",
+        "attribution-lookup-159",
+        "attribution-audio-160",
+        "attribution-action-161",
+        "attribution-lookup-165",
+        "attribution-audio-166",
+        "attribution-action-167"
+      ],
+      "visibleStates": [
+        {
+          "atMs": 24.5,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 24.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 25.4,
+          "kind": "loading-state",
+          "text": "Laden…"
+        },
+        {
+          "atMs": 440.6,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 870.9,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 966.1,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 983.7,
+          "kind": "loading-state",
+          "text": "Загрузка карточки…"
+        },
+        {
+          "atMs": 992.7,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 992.7,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1100.3,
+          "kind": "ready-control",
+          "text": "Учить"
+        },
+        {
+          "atMs": 1115.1,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1130.2,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1156.9,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1174,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1184.5,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1206.7,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1223.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1234.6,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1265.1,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1280.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1293.8,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1324.2,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1348.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1362.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1390.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1405.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1417.8,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1440.4,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1456.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1470.7,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1490.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1506.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1518.3,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1547.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1564.9,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1576.6,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1599,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1614.9,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1626.3,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1657.1,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1672,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1684.9,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1715.8,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1731.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1742.8,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1773.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1789.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1801.6,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1823.8,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1849,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1859.7,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1882.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1898.3,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1909.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1932.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1947.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1959.6,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1990.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 2005.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2018,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 2040.7,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 2064.9,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2076.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 2099.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 2114.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2126.3,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 2148.9,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 2165,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2175.5,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        }
+      ],
+      "requiredSurfaces": {
+        "auth": true,
+        "preferences": true,
+        "hydration": true,
+        "scenarios": true,
+        "scheduler": true,
+        "prefetch": true,
+        "lookup": true,
+        "translation": true,
+        "audio": true,
+        "preparation": true,
+        "actionRequest": true,
+        "actionAggregate": true,
+        "network": true,
+        "render": true,
+        "endToEnd": true,
+        "initialContinue": true,
+        "prefetchPerAcceptedTransition": true,
+        "prefetchHit": true,
+        "prefetchMiss": false,
+        "prefetchCancel": false,
+        "prefetchFallback": false,
+        "lookupCorrelation": true,
+        "audioCorrelation": true,
+        "actionCorrelation": true
+      },
+      "missingRequiredSurfaces": [
+        "prefetchMiss",
+        "prefetchCancel",
+        "prefetchFallback"
+      ],
+      "summary": {
+        "auth.session": {
+          "count": 1,
+          "p50": 9.7,
+          "p95": 9.7,
+          "max": 9.7
+        },
+        "training.preferences": {
+          "count": 1,
+          "p50": 110.8,
+          "p95": 110.8,
+          "max": 110.8
+        },
+        "training.active-scope-hydration": {
+          "count": 1,
+          "p50": 113.9,
+          "p95": 113.9,
+          "max": 113.9
+        },
+        "training.scenarios": {
+          "count": 1,
+          "p50": 113.7,
+          "p95": 113.7,
+          "max": 113.7
+        },
+        "next-card.selection": {
+          "count": 24,
+          "p50": 8.2,
+          "p95": 10.1,
+          "max": 12.2
+        },
+        "next-card.prefetch": {
+          "count": 90,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "next-card.lookup": {
+          "count": 22,
+          "p50": 2.2,
+          "p95": 4.6,
+          "max": 21.2
+        },
+        "network.transfer": {
+          "count": 64,
+          "p50": 0,
+          "p95": 0,
+          "max": 16.2
+        },
+        "translation.cache": {
+          "count": 23,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "audio.provider": {
+          "count": 22,
+          "p50": 1.4,
+          "p95": 3.9,
+          "max": 6.5
+        },
+        "preparation.total": {
+          "count": 23,
+          "p50": 3.9,
+          "p95": 10,
+          "max": 23.3
+        },
+        "next-card.preparation": {
+          "count": 2,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "audio.cache": {
+          "count": 1,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "card.render": {
+          "count": 22,
+          "p50": 2.4,
+          "p95": 5.6,
+          "max": 10.8
+        },
+        "transition.start": {
+          "count": 21,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "transition.total": {
+          "count": 21,
+          "p50": 11.8,
+          "p95": 14.2,
+          "max": 15.2
+        },
+        "review.mutation.request": {
+          "count": 20,
+          "p50": 1.6,
+          "p95": 2,
+          "max": 3.8
+        },
+        "review.mutation": {
+          "count": 20,
+          "p50": 9.2,
+          "p95": 11.5,
+          "max": 12
+        }
+      },
+      "overThreshold": [],
+      "unclassifiedOverThreshold": [],
+      "scenarioRequestCount": 1,
+      "bootstrapReads": {
+        "contract": "auth-gates-independent-training-reads",
+        "auth": {
+          "transitionId": "training-mt23tbvw-1",
+          "stage": "auth.session",
+          "durationMs": 9.7,
+          "outcome": "authenticated",
+          "recordedAtMs": 1787265637496,
+          "monotonicStartedAtMs": 409.3,
+          "monotonicEndedAtMs": 419,
+          "observedAtMs": 419.3
+        },
+        "independent": [
+          {
+            "transitionId": "training-mt23tbvw-1",
+            "stage": "training.preferences",
+            "durationMs": 110.8,
+            "outcome": "ready",
+            "recordedAtMs": 1787265637622,
+            "monotonicStartedAtMs": 433.6,
+            "monotonicEndedAtMs": 544.4,
+            "observedAtMs": 544.6
+          },
+          {
+            "transitionId": "training-mt23tbvw-1",
+            "stage": "training.active-scope-hydration",
+            "durationMs": 113.9,
+            "outcome": "ready",
+            "recordedAtMs": 1787265637625,
+            "monotonicStartedAtMs": 434.2,
+            "monotonicEndedAtMs": 548.1,
+            "observedAtMs": 548.1
+          },
+          {
+            "transitionId": "training-mt23tbvw-1",
+            "stage": "training.scenarios",
+            "durationMs": 113.7,
+            "outcome": "ready",
+            "recordedAtMs": 1787265637625,
+            "monotonicStartedAtMs": 434.5,
+            "monotonicEndedAtMs": 548.2,
+            "observedAtMs": 548.3
+          }
+        ],
+        "overlapMs": 109.89999999999998,
+        "overlapProven": true
+      }
+    },
+    {
+      "profile": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "acceptedTransitions": 20,
+      "actionPaths": {
+        "learn": 1,
+        "review": 19
+      },
+      "acceptedTransitionSummary": {
+        "count": 20,
+        "p50": 11.7,
+        "p95": 13.6,
+        "max": 14.6
+      },
+      "initialContinue": {
+        "transitionId": "training-mt23te0y-7",
+        "durationMs": 11.8,
+        "visibleStates": [
+          {
+            "atMs": 889.4,
+            "kind": "loading-state",
+            "text": "Загрузка карточки…"
+          },
+          {
+            "atMs": 899.1,
+            "kind": "loading-state",
+            "text": "(hidden)"
+          },
+          {
+            "atMs": 899.1,
+            "kind": "ready-control",
+            "text": "Показать ответSpace"
+          }
+        ]
+      },
+      "prefetchByTransition": [
+        {
+          "transitionId": "training-mt23tdy9-6",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23te5c-8",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23te73-9",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23te8p-a",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teab-b",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tebp-c",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tedc-d",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teey-e",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tegt-f",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tei5-g",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tejk-h",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teky-i",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23temc-j",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tenq-k",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tep4-l",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teqi-m",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23terw-n",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teta-o",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23teuo-p",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        },
+        {
+          "transitionId": "training-mt23tew2-q",
+          "outcomes": [
+            "miss",
+            "reuse-pending",
+            "accepted-hit",
+            "accepted-hit-ready"
+          ]
+        }
+      ],
+      "prefetchLifecycleCoverage": {
+        "hit": true,
+        "miss": false,
+        "cancel": false,
+        "fallback": false
+      },
+      "timingEventCount": 379,
+      "transitionIds": [
+        "training-mt23tdy9-6",
+        "training-mt23te5c-8",
+        "training-mt23te73-9",
+        "training-mt23te8p-a",
+        "training-mt23teab-b",
+        "training-mt23tebp-c",
+        "training-mt23tedc-d",
+        "training-mt23teey-e",
+        "training-mt23tegt-f",
+        "training-mt23tei5-g",
+        "training-mt23tejk-h",
+        "training-mt23teky-i",
+        "training-mt23temc-j",
+        "training-mt23tenq-k",
+        "training-mt23tep4-l",
+        "training-mt23teqi-m",
+        "training-mt23terw-n",
+        "training-mt23teta-o",
+        "training-mt23teuo-p",
+        "training-mt23tew2-q"
+      ],
+      "requestIds": [
+        "attribution-lookup-28",
+        "attribution-audio-29",
+        "attribution-lookup-31",
+        "attribution-audio-32",
+        "attribution-lookup-50",
+        "attribution-audio-51",
+        "attribution-action-53",
+        "attribution-lookup-57",
+        "attribution-audio-58",
+        "attribution-action-59",
+        "attribution-lookup-63",
+        "attribution-audio-64",
+        "attribution-action-65",
+        "attribution-lookup-69",
+        "attribution-audio-70",
+        "attribution-action-71",
+        "attribution-lookup-75",
+        "attribution-audio-76",
+        "attribution-action-77",
+        "attribution-lookup-81",
+        "attribution-audio-82",
+        "attribution-action-83",
+        "attribution-lookup-87",
+        "attribution-audio-88",
+        "attribution-action-89",
+        "attribution-lookup-93",
+        "attribution-audio-94",
+        "attribution-action-95",
+        "attribution-lookup-99",
+        "attribution-audio-100",
+        "attribution-action-101",
+        "attribution-lookup-105",
+        "attribution-audio-106",
+        "attribution-action-107",
+        "attribution-lookup-111",
+        "attribution-audio-112",
+        "attribution-action-113",
+        "attribution-lookup-117",
+        "attribution-audio-118",
+        "attribution-action-119",
+        "attribution-lookup-123",
+        "attribution-audio-124",
+        "attribution-action-125",
+        "attribution-lookup-129",
+        "attribution-audio-130",
+        "attribution-action-131",
+        "attribution-lookup-135",
+        "attribution-audio-136",
+        "attribution-action-137",
+        "attribution-lookup-141",
+        "attribution-audio-142",
+        "attribution-action-143",
+        "attribution-lookup-147",
+        "attribution-audio-148",
+        "attribution-action-149",
+        "attribution-lookup-153",
+        "attribution-audio-154",
+        "attribution-action-155",
+        "attribution-lookup-159",
+        "attribution-audio-160",
+        "attribution-action-161",
+        "attribution-lookup-165",
+        "attribution-audio-166",
+        "attribution-action-167"
+      ],
+      "visibleStates": [
+        {
+          "atMs": 74.7,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 74.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 75.5,
+          "kind": "loading-state",
+          "text": "Laden…"
+        },
+        {
+          "atMs": 396.8,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 791.4,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 863.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 889.4,
+          "kind": "loading-state",
+          "text": "Загрузка карточки…"
+        },
+        {
+          "atMs": 899.1,
+          "kind": "loading-state",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 899.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1007.2,
+          "kind": "ready-control",
+          "text": "Учить"
+        },
+        {
+          "atMs": 1030.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1045.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1072.9,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1094.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1107.9,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1137.9,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1154.2,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1165.7,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1196.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1212.7,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1223.8,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1246.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1262.4,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1274.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1304.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1319.9,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1333,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1362.8,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1378.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1391,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1424,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1445.1,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1458.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1479.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1495.6,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1506,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1529.2,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1546.1,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1556.9,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1579.8,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1595.4,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1607.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1629.3,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1645.9,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1657.2,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1679.9,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1695.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1707,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1728.4,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1744.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1757,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1779.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1795.6,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1806.7,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1828.1,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1845.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1857.1,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1879.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1895.5,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1907.5,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1929.2,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1946.1,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 1956.9,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 1979.6,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 1995.8,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2006.6,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        },
+        {
+          "atMs": 2028.2,
+          "kind": "ready-control",
+          "text": "Снова | Трудно | Хорошо | Легко"
+        },
+        {
+          "atMs": 2045,
+          "kind": "ready-control",
+          "text": "(hidden)"
+        },
+        {
+          "atMs": 2057.3,
+          "kind": "ready-control",
+          "text": "Показать ответSpace"
+        }
+      ],
+      "requiredSurfaces": {
+        "auth": true,
+        "preferences": true,
+        "hydration": true,
+        "scenarios": true,
+        "scheduler": true,
+        "prefetch": true,
+        "lookup": true,
+        "translation": true,
+        "audio": true,
+        "preparation": true,
+        "actionRequest": true,
+        "actionAggregate": true,
+        "network": true,
+        "render": true,
+        "endToEnd": true,
+        "initialContinue": true,
+        "prefetchPerAcceptedTransition": true,
+        "prefetchHit": true,
+        "prefetchMiss": false,
+        "prefetchCancel": false,
+        "prefetchFallback": false,
+        "lookupCorrelation": true,
+        "audioCorrelation": true,
+        "actionCorrelation": true
+      },
+      "missingRequiredSurfaces": [
+        "prefetchMiss",
+        "prefetchCancel",
+        "prefetchFallback"
+      ],
+      "summary": {
+        "auth.session": {
+          "count": 1,
+          "p50": 10.8,
+          "p95": 10.8,
+          "max": 10.8
+        },
+        "training.preferences": {
+          "count": 1,
+          "p50": 103.7,
+          "p95": 103.7,
+          "max": 103.7
+        },
+        "training.active-scope-hydration": {
+          "count": 1,
+          "p50": 106.9,
+          "p95": 106.9,
+          "max": 106.9
+        },
+        "training.scenarios": {
+          "count": 1,
+          "p50": 106.6,
+          "p95": 106.6,
+          "max": 106.6
+        },
+        "next-card.selection": {
+          "count": 24,
+          "p50": 8,
+          "p95": 10.2,
+          "max": 22.5
+        },
+        "next-card.prefetch": {
+          "count": 90,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "next-card.lookup": {
+          "count": 22,
+          "p50": 1.8,
+          "p95": 2.4,
+          "max": 2.5
+        },
+        "network.transfer": {
+          "count": 64,
+          "p50": 0,
+          "p95": 0,
+          "max": 17.6
+        },
+        "translation.cache": {
+          "count": 23,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "audio.provider": {
+          "count": 22,
+          "p50": 1.3,
+          "p95": 1.6,
+          "max": 22.6
+        },
+        "preparation.total": {
+          "count": 23,
+          "p50": 3.4,
+          "p95": 4.3,
+          "max": 25.7
+        },
+        "next-card.preparation": {
+          "count": 2,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "audio.cache": {
+          "count": 1,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "card.render": {
+          "count": 22,
+          "p50": 2.4,
+          "p95": 5,
+          "max": 11.4
+        },
+        "transition.start": {
+          "count": 21,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "transition.total": {
+          "count": 21,
+          "p50": 11.8,
+          "p95": 13.6,
+          "max": 14.6
+        },
+        "review.mutation.request": {
+          "count": 20,
+          "p50": 1.5,
+          "p95": 1.9,
+          "max": 2.1
+        },
+        "review.mutation": {
+          "count": 20,
+          "p50": 9.2,
+          "p95": 10.7,
+          "max": 11.3
+        }
+      },
+      "overThreshold": [],
+      "unclassifiedOverThreshold": [],
+      "scenarioRequestCount": 1,
+      "bootstrapReads": {
+        "contract": "auth-gates-independent-training-reads",
+        "auth": {
+          "transitionId": "training-mt23tdmf-1",
+          "stage": "auth.session",
+          "durationMs": 10.8,
+          "outcome": "authenticated",
+          "recordedAtMs": 1787265639748,
+          "monotonicStartedAtMs": 365.9,
+          "monotonicEndedAtMs": 376.7,
+          "observedAtMs": 376.9
+        },
+        "independent": [
+          {
+            "transitionId": "training-mt23tdmf-1",
+            "stage": "training.preferences",
+            "durationMs": 103.7,
+            "outcome": "ready",
+            "recordedAtMs": 1787265639866,
+            "monotonicStartedAtMs": 390.3,
+            "monotonicEndedAtMs": 494,
+            "observedAtMs": 494.1
+          },
+          {
+            "transitionId": "training-mt23tdmf-1",
+            "stage": "training.active-scope-hydration",
+            "durationMs": 106.9,
+            "outcome": "ready",
+            "recordedAtMs": 1787265639869,
+            "monotonicStartedAtMs": 390.7,
+            "monotonicEndedAtMs": 497.6,
+            "observedAtMs": 497.7
+          },
+          {
+            "transitionId": "training-mt23tdmf-1",
+            "stage": "training.scenarios",
+            "durationMs": 106.6,
+            "outcome": "ready",
+            "recordedAtMs": 1787265639869,
+            "monotonicStartedAtMs": 391.1,
+            "monotonicEndedAtMs": 497.7,
+            "observedAtMs": 497.8
+          }
+        ],
+        "overlapMs": 102.89999999999998,
+        "overlapProven": true
+      }
+    }
+  ]
+}

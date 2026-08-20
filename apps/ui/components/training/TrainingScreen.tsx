@@ -7,6 +7,7 @@ import Joyride, { Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
+  createTrainingScenarioCatalog,
   fetchDictionaryEntry,
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
@@ -14,6 +15,7 @@ import {
   isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   type ReviewResult,
+  type TrainingScenarioCatalog,
 } from "@/lib/trainingService";
 import type {
   ActiveTrainingScope,
@@ -204,6 +206,11 @@ export function TrainingScreen({
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
+  const trainingScenarioCatalogRef = useRef<TrainingScenarioCatalog | null>(null);
+  if (!trainingScenarioCatalogRef.current) {
+    trainingScenarioCatalogRef.current = createTrainingScenarioCatalog();
+  }
+  const trainingScenarioCatalog = trainingScenarioCatalogRef.current;
   const { wordId, devMode, firstEncounter } = useCardParams();
   const [revealed, setRevealed] = useState(false);
   const [hintRevealed, setHintRevealed] = useState(false);
@@ -543,6 +550,7 @@ export function TrainingScreen({
     wordListType,
     cardFilter,
     focusFilter: trainingFocusFilter,
+    resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
   const reviewLegacy = useLegacyTrainingReviewPort({
     userId: user.id,
@@ -577,7 +585,7 @@ export function TrainingScreen({
     nextTransitionId,
     nextCardOverrideNotice,
     loadNextWord,
-    beginSessionScopeChange,
+    beginSessionScopeChange: beginTrainingTurnScopeChange,
     replaceSessionScopeAndLoad,
     requestNextCardOverride,
     resetFocusQueue,
@@ -607,6 +615,10 @@ export function TrainingScreen({
     reviewLegacy,
     refreshAfterAccepted,
   });
+  const beginSessionScopeChange = useCallback(() => {
+    trainingScenarioCatalog.invalidate();
+    beginTrainingTurnScopeChange();
+  }, [beginTrainingTurnScopeChange, trainingScenarioCatalog]);
 
   useEffect(() => {
     if (
@@ -1261,6 +1273,7 @@ export function TrainingScreen({
   const handleScenarioChange = useCallback(
     (newScenario: string) => {
       trainingDebug.log("[Settings] Changing scenario to:", newScenario);
+      beginSessionScopeChange();
       setRevealed(false);
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
@@ -1270,6 +1283,7 @@ export function TrainingScreen({
       });
     },
     [
+      beginSessionScopeChange,
       setActiveScenario,
       persistCurrentTrainingScope,
       replaceSessionScopeAndLoad,
@@ -1563,6 +1577,7 @@ export function TrainingScreen({
     listOptions,
     sourceOptions: pilotSourceOptions,
     initialTransitionId,
+    loadTrainingScenarios: trainingScenarioCatalog.fetch,
     onCommitDraft: commitPilotSessionDraft,
     onRetry: async () => {
       const recovery = await retryCardLoadFailure();
