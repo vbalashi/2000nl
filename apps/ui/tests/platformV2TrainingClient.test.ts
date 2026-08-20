@@ -127,6 +127,52 @@ describe("performPlatformV2TrainingAction", () => {
     expect(submittedEvents).toEqual([eventId, eventId]);
   });
 
+  test("correlates safe response timing for each action request without changing the payload", async () => {
+    const capability = reviewCapability("success");
+    const eventId = "7ff65846-649f-4d09-9dd7-b5dfa82d0a11";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2" as const,
+      actionId: "review-card" as const,
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card!,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(acceptedResponse), {
+          status: 200,
+          headers: {
+            "x-request-id": "action-request-189",
+            "server-timing":
+              'action.db;dur=7.25;desc="private", route.total;dur=9.5',
+          },
+        }),
+      ),
+    );
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+
+    await expect(
+      performPlatformV2TrainingAction(capability, {
+        transitionId: "transition-action-189",
+      }),
+    ).resolves.toEqual(acceptedResponse);
+
+    expect(transitionEvents(dispatch)).toContainEqual(
+      expect.objectContaining({
+        transitionId: "transition-action-189",
+        stage: "review.mutation.request",
+        outcome: "attempt-1-http-200",
+        requestId: "action-request-189",
+        serverTiming: "action.db;dur=7.3, route.total;dur=9.5",
+      }),
+    );
+    expect(JSON.stringify(transitionEvents(dispatch))).not.toContain("private");
+    expect(JSON.stringify(transitionEvents(dispatch))).not.toContain("test-token");
+    expect(JSON.stringify(transitionEvents(dispatch))).not.toContain(eventId);
+  });
+
   test("correlates a timeout-before-commit retry with the same event identity", async () => {
     const capability = reviewCapability("hard");
     const eventId = "63825d8a-b62e-49ff-a360-0d5ef1ed26bf";
@@ -225,12 +271,21 @@ describe("performPlatformV2TrainingAction", () => {
       .mockRejectedValueOnce(new TypeError("Load failed"))
       .mockRejectedValueOnce(new Error("platform_request_timeout"))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+        new Response(JSON.stringify(acceptedResponse), {
+          status: 200,
+          headers: {
+            "x-request-id": "reconcile-request-189",
+            "server-timing": "action.reconcile;dur=4, route.total;dur=6",
+          },
+        }),
       );
     vi.stubGlobal("fetch", fetchMock);
+    const dispatch = vi.spyOn(window, "dispatchEvent");
 
     await expect(
-      performPlatformV2TrainingAction(capability),
+      performPlatformV2TrainingAction(capability, {
+        transitionId: "transition-reconcile-189",
+      }),
     ).resolves.toEqual(acceptedResponse);
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -242,6 +297,24 @@ describe("performPlatformV2TrainingAction", () => {
     expect(JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body))).toEqual({
       clientEventId: eventId,
     });
+    expect(transitionEvents(dispatch)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          stage: "review.mutation.request",
+          outcome: "attempt-1-transport-error",
+        }),
+        expect.objectContaining({
+          stage: "review.mutation.request",
+          outcome: "attempt-2-transport-error",
+        }),
+        expect.objectContaining({
+          stage: "review.reconciliation.request",
+          outcome: "reconcile-http-200",
+          requestId: "reconcile-request-189",
+          serverTiming: "action.reconcile;dur=4, route.total;dur=6",
+        }),
+      ]),
+    );
   });
 
   test("reports a typed recoverable outcome when neither ambiguous attempt committed", async () => {
@@ -615,6 +688,14 @@ function transitionStages(dispatch: { mock: { calls: [Event][] } }) {
   });
 }
 
+function transitionEvents(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) => {
+    if (!(event instanceof CustomEvent)) return [];
+    if (event.type !== "2000nl:training-transition-timing") return [];
+    return [event.detail as Record<string, unknown>];
+  });
+}
+
 describe("selectPlatformV2TrainingEntry", () => {
   test("accepts a new single-sense entry before scheduler state exists", () => {
     const entry = { ...singleSenseEntry, card: null };
@@ -707,6 +788,44 @@ describe("selectPlatformV2TrainingEntry", () => {
 });
 
 describe("fetchPlatformV2TrainingEntry", () => {
+  test("records ordinary forwarded AbortSignal cancellation", async () => {
+    const controller = new AbortController();
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+      ),
+    );
+    const pending = prefetchPlatformV2TrainingEntry({
+      cacheOwnerId: "test-user",
+      entryId: singleSenseEntry.entryId,
+      cardTypeId: "word-to-definition",
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      transitionId: "transition-forwarded-cancel",
+      signal: controller.signal,
+    });
+
+    controller.abort("fixture-cancel");
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(
+      transitionEvents(dispatch).filter(
+        (event) =>
+          event.transitionId === "transition-forwarded-cancel" &&
+          event.stage === "next-card.prefetch" &&
+          event.outcome === "cancelled",
+      ),
+    ).toHaveLength(1);
+  });
+
   test("prefetches the exact next card and exposes it synchronously to the session", async () => {
     const payload = {
       contractVersion: "platform-lookup-v2",
@@ -730,7 +849,9 @@ describe("fetchPlatformV2TrainingEntry", () => {
       cardTypeId: "word-to-definition" as const,
       contentLanguageCode: "nl",
       translationTargetLanguageCode: "en",
+      transitionId: "transition-prefetch-189",
     };
+    const dispatch = vi.spyOn(window, "dispatchEvent");
 
     await prefetchPlatformV2TrainingEntry(input);
 
@@ -743,6 +864,20 @@ describe("fetchPlatformV2TrainingEntry", () => {
       entry: { entryId: singleSenseEntry.entryId },
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(transitionEvents(dispatch)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          transitionId: "transition-prefetch-189",
+          stage: "next-card.prefetch",
+          outcome: "miss",
+        }),
+        expect.objectContaining({
+          transitionId: "transition-prefetch-189",
+          stage: "next-card.prefetch",
+          outcome: "accepted-hit-ready",
+        }),
+      ]),
+    );
   });
 
   test("partitions prefetched lookup state by browser cache owner", async () => {

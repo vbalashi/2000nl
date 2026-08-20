@@ -19,6 +19,11 @@ const prepared = vi.hoisted(() => ({
   warm: vi.fn(),
 }));
 const recordWordView = vi.hoisted(() => vi.fn());
+const transitionTiming = vi.hoisted(() => ({
+  begin: vi.fn(),
+  measure: vi.fn(),
+  record: vi.fn(),
+}));
 
 vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
   usePreparedNextTrainingTurn: () => ({
@@ -38,12 +43,20 @@ vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
 }));
 
 vi.mock("@/lib/training/trainingTransitionTiming", () => ({
+  beginTrainingUserTransition: (...args: unknown[]) =>
+    transitionTiming.begin(...args),
   markTrainingEntryPresentationStarted: vi.fn(),
+  createTrainingTransitionId: vi.fn(() => "generated-transition"),
+  recordTrainingTransitionTiming: (...args: unknown[]) =>
+    transitionTiming.record(...args),
   measureTrainingTransitionStage: async (
-    _transitionId: string,
-    _stage: string,
+    transitionId: string,
+    stage: string,
     operation: () => Promise<unknown>,
-  ) => operation(),
+  ) => {
+    transitionTiming.measure(transitionId, stage);
+    return operation();
+  },
 }));
 
 const word1: TrainingWord = {
@@ -151,6 +164,9 @@ describe("useTrainingTurnController transition matrix", () => {
     prepared.warm.mockReset();
     prepared.warm.mockResolvedValue(true);
     recordWordView.mockReset();
+    transitionTiming.begin.mockReset();
+    transitionTiming.measure.mockReset();
+    transitionTiming.record.mockReset();
   });
 
   test("fast prepared legacy candidate presents immediately while one mutation remains in flight", async () => {
@@ -172,6 +188,10 @@ describe("useTrainingTurnController transition matrix", () => {
     });
 
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(transitionTiming.begin).toHaveBeenCalledWith(
+      "transition-1",
+      "review",
+    );
     expect(reviewLegacy).toHaveBeenCalledTimes(1);
     expect(controller.selectNext).not.toHaveBeenCalled();
 
@@ -223,6 +243,38 @@ describe("useTrainingTurnController transition matrix", () => {
       }),
     );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(transitionTiming.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transitionId: "transition-1",
+        stage: "next-card.prefetch",
+        outcome: "accepted-miss",
+      }),
+    );
+    expect(prepared.warm).toHaveBeenCalledWith(
+      word2,
+      undefined,
+      "transition-1",
+    );
+  });
+
+  test("initial selection and preparation share one caller-provided transition", async () => {
+    const controller = renderController({ currentWord: null });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        transitionId: "initial-entry-189",
+      });
+    });
+
+    expect(transitionTiming.measure).toHaveBeenCalledWith(
+      "initial-entry-189",
+      "next-card.selection",
+    );
+    expect(prepared.warm).toHaveBeenCalledWith(
+      word2,
+      undefined,
+      "initial-entry-189",
+    );
   });
 
   test("Platform ambiguity does not advance until reconciliation invokes the accepted port", async () => {

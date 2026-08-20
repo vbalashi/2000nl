@@ -33,7 +33,10 @@ describe("useTrainingPreferences", () => {
   });
 
   test("loads saved preferences", async () => {
-    const { result } = renderHook(() => useTrainingPreferences("user-1"));
+    const dispatch = vi.spyOn(window, "dispatchEvent");
+    const { result } = renderHook(() =>
+      useTrainingPreferences("user-1", "initial-entry-189"),
+    );
 
     await waitFor(() => expect(result.current.activeScenario).toBe("listening"));
 
@@ -47,6 +50,13 @@ describe("useTrainingPreferences", () => {
         newReviewRatio: 4,
         themePreference: "dark",
         translationLang: "en",
+      }),
+    );
+    expect(trainingTimingEvents(dispatch)).toContainEqual(
+      expect.objectContaining({
+        transitionId: "initial-entry-189",
+        stage: "training.preferences",
+        outcome: "ready",
       }),
     );
   });
@@ -82,3 +92,12 @@ describe("useTrainingPreferences", () => {
     resolveUpdate({ error: null });
   });
 });
+
+function trainingTimingEvents(dispatch: { mock: { calls: [Event][] } }) {
+  return dispatch.mock.calls.flatMap(([event]) =>
+    event instanceof CustomEvent &&
+    event.type === "2000nl:training-transition-timing"
+      ? [event.detail as Record<string, unknown>]
+      : [],
+  );
+}

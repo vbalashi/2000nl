@@ -1,5 +1,9 @@
 import { platformV2AuthenticatedJsonHeaders } from "./platformV2Http";
 import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
+import {
+  recordTrainingTransitionResponse,
+  recordTrainingTransitionTiming,
+} from "../training/trainingTransitionTiming";
 import type {
   PlatformActionV2Request,
   PlatformActionV2Response,
@@ -54,6 +58,7 @@ export function buildPlatformV2TrainingActionRequest(
 
 export async function performPlatformV2TrainingAction(
   capability: PlatformV2TrainingActionCapability,
+  context: { transitionId?: string } = {},
 ): Promise<PlatformActionV2Response> {
   const request = buildPlatformV2TrainingActionRequest(
     capability,
@@ -62,7 +67,12 @@ export async function performPlatformV2TrainingAction(
   const headers = await platformV2AuthenticatedJsonHeaders();
   let response: Response;
   try {
-    response = await submitPlatformV2TrainingAction(request, headers, 1);
+    response = await submitPlatformV2TrainingAction(
+      request,
+      headers,
+      1,
+      context.transitionId,
+    );
   } catch (error) {
     if (
       capability.actionId !== "review-card" ||
@@ -71,12 +81,18 @@ export async function performPlatformV2TrainingAction(
       throw error;
     }
     try {
-      response = await submitPlatformV2TrainingAction(request, headers, 2);
+      response = await submitPlatformV2TrainingAction(
+        request,
+        headers,
+        2,
+        context.transitionId,
+      );
     } catch (retryError) {
       if (!isAmbiguousTransportError(retryError)) throw retryError;
       response = await reconcilePlatformV2TrainingAction(
         request.clientEventId,
         headers,
+        context.transitionId,
       );
     }
   }
@@ -102,31 +118,74 @@ function submitPlatformV2TrainingAction(
   request: PlatformActionV2Request,
   headers: HeadersInit,
   attempt: 1 | 2,
+  transitionId?: string,
 ) {
   const correlatedHeaders = Object.fromEntries(new Headers(headers).entries());
-  return platformFetchWithTimeout("/api/platform/v2/actions", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: {
-      ...correlatedHeaders,
-      "x-platform-action-attempt": String(attempt),
-    },
-    body: JSON.stringify(request),
-  });
+  return timedActionRequest(
+    transitionId,
+    "review.mutation.request",
+    `attempt-${attempt}`,
+    () =>
+      platformFetchWithTimeout("/api/platform/v2/actions", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          ...correlatedHeaders,
+          "x-platform-action-attempt": String(attempt),
+        },
+        body: JSON.stringify(request),
+      }),
+  );
 }
 
 function reconcilePlatformV2TrainingAction(
   clientEventId: string,
   headers: HeadersInit,
+  transitionId?: string,
 ) {
-  return platformFetchWithTimeout("/api/platform/v2/actions/reconcile", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers,
-    body: JSON.stringify({ clientEventId }),
-  });
+  return timedActionRequest(
+    transitionId,
+    "review.reconciliation.request",
+    "reconcile",
+    () =>
+      platformFetchWithTimeout("/api/platform/v2/actions/reconcile", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers,
+        body: JSON.stringify({ clientEventId }),
+      }),
+  );
+}
+
+async function timedActionRequest(
+  transitionId: string | undefined,
+  stage: "review.mutation.request" | "review.reconciliation.request",
+  outcomePrefix: string,
+  request: () => Promise<Response>,
+) {
+  if (!transitionId) return request();
+  const startedAt = performance.now();
+  try {
+    const response = await request();
+    recordTrainingTransitionResponse(
+      transitionId,
+      stage,
+      startedAt,
+      response,
+      `${outcomePrefix}-http-${response.status}`,
+    );
+    return response;
+  } catch (error) {
+    recordTrainingTransitionTiming({
+      transitionId,
+      stage,
+      durationMs: performance.now() - startedAt,
+      outcome: `${outcomePrefix}-transport-error`,
+    });
+    throw error;
+  }
 }
 
 function isAmbiguousTransportError(error: unknown) {

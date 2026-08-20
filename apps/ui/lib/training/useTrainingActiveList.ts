@@ -6,6 +6,7 @@ import {
   fetchListSummaryById,
   updateActiveTrainingScope,
 } from "../trainingService";
+import { measureTrainingTransitionStage } from "./trainingTransitionTiming";
 
 type SelectedListScope = {
   listId: string;
@@ -33,8 +34,9 @@ export function useTrainingActiveList(params: {
   userId?: string;
   language: string;
   showSettings: boolean;
+  initialTransitionId?: string;
 }) {
-  const { userId, language, showSettings } = params;
+  const { userId, language, showSettings, initialTransitionId } = params;
   const [wordListId, setWordListId] = useState<string | null>(null);
   const [wordListType, setWordListType] = useState<WordListType | null>(null);
   const [wordListLabel, setWordListLabel] = useState<string>("");
@@ -47,6 +49,7 @@ export function useTrainingActiveList(params: {
   const listRequestIdRef = useRef(0);
   const scopeRefreshIdRef = useRef(0);
   const languageGenerationRef = useRef(0);
+  const initialHydrationTransitionIdRef = useRef(initialTransitionId);
 
   const applyList = useCallback((list: WordListSummary) => {
     setWordListId(list.id);
@@ -144,7 +147,15 @@ export function useTrainingActiveList(params: {
       }
       setListHydrated(true);
     };
-    void hydrateActiveList();
+    const hydrationTransitionId = initialHydrationTransitionIdRef.current;
+    initialHydrationTransitionIdRef.current = undefined;
+    void (hydrationTransitionId
+      ? measureTrainingTransitionStage(
+          hydrationTransitionId,
+          "training.active-scope-hydration",
+          hydrateActiveList,
+        )
+      : hydrateActiveList());
     return () => {
       cancelled = true;
     };

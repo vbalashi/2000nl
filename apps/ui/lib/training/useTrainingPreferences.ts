@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AudioQuality } from "@/lib/audio/types";
 import { trainingDebug } from "@/lib/trainingDebug";
 import type { CardFilter, TrainingMode } from "@/lib/types";
 import { fetchUserPreferences, updateUserPreferences } from "../trainingService";
+import { measureTrainingTransitionStage } from "./trainingTransitionTiming";
 
 export type ThemePreference = "light" | "dark" | "system";
 type PersistOptions = { persist?: boolean };
 
-export function useTrainingPreferences(userId?: string) {
+export function useTrainingPreferences(
+  userId?: string,
+  initialTransitionId?: string,
+) {
   const [themePreference, setThemePreference] =
     useState<ThemePreference>("system");
   const [audioQuality, setAudioQualityState] = useState<AudioQuality>(
@@ -24,12 +28,21 @@ export function useTrainingPreferences(userId?: string) {
   const [translationLang, setTranslationLangState] = useState<string | null>(
     null,
   );
+  const initialTransitionIdRef = useRef(initialTransitionId);
 
   useEffect(() => {
     if (!userId) return;
 
     const loadPreferences = async () => {
-      const prefs = await fetchUserPreferences(userId);
+      const transitionId = initialTransitionIdRef.current;
+      initialTransitionIdRef.current = undefined;
+      const prefs = transitionId
+        ? await measureTrainingTransitionStage(
+            transitionId,
+            "training.preferences",
+            () => fetchUserPreferences(userId),
+          )
+        : await fetchUserPreferences(userId);
       trainingDebug.log("[Settings] Loaded preferences from Supabase:", prefs);
       setThemePreference(prefs.themePreference);
       setAudioQualityState(prefs.audioQuality);

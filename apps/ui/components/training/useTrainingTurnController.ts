@@ -6,8 +6,11 @@ import { trainingDebug } from "@/lib/trainingDebug";
 import { clearPlatformV2TrainingClientCaches } from "@/lib/platform/platformV2TrainingClient";
 import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingActionClient";
 import {
+  beginTrainingUserTransition,
+  createTrainingTransitionId,
   markTrainingEntryPresentationStarted,
   measureTrainingTransitionStage,
+  recordTrainingTransitionTiming,
 } from "@/lib/training/trainingTransitionTiming";
 import {
   generateReviewTurnId,
@@ -35,7 +38,7 @@ import type {
 export type LoadNextTrainingTurnRequest = Omit<
   TrainingTurnSelectionRequest,
   "queueTurn"
-> & { queueTurn?: QueueTurn };
+> & { queueTurn?: QueueTurn; transitionId?: string };
 
 export type LoadNextTrainingTurnResult = "loaded" | "empty" | "error" | "skipped";
 
@@ -47,6 +50,7 @@ type AcceptedCardTransition = {
   isNextCardOverride: boolean;
   nextQueueTurn: QueueTurn;
   prefetched: PreparedNextTrainingTurn | null;
+  transitionId: string;
 };
 
 type Inputs = {
@@ -229,6 +233,7 @@ export function useTrainingTurnController(input: Inputs) {
     async ({
       excludeWordIds = [],
       queueTurn: requestedQueueTurn,
+      transitionId = createTrainingTransitionId(),
       ...request
     }: LoadNextTrainingTurnRequest = {}): Promise<LoadNextTrainingTurnResult> => {
       if (loadingInProgressRef.current) {
@@ -265,7 +270,11 @@ export function useTrainingTurnController(input: Inputs) {
               mode,
             );
             recordPresentation(preparedOverrideWord, mode);
-            const overrideReady = await warmWord(preparedOverrideWord);
+            const overrideReady = await warmWord(
+              preparedOverrideWord,
+              undefined,
+              transitionId,
+            );
             if (generation !== loadGenerationRef.current) return "skipped";
             if (!overrideReady) {
               nextCardOverrideActiveKeyRef.current = null;
@@ -286,11 +295,17 @@ export function useTrainingTurnController(input: Inputs) {
           );
         }
 
-        const nextWord = await selection.selectNext({
-          ...request,
-          excludeWordIds,
-          queueTurn: requestedQueueTurn ?? queueTurn,
-        });
+        const nextWord = await measureTrainingTransitionStage(
+          transitionId,
+          "next-card.selection",
+          () =>
+            selection.selectNext({
+              ...request,
+              excludeWordIds,
+              queueTurn: requestedQueueTurn ?? queueTurn,
+            }),
+          (selected) => (selected ? "ready" : "empty"),
+        );
         if (generation !== loadGenerationRef.current) return "skipped";
         if (!nextWord) {
           presentWord(null);
@@ -299,7 +314,7 @@ export function useTrainingTurnController(input: Inputs) {
 
         const mode = nextWord.mode ?? enabledModes[0] ?? "word-to-definition";
         recordPresentation(nextWord, mode);
-        const ready = await warmWord(nextWord);
+        const ready = await warmWord(nextWord, undefined, transitionId);
         if (generation !== loadGenerationRef.current) return "skipped";
         if (!ready) {
           setLoadError("platform_v2_lookup_failed");
@@ -374,6 +389,14 @@ export function useTrainingTurnController(input: Inputs) {
     setReviewCounter(queue.reviewCounter);
     reviewedCardKeysRef.current.add(currentCardKey);
     const prefetched = consumePreparedNextTurn(currentCardKey);
+    const transitionId =
+      prefetched?.transitionId ?? nextTransitionId ?? createTrainingTransitionId();
+    recordTrainingTransitionTiming({
+      transitionId,
+      stage: "next-card.prefetch",
+      durationMs: 0,
+      outcome: prefetched ? "accepted-hit" : "accepted-miss",
+    });
     if (prefetched && !prefetched.v2Ready) {
       presentPreparedCandidate(prefetched.word);
     }
@@ -386,6 +409,7 @@ export function useTrainingTurnController(input: Inputs) {
         nextCardOverrideActiveKeyRef.current === currentCardKey,
       nextQueueTurn: queue.queueTurn,
       prefetched,
+      transitionId,
     } satisfies AcceptedCardTransition;
   }, [
     cardFilter,
@@ -393,6 +417,7 @@ export function useTrainingTurnController(input: Inputs) {
     currentWord,
     enabledModes,
     newReviewRatio,
+    nextTransitionId,
     presentPreparedCandidate,
     queueTurn,
     reviewCounter,
@@ -416,11 +441,20 @@ export function useTrainingTurnController(input: Inputs) {
       if (prefetched?.v2Ready) {
         const ready = await prefetched.v2Ready.catch(() => false);
         if (ready) presentPreparedCandidate(prefetched.word);
-        else prefetched = null;
+        else {
+          recordTrainingTransitionTiming({
+            transitionId: transition.transitionId,
+            stage: "next-card.prefetch",
+            durationMs: 0,
+            outcome: "fallback",
+          });
+          prefetched = null;
+        }
       }
 
       if (!prefetched) {
         await loadNextWord({
+          transitionId: transition.transitionId,
           queueTurn: transition.nextQueueTurn,
           excludeCardKeys: [
             ...reviewedCardKeysRef.current,
@@ -441,6 +475,7 @@ export function useTrainingTurnController(input: Inputs) {
       try {
         const transition = beginAcceptedCardTransition();
         if (!transition) return;
+        beginTrainingUserTransition(transition.transitionId, "review");
         const request: LegacyTrainingReviewRequest = {
           word: transition.word,
           mode: transition.wordMode,
@@ -448,16 +483,12 @@ export function useTrainingTurnController(input: Inputs) {
           turnId: transition.turnIdForReview,
         };
         const mutation = () => reviewLegacy(request);
-        if (nextTransitionId) {
-          await measureTrainingTransitionStage(
-            nextTransitionId,
-            "review.mutation",
-            mutation,
-            () => "accepted",
-          );
-        } else {
-          await mutation();
-        }
+        await measureTrainingTransitionStage(
+          transition.transitionId,
+          "review.mutation",
+          mutation,
+          () => "accepted",
+        );
         await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (${result})`,
         });
@@ -469,7 +500,6 @@ export function useTrainingTurnController(input: Inputs) {
       beginAcceptedCardTransition,
       currentWord,
       finishAcceptedCardTransition,
-      nextTransitionId,
       reviewLegacy,
     ],
   );

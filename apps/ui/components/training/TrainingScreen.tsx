@@ -84,9 +84,16 @@ import {
   getOnboardingTranslation,
   type OnboardingLanguage,
 } from "@/lib/onboardingI18n";
+import {
+  beginTrainingUserTransition,
+  createTrainingTransitionId,
+  markTrainingEntryPresentationStarted,
+  registerTrainingEntryTransition,
+} from "@/lib/training/trainingTransitionTiming";
 
 type Props = {
   user: User;
+  initialTransitionId?: string;
   destination?: AppDestination;
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
@@ -187,6 +194,7 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 
 export function TrainingScreen({
   user,
+  initialTransitionId,
   destination = "training",
   extendedDestinationsEnabled = process.env
     .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
@@ -217,7 +225,7 @@ export function TrainingScreen({
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
-  } = useTrainingPreferences(user?.id);
+  } = useTrainingPreferences(user?.id, initialTransitionId);
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
     useState(language);
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
@@ -385,6 +393,7 @@ export function TrainingScreen({
     userId: user?.id,
     language: currentTrainingLanguage,
     showSettings,
+    initialTransitionId,
   });
 
   const appliedDefaultScenarioListRef = useRef<string | null>(null);
@@ -865,7 +874,7 @@ export function TrainingScreen({
     if (wordId) {
       requestNextCardOverride(wordId, false);
     }
-    loadNextWord();
+    loadNextWord({ transitionId: initialTransitionId });
     loadStats(undefined, "INITIAL LOAD", true); // isInitialLoad = true to set fixed Y
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -874,6 +883,7 @@ export function TrainingScreen({
     activeTrainingScope?.hasSavedScope,
     user?.id,
     listHydrated,
+    initialTransitionId,
     wordId,
   ]);
 
@@ -1548,9 +1558,19 @@ export function TrainingScreen({
     focusFilter: trainingFocusFilter,
     listOptions,
     sourceOptions: pilotSourceOptions,
+    initialTransitionId,
     onCommitDraft: commitPilotSessionDraft,
     onRetry: () => loadNextWord(),
   });
+  const handleContinueTrainingSession = useCallback(() => {
+    if (currentWord) {
+      const transitionId = createTrainingTransitionId();
+      beginTrainingUserTransition(transitionId, "continue");
+      registerTrainingEntryTransition(currentWord.id, transitionId);
+      markTrainingEntryPresentationStarted(currentWord.id);
+    }
+    trainingPilot.continueSession();
+  }, [currentWord, trainingPilot]);
   const handleEnterTrainingSession = useCallback(() => {
     clearReviewedSession();
   }, [clearReviewedSession]);
@@ -1679,7 +1699,7 @@ export function TrainingScreen({
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
             activeSessionLabel={wordListLabel || undefined}
-            onContinue={trainingPilot.continueSession}
+            onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
             onRetry={() => void trainingPilot.retry()}
           />

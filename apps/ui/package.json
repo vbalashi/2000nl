@@ -16,6 +16,7 @@
     "test:watch": "vitest --watch",
     "eval:translation": "vite-node scripts/eval-translation-prompt.ts",
     "test:e2e": "playwright test",
+    "test:e2e:training-attribution": "APP_ROLLOUT_PROFILE=pilot playwright test playwright/tests/training-attribution.spec.ts",
     "test-account": "node scripts/test-account.js"
   },
   "dependencies": {
