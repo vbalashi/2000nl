@@ -45,7 +45,7 @@
 ### Card Components
 
 - **Main Card**: Large central card showing current word/definition
-- **Recent Opgezocht Sidebar**: Right sidebar showing recently looked-up words (clicked translations)
+- **Details Drawer**: On-demand word details opened from answer-card actions or linked dictionary text; there is no permanent sidebar or standalone Recent view
 - **Action Buttons**:
   - FirstTimeButtonGroup (first encounter): 2 buttons
   - Standard rating buttons are rendered by `TrainingScreen.tsx` for learning/review cards

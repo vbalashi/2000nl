@@ -33,6 +33,7 @@ import {
   projectPlatformV2WordDetails,
 } from "./platformV2RichContent";
 import { platformV2ActionsEnabled } from "./platformV2Rollout";
+import { resolvePlatformV2CrossReferenceTargets } from "./platformV2CrossReferenceResolver";
 
 const LOOKUP_GROUP_PAGE_SIZE = 10;
 const LOOKUP_GROUP_ENTRY_SAFETY_BOUND = 50;
@@ -182,20 +183,27 @@ export async function performPlatformV2Lookup(
   }
 
   const entryIds = entries.map((entry) => entry.id);
-  const identityPromise = measure<RpcResult>(
-    timings,
-    "lookup.identity",
-    async () =>
-      await context.service.supabase.rpc(
-        "read_platform_v2_presentation_identity",
-        {
-          p_user_id:
-            context.kind === "authenticated" ? context.auth.user.id : null,
-          p_entry_ids: entryIds,
-          p_catalog: context.kind === "catalog",
-        },
-      ),
+  const embeddedIdentities = embeddedIdentityEntries(entries);
+  const embeddedIdentityComplete = hasCompleteIdentity(
+    entries,
+    embeddedIdentities,
   );
+  const identityPromise = embeddedIdentityComplete
+    ? Promise.resolve<RpcResult>({
+        data: { entries: embeddedIdentities },
+        error: null,
+      })
+    : measure<RpcResult>(timings, "lookup.identity", async () =>
+        await context.service.supabase.rpc(
+          "read_platform_v2_presentation_identity",
+          {
+            p_user_id:
+              context.kind === "authenticated" ? context.auth.user.id : null,
+            p_entry_ids: entryIds,
+            p_catalog: context.kind === "catalog",
+          },
+        ),
+      );
   const statePromise =
     context.kind === "authenticated"
       ? measure<RpcResult>(timings, "lookup.user-state", async () =>
@@ -237,10 +245,7 @@ export async function performPlatformV2Lookup(
   const identityByEntryId = new Map(
     identities.map((identity) => [identity.entryId, identity]),
   );
-  if (
-    identities.length !== entries.length ||
-    entries.some((entry) => !identityByEntryId.has(entry.id))
-  ) {
+  if (!hasCompleteIdentity(entries, identities)) {
     return {
       payload: { error: "presentation_identity_incomplete" },
       status: 409,
@@ -285,6 +290,27 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
+  const crossReferenceTargets = await measure(
+    timings,
+    "lookup.cross-references",
+    () =>
+      resolvePlatformV2CrossReferenceTargets(context.service, {
+        sources: entries.flatMap((entry) => {
+          const query = platformV2CrossReferenceQuery(entry);
+          return query && entry.dictionary_id
+            ? [{
+                sourceEntryId: entry.id,
+                sourceDictionaryId: entry.dictionary_id,
+                query,
+              }]
+            : [];
+        }),
+        userId:
+          context.kind === "authenticated" ? context.auth.user.id : null,
+        catalog: context.kind === "catalog",
+        contentLanguageCode: request.contentLanguageCode ?? null,
+      }),
+  );
 
   try {
     const projectionEntries = await measure(
@@ -392,6 +418,7 @@ export async function performPlatformV2Lookup(
               contentNodeBindings,
               contentSections,
               crossReferenceQuery,
+              crossReferenceTarget: crossReferenceTargets.get(entry.id),
               cardState:
                 context.kind === "authenticated"
                   ? projectionCardState(
@@ -576,6 +603,29 @@ function identityEntries(value: unknown): PlatformV2IdentityEntry[] {
       },
     ];
   });
+}
+
+function embeddedIdentityEntries(
+  entries: DictionaryLookupPayload[],
+): PlatformV2IdentityEntry[] {
+  return identityEntries({
+    entries: entries.map(
+      (entry) => asRecord(entry).platform_v2_identity,
+    ),
+  });
+}
+
+function hasCompleteIdentity(
+  entries: DictionaryLookupPayload[],
+  identities: PlatformV2IdentityEntry[],
+): boolean {
+  const identityEntryIds = new Set(
+    identities.map((identity) => identity.entryId),
+  );
+  return (
+    identities.length === entries.length &&
+    entries.every((entry) => identityEntryIds.has(entry.id))
+  );
 }
 
 function dictionarySummary(

@@ -61,6 +61,7 @@ export function normalizeDictionaryContent(
                   ? item.text
                   : null,
             context: typeof item.context === "string" ? item.context : null,
+            ...(typeof item.note === "string" ? { note: item.note } : {}),
             examples: asStringArray(item.examples),
             translations: asRecord(item.translations),
             idioms: Array.isArray(item.idioms) ? item.idioms : undefined,
@@ -235,6 +236,7 @@ function localAudioRootCanBeInspected(publicRoot: string) {
 
 const publicAudioChecks = new Map<string, { ok: boolean; expiresAt: number }>();
 const PUBLIC_AUDIO_CHECK_TTL_MS = 5 * 60 * 1000;
+const PUBLIC_AUDIO_CHECK_TIMEOUT_MS = 1_200;
 
 async function publicAudioAssetExists(publicUrlPath: string) {
   const base = publicAudioBaseUrl();
@@ -258,11 +260,20 @@ async function publicAudioAssetExists(publicUrlPath: string) {
 }
 
 async function publicAudioHeadOk(url: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PUBLIC_AUDIO_CHECK_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { method: "HEAD" });
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
     return response.ok;
   } catch {
+    // A slow availability probe must not block the training card. The audio
+    // resolver remains the authoritative check when the learner presses play.
     return true;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

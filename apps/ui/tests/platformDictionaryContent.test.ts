@@ -57,6 +57,28 @@ describe("platform dictionary content audio links", () => {
     expect(content.audioLinks).toBeUndefined();
   });
 
+  test("keeps learner-visible meaning notes in canonical content", () => {
+    const content = normalizeDictionaryContent({
+      id: "entry-1",
+      language_code: "nl",
+      headword: "huis",
+      raw: {
+        meanings: [
+          { definition: "een gebouw", note: "alleen figuurlijk gebruikt" },
+        ],
+      },
+    });
+
+    expect(content.meanings[0]).toMatchObject({
+      note: "alleen figuurlijk gebruikt",
+    });
+    expect(content.sections).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourcePath: "raw.meanings[0].note" }),
+      ]),
+    );
+  });
+
   test("rejects encoded traversal in local audio links", () => {
     expect(localAudioAssetExists("/audio/%2E%2E/secret.mp3")).toBe(false);
   });
@@ -111,5 +133,34 @@ describe("platform dictionary content audio links", () => {
         nl: "/audio/nl/f/bH0re-0SrLgbBageu45d-A.mp3",
       },
     });
+  });
+
+  test("does not let a slow public audio probe block dictionary content", async () => {
+    vi.useFakeTimers();
+    delete process.env.PLATFORM_AUDIO_PUBLIC_ROOT;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://2000.dilum.io";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      })),
+    );
+
+    try {
+      const verification = verifyDictionaryContentAudioLinks({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+      await vi.advanceTimersByTimeAsync(1_200);
+
+      await expect(verification).resolves.toEqual({
+        audioLinks: {
+          nl: "/audio/nl/s/slow-probe.mp3",
+        },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

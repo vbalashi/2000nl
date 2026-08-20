@@ -54,7 +54,6 @@ export function TrainingSenseCardStage({
   const stageRef = React.useRef<HTMLElement>(null);
   const primaryAnswerActionRef = React.useRef<HTMLButtonElement>(null);
   const showAnswerRef = React.useRef<HTMLButtonElement>(null);
-  const previousEntryIdRef = React.useRef(model.entryId);
   const previousAnswerVisibleRef = React.useRef(answerVisible);
   const [announcement, setAnnouncement] = React.useState("");
   const t = React.useCallback(
@@ -75,16 +74,10 @@ export function TrainingSenseCardStage({
   }, [focusOnMount]);
 
   React.useEffect(() => {
-    const entryChanged = previousEntryIdRef.current !== model.entryId;
-    previousEntryIdRef.current = model.entryId;
     setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
-    if (entryChanged) {
-      setAnnouncement(t("senseCard.training.cardChanged"));
-      window.requestAnimationFrame(() => stageRef.current?.focus());
-    }
-  }, [model.entryId, t]);
+  }, [model.entryId]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;
@@ -172,6 +165,21 @@ export function TrainingSenseCardStage({
         data-testid="training-sense-card-shell"
         className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-slate-600 dark:bg-[#1d222b] dark:shadow-[0_22px_70px_rgba(0,0,0,0.22)] [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
       >
+        {mode === "word-to-definition" && model.audioCapability && onPlayAudio ? (
+          <div
+            data-testid="training-card-audio-corner"
+            className="absolute left-5 top-5 z-20 sm:left-7 sm:top-7"
+          >
+            <IconButton
+              label={t("senseCard.audio.play")}
+              disabled={busy}
+              onClick={onPlayAudio}
+              compact
+            >
+              <SpeakerIcon />
+            </IconButton>
+          </div>
+        ) : null}
         {answerVisible ? (
           <>
             <EntityHeader
@@ -181,23 +189,23 @@ export function TrainingSenseCardStage({
                 hasTranslation(model) || translationActionAvailable
               }
               translationLabel={t("senseCard.translation.request")}
-              audioLabel={t("senseCard.audio.play")}
               busy={busy}
               moreLabel={t("senseCard.wordDetails.open")}
               onToggleTranslation={() => {
                 if (!hasTranslation(model) && model.requestTranslationCapability) {
+                  setTranslationVisible(true);
                   onAction(model.requestTranslationCapability);
                   return;
                 }
                 setTranslationVisible((visible) => !visible);
               }}
-              onPlayAudio={model.audioCapability ? onPlayAudio : undefined}
               onOpenDetails={onOpenDetails}
             />
             <AnswerBody
               model={model}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
+              onReport={onAction}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
           </>
@@ -209,13 +217,6 @@ export function TrainingSenseCardStage({
             hint={hint}
             hintVisible={hintVisible}
             hintLabel={t("senseCard.hint.example")}
-            audioLabel={t("senseCard.audio.play")}
-            busy={busy}
-            onPlayAudio={
-              mode === "word-to-definition" && model.audioCapability
-                ? onPlayAudio
-                : undefined
-            }
           />
         )}
       </article>
@@ -225,8 +226,8 @@ export function TrainingSenseCardStage({
         className={`shrink-0 px-1 ${
           answerVisible
             ? model.reviewCapabilities.length
-              ? "h-24 min-h-24 sm:h-16 sm:min-h-16"
-              : "h-16 min-h-16"
+              ? "h-[104px] min-h-[104px] sm:h-[76px] sm:min-h-[76px]"
+              : "h-[76px] min-h-[76px]"
             : "h-11 min-h-11"
         }`}
       >
@@ -261,70 +262,52 @@ function EntityHeader({
   translationVisible,
   translationAvailable,
   translationLabel,
-  audioLabel,
   moreLabel,
   busy,
   onToggleTranslation,
-  onPlayAudio,
   onOpenDetails,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   translationAvailable: boolean;
   translationLabel: string;
-  audioLabel: string;
   moreLabel: string;
   busy: boolean;
   onToggleTranslation: () => void;
-  onPlayAudio?: () => void;
   onOpenDetails?: () => void;
 }) {
   return (
-    <header className="relative z-10 shrink-0 bg-slate-50 px-6 pb-2 pt-7 dark:bg-[#1d222b] sm:px-9 sm:pt-8">
+    <header className="relative z-10 shrink-0 bg-slate-50 px-6 pb-5 pt-20 dark:bg-[#1d222b] sm:px-9 sm:pt-20">
+      <div className="absolute right-5 top-5 flex shrink-0 items-center gap-2 sm:right-7 sm:top-7">
+        {model.repeatCount > 0 ? (
+          <ExposureBadge count={model.repeatCount} tone="light" />
+        ) : null}
+        {translationAvailable ? (
+          <IconButton
+            label={translationLabel}
+            active={translationVisible}
+            disabled={busy}
+            onClick={onToggleTranslation}
+          >
+            <TranslateIcon />
+          </IconButton>
+        ) : null}
+        {onOpenDetails ? (
+          <IconButton
+            label={moreLabel}
+            disabled={busy}
+            onClick={onOpenDetails}
+          >
+            <MoreIcon />
+          </IconButton>
+        ) : null}
+      </div>
       <SenseCardHeadwordLockup
         article={model.article}
         headword={model.headword}
         partOfSpeech={model.partOfSpeech}
         coreVocabularyLabel={model.coreVocabularyLabel}
         tone="light"
-        inlineAction={
-          onPlayAudio ? (
-            <IconButton
-              label={audioLabel}
-              disabled={busy}
-              onClick={onPlayAudio}
-              compact
-            >
-              <SpeakerIcon />
-            </IconButton>
-          ) : null
-        }
-        topActions={
-          <>
-            {model.repeatCount > 0 ? (
-              <ExposureBadge count={model.repeatCount} tone="light" />
-            ) : null}
-            {translationAvailable ? (
-              <IconButton
-                label={translationLabel}
-                active={translationVisible}
-                disabled={busy}
-                onClick={onToggleTranslation}
-              >
-                <TranslateIcon />
-              </IconButton>
-            ) : null}
-            {onOpenDetails ? (
-              <IconButton
-                label={moreLabel}
-                disabled={busy}
-                onClick={onOpenDetails}
-              >
-                <MoreIcon />
-              </IconButton>
-            ) : null}
-          </>
-        }
       />
       {model.entryTranslation ? (
         <SenseCardReveal open={translationVisible}>
@@ -332,7 +315,10 @@ function EntityHeader({
             data-testid="entry-translation"
             className="mt-2 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]"
           >
-            {model.entryTranslation}
+            {[
+              model.entryTranslation,
+              ...(model.entryTranslationAlternatives ?? []),
+            ].join(" · ")}
           </p>
         </SenseCardReveal>
       ) : null}
@@ -347,9 +333,6 @@ function FaceBody({
   hint,
   hintVisible,
   hintLabel,
-  audioLabel,
-  busy,
-  onPlayAudio,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -357,9 +340,6 @@ function FaceBody({
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
   hintLabel: string;
-  audioLabel: string;
-  busy: boolean;
-  onPlayAudio?: () => void;
 }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
@@ -367,18 +347,6 @@ function FaceBody({
         <div className="flex flex-col items-center gap-4 text-center">
           {mode === "definition-to-word" ? (
             <>
-              <div className="absolute right-0 top-0 flex gap-2">
-                {onPlayAudio ? (
-                  <IconButton
-                    label={audioLabel}
-                    disabled={busy}
-                    onClick={onPlayAudio}
-                    compact
-                  >
-                    <SpeakerIcon />
-                  </IconButton>
-                ) : null}
-              </div>
               <p
                 data-testid="reverse-prompt"
                 className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
@@ -392,18 +360,6 @@ function FaceBody({
               headword={model.headword}
               tone="light"
               showMetadata={false}
-              inlineAction={
-                onPlayAudio ? (
-                  <IconButton
-                    label={audioLabel}
-                    disabled={busy}
-                    onClick={onPlayAudio}
-                    compact
-                  >
-                    <SpeakerIcon />
-                  </IconButton>
-                ) : null
-              }
             />
           )}
         </div>
@@ -426,11 +382,18 @@ function AnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
+  onReport,
   onReachEnd,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
+  onReport: (
+    capability: Extract<
+      PlatformSenseCardCapabilityV2,
+      { actionId: "report-content" }
+    >,
+  ) => void;
   onReachEnd: () => void;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -487,7 +450,7 @@ function AnswerBody({
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
         style={{ maskImage, WebkitMaskImage: maskImage }}
-        className="h-full overflow-y-auto px-6 pb-8 pt-0 [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden"
+        className="h-full overflow-y-auto px-6 pb-8 pt-4 [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden"
       >
         {definitions.length ? (
           <div className="space-y-4 pt-2">
@@ -496,6 +459,8 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -513,6 +478,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="usage"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -530,6 +497,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="example"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -547,6 +516,8 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="idiom"
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -558,6 +529,8 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -607,10 +580,19 @@ function ContentSection({
 function ContentItem({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
   accent = "none",
 }: {
   item: TrainingSenseCardContent;
   translationVisible: boolean;
+  onReport: (
+    capability: Extract<
+      PlatformSenseCardCapabilityV2,
+      { actionId: "report-content" }
+    >,
+  ) => void;
+  reportLabel: string;
   accent?: "none" | "usage" | "example" | "idiom";
 }) {
   const literary =
@@ -624,16 +606,33 @@ function ContentItem({
           ? "border-l-[3px] border-amber-400 pl-4"
           : "";
   return (
-    <div className={border}>
-      <p
-        className={
-          literary
-            ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
-            : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
-        }
-      >
-        {item.text}
-      </p>
+    <div
+      className={border}
+      data-content-node-id={item.contentNodeId}
+      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
+      data-content-kind={item.kind}
+    >
+      <div className="flex items-start gap-2">
+        <p
+          className={`min-w-0 flex-1 ${
+            literary
+              ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
+              : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
+          }`}
+        >
+          {item.text}
+        </p>
+        {item.reportCapability ? (
+          <button
+            type="button"
+            aria-label={`${reportLabel}: ${item.text}`}
+            onClick={() => onReport(item.reportCapability!)}
+            className="mt-1 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <FlagIcon />
+          </button>
+        ) : null}
+      </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
           <p
@@ -644,8 +643,31 @@ function ContentItem({
           </p>
         </SenseCardReveal>
       ) : null}
+      {item.children?.length ? (
+        <div className="mt-2 space-y-2 pl-4">
+          {item.children.map((child) => (
+            <ContentItem
+              key={child.contentNodeId}
+              item={child}
+              translationVisible={translationVisible}
+              accent={contentAccent(child.kind)}
+              onReport={onReport}
+              reportLabel={reportLabel}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function contentAccent(
+  kind: TrainingSenseCardContent["kind"],
+): "none" | "usage" | "example" | "idiom" {
+  if (kind === "usage-pattern") return "usage";
+  if (kind === "example") return "example";
+  if (kind === "idiom") return "idiom";
+  return "none";
 }
 
 function FaceDock({
@@ -670,7 +692,7 @@ function FaceDock({
   showAnswerRef: React.RefObject<HTMLButtonElement>;
 }) {
   return (
-    <div className="flex h-full flex-col gap-2">
+    <div className="flex h-full flex-col gap-1.5">
       <div className="flex gap-3">
         {hintAvailable ? (
           <button
@@ -743,7 +765,7 @@ function AnswerDock({
           type="button"
           disabled={busy}
           onClick={() => onAction(model.learnCapability!)}
-          className="mx-auto block h-11 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
+          className="mx-auto block h-11 shrink-0 w-[94%] rounded-xl border border-indigo-400/60 bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-[#292650] dark:text-indigo-100 dark:hover:bg-[#332f60]"
         >
           {t(model.learnCapability.messageKey)}
         </button>
@@ -753,9 +775,9 @@ function AnswerDock({
         <div
           role="group"
           aria-label={t("senseCard.sections.reviewPrompt")}
-          className="flex flex-1 flex-col"
+          className="flex shrink-0 flex-col"
         >
-          <div className="grid h-[76px] grid-cols-2 gap-2 sm:h-10 sm:grid-cols-4">
+          <div className="grid h-[74px] grid-cols-2 gap-1.5 sm:h-11 sm:grid-cols-4">
             {model.reviewCapabilities.map((capability, index) => (
               <button
                 key={capability.reviewResult}
@@ -772,13 +794,13 @@ function AnswerDock({
         </div>
       ) : null}
 
-      <div className="flex min-h-3 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
+      <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
         {model.reportCapabilities.length ? (
           <button
             type="button"
             disabled={busy}
             onClick={() => onAction(model.reportCapabilities[0])}
-            className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-transparent px-2 text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className="inline-flex h-6 min-h-6 items-center gap-1.5 rounded-lg border border-transparent px-2 text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
           >
             <FlagIcon /> {t("senseCard.report")}
           </button>
@@ -790,7 +812,7 @@ function AnswerDock({
             type="button"
             disabled={busy}
             onClick={() => onAction(model.markKnownCapability!)}
-            className="flex items-center gap-2 hover:text-slate-900 disabled:opacity-50 dark:hover:text-slate-100"
+            className="flex h-6 min-h-6 items-center gap-2 rounded-lg px-2 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"
           >
             <CheckIcon /> {t(model.markKnownCapability.messageKey)}
           </button>
@@ -803,7 +825,13 @@ function AnswerDock({
 function hasTranslation(model: TrainingSenseCardModel) {
   return Boolean(
     model.entryTranslation ||
-    [...model.definitions, ...model.examples].some((item) => item.translation),
+    [...model.definitions, ...model.examples].some(hasContentTranslation),
+  );
+}
+
+function hasContentTranslation(item: TrainingSenseCardContent): boolean {
+  return Boolean(
+    item.translation || item.children?.some(hasContentTranslation),
   );
 }
 

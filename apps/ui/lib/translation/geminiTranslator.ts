@@ -1,5 +1,13 @@
-import { ITranslator } from "./ITranslator";
+import {
+  ITranslator,
+  type TranslationProviderTextRequest,
+  type TranslationProviderTextResult,
+} from "./ITranslator";
 import crypto from "crypto";
+import {
+  normalizeTranslationProviderError,
+  safeTranslationProviderError,
+} from "./translationProviderFailure";
 
 type GeminiTranslatorOptions = {
   apiKey: string;
@@ -125,6 +133,20 @@ export class GeminiTranslator implements ITranslator {
   async translate(textOrTexts: string | string[], targetLang: string) {
     const texts = Array.isArray(textOrTexts) ? textOrTexts : [textOrTexts];
     if (texts.length === 0) return Array.isArray(textOrTexts) ? [] : "";
+    const result = await this.translateText({
+      texts,
+      targetLanguageCode: targetLang,
+    });
+    return Array.isArray(textOrTexts)
+      ? result.translations
+      : result.translations[0] ?? "";
+  }
+
+  async translateText(
+    request: TranslationProviderTextRequest,
+  ): Promise<TranslationProviderTextResult> {
+    const texts = request.texts;
+    const targetLang = request.targetLanguageCode;
     if (!this.apiKey) {
       throw new Error("GEMINI_API_KEY is not configured");
     }
@@ -166,22 +188,33 @@ export class GeminiTranslator implements ITranslator {
 
         if (!res.ok) {
           const body = await res.text().catch(() => "");
-          throw new Error(`Gemini error ${res.status}: ${body || res.statusText}`);
+          throw safeTranslationProviderError("provider_http_error", {
+            status: res.status,
+            diagnostic: body || res.statusText,
+          });
         }
 
         const data = (await res.json()) as GeminiResponse;
         if (data?.error?.message) {
-          throw new Error(`Gemini error: ${data.error.message}`);
+          throw safeTranslationProviderError(
+            "provider_response_error",
+            data.error.message,
+          );
         }
 
         const content =
           data?.candidates?.[0]?.content?.parts?.map((part) => part?.text ?? "").join("") ??
           "";
         if (!content.trim()) {
-          throw new Error("Gemini returned an empty translation");
+          throw safeTranslationProviderError("provider_empty_response", "empty");
         }
 
         return parseTranslations(content, texts.length);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw safeTranslationProviderError("provider_timeout", error);
+        }
+        throw normalizeTranslationProviderError(error, "provider_network_error");
       } finally {
         clearTimeout(timeout);
       }
@@ -191,9 +224,20 @@ export class GeminiTranslator implements ITranslator {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const translated = await attemptTranslate();
-        return Array.isArray(textOrTexts) ? translated : translated[0] ?? "";
+        return {
+          translations: translated,
+          meta: {
+            providerSelected: "gemini",
+            providerUsed: "gemini",
+            usedFallback: false,
+            model: this.model,
+          },
+        };
       } catch (err) {
-        lastError = err;
+        lastError = normalizeTranslationProviderError(
+          err,
+          "provider_response_error",
+        );
         if (attempt < this.maxRetries) {
           await delay(300 * Math.pow(2, attempt));
           continue;
@@ -206,19 +250,30 @@ export class GeminiTranslator implements ITranslator {
         console.warn("[translation] Gemini failed; using DeepL fallback", {
           geminiKeyHash,
           model: this.model,
-          error: String(lastError),
+          failure: normalizeTranslationProviderError(lastError).failure,
         });
         const fallbackResult = await this.fallback.translate(texts, targetLang);
-        return Array.isArray(textOrTexts) ? fallbackResult : fallbackResult[0] ?? "";
+        const translations = Array.isArray(fallbackResult)
+          ? fallbackResult
+          : [fallbackResult];
+        return {
+          translations,
+          meta: {
+            providerSelected: "gemini",
+            providerUsed: "deepl",
+            usedFallback: true,
+            primaryFailure: normalizeTranslationProviderError(lastError).failure,
+            model: this.model,
+          },
+        };
       } catch (fallbackErr) {
-        throw new Error(
-          `Gemini failed (${String(lastError)}) and fallback failed (${String(
-            fallbackErr
-          )})`
-        );
+        throw safeTranslationProviderError("provider_fallback_error", {
+          primary: normalizeTranslationProviderError(lastError).failure,
+          fallback: normalizeTranslationProviderError(fallbackErr).failure,
+        });
       }
     }
 
-    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+    throw normalizeTranslationProviderError(lastError);
   }
 }

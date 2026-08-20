@@ -155,18 +155,6 @@ export type UserDictionaryEntry = {
 };
 
 export type ReviewResult = "fail" | "hard" | "success" | "easy" | "freeze" | "hide";
-export type HistorySource = "click" | "review";
-
-export type SidebarHistoryItem = DictionaryEntry & {
-  source: HistorySource;
-  result?: "fail" | "hard" | "success" | "easy" | "neutral";
-  clickedWord?: string;
-  stats?: {
-    click_count: number;
-    last_seen_at: string | null;
-  };
-  debugStats?: DebugStats;
-};
 
 export type WordListType = "curated" | "user";
 export type ListCardPolicy = "inherit" | "prefer" | "restrict";
@@ -301,11 +289,20 @@ export type ScenarioStats = {
 
 export type TranslationOverlay = {
   headword?: string;
+  entryTranslation?: {
+    primaryText: string;
+    alternativeTexts: string[];
+    baseText: string | null;
+    note: string | null;
+  } | null;
   meanings?: Array<{
     definition?: string;
     context?: string;
+    note?: string;
     examples?: string[];
-    idioms?: Array<string | { expression?: string; explanation?: string }>;
+    idioms?: Array<
+      string | { expression?: string; explanation?: string; examples?: string[] }
+    >;
   }>;
   // Optional provenance/debug metadata. Persisted in DB as part of `overlay` JSON.
   // This is intentionally best-effort: older cached translations may not have it.
@@ -313,7 +310,17 @@ export type TranslationOverlay = {
     providerSelected?: "deepl" | "openai" | "gemini";
     providerUsed?: "deepl" | "openai" | "gemini";
     usedFallback?: boolean | null;
-    primaryError?: string | null;
+    primaryFailure?: {
+      code:
+        | "provider_http_error"
+        | "provider_response_error"
+        | "provider_empty_response"
+        | "provider_timeout"
+        | "provider_network_error"
+        | "provider_fallback_error"
+        | "provider_unknown_error";
+      fingerprint: string;
+    } | null;
     promptFingerprint?: string | null;
     translatedPaths?: Array<Array<string | number>>;
   };

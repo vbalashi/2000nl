@@ -2,13 +2,13 @@
 
 ## Goal
 
-Prepare a low-risk refactor plan for the largest UI files without changing the training experience before the planned designer review is incorporated.
+Reduce the largest UI surfaces through behavior-preserving domain hooks without changing the rendered training experience. The August Platform V2 design work has now reopened the non-visual Training lifecycle slice; visual decomposition remains separately gated.
 
 ## Context
 
 Current large files:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - roughly 2.2k lines after non-visual hook extraction; still owns session orchestration, sidebars, queue/load sequencing, and action handling.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,861 lines before #172; still owns presentation, sidebars, settings, gestures, and destination composition after lifecycle extraction.
 - `apps/ui/components/training/TrainingCard.tsx` - roughly 1.1k lines after pure text and translation hook extraction; still owns card rendering across modes, examples, idioms, badges, audio affordances, and reveal states.
 - `apps/ui/lib/trainingService.ts` - compatibility barrel; implementation now lives in focused modules under `apps/ui/lib/training/`.
 
@@ -61,6 +61,7 @@ Recommended initial extraction candidates:
 - 2026-05-16: Added dictionary lookup characterization and continued Stage 2 by moving training-word/dictionary lookup helpers into `apps/ui/lib/training/dictionaryService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added review side-effect characterization and moved review/view/click/debug helpers into `apps/ui/lib/training/reviewService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added stats/history characterization and moved detailed stats plus recent-history hydration into `apps/ui/lib/training/statsHistoryService.ts` behind the `trainingService.ts` barrel.
+- 2026-08-14: Issue #141 retired the permanent Training sidebar, standalone Recent tab, eager recent-history client load, sidebar-pinning preference, and their client-only DTO/service code. `fetchStats` now lives in `apps/ui/lib/training/statsService.ts`; the legacy DB column/RPC remain only for rollback compatibility and are not called by the current UI.
 - 2026-05-16: Continued Stage 2 by moving list summary and active-list helpers into `apps/ui/lib/training/listService.ts` behind the `trainingService.ts` barrel; search/list words/mutations remain for the next slice.
 - 2026-05-16: Completed the remaining list/search split by moving word search, list word loading, user-list mutations, and membership helpers into `apps/ui/lib/training/listService.ts`; `trainingService.ts` still re-exports the public API and only imports `fetchWordsForList` for legacy next-card fallback.
 - 2026-05-16: Completed the selection split by moving next-card selection, scenario lookup, scenario stats, cross-reference skipping, debug logging, and legacy list fallback into `apps/ui/lib/training/selectionService.ts`; `trainingService.ts` is now a compatibility barrel.
@@ -73,19 +74,24 @@ Recommended initial extraction candidates:
 - 2026-05-16: Started the pre-designer `TrainingCard` work by extracting pure text helpers into `apps/ui/lib/training/trainingCardText.ts` and adding direct masking tests; no visual JSX/classes changed.
 - 2026-05-16: Completed the pre-designer `TrainingCard` translation slice by adding characterization tests for preload, pending polling, failed state, long-press force refresh, and timer cleanup, then moving translation state/effects into `apps/ui/lib/training/useTrainingTranslation.ts`.
 - 2026-05-16: Audit update: pre-designer non-visual work is complete through Stage 9. Remaining work should stop at the designer-review boundary unless a new approved plan explicitly reopens session or visual extraction.
+- 2026-08-14: #171 removed duplicate Training V2 transition ownership and reached independent spec/architecture review plateau in production.
+- 2026-08-14: #172 explicitly reopened Stage 10 as a non-visual lifecycle extraction. The controller-level matrix now covers fast prepared, DTO-pending, on-demand, Platform reconciliation boundary, reset, and stale completion cases.
 
 ## Analysis Output
 
-Snapshot date: 2026-05-16.
+Snapshot date: 2026-08-14 (#172 working state).
 
 Current measured sizes:
 
-- `apps/ui/components/training/TrainingScreen.tsx` - 2,165 lines.
+- `apps/ui/components/training/TrainingScreen.tsx` - 2,339 lines at the final #172 review point, down from 2,861 at the #172 base.
+- `apps/ui/components/training/useTrainingTurnController.ts` - 518 lines; one deep non-visual lifecycle owner.
+- `apps/ui/components/training/useLegacyTrainingReviewPort.ts` - 242 lines; legacy mutation/history adapter.
+- `apps/ui/components/training/useTrainingTurnSelectionPort.ts` - 122 lines; scheduler/list-scope adapter.
 - `apps/ui/components/training/TrainingCard.tsx` - 1,142 lines.
 - `apps/ui/lib/trainingService.ts` - 43 lines, compatibility barrel only.
 - `apps/ui/lib/training/*.ts` - focused service/helper/hook modules.
 
-This plan intentionally favors mechanical extraction and service decomposition over visual component changes. The pending designer review makes JSX/layout movement the highest-risk category.
+This plan intentionally favors mechanical extraction and service decomposition over visual component changes. Current Stage 10 authorization does not authorize JSX/layout changes or legacy renderer retirement.
 
 ## Architect Review Decision
 
@@ -122,7 +128,7 @@ Current responsibilities:
 - Training-word lookup and next-card RPC selection.
 - Scenario RPCs and scenario stats.
 - Review, click, and optional FSRS debug RPCs.
-- Detailed training stats and recent-history hydration.
+- Detailed training stats.
 - Curated/user list listing, word search, list word search, list membership and active-list persistence.
 - User preferences read/write and defaults.
 - Compatibility fallbacks for older DB/RPC deployments.
@@ -130,27 +136,27 @@ Current responsibilities:
 Main coupling points:
 
 - `TrainingScreen.tsx` imports most exports directly.
-- `SettingsModal`, `Sidebar`, and list-management UI likely depend on list/search/preference exports.
+- `SettingsModal`, the details-only drawer, and list-management UI depend on list/search/preference exports.
 - FSRS tests depend on review/session behavior and RPC signatures.
 
 ### `apps/ui/components/training/TrainingScreen.tsx`
 
 Current responsibilities:
 
-- Training session orchestration: current card, reveal state, first encounter behavior, action submission, prefetch, review history updates.
-- User preference hydration and persistence: modes, filter, language, theme, audio quality, translation language, active scenario, new/review ratio, sidebar pinning.
+- Training session orchestration: current card, reveal state, first encounter behavior, action submission, and prefetch.
+- User preference hydration and persistence: modes, filter, language, theme, audio quality, translation language, active scenario, and new/review ratio.
 - Active list hydration, auto-selection, list switching, settings refresh.
-- Stats and recent-history loading.
+- Stats loading.
 - Onboarding/Joyride state and persistence.
 - Keyboard shortcuts and mobile swipe gestures.
 - Audio URL resolution, audio playback, sentence TTS, audio mode persistence.
-- Sidebar/drawer state, details selection, dictionary click lookup.
+- Details-drawer state, details selection, dictionary click lookup.
 - Full screen/header/card/footer/modal JSX composition.
 
 Main coupling points:
 
 - Calls `trainingService` directly for every data operation.
-- Passes many state slices into `TrainingCard`, `FooterStats`, `Sidebar`, `TrainingSidebarDrawer`, and `SettingsModal`.
+- Passes presentation state into `TrainingCard`, `FooterStats`, `TrainingDetailsDrawer`, `WordDetailPanel`, and `SettingsModal`.
 - Local state changes are intentionally intertwined with current UI behavior, so extraction should start with hooks that preserve the existing prop flow.
 
 ### `apps/ui/components/training/TrainingCard.tsx`
@@ -194,8 +200,8 @@ Medium-risk modules:
   - Move `fetchNextTrainingWord`, `fetchNextTrainingWordByScenario`, cross-reference skipping, RPC payload construction, and list fallback behavior.
 - `apps/ui/lib/training/reviewService.ts`
   - Move `recordReview`, `recordWordView`, `recordDefinitionClick`, and `fetchLastReviewDebug`.
-- `apps/ui/lib/training/statsHistoryService.ts`
-  - Move `fetchStats` and `fetchRecentHistory`.
+- `apps/ui/lib/training/statsService.ts`
+  - Own `fetchStats`; the retired Recent surface has no client history service.
 - Keep `apps/ui/lib/trainingService.ts` as a compatibility barrel during the refactor so existing imports do not churn.
 
 Do not split the Supabase client or replace query logic during this pass.
@@ -205,7 +211,7 @@ Do not split the Supabase client or replace query logic during this pass.
 Low-risk hooks/helpers:
 
 - `apps/ui/lib/training/useTrainingPreferences.ts`
-  - Own preference hydration plus persisted setters for theme, audio quality, modes, filter, language, ratio, translation language, scenario, and sidebar pinning.
+  - Own preference hydration plus persisted setters for theme, audio quality, modes, filter, language, ratio, translation language, and scenario.
   - Preserve existing setter names in the returned object to minimize call-site edits.
 - `apps/ui/lib/training/useTrainingAudio.ts`
   - Own `audioModeEnabled` localStorage persistence, `ttsLoading`, `resolveAudioUrl`, `preloadAudioForWord`, `playAudio`, and `playSentenceTTS`.
@@ -374,7 +380,7 @@ Files:
 - Add `apps/ui/lib/training/preferencesService.ts`.
 - Add `apps/ui/lib/training/selectionService.ts`.
 - Add `apps/ui/lib/training/reviewService.ts`.
-- Add `apps/ui/lib/training/statsHistoryService.ts`.
+- Add `apps/ui/lib/training/statsService.ts`.
 - Keep `apps/ui/lib/trainingService.ts` re-exporting all existing public functions and types.
 - Do not update component imports in the first pass.
 
@@ -533,12 +539,15 @@ Risks:
 
 Files:
 
-- Add `apps/ui/lib/training/useTrainingSession.ts` only after stages 0-9 are complete, green, and a new review explicitly approves continuing past the current stop point.
-- Move current word, reveal/hint state, queue turn, prefetch, stats/history loading, review submission, and first encounter handlers.
+- #172 is the explicit approval to continue this non-visual slice after #171.
+- Add `apps/ui/components/training/useTrainingTurnController.ts` as the single owner of queue rotation, next-card selection/preparation, accepted-transition consume/cancel, reset invalidation, review double-submit protection, and both legacy/Platform accepted paths.
+- Keep rendering state (`currentWord`, reveal/hint, layout) in `TrainingScreen`; inject narrow selection, legacy-review, refresh, audio, and presentation ports.
+- Add `useTrainingTurnSelectionPort.ts` and `useLegacyTrainingReviewPort.ts` so the controller does not absorb scheduler query construction or history/debug projection.
 
 Protected by:
 
 - Stage 0 session tests.
+- `apps/ui/tests/useTrainingTurnController.test.tsx` transition matrix.
 - `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
 - `cd apps/ui && npm run lint`
 - FSRS DB-backed tests when DB access is available:
@@ -546,7 +555,7 @@ Protected by:
 
 Risks:
 
-- This is the riskiest screen extraction. It combines current card state, reveal state, queue turn, `reviewedInSessionRef`, prefetch, turn-id idempotency, stats refresh, recent history, first-encounter behavior, list scope, and action double-submit protection.
+- This remains the riskiest non-visual screen extraction. The controller owns lifecycle state but deliberately does not own JSX, reveal/hint presentation, stats projection, or provider/media implementation.
 - `handleScenarioChange` currently sets scenario state and immediately calls `loadNextWord`; pin intended behavior with a test before extracting.
 - Initial load suppresses exhaustive dependencies intentionally; hook extraction must not introduce double-loading.
 

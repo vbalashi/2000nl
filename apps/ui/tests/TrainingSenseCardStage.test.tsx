@@ -7,8 +7,107 @@ import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+import {
+  goedEntry,
+  goedGroup,
+  nodigEntry,
+  nodigGroup,
+} from "./platformV2IdiomHierarchyFixture";
 
 describe("TrainingSenseCardStage", () => {
+  test("renders two nodig idioms and the goed expression hierarchy", () => {
+    const nodigModel = buildTrainingSenseCardModel({
+      group: nodigGroup,
+      entry: nodigEntry,
+      interfaceLanguage: "en",
+    });
+    const { container, rerender } = render(
+      <TrainingSenseCardStage
+        model={nodigModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+    const nodigIdioms = container.querySelector('[data-section="idioms"]');
+    expect(nodigIdioms).toBeInTheDocument();
+    expect(
+      nodigIdioms?.querySelector('[data-testid="sense-section-header"]'),
+    ).toHaveTextContent("Idioms2");
+    expect(nodigIdioms?.querySelectorAll('[data-content-kind="idiom"]')).toHaveLength(2);
+    expect(
+      nodigIdioms?.querySelectorAll('[data-content-kind="idiom-explanation"]'),
+    ).toHaveLength(2);
+
+    const goedModel = buildTrainingSenseCardModel({
+      group: goedGroup,
+      entry: goedEntry,
+      interfaceLanguage: "en",
+    });
+    const onAction = vi.fn();
+    rerender(
+      <TrainingSenseCardStage
+        model={goedModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+
+    const expression = container.querySelector('[data-content-node-id="idiom-goed"]');
+    const explanation = container.querySelector(
+      '[data-content-node-id="idiom-explanation-goed"]',
+    );
+    const example = container.querySelector(
+      '[data-content-node-id="idiom-example-goed"]',
+    );
+    expect(expression).toContainElement(explanation as HTMLElement);
+    expect(expression).toContainElement(example as HTMLElement);
+    expect(expression?.querySelector("p")).toHaveClass("italic");
+    expect(explanation?.querySelector("p")).not.toHaveClass("italic");
+    expect(example?.querySelector("p")).toHaveClass("italic");
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Report: het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
+      }),
+    );
+    expect(onAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.objectContaining({
+          kind: "content-node",
+          contentNodeId: "idiom-example-goed",
+        }),
+      }),
+    );
+  });
+  test("keeps the audio control in the upper-left corner away from long headwords", () => {
+    const baseModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    render(
+      <TrainingSenseCardStage
+        model={{
+          ...baseModel,
+          headword: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring",
+        }}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    const corner = screen.getByTestId("training-card-audio-corner");
+    expect(corner).toContainElement(screen.getByRole("button", { name: "Play audio" }));
+    expect(screen.getByTestId("sense-card-headword-lockup")).not.toContainElement(
+      screen.getByRole("button", { name: "Play audio" }),
+    );
+  });
   test("renders Report as an actionable, keyboard-focusable button", () => {
     const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,
@@ -61,18 +160,22 @@ describe("TrainingSenseCardStage", () => {
         ...baseModel.definitions,
         {
           contentNodeId: "usage-pattern-1",
+          parentContentNodeId: null,
           kind: "usage-pattern" as const,
           text: "iemand de hand geven",
           translation: "to shake someone's hand",
+          children: [],
         },
       ],
       examples: [
         ...baseModel.examples,
         {
           contentNodeId: "idiom-1",
+          parentContentNodeId: null,
           kind: "idiom" as const,
           text: "door de bank genomen",
           translation: "on average",
+          children: [],
         },
       ],
     };
@@ -92,16 +195,12 @@ describe("TrainingSenseCardStage", () => {
     const headword = screen.getByRole("heading", { name: "hand" });
     const faceAudio = screen.getByRole("button", { name: "Afspelen" });
     expect(faceAudio).toBeInTheDocument();
-    expect(
-      headword.compareDocumentPosition(faceAudio) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(screen.getByTestId("training-card-audio-corner")).toContainElement(
+      faceAudio,
+    );
     expect(
       headword.closest("[data-testid='sense-card-headword-lockup']"),
-    ).toContainElement(faceAudio);
-    expect(faceAudio.parentElement?.previousElementSibling).toContainElement(
-      headword,
-    );
+    ).not.toContainElement(faceAudio);
     expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
     expect(faceShell.className).toContain("flex-1");
@@ -249,6 +348,63 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.queryByRole("button", { name: "Translate" })).not.toBeInTheDocument();
   });
 
+  test("reveals a requested translation as soon as the refreshed model arrives", () => {
+    const translatedModel = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const requestTranslationCapability = {
+      actionId: "request-translation" as const,
+      elementId: "sense-card.translation.request",
+      messageKey: "senseCard.translation.request",
+      target: {
+        kind: "entry" as const,
+        entryId: translatedModel.entryId,
+        contentRevision: "revision-1",
+      },
+      targetLanguageCode: "en",
+    };
+    const pendingModel = {
+      ...translatedModel,
+      entryTranslation: undefined,
+      definitions: translatedModel.definitions.map((item) => ({
+        ...item,
+        translation: undefined,
+      })),
+      examples: translatedModel.examples.map((item) => ({
+        ...item,
+        translation: undefined,
+      })),
+      requestTranslationCapability,
+    };
+    const onAction = vi.fn();
+    const { rerender } = render(
+      <TrainingSenseCardStage
+        model={pendingModel}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Translate" }));
+    expect(onAction).toHaveBeenCalledWith(requestTranslationCapability);
+
+    rerender(
+      <TrainingSenseCardStage
+        model={{ ...translatedModel, requestTranslationCapability }}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onAction={onAction}
+      />,
+    );
+    expect(screen.getByTestId("entry-translation")).toHaveTextContent(
+      translatedModel.entryTranslation!,
+    );
+  });
+
   test("renders the canonical headword instead of pronunciation metadata", () => {
     const model = buildTrainingSenseCardModel({
       group: {
@@ -301,9 +457,8 @@ describe("TrainingSenseCardStage", () => {
     expect(
       screen.getByRole("heading", { name: model.headword }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Afspelen" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
-    expect(onPlayAudio).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Afspelen" })).not.toBeInTheDocument();
+    expect(onPlayAudio).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
   });
 
@@ -344,8 +499,10 @@ describe("TrainingSenseCardStage", () => {
       definitions: [
         {
           contentNodeId: "usage-before-definition",
+          parentContentNodeId: null,
           kind: "usage-pattern" as const,
           text: "iemand geeft iemand een hand",
+          children: [],
         },
         ...baseModel.definitions,
       ],

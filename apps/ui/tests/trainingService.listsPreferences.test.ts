@@ -20,6 +20,7 @@ type QueryRecord = {
 
 const rpc = vi.fn();
 const getUser = vi.fn();
+const getSession = vi.fn();
 const fromResponses = new Map<string, QueryResponse[]>();
 const queries: QueryRecord[] = [];
 
@@ -65,6 +66,7 @@ vi.mock("@/lib/supabaseClient", () => ({
     rpc,
     auth: {
       getUser,
+      getSession,
     },
     from,
   },
@@ -84,7 +86,6 @@ const importService = async () => {
     fetchUserListMembership: service.fetchUserListMembership,
     fetchUserPreferences: service.fetchUserPreferences,
     fetchWordsForList: service.fetchWordsForList,
-    searchDictionaryEntriesV2: service.searchDictionaryEntriesV2,
     searchDictionaryGroups: service.searchDictionaryGroups,
     addWordsToUserList: service.addWordsToUserList,
     createUserList: service.createUserList,
@@ -102,6 +103,8 @@ describe("trainingService list and preference characterization", () => {
   beforeEach(() => {
     rpc.mockReset();
     getUser.mockReset();
+    getSession.mockReset();
+    getSession.mockResolvedValue({ data: { session: null } });
     from.mockClear();
     fromResponses.clear();
     queries.length = 0;
@@ -434,85 +437,6 @@ describe("trainingService list and preference characterization", () => {
       total: 120,
       isLocked: true,
       maxAllowed: 100,
-    });
-  });
-
-  test("searchDictionaryEntriesV2 uses extracted-search RPC payload and maps match metadata", async () => {
-    const { searchDictionaryEntriesV2 } = await importService();
-
-    rpc.mockResolvedValueOnce({
-      data: {
-        items: [
-          {
-            id: "word-1",
-            headword: "huis",
-            part_of_speech: "zn",
-            gender: "het",
-            raw: { meanings: [{ definition: "Een gebouw" }] },
-            is_nt2_2000: true,
-            dictionary_name: "Van Dale NT2",
-            dictionary_slug: "nl-vandale",
-            dictionary_kind: "curated",
-            search_match_group: "exact-headword",
-            search_match_label: "Exacte match",
-            search_matched_text: "huis",
-            search_matched_field: "headword",
-            search_source_path: "dictionary_search_documents.normalized_headword",
-            search_group_rank: 1,
-          },
-        ],
-        total: 3,
-        group_counts: { "exact-headword": 1, example: 2 },
-        query_normalization: {
-          query: "huis",
-          normalized: "huis",
-          normalized_unaccent: "huis",
-        },
-        is_locked: false,
-        max_allowed: 100,
-      },
-      error: null,
-    });
-
-    const result = await searchDictionaryEntriesV2({
-      query: "huis",
-      languageCode: "nl",
-      dictionaryIds: ["dict-nl"],
-      listId: "list-1",
-      listType: "curated",
-      partOfSpeech: "zn",
-      isNt2: true,
-      page: 2,
-      pageSize: 10,
-      includeBodyMatches: true,
-      includeFallback: false,
-    });
-
-    expect(rpc).toHaveBeenCalledWith("search_dictionary_entries_v2", {
-      p_query: "huis",
-      p_language_code: "nl",
-      p_dictionary_ids: ["dict-nl"],
-      p_list_id: "list-1",
-      p_list_type: "curated",
-      p_part_of_speech: "zn",
-      p_is_nt2: true,
-      p_page: 2,
-      p_page_size: 10,
-      p_include_body_matches: true,
-      p_include_fallback: false,
-    });
-    expect(result.groupCounts).toEqual({ "exact-headword": 1, example: 2 });
-    expect(result.queryNormalization).toEqual({
-      query: "huis",
-      normalized: "huis",
-      normalized_unaccent: "huis",
-    });
-    expect(result.items[0]).toMatchObject({
-      id: "word-1",
-      search_match_group: "exact-headword",
-      search_matched_text: "huis",
-      search_matched_field: "headword",
-      search_source_path: "dictionary_search_documents.normalized_headword",
     });
   });
 
@@ -1049,7 +973,6 @@ describe("trainingService list and preference characterization", () => {
         theme_preference: null,
         audio_quality: null,
         translation_lang: "off",
-        training_sidebar_pinned: null,
         preferences: { onboardingCompleted: true },
       },
       error: null,
@@ -1075,7 +998,6 @@ describe("trainingService list and preference characterization", () => {
       newReviewRatio: 2,
       activeScenario: "understanding",
       translationLang: "off",
-      trainingSidebarPinned: false,
       preferences: { onboardingCompleted: true },
       trainingMode: "definition-to-word",
     });

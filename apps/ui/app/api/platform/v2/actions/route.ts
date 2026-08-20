@@ -72,8 +72,38 @@ export async function POST(request: NextRequest) {
     "route.operation",
     () => performPlatformV2Action(auth, service, parsed.request),
   );
+  const response = reply(result.payload, result.status);
+  if (parsed.request.actionId === "review-card") {
+    const attempt = request.headers.get("x-platform-action-attempt") === "2" ? 2 : 1;
+    const error =
+      result.payload && typeof result.payload === "object" && "error" in result.payload
+        ? String(result.payload.error)
+        : null;
+    const outcome = error === "state_conflict"
+      ? attempt === 2
+        ? "newer_remote_state"
+        : "stale_state"
+      : result.receiptStatus === "duplicate"
+        ? attempt === 2
+          ? "commit_then_disconnect"
+          : "duplicate_retry"
+        : result.receiptStatus === "accepted"
+          ? attempt === 2
+            ? "timeout_before_commit"
+            : "accepted"
+          : "failed";
+    response.headers.set("X-Platform-Review-Outcome", outcome);
+    console.info("[platform.training.review]", {
+      requestId: instrumentation.requestId,
+      clientEventId: parsed.request.clientEventId,
+      actionId: parsed.request.actionId,
+      cardTypeId: parsed.request.target.cardTypeId,
+      attempt,
+      outcome,
+    });
+  }
   return appendPlatformRouteHeaders(
-    reply(result.payload, result.status),
+    response,
     instrumentation,
   );
 }

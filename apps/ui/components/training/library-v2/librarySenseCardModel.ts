@@ -1,7 +1,11 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  localizePlatformSemanticTerm,
+  projectPlatformV2SenseContent,
+  type PlatformV2SenseContentNode,
+} from "@/lib/platform/projections/platformV2SenseContent";
 import type {
-  PlatformContentNodeKindV2,
   PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
@@ -33,14 +37,7 @@ export type LibraryMutationCapability =
   | LibraryMarkKnownCapability
   | LibraryUndoKnownCapability;
 
-export type LibrarySenseContent = {
-  contentNodeId: string;
-  parentContentNodeId: string | null;
-  kind: PlatformContentNodeKindV2;
-  text: string;
-  translation: string | null;
-  children: LibrarySenseContent[];
-};
+export type LibrarySenseContent = PlatformV2SenseContentNode;
 
 export type LibrarySenseCardModel = {
   entryId: string;
@@ -49,6 +46,7 @@ export type LibrarySenseCardModel = {
   partOfSpeech: string | null;
   definition: LibrarySenseContent | null;
   entryTranslation: string | null;
+  entryTranslationAlternatives: string[];
   translationStatus: PlatformSenseCardEntryV2["translation"] extends infer _State
     ? NonNullable<PlatformSenseCardEntryV2["translation"]>["status"] | null
     : never;
@@ -60,6 +58,22 @@ export type LibrarySenseCardModel = {
   reportCapability: LibraryReportCapability | null;
 };
 
+export type LibraryCrossReferenceModel = {
+  crossReferenceId: string;
+  displayOrdinal: number | null;
+  label: string | null;
+  text: string;
+  targetQuery: string;
+  targetHeadwordGroupId: string | null;
+  targetEntryId: string | null;
+  sourceDictionaryId: string;
+  followLabel: string;
+};
+
+export type LibraryGroupPresentation =
+  | { kind: "sense-card"; meaning: LibrarySenseCardModel }
+  | { kind: "cross-reference"; reference: LibraryCrossReferenceModel };
+
 export type LibrarySenseCardGroupModel = {
   article: string | null;
   headword: string;
@@ -68,6 +82,8 @@ export type LibrarySenseCardGroupModel = {
   coreVocabularyLabel: string | null;
   senseCount: number;
   meanings: LibrarySenseCardModel[];
+  crossReferences: LibraryCrossReferenceModel[];
+  presentations: LibraryGroupPresentation[];
 };
 
 export type LibrarySenseCardViewState = Record<
@@ -117,58 +133,83 @@ export function buildLibrarySenseCardGroupModel(
   const coreVocabulary = group.indicators.find(
     (indicator) => indicator.indicatorId === "core-vocabulary",
   );
+  const crossReferences = group.entries
+    .filter((entry) => entry.kind === "cross-reference")
+    .map((entry) => ({
+      crossReferenceId: entry.crossReferenceId,
+      displayOrdinal: group.entryCount > 1 ? entry.meaningOrdinal : null,
+      label: entry.label
+        ? platformV2Message(interfaceLanguage, entry.label.messageKey)
+        : null,
+      text: entry.text,
+      targetQuery: entry.target.query,
+      targetHeadwordGroupId: entry.target.headwordGroupId ?? null,
+      targetEntryId: entry.target.entryId ?? null,
+      sourceDictionaryId: group.dictionary.dictionaryId,
+      followLabel: platformV2Message(
+        interfaceLanguage,
+        entry.capabilities.find(
+          (capability) => capability.actionId === "follow-cross-reference",
+        )?.messageKey ?? "crossReference.follow",
+      ),
+    }));
 
+  const meanings = senseEntries.map((entry) =>
+    buildMeaning(
+      entry,
+      group.entryCount,
+      requestedCardTypeId,
+      interfaceLanguage,
+    ),
+  );
+  const meaningById = new Map(
+    meanings.map((meaning) => [meaning.entryId, meaning]),
+  );
+  const referenceById = new Map(
+    crossReferences.map((reference) => [reference.crossReferenceId, reference]),
+  );
   return {
     article: group.header.article ?? null,
     headword: group.header.displayPronunciation ?? group.header.text,
     audioCapability: group.header.audio ?? null,
-    partOfSpeech: partOfSpeech
-      ? t(partOfSpeech.messageKey) === partOfSpeech.messageKey
-        ? (partOfSpeech.sourceValue ?? null)
-        : t(partOfSpeech.messageKey)
-      : null,
+    partOfSpeech: localizePlatformSemanticTerm(
+      partOfSpeech,
+      interfaceLanguage,
+    ),
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     senseCount: group.senseCount,
-    meanings: senseEntries.map((entry) =>
-      buildMeaning(
-        entry,
-        group.senseCount,
-        requestedCardTypeId,
-        interfaceLanguage,
-      ),
+    crossReferences,
+    meanings,
+    presentations: group.entries.flatMap<LibraryGroupPresentation>((entry) =>
+      entry.kind === "sense-card"
+        ? meaningById.has(entry.entryId)
+          ? [
+              {
+                kind: "sense-card" as const,
+                meaning: meaningById.get(entry.entryId)!,
+              },
+            ]
+          : []
+        : referenceById.has(entry.crossReferenceId)
+          ? [
+              {
+                kind: "cross-reference" as const,
+                reference: referenceById.get(entry.crossReferenceId)!,
+              },
+            ]
+          : [],
     ),
   };
 }
 
 function buildMeaning(
   entry: PlatformSenseCardEntryV2,
-  senseCount: number,
+  entryCount: number,
   requestedCardTypeId: CardTypeId,
   interfaceLanguage: OnboardingLanguage,
 ): LibrarySenseCardModel {
-  const nodes = [...entry.contentNodes].sort(
-    (left, right) => left.order - right.order,
-  );
-  const contentById = new Map<string, LibrarySenseContent>();
-  for (const node of nodes) {
-    contentById.set(node.contentNodeId, {
-      contentNodeId: node.contentNodeId,
-      parentContentNodeId: node.parentContentNodeId,
-      kind: node.kind,
-      text: node.text,
-      translation:
-        node.translations.find(
-          (translation) =>
-            translation.status === "ready" && Boolean(translation.text),
-        )?.text ?? null,
-      children: [],
-    });
-  }
-  for (const node of contentById.values()) {
-    if (!node.parentContentNodeId) continue;
-    contentById.get(node.parentContentNodeId)?.children.push(node);
-  }
-  const content = [...contentById.values()];
+  const { orderedNodes: content, rootNodes } =
+    projectPlatformV2SenseContent(entry);
   const summaryId = entry.summaryContentNodeId;
   const definition =
     content.find((node) => node.contentNodeId === summaryId) ??
@@ -179,24 +220,23 @@ function buildMeaning(
   return {
     entryId: entry.entryId,
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
-    displayOrdinal: senseCount > 1 ? entry.meaningOrdinal : null,
-    partOfSpeech: entry.partOfSpeech
-      ? platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey) ===
-        entry.partOfSpeech.messageKey
-        ? (entry.partOfSpeech.sourceValue ?? null)
-        : platformV2Message(interfaceLanguage, entry.partOfSpeech.messageKey)
-      : null,
+    displayOrdinal: entryCount > 1 ? entry.meaningOrdinal : null,
+    partOfSpeech: localizePlatformSemanticTerm(
+      entry.partOfSpeech,
+      interfaceLanguage,
+    ),
     definition,
     entryTranslation:
       entry.translation?.status === "ready" && entry.translation.isFresh
         ? (entry.translation.text ?? null)
         : null,
+    entryTranslationAlternatives:
+      entry.translation?.status === "ready" && entry.translation.isFresh
+        ? (entry.translation.alternativeTexts ?? [])
+        : [],
     translationStatus: entry.translation?.status ?? null,
-    details: content.filter(
-      (node) =>
-        node.contentNodeId !== definition?.contentNodeId &&
-        (!node.parentContentNodeId ||
-          !contentById.has(node.parentContentNodeId)),
+    details: rootNodes.filter(
+      (node) => node.contentNodeId !== definition?.contentNodeId,
     ),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     startLearning: capability(entry, "start-learning"),

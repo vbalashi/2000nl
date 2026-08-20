@@ -29,7 +29,7 @@ const { createClient } = require("@supabase/supabase-js");
 const DEFAULT_OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_OPENAI_MODEL = "gpt-5.2";
 
-// Keep in sync with apps/ui/app/api/translation/route.ts
+// Keep in sync with the dictionary-meaning translation coordinator and policy modules.
 const TRANSLATION_PIPELINE_VERSION = "note_v1";
 
 const POS_DUTCH_LABELS = {
@@ -100,6 +100,35 @@ function loadPromptText(filename) {
 
 function sha256(text) {
   return crypto.createHash("sha256").update(String(text || "")).digest("hex");
+}
+
+const SAFE_PROVIDER_FAILURE_RE =
+  /^(provider_http_error|provider_response_error|provider_empty_response|provider_timeout|provider_network_error|provider_fallback_error|provider_unknown_error):[a-f0-9]{24}$/;
+
+function safeProviderFailure(code) {
+  const fingerprint = sha256(`translation-provider-failure-v1\0${code}`).slice(0, 24);
+  return `${code}:${fingerprint}`;
+}
+
+function normalizeProviderFailure(error) {
+  const message = String(error && error.message ? error.message : error || "");
+  return SAFE_PROVIDER_FAILURE_RE.test(message)
+    ? message
+    : safeProviderFailure("provider_unknown_error");
+}
+
+function bulkFailureRecords(error, identity) {
+  const safeError = normalizeProviderFailure(error);
+  return {
+    log: { ok: false, ...identity, error: safeError },
+    db: {
+      ...identity,
+      status: "failed",
+      overlay: null,
+      note: null,
+      error_message: safeError,
+    },
+  };
 }
 
 function getOpenAiTranslationPromptFingerprint() {
@@ -328,16 +357,19 @@ async function openAITranslateWithRetries({ apiKey, apiUrl, model, texts, target
 
       if (!res.ok) {
         const resBody = await res.text().catch(() => "");
-        throw new Error(`OpenAI error ${res.status}: ${resBody || res.statusText}`);
+        void resBody;
+        throw new Error(safeProviderFailure("provider_http_error"));
       }
 
       const data = await res.json();
       const errMsg = data && data.error && data.error.message;
-      if (errMsg) throw new Error(`OpenAI error: ${errMsg}`);
+      if (errMsg) throw new Error(safeProviderFailure("provider_response_error"));
 
       const content = (((data || {}).choices || [])[0] || {}).message || {};
       const msg = content.content || "";
-      if (!String(msg).trim()) throw new Error("OpenAI returned an empty translation");
+      if (!String(msg).trim()) {
+        throw new Error(safeProviderFailure("provider_empty_response"));
+      }
 
       return parseOpenAIResult(String(msg), texts.length);
     } catch (err) {
@@ -616,28 +648,20 @@ async function main() {
           }
         } catch (err) {
           failures += 1;
-          const message = String(err && err.message ? err.message : err).slice(0, 2000);
-          appendLog({
-            ok: false,
+          const failure = bulkFailureRecords(err, {
             word_entry_id: wordId,
             target_lang: normalizeLang(dbLang),
             provider: "openai",
-            error: message,
           });
+          appendLog(failure.log);
 
           if (!dryRun) {
             await client
               .from("word_entry_translations")
               .upsert(
                 {
-                  word_entry_id: wordId,
-                  target_lang: normalizeLang(dbLang),
-                  provider: "openai",
-                  status: "failed",
-                  overlay: null,
-                  note: null,
+                  ...failure.db,
                   source_fingerprint: fingerprint,
-                  error_message: message,
                   updated_at: new Date().toISOString(),
                 },
                 { onConflict: "word_entry_id,target_lang,provider" }
@@ -679,7 +703,15 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(normalizeProviderFailure(err));
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  bulkFailureRecords,
+  normalizeProviderFailure,
+  openAITranslateWithRetries,
+};

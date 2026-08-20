@@ -1,5 +1,14 @@
 import type { CardTypeId, LookupIntent, PlatformSourceContextV2 } from "./platform";
 
+export const PLATFORM_V2_CARD_TYPE_IDS = [
+  "word-to-definition",
+  "definition-to-word",
+  "listen-recognize",
+  "listen-type",
+] as const;
+
+export type PlatformV2CardTypeId = (typeof PLATFORM_V2_CARD_TYPE_IDS)[number];
+
 export type PlatformSemanticTermV2 = {
   termId: string;
   messageKey: string;
@@ -70,6 +79,9 @@ export type PlatformEntryTranslationStateV2 = {
   targetLanguageCode: string;
   status: "ready" | "pending" | "failed" | "not-available";
   text?: string;
+  alternativeTexts?: string[];
+  baseText?: string | null;
+  note?: string | null;
   sourceContentFingerprint: string;
   translationPolicyVersion: string;
   providerRevision?: string;
@@ -224,6 +236,7 @@ export type PlatformSenseCardEntryV2 = {
 export type PlatformCrossReferenceEntryV2 = {
   kind: "cross-reference";
   crossReferenceId: string;
+  meaningOrdinal: number | null;
   label: PlatformSemanticTermV2 | null;
   text: string;
   target: {

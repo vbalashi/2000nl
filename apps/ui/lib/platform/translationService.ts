@@ -1,4 +1,8 @@
 import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
+import {
+  sanitizeStoredTranslationError,
+  sanitizeTranslationOverlay,
+} from "../translation/translationArtifactSafety";
 
 type TranslationCacheRow = {
   id?: string | null;
@@ -125,7 +129,7 @@ export async function resolveLookupTranslationContext(
           status: "ready",
           ...base,
         },
-        overlay: row.overlay,
+        overlay: sanitizeTranslationOverlay(row.overlay),
       });
       continue;
     }
@@ -138,13 +142,14 @@ export async function resolveLookupTranslationContext(
       });
       continue;
     }
+    const safeErrorMessage = sanitizeStoredTranslationError(row.error_message);
     artifactsByEntryId.set(entryId, {
       metadata: {
         status: "failed",
         ...base,
         error: {
           code: "translation_failed",
-          ...(row.error_message ? { message: row.error_message } : {}),
+          ...(safeErrorMessage ? { message: safeErrorMessage } : {}),
         },
       },
     });

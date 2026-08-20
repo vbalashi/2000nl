@@ -1,6 +1,10 @@
 import type { AuthenticatedSupabase } from "./serverSupabase";
 import { parseSourceContext } from "./sourceContext";
-import type { PlatformAction, PlatformActionBody, PlatformOperationResult } from "./platformApi";
+import type {
+  PlatformAction,
+  PlatformActionBody,
+  PlatformOperationResult,
+} from "./platformApiContracts";
 
 const SUPPORTED_PLATFORM_ACTIONS: PlatformAction[] = [
   "fetch-entry",

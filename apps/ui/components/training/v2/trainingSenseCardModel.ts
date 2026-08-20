@@ -1,19 +1,17 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  localizePlatformSemanticTerm,
+  projectPlatformV2SenseContent,
+  type PlatformV2SenseContentNode,
+} from "@/lib/platform/projections/platformV2SenseContent";
 import type {
-  PlatformContentNodeV2,
   PlatformAudioCapabilityV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../../packages/shared/types/platformV2";
 
-export type TrainingSenseCardContent = {
-  contentNodeId: string;
-  kind: PlatformContentNodeV2["kind"];
-  text: string;
-  translation?: string;
-};
+export type TrainingSenseCardContent = PlatformV2SenseContentNode;
 
 export type TrainingSenseCardModel = {
   entryId: string;
@@ -22,6 +20,7 @@ export type TrainingSenseCardModel = {
   partOfSpeech?: string;
   coreVocabularyLabel?: "2K";
   entryTranslation?: string;
+  entryTranslationAlternatives?: string[];
   requestTranslationCapability?: Extract<
     PlatformSenseCardCapabilityV2,
     { actionId: "request-translation" }
@@ -50,12 +49,12 @@ export type TrainingSenseCardModel = {
 };
 
 const reviewOrder = ["fail", "hard", "success", "easy"] as const;
-const definitionKinds = new Set<PlatformContentNodeV2["kind"]>([
+const definitionKinds = new Set<PlatformV2SenseContentNode["kind"]>([
   "definition",
   "usage-pattern",
   "usage-note",
 ]);
-const exampleKinds = new Set<PlatformContentNodeV2["kind"]>([
+const exampleKinds = new Set<PlatformV2SenseContentNode["kind"]>([
   "example",
   "idiom",
   "idiom-explanation",
@@ -70,18 +69,7 @@ export function buildTrainingSenseCardModel({
   entry: PlatformSenseCardEntryV2;
   interfaceLanguage: OnboardingLanguage;
 }): TrainingSenseCardModel {
-  const nodes = [...entry.contentNodes].sort((left, right) => left.order - right.order);
-  const content = (node: PlatformContentNodeV2): TrainingSenseCardContent => {
-    const translation = node.translations.find(
-      (candidate) => candidate.status === "ready" && candidate.text,
-    )?.text;
-    return {
-      contentNodeId: node.contentNodeId,
-      kind: node.kind,
-      text: node.text,
-      ...(translation ? { translation } : {}),
-    };
-  };
+  const { rootNodes: rootContent } = projectPlatformV2SenseContent(entry);
   const capability = <T extends PlatformSenseCardCapabilityV2["actionId"]>(
     actionId: T,
   ) =>
@@ -91,6 +79,7 @@ export function buildTrainingSenseCardModel({
       } => candidate.actionId === actionId,
     );
   const pos = entry.partOfSpeech ?? group.header.partOfSpeech;
+  const partOfSpeech = localizePlatformSemanticTerm(pos, interfaceLanguage);
   const has2k = group.indicators.some(
     (indicator) =>
       indicator.indicatorId === "core-vocabulary.nt2-2000" ||
@@ -107,16 +96,18 @@ export function buildTrainingSenseCardModel({
     entryId: entry.entryId,
     headword: group.header.displayPronunciation ?? group.header.text,
     ...(group.header.article ? { article: group.header.article } : {}),
-    ...(pos
-      ? { partOfSpeech: platformV2Message(interfaceLanguage, pos.messageKey) }
-      : {}),
+    ...(partOfSpeech ? { partOfSpeech } : {}),
     ...(has2k ? { coreVocabularyLabel: "2K" as const } : {}),
     ...(entryTranslation ? { entryTranslation } : {}),
+    entryTranslationAlternatives:
+      entry.translation?.status === "ready" && entry.translation.isFresh
+        ? (entry.translation.alternativeTexts ?? [])
+        : [],
     ...(capability("request-translation")
       ? { requestTranslationCapability: capability("request-translation") }
       : {}),
-    definitions: nodes.filter((node) => definitionKinds.has(node.kind)).map(content),
-    examples: nodes.filter((node) => exampleKinds.has(node.kind)).map(content),
+    definitions: rootContent.filter((item) => definitionKinds.has(item.kind)),
+    examples: rootContent.filter((item) => exampleKinds.has(item.kind)),
     repeatCount: entry.card?.scheduler.repeatCount ?? 0,
     isKnown: Boolean(entry.card?.knownMark),
     ...(group.header.audio ? { audioCapability: group.header.audio } : {}),

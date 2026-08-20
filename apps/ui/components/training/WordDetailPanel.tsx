@@ -21,7 +21,7 @@ import {
 } from "@/lib/trainingService";
 import { Tooltip } from "@/components/Tooltip";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
-import { translationRequestHeaders } from "@/lib/translation/translationApiClient";
+import { fetchDictionaryMeaningTranslation } from "@/lib/translation/translationApiClient";
 import { getAllMeanings } from "@/lib/wordUtils";
 
 export type WordDetailPanelProps = {
@@ -232,18 +232,11 @@ export function WordDetailPanel({
         setTranslationOverlay(null);
         setTranslationError(null);
 
-        const res = await fetch(
-          `/api/translation?word_id=${encodeURIComponent(
-            entry.id
-          )}&lang=${encodeURIComponent(translationLang)}${
-            opts?.force ? "&force=1" : ""
-          }`,
-          {
-            cache: "no-store",
-            credentials: "same-origin",
-            headers: await translationRequestHeaders(),
-          }
-        );
+        const res = await fetchDictionaryMeaningTranslation({
+          entryId: entry.id,
+          targetLanguageCode: translationLang,
+          force: opts?.force,
+        });
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");

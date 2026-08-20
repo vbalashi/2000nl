@@ -4,23 +4,19 @@ import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
+  fetchPlatformV2CrossReferenceTarget,
   fetchPlatformV2MultiSenseGroup,
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
-import {
-  performPlatformV2TrainingAction,
-  resolvePlatformV2Audio,
-} from "@/lib/platform/platformV2TrainingClient";
+import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingClient";
+import { performPlatformV2TrainingAction } from "@/lib/platform/platformV2TrainingActionClient";
 import {
   addWordsToUserList,
   createUserList,
   fetchEntryListMemberships,
   removeWordsFromUserList,
 } from "@/lib/trainingService";
-import type {
-  EntryLearningListMembership,
-  WordListSummary,
-} from "@/lib/types";
+import type { EntryLearningListMembership, WordListSummary } from "@/lib/types";
 import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
@@ -29,10 +25,12 @@ import {
   buildLibrarySenseCardGroupModel,
   librarySenseCardIdentity,
   type LibraryMutationCapability,
+  type LibraryReportCapability,
 } from "./librarySenseCardModel";
 
 type Props = {
   entryId: string;
+  initialGroup?: PlatformHeadwordGroupV2;
   headword: string;
   cardTypeId?: CardTypeId;
   contentLanguageCode: string;
@@ -47,6 +45,7 @@ type Props = {
 
 export function LibrarySenseCardV2Session({
   entryId,
+  initialGroup,
   headword,
   cardTypeId = "word-to-definition",
   contentLanguageCode,
@@ -62,15 +61,38 @@ export function LibrarySenseCardV2Session({
     translationTargetLanguageCode === "off"
       ? null
       : translationTargetLanguageCode;
+  const compatibleInitialGroup = React.useMemo(() => {
+    const selectedEntry = initialGroup?.entries.find((entry) =>
+      entry.kind === "sense-card"
+        ? entry.entryId === entryId
+        : entry.crossReferenceId === entryId,
+    );
+    if (!initialGroup || !selectedEntry) return null;
+    if (selectedEntry.kind === "cross-reference") return initialGroup;
+    return initialGroup.senseCount > 1 ||
+      initialGroup.entries.some((entry) => entry.kind === "cross-reference")
+      ? initialGroup
+      : null;
+  }, [entryId, initialGroup]);
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
-    null,
+    compatibleInitialGroup,
   );
+  const [activeReferenceTarget, setActiveReferenceTarget] = React.useState<{
+    query: string;
+    sourceDictionaryId: string;
+    targetHeadwordGroupId: string | null;
+    targetEntryId: string | null;
+  } | null>(null);
   const [busyIdentity, setBusyIdentity] = React.useState<string | null>(null);
   const [audioBusy, setAudioBusy] = React.useState(false);
   const [translationStates, setTranslationStates] = React.useState<
     Record<string, "pending" | "failed">
   >({});
   const [error, setError] = React.useState<string | null>(null);
+  const [lookupError, setLookupError] = React.useState<
+    "forbidden" | "timeout" | "contract" | "unavailable" | null
+  >(null);
+  const [lookupRetry, setLookupRetry] = React.useState(0);
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
@@ -85,6 +107,7 @@ export function LibrarySenseCardV2Session({
   );
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
+  const groupRequestSequence = React.useRef(0);
 
   React.useEffect(() => {
     translationSession.current += 1;
@@ -95,18 +118,35 @@ export function LibrarySenseCardV2Session({
     setTranslationStates({});
   }, [cardTypeId, entryId, translationLanguage]);
 
+  React.useEffect(() => {
+    setActiveReferenceTarget(null);
+  }, [entryId]);
+
   const load = React.useCallback(
     async (signal?: AbortSignal, expectedTranslationSession?: number) => {
-      const next = await fetchPlatformV2MultiSenseGroup({
-        query: headword,
-        entryId,
-        cardTypeId,
-        contentLanguageCode,
-        translationTargetLanguageCode: translationLanguage,
-        signal,
-      });
+      const requestSequence = ++groupRequestSequence.current;
+      const next = activeReferenceTarget
+        ? await fetchPlatformV2CrossReferenceTarget({
+            query: activeReferenceTarget.query,
+            sourceDictionaryId: activeReferenceTarget.sourceDictionaryId,
+            targetHeadwordGroupId: activeReferenceTarget.targetHeadwordGroupId,
+            targetEntryId: activeReferenceTarget.targetEntryId,
+            cardTypeId,
+            contentLanguageCode,
+            translationTargetLanguageCode: translationLanguage,
+            signal,
+          })
+        : await fetchPlatformV2MultiSenseGroup({
+            query: headword,
+            entryId,
+            cardTypeId,
+            contentLanguageCode,
+            translationTargetLanguageCode: translationLanguage,
+            signal,
+          });
       if (
         signal?.aborted ||
+        requestSequence !== groupRequestSequence.current ||
         (expectedTranslationSession != null &&
           expectedTranslationSession !== translationSession.current)
       ) {
@@ -115,26 +155,66 @@ export function LibrarySenseCardV2Session({
       setGroup(next);
       return next;
     },
-    [cardTypeId, contentLanguageCode, entryId, headword, translationLanguage],
+    [
+      activeReferenceTarget,
+      cardTypeId,
+      contentLanguageCode,
+      entryId,
+      headword,
+      translationLanguage,
+    ],
   );
 
   React.useEffect(() => {
     const controller = new AbortController();
-    setGroup(null);
+    setGroup(compatibleInitialGroup);
     setError(null);
-    void load(controller.signal).catch(() => {
-      if (!controller.signal.aborted) setGroup(null);
+    setLookupError(null);
+    if (compatibleInitialGroup && !activeReferenceTarget) {
+      return () => controller.abort();
+    }
+    void load(controller.signal).catch((cause) => {
+      const aborted =
+        controller.signal.aborted ||
+        Boolean(
+          cause &&
+            typeof cause === "object" &&
+            "name" in cause &&
+            cause.name === "AbortError",
+        );
+      if (!aborted) {
+        const message = cause instanceof Error ? cause.message : "";
+        setLookupError(
+          message === "platform_request_timeout"
+            ? "timeout"
+            : message === "contract-mismatch"
+              ? "contract"
+              : message === "lookup_http_401" || message === "lookup_http_403"
+                ? "forbidden"
+                : "unavailable",
+        );
+      }
     });
     return () => controller.abort();
-  }, [load]);
+  }, [activeReferenceTarget, compatibleInitialGroup, load, lookupRetry]);
 
-  const model = React.useMemo(
-    () =>
-      group
-        ? buildLibrarySenseCardGroupModel(group, interfaceLanguage, cardTypeId)
-        : null,
-    [cardTypeId, group, interfaceLanguage],
-  );
+  const model = React.useMemo(() => {
+    const matchesSelectedEntry = group?.entries.some((candidate) =>
+      candidate.kind === "sense-card"
+        ? candidate.entryId === entryId &&
+          candidate.card?.cardTypeId === cardTypeId
+        : candidate.crossReferenceId === entryId,
+    );
+    const compatibleGroup =
+      group && (activeReferenceTarget || matchesSelectedEntry) ? group : null;
+    return compatibleGroup
+      ? buildLibrarySenseCardGroupModel(
+          compatibleGroup,
+          interfaceLanguage,
+          cardTypeId,
+        )
+      : null;
+  }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage]);
 
   const loadMemberships = React.useCallback(
     async (entryIds: string[]) => {
@@ -182,12 +262,19 @@ export function LibrarySenseCardV2Session({
     }
   };
 
+  const handleReport = (_capability: LibraryReportCapability) => {
+    setError(
+      platformV2Message(interfaceLanguage, "senseCard.reportUnavailable"),
+    );
+  };
+
   const handlePlayAudio = async () => {
     if (!group?.header.audio) return;
     setAudioBusy(true);
     setError(null);
     try {
       const url = await resolvePlatformV2Audio({
+        cacheOwnerId: userId ?? "library-anonymous",
         capability: group.header.audio,
         text: group.header.text,
       });
@@ -209,10 +296,7 @@ export function LibrarySenseCardV2Session({
     await loadMemberships(model.meanings.map((meaning) => meaning.entryId));
   }, [loadMemberships, model]);
 
-  const handleToggleList = async (
-    list: WordListSummary,
-    included: boolean,
-  ) => {
+  const handleToggleList = async (list: WordListSummary, included: boolean) => {
     if (!collectionsEntryId) return;
     setCollectionBusyListId(list.id);
     setCollectionStatus(null);
@@ -370,7 +454,49 @@ export function LibrarySenseCardV2Session({
     [],
   );
 
-  if (!model) return <>{fallback}</>;
+  const lookupErrorText = lookupError
+    ? interfaceLanguage === "nl"
+      ? lookupError === "timeout"
+        ? "De woordenboekkaart duurde te lang om te laden."
+        : lookupError === "forbidden"
+          ? "Je hebt geen toegang tot deze woordenboekkaart."
+          : lookupError === "contract"
+            ? "De woordenboekkaart heeft een onbekend formaat."
+            : "De woordenboekkaart is tijdelijk niet beschikbaar."
+      : lookupError === "timeout"
+        ? "The dictionary card took too long to load."
+        : lookupError === "forbidden"
+          ? "You do not have access to this dictionary card."
+          : lookupError === "contract"
+            ? "The dictionary card has an unsupported format."
+            : "The dictionary card is temporarily unavailable."
+    : null;
+  const errorNotice = lookupErrorText || error ? (
+    <p
+      role="alert"
+      className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
+    >
+      {lookupErrorText ?? error}
+      {lookupError ? (
+        <button
+          type="button"
+          className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
+          onClick={() => setLookupRetry((current) => current + 1)}
+        >
+          {interfaceLanguage === "nl" ? "Opnieuw proberen" : "Retry"}
+        </button>
+      ) : null}
+    </p>
+  ) : null;
+
+  if (!model) {
+    return (
+      <div className="relative h-full min-h-0">
+        {fallback}
+        {errorNotice}
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full min-h-0">
@@ -382,13 +508,14 @@ export function LibrarySenseCardV2Session({
         onPlayAudio={
           model.audioCapability ? () => void handlePlayAudio() : undefined
         }
-        translationEnabled={Boolean(translationLanguage)}
+        translationEnabled={
+          Boolean(translationLanguage) && model.meanings.length > 0
+        }
         translationStates={translationStates}
         collectionCounts={Object.fromEntries(
-          Object.entries(membershipsByEntryId).map(([meaningEntryId, lists]) => [
-            meaningEntryId,
-            lists.length,
-          ]),
+          Object.entries(membershipsByEntryId).map(
+            ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
+          ),
         )}
         onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
           void handleRequestTranslation(
@@ -410,6 +537,8 @@ export function LibrarySenseCardV2Session({
         onTrainNext={
           onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
         }
+        onReport={handleReport}
+        onFollowCrossReference={setActiveReferenceTarget}
         onAction={(capability) => void handleAction(capability)}
       />
       <LibraryCollectionsPicker
@@ -426,19 +555,10 @@ export function LibrarySenseCardV2Session({
         busyListId={collectionBusyListId}
         status={collectionStatus}
         onClose={() => setCollectionsEntryId(null)}
-        onToggleList={(list, included) =>
-          void handleToggleList(list, included)
-        }
+        onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}
       />
-      {error ? (
-        <p
-          role="alert"
-          className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
-        >
-          {error}
-        </p>
-      ) : null}
+      {errorNotice}
     </div>
   );
 }

@@ -4,6 +4,12 @@ import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+import {
+  goedEntry,
+  goedGroup,
+  nodigEntry,
+  nodigGroup,
+} from "./platformV2IdiomHierarchyFixture";
 
 describe("buildTrainingSenseCardModel", () => {
   test("projects one exact semantic entry without ordinal or positional joins", () => {
@@ -59,5 +65,69 @@ describe("buildTrainingSenseCardModel", () => {
     });
 
     expect(model.partOfSpeech).toBeUndefined();
+  });
+
+  test("counts the two nodig expressions instead of four flattened idiom nodes", () => {
+    const model = buildTrainingSenseCardModel({
+      group: nodigGroup,
+      entry: nodigEntry,
+      interfaceLanguage: "nl",
+    });
+    const idioms = model.examples.filter((item) => item.kind === "idiom");
+
+    expect(idioms).toHaveLength(2);
+    expect(idioms.map((item) => item.text)).toEqual([
+      "ik moet nodig",
+      "hij moest zo nodig alleen naar huis fietsen",
+    ]);
+    expect(idioms.map((item) => item.children.map((child) => child.text))).toEqual([
+      ["ik voel dat ik dringend naar de wc moet"],
+      ["hij wilde het, maar het was niet verstandig"],
+    ]);
+  });
+
+  test("keeps the goed explanation and example owned by their expression after reorder", () => {
+    const model = buildTrainingSenseCardModel({
+      group: goedGroup,
+      entry: goedEntry,
+      interfaceLanguage: "nl",
+    });
+    const idiom = model.examples.find((item) => item.contentNodeId === "idiom-goed");
+
+    expect(idiom).toEqual(
+      expect.objectContaining({
+        parentContentNodeId: null,
+        text: "iets komt ten goede aan iemand of iets",
+        children: [
+          expect.objectContaining({
+            contentNodeId: "idiom-explanation-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "idiom-explanation",
+          }),
+          expect.objectContaining({
+            contentNodeId: "idiom-example-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "example",
+          }),
+        ],
+      }),
+    );
+  });
+
+  test("keeps structured entry alternatives separate from the primary text", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        translation: {
+          ...singleSenseEntry.translation!,
+          alternativeTexts: ["palm", "mitt"],
+        },
+      },
+      interfaceLanguage: "en",
+    });
+
+    expect(model.entryTranslation).toBe("hand");
+    expect(model.entryTranslationAlternatives).toEqual(["palm", "mitt"]);
   });
 });

@@ -6,6 +6,12 @@ These tasks are intentionally framed for future implementation agents. They are 
 
 ## Task A — Decompose 2000NL Platform application services
 
+Status: completed 2026-08-14 by issue #174. The route-facing facade remains
+stable; V1 lookup/projection, grouped search, action orchestration, user-list
+actions, contracts, and timing now have focused owners alongside the existing
+source-context, provenance, translation, list, user-dictionary, and projection
+modules.
+
 ### Classification
 
 Follow-up cleanup.

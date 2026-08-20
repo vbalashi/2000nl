@@ -27,7 +27,6 @@ describe("/api/platform/v1/catalog/lookup", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
-    delete process.env.PLATFORM_STRICT_LOOKUP_ROUTES;
     delete process.env.PLATFORM_LOOKUP_LATENCY_LOGS;
     createClient.mockClear();
     rpc.mockReset();
@@ -266,31 +265,4 @@ describe("/api/platform/v1/catalog/lookup", () => {
     );
   });
 
-  test("can roll back catalog lookup to broad catalog search by feature flag", async () => {
-    process.env.PLATFORM_STRICT_LOOKUP_ROUTES = "0";
-    const { POST } = await import("@/app/api/platform/v1/catalog/lookup/route");
-    rpc.mockResolvedValueOnce({
-      data: { items: [], total: 0 },
-      error: null,
-    });
-
-    const response = await POST(
-      request({
-        query: "huis",
-        languageCode: "nl",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("search_public_catalog_entries", {
-      p_query: "huis",
-      p_language_code: "nl",
-      p_page: 1,
-      p_page_size: 10,
-    });
-    expect(rpc).not.toHaveBeenCalledWith(
-      "lookup_public_catalog_entries_v1",
-      expect.anything(),
-    );
-  });
 });

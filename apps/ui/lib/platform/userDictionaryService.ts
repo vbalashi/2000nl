@@ -1,5 +1,8 @@
 import type { AuthenticatedSupabase, ServiceSupabase } from "./serverSupabase";
-import type { PlatformAction, PlatformOperationResult } from "./platformApi";
+import type {
+  PlatformAction,
+  PlatformOperationResult,
+} from "./platformApiContracts";
 import { parseSourceContext } from "./sourceContext";
 
 export type GeneratedUserDictionaryEntryBody = {

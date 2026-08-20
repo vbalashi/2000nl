@@ -135,6 +135,40 @@ silently deletes or rekeys an entry.
 The obsolete UI-local importer now delegates to the supported ingestion
 command, so there is only one write path.
 
+### Pointer-only content updates
+
+When a parser change converts definition-like source content into an explicit
+top-level `cross_reference`, use this order. The order is a compatibility gate:
+the old UI cannot present a cross-reference-only record safely.
+
+1. Create a fresh production database backup, verify that `pg_restore --list`
+   can read it, and preserve the previously imported generated corpus.
+2. Deploy application code that understands the explicit cross-reference DTO
+   together with migration `117_exclude_pointer_only_entries_from_training.sql`.
+   Confirm `/api/health` reports that exact commit. Read-only production probes
+   must confirm the versioned predicate/helper and partial index exist; attach
+   staging or transaction-rollback DB-test evidence that both Training scheduler
+   wrappers exclude a pointer-only fixture. Do not create a production fixture.
+3. Regenerate the corpus cleanly from the source list. Run
+   `audit_pointer_meanings.py` over the complete pre-generation source corpus;
+   require zero unresolved pointer shapes and review every resolvable candidate.
+4. Import the regenerated corpus with `import_words_db.py`. The importer must
+   report unchanged membership and UUID-preserving updates; any membership,
+   identity-group, or moved-fingerprint error stops the rollout.
+5. Run `import_word_forms.py`, refresh search documents, and replay
+   `import_words_db.py`. The replay must be a verified no-op.
+6. In production Library, verify that `daar` meaning 2 has only an **Open
+   reference** action, cannot be learned or marked known, and opens the full
+   `daar-` entry. Run the authenticated scheduler smoke against the now-real
+   `daar` pointer and confirm Training does not select the pointer-only record.
+
+If the pointer smoke fails, keep the compatible application deployed and roll
+the data forward by re-importing the preserved previous manifest, then rebuild
+word forms and search documents. Do not deploy the old application while the
+new cross-reference-only data is active, and do not delete or recreate entry
+UUIDs. A full database restore is reserved for disaster recovery because it
+would also rewind user learning state.
+
 ## Backups And Recovery
 
 Fresh pre-cutover production backup:
@@ -181,7 +215,7 @@ normal rollback mechanism.
 
 Platform V2 migrations deliberately do not infer source-managed Content Nodes
 from `word_entries.raw`. The checksummed source manifest remains the authority.
-When migrations `105` through `113` are deployed, keep
+When migrations `105` through `119` are deployed, keep
 `PLATFORM_V2_LOOKUP_ENABLED` and `PLATFORM_V2_ACTIONS_ENABLED` unset and run:
 
 ```bash
@@ -204,6 +238,13 @@ created the service-only `lookup_platform_v2_entries` RPC and run a direct
 service-role RPC smoke. Functional route smoke requires the flag: enable it
 temporarily only in an isolated staging environment, run the route checks, and
 keep production disabled until those checks pass.
+
+Migration `119` wraps the same lookup and exact-training RPC signatures so each
+item carries its internal presentation identity without a second PostgREST
+request. Apply it before the compatible application release, then verify a
+non-empty V2 lookup has `lookup.db` timing but no separate `lookup.identity`
+round-trip timing. Rollback may restore the previous application first because
+the older projection ignores the added internal item field.
 
 Only after the verified no-op and V2 smoke checks may the runtime set
 `PLATFORM_V2_LOOKUP_ENABLED=1`. Unset it to darken both authenticated and

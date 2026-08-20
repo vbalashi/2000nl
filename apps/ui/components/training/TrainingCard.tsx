@@ -5,21 +5,17 @@ import React from "react";
 import type { TrainingMode } from "@/lib/types";
 import { getGenericBadgeTooltip, getPosBadgeTooltip } from "@/lib/badgeTooltips";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
-import {
-  buildSegments,
-  getAllMeanings,
-  getPrimaryMeaning,
-} from "@/lib/wordUtils";
+import { buildSegments } from "@/lib/wordUtils";
 import { Tooltip } from "@/components/Tooltip";
 import { InteractiveText } from "./InteractiveText";
 import { AudioModeToggle } from "./AudioModeToggle";
-import type { TrainingWord } from "@/lib/types";
 import { maskTargetWordInDefinition } from "@/lib/training/trainingCardText";
+import type { TrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 import { isTrainingDebugEnabled } from "@/lib/trainingDebug";
 import { useTrainingTranslation } from "@/lib/training/useTrainingTranslation";
 
 type Props = {
-  word: TrainingWord | null;
+  card: TrainingCardPresentation | null;
   mode: TrainingMode;
   loading?: boolean;
   revealed?: boolean;
@@ -64,7 +60,7 @@ const POS_NAMES: Record<string, string> = {
 };
 
 export function TrainingCard({
-  word,
+  card,
   mode,
   loading,
   revealed = false,
@@ -81,7 +77,7 @@ export function TrainingCard({
   audioModeEnabled = false,
   onToggleAudioMode,
 }: Props) {
-  const showDebugStats = Boolean(word?.debugStats) && isTrainingDebugEnabled();
+  const showDebugStats = Boolean(card?.debugStats) && isTrainingDebugEnabled();
   // NOTE:
   // Hooks must run on every render. Do NOT early-return before hooks
   // (otherwise React can hit internal invariants when `loading` flips).
@@ -122,7 +118,7 @@ export function TrainingCard({
     translationStatusText,
     translationUiEnabled,
   } = useTrainingTranslation({
-    wordId: word?.id,
+    wordId: card?.entryId,
     translationLang,
     revealed,
     translationTooltipOpen,
@@ -135,7 +131,7 @@ export function TrainingCard({
       updateScrollFades();
     });
     return () => window.cancelAnimationFrame(raf);
-  }, [updateScrollFades, word?.id, revealed, hintRevealed, mode]);
+  }, [updateScrollFades, card?.entryId, revealed, hintRevealed, mode]);
 
   // Also update on resize (viewport changes / responsive layout).
   React.useEffect(() => {
@@ -165,10 +161,10 @@ export function TrainingCard({
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      if (!word?.headword) return;
-      onWordClick(word.headword, { forceAudio: true });
+      if (!card?.headword) return;
+      onWordClick(card.headword, { forceAudio: true });
     },
-    [onWordClick, word?.headword]
+    [onWordClick, card?.headword]
   );
 
   if (loading) {
@@ -181,7 +177,7 @@ export function TrainingCard({
     );
   }
 
-  if (!word) {
+  if (!card) {
     return (
       <div className="flex h-full w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 text-center dark:border-slate-700 dark:bg-slate-900/50">
         <div className="space-y-2">
@@ -197,51 +193,26 @@ export function TrainingCard({
     );
   }
 
-  const allMeanings = getAllMeanings(word.raw);
+  const allMeanings = card.meanings;
   const primaryMeaning = allMeanings[0];
   const isWordToDefinition = mode === "word-to-definition";
   const isListenRecognize = mode === "listen-recognize";
 
-  // For Definition -> Word mode, the "Question" is usually the primary meaning definition.
-  // Edge case: some entries (e.g. pure idioms) have an empty definition but do have idioms/examples.
-  const definitionPromptText = (() => {
-    const primaryDefinition = revealed
-      ? primaryMeaning.definition
-      : hidePerfectParticiple(primaryMeaning.definition);
-    if (!primaryDefinition) return primaryDefinition;
-    if (isWordToDefinition || revealed) return primaryDefinition;
-    return maskTargetWordInDefinition(primaryDefinition, word.headword);
+  const primaryPrompt = primaryMeaning.prompt;
+  const isIdiomOnlyMeaning = primaryPrompt.kind !== "definition";
+  const promptText: string = (() => {
+    if (primaryPrompt.kind !== "definition") return primaryPrompt.text;
+    const definition = revealed
+      ? primaryPrompt.text
+      : hidePerfectParticiple(primaryPrompt.text) ?? primaryPrompt.text;
+    if (!definition || isWordToDefinition || revealed) return definition;
+    return maskTargetWordInDefinition(definition, card.headword);
   })();
-
-  const definitionSegments = buildSegments(
-    definitionPromptText ?? "",
+  const promptSegments = buildSegments(promptText, primaryMeaning.links);
+  const primaryDefinitionSegments = buildSegments(
+    primaryMeaning.definition,
     primaryMeaning.links
   );
-
-  const primaryIdiom = primaryMeaning.idioms?.[0];
-  const hasPrimaryDefinitionText = Boolean(primaryMeaning.definition?.trim());
-  const isIdiomOnlyMeaning = !hasPrimaryDefinitionText && Boolean(primaryIdiom);
-  const hasPrimaryIdiomExplanationText = Boolean(
-    primaryIdiom?.explanation?.trim()
-  );
-  const hasPrimaryIdiomExpressionText = Boolean(
-    primaryIdiom?.expression?.trim()
-  );
-  const idiomExpressionSegments = primaryIdiom
-    ? buildSegments(primaryIdiom.expression, primaryMeaning.links)
-    : null;
-  const idiomExplanationSegments = primaryIdiom
-    ? buildSegments(primaryIdiom.explanation, primaryMeaning.links)
-    : null;
-  const idiomPromptSegments = hasPrimaryIdiomExplanationText
-    ? idiomExplanationSegments
-    : hasPrimaryIdiomExpressionText
-    ? idiomExpressionSegments
-    : null;
-
-  // If we used the idiom explanation as the "question" prompt, avoid repeating it under the idiom on reveal.
-  const hidePrimaryIdiomExplanationOnReveal =
-    isIdiomOnlyMeaning && hasPrimaryIdiomExplanationText;
 
   const hasHintExample =
     isWordToDefinition && (primaryMeaning.examples?.length ?? 0) > 0;
@@ -249,42 +220,27 @@ export function TrainingCard({
   const showTipButton = hasHintExample && !revealed;
 
   // Compute whether to show number badge (used for alignment in both hint and definition sections)
-  const globalCount = word.meanings_count ?? allMeanings.length ?? 1;
-  const meaningIdFromRaw =
-    typeof word.raw.meaning_id === "number" ? word.raw.meaning_id : undefined;
+  const globalCount = card.meaningCount;
+  const meaningOrdinal = card.meaningOrdinal;
   const showNumber =
     allMeanings.length > 1 ||
     globalCount > 1 ||
-    typeof meaningIdFromRaw === "number";
+    typeof meaningOrdinal === "number";
 
-  const safeWordGender =
-    word.gender &&
-    word.headword
-      .trim()
-      .toLowerCase()
-      .startsWith(`${word.gender.trim().toLowerCase()} `)
-      ? undefined
-      : word.gender;
+  const safeWordGender = card.gender;
 
   const renderWordWithDecoration = (
     text: string,
     gender?: string,
-    _pos?: string,
     sizeClass = "text-5xl"
   ) => {
-    const safeGender =
-      gender &&
-      text.trim().toLowerCase().startsWith(`${gender.trim().toLowerCase()} `)
-        ? undefined
-        : gender;
-
     return (
       <div className="inline-flex items-baseline justify-center gap-3">
-        {safeGender && (
+        {gender && (
           <span
             className={`${sizeClass} font-medium text-slate-500 opacity-60 flex-shrink-0`}
           >
-            {safeGender}
+            {gender}
           </span>
         )}
         <h1
@@ -304,9 +260,9 @@ export function TrainingCard({
     );
   };
 
-  const safePos = word.part_of_speech?.toLowerCase() ?? "";
+  const safePos = card.partOfSpeech?.toLowerCase() ?? "";
   const posColor = POS_COLORS[safePos] ?? POS_COLORS.default;
-  const posFullName = POS_NAMES[safePos] ?? word.part_of_speech;
+  const posFullName = POS_NAMES[safePos] ?? card.partOfSpeech;
   const posTooltip = getPosBadgeTooltip({
     posCode: safePos,
     translationLang,
@@ -383,7 +339,7 @@ export function TrainingCard({
     >
       {/* Part of Speech Badge + Info Icon - Top Right Corner (Always Visible) */}
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-30 flex items-center gap-2">
-        {word.part_of_speech && (
+        {card.partOfSpeech && (
           <Tooltip content={posTooltip} side="bottom" focusable>
             <span
               className={`select-none rounded-lg border px-2 py-1 md:px-3 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide ${posColor}`}
@@ -582,7 +538,7 @@ export function TrainingCard({
                     className="inline-block max-w-full min-w-0 whitespace-normal break-words"
                     style={{ cursor: speakerCursor }}
                   >
-                    {word.headword}
+                    {card.headword}
                   </button>
                 </h1>
               </div>
@@ -599,13 +555,13 @@ export function TrainingCard({
                         <div
                           className={`w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 shadow-sm text-sm font-bold`}
                         >
-                          {typeof meaningIdFromRaw === "number" &&
+                          {typeof meaningOrdinal === "number" &&
                           allMeanings.length === 1
-                            ? meaningIdFromRaw
+                            ? meaningOrdinal
                             : 1}
                         </div>
-                        {isIdiomOnlyMeaning && idiomPromptSegments ? (
-                          hasPrimaryIdiomExplanationText ? (
+                        {isIdiomOnlyMeaning && primaryPrompt.text ? (
+                          primaryPrompt.kind === "idiom-explanation" ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
                             >
@@ -643,14 +599,14 @@ export function TrainingCard({
                   )}
 
                   <div className="text-left flex-1">
-                    {hasPrimaryDefinitionText ? (
+                    {primaryPrompt.kind === "definition" && primaryPrompt.text.trim() ? (
                       <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                         <InteractiveText
-                          segments={definitionSegments}
+                          segments={promptSegments}
                           highlightedWord={highlightedWord}
                           onWordClick={onWordClick}
                           cursorStyle={wordCursorStyle}
-                          sentence={definitionPromptText ?? ""}
+                          sentence={promptText}
                         />
                         <InlineTranslation
                           align="left"
@@ -658,11 +614,11 @@ export function TrainingCard({
                           text={getTranslated(0, "definition")}
                         />
                       </div>
-                    ) : isIdiomOnlyMeaning && idiomPromptSegments ? (
+                    ) : isIdiomOnlyMeaning && primaryPrompt.text ? (
                       <div className="flex items-start gap-3 flex-wrap">
                         <div className="flex flex-col items-start text-xl md:text-3xl leading-[1.4] font-medium text-slate-700 dark:text-slate-200">
                           <InteractiveText
-                            segments={idiomPromptSegments}
+                            segments={promptSegments}
                             highlightedWord={highlightedWord}
                             onWordClick={onWordClick}
                             cursorStyle={wordCursorStyle}
@@ -670,21 +626,11 @@ export function TrainingCard({
                           <InlineTranslation
                             align="left"
                             variant="definition"
-                            text={
-                              hasPrimaryIdiomExplanationText
-                                ? getTranslated(0, {
-                                    idiomIndex: 0,
-                                    idiomField: "explanation",
-                                  })
-                                : getTranslated(0, {
-                                    idiomIndex: 0,
-                                    idiomField: "expression",
-                                  })
-                            }
+                            text={getTranslated(0, primaryPrompt.translationTarget)}
                           />
                         </div>
                         {!showNumber &&
-                          (hasPrimaryIdiomExplanationText ? (
+                          (primaryPrompt.kind === "idiom-explanation" ? (
                             <span
                               className="inline-flex flex-col items-center rounded-md bg-purple-100/60 px-1.5 py-1 text-[9px] font-bold uppercase leading-[1.02] tracking-wide text-purple-600/70 dark:bg-purple-900/20 dark:text-purple-300/70 text-center select-none"
                             >
@@ -768,7 +714,7 @@ export function TrainingCard({
                                   highlightedWord={highlightedWord}
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
-                                  excludeWord={word.headword}
+                                  excludeWord={card.headword}
                                   sentence={ex}
                                 />
                                 <InlineTranslation
@@ -802,9 +748,9 @@ export function TrainingCard({
                     // If we have a specific meaning_id, display it.
                     // Otherwise use index + 1
                     const badgeNumber =
-                      typeof meaningIdFromRaw === "number" &&
+                      typeof meaningOrdinal === "number" &&
                       allMeanings.length === 1
-                        ? meaningIdFromRaw
+                        ? meaningOrdinal
                         : index + 1;
                     const badgeTitle =
                       globalCount > 1
@@ -856,7 +802,7 @@ export function TrainingCard({
                                   highlightedWord={highlightedWord}
                                   onWordClick={onWordClick}
                                   cursorStyle={wordCursorStyle}
-                                  excludeWord={word.headword}
+                                  excludeWord={card.headword}
                                   sentence={definitionText}
                                 />
                                 <InlineTranslation
@@ -892,7 +838,7 @@ export function TrainingCard({
                                           highlightedWord={highlightedWord}
                                           onWordClick={onWordClick}
                                           cursorStyle={wordCursorStyle}
-                                          excludeWord={word.headword}
+                                          excludeWord={card.headword}
                                         />
                                         <InlineTranslation
                                           align="left"
@@ -914,7 +860,7 @@ export function TrainingCard({
                                           highlightedWord={highlightedWord}
                                           onWordClick={onWordClick}
                                           cursorStyle={wordCursorStyle}
-                                          excludeWord={word.headword}
+                                          excludeWord={card.headword}
                                         />
                                         <InlineTranslation
                                           align="left"
@@ -943,9 +889,8 @@ export function TrainingCard({
                   {/* Headword - centered across full card width (matches W->D header) */}
                   <div className="w-full flex flex-col items-center text-center">
                     {renderWordWithDecoration(
-                      word.headword,
-                      word.gender,
-                      word.part_of_speech,
+                      card.headword,
+                      card.gender,
                       "text-3xl md:text-4xl lg:text-5xl"
                     )}
                     <InlineTranslation
@@ -956,11 +901,11 @@ export function TrainingCard({
                   {isListenRecognize && primaryMeaning.definition ? (
                     <div className="mx-auto flex w-full max-w-2xl flex-col items-start text-xl md:text-2xl leading-[1.4] font-medium text-slate-800 dark:text-slate-100">
                       <InteractiveText
-                        segments={definitionSegments}
+                        segments={primaryDefinitionSegments}
                         highlightedWord={highlightedWord}
                         onWordClick={onWordClick}
                         cursorStyle={wordCursorStyle}
-                        excludeWord={word.headword}
+                        excludeWord={card.headword}
                         sentence={primaryMeaning.definition}
                       />
                       <InlineTranslation
@@ -1010,7 +955,7 @@ export function TrainingCard({
                                           highlightedWord={highlightedWord}
                                           onWordClick={onWordClick}
                                           cursorStyle={wordCursorStyle}
-                                          excludeWord={word.headword}
+                                          excludeWord={card.headword}
                                         />
                                         <InlineTranslation
                                           align="left"
@@ -1037,7 +982,8 @@ export function TrainingCard({
                                     {/* Explanation with separator */}
                                     {idiom.explanation?.trim() &&
                                       !(
-                                        hidePrimaryIdiomExplanationOnReveal && i === 0
+                                        primaryPrompt.suppressPrimaryIdiomExplanationOnReveal &&
+                                        i === 0
                                       ) && (
                                         <div className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 flex items-start">
                                           <span className="text-slate-500 dark:text-slate-400 mr-2">
@@ -1049,7 +995,7 @@ export function TrainingCard({
                                               highlightedWord={highlightedWord}
                                               onWordClick={onWordClick}
                                               cursorStyle={wordCursorStyle}
-                                              excludeWord={word.headword}
+                                              excludeWord={card.headword}
                                             />
                                             <InlineTranslation
                                               align="left"
@@ -1087,7 +1033,7 @@ export function TrainingCard({
                                         highlightedWord={highlightedWord}
                                         onWordClick={onWordClick}
                                         cursorStyle={wordCursorStyle}
-                                        excludeWord={word.headword}
+                                        excludeWord={card.headword}
                                         sentence={ex}
                                       />
                                       <InlineTranslation
@@ -1109,41 +1055,41 @@ export function TrainingCard({
           )}
 
           {/* Debug Stats (Footer - Color Coded) */}
-          {showDebugStats && word?.debugStats && (
+          {showDebugStats && card.debugStats && (
             <div className="mt-auto flex flex-wrap items-center justify-center gap-6 text-sm font-medium pb-2 pt-4 w-full opacity-70 hover:opacity-100 transition-opacity">
-              {word.debugStats.source && (
+              {card.debugStats.source && (
                 <span className="text-slate-500 dark:text-slate-400">
-                  src:{word.debugStats.source}
+                  src:{card.debugStats.source}
                 </span>
               )}
-              {typeof word.debugStats.interval === "number" && (
+              {typeof card.debugStats.interval === "number" && (
                 <span className="text-blue-500 dark:text-blue-400">
                   int:
-                  {typeof word.debugStats.previousInterval === "number"
-                    ? `${word.debugStats.previousInterval.toFixed(
+                  {typeof card.debugStats.previousInterval === "number"
+                    ? `${card.debugStats.previousInterval.toFixed(
                         2
-                      )}→${word.debugStats.interval.toFixed(2)}d`
-                    : `${word.debugStats.interval.toFixed(2)}d`}
+                      )}→${card.debugStats.interval.toFixed(2)}d`
+                    : `${card.debugStats.interval.toFixed(2)}d`}
                 </span>
               )}
-              {typeof word.debugStats.ef === "number" && (
+              {typeof card.debugStats.ef === "number" && (
                 <span className="text-yellow-500 dark:text-yellow-400">
                   S:
-                  {typeof word.debugStats.previousStability === "number"
-                    ? `${word.debugStats.previousStability.toFixed(
+                  {typeof card.debugStats.previousStability === "number"
+                    ? `${card.debugStats.previousStability.toFixed(
                         2
-                      )}→${word.debugStats.ef.toFixed(2)}`
-                    : word.debugStats.ef.toFixed(2)}
+                      )}→${card.debugStats.ef.toFixed(2)}`
+                    : card.debugStats.ef.toFixed(2)}
                 </span>
               )}
-              {typeof word.debugStats.clicks === "number" && (
+              {typeof card.debugStats.clicks === "number" && (
                 <span className="text-pink-500 dark:text-pink-400">
-                  clicks:{word.debugStats.clicks}
+                  clicks:{card.debugStats.clicks}
                 </span>
               )}
-              {typeof word.debugStats.overdue_count === "number" && (
+              {typeof card.debugStats.overdue_count === "number" && (
                 <span className="text-purple-500 dark:text-purple-400">
-                  queue:{word.debugStats.overdue_count}
+                  queue:{card.debugStats.overdue_count}
                 </span>
               )}
             </div>

@@ -3,6 +3,24 @@ import { createTranslator, loadTranslationConfigFromEnv } from "@/lib/translatio
 import { DeepLTranslator } from "@/lib/translation/deeplTranslator";
 import { GeminiTranslator } from "@/lib/translation/geminiTranslator";
 import { OpenAITranslator } from "@/lib/translation/openaiTranslator";
+import { DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { translationProviderFailure } from "@/lib/translation/translationProviderFailure";
+
+describe("translation provider failure metadata", () => {
+  it("does not derive the public fingerprint from provider-controlled text", () => {
+    const first = translationProviderFailure(
+      "provider_http_error",
+      "guessable-secret-one",
+    );
+    const second = translationProviderFailure(
+      "provider_http_error",
+      "different-secret-two",
+    );
+
+    expect(first).toEqual(second);
+    expect(JSON.stringify(first)).not.toContain("secret");
+  });
+});
 
 const makeConfig = () => ({
   provider: "deepl" as const,
@@ -161,6 +179,30 @@ describe("DeepLTranslator", () => {
     const translator = new DeepLTranslator({ apiKey: "key", apiUrl: "https://example.com" });
     const translated = await translator.translate(["hello", "world"], "en");
     expect(translated).toEqual(["Hallo", "Wereld"]);
+  });
+
+  it("does not expose a DeepL response body in its error", async () => {
+    const providerSecret = "deepl-provider-body-with-token";
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      text: async () => providerSecret,
+    });
+
+    const translator = new DeepLTranslator({
+      apiKey: "key",
+      apiUrl: "https://example.com",
+    });
+    const error = await translator.translate("hello", "en").catch((value) => value);
+
+    expect(String(error)).not.toContain(providerSecret);
+    expect(error).toMatchObject({
+      failure: {
+        code: "provider_http_error",
+        fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+      },
+    });
   });
 });
 
@@ -345,12 +387,74 @@ describe("OpenAITranslator", () => {
     expect(userMessage.instructions).toContain("For targetLanguageCode 'ru'");
   });
 
+  it("translates an exact dictionary meaning with structured alternatives", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                entryTranslation: {
+                  primaryText: "бельё",
+                  alternativeTexts: ["одежда", "текстиль"],
+                  baseText: "добро",
+                  note: "Здесь имеется в виду одежда для стирки.",
+                },
+                contentTranslations: [
+                  { fieldId: "definition", text: "ткань; одежда" },
+                ],
+              }),
+            },
+          },
+        ],
+      }),
+      text: async () => "",
+    });
+
+    const translator = new OpenAITranslator({ apiKey: "key" });
+    const result = await translator.translateDictionaryMeaning({
+      contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+      entryId: "entry-goed-cloth",
+      sourceContentFingerprint: "source-revision-1",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      headword: {
+        text: "goed",
+        article: "het",
+        partOfSpeech: "zelfstandig naamwoord",
+        partOfSpeechCode: "zn",
+      },
+      content: [
+        {
+          fieldId: "definition",
+          role: "definition",
+          text: "de stof; de kleren",
+        },
+      ],
+    });
+
+    expect(result.entryTranslation).toEqual({
+      primaryText: "бельё",
+      alternativeTexts: ["одежда", "текстиль"],
+      baseText: "добро",
+      note: "Здесь имеется в виду одежда для стирки.",
+    });
+    expect(result.meta).toMatchObject({
+      providerUsed: "openai",
+      usedFallback: false,
+    });
+  });
+
   it("falls back when OpenAI fails", async () => {
+    const providerSecret = "sk-provider-secret-from-response";
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
-      text: async () => "boom",
+      text: async () => providerSecret,
     });
 
     const fallback = {
@@ -359,10 +463,87 @@ describe("OpenAITranslator", () => {
       ),
     } as any;
 
-    const translator = new OpenAITranslator({ apiKey: "key", fallback });
+    const translator = new OpenAITranslator({ apiKey: "key", fallback, maxRetries: 0 });
     const translated = await translator.translate("hello", "en");
     expect(translated).toBe("Fallback");
     expect(fallback.translate).toHaveBeenCalled();
+    expect(JSON.stringify(warnSpy.mock.calls)).not.toContain(providerSecret);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[translation] OpenAI failed; using DeepL fallback",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        }),
+      }),
+    );
+  });
+
+  it("preserves structured dictionary artifacts when OpenAI falls back", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      text: async () => "boom",
+    });
+    const fallback = {
+      translate: vi.fn(async () => ["бельё", "ткань; одежда"]),
+      translateText: vi.fn(async () => ({
+        translations: ["бельё", "ткань; одежда"],
+        meta: {
+          providerSelected: "deepl",
+          providerUsed: "deepl",
+          usedFallback: false,
+        },
+      })),
+    } as any;
+    const translator = new OpenAITranslator({
+      apiKey: "key",
+      fallback,
+      maxRetries: 0,
+    });
+
+    const result = await translator.translateDictionaryMeaning({
+      contractVersion: DICTIONARY_MEANING_TRANSLATION_CONTRACT_VERSION,
+      entryId: "entry-goed-cloth",
+      sourceContentFingerprint: "source-revision-1",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      headword: {
+        text: "goed",
+        article: "het",
+        partOfSpeech: "zelfstandig naamwoord",
+        partOfSpeechCode: "zn",
+      },
+      content: [
+        {
+          fieldId: "definition",
+          role: "definition",
+          text: "de stof; de kleren",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      entryTranslation: {
+        primaryText: "бельё",
+        alternativeTexts: [],
+        baseText: "бельё",
+        note: null,
+      },
+      contentTranslations: [
+        { fieldId: "definition", text: "ткань; одежда" },
+      ],
+      meta: {
+        providerSelected: "openai",
+        providerUsed: "deepl",
+        usedFallback: true,
+        primaryFailure: {
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        },
+      },
+    });
   });
 });
 
@@ -412,11 +593,12 @@ describe("GeminiTranslator", () => {
   });
 
   it("falls back when Gemini fails", async () => {
+    const providerSecret = "gemini-provider-secret-from-response";
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
-      text: async () => "boom",
+      text: async () => providerSecret,
     });
 
     const fallback = {
@@ -425,9 +607,33 @@ describe("GeminiTranslator", () => {
       ),
     } as any;
 
-    const translator = new GeminiTranslator({ apiKey: "key", fallback });
-    const translated = await translator.translate("hello", "en");
-    expect(translated).toBe("Fallback");
+    const translator = new GeminiTranslator({ apiKey: "key", fallback, maxRetries: 0 });
+    const translated = await translator.translateText({
+      texts: ["hello"],
+      targetLanguageCode: "en",
+    });
+    expect(translated).toMatchObject({
+      translations: ["Fallback"],
+      meta: {
+        providerSelected: "gemini",
+        providerUsed: "deepl",
+        usedFallback: true,
+        primaryFailure: {
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        },
+      },
+    });
     expect(fallback.translate).toHaveBeenCalled();
+    expect(JSON.stringify(warnSpy.mock.calls)).not.toContain(providerSecret);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[translation] Gemini failed; using DeepL fallback",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "provider_http_error",
+          fingerprint: expect.stringMatching(/^[a-f0-9]{24}$/),
+        }),
+      }),
+    );
   });
 });

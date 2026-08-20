@@ -133,6 +133,9 @@ Important V2 rules:
   cross-reference-only records;
 - redirect-only dictionary records use `kind: "cross-reference"` and expose no
   learning, review, Known, translation, reporting, or Word Details state;
+- cross-reference entries retain their source `meaningOrdinal`; a resolved
+  target carries its opaque `headwordGroupId` (and `entryId` when unambiguous),
+  while `query` is the strict-lookup fallback for unresolved references;
 - translations are attached to exact Content Node IDs and are renderable only
   when source content and translation policy revisions match;
 - lookup reads cached translations but never starts a paid provider call;
@@ -155,7 +158,8 @@ Important V2 rules:
 
 Deployment order is intentionally fail-closed:
 
-1. deploy migrations `105` through `113` and the V2 code with both flags absent;
+1. deploy migrations `105` through `119` before the V2 code that may call the
+   receipt-reconciliation RPC, with both flags absent;
 2. replay the current versioned source manifest once to populate Content Nodes;
 3. replay it again and require the importer to report a verified no-op, which
    proves exact source-binding, stored-content, and Content Node coverage;
@@ -167,6 +171,25 @@ Deployment order is intentionally fail-closed:
 6. run the Known/Undo database and route smoke, then set
    `PLATFORM_V2_ACTIONS_ENABLED=1`. Removing only this flag hides all V2
    mutation capabilities without deleting accepted Known Marks.
+
+Migration `116` is an additive prerequisite for receipt reconciliation. A
+rolling deployment must apply it before code that can call
+`/api/platform/v2/actions/reconcile`; otherwise a second lost mutation response
+cannot be resolved authoritatively. The route remains fail-closed while
+`PLATFORM_V2_ACTIONS_ENABLED` is absent.
+
+Migration `117` keeps explicit pointer-only dictionary records at the Library
+navigation boundary. Apply it before importing a manifest that promotes those
+records: both ordinary and filtered Training schedulers then exclude them,
+including pre-existing due card state, while Library lookup can still project
+and follow their cross-reference capabilities.
+
+Migration `119` preserves the existing service-only lookup RPC signatures but
+enriches each internal result item with its presentation identity in the same
+database round trip. Apply it before expecting the reduced-latency path; older
+application code safely ignores the internal field, while newer code retains a
+temporary fallback to the standalone identity RPC for rolling compatibility.
+The public `platform-lookup-v2` response does not expose this internal envelope.
 
 Do not enable the flag merely because the migrations applied successfully:
 migration `106` backfills user-owned entries but source-managed Content Nodes
@@ -216,6 +239,36 @@ state and excludes the exact card from shared training selection. Undo clears
 only the current mark and reveals the preserved state. Consumers must dispatch
 the returned capability target verbatim and must not simulate either state
 locally.
+
+#### Reconcile an ambiguous V2 action
+
+```http
+POST /api/platform/v2/actions/reconcile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{"clientEventId":"<the original review UUID>"}
+```
+
+Use this read only when a `review-card` response and one same-ID retry both end
+ambiguously at the transport boundary. It requires the same `platform:write`
+scope as the mutation. The server derives the authenticated user, waits for an
+in-flight mutation using that user/event ID, and reads only that user's durable
+receipt. Reuse the original UUID; do not create another review event merely to
+reconcile the first.
+
+- `200`: authoritative `platform-action-v2`; advance as after the accepted
+  mutation;
+- `400`: malformed or non-UUID `clientEventId`;
+- `401`: missing or invalid authentication;
+- `403`: Connected Client lacks `platform:write`;
+- `404 {"error":"action_receipt_not_found"}`: neither attempt committed; keep
+  the current card recoverable and let a later intentional action use a new ID;
+- `503`: V2 actions are disabled or a server dependency is unavailable.
+
+`X-Platform-Review-Outcome` distinguishes `authoritative_receipt`,
+`receipt_not_found`, and `failed`. Telemetry contains correlation and
+categorical outcome fields only, never card text or review content.
 
 Capabilities are the authoritative action state machine, not UI hints.
 `mark-known` is available for not-started, encountered, learning, and reviewing
@@ -1029,18 +1082,44 @@ Response when a ready overlay is available:
   "status": "ready",
   "overlay": {
     "headword": "дом",
+    "entryTranslation": {
+      "primaryText": "дом",
+      "alternativeTexts": ["жилище"],
+      "baseText": "дом",
+      "note": null
+    },
     "meanings": [
       {
         "definition": "здание для жилья"
       }
     ],
     "__meta": {
+      "providerSelected": "openai",
+      "providerUsed": "deepl",
+      "usedFallback": true,
+      "primaryFailure": {
+        "code": "provider_http_error",
+        "fingerprint": "8f5d95f46f901c63f61f2e1a"
+      },
       "translatedPaths": [["headword"], ["meanings", 0, "definition"]]
     }
   },
   "note": null
 }
 ```
+
+`overlay.entryTranslation` is the meaning-specific entry artifact shared by
+Library and Training. `primaryText` is the preferred contextual translation;
+`alternativeTexts` contains zero or more distinct, non-invented alternatives
+and an empty array is valid; `baseText` is a context-independent dictionary
+translation when useful, otherwise `null`; `note` is a short disambiguation
+note when needed, otherwise `null`. These fields are derived translation data
+and never modify source dictionary content.
+
+Platform V2 lookup projects the same artifact as `entry.translation.text`,
+`alternativeTexts`, `baseText`, and `note`. Optional fields may be absent for
+older or non-ready artifacts; when present, `alternativeTexts` may be empty and
+`baseText`/`note` may be `null`.
 
 Response when another request is already producing the same overlay:
 ```json
@@ -1051,12 +1130,42 @@ Response when another request is already producing the same overlay:
 }
 ```
 
+Every successful response includes `X-Platform-Cache` with one of these values:
+
+- `hit`: a ready cached overlay was returned without provider work;
+- `pending`: an existing in-flight translation artifact was returned without
+  starting duplicate provider work;
+- `provider`: this request performed provider-backed translation work;
+- `unknown`: the worker did not return authoritative cache metadata. This is a
+  fail-closed diagnostic value and must not be counted as provider work.
+
+A failed provider attempt returns the same `provider` classification together
+with the non-2xx status; the header classifies work performed, not success.
+
 `force: true` refreshes the overlay even when a ready cached row exists. The
-endpoint gates source entry access before any service-role cache read/write, so
+result is therefore classified as `X-Platform-Cache: provider` when the refresh
+succeeds. The header is part of the Platform response contract and may be used
+for diagnostics and latency classification; clients must still use the JSON
+`status` as the authoritative readiness state.
+
+The endpoint gates source entry access before any service-role cache read/write, so
 private user-dictionary entries remain visible only to authorized users.
 Ready overlays include best-effort `overlay.__meta.translatedPaths` so
 line-level clients can correlate translated values with stable lookup content
 paths without parsing provider diagnostics.
+
+Provider failures never expose or persist the provider response body or error
+message. When a fallback succeeds, `overlay.__meta.primaryFailure` may contain
+only a closed failure `code` and a 24-character hexadecimal SHA-256 prefix for
+aggregate correlation. The fingerprint is derived from the versioned closed
+failure class only, never from provider-controlled text, and clients must not
+interpret it as user-facing error text. Historical cached `primaryError` values and
+unrecognized metadata are removed at the read boundary.
+
+Text-translation artifacts preserve `providerUsed` and `usedFallback` on both
+fresh and cached responses. Migration
+`118_platform_text_translation_provider_provenance.sql` must be applied before
+deploying code that reads or writes those fields.
 
 ## `POST /text-translation`
 
@@ -1092,7 +1201,9 @@ Response:
   "literalTranslatedText": "I go to house",
   "translatorComment": "In this sentence, the phrase is a normal motion phrase; the literal wording is less natural.",
   "translationPolicyVersion": "platform-text-translation-v2",
-  "cached": false
+  "cached": false,
+  "providerUsed": "deepl",
+  "usedFallback": true
 }
 ```
 
@@ -1110,6 +1221,10 @@ text, and `translatorComment`, a short explanation for learners and reviewers.
 The endpoint persists generic text translation artifacts in
 `platform_text_translations`. Existing `pending`, `ready`, or `failed` artifacts
 return with `cached: true`; a fresh provider call returns with `cached: false`.
+`providerUsed` identifies the provider that produced the artifact and
+`usedFallback` records whether it differed from the selected provider.
+Both fields are omitted for historical rows whose provenance was not recorded;
+absence means unknown and must not be interpreted as `usedFallback: false`.
 
 ## `POST /actions`
 

@@ -191,9 +191,10 @@ properties are:
 - observation and diagnostics do not control idempotency;
 - direct RPC callers cannot poison canonical source metadata.
 
-The HTTP normalizer in `apps/ui/lib/platform/platformApi.ts` should normalize
-v2 before calling the RPC. The DB trigger is defense in depth for direct RPC
-callers.
+The HTTP action-envelope normalizer in
+`apps/ui/lib/platform/actionService.ts` uses the source-context parser before
+the action orchestrator calls the RPC. The DB trigger is defense in depth for
+direct RPC callers.
 
 ## Source Canonicalization
 

@@ -129,10 +129,12 @@ A change that only passes mocked route tests is not enough when DB trust boundar
 
 ## 13. Recommended decomposition path
 
-If decomposing `apps/ui/lib/platform/platformApi.ts`, split along stable domain boundaries:
+`apps/ui/lib/platform/platformApi.ts` is now a stable route-facing facade. Its
+implementation is split along these domain boundaries:
 
-- lookup service;
-- action service;
+- V1 lookup/projection service;
+- grouped search service;
+- action orchestrator and user-list action service;
 - source-context normalizer;
 - provenance mapper;
 - translation service;
@@ -140,4 +142,5 @@ If decomposing `apps/ui/lib/platform/platformApi.ts`, split along stable domain 
 - user dictionary service;
 - response projection helpers.
 
-Keep the public route contracts stable while doing this.
+Keep the public route contracts stable and do not grow implementation back into
+the facade.

@@ -9,8 +9,50 @@ import {
   furnitureEntry,
   multiSenseBankGroup,
 } from "./platformV2LibraryFixture";
+import {
+  goedEntry,
+  goedGroup,
+  nodigGroup,
+} from "./platformV2IdiomHierarchyFixture";
 
 describe("Library multi-sense model", () => {
+  test("keeps the reordered goed explanation and example nested under the expression", () => {
+    const model = buildLibrarySenseCardGroupModel(goedGroup, "nl");
+    const idiom = model.meanings[0].details.find(
+      (item) => item.contentNodeId === "idiom-goed",
+    );
+
+    expect(goedEntry.contentNodes[0].contentNodeId).toBe("idiom-example-goed");
+    expect(idiom).toEqual(
+      expect.objectContaining({
+        parentContentNodeId: null,
+        text: "iets komt ten goede aan iemand of iets",
+        children: [
+          expect.objectContaining({
+            contentNodeId: "idiom-explanation-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "idiom-explanation",
+          }),
+          expect.objectContaining({
+            contentNodeId: "idiom-example-goed",
+            parentContentNodeId: "idiom-goed",
+            kind: "example",
+          }),
+        ],
+      }),
+    );
+  });
+  test("keeps two nodig expression roots with their own explanations", () => {
+    const model = buildLibrarySenseCardGroupModel(nodigGroup, "nl");
+    const idioms = model.meanings[0].details.filter(
+      (item) => item.kind === "idiom",
+    );
+
+    expect(idioms).toHaveLength(2);
+    expect(
+      idioms.map((item) => item.children.map((child) => child.kind)),
+    ).toEqual([["idiom-explanation"], ["idiom-explanation"]]);
+  });
   test("keeps learning state and actions on their exact entry", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
 
@@ -124,6 +166,29 @@ describe("Library multi-sense model", () => {
     expect(model.meanings[0].displayOrdinal).toBeNull();
   });
 
+  test("keeps structured entry alternatives separate from the primary text", () => {
+    const model = buildLibrarySenseCardGroupModel(
+      {
+        ...multiSenseBankGroup,
+        entries: [
+          {
+            ...furnitureEntry,
+            translation: {
+              ...furnitureEntry.translation!,
+              alternativeTexts: ["скамья", "верстак"],
+            },
+          },
+        ],
+      },
+      "ru",
+    );
+
+    expect(model.meanings[0].entryTranslationAlternatives).toEqual([
+      "скамья",
+      "верстак",
+    ]);
+  });
+
   test("keeps server-owned meaning count and entry-level part of speech", () => {
     const model = buildLibrarySenseCardGroupModel(
       {
@@ -135,6 +200,7 @@ describe("Library multi-sense model", () => {
           {
             kind: "cross-reference" as const,
             crossReferenceId: "xref-bank",
+            meaningOrdinal: 3,
             label: null,
             text: "bankieren",
             target: { query: "bankieren" },
@@ -148,6 +214,19 @@ describe("Library multi-sense model", () => {
     expect(model.senseCount).toBe(3);
     expect(model.meanings).toHaveLength(2);
     expect(model.meanings[0].partOfSpeech).toBe("noun");
+    expect(model.crossReferences).toEqual([
+      {
+        crossReferenceId: "xref-bank",
+        displayOrdinal: 3,
+        label: null,
+        text: "bankieren",
+        targetQuery: "bankieren",
+        targetHeadwordGroupId: null,
+        targetEntryId: null,
+        sourceDictionaryId: "vandale",
+        followLabel: "Open reference",
+      },
+    ]);
   });
 
   test("attaches reordered nested content by parent identity", () => {

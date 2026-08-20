@@ -41,6 +41,12 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (capability: LibraryReportCapability) => void;
+  onFollowCrossReference?: (target: {
+    query: string;
+    sourceDictionaryId: string;
+    targetHeadwordGroupId: string | null;
+    targetEntryId: string | null;
+  }) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 };
 
@@ -57,6 +63,7 @@ export function LibrarySenseCardGroup({
   onOpenCollections,
   onTrainNext,
   onReport,
+  onFollowCrossReference,
   onAction,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
@@ -67,6 +74,9 @@ export function LibrarySenseCardGroup({
     top: true,
     bottom: true,
   });
+  const meaningById = new Map(
+    model.meanings.map((meaning) => [meaning.entryId, meaning]),
+  );
 
   React.useEffect(() => {
     setViewState((current) =>
@@ -213,7 +223,48 @@ export function LibrarySenseCardGroup({
           className="h-full overflow-y-auto px-3 pb-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
         >
           <div className="space-y-3">
-            {model.meanings.map((meaning) => {
+            {model.presentations.map((presentation) => {
+              if (presentation.kind === "cross-reference") {
+                const reference = presentation.reference;
+                return (
+                  <article
+                    key={reference.crossReferenceId}
+                    data-testid={`library-cross-reference-${reference.crossReferenceId}`}
+                    className="relative rounded-[22px] border border-slate-300 bg-white px-5 py-5 shadow-sm dark:border-slate-600 dark:bg-[#20252f]"
+                  >
+                    {reference.displayOrdinal != null ? (
+                      <span className="absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center bg-slate-50 font-mono text-xs font-semibold text-indigo-600 dark:bg-[#11151d] dark:text-indigo-300">
+                        {reference.displayOrdinal}
+                      </span>
+                    ) : null}
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {reference.label}
+                    </p>
+                    <p className="mt-1 font-sense-serif text-2xl text-slate-900 dark:text-slate-100">
+                      {reference.text}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={reference.followLabel}
+                      onClick={() =>
+                        onFollowCrossReference?.({
+                          query: reference.targetQuery,
+                          sourceDictionaryId: reference.sourceDictionaryId,
+                          targetHeadwordGroupId:
+                            reference.targetHeadwordGroupId,
+                          targetEntryId: reference.targetEntryId,
+                        })
+                      }
+                      className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                    >
+                      {reference.followLabel}
+                    </button>
+                  </article>
+                );
+              }
+              const meaning =
+                meaningById.get(presentation.meaning.entryId) ??
+                presentation.meaning;
               const identity = librarySenseCardIdentity(
                 meaning.entryId,
                 meaning.cardTypeId,
@@ -321,13 +372,30 @@ function MeaningCard({
             {meaning.entryTranslation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
-                  {meaning.entryTranslation}
+                  {[
+                    meaning.entryTranslation,
+                    ...(meaning.entryTranslationAlternatives ?? []),
+                  ].join(" · ")}
                 </p>
               </SenseCardReveal>
             ) : null}
-            <p className="text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
-              {meaning.definition?.text ?? "—"}
-            </p>
+            <div className="flex items-start gap-2">
+              <p className="min-w-0 flex-1 text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
+                {meaning.definition?.text ?? "—"}
+              </p>
+              {meaning.definition?.reportCapability && onReport ? (
+                <button
+                  type="button"
+                  aria-label={`${t("senseCard.report")}: ${meaning.definition.text}`}
+                  onClick={() =>
+                    onReport(meaning.definition!.reportCapability!)
+                  }
+                  className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                >
+                  <FlagIcon className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
             {meaning.definition?.translation ? (
               <SenseCardReveal open={state.translationVisible}>
                 <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
@@ -375,6 +443,8 @@ function MeaningCard({
                 key={child.contentNodeId}
                 item={child}
                 translationVisible={state.translationVisible}
+                onReport={onReport}
+                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -407,6 +477,10 @@ function MeaningCard({
                       <section
                         key={item.contentNodeId}
                         data-content-kind={item.kind}
+                        data-content-node-id={item.contentNodeId}
+                        data-parent-content-node-id={
+                          item.parentContentNodeId ?? undefined
+                        }
                       >
                         {showLabel && presentation.labelKey ? (
                           <ContentSectionHeader
@@ -416,8 +490,7 @@ function MeaningCard({
                               orderedDetails.filter(
                                 (candidate) =>
                                   contentPresentation[candidate.kind]
-                                    .sectionGroup ===
-                                  presentation.sectionGroup,
+                                    .sectionGroup === presentation.sectionGroup,
                               ).length
                             }
                           />
@@ -425,6 +498,8 @@ function MeaningCard({
                         <ContentText
                           item={item}
                           translationVisible={state.translationVisible}
+                          onReport={onReport}
+                          reportLabel={t("senseCard.report")}
                         />
                         {item.children.length ? (
                           <div className="mt-2 space-y-2 pl-4">
@@ -433,6 +508,8 @@ function MeaningCard({
                                 key={child.contentNodeId}
                                 item={child}
                                 translationVisible={state.translationVisible}
+                                onReport={onReport}
+                                reportLabel={t("senseCard.report")}
                               />
                             ))}
                           </div>
@@ -588,13 +665,26 @@ function TranslateIcon() {
 function NestedContent({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
+  onReport?: (capability: LibraryReportCapability) => void;
+  reportLabel: string;
 }) {
   return (
-    <div data-content-kind={item.kind}>
-      <ContentText item={item} translationVisible={translationVisible} />
+    <div
+      data-content-kind={item.kind}
+      data-content-node-id={item.contentNodeId}
+      data-parent-content-node-id={item.parentContentNodeId ?? undefined}
+    >
+      <ContentText
+        item={item}
+        translationVisible={translationVisible}
+        onReport={onReport}
+        reportLabel={reportLabel}
+      />
       {item.children.length ? (
         <div className="mt-2 space-y-2 pl-4">
           {item.children.map((child) => (
@@ -602,6 +692,8 @@ function NestedContent({
               key={child.contentNodeId}
               item={child}
               translationVisible={translationVisible}
+              onReport={onReport}
+              reportLabel={reportLabel}
             />
           ))}
         </div>
@@ -613,14 +705,32 @@ function NestedContent({
 function ContentText({
   item,
   translationVisible,
+  onReport,
+  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
+  onReport?: (capability: LibraryReportCapability) => void;
+  reportLabel: string;
 }) {
   const presentation = contentPresentation[item.kind];
   return (
     <div className={`pl-3 ${presentation.borderClassName}`}>
-      <p className={presentation.textClassName}>{item.text}</p>
+      <div className="flex items-start gap-2">
+        <p className={`min-w-0 flex-1 ${presentation.textClassName}`}>
+          {item.text}
+        </p>
+        {item.reportCapability && onReport ? (
+          <button
+            type="button"
+            aria-label={`${reportLabel}: ${item.text}`}
+            onClick={() => onReport(item.reportCapability!)}
+            className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            <FlagIcon className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
           <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">

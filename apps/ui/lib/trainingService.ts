@@ -20,7 +20,7 @@ export {
   type RecordReviewParams,
   type WordStatusAfterReview,
 } from "./training/reviewService";
-export { fetchRecentHistory, fetchStats } from "./training/statsHistoryService";
+export { fetchStats } from "./training/statsService";
 export {
   fetchActiveList,
   fetchActiveTrainingScope,
@@ -34,7 +34,6 @@ export {
   fetchUserLists,
   fetchWordsForList,
   searchDictionaryGroups,
-  searchDictionaryEntriesV2,
   searchWordEntries,
   removeWordsFromUserList,
   deleteUserList,

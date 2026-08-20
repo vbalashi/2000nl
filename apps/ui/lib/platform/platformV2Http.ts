@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 
-export async function platformV2AuthenticatedJsonHeaders(): Promise<HeadersInit> {
+export async function authenticatedJsonHeaders(): Promise<HeadersInit> {
   const headers: Record<string, string> = {
     accept: "application/json",
     "content-type": "application/json",
@@ -10,3 +10,5 @@ export async function platformV2AuthenticatedJsonHeaders(): Promise<HeadersInit>
   if (accessToken) headers.authorization = `Bearer ${accessToken}`;
   return headers;
 }
+
+export const platformV2AuthenticatedJsonHeaders = authenticatedJsonHeaders;

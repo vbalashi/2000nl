@@ -21,7 +21,6 @@ const loadedPreferences = {
   newReviewRatio: 4,
   activeScenario: "listening",
   translationLang: "en",
-  trainingSidebarPinned: true,
   preferences: {},
 };
 
@@ -47,7 +46,6 @@ describe("useTrainingPreferences", () => {
         language: "nl",
         newReviewRatio: 4,
         themePreference: "dark",
-        trainingSidebarPinned: true,
         translationLang: "en",
       }),
     );
@@ -67,20 +65,14 @@ describe("useTrainingPreferences", () => {
 
     act(() => {
       result.current.setCardFilter("both");
-      result.current.setTrainingSidebarPinned(false);
       result.current.setTranslationLang(null);
     });
 
     expect(result.current.cardFilter).toBe("both");
-    expect(result.current.trainingSidebarPinned).toBe(false);
     expect(result.current.translationLang).toBeNull();
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",
       cardFilter: "both",
-    });
-    expect(updateUserPreferences).toHaveBeenCalledWith({
-      userId: "user-1",
-      trainingSidebarPinned: false,
     });
     expect(updateUserPreferences).toHaveBeenCalledWith({
       userId: "user-1",

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import type { AuthenticatedSupabase } from "./serverSupabase";
-import type { PlatformOperationResult } from "./platformApi";
+import type { PlatformOperationResult } from "./platformApiContracts";
 import { parseSourceContext } from "./sourceContext";
 import {
   contentFingerprint as learnerContentFingerprint,

@@ -10,6 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
+import type { ActiveTrainingScope, DictionaryEntry } from "@/lib/types";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -155,7 +156,15 @@ const fetchStats = vi.fn().mockResolvedValue({
   totalWordsLearned: 0,
   totalWordsInList: 2000,
 });
-const fetchRecentHistory = vi.fn().mockResolvedValue([]);
+const prefetchPlatformV2TrainingEntry = vi.fn();
+const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
+  state: "ready",
+  translation: "cached",
+  audio: "ready",
+});
+const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
+const clearPlatformV2TrainingClientCaches = vi.fn();
+const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
   {
@@ -187,7 +196,7 @@ const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
     entryCount: 2000,
   },
 ]);
-const defaultActiveTrainingScope = {
+const defaultActiveTrainingScope: ActiveTrainingScope = {
   languageCode: "nl",
   activeListId: null,
   activeListType: null,
@@ -209,14 +218,83 @@ const searchWordEntries = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
-const searchDictionaryEntriesV2 = vi.fn().mockResolvedValue({
-  items: [dictionaryHuis],
-  total: 1,
-});
 const searchDictionaryGroups = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const fetchPlatformV2LibraryGroupPage = vi.fn(
+  async ({
+    query,
+    contentLanguageCode,
+  }: {
+    query: string;
+    contentLanguageCode: string;
+  }) => {
+    const result = await searchDictionaryGroups({
+      query,
+      languageCode: contentLanguageCode,
+      dictionaryIds: undefined,
+      limit: 6,
+    });
+    return {
+      groups: result.items.map((entry: DictionaryEntry) => ({
+        headwordGroupId: `group-${entry.id}`,
+        dictionary: {
+          dictionaryId: entry.dictionary_id ?? "dictionary-vandale",
+          sourceLanguageCode: entry.language_code ?? contentLanguageCode,
+          displayName: entry.dictionary_name ?? "Van Dale",
+          messageKey: "dictionary.source",
+        },
+        header: { text: entry.headword },
+        senseCount: 1,
+        entryCount: 1,
+        indicators: entry.is_nt2_2000
+          ? [
+              {
+                indicatorId: "nt2-2000",
+                value: "true",
+                messageKey: "indicator.nt2-2000",
+              },
+            ]
+          : [],
+        entries: [
+          {
+            kind: "sense-card" as const,
+            entryId: entry.id,
+            meaningOrdinal: 1,
+            partOfSpeech: entry.part_of_speech
+              ? {
+                  termId: `pos:${entry.part_of_speech}`,
+                  messageKey: `pos.${entry.part_of_speech}`,
+                  sourceValue: entry.part_of_speech,
+                }
+              : undefined,
+            card: null,
+            contentRevision: `revision-${entry.id}`,
+            summaryContentNodeId: `definition-${entry.id}`,
+            contentNodes: [
+              {
+                contentNodeId: `definition-${entry.id}`,
+                parentContentNodeId: null,
+                kind: "definition" as const,
+                order: 0,
+                text:
+                  entry.raw.meanings?.[0]?.definition ??
+                  "Geen definitie beschikbaar.",
+                sourceTextFingerprint: `fingerprint-${entry.id}`,
+                translations: [],
+              },
+            ],
+            translation: null,
+            capabilities: [],
+          },
+        ],
+      })),
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    };
+  },
+);
 const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
@@ -287,7 +365,6 @@ const fetchUserPreferences = vi.fn().mockResolvedValue({
   newReviewRatio: 2,
   activeScenario: "understanding",
   translationLang: null,
-  trainingSidebarPinned: false,
 });
 const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
 
@@ -302,14 +379,12 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingScenarios,
   isTrainingFocusFilterActive,
   fetchStats,
-  fetchRecentHistory,
   fetchActiveTrainingScope,
   fetchListSummaryById,
   fetchAvailableLists,
   fetchAvailableLearningLanguages,
   fetchAvailableDictionarySources,
   fetchWordsForList,
-  searchDictionaryEntriesV2,
   searchDictionaryGroups,
   searchWordEntries,
   fetchEntryListMemberships,
@@ -328,6 +403,15 @@ vi.mock("@/lib/trainingService", () => ({
   updateUserPreferences,
 }));
 
+vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  fetchPlatformV2LibraryGroupPage: (input: {
+    query: string;
+    contentLanguageCode: string;
+  }) => fetchPlatformV2LibraryGroupPage(input),
+  fetchPlatformV2MultiSenseGroup: vi.fn().mockResolvedValue(null),
+  requestPlatformV2LibraryTranslation: vi.fn().mockResolvedValue("failed"),
+}));
+
 vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     auth: {
@@ -336,17 +420,60 @@ vi.mock("@/lib/supabaseClient", () => ({
   },
 }));
 
+vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
+  prefetchPlatformV2TrainingEntry: (...args: unknown[]) =>
+    prefetchPlatformV2TrainingEntry(...args),
+  preloadPlatformV2Audio: (...args: unknown[]) =>
+    preloadPlatformV2Audio(...args),
+  clearPlatformV2TrainingClientCaches: (...args: unknown[]) =>
+    clearPlatformV2TrainingClientCaches(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
+  preparePlatformV2TrainingEntry: (...args: unknown[]) =>
+    preparePlatformV2TrainingEntry(...args),
+}));
+
+vi.mock("@/lib/platform/platformV2Rollout", () => ({
+  platformV2TrainingUiEnabled: () => platformV2TrainingUiEnabled(),
+  platformV2LibraryUiEnabled: () => false,
+}));
+
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
-    onAvailabilityChange,
+    word,
+    focusOnPresentation,
+    onOpenDetails,
+    onProgressActionAccepted,
   }: {
-    onAvailabilityChange: (state: "loading") => void;
+    word: { headword: string };
+    focusOnPresentation?: boolean;
+    onOpenDetails?: () => void;
+    onProgressActionAccepted: (capability: { actionId: string }) => void;
   }) => {
+    const stageRef = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
-      onAvailabilityChange("loading");
-      return () => onAvailabilityChange("loading");
-    }, [onAvailabilityChange]);
-    return <div data-testid="mock-training-sense-card-v2" />;
+      if (focusOnPresentation) stageRef.current?.focus();
+    }, [focusOnPresentation]);
+    return (
+      <div ref={stageRef} tabIndex={-1} data-testid="mock-training-sense-card-v2">
+        <span aria-live="polite">
+          {focusOnPresentation ? "Next training card" : ""}
+        </span>
+        <h2>{word.headword}</h2>
+        {onOpenDetails ? (
+          <button type="button" onClick={onOpenDetails}>
+            Word details
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+        >
+          Mock V2 grade
+        </button>
+      </div>
+    );
   },
   TrainingKnownUndoNotice: () => null,
 }));
@@ -433,7 +560,7 @@ test("onboarding copy matches the five reachable tour targets", () => {
   }
 });
 
-test("does not expose Recent through the global R shortcut or a stale pinned preference", async () => {
+test("does not expose Recent through the global R shortcut", async () => {
   fetchUserPreferences.mockResolvedValue({
     themePreference: "system",
     modesEnabled: ["word-to-definition"],
@@ -442,7 +569,6 @@ test("does not expose Recent through the global R shortcut or a stale pinned pre
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: null,
-    trainingSidebarPinned: true,
     preferences: {
       onboardingCompleted: true,
       onboardingLanguage: "nl",
@@ -478,8 +604,40 @@ test("does not expose Recent through the global R shortcut or a stale pinned pre
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: null,
-    trainingSidebarPinned: false,
   });
+});
+
+test("legacy card details open without exposing the retired Recent tab", async () => {
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.click(screen.getByRole("button", { name: "Bekijk details" }));
+
+  expect(await screen.findByText("Bron:", { exact: false })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
+});
+
+test("V2 answer-card overflow opens the retained details surface", async () => {
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByTestId("mock-training-sense-card-v2");
+    fireEvent.click(screen.getByRole("button", { name: "Word details" }));
+
+    expect(await screen.findByText("Bron:")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
 });
 
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
@@ -1266,7 +1424,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 
     expect(
       await screen.findByRole("button", {
-        name: /ster[\s\S]*Een hemellichaam/i,
+        name: /ster[\s\S]*Van Dale/i,
       }),
     ).toBeInTheDocument();
 
@@ -1276,7 +1434,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
     });
 
     expect(
-      screen.getByRole("button", { name: /ster[\s\S]*Een hemellichaam/i }),
+      screen.getByRole("button", { name: /ster[\s\S]*Van Dale/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText("stedelijk")).not.toBeInTheDocument();
     expect(screen.queryByText(/3964 resultaten/i)).not.toBeInTheDocument();
@@ -1285,7 +1443,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
   }
 });
 
-test("dictionary lookup shows backend match labels and preserves ranked order", async () => {
+test("dictionary lookup preserves server Headword Group order", async () => {
   searchDictionaryGroups.mockResolvedValueOnce({
     items: [
       {
@@ -1317,10 +1475,10 @@ test("dictionary lookup shows backend match labels and preserves ranked order", 
   fireEvent.change(queryInput, { target: { value: "huis" } });
 
   const exact = await screen.findByRole("button", {
-    name: /huis[\s\S]*Exacte match/i,
+    name: /^huis[\s\S]*Van Dale NT2/i,
   });
   const compound = screen.getByRole("button", {
-    name: /bejaardenhuis[\s\S]*Samenstelling/i,
+    name: /^bejaardenhuis[\s\S]*Van Dale NT2/i,
   });
 
   expect(
@@ -1351,6 +1509,36 @@ test("lists tab opens the dedicated list management surface", async () => {
     screen.getAllByRole("button", { name: "Lijstinhoud" }).length,
   ).toBeGreaterThan(0);
   await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+});
+
+test("list browsing preserves frozen and hidden filters on the gated search path", async () => {
+  fetchWordsForList.mockClear();
+
+  render(<TrainingScreen user={user} />);
+
+  await screen.findByRole("heading", { name: "huis" });
+  fireEvent.click(screen.getByLabelText("Settings"));
+  fireEvent.click(await screen.findByRole("button", { name: "Lijsten" }));
+  await waitFor(() => expect(fetchWordsForList).toHaveBeenCalled());
+  fetchWordsForList.mockClear();
+
+  fireEvent.click(
+    (await screen.findAllByRole("button", { name: /selecteer filters/i }))[0],
+  );
+  fireEvent.click(screen.getAllByLabelText("Frozen")[0]);
+  fireEvent.click(screen.getAllByLabelText("Don't show")[0]);
+
+  await waitFor(() =>
+    expect(fetchWordsForList).toHaveBeenLastCalledWith(
+      "list-1",
+      "curated",
+      expect.objectContaining({
+        filterFrozen: true,
+        filterHidden: true,
+        page: 1,
+      }),
+    ),
+  );
 });
 
 test("lists tab keeps dictionary source separate from list browsing", async () => {
@@ -1503,7 +1691,12 @@ test("clicking a list in Lijsten changes only the viewed list", async () => {
     );
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
     expect(fetchStats).not.toHaveBeenCalled();
-    expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
     expect(screen.getAllByText("Active list").length).toBeGreaterThan(0);
   } finally {
     restoreDefaultListScope();
@@ -1542,6 +1735,7 @@ test("explicit list action makes the viewed list active for training", async () 
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
       }),
     );
     await waitFor(() =>
@@ -1567,14 +1761,43 @@ test("footer list selector still changes active training scope", async () => {
   fetchNextTrainingWordByScenario.mockClear();
   updateActiveTrainingScope.mockClear();
   fetchStats.mockClear();
+  let resolveOldSelection!: (word: typeof mockWord) => void;
+  const oldSelection = new Promise<typeof mockWord>((resolve) => {
+    resolveOldSelection = resolve;
+  });
+  let resolveSecondary!: (word: typeof overrideWord) => void;
+  const secondarySelection = new Promise<typeof overrideWord>((resolve) => {
+    resolveSecondary = resolve;
+  });
+  let resolvePersistence!: (result: {
+    scope: ActiveTrainingScope;
+    error: null;
+  }) => void;
+  const persistence = new Promise<{
+    scope: ActiveTrainingScope;
+    error: null;
+  }>((resolve) => {
+    resolvePersistence = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockImplementation(
+    async (
+      _userId: string,
+      _scenarioId: string,
+      _excludeWordIds: string[],
+      scope: { listId?: string } = {},
+    ) =>
+      scope.listId === secondaryList.id
+        ? secondarySelection
+        : oldSelection,
+  );
+  updateActiveTrainingScope.mockReturnValue(persistence);
 
   try {
     render(<TrainingScreen user={user} />);
 
-    await waitForInitialTrainingFetches();
-    fetchNextTrainingWordByScenario.mockClear();
-    updateActiveTrainingScope.mockClear();
-    fetchStats.mockClear();
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
+    );
 
     expect(
       screen.queryByRole("button", { name: /active list/i }),
@@ -1593,6 +1816,23 @@ test("footer list selector still changes active training scope", async () => {
         languageCode: "nl",
         listId: "list-secondary",
         listType: "curated",
+        activeScenario: "listening",
+      }),
+    );
+    await act(async () => resolveOldSelection(mockWord));
+    expect(
+      screen.queryByRole("heading", { name: "huis" }),
+    ).not.toBeInTheDocument();
+    await act(async () =>
+      resolvePersistence({
+        scope: {
+          ...defaultActiveTrainingScope,
+          activeListId: secondaryList.id,
+          activeListType: secondaryList.type,
+          activeScenario: "listening",
+          hasSavedScope: true,
+        },
+        error: null,
       }),
     );
     expect(
@@ -1605,14 +1845,54 @@ test("footer list selector still changes active training scope", async () => {
         );
       }),
     ).toBe(true);
+    await act(async () => resolveSecondary(overrideWord));
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+  } finally {
+    restoreDefaultListScope();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    updateActiveTrainingScope.mockResolvedValue({ scope: null, error: null });
+  }
+});
+
+test("initial load waits for an unsaved list default scenario", async () => {
+  fetchActiveTrainingScope.mockResolvedValue({
+    ...defaultActiveTrainingScope,
+    activeListId: secondaryList.id,
+    activeListType: secondaryList.type,
+    activeScenario: "understanding",
+    hasSavedScope: false,
+  });
+  fetchListSummaryById.mockResolvedValue(secondaryList);
+  fetchAvailableLists.mockResolvedValue([secondaryList]);
+  fetchNextTrainingWordByScenario.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+
+    await screen.findByRole("heading", { name: "huis" });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled();
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.every(
+        (call) => call[1] === "listening",
+      ),
+    ).toBe(true);
   } finally {
     restoreDefaultListScope();
   }
 });
 
 test("footer language selector switches current training language without changing defaults", async () => {
+  let resolveEnglishScope!: (scope: ActiveTrainingScope) => void;
+  const englishScope = new Promise<ActiveTrainingScope>(
+    (resolve) => {
+      resolveEnglishScope = resolve;
+    },
+  );
   fetchActiveTrainingScope.mockImplementation(
-    async ({ languageCode }: { languageCode: string }) => ({
+    async ({ languageCode }: { languageCode: string }) => {
+      const scope = {
       ...defaultActiveTrainingScope,
       languageCode,
       activeListId: languageCode === "en" ? secondaryList.id : activeList.id,
@@ -1623,7 +1903,9 @@ test("footer language selector switches current training language without changi
         languageCode === "en" ? ["listen-recognize"] : ["word-to-definition"],
       newReviewRatio: languageCode === "en" ? 1 : 2,
       hasSavedScope: true,
-    }),
+      };
+      return languageCode === "en" ? englishScope : scope;
+    },
   );
   fetchListSummaryById.mockImplementation(
     async ({ listId }: { listId: string }) =>
@@ -1651,6 +1933,7 @@ test("footer language selector switches current training language without changi
 
     fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
     fireEvent.click(screen.getByRole("button", { name: /Nederlands/ }));
+    fetchNextTrainingWordByScenario.mockClear();
     fireEvent.click(await screen.findByRole("button", { name: /English/ }));
 
     await waitFor(() =>
@@ -1659,12 +1942,39 @@ test("footer language selector switches current training language without changi
         languageCode: "en",
       }),
     );
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+        const scope = call[3] as { listId?: string };
+        return scope.listId === secondaryList.id;
+      }),
+    ).toBe(false);
+    await act(async () =>
+      resolveEnglishScope({
+        ...defaultActiveTrainingScope,
+        languageCode: "en",
+        activeListId: secondaryList.id,
+        activeListType: "curated",
+        activeScenario: "listening",
+        cardFilter: "review",
+        modesEnabled: ["listen-recognize"],
+        newReviewRatio: 1,
+        hasSavedScope: true,
+      }),
+    );
     await waitFor(() =>
       expect(
         within(footerScope).getByText(
           "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
         ),
       ).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.some((call) => {
+          const scope = call[3] as { listId?: string };
+          return call[1] === "listening" && scope.listId === secondaryList.id;
+        }),
+      ).toBe(true),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
@@ -1745,6 +2055,81 @@ test("search detail trains a selected entry as the next card without changing ac
       }),
     ).toBe(false);
   } finally {
+    restoreDefaultSearchResults();
+    restoreDefaultListScope();
+    fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
+  }
+});
+
+test("keeps the current V2 card when a selected-word warm fails", async () => {
+  let resolveOverrideLookup!: (value: unknown) => void;
+  const readyLookup = (entryId: string, text: string) => ({
+    state: "ready",
+    group: { header: { audio: null, text } },
+    entry: { entryId },
+  });
+
+  useTwoListScope();
+  searchDictionaryGroups.mockResolvedValue({
+    items: [dictionaryBoom],
+    total: 1,
+  });
+  fetchTrainingWordByLookup.mockClear();
+  fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      input.entryId === overrideWord.id
+        ? new Promise((resolve) => {
+            resolveOverrideLookup = resolve;
+          })
+        : Promise.resolve(readyLookup(input.entryId, "huis")),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+
+    fireEvent.keyDown(window, { key: "s" });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/zoek in het woordenboek/i),
+      { target: { value: "boom" } },
+    );
+    await screen.findAllByText("boom");
+
+    const detailActions = await screen.findAllByText("Meer acties");
+    fireEvent.click(detailActions[detailActions.length - 1]);
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /train dit woord als volgende kaart/i,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(fetchTrainingWordByLookup).toHaveBeenCalledWith(
+        overrideWord.id,
+        user.id,
+      ),
+    );
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveOverrideLookup({ state: "lookup-http-error", status: 503 });
+    });
+    expect(
+      await screen.findByText("Kon dit woord niet laden; probeer het opnieuw."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
     restoreDefaultSearchResults();
     restoreDefaultListScope();
     fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
@@ -1987,15 +2372,52 @@ test("settings training controls persist to the current language training scope"
         }),
       ),
     );
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
     expect(updateUserPreferences).not.toHaveBeenCalledWith(
       expect.objectContaining({ activeScenario: "listening" }),
     );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard nieuw\/herhaling/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Alleen herhaling" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Standaard herhalingmix/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "1:3 (1 nieuw, 3 herhalingen)" }),
+    );
+
+    await act(async () => undefined);
+    expect(
+      screen.getByRole("button", { name: /Luisteren.*standaard/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Definitie -> woord" }),
+    ).toHaveClass("bg-primary/10");
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard nieuw\/herhaling.*Alleen herhaling/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Standaard herhalingmix.*1:3/i,
+      }),
+    ).toBeInTheDocument();
   } finally {
     restoreDefaultListScope();
   }
 });
 
 test("hotkey triggers recordReview like button click", async () => {
+  const dispatch = vi.spyOn(window, "dispatchEvent");
   render(<TrainingScreen user={user} />);
 
   await waitFor(() =>
@@ -2014,6 +2436,15 @@ test("hotkey triggers recordReview like button click", async () => {
       expect.objectContaining({ result: "success" }),
     ),
   );
+  expect(
+    dispatch.mock.calls.some(
+      ([event]) =>
+        event instanceof CustomEvent &&
+        event.type === "2000nl:training-transition-timing" &&
+        event.detail.stage === "review.mutation" &&
+        event.detail.outcome === "accepted",
+    ),
+  ).toBe(true);
 });
 
 test("rapid hotkeys while review is in-flight trigger only one review (US-093.5)", async () => {
@@ -2060,6 +2491,13 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
 
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
@@ -2077,7 +2515,6 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(scrollRegion.className).toContain("overflow-clip");
     expect(scrollRegion.className).not.toContain("overflow-y-auto");
     const frame = screen.getByTestId("training-card-frame");
-    expect(frame).toHaveAttribute("data-training-v2-state", "loading");
     expect(frame.className).toContain("flex-1");
     expect(frame.className).not.toContain("h-[580px]");
     expect(
@@ -2132,12 +2569,15 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
       screen.queryByTestId("training-session-chrome"),
     ).not.toBeInTheDocument();
   } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
     vi.unstubAllEnvs();
   }
 });
 
 test("classifies the listening renderer as an explicit legacy exception", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchActiveTrainingScope.mockResolvedValueOnce({
     ...defaultActiveTrainingScope,
     activeScenario: "listening",
@@ -2165,6 +2605,7 @@ test("classifies the listening renderer as an explicit legacy exception", async 
       "listening-mode",
     );
   } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
     vi.unstubAllEnvs();
   }
 });
@@ -2328,6 +2769,200 @@ test("uses prefetched next card for instant transition on answer", async () => {
     if (typeof (vi as any).unstubAllGlobals === "function") {
       (vi as any).unstubAllGlobals();
     }
+  }
+});
+
+test("keeps the current V2 card visible until the prefetched DTO is ready", async () => {
+  let resolveNextLookup!: (value: unknown) => void;
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: "word-1" },
+  };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      input.entryId === word2.id
+        ? new Promise((resolve) => {
+            resolveNextLookup = resolve;
+          })
+        : Promise.resolve(readyLookup),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+    const schedulerCallsBeforeGrade =
+      fetchNextTrainingWordByScenario.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      schedulerCallsBeforeGrade,
+    );
+
+    await act(async () => {
+      resolveNextLookup({
+        ...readyLookup,
+        group: { header: { audio: null, text: "boom" } },
+        entry: { entryId: word2.id },
+      });
+    });
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Next training card")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveFocus();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("uses only the on-demand fallback when grading before next-turn selection resolves", async () => {
+  const resolveStaleSelections: Array<
+    (value: typeof mockWord | null) => void
+  > = [];
+  let selectionCall = 0;
+  let allowFallback = false;
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "boom" } },
+    entry: { entryId: word2.id },
+  };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementation(() => {
+    selectionCall += 1;
+    if (selectionCall === 1) return Promise.resolve(word1);
+    if (allowFallback) return Promise.resolve(word2);
+    return new Promise((resolve) => {
+      resolveStaleSelections.push(resolve);
+    });
+  });
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
+    );
+    const callsBeforeGrade = fetchNextTrainingWordByScenario.mock.calls.length;
+
+    allowFallback = true;
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "boom" }),
+    ).toBeInTheDocument();
+    await act(async () => Promise.resolve());
+    const callsAfterGrade = fetchNextTrainingWordByScenario.mock.calls.slice(
+      callsBeforeGrade,
+    );
+    expect(
+      callsAfterGrade.filter((call) => {
+        const excludedCardKeys = call[6] as string[];
+        return (
+          excludedCardKeys.includes("word-1:word-to-definition") &&
+          !excludedCardKeys.includes("word-2:word-to-definition")
+        );
+      }),
+    ).toHaveLength(1);
+    const callsAfterPresentation =
+      fetchNextTrainingWordByScenario.mock.calls.length;
+
+    await act(async () => {
+      resolveStaleSelections.forEach((resolve) => resolve(word2));
+    });
+    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
+      callsAfterPresentation,
+    );
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("keeps the current V2 card when the on-demand scheduler warm fails", async () => {
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValueOnce(null)
+    .mockResolvedValue(word2);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockImplementation(
+    (input: { entryId: string }) =>
+      Promise.resolve(
+        input.entryId === word2.id
+          ? { state: "lookup-http-error", status: 503 }
+          : {
+              state: "ready",
+              group: { header: { audio: null, text: "huis" } },
+              entry: { entryId: word1.id },
+            },
+      ),
+  );
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(
+        fetchNextTrainingWordByScenario.mock.calls.length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await waitFor(() =>
+      expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ entryId: word2.id }),
+      ),
+    );
+
+    expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "boom" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /Training could not be loaded/i }),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
 });
 
@@ -2508,6 +3143,7 @@ test("US-094.3: session-reviewed set is cleared on scenario change", async () =>
   expect(fetchNextTrainingWordByScenario.mock.calls[0][1]).toBe("listening");
   expect(fetchNextTrainingWordByScenario.mock.calls[0][2]).toEqual([]);
   expect(fetchNextTrainingWordByScenario.mock.calls[0][6]).toEqual([]);
+  expect(fetchNextTrainingWordByScenario.mock.calls[0][7]).toBeUndefined();
 
   // The fresh load should also clear the session-reviewed set.
   await waitFor(() => {
@@ -2542,7 +3178,6 @@ test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", as
     newReviewRatio: 2,
     activeScenario: "understanding",
     translationLang: "en",
-    trainingSidebarPinned: false,
     preferences: {
       onboardingCompleted: false,
       onboardingLanguage: null,

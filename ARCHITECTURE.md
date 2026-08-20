@@ -28,12 +28,19 @@ changes, learning preferences that affect scheduling, and platform-facing
 lookup/action contracts. These paths must not rely on frontend-owned table
 mutations.
 
+Diagnostic reporting uses a separate explicit mutation boundary: a closed,
+bounded client envelope is validated again by the server and atomically creates
+one durable Feedback Item plus one expiring Diagnostic Envelope. It must not
+reuse review mutations or accept general logs/browser state. See
+[`docs/adr/0006-bounded-diagnostic-reports-feed-the-feedback-queue.md`](docs/adr/0006-bounded-diagnostic-reports-feed-the-feedback-queue.md)
+and the linked full contract.
+
 `user_settings` intentionally contains two classes of settings:
 
 - Learning preferences that affect scheduling/training semantics. These are
   accessed through RPCs such as `get_learning_preferences` and
   `update_learning_preferences`.
-- App-local UI preferences such as theme, sidebar pinning, translation language,
+- App-local UI preferences such as theme, translation language,
   onboarding JSON, and audio quality. The first-party `apps/ui` service may
   read/write these columns directly under Supabase RLS because they are not a
   dictionary/platform boundary. If any of these settings becomes shared across
@@ -78,11 +85,18 @@ Docker Supabase URL. For local DB/RPC checks, prefer
   keep mutations on explicit Platform/RPC paths, preserve server-derived
   principal identity, and avoid parsing raw provider payloads above stable
   documented contracts.
-- Prefer domain modules over broad-file growth. If `apps/ui/lib/platform/platformApi.ts`
-  or another working module must be decomposed, first protect current behavior
-  with characterization tests, then split along stable boundaries such as
-  lookup, actions, source context, provenance, translation, lists, user
-  dictionary, and projection helpers.
+- Prefer domain modules over broad-file growth. `apps/ui/lib/platform/platformApi.ts`
+  is the stable route-facing facade; V1 lookup/projection, grouped search,
+  action orchestration, user-list mutations, timing, source context,
+  provenance, translation, and user-dictionary behavior live in focused
+  modules beside it. Extend the owning module instead of putting
+  implementation back into the facade. Protect any further decomposition with
+  route/facade characterization first.
+- The reachable legacy/listening Training renderer has its own anti-corruption
+  boundary: `apps/ui/lib/wordUtils.ts` owns compatibility normalization of
+  `WordRaw`, and `apps/ui/lib/training/trainingCardPresentation.ts` projects the
+  closed model consumed by `TrainingCard.tsx`. The renderer owns layout and
+  interactions only; it must not accept or inspect `TrainingWord.raw`.
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.

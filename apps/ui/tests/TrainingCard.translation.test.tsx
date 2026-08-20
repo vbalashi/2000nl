@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TrainingCard } from "@/components/training/TrainingCard";
+import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 
 const word = {
   id: "word-1",
@@ -39,7 +40,9 @@ function renderCard(
 
     return (
       <TrainingCard
-        word={(props.word ?? word) as any}
+        card={
+          props.card ?? projectTrainingCardPresentation(word as any)
+        }
         mode={props.mode ?? "word-to-definition"}
         revealed={props.revealed ?? true}
         hintRevealed={props.hintRevealed ?? false}
@@ -97,11 +100,16 @@ describe("TrainingCard translation behavior", () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     expect(fetch).toHaveBeenCalledWith(
-      "/api/translation?word_id=word-1&lang=en",
+      "/api/platform/translation",
       expect.objectContaining({
+        method: "POST",
         cache: "no-store",
         credentials: "same-origin",
-        headers: { Accept: "application/json" },
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ entryId: "word-1", targetLang: "en" }),
       }),
     );
   });
@@ -152,7 +160,9 @@ describe("TrainingCard translation behavior", () => {
     });
 
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(String(vi.mocked(fetch).mock.calls[1][0])).toContain("&force=1");
+    expect(vi.mocked(fetch).mock.calls[1][1]?.body).toBe(
+      JSON.stringify({ entryId: "word-1", targetLang: "en", force: true }),
+    );
     expect(onOpenChange).toHaveBeenCalledWith(true);
 
     fireEvent.click(button);

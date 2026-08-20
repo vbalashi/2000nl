@@ -166,6 +166,15 @@ export function parsePlatformV2ActionRequest(
   };
 }
 
+export function parsePlatformV2ActionReceiptRequest(value: unknown):
+  | { ok: true; clientEventId: string }
+  | { ok: false; error: string; status: number } {
+  const clientEventId = asUuid(asRecord(value).clientEventId);
+  return clientEventId
+    ? { ok: true, clientEventId }
+    : { ok: false, error: "invalid_client_event_id", status: 400 };
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)

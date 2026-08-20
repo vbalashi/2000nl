@@ -4,7 +4,8 @@
 before enabling its V2 adapter. Fixtures contain only public Platform DTO
 fields; provider `raw` data and diagnostic `sourcePath` values are forbidden.
 
-- `catalog-single-sense.json` covers a public, non-mutating SenseCard.
+- `catalog-single-sense.json` covers a public, non-mutating SenseCard and pins
+  the entry-level translation artifact, including alternatives and base text.
 - `catalog-cross-reference.json` covers a redirect-only dictionary record that
   must never become a learning card.
 - `known-action-roundtrip.json` pins server-owned Mark/Undo targets and the

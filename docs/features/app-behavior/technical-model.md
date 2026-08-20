@@ -29,7 +29,7 @@
 - Curated lists such as `vandale-all` and `nt2-2000`
 
 **`user_settings`**
-- Training preferences: active scenario, enabled modes, active list, card filter, new/review ratio, translation language, theme, sidebar pinning, audio quality, subscription tier
+- Training preferences: active scenario, enabled modes, active list, card filter, new/review ratio, translation language, theme, audio quality, subscription tier
 
 **`word_entry_translations` / `user_word_notes`**
 - Shared translation overlays per word/language and per-user notes
@@ -40,8 +40,8 @@
 - `apps/ui/components/training/TrainingScreen.tsx`
 - `apps/ui/components/training/TrainingCard.tsx`
 - `apps/ui/components/training/FirstTimeButtonGroup.tsx`
-- `apps/ui/components/training/SidebarCard.tsx`
-- `apps/ui/components/training/Sidebar.tsx`
+- `apps/ui/components/training/TrainingDetailsDrawer.tsx`
+- `apps/ui/components/training/WordDetailPanel.tsx`
 - `apps/ui/components/training/SettingsModal.tsx`
 - `apps/ui/components/Tooltip.tsx`
 
@@ -56,7 +56,7 @@
 - `apps/ui/lib/training/reviewService.ts`
 - `apps/ui/lib/training/listService.ts`
 - `apps/ui/lib/training/preferencesService.ts`
-- `apps/ui/lib/training/statsHistoryService.ts`
+- `apps/ui/lib/training/statsService.ts`
 - `fetchNextTrainingWord()`
 - `fetchNextTrainingWordByScenario()`
 - `recordReview()`

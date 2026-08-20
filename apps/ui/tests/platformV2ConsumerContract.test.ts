@@ -21,7 +21,7 @@ describe("Platform V2 shared consumer contract", () => {
       query: "huis",
       request: {
         contentLanguageCode: "nl",
-        translationTargetLanguageCode: null,
+        translationTargetLanguageCode: "ru",
         cardTypeId: "word-to-definition",
         intent: "external-click",
       },
@@ -84,6 +84,20 @@ describe("Platform V2 shared consumer contract", () => {
             },
           ],
           cardState: null,
+          entryTranslation: {
+            translationId: "fixture-translation-huis-ru",
+            entryId: "fixture-entry-huis-1",
+            targetLanguageCode: "ru",
+            status: "ready",
+            text: "дом",
+            alternativeTexts: ["жилище"],
+            baseText: "дом",
+            note: null,
+            sourceContentFingerprint: "fixture-content-revision-huis-1",
+            translationPolicyVersion: "translation-policy-v1",
+            providerRevision: "fixture-provider-revision",
+            isFresh: true,
+          },
         },
       ],
     });
@@ -109,7 +123,13 @@ describe("Platform V2 shared consumer contract", () => {
       entries: [
         {
           headwordGroupId: "fixture-group-selder",
+          meaningOrdinal: 1,
           crossReferenceQuery: "selderie",
+          crossReferenceTarget: {
+            query: "selderie",
+            headwordGroupId: "fixture-group-selderie",
+            entryId: "fixture-entry-selderie-1",
+          },
           allowMutationCapabilities: false,
           allowWordDetailsCapability: false,
           entry: {

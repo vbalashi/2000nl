@@ -543,7 +543,7 @@ they do not truncate or translate backend labels.
 | headword | `header.text` | Dictionary Entry group projection | render supplied value |
 | pronunciation separators | `header.displayPronunciation` | Platform/source projection | never synthesize from spelling |
 | article | `header.article` | Platform/source projection | local layout only |
-| part of speech | uniform group term or entry override | Platform | localize its message key; never choose a winner |
+| part of speech | uniform group term or entry override | Platform | localize its message key; if the key is unknown, render `sourceValue` when supplied, otherwise omit the label; never choose a winner |
 | 2K indicator | indicator ID `core-vocabulary`, value `nt2-2000` | Platform group projection | render once when supplied |
 | meaning count | `senseCount` | Platform group | locale pluralization from key |
 | meaning number | `meaningOrdinal` | entry presentation | hide for one-sense group |
@@ -565,6 +565,7 @@ become SenseCards.
 type CrossReferenceEntryV2 = {
   kind: "cross-reference";
   crossReferenceId: string;
+  meaningOrdinal: number | null;
   label: SemanticTermV2 | null;
   text: string;
   target: {

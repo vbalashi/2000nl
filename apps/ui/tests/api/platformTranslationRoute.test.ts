@@ -5,23 +5,68 @@ import {
   contentFingerprint,
   normalizeDictionaryContent,
 } from "@/lib/platform/projections/dictionaryContent";
-import { translationPolicyVersion } from "@/lib/translation/translationPolicy";
+import {
+  TRANSLATION_PIPELINE_VERSION,
+  ordinaryTranslationPolicyVersion,
+} from "@/lib/translation/translationPolicy";
+import { buildDictionaryMeaningTranslationRequest } from "@/lib/translation/dictionaryMeaningTranslationContract";
+import { dictionaryMeaningTranslationFingerprint } from "@/lib/translation/dictionaryMeaningTranslationService";
 
 const getUser = vi.fn();
 const rpc = vi.fn();
 const from = vi.fn();
 const createClient = vi.fn();
-const translate = vi.fn(async (texts: string[]) =>
+const translate = vi.fn(async (texts: string[], _target?: string) =>
   texts.map((text) => `translated:${text}`),
 );
-const translateWithContext = vi.fn(async (texts: string[]) =>
+const translateWithContext = vi.fn(async (texts: string[], _target?: string, _context?: unknown) =>
   texts.map((text) => `translated-with-context:${text}`),
 );
-const translateWithContextAndNote = vi.fn(async (texts: string[]) => ({
+const translateWithContextAndNote = vi.fn(async (texts: string[], _target?: string, _context?: unknown) => ({
   translations: texts.map((text) => `translated-with-context:${text}`),
   literalTranslations: texts.map((text) => `literal:${text}`),
   note: "translator note",
+  meta: {
+    providerSelected: "openai",
+    providerUsed: "deepl",
+    usedFallback: true,
+  },
 }));
+const translateText = vi.fn(async (request: {
+  texts: string[];
+  targetLanguageCode: string;
+  sourceLanguageCode?: string;
+  purpose?: string;
+  contextText?: string | null;
+}) => {
+  const context = {
+    sourceLanguageCode: request.sourceLanguageCode,
+    purpose: request.purpose,
+    contextText: request.contextText,
+  };
+  if (useRichTranslateWithContext) {
+    return translateWithContextAndNote(
+      request.texts,
+      request.targetLanguageCode,
+      context,
+    );
+  }
+  const translations = useTranslateWithContext
+    ? await translateWithContext(
+        request.texts,
+        request.targetLanguageCode,
+        context,
+      )
+    : await translate(request.texts, request.targetLanguageCode);
+  return {
+    translations,
+    meta: {
+      providerSelected: "openai",
+      providerUsed: "openai",
+      usedFallback: false,
+    },
+  };
+});
 let useTranslateWithContext = false;
 let useRichTranslateWithContext = false;
 
@@ -32,11 +77,15 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({
     provider: "openai",
-    translator: useTranslateWithContext
-      ? useRichTranslateWithContext
-        ? { translate, translateWithContext, translateWithContextAndNote }
-        : { translate, translateWithContext }
-      : { translate },
+    translator: {
+      translate,
+      translateText,
+      ...(useTranslateWithContext
+        ? useRichTranslateWithContext
+          ? { translateWithContext, translateWithContextAndNote }
+          : { translateWithContext }
+        : {}),
+    },
   })),
   loadTranslationConfigFromEnv: vi.fn(() => ({
     provider: "openai",
@@ -50,6 +99,7 @@ vi.mock("@/lib/translation/translationProvider", () => ({
 }));
 
 vi.mock("@/lib/translation/prompts/promptFingerprint", () => ({
+  getDictionaryMeaningPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
   getTranslationPromptFingerprint: vi.fn(() => "prompt-fingerprint"),
 }));
 
@@ -66,6 +116,45 @@ const request = (body: unknown, token = "token-1") =>
     },
     body: JSON.stringify(body),
   });
+
+const accessibleEntry = () => ({
+  id: ENTRY_ID,
+  headword: "huis",
+  gender: "het",
+  part_of_speech: "zn",
+  raw: { meanings: [{ definition: "woning" }] },
+});
+
+const translationFingerprint = (entry: ReturnType<typeof accessibleEntry>) => {
+  const sourceContentRevision = contentFingerprint(
+    normalizeDictionaryContent(entry as any),
+  );
+  return dictionaryMeaningTranslationFingerprint({
+    request: buildDictionaryMeaningTranslationRequest({
+      entryId: entry.id,
+      sourceContentFingerprint: sourceContentRevision,
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      word: entry,
+    }),
+    pipelineVersion: TRANSLATION_PIPELINE_VERSION,
+    provider: "openai",
+    promptFingerprint: "prompt-fingerprint",
+  });
+};
+
+const currentPendingTranslation = () => ({
+  status: "pending",
+  overlay: null,
+  note: null,
+  source_content_revision: contentFingerprint(
+    normalizeDictionaryContent(accessibleEntry() as any),
+  ),
+  source_fingerprint: translationFingerprint(accessibleEntry()),
+  translation_policy_version: ordinaryTranslationPolicyVersion("openai"),
+  provider_revision: "prompt-fingerprint",
+  updated_at: new Date().toISOString(),
+});
 
 const queryChain = (result: { data?: unknown; error?: unknown }) => {
   const query: any = {
@@ -85,26 +174,16 @@ function mockAuthenticatedClients() {
     auth: { getUser },
     rpc,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(platformUserClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
 }
 
 function mockAuthenticatedClientsWithPreference(targetLang = "en") {
@@ -113,26 +192,16 @@ function mockAuthenticatedClientsWithPreference(targetLang = "en") {
     rpc,
     from,
   };
-  const translationUserClient = {
-    auth: { getUser },
-    rpc,
-  };
   const serviceClient = {
     from,
   };
   createClient
     .mockReturnValueOnce(preferenceClient)
-    .mockReturnValueOnce(translationUserClient)
     .mockReturnValueOnce(serviceClient);
-  getUser
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    })
-    .mockResolvedValueOnce({
-      data: { user: { id: "user-1" } },
-      error: null,
-    });
+  getUser.mockResolvedValueOnce({
+    data: { user: { id: "user-1" } },
+    error: null,
+  });
   from.mockImplementationOnce((table: string) => {
     if (table === "user_settings") {
       return queryChain({
@@ -268,8 +337,9 @@ describe("/api/platform/v1/translation", () => {
             source_content_revision: contentFingerprint(
               normalizeDictionaryContent(entry as any),
             ),
+            source_fingerprint: translationFingerprint(entry),
             translation_policy_version:
-              translationPolicyVersion("openai"),
+              ordinaryTranslationPolicyVersion("openai"),
             provider_revision: "prompt-fingerprint",
             updated_at: new Date().toISOString(),
           },
@@ -283,6 +353,9 @@ describe("/api/platform/v1/translation", () => {
     const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledTimes(1);
     expect(response.headers.get("access-control-allow-origin")).toBe(
       "https://client.example",
     );
@@ -291,6 +364,152 @@ describe("/api/platform/v1/translation", () => {
       targetLang: "ru",
       status: "pending",
     });
+  });
+
+  test("does not create the service cache client before gated entry authorization", async () => {
+    const platformUserClient = { auth: { getUser }, rpc };
+    createClient.mockReturnValueOnce(platformUserClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(404);
+    expect(rpc).toHaveBeenCalledWith("fetch_dictionary_entry_by_id_gated", {
+      p_entry_id: ENTRY_ID,
+    });
+    expect(createClient).toHaveBeenCalledTimes(1);
+    expect(from).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru",
+      error: "word_entry_not_found",
+    });
+  });
+
+  test("rejects an invalid target language loaded from user settings", async () => {
+    const preferenceClient = { auth: { getUser }, rpc, from };
+    createClient.mockReturnValueOnce(preferenceClient);
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    from.mockImplementationOnce((table: string) => {
+      if (table === "user_settings") {
+        return queryChain({ data: { translation_lang: "ru;ignore" }, error: null });
+      }
+      throw new Error(`unexpected table read: ${table}`);
+    });
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID }));
+
+    expect(response.status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual({
+      entryId: ENTRY_ID,
+      targetLang: "ru;ignore",
+      error: "Invalid lang",
+    });
+  });
+
+  test("classifies a lost insert race as pending without provider work", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    from
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(
+        queryChain({ data: currentPendingTranslation(), error: null }),
+      );
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("keeps a failed lost-insert race classified as cached pending", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    from
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(
+        queryChain({
+          data: {
+            ...currentPendingTranslation(),
+            status: "failed",
+            error_message: "provider_unknown_error:000000000000000000000000",
+          },
+          error: null,
+        }),
+      );
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("classifies a failed conditional claim as a cache hit", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    const stale = {
+      ...currentPendingTranslation(),
+      source_content_revision: "stale-revision",
+      updated_at: "2026-08-13T00:00:00.000Z",
+    };
+    const ready = {
+      ...currentPendingTranslation(),
+      status: "ready",
+      overlay: { headword: "дом", meanings: [{ definition: "жилище" }] },
+    };
+    from
+      .mockReturnValueOnce(queryChain({ data: stale, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: ready, error: null }));
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("hit");
+    expect(translate).not.toHaveBeenCalled();
+  });
+
+  test("keeps a failed conditional-claim result classified as cached pending", async () => {
+    mockAuthenticatedClients();
+    rpc.mockResolvedValueOnce({ data: accessibleEntry(), error: null });
+    const stale = {
+      ...currentPendingTranslation(),
+      source_content_revision: "stale-revision",
+      updated_at: "2026-08-13T00:00:00.000Z",
+    };
+    const failed = {
+      ...currentPendingTranslation(),
+      status: "failed",
+      error_message: "provider_unknown_error:000000000000000000000000",
+    };
+    from
+      .mockReturnValueOnce(queryChain({ data: stale, error: null }))
+      .mockReturnValueOnce(queryChain({ data: null, error: null }))
+      .mockReturnValueOnce(queryChain({ data: failed, error: null }));
+
+    const { POST } = await import("@/app/api/platform/v1/translation/route");
+    const response = await POST(request({ entryId: ENTRY_ID, targetLang: "ru" }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("pending");
+    expect(translate).not.toHaveBeenCalled();
   });
 
   test("generates and stores a missing translation overlay", async () => {
@@ -319,6 +538,7 @@ describe("/api/platform/v1/translation", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-platform-cache")).toBe("provider");
     expect(translate).toHaveBeenCalledWith(["het huis", "woning"], "ru");
     expect(insertChain.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -576,6 +796,8 @@ describe("/api/platform/v1/translation", () => {
         status: "ready",
         translated_text: "translated:ik ga naar huis",
         provider: "openai",
+        provider_used: "openai",
+        used_fallback: false,
       }),
     );
     expect(translate).toHaveBeenCalledWith(["ik ga naar huis"], "en");
@@ -588,6 +810,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "translated:ik ga naar huis",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
+      providerUsed: "openai",
+      usedFallback: false,
     });
   });
 
@@ -750,12 +974,17 @@ describe("/api/platform/v1/translation", () => {
         translated_text: "translated-with-context:enorm toe.",
         literal_translated_text: "literal:enorm toe.",
         translator_comment: "translator note",
+        provider: "openai",
+        provider_used: "deepl",
+        used_fallback: true,
       }),
     );
     await expect(response.json()).resolves.toMatchObject({
       translatedText: "translated-with-context:enorm toe.",
       literalTranslatedText: "literal:enorm toe.",
       translatorComment: "translator note",
+      providerUsed: "deepl",
+      usedFallback: true,
     });
 
     useRichTranslateWithContext = false;
@@ -850,6 +1079,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: "see you tomorrow",
             error_message: null,
             provider: "openai",
+            provider_used: "deepl",
+            used_fallback: true,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",
@@ -889,6 +1120,8 @@ describe("/api/platform/v1/translation", () => {
       translatedText: "see you tomorrow",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: true,
+      providerUsed: "deepl",
+      usedFallback: true,
     });
   });
 
@@ -916,6 +1149,8 @@ describe("/api/platform/v1/translation", () => {
             translated_text: null,
             error_message: null,
             provider: null,
+            provider_used: "future-provider-must-not-project",
+            used_fallback: null,
             source_text_hash: "source-hash",
             source_language_code: "nl",
             target_language_code: "en",
@@ -1035,7 +1270,8 @@ describe("/api/platform/v1/translation", () => {
   });
 
   test("returns failed text translation artifact identity when provider fails", async () => {
-    translate.mockRejectedValueOnce(new Error("provider down"));
+    const providerSecret = "provider-body-with-private-subtitle-and-token";
+    translate.mockRejectedValueOnce(new Error(providerSecret));
     const userClient = {
       auth: { getUser },
       from,
@@ -1087,7 +1323,9 @@ describe("/api/platform/v1/translation", () => {
     expect(failedUpdateChain.update).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "failed",
-        error_message: "provider down",
+        error_message: expect.stringMatching(
+          /^provider_unknown_error:[a-f0-9]{24}$/,
+        ),
       }),
     );
     await expect(response.json()).resolves.toEqual({
@@ -1098,7 +1336,10 @@ describe("/api/platform/v1/translation", () => {
       targetLanguageCode: "en",
       translationPolicyVersion: "platform-text-translation-v2",
       cached: false,
-      error: "provider down",
+      error: expect.stringMatching(/^provider_unknown_error:[a-f0-9]{24}$/),
     });
+    expect(JSON.stringify(failedUpdateChain.update.mock.calls)).not.toContain(
+      providerSecret,
+    );
   });
 });
