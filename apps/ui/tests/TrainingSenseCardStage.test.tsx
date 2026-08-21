@@ -405,7 +405,7 @@ describe("TrainingSenseCardStage", () => {
     expect(model.headword).toBe("re·ˈcord");
   });
 
-  test("keeps reverse Face quiet without an audio action", () => {
+  test("keeps reverse Face quiet while headword audio remains available", () => {
     const model = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
@@ -429,7 +429,8 @@ describe("TrainingSenseCardStage", () => {
     expect(
       screen.queryByText("Welk woord hoort bij deze betekenis?"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Afspelen" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
+    expect(onPlayAudio).toHaveBeenCalledOnce();
     expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: model.headword }),
@@ -439,8 +440,7 @@ describe("TrainingSenseCardStage", () => {
     expect(
       screen.getByRole("heading", { name: model.headword }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Afspelen" })).not.toBeInTheDocument();
-    expect(onPlayAudio).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
   });
 

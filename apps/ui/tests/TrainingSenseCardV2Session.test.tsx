@@ -10,6 +10,7 @@ import {
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
+import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
 
 const fetchSingleSense = vi.fn();
 const performAction = vi.fn();
@@ -934,6 +935,110 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
+  test.each([
+    ["word-to-definition", "face"],
+    ["definition-to-word", "face"],
+  ] as const)(
+    "keeps projected headword audio available for %s on the %s",
+    async (mode, _side) => {
+      const projected = projectedTrainingAudioResult(mode, true);
+      fetchSingleSense.mockResolvedValue(projected);
+
+      render(
+        <TestTrainingSenseCardV2Session
+          word={{ ...word, mode }}
+          mode={mode}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onPlayResolvedAudio={vi.fn()}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      await screen.findByTestId("training-sense-card-v2");
+      expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+        "data-side",
+        "answer",
+      );
+      expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+    },
+  );
+
+  test("does not invent an audio action when projection has no capability", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("word-to-definition", false),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="en"
+        translationTargetLanguageCode="nl"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("keeps the audio action visible while resolution is pending", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("word-to-definition", true),
+    );
+    resolveAudio.mockImplementationOnce(() => new Promise(() => {}));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    const audioButton = await screen.findByRole("button", { name: "Afspelen" });
+    fireEvent.click(audioButton);
+
+    await waitFor(() => expect(audioButton).toBeDisabled());
+    expect(audioButton).toBeVisible();
+  });
+
+  test("keeps the audio action visible after resolution fails", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("word-to-definition", true),
+    );
+    resolveAudio.mockRejectedValueOnce(new Error("audio_failed"));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Afspelen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("audio_failed");
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+  });
+
   test("refreshes a genuinely newer remote state without advancing", async () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
     const onProgressActionAccepted = vi.fn();
@@ -1268,3 +1373,113 @@ describe("TrainingSenseCardV2Session", () => {
   });
 
 });
+
+function projectedTrainingAudioResult(
+  mode: "word-to-definition" | "definition-to-word",
+  withAudio: boolean,
+) {
+  const payload = projectPlatformLookupV2({
+    query: "hand",
+    request: {
+      contentLanguageCode: withAudio ? "nl" : "en",
+      translationTargetLanguageCode: withAudio ? "en" : "nl",
+      cardTypeId: mode,
+      intent: "training-review",
+    },
+    page: {
+      selectedTierComplete: true,
+      nextGroupCursor: null,
+    },
+    entries: [
+      {
+        headwordGroupId: "group-hand",
+        entry: {
+          id: "entry-hand-1",
+          dictionaryId: "vandale",
+          languageCode: withAudio ? "nl" : "en",
+          headword: "hand",
+          meaningId: 1,
+          partOfSpeech: "zn",
+          gender: "de",
+          contentFingerprint: "content-hand-1",
+          raw: {},
+          content: {
+            headword: "hand",
+            languageCode: withAudio ? "nl" : "en",
+            meaningId: 1,
+            partOfSpeech: "zn",
+            gender: "de",
+            meanings: [
+              { definition: "het einde van je arm, waar je vingers aan zitten" },
+            ],
+            summary: {
+              definition: "het einde van je arm, waar je vingers aan zitten",
+            },
+            sections: [
+              {
+                id: "meaning-1",
+                sourcePath: "raw.meanings[0].definition",
+                kind: "meaning",
+                text: "het einde van je arm, waar je vingers aan zitten",
+              },
+            ],
+          },
+        },
+        dictionary: {
+          id: "vandale",
+          languageCode: withAudio ? "nl" : "en",
+          slug: "vandale",
+          name: "Van Dale",
+          kind: "curated",
+          visibility: "system",
+        },
+        contentNodeBindings: [
+          {
+            contentNodeId: "definition-1",
+            sourcePath: "raw.meanings[0].definition",
+            kind: "definition",
+            sourceTextFingerprint: "definition-fingerprint",
+          },
+        ],
+        cardState: {
+          stateRevision: "state-1",
+          knownMark: null,
+          clickCount: 0,
+          seenCount: 1,
+          successCount: 0,
+          lastSeenAt: null,
+          lastReviewedAt: null,
+          nextReviewAt: null,
+          hidden: false,
+          frozenUntil: null,
+          inLearning: true,
+          learningDueAt: null,
+          fsrs: {
+            stability: null,
+            difficulty: null,
+            reps: 0,
+            lapses: 0,
+            lastGrade: null,
+            lastInterval: null,
+            paramsVersion: null,
+          },
+        },
+        ...(withAudio
+          ? {
+              audioCapability: {
+                audioId: "group-hand:headword:nl",
+                actionId: "play-audio" as const,
+                contentLanguageCode: "nl",
+              },
+            }
+          : {}),
+      },
+    ],
+  });
+  const group = payload.groups[0];
+  const entry = group.entries[0];
+  if (!entry || entry.kind !== "sense-card") {
+    throw new Error("Expected projected Training SenseCard");
+  }
+  return { state: "ready" as const, group, entry };
+}
