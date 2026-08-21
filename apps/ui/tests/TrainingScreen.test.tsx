@@ -465,6 +465,7 @@ vi.mock("@/lib/platform/platformV2Rollout", () => ({
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     word,
+    presentationIdentity,
     focusOnPresentation,
     onOpenDetails,
     onLoadFailure,
@@ -472,6 +473,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onProgressActionAccepted,
   }: {
     word: { headword: string };
+    presentationIdentity: string | null;
     focusOnPresentation?: boolean;
     onOpenDetails?: () => void;
     onLoadFailure?: (failure: "model-invalid") => void;
@@ -500,7 +502,12 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
       );
     }
     return (
-      <div ref={stageRef} tabIndex={-1} data-testid="mock-training-sense-card-v2">
+      <div
+        ref={stageRef}
+        tabIndex={-1}
+        data-testid="mock-training-sense-card-v2"
+        data-presentation-identity={presentationIdentity ?? ""}
+      >
         <span aria-live="polite">
           {focusOnPresentation ? "Next training card" : ""}
         </span>
@@ -2925,6 +2932,48 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
     ).toBeInTheDocument();
     expect(screen.getByText("Next training card")).toBeInTheDocument();
     expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveFocus();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
+test("publishes a new presentation identity when the same V2 word is presented again", async () => {
+  const repeatedWord = { ...mockWord, id: "word-repeat", headword: "huis" };
+  const readyLookup = {
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: repeatedWord.id },
+  };
+
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue(repeatedWord);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
+    );
+
+    const card = screen.getByTestId("mock-training-sense-card-v2");
+    const firstIdentity = card.getAttribute("data-presentation-identity");
+    expect(firstIdentity).toEqual(expect.any(String));
+    expect(firstIdentity).not.toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+
+    await waitFor(() =>
+      expect(card.getAttribute("data-presentation-identity")).not.toBe(
+        firstIdentity,
+      ),
+    );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();

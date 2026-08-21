@@ -33,11 +33,19 @@ import {
   freezeSenseCardDiagnosticSnapshot,
   type SenseCardTrainingOperation,
 } from "@/lib/feedback/diagnosticReportClient";
+import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
+import {
+  rememberPendingKnownUndo,
+  type UndoKnownCapability,
+} from "./pendingKnownUndoStore";
+
+export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
 type Props = {
   cacheOwnerId: string;
   nextTransitionId?: string;
+  presentationIdentity: string | null;
   word: TrainingWord;
   mode: "word-to-definition" | "definition-to-word";
   contentLanguageCode: string;
@@ -59,11 +67,6 @@ type Props = {
   onProgressActionStarting?: () => void;
 };
 
-type UndoKnownCapability = Extract<
-  PlatformSenseCardCapabilityV2,
-  { actionId: "undo-known" }
->;
-
 type TrainingV2SessionState =
   | "loading"
   | "ready"
@@ -73,12 +76,10 @@ type TrainingV2SessionState =
   | "model-invalid"
   | "reverse-definition-missing";
 
-const PENDING_KNOWN_UNDO_STORAGE_KEY = "2000nl.training.pendingKnownUndo.v2";
-const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
-
 export function TrainingSenseCardV2Session({
   cacheOwnerId,
   nextTransitionId,
+  presentationIdentity,
   word,
   mode,
   contentLanguageCode,
@@ -324,7 +325,11 @@ export function TrainingSenseCardV2Session({
                 },
               }
             : null;
-          rememberPendingKnownUndo(undoKnown ?? null);
+          rememberPendingKnownUndo(
+            undoKnown && presentationIdentity
+              ? { capability: undoKnown, presentationIdentity }
+              : null,
+          );
         } else {
           rememberPendingKnownUndo(null);
         }
@@ -505,108 +510,6 @@ function classifyTrainingActionOutcome(
   return "unknown";
 }
 
-export function TrainingKnownUndoNotice({
-  interfaceLanguage,
-}: {
-  interfaceLanguage: OnboardingLanguage;
-}) {
-  const [undoKnown, setUndoKnown] = React.useState<UndoKnownCapability | null>(
-    null,
-  );
-  const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const t = (key: string) => platformV2Message(interfaceLanguage, key);
-
-  React.useEffect(() => {
-    const sync = () => setUndoKnown(readPendingKnownUndo());
-    sync();
-    window.addEventListener(PENDING_KNOWN_UNDO_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(PENDING_KNOWN_UNDO_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(null), 5000);
-    return () => window.clearTimeout(timer);
-  }, [error]);
-
-  if (!undoKnown && !error) return null;
-
-  const handleUndo = async () => {
-    if (!undoKnown) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await performPlatformV2TrainingAction(undoKnown);
-      rememberPendingKnownUndo(null);
-      setUndoKnown(null);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "action_failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-x-4 bottom-20 z-50 mx-auto flex max-w-md flex-col gap-2">
-      {error ? (
-        <div
-          role="status"
-          className="rounded-xl border border-rose-400/60 bg-[#261b22] px-4 py-3 text-sm text-rose-100 shadow-xl"
-        >
-          {error}
-        </div>
-      ) : null}
-      {undoKnown ? (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-400/60 bg-[#17251f] px-4 py-3 text-sm text-emerald-100 shadow-xl">
-          <span>{t("senseCard.known.marked")}</span>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void handleUndo()}
-            className="shrink-0 font-semibold text-indigo-200 hover:text-white disabled:opacity-50"
-          >
-            {t(undoKnown.messageKey)}
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function readPendingKnownUndo(): UndoKnownCapability | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
-    if (!raw) return null;
-    const capability = JSON.parse(raw) as UndoKnownCapability;
-    return capability.actionId === "undo-known" ? capability : null;
-  } catch {
-    return null;
-  }
-}
-
-function rememberPendingKnownUndo(capability: UndoKnownCapability | null) {
-  if (typeof window === "undefined") return;
-  try {
-    if (capability) {
-      window.sessionStorage.setItem(
-        PENDING_KNOWN_UNDO_STORAGE_KEY,
-        JSON.stringify(capability),
-      );
-    } else {
-      window.sessionStorage.removeItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
-    }
-    window.dispatchEvent(new Event(PENDING_KNOWN_UNDO_EVENT));
-  } catch {
-    // Undo still works within the mounted session when storage is unavailable.
-  }
-}
-
 function safelyBuildTrainingSenseCardModel(
   result: Extract<PlatformV2TrainingLookupResult, { state: "ready" }>,
   interfaceLanguage: OnboardingLanguage,
@@ -684,26 +587,14 @@ function SessionError({
   onDismiss: () => void;
 }) {
   return error ? (
-    <div
-      role={tone === "error" ? "alert" : "status"}
-      className={`fixed inset-x-4 bottom-52 z-50 mx-auto max-w-md rounded-xl border px-4 py-2 text-sm shadow-xl sm:bottom-24 ${
-        tone === "info"
-          ? "border-slate-400/60 bg-slate-900 text-slate-50"
-          : "border-rose-400/60 bg-[#261b22] text-rose-100"
-      }`}
+    <TransientNotice
+      tone={tone}
+      dismissLabel={dismissLabel}
+      onDismiss={onDismiss}
+      className="fixed inset-x-4 bottom-52 z-50 mx-auto max-w-md sm:bottom-24"
     >
-      <div className="flex items-center justify-between gap-4">
-        <span>{error}</span>
-        <button
-          type="button"
-          aria-label={dismissLabel}
-          onClick={onDismiss}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xl leading-none text-current opacity-80 hover:bg-white/10 hover:opacity-100"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+      {error}
+    </TransientNotice>
   ) : null;
 }
 

@@ -584,6 +584,7 @@ export function TrainingScreen({
     reportCardLoadFailure,
     retryCardLoadFailure,
     nextTransitionId,
+    currentPresentationId,
     nextCardOverrideNotice,
     loadNextWord,
     beginSessionScopeChange: beginTrainingTurnScopeChange,
@@ -617,6 +618,10 @@ export function TrainingScreen({
     reviewLegacy,
     refreshAfterAccepted,
   });
+  const currentPresentationIdentity =
+    currentWord && currentPresentationId
+      ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
+      : null;
   const beginSessionScopeChange = useCallback(() => {
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
@@ -1900,6 +1905,7 @@ export function TrainingScreen({
                               key={`${user.id}:${currentWord.id}:${currentMode}`}
                               cacheOwnerId={user.id}
                               nextTransitionId={nextTransitionId ?? undefined}
+                              presentationIdentity={currentPresentationIdentity}
                               word={currentWord}
                               mode={currentMode}
                               contentLanguageCode={currentTrainingLanguage}
@@ -2107,7 +2113,10 @@ export function TrainingScreen({
         ) : null}
 
         {trainingShellV2Enabled ? (
-          <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
+          <TrainingKnownUndoNotice
+            interfaceLanguage={onboardingLang}
+            currentPresentationIdentity={currentPresentationIdentity}
+          />
         ) : null}
 
         {wordLookupNotice ? (

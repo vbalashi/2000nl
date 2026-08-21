@@ -111,17 +111,17 @@ export function TrainingSenseCardStage({
       }
       const targetInsideStage =
         event.target instanceof Node && stageRef.current?.contains(event.target);
+      if (isInteractiveTarget(event.target)) return;
       if (
         event.key === " " &&
         !event.shiftKey &&
         !isTextEntryTarget(event.target) &&
-        (!isInteractiveTarget(event.target) || targetInsideStage)
+        targetInsideStage
       ) {
         event.preventDefault();
         setAnswerVisible((visible) => !visible);
         return;
       }
-      if (isInteractiveTarget(event.target)) return;
       const key = event.key.toLowerCase();
       if (key === "i" && !event.shiftKey && !answerVisible && hint) {
         event.preventDefault();
@@ -233,7 +233,7 @@ export function TrainingSenseCardStage({
             ? model.reviewCapabilities.length
               ? "h-[104px] min-h-[104px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
-            : reportAction
+            : reportAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
               : "h-11 min-h-11"
         }`}
@@ -249,7 +249,9 @@ export function TrainingSenseCardStage({
           />
         ) : (
           <FaceDock
+            model={model}
             busy={busy}
+            interfaceLanguage={interfaceLanguage}
             hintAvailable={Boolean(hint)}
             hintVisible={hintVisible}
             showHintLabel={t("senseCard.hint.show")}
@@ -258,6 +260,7 @@ export function TrainingSenseCardStage({
             onToggleHint={() => setHintVisible((visible) => !visible)}
             onShowAnswer={() => setAnswerVisible(true)}
             showAnswerRef={showAnswerRef}
+            onAction={onAction}
             reportAction={reportAction}
           />
         )}
@@ -642,7 +645,9 @@ function contentAccent(
 }
 
 function FaceDock({
+  model,
   busy,
+  interfaceLanguage,
   hintAvailable,
   hintVisible,
   showHintLabel,
@@ -651,9 +656,12 @@ function FaceDock({
   onToggleHint,
   onShowAnswer,
   showAnswerRef,
+  onAction,
   reportAction,
 }: {
+  model: TrainingSenseCardModel;
   busy: boolean;
+  interfaceLanguage: OnboardingLanguage;
   hintAvailable: boolean;
   hintVisible: boolean;
   showHintLabel: string;
@@ -662,8 +670,11 @@ function FaceDock({
   onToggleHint: () => void;
   onShowAnswer: () => void;
   showAnswerRef: React.RefObject<HTMLButtonElement>;
+  onAction: (capability: PlatformSenseCardCapabilityV2) => void;
   reportAction?: React.ReactNode;
 }) {
+  const t = (key: string) => platformV2Message(interfaceLanguage, key);
+
   return (
     <div className="flex h-full flex-col gap-1.5">
       <div className="flex gap-3">
@@ -692,7 +703,19 @@ function FaceDock({
           </kbd>
         </button>
       </div>
-      {reportAction ? <div className="flex h-6 items-center px-1">{reportAction}</div> : null}
+      {reportAction || model.markKnownCapability ? (
+        <div className="flex h-6 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
+          {reportAction ?? <span />}
+          {model.markKnownCapability ? (
+            <MarkKnownAction
+              capability={model.markKnownCapability}
+              busy={busy}
+              label={t(model.markKnownCapability.messageKey)}
+              onAction={onAction}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -773,17 +796,38 @@ function AnswerDock({
       <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
         {reportAction ?? <span />}
         {model.markKnownCapability ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onAction(model.markKnownCapability!)}
-            className="flex h-6 min-h-6 items-center gap-2 rounded-lg px-2 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-          >
-            <CheckIcon /> {t(model.markKnownCapability.messageKey)}
-          </button>
+          <MarkKnownAction
+            capability={model.markKnownCapability}
+            busy={busy}
+            label={t(model.markKnownCapability.messageKey)}
+            onAction={onAction}
+          />
         ) : null}
       </div>
     </div>
+  );
+}
+
+function MarkKnownAction({
+  capability,
+  busy,
+  label,
+  onAction,
+}: {
+  capability: NonNullable<TrainingSenseCardModel["markKnownCapability"]>;
+  busy: boolean;
+  label: string;
+  onAction: (capability: PlatformSenseCardCapabilityV2) => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => onAction(capability)}
+      className="flex h-6 min-h-6 items-center gap-2 rounded-lg px-2 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+    >
+      <CheckIcon /> {label}
+    </button>
   );
 }
 
