@@ -39,6 +39,7 @@ import { TransientNotice } from "@/components/system/TransientNotice";
 type Props = {
   cacheOwnerId: string;
   nextTransitionId?: string;
+  presentationIdentity: string | null;
   word: TrainingWord;
   mode: "word-to-definition" | "definition-to-word";
   contentLanguageCode: string;
@@ -80,6 +81,7 @@ const PENDING_KNOWN_UNDO_EVENT = "2000nl:training-pending-known-undo";
 export function TrainingSenseCardV2Session({
   cacheOwnerId,
   nextTransitionId,
+  presentationIdentity,
   word,
   mode,
   contentLanguageCode,
@@ -325,7 +327,11 @@ export function TrainingSenseCardV2Session({
                 },
               }
             : null;
-          rememberPendingKnownUndo(undoKnown ?? null);
+          rememberPendingKnownUndo(
+            undoKnown && presentationIdentity
+              ? { capability: undoKnown, presentationIdentity }
+              : null,
+          );
         } else {
           rememberPendingKnownUndo(null);
         }
@@ -508,20 +514,35 @@ function classifyTrainingActionOutcome(
 
 export function TrainingKnownUndoNotice({
   interfaceLanguage,
-  currentEntryId,
+  currentPresentationIdentity,
 }: {
   interfaceLanguage: OnboardingLanguage;
-  currentEntryId: string | null;
+  currentPresentationIdentity: string | null;
 }) {
-  const [undoKnown, setUndoKnown] = React.useState<UndoKnownCapability | null>(
-    null,
-  );
+  const [pendingUndo, setPendingUndo] = React.useState<PendingKnownUndo | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const presentationIdentityRef = React.useRef(currentPresentationIdentity);
+  const undoAttemptRef = React.useRef(0);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
   React.useEffect(() => {
-    const sync = () => setUndoKnown(readPendingKnownUndo());
+    presentationIdentityRef.current = currentPresentationIdentity;
+    undoAttemptRef.current += 1;
+    setBusy(false);
+    setError(null);
+    const sync = () => {
+      const pending = readPendingKnownUndo();
+      if (
+        pending &&
+        pending.presentationIdentity !== currentPresentationIdentity
+      ) {
+        rememberPendingKnownUndo(null);
+        setPendingUndo(null);
+        return;
+      }
+      setPendingUndo(pending);
+    };
     sync();
     window.addEventListener(PENDING_KNOWN_UNDO_EVENT, sync);
     window.addEventListener("storage", sync);
@@ -529,7 +550,7 @@ export function TrainingKnownUndoNotice({
       window.removeEventListener(PENDING_KNOWN_UNDO_EVENT, sync);
       window.removeEventListener("storage", sync);
     };
-  }, []);
+  }, [currentPresentationIdentity]);
 
   React.useEffect(() => {
     if (!error) return;
@@ -538,22 +559,38 @@ export function TrainingKnownUndoNotice({
   }, [error]);
 
   const visibleUndoKnown =
-    undoKnown?.target.entryId === currentEntryId ? undoKnown : null;
+    pendingUndo?.presentationIdentity === currentPresentationIdentity
+      ? pendingUndo.capability
+      : null;
 
   if (!visibleUndoKnown && !error) return null;
 
   const handleUndo = async () => {
-    if (!undoKnown) return;
+    if (!visibleUndoKnown || !currentPresentationIdentity) return;
+    const attemptPresentationIdentity = currentPresentationIdentity;
+    const attempt = (undoAttemptRef.current += 1);
     setBusy(true);
     setError(null);
     try {
-      await performPlatformV2TrainingAction(undoKnown);
-      rememberPendingKnownUndo(null);
-      setUndoKnown(null);
+      await performPlatformV2TrainingAction(visibleUndoKnown);
+      if (
+        undoAttemptRef.current !== attempt ||
+        presentationIdentityRef.current !== attemptPresentationIdentity
+      ) {
+        return;
+      }
+      clearPendingKnownUndo(attemptPresentationIdentity);
+      setPendingUndo(null);
     } catch (cause) {
+      if (
+        undoAttemptRef.current !== attempt ||
+        presentationIdentityRef.current !== attemptPresentationIdentity
+      ) {
+        return;
+      }
       setError(cause instanceof Error ? cause.message : "action_failed");
     } finally {
-      setBusy(false);
+      if (undoAttemptRef.current === attempt) setBusy(false);
     }
   };
 
@@ -574,7 +611,7 @@ export function TrainingKnownUndoNotice({
           dismissLabel={t("senseCard.dismiss")}
           onDismiss={() => {
             rememberPendingKnownUndo(null);
-            setUndoKnown(null);
+            setPendingUndo(null);
           }}
           action={
             <button
@@ -594,25 +631,43 @@ export function TrainingKnownUndoNotice({
   );
 }
 
-function readPendingKnownUndo(): UndoKnownCapability | null {
+type PendingKnownUndo = {
+  capability: UndoKnownCapability;
+  presentationIdentity: string;
+};
+
+function readPendingKnownUndo(): PendingKnownUndo | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
     if (!raw) return null;
-    const capability = JSON.parse(raw) as UndoKnownCapability;
-    return capability.actionId === "undo-known" ? capability : null;
+    const pending = JSON.parse(raw) as PendingKnownUndo;
+    if (
+      typeof pending.presentationIdentity === "string" &&
+      pending.presentationIdentity &&
+      pending.capability?.actionId === "undo-known"
+    ) {
+      return pending;
+    }
+    window.sessionStorage.removeItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
+    return null;
   } catch {
+    try {
+      window.sessionStorage.removeItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
+    } catch {
+      // The in-memory notice still follows the active presentation.
+    }
     return null;
   }
 }
 
-function rememberPendingKnownUndo(capability: UndoKnownCapability | null) {
+function rememberPendingKnownUndo(pending: PendingKnownUndo | null) {
   if (typeof window === "undefined") return;
   try {
-    if (capability) {
+    if (pending) {
       window.sessionStorage.setItem(
         PENDING_KNOWN_UNDO_STORAGE_KEY,
-        JSON.stringify(capability),
+        JSON.stringify(pending),
       );
     } else {
       window.sessionStorage.removeItem(PENDING_KNOWN_UNDO_STORAGE_KEY);
@@ -620,6 +675,13 @@ function rememberPendingKnownUndo(capability: UndoKnownCapability | null) {
     window.dispatchEvent(new Event(PENDING_KNOWN_UNDO_EVENT));
   } catch {
     // Undo still works within the mounted session when storage is unavailable.
+  }
+}
+
+function clearPendingKnownUndo(presentationIdentity: string) {
+  const pending = readPendingKnownUndo();
+  if (pending?.presentationIdentity === presentationIdentity) {
+    rememberPendingKnownUndo(null);
   }
 }
 

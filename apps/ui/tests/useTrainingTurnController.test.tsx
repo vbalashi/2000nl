@@ -310,6 +310,36 @@ describe("useTrainingTurnController transition matrix", () => {
     );
   });
 
+  test("issues a new presentation identity when the same card is presented again", async () => {
+    const repeatedWord = { ...word1 };
+    const controller = renderController({
+      currentWord: null,
+      selectNext: vi.fn().mockResolvedValue(repeatedWord),
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+    controller.rerender({
+      sessionScopeKey: "default",
+      currentWord: repeatedWord,
+    });
+    const firstPresentationId = controller.result.current.currentPresentationId;
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+    controller.rerender({
+      sessionScopeKey: "default",
+      currentWord: { ...repeatedWord },
+    });
+    const secondPresentationId = controller.result.current.currentPresentationId;
+
+    expect(firstPresentationId).toEqual(expect.any(String));
+    expect(secondPresentationId).toEqual(expect.any(String));
+    expect(secondPresentationId).not.toBe(firstPresentationId);
+  });
+
   test("Platform ambiguity does not advance until reconciliation invokes the accepted port", async () => {
     prepared.consume.mockReturnValue(null);
     const controller = renderController();

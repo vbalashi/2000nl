@@ -51,10 +51,26 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
 function TestTrainingSenseCardV2Session(
   props: Omit<
     React.ComponentProps<typeof TrainingSenseCardV2Session>,
-    "cacheOwnerId"
-  >,
+    "cacheOwnerId" | "presentationIdentity"
+  > & { presentationIdentity?: string },
 ) {
-  return <TrainingSenseCardV2Session cacheOwnerId="test-user" {...props} />;
+  return (
+    <TrainingSenseCardV2Session
+      cacheOwnerId="test-user"
+      presentationIdentity={
+        props.presentationIdentity ??
+        `test-presentation:${props.word.id}:${props.mode}`
+      }
+      {...props}
+    />
+  );
+}
+
+function testPresentationIdentity(
+  nextWord: TrainingWord,
+  mode: "word-to-definition" | "definition-to-word",
+) {
+  return `test-presentation:${nextWord.id}:${mode}`;
 }
 
 const word: TrainingWord = {
@@ -884,7 +900,10 @@ describe("TrainingSenseCardV2Session", () => {
         />
         <TrainingKnownUndoNotice
           interfaceLanguage="nl"
-          currentEntryId={word.id}
+          currentPresentationIdentity={testPresentationIdentity(
+            word,
+            "word-to-definition",
+          )}
         />
       </>,
     );
@@ -907,7 +926,10 @@ describe("TrainingSenseCardV2Session", () => {
         />
         <TrainingKnownUndoNotice
           interfaceLanguage="nl"
-          currentEntryId={word.id}
+          currentPresentationIdentity={testPresentationIdentity(
+            word,
+            "word-to-definition",
+          )}
         />
       </>,
     );
@@ -929,6 +951,7 @@ describe("TrainingSenseCardV2Session", () => {
         screen.queryByRole("button", { name: "Markering ongedaan maken" }),
       ).not.toBeInTheDocument(),
     );
+
   });
 
   test("advances after mark-known without depending on a post-action lookup", async () => {
@@ -1033,7 +1056,10 @@ describe("TrainingSenseCardV2Session", () => {
         />
         <TrainingKnownUndoNotice
           interfaceLanguage="nl"
-          currentEntryId={nextWord.id}
+          currentPresentationIdentity={testPresentationIdentity(
+            nextWord,
+            "word-to-definition",
+          )}
         />
       </>
     );
@@ -1059,6 +1085,135 @@ describe("TrainingSenseCardV2Session", () => {
     expect(performAction).toHaveBeenCalledWith(
       markKnown,
       expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+    );
+  });
+
+  test("does not resurrect a Known notice when the same entry gets a new presentation", async () => {
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-repeated-entry",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+    const renderPresentation = (
+      presentationIdentity: string,
+      mode: "word-to-definition" | "definition-to-word",
+    ) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode={mode}
+          presentationIdentity={presentationIdentity}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={presentationIdentity}
+        />
+      </>
+    );
+    const view = render(
+      renderPresentation("repeated-entry-presentation-1", "word-to-definition"),
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    expect(
+      await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-2", "word-to-definition"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-3", "definition-to-word"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    view.rerender(
+      renderPresentation("repeated-entry-presentation-1", "word-to-definition"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("discards an Undo failure that settles after the presentation changes", async () => {
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-pending-undo",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+    let rejectUndo!: (cause: Error) => void;
+    const renderPresentation = (presentationIdentity: string) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          presentationIdentity={presentationIdentity}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentPresentationIdentity={presentationIdentity}
+        />
+      </>
+    );
+    const view = render(renderPresentation("pending-undo-presentation-1"));
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    const undo = await screen.findByRole("button", {
+      name: "Markering ongedaan maken",
+    });
+    performAction.mockImplementationOnce(
+      () => new Promise((_, reject) => { rejectUndo = reject; }),
+    );
+    fireEvent.click(undo);
+    view.rerender(renderPresentation("pending-undo-presentation-2"));
+
+    await act(async () => rejectUndo(new Error("stale_undo_failure")));
+    await waitFor(() =>
+      expect(screen.queryByText("stale_undo_failure")).not.toBeInTheDocument(),
     );
   });
 

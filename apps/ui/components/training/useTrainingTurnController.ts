@@ -658,6 +658,7 @@ export function useTrainingTurnController(input: Inputs) {
     reportCardLoadFailure,
     retryCardLoadFailure,
     nextTransitionId,
+    currentPresentationId: currentTurnIdRef.current,
     nextCardOverrideNotice,
     loadNextWord,
     beginSessionScopeChange,
