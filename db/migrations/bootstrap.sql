@@ -361,3 +361,6 @@
 
 -- Immutable original Training-action projection for delayed diagnostic reports
 \i db/migrations/121_platform_v2_verifiable_action_receipts.sql
+
+-- Bounded Diagnostic Report v1 feedback tracer
+\i db/migrations/122_diagnostic_feedback_tracer.sql
