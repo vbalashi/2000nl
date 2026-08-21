@@ -61,6 +61,7 @@ import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { WordDetailPanel } from "./WordDetailPanel";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
+import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import {
@@ -995,6 +996,7 @@ export function TrainingScreen({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (areTrainingHotkeysSuspended()) return;
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement

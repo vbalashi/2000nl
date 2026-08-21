@@ -112,6 +112,15 @@
     "report": "Report",
     "dismiss": "Dismiss notification",
     "reportUnavailable": "Reporting is not available yet.",
+    "reportSheet": {
+      "title": "What is wrong?", "subtitle": "Choose the closest category", "close": "Close", "back": "Back", "send": "Send", "sending": "Sending…", "tryAgain": "Try again",
+      "retry": "The report could not be saved. Try again.", "commentLabel": "Comment", "optional": "optional", "commentPlaceholder": "Optional comment (not required)",
+      "context": "Current card context and session information are attached automatically.",
+      "operationContext": "Exact details of this training action are also attached.",
+      "privacy": "Do not include passwords, tokens, contact details, or private links.",
+      "categories": { "translation-quality": "Translation", "content-quality": "Meaning or example", "rendering": "Display", "loading": "Loading or waiting", "training-action": "Training action", "other": "Something else" },
+      "states": { "sent": { "title": "Sent", "body": "Thanks. Your report has been received." }, "queued": { "title": "Saved for later", "body": "It will be sent automatically when you are online again." }, "scheduled": { "title": "Retry scheduled", "body": "It will be sent again automatically." }, "rejected": { "title": "Could not send", "body": "This report is not supported by the current app version or you are not signed in." } }
+    },
     "collections": {
       "label": "Collections",
       "title": "Collections for this meaning",

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -27,6 +28,7 @@ type Props = {
   focusOnMount?: boolean;
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
+  reportAction?: React.ReactNode;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 };
 
@@ -46,6 +48,7 @@ export function TrainingSenseCardStage({
   focusOnMount = false,
   onPlayAudio,
   onOpenDetails,
+  reportAction,
   onAction,
 }: Props) {
   const [answerVisible, setAnswerVisible] = React.useState(false);
@@ -97,6 +100,7 @@ export function TrainingSenseCardStage({
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (areTrainingHotkeysSuspended()) return;
       if (
         event.metaKey ||
         event.ctrlKey ||
@@ -205,7 +209,6 @@ export function TrainingSenseCardStage({
               model={model}
               translationVisible={translationVisible}
               interfaceLanguage={interfaceLanguage}
-              onReport={onAction}
               onReachEnd={() => primaryAnswerActionRef.current?.focus()}
             />
           </>
@@ -228,7 +231,9 @@ export function TrainingSenseCardStage({
             ? model.reviewCapabilities.length
               ? "h-[104px] min-h-[104px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
-            : "h-11 min-h-11"
+            : reportAction
+              ? "h-[76px] min-h-[76px]"
+              : "h-11 min-h-11"
         }`}
       >
         {answerVisible ? (
@@ -238,6 +243,7 @@ export function TrainingSenseCardStage({
             interfaceLanguage={interfaceLanguage}
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
+            reportAction={reportAction}
           />
         ) : (
           <FaceDock
@@ -250,6 +256,7 @@ export function TrainingSenseCardStage({
             onToggleHint={() => setHintVisible((visible) => !visible)}
             onShowAnswer={() => setAnswerVisible(true)}
             showAnswerRef={showAnswerRef}
+            reportAction={reportAction}
           />
         )}
       </footer>
@@ -382,18 +389,11 @@ function AnswerBody({
   model,
   translationVisible,
   interfaceLanguage,
-  onReport,
   onReachEnd,
 }: {
   model: TrainingSenseCardModel;
   translationVisible: boolean;
   interfaceLanguage: OnboardingLanguage;
-  onReport: (
-    capability: Extract<
-      PlatformSenseCardCapabilityV2,
-      { actionId: "report-content" }
-    >,
-  ) => void;
   onReachEnd: () => void;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -459,8 +459,6 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -478,8 +476,6 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="usage"
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -497,8 +493,6 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="example"
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -516,8 +510,6 @@ function AnswerBody({
                 item={item}
                 translationVisible={translationVisible}
                 accent="idiom"
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -529,8 +521,6 @@ function AnswerBody({
                 key={item.contentNodeId}
                 item={item}
                 translationVisible={translationVisible}
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </ContentSection>
@@ -580,19 +570,10 @@ function ContentSection({
 function ContentItem({
   item,
   translationVisible,
-  onReport,
-  reportLabel,
   accent = "none",
 }: {
   item: TrainingSenseCardContent;
   translationVisible: boolean;
-  onReport: (
-    capability: Extract<
-      PlatformSenseCardCapabilityV2,
-      { actionId: "report-content" }
-    >,
-  ) => void;
-  reportLabel: string;
   accent?: "none" | "usage" | "example" | "idiom";
 }) {
   const literary =
@@ -622,16 +603,6 @@ function ContentItem({
         >
           {item.text}
         </p>
-        {item.reportCapability ? (
-          <button
-            type="button"
-            aria-label={`${reportLabel}: ${item.text}`}
-            onClick={() => onReport(item.reportCapability!)}
-            className="mt-1 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <FlagIcon />
-          </button>
-        ) : null}
       </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
@@ -651,8 +622,6 @@ function ContentItem({
               item={child}
               translationVisible={translationVisible}
               accent={contentAccent(child.kind)}
-              onReport={onReport}
-              reportLabel={reportLabel}
             />
           ))}
         </div>
@@ -680,6 +649,7 @@ function FaceDock({
   onToggleHint,
   onShowAnswer,
   showAnswerRef,
+  reportAction,
 }: {
   busy: boolean;
   hintAvailable: boolean;
@@ -690,6 +660,7 @@ function FaceDock({
   onToggleHint: () => void;
   onShowAnswer: () => void;
   showAnswerRef: React.RefObject<HTMLButtonElement>;
+  reportAction?: React.ReactNode;
 }) {
   return (
     <div className="flex h-full flex-col gap-1.5">
@@ -719,6 +690,7 @@ function FaceDock({
           </kbd>
         </button>
       </div>
+      {reportAction ? <div className="flex h-6 items-center px-1">{reportAction}</div> : null}
     </div>
   );
 }
@@ -729,12 +701,14 @@ function AnswerDock({
   interfaceLanguage,
   primaryActionRef,
   onAction,
+  reportAction,
 }: {
   model: TrainingSenseCardModel;
   busy: boolean;
   interfaceLanguage: OnboardingLanguage;
   primaryActionRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
+  reportAction?: React.ReactNode;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
@@ -795,18 +769,7 @@ function AnswerDock({
       ) : null}
 
       <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
-        {model.reportCapabilities.length ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onAction(model.reportCapabilities[0])}
-            className="inline-flex h-6 min-h-6 items-center gap-1.5 rounded-lg border border-transparent px-2 text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:opacity-50 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-          >
-            <FlagIcon /> {t("senseCard.report")}
-          </button>
-        ) : (
-          <span />
-        )}
+        {reportAction ?? <span />}
         {model.markKnownCapability ? (
           <button
             type="button"
@@ -948,21 +911,6 @@ function MoreIcon() {
       <circle cx="5" cy="12" r="1.5" />
       <circle cx="12" cy="12" r="1.5" />
       <circle cx="19" cy="12" r="1.5" />
-    </svg>
-  );
-}
-
-function FlagIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-3.5 w-3.5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M6 21V4m0 1h10l-2 3 2 3H6" />
     </svg>
   );
 }

@@ -23,8 +23,16 @@ import {
   type PlatformV2TrainingActionCapability,
 } from "@/lib/platform/platformV2TrainingActionClient";
 import type { TrainingWord } from "@/lib/types";
-import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
+import type {
+  PlatformActionV2Request,
+  PlatformSenseCardCapabilityV2,
+} from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
+import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
+import {
+  freezeSenseCardDiagnosticSnapshot,
+  type SenseCardTrainingOperation,
+} from "@/lib/feedback/diagnosticReportClient";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
 
 type Props = {
@@ -102,6 +110,8 @@ export function TrainingSenseCardV2Session({
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
+  const [reportOperation, setReportOperation] =
+    React.useState<SenseCardTrainingOperation | null>(null);
   const [presentationAnnouncement, setPresentationAnnouncement] =
     React.useState<string>("");
   const interactionBusyRef = React.useRef(false);
@@ -208,6 +218,10 @@ export function TrainingSenseCardV2Session({
   }, [result, sessionState]);
 
   React.useEffect(() => {
+    setReportOperation(null);
+  }, [cacheOwnerId, nextTransitionId, word.id]);
+
+  React.useEffect(() => {
     if (sessionState === "loading" || sessionState === "ready") return;
     onLoadFailure?.(sessionState);
   }, [onLoadFailure, sessionState]);
@@ -225,6 +239,7 @@ export function TrainingSenseCardV2Session({
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
+    let frozenRequest: PlatformActionV2Request | null = null;
     try {
       if (capability.actionId === "request-translation") {
         await requestPlatformV2Translation(capability);
@@ -266,6 +281,10 @@ export function TrainingSenseCardV2Session({
         onProgressActionStarting?.();
       }
       setNoticeTone("error");
+      const onRequestFrozen = (request: PlatformActionV2Request) => {
+        frozenRequest = request;
+        setReportOperation({ request, observedOutcome: "unknown" });
+      };
       const response = nextTransitionId
         ? await measureTrainingTransitionStage(
             nextTransitionId,
@@ -273,10 +292,17 @@ export function TrainingSenseCardV2Session({
             () =>
               performPlatformV2TrainingAction(capability, {
                 transitionId: nextTransitionId,
+                onRequestFrozen,
               }),
             () => "accepted",
           )
-        : await performPlatformV2TrainingAction(capability);
+        : await performPlatformV2TrainingAction(capability, { onRequestFrozen });
+      if (frozenRequest) {
+        setReportOperation({
+          request: frozenRequest,
+          observedOutcome: "accepted",
+        });
+      }
       if (capability.actionId === "undo-known") {
         rememberPendingKnownUndo(null);
         if (result?.entry.entryId === capability.target.entryId) await load();
@@ -307,6 +333,12 @@ export function TrainingSenseCardV2Session({
     } catch (cause) {
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
+      if (frozenRequest) {
+        setReportOperation({
+          request: frozenRequest,
+          observedOutcome: classifyTrainingActionOutcome(code),
+        });
+      }
       if (code === "state_conflict") {
         const refreshed = await load(undefined, {
           preserveCard: true,
@@ -432,6 +464,20 @@ export function TrainingSenseCardV2Session({
               : undefined
           }
           onOpenDetails={onOpenDetails}
+          reportAction={
+            model.reportCapabilities.length && result.entry.reportContentRevision ? (
+              <SenseCardReportAction
+                snapshot={freezeSenseCardDiagnosticSnapshot({
+                  route: "training",
+                  group: result.group,
+                  entry: result.entry,
+                  operation: reportOperation,
+                })}
+                interfaceLanguage={interfaceLanguage}
+                disabled={busy}
+              />
+            ) : undefined
+          }
           onAction={(capability) => void handleAction(capability)}
         />
         <SessionError
@@ -443,6 +489,20 @@ export function TrainingSenseCardV2Session({
       </div>
     </>
   );
+}
+
+function classifyTrainingActionOutcome(
+  code: string,
+): SenseCardTrainingOperation["observedOutcome"] {
+  if (code === "state_conflict") return "state-conflict";
+  if (code === "platform_request_timeout") return "timeout";
+  if (code === "Failed to fetch" || code === "action_receipt_not_found") {
+    return "network";
+  }
+  if (code === "platform_v2_action_failed" || code.startsWith("http_")) {
+    return "server-error";
+  }
+  return "unknown";
 }
 
 export function TrainingKnownUndoNotice({

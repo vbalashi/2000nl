@@ -7,7 +7,6 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ChevronIcon,
   ExposureBadge,
-  FlagIcon,
   IdiomIcon,
   NewExposureBadge,
   SenseCardReveal,
@@ -21,7 +20,6 @@ import type {
   LibrarySenseCardModel,
   LibrarySenseCardViewState,
   LibraryMutationCapability,
-  LibraryReportCapability,
 } from "./librarySenseCardModel";
 import {
   reconcileLibrarySenseCardViewState,
@@ -40,7 +38,6 @@ type Props = {
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
-  onReport?: (capability: LibraryReportCapability) => void;
   onFollowCrossReference?: (target: {
     query: string;
     sourceDictionaryId: string;
@@ -48,6 +45,7 @@ type Props = {
     targetEntryId: string | null;
   }) => void;
   onAction: (capability: LibraryMutationCapability) => void;
+  bottomOverlayReserve?: boolean;
 };
 
 export function LibrarySenseCardGroup({
@@ -62,9 +60,9 @@ export function LibrarySenseCardGroup({
   onRequestTranslation,
   onOpenCollections,
   onTrainNext,
-  onReport,
   onFollowCrossReference,
   onAction,
+  bottomOverlayReserve = false,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
     () => initialViewState(model),
@@ -220,7 +218,9 @@ export function LibrarySenseCardGroup({
         <div
           ref={scrollRef}
           data-testid="library-sense-card-scroll-region"
-          className="h-full overflow-y-auto px-3 pb-4 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
+          className={`h-full overflow-y-auto px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${
+            bottomOverlayReserve ? "pb-16" : "pb-4"
+          }`}
         >
           <div className="space-y-3">
             {model.presentations.map((presentation) => {
@@ -295,7 +295,6 @@ export function LibrarySenseCardGroup({
                   }
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
-                  onReport={onReport}
                   onAction={onAction}
                 />
               );
@@ -321,7 +320,6 @@ function MeaningCard({
   onRetryTranslation,
   onOpenCollections,
   onTrainNext,
-  onReport,
   onAction,
 }: {
   meaning: LibrarySenseCardModel;
@@ -335,7 +333,6 @@ function MeaningCard({
   onRetryTranslation: () => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
-  onReport?: (capability: LibraryReportCapability) => void;
   onAction: (capability: LibraryMutationCapability) => void;
 }) {
   const t = (key: string, variables?: Record<string, string | number>) =>
@@ -383,18 +380,6 @@ function MeaningCard({
               <p className="min-w-0 flex-1 text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
                 {meaning.definition?.text ?? "—"}
               </p>
-              {meaning.definition?.reportCapability && onReport ? (
-                <button
-                  type="button"
-                  aria-label={`${t("senseCard.report")}: ${meaning.definition.text}`}
-                  onClick={() =>
-                    onReport(meaning.definition!.reportCapability!)
-                  }
-                  className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                >
-                  <FlagIcon className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
             </div>
             {meaning.definition?.translation ? (
               <SenseCardReveal open={state.translationVisible}>
@@ -443,8 +428,6 @@ function MeaningCard({
                 key={child.contentNodeId}
                 item={child}
                 translationVisible={state.translationVisible}
-                onReport={onReport}
-                reportLabel={t("senseCard.report")}
               />
             ))}
           </div>
@@ -498,8 +481,6 @@ function MeaningCard({
                         <ContentText
                           item={item}
                           translationVisible={state.translationVisible}
-                          onReport={onReport}
-                          reportLabel={t("senseCard.report")}
                         />
                         {item.children.length ? (
                           <div className="mt-2 space-y-2 pl-4">
@@ -508,8 +489,6 @@ function MeaningCard({
                                 key={child.contentNodeId}
                                 item={child}
                                 translationVisible={state.translationVisible}
-                                onReport={onReport}
-                                reportLabel={t("senseCard.report")}
                               />
                             ))}
                           </div>
@@ -553,16 +532,6 @@ function MeaningCard({
               data-testid="library-service-actions"
               className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11.5px]"
             >
-              {meaning.reportCapability && onReport ? (
-                <button
-                  type="button"
-                  onClick={() => onReport(meaning.reportCapability!)}
-                  className="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                  <FlagIcon className="h-3.5 w-3.5" />
-                  {t("senseCard.report")}
-                </button>
-              ) : null}
               {meaning.startLearning ? (
                 <button
                   type="button"
@@ -665,13 +634,9 @@ function TranslateIcon() {
 function NestedContent({
   item,
   translationVisible,
-  onReport,
-  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
-  onReport?: (capability: LibraryReportCapability) => void;
-  reportLabel: string;
 }) {
   return (
     <div
@@ -682,8 +647,6 @@ function NestedContent({
       <ContentText
         item={item}
         translationVisible={translationVisible}
-        onReport={onReport}
-        reportLabel={reportLabel}
       />
       {item.children.length ? (
         <div className="mt-2 space-y-2 pl-4">
@@ -692,8 +655,6 @@ function NestedContent({
               key={child.contentNodeId}
               item={child}
               translationVisible={translationVisible}
-              onReport={onReport}
-              reportLabel={reportLabel}
             />
           ))}
         </div>
@@ -705,13 +666,9 @@ function NestedContent({
 function ContentText({
   item,
   translationVisible,
-  onReport,
-  reportLabel,
 }: {
   item: LibrarySenseCardModel["details"][number];
   translationVisible: boolean;
-  onReport?: (capability: LibraryReportCapability) => void;
-  reportLabel: string;
 }) {
   const presentation = contentPresentation[item.kind];
   return (
@@ -720,16 +677,6 @@ function ContentText({
         <p className={`min-w-0 flex-1 ${presentation.textClassName}`}>
           {item.text}
         </p>
-        {item.reportCapability && onReport ? (
-          <button
-            type="button"
-            aria-label={`${reportLabel}: ${item.text}`}
-            onClick={() => onReport(item.reportCapability!)}
-            className="mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <FlagIcon className="h-3.5 w-3.5" />
-          </button>
-        ) : null}
       </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>

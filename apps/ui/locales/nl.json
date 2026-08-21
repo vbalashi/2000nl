@@ -112,6 +112,15 @@
     "report": "Melden",
     "dismiss": "Melding sluiten",
     "reportUnavailable": "Melden is nog niet beschikbaar.",
+    "reportSheet": {
+      "title": "Wat klopt er niet?", "subtitle": "Kies de beste categorie", "close": "Sluiten", "back": "Terug", "send": "Versturen", "sending": "Versturen…", "tryAgain": "Opnieuw proberen",
+      "retry": "De melding kon niet worden opgeslagen. Probeer opnieuw.", "commentLabel": "Opmerking", "optional": "optioneel", "commentPlaceholder": "Optionele opmerking (niet verplicht)",
+      "context": "Kaartcontext en sessiegegevens worden automatisch meegestuurd.",
+      "operationContext": "Exacte details van deze trainingsactie worden ook meegestuurd.",
+      "privacy": "Deel geen wachtwoorden, tokens, contactgegevens of privélinks.",
+      "categories": { "translation-quality": "Vertaling", "content-quality": "Betekenis of voorbeeld", "rendering": "Weergave", "loading": "Laden of wachten", "training-action": "Trainingsactie", "other": "Iets anders" },
+      "states": { "sent": { "title": "Verzonden", "body": "Bedankt. Je melding is ontvangen." }, "queued": { "title": "Bewaard voor later", "body": "De melding wordt automatisch verstuurd zodra je weer online bent." }, "scheduled": { "title": "Opnieuw gepland", "body": "De melding wordt automatisch opnieuw verstuurd." }, "rejected": { "title": "Versturen niet mogelijk", "body": "Deze melding wordt niet ondersteund door de huidige appversie of je bent niet aangemeld." } }
+    },
     "collections": {
       "label": "Collecties",
       "title": "Collecties voor deze betekenis",

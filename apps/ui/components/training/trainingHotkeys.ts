@@ -79,3 +79,8 @@ const labels: Record<
 
 export const getTrainingHotkeys = (language: OnboardingLanguage) =>
   hotkeys.map(({ key, id }) => ({ key, description: labels[language][id] }));
+
+export function areTrainingHotkeysSuspended() {
+  return typeof document !== "undefined" &&
+    document.querySelector('[data-training-hotkeys-suspended="true"]') !== null;
+}

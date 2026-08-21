@@ -21,11 +21,12 @@ import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
+import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
+import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
   buildLibrarySenseCardGroupModel,
   librarySenseCardIdentity,
   type LibraryMutationCapability,
-  type LibraryReportCapability,
 } from "./librarySenseCardModel";
 
 type Props = {
@@ -262,12 +263,6 @@ export function LibrarySenseCardV2Session({
     }
   };
 
-  const handleReport = (_capability: LibraryReportCapability) => {
-    setError(
-      platformV2Message(interfaceLanguage, "senseCard.reportUnavailable"),
-    );
-  };
-
   const handlePlayAudio = async () => {
     if (!group?.header.audio) return;
     setAudioBusy(true);
@@ -498,6 +493,21 @@ export function LibrarySenseCardV2Session({
     );
   }
 
+  const selectedReportEntry = group?.entries.find(
+    (candidate) =>
+      candidate.kind === "sense-card" && candidate.entryId === entryId,
+  );
+  const canReport = Boolean(
+    group &&
+    selectedReportEntry?.kind === "sense-card" &&
+    selectedReportEntry.reportContentRevision &&
+    selectedReportEntry.capabilities.some(
+      (capability) =>
+        capability.actionId === "report-content" &&
+        capability.target.kind === "entry",
+    ),
+  );
+
   return (
     <div className="relative h-full min-h-0">
       <LibrarySenseCardGroup
@@ -537,10 +547,23 @@ export function LibrarySenseCardV2Session({
         onTrainNext={
           onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
         }
-        onReport={handleReport}
         onFollowCrossReference={setActiveReferenceTarget}
         onAction={(capability) => void handleAction(capability)}
+        bottomOverlayReserve={canReport}
       />
+      {canReport && group && selectedReportEntry?.kind === "sense-card" ? (
+          <div className="absolute bottom-2 left-3 z-20 sm:left-5">
+            <SenseCardReportAction
+              snapshot={freezeSenseCardDiagnosticSnapshot({
+                route: "library",
+                group,
+                entry: selectedReportEntry,
+              })}
+              interfaceLanguage={interfaceLanguage}
+              disabled={Boolean(busyIdentity)}
+            />
+          </div>
+      ) : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}

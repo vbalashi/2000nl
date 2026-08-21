@@ -70,12 +70,16 @@ export function buildPlatformV2TrainingActionRequest(
 
 export async function performPlatformV2TrainingAction(
   capability: PlatformV2TrainingActionCapability,
-  context: { transitionId?: string } = {},
+  context: {
+    transitionId?: string;
+    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+  } = {},
 ): Promise<PlatformActionV2Response> {
   const request = buildPlatformV2TrainingActionRequest(
     capability,
     crypto.randomUUID(),
   );
+  context.onRequestFrozen?.(structuredClone(request));
   const headers = await platformV2AuthenticatedJsonHeaders();
   let response: Response;
   try {
