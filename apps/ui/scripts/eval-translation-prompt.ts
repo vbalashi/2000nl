@@ -7,6 +7,7 @@ import { OpenAITranslator } from "../lib/translation/openaiTranslator";
 import { loadTranslationConfigFromEnv } from "../lib/translation/translationProvider";
 import {
   prepareTranslationEvalRun,
+  evaluateDictionaryMeaningPrimaryText,
   prepareDictionaryMeaningEvalCase,
   type PreparedTranslationEvalCase,
 } from "./translationEvalHarness";
@@ -110,6 +111,7 @@ async function main() {
     timeoutMs: 60_000,
   });
   const logJsonl = getArg("--log-jsonl");
+  let failed = false;
 
   for (const item of selected) {
     const startedAt = Date.now();
@@ -117,6 +119,11 @@ async function main() {
     if (useMeaningContract) {
       const meaningCase = prepareDictionaryMeaningEvalCase(sourceCase);
       const result = await translator.translateDictionaryMeaning(meaningCase.request);
+      const evaluation = evaluateDictionaryMeaningPrimaryText(
+        result.entryTranslation?.primaryText ?? null,
+        item.expectations,
+      );
+      failed ||= evaluation.status === "evaluated" && !evaluation.passed;
       const record = {
         id: item.id,
         targetLang: item.targetLang,
@@ -128,6 +135,7 @@ async function main() {
         },
         model: result.meta.model ?? model ?? null,
         providerUsed: result.meta.providerUsed,
+        evaluation,
         elapsedMs: Date.now() - startedAt,
       };
       console.log(JSON.stringify(record, null, 2));
@@ -153,6 +161,7 @@ async function main() {
     console.log(JSON.stringify(record, null, 2));
     appendJsonl(logJsonl, record);
   }
+  if (failed) process.exitCode = 1;
 }
 
 main().catch((error) => {

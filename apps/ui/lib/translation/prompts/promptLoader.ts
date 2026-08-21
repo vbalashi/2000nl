@@ -19,10 +19,17 @@ export function loadPromptText(filename: string) {
   const fullPath = resolvePromptPath(filename);
   try {
     const text = fs.readFileSync(fullPath, "utf8");
+    if (!text.trim()) {
+      throw new Error(`Translation prompt is empty: ${filename}`);
+    }
     cache.set(key, text);
     return text;
-  } catch {
-    cache.set(key, "");
-    return "";
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Translation prompt")) {
+      throw error;
+    }
+    throw new Error(`Translation prompt is unavailable: ${filename}`, {
+      cause: error,
+    });
   }
 }

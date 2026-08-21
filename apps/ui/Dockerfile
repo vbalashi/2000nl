@@ -55,6 +55,9 @@ ENV APP_ROLLOUT_PROFILE=$APP_ROLLOUT_PROFILE
 COPY --from=builder /workspace/apps/ui/public ./public
 COPY --from=builder /workspace/apps/ui/.next/standalone ./
 COPY --from=builder /workspace/apps/ui/.next/static ./.next/static
+# Translation prompts use dynamic runtime filenames and are not discovered by
+# Next's standalone file tracer. Keep them beside the server bundle explicitly.
+COPY --from=builder /workspace/apps/ui/lib/translation/prompts/*.txt ./lib/translation/prompts/
 
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0

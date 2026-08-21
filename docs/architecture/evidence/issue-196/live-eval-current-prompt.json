@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "translation-meaning-live-eval-v1",
+  "capturedAt": "2026-08-21T07:24:07Z",
+  "fixedPoint": "1f7e5e33ccac33c7d7b902191c0af1b12a3ef558",
+  "promptFingerprint": "109cf135d00a9c5e7977c52f7dd4cb843360a1e4c0d924efe22b19ebc1cf3253",
+  "source": {
+    "entryId": "1b636b1b-0ba1-4f29-a52d-0b45fdbaba8d",
+    "sourceContentFingerprint": "221be689c6ff0b006999786b41d60d36cab5fff2011034949368fc7af3c6fbb9",
+    "productionArtifact": {
+      "translationId": "df76239a-8292-40ca-8205-a457e7acf9b3",
+      "providerRevision": "316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "translationPolicyVersion": "dictionary_meaning_v1:316deeb28892b1cdebfe5c12c2cd620b5b8f29289c1ffe3d4f5fc1b2e6a4ea7d",
+      "updatedAt": "2026-08-14T05:11:13.431Z"
+    }
+  },
+  "typisch": {
+    "requestFingerprint": "95f35763b3c7631e686d6e8ac3755a997fb86f1b8a361c4896f952f3c6f23f45",
+    "request": {
+      "contractVersion": "dictionary-meaning-translation-v1",
+      "entryId": "1b636b1b-0ba1-4f29-a52d-0b45fdbaba8d",
+      "sourceContentFingerprint": "221be689c6ff0b006999786b41d60d36cab5fff2011034949368fc7af3c6fbb9",
+      "sourceLanguageCode": "nl",
+      "targetLanguageCode": "ru",
+      "headword": {
+        "text": "typisch",
+        "article": null,
+        "partOfSpeech": "bijvoeglijk naamwoord",
+        "partOfSpeechCode": "bn"
+      },
+      "content": [
+        {
+          "fieldId": "definition",
+          "role": "definition",
+          "text": "iets wat typisch is, is vreemd"
+        },
+        {
+          "fieldId": "example:0",
+          "role": "example",
+          "text": "wat typisch dat we elkaar niet gezien hebben op dat congres!"
+        }
+      ]
+    },
+    "runs": [
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      },
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      },
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      },
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      },
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      },
+      {
+        "primaryText": "странный",
+        "baseText": "типичный",
+        "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+      }
+    ]
+  },
+  "neighbors": [
+    {
+      "id": "goed_zn_goods",
+      "requestFingerprint": "1db8357005e45cc451180318ac56030f2f0e90f631e3a79ed909e77910667510",
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:goed_zn_goods",
+        "sourceContentFingerprint": "ef514cd42cf652031e02fdc831e3b4d8a48f11d0956d081319a38fb899d18df7",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": { "text": "goed", "article": "het", "partOfSpeech": "zelfstandig naamwoord", "partOfSpeechCode": "zn" },
+        "content": [
+          { "fieldId": "definition", "role": "definition", "text": "de dingen; de voorwerpen" },
+          { "fieldId": "example:0", "role": "example", "text": "de goederen worden vervoerd per schip" }
+        ]
+      },
+      "primaryText": "товар",
+      "baseText": "товар",
+      "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+    },
+    {
+      "id": "goed_zn_moral_good",
+      "requestFingerprint": "30d6bedb010fbac7a611ee60fc39584c438e34334f9f23870b81836a1880d856",
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:goed_zn_moral_good",
+        "sourceContentFingerprint": "6126b48779f7bcd55513ae9acdafd2ea0707b5119e027498c7a0cf8ee26516f6",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": { "text": "goed", "article": "het", "partOfSpeech": "zelfstandig naamwoord", "partOfSpeechCode": "zn" },
+        "content": [
+          { "fieldId": "definition", "role": "definition", "text": "dat wat goed is" },
+          { "fieldId": "example:0", "role": "example", "text": "zij heeft veel goed gedaan voor de stad" }
+        ]
+      },
+      "primaryText": "благо",
+      "baseText": "добро",
+      "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+    },
+    {
+      "id": "goed_zn_cloth",
+      "requestFingerprint": "6cc3cba0fb1109aa1c850b24caf4c5d3338ba5cb87e4bfe9cbe92c401fde4cc6",
+      "request": {
+        "contractVersion": "dictionary-meaning-translation-v1",
+        "entryId": "eval:goed_zn_cloth",
+        "sourceContentFingerprint": "3c23a1712ab1127ed89e1dc64bb17ceedd14fc8c993c08056f31231f192a734e",
+        "sourceLanguageCode": "nl",
+        "targetLanguageCode": "ru",
+        "headword": { "text": "goed", "article": "het", "partOfSpeech": "zelfstandig naamwoord", "partOfSpeechCode": "zn" },
+        "content": [
+          { "fieldId": "definition", "role": "definition", "text": "de stof; de kleren" },
+          { "fieldId": "example:0", "role": "example", "text": "het vuile goed kun je in de machine doen" }
+        ]
+      },
+      "primaryText": "ткань",
+      "baseText": "товар",
+      "evaluation": { "status": "evaluated", "passed": true, "missingRequiredSemanticUnits": [], "forbiddenSensesPresent": [] }
+    }
+  ]
+}
