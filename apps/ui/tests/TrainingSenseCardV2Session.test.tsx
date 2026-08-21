@@ -119,6 +119,142 @@ describe("TrainingSenseCardV2Session", () => {
     });
   });
 
+  test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const onProgressActionAccepted = vi.fn();
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 200, clientY: 0 }],
+      });
+      expect(wrapper.getAttribute("style")).toContain("translateX(200px)");
+      fireEvent.touchCancel(wrapper);
+      expect(wrapper.getAttribute("style")).toContain("translateX(0px)");
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      const success = singleSenseEntry.capabilities.find(
+        (candidate) =>
+          candidate.actionId === "review-card" &&
+          candidate.reviewResult === "success",
+      );
+      await waitFor(() =>
+        expect(performAction).toHaveBeenCalledWith(
+          success,
+          expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+        ),
+      );
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(success);
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("ignores answer swipes while a review action is busy", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      const swipeRight = () => {
+        fireEvent.touchStart(wrapper, {
+          touches: [{ clientX: 0, clientY: 0 }],
+        });
+        fireEvent.touchMove(wrapper, {
+          touches: [{ clientX: 500, clientY: 0 }],
+        });
+        fireEvent.touchEnd(wrapper);
+      };
+
+      swipeRight();
+      await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+      swipeRight();
+      expect(performAction).toHaveBeenCalledOnce();
+      await act(async () =>
+        resolveAction({
+          contractVersion: "platform-action-v2",
+          actionId: "review-card",
+          clientEventId: "event-1",
+          accepted: true,
+          card: singleSenseEntry.card,
+        }),
+      );
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
   test("offers one global report action on face and answer and sends without advancing", async () => {
     const reportCapability = {
       actionId: "report-content" as const,

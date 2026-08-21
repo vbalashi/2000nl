@@ -43,6 +43,7 @@ import {
   resolveTrainingSessionLayoutPhase,
   TrainingSessionV2Layout,
 } from "./TrainingSessionV2Layout";
+import { useTrainingCardSwipeSurface } from "./useTrainingCardSwipeSurface";
 
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
@@ -119,6 +120,7 @@ export function TrainingSenseCardV2Session({
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
+  const [cardSide, setCardSide] = React.useState<"face" | "answer">("face");
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
   const [reportOperation, setReportOperation] =
@@ -404,6 +406,37 @@ export function TrainingSenseCardV2Session({
     }
   };
 
+  const swipeLeftCapability = model?.reviewCapabilities.find(
+    (capability) => capability.reviewResult === "fail",
+  );
+  const swipeRightCapability = model?.reviewCapabilities.find(
+    (capability) => capability.reviewResult === "success",
+  );
+  const swipeSurface = useTrainingCardSwipeSurface({
+    enabled: sessionState === "ready" && cardSide === "answer",
+    busy,
+    identity: `${word.id}:${mode}`,
+    left: swipeLeftCapability
+      ? {
+          value: swipeLeftCapability,
+          label: platformV2Message(interfaceLanguage, swipeLeftCapability.messageKey),
+          tintColor: "rgb(239 68 68)",
+          indicatorClass:
+            "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/80 dark:text-rose-200",
+        }
+      : undefined,
+    right: swipeRightCapability
+      ? {
+          value: swipeRightCapability,
+          label: platformV2Message(interfaceLanguage, swipeRightCapability.messageKey),
+          tintColor: "rgb(16 185 129)",
+          indicatorClass:
+            "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/80 dark:text-emerald-200",
+        }
+      : undefined,
+    onCommit: (capability) => void handleAction(capability),
+  });
+
   const cardAnnouncementRegion = (
     <span className="sr-only" aria-live="polite" aria-atomic="true">
       {presentationAnnouncement}
@@ -415,6 +448,7 @@ export function TrainingSenseCardV2Session({
       chrome={chrome}
       footer={footer}
       notice={notice}
+      readySurface={swipeSurface}
     >
       {cardAnnouncementRegion}
       {content}
@@ -496,6 +530,7 @@ export function TrainingSenseCardV2Session({
               />
             ) : undefined
           }
+          onSideChange={setCardSide}
           onAction={(capability) => void handleAction(capability)}
         />
         <SessionError

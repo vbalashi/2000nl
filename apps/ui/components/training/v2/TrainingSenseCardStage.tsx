@@ -37,6 +37,7 @@ type Props = {
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
+  onSideChange?: (side: "face" | "answer") => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 };
 
@@ -57,6 +58,7 @@ export function TrainingSenseCardStage({
   onPlayAudio,
   onOpenDetails,
   reportAction,
+  onSideChange,
   onAction,
 }: Props) {
   const [answerVisible, setAnswerVisible] = React.useState(false);
@@ -89,6 +91,10 @@ export function TrainingSenseCardStage({
     setHintVisible(false);
     setTranslationVisible(false);
   }, [model.entryId]);
+
+  React.useEffect(() => {
+    onSideChange?.(answerVisible ? "answer" : "face");
+  }, [answerVisible, onSideChange]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;

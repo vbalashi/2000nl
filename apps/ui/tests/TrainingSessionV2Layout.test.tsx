@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 import {
   resolveTrainingSessionLayoutPhase,
   TrainingSessionV2Layout,
@@ -58,5 +58,64 @@ describe("TrainingSessionV2Layout", () => {
     expect(resolveTrainingSessionLayoutPhase("future-nonfailure-state")).toBe(
       "failure",
     );
+  });
+
+  test("owns the ready-card interaction surface without leaking it into loading or failure", () => {
+    const onTouchStart = vi.fn();
+    const onTouchMove = vi.fn();
+    const onTouchEnd = vi.fn();
+    const onTouchCancel = vi.fn();
+    const readySurface = {
+      style: { transform: "translateX(42px) rotate(1deg)" },
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd,
+      onTouchCancel,
+      feedback: <div data-testid="swipe-feedback" />,
+    };
+    const { rerender } = render(
+      <TrainingSessionV2Layout
+        phase="ready"
+        chrome={<div />}
+        footer={<div />}
+        readySurface={readySurface}
+      >
+        <div />
+      </TrainingSessionV2Layout>,
+    );
+
+    const readyWrapper = screen.getByTestId("training-card-swipe-wrapper");
+    expect(readyWrapper).toHaveStyle({
+      transform: "translateX(42px) rotate(1deg)",
+    });
+    expect(screen.getByTestId("swipe-feedback")).toBeInTheDocument();
+    fireEvent.touchStart(readyWrapper);
+    fireEvent.touchMove(readyWrapper);
+    fireEvent.touchEnd(readyWrapper);
+    fireEvent.touchCancel(readyWrapper);
+    expect(onTouchStart).toHaveBeenCalledOnce();
+    expect(onTouchMove).toHaveBeenCalledOnce();
+    expect(onTouchEnd).toHaveBeenCalledOnce();
+    expect(onTouchCancel).toHaveBeenCalledOnce();
+
+    for (const phase of ["loading", "failure"] as const) {
+      rerender(
+        <TrainingSessionV2Layout
+          phase={phase}
+          chrome={<div />}
+          footer={<div />}
+          readySurface={readySurface}
+        >
+          <div />
+        </TrainingSessionV2Layout>,
+      );
+      const inactiveWrapper = screen.getByTestId(
+        "training-card-swipe-wrapper",
+      );
+      expect(inactiveWrapper).not.toHaveStyle({
+        transform: "translateX(42px) rotate(1deg)",
+      });
+      expect(screen.queryByTestId("swipe-feedback")).not.toBeInTheDocument();
+    }
   });
 });
