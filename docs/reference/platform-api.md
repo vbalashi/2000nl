@@ -272,6 +272,18 @@ first.
 `receipt_not_found`, and `failed`. Telemetry contains correlation and
 categorical outcome fields only, never card text or review content.
 
+Migration `121` also stores a closed
+`platform-action-report-verification-v1` projection on every newly accepted
+action receipt. It contains only the original Dictionary Entry, card type,
+state revision, action and client-event identity, plus the review result or
+Undo Known mark identity/revision when applicable. Auth/source observations
+and response/current-state fields are deliberately excluded. The service-only
+`verify_platform_v2_action_receipt_as_principal(user_id, projection)` RPC waits
+for an in-flight action with that event identity to finish and then verifies
+the immutable receipt projection; it never compares the report with current
+card state. Receipts created before migration `121` retain a null projection
+and fail closed rather than being reconstructed from later state or retry data.
+
 Capabilities are the authoritative action state machine, not UI hints.
 `mark-known` is available for not-started, encountered, learning, and reviewing
 cards; learning/reviewing cards expose it alongside their review actions.

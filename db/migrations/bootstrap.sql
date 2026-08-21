@@ -358,3 +358,6 @@
 \i db/migrations/118_platform_text_translation_provider_provenance.sql
 \i db/migrations/119_platform_v2_lookup_embedded_identity.sql
 \i db/migrations/120_platform_v2_report_atom_attestation.sql
+
+-- Immutable original Training-action projection for delayed diagnostic reports
+\i db/migrations/121_platform_v2_verifiable_action_receipts.sql
