@@ -63,8 +63,12 @@ export function trainingSessionLabel(
   mode: TrainingMode,
   cardFilter: CardFilter,
 ) {
+  const scenarioLabel =
+    scenario === "understanding" && mode === "word-to-definition"
+      ? null
+      : trainingScenarioLabel(interfaceLanguage, scenario);
   return [
-    trainingScenarioLabel(interfaceLanguage, scenario),
+    scenarioLabel,
     modeLabels[interfaceLanguage][mode],
     filterLabels[interfaceLanguage][cardFilter],
   ].filter(Boolean).join(" · ");

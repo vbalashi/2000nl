@@ -361,6 +361,29 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const pathname = url.pathname;
     const body = request.postDataJSON?.() ?? {};
 
+    if (pathname.endsWith("/rpc/get_training_session_plan")) {
+      await fulfillJson(
+        route,
+        options.visualProfile
+          ? {
+              plannedNew: 5,
+              plannedReview: 18,
+              plannedPractice: 0,
+              plannedTotal: 23,
+              plannedAt: new Date(0).toISOString(),
+            }
+          : {
+              plannedNew: 30,
+              plannedReview: 20,
+              plannedPractice: 0,
+              plannedTotal: 50,
+              plannedAt: new Date(0).toISOString(),
+            },
+        "session-plan",
+      );
+      return;
+    }
+
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)

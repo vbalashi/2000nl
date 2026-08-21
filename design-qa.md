@@ -25,7 +25,7 @@ Pencil MCP reports every authoritative screen node as exactly 402 × 874 logical
 
 The integrated Pencil browser was available and was used to read the authoritative node dimensions and component geometry. The unavailable surface was specifically request-route interception/test-fixture injection, which is needed to make the four Training states deterministic without touching real learning data. Therefore exact-state runtime capture used the repository's standalone Playwright harness with mocked platform/Supabase routes, the visual-only fallback permitted by `nl-local-ui-qa`. This does not mean the integrated browser itself was unavailable.
 
-The fixture uses a synthetic authenticated identity and performs no real user or learning mutations. Primary interactions tested were starting the current selection, revealing the answer, toggling translation, and rendering the recoverable-error state. The run produced no unexpected browser-console or page errors; only the development toolchain's existing dependency-age/deprecation warnings were printed by the test runner.
+The fixture uses a synthetic authenticated identity and performs no real user or learning mutations. Primary interactions tested were starting the current selection, advancing nine mocked card actions to the approved `10 / 23` position, revealing the answer, toggling translation, opening the real History destination in focused tests, and rendering the recoverable-error state. The run produced no unexpected browser-console or page errors; only the development toolchain's existing dependency-age/deprecation warnings were printed by the test runner.
 
 ## Focused-region evidence
 
@@ -37,8 +37,8 @@ No additional cropped comparison was necessary after the final full-view contact
 - Spacing and layout rhythm: 10 px outer frame, 58 px app header, compact session block, 14 px card radius, 18 px card padding, separate scrolling card body, stable Face/Answer docks, 44 px footer, and error-only full card were checked against all four nodes.
 - Colors and tokens: approved dark surface, border, muted text, accent, green, amber, red, and review colors map to shared runtime classes. All four states were checked in light/mobile and dark/wide profiles; footer tracks and values use explicit light/dark tokens.
 - Image and asset fidelity: the approved subset has no photographic/raster content inside the UI. Existing BrandLogo and Lucide icons are reused for every certified visible icon, including audio, translation, More, hint, check, chevron, exposure, and section markers; a component assertion rejects non-Lucide SVGs on both sides.
-- Copy and content: deterministic `bank` and `nodig` fixtures match source dictionary content. Dutch interface labels intentionally follow the selected-language catalogs. The session chrome now shows only authoritative ordinal `1`; both Pen's illustrative `10 / 23` and the earlier derived `1 / 28` are intentionally absent because no server-owned planned-session-total exists. Contract work is tracked in #224.
-- Interaction/accessibility: visible actions remain semantic buttons with labels and focus rings. Direct Face audio remains top-right, Answer audio remains in the answer header, reverse Face stays quiet, and global Melden/Mark Known remain the only secondary actions. History is omitted when no handler exists; the eventual authoritative destination is #225. Mobile controls do not clip; desktop keeps the body bounded and docks stable.
+- Copy and content: deterministic `bank` and `nodig` fixtures match source dictionary content. Dutch interface labels intentionally follow the selected-language catalogs, so Pen's mixed English CTA/review/error copy remains localized at runtime. The default direct-understanding scenario is implicit, matching the approved `Nieuw + herhaling`; non-default modes/scenarios remain explicit and covered. The visual fixture returns the merged authoritative plan and advances through real mocked actions, so the ordinal, total, and bar now represent `10 / 23` rather than a derived stats sum.
+- Interaction/accessibility: visible actions remain semantic buttons with labels and focus rings. Direct Face audio remains top-right, Answer audio remains in the answer header, reverse Face stays quiet, and global Melden/Mark Known remain the only secondary actions. The approved History icon now uses the merged authoritative destination handler and stable focus-return ref; it is omitted only when no handler exists, preventing a dead control. Mobile controls do not clip; desktop keeps the body bounded and docks stable.
 
 ## Comparison history
 
@@ -69,20 +69,26 @@ No additional cropped comparison was necessary after the final full-view contact
    - Session copy projects localized scenario, card filter, and any non-default mode rather than claiming every session is mixed. New-only, review-only, mixed, and reverse cases have focused coverage.
    - All four states were recaptured at exact 402 × 874 dark, 402 × 874 light, and 1280 × 900 dark. There is no light Pen source, so light evidence certifies contrast/containment rather than pixel equivalence.
 
-The #194 code slice has no open P0/P1/P2 visual finding, but final Design QA remains blocked on hard product dependencies #224 (authoritative planned-session total/progress) and #225 (authoritative History destination/handler). This report does not claim final exact fidelity while those approved chrome elements are intentionally absent.
+6. Dependency integration comparison — passed.
+   - #224 now supplies the server-owned planned total. `TrainingSessionChrome` renders the accepted presentation position/total/fraction, restoring the approved `10 / 23` count and progress bar without deriving a total from footer statistics.
+   - #225 now supplies the real History destination and focus-return seam. The approved Lucide History control is visible, operable, and no longer decorative.
+   - The default direct-understanding label is intentionally implicit to match Pen, while new-only, review-only, mixed, reverse, and non-default scenarios remain semantically projected by the shared label owner.
+   - History icon placement, ratio pill, progress track, four card/error compositions, and stable docks were compared in the refreshed contact sheet. No actionable P0/P1/P2 visual difference remains. Remaining copy differences are required Dutch localization, not geometry regressions.
+
+The #194 code slice and its formerly hard dependencies #224/#225 are integrated. All approved visible chrome is backed by authoritative runtime behavior; final Design QA passes.
 
 P3 follow-up polish:
 
 - The runtime BrandLogo's glyph metrics differ slightly from the Pencil raster because the product's real font rendering is retained; hierarchy and header geometry are preserved.
-- When a future session contract exposes an authoritative planned total, the session count/progress can be compared to a non-illustrative Pen state without derivation.
+- The progress fill follows the authoritative `10 / 23` fraction; subpixel rasterization can differ by a pixel from the 2× Pen export while the track and pill geometry remain aligned.
 
 ## Validation
 
-- Focused component/session and fixture suites: passed, including loading retention and four semantic-label cases.
-- Full UI unit suite: 847 passed, 111 skipped (environment-gated RPC tests), 0 failed.
+- Focused component/session and fixture suites: passed, including authoritative progress, History navigation/focus return, loading retention, and four semantic-label cases.
+- Full UI unit suite: 869 passed, 120 skipped (environment-gated RPC tests), 0 failed.
 - Exact-state visual browser suite: 4 / 4 passed.
 - TypeScript typecheck: passed.
 - Lint: passed.
 - Optimized Next.js compile/type validation: passed; static export then stopped on the known local-environment prerequisite `Supabase credentials are not configured` for auth/root pages, unrelated to this UI slice.
 
-final result: blocked
+final result: passed

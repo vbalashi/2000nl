@@ -5,6 +5,27 @@ import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAt
 
 const artifactDirectory = resolve(process.cwd(), "../../artifacts/design-qa");
 
+async function advanceToApprovedPosition(page: import("@playwright/test").Page) {
+  for (let position = 1; position < 10; position += 1) {
+    await page
+      .getByRole("button", {
+        name: /Antwoord tonen|Показать ответ|Show answer/i,
+      })
+      .click();
+    const learn = page.getByRole("button", {
+      name: /Begin met leren|Учить|Start learning/i,
+    });
+    if (await learn.isVisible().catch(() => false)) {
+      await learn.click();
+    } else {
+      await page.getByRole("button", { name: /Goed|Хорошо|Good/i }).click();
+    }
+    await expect(page.getByTestId("training-session-position")).toHaveText(
+      `${position + 1} / 23`,
+    );
+  }
+}
+
 test.skip(
   process.env.APP_ROLLOUT_PROFILE !== "pilot",
   "Run through the pilot browser harness.",
@@ -30,6 +51,7 @@ test("captures the approved Training face and answer at the authoritative viewpo
 
   const card = page.getByTestId("training-sense-card-v2");
   await expect(card).toBeVisible();
+  await advanceToApprovedPosition(page);
   await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute(
     "data-side",
     "face",
@@ -87,6 +109,7 @@ test("keeps the approved primitives responsive in light and wide layouts", async
       }
       else {
         await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+        await advanceToApprovedPosition(page);
         if (state !== "face") {
           await page.getByRole("button", { name: /Antwoord tonen|Показать ответ|Show answer/i }).click();
         }
@@ -134,6 +157,7 @@ test("captures the approved long-idiom answer", async ({ browser }) => {
     })
     .click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await advanceToApprovedPosition(page);
   await page
     .getByRole("button", {
       name: /Antwoord tonen|Показать ответ|Show answer/i,

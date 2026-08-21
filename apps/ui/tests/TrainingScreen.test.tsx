@@ -2672,9 +2672,14 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /TRAININGUnderstanding · New \+ review1/,
+      /TRAININGNew \+ review1/,
     );
-    expect(screen.getByTestId("training-session-chrome")).not.toHaveTextContent("/");
+    expect(screen.getByTestId("training-session-position")).toHaveTextContent(
+      "1 / 2",
+    );
+    expect(
+      screen.getByTestId("training-session-progress-track"),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("training-session-app-header")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Theme: System" }),

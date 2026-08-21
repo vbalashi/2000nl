@@ -39,9 +39,9 @@ test("omits History when the runtime does not provide an authoritative action", 
 });
 
 test.each([
-  ["new", "word-to-definition", "Begrip · Nieuw"],
-  ["review", "word-to-definition", "Begrip · Herhaling"],
-  ["both", "word-to-definition", "Begrip · Nieuw + herhaling"],
+  ["new", "word-to-definition", "Nieuw"],
+  ["review", "word-to-definition", "Herhaling"],
+  ["both", "word-to-definition", "Nieuw + herhaling"],
   ["both", "definition-to-word", "Begrip · Definitie → woord · Nieuw + herhaling"],
 ] as const)("projects the actual %s/%s session semantics", (cardFilter, mode, expectedLabel) => {
   render(
@@ -51,6 +51,7 @@ test.each([
       mode={mode}
       cardFilter={cardFilter}
       position={10}
+      progress={null}
     />,
   );
 
@@ -62,4 +63,23 @@ test.each([
   expect(screen.getByTestId("training-session-position")).toHaveTextContent("10");
   expect(screen.getByTestId("training-session-position")).not.toHaveTextContent("/");
   expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();
+});
+
+test("renders only the authoritative planned total and fraction", () => {
+  render(
+    <TrainingSessionChrome
+      interfaceLanguage="nl"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      position={99}
+      progress={{ position: 10, total: 23, fraction: 10 / 23 }}
+    />,
+  );
+
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent(
+    "10 / 23",
+  );
+  const track = screen.getByTestId("training-session-progress-track");
+  expect(track.firstElementChild).toHaveStyle({ width: `${(10 / 23) * 100}%` });
 });
