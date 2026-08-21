@@ -373,9 +373,42 @@ describe("/api/platform/v2/lookup", () => {
           target: expect.objectContaining({
             kind: "translation",
             translationId: "translation-entry-1",
-            sourceTextFingerprint: sourceContentRevision,
+            sourceContentFingerprint: sourceContentRevision,
           }),
         }),
+      ]),
+    );
+    const translationReportTargets = payload.groups[0].entries[0].capabilities
+      .filter(
+        (capability: any) =>
+          capability.actionId === "report-content" &&
+          capability.target.kind === "translation",
+      )
+      .map((capability: any) => capability.target);
+    expect(translationReportTargets).toEqual(
+      expect.arrayContaining([
+        {
+          kind: "translation",
+          targetKind: "entry",
+          entryId: "entry-1",
+          contentNodeId: null,
+          translationId: "translation-entry-1",
+          targetLanguageCode: "ru",
+          sourceContentFingerprint: sourceContentRevision,
+          translationPolicyVersion: ordinaryTranslationPolicyVersion("openai"),
+          providerRevision: "openai:test",
+        },
+        {
+          kind: "translation",
+          targetKind: "content-node",
+          entryId: "entry-1",
+          contentNodeId: "node-definition-1",
+          translationId: expect.stringMatching(/^[0-9a-f]{64}$/),
+          targetLanguageCode: "ru",
+          sourceTextFingerprint: "definition-fingerprint-1",
+          translationPolicyVersion: ordinaryTranslationPolicyVersion("openai"),
+          providerRevision: "openai:test",
+        },
       ]),
     );
     expect(JSON.stringify(payload)).not.toContain("providerOnly");

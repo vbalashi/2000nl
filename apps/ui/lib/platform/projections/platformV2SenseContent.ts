@@ -6,6 +6,7 @@ import type {
   PlatformSenseCardCapabilityV2,
   PlatformSenseCardEntryV2,
 } from "../../../../../packages/shared/types/platformV2";
+import { firstExactRenderableNodeTranslationV1 } from "../../../../../packages/shared/platform-v2/displayedTranslationArtifactIdentityV1";
 
 export type PlatformV2NodeReportCapability = Extract<
   PlatformSenseCardCapabilityV2,
@@ -41,8 +42,9 @@ export function projectPlatformV2SenseContent(
   const orderedNodes = [...entry.contentNodes]
     .sort((left, right) => left.order - right.order)
     .map<PlatformV2SenseContentNode>((node) => {
-      const translation = node.translations.find(
-        (candidate) => candidate.status === "ready" && candidate.text,
+      const translation = firstExactRenderableNodeTranslationV1(
+        node.translations,
+        node.sourceTextFingerprint,
       )?.text;
       const reportCapability = reportByContentNodeId.get(node.contentNodeId);
       return {

@@ -138,6 +138,16 @@ Important V2 rules:
   while `query` is the strict-lookup fallback for unresolved references;
 - translations are attached to exact Content Node IDs and are renderable only
   when source content and translation policy revisions match;
+- each `report-content` translation capability carries the exact rendered
+  artifact identity. Entry artifacts use their translation-row UUID and
+  `contentNodeId: null`; node artifacts use their deterministic SHA-256
+  translation ID and exact Content Node ID. Both variants include target
+  language, source fingerprint, policy version, and explicit nullable provider
+  revision, so a report verifier never infers language or revision from client
+  preferences;
+- translation Report capabilities are emitted only for the non-empty `ready`
+  artifact selected for rendering, after its source fingerprint is compared
+  with the current entry or Content Node fingerprint;
 - lookup reads cached translations but never starts a paid provider call;
 - `wordDetails`, when present for an authenticated lookup, contains typed
   lexical relations, notes, forms, conjugation rows, and references; clients

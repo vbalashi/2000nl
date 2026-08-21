@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
+import { projectPlatformV2SenseContent } from "@/lib/platform/projections/platformV2SenseContent";
 import { goedEntry } from "./platformV2IdiomHierarchyFixture";
 
 describe("Platform V2 SenseCard projection", () => {
@@ -95,6 +96,74 @@ describe("Platform V2 SenseCard projection", () => {
         ]),
       }),
     );
+  });
+
+  test("publishes report targets only for fresh non-empty translations that the card renders", () => {
+    const input = projectionInput({
+      stateRevision: "state-report-translation",
+      knownMark: null,
+    });
+    input.entries[0].allowMutationCapabilities = true;
+    input.entries[0].entrySourceContentFingerprint = "content-known-1";
+    input.entries[0].entryTranslation = {
+      translationId: "11111111-1111-4111-8111-111111111111",
+      entryId: "entry-known",
+      targetLanguageCode: "ru",
+      status: "ready",
+      text: "дом",
+      sourceContentFingerprint: "stale-content-revision",
+      translationPolicyVersion: "policy:current",
+      isFresh: true,
+    };
+    input.entries[0].contentNodeBindings[0]!.translations = [
+      {
+        translationId: "a".repeat(64),
+        targetLanguageCode: "ru",
+        status: "ready",
+        text: "устаревшее",
+        sourceTextFingerprint: "stale-node-revision",
+        translationPolicyVersion: "policy:current",
+      },
+      {
+        translationId: "b".repeat(64),
+        targetLanguageCode: "ru",
+        status: "failed",
+        text: "ошибка",
+        sourceTextFingerprint: "definition-known-1",
+        translationPolicyVersion: "policy:current",
+      },
+      {
+        translationId: "c".repeat(64),
+        targetLanguageCode: "ru",
+        status: "ready",
+        text: "",
+        sourceTextFingerprint: "definition-known-1",
+        translationPolicyVersion: "policy:current",
+      },
+      {
+        translationId: "d".repeat(64),
+        targetLanguageCode: "ru",
+        status: "ready",
+        text: "точное определение",
+        sourceTextFingerprint: "definition-known-1",
+        translationPolicyVersion: "policy:current",
+      },
+    ];
+
+    const entry = projectPlatformLookupV2(input).groups[0].entries[0];
+    expect(entry.kind).toBe("sense-card");
+    if (entry.kind !== "sense-card") throw new Error("Expected SenseCard");
+    expect(
+      entry.capabilities.flatMap((capability) =>
+        capability.actionId === "report-content" &&
+        capability.target.kind === "translation"
+          ? [capability.target.translationId]
+          : [],
+      ),
+    ).toEqual(["d".repeat(64)]);
+    expect(
+      projectPlatformV2SenseContent(entry).orderedNodes[0]?.translation,
+    ).toBe("точное определение");
   });
 
   test("keeps headword audio on a multi-sense group", () => {
