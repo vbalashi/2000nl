@@ -485,6 +485,7 @@ begin
       ('public.get_user_card_state(uuid,uuid,text)'::regprocedure),
       ('public.get_user_card_states_for_entries(uuid,uuid[],text[])'::regprocedure),
       ('public.get_recent_training_history(uuid,timestamp with time zone,integer)'::regprocedure),
+      ('public.get_recent_training_review_history(integer)'::regprocedure),
       ('public.get_learning_preferences(uuid)'::regprocedure),
       ('public.update_learning_preferences(uuid,text[],text,text,integer,text)'::regprocedure),
       ('public.get_active_word_list(uuid)'::regprocedure),

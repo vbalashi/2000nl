@@ -46,7 +46,7 @@
 
 - **Main Card**: Large central card showing current word/definition
 - **Details Drawer**: On-demand word details opened from answer-card actions or linked dictionary text; there is no permanent sidebar
-- **Training History**: A separate, on-demand destination showing the authenticated recent activity window without remounting the current Training session
+- **Training History**: A separate, code-split destination showing the authenticated latest 50 review records from the server-owned 24-hour window without remounting the current Training session
 - **Action Buttons**:
   - FirstTimeButtonGroup (first encounter): 2 buttons
   - Standard rating buttons are rendered by `TrainingScreen.tsx` for learning/review cards

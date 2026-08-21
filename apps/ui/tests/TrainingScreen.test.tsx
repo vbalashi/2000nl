@@ -401,6 +401,10 @@ const fetchTrainingSessionPlan = vi.fn().mockResolvedValue({
   plannedTotal: 2,
   plannedAt: "2026-08-21T12:00:00.000Z",
 });
+const fetchRecentTrainingHistory = vi.fn().mockResolvedValue({
+  items: [],
+  hasMore: false,
+});
 
 vi.mock("@/lib/trainingService", () => ({
   createTrainingScenarioCatalog,
@@ -438,6 +442,10 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingWordByLookup,
   fetchUserPreferences,
   updateUserPreferences,
+}));
+
+vi.mock("@/lib/training/trainingHistoryService", () => ({
+  fetchRecentTrainingHistory: () => fetchRecentTrainingHistory(),
 }));
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
@@ -2734,9 +2742,60 @@ test("approved Training History control requests the authoritative destination b
 
     const history = screen.getByRole("button", { name: "History" });
     history.focus();
-    await userEvent.keyboard("{Enter}");
+    await act(async () => userEvent.keyboard("{Enter}"));
 
     expect(onRequestDestination).toHaveBeenCalledWith("history");
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("keyboard return from History restores focus to its stable Training trigger", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  function Harness() {
+    const [destination, setDestination] = React.useState<AppDestination>("training");
+    return (
+      <TrainingScreen
+        user={user}
+        destination={destination}
+        trainingTodaySetupEnabled
+        onRequestDestination={setDestination}
+        onReturnFromHistory={() => setDestination("training")}
+      />
+    );
+  }
+
+  try {
+    render(<Harness />);
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Continue session|Sessie doorgaan/,
+      }),
+    );
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    const history = screen.getByRole("button", { name: "History" });
+    history.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByRole("heading", { name: "History" })).toHaveFocus();
+
+    const back = screen.getByRole("button", { name: "Back to training" });
+    back.focus();
+    await act(async () => userEvent.keyboard("{Enter}"));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "History" })).toHaveFocus(),
+    );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();

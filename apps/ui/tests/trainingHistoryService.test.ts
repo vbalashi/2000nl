@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const rpc = vi.fn();
 
@@ -13,43 +13,38 @@ const { fetchRecentTrainingHistory } = await import(
 describe("recent Training history", () => {
   beforeEach(() => {
     rpc.mockReset();
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-08-21T12:00:00.000Z"));
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  test("reads the authenticated 24-hour history boundary and projects only display fields", async () => {
+  test("reads the authenticated server-owned projection and returns cap metadata", async () => {
     rpc.mockResolvedValueOnce({
       data: [
         {
-          id: "entry-1",
+          entry_id: "entry-1",
           headword: "bank",
           part_of_speech: "zn.",
-          event_type: "review_success",
-          mode: "word-to-definition",
-          created_at: "2026-08-21T11:59:00.000Z",
-          raw: { mustNotLeakIntoView: true },
+          review_result: "review_success",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: true,
         },
       ],
       error: null,
     });
 
-    await expect(fetchRecentTrainingHistory("user-1")).resolves.toEqual([
-      {
-        entryId: "entry-1",
-        headword: "bank",
-        partOfSpeech: "zn.",
-        eventType: "review_success",
-        mode: "word-to-definition",
-        createdAt: "2026-08-21T11:59:00.000Z",
-      },
-    ]);
-    expect(rpc).toHaveBeenCalledWith("get_recent_training_history", {
-      p_user_id: "user-1",
-      p_since: "2026-08-20T12:00:00.000Z",
+    await expect(fetchRecentTrainingHistory()).resolves.toEqual({
+      items: [
+        {
+          entryId: "entry-1",
+          headword: "bank",
+          partOfSpeech: "zn.",
+          reviewResult: "review_success",
+          cardTypeId: "word-to-definition",
+          reviewedAt: "2026-08-21T11:59:00.000Z",
+        },
+      ],
+      hasMore: true,
+    });
+    expect(rpc).toHaveBeenCalledWith("get_recent_training_review_history", {
       p_limit: 50,
     });
   });
@@ -60,8 +55,47 @@ describe("recent Training history", () => {
       error: { message: "rpc unavailable" },
     });
 
-    await expect(fetchRecentTrainingHistory("user-1")).rejects.toThrow(
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
       "training_history_failed",
     );
+  });
+
+  test("fails and diagnoses a malformed row instead of silently showing an empty history", async () => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: [{ entry_id: "entry-1", headword: "bank" }],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    expect(diagnostic).toHaveBeenCalledWith(
+      "Invalid recent training history projection",
+      { index: 0 },
+    );
+    diagnostic.mockRestore();
+  });
+
+  test("rejects inconsistent truncation metadata", async () => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const row = {
+      entry_id: "entry-1",
+      headword: "bank",
+      part_of_speech: null,
+      review_result: "review_success",
+      card_type_id: "word-to-definition",
+      reviewed_at: "2026-08-21T11:59:00.000Z",
+      has_more: false,
+    };
+    rpc.mockResolvedValueOnce({
+      data: [row, { ...row, entry_id: "entry-2", has_more: true }],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    diagnostic.mockRestore();
   });
 });

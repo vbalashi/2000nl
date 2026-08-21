@@ -364,6 +364,8 @@
 
 -- Bounded Diagnostic Report v1 feedback tracer
 \i db/migrations/122_diagnostic_feedback_tracer.sql
-
 -- Authoritative exact-card Training session progress snapshot
 \i db/migrations/123_authoritative_training_session_plan.sql
+
+-- Browser-safe recent Training review history projection
+\i db/migrations/124_recent_training_review_history_projection.sql

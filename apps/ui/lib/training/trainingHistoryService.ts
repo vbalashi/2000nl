@@ -4,18 +4,24 @@ export type RecentTrainingHistoryItem = {
   entryId: string;
   headword: string;
   partOfSpeech: string | null;
-  eventType: string;
-  mode: string;
-  createdAt: string;
+  reviewResult: string;
+  cardTypeId: string;
+  reviewedAt: string;
+};
+
+export type RecentTrainingHistoryPage = {
+  items: RecentTrainingHistoryItem[];
+  hasMore: boolean;
 };
 
 type RecentTrainingHistoryRow = {
-  id?: unknown;
+  entry_id?: unknown;
   headword?: unknown;
   part_of_speech?: unknown;
-  event_type?: unknown;
-  mode?: unknown;
-  created_at?: unknown;
+  review_result?: unknown;
+  card_type_id?: unknown;
+  reviewed_at?: unknown;
+  has_more?: unknown;
 };
 
 const isString = (value: unknown): value is string =>
@@ -23,43 +29,67 @@ const isString = (value: unknown): value is string =>
 
 const projectHistoryRow = (
   row: RecentTrainingHistoryRow,
-): RecentTrainingHistoryItem | null => {
+): RecentTrainingHistoryItem => {
   if (
-    !isString(row.id) ||
+    !isString(row.entry_id) ||
     !isString(row.headword) ||
-    !isString(row.event_type) ||
-    !isString(row.mode) ||
-    !isString(row.created_at)
+    !isString(row.review_result) ||
+    !isString(row.card_type_id) ||
+    !isString(row.reviewed_at) ||
+    typeof row.has_more !== "boolean" ||
+    (row.part_of_speech !== null &&
+      typeof row.part_of_speech !== "string")
   ) {
-    return null;
+    throw new Error("training_history_contract_mismatch");
   }
 
   return {
-    entryId: row.id,
+    entryId: row.entry_id,
     headword: row.headword,
     partOfSpeech:
       typeof row.part_of_speech === "string" ? row.part_of_speech : null,
-    eventType: row.event_type,
-    mode: row.mode,
-    createdAt: row.created_at,
+    reviewResult: row.review_result,
+    cardTypeId: row.card_type_id,
+    reviewedAt: row.reviewed_at,
   };
 };
 
-export async function fetchRecentTrainingHistory(
-  userId: string,
-): Promise<RecentTrainingHistoryItem[]> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase.rpc("get_recent_training_history", {
-    p_user_id: userId,
-    p_since: since,
-    p_limit: 50,
-  });
+export async function fetchRecentTrainingHistory(): Promise<RecentTrainingHistoryPage> {
+  const { data, error } = await supabase.rpc(
+    "get_recent_training_review_history",
+    {
+      p_limit: 50,
+    },
+  );
 
   if (error || !Array.isArray(data)) {
     throw new Error("training_history_failed");
   }
 
-  return data
-    .map((row) => projectHistoryRow(row as RecentTrainingHistoryRow))
-    .filter((row): row is RecentTrainingHistoryItem => row !== null);
+  try {
+    const rows = data as RecentTrainingHistoryRow[];
+    const items = rows.map(projectHistoryRow);
+    const hasMoreValue = rows[0]?.has_more ?? false;
+    if (typeof hasMoreValue !== "boolean") {
+      throw new Error("training_history_contract_mismatch");
+    }
+    const hasMore = hasMoreValue;
+    if (rows.some((row) => row.has_more !== hasMore)) {
+      throw new Error("training_history_contract_mismatch");
+    }
+    return { items, hasMore };
+  } catch {
+    const invalidIndex = data.findIndex((row) => {
+      try {
+        projectHistoryRow(row as RecentTrainingHistoryRow);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    console.error("Invalid recent training history projection", {
+      index: invalidIndex < 0 ? 0 : invalidIndex,
+    });
+    throw new Error("training_history_contract_mismatch");
+  }
 }

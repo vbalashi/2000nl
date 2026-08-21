@@ -60,6 +60,7 @@ export function TrainingSessionChrome({
   mode,
   position,
   onHistory,
+  historyButtonRef,
   onClose,
 }: {
   interfaceLanguage: OnboardingLanguage;
@@ -67,6 +68,7 @@ export function TrainingSessionChrome({
   mode: TrainingMode;
   position: number;
   onHistory?: () => void;
+  historyButtonRef?: React.Ref<HTMLButtonElement>;
   onClose: () => void;
 }) {
   const text = copy[interfaceLanguage];
@@ -86,6 +88,7 @@ export function TrainingSessionChrome({
         <div className="flex shrink-0 items-center gap-2">
           {onHistory ? (
             <button
+              ref={historyButtonRef}
               type="button"
               onClick={onHistory}
               aria-label={text.history}

@@ -3,11 +3,14 @@
 import React, { useMemo } from "react";
 import { ChartNoAxesColumn, Library, Play } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import type { AppDestination } from "./appDestination";
+import type {
+  AppDestination,
+  PrimaryNavigationDestination,
+} from "./appDestination";
 
 const labels: Record<
   OnboardingLanguage,
-  Record<Exclude<AppDestination, "settings" | "history">, string>
+  Record<PrimaryNavigationDestination, string>
 > = {
   nl: {
     training: "Training",
@@ -25,7 +28,7 @@ const labels: Record<
 function DestinationIcon({
   destination,
 }: {
-  destination: Exclude<AppDestination, "settings" | "history">;
+  destination: PrimaryNavigationDestination;
 }) {
   const iconProps = {
     "aria-hidden": true,
@@ -37,7 +40,7 @@ function DestinationIcon({
 }
 
 type Props = {
-  active: Exclude<AppDestination, "settings" | "history"> | null;
+  active: PrimaryNavigationDestination | null;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
   extendedDestinationsEnabled?: boolean;
@@ -53,9 +56,7 @@ export function AppDestinationNav({
   variant = "desktop",
   onNavigate,
 }: Props) {
-  const destinations = useMemo<
-    Array<Exclude<AppDestination, "settings" | "history">>
-  >(
+  const destinations = useMemo<Array<PrimaryNavigationDestination>>(
     () =>
       extendedDestinationsEnabled
         ? ["training", "library", "statistics"]
