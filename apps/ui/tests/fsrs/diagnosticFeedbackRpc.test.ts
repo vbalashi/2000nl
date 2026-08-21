@@ -116,6 +116,7 @@ describeIfDb("Diagnostic feedback RPC", () => {
       expect(duplicate.rows[0].result).toEqual(expect.objectContaining({ status: "duplicate", feedbackItemId: accepted.rows[0].result.feedbackItemId }));
       expect(duplicate.rows[0].result.acceptedAt).toBe(accepted.rows[0].result.acceptedAt);
       expect(conflict.rows[0].result.status).toBe("conflict");
+      await client.query("reset role");
       const counts = await client.query("select (select count(*)::int from feedback_items where reporter_user_id=$1) items, (select count(*)::int from diagnostic_envelopes where reporter_user_id=$1) envelopes", [userId]);
       expect(counts.rows[0]).toEqual({ items: 1, envelopes: 1 });
       const adminProjection = await client.query("select * from query_feedback_items_admin(p_limit => 10) where report_id=$1", [reportId]);
@@ -575,6 +576,7 @@ describeIfDb("Diagnostic feedback RPC", () => {
       expect(retainedConflict.rows[0].result.status).toBe("conflict");
       const conflict = await client.query(`select submit_diagnostic_report_as_principal($1,'2000nl-web','test@sha',$2,$3,$4,$5::jsonb) result`, [userId, reportId, changedHash, changedCanonical, changedCanonical]);
       expect(conflict.rows[0].result.status).toBe("conflict");
+      await client.query("reset role");
       const counts = await client.query("select (select count(*)::int from feedback_items where reporter_user_id=$1) items, (select count(*)::int from diagnostic_envelopes where reporter_user_id=$1) envelopes", [userId]);
       expect(counts.rows[0]).toEqual({ items: 1, envelopes: 0 });
     });
