@@ -48,6 +48,7 @@ type PlatformV2IdentityEntry = {
   entryId: string;
   headwordGroupId: string;
   meaningOrdinal: number | null;
+  reportContentRevision: string | null;
   contentNodeBindings: PlatformContentNodeBindingV2Input[];
 };
 
@@ -425,6 +426,7 @@ export async function performPlatformV2Lookup(
             return {
               headwordGroupId: identity.headwordGroupId,
               meaningOrdinal: identity.meaningOrdinal,
+              reportContentRevision: identity.reportContentRevision,
               allowMutationCapabilities:
                 context.kind === "authenticated" &&
                 context.auth.principal.scopes.has("platform:write") &&
@@ -615,6 +617,10 @@ function identityEntries(value: unknown): PlatformV2IdentityEntry[] {
         meaningOrdinal:
           typeof entry.meaningOrdinal === "number"
             ? entry.meaningOrdinal
+            : null,
+        reportContentRevision:
+          typeof entry.reportContentRevision === "string"
+            ? entry.reportContentRevision
             : null,
         contentNodeBindings:
           entry.contentNodeBindings as PlatformContentNodeBindingV2Input[],

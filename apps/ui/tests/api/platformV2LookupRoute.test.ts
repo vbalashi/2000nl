@@ -138,6 +138,7 @@ describe("/api/platform/v2/lookup", () => {
         entryId: "entry-1",
         headwordGroupId: "group-1",
         meaningOrdinal: 1,
+        reportContentRevision: "report-content-revision-1",
         contentNodeBindings: [
           {
             contentNodeId: "node-definition-1",
@@ -292,6 +293,9 @@ describe("/api/platform/v2/lookup", () => {
         cardTypeId: "word-to-definition",
         scheduler: expect.objectContaining({ phase: "not-started" }),
       }),
+    );
+    expect(payload.groups[0].entries[0].reportContentRevision).toBe(
+      "report-content-revision-1",
     );
     expect(payload.groups[0].entries[0].translation).toEqual(
       expect.objectContaining({

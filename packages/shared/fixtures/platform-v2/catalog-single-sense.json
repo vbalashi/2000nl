@@ -39,7 +39,8 @@
             "sourceValue": "zn"
           },
           "card": null,
-          "contentRevision": "fixture-content-revision-huis-1",
+        "contentRevision": "fixture-content-revision-huis-1",
+        "reportContentRevision": null,
           "summaryContentNodeId": "fixture-node-huis-definition",
           "contentNodes": [
             {

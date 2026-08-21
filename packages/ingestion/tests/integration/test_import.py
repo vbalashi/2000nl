@@ -465,3 +465,111 @@ def test_versioned_source_import_is_stable_and_fails_closed_on_drift(
             nt2_slug=list_slug,
             nt2_name="Pytest source list",
         )
+
+
+def test_source_import_keeps_report_atoms_verifiable_across_reimport(
+    tmp_path: Path,
+) -> None:
+    database_url = _require_local_test_database()
+    suffix = uuid4().hex
+    dictionary_slug = f"pytest-report-atoms-{suffix}"
+    list_slug = f"pytest-report-list-{suffix}"
+    user_id = str(uuid4())
+    first_definition = "e\u0301e\u0301n zitmeubel"
+    changed_definition = "e\u0301e\u0301n gewijzigd zitmeubel"
+
+    def run_import():
+        return import_entries(
+            data_dir=tmp_path,
+            database_url=database_url,
+            dictionary_slug=dictionary_slug,
+            dictionary_name="Pytest report atom dictionary",
+            nt2_slug=list_slug,
+            nt2_name="Pytest report atom list",
+        )
+
+    def read_attestation() -> dict:
+        with psycopg2.connect(database_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    insert into auth.users (id, email)
+                    values (%s, %s)
+                    on conflict (id) do nothing
+                    """,
+                    (user_id, f"{user_id}@test.local"),
+                )
+                cursor.execute(
+                    """
+                    insert into public.user_settings (user_id)
+                    values (%s)
+                    on conflict (user_id) do nothing
+                    """,
+                    (user_id,),
+                )
+                cursor.execute(
+                    """
+                    select binding.word_entry_id::text
+                    from private.source_entry_bindings as binding
+                    join public.dictionaries as dictionary
+                      on dictionary.id = binding.dictionary_id
+                    where dictionary.slug = %s
+                      and binding.source_entry_key = 'test:article:a1:1'
+                      and binding.binding_state = 'active'
+                    """,
+                    (dictionary_slug,),
+                )
+                entry_id = cursor.fetchone()[0]
+                cursor.execute(
+                    "select set_config('request.jwt.claim.role', 'service_role', true)"
+                )
+                cursor.execute(
+                    """
+                    select public.read_platform_v2_report_atom_attestation(
+                        %s::uuid,
+                        %s::uuid
+                    )
+                    """,
+                    (user_id, entry_id),
+                )
+                return cursor.fetchone()[0]
+
+    _write_manifest(tmp_path, first_definition=first_definition)
+    run_import()
+    first = read_attestation()
+    assert first["cardContent"]["atoms"][1]["text"] == "één zitmeubel"
+    assert len(first["contentRevision"]) == 64
+
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                update private.platform_v2_content_nodes as node
+                set canonical_source_text = null
+                from private.source_entry_bindings as binding
+                join public.dictionaries as dictionary
+                  on dictionary.id = binding.dictionary_id
+                where node.entry_id = binding.word_entry_id
+                  and dictionary.slug = %s
+                  and binding.source_entry_key = 'test:article:a1:1'
+                  and node.binding_state = 'active'
+                """,
+                (dictionary_slug,),
+            )
+            assert cursor.rowcount == 1
+
+    repaired = run_import()
+    assert repaired.no_op is False
+    assert read_attestation() == first
+
+    _write_manifest(tmp_path, first_definition=changed_definition)
+    run_import()
+    changed = read_attestation()
+    assert changed["cardContent"]["atoms"][1]["text"] == (
+        "één gewijzigd zitmeubel"
+    )
+    assert changed["contentRevision"] != first["contentRevision"]
+
+    run_import()
+    replayed = read_attestation()
+    assert replayed == changed

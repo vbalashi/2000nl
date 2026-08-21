@@ -60,6 +60,7 @@ export type PlatformContentNodeBindingV2Input = {
 export type PlatformLookupV2ProjectionEntry = {
   headwordGroupId: string;
   meaningOrdinal?: number | null;
+  reportContentRevision?: string | null;
   allowMutationCapabilities?: boolean;
   entry: DictionaryLookupResult["entry"];
   dictionary: DictionarySummary;
@@ -286,6 +287,7 @@ function projectSenseCard(
       : {}),
     card,
     contentRevision: item.entry.contentFingerprint,
+    reportContentRevision: item.reportContentRevision ?? null,
     summaryContentNodeId:
       contentNodes.find((node) => node.kind === "definition")?.contentNodeId ??
       contentNodes[0]?.contentNodeId ??

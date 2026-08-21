@@ -43,6 +43,7 @@ function entry(
       stateRevision: `state-${entryId}`,
     },
     contentRevision: `content-${entryId}`,
+    reportContentRevision: null,
     summaryContentNodeId: `definition-${entryId}`,
     // Intentionally reverse the wire order. Public node identity/order and
     // parentContentNodeId, never array adjacency, own the hierarchy.

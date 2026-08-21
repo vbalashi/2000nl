@@ -29,6 +29,7 @@ const makeEntry = (input: {
     stateRevision: `state-${input.entryId}`,
   },
   contentRevision: `content-${input.entryId}`,
+  reportContentRevision: null,
   summaryContentNodeId: `definition-${input.entryId}`,
   contentNodes: [
     {

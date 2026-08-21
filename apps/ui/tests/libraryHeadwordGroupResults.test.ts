@@ -13,6 +13,7 @@ const sense = (entryId: string, partOfSpeech: string) => ({
   },
   card: null,
   contentRevision: `revision-${entryId}`,
+  reportContentRevision: null,
   summaryContentNodeId: `definition-${entryId}`,
   contentNodes: [
     {

@@ -75,6 +75,7 @@ function makeEntry(input: {
       stateRevision: target.stateRevision,
     },
     contentRevision: `content-${input.entryId}`,
+    reportContentRevision: null,
     summaryContentNodeId: definition.contentNodeId,
     contentNodes: [
       definition,

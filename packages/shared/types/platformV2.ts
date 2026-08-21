@@ -226,6 +226,7 @@ export type PlatformSenseCardEntryV2 = {
   partOfSpeech?: PlatformSemanticTermV2;
   card: PlatformSenseCardStateV2 | null;
   contentRevision: string;
+  reportContentRevision: string | null;
   summaryContentNodeId: string | null;
   contentNodes: PlatformContentNodeV2[];
   translation: PlatformEntryTranslationStateV2 | null;
