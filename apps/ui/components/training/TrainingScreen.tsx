@@ -47,6 +47,7 @@ import {
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
 import {
+  TrainingSessionAppHeader,
   TrainingSessionChrome,
 } from "./v2/TrainingSessionChrome";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
@@ -468,11 +469,14 @@ export function TrainingScreen({
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
   const trainingShellV2Enabled = platformV2TrainingUiEnabled();
-  const trainingSessionV2Enabled =
+  const v2SessionMode =
     trainingShellV2Enabled &&
     (currentMode === "word-to-definition" ||
-      currentMode === "definition-to-word");
-  const v2SessionOwned = Boolean(trainingSessionV2Enabled && currentWord);
+    currentMode === "definition-to-word")
+      ? currentMode
+      : null;
+  const trainingSessionV2Enabled = Boolean(v2SessionMode);
+  const v2SessionOwned = Boolean(v2SessionMode && currentWord);
 
   useEffect(() => {
     if (!currentWord || currentMode !== "listen-recognize") {
@@ -1656,7 +1660,7 @@ export function TrainingScreen({
     scope: trainingSessionPlanScope,
   });
   const {
-    cardOrdinal: sessionCardOrdinal,
+    presentation: sessionPresentation,
     isSubsequentCard: isSubsequentSessionCard,
   } = useTrainingSessionPresentation({
     surface: trainingPilot.surface,
@@ -1710,17 +1714,73 @@ export function TrainingScreen({
     currentWord &&
     trainingPilot.surface === "session",
   );
+  const trainingSessionChrome = v2SessionChromeVisible ? (
+    <TrainingSessionChrome
+      interfaceLanguage={onboardingLang}
+      scenario={activeScenario}
+      mode={currentMode}
+      cardFilter={cardFilter}
+      presentation={sessionPresentation}
+    />
+  ) : null;
+  const trainingSessionFooter = (
+    <FooterStats
+      stats={stats}
+      enabledModes={enabledModes}
+      cardFilter={cardFilter}
+      onModesChange={handleModesChange}
+      onCardFilterChange={handleCardFilterChange}
+      language={currentTrainingLanguage}
+      onLanguageChange={handleTrainingLanguageChange}
+      languageOptions={trainingLanguageOptions}
+      activeList={activeList}
+      activeListName={wordListLabel}
+      activeListValue={activeListValue}
+      listOptions={listOptions}
+      onListChange={handleFooterListChange}
+      onOpenSettings={() => {
+        setSettingsInitialViewedListScope(null);
+        setShowSettings(true);
+      }}
+      activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
+      initialReviewDue={initialReviewDue}
+      inlineControlsEnabled={!trainingTodaySetupEnabled}
+      compact={v2SessionOwned}
+      interfaceLanguage={onboardingLang}
+    />
+  );
+  const trainingSessionNotice = nextCardOverrideNotice ? (
+    <div
+      role="status"
+      className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
+    >
+      {nextCardOverrideNotice}
+    </div>
+  ) : null;
   return (
     <>
       <div
+        data-training-session-layout={v2SessionChromeVisible ? "v2" : undefined}
         aria-hidden={destination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col bg-background-light text-slate-900 overflow-hidden dark:bg-background-dark dark:text-slate-100`}
+        className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:text-slate-100 ${
+          v2SessionChromeVisible
+            ? "font-sense-sans dark:bg-[#11141A] max-[480px]:rounded-[16px] max-[480px]:border max-[480px]:border-[#4B5360] max-[480px]:p-[10px]"
+            : "dark:bg-background-dark"
+        }`}
       >
-        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2.5 md:px-6 md:py-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
+        {v2SessionChromeVisible ? (
+          <TrainingSessionAppHeader
+            interfaceLanguage={onboardingLang}
+            onHistory={onRequestDestination ? openTrainingHistory : undefined}
+            historyButtonRef={historyButtonRef}
+            onClose={trainingPilot.returnToToday}
+          />
+        ) : (
+        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 md:px-6 md:py-3">
           <div className="flex min-w-0 items-center gap-2 justify-self-start">
             <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
               <BrandLogo />
@@ -1763,18 +1823,7 @@ export function TrainingScreen({
             <div />
           )}
         </header>
-
-        {v2SessionChromeVisible ? (
-          <TrainingSessionChrome
-            interfaceLanguage={onboardingLang}
-            scenario={activeScenario}
-            mode={currentMode}
-            position={sessionCardOrdinal}
-            onHistory={onRequestDestination ? openTrainingHistory : undefined}
-            historyButtonRef={historyButtonRef}
-            onClose={trainingPilot.returnToToday}
-          />
-        ) : null}
+        )}
 
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
@@ -1792,20 +1841,57 @@ export function TrainingScreen({
             onStart={trainingPilot.startSession}
             onRetry={() => void trainingPilot.retry()}
           />
+        ) : v2SessionOwned && currentWord && v2SessionMode ? (
+          <TrainingSenseCardV2Session
+            key={`${user.id}:${currentWord.id}:${currentMode}`}
+            cacheOwnerId={user.id}
+            nextTransitionId={nextTransitionId ?? undefined}
+            presentationIdentity={currentPresentationIdentity}
+            word={currentWord}
+            mode={v2SessionMode}
+            contentLanguageCode={currentTrainingLanguage}
+            translationTargetLanguageCode={
+              translationLang === "off" ? null : translationLang
+            }
+            interfaceLanguage={onboardingLang}
+            chrome={trainingSessionChrome}
+            footer={trainingSessionFooter}
+            notice={trainingSessionNotice}
+            focusOnPresentation={isSubsequentSessionCard}
+            onPlayResolvedAudio={(url, label) => playAudio(url, label)}
+            onOpenDetails={handleShowCurrentWordDetails}
+            onProgressActionAccepted={handleV2ProgressActionAccepted}
+            onProgressActionStarting={prepareV2ProgressAction}
+            onLoadFailure={(failure) => {
+              reportCardLoadFailure(currentWord, failure);
+            }}
+            onRetryAlternative={() => {
+              void retryCardLoadFailure();
+            }}
+            onExit={trainingPilot.returnToToday}
+          />
         ) : (
           <>
-            <main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
+            <main data-training-session-main className={`flex grow flex-col items-center overflow-hidden bg-background-light ${
+              v2SessionOwned ? "dark:bg-[#11141A]" : "dark:bg-background-dark"
+            }`}>
               {/* Center the training card while preserving its established width. */}
-              <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
+              <div className={`flex h-full w-full flex-row justify-center ${
+                v2SessionOwned
+                  ? "max-w-[780px] px-[10px] pb-[8px] pt-[10px] max-[480px]:px-0 max-[480px]:pt-[6px]"
+                  : "max-w-[1200px] gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6"
+              }`}>
                 {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
-                <section className="flex flex-1 w-full max-w-3xl flex-col h-full overflow-visible rounded-3xl bg-transparent">
+                <section className={`flex h-full w-full flex-1 flex-col overflow-visible bg-transparent ${
+                  v2SessionOwned ? "max-w-[760px]" : "max-w-3xl rounded-3xl"
+                }`}>
                   {/* 1. Scrollable Card Area */}
                   <div
                     data-testid="training-card-scroll-region"
-                    className={`flex flex-1 flex-col px-2 md:px-4 ${
+                    className={`flex flex-1 flex-col ${
                       v2SessionOwned
-                        ? "min-h-0 overflow-clip"
-                        : "overflow-y-auto overflow-x-visible scrollbar-hide"
+                        ? "min-h-0 overflow-clip px-0"
+                        : "overflow-y-auto overflow-x-visible px-2 scrollbar-hide md:px-4"
                     }`}
                   >
                     {/* Card Container */}
@@ -1816,14 +1902,7 @@ export function TrainingScreen({
                           : "min-h-full py-2 md:py-4"
                       }`}
                     >
-                      {nextCardOverrideNotice ? (
-                        <div
-                          role="status"
-                          className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
-                        >
-                          {nextCardOverrideNotice}
-                        </div>
-                      ) : null}
+                      {trainingSessionNotice}
                       {!trainingShellV2Enabled && !onRequestDestination ? (
                         <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
                           <div className="flex flex-col gap-2 md:flex-row md:items-center">
@@ -1917,10 +1996,10 @@ export function TrainingScreen({
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                       <div
                         data-testid="training-card-frame"
-                        className={`mx-auto mb-6 w-full transition-[height] duration-200 md:mb-8 ${
+                        className={`mx-auto w-full transition-[height] duration-200 ${
                           v2SessionOwned
                             ? "min-h-0 flex-1 overflow-hidden"
-                            : "h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:aspect-[16/10] md:h-auto md:min-h-[400px]"
+                            : "mb-6 h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:mb-8 md:aspect-[16/10] md:h-auto md:min-h-[400px]"
                         }`}
                       >
                         <div
@@ -1957,40 +2036,6 @@ export function TrainingScreen({
                           {usableCandidatesExhausted ? (
                             <TrainingUsableCandidatesExhausted
                               interfaceLanguage={onboardingLang}
-                              onExit={trainingPilot.returnToToday}
-                            />
-                          ) : trainingSessionV2Enabled && currentWord ? (
-                            <TrainingSenseCardV2Session
-                              key={`${user.id}:${currentWord.id}:${currentMode}`}
-                              cacheOwnerId={user.id}
-                              nextTransitionId={nextTransitionId ?? undefined}
-                              presentationIdentity={currentPresentationIdentity}
-                              word={currentWord}
-                              mode={currentMode}
-                              contentLanguageCode={currentTrainingLanguage}
-                              translationTargetLanguageCode={
-                                translationLang === "off"
-                                  ? null
-                                  : translationLang
-                              }
-                              interfaceLanguage={onboardingLang}
-                              focusOnPresentation={isSubsequentSessionCard}
-                              onPlayResolvedAudio={(url, label) =>
-                                playAudio(url, label)
-                              }
-                              onOpenDetails={handleShowCurrentWordDetails}
-                              onProgressActionAccepted={
-                                handleV2ProgressActionAccepted
-                              }
-                              onProgressActionStarting={
-                                prepareV2ProgressAction
-                              }
-                              onLoadFailure={(failure) =>
-                                reportCardLoadFailure(currentWord, failure)
-                              }
-                              onRetryAlternative={() => {
-                                void retryCardLoadFailure();
-                              }}
                               onExit={trainingPilot.returnToToday}
                             />
                           ) : (
@@ -2132,30 +2177,9 @@ export function TrainingScreen({
               </div>
             </main>
 
-            <FooterStats
-              stats={stats}
-              enabledModes={enabledModes}
-              cardFilter={cardFilter}
-              onModesChange={handleModesChange}
-              onCardFilterChange={handleCardFilterChange}
-              language={currentTrainingLanguage}
-              onLanguageChange={handleTrainingLanguageChange}
-              languageOptions={trainingLanguageOptions}
-              activeList={activeList}
-              activeListName={wordListLabel}
-              activeListValue={activeListValue}
-              listOptions={listOptions}
-              onListChange={handleFooterListChange}
-              onOpenSettings={() => {
-                setSettingsInitialViewedListScope(null);
-                setShowSettings(true);
-              }}
-              activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
-              initialReviewDue={initialReviewDue}
-              inlineControlsEnabled={!trainingTodaySetupEnabled}
-              compact={v2SessionOwned}
-              interfaceLanguage={onboardingLang}
-            />
+            <div>
+              {trainingSessionFooter}
+            </div>
           </>
         )}
 

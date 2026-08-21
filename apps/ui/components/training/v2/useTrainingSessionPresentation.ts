@@ -5,15 +5,12 @@ import type { TrainingSessionPlanSnapshot } from "./useTrainingSessionPlan";
 
 type TrainingSurface = "today" | "setup" | "session";
 
-export type TrainingSessionProgress = {
-  position: number;
-  total: number;
-  fraction: number;
-};
+export type TrainingSessionPresentationSnapshot =
+  | { kind: "ordinal"; position: number }
+  | { kind: "planned"; position: number; total: number; fraction: number };
 
 export type TrainingSessionPresentation = {
-  cardOrdinal: number;
-  progress: TrainingSessionProgress | null;
+  presentation: TrainingSessionPresentationSnapshot;
   isSubsequentCard: boolean;
 };
 
@@ -87,15 +84,15 @@ export function useTrainingSessionPresentation({
   }, [presentedCardKey, surface]);
 
   return {
-    cardOrdinal: actualCardOrdinal,
-    progress:
+    presentation:
       surface === "session" && acceptedTotal !== null && acceptedTotal > 0
         ? {
+            kind: "planned",
             position: actualCardOrdinal,
             total: acceptedTotal,
             fraction: Math.min(actualCardOrdinal / acceptedTotal, 1),
           }
-        : null,
+        : { kind: "ordinal", position: actualCardOrdinal },
     isSubsequentCard:
       surface === "session" && !isEnteringSession && actualCardOrdinal > 1,
   };

@@ -39,6 +39,12 @@ import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
 } from "./pendingKnownUndoStore";
+import {
+  resolveTrainingSessionLayoutPhase,
+  TrainingSessionV2Layout,
+} from "./TrainingSessionV2Layout";
+import { useTrainingCardSwipeSurface } from "./useTrainingCardSwipeSurface";
+import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurface";
 
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
@@ -51,6 +57,9 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
+  chrome: React.ReactNode;
+  footer: React.ReactNode;
+  notice?: React.ReactNode;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
@@ -85,6 +94,9 @@ export function TrainingSenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
+  chrome,
+  footer,
+  notice,
   focusOnPresentation = false,
   onPlayResolvedAudio,
   onOpenDetails,
@@ -109,6 +121,19 @@ export function TrainingSenseCardV2Session({
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
+  const cardIdentity = `${word.id}:${mode}`;
+  const [cardPresentation, setCardPresentation] = React.useState<{
+    identity: string;
+    side: "face" | "answer";
+  }>(() => ({ identity: cardIdentity, side: "face" }));
+  const cardSide =
+    cardPresentation.identity === cardIdentity ? cardPresentation.side : "face";
+  const setCardSide = React.useCallback(
+    (side: "face" | "answer") => {
+      setCardPresentation({ identity: cardIdentity, side });
+    },
+    [cardIdentity],
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
   const [reportOperation, setReportOperation] =
@@ -235,8 +260,10 @@ export function TrainingSenseCardV2Session({
     );
   }, [handlePresentation, interfaceLanguage]);
 
-  const handleAction = async (capability: PlatformSenseCardCapabilityV2) => {
-    if (interactionBusyRef.current) return;
+  const handleAction = async (
+    capability: PlatformSenseCardCapabilityV2,
+  ): Promise<TrainingCardSwipeCommitOutcome> => {
+    if (interactionBusyRef.current) return "rejected";
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
@@ -252,7 +279,7 @@ export function TrainingSenseCardV2Session({
           setNoticeTone("error");
           setError(temporaryFailureMessage(interfaceLanguage));
         }
-        return;
+        return "accepted";
       }
       if (capability.actionId === "report-content") {
         setNoticeTone("info");
@@ -262,9 +289,9 @@ export function TrainingSenseCardV2Session({
             "senseCard.reportUnavailable",
           ),
         );
-        return;
+        return "accepted";
       }
-      if (!isPlatformV2TrainingActionCapability(capability)) return;
+      if (!isPlatformV2TrainingActionCapability(capability)) return "rejected";
       if (
         nextTransitionId &&
         (capability.actionId === "start-learning" ||
@@ -335,6 +362,7 @@ export function TrainingSenseCardV2Session({
         }
         await onProgressActionAccepted(capability);
       }
+      return "accepted";
     } catch (cause) {
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
@@ -366,6 +394,7 @@ export function TrainingSenseCardV2Session({
             : code,
         );
       }
+      return "rejected";
     } finally {
       interactionBusyRef.current = false;
       setBusy(false);
@@ -394,16 +423,57 @@ export function TrainingSenseCardV2Session({
     }
   };
 
+  const swipeLeftCapability = model?.reviewCapabilities.find(
+    (capability) => capability.reviewResult === "fail",
+  );
+  const swipeRightCapability = model?.reviewCapabilities.find(
+    (capability) => capability.reviewResult === "success",
+  );
+  const swipeSurface = useTrainingCardSwipeSurface({
+    enabled: sessionState === "ready" && cardSide === "answer",
+    busy,
+    identity: cardIdentity,
+    left: swipeLeftCapability
+      ? {
+          value: swipeLeftCapability,
+          label: platformV2Message(interfaceLanguage, swipeLeftCapability.messageKey),
+          tintColor: "rgb(239 68 68)",
+          indicatorClass:
+            "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/80 dark:text-rose-200",
+        }
+      : undefined,
+    right: swipeRightCapability
+      ? {
+          value: swipeRightCapability,
+          label: platformV2Message(interfaceLanguage, swipeRightCapability.messageKey),
+          tintColor: "rgb(16 185 129)",
+          indicatorClass:
+            "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/80 dark:text-emerald-200",
+        }
+      : undefined,
+    onCommit: handleAction,
+  });
+
   const cardAnnouncementRegion = (
     <span className="sr-only" aria-live="polite" aria-atomic="true">
       {presentationAnnouncement}
     </span>
   );
+  const renderLayout = (content: React.ReactNode) => (
+    <TrainingSessionV2Layout
+      phase={resolveTrainingSessionLayoutPhase(sessionState)}
+      chrome={chrome}
+      footer={footer}
+      notice={notice}
+      readySurface={swipeSurface}
+    >
+      {cardAnnouncementRegion}
+      {content}
+    </TrainingSessionV2Layout>
+  );
 
   if (sessionState === "loading") {
-    return (
-      <>
-        {cardAnnouncementRegion}
+    return renderLayout(
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 [@media(hover:hover)_and_(pointer:fine)]:justify-center">
           <div
             role="status"
@@ -415,8 +485,7 @@ export function TrainingSenseCardV2Session({
             {platformV2Message(interfaceLanguage, "senseCard.training.loading")}
           </div>
           <div aria-hidden="true" className="h-11 min-h-11 shrink-0" />
-        </div>
-      </>
+        </div>,
     );
   }
 
@@ -425,9 +494,7 @@ export function TrainingSenseCardV2Session({
       TrainingV2SessionState,
       "loading" | "ready"
     >;
-    return (
-      <>
-        {cardAnnouncementRegion}
+    return renderLayout(
         <SessionV2Failure
           state={failureState}
           interfaceLanguage={interfaceLanguage}
@@ -443,14 +510,11 @@ export function TrainingSenseCardV2Session({
               setError(cause instanceof Error ? cause.message : "lookup_failed");
             });
           }}
-        />
-      </>
+        />,
     );
   }
 
-  return (
-    <>
-      {cardAnnouncementRegion}
+  return renderLayout(
       <div
         className="contents"
         data-testid="training-sense-card-v2"
@@ -483,6 +547,8 @@ export function TrainingSenseCardV2Session({
               />
             ) : undefined
           }
+          side={cardSide}
+          onSideChange={setCardSide}
           onAction={(capability) => void handleAction(capability)}
         />
         <SessionError
@@ -491,8 +557,7 @@ export function TrainingSenseCardV2Session({
           dismissLabel={platformV2Message(interfaceLanguage, "senseCard.dismiss")}
           onDismiss={() => setError(null)}
         />
-      </div>
-    </>
+      </div>,
   );
 }
 
@@ -545,18 +610,19 @@ function SessionV2Failure({
       data-testid="training-v2-failure"
       data-training-renderer="v2"
       data-training-v2-state={state}
-      className="mx-auto grid min-h-48 w-full max-w-[760px] place-items-center self-center rounded-3xl border border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-900 shadow-sm dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-50"
+      data-visual-spec="training-v1.0"
+      className="mx-auto grid h-full min-h-0 w-full max-w-[760px] flex-1 place-items-center self-center rounded-[14px] border border-slate-300 bg-slate-50 px-[18px] py-10 text-center font-sense-sans text-slate-900 shadow-sm dark:border-[#4B5360] dark:bg-[#20252D] dark:text-[#F4F6FA] dark:shadow-none"
     >
-      <div className="flex max-w-sm flex-col items-center gap-4">
-        <p className="text-sm font-medium">
+      <div className="flex max-w-sm -translate-y-[6px] flex-col items-center gap-[18px]">
+        <p className="text-[18px] font-bold leading-tight">
           {platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
         </p>
         {detail ? <span className="sr-only">{detail}</span> : null}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-3">
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
+            className="h-[42px] rounded-[18px] border border-slate-400 bg-white px-4 text-[14px] font-bold text-slate-800 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-[#8B89F6] dark:border-[#7B8491] dark:bg-[#20252D] dark:text-[#F4F6FA] dark:hover:bg-[#262B34]"
           >
             {platformV2Message(interfaceLanguage, "senseCard.training.retry")}
           </button>
@@ -564,7 +630,7 @@ function SessionV2Failure({
             <button
               type="button"
               onClick={onExit}
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-700/50"
+              className="h-[42px] rounded-xl px-3 text-[14px] font-bold text-slate-600 outline-none hover:bg-slate-200/60 focus-visible:ring-2 focus-visible:ring-[#8B89F6] dark:text-[#F4F6FA] dark:hover:bg-[#262B34]"
             >
               {platformV2Message(interfaceLanguage, "senseCard.training.exit")}
             </button>

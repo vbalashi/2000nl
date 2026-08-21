@@ -1,18 +1,26 @@
 "use client";
 
 import React from "react";
+import {
+  Check,
+  ChevronDown,
+  Languages,
+  Lightbulb,
+  List,
+  MoreHorizontal,
+  Quote,
+  Route,
+  Volume2,
+} from "lucide-react";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ExposureBadge,
-  IdiomIcon,
-  ListMarkerIcon,
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
-  UsagePatternIcon,
 } from "../SenseCardChrome";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type {
@@ -29,6 +37,8 @@ type Props = {
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
+  side: "face" | "answer";
+  onSideChange: (side: "face" | "answer") => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 };
 
@@ -49,9 +59,11 @@ export function TrainingSenseCardStage({
   onPlayAudio,
   onOpenDetails,
   reportAction,
+  side,
+  onSideChange,
   onAction,
 }: Props) {
-  const [answerVisible, setAnswerVisible] = React.useState(false);
+  const answerVisible = side === "answer";
   const [hintVisible, setHintVisible] = React.useState(false);
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const stageRef = React.useRef<HTMLElement>(null);
@@ -77,7 +89,6 @@ export function TrainingSenseCardStage({
   }, [focusOnMount]);
 
   React.useEffect(() => {
-    setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
   }, [model.entryId]);
@@ -119,7 +130,7 @@ export function TrainingSenseCardStage({
         targetInsideStage
       ) {
         event.preventDefault();
-        setAnswerVisible((visible) => !visible);
+        onSideChange(answerVisible ? "face" : "answer");
         return;
       }
       const key = event.key.toLowerCase();
@@ -151,7 +162,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, hint, model, onAction]);
+  }, [answerVisible, busy, hint, model, onAction, onSideChange]);
 
   return (
     <section
@@ -160,29 +171,32 @@ export function TrainingSenseCardStage({
       aria-label={t("senseCard.training.cardChanged")}
       data-testid="training-sense-card-stage"
       data-side={answerVisible ? "answer" : "face"}
-      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 text-slate-900 dark:text-slate-100 [@media(hover:hover)_and_(pointer:fine)]:justify-center [container-type:inline-size]"
+      data-visual-spec="training-v1.0"
+      className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-[10px] font-sense-sans text-slate-900 dark:text-[#F4F6FA] [container-type:inline-size]"
     >
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </span>
       <article
         data-testid="training-sense-card-shell"
-        className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-slate-600 dark:bg-[#1d222b] dark:shadow-[0_22px_70px_rgba(0,0,0,0.22)] [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
+        className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[14px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-[#4B5360] dark:bg-[#20252D] dark:shadow-none ${
+          answerVisible ? "gap-[6px] p-[18px]" : ""
+        }`}
       >
         {model.audioCapability &&
         onPlayAudio &&
-        (mode === "word-to-definition" || answerVisible) ? (
+        mode === "word-to-definition" &&
+        !answerVisible ? (
           <div
             data-testid="training-card-audio-corner"
-            className="absolute left-5 top-5 z-20 sm:left-7 sm:top-7"
+            className="absolute right-[18px] top-[18px] z-20"
           >
             <IconButton
               label={t("senseCard.audio.play")}
               disabled={busy}
               onClick={onPlayAudio}
-              compact
             >
-              <SpeakerIcon />
+              <Volume2 aria-hidden="true" className="h-5 w-5" />
             </IconButton>
           </div>
         ) : null}
@@ -195,8 +209,10 @@ export function TrainingSenseCardStage({
                 hasTranslation(model) || translationActionAvailable
               }
               translationLabel={t("senseCard.translation.request")}
+              audioLabel={t("senseCard.audio.play")}
               busy={busy}
               moreLabel={t("senseCard.wordDetails.open")}
+              onPlayAudio={onPlayAudio}
               onToggleTranslation={() => {
                 if (!hasTranslation(model) && model.requestTranslationCapability) {
                   setTranslationVisible(true);
@@ -228,10 +244,10 @@ export function TrainingSenseCardStage({
 
       <footer
         data-testid="training-sense-card-dock"
-        className={`shrink-0 px-1 ${
+        className={`shrink-0 ${
           answerVisible
             ? model.reviewCapabilities.length
-              ? "h-[104px] min-h-[104px] sm:h-[76px] sm:min-h-[76px]"
+              ? "h-[120px] min-h-[120px] sm:h-[76px] sm:min-h-[76px]"
               : "h-[76px] min-h-[76px]"
             : reportAction || model.markKnownCapability
               ? "h-[76px] min-h-[76px]"
@@ -258,7 +274,7 @@ export function TrainingSenseCardStage({
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
             onToggleHint={() => setHintVisible((visible) => !visible)}
-            onShowAnswer={() => setAnswerVisible(true)}
+            onShowAnswer={() => onSideChange("answer")}
             showAnswerRef={showAnswerRef}
             onAction={onAction}
             reportAction={reportAction}
@@ -274,8 +290,10 @@ function EntityHeader({
   translationVisible,
   translationAvailable,
   translationLabel,
+  audioLabel,
   moreLabel,
   busy,
+  onPlayAudio,
   onToggleTranslation,
   onOpenDetails,
 }: {
@@ -283,16 +301,46 @@ function EntityHeader({
   translationVisible: boolean;
   translationAvailable: boolean;
   translationLabel: string;
+  audioLabel: string;
   moreLabel: string;
   busy: boolean;
+  onPlayAudio?: () => void;
   onToggleTranslation: () => void;
   onOpenDetails?: () => void;
 }) {
   return (
-    <header className="relative z-10 shrink-0 bg-slate-50 px-6 pb-5 pt-20 dark:bg-[#1d222b] sm:px-9 sm:pt-20">
-      <div className="absolute right-5 top-5 flex shrink-0 items-center gap-2 sm:right-7 sm:top-7">
-        {model.repeatCount > 0 ? (
-          <ExposureBadge count={model.repeatCount} tone="light" />
+    <header className="relative z-10 flex shrink-0 flex-col gap-0">
+      <div className="flex min-h-[34px] items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]">
+          {model.partOfSpeech ? (
+            <span className="inline-flex items-center gap-2 font-medium">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-[#37D99B]" />
+              <span title={model.partOfSpeech}>
+                {trainingPartOfSpeechLabel(model.partOfSpeech)}
+              </span>
+            </span>
+          ) : null}
+          {model.coreVocabularyLabel ? (
+            <span className="rounded-md bg-indigo-500/10 px-2 py-1 font-semibold text-indigo-700 dark:bg-[#262648] dark:text-[#9D94FF]">
+              {model.coreVocabularyLabel}
+            </span>
+          ) : null}
+          {model.repeatCount > 0 ? (
+            <ExposureBadge count={model.repeatCount} tone="light" />
+          ) : null}
+        </div>
+        <div
+          data-testid="training-answer-header-actions"
+          className="flex shrink-0 items-center gap-[7px]"
+        >
+        {onPlayAudio ? (
+          <IconButton
+            label={audioLabel}
+            disabled={busy}
+            onClick={onPlayAudio}
+          >
+            <Volume2 aria-hidden="true" className="h-5 w-5" />
+          </IconButton>
         ) : null}
         {translationAvailable ? (
           <IconButton
@@ -301,7 +349,7 @@ function EntityHeader({
             disabled={busy}
             onClick={onToggleTranslation}
           >
-            <TranslateIcon />
+            <Languages aria-hidden="true" className="h-5 w-5" />
           </IconButton>
         ) : null}
         {onOpenDetails ? (
@@ -310,22 +358,23 @@ function EntityHeader({
             disabled={busy}
             onClick={onOpenDetails}
           >
-            <MoreIcon />
+            <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
           </IconButton>
         ) : null}
+        </div>
       </div>
       <SenseCardHeadwordLockup
         article={model.article}
         headword={model.headword}
-        partOfSpeech={model.partOfSpeech}
-        coreVocabularyLabel={model.coreVocabularyLabel}
         tone="light"
+        showMetadata={false}
+        variant="training"
       />
       {model.entryTranslation ? (
         <SenseCardReveal open={translationVisible}>
           <p
             data-testid="entry-translation"
-            className="mt-2 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]"
+            className="mt-0 text-[15px] font-bold text-amber-700 dark:text-[#E9C46A]"
           >
             {[
               model.entryTranslation,
@@ -336,6 +385,14 @@ function EntityHeader({
       ) : null}
     </header>
   );
+}
+
+function trainingPartOfSpeechLabel(value: string) {
+  return value === "zelfstandig naamwoord" || value === "substantief"
+    ? "zn."
+    : value === "bijvoeglijk naamwoord"
+      ? "bn."
+      : value;
 }
 
 function FaceBody({
@@ -354,7 +411,7 @@ function FaceBody({
   hintLabel: string;
 }) {
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col px-6 pb-6 pt-7 sm:px-9">
+    <div className="relative flex min-h-0 flex-1 flex-col p-[18px]">
       <div className="grid min-h-0 flex-1 place-items-center px-10">
         <div className="flex flex-col items-center gap-4 text-center">
           {mode === "definition-to-word" ? (
@@ -372,6 +429,7 @@ function FaceBody({
               headword={model.headword}
               tone="light"
               showMetadata={false}
+              variant="training"
             />
           )}
         </div>
@@ -455,10 +513,10 @@ function AnswerBody({
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
         style={{ maskImage, WebkitMaskImage: maskImage }}
-        className="h-full overflow-y-auto px-6 pb-8 pt-4 [scrollbar-width:none] sm:px-9 [&::-webkit-scrollbar]:hidden"
+        className="h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {definitions.length ? (
-          <div className="space-y-4 pt-2">
+          <div className="space-y-3 pt-1">
             {definitions.map((item) => (
               <ContentItem
                 key={item.contentNodeId}
@@ -473,7 +531,7 @@ function AnswerBody({
             section="usage"
             title={t("senseCard.sections.usagePattern")}
             count={usagePatterns.length}
-            icon={<UsagePatternIcon className="h-3 w-3" />}
+            icon={<Route aria-hidden="true" className="h-3 w-3" />}
           >
             {usagePatterns.map((item) => (
               <ContentItem
@@ -490,7 +548,7 @@ function AnswerBody({
             section="examples"
             title={t("senseCard.sections.examples")}
             count={examples.length}
-            icon={<ListMarkerIcon className="h-3 w-3" />}
+            icon={<List aria-hidden="true" className="h-3 w-3" />}
           >
             {examples.map((item) => (
               <ContentItem
@@ -507,7 +565,7 @@ function AnswerBody({
             section="idioms"
             title={t("senseCard.sections.idioms")}
             count={idioms.length}
-            icon={<IdiomIcon className="h-3 w-3" />}
+            icon={<Quote aria-hidden="true" className="h-3 w-3" />}
           >
             {idioms.map((item) => (
               <ContentItem
@@ -544,7 +602,7 @@ function AnswerBody({
           }}
           className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"
         >
-          <ChevronDownIcon />
+          <ChevronDown aria-hidden="true" className="h-4 w-4" />
         </button>
       ) : null}
     </div>
@@ -565,9 +623,11 @@ function ContentSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-5 first:mt-0" data-section={section}>
+    <section className="mt-4 first:mt-0" data-section={section}>
       <SenseSectionHeader label={title} icon={icon} count={count} tone="light" />
-      <div className="space-y-4">{children}</div>
+      <div className={section === "idioms" ? "space-y-5 pt-2" : "space-y-3"}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -581,15 +641,22 @@ function ContentItem({
   translationVisible: boolean;
   accent?: "none" | "usage" | "example" | "idiom";
 }) {
+  const nested = Boolean(item.parentContentNodeId);
+  const nestedDefinition = nested && item.kind === "definition";
+  const compactIdiomLine = accent === "idiom" || (nested && item.kind === "example");
+  const compactExampleLine = accent === "example";
   const literary =
-    accent === "usage" || accent === "example" || accent === "idiom";
+    accent === "usage" ||
+    accent === "example" ||
+    accent === "idiom" ||
+    (nested && item.kind === "example");
   const border =
     accent === "usage"
       ? "border-l-[3px] border-slate-400 pl-4 dark:border-slate-500"
       : accent === "example"
         ? "border-l-[3px] border-indigo-400 pl-4"
         : accent === "idiom"
-          ? "border-l-[3px] border-amber-400 pl-4"
+          ? "border-l-[3px] border-amber-400 pl-[10px]"
           : "";
   return (
     <div
@@ -601,9 +668,17 @@ function ContentItem({
       <div className="flex items-start gap-2">
         <p
           className={`min-w-0 flex-1 ${
-            literary
-              ? "font-sense-serif text-lg italic leading-7 text-slate-900 dark:text-slate-100"
-              : "text-[17px] leading-7 text-slate-900 dark:text-slate-100"
+            nestedDefinition
+              ? "font-sense-sans text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
+              : literary
+              ? `font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] ${
+                  compactExampleLine
+                    ? "text-[13px] leading-[1.4]"
+                    : compactIdiomLine
+                    ? "text-[14px] leading-[1.25]"
+                    : "text-[16px] leading-[1.4]"
+                }`
+              : "font-sense-serif text-[16px] leading-[1.15] text-slate-900 dark:text-[#F4F6FA]"
           }`}
         >
           {item.text}
@@ -613,35 +688,30 @@ function ContentItem({
         <SenseCardReveal open={translationVisible}>
           <p
             data-content-translation="true"
-            className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400"
+            className="mt-1 text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
           >
             {item.translation}
           </p>
         </SenseCardReveal>
       ) : null}
       {item.children?.length ? (
-        <div className="mt-2 space-y-2 pl-4">
+        <div
+          className={
+            accent === "idiom" ? "mt-1 space-y-0.5 pl-0" : "mt-2 space-y-2 pl-4"
+          }
+        >
           {item.children.map((child) => (
             <ContentItem
               key={child.contentNodeId}
               item={child}
               translationVisible={translationVisible}
-              accent={contentAccent(child.kind)}
+              accent="none"
             />
           ))}
         </div>
       ) : null}
     </div>
   );
-}
-
-function contentAccent(
-  kind: TrainingSenseCardContent["kind"],
-): "none" | "usage" | "example" | "idiom" {
-  if (kind === "usage-pattern") return "usage";
-  if (kind === "example") return "example";
-  if (kind === "idiom") return "idiom";
-  return "none";
 }
 
 function FaceDock({
@@ -676,17 +746,17 @@ function FaceDock({
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
   return (
-    <div className="flex h-full flex-col gap-1.5">
-      <div className="flex gap-3">
+    <div className="flex h-full flex-col gap-[6px]">
+      <div className="flex gap-2">
         {hintAvailable ? (
           <button
             type="button"
             aria-label={hintVisible ? hideHintLabel : showHintLabel}
             disabled={busy}
             onClick={onToggleHint}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:text-indigo-200 dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
+            className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#171B22] dark:text-[#9D94FF] dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
           >
-            <HintIcon />
+            <Lightbulb aria-hidden="true" className="h-5 w-5" />
           </button>
         ) : null}
         <button
@@ -695,16 +765,13 @@ function FaceDock({
           aria-label={showAnswerLabel}
           disabled={busy}
           onClick={onShowAnswer}
-          className="h-11 flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-semibold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#6259b2] dark:bg-[#292650] dark:text-indigo-50 dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
+          className="h-[46px] flex-1 rounded-xl border border-indigo-400 bg-indigo-600 px-4 text-sm font-bold text-white outline-none transition hover:bg-indigo-700 focus-visible:bg-indigo-700 disabled:opacity-50 dark:border-[#8B89F6] dark:bg-[#262648] dark:text-[#F4F6FA] dark:hover:bg-[#332f60] dark:focus-visible:bg-[#3a356b]"
         >
           <span>{showAnswerLabel}</span>
-          <kbd className="ml-2 rounded border border-white/30 bg-black/10 px-1.5 py-0.5 text-[10px] font-medium text-white/90 dark:border-indigo-300/30 dark:bg-black/20 dark:text-indigo-100/80">
-            Space
-          </kbd>
         </button>
       </div>
       {reportAction || model.markKnownCapability ? (
-        <div className="flex h-6 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
+        <div className="flex h-6 items-end justify-between gap-3 text-[11.5px] leading-none text-slate-500 dark:text-[#7B8694]">
           {reportAction ?? <span />}
           {model.markKnownCapability ? (
             <MarkKnownAction
@@ -741,7 +808,7 @@ function AnswerDock({
     return (
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
         <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
-          <CheckIcon /> {t("senseCard.known.marked")}
+          <Check aria-hidden="true" className="h-4 w-4" /> {t("senseCard.known.marked")}
         </span>
         <button
           ref={primaryActionRef}
@@ -776,7 +843,10 @@ function AnswerDock({
           aria-label={t("senseCard.sections.reviewPrompt")}
           className="flex shrink-0 flex-col"
         >
-          <div className="grid h-[74px] grid-cols-2 gap-1.5 sm:h-11 sm:grid-cols-4">
+          <div
+            data-testid="training-review-grid"
+            className="grid h-[90px] grid-cols-2 grid-rows-2 gap-[6px] sm:h-[42px] sm:grid-cols-4 sm:grid-rows-1"
+          >
             {model.reviewCapabilities.map((capability, index) => (
               <button
                 key={capability.reviewResult}
@@ -784,7 +854,7 @@ function AnswerDock({
                 type="button"
                 disabled={busy}
                 onClick={() => onAction(capability)}
-                className={`relative min-h-[34px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-semibold outline-none transition before:absolute before:inset-y-1 before:left-0 before:w-1 before:rounded-r-full hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:bg-[#171b22] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] sm:h-11 ${reviewTone[capability.reviewResult]}`}
+                className={`relative h-[42px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] ${reviewTone[capability.reviewResult]}`}
               >
                 {t(capability.messageKey)}
               </button>
@@ -793,7 +863,7 @@ function AnswerDock({
         </div>
       ) : null}
 
-      <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3 px-1 text-[11px] leading-none text-slate-500 dark:text-slate-400">
+      <div className="flex h-6 min-h-6 shrink-0 items-end justify-between gap-3 text-[11.5px] leading-none text-slate-500 dark:text-[#7B8694]">
         {reportAction ?? <span />}
         {model.markKnownCapability ? (
           <MarkKnownAction
@@ -824,9 +894,9 @@ function MarkKnownAction({
       type="button"
       disabled={busy}
       onClick={() => onAction(capability)}
-      className="flex h-6 min-h-6 items-center gap-2 rounded-lg px-2 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+      className="flex h-6 min-h-6 items-center gap-1.5 rounded-lg px-0 hover:text-slate-900 disabled:opacity-50 dark:hover:text-slate-100"
     >
-      <CheckIcon /> {label}
+      <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>
   );
 }
@@ -885,14 +955,12 @@ function IconButton({
   disabled = false,
   onClick,
   children,
-  compact = false,
 }: {
   label: string;
   active?: boolean;
   disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
-  compact?: boolean;
 }) {
   return (
     <button
@@ -901,9 +969,7 @@ function IconButton({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`flex shrink-0 items-center justify-center rounded-xl border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
-        compact ? "h-9 w-9" : "h-10 w-10"
-      } ${
+      className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
         active
           ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
           : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"
@@ -911,98 +977,5 @@ function IconButton({
     >
       {children}
     </button>
-  );
-}
-
-function SpeakerIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M5 9v6h4l5 4V5L9 9H5Z" />
-      <path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a7.5 7.5 0 0 1 0 11" />
-    </svg>
-  );
-}
-
-function TranslateIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M4 5h9M8.5 3v2M6 8c1.5 2.5 3.5 4.5 6 6M12 8c-1.5 3-4 5.5-7 7" />
-      <path d="m14 19 3-8 3 8M15.2 16h3.6" />
-    </svg>
-  );
-}
-
-function MoreIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <circle cx="5" cy="12" r="1.5" />
-      <circle cx="12" cy="12" r="1.5" />
-      <circle cx="19" cy="12" r="1.5" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path d="m7 10 5 5 5-5" />
-    </svg>
-  );
-}
-
-function HintIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M9 18h6M10 21h4" />
-      <path d="M8.5 14.5C7.5 13.6 7 12.3 7 11a5 5 0 0 1 10 0c0 1.3-.5 2.6-1.5 3.5-.7.7-1.1 1.2-1.2 2.5h-4.6c-.1-1.3-.5-1.8-1.2-2.5Z" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path d="m5 12 4 4L19 6" />
-    </svg>
   );
 }
