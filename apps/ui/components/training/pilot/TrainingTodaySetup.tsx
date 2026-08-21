@@ -8,6 +8,7 @@ import type {
   TrainingDateWindow,
   TrainingMode,
 } from "@/lib/types";
+import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
 
 export type TrainingPilotStatus =
   "ready" | "loading" | "empty" | "error" | "first-use";
@@ -115,16 +116,6 @@ const copy = {
     daysAgo: "Days ago",
     loading: "Loading Training",
     chooseGoal: "Choose a training goal",
-    loadingBody: "Your navigation stays available while the session loads.",
-    empty: "No cards match this setup",
-    emptyBody: "Adjust the selection without losing your current session.",
-    error: "Training could not be loaded",
-    errorBody: "Try again; your current session and setup stay intact.",
-    firstUse: "Create your first training",
-    firstUseBody: "Start with a safe default and adjust only what you need.",
-    retry: "Try again",
-    adjustFilters: "Adjust filters",
-    setUp: "Set up training",
   },
   nl: {
     eyebrowToday: "TRAINING · VANDAAG",
@@ -168,17 +159,6 @@ const copy = {
     daysAgo: "Dagen geleden",
     loading: "Training laden",
     chooseGoal: "Kies een trainingsdoel",
-    loadingBody: "De navigatie blijft beschikbaar terwijl je sessie laadt.",
-    empty: "Geen kaarten voor deze selectie",
-    emptyBody: "Pas de selectie aan zonder je huidige sessie te verliezen.",
-    error: "Training kon niet worden geladen",
-    errorBody:
-      "Probeer opnieuw; je huidige sessie en selectie blijven bewaard.",
-    firstUse: "Maak je eerste training",
-    firstUseBody: "Begin veilig en pas alleen aan wat je nodig hebt.",
-    retry: "Opnieuw proberen",
-    adjustFilters: "Filters aanpassen",
-    setUp: "Training samenstellen",
   },
   ru: {
     eyebrowToday: "ТРЕНИРОВКА · СЕГОДНЯ",
@@ -222,17 +202,6 @@ const copy = {
     daysAgo: "Дней назад",
     loading: "Загрузка тренировки",
     chooseGoal: "Выберите цель тренировки",
-    loadingBody: "Навигация остаётся доступной, пока загружается сессия.",
-    empty: "Для этих настроек нет карточек",
-    emptyBody: "Измените выбор, не теряя текущую сессию.",
-    error: "Не удалось загрузить тренировку",
-    errorBody: "Попробуйте ещё раз — текущая сессия и настройки сохранятся.",
-    firstUse: "Создайте первую тренировку",
-    firstUseBody:
-      "Начните с безопасного варианта и меняйте только необходимое.",
-    retry: "Попробовать снова",
-    adjustFilters: "Настроить фильтры",
-    setUp: "Настроить тренировку",
   },
 } satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
@@ -349,47 +318,26 @@ export function TrainingTodaySetup({
   };
 
   if (screen === "today" && status !== "ready") {
-    const stateCopy = {
-      loading: [t.loading, t.loadingBody, null],
-      empty: [t.empty, t.emptyBody, t.adjustFilters],
-      error: [t.error, t.errorBody, t.retry],
-      "first-use": [t.firstUse, t.firstUseBody, t.setUp],
-    }[status];
-    return (
-      <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
-        <section className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12">
-          <div
-            aria-hidden="true"
-            className={`mx-auto mb-5 h-12 w-12 rounded-2xl border ${
-              status === "error"
-                ? "border-red-400/60 bg-red-500/10"
-                : "border-indigo-400/60 bg-indigo-500/10"
-            }`}
-          />
-          <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
-            {stateCopy[0]}
-          </h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">
-            {stateCopy[1]}
-          </p>
-          {stateCopy[2] ? (
-            <button
-              type="button"
-              onClick={status === "error" ? onRetry : openSetup}
-              className={`${actionClass} mt-8 w-full border-indigo-500 bg-indigo-500/20 text-indigo-900 dark:text-indigo-100`}
-            >
-              {stateCopy[2]}
-            </button>
-          ) : (
-            <p
-              role="status"
-              className="mt-8 text-sm font-semibold text-indigo-500"
-            >
-              …
-            </p>
-          )}
-        </section>
-      </main>
+    return status === "error" ? (
+      <TrainingPilotStatePanel
+        interfaceLanguage={interfaceLanguage}
+        status={status}
+        context="training"
+        onRetry={onRetry}
+      />
+    ) : status === "empty" || status === "first-use" ? (
+      <TrainingPilotStatePanel
+        interfaceLanguage={interfaceLanguage}
+        status={status}
+        context="training"
+        onSetUp={openSetup}
+      />
+    ) : (
+      <TrainingPilotStatePanel
+        interfaceLanguage={interfaceLanguage}
+        status="loading"
+        context="training"
+      />
     );
   }
 
