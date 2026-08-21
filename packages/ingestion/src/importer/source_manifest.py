@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+import unicodedata
 
 from jsonschema import Draft202012Validator
 
@@ -68,6 +69,7 @@ def platform_v2_content_node_inputs(
         if not isinstance(text, str) or not text.strip():
             return
         normalized_text = text.strip()
+        canonical_source_text = unicodedata.normalize("NFC", normalized_text)
         node = {
             "inputKey": input_key,
             "kind": kind,
@@ -80,6 +82,7 @@ def platform_v2_content_node_inputs(
                     }
                 )
             ).hexdigest(),
+            "sourceText": canonical_source_text,
         }
         if parent_input_key is not None:
             node["parentInputKey"] = parent_input_key

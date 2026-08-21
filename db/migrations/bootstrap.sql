@@ -357,3 +357,4 @@
 -- Safe selected/actual provider provenance for text translation artifacts
 \i db/migrations/118_platform_text_translation_provider_provenance.sql
 \i db/migrations/119_platform_v2_lookup_embedded_identity.sql
+\i db/migrations/120_platform_v2_report_atom_attestation.sql

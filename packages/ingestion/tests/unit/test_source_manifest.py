@@ -183,4 +183,21 @@ def test_builds_semantic_platform_v2_content_node_inputs() -> None:
     assert nodes[5]["parentInputKey"] == idiom["inputKey"]
     assert nodes[0]["sourcePath"] == "raw.meanings[0].definition"
     assert all(len(node["sourceTextFingerprint"]) == 64 for node in nodes)
+    assert [node["sourceText"] for node in nodes] == [
+        "een illustratie",
+        "ter verduidelijking",
+        "dit is een voorbeeld",
+        "een lichtend voorbeeld",
+        "iemand die navolging verdient",
+        "zij is een lichtend voorbeeld",
+        "vooral figuurlijk",
+    ]
     assert all("sourceNativeKey" not in node for node in nodes)
+
+
+def test_content_node_source_text_is_nfc_canonical() -> None:
+    nodes = platform_v2_content_node_inputs(
+        {"meanings": [{"definition": " e\u0301e\u0301n voorbeeld "}]}
+    )
+
+    assert nodes[0]["sourceText"] == "één voorbeeld"

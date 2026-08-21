@@ -19,6 +19,7 @@ export const singleSenseEntry: PlatformSenseCardEntryV2 = {
     stateRevision: "state-1",
   },
   contentRevision: "content-1",
+  reportContentRevision: null,
   summaryContentNodeId: "definition-1",
   contentNodes: [
     {

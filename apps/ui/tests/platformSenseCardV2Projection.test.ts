@@ -389,6 +389,7 @@ describe("Platform V2 SenseCard projection", () => {
                 stateRevision: "state-revision-1",
               },
               contentRevision: "content-revision-1",
+              reportContentRevision: null,
               summaryContentNodeId: "node-definition-1",
               contentNodes: [
                 {

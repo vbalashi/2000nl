@@ -69,6 +69,13 @@ def _verify_source_schema(cursor) -> None:
             to_regprocedure(
                 'private.reconcile_platform_v2_content_nodes(uuid,text,jsonb)'
             ),
+            (
+                select count(*) = 2
+                from information_schema.columns
+                where table_schema = 'private'
+                  and table_name = 'platform_v2_content_nodes'
+                  and column_name in ('canonical_source_text', 'source_order')
+            ),
             exists (
                 select 1
                 from information_schema.columns
@@ -84,6 +91,7 @@ def _verify_source_schema(cursor) -> None:
         headword_groups,
         content_nodes,
         reconcile_nodes,
+        report_atom_columns,
         management_column,
     ) = cursor.fetchone()
     if (
@@ -92,10 +100,11 @@ def _verify_source_schema(cursor) -> None:
         or headword_groups is None
         or content_nodes is None
         or reconcile_nodes is None
+        or not report_atom_columns
         or not management_column
     ):
         raise RuntimeError(
-            "Platform V2 identity migrations 102, 105, and 106 are not applied"
+            "Platform V2 identity migrations 102, 105, 106, and 120 are not applied"
         )
 
 
@@ -230,26 +239,47 @@ def _completed_manifest_is_noop(
 
     cursor.execute(
         """
-        select entry_id::text, kind, source_text_fingerprint
+        select entry_id::text, kind, source_text_fingerprint,
+               canonical_source_text, source_order
         from private.platform_v2_content_nodes
         where entry_id = any(%s::uuid[])
           and binding_state = 'active'
         """,
         (word_entry_ids,),
     )
-    actual_nodes: dict[str, list[tuple[str, str]]] = {}
-    for entry_id, kind, fingerprint in cursor.fetchall():
-        actual_nodes.setdefault(entry_id, []).append((kind, fingerprint))
+    actual_nodes: dict[
+        str,
+        list[tuple[str, str, str | None, int | None]],
+    ] = {}
+    for (
+        entry_id,
+        kind,
+        fingerprint,
+        source_text,
+        source_order,
+    ) in cursor.fetchall():
+        actual_nodes.setdefault(entry_id, []).append(
+            (kind, fingerprint, source_text, source_order)
+        )
     for source_entry_key, artifact in artifacts_by_key.items():
         entry_id = bindings[source_entry_key]["word_entry_id"]
-        expected_nodes = sorted(
+        expected_nodes = [
             (
                 node["kind"],
                 node["sourceTextFingerprint"],
+                node["sourceText"],
+                source_order,
             )
-            for node in platform_v2_content_node_inputs(artifact.payload)
-        )
-        if sorted(actual_nodes.get(entry_id, [])) != expected_nodes:
+            for source_order, node in enumerate(
+                platform_v2_content_node_inputs(artifact.payload),
+                start=1,
+            )
+        ]
+        actual_entry_nodes = actual_nodes.get(entry_id, [])
+        if (
+            len(actual_entry_nodes) != len(expected_nodes)
+            or set(actual_entry_nodes) != set(expected_nodes)
+        ):
             return False
     return True
 

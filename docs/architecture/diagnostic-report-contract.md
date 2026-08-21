@@ -72,6 +72,15 @@ Platform V2 types:
 
 Source paths, visible headwords, array positions, card text, device data, timestamps, and diagnostics never constitute target identity.
 
+For source-card atoms, Platform lookup supplies a nullable opaque
+`reportContentRevision` derived by the DB-owned ordered source-atom projection.
+The Diagnostic Report target places that value in its `contentRevision` field;
+it is deliberately distinct from the general SenseCard presentation
+`contentRevision`. A null report revision means automatic source-card atoms are
+not independently verifiable and submission with `cardContent` fails closed.
+Displayed Translation atoms retain their separate Translation Artifact
+revision from #197.
+
 ### Connected-client source context
 
 `sourceContext` is `null` for first-party reports. Connected clients may send
