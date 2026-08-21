@@ -111,21 +111,17 @@ export function TrainingSenseCardStage({
       }
       const targetInsideStage =
         event.target instanceof Node && stageRef.current?.contains(event.target);
-      const nativeSpaceAction =
-        event.target instanceof HTMLElement &&
-        Boolean(event.target.closest("[data-training-native-space-action]"));
+      if (isInteractiveTarget(event.target)) return;
       if (
         event.key === " " &&
         !event.shiftKey &&
         !isTextEntryTarget(event.target) &&
-        !nativeSpaceAction &&
-        (!isInteractiveTarget(event.target) || targetInsideStage)
+        targetInsideStage
       ) {
         event.preventDefault();
         setAnswerVisible((visible) => !visible);
         return;
       }
-      if (isInteractiveTarget(event.target)) return;
       const key = event.key.toLowerCase();
       if (key === "i" && !event.shiftKey && !answerVisible && hint) {
         event.preventDefault();
@@ -826,7 +822,6 @@ function MarkKnownAction({
   return (
     <button
       type="button"
-      data-training-native-space-action="true"
       disabled={busy}
       onClick={() => onAction(capability)}
       className="flex h-6 min-h-6 items-center gap-2 rounded-lg px-2 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"

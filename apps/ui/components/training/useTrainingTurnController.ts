@@ -118,6 +118,9 @@ export function useTrainingTurnController(input: Inputs) {
   >(null);
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
+  const [currentPresentationId, setCurrentPresentationId] = useState<
+    string | null
+  >(null);
   const actionLoadingRef = useRef(false);
   const loadingInProgressRef = useRef(false);
   const loadGenerationRef = useRef(0);
@@ -135,8 +138,10 @@ export function useTrainingTurnController(input: Inputs) {
   const presentWord = useCallback(
     (word: TrainingWord | null) => {
       if (word) markTrainingEntryPresentationStarted(word.id);
+      const presentationId = word ? generateReviewTurnId() : null;
+      currentTurnIdRef.current = presentationId;
+      setCurrentPresentationId(presentationId);
       setCurrentWord(word);
-      currentTurnIdRef.current = word ? generateReviewTurnId() : null;
     },
     [setCurrentWord],
   );
@@ -658,7 +663,7 @@ export function useTrainingTurnController(input: Inputs) {
     reportCardLoadFailure,
     retryCardLoadFailure,
     nextTransitionId,
-    currentPresentationId: currentTurnIdRef.current,
+    currentPresentationId,
     nextCardOverrideNotice,
     loadNextWord,
     beginSessionScopeChange,

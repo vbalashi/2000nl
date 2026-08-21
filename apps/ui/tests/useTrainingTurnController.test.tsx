@@ -320,18 +320,10 @@ describe("useTrainingTurnController transition matrix", () => {
     await act(async () => {
       await controller.result.current.loadNextWord();
     });
-    controller.rerender({
-      sessionScopeKey: "default",
-      currentWord: repeatedWord,
-    });
     const firstPresentationId = controller.result.current.currentPresentationId;
 
     await act(async () => {
       await controller.result.current.loadNextWord();
-    });
-    controller.rerender({
-      sessionScopeKey: "default",
-      currentWord: { ...repeatedWord },
     });
     const secondPresentationId = controller.result.current.currentPresentationId;
 

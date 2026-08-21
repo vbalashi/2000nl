@@ -505,15 +505,17 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByTestId("reverse-prompt")).toHaveTextContent(
       actualDefinition.text,
     );
-    fireEvent.keyDown(window, { key: " " });
+    const stage = screen.getByTestId("training-sense-card-stage");
+    stage.focus();
+    fireEvent.keyDown(stage, { key: " " });
     expect(
       screen.getByRole("heading", { name: model.headword }),
     ).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: " " });
+    fireEvent.keyDown(stage, { key: " " });
     expect(
       screen.queryByRole("heading", { name: model.headword }),
     ).not.toBeInTheDocument();
-    fireEvent.keyDown(window, { key: " " });
+    fireEvent.keyDown(stage, { key: " " });
     expect(
       screen.getByRole("heading", { name: model.headword }),
     ).toBeInTheDocument();
@@ -521,66 +523,58 @@ describe("TrainingSenseCardStage", () => {
     expect(onAction).toHaveBeenCalledWith(model.reviewCapabilities[2]);
   });
 
-  test("keeps Space owned by the card when a review button is focused", async () => {
+  test("leaves Space native for every interactive card action", () => {
     const onAction = vi.fn();
+    const onReport = vi.fn();
     const model = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
-      interfaceLanguage: "nl",
+      interfaceLanguage: "en",
     });
 
     render(
       <TrainingSenseCardStage
         model={model}
         mode="word-to-definition"
-        interfaceLanguage="nl"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onOpenDetails={vi.fn()}
+        reportAction={
+          <button type="button" onClick={onReport}>
+            Report
+          </button>
+        }
         onAction={onAction}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
-    const good = screen.getByRole("button", { name: "Goed" });
-    good.focus();
-    fireEvent.keyDown(good, { key: " " });
+    const stage = screen.getByTestId("training-sense-card-stage");
+    for (const name of [
+      "Play audio",
+      "Show hint",
+      "Show answer",
+      "Report",
+      "Mark as known",
+    ]) {
+      const control = screen.getByRole("button", { name });
+      control.focus();
+      expect(fireEvent.keyDown(control, { key: " " })).toBe(true);
+      expect(stage).toHaveAttribute("data-side", "face");
+    }
 
-    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
-      "data-side",
-      "face",
-    );
-    expect(onAction).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveFocus(),
-    );
-  });
-
-  test("Space reveals the answer instead of activating a focused Hint button", async () => {
-    const model = buildTrainingSenseCardModel({
-      group: singleSenseGroup,
-      entry: singleSenseEntry,
-      interfaceLanguage: "nl",
-    });
-
-    render(
-      <TrainingSenseCardStage
-        model={model}
-        mode="word-to-definition"
-        interfaceLanguage="nl"
-        onAction={vi.fn()}
-      />,
-    );
-
-    const hint = screen.getByRole("button", { name: "Hint tonen" });
-    hint.focus();
-    fireEvent.keyDown(hint, { key: " " });
-
-    expect(document.querySelector("aside")).not.toBeInTheDocument();
-    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
-      "data-side",
-      "answer",
-    );
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Opnieuw" })).toHaveFocus(),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    for (const name of [
+      "Play audio",
+      "Word details",
+      "Report",
+      "Mark as known",
+      "Good",
+    ]) {
+      const control = screen.getByRole("button", { name });
+      control.focus();
+      expect(fireEvent.keyDown(control, { key: " " })).toBe(true);
+      expect(stage).toHaveAttribute("data-side", "answer");
+    }
   });
 
   test("keeps modified Space and controls outside the card native", () => {

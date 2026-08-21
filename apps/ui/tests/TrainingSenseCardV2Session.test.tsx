@@ -954,6 +954,95 @@ describe("TrainingSenseCardV2Session", () => {
 
   });
 
+  test("keeps same-presentation undo available when session storage is unavailable", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const sessionStorageDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage",
+    );
+    const unavailableStorage = {
+      getItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+      setItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+      removeItem: vi.fn(() => {
+        throw new Error("storage_unavailable");
+      }),
+    };
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: unavailableStorage,
+    });
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-memory-fallback",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    try {
+      render(
+        <>
+          <TestTrainingSenseCardV2Session
+            word={word}
+            mode="word-to-definition"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="nl"
+            onProgressActionAccepted={onProgressActionAccepted}
+          />
+          <TrainingKnownUndoNotice
+            interfaceLanguage="nl"
+            currentPresentationIdentity={testPresentationIdentity(
+              word,
+              "word-to-definition",
+            )}
+          />
+        </>,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Markeer als bekend" }),
+      );
+
+      const undo = await screen.findByRole("button", {
+        name: "Markering ongedaan maken",
+      });
+      fireEvent.click(undo);
+      await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", {
+            name: "Markering ongedaan maken",
+          }),
+        ).not.toBeInTheDocument(),
+      );
+    } finally {
+      if (sessionStorageDescriptor) {
+        Object.defineProperty(
+          window,
+          "sessionStorage",
+          sessionStorageDescriptor,
+        );
+      } else {
+        delete (window as { sessionStorage?: Storage }).sessionStorage;
+      }
+    }
+  });
+
   test("advances after mark-known without depending on a post-action lookup", async () => {
     const onProgressActionAccepted = vi.fn();
     const markKnown = singleSenseEntry.capabilities.find(
