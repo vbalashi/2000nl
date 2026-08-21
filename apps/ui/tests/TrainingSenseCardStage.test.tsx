@@ -69,19 +69,8 @@ describe("TrainingSenseCardStage", () => {
     expect(expression?.querySelector("p")).toHaveClass("italic");
     expect(explanation?.querySelector("p")).not.toHaveClass("italic");
     expect(example?.querySelector("p")).toHaveClass("italic");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Report: het geld dat we met deze actie verdienen, komt ten goede aan de slachtoffers van de brand",
-      }),
-    );
-    expect(onAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        target: expect.objectContaining({
-          kind: "content-node",
-          contentNodeId: "idiom-example-goed",
-        }),
-      }),
-    );
+    expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
+    expect(onAction).not.toHaveBeenCalled();
   });
   test("keeps the audio control in the upper-left corner away from long headwords", () => {
     const baseModel = buildTrainingSenseCardModel({
@@ -114,23 +103,15 @@ describe("TrainingSenseCardStage", () => {
       entry: singleSenseEntry,
       interfaceLanguage: "en",
     });
-    const reportCapability = {
-      actionId: "report-content" as const,
-      elementId: "sense-card.report",
-      messageKey: "senseCard.report",
-      target: {
-        kind: "entry" as const,
-        entryId: baseModel.entryId,
-        contentRevision: "content-report-test",
-      },
-    };
     const onAction = vi.fn();
+    const onReport = vi.fn();
 
     render(
       <TrainingSenseCardStage
-        model={{ ...baseModel, reportCapabilities: [reportCapability] }}
+        model={baseModel}
         mode="word-to-definition"
         interfaceLanguage="en"
+        reportAction={<button type="button" onClick={onReport} className="hover:bg-slate-100 focus-visible:ring-2">Report</button>}
         onAction={onAction}
       />,
     );
@@ -143,7 +124,8 @@ describe("TrainingSenseCardStage", () => {
     report.focus();
     expect(report).toHaveFocus();
     fireEvent.click(report);
-    expect(onAction).toHaveBeenCalledWith(reportCapability);
+    expect(onReport).toHaveBeenCalledOnce();
+    expect(onAction).not.toHaveBeenCalled();
   });
 
   test("keeps one exact sense hidden on Face, supports a hint, then reveals Answer actions", () => {

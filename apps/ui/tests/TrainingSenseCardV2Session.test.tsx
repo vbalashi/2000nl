@@ -18,6 +18,8 @@ const requestTranslation = vi.fn();
 const peekPrefetched = vi.fn();
 const consumePrefetched = vi.fn();
 const preloadAudio = vi.fn();
+const queueDiagnosticReport = vi.fn();
+const buildDiagnosticReport = vi.fn();
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
   fetchPlatformV2TrainingEntry: (...args: unknown[]) => fetchSingleSense(...args),
@@ -35,6 +37,14 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
     ),
   performPlatformV2TrainingAction: (...args: unknown[]) =>
     performAction(...args),
+}));
+
+vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
+  freezeSenseCardDiagnosticSnapshot: (input: unknown) => input,
+  buildSenseCardDiagnosticReport: (...args: unknown[]) =>
+    buildDiagnosticReport(...args),
+  queuePreparedSenseCardDiagnosticReport: (...args: unknown[]) =>
+    queueDiagnosticReport(...args),
 }));
 
 function TestTrainingSenseCardV2Session(
@@ -64,11 +74,18 @@ describe("TrainingSenseCardV2Session", () => {
     peekPrefetched.mockReset();
     consumePrefetched.mockReset();
     preloadAudio.mockReset();
+    queueDiagnosticReport.mockReset();
+    buildDiagnosticReport.mockReset();
     peekPrefetched.mockReturnValue(null);
     consumePrefetched.mockReturnValue(null);
     requestTranslation.mockResolvedValue(undefined);
     preloadAudio.mockResolvedValue(undefined);
     resolveAudio.mockResolvedValue("/audio/hand.mp3");
+    queueDiagnosticReport.mockResolvedValue({ state: "sent" });
+    buildDiagnosticReport.mockImplementation(async (input) => ({
+      ...(input as object),
+      reportId: "55555555-5555-4555-8555-555555555555",
+    }));
     fetchSingleSense.mockResolvedValue({
       state: "ready",
       group: singleSenseGroup,
@@ -81,6 +98,183 @@ describe("TrainingSenseCardV2Session", () => {
       accepted: true,
       card: singleSenseEntry.card,
     });
+  });
+
+  test("offers one global report action on face and answer and sends without advancing", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    const onProgressActionAccepted = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(screen.getAllByRole("button", { name: "Melden" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Melden:/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(document.querySelector("#sense-card-report-context")).toHaveTextContent(
+      "Kaartcontext en sessiegegevens worden automatisch meegestuurd.",
+    );
+    expect(screen.getAllByRole("radio")).toHaveLength(6);
+    const stage = screen.getByTestId("training-sense-card-stage");
+    for (const control of [
+      screen.getByRole("button", { name: "Terug" }),
+      screen.getByRole("button", { name: "Versturen" }),
+      screen.getByRole("radio", { name: "Vertaling" }),
+      screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"),
+    ]) {
+      fireEvent.keyDown(control, { key: " " });
+      expect(stage).toHaveAttribute("data-side", "face");
+    }
+    fireEvent.click(screen.getByRole("radio", { name: "Vertaling" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    await screen.findByText("Verzonden");
+    expect(queueDiagnosticReport).toHaveBeenCalledOnce();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(performAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Sluiten" }).at(-1)!);
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getAllByRole("button", { name: "Melden" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Melden:/ })).not.toBeInTheDocument();
+  });
+
+  test("retries the exact same frozen report identity and payload", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    queueDiagnosticReport
+      .mockRejectedValueOnce(new Error("diagnostic_outbox_failed"))
+      .mockResolvedValueOnce({ state: "sent" });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Iets anders" }));
+    fireEvent.change(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"), {
+      target: { value: "zelfde melding" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Probeer opnieuw");
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    await screen.findByText("Verzonden");
+
+    expect(buildDiagnosticReport).toHaveBeenCalledOnce();
+    expect(queueDiagnosticReport).toHaveBeenCalledTimes(2);
+    expect(queueDiagnosticReport.mock.calls[1][0]).toBe(
+      queueDiagnosticReport.mock.calls[0][0],
+    );
+    expect(queueDiagnosticReport.mock.calls[1][0]).toMatchObject({
+      reportId: "55555555-5555-4555-8555-555555555555",
+      kind: "other",
+      comment: "zelfde melding",
+    });
+  });
+
+  test("announces sending and terminal delivery on one stable live region", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        entryId: reportCapability.target.entryId,
+        reportContentRevision: reportCapability.target.contentRevision,
+        capabilities: [...singleSenseEntry.capabilities, reportCapability],
+      },
+    });
+    let resolveDelivery!: (value: { state: "sent" }) => void;
+    queueDiagnosticReport.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveDelivery = resolve; }),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: reportCapability.target.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Iets anders" }));
+    const dialog = screen.getByRole("dialog", { name: "Wat klopt er niet?" });
+    const announcement = screen.getByTestId("report-delivery-announcement");
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "true"));
+    expect(announcement).toHaveTextContent("Versturen");
+    await act(async () => resolveDelivery({ state: "sent" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("aria-busy", "false"));
+    expect(screen.getByTestId("report-delivery-announcement")).toBe(announcement);
+    expect(announcement).toHaveTextContent("Verzonden");
+    expect(screen.getByRole("button", { name: "Sluiten" })).toHaveFocus();
+    expect(dialog).toHaveAttribute("aria-describedby", "sense-card-report-delivery-description");
   });
 
   test("uses the exact server capability, then asks the session owner to advance", async () => {
@@ -118,12 +312,167 @@ describe("TrainingSenseCardV2Session", () => {
         candidate.actionId === "review-card" &&
         candidate.reviewResult === "success",
     );
-    await waitFor(() => expect(performAction).toHaveBeenCalledWith(capability));
+    await waitFor(() =>
+      expect(performAction).toHaveBeenCalledWith(
+        capability,
+        expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+      ),
+    );
     expect(onProgressActionStarting).toHaveBeenCalledOnce();
     expect(onProgressActionStarting.mock.invocationCallOrder[0]).toBeLessThan(
       performAction.mock.invocationCallOrder[0]!,
     );
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
+  });
+
+  test("freezes the exact failed training operation for a later global report", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    const entry = {
+      ...singleSenseEntry,
+      entryId: reportCapability.target.entryId,
+      reportContentRevision: reportCapability.target.contentRevision,
+      capabilities: [...singleSenseEntry.capabilities, reportCapability],
+    };
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry,
+    });
+    performAction.mockImplementationOnce(
+      (capability: typeof singleSenseEntry.capabilities[number], context: {
+        onRequestFrozen?: (request: unknown) => void;
+      }) => {
+        context.onRequestFrozen?.({
+          actionId: capability.actionId,
+          clientEventId: "33333333-3333-4333-8333-333333333333",
+          target: capability.target,
+          ...("reviewResult" in capability
+            ? { reviewResult: capability.reviewResult }
+            : {}),
+        });
+        return Promise.reject(new Error("platform_request_timeout"));
+      },
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: entry.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Trainingsactie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+
+    await waitFor(() => expect(queueDiagnosticReport).toHaveBeenCalledOnce());
+    expect(queueDiagnosticReport.mock.calls[0][0]).toMatchObject({
+      kind: "training-action",
+      snapshot: {
+        operation: {
+          request: {
+            actionId: "review-card",
+            clientEventId: "33333333-3333-4333-8333-333333333333",
+            reviewResult: "success",
+          },
+          observedOutcome: "timeout",
+        },
+      },
+    });
+  });
+
+  test("keeps a failed action attached across state-conflict refresh of the same turn", async () => {
+    const reportCapability = {
+      actionId: "report-content" as const,
+      elementId: "sense-card.report",
+      messageKey: "senseCard.report",
+      target: {
+        kind: "entry" as const,
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentRevision: "a".repeat(64),
+      },
+    };
+    const entry = {
+      ...singleSenseEntry,
+      entryId: reportCapability.target.entryId,
+      reportContentRevision: reportCapability.target.contentRevision,
+      capabilities: [...singleSenseEntry.capabilities, reportCapability],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({ state: "ready", group: singleSenseGroup, entry })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: {
+          ...entry,
+          card: {
+            ...entry.card!,
+            stateRevision: "44444444-4444-4444-8444-444444444444",
+          },
+        },
+      });
+    performAction.mockImplementationOnce(
+      (capability: typeof singleSenseEntry.capabilities[number], context: {
+        onRequestFrozen?: (request: unknown) => void;
+      }) => {
+        context.onRequestFrozen?.({
+          actionId: capability.actionId,
+          clientEventId: "33333333-3333-4333-8333-333333333333",
+          target: capability.target,
+          ...("reviewResult" in capability
+            ? { reviewResult: capability.reviewResult }
+            : {}),
+        });
+        return Promise.reject(new Error("state_conflict"));
+      },
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, id: entry.entryId }}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Goed" }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Melden" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Trainingsactie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Versturen" }));
+
+    await waitFor(() => expect(queueDiagnosticReport).toHaveBeenCalledOnce());
+    expect(queueDiagnosticReport.mock.calls[0][0]).toMatchObject({
+      snapshot: {
+        operation: {
+          observedOutcome: "state-conflict",
+          request: {
+            clientEventId: "33333333-3333-4333-8333-333333333333",
+          },
+        },
+      },
+    });
   });
 
   test("shows an explicit V2 error instead of the legacy card when lookup returns HTTP 500", async () => {
@@ -259,7 +608,7 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.queryByTestId("training-v2-loading")).not.toBeInTheDocument();
   });
 
-  test("gives explicit feedback when durable reporting is unavailable", async () => {
+  test("opens the durable report sheet from the existing global action", async () => {
     const reportCapability = {
       actionId: "report-content" as const,
       elementId: "sense-card.report",
@@ -275,6 +624,7 @@ describe("TrainingSenseCardV2Session", () => {
       group: singleSenseGroup,
       entry: {
         ...singleSenseEntry,
+        reportContentRevision: "a".repeat(64),
         capabilities: [...singleSenseEntry.capabilities, reportCapability],
       },
     });
@@ -293,13 +643,7 @@ describe("TrainingSenseCardV2Session", () => {
     await screen.findByRole("heading", { name: "hand" });
     fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
     fireEvent.click(screen.getByRole("button", { name: "Melden" }));
-
-    expect(
-      await screen.findByText("Melden is nog niet beschikbaar."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Melden is nog niet beschikbaar.",
-    );
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
   });
 

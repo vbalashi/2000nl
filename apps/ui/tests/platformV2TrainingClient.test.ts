@@ -219,6 +219,36 @@ describe("performPlatformV2TrainingAction", () => {
     expect(JSON.stringify(transitionEvents(dispatch))).not.toContain(eventId);
   });
 
+  test("freezes the exact action request before transport starts", async () => {
+    const capability = reviewCapability("hard");
+    const eventId = "63825d8a-b62e-49ff-a360-0d5ef1ed26bf";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const acceptedResponse = {
+      contractVersion: "platform-action-v2" as const,
+      actionId: "review-card" as const,
+      clientEventId: eventId,
+      accepted: true,
+      card: singleSenseEntry.card!,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(acceptedResponse), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const onRequestFrozen = vi.fn();
+
+    await performPlatformV2TrainingAction(capability, { onRequestFrozen });
+
+    expect(onRequestFrozen).toHaveBeenCalledWith({
+      actionId: "review-card",
+      clientEventId: eventId,
+      target: capability.target,
+      reviewResult: "hard",
+    });
+    expect(onRequestFrozen.mock.invocationCallOrder[0]).toBeLessThan(
+      fetchMock.mock.invocationCallOrder[0],
+    );
+  });
+
   test("reconciles a timeout with the same event identity", async () => {
     const capability = reviewCapability("hard");
     const eventId = "63825d8a-b62e-49ff-a360-0d5ef1ed26bf";

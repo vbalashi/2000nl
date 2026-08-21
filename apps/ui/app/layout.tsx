@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Inter, Newsreader } from "next/font/google";
 import { SystemThemeEffect } from "@/components/theme/SystemThemeEffect";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
+import { DiagnosticReportOutboxBootstrap } from "@/components/feedback/DiagnosticReportOutboxBootstrap";
 
 const senseSans = Inter({
   subsets: ["latin", "cyrillic"],
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
         <SystemThemeEffect />
         <OfflineBanner />
+        <DiagnosticReportOutboxBootstrap />
         {children}
       </body>
     </html>

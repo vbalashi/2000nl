@@ -17,6 +17,7 @@ const fetchGroup = vi.fn();
 const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
+const queueDiagnosticReport = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -70,12 +71,20 @@ vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
     performAction(...args),
 }));
 
+vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
+  freezeSenseCardDiagnosticSnapshot: (input: unknown) => input,
+  buildSenseCardDiagnosticReport: (input: unknown) => Promise.resolve(input),
+  queuePreparedSenseCardDiagnosticReport: (...args: unknown[]) =>
+    queueDiagnosticReport(...args),
+}));
+
 describe("LibrarySenseCardV2Session", () => {
   beforeEach(() => {
     fetchGroup.mockReset();
     fetchCrossReferenceTarget.mockReset();
     performAction.mockReset();
     requestTranslation.mockReset();
+    queueDiagnosticReport.mockReset();
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
     performAction.mockResolvedValue({
       contractVersion: "platform-action-v2",
@@ -84,10 +93,47 @@ describe("LibrarySenseCardV2Session", () => {
       accepted: true,
       card: financeEntry.card,
     });
+    queueDiagnosticReport.mockResolvedValue({ state: "sent" });
   });
 
-  test("routes an exact idiom node report through the real Library session", async () => {
-    fetchGroup.mockResolvedValue(goedGroup);
+  test("uses one global report action and no per-node flags", async () => {
+    fetchGroup.mockResolvedValue({
+      ...multiSenseBankGroup,
+      entries: multiSenseBankGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
+          ? { ...entry, reportContentRevision: "a".repeat(64) }
+          : entry,
+      ),
+    });
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        fallback={<p>Legacy detail</p>}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(6);
+    expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("keeps idiom reporting on the sole global Library action", async () => {
+    fetchGroup.mockResolvedValue({
+      ...goedGroup,
+      entries: goedGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === goedEntry.entryId
+          ? { ...entry, reportContentRevision: "a".repeat(64) }
+          : entry,
+      ),
+    });
 
     render(
       <LibrarySenseCardV2Session
@@ -101,15 +147,9 @@ describe("LibrarySenseCardV2Session", () => {
     );
 
     await screen.findByTestId("library-sense-card-group");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Report: iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
-      }),
-    );
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Reporting is not available yet.",
-    );
+    expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Report" }));
+    expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
   });
 

@@ -18,12 +18,10 @@ import {
 
 describe("LibrarySenseCardGroup", () => {
   test("renders the goed expression, explanation, and example as one owned hierarchy", () => {
-    const onReport = vi.fn();
     const { container } = render(
       <LibrarySenseCardGroup
         model={buildLibrarySenseCardGroupModel(goedGroup, "en")}
         interfaceLanguage="en"
-        onReport={onReport}
         onAction={vi.fn()}
       />,
     );
@@ -40,19 +38,7 @@ describe("LibrarySenseCardGroup", () => {
     expect(expression?.querySelector("p")).toHaveClass("italic");
     expect(explanation?.querySelector("p")).not.toHaveClass("italic");
     expect(example?.querySelector("p")).toHaveClass("italic");
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Report: iets is bestemd voor iemand of iets; iets is gunstig voor iemand of iets",
-      }),
-    );
-    expect(onReport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        target: expect.objectContaining({
-          kind: "content-node",
-          contentNodeId: "idiom-explanation-goed",
-        }),
-      }),
-    );
+    expect(screen.queryByRole("button", { name: /Report/ })).not.toBeInTheDocument();
   });
   test("renders two nodig idiom roots with separate explanations", () => {
     const { container } = render(
@@ -205,7 +191,6 @@ describe("LibrarySenseCardGroup", () => {
     const model = buildLibrarySenseCardGroupModel(multiSenseBankGroup, "en");
     const markKnown = model.meanings[1].markKnown;
     const onOpenCollections = vi.fn();
-    const onReport = vi.fn();
     render(
       <LibrarySenseCardGroup
         model={{
@@ -215,7 +200,6 @@ describe("LibrarySenseCardGroup", () => {
         interfaceLanguage="en"
         collectionCounts={{ "entry-bank-furniture": 2 }}
         onOpenCollections={onOpenCollections}
-        onReport={onReport}
         onAction={vi.fn()}
       />,
     );
@@ -252,18 +236,7 @@ describe("LibrarySenseCardGroup", () => {
     ).toContainElement(
       within(firstCard).getByRole("button", { name: "Collapse meaning" }),
     );
-    expect(
-      within(firstCard).getByTestId("library-service-actions"),
-    ).toContainElement(
-      within(firstCard).getByRole("button", { name: "Report" }),
-    );
-    fireEvent.click(within(firstCard).getByRole("button", { name: "Report" }));
-    expect(onReport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actionId: "report-content",
-        target: expect.objectContaining({ entryId: "entry-bank-furniture" }),
-      }),
-    );
+    expect(within(firstCard).queryByRole("button", { name: /Report/ })).not.toBeInTheDocument();
   });
 
   test("resets local translation state when card type changes", async () => {

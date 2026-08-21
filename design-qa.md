@@ -269,3 +269,45 @@ Date: 2026-08-11
 ## Final result
 
 final result: passed
+
+---
+
+# Issue #191 Report / Melden design QA
+
+## Reference and tested state
+
+- Approved source: `/Users/khrustal/adhoc/2000nl-design-approvals/2026-08-20-report-melden-approved-mobile.png`
+- Source dimensions: 851 × 1848 px.
+- Implemented capture: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/training-answer.png`
+- Implemented viewport: 402 × 874 px, Training Answer, dark mode, no category selected.
+- Side-by-side evidence: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/reference-vs-implementation-402x874.png`
+- Library evidence: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/library.png` (402 × 874) and `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/desktop-library.png` (1280 × 900).
+- Delivery-state contact sheet: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/delivery-states-402x874.png` (sent, queued offline, scheduled online retry, explicit retry, rejected).
+- Source SHA-256: `69a4033c3aa7c7d03490147e57a3982e744b99ee8b4e8ec09a7fefa3f2d3d6a7`
+- Implemented capture SHA-256: `688f293ade7e5d1d0416b1cc29952a34888888aaa5e2c6847b23041a07ca2683`
+- Side-by-side SHA-256: `fe29f1b9d59ff2d77d495cb63a5ff22bad39a83f957729f051501cd25d8f9726`
+- Delivery-state contact-sheet SHA-256: `8fb7fa747ee04849231964217298391bcacea10cae043c98b0daafafe24f2fd3`
+- Library 402 × 874 capture SHA-256: `d0a7e75859a326730ec068d4906f4b8e3cf35637c3033e270dd5fd7e1b0d3228`
+
+The source was scaled to the implementation viewport only for the side-by-side comparison. The implementation follows the approved correction in issue #202: the footer uses one-third Back and two-thirds Send, even though the earlier source image shows a more even split. The final sheet also replaces the source image's inaccurate “selected part” promise with truthful card-context wording and adds the required quiet privacy warning; those reviewed copy corrections intentionally add one compact line.
+
+## Iteration history
+
+1. First implementation reproduced the content and state model, but the mobile sheet was too tall and visually light. It also included an unapproved icon, subtitle, and close control.
+2. Removed those extra elements, introduced the approved drag handle, grouped the six categories into one divided surface, tightened row and comment spacing, and matched the dark surface.
+3. Matched the approved quiet context treatment, edge-to-edge mobile sheet, title scale, and outlined radio controls. Retained the corrected one-third/two-thirds action footer.
+4. Re-captured after review fixes: truthful current-card and session-information wording, separate exact-action detail only when present, privacy warning, principal-bound delivery, distinct offline/scheduled/retry/rejected states, stable live announcements, and Library placement. The complete form remains visible without overlap at 390 × 844 and 402 × 874.
+5. A dense six-meaning Library fixture was scrolled to its end at 402 × 874 and 1280 × 900. The report-enabled scroll region reserves 64 px: the 32 px action at an 8 px bottom inset plus at least a 12 px measured safe gap, keeping the final content visible and non-intersecting.
+
+## Final comparison
+
+- Layout: pass — bottom-sheet placement, full mobile width, rounded top corners, grouped rows, comment, context, and footer align with the approved composition.
+- Typography and hierarchy: pass — one title, compact category labels, quiet placeholder/context, and primary Send hierarchy.
+- Color and surface: pass — dark navy sheet, muted borders, dimmed card backdrop, indigo primary action.
+- Interaction: pass — exactly one global Report action, no inline flags, six radio choices, focus trap, Escape/backdrop close, trigger focus restoration, all training hotkeys suspended while open, reduced-motion support.
+- Responsive states: pass — 402 × 874, adjacent 390 × 844, desktop dark, and desktop light/reduced-motion.
+- Library: pass — 402 × 874 and 1280 × 900 each show one global action, zero inline flags, and a centered/non-overlapping sheet.
+- Delivery states: pass — sending, sent, queued offline, scheduled online retry, explicit retry, and rejected share the same sheet surface; real Chromium IndexedDB tests prove durable offline persistence, expired-record cleanup, and exactly one sender across two tabs without blocking or advancing the card.
+- Accessibility: pass — the dialog has bounded focus, `aria-busy` while sending, and one stable polite live region for sending and every terminal state.
+
+Final result: passed.
