@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { ensureUserWithSettings, getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
 import { canonicalJson } from "../../../../packages/shared/diagnostic-report/v1";
 
@@ -14,6 +14,82 @@ const envelope = (reportId: string) => ({
   sourceContext: null, cardContent: null,
   observations: { capturedAt: "2026-08-20T10:00:00.000Z", timezoneOffsetMinutes: 180, timezoneName: "Europe/Moscow", route: "training", browserFamily: "chromium", browserMajorVersion: 140, osFamily: "android", osMajorVersion: 16, isPwa: true, isOnline: true, correlationIds: [], errorChain: [], recentEvents: [], omittedEventCount: 0, actionObservation: null },
 });
+
+async function createReportEntry(client: PoolClient, userId: string) {
+  await ensureUserWithSettings(client, userId);
+  await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
+  const created = await client.query(
+    `select create_user_dictionary_entry($1, null, jsonb_build_object(
+       'headword', $2::text, 'languageCode', 'nl', 'definition', 'Definition'
+     )) entry_id`,
+    [userId, `diagnostic-report-${randomUUID()}`],
+  );
+  const entryId = created.rows[0].entry_id as string;
+  await client.query("reset role");
+  await client.query(
+    `select private.reconcile_platform_v2_content_nodes($1, 'diagnostic-source-v1', $2::jsonb)`,
+    [entryId, JSON.stringify([{
+      inputKey: "definition",
+      kind: "definition",
+      sourcePath: "raw.definition",
+      sourceTextFingerprint: "b".repeat(64),
+      sourceText: "Definition",
+    }])],
+  );
+  const node = await client.query(
+    `select id::text, source_text_fingerprint
+       from private.platform_v2_content_nodes
+      where entry_id=$1 and binding_state='active' and kind='definition'`,
+    [entryId],
+  );
+  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+  await client.query("set local role service_role");
+  const attestation = await client.query(
+    `select read_platform_v2_report_atom_attestation($1,$2) result`,
+    [userId, entryId],
+  );
+  return {
+    entryId,
+    node: node.rows[0] as { id: string; source_text_fingerprint: string },
+    attestation: attestation.rows[0].result as {
+      contentRevision: string;
+      cardContent: { atoms: unknown[]; omittedAtomCount: number };
+    },
+  };
+}
+
+function reportEnvelope(
+  reportId: string,
+  target: Record<string, unknown>,
+  cardContent: { atoms: unknown[]; omittedAtomCount: number },
+  actionOutcome: string | null = null,
+) {
+  const report: any = envelope(reportId);
+  report.target = target;
+  report.cardContent = cardContent;
+  report.feedback = target.kind === "training-action"
+    ? { kind: "training-action", problemType: "training-action-failure", comment: null }
+    : { kind: "rendering", problemType: "rendering-layout-issue", comment: null };
+  report.observations.actionObservation = actionOutcome
+    ? { clientObservedOutcome: actionOutcome }
+    : null;
+  return report;
+}
+
+async function submitReport(
+  client: PoolClient,
+  userId: string,
+  report: Record<string, unknown>,
+) {
+  const canonical = canonicalJson(report);
+  const hash = createHash("sha256").update(canonical).digest("hex");
+  return client.query(
+    `select submit_diagnostic_report_as_principal(
+       $1,'2000nl-web','test@sha',$2,$3,$4,$5::jsonb
+     ) result`,
+    [userId, report.reportId, hash, canonical, canonical],
+  );
+}
 
 describeIfDb("Diagnostic feedback RPC", () => {
   const pool = new Pool({ connectionString: dbUrl });
@@ -47,6 +123,349 @@ describeIfDb("Diagnostic feedback RPC", () => {
       expect(adminProjection.rows[0]).not.toHaveProperty("reporter_user_id");
       expect(adminProjection.rows[0].comment_present).toBe(true);
       expect(JSON.stringify(adminProjection.rows[0])).not.toContain("waited");
+    });
+  });
+
+  test("accepts exact entry, SenseCard and Content Node targets through the report-atom attestation", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      const targets = [
+        {
+          kind: "entry",
+          entryId: fixture.entryId,
+          contentRevision: fixture.attestation.contentRevision,
+        },
+        {
+          kind: "sense-card",
+          entryId: fixture.entryId,
+          cardTypeId: "word-to-definition",
+          contentRevision: fixture.attestation.contentRevision,
+          stateRevision: "untracked",
+        },
+        {
+          kind: "content-node",
+          entryId: fixture.entryId,
+          contentNodeId: fixture.node.id,
+          nodeKind: "definition",
+          sourceTextFingerprint: fixture.node.source_text_fingerprint,
+        },
+      ];
+      for (const target of targets) {
+        const result = await submitReport(
+          client,
+          userId,
+          reportEnvelope(randomUUID(), target, fixture.attestation.cardContent),
+        );
+        expect(result.rows[0].result.status).toBe("accepted");
+      }
+      await client.query("savepoint stale_sense_card");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          { ...targets[1], stateRevision: randomUUID() },
+          fixture.attestation.cardContent,
+        ),
+      )).rejects.toThrow(/stale_target/);
+      await client.query("rollback to savepoint stale_sense_card");
+      await client.query("release savepoint stale_sense_card");
+    });
+  });
+
+  test("accepts an exact historical Training action and rejects a mismatched receipt projection", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      await client.query("reset role");
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
+      const clientEventId = randomUUID();
+      await client.query(
+        `select perform_platform_v2_card_action(
+           $1,'mark-known',$2,'word-to-definition','untracked',
+           null,null,null,$3,null,'first_party',null
+         )`,
+        [userId, fixture.entryId, clientEventId],
+      );
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      await client.query("set local role service_role");
+      const exactTarget = {
+        kind: "training-action",
+        entryId: fixture.entryId,
+        cardTypeId: "word-to-definition",
+        stateRevision: "untracked",
+        contentRevision: fixture.attestation.contentRevision,
+        actionId: "mark-known",
+        clientEventId,
+        reviewResult: null,
+        activeKnownMarkId: null,
+        knownMarkRevision: null,
+      };
+      const accepted = await submitReport(
+        client,
+        userId,
+        reportEnvelope(randomUUID(), exactTarget, fixture.attestation.cardContent, "accepted"),
+      );
+      expect(accepted.rows[0].result).toEqual(expect.objectContaining({
+        status: "accepted",
+        commitState: "committed",
+      }));
+
+      await client.query("savepoint mismatched_action");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          { ...exactTarget, stateRevision: randomUUID() },
+          fixture.attestation.cardContent,
+          "timeout",
+        ),
+      )).rejects.toThrow(/action_target_mismatch/);
+      await client.query("rollback to savepoint mismatched_action");
+      await client.query("release savepoint mismatched_action");
+    });
+  });
+
+  test("accepts a missing historical action only as not-found and rejects claimed acceptance", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      const target = {
+        kind: "training-action",
+        entryId: fixture.entryId,
+        cardTypeId: "word-to-definition",
+        stateRevision: "untracked",
+        contentRevision: fixture.attestation.contentRevision,
+        actionId: "review-card",
+        clientEventId: randomUUID(),
+        reviewResult: "hard",
+        activeKnownMarkId: null,
+        knownMarkRevision: null,
+      };
+      const missing = await submitReport(
+        client,
+        userId,
+        reportEnvelope(randomUUID(), target, fixture.attestation.cardContent, "timeout"),
+      );
+      expect(missing.rows[0].result).toEqual(expect.objectContaining({
+        status: "accepted",
+        commitState: "not-found",
+      }));
+
+      await client.query("savepoint false_acceptance");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(randomUUID(), target, fixture.attestation.cardContent, "accepted"),
+      )).rejects.toThrow(/action_target_mismatch/);
+      await client.query("rollback to savepoint false_acceptance");
+      await client.query("release savepoint false_acceptance");
+    });
+  });
+
+  test("fails a pre-#198 action receipt without an immutable request projection closed", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      await client.query("reset role");
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
+      const clientEventId = randomUUID();
+      await client.query(
+        `select private.perform_platform_v2_card_action_without_verifiable_receipt(
+           $1,'mark-known',$2,'word-to-definition','untracked',
+           null,null,null,$3,null,'first_party',null
+         )`,
+        [userId, fixture.entryId, clientEventId],
+      );
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      await client.query("set local role service_role");
+      await client.query("savepoint legacy_action_receipt");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          {
+            kind: "training-action",
+            entryId: fixture.entryId,
+            cardTypeId: "word-to-definition",
+            stateRevision: "untracked",
+            contentRevision: fixture.attestation.contentRevision,
+            actionId: "mark-known",
+            clientEventId,
+            reviewResult: null,
+            activeKnownMarkId: null,
+            knownMarkRevision: null,
+          },
+          fixture.attestation.cardContent,
+          "timeout",
+        ),
+      )).rejects.toThrow(/action_target_mismatch/);
+      await client.query("rollback to savepoint legacy_action_receipt");
+      await client.query("release savepoint legacy_action_receipt");
+    });
+  });
+
+  test("accepts exact entry and Content Node displayed-translation identities and rejects drift", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      await client.query("reset role");
+      const translationId = randomUUID();
+      const sourceContentFingerprint = "d".repeat(64);
+      await client.query(
+        `insert into word_entry_translations (
+           id, word_entry_id, target_lang, provider, status, overlay,
+           source_content_revision, translation_policy_version, provider_revision
+         ) values ($1,$2,'ru','openai','ready',$3::jsonb,$4,'policy-1','provider-1')`,
+        [
+          translationId,
+          fixture.entryId,
+          JSON.stringify({ headword: "перевод", meanings: [{ definition: "значение" }] }),
+          sourceContentFingerprint,
+        ],
+      );
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      await client.query("set local role service_role");
+      const entryArtifact = {
+        targetKind: "entry",
+        entryId: fixture.entryId,
+        contentNodeId: null,
+        translationId,
+        targetLanguageCode: "ru",
+        sourceContentFingerprint,
+        translationPolicyVersion: "policy-1",
+        providerRevision: "provider-1",
+      };
+      const nodeArtifact = {
+        targetKind: "content-node",
+        entryId: fixture.entryId,
+        contentNodeId: fixture.node.id,
+        translationId: createHash("sha256")
+          .update(`${translationId}:${fixture.node.id}`)
+          .digest("hex"),
+        targetLanguageCode: "ru",
+        sourceTextFingerprint: fixture.node.source_text_fingerprint,
+        translationPolicyVersion: "policy-1",
+        providerRevision: "provider-1",
+      };
+      for (const [artifact, text] of [
+        [entryArtifact, "перевод"],
+        [nodeArtifact, "значение"],
+      ] as const) {
+        const result = await submitReport(
+          client,
+          userId,
+          reportEnvelope(
+            randomUUID(),
+            { kind: "translation-artifact", ...artifact },
+            {
+              atoms: [
+                ...fixture.attestation.cardContent.atoms,
+                {
+                  role: "displayed-translation",
+                  contentNodeId: artifact.contentNodeId,
+                  text,
+                  truncated: false,
+                  artifact,
+                },
+              ],
+              omittedAtomCount: fixture.attestation.cardContent.omittedAtomCount,
+            },
+          ),
+        );
+        expect(result.rows[0].result.status).toBe("accepted");
+      }
+
+      await client.query("savepoint altered_translation_text");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          { kind: "translation-artifact", ...entryArtifact },
+          {
+            atoms: [
+              ...fixture.attestation.cardContent.atoms,
+              {
+                role: "displayed-translation",
+                contentNodeId: null,
+                text: "подменено",
+                truncated: false,
+                artifact: entryArtifact,
+              },
+            ],
+            omittedAtomCount: fixture.attestation.cardContent.omittedAtomCount,
+          },
+        ),
+      )).rejects.toThrow(/translation_atom_not_supported/);
+      await client.query("rollback to savepoint altered_translation_text");
+      await client.query("release savepoint altered_translation_text");
+
+      await client.query("savepoint stale_translation");
+      const staleArtifact = { ...entryArtifact, translationId: randomUUID() };
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          { kind: "translation-artifact", ...staleArtifact },
+          {
+            atoms: [
+              ...fixture.attestation.cardContent.atoms,
+              {
+                role: "displayed-translation",
+                contentNodeId: null,
+                text: "перевод",
+                truncated: false,
+                artifact: staleArtifact,
+              },
+            ],
+            omittedAtomCount: fixture.attestation.cardContent.omittedAtomCount,
+          },
+        ),
+      )).rejects.toThrow(/stale_target/);
+      await client.query("rollback to savepoint stale_translation");
+      await client.query("release savepoint stale_translation");
+    });
+  });
+
+  test("rejects stale revisions and reordered source atoms before writing", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      const target = {
+        kind: "entry",
+        entryId: fixture.entryId,
+        contentRevision: "a".repeat(64),
+      };
+      await client.query("savepoint stale_revision");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(randomUUID(), target, fixture.attestation.cardContent),
+      )).rejects.toThrow(/stale_report_content_revision/);
+      await client.query("rollback to savepoint stale_revision");
+      await client.query("release savepoint stale_revision");
+
+      const reordered = {
+        ...fixture.attestation.cardContent,
+        atoms: [...fixture.attestation.cardContent.atoms].reverse(),
+      };
+      await client.query("savepoint reordered_atoms");
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(
+          randomUUID(),
+          { ...target, contentRevision: fixture.attestation.contentRevision },
+          reordered,
+        ),
+      )).rejects.toThrow(/report_atoms_mismatch/);
+      await client.query("rollback to savepoint reordered_atoms");
+      await client.query("release savepoint reordered_atoms");
     });
   });
 

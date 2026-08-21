@@ -5,8 +5,12 @@ import { buildDiagnosticReport } from "../../../../packages/shared/diagnostic-re
 const rpc = vi.fn();
 const from = vi.fn();
 const getUser = vi.fn();
+const performPlatformV2Lookup = vi.fn();
 const createClient = vi.fn(() => ({ auth: { getUser }, rpc, from }));
 vi.mock("@supabase/supabase-js", () => ({ createClient }));
+vi.mock("@/lib/platform/platformV2LookupService", () => ({
+  performPlatformV2Lookup,
+}));
 
 const chain = (result: { data?: unknown; error?: unknown }) => {
   const query: any = { select: vi.fn(() => query), eq: vi.fn(() => query), maybeSingle: vi.fn(async () => result) };
@@ -50,13 +54,83 @@ async function sensePayload() {
   });
 }
 
+async function translationPayload() {
+  const base = await sensePayload();
+  const artifact = {
+    targetKind: "entry" as const,
+    entryId: "11111111-1111-4111-8111-111111111111",
+    contentNodeId: null,
+    translationId: "33333333-3333-4333-8333-333333333333",
+    targetLanguageCode: "ru",
+    sourceContentFingerprint: "d".repeat(64),
+    translationPolicyVersion: "policy-1",
+    providerRevision: "provider-1",
+  };
+  return buildDiagnosticReport({
+    ...base,
+    reportId: "77777777-7777-4777-8777-777777777777",
+    feedback: {
+      kind: "translation-quality",
+      problemType: "bad-headword-translation",
+      comment: null,
+    },
+    target: { kind: "translation-artifact", ...artifact },
+    cardContent: {
+      atoms: [
+        ...base.cardContent!.atoms,
+        {
+          role: "displayed-translation",
+          contentNodeId: null,
+          text: "перевод",
+          artifact,
+        },
+      ],
+    },
+  });
+}
+
+function translatedSenseCard() {
+  const target = {
+    kind: "translation" as const,
+    targetKind: "entry" as const,
+    entryId: "11111111-1111-4111-8111-111111111111",
+    contentNodeId: null,
+    translationId: "33333333-3333-4333-8333-333333333333",
+    targetLanguageCode: "ru",
+    sourceContentFingerprint: "d".repeat(64),
+    translationPolicyVersion: "policy-1",
+    providerRevision: "provider-1",
+  };
+  return {
+    contractVersion: "platform-lookup-v2",
+    groups: [{ entries: [{
+      kind: "sense-card",
+      entryId: target.entryId,
+      translation: {
+        ...target,
+        status: "ready",
+        text: "перевод",
+        isFresh: true,
+      },
+      contentNodes: [],
+      capabilities: [{
+        actionId: "report-content",
+        elementId: "sense-card.report.translation",
+        messageKey: "senseCard.report",
+        target,
+      }],
+    }] }],
+  };
+}
+
 describe("feedback routes", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
-    getUser.mockReset(); rpc.mockReset(); from.mockReset(); createClient.mockClear();
+    getUser.mockReset(); rpc.mockReset(); from.mockReset();
+    performPlatformV2Lookup.mockReset(); createClient.mockClear();
   });
 
   test("requires authentication before parsing a report", async () => {
@@ -114,30 +188,33 @@ describe("feedback routes", () => {
     expect(rpc).toHaveBeenCalledWith("query_feedback_items_admin", expect.objectContaining({ p_kind: "loading", p_limit: 25 }));
   });
 
-  test("fails a new SenseCard report closed until the atomic projection dependency lands", async () => {
+  test("submits a SenseCard report to the atomic verifier after the dependency lands", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
     rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({ data: { status: "accepted", reportId: "44444444-4444-4444-8444-444444444444", feedbackItemId: "55555555-5555-4555-8555-555555555555", acceptedAt: "2026-08-21T10:00:01Z" }, error: null });
     const body = await sensePayload();
     const response = await POST(request("http://localhost/api/feedback/reports", { method: "POST", body: JSON.stringify(body) }));
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({ error: "atomic_projection_unverifiable" });
-    expect(rpc).not.toHaveBeenCalledWith("submit_diagnostic_report_as_principal", expect.anything());
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "submit_diagnostic_report_as_principal",
+      expect.objectContaining({ p_user_id: "user-1", p_payload: expect.objectContaining({ target: body.target }) }),
+    );
   });
 
   test("fails reordered SenseCard atoms closed rather than applying a route-only ordering rule", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
     rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "report_atoms_mismatch" } });
     const original = await sensePayload();
     const body = await buildDiagnosticReport({
       ...original,
       cardContent: { ...original.cardContent!, atoms: [...original.cardContent!.atoms].reverse() },
     });
     const response = await POST(request("http://localhost/api/feedback/reports", { method: "POST", body: JSON.stringify(body) }));
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({ error: "atomic_projection_unverifiable" });
-    expect(rpc).not.toHaveBeenCalledWith("submit_diagnostic_report_as_principal", expect.anything());
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "card_content_mismatch" });
   });
 
   test("returns the durable duplicate receipt before revalidating a now-stale projection", async () => {
@@ -206,10 +283,11 @@ describe("feedback routes", () => {
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
   });
 
-  test("fails historical Training-action targets closed instead of comparing current state", async () => {
+  test("submits a historical Training-action target to the receipt verifier", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
     rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({ data: { status: "accepted", reportId: "66666666-6666-4666-8666-666666666666", feedbackItemId: "77777777-7777-4777-8777-777777777777", acceptedAt: "2026-08-21T10:00:01Z", commitState: "committed" }, error: null });
     const base = await payload();
     const body = await buildDiagnosticReport({
       reportId: "66666666-6666-4666-8666-666666666666",
@@ -220,8 +298,75 @@ describe("feedback routes", () => {
       observations: { ...base.observations, actionObservation: { clientObservedOutcome: "timeout" } },
     });
     const response = await POST(request("http://localhost/api/feedback/reports", { method: "POST", body: JSON.stringify(body) }));
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({ error: "atomic_projection_unverifiable" });
-    expect(rpc).not.toHaveBeenCalledWith("submit_diagnostic_report_as_principal", expect.anything());
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(expect.objectContaining({
+      status: "accepted",
+      commitState: "committed",
+    }));
+  });
+
+  test("accepts only the exact fresh displayed Translation Artifact selected by Platform", async () => {
+    const { POST } = await import("@/app/api/feedback/reports/route");
+    getUser.mockResolvedValue({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
+    const body = await translationPayload();
+    const sourceCardContent = {
+      atoms: body.cardContent!.atoms.filter(
+        (atom) => atom.role !== "displayed-translation",
+      ),
+      omittedAtomCount: 0,
+    };
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({
+      data: { contentRevision: "report-revision-1", cardContent: sourceCardContent },
+      error: null,
+    });
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        reportId: "77777777-7777-4777-8777-777777777777",
+        feedbackItemId: "88888888-8888-4888-8888-888888888888",
+        acceptedAt: "2026-08-21T10:00:01Z",
+      },
+      error: null,
+    });
+    performPlatformV2Lookup.mockResolvedValue({
+      status: 200,
+      payload: translatedSenseCard(),
+    });
+    const accepted = await POST(request("http://localhost/api/feedback/reports", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }));
+    expect(accepted.status).toBe(200);
+
+    rpc.mockReset();
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({
+      data: { contentRevision: "report-revision-1", cardContent: sourceCardContent },
+      error: null,
+    });
+    const altered = await buildDiagnosticReport({
+      ...body,
+      reportId: "99999999-9999-4999-8999-999999999999",
+      cardContent: {
+        atoms: body.cardContent!.atoms.map((atom) =>
+          atom.role === "displayed-translation"
+            ? { ...atom, text: "подменено" }
+            : atom,
+        ),
+      },
+    });
+    const rejected = await POST(request("http://localhost/api/feedback/reports", {
+      method: "POST",
+      body: JSON.stringify(altered),
+    }));
+    expect(rejected.status).toBe(400);
+    await expect(rejected.json()).resolves.toEqual({
+      error: "card_content_mismatch",
+    });
+    expect(rpc).not.toHaveBeenCalledWith(
+      "submit_diagnostic_report_as_principal",
+      expect.anything(),
+    );
   });
 });

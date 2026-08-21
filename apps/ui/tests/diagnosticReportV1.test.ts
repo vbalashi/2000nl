@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   buildDiagnosticReport,
   canonicalJson,
+  combineDiagnosticCardContentV1,
   DIAGNOSTIC_REPORT_MAX_BYTES,
   parseDiagnosticReportTransport,
   verifyDiagnosticTransport,
@@ -122,8 +123,8 @@ describe("Diagnostic Report v1", () => {
     { kind: "entry", entryId: reportId, contentRevision: "revision-1" },
     { kind: "sense-card", entryId: reportId, cardTypeId: "word-to-definition", contentRevision: "revision-1", stateRevision: "untracked" },
     { kind: "content-node", entryId: reportId, contentNodeId: correlationId, nodeKind: "definition", sourceTextFingerprint: "b".repeat(64) },
-    { kind: "translation-artifact", targetKind: "entry", entryId: reportId, contentNodeId: null, translationId: correlationId, sourceContentFingerprint: "b".repeat(64), sourceTextFingerprint: null, targetLanguageCode: "en", translationPolicyVersion: "policy-1", providerRevision: null },
-    { kind: "translation-artifact", targetKind: "content-node", entryId: reportId, contentNodeId: correlationId, translationId: "33333333-3333-4333-8333-333333333333", sourceContentFingerprint: null, sourceTextFingerprint: "b".repeat(64), targetLanguageCode: "ru", translationPolicyVersion: "policy-1", providerRevision: "provider-1" },
+    { kind: "translation-artifact", targetKind: "entry", entryId: reportId, contentNodeId: null, translationId: correlationId, sourceContentFingerprint: "b".repeat(64), targetLanguageCode: "en", translationPolicyVersion: "policy-1", providerRevision: null },
+    { kind: "translation-artifact", targetKind: "content-node", entryId: reportId, contentNodeId: correlationId, translationId: "c".repeat(64), sourceTextFingerprint: "b".repeat(64), targetLanguageCode: "ru", translationPolicyVersion: "policy-1", providerRevision: "provider-1" },
     { kind: "training-action", entryId: reportId, cardTypeId: "word-to-definition", stateRevision: "untracked", contentRevision: "revision-1", actionId: "review-card", clientEventId: correlationId, reviewResult: "hard", activeKnownMarkId: null, knownMarkRevision: null },
   ])("accepts the exact stable target union for $kind", async (target) => {
     const report: any = await validReport();
@@ -133,6 +134,83 @@ describe("Diagnostic Report v1", () => {
       ? { clientObservedOutcome: "timeout" }
       : null;
     expect(parseDiagnosticReportTransport(report).ok).toBe(true);
+  });
+
+  test("binds a displayed-translation atom to the exact rendered artifact", async () => {
+    const report: any = await validReport();
+    const artifact = {
+      targetKind: "content-node",
+      entryId: reportId,
+      contentNodeId: correlationId,
+      translationId: "c".repeat(64),
+      targetLanguageCode: "ru",
+      sourceTextFingerprint: "b".repeat(64),
+      translationPolicyVersion: "policy-1",
+      providerRevision: null,
+    };
+    report.target = { kind: "translation-artifact", ...artifact };
+    report.cardContent = {
+      atoms: [{
+        role: "displayed-translation",
+        contentNodeId: correlationId,
+        text: "перевод",
+        truncated: false,
+        artifact,
+      }],
+      omittedAtomCount: 0,
+    };
+    expect(parseDiagnosticReportTransport(report).ok).toBe(true);
+
+    report.cardContent.atoms[0].artifact.translationId =
+      "33333333-3333-4333-8333-333333333333";
+    expect(parseDiagnosticReportTransport(report)).toEqual({
+      ok: false,
+      error: "invalid_card_content",
+    });
+  });
+
+  test("keeps source priority when combining bounded source and displayed translation atoms", () => {
+    const artifact = {
+      targetKind: "entry" as const,
+      entryId: reportId,
+      contentNodeId: null,
+      translationId: correlationId,
+      targetLanguageCode: "ru",
+      sourceContentFingerprint: "b".repeat(64),
+      translationPolicyVersion: "policy-1",
+      providerRevision: null,
+    };
+    const translation = {
+      role: "displayed-translation" as const,
+      contentNodeId: null,
+      text: "перевод",
+      truncated: false,
+      artifact,
+    };
+    const sourceAtom = {
+      role: "definition" as const,
+      contentNodeId: correlationId,
+      text: "definition",
+      truncated: false,
+    };
+    expect(combineDiagnosticCardContentV1(
+      { atoms: [sourceAtom], omittedAtomCount: 2 },
+      [translation],
+    )).toEqual({ atoms: [sourceAtom], omittedAtomCount: 3 });
+
+    const source = {
+      atoms: Array.from({ length: 31 }, (_, index) => ({
+        ...sourceAtom,
+        contentNodeId: `node-${index}`,
+      })),
+      omittedAtomCount: 0,
+    };
+    const combined = combineDiagnosticCardContentV1(source, [
+      translation,
+      { ...translation, artifact: { ...artifact, translationId: reportId } },
+    ]);
+    expect(combined.atoms).toHaveLength(32);
+    expect(combined.omittedAtomCount).toBe(1);
   });
 
   test("clips atoms by scalar and count limits while preserving omission evidence", async () => {

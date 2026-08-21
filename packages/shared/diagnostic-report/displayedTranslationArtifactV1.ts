@@ -28,7 +28,7 @@ export type DisplayedTranslationAtomV1 = {
   artifact: DisplayedTranslationArtifactIdentityV1;
 };
 
-type AuthorizedDisplayedTranslationProjectionV1 = Pick<
+export type AuthorizedDisplayedTranslationProjectionV1 = Pick<
   PlatformSenseCardEntryV2,
   "entryId" | "translation"
 > & {
@@ -72,7 +72,7 @@ export function verifyDisplayedTranslationAtomsV1(input: {
     : { ok: false, error: "unverifiable-displayed-translation" };
 }
 
-function reconstructDisplayedTranslationAtomsV1(
+export function reconstructDisplayedTranslationAtomsV1(
   entry: AuthorizedDisplayedTranslationProjectionV1,
 ): DisplayedTranslationAtomV1[] {
   const atoms: DisplayedTranslationAtomV1[] = [];

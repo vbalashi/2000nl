@@ -1,5 +1,10 @@
 /** Closed, transport-independent Diagnostic Report v1 contract. */
 
+import {
+  parseDisplayedTranslationArtifactIdentityV1,
+  type DisplayedTranslationArtifactIdentityV1,
+} from "../platform-v2/displayedTranslationArtifactIdentityV1";
+
 export const DIAGNOSTIC_REPORT_SCHEMA_VERSION = "diagnostic-report-v1" as const;
 export const DIAGNOSTIC_REPORT_MAX_BYTES = 65_536;
 export const DIAGNOSTIC_CARD_CONTENT_MAX_BYTES = 48 * 1024;
@@ -45,18 +50,7 @@ export type DiagnosticTarget =
   | { kind: "entry"; entryId: string; contentRevision: string }
   | { kind: "sense-card"; entryId: string; cardTypeId: string; contentRevision: string; stateRevision: string }
   | { kind: "content-node"; entryId: string; contentNodeId: string; nodeKind: ContentNodeKind; sourceTextFingerprint: string }
-  | {
-      kind: "translation-artifact";
-      targetKind: "entry" | "content-node";
-      entryId: string;
-      contentNodeId: string | null;
-      translationId: string;
-      sourceContentFingerprint: string | null;
-      sourceTextFingerprint: string | null;
-      targetLanguageCode: string;
-      translationPolicyVersion: string;
-      providerRevision: string | null;
-    }
+  | ({ kind: "translation-artifact" } & DisplayedTranslationArtifactIdentityV1)
   | {
       kind: "training-action";
       entryId: string;
@@ -94,11 +88,34 @@ export type DiagnosticSourceContext = null | {
   };
 };
 
-export type DiagnosticCardAtom = {
-  role: CardAtomRole;
+export type DiagnosticSourceCardAtom = {
+  role: Exclude<CardAtomRole, "displayed-translation">;
   contentNodeId: string | null;
   text: string;
   truncated: boolean;
+};
+
+export type DiagnosticDisplayedTranslationAtom = {
+  role: "displayed-translation";
+  contentNodeId: string | null;
+  text: string;
+  truncated: boolean;
+  artifact: DisplayedTranslationArtifactIdentityV1;
+};
+
+export type DiagnosticCardAtom =
+  | DiagnosticSourceCardAtom
+  | DiagnosticDisplayedTranslationAtom;
+
+type DiagnosticCardAtomInput =
+  | (Omit<DiagnosticSourceCardAtom, "text" | "truncated"> & { text: string })
+  | (Omit<DiagnosticDisplayedTranslationAtom, "text" | "truncated"> & {
+      text: string;
+    });
+
+export type DiagnosticCardContent = {
+  atoms: DiagnosticCardAtom[];
+  omittedAtomCount: number;
 };
 
 export type DiagnosticObservations = {
@@ -141,7 +158,7 @@ export type DiagnosticReportV1 = {
   feedback: { kind: FeedbackKind; problemType: FeedbackProblemType; comment: string | null };
   target: DiagnosticTarget;
   sourceContext: DiagnosticSourceContext;
-  cardContent: null | { atoms: DiagnosticCardAtom[]; omittedAtomCount: number };
+  cardContent: null | DiagnosticCardContent;
   observations: DiagnosticObservations;
 };
 
@@ -180,11 +197,8 @@ function validateTarget(value: unknown): value is DiagnosticTarget {
   if (value.kind === "sense-card") return exact(value, ["kind", "entryId", "cardTypeId", "contentRevision", "stateRevision"]) && validUuid(entryId) && validCardType(value.cardTypeId) && validRevision(value.contentRevision) && (value.stateRevision === "untracked" || validUuid(value.stateRevision));
   if (value.kind === "content-node") return exact(value, ["kind", "entryId", "contentNodeId", "nodeKind", "sourceTextFingerprint"]) && validUuid(entryId) && validIdentifier(value.contentNodeId) && oneOf(value.nodeKind, ["definition", "usage-pattern", "example", "idiom", "idiom-explanation", "usage-note"] as const) && validSha(value.sourceTextFingerprint);
   if (value.kind === "translation-artifact") {
-    if (!exact(value, ["kind", "targetKind", "entryId", "contentNodeId", "translationId", "sourceContentFingerprint", "sourceTextFingerprint", "targetLanguageCode", "translationPolicyVersion", "providerRevision"])) return false;
-    if (!validUuid(entryId) || !validUuid(value.translationId) || !oneOf(value.targetKind, ["entry", "content-node"] as const) || typeof value.targetLanguageCode !== "string" || value.targetLanguageCode.length > 35 || !BCP47.test(value.targetLanguageCode) || !validRevision(value.translationPolicyVersion) || !(value.providerRevision === null || validRevision(value.providerRevision))) return false;
-    return value.targetKind === "entry"
-      ? value.contentNodeId === null && validSha(value.sourceContentFingerprint) && value.sourceTextFingerprint === null
-      : validIdentifier(value.contentNodeId) && value.sourceContentFingerprint === null && validSha(value.sourceTextFingerprint);
+    const { kind: _kind, ...artifact } = value;
+    return parseDisplayedTranslationArtifactIdentityV1(artifact).ok;
   }
   if (value.kind === "training-action") {
     if (!exact(value, ["kind", "entryId", "cardTypeId", "stateRevision", "contentRevision", "actionId", "clientEventId", "reviewResult", "activeKnownMarkId", "knownMarkRevision"])) return false;
@@ -214,8 +228,15 @@ function validateCardContent(value: unknown, target: DiagnosticTarget): value is
   if (target.kind === "app-operation" || !record(value) || !exact(value, ["atoms", "omittedAtomCount"]) || !Array.isArray(value.atoms) || value.atoms.length < 1 || value.atoms.length > 32 || !integer(value.omittedAtomCount, 0, 2_147_483_647)) return false;
   const seen = new Set<string>();
   for (const atom of value.atoms) {
-    if (!record(atom) || !exact(atom, ["role", "contentNodeId", "text", "truncated"]) || !oneOf(atom.role, ["headword", "definition", "usage-pattern", "example", "idiom", "idiom-explanation", "usage-note", "displayed-translation"] as const) || !(atom.contentNodeId === null || validIdentifier(atom.contentNodeId)) || typeof atom.text !== "string" || atom.text !== atom.text.normalize("NFC") || scalarLength(atom.text) > 1_500 || utf8Bytes(atom.text) > 6_000 || typeof atom.truncated !== "boolean") return false;
-    const identity = `${atom.role}:${atom.contentNodeId ?? ""}:${atom.text}`;
+    if (!record(atom) || !oneOf(atom.role, ["headword", "definition", "usage-pattern", "example", "idiom", "idiom-explanation", "usage-note", "displayed-translation"] as const) || !(atom.contentNodeId === null || validIdentifier(atom.contentNodeId)) || typeof atom.text !== "string" || atom.text !== atom.text.normalize("NFC") || scalarLength(atom.text) > 1_500 || utf8Bytes(atom.text) > 6_000 || typeof atom.truncated !== "boolean") return false;
+    if (atom.role === "displayed-translation") {
+      if (!exact(atom, ["role", "contentNodeId", "text", "truncated", "artifact"])) return false;
+      const artifact = parseDisplayedTranslationArtifactIdentityV1(atom.artifact);
+      if (!artifact.ok || artifact.value.contentNodeId !== atom.contentNodeId) return false;
+    } else if (!exact(atom, ["role", "contentNodeId", "text", "truncated"])) {
+      return false;
+    }
+    const identity = `${atom.role}:${atom.contentNodeId ?? ""}:${atom.text}:${atom.role === "displayed-translation" ? canonicalJson(atom.artifact) : ""}`;
     if (seen.has(identity)) return false;
     seen.add(identity);
   }
@@ -264,6 +285,38 @@ export function canonicalJson(value: unknown): string {
   return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`).join(",")}}`;
 }
 
+export function combineDiagnosticCardContentV1(
+  source: DiagnosticCardContent,
+  displayedTranslations: DiagnosticDisplayedTranslationAtom[],
+): DiagnosticCardContent {
+  if (source.omittedAtomCount > 0) {
+    return {
+      atoms: source.atoms,
+      omittedAtomCount:
+        source.omittedAtomCount + displayedTranslations.length,
+    };
+  }
+  const atoms = [...source.atoms];
+  let includedTranslations = 0;
+  for (const translation of displayedTranslations) {
+    if (atoms.length >= 32) break;
+    const candidate = {
+      atoms: [...atoms, translation],
+      omittedAtomCount:
+        displayedTranslations.length - (includedTranslations + 1),
+    };
+    if (utf8Bytes(canonicalJson(candidate)) > DIAGNOSTIC_CARD_CONTENT_MAX_BYTES) {
+      break;
+    }
+    atoms.push(translation);
+    includedTranslations += 1;
+  }
+  return {
+    atoms,
+    omittedAtomCount: displayedTranslations.length - includedTranslations,
+  };
+}
+
 export async function diagnosticPayloadHash(payload: DiagnosticReportV1): Promise<string> {
   const bytes = new TextEncoder().encode(canonicalJson(payload));
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -285,7 +338,7 @@ function truncateText(input: string) {
   return { text, truncated: text !== normalized };
 }
 
-export async function buildDiagnosticReport(input: Omit<DiagnosticReportV1, "schemaVersion" | "cardContent"> & { cardContent: null | { atoms: Array<Omit<DiagnosticCardAtom, "text" | "truncated"> & { text: string }>; omittedAtomCount?: number } }): Promise<DiagnosticReportTransportV1> {
+export async function buildDiagnosticReport(input: Omit<DiagnosticReportV1, "schemaVersion" | "cardContent"> & { cardContent: null | { atoms: DiagnosticCardAtomInput[]; omittedAtomCount?: number } }): Promise<DiagnosticReportTransportV1> {
   const comment = input.feedback.comment?.normalize("NFC") ?? null;
   if (comment !== null && (scalarLength(comment) > 1_000 || utf8Bytes(comment) > 4_096)) throw new Error("invalid_feedback");
   const sourceAtoms = input.cardContent?.atoms ?? [];

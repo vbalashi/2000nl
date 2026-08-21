@@ -6,6 +6,7 @@ import {
   verifyDiagnosticTransport,
   type DiagnosticReportTransportV1,
 } from "../../../../packages/shared/diagnostic-report/v1";
+import { verifyCurrentDisplayedTranslations } from "./diagnosticDisplayedTranslationVerifier";
 
 export type FeedbackSubmitResult = {
   status: number;
@@ -39,9 +40,15 @@ export async function submitDiagnosticReport(
   }
   if (existing?.status === "duplicate") return { status: 200, payload: existing };
 
-  if (report.target.kind !== "app-operation") {
-    return { status: 409, payload: { error: "atomic_projection_unverifiable" } };
+  const displayedTranslationVerification =
+    await verifyCurrentDisplayedTranslations(auth, service, report);
+  if (!displayedTranslationVerification.ok) {
+    return {
+      status: displayedTranslationVerification.status,
+      payload: { error: displayedTranslationVerification.error },
+    };
   }
+
   const { data, error } = await service.supabase.rpc(
     "submit_diagnostic_report_as_principal",
     {
@@ -79,9 +86,16 @@ function serverBuildVersion() {
 }
 
 function safeRpcError(message: string) {
-  if (message.includes("stale_target")) return { status: 409, error: "stale_target" };
+  if (
+    message.includes("stale_target") ||
+    message.includes("stale_report_content_revision")
+  ) return { status: 409, error: "stale_target" };
   if (message.includes("action_target_mismatch")) return { status: 409, error: "action_target_mismatch" };
-  if (message.includes("card_content_mismatch") || message.includes("translation_atom_not_supported")) return { status: 400, error: "card_content_mismatch" };
+  if (
+    message.includes("card_content_mismatch") ||
+    message.includes("report_atoms_mismatch") ||
+    message.includes("translation_atom_not_supported")
+  ) return { status: 400, error: "card_content_mismatch" };
   if (message.includes("not_accessible")) return { status: 403, error: "target_not_accessible" };
   return { status: 500, error: "feedback_persist_failed" };
 }

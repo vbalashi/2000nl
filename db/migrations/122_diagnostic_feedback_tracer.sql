@@ -145,15 +145,24 @@ BEGIN
   IF v_card <> 'null'::jsonb THEN
     IF NOT private.jsonb_has_exact_keys(v_card, ARRAY['atoms','omittedAtomCount']) OR jsonb_typeof(v_card->'atoms') <> 'array' OR jsonb_array_length(v_card->'atoms') NOT BETWEEN 1 AND 32 THEN RETURN false; END IF;
     FOR v_item IN SELECT value FROM jsonb_array_elements(v_card->'atoms') LOOP
-      IF NOT private.jsonb_has_exact_keys(v_item, ARRAY['role','contentNodeId','text','truncated'])
-         OR v_item->>'role' NOT IN ('headword','definition','usage-pattern','example','idiom','idiom-explanation','usage-note','displayed-translation') THEN RETURN false; END IF;
+      IF v_item->>'role' = 'displayed-translation' THEN
+        IF NOT private.jsonb_has_exact_keys(v_item, ARRAY['role','contentNodeId','text','truncated','artifact'])
+           OR jsonb_typeof(v_item->'artifact') IS DISTINCT FROM 'object'
+           OR v_item->'contentNodeId' IS DISTINCT FROM v_item->'artifact'->'contentNodeId'
+        THEN RETURN false; END IF;
+      ELSIF NOT private.jsonb_has_exact_keys(v_item, ARRAY['role','contentNodeId','text','truncated'])
+         OR v_item->>'role' NOT IN ('headword','definition','usage-pattern','example','idiom','idiom-explanation','usage-note')
+      THEN RETURN false; END IF;
     END LOOP;
   END IF;
   v_kind := v_target->>'kind';
   IF v_kind = 'entry' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','entryId','contentRevision']);
   ELSIF v_kind = 'sense-card' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','entryId','cardTypeId','contentRevision','stateRevision']);
   ELSIF v_kind = 'content-node' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','entryId','contentNodeId','nodeKind','sourceTextFingerprint']);
-  ELSIF v_kind = 'translation-artifact' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','targetKind','entryId','contentNodeId','translationId','sourceContentFingerprint','sourceTextFingerprint','targetLanguageCode','translationPolicyVersion','providerRevision']);
+  ELSIF v_kind = 'translation-artifact' AND v_target->>'targetKind' = 'entry' THEN
+    RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','targetKind','entryId','contentNodeId','translationId','sourceContentFingerprint','targetLanguageCode','translationPolicyVersion','providerRevision']);
+  ELSIF v_kind = 'translation-artifact' AND v_target->>'targetKind' = 'content-node' THEN
+    RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','targetKind','entryId','contentNodeId','translationId','sourceTextFingerprint','targetLanguageCode','translationPolicyVersion','providerRevision']);
   ELSIF v_kind = 'training-action' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','entryId','cardTypeId','stateRevision','contentRevision','actionId','clientEventId','reviewResult','activeKnownMarkId','knownMarkRevision']);
   ELSIF v_kind = 'app-operation' THEN RETURN private.jsonb_has_exact_keys(v_target, ARRAY['kind','route','stage','operationCorrelationId','entryId']);
   END IF;
@@ -177,10 +186,133 @@ EXCEPTION WHEN invalid_text_representation THEN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION private.diagnostic_translation_text_at_locator(
+    p_overlay jsonb,
+    p_locator text,
+    p_kind text
+)
+RETURNS text
+LANGUAGE plpgsql IMMUTABLE
+SET search_path = public, private, pg_temp
+AS $$
+DECLARE v_text text;
+BEGIN
+    v_text := CASE p_locator
+        WHEN 'raw.headword' THEN p_overlay->>'headword'
+        WHEN 'raw.definition' THEN p_overlay#>>'{meanings,0,definition}'
+        WHEN 'raw.example.source' THEN p_overlay#>>'{meanings,0,examples,0}'
+        WHEN 'raw.notes' THEN p_overlay#>>'{meanings,0,context}'
+        ELSE private.platform_v2_text_at_diagnostic_locator(
+            p_overlay,
+            p_locator,
+            p_kind
+        )
+    END;
+    v_text := NULLIF(trim(v_text), '');
+    RETURN CASE WHEN v_text IS NULL THEN NULL ELSE normalize(v_text, NFC) END;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION private.verify_diagnostic_displayed_translation_atoms(
+    p_entry_id uuid,
+    p_atoms jsonb
+)
+RETURNS boolean
+LANGUAGE plpgsql STABLE
+SET search_path = public, private, extensions, pg_temp
+AS $$
+DECLARE
+    v_atom jsonb;
+    v_artifact jsonb;
+    v_expected_text text;
+    v_bounded_text text;
+    v_translation record;
+BEGIN
+    IF jsonb_array_length(p_atoms) = 0 THEN RETURN true; END IF;
+    IF (
+        SELECT count(DISTINCT atom->'artifact'->>'targetLanguageCode')
+        FROM jsonb_array_elements(p_atoms) atom
+    ) <> 1 THEN
+        RAISE EXCEPTION 'translation_atom_not_supported';
+    END IF;
+
+    FOR v_atom IN SELECT value FROM jsonb_array_elements(p_atoms) LOOP
+        v_artifact := v_atom->'artifact';
+        IF v_atom->>'role' IS DISTINCT FROM 'displayed-translation'
+           OR v_atom->'contentNodeId' IS DISTINCT FROM v_artifact->'contentNodeId'
+        THEN RAISE EXCEPTION 'translation_atom_not_supported'; END IF;
+
+        IF v_artifact->>'targetKind' = 'entry' THEN
+            IF NOT private.jsonb_has_exact_keys(v_artifact, ARRAY[
+                'targetKind','entryId','contentNodeId','translationId',
+                'targetLanguageCode','sourceContentFingerprint',
+                'translationPolicyVersion','providerRevision'
+            ]) OR v_artifact->>'entryId' IS DISTINCT FROM p_entry_id::text
+               OR v_artifact->'contentNodeId' <> 'null'::jsonb
+            THEN RAISE EXCEPTION 'translation_atom_not_supported'; END IF;
+            SELECT translation.overlay
+              INTO v_translation
+              FROM public.word_entry_translations translation
+             WHERE translation.id = (v_artifact->>'translationId')::uuid
+               AND translation.word_entry_id = p_entry_id
+               AND translation.status = 'ready'
+               AND translation.target_lang = v_artifact->>'targetLanguageCode'
+               AND translation.source_content_revision = v_artifact->>'sourceContentFingerprint'
+               AND translation.translation_policy_version = v_artifact->>'translationPolicyVersion'
+               AND translation.provider_revision IS NOT DISTINCT FROM v_artifact->>'providerRevision';
+            v_expected_text := NULLIF(trim(v_translation.overlay->>'headword'), '');
+        ELSIF v_artifact->>'targetKind' = 'content-node' THEN
+            IF NOT private.jsonb_has_exact_keys(v_artifact, ARRAY[
+                'targetKind','entryId','contentNodeId','translationId',
+                'targetLanguageCode','sourceTextFingerprint',
+                'translationPolicyVersion','providerRevision'
+            ]) OR v_artifact->>'entryId' IS DISTINCT FROM p_entry_id::text
+            THEN RAISE EXCEPTION 'translation_atom_not_supported'; END IF;
+            SELECT translation.overlay, node.diagnostic_locator, node.kind
+              INTO v_translation
+              FROM public.word_entry_translations translation
+              JOIN private.platform_v2_content_nodes node
+                ON node.entry_id = translation.word_entry_id
+               AND node.id::text = v_artifact->>'contentNodeId'
+               AND node.binding_state = 'active'
+             WHERE translation.word_entry_id = p_entry_id
+               AND translation.status = 'ready'
+               AND translation.target_lang = v_artifact->>'targetLanguageCode'
+               AND translation.translation_policy_version = v_artifact->>'translationPolicyVersion'
+               AND translation.provider_revision IS NOT DISTINCT FROM v_artifact->>'providerRevision'
+               AND node.source_text_fingerprint = v_artifact->>'sourceTextFingerprint'
+               AND encode(digest(
+                    translation.id::text || ':' || node.id::text,
+                    'sha256'
+               ), 'hex') = v_artifact->>'translationId';
+            v_expected_text := private.diagnostic_translation_text_at_locator(
+                v_translation.overlay,
+                v_translation.diagnostic_locator,
+                v_translation.kind
+            );
+        ELSE
+            RAISE EXCEPTION 'translation_atom_not_supported';
+        END IF;
+
+        IF v_expected_text IS NULL THEN RAISE EXCEPTION 'stale_target'; END IF;
+        v_expected_text := normalize(v_expected_text, NFC);
+        v_bounded_text := substring(v_expected_text FROM 1 FOR 1500);
+        IF v_atom->>'text' IS DISTINCT FROM v_bounded_text
+           OR (v_atom->>'truncated')::boolean
+                IS DISTINCT FROM (v_bounded_text IS DISTINCT FROM v_expected_text)
+        THEN RAISE EXCEPTION 'translation_atom_not_supported'; END IF;
+    END LOOP;
+    RETURN true;
+EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'translation_atom_not_supported';
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION private.verify_diagnostic_report_target(
     p_user_id uuid,
     p_target jsonb,
-    p_card_content jsonb
+    p_card_content jsonb,
+    p_observations jsonb
 )
 RETURNS text
 LANGUAGE plpgsql
@@ -190,6 +322,13 @@ AS $$
 DECLARE
     v_entry_id uuid;
     v_target_kind text := p_target->>'kind';
+    v_expected_card_content jsonb;
+    v_source_atoms jsonb;
+    v_translation_atoms jsonb;
+    v_report_content_revision text;
+    v_action_projection jsonb;
+    v_action_verified boolean;
+    v_card_state jsonb;
     v_node jsonb;
 BEGIN
     IF jsonb_typeof(p_target) IS DISTINCT FROM 'object'
@@ -204,10 +343,70 @@ BEGIN
         );
     END IF;
 
-    IF v_target_kind IN ('entry', 'sense-card') THEN
-        -- contentRevision and SenseCard state/card identity are projected in
-        -- TypeScript today and have no atomically comparable DB projection.
-        RAISE EXCEPTION 'atomic_projection_unverifiable';
+    IF v_target_kind <> 'app-operation' THEN
+        IF p_card_content IS NULL THEN
+            RAISE EXCEPTION 'card_content_mismatch';
+        END IF;
+        v_report_content_revision := CASE
+            WHEN v_target_kind IN ('entry', 'sense-card', 'training-action')
+                THEN p_target->>'contentRevision'
+            ELSE private.platform_v2_report_atom_revision(v_entry_id)
+        END;
+        v_expected_card_content := private.project_platform_v2_bounded_report_atoms(
+            p_user_id,
+            v_entry_id,
+            v_report_content_revision
+        );
+        SELECT COALESCE(jsonb_agg(atom.value ORDER BY atom.ordinality), '[]'::jsonb)
+          INTO v_source_atoms
+          FROM jsonb_array_elements(p_card_content->'atoms') WITH ORDINALITY atom(value, ordinality)
+         WHERE atom.value->>'role' <> 'displayed-translation';
+        SELECT COALESCE(jsonb_agg(atom.value ORDER BY atom.ordinality), '[]'::jsonb)
+          INTO v_translation_atoms
+          FROM jsonb_array_elements(p_card_content->'atoms') WITH ORDINALITY atom(value, ordinality)
+         WHERE atom.value->>'role' = 'displayed-translation';
+        IF v_source_atoms IS DISTINCT FROM v_expected_card_content->'atoms'
+           OR (p_card_content->>'omittedAtomCount')::integer
+                < (v_expected_card_content->>'omittedAtomCount')::integer
+           OR (
+                jsonb_array_length(v_translation_atoms) = 0
+                AND v_target_kind <> 'translation-artifact'
+                AND (p_card_content->>'omittedAtomCount')::integer
+                    IS DISTINCT FROM (v_expected_card_content->>'omittedAtomCount')::integer
+           ) THEN
+            RAISE EXCEPTION 'report_atoms_mismatch';
+        END IF;
+        IF jsonb_array_length(v_translation_atoms) > 0 AND EXISTS (
+            SELECT 1
+              FROM jsonb_array_elements(p_card_content->'atoms')
+                   WITH ORDINALITY atom(value, ordinality)
+             WHERE atom.value->>'role' <> 'displayed-translation'
+               AND atom.ordinality > (
+                   SELECT min(candidate.ordinality)
+                     FROM jsonb_array_elements(p_card_content->'atoms')
+                          WITH ORDINALITY candidate(value, ordinality)
+                    WHERE candidate.value->>'role' = 'displayed-translation'
+               )
+        ) THEN
+            RAISE EXCEPTION 'report_atoms_mismatch';
+        END IF;
+        PERFORM private.verify_diagnostic_displayed_translation_atoms(
+            v_entry_id,
+            v_translation_atoms
+        );
+    ELSIF p_card_content IS NOT NULL THEN
+        RAISE EXCEPTION 'card_content_mismatch';
+    END IF;
+
+    IF v_target_kind = 'sense-card' THEN
+        v_card_state := private.platform_v2_card_state_json(
+            p_user_id,
+            v_entry_id,
+            p_target->>'cardTypeId'
+        );
+        IF v_card_state->>'stateRevision' IS DISTINCT FROM p_target->>'stateRevision' THEN
+            RAISE EXCEPTION 'stale_target';
+        END IF;
     END IF;
 
     IF v_target_kind = 'content-node' THEN
@@ -227,34 +426,70 @@ BEGIN
     END IF;
 
     IF v_target_kind = 'training-action' THEN
-        -- Existing action receipts do not retain the complete original request
-        -- projection needed to verify #154's historical stateRevision. Current
-        -- card state is explicitly not a substitute, so fail closed.
-        RAISE EXCEPTION 'historical_action_identity_unverifiable';
+        v_action_projection := jsonb_build_object(
+            'contractVersion', 'platform-action-report-verification-v1',
+            'entryId', p_target->>'entryId',
+            'cardTypeId', p_target->>'cardTypeId',
+            'stateRevision', p_target->>'stateRevision',
+            'actionId', p_target->>'actionId',
+            'clientEventId', p_target->>'clientEventId',
+            'reviewResult', p_target->'reviewResult',
+            'activeKnownMarkId', p_target->'activeKnownMarkId',
+            'knownMarkRevision', p_target->'knownMarkRevision'
+        );
+        v_action_verified := public.verify_platform_v2_action_receipt_as_principal(
+            p_user_id,
+            v_action_projection
+        );
+        IF v_action_verified THEN
+            RETURN 'committed';
+        END IF;
+        IF EXISTS (
+            SELECT 1 FROM public.platform_v2_action_receipts receipt
+            WHERE receipt.client_event_id = (p_target->>'clientEventId')::uuid
+        ) OR p_observations#>>'{actionObservation,clientObservedOutcome}'
+            IN ('accepted', 'duplicate') THEN
+            RAISE EXCEPTION 'action_target_mismatch';
+        END IF;
+        RETURN 'not-found';
     END IF;
 
     IF v_target_kind = 'translation-artifact' THEN
-        IF p_target->>'targetKind' = 'content-node' THEN
-            -- Current Platform V2 derives node translation identity as SHA-256,
-            -- while #154 requires a UUID. No real node artifact can satisfy both.
-            RAISE EXCEPTION 'node_translation_identity_unverifiable';
+        IF jsonb_array_length(v_translation_atoms) > 0
+           AND NOT EXISTS (
+               SELECT 1 FROM jsonb_array_elements(v_translation_atoms) atom
+               WHERE atom->'artifact' = p_target - 'kind'
+           ) THEN
+            RAISE EXCEPTION 'translation_atom_not_supported';
         END IF;
-        IF NOT EXISTS (
+        IF p_target->>'targetKind' = 'entry' AND NOT EXISTS (
             SELECT 1 FROM public.word_entry_translations translation
             WHERE translation.id = (p_target->>'translationId')::uuid
               AND translation.word_entry_id = v_entry_id
+              AND translation.status = 'ready'
               AND translation.target_lang = p_target->>'targetLanguageCode'
               AND translation.source_content_revision = p_target->>'sourceContentFingerprint'
               AND translation.translation_policy_version = p_target->>'translationPolicyVersion'
               AND translation.provider_revision IS NOT DISTINCT FROM p_target->>'providerRevision'
         ) THEN RAISE EXCEPTION 'stale_target'; END IF;
-    END IF;
-
-    IF p_card_content IS NOT NULL THEN
-        -- The DB owns fingerprints and durable node identity, but not the
-        -- semantic atom priority/idiom ownership/truncation projection. Do not
-        -- substitute created_at ordering for the shared contract.
-        RAISE EXCEPTION 'atomic_card_projection_unverifiable';
+        IF p_target->>'targetKind' = 'content-node' AND NOT EXISTS (
+            SELECT 1
+              FROM public.word_entry_translations translation
+              JOIN private.platform_v2_content_nodes node
+                ON node.entry_id = translation.word_entry_id
+               AND node.id::text = p_target->>'contentNodeId'
+               AND node.binding_state = 'active'
+             WHERE translation.word_entry_id = v_entry_id
+               AND translation.status = 'ready'
+               AND translation.target_lang = p_target->>'targetLanguageCode'
+               AND translation.translation_policy_version = p_target->>'translationPolicyVersion'
+               AND translation.provider_revision IS NOT DISTINCT FROM p_target->>'providerRevision'
+               AND node.source_text_fingerprint = p_target->>'sourceTextFingerprint'
+               AND encode(digest(
+                    translation.id::text || ':' || node.id::text,
+                    'sha256'
+               ), 'hex') = p_target->>'translationId'
+        ) THEN RAISE EXCEPTION 'stale_target'; END IF;
     END IF;
     RETURN NULL;
 END;
@@ -340,7 +575,10 @@ BEGIN
     END IF;
 
     v_commit_state := private.verify_diagnostic_report_target(
-        p_user_id, p_payload->'target', NULLIF(p_payload->'cardContent', 'null'::jsonb)
+        p_user_id,
+        p_payload->'target',
+        NULLIF(p_payload->'cardContent', 'null'::jsonb),
+        p_payload->'observations'
     );
     SELECT COALESCE(array_agg(DISTINCT cause->>'safeCode'), '{}') INTO v_safe_codes
       FROM jsonb_array_elements(p_payload->'observations'->'errorChain') cause;
@@ -451,7 +689,9 @@ $$;
 REVOKE ALL ON FUNCTION private.diagnostic_report_target_entry_id(jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION private.jsonb_has_exact_keys(jsonb,text[]) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION private.diagnostic_report_closed_shape(jsonb) FROM PUBLIC, anon, authenticated, service_role;
-REVOKE ALL ON FUNCTION private.verify_diagnostic_report_target(uuid,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION private.verify_diagnostic_report_target(uuid,jsonb,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION private.diagnostic_translation_text_at_locator(jsonb,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION private.verify_diagnostic_displayed_translation_atoms(uuid,jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.submit_diagnostic_report_as_principal(uuid,text,text,uuid,text,text,jsonb) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.read_diagnostic_report_receipt_as_principal(uuid,uuid,text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.delete_expired_diagnostic_envelopes(timestamptz) FROM PUBLIC, anon, authenticated;

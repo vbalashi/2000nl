@@ -21,59 +21,30 @@ stable target for loading failures that happen before a card exists and requires
 `cardContent: null` so a stale previously visible card is never borrowed.
 
 The tracer deliberately does not include the offline outbox, event recorder,
-Report/Melden UI, reviewer UI, or automatic GitHub linking. Displayed
-translation atoms fail closed until the translation-artifact reconstruction
-slice can verify their exact persisted projection. All new card-content reports
-currently fail closed because the database has no single atomic projection for
-content/card/state revisions, semantic atom order, idiom ownership, and bounded
-truncation. Only the pre-card `app-operation` tracer is accepted in this slice.
+Report/Melden UI, reviewer UI, or automatic GitHub linking. It now accepts all
+six stable target kinds by composing three deployed trust boundaries rather
+than rebuilding their semantics:
 
-### Displayed-translation identity gap in the shaped schema
+- #199 supplies the principal-scoped `reportContentRevision` and the DB-owned
+  ordered, NFC-normalized, bounded source-card atom projection. The submission
+  transaction reconstructs it again and rejects stale revisions, changed
+  order/text/truncation, and inaccessible entries.
+- #198 supplies the immutable original Training-action request projection.
+  An exact receipt produces server-derived `commitState: committed`; a missing
+  receipt can produce `not-found` only for non-success client observations.
+  Existing-but-old or mismatched receipts fail closed.
+- #197 supplies the closed displayed Translation Artifact identity, including
+  SHA-256 node translation IDs. The authenticated server resolves the current
+  typed Platform projection and accepts only the exact non-empty `ready`, fresh
+  artifact selected by both renderer and Report capability. The RPC binds the
+  target to the stored ready artifact and current Content Node fingerprint.
 
-The #154 v1 atom shape identifies a displayed translation only by
-`contentNodeId` (or `null`) and text. It does not carry `translationId`,
-`targetLanguageCode`, policy version, or provider revision. A connected client
-also has no server-bound first-party translation preference. Consequently, for
-a report whose primary target is not itself `translation-artifact`, the server
-cannot uniquely reconstruct which translation was displayed when multiple
-languages or revisions exist. #190 must not infer that identity from text or
-client labels, so connected reports containing displayed-translation atoms fail
-closed.
-
-The minimal future contract choices are either (a) give every displayed-
-translation atom its stable translation-artifact identity, or (b) introduce a
-server-owned connected-session presentation preference and bind the report to
-its revision. Choice (a) is self-contained evidence; choice (b) is smaller on
-the wire but adds mutable session state and needs offline/stale semantics.
-Neither choice exists in #154, so #190 does not silently select one.
-In addition, current Platform V2 derives a node-translation ID as a 64-character
-SHA-256 digest, whereas #154 requires a UUID. Real node-translation targets
-therefore cannot pass the v1 schema until Platform adopts durable UUID identity
-or the report contract is versioned; they fail closed here.
-
-The existing Platform action receipt has a similar historical limitation. It
-stores the complete request only as an opaque hash, while the event row stores
-entry/card/action/result but not the complete original `stateRevision` request.
-#154 correctly says a later current state must not invalidate a Training-action
-report, so comparing with current state would be wrong. Training-action targets
-therefore fail closed. Exact verification needs either (a) a receipt migration
-that stores the closed original action request projection, or (b) a separately
-versioned verification digest whose inputs are exactly the reportable target
-fields. The former is directly reviewable but stores more durable structure;
-the latter is smaller but must be introduced at action time and versioned. It
-is not inferred in #190.
-
-The private Content Node identity table also stores a full-source SHA-256
-fingerprint but not the canonical source text. Although the Next boundary can
-rebuild a typed projection, a route-only comparison would introduce a TOCTOU
-window and cannot attest the transaction that stores the report. The DB cannot
-prove that a truncated submitted prefix came from that full source, and it has
-no canonical semantic atom priority/idiom-ownership projection. The DB
-therefore fails all new card-content reports closed rather than accepting an
-arbitrary ordering or `truncated: true` text.
-Closing this storage-boundary gap requires either persisting versioned bounded
-canonical node text in the private projection or introducing a DB-verifiable
-server attestation; #190 selects neither implicitly.
+Every `displayed-translation` atom therefore contains its exact closed
+`artifact` object. Source atoms keep the four-key source shape. The server never
+infers language, provider revision, source path, or artifact identity from text
+or client preferences. Old UUID-shaped node translation IDs, stale artifacts,
+unknown fields, altered translation text, or multiple target languages fail
+closed before persistence.
 
 ## Receipt and idempotency
 
