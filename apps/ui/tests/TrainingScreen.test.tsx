@@ -389,9 +389,21 @@ const fetchUserPreferences = vi.fn().mockResolvedValue({
   translationLang: null,
 });
 const updateUserPreferences = vi.fn().mockResolvedValue(undefined);
+const createTrainingSessionPlanKey = vi.fn(
+  (userId: string, modes: string[], scope: unknown) =>
+    JSON.stringify({ userId, modes, scope }),
+);
+const fetchTrainingSessionPlan = vi.fn().mockResolvedValue({
+  plannedNew: 1,
+  plannedReview: 1,
+  plannedPractice: 0,
+  plannedTotal: 2,
+  plannedAt: "2026-08-21T12:00:00.000Z",
+});
 
 vi.mock("@/lib/trainingService", () => ({
   createTrainingScenarioCatalog,
+  createTrainingSessionPlanKey,
   fetchDictionaryEntry,
   fetchDictionaryEntryById,
   createUserDictionaryEntry,
@@ -400,6 +412,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
   fetchTrainingScenarios,
+  fetchTrainingSessionPlan,
   isTrainingFocusFilterActive,
   fetchStats,
   fetchActiveTrainingScope,
@@ -819,6 +832,17 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   expect(
     await screen.findByRole("heading", { name: "huis" }),
   ).toBeInTheDocument();
+  await waitFor(() =>
+    expect(fetchTrainingSessionPlan).toHaveBeenCalledWith(
+      "user-1",
+      ["word-to-definition"],
+      expect.objectContaining({
+        cardFilter: "both",
+        trainingFilter: expect.objectContaining({ dateWindow: "all" }),
+      }),
+    ),
+  );
+  expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(1);
   expect(
     screen.queryByRole("navigation", { name: "Primary" })?.getAttribute(
       "data-variant",
@@ -833,6 +857,13 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
     screen.getByRole("heading", { name: /Good morning|Goedemorgen/ }),
   ).toBeInTheDocument();
   expect(getPrimaryNavigation("mobile-tabs")).toBeInTheDocument();
+
+  fireEvent.click(
+    screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+  );
+  await waitFor(() =>
+    expect(fetchTrainingSessionPlan).toHaveBeenCalledTimes(2),
+  );
 });
 
 test("delayed first card keeps the Today shell until Continue can reveal it", async () => {

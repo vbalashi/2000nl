@@ -50,6 +50,7 @@ import {
 } from "./v2/TrainingSessionChrome";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
+import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
 import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
@@ -1604,6 +1605,26 @@ export function TrainingScreen({
   const handleEnterTrainingSession = useCallback(() => {
     clearReviewedSession();
   }, [clearReviewedSession]);
+  const trainingSessionPlanScope = React.useMemo(
+    () => ({
+      listId: wordListId,
+      ...(wordListType ? { listType: wordListType } : {}),
+      cardFilter,
+      trainingFilter: trainingFocusFilter,
+    }),
+    [cardFilter, trainingFocusFilter, wordListId, wordListType],
+  );
+  const {
+    scopeKey: trainingSessionPlanScopeKey,
+    snapshot: trainingSessionPlanSnapshot,
+  } = useAuthoritativeTrainingSessionPlan({
+    active:
+      Boolean(trainingTodaySetupEnabled) && trainingPilot.surface === "session",
+    sessionGeneration: trainingPilot.sessionGeneration,
+    userId: user.id,
+    modes: enabledModes,
+    scope: trainingSessionPlanScope,
+  });
   const {
     cardOrdinal: sessionCardOrdinal,
     isSubsequentCard: isSubsequentSessionCard,
@@ -1612,6 +1633,9 @@ export function TrainingScreen({
     presentedCardKey: currentWord
       ? getTrainingCardKey(currentWord, currentMode)
       : null,
+    sessionGeneration: trainingPilot.sessionGeneration,
+    scopeKey: trainingSessionPlanScopeKey,
+    planSnapshot: trainingSessionPlanSnapshot,
     onEnterSession: handleEnterTrainingSession,
   });
 

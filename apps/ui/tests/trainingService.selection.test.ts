@@ -16,8 +16,10 @@ const importService = async () => {
   const service = await import("@/lib/trainingService");
   return {
     createTrainingScenarioCatalog: service.createTrainingScenarioCatalog,
+    createTrainingSessionPlanKey: service.createTrainingSessionPlanKey,
     fetchNextTrainingWord: service.fetchNextTrainingWord,
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
+    fetchTrainingSessionPlan: service.fetchTrainingSessionPlan,
     fetchScenarioStats: service.fetchScenarioStats,
     fetchTrainingScenarios: service.fetchTrainingScenarios,
   };
@@ -44,6 +46,101 @@ describe("trainingService next-word selection", () => {
     });
   };
 
+  test("fetchTrainingSessionPlan maps only a valid authoritative server snapshot", async () => {
+    const { fetchTrainingSessionPlan } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        plannedNew: 3,
+        plannedReview: 5,
+        plannedPractice: 2,
+        plannedTotal: 10,
+        plannedAt: "2026-08-21T12:00:00.000Z",
+      },
+      error: null,
+    });
+
+    await expect(
+      fetchTrainingSessionPlan("user-1", ["word-to-definition"], {
+        listId: "list-1",
+        listType: "user",
+        cardFilter: "both",
+      }),
+    ).resolves.toEqual({
+      plannedNew: 3,
+      plannedReview: 5,
+      plannedPractice: 2,
+      plannedTotal: 10,
+      plannedAt: "2026-08-21T12:00:00.000Z",
+    });
+    expect(rpc).toHaveBeenCalledWith("get_training_session_plan", {
+      p_user_id: "user-1",
+      p_card_type_ids: ["word-to-definition"],
+      p_list_id: "list-1",
+      p_list_type: "user",
+      p_card_filter: "both",
+      p_training_filter: {},
+    });
+  });
+
+  test("creates an exact stable plan key from user, modes, list, and filter", async () => {
+    const { createTrainingSessionPlanKey } = await importService();
+    const scope = {
+      listId: "list-1",
+      listType: "user" as const,
+      cardFilter: "review" as const,
+      trainingFilter: {
+        dateWindow: "today" as const,
+        timezone: "Europe/Amsterdam",
+        sourceKind: "youtube",
+      },
+    };
+
+    const first = createTrainingSessionPlanKey(
+      "user-1",
+      ["word-to-definition", "word-to-definition"],
+      scope,
+    );
+    const same = createTrainingSessionPlanKey(
+      "user-1",
+      ["word-to-definition"],
+      scope,
+    );
+    const changed = createTrainingSessionPlanKey(
+      "user-1",
+      ["definition-to-word"],
+      scope,
+    );
+
+    expect(first).toBe(same);
+    expect(changed).not.toBe(first);
+  });
+
+  test("fetchTrainingSessionPlan rejects inconsistent or failed snapshots", async () => {
+    const { fetchTrainingSessionPlan } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        plannedNew: 3,
+        plannedReview: 5,
+        plannedPractice: 0,
+        plannedTotal: 99,
+        plannedAt: "2026-08-21T12:00:00.000Z",
+      },
+      error: null,
+    });
+    await expect(
+      fetchTrainingSessionPlan("user-1", ["word-to-definition"], {
+        cardFilter: "both",
+      }),
+    ).resolves.toBeNull();
+
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "offline" } });
+    await expect(
+      fetchTrainingSessionPlan("user-1", ["word-to-definition"], {
+        cardFilter: "both",
+      }),
+    ).resolves.toBeNull();
+  });
+
   test("fetchNextTrainingWord forwards modes, list scope, card filter, queue turn, and excludes", async () => {
     const { fetchNextTrainingWord } = await importService();
 
@@ -62,6 +159,11 @@ describe("trainingService next-word selection", () => {
             source: "review",
             mode: "definition-to-word",
             stability: 4.25,
+            new_today: 2,
+            daily_new_limit: 10,
+            new_pool_size: 7,
+            learning_due_count: 3,
+            review_pool_size: 5,
           },
         },
       ],
@@ -103,6 +205,11 @@ describe("trainingService next-word selection", () => {
           mode: "definition-to-word",
           stability: 4.25,
           ef: 4.25,
+          new_today: 2,
+          daily_new_limit: 10,
+          new_pool_size: 7,
+          learning_due_count: 3,
+          review_pool_size: 5,
         }),
       }),
     );

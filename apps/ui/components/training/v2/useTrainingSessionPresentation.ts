@@ -1,20 +1,53 @@
 "use client";
 
 import React from "react";
+import type { TrainingSessionPlanSnapshot } from "./useTrainingSessionPlan";
 
 type TrainingSurface = "today" | "setup" | "session";
+
+export type TrainingSessionProgress = {
+  position: number;
+  total: number;
+  fraction: number;
+};
+
+export type TrainingSessionPresentation = {
+  cardOrdinal: number;
+  progress: TrainingSessionProgress | null;
+  isSubsequentCard: boolean;
+};
+
+const normalizePlannedTotal = (value: number | null | undefined) =>
+  typeof value === "number" && Number.isInteger(value) && value >= 0
+    ? value
+    : null;
 
 export function useTrainingSessionPresentation({
   surface,
   presentedCardKey,
+  sessionGeneration,
+  scopeKey,
+  planSnapshot,
   onEnterSession,
 }: {
   surface: TrainingSurface;
   presentedCardKey: string | null;
+  sessionGeneration: number;
+  scopeKey: string;
+  planSnapshot: TrainingSessionPlanSnapshot | null;
   onEnterSession: () => void;
-}) {
-  const [cardOrdinal, setCardOrdinal] = React.useState(1);
+}): TrainingSessionPresentation {
+  const currentPlan =
+    planSnapshot?.sessionGeneration === sessionGeneration &&
+    planSnapshot.scopeKey === scopeKey
+      ? planSnapshot.plan
+      : null;
+  const plannedTotal = currentPlan?.plannedTotal ?? null;
+  const sessionKey = `${sessionGeneration}:${scopeKey}`;
+  const [actualCardOrdinal, setActualCardOrdinal] = React.useState(1);
+  const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);
   const previousSurfaceRef = React.useRef(surface);
+  const previousSessionKeyRef = React.useRef(sessionKey);
   const previousCardKeyRef = React.useRef<string | null>(null);
   const isEnteringSession =
     previousSurfaceRef.current !== "session" && surface === "session";
@@ -22,31 +55,48 @@ export function useTrainingSessionPresentation({
   React.useEffect(() => {
     const enteringSession =
       previousSurfaceRef.current !== "session" && surface === "session";
+    const scopeChanged = previousSessionKeyRef.current !== sessionKey;
     previousSurfaceRef.current = surface;
+    previousSessionKeyRef.current = sessionKey;
 
     if (surface !== "session") {
       previousCardKeyRef.current = null;
       return;
     }
-    if (!enteringSession) return;
+    if (!enteringSession && !scopeChanged) return;
 
     onEnterSession();
-    setCardOrdinal(1);
+    setActualCardOrdinal(1);
+    setAcceptedTotal(normalizePlannedTotal(plannedTotal));
     previousCardKeyRef.current = presentedCardKey;
-  }, [onEnterSession, presentedCardKey, surface]);
+  }, [onEnterSession, plannedTotal, presentedCardKey, sessionKey, surface]);
+
+  React.useEffect(() => {
+    if (surface !== "session" || acceptedTotal !== null) return;
+    const nextTotal = normalizePlannedTotal(plannedTotal);
+    if (nextTotal !== null) setAcceptedTotal(nextTotal);
+  }, [acceptedTotal, plannedTotal, surface]);
 
   React.useEffect(() => {
     if (surface !== "session" || !presentedCardKey) return;
     const previousCardKey = previousCardKeyRef.current;
     if (previousCardKey && previousCardKey !== presentedCardKey) {
-      setCardOrdinal((ordinal) => ordinal + 1);
+      setActualCardOrdinal((ordinal) => ordinal + 1);
     }
     previousCardKeyRef.current = presentedCardKey;
   }, [presentedCardKey, surface]);
 
   return {
-    cardOrdinal,
+    cardOrdinal: actualCardOrdinal,
+    progress:
+      surface === "session" && acceptedTotal !== null && acceptedTotal > 0
+        ? {
+            position: actualCardOrdinal,
+            total: acceptedTotal,
+            fraction: Math.min(actualCardOrdinal / acceptedTotal, 1),
+          }
+        : null,
     isSubsequentCard:
-      surface === "session" && !isEnteringSession && cardOrdinal > 1,
+      surface === "session" && !isEnteringSession && actualCardOrdinal > 1,
   };
 }

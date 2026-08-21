@@ -8,6 +8,7 @@ import type {
   TrainingFilterSource,
   TrainingMode,
   TrainingScenario,
+  TrainingSessionPlan,
   TrainingWord,
   WordListType,
 } from "../types";
@@ -31,6 +32,13 @@ export type TrainingScenarioCatalog = {
   resolveModes: (scenarioId: string) => Promise<TrainingMode[] | null>;
 };
 
+export type TrainingSessionPlanScope = {
+  listId?: string | null;
+  listType?: WordListType;
+  cardFilter: CardFilter;
+  trainingFilter?: TrainingFocusFilter | null;
+};
+
 export const isTrainingFocusFilterActive = (
   filter?: TrainingFocusFilter | null,
 ): filter is TrainingFocusFilter => {
@@ -40,6 +48,87 @@ export const isTrainingFocusFilterActive = (
     Boolean(filter.sourceKind) ||
     Boolean(filter.externalId);
 };
+
+const isNonNegativeInteger = (value: unknown): value is number =>
+  typeof value === "number" && Number.isInteger(value) && value >= 0;
+
+const mapTrainingSessionPlan = (value: unknown): TrainingSessionPlan | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  if (
+    !isNonNegativeInteger(candidate.plannedNew) ||
+    !isNonNegativeInteger(candidate.plannedReview) ||
+    !isNonNegativeInteger(candidate.plannedPractice) ||
+    !isNonNegativeInteger(candidate.plannedTotal) ||
+    candidate.plannedTotal !==
+      candidate.plannedNew + candidate.plannedReview + candidate.plannedPractice ||
+    typeof candidate.plannedAt !== "string" ||
+    !Number.isFinite(Date.parse(candidate.plannedAt))
+  ) {
+    return null;
+  }
+  return {
+    plannedNew: candidate.plannedNew,
+    plannedReview: candidate.plannedReview,
+    plannedPractice: candidate.plannedPractice,
+    plannedTotal: candidate.plannedTotal,
+    plannedAt: candidate.plannedAt,
+  };
+};
+
+const trainingSessionPlanScopePayload = (
+  userId: string,
+  modes: TrainingMode[],
+  input: TrainingSessionPlanScope,
+) => {
+  const uniqueModes = [...new Set(modes)].sort();
+  return {
+    p_user_id: userId,
+    p_card_type_ids:
+      uniqueModes.length > 0 ? uniqueModes : ["word-to-definition"],
+    p_list_id: input.listId ?? null,
+    p_list_type: input.listId ? input.listType ?? "curated" : "curated",
+    p_card_filter: input.cardFilter,
+    p_training_filter: isTrainingFocusFilterActive(input.trainingFilter)
+      ? normalizeTrainingFocusFilter(input.trainingFilter)
+      : {},
+  };
+};
+
+/** Stable identity for the exact server plan scope latched by the UI session. */
+export const createTrainingSessionPlanKey = (
+  userId: string,
+  modes: TrainingMode[],
+  input: TrainingSessionPlanScope,
+) => JSON.stringify(trainingSessionPlanScopePayload(userId, modes, input));
+
+export async function fetchTrainingSessionPlan(
+  userId: string,
+  modes: TrainingMode[],
+  input: TrainingSessionPlanScope,
+): Promise<TrainingSessionPlan | null> {
+  const scope = trainingSessionPlanScopePayload(userId, modes, input);
+  const payload: Record<string, unknown> = {
+    p_user_id: scope.p_user_id,
+    p_card_type_ids: scope.p_card_type_ids,
+    p_card_filter: scope.p_card_filter,
+    p_training_filter: scope.p_training_filter,
+  };
+  if (scope.p_list_id) {
+    payload.p_list_id = scope.p_list_id;
+    payload.p_list_type = scope.p_list_type;
+  }
+
+  const { data, error } = await supabase.rpc(
+    "get_training_session_plan",
+    payload,
+  );
+  if (error) {
+    console.error("Error planning training session:", error);
+    return null;
+  }
+  return mapTrainingSessionPlan(data);
+}
 
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
