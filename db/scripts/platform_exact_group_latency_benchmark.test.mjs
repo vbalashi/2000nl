@@ -1,16 +1,25 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import {
   MAX_LOOKUP_REQUESTS,
   FIXED_BENCHMARK_REQUESTS,
   MAX_TOTAL_REQUESTS,
+  MAX_AUTH_USER_LIST_PAGES,
   PRODUCTION_AUTH_CACHE_TTL_MS,
   classifyAuthCacheSignal,
   createBoundedFetch,
   executeWithBoundedCleanup,
   fetchWithTimeout,
   parseArgs,
+  verifyBenchmarkSessionOrRevoke,
+  createBenchmarkRecoveryLease,
+  resolveBenchmarkSupabaseUrl,
+  persistBenchmarkSessionRecovery,
+  findAuthUser,
 } from "./platform_exact_group_latency_benchmark.mjs";
 
 test("production defaults expire the deployed auth cache and stay within the hard request cap", () => {
@@ -23,6 +32,102 @@ test("production defaults expire the deployed auth cache and stay within the har
     MAX_TOTAL_REQUESTS,
   );
   assert.equal(options.assertColdFirstSample, true);
+  assert.equal(FIXED_BENCHMARK_REQUESTS, 6);
+});
+
+test("production benchmark rejects an unapproved Supabase origin before clients", () => {
+  assert.throws(
+    () => resolveBenchmarkSupabaseUrl("https://2000.dilum.io", "https://attacker.example"),
+    /unapproved/i,
+  );
+  for (const invalid of [
+    "http://user@127.0.0.1:3000/",
+    "http://127.0.0.1:3000/evil",
+    "http://127.0.0.1:3000/?x=1",
+    "ftp://127.0.0.1:3000/",
+  ]) {
+    assert.throws(
+      () => resolveBenchmarkSupabaseUrl(invalid, "http://127.0.0.1:54321"),
+      /canonical HTTP\(S\)/i,
+    );
+  }
+  assert.throws(
+    () =>
+      resolveBenchmarkSupabaseUrl(
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:54321/evil?x=1",
+      ),
+    /canonical HTTP\(S\)/i,
+  );
+  assert.equal(
+    resolveBenchmarkSupabaseUrl("http://127.0.0.1:3000", "http://127.0.0.1:54321"),
+    "http://127.0.0.1:54321",
+  );
+  assert.throws(
+    () =>
+      resolveBenchmarkSupabaseUrl(
+        "http://127.0.0.1:3000",
+        "https://unapproved.example",
+      ),
+    /loopback Supabase/i,
+  );
+  assert.throws(
+    () =>
+      resolveBenchmarkSupabaseUrl(
+        "https://attacker.example",
+        "https://lliwdcpuuzjmxyzrjtoz.supabase.co",
+      ),
+    /benchmark target/i,
+  );
+});
+
+test("concurrent benchmark runs receive distinct protected recovery leases", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "benchmark-recovery-leases-"));
+  const first = createBenchmarkRecoveryLease(root);
+  const second = createBenchmarkRecoveryLease(root);
+  assert.notEqual(first, second);
+  assert.equal(fs.statSync(first).mode & 0o777, 0o700);
+  assert.equal(fs.statSync(second).mode & 0o777, 0o700);
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("a valid benchmark session receives durable recovery before long requests", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "benchmark-valid-recovery-"));
+  const recovery = persistBenchmarkSessionRecovery(
+    { access_token: "valid-token", user: { id: "qa", email: "test@2000nl.test" } },
+    root,
+  );
+  assert.equal(fs.statSync(recovery.directory).mode & 0o777, 0o700);
+  assert.equal(fs.statSync(recovery.filename).mode & 0o777, 0o600);
+  assert.equal(JSON.parse(fs.readFileSync(recovery.filename)).session.access_token, "valid-token");
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("QA identity lookup is bounded to one admin request", async () => {
+  let calls = 0;
+  const adminClient = {
+    auth: {
+      admin: {
+        listUsers: async () => {
+          calls += 1;
+          return {
+            data: {
+              users: Array.from({ length: 1000 }, (_, index) => ({
+                id: `other-${index}`,
+                email: `other-${index}@example.test`,
+              })),
+            },
+            error: null,
+          };
+        },
+      },
+    },
+  };
+  await assert.rejects(
+    () => findAuthUser("test@2000nl.test", adminClient),
+    /bounded_page/,
+  );
+  assert.equal(calls, MAX_AUTH_USER_LIST_PAGES);
 });
 
 test("classifies and records the intended auth cache signal", () => {
@@ -39,6 +144,52 @@ test("every HTTP read receives a bounded abort signal", async () => {
   });
 
   assert.ok(observedSignal instanceof AbortSignal);
+});
+
+test("principal mismatch revokes the just-minted benchmark session", async () => {
+  const calls = [];
+  await assert.rejects(
+    () =>
+      verifyBenchmarkSessionOrRevoke({
+        session: {
+          access_token: "mismatched-token",
+          user: { id: "other-user", email: "test@2000nl.test" },
+        },
+        identity: { id: "qa-user", email: "test@2000nl.test" },
+        adminClient: {
+          auth: {
+            admin: {
+              signOut: async (...args) => {
+                calls.push(args);
+                return { error: null };
+              },
+            },
+          },
+        },
+      }),
+    /principal/i,
+  );
+  assert.deepEqual(calls, [["mismatched-token", "global"]]);
+});
+
+test("principal mismatch preserves recovery ownership when revocation fails", async () => {
+  const preserved = [];
+  await assert.rejects(
+    () =>
+      verifyBenchmarkSessionOrRevoke({
+        session: {
+          access_token: "mismatched-token",
+          user: { id: "other-user", email: "test@2000nl.test" },
+        },
+        identity: { id: "qa-user", email: "test@2000nl.test" },
+        adminClient: {
+          auth: { admin: { signOut: async () => ({ error: new Error("revoke failed") }) } },
+        },
+        preserveRecoverySession: async (session) => preserved.push(session.access_token),
+      }),
+    /revocation_failed/,
+  );
+  assert.deepEqual(preserved, ["mismatched-token"]);
 });
 
 test("rejects request counts above the hard cap", () => {

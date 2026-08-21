@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Mint + inject a Supabase session into production (https://2000.dilum.io) using agent-browser,
-# persisted under a dedicated browser profile directory.
+# using a temporary dedicated browser profile by default.
 #
 # Prereqs:
 # - agent-browser installed
@@ -10,22 +10,22 @@ set -euo pipefail
 #   NEXT_PUBLIC_SUPABASE_URL
 #   NEXT_PUBLIC_SUPABASE_ANON_KEY
 #   SUPABASE_SERVICE_ROLE_KEY
-#   TEST_USER_EMAIL
+#   QA_TEST_USER_EMAIL
+#   QA_TEST_USER_EMAIL_ALLOWLIST
+#   QA_REFERENCE_USER_EMAILS
 #
 # Notes:
 # - Session is stored in localStorage under sb-lliwdcpuuzjmxyzrjtoz-auth-token (origin-scoped).
-# - Use a persistent profile to avoid re-auth on each run.
+# - Default browser state is removed during cleanup.
 
 usage() {
   cat <<'USAGE'
 Usage: scripts/ab-auth-prod.sh [options]
 
 Options:
-  --url <url>          Target prod URL (default: https://2000.dilum.io/)
-  --profile <path>     agent-browser profile dir (default: tmp/agent-browser/profile-2000nl-prod)
+  --profile <path>     caller-owned agent-browser profile dir (default: temporary, auto-removed)
   --session <name>     agent-browser session name (default: prod2000)
   --env-file <path>    Env file to source (default: .env.local if present, else apps/ui/.env.local)
-  --keep               Keep tmp/prod-session.{json,b64} (default: delete after injection)
   --no-close           Do not run agent-browser close before starting
   -h, --help           Show help
 
@@ -36,19 +36,17 @@ USAGE
 }
 
 URL="https://2000.dilum.io/"
-PROFILE="tmp/agent-browser/profile-2000nl-prod"
+PROFILE=""
+PROFILE_OWNED="0"
 SESSION="prod2000"
 ENV_FILE=""
-KEEP_ARTIFACTS="0"
 DO_CLOSE="1"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) URL="${2:-}"; shift 2 ;;
     --profile) PROFILE="${2:-}"; shift 2 ;;
     --session) SESSION="${2:-}"; shift 2 ;;
     --env-file) ENV_FILE="${2:-}"; shift 2 ;;
-    --keep) KEEP_ARTIFACTS="1"; shift 1 ;;
     --no-close) DO_CLOSE="0"; shift 1 ;;
     -h|--help) usage; exit 0 ;;
     *)
@@ -73,74 +71,110 @@ if [[ -z "$ENV_FILE" ]]; then
   fi
 fi
 
-mkdir -p tmp/agent-browser
-chmod 700 tmp/agent-browser || true
-chmod 700 "$(dirname "$PROFILE")" 2>/dev/null || true
+SESSION_ARTIFACT_DIR="$REPO_ROOT/tmp/agent-browser/qa-session-$$"
+OUT_JSON="$SESSION_ARTIFACT_DIR/prod-session.json"
+OUT_B64="$SESSION_ARTIFACT_DIR/prod-session.b64"
+if [[ -z "$PROFILE" ]]; then
+  PROFILE="$REPO_ROOT/tmp/agent-browser/profile-qa-$$"
+  PROFILE_OWNED="1"
+fi
+mkdir -p "$SESSION_ARTIFACT_DIR" "$(dirname "$PROFILE")"
+chmod 700 "$SESSION_ARTIFACT_DIR" "$(dirname "$PROFILE")" || true
 
-OUT_JSON="tmp/agent-browser/prod-session.json"
-OUT_B64="tmp/agent-browser/prod-session.b64"
-
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
-
-cd "$REPO_ROOT/apps/ui"
-node - <<'NODE'
-const fs = require('fs');
-const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.TEST_USER_EMAIL;
-
-if (!url || !anon || !service || !email) {
-  throw new Error(
-    'Missing env: need NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, TEST_USER_EMAIL'
-  );
+browser() {
+  bash "$REPO_ROOT/scripts/lib/run-sanitized-agent-browser.sh" "$@"
 }
 
-const repoRoot = path.resolve(__dirname, '..', '..');
-const outJson = path.join(repoRoot, 'tmp', 'agent-browser', 'prod-session.json');
-const outB64 = path.join(repoRoot, 'tmp', 'agent-browser', 'prod-session.b64');
+run_bounded() {
+  "$@" &
+  local bounded_pid=$!
+  local attempt
+  for attempt in {1..80}; do
+    if ! kill -0 "$bounded_pid" 2>/dev/null; then
+      wait "$bounded_pid"
+      return $?
+    fi
+    sleep 0.1
+  done
+  kill -TERM "$bounded_pid" 2>/dev/null || true
+  for attempt in {1..10}; do
+    if ! kill -0 "$bounded_pid" 2>/dev/null; then
+      wait "$bounded_pid" 2>/dev/null || true
+      return 124
+    fi
+    sleep 0.1
+  done
+  kill -KILL "$bounded_pid" 2>/dev/null || true
+  wait "$bounded_pid" 2>/dev/null || true
+  return 124
+}
 
-const admin = createClient(url, service, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-});
-const pub = createClient(url, anon, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-});
+revoke_session() {
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+  cd "$REPO_ROOT/apps/ui"
+  exec env QA_SESSION_JSON_PATH="$OUT_JSON" npx vite-node scripts/revoke-prod-qa-session.ts
+}
 
-(async () => {
-  const link = await admin.auth.admin.generateLink({ type: 'magiclink', email });
-  if (link.error) throw link.error;
-  const otp = link.data.properties.email_otp;
+cleanup() {
+  local original_status="${1:-0}"
+  local cleanup_failed="0"
+  local revoked="0"
+  trap - EXIT INT TERM
+  set +e
+  if [[ -f "$OUT_JSON" ]]; then
+    if run_bounded revoke_session >/dev/null; then
+      revoked="1"
+    else
+      echo "Error: global QA session revocation failed; protected recovery artifacts retained at $SESSION_ARTIFACT_DIR." >&2
+      cleanup_failed="1"
+    fi
+  fi
+  if ! run_bounded browser --session "$SESSION" eval '(() => { for (const key of Object.keys(localStorage)) { if (key.startsWith("sb-")) localStorage.removeItem(key); } return true; })()' >/dev/null 2>&1; then
+    echo "Warning: browser QA session cleanup did not complete." >&2
+    cleanup_failed="1"
+  fi
+  run_bounded browser --session "$SESSION" close >/dev/null 2>&1 || true
+  if [[ "$revoked" == "1" || ! -f "$OUT_JSON" ]]; then
+    [[ -f "$OUT_JSON" ]] && unlink "$OUT_JSON"
+    [[ -f "$OUT_B64" ]] && unlink "$OUT_B64"
+    rmdir "$SESSION_ARTIFACT_DIR" 2>/dev/null || true
+  fi
+  if [[ "$PROFILE_OWNED" == "1" && "$PROFILE" == "$REPO_ROOT"/tmp/agent-browser/profile-qa-* ]]; then
+    find "$PROFILE" -depth -delete 2>/dev/null || true
+  fi
+  if [[ "$original_status" != "0" ]]; then
+    exit "$original_status"
+  fi
+  if [[ "$cleanup_failed" != "0" ]]; then
+    exit 1
+  fi
+  exit 0
+}
+trap 'cleanup $?' EXIT
+trap 'exit 130' INT TERM
 
-  const ver = await pub.auth.verifyOtp({ email, token: otp, type: 'email' });
-  if (ver.error) throw ver.error;
-
-  const payload = { session: ver.data.session };
-  fs.writeFileSync(outJson, JSON.stringify(payload, null, 2), { mode: 0o600 });
-  fs.writeFileSync(outB64, Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'), {
-    mode: 0o600,
-  });
-})();
-NODE
-
-cd "$REPO_ROOT"
+(
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+  cd "$REPO_ROOT/apps/ui"
+  QA_SESSION_OUTPUT_DIR="$SESSION_ARTIFACT_DIR" npx vite-node scripts/mint-prod-qa-session.ts
+)
 
 if [[ "$DO_CLOSE" == "1" ]]; then
-  agent-browser close >/dev/null 2>&1 || true
+  browser close >/dev/null 2>&1 || true
 fi
 
 b64="$(tr -d '\n' < "$OUT_B64")"
 
-agent-browser --session "$SESSION" --profile "$PROFILE" open "$URL"
-agent-browser --session "$SESSION" wait --load networkidle
+browser --session "$SESSION" --profile "$PROFILE" open "$URL"
+browser --session "$SESSION" wait --load networkidle
 
-cat <<EOF | agent-browser --session "$SESSION" eval --stdin
+cat <<EOF | browser --session "$SESSION" eval --stdin
 (() => {
   const key = "sb-lliwdcpuuzjmxyzrjtoz-auth-token";
   const json = atob("${b64}");
@@ -149,18 +183,23 @@ cat <<EOF | agent-browser --session "$SESSION" eval --stdin
     if (k.startsWith("sb-")) localStorage.removeItem(k);
   }
   localStorage.setItem(key, JSON.stringify(session));
-  return { ok: true, expires_at: session.expires_at, email: session.user?.email || null };
+  return { ok: true };
 })()
 EOF
 
-agent-browser --session "$SESSION" reload
-agent-browser --session "$SESSION" wait --load networkidle
+browser --session "$SESSION" reload
+browser --session "$SESSION" wait --load networkidle
 
-# Smoke check: training UI usually contains this button once authenticated.
-agent-browser --session "$SESSION" wait --text "ANTWOORD TONEN"
+cat <<'EOF' | browser --session "$SESSION" eval --stdin >/dev/null
+(async () => {
+  const todayLabels = ["Vandaag", "Today", "Сегодня"];
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const text = document.body?.innerText || "";
+    if (todayLabels.some((label) => text.includes(label))) return { surface: "today" };
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new Error("Authenticated Today surface did not become visible.");
+})()
+EOF
 
-if [[ "$KEEP_ARTIFACTS" != "1" ]]; then
-  rm -f "$OUT_JSON" "$OUT_B64" 2>/dev/null || true
-fi
-
-echo "OK: Auth injected for $URL (session=$SESSION profile=$PROFILE)"
+echo "OK: dedicated QA session verified and startup surface loaded for $URL"
