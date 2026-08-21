@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "issue-207-browser-lookup-composition-v1",
+  "model": {
+    "serializedMs": 500,
+    "overlappedMs": 300,
+    "statement": "The fixture models the route-contract test's measured 200ms state plus 300ms translation critical path; it is not post-rollout production latency."
+  },
+  "sampleCount": 5,
+  "profiles": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "results": [
+    {
+      "profile": "desktop",
+      "composition": "serialized",
+      "injectedLookupCompositionMs": 500,
+      "durationsMs": [
+        550.2,
+        548.1,
+        541.7,
+        541.3,
+        555.2
+      ],
+      "summary": {
+        "count": 5,
+        "p50": 548.1,
+        "p95": 555.2,
+        "max": 555.2
+      },
+      "preservedAnswerCardDuringLookup": true
+    },
+    {
+      "profile": "desktop",
+      "composition": "overlapped",
+      "injectedLookupCompositionMs": 300,
+      "durationsMs": [
+        354.2,
+        355.1,
+        341.1,
+        341.4,
+        352.3
+      ],
+      "summary": {
+        "count": 5,
+        "p50": 352.3,
+        "p95": 355.1,
+        "max": 355.1
+      },
+      "preservedAnswerCardDuringLookup": true
+    },
+    {
+      "profile": "mobile",
+      "composition": "serialized",
+      "injectedLookupCompositionMs": 500,
+      "durationsMs": [
+        549.3,
+        542,
+        542.6,
+        539.3,
+        539.4
+      ],
+      "summary": {
+        "count": 5,
+        "p50": 542,
+        "p95": 549.3,
+        "max": 549.3
+      },
+      "preservedAnswerCardDuringLookup": true
+    },
+    {
+      "profile": "mobile",
+      "composition": "overlapped",
+      "injectedLookupCompositionMs": 300,
+      "durationsMs": [
+        346.8,
+        346.9,
+        343.5,
+        343.6,
+        354
+      ],
+      "summary": {
+        "count": 5,
+        "p50": 346.8,
+        "p95": 354,
+        "max": 354
+      },
+      "preservedAnswerCardDuringLookup": true
+    }
+  ],
+  "identity": {
+    "appCommit": "c7e2690fa8708cb35b65216b536134d4637308c4",
+    "relevantPaths": [
+      "apps/ui/lib/platform/platformV2LookupService.ts",
+      "apps/ui/tests/api/platformV2LookupRoute.test.ts",
+      "apps/ui/playwright/support/trainingAttributionHarness.ts",
+      "apps/ui/playwright/tests/training-lookup-composition.spec.ts"
+    ],
+    "relevantSourceSha256": "c2232fcf5b3e54b57a4155d479923ec07bea3984e576fe3d9bc223ffd9decdf9",
+    "relevantPatchSha256": "29ce405cb8c02eb2605a01bf973b0565185a8a2f6844d6139850bce1138f3b18"
+  }
+}

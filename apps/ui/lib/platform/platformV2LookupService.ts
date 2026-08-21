@@ -204,6 +204,22 @@ export async function performPlatformV2Lookup(
           },
         ),
       );
+  const embeddedBindingsByEntryId = new Map(
+    embeddedIdentities.map((identity) => [
+      identity.entryId,
+      identity.contentNodeBindings,
+    ]),
+  );
+  const eagerTranslationPromise =
+    embeddedIdentityComplete && request.translationTargetLanguageCode
+      ? measure(timings, "lookup.translations", () =>
+          resolvePlatformV2Translations(context.service, {
+            entries,
+            bindingsByEntryId: embeddedBindingsByEntryId,
+            targetLanguageCode: request.translationTargetLanguageCode!,
+          }),
+        )
+      : null;
   const statePromise =
     context.kind === "authenticated"
       ? measure<RpcResult>(timings, "lookup.user-state", async () =>
@@ -217,9 +233,10 @@ export async function performPlatformV2Lookup(
           ),
         )
       : Promise.resolve<RpcResult>({ data: [], error: null });
-  const [identityResult, stateResult] = await Promise.all([
+  const [identityResult, stateResult, eagerTranslationResult] = await Promise.all([
     identityPromise,
     statePromise,
+    eagerTranslationPromise,
   ]);
 
   if (identityResult.error) {
@@ -269,13 +286,14 @@ export async function performPlatformV2Lookup(
     ]),
   );
   const translationResult = request.translationTargetLanguageCode
-    ? await measure(timings, "lookup.translations", () =>
+    ? eagerTranslationResult ??
+      (await measure(timings, "lookup.translations", () =>
         resolvePlatformV2Translations(context.service, {
           entries,
           bindingsByEntryId,
           targetLanguageCode: request.translationTargetLanguageCode!,
         }),
-      )
+      ))
     : {
         ok: true as const,
         byEntryId: new Map(),

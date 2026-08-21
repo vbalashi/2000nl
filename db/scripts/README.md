@@ -149,6 +149,46 @@ Use `--layers sql` or `--layers http-2000nl,audiofilms` to isolate one side of
 the boundary. Use `--no-lookup`, `--no-full-search`, or `--no-group-search` for
 focused runs.
 
+### Authenticated exact-group latency
+
+`platform_exact_group_latency_benchmark.mjs` repeatedly calls the authenticated
+Platform V2 training lookup for one exact Dictionary Entry and Headword Group.
+It discovers the identity once through catalog lookup, mints an isolated test
+session, records request IDs and `Server-Timing`, and revokes that session in a
+`finally` block. It does not call learning mutation endpoints.
+
+```bash
+node db/scripts/platform_exact_group_latency_benchmark.mjs \
+  --batches 10 \
+  --samples-per-batch 5 \
+  --idle-ms 6000 \
+  --warm-spacing-ms 150 \
+  --output tmp/issue-207-route-rows.jsonl \
+  --summary-output tmp/issue-207-route-summary.json
+```
+
+Required environment: `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and
+`PLATFORM_CATALOG_ACCESS_TOKEN`. `--email` defaults to the isolated
+`test@2000nl.test` account. Output never contains access, refresh, service-role,
+or catalog tokens.
+
+The benchmark enforces a maximum of 55 total requests (five fixed auth,
+health, catalog, and cleanup requests plus 50 lookup reads), a 15-second timeout on
+each HTTP read, at least 6 seconds before every intended cold sample (the
+deployed auth cache TTL is 5 seconds), and at least 150 ms between warm
+samples. Every first sample must expose a cold-auth `Server-Timing` signal or
+the run fails. Faster pacing is accepted only with `--allow-fast-local` and a
+loopback `--base-url` (`localhost`, `127.0.0.1`, or `[::1]`). The same bounded
+fetch is installed on both Supabase auth clients, so session creation,
+verification, and revocation cannot hang indefinitely. A timed-out revocation
+is reported as cleanup failure and is never recorded as successful. Argument,
+timeout, and cleanup policy checks run with:
+
+```bash
+node --test db/scripts/platform_exact_group_latency_benchmark.test.mjs
+```
+
 ---
 
 ## Development
