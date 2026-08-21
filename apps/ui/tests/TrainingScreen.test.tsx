@@ -2663,14 +2663,15 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /Card 1 · open session/,
+      /TRAININGNew \+ review1 \/ 10/,
     );
+    expect(screen.getByTestId("training-session-app-header")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Theme: System" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Theme: System" }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Settings" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Settings" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Search" }),
     ).not.toBeInTheDocument();
@@ -2678,8 +2679,8 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
       screen.queryByRole("button", { name: "Help" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "History" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "History" }),
+    ).toHaveAttribute("aria-disabled", "true");
     expect(
       screen.queryByRole("button", { name: "Account" }),
     ).not.toBeInTheDocument();
@@ -2695,7 +2696,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(compactFooter).not.toHaveTextContent(/VanDale 2k|Begrip/);
     fireEvent.click(
-      within(screen.getByTestId("training-session-chrome")).getByRole(
+      within(screen.getByTestId("training-session-app-header")).getByRole(
         "button",
         { name: "Close session" },
       ),

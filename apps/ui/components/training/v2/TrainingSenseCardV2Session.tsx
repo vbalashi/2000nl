@@ -545,18 +545,19 @@ function SessionV2Failure({
       data-testid="training-v2-failure"
       data-training-renderer="v2"
       data-training-v2-state={state}
-      className="mx-auto grid min-h-48 w-full max-w-[760px] place-items-center self-center rounded-3xl border border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-900 shadow-sm dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-50"
+      data-visual-spec="training-v1.0"
+      className="mx-auto grid h-full min-h-0 w-full max-w-[760px] flex-1 place-items-center self-center rounded-[14px] border border-slate-300 bg-slate-50 px-[18px] py-10 text-center font-sense-sans text-slate-900 shadow-sm dark:border-[#4B5360] dark:bg-[#20252D] dark:text-[#F4F6FA] dark:shadow-none"
     >
-      <div className="flex max-w-sm flex-col items-center gap-4">
-        <p className="text-sm font-medium">
+      <div className="flex max-w-sm -translate-y-[6px] flex-col items-center gap-[18px]">
+        <p className="text-[18px] font-bold leading-tight">
           {platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
         </p>
         {detail ? <span className="sr-only">{detail}</span> : null}
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-3">
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
+            className="h-[42px] rounded-[18px] border border-slate-400 bg-white px-4 text-[14px] font-bold text-slate-800 outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-[#8B89F6] dark:border-[#7B8491] dark:bg-[#20252D] dark:text-[#F4F6FA] dark:hover:bg-[#262B34]"
           >
             {platformV2Message(interfaceLanguage, "senseCard.training.retry")}
           </button>
@@ -564,7 +565,7 @@ function SessionV2Failure({
             <button
               type="button"
               onClick={onExit}
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 dark:text-slate-300 dark:hover:bg-slate-700/50"
+              className="h-[42px] rounded-xl px-3 text-[14px] font-bold text-slate-600 outline-none hover:bg-slate-200/60 focus-visible:ring-2 focus-visible:ring-[#8B89F6] dark:text-[#F4F6FA] dark:hover:bg-[#262B34]"
             >
               {platformV2Message(interfaceLanguage, "senseCard.training.exit")}
             </button>

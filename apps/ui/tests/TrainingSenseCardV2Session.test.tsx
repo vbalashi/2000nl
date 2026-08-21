@@ -583,6 +583,8 @@ describe("TrainingSenseCardV2Session", () => {
       "data-training-v2-state",
       "lookup-http-error",
     );
+    expect(errorState).toHaveAttribute("data-visual-spec", "training-v1.0");
+    expect(errorState).toHaveClass("flex-1", "rounded-[14px]", "dark:bg-[#20252D]");
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Opnieuw proberen" })).toBeInTheDocument();
   });

@@ -86,6 +86,40 @@ function ProgressStat({
   );
 }
 
+function CompactProgressStat({
+  label,
+  value,
+  total,
+  colorClass,
+  barColorClass,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  colorClass: string;
+  barColorClass: string;
+}) {
+  const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
+  return (
+    <div className="flex h-[33px] w-[104px] flex-col gap-[3px] font-mono">
+      <span className={`text-[8px] font-bold uppercase ${colorClass}`}>
+        {label}
+      </span>
+      <div className="flex h-[14px] items-center gap-[6px]">
+        <div className="h-1 w-[52px] overflow-hidden rounded-sm bg-[#4B5360]">
+          <div
+            className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <span className="whitespace-nowrap text-[10px] font-semibold text-[#BFC7D4]">
+          {value} / {total}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function FooterStats({
   stats,
   cardFilter,
@@ -158,10 +192,34 @@ export function FooterStats({
     return (
       <footer
         data-compact="true"
-        className="sticky bottom-0 z-10 w-full border-t border-slate-200 bg-white/80 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/75"
+        data-visual-spec="training-v1.0"
+        className="z-10 flex h-[44px] w-full shrink-0 items-end justify-center border-t border-slate-200 bg-white px-4 pb-1 dark:border-[#272C35] dark:bg-[#11141A]"
       >
-        <div className="mx-auto flex w-full items-center justify-center px-4 lg:px-6">
-          <div className="w-fit max-w-full">{progress}</div>
+        <div
+          data-testid="training-session-footer-progress"
+          className="flex h-[33px] w-[326px] max-w-full items-center gap-[7px]"
+        >
+          <CompactProgressStat
+            label={text.new}
+            value={newCardsToday}
+            total={dailyNewLimit}
+            colorClass="text-[#9D94FF]"
+            barColorClass="bg-[#9D94FF]"
+          />
+          <CompactProgressStat
+            label={text.review}
+            value={reviewCardsDone}
+            total={reviewTotal}
+            colorClass="text-[#E9C46A]"
+            barColorClass="bg-[#E9C46A]"
+          />
+          <CompactProgressStat
+            label={text.total}
+            value={totalWordsLearned}
+            total={totalWordsInList}
+            colorClass="text-[#37D99B]"
+            barColorClass="bg-[#37D99B]"
+          />
         </div>
       </footer>
     );

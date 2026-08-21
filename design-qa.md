@@ -1,313 +1,80 @@
-# Design QA — 2000NL Library SenseCard correction
+# Design QA — Training v1.0 approved subset (#194)
 
-Status: PASS for owner review  
-Date: 2026-08-06
+## Comparison target
 
-## Comparison
+- Source visual truth:
+  - `/Users/khrustal/dev/docs/design/2000nl-audiofilms/training-v1.0/face.png` (Pencil `k4unJX`)
+  - `/Users/khrustal/dev/docs/design/2000nl-audiofilms/training-v1.0/answer.png` (Pencil `twUIm`)
+  - `/Users/khrustal/dev/docs/design/2000nl-audiofilms/training-v1.0/long-idiom.png` (Pencil `lkphz`)
+  - `/Users/khrustal/dev/docs/design/2000nl-audiofilms/training-v1.0/recoverable-error.png` (Pencil `ZprWV`)
+- Browser-rendered implementation screenshots:
+  - `artifacts/design-qa/training-face-402x874.png`
+  - `artifacts/design-qa/training-answer-402x874.png`
+  - `artifacts/design-qa/training-long-idiom-402x874.png`
+  - `artifacts/design-qa/training-error-402x874.png`
+  - responsive/theme evidence: `artifacts/design-qa/training-face-light-mobile.png` and `artifacts/design-qa/training-face-dark-wide.png`
+- Full-view comparison evidence: `artifacts/design-qa/training-v1-comparison.png` (source left, implementation right for all four states).
+- Viewport: 402 × 874 CSS px, dark scheme, device scale factor 1. Additional checks: 402 × 874 light and 1280 × 900 dark.
+- State: authenticated pilot Training session, direct word-to-definition card, Dutch interface, `bank` face, translated `bank` answer, `nodig` long-idiom answer, and recoverable invalid-model error.
 
-- Source: Pen `30.50.02 · LIBRARY / TWO-PANE WORD DETAIL`, focused card node
-  `l2e1m`, exported to
-  `/Users/khrustal/adhoc/2000nl-library-canonical-audit-2026-08-06/l2e1m.png`.
-- Source interaction: Pen `30.50.05 · LIBRARY / COLLECTIONS PICKER · MEANING 1`,
-  node `N28YlY`, exported beside the card source.
-- Implementation desktop:
-  `docs/architecture/evidence/sensecard-v1-cross-product/screenshots/2000nl-library-canonical-desktop.png`.
-- Implementation mobile:
-  `docs/architecture/evidence/sensecard-v1-cross-product/screenshots/2000nl-library-canonical-mobile.png`.
-- Implementation collection picker:
-  `docs/architecture/evidence/sensecard-v1-cross-product/screenshots/2000nl-library-collections-picker.png`.
+## Density normalization
 
-The source and desktop implementation were inspected together in one visual
-comparison at the same expanded first-meaning and translation-visible state.
+Pencil MCP reports every authoritative screen node as exactly 402 × 874 logical px. The committed PNG exports are 806 × 1750 px because they are 2× rasters that include the outer one-pixel stroke at export density; this is not a 403 × 875 logical viewport. Runtime screenshots are 402 × 874 px at device scale factor 1. For the combined comparison, each complete 806 × 1750 source export was normalized to 402 × 874 without cropping, then paired with the corresponding 402 × 874 runtime capture.
 
-## Result
+## Browser choice and capture path
 
-- PASS: Training grade controls no longer appear in Library.
-- PASS: actions address one exact meaning/entry; collection counts are
-  meaning-local.
-- PASS: the collection picker opens, filters lists, toggles membership, creates
-  a list and closes through visible controls.
-- PASS: single/multi-sense structure, headword lockup, optional sections and
-  collapsed second meaning remain intact.
-- PASS: mobile 390×844 has no horizontal overflow; the action row wraps without
-  clipping or losing accessible names.
-- PASS: the Library view is intentionally richer than the compact approved
-  SenseCard component while retaining the same semantic anatomy.
+The integrated Pencil browser was available and was used to read the authoritative node dimensions and component geometry. The unavailable surface was specifically request-route interception/test-fixture injection, which is needed to make the four Training states deterministic without touching real learning data. Therefore exact-state runtime capture used the repository's standalone Playwright harness with mocked platform/Supabase routes, the visual-only fallback permitted by `nl-local-ui-qa`. This does not mean the integrated browser itself was unavailable.
 
-## Remaining non-blockers
+The fixture uses a synthetic authenticated identity and performs no real user or learning mutations. Primary interactions tested were starting the current selection, revealing the answer, toggling translation, and rendering the recoverable-error state. The run produced no unexpected browser-console or page errors; only the development toolchain's existing dependency-age/deprecation warnings were printed by the test runner.
 
-- The durable report submission endpoint is not part of this slice. The report
-  control is shown only where a typed `report-content` capability and handler
-  are both available; no fake persistence is introduced.
-- Fine spacing and icon polish remain owner-review work, not rollout blockers.
+## Focused-region evidence
 
----
+No additional cropped comparison was necessary after the final full-view contact sheet: at 804 px paired width, the card header controls, typography, content hierarchy, action docks, footer stats, and error actions remain readable. The focused individual implementation captures listed above were also opened at native 402 × 874 resolution while iterating.
 
-# Design QA — issue #124 Training SenseCard loop
+## Required fidelity surfaces
 
-## Evidence
-
-- Source visual truth: `/Users/khrustal/dev/pens/2000nl-audiofilms.pen`, visible address `10.17.01 · COMPONENT · TRAININGCARD / PROMPT / FULL`; captured at `docs/architecture/evidence/issue-124/pen-10.17.01-face.png` (`761 × 409`, 1×).
-- Rendered implementation: `http://localhost:3100/`, authenticated local pilot, captured at `docs/architecture/evidence/issue-124/implementation-face-desktop.jpg` (`1536 × 1646`, browser density 1×).
-- Normalized comparison: `docs/architecture/evidence/issue-124/comparison-face.png` (`1521 × 570`). The implementation stage was cropped to its visible desktop bounds (`736 × 570`); the Pen component was padded, not scaled, to retain 1× typography and geometry.
-- State: desktop, dark direct `word-to-definition` face, real Van Dale entry `de bank`, hint off.
-
-## Findings
-
-No actionable P0/P1/P2 mismatch remains for this tracer slice.
-
-- Fonts and typography: the implementation preserves the serif headword/article lockup and the compact sans/mono control hierarchy. The browser uses responsive type sizing inside the real application shell; the Pen source is a fixed-size component fixture. The resulting optical hierarchy remains equivalent.
-- Spacing and layout rhythm: the headword remains centered, the face and answer use one stable shell height, and the action dock stays in a stable location. The implementation shell is taller than the component-only Pen fixture because the accepted real-screen contract uses the available training viewport; this is an intentional screen constraint, not card-anatomy drift.
-- Colors and visual tokens: dark card surface, quiet border, light serif headword, and indigo primary action match the source direction. Contrast remains sufficient in the captured state.
-- Image quality and assets: this state has no raster imagery. UI symbols use the existing product icon components; no placeholder image or approximate decorative asset was introduced.
-- Copy and content: copy is resolved through the selected interface locale. The Pen-only scenario/progress captions are not duplicated inside the card because the real 2000NL shell already owns session context and progress. This implements the approved removal of duplicate session controls.
-
-## Full-view comparison evidence
-
-The normalized side-by-side comparison confirms the same card silhouette, centered headword lockup, dark surface, and primary/secondary action hierarchy. The surrounding application shell remains light and independently owned, as intended by the shared SenseCard contract.
-
-## Focused region comparison evidence
-
-The face card and action dock are large and readable in `comparison-face.png`; no smaller crop was needed. The answer state was inspected separately in the live browser with real `bank` content because Pen `10.18.01` is a content-body component rather than the same full-screen state.
-
-## Interaction evidence
-
-- Today → Continue opens the V2 face.
-- Hint can be toggled without changing the fixed shell.
-- Show answer reveals the V2 answer and first-encounter actions.
-- Space, I, T and H/J/K/L are owned by the V2 card while it is active; the
-  legacy screen handler cannot reveal or grade a second, hidden card state.
-- Start learning is accepted by Platform V2 and advances to the next card.
-- Reverse mode shows the definition on the face and reveals the headword on answer.
-- Reverse mode fails closed to the legacy presentation when the exact entry has
-  no real definition; usage metadata is never substituted for the prompt and
-  the headword is never exposed as a fallback answer.
-- Multi-sense lookup selects the exact trained entry rather than reverting to the legacy card.
-- The legacy inline training selector is absent while the Today/Setup rollout is active.
-- The Training surface does not render a report action until a durable
-  `report-content` handler exists; no visible control silently discards input.
-
-Browser console/runtime: no unhandled runtime error was visible during the final cycle. The local grouped-search readiness warning disappeared after the documented search backfill completed.
+- Fonts and typography: reusable Inter/Newsreader/Geist Mono owners are used. Headword scale, semantic metadata, section hierarchy, long-idiom line treatment, and compact footer type were checked. The application correctly localizes Dutch UI labels; Pen's mixed English CTA/review/error labels are not hardcoded over runtime message-key policy.
+- Spacing and layout rhythm: 10 px outer frame, 58 px app header, compact session block, 14 px card radius, 18 px card padding, separate scrolling card body, stable Face/Answer docks, 44 px footer, and error-only full card were checked against all four nodes.
+- Colors and tokens: approved dark surface, border, muted text, accent, green, amber, red, and review colors map to shared runtime classes. Light theme and wide dark layout were smoke-checked for contrast and containment.
+- Image and asset fidelity: the approved subset has no photographic/raster content inside the UI. Existing BrandLogo and Lucide icon assets are reused; no placeholder imagery, emoji, CSS illustration, or handcrafted replacement asset was introduced.
+- Copy and content: deterministic `bank` and `nodig` fixtures match source dictionary content. Dutch interface labels intentionally follow the selected-language catalogs. The session counter remains `1 / 28` in capture rather than Pen's illustrative `10 / 23`: runtime has an authoritative presented-card ordinal plus daily/review totals, but no authoritative planned-session-total field. Inventing or hardcoding `10 / 23` would violate the session contract and is outside #194.
+- Interaction/accessibility: visible actions remain semantic buttons with labels and focus rings. Direct Face audio remains top-right, Answer audio remains in the answer header, reverse Face stays quiet, and global Melden/Mark Known remain the only secondary actions. Mobile controls do not clip; desktop keeps the body bounded and docks stable.
 
 ## Comparison history
 
-1. Initial browser pass fell back to the legacy card because the local grouped-search index had not been populated. No design judgment was made from that state.
-2. The documented resumable local search backfill was completed. The same real entry then rendered through the V2 component.
-3. Direct face, answer, mutation/next-card, reverse face/answer, and exact-entry selection were rechecked. No P0/P1/P2 visual issue remained.
-4. Owner review exposed a shell-integration regression rather than a second
-   card design: the legacy outer scroll region could retain an offset when Face
-   changed to Answer, moving the stable V2 card beneath the application header.
-   The V2 card now owns its internal scrolling and the outer region is clipped;
-   the rich component anatomy remains the `418a108b` visual-contract baseline.
-   At the measured 1280 × 720 owner-review viewport the outer scroll offset is
-   `0`; the complete stage and known action end at 539 px while the owning
-   region ends at 571 px, so the secondary action row remains visible.
-   Evidence:
-   `docs/architecture/evidence/issue-124/gate-answer-dense-1280.png` and
-   `docs/architecture/evidence/issue-124/implementation-answer-fixed-1280.png`;
-   the combined review input is
-   `docs/architecture/evidence/issue-124/comparison-contract-vs-real-1280.png`.
-
-## Follow-up polish
-
-- P3: the Pen training components still carry `[WORKING]` labels even though the current runtime direction has owner approval; canvas status promotion should be handled as a separate governance edit rather than hidden inside this code slice.
-- P3: translation/audio availability depends on the real entry capabilities and is intentionally absent when the Platform response does not advertise it.
-
-## Final result
-
-final result: passed
-
----
-
-# Design QA — issue #137 mobile primary navigation
-
-Status: PASS
-Date: 2026-08-11
-
-## Evidence
-
-- Source visual truth: Pen node `vZigu`, `30.10.10 · MOBILE PRIMARY
-  NAVIGATION · BOTTOM TABS + FOCUSED SESSION · NARROW · v0.1 · [REVIEW]`,
-  exported at 1× to
-  `/Users/khrustal/adhoc/2000nl-issue-137-mobile-bottom-nav/design-qa-evidence/vZigu.png`
-  (`1042 × 432`).
-- Browser implementation: authenticated local pilot at `http://localhost:3100/`,
-  captured through the in-app browser at a `390 × 844` CSS viewport,
-  `deviceScaleFactor: 1`:
-  - `mobile-today-390x844-cdp.png`
-  - `mobile-library-390x844-cdp.png`
-  - `mobile-statistics-390x844-cdp.png`
-  - `mobile-session-390x844-cdp.png`
-- Narrow responsive check: `mobile-today-320x844.png`; measured document width
-  equals the `320 px` viewport width.
-- Desktop check: `desktop-today-1440x1000.png`; the visible primary navigation
-  remains the desktop variant and contains three Lucide icons.
-- Combined source/implementation comparison:
-  `/Users/khrustal/adhoc/2000nl-issue-137-mobile-bottom-nav/design-qa-evidence/navigation-comparison.png`
-  (`1042 × 854`). The four implementation captures were normalized to
-  `195 × 422` each and placed together below the Pen board.
+1. Initial comparison — blocked.
+   - P1: runtime captures contained a development database warning and Russian/synthetic copy, so state and viewport did not match.
+   - P1: outer frame, card bounds, app/session chrome, audio location, answer metadata actions, docks, footer, and recoverable-error composition differed.
+   - Fixes: added capability-complete deterministic Dutch visual fixtures; suppressed only the fixture-inapplicable health warning; implemented shared session header/chrome/footer/card primitives; moved direct Face audio and Answer controls; separated body scrolling from stable docks.
+   - Evidence: first 402 × 874 Face/Answer/Error captures and focused component assertions.
+2. Second comparison — blocked.
+   - P1: Answer omitted entry and definition translations; POS rendered long-form; error still showed session chrome/footer; long idiom was not captured.
+   - Fixes: rendered the approved translation state, introduced compact visual POS labels while retaining the full semantic title, made the failure state suppress session detail/footer, and added an exact-state long-idiom fixture/capture.
+   - Evidence: four-state Playwright suite and updated individual captures.
+3. Third comparison — blocked.
+   - P1: long-idiom children had per-line nested accent bars and incorrect indentation; error card reserved footer space; Answer and idiom vertical rhythm/wrapping drifted.
+   - Fixes: made each idiom one reusable accented block, aligned nested text, removed failure-only bottom reservation, expanded the error card to the outer inset, tightened answer header/content rhythm, and adjusted example/idiom optical sizes.
+   - Evidence: final `artifacts/design-qa/training-v1-comparison.png` plus native individual captures.
+4. Final comparison — passed.
+   - No actionable P0/P1/P2 visual differences remain in #194 scope.
+   - Expected dynamic/localization differences are documented above and must not be replaced with fixture-specific product code.
 
 ## Findings
 
-No actionable P0/P1/P2 mismatch remains.
+No actionable P0/P1/P2 findings remain.
 
-- Fonts and typography: destination labels preserve the compact sans hierarchy;
-  mobile tabs remain readable at 320 and 390 px. The Pen board uses English
-  specimen copy while the browser check uses the real Russian locale; this is
-  expected localization, not typography drift.
-- Spacing and layout rhythm: Today, Library and Statistics use one bottom tab
-  bar with equal-width destinations. It stays at the bottom without horizontal
-  overflow. The focused session removes the bar and gives the card the full
-  vertical stage.
-- Colors and visual tokens: active tabs use the existing white selected surface,
-  quiet slate inactive text and the established bordered shell in both Pen and
-  code.
-- Image quality and assets: the contract contains no raster imagery. Desktop
-  destination icons come from the existing Lucide library; compact mobile tabs
-  intentionally omit icons.
-- Copy and content: the three localized destination names map directly to
-  Today/Training, Library and Statistics. No duplicate header selector remains.
-- Behavior and accessibility: the visible mobile tab has `aria-current=page`;
-  the hidden desktop/mobile alternatives use mutually exclusive responsive
-  display rules. Close in the focused session returns to Today.
+P3 follow-up polish:
 
-## Comparison history
+- The runtime BrandLogo's glyph metrics differ slightly from the Pencil raster because the product's real font rendering is retained; hierarchy and header geometry are preserved.
+- When a future session contract exposes an authoritative planned total, the session count/progress can be compared to a non-illustrative Pen state without derivation.
 
-1. The first component run exposed only virtual-DOM query ambiguity because the
-   test environment does not compute responsive CSS. Tests were scoped to the
-   explicit `data-variant` contract; no browser layout change was required.
-2. The browser pass verified Today, Library, Statistics and focused Session at
-   390 px, then verified overflow at 320 px and desktop icons at 1440 px.
-3. The combined Pen/browser comparison found no P0/P1/P2 visual drift, so no
-   post-comparison visual fix was required.
+## Validation
 
-## Focused region comparison
-
-No separate crop was needed: the combined comparison keeps all four navigation
-regions readable and shows the full header, tab bar and focused-session close
-control for each state.
-
-## Primary interactions and runtime
-
-- Mobile tabs navigate directly among Training, Library and Statistics.
-- Continue opens the focused session without mobile tabs.
-- Close returns to Today and restores the tab bar.
-- No horizontal overflow at 320 or 390 px.
-- Local health gate reports `status: ok`, `database.target: local`, and the
-  approved pilot profile. No unhandled browser error was observed in the final
-  cycle.
-
-## Follow-up polish
-
-- P3: add a browser-level viewport regression test so the 320/390 px overflow
-  and single visible navigation landmark are protected automatically rather
-  than only by component tests plus visual QA.
-
-## Final result
+- Focused component/session suite: 119 / 119 passed.
+- Full UI unit suite: 839 passed, 111 skipped (environment-gated RPC tests), 0 failed.
+- Exact-state visual browser suite: 4 / 4 passed.
+- TypeScript typecheck: passed.
+- Lint: passed.
+- Optimized Next.js compile/type validation: passed; static export then stopped on the known local-environment prerequisite `Supabase credentials are not configured` for auth/root pages, unrelated to this UI slice.
 
 final result: passed
-
----
-
-# Design QA — issue #134 responsive shell
-
-Status: PASS
-Date: 2026-08-11
-
-## Evidence
-
-- Approved source: Pen node `fhnVs`, `30.10.09 · MOBILE HEADER SELECTOR
-  STATES · v0.1 · [REVIEW]`, exported to
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/fhnVs.png`.
-- Mobile implementation, closed selector (390×844):
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/03-mobile-selector-closed.png`.
-- Mobile implementation, open selector (390×844):
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/04-mobile-selector-open.png`.
-- Desktop implementation (1440×900):
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/05-desktop-shell.png`.
-- Narrow mobile implementation (320×844):
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/07-mobile-320.png`.
-- Combined source/implementation comparison:
-  `/Users/khrustal/adhoc/2000nl-responsive-shell-audit-2026-08-11/06-pen-vs-implementation.png`.
-
-## Result
-
-- PASS: the mobile header replaces the three peer labels with one 132×36
-  destination selector and retains Theme + Settings as the only quick actions.
-- PASS: the selector exposes localized accessible names, announces expanded
-  state, moves focus with ArrowUp/ArrowDown/Home/End, restores trigger focus on
-  Escape, and navigates to exact destinations.
-- PASS: desktop retains Training / Library / Statistics with Lucide icons.
-- PASS: account identity and Sign out are available inside Settings instead of
-  a separate header action.
-- PASS: the Training Report affordance is a native button with hover, focus,
-  active, busy and keyboard behavior. Until a durable submission contract is
-  implemented, activation returns explicit localized unavailable feedback
-  instead of silently discarding the action.
-- PASS: the separate bottom mobile navigation remains present. Its destination
-  icons are hidden at this compact breakpoint, preserving the prior tab layout;
-  measured width is 364/364 px with document width 390/390 px.
-- PASS: at 320 px the compact logo and selector retain a measured 10.9 px gap;
-  the bottom tabs measure 294/294 px and the document 320/320 px.
-- PASS: no global Search, Help, History, or Account action remains in the
-  responsive header. The legacy `R` shortcut and persisted pinned-History entry
-  path are also removed; definition clicks resolve into Details rather than
-  Recent. Recent remains reachable from the Answer-card details drawer.
-- PASS: the five-step onboarding tour targets only controls that remain in the
-  shell; removed Search and History targets are absent from both DOM and copy.
-- PASS: a dictionary miss from an interactive card word produces localized
-  visible `role=status` feedback instead of silently updating hidden history.
-
-## Intentional differences
-
-- The approved Pen reference uses English copy; the final browser check used
-  the Russian interface. The fixed-width selector truncates the current Russian
-  label in its closed state while the complete label remains available as its
-  accessible name and in the open menu.
-- Spacing between the session bar and Training card remains outside issue #134.
-
-## Final result
-
-final result: passed
-
----
-
-# Issue #191 Report / Melden design QA
-
-## Reference and tested state
-
-- Approved source: `/Users/khrustal/adhoc/2000nl-design-approvals/2026-08-20-report-melden-approved-mobile.png`
-- Source dimensions: 851 × 1848 px.
-- Implemented capture: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/training-answer.png`
-- Implemented viewport: 402 × 874 px, Training Answer, dark mode, no category selected.
-- Side-by-side evidence: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/reference-vs-implementation-402x874.png`
-- Library evidence: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/library.png` (402 × 874) and `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/final/desktop-library.png` (1280 × 900).
-- Delivery-state contact sheet: `/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui/docs/architecture/evidence/issue-191/delivery-states-402x874.png` (sent, queued offline, scheduled online retry, explicit retry, rejected).
-- Source SHA-256: `69a4033c3aa7c7d03490147e57a3982e744b99ee8b4e8ec09a7fefa3f2d3d6a7`
-- Implemented capture SHA-256: `688f293ade7e5d1d0416b1cc29952a34888888aaa5e2c6847b23041a07ca2683`
-- Side-by-side SHA-256: `fe29f1b9d59ff2d77d495cb63a5ff22bad39a83f957729f051501cd25d8f9726`
-- Delivery-state contact-sheet SHA-256: `8fb7fa747ee04849231964217298391bcacea10cae043c98b0daafafe24f2fd3`
-- Library 402 × 874 capture SHA-256: `d0a7e75859a326730ec068d4906f4b8e3cf35637c3033e270dd5fd7e1b0d3228`
-
-The source was scaled to the implementation viewport only for the side-by-side comparison. The implementation follows the approved correction in issue #202: the footer uses one-third Back and two-thirds Send, even though the earlier source image shows a more even split. The final sheet also replaces the source image's inaccurate “selected part” promise with truthful card-context wording and adds the required quiet privacy warning; those reviewed copy corrections intentionally add one compact line.
-
-## Iteration history
-
-1. First implementation reproduced the content and state model, but the mobile sheet was too tall and visually light. It also included an unapproved icon, subtitle, and close control.
-2. Removed those extra elements, introduced the approved drag handle, grouped the six categories into one divided surface, tightened row and comment spacing, and matched the dark surface.
-3. Matched the approved quiet context treatment, edge-to-edge mobile sheet, title scale, and outlined radio controls. Retained the corrected one-third/two-thirds action footer.
-4. Re-captured after review fixes: truthful current-card and session-information wording, separate exact-action detail only when present, privacy warning, principal-bound delivery, distinct offline/scheduled/retry/rejected states, stable live announcements, and Library placement. The complete form remains visible without overlap at 390 × 844 and 402 × 874.
-5. A dense six-meaning Library fixture was scrolled to its end at 402 × 874 and 1280 × 900. The report-enabled scroll region reserves 64 px: the 32 px action at an 8 px bottom inset plus at least a 12 px measured safe gap, keeping the final content visible and non-intersecting.
-
-## Final comparison
-
-- Layout: pass — bottom-sheet placement, full mobile width, rounded top corners, grouped rows, comment, context, and footer align with the approved composition.
-- Typography and hierarchy: pass — one title, compact category labels, quiet placeholder/context, and primary Send hierarchy.
-- Color and surface: pass — dark navy sheet, muted borders, dimmed card backdrop, indigo primary action.
-- Interaction: pass — exactly one global Report action, no inline flags, six radio choices, focus trap, Escape/backdrop close, trigger focus restoration, all training hotkeys suspended while open, reduced-motion support.
-- Responsive states: pass — 402 × 874, adjacent 390 × 844, desktop dark, and desktop light/reduced-motion.
-- Library: pass — 402 × 874 and 1280 × 900 each show one global action, zero inline flags, and a centered/non-overlapping sheet.
-- Delivery states: pass — sending, sent, queued offline, scheduled online retry, explicit retry, and rejected share the same sheet surface; real Chromium IndexedDB tests prove durable offline persistence, expired-record cleanup, and exactly one sender across two tabs without blocking or advancing the card.
-- Accessibility: pass — the dialog has bounded focus, `aria-busy` while sending, and one stable polite live region for sending and every terminal state.
-
-Final result: passed.

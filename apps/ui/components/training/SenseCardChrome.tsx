@@ -12,6 +12,7 @@ export function SenseCardHeadwordLockup({
   inlineAction,
   topActions,
   showMetadata = true,
+  variant = "default",
 }: {
   article?: string | null;
   headword: string;
@@ -21,6 +22,7 @@ export function SenseCardHeadwordLockup({
   inlineAction?: React.ReactNode;
   topActions?: React.ReactNode;
   showMetadata?: boolean;
+  variant?: "default" | "training";
 }) {
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const primaryText =
@@ -76,7 +78,11 @@ export function SenseCardHeadwordLockup({
             >
               {article ? (
                 <span
-                  className={`shrink-0 text-[1.35rem] leading-none sm:text-[1.5rem] ${mutedText}`}
+                  className={`shrink-0 leading-none ${mutedText} ${
+                    variant === "training"
+                      ? "pb-[0.16em] text-[24px]"
+                      : "text-[1.35rem] sm:text-[1.5rem]"
+                  }`}
                 >
                   {article}
                 </span>
@@ -84,10 +90,14 @@ export function SenseCardHeadwordLockup({
               <h2
                 aria-label={headword}
                 data-long-headword={longHeadword ? "true" : "false"}
-                className={`min-w-0 break-words font-normal tracking-[-0.035em] ${primaryText} ${
-                  longHeadword
-                    ? "text-[1.75rem] leading-[0.96] sm:text-[2.2rem]"
-                    : "text-[2.65rem] leading-[0.92] sm:text-[3rem]"
+                className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
+                  variant === "training"
+                    ? longHeadword
+                      ? "text-[32px] font-medium leading-[1] sm:text-[40px]"
+                      : "text-[48px] font-medium leading-[1]"
+                    : longHeadword
+                      ? "text-[1.75rem] font-normal leading-[0.96] sm:text-[2.2rem]"
+                      : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
                 }`}
               >
                 <HeadwordWithPronunciationBreaks text={headword} />
