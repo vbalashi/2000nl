@@ -9,9 +9,18 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const requireFromUi = createRequire(path.join(repoRoot, "apps/ui/package.json"));
 const { createClient } = requireFromUi("@supabase/supabase-js");
+const {
+  assertQaAccount,
+  assertQaRequest,
+  assertQaSessionPrincipal,
+  assertProductionSupabaseUrl,
+  parseQaEmailList,
+} = requireFromUi("./lib/server/qaIdentityPolicy.js");
+const { preserveQaRecoverySession } = requireFromUi("./lib/server/qaSessionRecovery.js");
 
 export const MAX_LOOKUP_REQUESTS = 50;
-export const FIXED_BENCHMARK_REQUESTS = 5;
+export const FIXED_BENCHMARK_REQUESTS = 6;
+export const MAX_AUTH_USER_LIST_PAGES = 1;
 export const MAX_TOTAL_REQUESTS = FIXED_BENCHMARK_REQUESTS + MAX_LOOKUP_REQUESTS;
 export const PRODUCTION_AUTH_CACHE_TTL_MS = 5_000;
 export const PRODUCTION_MIN_IDLE_MS = 6_000;
@@ -26,12 +35,35 @@ let benchmarkIdentity = null;
 let deploymentIdentity = null;
 let admin = null;
 let publicClient = null;
+const benchmarkRecoveryRoot = path.join(repoRoot, "tmp");
+let benchmarkRecoveryDir = null;
+let benchmarkRecoveryPath = null;
 
 async function main(argv = process.argv.slice(2)) {
   options = parseArgs(argv);
+  const hostname = new URL(options.baseUrl).hostname.replace(/^\[|\]$/g, "");
+  const loopback = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  const supabaseUrl = resolveBenchmarkSupabaseUrl(
+    options.baseUrl,
+    requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+  );
+  const allowedEmails = parseQaEmailList(
+    loopback
+      ? process.env.QA_TEST_USER_EMAIL_ALLOWLIST || options.email
+      : requiredEnv("QA_TEST_USER_EMAIL_ALLOWLIST"),
+  );
+  const referenceEmails = parseQaEmailList(
+    loopback ? process.env.QA_REFERENCE_USER_EMAILS : requiredEnv("QA_REFERENCE_USER_EMAILS"),
+  );
+  const qaRequest = assertQaRequest({
+    requestedEmail: options.email,
+    allowedEmails,
+    referenceEmails,
+  });
+  options.email = qaRequest.email;
   const boundedSupabaseFetch = createBoundedFetch();
   admin = createClient(
-    requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseUrl,
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -39,7 +71,7 @@ async function main(argv = process.argv.slice(2)) {
     },
   );
   publicClient = createClient(
-    requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseUrl,
     requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -59,6 +91,12 @@ async function main(argv = process.argv.slice(2)) {
       const result = await admin.auth.admin.signOut(accessToken, "local");
       if (result.error) throw new Error("benchmark_session_revocation_failed");
       sessionRevoked = true;
+      if (benchmarkRecoveryPath && fs.existsSync(benchmarkRecoveryPath)) {
+        fs.unlinkSync(benchmarkRecoveryPath);
+        fs.rmdirSync(benchmarkRecoveryDir);
+        benchmarkRecoveryPath = null;
+        benchmarkRecoveryDir = null;
+      }
     },
   });
 
@@ -76,6 +114,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 }
 
 async function mintSession(email) {
+  const account = await findAuthUser(email);
+  const identity = assertQaAccount(account, email);
   const link = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (link.error) throw link.error;
   const verified = await publicClient.auth.verifyOtp({
@@ -86,7 +126,115 @@ async function mintSession(email) {
   if (verified.error || !verified.data.session) {
     throw verified.error ?? new Error("benchmark_session_missing");
   }
-  return verified.data.session.access_token;
+  accessToken = verified.data.session.access_token;
+  await verifyBenchmarkSessionOrRevoke({
+    session: verified.data.session,
+    identity,
+    adminClient: admin,
+    preserveRecoverySession: async (session) => {
+      benchmarkRecoveryDir ??= createBenchmarkRecoveryLease(benchmarkRecoveryRoot);
+      benchmarkRecoveryPath = preserveQaRecoverySession(benchmarkRecoveryDir, session);
+    },
+  });
+  if (!benchmarkRecoveryPath) {
+    const recovery = persistBenchmarkSessionRecovery(
+      verified.data.session,
+      benchmarkRecoveryRoot,
+    );
+    benchmarkRecoveryDir = recovery.directory;
+    benchmarkRecoveryPath = recovery.filename;
+  }
+  return accessToken;
+}
+
+export function resolveBenchmarkSupabaseUrl(baseUrl, configuredSupabaseUrl) {
+  const target = canonicalOriginUrl(baseUrl, "benchmark target");
+  const hostname = target.hostname.replace(/^\[|\]$/g, "");
+  const loopback = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  if (loopback) {
+    const supabase = canonicalOriginUrl(configuredSupabaseUrl, "Supabase");
+    const supabaseHostname = supabase.hostname.replace(/^\[|\]$/g, "");
+    if (!["localhost", "127.0.0.1", "::1"].includes(supabaseHostname)) {
+      throw new Error("Local benchmark requires a loopback Supabase origin.");
+    }
+    return configuredSupabaseUrl;
+  }
+  if (
+    target.origin !== "https://2000.dilum.io" ||
+    target.pathname !== "/" ||
+    target.search ||
+    target.hash
+  ) {
+    throw new Error("Production benchmark target is not approved.");
+  }
+  return assertProductionSupabaseUrl(configuredSupabaseUrl);
+}
+
+function canonicalOriginUrl(value, label) {
+  const parsed = new URL(value);
+  if (
+    !["http:", "https:"].includes(parsed.protocol) ||
+    parsed.username ||
+    parsed.password ||
+    parsed.pathname !== "/" ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error(`${label} must be a canonical HTTP(S) origin-only URL.`);
+  }
+  return parsed;
+}
+
+export function createBenchmarkRecoveryLease(rootDirectory = benchmarkRecoveryRoot) {
+  fs.mkdirSync(rootDirectory, { recursive: true, mode: 0o700 });
+  const directory = fs.mkdtempSync(path.join(rootDirectory, "platform-benchmark-qa-recovery-"));
+  fs.chmodSync(directory, 0o700);
+  return directory;
+}
+
+export function persistBenchmarkSessionRecovery(session, rootDirectory = benchmarkRecoveryRoot) {
+  const directory = createBenchmarkRecoveryLease(rootDirectory);
+  const filename = preserveQaRecoverySession(directory, session);
+  return { directory, filename };
+}
+
+export async function verifyBenchmarkSessionOrRevoke({
+  session,
+  identity,
+  adminClient,
+  preserveRecoverySession,
+}) {
+  try {
+    assertQaSessionPrincipal(session, identity);
+  } catch (principalError) {
+    const revoked = await adminClient.auth.admin.signOut(session.access_token, "global");
+    if (revoked.error) {
+      let recoveryError = null;
+      try {
+        await preserveRecoverySession?.(session);
+      } catch (error) {
+        recoveryError = error;
+      }
+      throw new AggregateError(
+        [principalError, revoked.error, ...(recoveryError ? [recoveryError] : [])],
+        "benchmark_principal_mismatch_and_revocation_failed",
+      );
+    }
+    throw principalError;
+  }
+}
+
+export async function findAuthUser(email, adminClient = admin) {
+  const perPage = 1000;
+  for (let page = 1; page <= MAX_AUTH_USER_LIST_PAGES; page += 1) {
+    const result = await adminClient.auth.admin.listUsers({ page, perPage });
+    if (result.error) throw result.error;
+    const users = result.data?.users ?? [];
+    const found = users.find((user) => String(user.email ?? "").trim().toLowerCase() === email);
+    if (found) return found;
+    if (users.length < perPage) return null;
+  }
+  throw new Error("benchmark_qa_identity_not_found_within_bounded_page");
 }
 
 async function readDeploymentIdentity() {

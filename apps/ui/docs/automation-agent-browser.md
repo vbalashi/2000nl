@@ -44,7 +44,7 @@ For production auth injection (https://2000.dilum.io), see `docs/runbooks/produc
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` (server only, never client-side)
-   - `TEST_USER_EMAIL` (the automation user email)
+   - `QA_TEST_USER_EMAIL` and `QA_TEST_USER_EMAIL_ALLOWLIST` (the dedicated automation identity)
 
 ## Dev Login (No Manual OTP)
 
@@ -58,7 +58,7 @@ an alternate port, open that same origin:
 - `http://localhost:<port>/dev/test-login?redirectTo=/`
 
 What it does:
-- `GET /api/dev/test-session` (dev-only) uses `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to generate an email OTP for `TEST_USER_EMAIL`.
+- `GET /api/dev/test-session` (dev-only) uses the local wrapper's exact allowlisted QA identity and requires its server-read QA marker before generating an OTP.
 - It then exchanges the OTP for a real Supabase session and stores the session JSON in `localStorage` (Supabase format).
 
 If this flow is flaky in headless automation (token rotation / Strict Mode timing), use the deterministic injection flow below.
@@ -74,89 +74,26 @@ Notes:
 - Never commit anything under `tmp/`.
 - Supabase auth is origin-scoped. A session injected into `http://localhost:3100` does not apply to `https://2000.dilum.io` and vice versa.
 
-## Deterministic Session Injection (Recommended)
+## Deterministic local login
 
-1) Mint a session JSON (server-side, no email) and write it to `tmp/agent-browser/`:
+Use the dev-only `/dev/test-login` flow created by `scripts/ui-local-dev.sh`.
+It applies the same allowlist, reference-identity, durable-marker, and exact
+principal checks as the production helper. Do not mint or copy raw Supabase
+session JSON with an inline script.
 
-```bash
-cd /path/to/2000nl
-mkdir -p tmp/agent-browser
-set -a && source .env.local && set +a
-node - <<'NODE'
-const fs = require('fs');
-const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+## Production smoke
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.TEST_USER_EMAIL;
-
-const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-const pub = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-
-(async () => {
-  const link = await admin.auth.admin.generateLink({ type: 'magiclink', email });
-  if (link.error) throw link.error;
-  const otp = link.data.properties.email_otp;
-  const ver = await pub.auth.verifyOtp({ email, token: otp, type: 'email' });
-  if (ver.error) throw ver.error;
-
-  const payload = { session: ver.data.session };
-  const outJson = path.join('tmp', 'agent-browser', 'local-session.json');
-  const outB64 = path.join('tmp', 'agent-browser', 'local-session.b64');
-  fs.writeFileSync(outJson, JSON.stringify(payload, null, 2));
-  fs.writeFileSync(outB64, Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'));
-  console.log('Wrote', outJson);
-})();
-NODE
-```
-
-2) Inject into `http://localhost:3100` using a persistent profile:
-
-```bash
-cd /path/to/2000nl
-b64=$(cat tmp/agent-browser/local-session.b64)
-
-agent-browser close || true
-agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/
-agent-browser --session ab-local wait --load networkidle
-
-cat <<EOF | agent-browser --session ab-local eval --stdin
-(() => {
-  const key = "sb-lliwdcpuuzjmxyzrjtoz-auth-token";
-  const json = atob("${b64}");
-  for (const k of Object.keys(localStorage)) {
-    if (k.startsWith("sb-")) localStorage.removeItem(k);
-  }
-  localStorage.setItem(key, JSON.stringify(JSON.parse(json).session));
-  return "ok";
-})()
-EOF
-
-agent-browser --session ab-local reload
-agent-browser --session ab-local wait --text "Antwoord Tonen"
-```
-
-3) Next runs (no auth step):
-
-```bash
-agent-browser --session ab-local --profile tmp/agent-browser/profile-2000nl-local open http://localhost:3100/
-```
-
-## Production Profile (Recommended)
-
-For production debugging, use a separate profile directory so you do not mix dev and prod sessions:
-
-- `tmp/agent-browser/profile-2000nl-prod`
-
-The session injection steps are the same idea, but you must mint a prod session JSON and inject it into the prod origin. Follow `docs/runbooks/production-login.md` (Option B), and always include `--profile tmp/agent-browser/profile-2000nl-prod` in your prod `agent-browser` commands.
-
-If you want the whole flow in one command, run:
+Do not reuse the local injection snippet or a human-owned browser session in
+production. The production wrapper enforces the explicit allowlist, reference
+identity deny-list, durable QA marker, and exact post-exchange principal. It
+also revokes the session and removes token artifacts when it exits:
 
 ```bash
 scripts/ab-auth-prod.sh
 ```
+
+Keep production smoke read-only unless the owning issue explicitly authorizes a
+mutation. See `docs/runbooks/production-login.md` for the full safety contract.
 
 ## Desktop Run (Example)
 
@@ -232,7 +169,7 @@ If `http://localhost:3100/dev/test-login` shows an error:
 - `Token has expired or is invalid`
   - `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` is wrong for the project, or was rotated.
 - `Email link is invalid or has expired` / `Token has expired or is invalid` from `verifyOtp`
-  - Check that Auth is configured for **email OTP** and that `TEST_USER_EMAIL` exists in the project.
+  - Check that Auth is configured for **email OTP** and that `QA_TEST_USER_EMAIL` exists with the required QA marker.
 
 Noise in console during automation:
 - `get_last_review_debug` missing:

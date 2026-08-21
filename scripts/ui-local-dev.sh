@@ -22,7 +22,7 @@ Options:
 Environment:
   PORT            UI port. Default: 3100.
   HOST            Reserved for future use. apps/ui dev script already binds 0.0.0.0.
-  TEST_USER_EMAIL Dev-login user email. Default: test@2000nl.local.
+  QA_TEST_USER_EMAIL Dev-login user email. Default: test@2000nl.local.
 EOF
 }
 
@@ -84,7 +84,8 @@ export SUPABASE_URL="$api_url"
 export SUPABASE_ANON_KEY="$anon_key"
 export SUPABASE_SECRET_KEY="${secret_key:-$service_role_key}"
 export SUPABASE_SERVICE_ROLE_KEY="$service_role_key"
-export TEST_USER_EMAIL="${TEST_USER_EMAIL:-test@2000nl.local}"
+export QA_TEST_USER_EMAIL="${QA_TEST_USER_EMAIL:-test@2000nl.local}"
+export QA_TEST_USER_EMAIL_ALLOWLIST="${QA_TEST_USER_EMAIL_ALLOWLIST:-$QA_TEST_USER_EMAIL}"
 export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
@@ -99,4 +100,5 @@ echo "  Cache:    $NEXT_DIST_DIR"
 echo "  Profile:  $APP_ROLLOUT_PROFILE"
 
 cd "$repo_root/apps/ui"
+node scripts/ensure-local-qa-account.js
 exec npm run dev -- --port "$port"

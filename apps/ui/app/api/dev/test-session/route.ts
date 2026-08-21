@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { parseQaEmailList } from "@/lib/server/qaIdentityPolicy";
+import { mintQaSession } from "@/lib/server/qaSession";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +25,11 @@ export async function GET(): Promise<NextResponse> {
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
     process.env.SUPABASE_SECRET_KEY ??
     process.env.SUPABASE_SERVICE_KEY;
-  const testUserEmail = process.env.TEST_USER_EMAIL;
+  const testUserEmail = process.env.QA_TEST_USER_EMAIL ?? "test@2000nl.test";
+  const allowedEmails = parseQaEmailList(
+    process.env.QA_TEST_USER_EMAIL_ALLOWLIST ?? "test@2000nl.test"
+  );
+  const referenceEmails = parseQaEmailList(process.env.QA_REFERENCE_USER_EMAILS);
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json(
@@ -42,66 +48,35 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 
-  if (!testUserEmail) {
-    return NextResponse.json(
-      { error: "TEST_USER_EMAIL is not configured." },
-      { status: 500 }
-    );
-  }
-
-  // 1) Generate an OTP (server-side) without sending an email.
   const admin = createClient(supabaseUrl, serviceKey, {
     // This route is a one-shot helper; never start background refresh timers.
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
-  const linkRes = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email: testUserEmail,
-  });
-
-  if (linkRes.error || !linkRes.data?.properties?.email_otp) {
-    return NextResponse.json(
-      {
-        step: "generateLink",
-        error: linkRes.error?.message ?? "Failed to generate OTP.",
-        status: (linkRes.error as any)?.status ?? null,
-      },
-      { status: 500 }
-    );
-  }
-
-  // 2) Exchange the generated link token for a real Supabase session (valid JWT).
   const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
     // Important: don't auto-refresh in the background, otherwise the freshly-issued
     // refresh token can get rotated/consumed before the caller stores it.
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 
-  // Admin `generateLink({ type: "magiclink" })` also returns a short `email_otp`.
-  // In Supabase "Email OTP" mode, that OTP is verified with `type: "email"` to mint
-  // a real session (valid JWT + refresh token).
-  const verifyRes = await publicClient.auth.verifyOtp({
-    email: testUserEmail,
-    token: linkRes.data.properties.email_otp,
-    type: "email",
-  });
-
-  if (verifyRes.error || !verifyRes.data?.session) {
+  try {
+    const { session } = await mintQaSession({
+      admin,
+      publicClient,
+      requestedEmail: testUserEmail,
+      allowedEmails,
+      referenceEmails,
+    });
+    const res = NextResponse.json({ session }, { status: 200 });
+    res.headers.set("cache-control", "no-store, max-age=0");
+    return res;
+  } catch (error) {
     return NextResponse.json(
       {
-        step: "verifyOtp",
-        error: verifyRes.error?.message ?? "Failed to verify OTP.",
-        status: (verifyRes.error as any)?.status ?? null,
+        step: "qaIdentity",
+        error: error instanceof Error ? error.message : "Failed to create QA session.",
       },
       { status: 500 }
     );
   }
-
-  const res = NextResponse.json(
-    { session: verifyRes.data.session },
-    { status: 200 }
-  );
-  res.headers.set("cache-control", "no-store, max-age=0");
-  return res;
 }

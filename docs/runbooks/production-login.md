@@ -2,146 +2,55 @@
 
 Production UI: https://2000.dilum.io
 
-This app uses Supabase Auth. In production, the `/dev/test-login` helper is intentionally disabled.
-
-This doc describes two ways to get an authenticated session in production for debugging (e.g. testing sentence audio playback) without waiting for OTP email delivery.
-
-If you just want a one-command flow (mint + inject + reload), use:
+The production `/dev/test-login` helper is intentionally disabled. Use a normal
+OTP/OAuth login for personal testing. Automated production smoke checks must use
+the dedicated QA account through the fail-closed wrapper:
 
 ```bash
 scripts/ab-auth-prod.sh
 ```
 
-## Option A: Normal Production Login (OTP/OAuth)
+## Required server-only configuration
 
-1. Open `https://2000.dilum.io`.
-2. Log in via email OTP or Google OAuth.
-
-This is the simplest and safest path.
-
-## Option B: Inject a Supabase Session Token into Production
-
-Supabase sessions are stored in `localStorage` under a key like:
-
-- `sb-<project_ref>-auth-token`
-
-For this project, `<project_ref>` is `lliwdcpuuzjmxyzrjtoz`, so the key is:
-
-- `sb-lliwdcpuuzjmxyzrjtoz-auth-token`
-
-Because `localStorage` is origin-scoped, a session minted on `http://127.0.0.1:3001` does not automatically apply to `https://2000.dilum.io`. To use a local/dev-minted session in prod, you must copy the session JSON into prod's `localStorage`.
-
-### 1) Mint a session JSON (server-side, no email)
-
-This uses the Supabase service role key to generate an OTP and exchange it for a real session.
-
-Prereqs (already supported by `.env.local` in this repo):
+Keep these values in a gitignored env file; never pass them to browser code:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `TEST_USER_EMAIL`
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`
+- `QA_TEST_USER_EMAIL` — the dedicated QA identity
+- `QA_TEST_USER_EMAIL_ALLOWLIST` — must explicitly contain that identity
+- `QA_REFERENCE_USER_EMAILS` — comma-separated personal/reference identities
+  that automation must never use
 
-Command:
+The Supabase Auth user must also have server-read
+`app_metadata.is_qa_test_user: true`.
 
-```bash
-cd /path/to/2000nl
-set -a && source .env.local && set +a
-node - <<'NODE'
-const fs = require('fs');
-const { createClient } = require('@supabase/supabase-js');
+The legacy `TEST_USER_EMAIL` variable is not accepted by the production helper.
+Its name never proves that an account is safe for automation.
+The configured personal owner account is reference-only: its literal value may
+appear in `QA_REFERENCE_USER_EMAILS`, but never as the QA identity or allowlist.
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.TEST_USER_EMAIL;
+## Safety contract
 
-const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-const pub = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+Before opening production, the wrapper:
 
-(async () => {
-  const link = await admin.auth.admin.generateLink({ type: 'magiclink', email });
-  if (link.error) throw link.error;
+1. rejects missing or non-allowlisted QA configuration;
+2. rejects every identity listed as personal/reference;
+3. reads the Auth user and requires the durable QA marker;
+4. exchanges the OTP and rechecks the exact email and user ID;
+5. only then opens the site and installs the session.
 
-  const otp = link.data.properties.email_otp;
-  const ver = await pub.auth.verifyOtp({ email, token: otp, type: 'email' });
-  if (ver.error) throw ver.error;
+On success, interruption, or failure after minting, it clears the browser auth
+entry, globally revokes the QA session, and deletes local token artifacts. Do
+not copy session JSON into another profile or bypass the wrapper with an inline
+OTP script.
 
-  // Write session JSON to a file (do not commit it)
-  fs.writeFileSync('tmp/prod-session.json', JSON.stringify({ session: ver.data.session }, null, 2));
+Production smoke checks should be read-only unless an owning issue explicitly
+authorizes a mutation. Loading the authenticated startup surface is safe;
+revealing/grading cards, reporting, changing settings, and starting learning are
+mutations and are outside a read-only smoke.
 
-  // Sanity check: refresh token should be usable
-  const rt = ver.data.session.refresh_token;
-  const resp = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, {
-    method: 'POST',
-    headers: { apikey: anon, authorization: `Bearer ${anon}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ refresh_token: rt }),
-  });
-  if (!resp.ok) {
-    throw new Error(`refresh failed: ${resp.status} ${await resp.text()}`);
-  }
+## Normal production login
 
-  console.log('Wrote tmp/prod-session.json');
-})();
-NODE
-```
-
-### 2) Inject into production with `agent-browser`
-
-This is the most repeatable flow for debugging.
-
-```bash
-cd /path/to/2000nl
-
-# Use a persistent profile so the prod session sticks across runs.
-# If you see `--profile ignored: daemon already running`, run `agent-browser close` and retry.
-mkdir -p tmp/agent-browser
-agent-browser close || true
-
-# Convert the session JSON to base64 to avoid quoting issues when passing to agent-browser.
-node - <<'NODE'
-const fs = require('fs');
-const payload = fs.readFileSync('tmp/prod-session.json', 'utf8');
-fs.writeFileSync('tmp/prod-session.b64', Buffer.from(payload, 'utf8').toString('base64'));
-NODE
-
-b64=$(cat tmp/prod-session.b64)
-
-agent-browser --session prod2000 --profile tmp/agent-browser/profile-2000nl-prod open https://2000.dilum.io/
-agent-browser --session prod2000 wait --load networkidle
-
-# Clear existing Supabase keys + set the new session JSON
-cat <<EOF | agent-browser --session prod2000 eval --stdin
-(() => {
-  const key = "sb-lliwdcpuuzjmxyzrjtoz-auth-token";
-  const json = atob("${b64}");
-  const session = JSON.parse(json).session;
-  for (const k of Object.keys(localStorage)) {
-    if (k.startsWith("sb-")) localStorage.removeItem(k);
-  }
-  localStorage.setItem(key, JSON.stringify(session));
-  return "ok";
-})()
-EOF
-
-agent-browser --session prod2000 reload
-agent-browser --session prod2000 wait --load networkidle
-agent-browser --session prod2000 snapshot -i -C
-```
-
-You should now see the training UI (not the auth screen).
-
-### 3) Next runs (no auth step, usually)
-
-```bash
-agent-browser --session prod2000 --profile tmp/agent-browser/profile-2000nl-prod open https://2000.dilum.io/
-agent-browser --session prod2000 wait --text "Antwoord Tonen"
-```
-
-If it drops back to the login screen, the session likely expired. Re-run steps (1) + (2) to mint and inject a new session.
-
-### Security notes
-
-- `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side or shipped to production.
-- `tmp/prod-session.json` contains a live session token. Do not commit it.
-- Prefer Option A (real login) whenever possible.
+For a human-owned session, open `https://2000.dilum.io` and log in via email OTP
+or Google OAuth. Never point automation at that identity.

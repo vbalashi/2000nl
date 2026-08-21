@@ -5,7 +5,7 @@
 //
 // Usage:
 //   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
-//   TEST_USER_EMAIL=... TEST_USER_PASSWORD=... \
+//   QA_TEST_USER_EMAIL=... QA_TEST_USER_EMAIL_ALLOWLIST=... TEST_USER_PASSWORD=... \
 //   node scripts/test-account.js create
 //
 //   ... node scripts/test-account.js seed
@@ -15,6 +15,12 @@
 // - Seeding is best-effort; it assumes core migrations are applied.
 
 const { createClient } = require("@supabase/supabase-js");
+const {
+  QA_ACCOUNT_MARKER,
+  assertQaAccount,
+  assertQaRequest,
+  parseQaEmailList,
+} = require("../lib/server/qaIdentityPolicy");
 
 const getEnv = (key) => {
   const value = process.env[key];
@@ -25,8 +31,15 @@ const getEnv = (key) => {
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || "test@2000nl.test";
+const QA_TEST_USER_EMAIL = process.env.QA_TEST_USER_EMAIL;
 const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "test-password-123";
+
+const qaRequest = () =>
+  assertQaRequest({
+    requestedEmail: QA_TEST_USER_EMAIL,
+    allowedEmails: parseQaEmailList(process.env.QA_TEST_USER_EMAIL_ALLOWLIST),
+    referenceEmails: parseQaEmailList(process.env.QA_REFERENCE_USER_EMAILS),
+  });
 
 const supabaseAdmin = () => {
   const url = SUPABASE_URL || getEnv("NEXT_PUBLIC_SUPABASE_URL");
@@ -36,7 +49,7 @@ const supabaseAdmin = () => {
   });
 };
 
-async function findUserIdByEmail(client, email) {
+async function findUserByEmail(client, email) {
   let page = 1;
   const perPage = 1000;
 
@@ -45,41 +58,45 @@ async function findUserIdByEmail(client, email) {
     if (error) throw error;
     const users = data?.users || [];
     const found = users.find((u) => u.email === email);
-    if (found?.id) return found.id;
+    if (found?.id) return found;
     if (users.length < perPage) return null;
     page += 1;
   }
 }
 
 async function createOrUpdateTestUser() {
+  const { email } = qaRequest();
   const client = supabaseAdmin();
 
   const { data: createData, error: createError } =
     await client.auth.admin.createUser({
-      email: TEST_USER_EMAIL,
+      email,
       password: TEST_USER_PASSWORD,
       email_confirm: true,
+      app_metadata: { [QA_ACCOUNT_MARKER]: true },
     });
 
   if (!createError && createData?.user?.id) {
-    console.log(`Created test user: ${TEST_USER_EMAIL} (${createData.user.id})`);
+    const identity = assertQaAccount(createData.user, email);
+    console.log(`Created dedicated QA test user (${identity.id})`);
     return createData.user.id;
   }
 
   // If already exists, update password + confirm email.
-  const userId = await findUserIdByEmail(client, TEST_USER_EMAIL);
-  if (!userId) {
+  const user = await findUserByEmail(client, email);
+  if (!user) {
     throw createError || new Error("Failed to create test user and could not find it.");
   }
+  const identity = assertQaAccount(user, email);
 
-  const { error: updateError } = await client.auth.admin.updateUserById(userId, {
+  const { error: updateError } = await client.auth.admin.updateUserById(identity.id, {
     password: TEST_USER_PASSWORD,
     email_confirm: true,
   });
   if (updateError) throw updateError;
 
-  console.log(`Updated test user: ${TEST_USER_EMAIL} (${userId})`);
-  return userId;
+  console.log(`Updated dedicated QA test user (${identity.id})`);
+  return identity.id;
 }
 
 async function seedTestData(userId) {
@@ -199,15 +216,18 @@ async function main() {
     throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY.");
   }
 
+  const { email } = qaRequest();
+
   if (cmd === "create") {
     await createOrUpdateTestUser();
     return;
   }
 
   if (cmd === "seed") {
-    const userId = await findUserIdByEmail(supabaseAdmin(), TEST_USER_EMAIL);
-    if (!userId) throw new Error("Test user not found. Run `create` first.");
-    await seedTestData(userId);
+    const user = await findUserByEmail(supabaseAdmin(), email);
+    if (!user) throw new Error("Dedicated QA test user not found. Run `create` first.");
+    const identity = assertQaAccount(user, email);
+    await seedTestData(identity.id);
     return;
   }
 
@@ -224,4 +244,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-

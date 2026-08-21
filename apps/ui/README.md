@@ -89,13 +89,17 @@ In the browser, you can also use `?debugTraining=1` or set `localStorage["debug:
 For browser automation (Playwright, `agent-browser`, CI smoke checks) it helps to have a dedicated test user.
 
 1. Put credentials in `.env.local` (gitignored) or your CI secrets:
-   - `TEST_USER_EMAIL`
+   - `QA_TEST_USER_EMAIL`
+   - `QA_TEST_USER_EMAIL_ALLOWLIST`
+   - `QA_REFERENCE_USER_EMAILS` (required for production QA)
    - `TEST_USER_PASSWORD`
 2. (Optional, recommended) Provision the user + seed predictable data via Supabase Admin API:
    ```
    NEXT_PUBLIC_SUPABASE_URL=... \
    SUPABASE_SERVICE_ROLE_KEY=... \
-   TEST_USER_EMAIL=test@2000nl.test \
+   QA_TEST_USER_EMAIL=test@2000nl.test \
+   QA_TEST_USER_EMAIL_ALLOWLIST=test@2000nl.test \
+   QA_REFERENCE_USER_EMAILS=owner@example.com \
    TEST_USER_PASSWORD=test-password-123 \
    node scripts/test-account.js create+seed
    ```
@@ -105,7 +109,7 @@ Notes:
 - For local development / browser automation that needs a *real* Supabase session without typing an OTP, use the dev-only helper page:
   - `http://localhost:3100/dev/test-login?redirectTo=/` when using `scripts/ui-local-dev.sh --port 3100`
   - `http://localhost:3000/dev/test-login` when using plain `npm run dev`
-  - both require `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`, plus `TEST_USER_EMAIL`, on the server
+  - both require `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`; the local wrapper supplies an explicitly allowlisted local QA identity
 - For `agent-browser` examples (desktop + mobile) and how to persist sessions across runs, see `apps/ui/docs/automation-agent-browser.md`.
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
 

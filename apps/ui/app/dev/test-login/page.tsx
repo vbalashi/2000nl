@@ -107,7 +107,7 @@ export default function DevTestLoginPage() {
       <h1 className="text-2xl font-semibold">Dev test login</h1>
       <p className="text-sm text-neutral-600">
         Uses a server-only Supabase Admin API call to mint an OTP for{" "}
-        <code>TEST_USER_EMAIL</code>, then exchanges it for a session and stores
+        <code>QA_TEST_USER_EMAIL</code>, then exchanges it for a session and stores
         the session JSON in <code>localStorage</code> (Supabase format).
       </p>
 
