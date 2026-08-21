@@ -202,6 +202,46 @@ describe("feedback routes", () => {
     );
   });
 
+  test("passes an opaque ASCII Content Node identifier unchanged to the report RPC", async () => {
+    const { POST } = await import("@/app/api/feedback/reports/route");
+    getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
+    rpc.mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        reportId: "88888888-8888-4888-8888-888888888888",
+        feedbackItemId: "99999999-9999-4999-8999-999999999999",
+        acceptedAt: "2026-08-21T10:00:01Z",
+      },
+      error: null,
+    });
+    const base = await sensePayload();
+    const body = await buildDiagnosticReport({
+      ...base,
+      reportId: "88888888-8888-4888-8888-888888888888",
+      target: {
+        kind: "content-node",
+        entryId: "11111111-1111-4111-8111-111111111111",
+        contentNodeId: "node/definition#primary",
+        nodeKind: "definition",
+        sourceTextFingerprint: "b".repeat(64),
+      },
+    });
+
+    const response = await POST(request("http://localhost/api/feedback/reports", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "submit_diagnostic_report_as_principal",
+      expect.objectContaining({
+        p_payload: expect.objectContaining({ target: body.target }),
+      }),
+    );
+  });
+
   test("fails reordered SenseCard atoms closed rather than applying a route-only ordering rule", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });

@@ -174,6 +174,26 @@ describeIfDb("Diagnostic feedback RPC", () => {
     });
   });
 
+  test("treats an opaque Content Node identifier as text instead of casting it to UUID", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createReportEntry(client, userId);
+      const opaqueTarget = {
+        kind: "content-node",
+        entryId: fixture.entryId,
+        contentNodeId: "node/definition#primary",
+        nodeKind: "definition",
+        sourceTextFingerprint: fixture.node.source_text_fingerprint,
+      };
+
+      await expect(submitReport(
+        client,
+        userId,
+        reportEnvelope(randomUUID(), opaqueTarget, fixture.attestation.cardContent),
+      )).rejects.toThrow(/stale_target/);
+    });
+  });
+
   test("accepts an exact historical Training action and rejects a mismatched receipt projection", async () => {
     await withTransaction(pool, async (client) => {
       const userId = randomUUID();
@@ -262,6 +282,55 @@ describeIfDb("Diagnostic feedback RPC", () => {
       )).rejects.toThrow(/action_target_mismatch/);
       await client.query("rollback to savepoint false_acceptance");
       await client.query("release savepoint false_acceptance");
+    });
+  });
+
+  test("does not let another principal's receipt turn a missing action into a mismatch", async () => {
+    await withTransaction(pool, async (client) => {
+      const ownerId = randomUUID();
+      const reporterId = randomUUID();
+      const reporterFixture = await createReportEntry(client, reporterId);
+      await client.query("reset role");
+      const ownerFixture = await createReportEntry(client, ownerId);
+      await client.query("reset role");
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", [ownerId]);
+      const clientEventId = randomUUID();
+      await client.query(
+        `select perform_platform_v2_card_action(
+           $1,'mark-known',$2,'word-to-definition','untracked',
+           null,null,null,$3,null,'first_party',null
+         )`,
+        [ownerId, ownerFixture.entryId, clientEventId],
+      );
+      await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+      await client.query("set local role service_role");
+
+      const missingForReporter = await submitReport(
+        client,
+        reporterId,
+        reportEnvelope(
+          randomUUID(),
+          {
+            kind: "training-action",
+            entryId: reporterFixture.entryId,
+            cardTypeId: "word-to-definition",
+            stateRevision: "untracked",
+            contentRevision: reporterFixture.attestation.contentRevision,
+            actionId: "mark-known",
+            clientEventId,
+            reviewResult: null,
+            activeKnownMarkId: null,
+            knownMarkRevision: null,
+          },
+          reporterFixture.attestation.cardContent,
+          "timeout",
+        ),
+      );
+
+      expect(missingForReporter.rows[0].result).toEqual(expect.objectContaining({
+        status: "accepted",
+        commitState: "not-found",
+      }));
     });
   });
 

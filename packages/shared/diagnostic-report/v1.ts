@@ -12,7 +12,7 @@ export const DIAGNOSTIC_RECENT_EVENTS_MAX_BYTES = 32 * 1024;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
-const IDENTIFIER = /^[A-Za-z0-9._:-]{1,128}$/;
+const IDENTIFIER = /^[\x21-\x7e]{1,128}$/;
 const BCP47 = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const RFC3339_MS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
@@ -353,12 +353,12 @@ export async function buildDiagnosticReport(input: Omit<DiagnosticReportV1, "sch
     observations: { ...input.observations, recentEvents: events, omittedEventCount: input.observations.recentEvents.length - events.length + input.observations.omittedEventCount },
   });
   let atoms = boundedAtoms;
-  let events = input.observations.recentEvents.slice(-30).reverse();
+  let events = input.observations.recentEvents.slice(-30);
   while (atoms.length && (utf8Bytes(canonicalJson(make(atoms, []))) > DIAGNOSTIC_REPORT_MAX_BYTES || utf8Bytes(canonicalJson(make(atoms, []).cardContent)) > DIAGNOSTIC_CARD_CONTENT_MAX_BYTES)) atoms = atoms.slice(0, -1);
   while (events.length && (
     utf8Bytes(canonicalJson(events)) > DIAGNOSTIC_RECENT_EVENTS_MAX_BYTES ||
     utf8Bytes(canonicalJson(make(atoms, events))) > DIAGNOSTIC_REPORT_MAX_BYTES
-  )) events = events.slice(0, -1);
+  )) events = events.slice(1);
   const payload = make(atoms, events);
   const parsed = parseDiagnosticReport(payload);
   if (!parsed.ok) throw new Error(parsed.error);

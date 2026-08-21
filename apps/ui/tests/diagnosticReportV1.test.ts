@@ -97,8 +97,8 @@ describe("Diagnostic Report v1", () => {
 
   test("accepts Platform identifier contentNodeId values rather than requiring UUIDs", async () => {
     const report: any = await validReport();
-    report.target = { kind: "content-node", entryId: reportId, contentNodeId: "node.definition:primary", nodeKind: "definition", sourceTextFingerprint: "b".repeat(64) };
-    report.cardContent = { atoms: [{ role: "definition", contentNodeId: "node.definition:primary", text: "betekenis", truncated: false }], omittedAtomCount: 0 };
+    report.target = { kind: "content-node", entryId: reportId, contentNodeId: "node/definition#primary", nodeKind: "definition", sourceTextFingerprint: "b".repeat(64) };
+    report.cardContent = { atoms: [{ role: "definition", contentNodeId: "node/definition#primary", text: "betekenis", truncated: false }], omittedAtomCount: 0 };
     expect(parseDiagnosticReportTransport(report).ok).toBe(true);
   });
 
@@ -231,4 +231,28 @@ describe("Diagnostic Report v1", () => {
     expect((report.cardContent?.atoms.length ?? 0) + (report.cardContent?.omittedAtomCount ?? 0)).toBe(40);
     expect(parseDiagnosticReportTransport(report).ok).toBe(true);
   });
+
+  test("keeps the newest diagnostic events in their original source order", async () => {
+    const orderedEvents = Array.from({ length: 35 }, (_, index) => ({
+      stage: "lookup-fetch" as const,
+      relativeMs: index,
+      durationMs: index,
+      outcome: "succeeded" as const,
+      safeCode: null,
+      correlationId: null,
+    }));
+    const report = await buildDiagnosticReport({
+      reportId,
+      feedback: { kind: "loading", problemType: "loading-failure", comment: null },
+      target: { kind: "app-operation", route: "training", stage: "lookup-fetch", operationCorrelationId: correlationId, entryId: null },
+      sourceContext: null,
+      cardContent: null,
+      observations: { ...observations(), recentEvents: orderedEvents },
+    });
+
+    expect(report.observations.recentEvents.map((event) => event.relativeMs))
+      .toEqual(Array.from({ length: 30 }, (_, index) => index + 5));
+    expect(report.observations.omittedEventCount).toBe(5);
+  });
+
 });

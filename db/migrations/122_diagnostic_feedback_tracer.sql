@@ -415,7 +415,7 @@ BEGIN
             'sourceTextFingerprint', source_text_fingerprint
         ) INTO v_node
         FROM private.platform_v2_content_nodes
-        WHERE id = (p_target->>'contentNodeId')::uuid
+        WHERE id::text = p_target->>'contentNodeId'
           AND entry_id = v_entry_id
           AND binding_state = 'active';
         IF v_node IS NULL
@@ -446,7 +446,8 @@ BEGIN
         END IF;
         IF EXISTS (
             SELECT 1 FROM public.platform_v2_action_receipts receipt
-            WHERE receipt.client_event_id = (p_target->>'clientEventId')::uuid
+            WHERE receipt.user_id = p_user_id
+              AND receipt.client_event_id = (p_target->>'clientEventId')::uuid
         ) OR p_observations#>>'{actionObservation,clientObservedOutcome}'
             IN ('accepted', 'duplicate') THEN
             RAISE EXCEPTION 'action_target_mismatch';
