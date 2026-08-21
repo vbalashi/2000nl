@@ -61,7 +61,8 @@
     "known": {
       "mark": "Mark as known",
       "marked": "Marked as known",
-      "undo": "Undo known"
+      "undo": "Undo known",
+      "undoFailed": "Could not undo the known mark. Please try again."
     },
     "review": {
       "fail": "Again",

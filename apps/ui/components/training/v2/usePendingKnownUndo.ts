@@ -16,7 +16,7 @@ export function usePendingKnownUndo(
   const [pendingUndo, setPendingUndo] =
     React.useState<PendingKnownUndo | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
   const presentationIdentityRef = React.useRef(currentPresentationIdentity);
   const undoAttemptRef = React.useRef(0);
   presentationIdentityRef.current = currentPresentationIdentity;
@@ -24,7 +24,7 @@ export function usePendingKnownUndo(
   React.useEffect(() => {
     undoAttemptRef.current += 1;
     setBusy(false);
-    setError(null);
+    setErrorCode(null);
     const sync = () => {
       const pending = readPendingKnownUndo();
       if (
@@ -42,10 +42,10 @@ export function usePendingKnownUndo(
   }, [currentPresentationIdentity]);
 
   React.useEffect(() => {
-    if (!error) return;
-    const timer = window.setTimeout(() => setError(null), 5000);
+    if (!errorCode) return;
+    const timer = window.setTimeout(() => setErrorCode(null), 5000);
     return () => window.clearTimeout(timer);
-  }, [error]);
+  }, [errorCode]);
 
   const visibleUndoKnown =
     pendingUndo?.presentationIdentity === currentPresentationIdentity
@@ -57,7 +57,7 @@ export function usePendingKnownUndo(
     const attemptPresentationIdentity = currentPresentationIdentity;
     const attempt = (undoAttemptRef.current += 1);
     setBusy(true);
-    setError(null);
+    setErrorCode(null);
     try {
       await performPlatformV2TrainingAction(visibleUndoKnown);
       if (
@@ -75,7 +75,7 @@ export function usePendingKnownUndo(
       ) {
         return;
       }
-      setError(cause instanceof Error ? cause.message : "action_failed");
+      setErrorCode(cause instanceof Error ? cause.message : "action_failed");
     } finally {
       if (undoAttemptRef.current === attempt) setBusy(false);
     }
@@ -88,10 +88,10 @@ export function usePendingKnownUndo(
 
   return {
     busy,
-    error,
+    errorCode,
     undoKnown: visibleUndoKnown,
     undo,
     dismiss,
-    dismissError: () => setError(null),
+    dismissError: () => setErrorCode(null),
   };
 }

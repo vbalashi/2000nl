@@ -1306,6 +1306,76 @@ describe("TrainingSenseCardV2Session", () => {
     );
   });
 
+  test.each([
+    {
+      interfaceLanguage: "en" as const,
+      markLabel: "Mark as known",
+      undoLabel: "Undo known",
+      failureMessage: "Could not undo the known mark. Please try again.",
+    },
+    {
+      interfaceLanguage: "nl" as const,
+      markLabel: "Markeer als bekend",
+      undoLabel: "Markering ongedaan maken",
+      failureMessage:
+        "De markering kon niet ongedaan worden gemaakt. Probeer het opnieuw.",
+    },
+    {
+      interfaceLanguage: "ru" as const,
+      markLabel: "Отметить как знакомое",
+      undoLabel: "Отменить отметку",
+      failureMessage: "Не удалось отменить отметку. Попробуйте ещё раз.",
+    },
+  ])(
+    "localizes an active Undo failure in $interfaceLanguage without exposing its code",
+    async ({ interfaceLanguage, markLabel, undoLabel, failureMessage }) => {
+      performAction
+        .mockResolvedValueOnce({
+          contractVersion: "platform-action-v2",
+          actionId: "mark-known",
+          clientEventId: `event-known-undo-failure-${interfaceLanguage}`,
+          accepted: true,
+          card: {
+            cardTypeId: "word-to-definition",
+            scheduler: { phase: "hidden", repeatCount: 3 },
+            knownMark: {
+              markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+              revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+              markedAt: "2026-08-05T10:00:00.000Z",
+            },
+            stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+          },
+        })
+        .mockRejectedValueOnce(new Error("http_500"));
+      const presentationIdentity = `undo-failure-${interfaceLanguage}`;
+
+      render(
+        <>
+          <TestTrainingSenseCardV2Session
+            word={word}
+            mode="word-to-definition"
+            presentationIdentity={presentationIdentity}
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage={interfaceLanguage}
+            onProgressActionAccepted={vi.fn()}
+          />
+          <TrainingKnownUndoNotice
+            interfaceLanguage={interfaceLanguage}
+            currentPresentationIdentity={presentationIdentity}
+          />
+        </>,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: markLabel }));
+      fireEvent.click(await screen.findByRole("button", { name: undoLabel }));
+
+      expect(await screen.findByText(failureMessage)).toBeInTheDocument();
+      expect(screen.queryByText("http_500")).not.toBeInTheDocument();
+    },
+  );
+
   test("resolves and plays audio from the DTO header capability", async () => {
     const onPlayResolvedAudio = vi.fn();
 

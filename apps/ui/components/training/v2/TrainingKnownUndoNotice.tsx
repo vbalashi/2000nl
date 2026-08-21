@@ -13,21 +13,21 @@ export function TrainingKnownUndoNotice({
   interfaceLanguage: OnboardingLanguage;
   currentPresentationIdentity: string | null;
 }) {
-  const { busy, error, undoKnown, undo, dismiss, dismissError } =
+  const { busy, errorCode, undoKnown, undo, dismiss, dismissError } =
     usePendingKnownUndo(currentPresentationIdentity);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
 
-  if (!undoKnown && !error) return null;
+  if (!undoKnown && !errorCode) return null;
 
   return (
     <div className="fixed inset-x-4 bottom-20 z-50 mx-auto flex max-w-md flex-col gap-2">
-      {error ? (
+      {errorCode ? (
         <TransientNotice
           tone="error"
           dismissLabel={t("senseCard.dismiss")}
           onDismiss={dismissError}
         >
-          {error}
+          {t("senseCard.known.undoFailed")}
         </TransientNotice>
       ) : null}
       {undoKnown ? (
