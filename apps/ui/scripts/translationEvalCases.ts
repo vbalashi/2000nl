@@ -1,12 +1,24 @@
 export type TranslationEvalExpectations = {
   requiredSemanticUnits: string[];
   forbiddenSenses: string[];
+  primaryText?: {
+    required: Array<{
+      semanticUnit: string;
+      anyOf: string[];
+    }>;
+    forbidden: Array<{
+      sense: string;
+      anyOf: string[];
+    }>;
+  };
   notes?: string;
 };
 
 export type TranslationEvalCase = {
   id: string;
   targetLang: string;
+  entryId?: string;
+  sourceContentFingerprint?: string;
   word: {
     headword: string;
     gender: string;
@@ -30,6 +42,50 @@ export type TranslationEvalCase = {
 };
 
 export const translationEvalCases: TranslationEvalCase[] = [
+  {
+    id: "typisch_bn_strange",
+    targetLang: "ru",
+    entryId: "1b636b1b-0ba1-4f29-a52d-0b45fdbaba8d",
+    sourceContentFingerprint:
+      "221be689c6ff0b006999786b41d60d36cab5fff2011034949368fc7af3c6fbb9",
+    word: {
+      headword: "typisch",
+      gender: "",
+      part_of_speech: "bn",
+      raw: {
+        meanings: [
+          {
+            definition: "iets wat typisch is, is vreemd",
+            context: "",
+            examples: [
+              "wat typisch dat we elkaar niet gezien hebben op dat congres!",
+            ],
+            idioms: [],
+          },
+        ],
+      },
+    },
+    expectations: {
+      requiredSemanticUnits: ["strange, unusual, or remarkable"],
+      forbiddenSenses: ["typical or characteristic as the primary sense"],
+      primaryText: {
+        required: [
+          {
+            semanticUnit: "strange, unusual, or remarkable",
+            anyOf: ["стран", "необыч", "удивительн", "примечательн"],
+          },
+        ],
+        forbidden: [
+          {
+            sense: "typical or characteristic as the primary sense",
+            anyOf: ["типич", "характерн", "свойственн"],
+          },
+        ],
+      },
+      notes:
+        "The selected dictionary meaning overrides the common context-free headword sense.",
+    },
+  },
   {
     id: "goed_zn_goods",
     targetLang: "ru",
@@ -55,6 +111,22 @@ export const translationEvalCases: TranslationEvalCase[] = [
         "adjectival good",
         "clothes or textile",
       ],
+      primaryText: {
+        required: [
+          {
+            semanticUnit: "goods, things, objects, or possessions",
+            anyOf: ["товар", "вещ", "предмет", "имуще"],
+          },
+        ],
+        forbidden: [
+          { sense: "moral good", anyOf: ["добро", "благо"] },
+          { sense: "adjectival good", anyOf: ["хорош"] },
+          {
+            sense: "clothes or textile",
+            anyOf: ["одежд", "бель", "ткан", "текстил"],
+          },
+        ],
+      },
     },
   },
   {
@@ -78,6 +150,24 @@ export const translationEvalCases: TranslationEvalCase[] = [
     expectations: {
       requiredSemanticUnits: ["moral good or benefit"],
       forbiddenSenses: ["goods or merchandise", "clothes or textile"],
+      primaryText: {
+        required: [
+          {
+            semanticUnit: "moral good or benefit",
+            anyOf: ["добро", "благо", "польз"],
+          },
+        ],
+        forbidden: [
+          {
+            sense: "goods or merchandise",
+            anyOf: ["товар", "мерч", "имуще"],
+          },
+          {
+            sense: "clothes or textile",
+            anyOf: ["одежд", "бель", "ткан", "текстил"],
+          },
+        ],
+      },
     },
   },
   {
@@ -101,6 +191,21 @@ export const translationEvalCases: TranslationEvalCase[] = [
     expectations: {
       requiredSemanticUnits: ["clothes, laundry, cloth, or textile"],
       forbiddenSenses: ["moral good", "goods or merchandise"],
+      primaryText: {
+        required: [
+          {
+            semanticUnit: "clothes, laundry, cloth, or textile",
+            anyOf: ["одежд", "бель", "ткан", "текстил"],
+          },
+        ],
+        forbidden: [
+          { sense: "moral good", anyOf: ["добро", "благо"] },
+          {
+            sense: "goods or merchandise",
+            anyOf: ["товар", "мерч", "имуще"],
+          },
+        ],
+      },
     },
   },
   {

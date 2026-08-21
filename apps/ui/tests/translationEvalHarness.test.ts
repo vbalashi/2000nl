@@ -2,11 +2,133 @@ import { describe, expect, test } from "vitest";
 import {
   prepareTranslationEvalCase,
   prepareDictionaryMeaningEvalCase,
+  evaluateDictionaryMeaningPrimaryText,
   prepareTranslationEvalRun,
 } from "@/scripts/translationEvalHarness";
 import { translationEvalCases } from "@/scripts/translationEvalCases";
 
 describe("translation evaluation harness", () => {
+  test("rejects the captured generic typisch primary and accepts the selected sense", () => {
+    const item = translationEvalCases.find(
+      (candidate) => candidate.id === "typisch_bn_strange",
+    )!;
+
+    expect(
+      evaluateDictionaryMeaningPrimaryText("типичный", item.expectations),
+    ).toMatchObject({
+      status: "evaluated",
+      passed: false,
+      forbiddenSensesPresent: [
+        "typical or characteristic as the primary sense",
+      ],
+    });
+    expect(
+      evaluateDictionaryMeaningPrimaryText("странный", item.expectations),
+    ).toEqual({
+      status: "evaluated",
+      passed: true,
+      missingRequiredSemanticUnits: [],
+      forbiddenSensesPresent: [],
+    });
+  });
+
+  test("executes the declared semantic rules for neighboring goed meanings", () => {
+    const cases = Object.fromEntries(
+      translationEvalCases
+        .filter((item) => item.id.startsWith("goed_zn_"))
+        .map((item) => [item.id, item]),
+    );
+
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "товары",
+        cases.goed_zn_goods.expectations,
+      ),
+    ).toMatchObject({ status: "evaluated", passed: true });
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "добро",
+        cases.goed_zn_goods.expectations,
+      ),
+    ).toMatchObject({
+      status: "evaluated",
+      passed: false,
+      forbiddenSensesPresent: ["moral good"],
+    });
+
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "благо",
+        cases.goed_zn_moral_good.expectations,
+      ),
+    ).toMatchObject({ status: "evaluated", passed: true });
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "товары",
+        cases.goed_zn_moral_good.expectations,
+      ),
+    ).toMatchObject({
+      status: "evaluated",
+      passed: false,
+      forbiddenSensesPresent: ["goods or merchandise"],
+    });
+
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "бельё",
+        cases.goed_zn_cloth.expectations,
+      ),
+    ).toMatchObject({ status: "evaluated", passed: true });
+    expect(
+      evaluateDictionaryMeaningPrimaryText(
+        "добро",
+        cases.goed_zn_cloth.expectations,
+      ),
+    ).toMatchObject({
+      status: "evaluated",
+      passed: false,
+      forbiddenSensesPresent: ["moral good"],
+    });
+  });
+
+  test("reports an unevaluated primary rule instead of a vacuous pass", () => {
+    const item = translationEvalCases.find(
+      (candidate) => candidate.id === "kermis_idiom_not_literal",
+    )!;
+
+    expect(
+      evaluateDictionaryMeaningPrimaryText("ярмарка", item.expectations),
+    ).toEqual({ status: "not-configured" });
+  });
+
+  test("rebuilds the exact current typisch meaning request", () => {
+    const item = translationEvalCases.find(
+      (candidate) => candidate.id === "typisch_bn_strange",
+    )!;
+    const prepared = prepareDictionaryMeaningEvalCase(item);
+
+    expect(prepared.request).toMatchObject({
+      entryId: "1b636b1b-0ba1-4f29-a52d-0b45fdbaba8d",
+      sourceContentFingerprint:
+        "221be689c6ff0b006999786b41d60d36cab5fff2011034949368fc7af3c6fbb9",
+      sourceLanguageCode: "nl",
+      targetLanguageCode: "ru",
+      headword: { text: "typisch", partOfSpeechCode: "bn" },
+      content: [
+        {
+          fieldId: "definition",
+          role: "definition",
+          text: "iets wat typisch is, is vreemd",
+        },
+        {
+          fieldId: "example:0",
+          role: "example",
+          text: "wat typisch dat we elkaar niet gezien hebben op dat congres!",
+        },
+      ],
+    });
+  });
+
   test("uses the production message contract for each goed meaning", () => {
     const prepared = translationEvalCases
       .filter((item) => item.id.startsWith("goed_zn_"))

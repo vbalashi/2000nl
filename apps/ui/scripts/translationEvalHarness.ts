@@ -57,14 +57,51 @@ export function prepareDictionaryMeaningEvalCase(item: TranslationEvalCase): {
     id: item.id,
     expectations: item.expectations,
     request: buildDictionaryMeaningTranslationRequest({
-      entryId: `eval:${item.id}`,
-      sourceContentFingerprint: crypto
-        .createHash("sha256")
-        .update(JSON.stringify(item.word))
-        .digest("hex"),
+      entryId: item.entryId ?? `eval:${item.id}`,
+      sourceContentFingerprint:
+        item.sourceContentFingerprint ??
+        crypto.createHash("sha256").update(JSON.stringify(item.word)).digest("hex"),
       sourceLanguageCode: "nl",
       targetLanguageCode: item.targetLang,
       word: item.word,
     }),
+  };
+}
+
+export function requestFingerprint(
+  request: DictionaryMeaningTranslationRequestV1,
+) {
+  return crypto.createHash("sha256").update(JSON.stringify(request)).digest("hex");
+}
+
+export function evaluateDictionaryMeaningPrimaryText(
+  primaryText: string | null,
+  expectations: TranslationEvalCase["expectations"],
+) {
+  const rules = expectations.primaryText;
+  if (!rules) return { status: "not-configured" as const };
+  const normalized = primaryText?.normalize("NFC").toLocaleLowerCase("ru") ?? "";
+  const missingRequiredSemanticUnits = rules.required
+    .filter(
+      (rule) =>
+        !rule.anyOf.some((term) =>
+          normalized.includes(term.normalize("NFC").toLocaleLowerCase("ru")),
+        ),
+    )
+    .map((rule) => rule.semanticUnit);
+  const forbiddenSensesPresent = rules.forbidden
+    .filter((rule) =>
+      rule.anyOf.some((term) =>
+        normalized.includes(term.normalize("NFC").toLocaleLowerCase("ru")),
+      ),
+    )
+    .map((rule) => rule.sense);
+  return {
+    status: "evaluated" as const,
+    passed:
+      missingRequiredSemanticUnits.length === 0 &&
+      forbiddenSensesPresent.length === 0,
+    missingRequiredSemanticUnits,
+    forbiddenSensesPresent,
   };
 }
