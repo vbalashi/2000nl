@@ -828,6 +828,57 @@ test("first-pilot Training opens on Today and Continue reveals the mounted card"
   expect(getPrimaryNavigation("mobile-tabs")).toBeInTheDocument();
 });
 
+test("delayed first card keeps the Today shell until Continue can reveal it", async () => {
+  let resolveFirstCard!: (word: typeof mockWord) => void;
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveFirstCard = resolve;
+      }),
+  );
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+
+  try {
+    render(
+      <TrainingScreen
+        user={user}
+        trainingTodaySetupEnabled
+        extendedDestinationsEnabled
+        onRequestDestination={vi.fn()}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /Loading Training|Training laden/,
+      }),
+    ).toBeInTheDocument();
+    const todayShell = document.querySelector<HTMLElement>(
+      '[data-training-pilot-surface="today"]',
+    );
+    expect(todayShell).toBeInTheDocument();
+    expect(within(todayShell!).getByLabelText("2000nl")).toBeInTheDocument();
+    expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
+    expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
+
+    await act(async () => resolveFirstCard(mockWord));
+
+    expect(
+      await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "huis" })).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Continue session|Sessie doorgaan/ }),
+    );
+    expect(await screen.findByRole("heading", { name: "huis" })).toBeInTheDocument();
+  } finally {
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
+});
+
 test("rollout-off keeps the legacy Training card as the entry surface", async () => {
   render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
 

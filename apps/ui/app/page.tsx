@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { TrainingLibraryShell } from "@/components/navigation/TrainingLibraryShell";
 import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
+import { TrainingBootstrapShell } from "@/components/training/pilot/TrainingBootstrapShell";
+import {
+  getOnboardingLanguage,
+  type OnboardingLanguage,
+} from "@/lib/onboardingI18n";
 import {
   createTrainingTransitionId,
   measureTrainingTransitionStage,
@@ -13,22 +18,49 @@ import {
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [bootstrapStatus, setBootstrapStatus] = useState<
+    "loading" | "long-running" | "error" | "ready"
+  >("loading");
   const [initialTransitionId] = useState(createTrainingTransitionId);
+  const [interfaceLanguage, setInterfaceLanguage] =
+    useState<OnboardingLanguage>("en");
   const initialAuthRequestStartedRef = useRef(false);
+
+  const loadSession = useCallback((transitionId: string) => {
+    setBootstrapStatus("loading");
+    void measureTrainingTransitionStage(
+      transitionId,
+      "auth.session",
+      () => supabase.auth.getSession(),
+      ({ data }) => (data?.session?.user ? "authenticated" : "anonymous"),
+    )
+      .then(({ data }) => {
+        setUser(data?.session?.user ?? null);
+        setBootstrapStatus("ready");
+      })
+      .catch(() => {
+        setBootstrapStatus("error");
+      });
+  }, []);
+
+  useEffect(() => {
+    setInterfaceLanguage(getOnboardingLanguage());
+  }, []);
+
+  useEffect(() => {
+    if (bootstrapStatus !== "loading") return;
+    const timeout = window.setTimeout(() => {
+      setBootstrapStatus((current) =>
+        current === "loading" ? "long-running" : current,
+      );
+    }, 8_000);
+    return () => window.clearTimeout(timeout);
+  }, [bootstrapStatus]);
 
   useEffect(() => {
     if (!initialAuthRequestStartedRef.current) {
       initialAuthRequestStartedRef.current = true;
-      void measureTrainingTransitionStage(
-        initialTransitionId,
-        "auth.session",
-        () => supabase.auth.getSession(),
-        ({ data }) => (data?.session?.user ? "authenticated" : "anonymous"),
-      ).then(({ data }) => {
-        setUser(data?.session?.user ?? null);
-        setLoading(false);
-      });
+      loadSession(initialTransitionId);
     }
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_, session) => {
@@ -38,13 +70,15 @@ export default function HomePage() {
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, [initialTransitionId]);
+  }, [initialTransitionId, loadSession]);
 
-  if (loading) {
+  if (bootstrapStatus !== "ready") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
-        <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">Laden…</p>
-      </div>
+      <TrainingBootstrapShell
+        interfaceLanguage={interfaceLanguage}
+        status={bootstrapStatus}
+        onRetry={() => loadSession(createTrainingTransitionId())}
+      />
     );
   }
 

@@ -16,7 +16,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon npm run dev -- --hostname 0.0.0.0 --port 3100",
+      "NEXT_FONT_GOOGLE_MOCKED_RESPONSES=$PWD/playwright/fixtures/next-font-google-mocked-responses.cjs NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon npm run dev -- --hostname 0.0.0.0 --port 3100",
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false
   }
