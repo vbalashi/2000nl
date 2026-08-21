@@ -195,7 +195,7 @@ describe("TrainingSenseCardStage", () => {
     expect(faceShell.className).toContain("dark:bg-[#1d222b]");
     const dock = screen.getByTestId("training-sense-card-dock");
     expect(dock.className).toContain("shrink-0");
-    expect(dock.className).toContain("h-11");
+    expect(dock.className).toContain("h-[76px]");
     expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveClass(
       "h-11",
     );

@@ -2107,7 +2107,10 @@ export function TrainingScreen({
         ) : null}
 
         {trainingShellV2Enabled ? (
-          <TrainingKnownUndoNotice interfaceLanguage={onboardingLang} />
+          <TrainingKnownUndoNotice
+            interfaceLanguage={onboardingLang}
+            currentEntryId={currentWord?.id ?? null}
+          />
         ) : null}
 
         {wordLookupNotice ? (

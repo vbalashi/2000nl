@@ -34,6 +34,7 @@ import {
   type SenseCardTrainingOperation,
 } from "@/lib/feedback/diagnosticReportClient";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
+import { TransientNotice } from "@/components/system/TransientNotice";
 
 type Props = {
   cacheOwnerId: string;
@@ -507,8 +508,10 @@ function classifyTrainingActionOutcome(
 
 export function TrainingKnownUndoNotice({
   interfaceLanguage,
+  currentEntryId,
 }: {
   interfaceLanguage: OnboardingLanguage;
+  currentEntryId: string | null;
 }) {
   const [undoKnown, setUndoKnown] = React.useState<UndoKnownCapability | null>(
     null,
@@ -534,7 +537,10 @@ export function TrainingKnownUndoNotice({
     return () => window.clearTimeout(timer);
   }, [error]);
 
-  if (!undoKnown && !error) return null;
+  const visibleUndoKnown =
+    undoKnown?.target.entryId === currentEntryId ? undoKnown : null;
+
+  if (!visibleUndoKnown && !error) return null;
 
   const handleUndo = async () => {
     if (!undoKnown) return;
@@ -554,25 +560,35 @@ export function TrainingKnownUndoNotice({
   return (
     <div className="fixed inset-x-4 bottom-20 z-50 mx-auto flex max-w-md flex-col gap-2">
       {error ? (
-        <div
-          role="status"
-          className="rounded-xl border border-rose-400/60 bg-[#261b22] px-4 py-3 text-sm text-rose-100 shadow-xl"
+        <TransientNotice
+          tone="error"
+          dismissLabel={t("senseCard.dismiss")}
+          onDismiss={() => setError(null)}
         >
           {error}
-        </div>
+        </TransientNotice>
       ) : null}
-      {undoKnown ? (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-400/60 bg-[#17251f] px-4 py-3 text-sm text-emerald-100 shadow-xl">
-          <span>{t("senseCard.known.marked")}</span>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void handleUndo()}
-            className="shrink-0 font-semibold text-indigo-200 hover:text-white disabled:opacity-50"
-          >
-            {t(undoKnown.messageKey)}
-          </button>
-        </div>
+      {visibleUndoKnown ? (
+        <TransientNotice
+          tone="success"
+          dismissLabel={t("senseCard.dismiss")}
+          onDismiss={() => {
+            rememberPendingKnownUndo(null);
+            setUndoKnown(null);
+          }}
+          action={
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void handleUndo()}
+              className="shrink-0 font-semibold text-indigo-200 hover:text-white disabled:opacity-50"
+            >
+              {t(visibleUndoKnown.messageKey)}
+            </button>
+          }
+        >
+          {t("senseCard.known.marked")}
+        </TransientNotice>
       ) : null}
     </div>
   );
@@ -684,26 +700,14 @@ function SessionError({
   onDismiss: () => void;
 }) {
   return error ? (
-    <div
-      role={tone === "error" ? "alert" : "status"}
-      className={`fixed inset-x-4 bottom-52 z-50 mx-auto max-w-md rounded-xl border px-4 py-2 text-sm shadow-xl sm:bottom-24 ${
-        tone === "info"
-          ? "border-slate-400/60 bg-slate-900 text-slate-50"
-          : "border-rose-400/60 bg-[#261b22] text-rose-100"
-      }`}
+    <TransientNotice
+      tone={tone}
+      dismissLabel={dismissLabel}
+      onDismiss={onDismiss}
+      className="fixed inset-x-4 bottom-52 z-50 mx-auto max-w-md sm:bottom-24"
     >
-      <div className="flex items-center justify-between gap-4">
-        <span>{error}</span>
-        <button
-          type="button"
-          aria-label={dismissLabel}
-          onClick={onDismiss}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xl leading-none text-current opacity-80 hover:bg-white/10 hover:opacity-100"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+      {error}
+    </TransientNotice>
   ) : null;
 }
 

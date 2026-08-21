@@ -326,6 +326,74 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
   });
 
+  test("offers the server-provided Mark Known capability on the card face", async () => {
+    const onProgressActionAccepted = vi.fn();
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={onProgressActionAccepted}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    const markKnownButton = screen.getByRole("button", {
+      name: "Markeer als bekend",
+    });
+    fireEvent.keyDown(markKnownButton, { key: " " });
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+    fireEvent.click(markKnownButton);
+    await waitFor(() =>
+      expect(performAction).toHaveBeenCalledWith(
+        markKnown,
+        expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+      ),
+    );
+    expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown);
+  });
+
+  test("does not invent Mark Known on the face when the server omits the capability", async () => {
+    fetchSingleSense.mockResolvedValue({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        capabilities: singleSenseEntry.capabilities.filter(
+          (candidate) => candidate.actionId !== "mark-known",
+        ),
+      },
+    });
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(
+      screen.queryByRole("button", { name: "Markeer als bekend" }),
+    ).not.toBeInTheDocument();
+  });
+
   test("freezes the exact failed training operation for a later global report", async () => {
     const reportCapability = {
       actionId: "report-content" as const,
@@ -743,7 +811,7 @@ describe("TrainingSenseCardV2Session", () => {
     settingsControl.remove();
   });
 
-  test("keeps a durable undo after marking the previous card known and advancing", async () => {
+  test("keeps undo available across a same-card remount", async () => {
     const onProgressActionAccepted = vi.fn();
     const markKnown = singleSenseEntry.capabilities.find(
       (candidate) => candidate.actionId === "mark-known",
@@ -814,7 +882,10 @@ describe("TrainingSenseCardV2Session", () => {
           interfaceLanguage="nl"
           onProgressActionAccepted={onProgressActionAccepted}
         />
-        <TrainingKnownUndoNotice interfaceLanguage="nl" />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentEntryId={word.id}
+        />
       </>,
     );
 
@@ -834,12 +905,18 @@ describe("TrainingSenseCardV2Session", () => {
           interfaceLanguage="nl"
           onProgressActionAccepted={onProgressActionAccepted}
         />
-        <TrainingKnownUndoNotice interfaceLanguage="nl" />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentEntryId={word.id}
+        />
       </>,
     );
 
     expect(
       await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Melding sluiten" }),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Markering ongedaan maken" }),
@@ -895,6 +972,94 @@ describe("TrainingSenseCardV2Session", () => {
       expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown),
     );
     expect(fetchSingleSense).toHaveBeenCalledTimes(1);
+  });
+
+  test("dismisses the Mark Known success notice when the next card is presented", async () => {
+    const markKnown = singleSenseEntry.capabilities.find(
+      (candidate) => candidate.actionId === "mark-known",
+    )!;
+    const nextEntry = {
+      ...singleSenseEntry,
+      entryId: "entry-bank-after-known",
+      contentRevision: "content-bank-after-known",
+    };
+    const nextGroup = {
+      ...singleSenseGroup,
+      headwordGroupId: "group-bank-after-known",
+      header: {
+        ...singleSenseGroup.header,
+        text: "bank",
+        displayPronunciation: "bank",
+      },
+      entries: [nextEntry],
+    };
+    fetchSingleSense
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: singleSenseGroup,
+        entry: singleSenseEntry,
+      })
+      .mockResolvedValueOnce({
+        state: "ready",
+        group: nextGroup,
+        entry: nextEntry,
+      });
+    performAction.mockResolvedValueOnce({
+      contractVersion: "platform-action-v2",
+      actionId: "mark-known",
+      clientEventId: "event-known-next-card",
+      accepted: true,
+      card: {
+        cardTypeId: "word-to-definition",
+        scheduler: { phase: "hidden", repeatCount: 3 },
+        knownMark: {
+          markId: "20b34a88-b29d-4a72-89e5-49221af7ca27",
+          revision: "ef774f0a-59a4-420a-b2e2-85a544050892",
+          markedAt: "2026-08-05T10:00:00.000Z",
+        },
+        stateRevision: "0d0a9b93-7b67-49ca-a12c-47821c68ce8d",
+      },
+    });
+
+    const renderSession = (nextWord: TrainingWord) => (
+      <>
+        <TestTrainingSenseCardV2Session
+          word={nextWord}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />
+        <TrainingKnownUndoNotice
+          interfaceLanguage="nl"
+          currentEntryId={nextWord.id}
+        />
+      </>
+    );
+    const view = render(renderSession(word));
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markeer als bekend" }));
+    expect(
+      await screen.findByRole("button", { name: "Markering ongedaan maken" }),
+    ).toBeInTheDocument();
+
+    view.rerender(
+      renderSession({ ...word, id: nextEntry.entryId, headword: "bank" }),
+    );
+    await screen.findByRole("heading", { name: "bank" });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Markering ongedaan maken" }),
+      ).not.toBeInTheDocument(),
+    );
+
+    expect(performAction).toHaveBeenCalledWith(
+      markKnown,
+      expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+    );
   });
 
   test("resolves and plays audio from the DTO header capability", async () => {
