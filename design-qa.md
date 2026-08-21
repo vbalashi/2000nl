@@ -12,9 +12,9 @@
   - `artifacts/design-qa/training-answer-402x874.png`
   - `artifacts/design-qa/training-long-idiom-402x874.png`
   - `artifacts/design-qa/training-error-402x874.png`
-  - responsive/theme evidence: `artifacts/design-qa/training-face-light-mobile.png` and `artifacts/design-qa/training-face-dark-wide.png`
+  - responsive/theme evidence: `training-{face,answer,long-idiom,recoverable-error}-{light-mobile,dark-wide}.png` in the same directory
 - Full-view comparison evidence: `artifacts/design-qa/training-v1-comparison.png` (source left, implementation right for all four states).
-- Viewport: 402 × 874 CSS px, dark scheme, device scale factor 1. Additional checks: 402 × 874 light and 1280 × 900 dark.
+- Viewport: 402 × 874 CSS px, dark scheme, device scale factor 1. Every state also has containment/contrast evidence at 402 × 874 light and 1280 × 900 dark.
 - State: authenticated pilot Training session, direct word-to-definition card, Dutch interface, `bank` face, translated `bank` answer, `nodig` long-idiom answer, and recoverable invalid-model error.
 
 ## Density normalization
@@ -35,10 +35,10 @@ No additional cropped comparison was necessary after the final full-view contact
 
 - Fonts and typography: reusable Inter/Newsreader/Geist Mono owners are used. Headword scale, semantic metadata, section hierarchy, long-idiom line treatment, and compact footer type were checked. The application correctly localizes Dutch UI labels; Pen's mixed English CTA/review/error labels are not hardcoded over runtime message-key policy.
 - Spacing and layout rhythm: 10 px outer frame, 58 px app header, compact session block, 14 px card radius, 18 px card padding, separate scrolling card body, stable Face/Answer docks, 44 px footer, and error-only full card were checked against all four nodes.
-- Colors and tokens: approved dark surface, border, muted text, accent, green, amber, red, and review colors map to shared runtime classes. Light theme and wide dark layout were smoke-checked for contrast and containment.
-- Image and asset fidelity: the approved subset has no photographic/raster content inside the UI. Existing BrandLogo and Lucide icon assets are reused; no placeholder imagery, emoji, CSS illustration, or handcrafted replacement asset was introduced.
-- Copy and content: deterministic `bank` and `nodig` fixtures match source dictionary content. Dutch interface labels intentionally follow the selected-language catalogs. The session counter remains `1 / 28` in capture rather than Pen's illustrative `10 / 23`: runtime has an authoritative presented-card ordinal plus daily/review totals, but no authoritative planned-session-total field. Inventing or hardcoding `10 / 23` would violate the session contract and is outside #194.
-- Interaction/accessibility: visible actions remain semantic buttons with labels and focus rings. Direct Face audio remains top-right, Answer audio remains in the answer header, reverse Face stays quiet, and global Melden/Mark Known remain the only secondary actions. Mobile controls do not clip; desktop keeps the body bounded and docks stable.
+- Colors and tokens: approved dark surface, border, muted text, accent, green, amber, red, and review colors map to shared runtime classes. All four states were checked in light/mobile and dark/wide profiles; footer tracks and values use explicit light/dark tokens.
+- Image and asset fidelity: the approved subset has no photographic/raster content inside the UI. Existing BrandLogo and Lucide icons are reused for every certified visible icon, including audio, translation, More, hint, check, chevron, exposure, and section markers; a component assertion rejects non-Lucide SVGs on both sides.
+- Copy and content: deterministic `bank` and `nodig` fixtures match source dictionary content. Dutch interface labels intentionally follow the selected-language catalogs. The session chrome now shows only authoritative ordinal `1`; both Pen's illustrative `10 / 23` and the earlier derived `1 / 28` are intentionally absent because no server-owned planned-session-total exists. Contract work is tracked in #224.
+- Interaction/accessibility: visible actions remain semantic buttons with labels and focus rings. Direct Face audio remains top-right, Answer audio remains in the answer header, reverse Face stays quiet, and global Melden/Mark Known remain the only secondary actions. History is omitted when no handler exists; the eventual authoritative destination is #225. Mobile controls do not clip; desktop keeps the body bounded and docks stable.
 
 ## Comparison history
 
@@ -55,13 +55,17 @@ No additional cropped comparison was necessary after the final full-view contact
    - P1: long-idiom children had per-line nested accent bars and incorrect indentation; error card reserved footer space; Answer and idiom vertical rhythm/wrapping drifted.
    - Fixes: made each idiom one reusable accented block, aligned nested text, removed failure-only bottom reservation, expanded the error card to the outer inset, tightened answer header/content rhythm, and adjusted example/idiom optical sizes.
    - Evidence: final `artifacts/design-qa/training-v1-comparison.png` plus native individual captures.
-4. Final comparison — passed.
+4. Pre-review comparison — passed, then reopened by Standards + Spec review.
    - No actionable P0/P1/P2 visual differences remain in #194 scope.
    - Expected dynamic/localization differences are documented above and must not be replaced with fixture-specific product code.
 
-## Findings
-
-No actionable P0/P1/P2 findings remain.
+5. Standards + Spec remediation comparison — passed.
+   - Session chrome consumes only the authoritative ordinal; invented ratio/progress were removed and #224 owns a future server contract.
+   - Certified icons use Lucide; the identical `IconButton.compact` prop/branch was removed.
+   - A typed `TrainingVisualState` profile module owns the four valid fixtures, including English entry and definition translation targets; combinable visual booleans were removed from the attribution harness.
+   - Session detail slots default hidden and are revealed only by a ready-card layout signal before paint. The error first-paint observer found no visible session chrome/footer.
+   - History renders only when an authoritative handler exists; production omits the dead control and #225 owns the destination.
+   - All four states were recaptured at exact 402 × 874 dark, 402 × 874 light, and 1280 × 900 dark. No P0/P1/P2 remains. There is no light Pen source, so light evidence certifies contrast/containment rather than pixel equivalence.
 
 P3 follow-up polish:
 
@@ -71,7 +75,7 @@ P3 follow-up polish:
 ## Validation
 
 - Focused component/session suite: 119 / 119 passed.
-- Full UI unit suite: 839 passed, 111 skipped (environment-gated RPC tests), 0 failed.
+- Full UI unit suite: 843 passed, 111 skipped (environment-gated RPC tests), 0 failed.
 - Exact-state visual browser suite: 4 / 4 passed.
 - TypeScript typecheck: passed.
 - Lint: passed.

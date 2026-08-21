@@ -351,10 +351,7 @@ export function TrainingScreen({
   });
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
-  const [v2SessionFailureVisible, setV2SessionFailureVisible] = useState(false);
-  useEffect(() => {
-    setV2SessionFailureVisible(false);
-  }, [currentWord?.id]);
+  const [v2LayoutReadyEntryId, setV2LayoutReadyEntryId] = useState<string | null>(null);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -1719,6 +1716,12 @@ export function TrainingScreen({
   return (
     <>
       <div
+        data-training-session-layout={v2SessionChromeVisible ? "v2" : undefined}
+        data-training-session-layout-state={
+          v2SessionChromeVisible && v2LayoutReadyEntryId === currentWord?.id
+            ? "ready"
+            : "pending"
+        }
         aria-hidden={destination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
@@ -1783,7 +1786,8 @@ export function TrainingScreen({
         </header>
         )}
 
-        {v2SessionChromeVisible && !v2SessionFailureVisible ? (
+        {v2SessionChromeVisible ? (
+          <div data-training-session-detail="chrome">
           <TrainingSessionChrome
             interfaceLanguage={onboardingLang}
             scenario={activeScenario}
@@ -1791,6 +1795,7 @@ export function TrainingScreen({
             position={sessionCardOrdinal}
             progress={sessionProgress}
           />
+          </div>
         ) : null}
 
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
@@ -1811,17 +1816,13 @@ export function TrainingScreen({
           />
         ) : (
           <>
-            <main className={`flex grow flex-col items-center overflow-hidden bg-background-light ${
+            <main data-training-session-main className={`flex grow flex-col items-center overflow-hidden bg-background-light ${
               v2SessionOwned ? "dark:bg-[#11141A]" : "dark:bg-background-dark"
             }`}>
               {/* Center the training card while preserving its established width. */}
               <div className={`flex h-full w-full flex-row justify-center ${
                 v2SessionOwned
-                  ? `max-w-[780px] px-[10px] pt-[10px] max-[480px]:px-0 ${
-                      v2SessionFailureVisible
-                        ? "max-[480px]:pt-[10px]"
-                        : "pb-[8px] max-[480px]:pt-[6px]"
-                    }`
+                  ? "max-w-[780px] px-[10px] pb-[8px] pt-[10px] max-[480px]:px-0 max-[480px]:pt-[6px]"
                   : "max-w-[1200px] gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6"
               }`}>
                 {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
@@ -2015,11 +2016,12 @@ export function TrainingScreen({
                                 prepareV2ProgressAction
                               }
                               onLoadFailure={(failure) => {
-                                setV2SessionFailureVisible(true);
                                 reportCardLoadFailure(currentWord, failure);
                               }}
+                              onLayoutReadyChange={(ready) => {
+                                setV2LayoutReadyEntryId(ready ? currentWord.id : null);
+                              }}
                               onRetryAlternative={() => {
-                                setV2SessionFailureVisible(false);
                                 void retryCardLoadFailure();
                               }}
                               onExit={trainingPilot.returnToToday}
@@ -2163,7 +2165,7 @@ export function TrainingScreen({
               </div>
             </main>
 
-            {!v2SessionFailureVisible ? (
+            <div data-training-session-detail="footer">
               <FooterStats
                 stats={stats}
                 enabledModes={enabledModes}
@@ -2188,7 +2190,7 @@ export function TrainingScreen({
                 compact={v2SessionOwned}
                 interfaceLanguage={onboardingLang}
               />
-            ) : null}
+            </div>
           </>
         )}
 

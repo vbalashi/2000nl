@@ -106,13 +106,13 @@ function CompactProgressStat({
         {label}
       </span>
       <div className="flex h-[14px] items-center gap-[6px]">
-        <div className="h-1 w-[52px] overflow-hidden rounded-sm bg-[#4B5360]">
+        <div className="h-1 w-[52px] overflow-hidden rounded-sm bg-slate-200 dark:bg-[#4B5360]">
           <div
             className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
             style={{ width: `${progress}%` }}
           />
         </div>
-        <span className="whitespace-nowrap text-[10px] font-semibold text-[#BFC7D4]">
+        <span className="whitespace-nowrap text-[10px] font-semibold text-slate-600 dark:text-[#BFC7D4]">
           {value} / {total}
         </span>
       </div>

@@ -20,7 +20,7 @@ test("captures the approved Training face and answer at the authoritative viewpo
     deviceScaleFactor: 1,
   });
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
-    visualCard: true,
+    visualProfile: "answer",
   });
   await page
     .getByRole("button", {
@@ -68,24 +68,53 @@ test("keeps the approved primitives responsive in light and wide layouts", async
     { name: "light-mobile", width: 402, height: 874, colorScheme: "light" as const },
     { name: "dark-wide", width: 1280, height: 900, colorScheme: "dark" as const },
   ]) {
-    const page = await browser.newPage({
-      viewport: { width: profile.width, height: profile.height },
-      colorScheme: profile.colorScheme,
-      deviceScaleFactor: 1,
-    });
-    await setupAuthenticatedTrainingAttributionPage(page, 0, {
-      visualCard: true,
-    });
-    await page
-      .getByRole("button", {
-        name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
-      })
-      .click();
-    await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
-    await page.screenshot({
-      path: resolve(artifactDirectory, `training-face-${profile.name}.png`),
-    });
-    await page.close();
+    for (const state of ["face", "answer", "long-idiom", "recoverable-error"] as const) {
+      const page = await browser.newPage({
+        viewport: { width: profile.width, height: profile.height },
+        colorScheme: profile.colorScheme,
+        deviceScaleFactor: 1,
+      });
+      await setupAuthenticatedTrainingAttributionPage(page, 0, {
+        visualProfile: state,
+      });
+      await page
+        .getByRole("button", {
+          name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+        })
+        .click();
+      if (state === "recoverable-error") {
+        await expect(page.getByTestId("training-v2-failure")).toBeVisible();
+      }
+      else {
+        await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+        if (state !== "face") {
+          await page.getByRole("button", { name: /Antwoord tonen|Показать ответ|Show answer/i }).click();
+        }
+        if (state === "answer") {
+          await page.getByRole("button", { name: /Vertalen|Перевести|Translate/i }).click();
+        }
+        const cardBox = await page.getByTestId("training-sense-card-shell").boundingBox();
+        expect(cardBox).not.toBeNull();
+        expect(cardBox!.x).toBeGreaterThanOrEqual(0);
+        expect(cardBox!.x + cardBox!.width).toBeLessThanOrEqual(profile.width);
+        await expect(page.getByTestId("training-sense-card-dock")).toBeVisible();
+      }
+      await expect(page.locator("body")).toHaveCSS("overflow-x", "visible");
+      if (profile.colorScheme === "light" && state !== "recoverable-error") {
+        const footerTrack = page
+          .getByTestId("training-session-footer-progress")
+          .locator("> div > div > div")
+          .first();
+        await expect(footerTrack).not.toHaveCSS(
+          "background-color",
+          "rgb(75, 83, 96)",
+        );
+      }
+      await page.screenshot({
+        path: resolve(artifactDirectory, `training-${state}-${profile.name}.png`),
+      });
+      await page.close();
+    }
   }
 });
 
@@ -97,8 +126,7 @@ test("captures the approved long-idiom answer", async ({ browser }) => {
     deviceScaleFactor: 1,
   });
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
-    visualCard: true,
-    visualLongCard: true,
+    visualProfile: "long-idiom",
   });
   await page
     .getByRole("button", {
@@ -126,11 +154,27 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
     deviceScaleFactor: 1,
   });
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
-    visualCard: true,
-    invalidEntryIds: Array.from(
-      { length: 10 },
-      (_, index) => `attribution-word-${index + 1}`,
-    ),
+    visualProfile: "recoverable-error",
+  });
+  await page.evaluate(() => {
+    const runtime = window as typeof window & {
+      __errorLayoutViolations?: string[];
+    };
+    runtime.__errorLayoutViolations = [];
+    new MutationObserver(() => {
+      if (!document.querySelector('[data-training-v2-state="model-invalid"]')) return;
+      requestAnimationFrame(() => {
+        for (const testId of [
+          "training-session-chrome",
+          "training-session-footer-progress",
+        ]) {
+          const element = document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+          if (element && element.getClientRects().length > 0) {
+            runtime.__errorLayoutViolations?.push(testId);
+          }
+        }
+      });
+    }).observe(document.body, { childList: true, subtree: true });
   });
   await page
     .getByRole("button", {
@@ -147,9 +191,16 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
   await expect(
     page.getByRole("button", { name: /Sessie sluiten|Close session|Закрыть сессию/i }),
   ).toBeVisible();
-  await expect(page.getByTestId("training-session-chrome")).toHaveCount(0);
-  await expect(page.getByTestId("training-session-footer-progress")).toHaveCount(0);
-  await page.waitForTimeout(100);
+  await expect(page.getByTestId("training-session-chrome")).toBeHidden();
+  await expect(page.getByTestId("training-session-footer-progress")).toBeHidden();
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect(
+    await page.evaluate(
+      () =>
+        (window as typeof window & { __errorLayoutViolations?: string[] })
+          .__errorLayoutViolations ?? [],
+    ),
+  ).toEqual([]);
   await page.screenshot({
     path: resolve(artifactDirectory, "training-error-402x874.png"),
   });

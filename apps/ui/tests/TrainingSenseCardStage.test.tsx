@@ -142,6 +142,29 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByRole("button", { name: "Again" })).toHaveClass("h-[42px]");
     expect(screen.getByRole("button", { name: "Easy" })).toHaveClass("h-[42px]");
   });
+
+  test("uses the product icon library for every visible redesign control", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const { container } = render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onOpenDetails={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll("svg:not(.lucide)")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(container.querySelectorAll("svg:not(.lucide)")).toHaveLength(0);
+    expect(container.querySelectorAll("svg.lucide").length).toBeGreaterThan(0);
+  });
   test("renders Report as an actionable, keyboard-focusable button", () => {
     const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,

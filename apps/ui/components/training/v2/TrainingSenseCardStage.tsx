@@ -1,18 +1,26 @@
 "use client";
 
 import React from "react";
+import {
+  Check,
+  ChevronDown,
+  Languages,
+  Lightbulb,
+  List,
+  MoreHorizontal,
+  Quote,
+  Route,
+  Volume2,
+} from "lucide-react";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   ExposureBadge,
-  IdiomIcon,
-  ListMarkerIcon,
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
-  UsagePatternIcon,
 } from "../SenseCardChrome";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type {
@@ -184,9 +192,8 @@ export function TrainingSenseCardStage({
               label={t("senseCard.audio.play")}
               disabled={busy}
               onClick={onPlayAudio}
-              compact
             >
-              <SpeakerIcon />
+              <Volume2 aria-hidden="true" className="h-5 w-5" />
             </IconButton>
           </div>
         ) : null}
@@ -328,9 +335,8 @@ function EntityHeader({
             label={audioLabel}
             disabled={busy}
             onClick={onPlayAudio}
-            compact
           >
-            <SpeakerIcon />
+            <Volume2 aria-hidden="true" className="h-5 w-5" />
           </IconButton>
         ) : null}
         {translationAvailable ? (
@@ -340,7 +346,7 @@ function EntityHeader({
             disabled={busy}
             onClick={onToggleTranslation}
           >
-            <TranslateIcon />
+            <Languages aria-hidden="true" className="h-5 w-5" />
           </IconButton>
         ) : null}
         {onOpenDetails ? (
@@ -349,7 +355,7 @@ function EntityHeader({
             disabled={busy}
             onClick={onOpenDetails}
           >
-            <MoreIcon />
+            <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
           </IconButton>
         ) : null}
         </div>
@@ -522,7 +528,7 @@ function AnswerBody({
             section="usage"
             title={t("senseCard.sections.usagePattern")}
             count={usagePatterns.length}
-            icon={<UsagePatternIcon className="h-3 w-3" />}
+            icon={<Route aria-hidden="true" className="h-3 w-3" />}
           >
             {usagePatterns.map((item) => (
               <ContentItem
@@ -539,7 +545,7 @@ function AnswerBody({
             section="examples"
             title={t("senseCard.sections.examples")}
             count={examples.length}
-            icon={<ListMarkerIcon className="h-3 w-3" />}
+            icon={<List aria-hidden="true" className="h-3 w-3" />}
           >
             {examples.map((item) => (
               <ContentItem
@@ -556,7 +562,7 @@ function AnswerBody({
             section="idioms"
             title={t("senseCard.sections.idioms")}
             count={idioms.length}
-            icon={<IdiomIcon className="h-3 w-3" />}
+            icon={<Quote aria-hidden="true" className="h-3 w-3" />}
           >
             {idioms.map((item) => (
               <ContentItem
@@ -593,7 +599,7 @@ function AnswerBody({
           }}
           className="absolute bottom-2 left-1/2 z-10 flex h-7 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 text-slate-600 shadow-lg hover:bg-slate-100 hover:text-slate-900 dark:border-slate-600 dark:bg-[#171b22]/95 dark:text-slate-300 dark:hover:border-slate-400 dark:hover:text-white"
         >
-          <ChevronDownIcon />
+          <ChevronDown aria-hidden="true" className="h-4 w-4" />
         </button>
       ) : null}
     </div>
@@ -747,7 +753,7 @@ function FaceDock({
             onClick={onToggleHint}
             className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-indigo-700 outline-none transition hover:bg-indigo-50 focus-visible:bg-indigo-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#171B22] dark:text-[#9D94FF] dark:hover:border-indigo-400/70 dark:hover:bg-[#201f36] dark:focus-visible:bg-[#252348]"
           >
-            <HintIcon />
+            <Lightbulb aria-hidden="true" className="h-5 w-5" />
           </button>
         ) : null}
         <button
@@ -799,7 +805,7 @@ function AnswerDock({
     return (
       <div className="flex min-h-12 flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/60 bg-emerald-50 px-4 py-2 text-sm dark:bg-[#18352b]">
         <span className="inline-flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-200">
-          <CheckIcon /> {t("senseCard.known.marked")}
+          <Check aria-hidden="true" className="h-4 w-4" /> {t("senseCard.known.marked")}
         </span>
         <button
           ref={primaryActionRef}
@@ -887,7 +893,7 @@ function MarkKnownAction({
       onClick={() => onAction(capability)}
       className="flex h-6 min-h-6 items-center gap-1.5 rounded-lg px-0 hover:text-slate-900 disabled:opacity-50 dark:hover:text-slate-100"
     >
-      <CheckIcon /> {label}
+      <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>
   );
 }
@@ -946,14 +952,12 @@ function IconButton({
   disabled = false,
   onClick,
   children,
-  compact = false,
 }: {
   label: string;
   active?: boolean;
   disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
-  compact?: boolean;
 }) {
   return (
     <button
@@ -962,9 +966,7 @@ function IconButton({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`flex shrink-0 items-center justify-center rounded-xl border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
-        compact ? "h-[34px] w-[34px] rounded-full" : "h-[34px] w-[34px] rounded-full"
-      } ${
+      className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:shadow-[inset_0_-3px_0_rgba(79,70,229,0.65)] disabled:opacity-50 dark:focus-visible:shadow-[inset_0_-3px_0_rgba(165,180,252,0.75)] ${
         active
           ? "border-slate-300 bg-indigo-100 text-indigo-700 dark:border-slate-600 dark:bg-indigo-400/10 dark:text-indigo-200"
           : "border-slate-300 bg-white text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:bg-transparent dark:text-slate-300 dark:hover:border-slate-400"
@@ -972,98 +974,5 @@ function IconButton({
     >
       {children}
     </button>
-  );
-}
-
-function SpeakerIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M5 9v6h4l5 4V5L9 9H5Z" />
-      <path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a7.5 7.5 0 0 1 0 11" />
-    </svg>
-  );
-}
-
-function TranslateIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M4 5h9M8.5 3v2M6 8c1.5 2.5 3.5 4.5 6 6M12 8c-1.5 3-4 5.5-7 7" />
-      <path d="m14 19 3-8 3 8M15.2 16h3.6" />
-    </svg>
-  );
-}
-
-function MoreIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <circle cx="5" cy="12" r="1.5" />
-      <circle cx="12" cy="12" r="1.5" />
-      <circle cx="19" cy="12" r="1.5" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path d="m7 10 5 5 5-5" />
-    </svg>
-  );
-}
-
-function HintIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="M9 18h6M10 21h4" />
-      <path d="M8.5 14.5C7.5 13.6 7 12.3 7 11a5 5 0 0 1 10 0c0 1.3-.5 2.6-1.5 3.5-.7.7-1.1 1.2-1.2 2.5h-4.6c-.1-1.3-.5-1.8-1.2-2.5Z" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
-      <path d="m5 12 4 4L19 6" />
-    </svg>
   );
 }

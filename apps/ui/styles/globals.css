@@ -45,3 +45,33 @@ body {
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-600;
 }
+/* Session details are revealed only by an authoritative ready card. */
+[data-training-session-layout="v2"] [data-training-session-detail] {
+  display: none;
+}
+
+[data-training-session-layout="v2"][data-training-session-layout-state="ready"]
+  [data-training-session-detail] {
+  display: block;
+}
+
+[data-training-session-layout="v2"]
+  [data-training-session-main]
+  > div {
+  padding-bottom: 0;
+  padding-top: 10px;
+}
+
+[data-training-session-layout="v2"][data-training-session-layout-state="ready"]
+  [data-training-session-main]
+  > div {
+  padding-bottom: 8px;
+}
+
+@media (max-width: 480px) {
+  [data-training-session-layout="v2"][data-training-session-layout-state="ready"]
+    [data-training-session-main]
+    > div {
+    padding-top: 6px;
+  }
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import { Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
 
 type Tone = "light" | "dark";
@@ -237,14 +238,7 @@ export function SmallIcon({
 }
 
 export function RepeatIcon({ className }: { className: string }) {
-  return (
-    <SmallIcon className={className}>
-      <path d="m17 2 4 4-4 4" />
-      <path d="M3 11V9a3 3 0 0 1 3-3h15" />
-      <path d="m7 22-4-4 4-4" />
-      <path d="M21 13v2a3 3 0 0 1-3 3H3" />
-    </SmallIcon>
-  );
+  return <Repeat2 aria-hidden="true" className={className} />;
 }
 
 export function ListMarkerIcon({ className }: { className: string }) {

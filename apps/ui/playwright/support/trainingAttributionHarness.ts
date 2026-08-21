@@ -3,6 +3,11 @@ import {
   buildFakeSupabaseSession,
   installSupabaseSession,
 } from "../utils/supabaseTestSession";
+import {
+  buildTrainingVisualFixtureProfile,
+  buildTrainingVisualLookupGroup,
+  type TrainingVisualState,
+} from "./trainingVisualFixtureProfile";
 
 export const TRAINING_ATTRIBUTION_THRESHOLD_MS = 1_000;
 export const TRAINING_ATTRIBUTION_TRANSITIONS = 20;
@@ -145,9 +150,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     advanceLeaseClockMs?: number;
     advanceLeaseClockOnAction?: number;
     forceOnDemandLookupEveryAction?: boolean;
-    /** Deterministic, capability-complete card used only for visual QA. */
-    visualCard?: boolean;
-    visualLongCard?: boolean;
+    /** One valid deterministic state used only for visual QA. */
+    visualProfile?: TrainingVisualState;
   } = {},
 ) {
   let nextEntryIndex = 0;
@@ -192,7 +196,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   // Keep visual-only captures focused on the product surface; the harness
   // intentionally replaces platform data and therefore cannot satisfy the
   // development server's real database-contract health probe.
-  if (options.visualCard) {
+  if (options.visualProfile) {
     await page.route("**/api/health**", (route) =>
       route.fulfill({
         status: 200,
@@ -241,15 +245,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
           intent: "training-review",
         },
         groups: entry
-          ? [
-              buildLookupGroup(
-                entry,
-                options.visualCard ? false : entries.indexOf(entry) < 3,
-                invalidEntryIds.has(entry.id),
-                options.visualCard,
-                options.visualLongCard,
-              ),
-            ]
+          ? [options.visualProfile
+              ? buildTrainingVisualLookupGroup(entry, options.visualProfile)
+              : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id))]
           : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       },
@@ -545,7 +543,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       statsRequests.push({ ...body });
       await fulfillJson(
         route,
-        options.visualCard
+        options.visualProfile
           ? {
               newWordsToday: 0,
               newCardsToday: 0,
@@ -609,8 +607,10 @@ export async function setupAuthenticatedTrainingAttributionPage(
           ? {
               ...learningPreferences(),
               theme_preference: "system",
-              translation_lang: options.visualCard ? "en" : "ru",
-              preferences: options.visualCard
+              translation_lang: options.visualProfile
+                ? buildTrainingVisualFixtureProfile(options.visualProfile).translationTargetLanguageCode
+                : "ru",
+              preferences: options.visualProfile
                 ? { onboardingCompleted: true, onboardingLanguage: "nl" }
                 : {},
             }
@@ -1088,15 +1088,7 @@ function buildLookupGroup(
   entry: FixtureEntry,
   learn: boolean,
   invalid = false,
-  visualCard = false,
-  visualLongCard = false,
 ) {
-  const visualHeadword = visualLongCard ? "nodig" : visualCard ? "bank" : entry.headword;
-  const visualPartOfSpeech = visualLongCard
-    ? "bn."
-    : visualCard
-      ? "zn."
-      : entry.part_of_speech;
   const target = {
     kind: "sense-card" as const,
     entryId: entry.id,
@@ -1122,26 +1114,6 @@ function buildLookupGroup(
         },
       ]
     : reviewCapabilities;
-  if (visualCard) {
-    capabilities.push(
-      {
-        actionId: "mark-known",
-        elementId: "sense-card.known.mark",
-        messageKey: "senseCard.known.mark",
-        target,
-      },
-      {
-        actionId: "report-content",
-        elementId: "sense-card.report",
-        messageKey: "senseCard.report",
-        target: {
-          kind: "entry",
-          entryId: entry.id,
-          contentRevision: `content-${entry.id}`,
-        },
-      },
-    );
-  }
   return {
     headwordGroupId: `group-${entry.id}`,
     dictionary: {
@@ -1151,20 +1123,12 @@ function buildLookupGroup(
       messageKey: "dictionary.source",
     },
     header: {
-      text: invalid ? "" : visualHeadword,
+      text: invalid ? "" : entry.headword,
       article: entry.gender,
       partOfSpeech: {
-        termId: visualLongCard
-          ? "part-of-speech.bn"
-          : visualCard
-            ? "part-of-speech.zn"
-            : "part-of-speech:substantief",
-        messageKey: visualLongCard
-          ? "partOfSpeech.bn"
-          : visualCard
-            ? "partOfSpeech.zn"
-            : "partOfSpeech.source",
-        sourceValue: visualPartOfSpeech,
+        termId: "part-of-speech:substantief",
+        messageKey: "partOfSpeech.source",
+        sourceValue: entry.part_of_speech,
       },
       audio: {
         audioId: `audio-${entry.id}`,
@@ -1174,43 +1138,27 @@ function buildLookupGroup(
     },
     senseCount: 1,
     entryCount: 1,
-    indicators: visualCard
-      ? [
-          {
-            indicatorId: "core-vocabulary.nt2-2000",
-            value: "true",
-            messageKey: "indicator.coreVocabulary.nt22000",
-          },
-        ]
-      : [],
+    indicators: [],
     entries: [
       {
         kind: "sense-card",
         entryId: entry.id,
         meaningOrdinal: 1,
         partOfSpeech: {
-          termId: visualLongCard
-            ? "part-of-speech.bn"
-            : visualCard
-              ? "part-of-speech.zn"
-              : "part-of-speech:substantief",
-          messageKey: visualLongCard
-            ? "partOfSpeech.bn"
-            : visualCard
-              ? "partOfSpeech.zn"
-              : "partOfSpeech.source",
-          sourceValue: visualPartOfSpeech,
+          termId: "part-of-speech:substantief",
+          messageKey: "partOfSpeech.source",
+          sourceValue: entry.part_of_speech,
         },
         card: learn
           ? null
           : {
               cardTypeId: "word-to-definition",
-              scheduler: { phase: "learning", repeatCount: visualCard ? 1 : 3 },
+              scheduler: { phase: "learning", repeatCount: 3 },
               knownMark: null,
               stateRevision: `state-${entry.id}`,
             },
         contentRevision: `content-${entry.id}`,
-        reportContentRevision: visualCard ? `content-${entry.id}` : null,
+        reportContentRevision: null,
         summaryContentNodeId: `definition-${entry.id}`,
         contentNodes: [
           {
@@ -1218,50 +1166,17 @@ function buildLookupGroup(
             parentContentNodeId: null,
             kind: "definition",
             order: 0,
-            text: visualLongCard
-              ? "vereist of gewenst voor een bepaald doel"
-              : visualCard
-                ? "een meubelstuk waarop je met meer personen kunt zitten"
-              : entry.raw.meanings[0]!.definition,
+            text: entry.raw.meanings[0]!.definition,
             sourceTextFingerprint: `fingerprint-${entry.id}`,
-            translations: visualCard
-              ? [
-                  {
-                    translationId: `definition-translation-${entry.id}`,
-                    targetLanguageCode: "ru",
-                    status: "ready",
-                    text: "a piece of furniture that seats several people",
-                    sourceTextFingerprint: `fingerprint-${entry.id}`,
-                    translationPolicyVersion: "attribution-fixture-v1",
-                  },
-                ]
-              : [],
+            translations: [],
           },
-          ...(visualLongCard
-            ? [
-                idiomNode(entry.id, 1, "iets nodig hebben", "iets moeten gebruiken of bezitten", "ik heb je hulp nodig"),
-                idiomNode(entry.id, 2, "zo nodig", "als het noodzakelijk is", "bel mij zo nodig"),
-              ].flat()
-            : visualCard
-            ? [
-                {
-                  contentNodeId: `example-${entry.id}`,
-                  parentContentNodeId: null,
-                  kind: "example",
-                  order: 1,
-                  text: "Margriet en Ellie zaten op de bank televisie te kijken.",
-                  sourceTextFingerprint: `example-fingerprint-${entry.id}`,
-                  translations: [],
-                },
-              ]
-            : []),
         ],
         translation: {
           translationId: `translation-${entry.id}`,
           entryId: entry.id,
-          targetLanguageCode: visualCard ? "en" : "ru",
+          targetLanguageCode: "ru",
           status: "ready",
-          text: visualCard ? "bench · sofa" : `перевод ${entry.headword}`,
+          text: `перевод ${entry.headword}`,
           sourceContentFingerprint: `content-${entry.id}`,
           translationPolicyVersion: "attribution-fixture-v1",
           isFresh: true,
@@ -1270,45 +1185,6 @@ function buildLookupGroup(
       },
     ],
   };
-}
-
-function idiomNode(
-  entryId: string,
-  ordinal: number,
-  text: string,
-  definition: string,
-  example: string,
-) {
-  const parentId = `idiom-${ordinal}-${entryId}`;
-  return [
-    {
-      contentNodeId: parentId,
-      parentContentNodeId: null,
-      kind: "idiom",
-      order: ordinal * 10,
-      text,
-      sourceTextFingerprint: `${parentId}-fingerprint`,
-      translations: [],
-    },
-    {
-      contentNodeId: `${parentId}-definition`,
-      parentContentNodeId: parentId,
-      kind: "definition",
-      order: ordinal * 10 + 1,
-      text: definition,
-      sourceTextFingerprint: `${parentId}-definition-fingerprint`,
-      translations: [],
-    },
-    {
-      contentNodeId: `${parentId}-example`,
-      parentContentNodeId: parentId,
-      kind: "example",
-      order: ordinal * 10 + 2,
-      text: example,
-      sourceTextFingerprint: `${parentId}-example-fingerprint`,
-      translations: [],
-    },
-  ];
 }
 
 function learningPreferences() {

@@ -28,14 +28,23 @@ test("composes the approved compact app header without changing its actions", ()
   expect(onClose).toHaveBeenCalledOnce();
 });
 
-test("renders the approved session identity, count and progress as one reusable owner", () => {
+test("omits History when the runtime does not provide an authoritative action", () => {
+  render(
+    <TrainingSessionAppHeader interfaceLanguage="en" onClose={vi.fn()} />,
+  );
+
+  expect(
+    screen.queryByRole("button", { name: "History" }),
+  ).not.toBeInTheDocument();
+});
+
+test("renders only the authoritative session ordinal without derived progress", () => {
   render(
     <TrainingSessionChrome
       interfaceLanguage="en"
       scenario="understanding"
       mode="word-to-definition"
       position={10}
-      total={23}
     />,
   );
 
@@ -44,6 +53,7 @@ test("renders the approved session identity, count and progress as one reusable 
   expect(chrome).toHaveClass("gap-[14px]");
   expect(screen.getByText("TRAINING")).toBeInTheDocument();
   expect(screen.getByText("New + review")).toBeInTheDocument();
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("10 / 23");
-  expect(screen.getByTestId("training-session-progress-track")).toHaveClass("h-1");
+  expect(screen.getByTestId("training-session-position")).toHaveTextContent("10");
+  expect(screen.getByTestId("training-session-position")).not.toHaveTextContent("/");
+  expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();
 });
