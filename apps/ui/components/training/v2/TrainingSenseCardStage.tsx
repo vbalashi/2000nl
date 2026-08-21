@@ -169,7 +169,9 @@ export function TrainingSenseCardStage({
         data-testid="training-sense-card-shell"
         className="relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden rounded-[24px] border border-slate-300 bg-slate-50 shadow-[0_18px_55px_rgba(15,23,42,0.12)] dark:border-slate-600 dark:bg-[#1d222b] dark:shadow-[0_22px_70px_rgba(0,0,0,0.22)] [@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]"
       >
-        {model.audioCapability && onPlayAudio ? (
+        {model.audioCapability &&
+        onPlayAudio &&
+        (mode === "word-to-definition" || answerVisible) ? (
           <div
             data-testid="training-card-audio-corner"
             className="absolute left-5 top-5 z-20 sm:left-7 sm:top-7"
