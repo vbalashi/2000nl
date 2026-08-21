@@ -28,17 +28,12 @@ const copy = {
       review_hard: "Moeilijk",
       review_success: "Goed",
       review_easy: "Makkelijk",
-      definition_click: "Definitie bekeken",
-      freeze: "Bevroren",
-      hide: "Verborgen",
-      other: "Activiteit",
     },
     modes: {
       "word-to-definition": "Woord → betekenis",
       "definition-to-word": "Betekenis → woord",
       "listen-recognize": "Luisteren → herkennen",
       "listen-type": "Luisteren → typen",
-      other: "Training",
     },
   },
   en: {
@@ -57,17 +52,12 @@ const copy = {
       review_hard: "Hard",
       review_success: "Good",
       review_easy: "Easy",
-      definition_click: "Definition viewed",
-      freeze: "Frozen",
-      hide: "Hidden",
-      other: "Activity",
     },
     modes: {
       "word-to-definition": "Word → meaning",
       "definition-to-word": "Meaning → word",
       "listen-recognize": "Listen → recognize",
       "listen-type": "Listen → type",
-      other: "Training",
     },
   },
   ru: {
@@ -86,17 +76,12 @@ const copy = {
       review_hard: "Трудно",
       review_success: "Хорошо",
       review_easy: "Легко",
-      definition_click: "Просмотрено определение",
-      freeze: "Заморожено",
-      hide: "Скрыто",
-      other: "Действие",
     },
     modes: {
       "word-to-definition": "Слово → значение",
       "definition-to-word": "Значение → слово",
       "listen-recognize": "Слушать → узнать",
       "listen-type": "Слушать → ввести",
-      other: "Тренировка",
     },
   },
 } as const;
@@ -293,12 +278,8 @@ export function TrainingHistoryDestination({
             {visibleLoadState.items.length > 0 ? (
               <ol aria-label={text.list} className="divide-y divide-slate-100 dark:divide-slate-800">
                 {visibleLoadState.items.map((item) => {
-                  const eventLabel =
-                    text.events[item.reviewResult as keyof typeof text.events] ??
-                    text.events.other;
-                  const modeLabel =
-                    text.modes[item.cardTypeId as keyof typeof text.modes] ??
-                    text.modes.other;
+                  const eventLabel = text.events[item.reviewResult];
+                  const modeLabel = text.modes[item.cardTypeId];
                   return (
                     <li
                       key={`${item.entryId}-${item.reviewedAt}-${item.reviewResult}`}

@@ -1,11 +1,18 @@
 import { supabase } from "../supabaseClient";
+import type { TrainingMode } from "../types";
+
+export type TrainingHistoryReviewResult =
+  | "review_fail"
+  | "review_hard"
+  | "review_success"
+  | "review_easy";
 
 export type RecentTrainingHistoryItem = {
   entryId: string;
   headword: string;
   partOfSpeech: string | null;
-  reviewResult: string;
-  cardTypeId: string;
+  reviewResult: TrainingHistoryReviewResult;
+  cardTypeId: TrainingMode;
   reviewedAt: string;
 };
 
@@ -27,15 +34,36 @@ type RecentTrainingHistoryRow = {
 const isString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
+const reviewResults = new Set<TrainingHistoryReviewResult>([
+  "review_fail",
+  "review_hard",
+  "review_success",
+  "review_easy",
+]);
+const trainingModes = new Set<TrainingMode>([
+  "word-to-definition",
+  "definition-to-word",
+  "listen-recognize",
+  "listen-type",
+]);
+
+const isReviewResult = (value: unknown): value is TrainingHistoryReviewResult =>
+  typeof value === "string" &&
+  reviewResults.has(value as TrainingHistoryReviewResult);
+const isTrainingMode = (value: unknown): value is TrainingMode =>
+  typeof value === "string" && trainingModes.has(value as TrainingMode);
+const isValidTimestamp = (value: unknown): value is string =>
+  isString(value) && Number.isFinite(Date.parse(value));
+
 const projectHistoryRow = (
   row: RecentTrainingHistoryRow,
 ): RecentTrainingHistoryItem => {
   if (
     !isString(row.entry_id) ||
     !isString(row.headword) ||
-    !isString(row.review_result) ||
-    !isString(row.card_type_id) ||
-    !isString(row.reviewed_at) ||
+    !isReviewResult(row.review_result) ||
+    !isTrainingMode(row.card_type_id) ||
+    !isValidTimestamp(row.reviewed_at) ||
     typeof row.has_more !== "boolean" ||
     (row.part_of_speech !== null &&
       typeof row.part_of_speech !== "string")

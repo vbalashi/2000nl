@@ -98,4 +98,36 @@ describe("recent Training history", () => {
     );
     diagnostic.mockRestore();
   });
+
+  test.each([
+    ["an unknown review result", { review_result: "definition_click" }],
+    ["an unsupported card mode", { card_type_id: "opaque-mode" }],
+    ["an invalid review timestamp", { reviewed_at: "not-a-date" }],
+  ])("rejects %s", async (_label, invalidField) => {
+    const diagnostic = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          entry_id: "entry-1",
+          headword: "bank",
+          part_of_speech: "zn.",
+          review_result: "review_success",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: false,
+          ...invalidField,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).rejects.toThrow(
+      "training_history_contract_mismatch",
+    );
+    expect(diagnostic).toHaveBeenCalledWith(
+      "Invalid recent training history projection",
+      { index: 0 },
+    );
+    diagnostic.mockRestore();
+  });
 });
