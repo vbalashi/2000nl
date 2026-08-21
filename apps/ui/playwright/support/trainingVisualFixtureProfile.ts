@@ -18,7 +18,44 @@ type FixtureEntry = {
   id: string;
 };
 
-export function buildTrainingVisualFixtureProfile(state: TrainingVisualState) {
+export type TrainingVisualFixtureBundle = Readonly<{
+  profile: ReturnType<typeof buildTrainingVisualFixtureProfile>;
+  lookupGroups: Readonly<Record<string, PlatformHeadwordGroupV2>>;
+  plan: Readonly<{
+    plannedNew: number;
+    plannedReview: number;
+    plannedPractice: number;
+    plannedTotal: number;
+    plannedAt: string;
+  }>;
+  stats: Readonly<{
+    newWordsToday: number;
+    newCardsToday: number;
+    dailyNewLimit: number;
+    reviewWordsDone: number;
+    reviewCardsDone: number;
+    reviewWordsDue: number;
+    reviewCardsDue: number;
+    totalWordsLearned: number;
+    totalWordsInList: number;
+  }>;
+  settings: Readonly<{
+    training_mode: "word-to-definition";
+    modes_enabled: readonly ["word-to-definition"];
+    card_filter: "both";
+    language_code: "nl";
+    new_review_ratio: 2;
+    active_scenario: "understanding";
+    theme_preference: "system";
+    translation_lang: "en";
+    preferences: Readonly<{
+      onboardingCompleted: true;
+      onboardingLanguage: "nl";
+    }>;
+  }>;
+}>;
+
+function buildTrainingVisualFixtureProfile(state: TrainingVisualState) {
   const long = state === "long-idiom";
   return {
     state,
@@ -40,7 +77,58 @@ export function buildTrainingVisualFixtureProfile(state: TrainingVisualState) {
   };
 }
 
-export function buildTrainingVisualLookupGroup(
+export function buildTrainingVisualFixtureBundle(
+  state: TrainingVisualState,
+  entries: readonly FixtureEntry[],
+): TrainingVisualFixtureBundle {
+  const profile = buildTrainingVisualFixtureProfile(state);
+  const lookupGroups = Object.freeze(
+    Object.fromEntries(
+      entries.map((entry) => [
+        entry.id,
+        buildTrainingVisualLookupGroup(entry, state),
+      ]),
+    ) as Record<string, PlatformHeadwordGroupV2>,
+  );
+  return Object.freeze({
+    profile,
+    lookupGroups,
+    plan: Object.freeze({
+      plannedNew: 5,
+      plannedReview: 18,
+      plannedPractice: 0,
+      plannedTotal: 23,
+      plannedAt: new Date(0).toISOString(),
+    }),
+    stats: Object.freeze({
+      newWordsToday: 0,
+      newCardsToday: 0,
+      dailyNewLimit: 10,
+      reviewWordsDone: 6,
+      reviewCardsDone: 6,
+      reviewWordsDue: 12,
+      reviewCardsDue: 12,
+      totalWordsLearned: 6,
+      totalWordsInList: 25,
+    }),
+    settings: Object.freeze({
+      training_mode: "word-to-definition",
+      modes_enabled: ["word-to-definition"] as const,
+      card_filter: "both",
+      language_code: "nl",
+      new_review_ratio: 2,
+      active_scenario: "understanding",
+      theme_preference: "system",
+      translation_lang: profile.translationTargetLanguageCode,
+      preferences: Object.freeze({
+        onboardingCompleted: true,
+        onboardingLanguage: profile.interfaceLanguage,
+      }),
+    }),
+  });
+}
+
+function buildTrainingVisualLookupGroup(
   entry: FixtureEntry,
   state: TrainingVisualState,
 ): PlatformHeadwordGroupV2 {

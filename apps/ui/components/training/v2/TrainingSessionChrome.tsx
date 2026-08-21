@@ -6,7 +6,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardFilter, TrainingMode } from "@/lib/types";
 import { trainingSessionLabel } from "./trainingSessionLabels";
-import type { TrainingSessionProgress } from "./useTrainingSessionPresentation";
+import type { TrainingSessionPresentationSnapshot } from "./useTrainingSessionPresentation";
 
 const copy = {
   nl: { close: "Sessie sluiten", history: "Geschiedenis", eyebrow: "TRAINING" },
@@ -69,20 +69,17 @@ export function TrainingSessionChrome({
   scenario,
   mode,
   cardFilter,
-  position,
-  progress,
+  presentation,
   sessionName,
 }: {
   interfaceLanguage: OnboardingLanguage;
   scenario: string;
   mode: TrainingMode;
   cardFilter: CardFilter;
-  position: number;
-  progress: TrainingSessionProgress | null;
+  presentation: TrainingSessionPresentationSnapshot;
   sessionName?: string;
 }) {
   const text = copy[interfaceLanguage];
-  const shownPosition = progress?.position ?? position;
   return (
     <section
       data-testid="training-session-chrome"
@@ -108,22 +105,22 @@ export function TrainingSessionChrome({
           data-testid="training-session-position"
           className="shrink-0 rounded-full border border-slate-300 bg-white px-[9px] py-1.5 font-mono text-[11px] font-semibold tabular-nums text-slate-900 dark:border-[#30394B] dark:bg-[#171D29] dark:text-[#F3F5F9]"
         >
-          {shownPosition}
-          {progress ? (
+          {presentation.position}
+          {presentation.kind === "planned" ? (
             <span className="font-normal text-slate-500 dark:text-[#858F9F]">
-              {" "}/ {progress.total}
+              {" "}/ {presentation.total}
             </span>
           ) : null}
         </span>
       </div>
-      {progress ? (
+      {presentation.kind === "planned" ? (
         <div
           data-testid="training-session-progress-track"
           className="h-1 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-[#232A38]"
         >
           <div
             className="h-full rounded-full bg-[#8B89F6] transition-[width] motion-reduce:transition-none"
-            style={{ width: `${progress.fraction * 100}%` }}
+            style={{ width: `${presentation.fraction * 100}%` }}
           />
         </div>
       ) : null}

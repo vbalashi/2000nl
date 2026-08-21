@@ -39,6 +39,10 @@ import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
 } from "./pendingKnownUndoStore";
+import {
+  resolveTrainingSessionLayoutPhase,
+  TrainingSessionV2Layout,
+} from "./TrainingSessionV2Layout";
 
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
@@ -51,6 +55,9 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
+  chrome: React.ReactNode;
+  footer: React.ReactNode;
+  notice?: React.ReactNode;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
@@ -85,6 +92,9 @@ export function TrainingSenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
+  chrome,
+  footer,
+  notice,
   focusOnPresentation = false,
   onPlayResolvedAudio,
   onOpenDetails,
@@ -399,11 +409,20 @@ export function TrainingSenseCardV2Session({
       {presentationAnnouncement}
     </span>
   );
+  const renderLayout = (content: React.ReactNode) => (
+    <TrainingSessionV2Layout
+      phase={resolveTrainingSessionLayoutPhase(sessionState)}
+      chrome={chrome}
+      footer={footer}
+      notice={notice}
+    >
+      {cardAnnouncementRegion}
+      {content}
+    </TrainingSessionV2Layout>
+  );
 
   if (sessionState === "loading") {
-    return (
-      <>
-        {cardAnnouncementRegion}
+    return renderLayout(
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[760px] flex-1 flex-col gap-3 [@media(hover:hover)_and_(pointer:fine)]:justify-center">
           <div
             role="status"
@@ -415,8 +434,7 @@ export function TrainingSenseCardV2Session({
             {platformV2Message(interfaceLanguage, "senseCard.training.loading")}
           </div>
           <div aria-hidden="true" className="h-11 min-h-11 shrink-0" />
-        </div>
-      </>
+        </div>,
     );
   }
 
@@ -425,9 +443,7 @@ export function TrainingSenseCardV2Session({
       TrainingV2SessionState,
       "loading" | "ready"
     >;
-    return (
-      <>
-        {cardAnnouncementRegion}
+    return renderLayout(
         <SessionV2Failure
           state={failureState}
           interfaceLanguage={interfaceLanguage}
@@ -443,14 +459,11 @@ export function TrainingSenseCardV2Session({
               setError(cause instanceof Error ? cause.message : "lookup_failed");
             });
           }}
-        />
-      </>
+        />,
     );
   }
 
-  return (
-    <>
-      {cardAnnouncementRegion}
+  return renderLayout(
       <div
         className="contents"
         data-testid="training-sense-card-v2"
@@ -491,8 +504,7 @@ export function TrainingSenseCardV2Session({
           dismissLabel={platformV2Message(interfaceLanguage, "senseCard.dismiss")}
           onDismiss={() => setError(null)}
         />
-      </div>
-    </>
+      </div>,
   );
 }
 

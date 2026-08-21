@@ -53,8 +53,8 @@ describe("useTrainingSessionPresentation", () => {
     // consumes its transition signal only once when it first becomes ready.
     view.rerender({ surface: "session", cardKey: "entry-2:word-to-definition" });
     expect(view.result.current.isSubsequentCard).toBe(true);
-    expect(view.result.current.cardOrdinal).toBe(2);
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 2,
       total: 3,
       fraction: 2 / 3,
@@ -63,8 +63,8 @@ describe("useTrainingSessionPresentation", () => {
     act(() => view.rerender({ surface: "today", cardKey: null }));
     view.rerender({ surface: "session", cardKey: "entry-3:word-to-definition" });
     expect(view.result.current.isSubsequentCard).toBe(false);
-    expect(view.result.current.cardOrdinal).toBe(1);
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 1,
       total: 3,
       fraction: 1 / 3,
@@ -99,12 +99,12 @@ describe("useTrainingSessionPresentation", () => {
       plannedTotal: null,
     });
 
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 3,
       total: 2,
       fraction: 1,
     });
-    expect(view.result.current.cardOrdinal).toBe(3);
   });
 
   test("never decreases a plan mid-session and resets it for an exact scope or session restart", () => {
@@ -144,7 +144,8 @@ describe("useTrainingSessionPresentation", () => {
       plannedTotal: 3,
       cardKey: "entry-2:a",
     });
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 2,
       total: 5,
       fraction: 0.4,
@@ -157,8 +158,8 @@ describe("useTrainingSessionPresentation", () => {
       plannedTotal: 2,
       cardKey: "entry-3:a",
     });
-    expect(view.result.current.cardOrdinal).toBe(1);
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 1,
       total: 2,
       fraction: 0.5,
@@ -171,7 +172,10 @@ describe("useTrainingSessionPresentation", () => {
       plannedTotal: null,
       cardKey: null,
     });
-    expect(view.result.current.progress).toBeNull();
+    expect(view.result.current.presentation).toEqual({
+      kind: "ordinal",
+      position: 1,
+    });
     view.rerender({
       surface: "session",
       sessionKey: "modes=a|list=2|filter=review",
@@ -179,7 +183,8 @@ describe("useTrainingSessionPresentation", () => {
       plannedTotal: 4,
       cardKey: "entry-4:a",
     });
-    expect(view.result.current.progress).toEqual({
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
       position: 1,
       total: 4,
       fraction: 0.25,

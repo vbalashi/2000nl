@@ -75,7 +75,15 @@ No additional cropped comparison was necessary after the final full-view contact
    - The default direct-understanding label is intentionally implicit to match Pen, while new-only, review-only, mixed, reverse, and non-default scenarios remain semantically projected by the shared label owner.
    - History icon placement, ratio pill, progress track, four card/error compositions, and stable docks were compared in the refreshed contact sheet. No actionable P0/P1/P2 visual difference remains. Remaining copy differences are required Dutch localization, not geometry regressions.
 
-The #194 code slice and its formerly hard dependencies #224/#225 are integrated. All approved visible chrome is backed by authoritative runtime behavior; final Design QA passes.
+At the dependency-integration checkpoint, the #194 code slice and #224/#225 were visually complete: all approved chrome was backed by authoritative runtime behavior.
+
+7. Architecture remediation comparison — visually passed; architecture rereview pending.
+   - A typed `TrainingSessionV2Layout` now owns loading, ready, and failure composition in the same render. Loading/ready receive chrome and footer slots; every known failure and any unknown future renderer state fail closed to the error-only composition. The broad negative DOM `:has(...)` selector was removed.
+   - Session presentation is one discriminated snapshot: ordinal-only or authoritative planned progress. There are no competing `position` and `progress.position` inputs.
+   - Each visual profile is built once as one immutable typed bundle containing canonical Platform V2 lookup groups plus its plan, stats, and settings. The harness consumes that bundle rather than reconstructing visual state across routes.
+   - All four exact 402 × 874 dark states and the light/mobile plus dark/wide profiles were recaptured after the DOM ownership change. The refreshed contact sheet shows unchanged approved geometry and no new P0/P1/P2 visual difference.
+
+Design fidelity remains passed, but the overall gate is intentionally blocked until the requested independent architecture rereview confirms these seams.
 
 P3 follow-up polish:
 
@@ -84,11 +92,11 @@ P3 follow-up polish:
 
 ## Validation
 
-- Focused component/session and fixture suites: passed, including authoritative progress, History navigation/focus return, loading retention, and four semantic-label cases.
-- Full UI unit suite: 869 passed, 120 skipped (environment-gated RPC tests), 0 failed.
+- Focused component/session/layout/fixture suites: 126 / 126 passed, including authoritative progress, History navigation/focus return, loading retention, fail-closed layout ownership, and semantic-label cases.
+- Full UI unit suite: 878 passed, 120 skipped (environment-gated RPC tests), 0 failed.
 - Exact-state visual browser suite: 4 / 4 passed.
 - TypeScript typecheck: passed.
 - Lint: passed.
 - Optimized Next.js compile/type validation: passed; static export then stopped on the known local-environment prerequisite `Supabase credentials are not configured` for auth/root pages, unrelated to this UI slice.
 
-final result: passed
+final result: blocked — architecture rereview pending

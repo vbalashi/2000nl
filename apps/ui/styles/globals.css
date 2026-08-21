@@ -45,23 +45,3 @@ body {
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-600;
 }
-/* A committed V2 failure owns the session body; loading keeps existing chrome. */
-[data-training-session-layout="v2"]:has(
-    [data-training-v2-state]:not([data-training-v2-state="loading"]):not(
-        [data-training-v2-state="ready"]
-      )
-  )
-  [data-training-session-detail] {
-  display: none;
-}
-
-[data-training-session-layout="v2"]:has(
-    [data-training-v2-state]:not([data-training-v2-state="loading"]):not(
-        [data-training-v2-state="ready"]
-      )
-  )
-  [data-training-session-main]
-  > div {
-  padding-bottom: 0;
-  padding-top: 10px;
-}

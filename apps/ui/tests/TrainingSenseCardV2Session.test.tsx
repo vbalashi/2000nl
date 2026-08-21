@@ -51,7 +51,7 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
 function TestTrainingSenseCardV2Session(
   props: Omit<
     React.ComponentProps<typeof TrainingSenseCardV2Session>,
-    "cacheOwnerId" | "presentationIdentity"
+    "cacheOwnerId" | "presentationIdentity" | "chrome" | "footer"
   > & { presentationIdentity?: string },
 ) {
   return (
@@ -61,6 +61,8 @@ function TestTrainingSenseCardV2Session(
         props.presentationIdentity ??
         `test-presentation:${props.word.id}:${props.mode}`
       }
+      chrome={<div data-testid="test-session-chrome" />}
+      footer={<div data-testid="test-session-footer" />}
       {...props}
     />
   );

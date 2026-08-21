@@ -50,8 +50,7 @@ test.each([
       scenario="understanding"
       mode={mode}
       cardFilter={cardFilter}
-      position={10}
-      progress={null}
+      presentation={{ kind: "ordinal", position: 10 }}
     />,
   );
 
@@ -72,8 +71,12 @@ test("renders only the authoritative planned total and fraction", () => {
       scenario="understanding"
       mode="word-to-definition"
       cardFilter="both"
-      position={99}
-      progress={{ position: 10, total: 23, fraction: 10 / 23 }}
+      presentation={{
+        kind: "planned",
+        position: 10,
+        total: 23,
+        fraction: 10 / 23,
+      }}
     />,
   );
 

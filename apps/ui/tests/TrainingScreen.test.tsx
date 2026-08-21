@@ -16,6 +16,7 @@ import type {
   TrainingScenario,
 } from "@/lib/types";
 import type { AppDestination } from "@/components/navigation/appDestination";
+import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -494,6 +495,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onLoadFailure,
     onRetryAlternative,
     onProgressActionAccepted,
+    chrome,
+    footer,
+    notice,
   }: {
     word: { headword: string };
     presentationIdentity: string | null;
@@ -502,6 +506,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onLoadFailure?: (failure: "model-invalid") => void;
     onRetryAlternative?: (failure: "model-invalid") => void;
     onProgressActionAccepted: (capability: { actionId: string }) => void;
+    chrome: React.ReactNode;
+    footer: React.ReactNode;
+    notice?: React.ReactNode;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
     const failed = word.headword === "broken-card";
@@ -514,47 +521,53 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     }, [failed, onLoadFailure]);
     if (failed) {
       return (
-        <div role="alert" data-training-v2-state="model-invalid">
-          This training card could not be loaded.
-          <button
-            type="button"
-            onClick={() => onRetryAlternative?.("model-invalid")}
-          >
-            Try again
-          </button>
-        </div>
+        <TrainingSessionV2Layout phase="failure" chrome={chrome} footer={footer} notice={notice}>
+          <div role="alert" data-training-v2-state="model-invalid">
+            This training card could not be loaded.
+            <button
+              type="button"
+              onClick={() => onRetryAlternative?.("model-invalid")}
+            >
+              Try again
+            </button>
+          </div>
+        </TrainingSessionV2Layout>
       );
     }
     if (loading) {
       return (
-        <div role="status" data-testid="training-v2-loading" data-training-v2-state="loading">
-          Loading training card
-        </div>
+        <TrainingSessionV2Layout phase="loading" chrome={chrome} footer={footer} notice={notice}>
+          <div role="status" data-testid="training-v2-loading" data-training-v2-state="loading">
+            Loading training card
+          </div>
+        </TrainingSessionV2Layout>
       );
     }
     return (
-      <div
-        ref={stageRef}
-        tabIndex={-1}
-        data-testid="mock-training-sense-card-v2"
-        data-presentation-identity={presentationIdentity ?? ""}
-      >
-        <span aria-live="polite">
-          {focusOnPresentation ? "Next training card" : ""}
-        </span>
-        <h2>{word.headword}</h2>
-        {onOpenDetails ? (
-          <button type="button" onClick={onOpenDetails}>
-            Word details
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+      <TrainingSessionV2Layout phase="ready" chrome={chrome} footer={footer} notice={notice}>
+        <div
+          ref={stageRef}
+          tabIndex={-1}
+          data-testid="mock-training-sense-card-v2"
+          data-presentation-identity={presentationIdentity ?? ""}
         >
-          Mock V2 grade
-        </button>
-      </div>
+          <span aria-live="polite">
+            {focusOnPresentation ? "Next training card" : ""}
+          </span>
+          <h2>{word.headword}</h2>
+          {onOpenDetails ? (
+            <button type="button" onClick={onOpenDetails}>
+              Word details
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+          >
+            Mock V2 grade
+          </button>
+        </div>
+      </TrainingSessionV2Layout>
     );
   },
   TrainingKnownUndoNotice: () => null,

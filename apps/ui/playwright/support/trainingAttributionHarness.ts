@@ -4,10 +4,13 @@ import {
   installSupabaseSession,
 } from "../utils/supabaseTestSession";
 import {
-  buildTrainingVisualFixtureProfile,
-  buildTrainingVisualLookupGroup,
+  buildTrainingVisualFixtureBundle,
   type TrainingVisualState,
 } from "./trainingVisualFixtureProfile";
+import type {
+  PlatformHeadwordGroupV2,
+  PlatformSenseCardCapabilityV2,
+} from "../../../../packages/shared/types/platformV2";
 
 export const TRAINING_ATTRIBUTION_THRESHOLD_MS = 1_000;
 export const TRAINING_ATTRIBUTION_TRANSITIONS = 20;
@@ -172,6 +175,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
+  const visualFixture = options.visualProfile
+    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
+    : null;
 
   const correlatedHeaders = (surface: string) => {
     requestSequence += 1;
@@ -245,8 +251,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
           intent: "training-review",
         },
         groups: entry
-          ? [options.visualProfile
-              ? buildTrainingVisualLookupGroup(entry, options.visualProfile)
+          ? [visualFixture
+              ? visualFixture.lookupGroups[entry.id]!
               : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id))]
           : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
@@ -364,14 +370,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     if (pathname.endsWith("/rpc/get_training_session_plan")) {
       await fulfillJson(
         route,
-        options.visualProfile
-          ? {
-              plannedNew: 5,
-              plannedReview: 18,
-              plannedPractice: 0,
-              plannedTotal: 23,
-              plannedAt: new Date(0).toISOString(),
-            }
+        visualFixture
+          ? visualFixture.plan
           : {
               plannedNew: 30,
               plannedReview: 20,
@@ -566,18 +566,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
       statsRequests.push({ ...body });
       await fulfillJson(
         route,
-        options.visualProfile
-          ? {
-              newWordsToday: 0,
-              newCardsToday: 0,
-              dailyNewLimit: 10,
-              reviewWordsDone: 6,
-              reviewCardsDone: 6,
-              reviewWordsDue: 12,
-              reviewCardsDue: 12,
-              totalWordsLearned: 6,
-              totalWordsInList: 25,
-            }
+        visualFixture
+          ? visualFixture.stats
           : {
               newWordsToday: 0,
               newCardsToday: 0,
@@ -627,16 +617,14 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         method === "GET" || method === "HEAD"
-          ? {
-              ...learningPreferences(),
-              theme_preference: "system",
-              translation_lang: options.visualProfile
-                ? buildTrainingVisualFixtureProfile(options.visualProfile).translationTargetLanguageCode
-                : "ru",
-              preferences: options.visualProfile
-                ? { onboardingCompleted: true, onboardingLanguage: "nl" }
-                : {},
-            }
+          ? visualFixture
+            ? visualFixture.settings
+            : {
+                ...learningPreferences(),
+                theme_preference: "system",
+                translation_lang: "ru",
+                preferences: {},
+              }
           : [],
         "settings",
         method === "GET" || method === "HEAD" ? 200 : 201,
@@ -1111,7 +1099,7 @@ function buildLookupGroup(
   entry: FixtureEntry,
   learn: boolean,
   invalid = false,
-) {
+): PlatformHeadwordGroupV2 {
   const target = {
     kind: "sense-card" as const,
     entryId: entry.id,
@@ -1127,7 +1115,7 @@ function buildLookupGroup(
       reviewResult,
     }),
   );
-  const capabilities: Array<Record<string, unknown>> = learn
+  const capabilities: PlatformSenseCardCapabilityV2[] = learn
     ? [
         {
           actionId: "start-learning" as const,
