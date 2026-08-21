@@ -45,13 +45,16 @@ export {
 } from "./training/listService";
 export {
   createTrainingScenarioCatalog,
+  createTrainingSessionPlanKey,
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
   fetchScenarioStats,
   fetchTrainingScenarios,
+  fetchTrainingSessionPlan,
   isTrainingFocusFilterActive,
   type TrainingScenarioCatalog,
+  type TrainingSessionPlanScope,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";

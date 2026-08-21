@@ -28,6 +28,14 @@ export type TrainingFilterSource = {
   lastSeenAt?: string | null;
 };
 
+/** Server-authored snapshot of work planned when a Training session starts. */
+export type TrainingSessionPlan = {
+  plannedNew: number;
+  plannedReview: number;
+  plannedTotal: number;
+  plannedAt: string;
+};
+
 export type WordRaw = {
   headword?: string;
   languageCode?: string;
