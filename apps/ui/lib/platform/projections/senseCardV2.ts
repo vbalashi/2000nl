@@ -15,6 +15,10 @@ import type {
   PlatformWordDetailsV2,
 } from "../../../../../packages/shared/types/platformV2";
 import {
+  firstExactRenderableNodeTranslationV1,
+  isExactRenderableEntryTranslationV1,
+} from "../../../../../packages/shared/platform-v2/displayedTranslationArtifactIdentityV1";
+import {
   learnerDisplayPronunciation,
   type PlatformV2ContentSectionInput,
 } from "../platformV2RichContent";
@@ -61,6 +65,7 @@ export type PlatformLookupV2ProjectionEntry = {
   headwordGroupId: string;
   meaningOrdinal?: number | null;
   reportContentRevision?: string | null;
+  entrySourceContentFingerprint?: string | null;
   allowMutationCapabilities?: boolean;
   entry: DictionaryLookupResult["entry"];
   dictionary: DictionarySummary;
@@ -299,6 +304,8 @@ function projectSenseCard(
       entryTarget,
       contentNodes,
       entryTranslation: item.entryTranslation ?? null,
+      entrySourceContentFingerprint:
+        item.entrySourceContentFingerprint ?? null,
       audioCapability: item.audioCapability,
       translationTargetLanguageCode: request.translationTargetLanguageCode,
       hasWordDetails: Boolean(item.wordDetails),
@@ -377,6 +384,7 @@ function capabilitiesFor(params: {
   };
   contentNodes: PlatformContentNodeV2[];
   entryTranslation: PlatformEntryTranslationStateV2 | null;
+  entrySourceContentFingerprint: string | null;
   audioCapability?: PlatformAudioCapabilityV2;
   translationTargetLanguageCode: string | null;
   hasWordDetails: boolean;
@@ -477,32 +485,51 @@ function capabilitiesFor(params: {
           sourceTextFingerprint: node.sourceTextFingerprint,
         },
       });
-      for (const translation of node.translations) {
+      const translation = firstExactRenderableNodeTranslationV1(
+        node.translations,
+        node.sourceTextFingerprint,
+      );
+      if (translation) {
         capabilities.push({
           actionId: "report-content",
           elementId: "sense-card.report.translation",
           messageKey: "senseCard.report",
           target: {
             kind: "translation",
+            targetKind: "content-node",
             entryId: params.entryTarget.entryId,
             translationId: translation.translationId,
             contentNodeId: node.contentNodeId,
+            targetLanguageCode: translation.targetLanguageCode,
             sourceTextFingerprint: translation.sourceTextFingerprint,
+            translationPolicyVersion: translation.translationPolicyVersion,
+            providerRevision: translation.providerRevision ?? null,
           },
         });
       }
     }
-    if (params.entryTranslation) {
+    if (
+      isExactRenderableEntryTranslationV1(params.entryTranslation, {
+        entryId: params.entryTarget.entryId,
+        sourceContentFingerprint: params.entrySourceContentFingerprint,
+      })
+    ) {
       capabilities.push({
         actionId: "report-content",
         elementId: "sense-card.report.translation",
         messageKey: "senseCard.report",
         target: {
           kind: "translation",
+          targetKind: "entry",
           entryId: params.entryTarget.entryId,
           translationId: params.entryTranslation.translationId,
-          sourceTextFingerprint:
+          contentNodeId: null,
+          targetLanguageCode: params.entryTranslation.targetLanguageCode,
+          sourceContentFingerprint:
             params.entryTranslation.sourceContentFingerprint,
+          translationPolicyVersion:
+            params.entryTranslation.translationPolicyVersion,
+          providerRevision: params.entryTranslation.providerRevision ?? null,
         },
       });
     }

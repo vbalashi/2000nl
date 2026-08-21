@@ -29,6 +29,7 @@ type TranslationRow = {
 };
 
 export type PlatformV2TranslationProjection = {
+  currentSourceContentFingerprint: string | null;
   entryTranslation: PlatformEntryTranslationStateV2 | null;
   nodeTranslationsById: Map<string, PlatformContentNodeTranslationV2[]>;
 };
@@ -90,6 +91,7 @@ export async function resolvePlatformV2Translations(
     >();
     if (!row) {
       byEntryId.set(entry.id, {
+        currentSourceContentFingerprint: null,
         entryTranslation: null,
         nodeTranslationsById,
       });
@@ -118,6 +120,7 @@ export async function resolvePlatformV2Translations(
 
     if (!isFresh) {
       byEntryId.set(entry.id, {
+        currentSourceContentFingerprint: currentContentRevision,
         entryTranslation: {
           translationId: row.id,
           entryId: entry.id,
@@ -205,6 +208,7 @@ export async function resolvePlatformV2Translations(
     }
 
     byEntryId.set(entry.id, {
+      currentSourceContentFingerprint: currentContentRevision,
       entryTranslation,
       nodeTranslationsById,
     });

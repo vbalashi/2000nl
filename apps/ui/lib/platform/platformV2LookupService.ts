@@ -447,6 +447,8 @@ export async function performPlatformV2Lookup(
                   : null,
               entryTranslation:
                 translations?.entryTranslation ?? null,
+              entrySourceContentFingerprint:
+                translations?.currentSourceContentFingerprint ?? null,
               audioCapability,
               ...(wordDetails ? { wordDetails } : {}),
             };

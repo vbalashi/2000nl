@@ -8,6 +8,7 @@ import type {
   PlatformWordDetailsV2,
 } from "./platformV2";
 import { PLATFORM_V2_CARD_TYPE_IDS } from "./platformV2";
+import { isDisplayedTranslationArtifactIdentityV1 } from "../platform-v2/displayedTranslationArtifactIdentityV1";
 
 const CARD_TYPES = new Set<string>(PLATFORM_V2_CARD_TYPE_IDS);
 const INTENTS = new Set(["dictionary-lookup", "training-review", "external-click"]);
@@ -50,8 +51,9 @@ function target(value: unknown, kind: string) {
   if (kind === "sense-card") return CARD_TYPES.has(String(value.cardTypeId)) && string(value.stateRevision);
   if (kind === "entry") return string(value.contentRevision);
   if (kind === "content-node") return string(value.contentNodeId) && string(value.sourceTextFingerprint);
-  return kind === "translation" && string(value.translationId) &&
-    optionalString(value.contentNodeId) && string(value.sourceTextFingerprint);
+  if (kind !== "translation") return false;
+  const { kind: _kind, ...artifact } = value;
+  return isDisplayedTranslationArtifactIdentityV1(artifact);
 }
 
 function capability(value: unknown): value is PlatformSenseCardCapabilityV2 {

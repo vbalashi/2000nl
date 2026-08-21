@@ -38,8 +38,11 @@ transport hash before persistence.
 
 ### Stable target
 
-Exactly one primary target is required. IDs described as UUIDs must be canonical
-lower-case UUID strings; content/source fingerprints are lower-case
+Exactly one primary target is required. Entry translation artifacts use their
+canonical lower-case database UUID. Content-node translation artifacts use the
+Platform V2 lower-case 64-character SHA-256 digest derived from that entry
+artifact UUID and the exact `contentNodeId`; they are not UUIDs. Other IDs
+described as UUIDs must be canonical lower-case UUID strings. Content/source fingerprints are lower-case
 64-character SHA-256 hex strings. Platform-owned fields retain their existing
 Platform V2 types:
 
@@ -158,7 +161,17 @@ content. Card text is never copied into the durable Feedback Item or GitHub.
 ordered array of typed atoms. Atom roles are `headword`,
 `definition`, `usage-pattern`, `example`, `idiom`, `idiom-explanation`,
 `usage-note`, and `displayed-translation`. Every atom contains `role`, stable
-`contentNodeId` or `null`, NFC `text`, and `truncated`. The maximums are 32
+`contentNodeId` or `null`, NFC `text`, and `truncated`. Every
+`displayed-translation` atom additionally contains the closed `artifact`
+identity that was actually rendered. For an entry artifact this is exactly
+`targetKind: entry`, `entryId`, `contentNodeId: null`, the UUID
+`translationId`, lower-case canonical `targetLanguageCode`,
+`sourceContentFingerprint`, `translationPolicyVersion`, and explicit nullable
+`providerRevision`. For a node artifact it is exactly `targetKind:
+content-node`, `entryId`, `contentNodeId`, the SHA-256 `translationId`, the same
+language/policy/provider fields, and `sourceTextFingerprint`. No provider
+payload, source path, visible label, or user/client language preference is part
+of this object. The maximums are 32
 atoms, 1,500 Unicode scalar values and 6,000 UTF-8 bytes per atom, and 48 KiB
 for the canonical serialized `cardContent` value. The builder considers atoms
 in this deterministic priority order: headword; definition; Usage Pattern;
@@ -171,12 +184,21 @@ the exact remainder.
 
 The collector receives an already-owned typed SenseCard projection. It must not inspect the DOM, clipboard, browser page, caches, another card, raw dictionary/provider payload, or neighboring application state. Total serialized envelope size is at most 64 KiB; overflow is truncated per field with explicit truncation flags, never by adding broader source data.
 
-The server does not trust submitted atom text. Before persistence it authorizes
+The server does not trust submitted atom text or artifact identity. Before persistence it authorizes
 the stable target for the authenticated principal, resolves the exact current
 Platform V2 projection/revision and translation artifact, and reconstructs the
 allowlisted atoms. Submitted atoms must exactly match that ordered projection
-after the specified NFC/truncation algorithm. Inaccessible, stale, unknown,
-duplicate, reordered, or mismatched atoms fail closed and nothing is written.
+after the specified NFC/truncation algorithm. Artifact ID, target kind,
+entry/node ID, target language, source fingerprint, translation policy version,
+and nullable provider revision must all exact-match one `ready` and fresh
+artifact from that authorized projection. This rule is identical for the
+first-party app and Connected Clients; the server never guesses a target
+language from app settings or client labels. Inaccessible, stale, missing,
+unknown, duplicate, reordered, or mismatched atoms fail closed and nothing is written.
+Freshness is reconstructed from the current authoritative entry-content or
+Content Node fingerprint; a cached `isFresh` flag is never sufficient evidence
+by itself. Platform exposes a translation Report capability only for the exact
+non-empty `ready` artifact selected by the card renderer under that same check.
 For an offline report whose frozen revision is no longer resolvable, the server
 returns the permanent `stale-target` rejection; v1 does not persist unverifiable
 historical text as automatic card content.

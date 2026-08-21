@@ -1,4 +1,5 @@
 import type { CardTypeId, LookupIntent, PlatformSourceContextV2 } from "./platform";
+import type { DisplayedTranslationArtifactIdentityV1 } from "../platform-v2/displayedTranslationArtifactIdentityV1";
 
 export const PLATFORM_V2_CARD_TYPE_IDS = [
   "word-to-definition",
@@ -111,11 +112,7 @@ export type PlatformContentNodeTargetV2 = {
 
 export type PlatformTranslationTargetV2 = {
   kind: "translation";
-  entryId: string;
-  translationId: string;
-  contentNodeId?: string;
-  sourceTextFingerprint: string;
-};
+} & DisplayedTranslationArtifactIdentityV1;
 
 export type PlatformSenseCardCapabilityV2 =
   | {
