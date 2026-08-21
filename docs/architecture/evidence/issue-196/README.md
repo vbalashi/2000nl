@@ -1,6 +1,6 @@
 # Issue #196: `typisch` prompt diagnosis
 
-Date: 2026-08-21  
+Date: 2026-08-21
 Fixed point: `1f7e5e33ccac33c7d7b902191c0af1b12a3ef558`
 
 ## Safe production observation
