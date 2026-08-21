@@ -44,6 +44,7 @@ import {
   TrainingSessionV2Layout,
 } from "./TrainingSessionV2Layout";
 import { useTrainingCardSwipeSurface } from "./useTrainingCardSwipeSurface";
+import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurface";
 
 export { TrainingKnownUndoNotice } from "./TrainingKnownUndoNotice";
 
@@ -120,7 +121,19 @@ export function TrainingSenseCardV2Session({
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
-  const [cardSide, setCardSide] = React.useState<"face" | "answer">("face");
+  const cardIdentity = `${word.id}:${mode}`;
+  const [cardPresentation, setCardPresentation] = React.useState<{
+    identity: string;
+    side: "face" | "answer";
+  }>(() => ({ identity: cardIdentity, side: "face" }));
+  const cardSide =
+    cardPresentation.identity === cardIdentity ? cardPresentation.side : "face";
+  const setCardSide = React.useCallback(
+    (side: "face" | "answer") => {
+      setCardPresentation({ identity: cardIdentity, side });
+    },
+    [cardIdentity],
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [noticeTone, setNoticeTone] = React.useState<"error" | "info">("error");
   const [reportOperation, setReportOperation] =
@@ -247,8 +260,10 @@ export function TrainingSenseCardV2Session({
     );
   }, [handlePresentation, interfaceLanguage]);
 
-  const handleAction = async (capability: PlatformSenseCardCapabilityV2) => {
-    if (interactionBusyRef.current) return;
+  const handleAction = async (
+    capability: PlatformSenseCardCapabilityV2,
+  ): Promise<TrainingCardSwipeCommitOutcome> => {
+    if (interactionBusyRef.current) return "rejected";
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
@@ -264,7 +279,7 @@ export function TrainingSenseCardV2Session({
           setNoticeTone("error");
           setError(temporaryFailureMessage(interfaceLanguage));
         }
-        return;
+        return "accepted";
       }
       if (capability.actionId === "report-content") {
         setNoticeTone("info");
@@ -274,9 +289,9 @@ export function TrainingSenseCardV2Session({
             "senseCard.reportUnavailable",
           ),
         );
-        return;
+        return "accepted";
       }
-      if (!isPlatformV2TrainingActionCapability(capability)) return;
+      if (!isPlatformV2TrainingActionCapability(capability)) return "rejected";
       if (
         nextTransitionId &&
         (capability.actionId === "start-learning" ||
@@ -347,6 +362,7 @@ export function TrainingSenseCardV2Session({
         }
         await onProgressActionAccepted(capability);
       }
+      return "accepted";
     } catch (cause) {
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
@@ -378,6 +394,7 @@ export function TrainingSenseCardV2Session({
             : code,
         );
       }
+      return "rejected";
     } finally {
       interactionBusyRef.current = false;
       setBusy(false);
@@ -415,7 +432,7 @@ export function TrainingSenseCardV2Session({
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",
     busy,
-    identity: `${word.id}:${mode}`,
+    identity: cardIdentity,
     left: swipeLeftCapability
       ? {
           value: swipeLeftCapability,
@@ -434,7 +451,7 @@ export function TrainingSenseCardV2Session({
             "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/80 dark:text-emerald-200",
         }
       : undefined,
-    onCommit: (capability) => void handleAction(capability),
+    onCommit: handleAction,
   });
 
   const cardAnnouncementRegion = (
@@ -530,6 +547,7 @@ export function TrainingSenseCardV2Session({
               />
             ) : undefined
           }
+          side={cardSide}
           onSideChange={setCardSide}
           onAction={(capability) => void handleAction(capability)}
         />

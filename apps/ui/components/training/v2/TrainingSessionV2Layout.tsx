@@ -6,6 +6,7 @@ export type TrainingSessionLayoutPhase = "loading" | "ready" | "failure";
 
 export type TrainingSessionReadySurface = {
   ref?: React.Ref<HTMLDivElement>;
+  className?: string;
   style?: React.CSSProperties;
   onTouchStart?: React.TouchEventHandler<HTMLDivElement>;
   onTouchMove?: React.TouchEventHandler<HTMLDivElement>;
@@ -69,7 +70,7 @@ export function TrainingSessionV2Layout({
                   <div
                     ref={interaction?.ref}
                     data-testid="training-card-swipe-wrapper"
-                    className="relative h-full min-h-0 overflow-hidden"
+                    className={`relative h-full min-h-0 overflow-hidden ${interaction?.className ?? ""}`}
                     style={interaction?.style}
                     onTouchStart={interaction?.onTouchStart}
                     onTouchMove={interaction?.onTouchMove}

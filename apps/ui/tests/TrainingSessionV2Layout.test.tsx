@@ -66,6 +66,8 @@ describe("TrainingSessionV2Layout", () => {
     const onTouchEnd = vi.fn();
     const onTouchCancel = vi.fn();
     const readySurface = {
+      className:
+        "transition-transform duration-200 ease-out motion-reduce:transition-none",
       style: { transform: "translateX(42px) rotate(1deg)" },
       onTouchStart,
       onTouchMove,
@@ -88,6 +90,7 @@ describe("TrainingSessionV2Layout", () => {
     expect(readyWrapper).toHaveStyle({
       transform: "translateX(42px) rotate(1deg)",
     });
+    expect(readyWrapper).toHaveClass("motion-reduce:transition-none");
     expect(screen.getByTestId("swipe-feedback")).toBeInTheDocument();
     fireEvent.touchStart(readyWrapper);
     fireEvent.touchMove(readyWrapper);
@@ -115,6 +118,7 @@ describe("TrainingSessionV2Layout", () => {
       expect(inactiveWrapper).not.toHaveStyle({
         transform: "translateX(42px) rotate(1deg)",
       });
+      expect(inactiveWrapper).not.toHaveClass("motion-reduce:transition-none");
       expect(screen.queryByTestId("swipe-feedback")).not.toBeInTheDocument();
     }
   });

@@ -37,7 +37,8 @@ type Props = {
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
-  onSideChange?: (side: "face" | "answer") => void;
+  side: "face" | "answer";
+  onSideChange: (side: "face" | "answer") => void;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
 };
 
@@ -58,10 +59,11 @@ export function TrainingSenseCardStage({
   onPlayAudio,
   onOpenDetails,
   reportAction,
+  side,
   onSideChange,
   onAction,
 }: Props) {
-  const [answerVisible, setAnswerVisible] = React.useState(false);
+  const answerVisible = side === "answer";
   const [hintVisible, setHintVisible] = React.useState(false);
   const [translationVisible, setTranslationVisible] = React.useState(false);
   const stageRef = React.useRef<HTMLElement>(null);
@@ -87,14 +89,9 @@ export function TrainingSenseCardStage({
   }, [focusOnMount]);
 
   React.useEffect(() => {
-    setAnswerVisible(false);
     setHintVisible(false);
     setTranslationVisible(false);
   }, [model.entryId]);
-
-  React.useEffect(() => {
-    onSideChange?.(answerVisible ? "answer" : "face");
-  }, [answerVisible, onSideChange]);
 
   React.useEffect(() => {
     if (previousAnswerVisibleRef.current === answerVisible) return;
@@ -133,7 +130,7 @@ export function TrainingSenseCardStage({
         targetInsideStage
       ) {
         event.preventDefault();
-        setAnswerVisible((visible) => !visible);
+        onSideChange(answerVisible ? "face" : "answer");
         return;
       }
       const key = event.key.toLowerCase();
@@ -165,7 +162,7 @@ export function TrainingSenseCardStage({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [answerVisible, busy, hint, model, onAction]);
+  }, [answerVisible, busy, hint, model, onAction, onSideChange]);
 
   return (
     <section
@@ -277,7 +274,7 @@ export function TrainingSenseCardStage({
             hideHintLabel={t("senseCard.hint.hide")}
             showAnswerLabel={t("senseCard.answer.show")}
             onToggleHint={() => setHintVisible((visible) => !visible)}
-            onShowAnswer={() => setAnswerVisible(true)}
+            onShowAnswer={() => onSideChange("answer")}
             showAnswerRef={showAnswerRef}
             onAction={onAction}
             reportAction={reportAction}

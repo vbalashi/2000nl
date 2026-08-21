@@ -85,10 +85,13 @@ At the dependency-integration checkpoint, the #194 code slice and #224/#225 were
 
 Design fidelity remains passed, but the overall gate is intentionally blocked until the requested independent architecture and spec rereviews confirm these seams.
 
-8. Swipe interaction remediation — visually passed; spec rereview pending.
+8. Swipe interaction remediation — visually passed; independent rereviews pending.
    - The V2 session now owns answer-side swipe state and resolves the exact server-provided `fail`/`success` review capabilities. It does not route V2 gestures through the legacy review mutation.
    - `TrainingSessionV2Layout` exposes one typed ready-only interaction surface for the card ref, transform, touch lifecycle, and feedback. Loading and every failure phase omit that surface by construction; Face remains non-swipeable and busy actions remain single-flight.
    - Component/session tests cover the 35% commit threshold, Face suppression, below-threshold cancel/reset, visible transform feedback, canonical review action selection, and busy suppression.
+   - Swipe commits are outcome-aware. A rejected server/network/timeout or owner-advance result returns the same card to rest while preserving its visible error and allowing retry; an accepted commit stays offscreen only while the owner advances to another identity/phase.
+   - Session is the single owner of the controlled Face/Answer side. Swipe availability and rendered side derive from the same value in the same render, and a replacement identity synchronously projects Face rather than inheriting stale Answer state.
+   - Transform timing uses shared utility classes with `motion-reduce:transition-none`; no inline hardcoded transition remains.
    - The four authoritative dark states and responsive light/wide profiles were recaptured after the wrapper gained its ready-only event/style port. Resting-state pixels retain the approved geometry; no new P0/P1/P2 visual difference was found.
 
 P3 follow-up polish:
@@ -98,11 +101,11 @@ P3 follow-up polish:
 
 ## Validation
 
-- Focused component/session/layout/fixture suites: 132 / 132 passed, including authoritative progress, History navigation/focus return, loading retention, fail-closed layout ownership, semantic-label cases, and V2 swipe threshold/cancel/busy behavior.
-- Full UI unit suite: 881 passed, 120 skipped (environment-gated RPC tests), 0 failed.
+- Focused component/session/layout/fixture suites: 134 / 134 passed, including authoritative progress, History navigation/focus return, loading retention, fail-closed layout ownership, semantic-label cases, V2 swipe threshold/cancel/busy behavior, rejected-action rollback/retry, identity replacement, and reduced motion.
+- Full UI unit suite: 883 passed, 120 skipped (environment-gated RPC tests), 0 failed.
 - Exact-state visual browser suite: 4 / 4 passed.
 - TypeScript typecheck: passed.
 - Lint: passed.
 - Optimized Next.js compile/type validation: passed; static export then stopped on the known local-environment prerequisite `Supabase credentials are not configured` for auth/root pages, unrelated to this UI slice.
 
-final result: blocked — architecture and spec rereviews pending
+final result: blocked — three independent rereviews pending

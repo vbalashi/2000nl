@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
+import { TrainingSenseCardStage as TrainingSenseCardStageView } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
 import {
   singleSenseEntry,
@@ -13,6 +13,29 @@ import {
   nodigEntry,
   nodigGroup,
 } from "./platformV2IdiomHierarchyFixture";
+
+function TrainingSenseCardStage(
+  props: Omit<
+    React.ComponentProps<typeof TrainingSenseCardStageView>,
+    "side" | "onSideChange"
+  >,
+) {
+  const identity = props.model.entryId;
+  const [presentation, setPresentation] = React.useState<{
+    identity: string;
+    side: "face" | "answer";
+  }>(() => ({ identity, side: "face" }));
+  const side = presentation.identity === identity ? presentation.side : "face";
+  return (
+    <TrainingSenseCardStageView
+      {...props}
+      side={side}
+      onSideChange={(nextSide) =>
+        setPresentation({ identity, side: nextSide })
+      }
+    />
+  );
+}
 
 describe("TrainingSenseCardStage", () => {
   test("renders two nodig idioms and the goed expression hierarchy", () => {

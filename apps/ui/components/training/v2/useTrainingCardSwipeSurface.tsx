@@ -10,6 +10,8 @@ type SwipeChoice<T> = {
   indicatorClass: string;
 };
 
+export type TrainingCardSwipeCommitOutcome = "accepted" | "rejected";
+
 export function useTrainingCardSwipeSurface<T>({
   enabled,
   busy,
@@ -23,11 +25,14 @@ export function useTrainingCardSwipeSurface<T>({
   identity: string;
   left?: SwipeChoice<T>;
   right?: SwipeChoice<T>;
-  onCommit: (value: T) => void;
+  onCommit: (value: T) => Promise<TrainingCardSwipeCommitOutcome>;
 }): TrainingSessionReadySurface {
   const cardRef = React.useRef<HTMLDivElement | null>(null);
   const startRef = React.useRef<{ x: number; y: number } | null>(null);
   const trackingRef = React.useRef(false);
+  const commitPendingRef = React.useRef(false);
+  const identityRef = React.useRef(identity);
+  identityRef.current = identity;
   const offsetRef = React.useRef(0);
   const [offset, setOffset] = React.useState(0);
   const [direction, setDirection] = React.useState<"left" | "right" | null>(
@@ -39,6 +44,7 @@ export function useTrainingCardSwipeSurface<T>({
   const reset = React.useCallback(() => {
     startRef.current = null;
     trackingRef.current = false;
+    commitPendingRef.current = false;
     offsetRef.current = 0;
     setOffset(0);
     setDirection(null);
@@ -50,7 +56,7 @@ export function useTrainingCardSwipeSurface<T>({
 
   const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
     const touch = event.touches[0];
-    if (!touch || !enabled || busy) return;
+    if (!touch || !enabled || busy || commitPendingRef.current) return;
     startRef.current = { x: touch.clientX, y: touch.clientY };
     trackingRef.current = false;
     setAnimating(false);
@@ -59,7 +65,7 @@ export function useTrainingCardSwipeSurface<T>({
   const onTouchMove: React.TouchEventHandler<HTMLDivElement> = (event) => {
     const start = startRef.current;
     const touch = event.touches[0];
-    if (!start || !touch || !enabled || busy) return;
+    if (!start || !touch || !enabled || busy || commitPendingRef.current) return;
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     if (!trackingRef.current) {
@@ -100,7 +106,18 @@ export function useTrainingCardSwipeSurface<T>({
         setAnimating(true);
         startRef.current = null;
         trackingRef.current = false;
-        onCommit(choice.value);
+        commitPendingRef.current = true;
+        const committedIdentity = identity;
+        void onCommit(choice.value)
+          .catch(() => "rejected" as const)
+          .then((outcome) => {
+            if (
+              outcome === "rejected" &&
+              identityRef.current === committedIdentity
+            ) {
+              reset();
+            }
+          });
         return;
       }
       startRef.current = null;
@@ -111,7 +128,7 @@ export function useTrainingCardSwipeSurface<T>({
       setActive(false);
       setAnimating(true);
     },
-    [busy, enabled, left, onCommit, right],
+    [busy, enabled, identity, left, onCommit, reset, right],
   );
 
   const choice = direction === "left" ? left : direction === "right" ? right : null;
@@ -121,9 +138,11 @@ export function useTrainingCardSwipeSurface<T>({
 
   return {
     ref: cardRef,
+    className: animating
+      ? "transition-transform duration-200 ease-out motion-reduce:transition-none"
+      : "transition-none motion-reduce:transition-none",
     style: {
       transform: `translateX(${offset}px) rotate(${offset / 40}deg)`,
-      transition: animating ? "transform 200ms ease" : "none",
       touchAction: "pan-y",
     },
     onTouchStart,
