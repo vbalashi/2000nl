@@ -6,6 +6,7 @@ import { TrainingScreen } from "@/components/training/TrainingScreen";
 import {
   appDestinationUrl,
   parseAppDestination,
+  TRAINING_HISTORY_DESTINATION,
   type AppDestination,
 } from "./appDestination";
 
@@ -63,6 +64,16 @@ export function TrainingLibraryShell({
     [destination, extendedDestinationsEnabled, navigationBlocked],
   );
 
+  const returnFromHistory = useCallback(() => {
+    if (destination !== TRAINING_HISTORY_DESTINATION) return;
+    window.history.replaceState(
+      {},
+      "",
+      appDestinationUrl(window.location.href, "training"),
+    );
+    setDestination("training");
+  }, [destination]);
+
   useEffect(() => {
     if (!enabled) return;
     const rawDestination = new URL(window.location.href).searchParams.get(
@@ -119,6 +130,7 @@ export function TrainingLibraryShell({
       destination={destination}
       extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}
+      onReturnFromHistory={returnFromHistory}
       onNavigationBlockedChange={setNavigationBlocked}
     />
   );

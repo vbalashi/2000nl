@@ -986,6 +986,89 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("get_recent_training_review_history is an authenticated narrow 24-hour projection capped at 50", async () => {
+    const userId = randomUUID();
+    const otherUserId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await ensureUserWithSettings(client, otherUserId);
+      const wordId = await insertWord(client, `review-history-${Date.now()}`);
+
+      await client.query(
+        `insert into user_review_log (
+           user_id, word_id, mode, grade, review_type, reviewed_at
+         )
+         select $1, $2, $3, (1 + (n % 4))::smallint, 'review',
+                now() - (n * interval '1 minute')
+         from generate_series(0, 50) as n`,
+        [userId, wordId, mode],
+      );
+      await client.query(
+        `insert into user_review_log (
+           user_id, word_id, mode, grade, review_type, reviewed_at
+         ) values
+           ($1, $2, $3, 3, 'review', now() - interval '25 hours'),
+           ($4, $2, $3, 3, 'review', now())`,
+        [userId, wordId, mode, otherUserId],
+      );
+
+      const { rows } = await client.query(
+        `select * from get_recent_training_review_history(50)`,
+      );
+
+      expect(rows).toHaveLength(50);
+      expect(rows.every((row) => row.entry_id === wordId)).toBe(true);
+      expect(rows.every((row) => row.has_more === true)).toBe(true);
+      expect(Object.keys(rows[0]).sort()).toEqual([
+        "card_type_id",
+        "entry_id",
+        "has_more",
+        "headword",
+        "part_of_speech",
+        "review_result",
+        "reviewed_at",
+      ]);
+      expect(rows[0].reviewed_at.getTime()).toBeGreaterThan(
+        Date.now() - 24 * 60 * 60 * 1000,
+      );
+
+      const { rows: definitionRows } = await client.query(
+        `select p.prosecdef,
+                p.proconfig,
+                pg_get_function_identity_arguments(p.oid) as args,
+                has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated_execute,
+                has_function_privilege('anon', p.oid, 'EXECUTE') as anon_execute
+         from pg_proc p
+         join pg_namespace n on n.oid = p.pronamespace
+         where n.nspname = 'public'
+           and p.proname = 'get_recent_training_review_history'`,
+      );
+      expect(definitionRows).toHaveLength(1);
+      expect(definitionRows[0]).toEqual(
+        expect.objectContaining({
+          prosecdef: true,
+          args: "p_limit integer",
+          authenticated_execute: true,
+          anon_execute: false,
+        }),
+      );
+      expect(definitionRows[0].proconfig).toContain(
+        "search_path=pg_catalog, public, pg_temp",
+      );
+    }, userId);
+  });
+
+  test("get_recent_training_review_history rejects a missing authenticated principal", async () => {
+    await withTransaction(pool, async (client) => {
+      await expectUnauthorizedRpc(
+        client,
+        "recent_review_history_null_auth",
+        `select * from get_recent_training_review_history(50)`,
+        [],
+      );
+    });
+  });
+
   test("get_card_user_state returns one accessible card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

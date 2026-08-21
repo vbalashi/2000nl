@@ -9,12 +9,14 @@ vi.mock("@/components/training/TrainingScreen", () => ({
   TrainingScreen: ({
     destination,
     onRequestDestination,
+    onReturnFromHistory,
     onNavigationBlockedChange,
   }: {
-    destination?: "training" | "library" | "statistics" | "settings";
+    destination?: "training" | "library" | "statistics" | "settings" | "history";
     onRequestDestination?: (
-      destination: "training" | "library" | "statistics" | "settings",
+      destination: "training" | "library" | "statistics" | "settings" | "history",
     ) => void;
+    onReturnFromHistory?: () => void;
     onNavigationBlockedChange?: (blocked: boolean) => void;
   }) => {
     const mountNumber = useRef<number>();
@@ -34,6 +36,8 @@ vi.mock("@/components/training/TrainingScreen", () => ({
         <button onClick={() => onRequestDestination?.("settings")}>
           Settings
         </button>
+        <button onClick={() => onRequestDestination?.("history")}>History</button>
+        <button onClick={() => onReturnFromHistory?.()}>Return from History</button>
         <button onClick={() => onNavigationBlockedChange?.(true)}>Block</button>
       </div>
     );
@@ -139,4 +143,64 @@ test("extended destination flag off normalizes unsupported direct links to Train
 
   expect(screen.getByText("destination training")).toBeInTheDocument();
   expect(window.location.search).toBe("");
+});
+
+test("Training history is a secondary destination even when extended destinations are off", () => {
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled={false}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+
+  expect(window.location.search).toBe("?destination=history");
+  expect(screen.getByText("destination history")).toBeInTheDocument();
+  expect(screen.getByText("training mount 1")).toBeInTheDocument();
+
+  act(() => {
+    window.history.pushState({}, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+
+  expect(screen.getByText("destination training")).toBeInTheDocument();
+  expect(trainingMounts).toBe(1);
+});
+
+test("a direct Training history URL survives shell hydration", () => {
+  window.history.replaceState({}, "", "/?destination=history");
+
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled={false}
+    />,
+  );
+
+  expect(screen.getByText("destination history")).toBeInTheDocument();
+  expect(window.location.search).toBe("?destination=history");
+});
+
+test("returning from History replaces its entry so Back cannot loop into History", async () => {
+  window.history.replaceState({ origin: "before-training" }, "", "/?origin=before");
+  window.history.pushState({}, "", "/");
+  render(<TrainingLibraryShell user={user} enabled />);
+
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+  expect(window.location.search).toBe("?destination=history");
+
+  fireEvent.click(screen.getByRole("button", { name: "Return from History" }));
+  expect(window.location.search).toBe("");
+  expect(screen.getByText("destination training")).toBeInTheDocument();
+
+  await act(async () => {
+    await new Promise<void>((resolve) => {
+      window.addEventListener("popstate", () => resolve(), { once: true });
+      window.history.back();
+    });
+  });
+  expect(window.location.search).not.toBe("?destination=history");
 });

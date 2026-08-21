@@ -57,6 +57,7 @@
 - `apps/ui/lib/training/listService.ts`
 - `apps/ui/lib/training/preferencesService.ts`
 - `apps/ui/lib/training/statsService.ts`
+- `apps/ui/lib/training/trainingHistoryService.ts`
 - `fetchNextTrainingWord()`
 - `fetchNextTrainingWordByScenario()`
 - `recordReview()`
@@ -93,6 +94,12 @@
 
 **`get_training_stats(...)`, `get_scenario_stats(...)`, `get_training_scenarios()`**
 - Feed footer counters, settings/statistics views, and scenario-level progress
+
+**`get_recent_training_review_history(p_limit)`**
+- Feeds the code-split, on-demand Training History destination from authoritative review records
+- Derives the principal from `auth.uid()` and owns the trailing 24-hour boundary in Postgres
+- Returns only display fields, caps output at the latest 50 rows, and exposes truncation metadata
+- Enforces dictionary visibility in Postgres; the browser never receives raw dictionary or FSRS state
 
 ### Queue Mechanism
 

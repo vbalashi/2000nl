@@ -61,7 +61,8 @@ Recommended initial extraction candidates:
 - 2026-05-16: Added dictionary lookup characterization and continued Stage 2 by moving training-word/dictionary lookup helpers into `apps/ui/lib/training/dictionaryService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added review side-effect characterization and moved review/view/click/debug helpers into `apps/ui/lib/training/reviewService.ts` behind the `trainingService.ts` barrel.
 - 2026-05-16: Added stats/history characterization and moved detailed stats plus recent-history hydration into `apps/ui/lib/training/statsHistoryService.ts` behind the `trainingService.ts` barrel.
-- 2026-08-14: Issue #141 retired the permanent Training sidebar, standalone Recent tab, eager recent-history client load, sidebar-pinning preference, and their client-only DTO/service code. `fetchStats` now lives in `apps/ui/lib/training/statsService.ts`; the legacy DB column/RPC remain only for rollback compatibility and are not called by the current UI.
+- 2026-08-14: Issue #141 retired the permanent Training sidebar, standalone Recent tab, eager recent-history client load, sidebar-pinning preference, and their client-only DTO/service code. `fetchStats` now lives in `apps/ui/lib/training/statsService.ts`.
+- 2026-08-21: Issue #225 added a browser-safe authenticated review-history projection behind an actually code-split secondary destination. Postgres owns principal selection, the trailing 24-hour boundary, and the latest-50 cap; `apps/ui/lib/training/trainingHistoryService.ts` validates the closed display contract. It does not restore the sidebar, eager loading, details coupling, or sidebar preference.
 - 2026-05-16: Continued Stage 2 by moving list summary and active-list helpers into `apps/ui/lib/training/listService.ts` behind the `trainingService.ts` barrel; search/list words/mutations remain for the next slice.
 - 2026-05-16: Completed the remaining list/search split by moving word search, list word loading, user-list mutations, and membership helpers into `apps/ui/lib/training/listService.ts`; `trainingService.ts` still re-exports the public API and only imports `fetchWordsForList` for legacy next-card fallback.
 - 2026-05-16: Completed the selection split by moving next-card selection, scenario lookup, scenario stats, cross-reference skipping, debug logging, and legacy list fallback into `apps/ui/lib/training/selectionService.ts`; `trainingService.ts` is now a compatibility barrel.
@@ -201,7 +202,9 @@ Medium-risk modules:
 - `apps/ui/lib/training/reviewService.ts`
   - Move `recordReview`, `recordWordView`, `recordDefinitionClick`, and `fetchLastReviewDebug`.
 - `apps/ui/lib/training/statsService.ts`
-  - Own `fetchStats`; the retired Recent surface has no client history service.
+  - Own `fetchStats`.
+- `apps/ui/lib/training/trainingHistoryService.ts`
+  - Own the narrow, on-demand display projection for the separate recent Training History destination.
 - Keep `apps/ui/lib/trainingService.ts` as a compatibility barrel during the refactor so existing imports do not churn.
 
 Do not split the Supabase client or replace query logic during this pass.

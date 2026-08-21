@@ -6,6 +6,18 @@
 
 Edge swipe closes the on-demand word-details drawer instead of triggering back navigation. The former permanent Recent panel was retired by issue #141.
 
+### On-Demand Training History
+**Added:** 2026-08-21
+**Issue:** #225
+
+The History action opens a separate, localized, code-split destination backed
+by the authenticated review-history projection. It loads only when opened,
+clearly describes its server-owned 24-hour window and latest-50 cap, preserves
+the mounted Training session, and shows distinct loading, empty, failure/retry,
+and loaded states. Returning replaces the History URL entry and restores focus
+to the trigger. It does not restore the former permanent Recent sidebar or
+claim to be an all-time audit log.
+
 ### Audio Mode Definition Playback
 **Added:** 2026-01-29
 **User Story:** US-055.1

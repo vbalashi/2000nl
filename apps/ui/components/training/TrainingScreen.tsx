@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import type { User } from "@supabase/supabase-js";
 import Joyride, { Step } from "react-joyride";
 import { supabase } from "@/lib/supabaseClient";
@@ -84,7 +85,10 @@ import {
   useCommitTrainingPilotDraft,
   useTrainingPilotController,
 } from "./pilot/useTrainingPilotController";
-import type { AppDestination } from "@/components/navigation/appDestination";
+import {
+  TRAINING_HISTORY_DESTINATION,
+  type AppDestination,
+} from "@/components/navigation/appDestination";
 import {
   getOnboardingTranslation,
   type OnboardingLanguage,
@@ -102,9 +106,18 @@ type Props = {
   destination?: AppDestination;
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
+  onReturnFromHistory?: () => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
 };
+
+const LazyTrainingHistoryDestination = dynamic(
+  () =>
+    import("@/components/navigation/TrainingHistoryDestination").then(
+      (module) => module.TrainingHistoryDestination,
+    ),
+  { ssr: false },
+);
 
 const ACTION_LABELS: Record<
   ReviewResult,
@@ -204,10 +217,27 @@ export function TrainingScreen({
   extendedDestinationsEnabled = process.env
     .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
   onRequestDestination,
+  onReturnFromHistory,
   onNavigationBlockedChange,
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
+  const historyButtonRef = useRef<HTMLButtonElement>(null);
+  const previousDestinationRef = useRef(destination);
+
+  useEffect(() => {
+    const previousDestination = previousDestinationRef.current;
+    previousDestinationRef.current = destination;
+    if (
+      previousDestination !== TRAINING_HISTORY_DESTINATION ||
+      destination !== "training"
+    ) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => historyButtonRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [destination]);
+
   const trainingScenarioCatalogRef = useRef<TrainingScenarioCatalog | null>(null);
   if (!trainingScenarioCatalogRef.current) {
     trainingScenarioCatalogRef.current = createTrainingScenarioCatalog();
@@ -1670,6 +1700,9 @@ export function TrainingScreen({
     onCycleTheme: cycleThemePreference,
     onOpenSettings: openAppSettings,
   } satisfies Omit<AppUtilityNavProps, "interfaceLanguage">;
+  const openTrainingHistory = useCallback(() => {
+    onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
+  }, [onRequestDestination]);
 
   const v2SessionChromeVisible = Boolean(
     trainingTodaySetupEnabled &&
@@ -1737,6 +1770,8 @@ export function TrainingScreen({
             scenario={activeScenario}
             mode={currentMode}
             position={sessionCardOrdinal}
+            onHistory={onRequestDestination ? openTrainingHistory : undefined}
+            historyButtonRef={historyButtonRef}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}
@@ -2311,6 +2346,18 @@ export function TrainingScreen({
           interfaceLanguage={onboardingLang}
           stats={stats}
           onNavigate={onRequestDestination}
+          utilityNav={destinationUtilityNav}
+        />
+      ) : null}
+      {onRequestDestination && destination === TRAINING_HISTORY_DESTINATION ? (
+        <LazyTrainingHistoryDestination
+          open
+          userId={user.id}
+          interfaceLanguage={onboardingLang}
+          onNavigate={onRequestDestination}
+          onReturnToTraining={
+            onReturnFromHistory ?? (() => onRequestDestination("training"))
+          }
           utilityNav={destinationUtilityNav}
         />
       ) : null}
