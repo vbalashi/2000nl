@@ -76,6 +76,7 @@ import {
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
+import { TrainingHistoryDestination } from "@/components/navigation/TrainingHistoryDestination";
 import {
   TrainingTodaySetup,
   type TrainingSetupDraft,
@@ -1670,6 +1671,9 @@ export function TrainingScreen({
     onCycleTheme: cycleThemePreference,
     onOpenSettings: openAppSettings,
   } satisfies Omit<AppUtilityNavProps, "interfaceLanguage">;
+  const openTrainingHistory = useCallback(() => {
+    onRequestDestination?.("history");
+  }, [onRequestDestination]);
 
   const v2SessionChromeVisible = Boolean(
     trainingTodaySetupEnabled &&
@@ -1737,6 +1741,7 @@ export function TrainingScreen({
             scenario={activeScenario}
             mode={currentMode}
             position={sessionCardOrdinal}
+            onHistory={onRequestDestination ? openTrainingHistory : undefined}
             onClose={trainingPilot.returnToToday}
           />
         ) : null}
@@ -2310,6 +2315,15 @@ export function TrainingScreen({
           open={destination === "statistics"}
           interfaceLanguage={onboardingLang}
           stats={stats}
+          onNavigate={onRequestDestination}
+          utilityNav={destinationUtilityNav}
+        />
+      ) : null}
+      {onRequestDestination ? (
+        <TrainingHistoryDestination
+          open={destination === "history"}
+          userId={user.id}
+          interfaceLanguage={onboardingLang}
           onNavigate={onRequestDestination}
           utilityNav={destinationUtilityNav}
         />

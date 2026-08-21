@@ -2,13 +2,15 @@ export type AppDestination =
   | "training"
   | "library"
   | "statistics"
-  | "settings";
+  | "settings"
+  | "history";
 
 export const parseAppDestination = (
   value: string | null,
   extendedDestinationsEnabled: boolean,
 ): AppDestination => {
   if (value === "library") return "library";
+  if (value === "history") return "history";
   if (
     extendedDestinationsEnabled &&
     (value === "statistics" || value === "settings")

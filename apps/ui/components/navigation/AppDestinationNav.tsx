@@ -7,7 +7,7 @@ import type { AppDestination } from "./appDestination";
 
 const labels: Record<
   OnboardingLanguage,
-  Record<Exclude<AppDestination, "settings">, string>
+  Record<Exclude<AppDestination, "settings" | "history">, string>
 > = {
   nl: {
     training: "Training",
@@ -25,7 +25,7 @@ const labels: Record<
 function DestinationIcon({
   destination,
 }: {
-  destination: Exclude<AppDestination, "settings">;
+  destination: Exclude<AppDestination, "settings" | "history">;
 }) {
   const iconProps = {
     "aria-hidden": true,
@@ -37,7 +37,7 @@ function DestinationIcon({
 }
 
 type Props = {
-  active: Exclude<AppDestination, "settings"> | null;
+  active: Exclude<AppDestination, "settings" | "history"> | null;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
   extendedDestinationsEnabled?: boolean;
@@ -54,7 +54,7 @@ export function AppDestinationNav({
   onNavigate,
 }: Props) {
   const destinations = useMemo<
-    Array<Exclude<AppDestination, "settings">>
+    Array<Exclude<AppDestination, "settings" | "history">>
   >(
     () =>
       extendedDestinationsEnabled

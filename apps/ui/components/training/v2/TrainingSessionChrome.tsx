@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X } from "lucide-react";
+import { History, X } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { TrainingMode } from "@/lib/types";
 import { trainingScenarioLabel } from "./trainingSessionLabels";
@@ -59,12 +59,14 @@ export function TrainingSessionChrome({
   scenario,
   mode,
   position,
+  onHistory,
   onClose,
 }: {
   interfaceLanguage: OnboardingLanguage;
   scenario: string;
   mode: TrainingMode;
   position: number;
+  onHistory?: () => void;
   onClose: () => void;
 }) {
   const text = copy[interfaceLanguage];
@@ -81,14 +83,26 @@ export function TrainingSessionChrome({
         <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-300">
           {text.card} {position} · {text.openSession}
         </span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={text.close}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-white"
-        >
-          <X aria-hidden="true" className="h-4 w-4" />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {onHistory ? (
+            <button
+              type="button"
+              onClick={onHistory}
+              aria-label={text.history}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-white"
+            >
+              <History aria-hidden="true" className="h-4 w-4" />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={text.close}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-white"
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

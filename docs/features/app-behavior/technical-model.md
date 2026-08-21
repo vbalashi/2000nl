@@ -57,6 +57,7 @@
 - `apps/ui/lib/training/listService.ts`
 - `apps/ui/lib/training/preferencesService.ts`
 - `apps/ui/lib/training/statsService.ts`
+- `apps/ui/lib/training/trainingHistoryService.ts`
 - `fetchNextTrainingWord()`
 - `fetchNextTrainingWordByScenario()`
 - `recordReview()`
@@ -93,6 +94,10 @@
 
 **`get_training_stats(...)`, `get_scenario_stats(...)`, `get_training_scenarios()`**
 - Feed footer counters, settings/statistics views, and scenario-level progress
+
+**`get_recent_training_history(p_user_id, p_since, p_limit)`**
+- Feeds the lazy, on-demand Training History destination
+- Enforces the authenticated user boundary and dictionary visibility in Postgres
 
 ### Queue Mechanism
 

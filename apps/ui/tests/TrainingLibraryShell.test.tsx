@@ -11,9 +11,9 @@ vi.mock("@/components/training/TrainingScreen", () => ({
     onRequestDestination,
     onNavigationBlockedChange,
   }: {
-    destination?: "training" | "library" | "statistics" | "settings";
+    destination?: "training" | "library" | "statistics" | "settings" | "history";
     onRequestDestination?: (
-      destination: "training" | "library" | "statistics" | "settings",
+      destination: "training" | "library" | "statistics" | "settings" | "history",
     ) => void;
     onNavigationBlockedChange?: (blocked: boolean) => void;
   }) => {
@@ -34,6 +34,7 @@ vi.mock("@/components/training/TrainingScreen", () => ({
         <button onClick={() => onRequestDestination?.("settings")}>
           Settings
         </button>
+        <button onClick={() => onRequestDestination?.("history")}>History</button>
         <button onClick={() => onNavigationBlockedChange?.(true)}>Block</button>
       </div>
     );
@@ -139,4 +140,43 @@ test("extended destination flag off normalizes unsupported direct links to Train
 
   expect(screen.getByText("destination training")).toBeInTheDocument();
   expect(window.location.search).toBe("");
+});
+
+test("Training history is a secondary destination even when extended destinations are off", () => {
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled={false}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+
+  expect(window.location.search).toBe("?destination=history");
+  expect(screen.getByText("destination history")).toBeInTheDocument();
+  expect(screen.getByText("training mount 1")).toBeInTheDocument();
+
+  act(() => {
+    window.history.pushState({}, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+
+  expect(screen.getByText("destination training")).toBeInTheDocument();
+  expect(trainingMounts).toBe(1);
+});
+
+test("a direct Training history URL survives shell hydration", () => {
+  window.history.replaceState({}, "", "/?destination=history");
+
+  render(
+    <TrainingLibraryShell
+      user={user}
+      enabled
+      extendedDestinationsEnabled={false}
+    />,
+  );
+
+  expect(screen.getByText("destination history")).toBeInTheDocument();
+  expect(window.location.search).toBe("?destination=history");
 });
