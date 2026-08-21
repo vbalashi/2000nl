@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 import {
   contentFingerprint,
@@ -54,6 +54,10 @@ const catalogRequest = (body: unknown) =>
   });
 
 describe("/api/platform/v2/lookup", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
@@ -517,6 +521,134 @@ describe("/api/platform/v2/lookup", () => {
     await expect(response.json()).resolves.toEqual({
       error: "exact_group_lookup_failed",
     });
+  });
+
+  test("overlaps exact-group user state and translation reads once atomic identity is available", async () => {
+    vi.useFakeTimers();
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    const targetEntryId = "00000000-0000-4000-8000-000000000701";
+    const stateStarted = vi.fn();
+    const translationsStarted = vi.fn();
+    const dictionary = {
+      id: "dict-1",
+      language_code: "nl",
+      slug: "nl-vandale",
+      name: "Van Dale",
+      kind: "curated",
+      visibility: "system",
+      owner_user_id: null,
+      is_editable: false,
+      schema_key: "nl-vandale-v2",
+      schema_version: 1,
+    };
+    const entry = {
+      id: targetEntryId,
+      dictionary_id: dictionary.id,
+      language_code: "nl",
+      headword: "huis",
+      meaning_id: 1,
+      part_of_speech: "zn",
+      raw: { meanings: [{ definition: "een gebouw om in te wonen" }] },
+      dictionary,
+      platform_v2_identity: {
+        entryId: targetEntryId,
+        headwordGroupId: "group-target",
+        meaningOrdinal: 1,
+        contentNodeBindings: [
+          {
+            contentNodeId: "node-definition",
+            sourcePath: "raw.meanings[0].definition",
+            kind: "definition",
+            parentContentNodeId: null,
+            sourceTextFingerprint: "definition-fingerprint",
+          },
+        ],
+      },
+    };
+    getUser.mockResolvedValueOnce({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    rpc.mockImplementation((name: string) => {
+      if (name === "read_platform_v2_training_group") {
+        return Promise.resolve({
+          data: {
+            items: [entry],
+            page: { selectedTierComplete: true, nextGroupCursor: null },
+          },
+          error: null,
+        });
+      }
+      if (name === "get_platform_v2_card_states_for_entries") {
+        stateStarted();
+        return new Promise((resolve) =>
+          setTimeout(() => resolve({ data: [], error: null }), 200),
+        );
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+    from.mockImplementation((table: string) => {
+      if (table !== "word_entry_translations") {
+        return chain({ data: null, error: null });
+      }
+      const query: any = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        in: vi.fn(() => query),
+        then: (resolve: any, reject: any) => {
+          translationsStarted();
+          return new Promise((resolveTranslations) =>
+            setTimeout(
+              () => resolveTranslations({ data: [], error: null }),
+              300,
+            ),
+          ).then(resolve, reject);
+        },
+      };
+      return query;
+    });
+
+    const responsePromise = POST(
+      authenticatedRequest({
+        entryId: targetEntryId,
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "ru",
+        cardTypeId: "word-to-definition",
+        intent: "training-review",
+      }),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stateStarted).toHaveBeenCalledOnce();
+    const overlapped = translationsStarted.mock.calls.length === 1;
+    let completedWithinParallelWindow = false;
+    void responsePromise.then(() => {
+      completedWithinParallelWindow = true;
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    const completedAt300Ms = completedWithinParallelWindow;
+    await vi.advanceTimersByTimeAsync(200);
+    const response = await responsePromise;
+
+    expect(overlapped).toBe(true);
+    expect(completedAt300Ms).toBe(true);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        contractVersion: "platform-lookup-v2",
+        query: "huis",
+        groups: [
+          expect.objectContaining({
+            headwordGroupId: "group-target",
+            entries: [
+              expect.objectContaining({
+                kind: "sense-card",
+                entryId: targetEntryId,
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
   });
 
   test("does not expose an inaccessible exact training entry", async () => {

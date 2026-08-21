@@ -144,6 +144,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     actionDelayMs?: number;
     advanceLeaseClockMs?: number;
     advanceLeaseClockOnAction?: number;
+    forceOnDemandLookupEveryAction?: boolean;
   } = {},
 ) {
   let nextEntryIndex = 0;
@@ -362,6 +363,11 @@ export async function setupAuthenticatedTrainingAttributionPage(
             [buildSchedulerEntry(entries[nextEntryIndex]!)],
             "scheduler-fallback",
           );
+          return;
+        }
+        if (options.forceOnDemandLookupEveryAction) {
+          expectOnDemandSelection = true;
+          await fulfillJson(route, [], "scheduler-prefetch-miss");
           return;
         }
         backgroundScenarioIndex += 1;
