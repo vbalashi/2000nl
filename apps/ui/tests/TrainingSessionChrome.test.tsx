@@ -38,12 +38,18 @@ test("omits History when the runtime does not provide an authoritative action", 
   ).not.toBeInTheDocument();
 });
 
-test("renders only the authoritative session ordinal without derived progress", () => {
+test.each([
+  ["new", "word-to-definition", "Begrip · Nieuw"],
+  ["review", "word-to-definition", "Begrip · Herhaling"],
+  ["both", "word-to-definition", "Begrip · Nieuw + herhaling"],
+  ["both", "definition-to-word", "Begrip · Definitie → woord · Nieuw + herhaling"],
+] as const)("projects the actual %s/%s session semantics", (cardFilter, mode, expectedLabel) => {
   render(
     <TrainingSessionChrome
-      interfaceLanguage="en"
+      interfaceLanguage="nl"
       scenario="understanding"
-      mode="word-to-definition"
+      mode={mode}
+      cardFilter={cardFilter}
       position={10}
     />,
   );
@@ -52,7 +58,7 @@ test("renders only the authoritative session ordinal without derived progress", 
   expect(chrome).toHaveAttribute("data-visual-spec", "training-v1.0");
   expect(chrome).toHaveClass("gap-[14px]");
   expect(screen.getByText("TRAINING")).toBeInTheDocument();
-  expect(screen.getByText("New + review")).toBeInTheDocument();
+  expect(screen.getByText(expectedLabel)).toBeInTheDocument();
   expect(screen.getByTestId("training-session-position")).toHaveTextContent("10");
   expect(screen.getByTestId("training-session-position")).not.toHaveTextContent("/");
   expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();

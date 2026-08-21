@@ -170,6 +170,7 @@ const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
+let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
   {
@@ -504,6 +505,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
     const failed = word.headword === "broken-card";
+    const loading = mockV2SessionState === "loading";
     React.useEffect(() => {
       if (focusOnPresentation) stageRef.current?.focus();
     }, [focusOnPresentation]);
@@ -520,6 +522,13 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           >
             Try again
           </button>
+        </div>
+      );
+    }
+    if (loading) {
+      return (
+        <div role="status" data-testid="training-v2-loading" data-training-v2-state="loading">
+          Loading training card
         </div>
       );
     }
@@ -2663,7 +2672,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /TRAININGNew \+ review1/,
+      /TRAININGUnderstanding · New \+ review1/,
     );
     expect(screen.getByTestId("training-session-chrome")).not.toHaveTextContent("/");
     expect(screen.getByTestId("training-session-app-header")).toBeInTheDocument();
@@ -2800,6 +2809,39 @@ test("keyboard return from History restores focus to its stable Training trigger
     );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("V2 loading retains the existing session chrome and footer", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  mockV2SessionState = "loading";
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Continue session|Sessie doorgaan/,
+      }),
+    );
+
+    expect(await screen.findByTestId("training-v2-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("training-session-footer-progress"),
+    ).toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    mockV2SessionState = "ready";
     prefetchPlatformV2TrainingEntry.mockReset();
     vi.unstubAllEnvs();
   }

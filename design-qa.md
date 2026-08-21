@@ -59,13 +59,17 @@ No additional cropped comparison was necessary after the final full-view contact
    - No actionable P0/P1/P2 visual differences remain in #194 scope.
    - Expected dynamic/localization differences are documented above and must not be replaced with fixture-specific product code.
 
-5. Standards + Spec remediation comparison — passed.
+5. Standards + Spec remediation comparison — reopened.
    - Session chrome consumes only the authoritative ordinal; invented ratio/progress were removed and #224 owns a future server contract.
    - Certified icons use Lucide; the identical `IconButton.compact` prop/branch was removed.
    - A typed `TrainingVisualState` profile module owns the four valid fixtures, including English entry and definition translation targets; combinable visual booleans were removed from the attribution harness.
-   - Session detail slots default hidden and are revealed only by a ready-card layout signal before paint. The error first-paint observer found no visible session chrome/footer.
+   - A declarative failure-only layout selector suppresses session detail in the same committed error state. The error first-paint observer found no visible session chrome/footer, while the loading regression proves the existing chrome/footer remain present; #193 loading UX is unchanged.
    - History renders only when an authoritative handler exists; production omits the dead control and #225 owns the destination.
-   - All four states were recaptured at exact 402 × 874 dark, 402 × 874 light, and 1280 × 900 dark. No P0/P1/P2 remains. There is no light Pen source, so light evidence certifies contrast/containment rather than pixel equivalence.
+   - Visual fixtures now return canonical `PlatformHeadwordGroupV2`, use `PlatformSenseCardCapabilityV2[]`, and type idiom content as `PlatformContentNodeV2[]`.
+   - Session copy projects localized scenario, card filter, and any non-default mode rather than claiming every session is mixed. New-only, review-only, mixed, and reverse cases have focused coverage.
+   - All four states were recaptured at exact 402 × 874 dark, 402 × 874 light, and 1280 × 900 dark. There is no light Pen source, so light evidence certifies contrast/containment rather than pixel equivalence.
+
+The #194 code slice has no open P0/P1/P2 visual finding, but final Design QA remains blocked on hard product dependencies #224 (authoritative planned-session total/progress) and #225 (authoritative History destination/handler). This report does not claim final exact fidelity while those approved chrome elements are intentionally absent.
 
 P3 follow-up polish:
 
@@ -74,11 +78,11 @@ P3 follow-up polish:
 
 ## Validation
 
-- Focused component/session suite: 119 / 119 passed.
-- Full UI unit suite: 843 passed, 111 skipped (environment-gated RPC tests), 0 failed.
+- Focused component/session and fixture suites: passed, including loading retention and four semantic-label cases.
+- Full UI unit suite: 847 passed, 111 skipped (environment-gated RPC tests), 0 failed.
 - Exact-state visual browser suite: 4 / 4 passed.
 - TypeScript typecheck: passed.
 - Lint: passed.
 - Optimized Next.js compile/type validation: passed; static export then stopped on the known local-environment prerequisite `Supabase credentials are not configured` for auth/root pages, unrelated to this UI slice.
 
-final result: passed
+final result: blocked

@@ -1,3 +1,10 @@
+import type {
+  PlatformContentNodeV2,
+  PlatformHeadwordGroupV2,
+  PlatformSenseCardCapabilityV2,
+  PlatformSenseCardTargetV2,
+} from "../../../../packages/shared/types/platformV2";
+
 export const trainingVisualStates = [
   "face",
   "answer",
@@ -36,15 +43,15 @@ export function buildTrainingVisualFixtureProfile(state: TrainingVisualState) {
 export function buildTrainingVisualLookupGroup(
   entry: FixtureEntry,
   state: TrainingVisualState,
-) {
+): PlatformHeadwordGroupV2 {
   const profile = buildTrainingVisualFixtureProfile(state);
-  const target = {
+  const target: PlatformSenseCardTargetV2 = {
     kind: "sense-card" as const,
     entryId: entry.id,
     cardTypeId: "word-to-definition" as const,
     stateRevision: `state-${entry.id}`,
   };
-  const capabilities: Array<Record<string, unknown>> = (["fail", "hard", "success", "easy"] as const).map(
+  const capabilities: PlatformSenseCardCapabilityV2[] = (["fail", "hard", "success", "easy"] as const).map(
     (reviewResult) => ({
       actionId: "review-card" as const,
       elementId: `sense-card.review.${reviewResult}`,
@@ -67,6 +74,39 @@ export function buildTrainingVisualLookupGroup(
       target: { kind: "entry", entryId: entry.id, contentRevision: `content-${entry.id}` },
     },
   );
+  const contentNodes: PlatformContentNodeV2[] = [
+    {
+      contentNodeId: `definition-${entry.id}`,
+      parentContentNodeId: null,
+      kind: "definition",
+      order: 0,
+      text: profile.state === "long-idiom"
+        ? "vereist of gewenst voor een bepaald doel"
+        : "een meubelstuk waarop je met meer personen kunt zitten",
+      sourceTextFingerprint: `fingerprint-${entry.id}`,
+      translations: [{
+        translationId: `definition-translation-${entry.id}`,
+        ...profile.definitionTranslation,
+        status: "ready",
+        sourceTextFingerprint: `fingerprint-${entry.id}`,
+        translationPolicyVersion: "attribution-fixture-v1",
+      }],
+    },
+    ...(profile.state === "long-idiom"
+      ? [
+          ...idiomNodes(entry.id, 1, "iets nodig hebben", "iets moeten gebruiken of bezitten", "ik heb je hulp nodig"),
+          ...idiomNodes(entry.id, 2, "zo nodig", "als het noodzakelijk is", "bel mij zo nodig"),
+        ]
+      : [{
+          contentNodeId: `example-${entry.id}`,
+          parentContentNodeId: null,
+          kind: "example" as const,
+          order: 1,
+          text: "Margriet en Ellie zaten op de bank televisie te kijken.",
+          sourceTextFingerprint: `example-fingerprint-${entry.id}`,
+          translations: [],
+        }]),
+  ];
 
   return {
     headwordGroupId: `group-${entry.id}`,
@@ -115,39 +155,7 @@ export function buildTrainingVisualLookupGroup(
       contentRevision: `content-${entry.id}`,
       reportContentRevision: `content-${entry.id}`,
       summaryContentNodeId: `definition-${entry.id}`,
-      contentNodes: [
-        {
-          contentNodeId: `definition-${entry.id}`,
-          parentContentNodeId: null,
-          kind: "definition",
-          order: 0,
-          text: profile.state === "long-idiom"
-            ? "vereist of gewenst voor een bepaald doel"
-            : "een meubelstuk waarop je met meer personen kunt zitten",
-          sourceTextFingerprint: `fingerprint-${entry.id}`,
-          translations: [{
-            translationId: `definition-translation-${entry.id}`,
-            ...profile.definitionTranslation,
-            status: "ready",
-            sourceTextFingerprint: `fingerprint-${entry.id}`,
-            translationPolicyVersion: "attribution-fixture-v1",
-          }],
-        },
-        ...(profile.state === "long-idiom"
-          ? [
-              ...idiomNodes(entry.id, 1, "iets nodig hebben", "iets moeten gebruiken of bezitten", "ik heb je hulp nodig"),
-              ...idiomNodes(entry.id, 2, "zo nodig", "als het noodzakelijk is", "bel mij zo nodig"),
-            ]
-          : [{
-              contentNodeId: `example-${entry.id}`,
-              parentContentNodeId: null,
-              kind: "example",
-              order: 1,
-              text: "Margriet en Ellie zaten op de bank televisie te kijken.",
-              sourceTextFingerprint: `example-fingerprint-${entry.id}`,
-              translations: [],
-            }]),
-      ],
+      contentNodes,
       translation: {
         translationId: `translation-${entry.id}`,
         entryId: entry.id,
@@ -168,7 +176,7 @@ function idiomNodes(
   text: string,
   definition: string,
   example: string,
-) {
+): PlatformContentNodeV2[] {
   const parentId = `idiom-${ordinal}-${entryId}`;
   return [
     { contentNodeId: parentId, parentContentNodeId: null, kind: "idiom", order: ordinal * 10, text, sourceTextFingerprint: `${parentId}-fingerprint`, translations: [] },

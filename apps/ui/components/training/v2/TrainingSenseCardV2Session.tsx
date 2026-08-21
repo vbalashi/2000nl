@@ -58,7 +58,6 @@ type Props = {
   onLoadFailure?: (
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void;
-  onLayoutReadyChange?: (ready: boolean) => void;
   onRetryAlternative?: (
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void | Promise<void>;
@@ -91,7 +90,6 @@ export function TrainingSenseCardV2Session({
   onOpenDetails,
   onExit,
   onLoadFailure,
-  onLayoutReadyChange,
   onRetryAlternative,
   onProgressActionAccepted,
   onProgressActionStarting,
@@ -213,10 +211,6 @@ export function TrainingSenseCardV2Session({
     result?.entry.entryId === word.id &&
     focusOnPresentation &&
     !presentationHandledRef.current;
-
-  React.useLayoutEffect(() => {
-    onLayoutReadyChange?.(sessionState === "ready");
-  }, [onLayoutReadyChange, sessionState]);
 
   React.useEffect(() => {
     if (sessionState === "ready" && result) {

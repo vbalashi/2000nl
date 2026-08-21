@@ -351,7 +351,6 @@ export function TrainingScreen({
   });
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
-  const [v2LayoutReadyEntryId, setV2LayoutReadyEntryId] = useState<string | null>(null);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
   const [showHotkeys, setShowHotkeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -1717,11 +1716,6 @@ export function TrainingScreen({
     <>
       <div
         data-training-session-layout={v2SessionChromeVisible ? "v2" : undefined}
-        data-training-session-layout-state={
-          v2SessionChromeVisible && v2LayoutReadyEntryId === currentWord?.id
-            ? "ready"
-            : "pending"
-        }
         aria-hidden={destination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
@@ -1792,6 +1786,7 @@ export function TrainingScreen({
             interfaceLanguage={onboardingLang}
             scenario={activeScenario}
             mode={currentMode}
+            cardFilter={cardFilter}
             position={sessionCardOrdinal}
             progress={sessionProgress}
           />
@@ -2017,9 +2012,6 @@ export function TrainingScreen({
                               }
                               onLoadFailure={(failure) => {
                                 reportCardLoadFailure(currentWord, failure);
-                              }}
-                              onLayoutReadyChange={(ready) => {
-                                setV2LayoutReadyEntryId(ready ? currentWord.id : null);
                               }}
                               onRetryAlternative={() => {
                                 void retryCardLoadFailure();
