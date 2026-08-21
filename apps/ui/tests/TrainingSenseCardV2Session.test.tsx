@@ -7,6 +7,7 @@ import {
 } from "@/components/training/v2/TrainingSenseCardV2Session";
 import type { TrainingWord } from "@/lib/types";
 import {
+  projectedTrainingAudioResult,
   singleSenseEntry,
   singleSenseGroup,
 } from "./platformV2TrainingFixture";
@@ -932,6 +933,126 @@ describe("TrainingSenseCardV2Session", () => {
       "/audio/hand.mp3",
       "hand",
     );
+  });
+
+  test.each([
+    { mode: "word-to-definition", faceAudioVisible: true },
+    { mode: "definition-to-word", faceAudioVisible: false },
+  ] as const)(
+    "renders projected audio safely for $mode",
+    async ({ mode, faceAudioVisible }) => {
+      const projected = projectedTrainingAudioResult(mode, true);
+      fetchSingleSense.mockResolvedValue(projected);
+
+      render(
+        <TestTrainingSenseCardV2Session
+          word={{ ...word, mode }}
+          mode={mode}
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onPlayResolvedAudio={vi.fn()}
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+
+      await screen.findByTestId("training-sense-card-v2");
+      const faceAudio = screen.queryByRole("button", { name: "Afspelen" });
+      if (faceAudioVisible) expect(faceAudio).toBeVisible();
+      else expect(faceAudio).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+        "data-side",
+        "answer",
+      );
+      expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
+    },
+  );
+
+  test("does not invent an audio action when projection has no capability", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("word-to-definition", false),
+    );
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="en"
+        translationTargetLanguageCode="nl"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("keeps revealed reverse audio visible while resolution is pending", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("definition-to-word", true),
+    );
+    resolveAudio.mockImplementationOnce(() => new Promise(() => {}));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-sense-card-v2");
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    const audioButton = screen.getByRole("button", { name: "Afspelen" });
+    fireEvent.click(audioButton);
+
+    await waitFor(() => expect(audioButton).toBeDisabled());
+    expect(audioButton).toBeVisible();
+  });
+
+  test("keeps revealed reverse audio visible after resolution fails", async () => {
+    fetchSingleSense.mockResolvedValue(
+      projectedTrainingAudioResult("definition-to-word", true),
+    );
+    resolveAudio.mockRejectedValueOnce(new Error("audio_failed"));
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "definition-to-word" }}
+        mode="definition-to-word"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="nl"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-sense-card-v2");
+    expect(
+      screen.queryByRole("button", { name: "Afspelen" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("audio_failed");
+    expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
   });
 
   test("refreshes a genuinely newer remote state without advancing", async () => {

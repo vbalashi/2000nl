@@ -2,6 +2,7 @@ import type {
   PlatformHeadwordGroupV2,
   PlatformSenseCardEntryV2,
 } from "../../../packages/shared/types/platformV2";
+import { projectPlatformLookupV2 } from "@/lib/platform/projections/senseCardV2";
 
 export const singleSenseEntry: PlatformSenseCardEntryV2 = {
   kind: "sense-card",
@@ -128,3 +129,78 @@ export const singleSenseGroup: PlatformHeadwordGroupV2 = {
   ],
   entries: [singleSenseEntry],
 };
+
+export function projectedTrainingAudioResult(
+  mode: "word-to-definition" | "definition-to-word",
+  withAudio: boolean,
+) {
+  const languageCode = withAudio ? "nl" : "en";
+  const definition = singleSenseEntry.contentNodes[0];
+  const sourcePath = "raw.meanings[0].definition";
+  const payload = projectPlatformLookupV2({
+    query: singleSenseGroup.header.text,
+    request: {
+      contentLanguageCode: languageCode,
+      translationTargetLanguageCode: withAudio ? "en" : "nl",
+      cardTypeId: mode,
+      intent: "training-review",
+    },
+    page: { selectedTierComplete: true, nextGroupCursor: null },
+    entries: [
+      {
+        headwordGroupId: singleSenseGroup.headwordGroupId,
+        entry: {
+          id: singleSenseEntry.entryId,
+          dictionaryId: singleSenseGroup.dictionary.dictionaryId,
+          languageCode,
+          headword: singleSenseGroup.header.text,
+          meaningId: singleSenseEntry.meaningOrdinal,
+          partOfSpeech: singleSenseEntry.partOfSpeech?.sourceValue,
+          gender: singleSenseGroup.header.article,
+          contentFingerprint: singleSenseEntry.contentRevision,
+          raw: {},
+          content: {
+            headword: singleSenseGroup.header.text,
+            languageCode,
+            meaningId: singleSenseEntry.meaningOrdinal,
+            partOfSpeech: singleSenseEntry.partOfSpeech?.sourceValue,
+            gender: singleSenseGroup.header.article,
+            meanings: [{ definition: definition.text }],
+            summary: { definition: definition.text },
+            sections: [
+              {
+                id: definition.contentNodeId,
+                sourcePath,
+                kind: "meaning",
+                text: definition.text,
+              },
+            ],
+          },
+        },
+        dictionary: {
+          id: singleSenseGroup.dictionary.dictionaryId,
+          languageCode,
+          slug: "vandale",
+          name: singleSenseGroup.dictionary.displayName,
+          kind: "curated",
+          visibility: "system",
+        },
+        contentNodeBindings: [
+          {
+            contentNodeId: definition.contentNodeId,
+            sourcePath,
+            kind: "definition",
+            sourceTextFingerprint: definition.sourceTextFingerprint,
+          },
+        ],
+        ...(withAudio ? { audioCapability: singleSenseGroup.header.audio } : {}),
+      },
+    ],
+  });
+  const group = payload.groups[0];
+  const entry = group.entries[0];
+  if (!entry || entry.kind !== "sense-card") {
+    throw new Error("Expected projected Training SenseCard");
+  }
+  return { state: "ready" as const, group, entry };
+}
