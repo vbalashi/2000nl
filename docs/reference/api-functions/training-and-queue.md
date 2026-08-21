@@ -54,7 +54,7 @@ Notes:
 
 ## `get_training_session_plan`
 
-Return the authoritative bounded work snapshot for one effective Training
+Return the authoritative exact-card work snapshot for one effective Training
 scope. This is the only source for a session ratio or progress bar; daily-new
 settings and due counters are not themselves a session total.
 
@@ -69,16 +69,39 @@ get_training_session_plan(
 ) RETURNS jsonb
 ```
 
-The response contains `plannedNew`, `plannedReview`, `plannedTotal`, and
-`plannedAt`. `plannedTotal` always equals the two component counts. The server
+The response contains `plannedNew`, `plannedReview`, `plannedPractice`,
+`plannedTotal`, and `plannedAt`. `plannedReview` includes due learning and
+review cards; `plannedPractice` includes reachable future-due practice cards.
+`plannedTotal` always equals all three component counts. The server
 applies the effective modes, list, card filter, source/date filter, dictionary
 access, Known Marks, pointer-only exclusion, frozen/hidden state, due time, and
-remaining daily limits. It snapshots planned work without changing queue order,
-review state, or FSRS behavior.
+the scheduler's cap/fallback rules. Each `(entry_id, card_type_id)` is counted
+separately. Selection wrappers and planning both use the private
+`training_scheduler_candidates_v1` relation, which owns cap/fallback
+cardinality and queue ordering. The public selectors take their next identity
+directly from that relation; the plan counts the same relation. This avoids a
+second scheduler or a post-selection rejection path.
+
+Scheduler compatibility remains part of this contract: due review/learning
+order is preserved, while new and practice selection keeps the existing
+random-mode-then-random-card policy. The daily-new cap is measured in distinct
+words, so additional unseen modes for a word introduced today do not consume a
+second word slot. Selector diagnostics (`new_pool_size`,
+`learning_due_count`, `review_pool_size`, and mode-set-wide `new_today`) remain
+present with their established meanings.
+
+When the remaining new-word cap is smaller than the candidate pool, cohort
+membership is stable for the authenticated user and exact modes/list/card/filter
+scope. Plan and subsequent selectors therefore cannot independently choose
+words with different eligible-mode cardinalities. This seed controls only cap
+cohort membership; presentation order inside the selected new/practice work
+remains random on every call and is not a global deterministic queue policy.
 
 Session lifecycle:
 
-- request one plan when a session starts for the exact modes/list/filter scope;
+- request one plan when a session starts for the exact modes/list/filter scope
+  and publish it only as an atomic `(session generation, scope key, plan)`
+  snapshot; stale responses from an earlier generation or scope are rejected;
 - latch that accepted total for the session; later counter refreshes must not
   reduce it;
 - selection retries, skipped/unrenderable candidates, and exhaustion do not

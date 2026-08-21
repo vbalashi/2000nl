@@ -32,6 +32,7 @@ export type TrainingFilterSource = {
 export type TrainingSessionPlan = {
   plannedNew: number;
   plannedReview: number;
+  plannedPractice: number;
   plannedTotal: number;
   plannedAt: string;
 };

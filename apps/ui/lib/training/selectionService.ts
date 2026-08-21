@@ -58,8 +58,10 @@ const mapTrainingSessionPlan = (value: unknown): TrainingSessionPlan | null => {
   if (
     !isNonNegativeInteger(candidate.plannedNew) ||
     !isNonNegativeInteger(candidate.plannedReview) ||
+    !isNonNegativeInteger(candidate.plannedPractice) ||
     !isNonNegativeInteger(candidate.plannedTotal) ||
-    candidate.plannedTotal !== candidate.plannedNew + candidate.plannedReview ||
+    candidate.plannedTotal !==
+      candidate.plannedNew + candidate.plannedReview + candidate.plannedPractice ||
     typeof candidate.plannedAt !== "string" ||
     !Number.isFinite(Date.parse(candidate.plannedAt))
   ) {
@@ -68,6 +70,7 @@ const mapTrainingSessionPlan = (value: unknown): TrainingSessionPlan | null => {
   return {
     plannedNew: candidate.plannedNew,
     plannedReview: candidate.plannedReview,
+    plannedPractice: candidate.plannedPractice,
     plannedTotal: candidate.plannedTotal,
     plannedAt: candidate.plannedAt,
   };

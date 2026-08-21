@@ -61,10 +61,11 @@ Spacing is more robust for awkward words and long content.
 Each presented card gets a unique `turnId`, reused on retries.
 
 Training session progress uses two independent authoritative values. The UI
-owns the presented-card ordinal. The server owns a bounded session-plan snapshot
+owns the presented-card ordinal. The server owns an exact-card session-plan snapshot
 from `get_training_session_plan`. The UI may render an ordinal ratio and
-progress bar only after accepting that snapshot; it latches the total until the
-session restarts or the exact modes/list/filter scope changes. Transient loading,
+progress bar only after accepting an atomic snapshot tied to the current session
+generation and exact scope key; stale asynchronous responses are rejected. It
+latches the total until the session restarts or the exact modes/list/filter scope changes. Transient loading,
 retry, rejected-card skip, or exhausted-candidate states never replace it with
 daily-limit or due-count arithmetic.
 

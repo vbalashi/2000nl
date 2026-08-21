@@ -52,7 +52,8 @@ describe("trainingService next-word selection", () => {
       data: {
         plannedNew: 3,
         plannedReview: 5,
-        plannedTotal: 8,
+        plannedPractice: 2,
+        plannedTotal: 10,
         plannedAt: "2026-08-21T12:00:00.000Z",
       },
       error: null,
@@ -67,7 +68,8 @@ describe("trainingService next-word selection", () => {
     ).resolves.toEqual({
       plannedNew: 3,
       plannedReview: 5,
-      plannedTotal: 8,
+      plannedPractice: 2,
+      plannedTotal: 10,
       plannedAt: "2026-08-21T12:00:00.000Z",
     });
     expect(rpc).toHaveBeenCalledWith("get_training_session_plan", {
@@ -119,6 +121,7 @@ describe("trainingService next-word selection", () => {
       data: {
         plannedNew: 3,
         plannedReview: 5,
+        plannedPractice: 0,
         plannedTotal: 99,
         plannedAt: "2026-08-21T12:00:00.000Z",
       },
@@ -156,6 +159,11 @@ describe("trainingService next-word selection", () => {
             source: "review",
             mode: "definition-to-word",
             stability: 4.25,
+            new_today: 2,
+            daily_new_limit: 10,
+            new_pool_size: 7,
+            learning_due_count: 3,
+            review_pool_size: 5,
           },
         },
       ],
@@ -197,6 +205,11 @@ describe("trainingService next-word selection", () => {
           mode: "definition-to-word",
           stability: 4.25,
           ef: 4.25,
+          new_today: 2,
+          daily_new_limit: 10,
+          new_pool_size: 7,
+          learning_due_count: 3,
+          review_pool_size: 5,
         }),
       }),
     );

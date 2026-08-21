@@ -365,5 +365,5 @@
 -- Bounded Diagnostic Report v1 feedback tracer
 \i db/migrations/122_diagnostic_feedback_tracer.sql
 
--- Authoritative bounded Training session progress snapshot
+-- Authoritative exact-card Training session progress snapshot
 \i db/migrations/123_authoritative_training_session_plan.sql

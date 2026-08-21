@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import type { TrainingSessionPlanSnapshot } from "./useTrainingSessionPlan";
 
 type TrainingSurface = "today" | "setup" | "session";
 
@@ -24,21 +25,27 @@ const normalizePlannedTotal = (value: number | null | undefined) =>
 export function useTrainingSessionPresentation({
   surface,
   presentedCardKey,
-  plannedTotal,
-  sessionKey = "default",
+  sessionGeneration,
+  scopeKey,
+  planSnapshot,
   onEnterSession,
 }: {
   surface: TrainingSurface;
   presentedCardKey: string | null;
-  plannedTotal?: number | null;
-  /** Exact modes/list/filter fingerprint. A change starts a new plan. */
-  sessionKey?: string;
+  sessionGeneration: number;
+  scopeKey: string;
+  planSnapshot: TrainingSessionPlanSnapshot | null;
   onEnterSession: () => void;
 }): TrainingSessionPresentation {
-  const [cardOrdinal, setCardOrdinal] = React.useState(1);
-  const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(() =>
-    normalizePlannedTotal(plannedTotal),
-  );
+  const currentPlan =
+    planSnapshot?.sessionGeneration === sessionGeneration &&
+    planSnapshot.scopeKey === scopeKey
+      ? planSnapshot.plan
+      : null;
+  const plannedTotal = currentPlan?.plannedTotal ?? null;
+  const sessionKey = `${sessionGeneration}:${scopeKey}`;
+  const [actualCardOrdinal, setActualCardOrdinal] = React.useState(1);
+  const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);
   const previousSurfaceRef = React.useRef(surface);
   const previousSessionKeyRef = React.useRef(sessionKey);
   const previousCardKeyRef = React.useRef<string | null>(null);
@@ -59,7 +66,7 @@ export function useTrainingSessionPresentation({
     if (!enteringSession && !scopeChanged) return;
 
     onEnterSession();
-    setCardOrdinal(1);
+    setActualCardOrdinal(1);
     setAcceptedTotal(normalizePlannedTotal(plannedTotal));
     previousCardKeyRef.current = presentedCardKey;
   }, [onEnterSession, plannedTotal, presentedCardKey, sessionKey, surface]);
@@ -74,22 +81,22 @@ export function useTrainingSessionPresentation({
     if (surface !== "session" || !presentedCardKey) return;
     const previousCardKey = previousCardKeyRef.current;
     if (previousCardKey && previousCardKey !== presentedCardKey) {
-      setCardOrdinal((ordinal) => ordinal + 1);
+      setActualCardOrdinal((ordinal) => ordinal + 1);
     }
     previousCardKeyRef.current = presentedCardKey;
   }, [presentedCardKey, surface]);
 
   return {
-    cardOrdinal,
+    cardOrdinal: actualCardOrdinal,
     progress:
       surface === "session" && acceptedTotal !== null && acceptedTotal > 0
         ? {
-            position: Math.min(cardOrdinal, acceptedTotal),
+            position: actualCardOrdinal,
             total: acceptedTotal,
-            fraction: Math.min(cardOrdinal / acceptedTotal, 1),
+            fraction: Math.min(actualCardOrdinal / acceptedTotal, 1),
           }
         : null,
     isSubsequentCard:
-      surface === "session" && !isEnteringSession && cardOrdinal > 1,
+      surface === "session" && !isEnteringSession && actualCardOrdinal > 1,
   };
 }

@@ -174,6 +174,9 @@ export function useTrainingPilotController({
   const [surface, setSurface] = useState<"today" | "session">(() =>
     enabled ? "today" : "session",
   );
+  const [sessionGeneration, setSessionGeneration] = useState(() =>
+    enabled ? 0 : 1,
+  );
   const [scenarios, setScenarios] = useState<TrainingScenario[]>([]);
   const [scenariosResolved, setScenariosResolved] = useState(false);
   const [startPending, setStartPending] = useState(false);
@@ -261,7 +264,10 @@ export function useTrainingPilotController({
       setStartPending(true);
       try {
         const committed = await onCommitDraft(draft);
-        if (committed) setSurface("session");
+        if (committed) {
+          setSessionGeneration((generation) => generation + 1);
+          setSurface("session");
+        }
         return committed;
       } finally {
         startPendingRef.current = false;
@@ -273,13 +279,17 @@ export function useTrainingPilotController({
 
   return {
     surface,
+    sessionGeneration,
     status,
     initialDraft,
     scenarioOptions,
     sourceOptions,
     startPending,
     scenarioLoading: !scenariosResolved,
-    continueSession: () => setSurface("session"),
+    continueSession: () => {
+      setSessionGeneration((generation) => generation + 1);
+      setSurface("session");
+    },
     returnToToday: () => setSurface("today"),
     startSession,
     retry: onRetry,

@@ -25,7 +25,7 @@ describeDb("authoritative training session plan RPC", () => {
     await pool.end();
   });
 
-  test("snapshots bounded new and due work for the exact scheduler scope", async () => {
+  test("snapshots exact card identities reachable in the scheduler scope", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -78,11 +78,208 @@ describeDb("authoritative training session plan RPC", () => {
       expect(rows[0].plan).toEqual(
         expect.objectContaining({
           plannedNew: 2,
-          plannedReview: 1,
-          plannedTotal: 3,
+          plannedReview: 2,
+          plannedPractice: 0,
+          plannedTotal: 4,
         }),
       );
+      const excluded: string[] = [];
+      const drained: Array<{ id: string; mode: string; source: string }> = [];
+      for (;;) {
+        const { rows: selectedRows } = await client.query(
+          `select get_next_card(
+            $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], $2,
+            'user', 'both', 'auto', $3::text[]
+          ) as item`,
+          [userId, listId, excluded],
+        );
+        const item = selectedRows[0]?.item;
+        if (!item) break;
+        drained.push({ id: item.id, mode: item.mode, source: item.stats.source });
+        excluded.push(`${item.id}:${item.mode}`);
+        await client.query(
+          `insert into user_review_log (
+            user_id, word_id, mode, grade, review_type, reviewed_at
+          ) values ($1, $2, $3, 3, $4, now())`,
+          [userId, item.id, item.mode, item.stats.source === "new" ? "new" : "review"],
+        );
+      }
+      expect(drained).toHaveLength(rows[0].plan.plannedTotal);
+      expect(drained.filter((item) => item.source === "new")).toHaveLength(2);
+      const { rows: volatilityRows } = await client.query(
+        `select proc.provolatile
+         from pg_proc proc
+         join pg_namespace namespace on namespace.oid = proc.pronamespace
+         where namespace.nspname = 'private'
+           and proc.proname = 'training_scheduler_candidates_v1'`,
+      );
+      expect(volatilityRows[0].provolatile).toBe("v");
       expect(rows[0].plan.plannedAt).toEqual(expect.any(String));
+    }, userId);
+  });
+
+  test("uses distinct new words as the multi-mode daily cap unit and preserves diagnostics", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 2,
+        daily_review_limit: 0,
+      });
+      const wordA = await insertWord(client, `plan-multimode-a-${Date.now()}`);
+      const wordB = await insertWord(client, `plan-multimode-b-${Date.now()}`);
+      const reverse = "definition-to-word";
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id, fsrs_enabled, hidden
+        ) values ($1, $2, $3, false, false)`,
+        [userId, wordB, reverse],
+      );
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2) returning id`,
+        [userId, `Multi-mode cap ${Date.now()}`],
+      );
+      const listId = listRows[0].id;
+      for (const wordId of [wordA, wordB]) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [userId, listId, wordId]);
+      }
+      const modes = ["word-to-definition", reverse];
+      const randomChoices = new Set<string>();
+      for (let attempt = 0; attempt < 24; attempt += 1) {
+        const { rows } = await client.query(
+          `select get_next_card(
+            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'new', ARRAY[]::text[]
+          ) as item`,
+          [userId, modes, listId],
+        );
+        randomChoices.add(`${rows[0].item.id}:${rows[0].item.mode}`);
+      }
+      expect(randomChoices.size).toBeGreaterThan(1);
+      expect([...randomChoices]).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(new RegExp(`^(${wordA}|${wordB}):`)),
+        ]),
+      );
+      const { rows: planRows } = await client.query(
+        `select get_training_session_plan($1, $2::text[], $3, 'user', 'both', '{}') as plan`,
+        [userId, modes, listId],
+      );
+      expect(planRows[0].plan).toEqual(
+        expect.objectContaining({ plannedNew: 3, plannedTotal: 3 }),
+      );
+
+      const excluded: string[] = [];
+      for (;;) {
+        const distinctReviewedWords = new Set(
+          excluded.map((key) => key.slice(0, key.lastIndexOf(":"))),
+        ).size;
+        const { rows } = await client.query(
+          `select get_next_card(
+            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[]
+          ) as item`,
+          [userId, modes, listId, excluded],
+        );
+        const item = rows[0]?.item;
+        if (!item) break;
+        expect(item.stats).toEqual(
+          expect.objectContaining({
+            new_today: distinctReviewedWords,
+            daily_new_limit: 2,
+            new_pool_size: 1,
+            learning_due_count: 0,
+            review_pool_size: 0,
+          }),
+        );
+        expect(item.stats).not.toHaveProperty("training_filter");
+        expect(Object.keys(item.stats).sort()).toEqual(
+          [
+            "clicks",
+            "daily_new_limit",
+            "difficulty",
+            "interval",
+            "learning_due_count",
+            "mode",
+            "new_pool_size",
+            "new_today",
+            "next_review",
+            "reason",
+            "reps",
+            "review_pool_size",
+            "source",
+            "stability",
+          ].sort(),
+        );
+        excluded.push(`${item.id}:${item.mode}`);
+        await client.query(
+          `insert into user_review_log (
+            user_id, word_id, mode, grade, review_type, reviewed_at
+          ) values ($1, $2, $3, 3, 'new', now())`,
+          [userId, item.id, item.mode],
+        );
+      }
+      expect(excluded).toHaveLength(planRows[0].plan.plannedTotal);
+      expect(excluded).toContain(`${wordA}:word-to-definition`);
+      expect(excluded).toContain(`${wordA}:${reverse}`);
+      expect(excluded).toContain(`${wordB}:word-to-definition`);
+    }, userId);
+  });
+
+  test("keeps an unequal-mode new-word cohort stable between plan and exhaustive drain", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 0,
+      });
+      const reverse = "definition-to-word";
+      const modes = ["word-to-definition", reverse];
+
+      for (let sample = 0; sample < 16; sample += 1) {
+        const wordA = await insertWord(client, `cohort-a-${sample}-${Date.now()}`);
+        const wordB = await insertWord(client, `cohort-b-${sample}-${Date.now()}`);
+        await client.query(
+          `insert into user_card_status (
+            user_id, entry_id, card_type_id, fsrs_enabled, hidden
+          ) values ($1, $2, $3, false, false)`,
+          [userId, wordB, reverse],
+        );
+        const { rows: listRows } = await client.query(
+          `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+           values ($1, 'nl', 'nl', $2) returning id`,
+          [userId, `Cohort ${sample} ${Date.now()}`],
+        );
+        const listId = listRows[0].id;
+        for (const wordId of [wordA, wordB]) {
+          await client.query(`select add_entry_to_user_list($1, $2, $3)`, [userId, listId, wordId]);
+        }
+
+        const { rows: planRows } = await client.query(
+          `select get_training_session_plan(
+            $1, $2::text[], $3, 'user', 'both', '{}'
+          ) as plan`,
+          [userId, modes, listId],
+        );
+        const excluded: string[] = [];
+        for (;;) {
+          const { rows } = await client.query(
+            `select get_next_card(
+              $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[]
+            ) as item`,
+            [userId, modes, listId, excluded],
+          );
+          const item = rows[0]?.item;
+          if (!item) break;
+          excluded.push(`${item.id}:${item.mode}`);
+          await client.query(
+            `insert into user_review_log (
+              user_id, word_id, mode, grade, review_type, reviewed_at
+            ) values ($1, $2, $3, 3, 'new', now())`,
+            [userId, item.id, item.mode],
+          );
+        }
+        expect(excluded).toHaveLength(planRows[0].plan.plannedTotal);
+        await client.query(`delete from user_review_log where user_id=$1`, [userId]);
+      }
     }, userId);
   });
 
@@ -206,6 +403,164 @@ describeDb("authoritative training session plan RPC", () => {
       expect(rows[0].plan).toEqual(
         expect.objectContaining({ plannedNew: 0, plannedReview: 1, plannedTotal: 1 }),
       );
+    }, userId);
+  });
+
+  test("matches unfiltered selection for exhausted caps, learning, future-due practice, and multi-mode identity", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 0,
+        daily_review_limit: 0,
+      });
+      const learning = await insertWord(client, `plan-learning-${Date.now()}`);
+      const future = await insertWord(client, `plan-future-${Date.now()}`);
+      const reverse = "definition-to-word";
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id, fsrs_enabled, hidden,
+          fsrs_last_interval, next_review_at
+        ) values
+          ($1, $2, 'word-to-definition', true, false, .2, now() - interval '1 minute'),
+          ($1, $3, 'word-to-definition', true, false, 2, now() + interval '1 day'),
+          ($1, $3, $4, true, false, 2, now() + interval '1 day')`,
+        [userId, learning, future, reverse],
+      );
+
+      const { rows: learningPlanRows } = await client.query(
+        `select get_training_session_plan(
+          $1, ARRAY['word-to-definition'], NULL, 'curated', 'both', '{}'
+        ) as plan`,
+        [userId],
+      );
+      const { rows: learningSelectionRows } = await client.query(
+        `select get_next_card(
+          $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], NULL,
+          'curated', 'both', 'auto', ARRAY[]::text[]
+        ) as item`,
+        [userId],
+      );
+      expect(learningPlanRows[0].plan.plannedTotal).toBe(1);
+      expect(learningSelectionRows[0].item).toEqual(
+        expect.objectContaining({ id: learning, mode: "word-to-definition" }),
+      );
+
+      await client.query(`update user_settings set daily_new_limit = 1 where user_id = $1`, [userId]);
+      const { rows: practicePlanRows } = await client.query(
+        `select get_training_session_plan(
+          $1, ARRAY['word-to-definition', $2], NULL, 'curated', 'review', '{}'
+        ) as plan`,
+        [userId, reverse],
+      );
+      expect(practicePlanRows[0].plan).toEqual(
+        expect.objectContaining({
+          plannedNew: 0,
+          plannedReview: 0,
+          plannedPractice: 4,
+          plannedTotal: 4,
+        }),
+      );
+      const practiceKeys: string[] = [];
+      for (;;) {
+        const { rows: selectedRows } = await client.query(
+          `select get_next_card(
+            $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
+            'curated', 'review', 'auto', $3::text[]
+          ) as item`,
+          [userId, reverse, practiceKeys],
+        );
+        const item = selectedRows[0]?.item;
+        if (!item) break;
+        expect(item.stats.source).toBe("practice");
+        practiceKeys.push(`${item.id}:${item.mode}`);
+      }
+      expect(practiceKeys).toHaveLength(practicePlanRows[0].plan.plannedTotal);
+      expect(practiceKeys).toContain(`${future}:word-to-definition`);
+      expect(practiceKeys).toContain(`${future}:${reverse}`);
+    }, userId);
+  });
+
+  test("counts filtered future-due practice cards with exact card identities", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 0,
+        daily_review_limit: 0,
+      });
+      const wordId = await insertWord(client, `plan-filtered-future-${Date.now()}`);
+      const reverse = "definition-to-word";
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id, fsrs_enabled, hidden,
+          fsrs_last_interval, next_review_at
+        ) values
+          ($1, $2, 'word-to-definition', true, false, 2, now() + interval '1 day'),
+          ($1, $2, $3, true, false, 2, now() + interval '1 day')`,
+        [userId, wordId, reverse],
+      );
+      await client.query(
+        `insert into user_card_action_events (
+          user_id, entry_id, card_type_id, action, client_event_id, action_payload_hash
+        ) values
+          ($1, $2, 'word-to-definition', 'record-view', $3, 'filtered-a'),
+          ($1, $2, $4, 'record-view', $5, 'filtered-b')`,
+        [userId, wordId, randomUUID(), reverse, randomUUID()],
+      );
+
+      const { rows } = await client.query(
+        `select get_training_session_plan(
+          $1, ARRAY['word-to-definition', $2], NULL, 'curated', 'review',
+          jsonb_build_object('dateWindow', 'today', 'timezone', 'UTC')
+        ) as plan`,
+        [userId, reverse],
+      );
+      expect(rows[0].plan).toEqual(
+        expect.objectContaining({ plannedPractice: 2, plannedTotal: 2 }),
+      );
+      const trainingFilter = JSON.stringify({
+        dateWindow: "today",
+        timezone: "UTC",
+      });
+      const { rows: firstSelection } = await client.query(
+        `select get_next_filtered_card(
+          $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
+          'curated', 'review', 'auto', ARRAY[]::text[], $3::jsonb
+        ) as item`,
+        [userId, reverse, trainingFilter],
+      );
+      expect(firstSelection[0].item).toEqual(
+        expect.objectContaining({ id: wordId }),
+      );
+      expect(firstSelection[0].item.stats).toEqual(
+        expect.objectContaining({
+          reason: "filtered",
+          training_filter: JSON.parse(trainingFilter),
+          new_pool_size: 0,
+          learning_due_count: 0,
+          review_pool_size: 0,
+        }),
+      );
+      const firstKey = `${wordId}:${firstSelection[0].item.mode}`;
+      const { rows: secondSelection } = await client.query(
+        `select get_next_filtered_card(
+          $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
+          'curated', 'review', 'auto', ARRAY[$3]::text[], $4::jsonb
+        ) as item`,
+        [userId, reverse, firstKey, trainingFilter],
+      );
+      expect(secondSelection[0].item).toEqual(
+        expect.objectContaining({ id: wordId }),
+      );
+      expect(secondSelection[0].item.mode).not.toBe(firstSelection[0].item.mode);
+      const secondKey = `${wordId}:${secondSelection[0].item.mode}`;
+      const { rows: exhaustedSelection } = await client.query(
+        `select get_next_filtered_card(
+          $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
+          'curated', 'review', 'auto', ARRAY[$3, $4]::text[], $5::jsonb
+        ) as item`,
+        [userId, reverse, firstKey, secondKey, trainingFilter],
+      );
+      expect(exhaustedSelection[0]?.item).toBeUndefined();
     }, userId);
   });
 });
