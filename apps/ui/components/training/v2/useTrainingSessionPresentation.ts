@@ -4,6 +4,18 @@ import React from "react";
 
 type TrainingSurface = "today" | "setup" | "session";
 
+export type TrainingSessionProgress = {
+  position: number;
+  total: number;
+  fraction: number;
+};
+
+export type TrainingSessionPresentation = {
+  cardOrdinal: number;
+  progress: TrainingSessionProgress | null;
+  isSubsequentCard: boolean;
+};
+
 const normalizePlannedTotal = (value: number | null | undefined) =>
   typeof value === "number" && Number.isInteger(value) && value >= 0
     ? value
@@ -22,7 +34,7 @@ export function useTrainingSessionPresentation({
   /** Exact modes/list/filter fingerprint. A change starts a new plan. */
   sessionKey?: string;
   onEnterSession: () => void;
-}) {
+}): TrainingSessionPresentation {
   const [cardOrdinal, setCardOrdinal] = React.useState(1);
   const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(() =>
     normalizePlannedTotal(plannedTotal),
