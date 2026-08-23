@@ -82,6 +82,45 @@ test("captures the approved Training face and answer at the authoritative viewpo
   await page.close();
 });
 
+test("mobile report Back dismisses the training sheet on the first tap", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 402, height: 874 },
+    colorScheme: "dark",
+    deviceScaleFactor: 1,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    visualProfile: "face",
+  });
+  await page
+    .getByRole("button", {
+      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i,
+    })
+    .click();
+
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await advanceToApprovedPosition(page);
+  const report = page.getByRole("button", {
+    name: /Melden|Сообщить|Report/i,
+  });
+  await report.tap();
+  const dialog = page.getByRole("dialog", {
+    name: /Wat klopt er niet\?|Что не так\?|What is wrong\?/i,
+  });
+  await expect(dialog).toBeVisible();
+
+  await dialog
+    .getByRole("button", { name: /Terug|Назад|Back/i })
+    .tap();
+
+  await expect(dialog).toBeHidden();
+  await expect(report).toBeFocused();
+  await context.close();
+});
+
 test("keeps the approved primitives responsive in light and wide layouts", async ({
   browser,
 }) => {

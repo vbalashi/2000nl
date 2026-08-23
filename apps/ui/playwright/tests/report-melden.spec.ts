@@ -61,6 +61,11 @@ for (const profile of profiles) {
     expect((sendBox?.width ?? 0) / (backBox?.width ?? 1)).toBeGreaterThan(1.8);
     await page.screenshot({ path: testInfo.outputPath(`${profile.name}-face-dark.png`) });
 
+    await back.click();
+    await expect(dialog).toBeHidden();
+    await expect(report).toBeFocused();
+    await report.click();
+    await expect(dialog).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(report).toBeFocused();
@@ -69,6 +74,11 @@ for (const profile of profiles) {
     await fixture.getByRole("button", { name: "Melden" }).click();
     await expect(dialog).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`${profile.name}-answer-dark.png`) });
+    await page.locator('[data-training-hotkeys-suspended="true"]').click({
+      position: { x: 8, y: 8 },
+    });
+    await expect(dialog).toBeHidden();
+    await expect(fixture.getByRole("button", { name: "Melden" })).toBeFocused();
   });
 }
 

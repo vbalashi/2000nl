@@ -505,6 +505,34 @@ describe("TrainingSenseCardV2Session", () => {
       "Kaartcontext en sessiegegevens worden automatisch meegestuurd.",
     );
     expect(screen.getAllByRole("radio")).toHaveLength(6);
+    const reportAction = screen.getByRole("button", { name: "Melden" });
+    fireEvent.click(screen.getByRole("radio", { name: "Vertaling" }));
+    fireEvent.change(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"), {
+      target: { value: "wordt niet bewaard" },
+    });
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Terug" }), {
+      button: 0,
+      isPrimary: true,
+    });
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Vertaling" })).not.toBeChecked();
+    expect(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)")).toHaveValue("");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    const reopenedDialog = await screen.findByRole("dialog", { name: "Wat klopt er niet?" });
+    fireEvent.pointerDown(reopenedDialog.parentElement!, { button: 0, isPrimary: true });
+    expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
+    await waitFor(() => expect(reportAction).toHaveFocus());
+
+    fireEvent.click(reportAction);
+    expect(await screen.findByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
     const stage = screen.getByTestId("training-sense-card-stage");
     for (const control of [
       screen.getByRole("button", { name: "Terug" }),
