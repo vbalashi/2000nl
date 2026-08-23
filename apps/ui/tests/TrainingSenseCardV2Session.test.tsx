@@ -352,6 +352,7 @@ describe("TrainingSenseCardV2Session", () => {
               </div>
             ) : null
           }
+          interactionDisabled={stalled}
           onProgressActionAccepted={
             (async () => {
               setStalled(true);
@@ -376,6 +377,7 @@ describe("TrainingSenseCardV2Session", () => {
       fireEvent.touchEnd(wrapper);
 
       expect(await screen.findByText("Next card failed to load")).toBeVisible();
+      expect(screen.getByRole("button", { name: "Goed" })).toBeDisabled();
       await waitFor(() =>
         expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
       );
@@ -419,6 +421,41 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     expect(await screen.findByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+  });
+
+  test("resets the same word to face for a new presentation identity", async () => {
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "nl" as const,
+      onProgressActionAccepted: vi.fn().mockResolvedValue("accepted" as const),
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-1"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-2"
+      />,
+    );
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
       "data-side",
       "face",
     );

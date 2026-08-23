@@ -60,6 +60,7 @@ type Props = {
   chrome: React.ReactNode;
   footer: React.ReactNode;
   notice?: React.ReactNode;
+  interactionDisabled?: boolean;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
   onOpenDetails?: () => void;
@@ -99,6 +100,7 @@ export function TrainingSenseCardV2Session({
   chrome,
   footer,
   notice,
+  interactionDisabled = false,
   focusOnPresentation = false,
   onPlayResolvedAudio,
   onOpenDetails,
@@ -123,7 +125,7 @@ export function TrainingSenseCardV2Session({
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
-  const cardIdentity = `${word.id}:${mode}`;
+  const cardIdentity = presentationIdentity ?? `${word.id}:${mode}`;
   const [cardPresentation, setCardPresentation] = React.useState<{
     identity: string;
     side: "face" | "answer";
@@ -265,7 +267,7 @@ export function TrainingSenseCardV2Session({
   const handleAction = async (
     capability: PlatformSenseCardCapabilityV2,
   ): Promise<TrainingCardSwipeCommitOutcome> => {
-    if (interactionBusyRef.current) return "rejected";
+    if (interactionDisabled || interactionBusyRef.current) return "rejected";
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
@@ -362,7 +364,16 @@ export function TrainingSenseCardV2Session({
         } else {
           rememberPendingKnownUndo(null);
         }
-        return await onProgressActionAccepted(capability);
+        try {
+          return await onProgressActionAccepted(capability);
+        } catch (cause) {
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : temporaryFailureMessage(interfaceLanguage),
+          );
+          return "stalled";
+        }
       }
       return "accepted";
     } catch (cause) {
@@ -433,7 +444,7 @@ export function TrainingSenseCardV2Session({
   );
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",
-    busy,
+    busy: busy || interactionDisabled,
     identity: cardIdentity,
     left: swipeLeftCapability
       ? {
@@ -527,7 +538,7 @@ export function TrainingSenseCardV2Session({
           model={model}
           mode={mode}
           interfaceLanguage={interfaceLanguage}
-          busy={busy}
+          busy={busy || interactionDisabled}
           focusOnMount={handlePresentation}
           onPlayAudio={
             result.group.header.audio && onPlayResolvedAudio
@@ -545,7 +556,7 @@ export function TrainingSenseCardV2Session({
                   operation: reportOperation,
                 })}
                 interfaceLanguage={interfaceLanguage}
-                disabled={busy}
+                disabled={busy || interactionDisabled}
               />
             ) : undefined
           }

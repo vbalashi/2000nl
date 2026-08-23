@@ -54,6 +54,7 @@ import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
 import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
 import { useTrainingTurnController } from "./useTrainingTurnController";
@@ -614,10 +615,12 @@ export function TrainingScreen({
     loadingWord,
     actionLoading,
     loadError: trainingLoadError,
+    acceptedTransitionLoadStalled,
     usableCandidatesExhausted,
     reportLoadError: setTrainingLoadError,
     reportCardLoadFailure,
     retryCardLoadFailure,
+    retryAcceptedTransitionLoad,
     nextTransitionId,
     currentPresentationId,
     nextCardOverrideNotice,
@@ -1749,7 +1752,27 @@ export function TrainingScreen({
       interfaceLanguage={onboardingLang}
     />
   );
-  const trainingSessionNotice = nextCardOverrideNotice ? (
+  const trainingSessionNotice = acceptedTransitionLoadStalled ? (
+    <div
+      role="alert"
+      className="mx-auto mb-3 flex w-full max-w-2xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 shadow-sm dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200"
+    >
+      <span>
+        {platformV2Message(
+          onboardingLang,
+          "senseCard.training.temporaryFailure",
+        )}
+      </span>
+      <button
+        type="button"
+        disabled={actionLoading}
+        onClick={() => void retryAcceptedTransitionLoad()}
+        className="min-h-9 shrink-0 rounded-lg border border-red-300 px-3 py-1.5 disabled:cursor-wait disabled:opacity-60 dark:border-red-800"
+      >
+        {platformV2Message(onboardingLang, "senseCard.training.retry")}
+      </button>
+    </div>
+  ) : nextCardOverrideNotice ? (
     <div
       role="status"
       className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
@@ -1843,7 +1866,10 @@ export function TrainingScreen({
           />
         ) : v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
-            key={`${user.id}:${currentWord.id}:${currentMode}`}
+            key={
+              currentPresentationIdentity ??
+              `${user.id}:${currentWord.id}:${currentMode}`
+            }
             cacheOwnerId={user.id}
             nextTransitionId={nextTransitionId ?? undefined}
             presentationIdentity={currentPresentationIdentity}
@@ -1857,6 +1883,7 @@ export function TrainingScreen({
             chrome={trainingSessionChrome}
             footer={trainingSessionFooter}
             notice={trainingSessionNotice}
+            interactionDisabled={acceptedTransitionLoadStalled}
             focusOnPresentation={isSubsequentSessionCard}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails}

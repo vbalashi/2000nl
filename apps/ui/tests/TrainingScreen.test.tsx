@@ -170,6 +170,7 @@ const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
 });
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
+const mockV2ProgressAction = vi.fn();
 const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
 let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
@@ -498,6 +499,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     chrome,
     footer,
     notice,
+    interactionDisabled,
   }: {
     word: { headword: string };
     presentationIdentity: string | null;
@@ -509,6 +511,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     chrome: React.ReactNode;
     footer: React.ReactNode;
     notice?: React.ReactNode;
+    interactionDisabled?: boolean;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
     const failed = word.headword === "broken-card";
@@ -562,7 +565,11 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           ) : null}
           <button
             type="button"
-            onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+            disabled={interactionDisabled}
+            onClick={() => {
+              mockV2ProgressAction();
+              onProgressActionAccepted({ actionId: "review-card" });
+            }}
           >
             Mock V2 grade
           </button>
@@ -3150,17 +3157,20 @@ test("publishes a new presentation identity when the same V2 word is presented a
       expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
     );
 
-    const card = screen.getByTestId("mock-training-sense-card-v2");
-    const firstIdentity = card.getAttribute("data-presentation-identity");
+    const firstIdentity = screen
+      .getByTestId("mock-training-sense-card-v2")
+      .getAttribute("data-presentation-identity");
     expect(firstIdentity).toEqual(expect.any(String));
     expect(firstIdentity).not.toBe("");
 
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
 
     await waitFor(() =>
-      expect(card.getAttribute("data-presentation-identity")).not.toBe(
-        firstIdentity,
-      ),
+      expect(
+        screen
+          .getByTestId("mock-training-sense-card-v2")
+          .getAttribute("data-presentation-identity"),
+      ).not.toBe(firstIdentity),
     );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
@@ -3243,11 +3253,13 @@ test("uses only the on-demand fallback when grading before next-turn selection r
   }
 });
 
-test("keeps the current V2 card when the on-demand scheduler warm fails", async () => {
+test("shows load-only recovery and blocks a repeated V2 grade after an accepted action", async () => {
   const word1 = { ...mockWord, id: "word-1", headword: "huis" };
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  let word2Ready = false;
 
   platformV2TrainingUiEnabled.mockReturnValue(true);
+  mockV2ProgressAction.mockClear();
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario
     .mockResolvedValueOnce(word1)
@@ -3258,7 +3270,13 @@ test("keeps the current V2 card when the on-demand scheduler warm fails", async 
     (input: { entryId: string }) =>
       Promise.resolve(
         input.entryId === word2.id
-          ? { state: "lookup-http-error", status: 503 }
+          ? word2Ready
+            ? {
+                state: "ready",
+                group: { header: { audio: null, text: "boom" } },
+                entry: { entryId: word2.id },
+              }
+            : { state: "lookup-http-error", status: 503 }
           : {
               state: "ready",
               group: { header: { audio: null, text: "huis" } },
@@ -3290,6 +3308,26 @@ test("keeps the current V2 card when the on-demand scheduler warm fails", async 
     expect(
       screen.queryByRole("heading", { name: /Training could not be loaded/i }),
     ).not.toBeInTheDocument();
+    const recovery = await screen.findByRole("alert");
+    expect(recovery).toHaveTextContent(
+      /verbinding werd onderbroken|connection was interrupted|соединение прервалось/i,
+    );
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeDisabled();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+
+    word2Ready = true;
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Opnieuw proberen|Try again|Повторить/i,
+      }),
+    );
+
+    expect(await screen.findByRole("heading", { name: "boom" })).toBeInTheDocument();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+    const retryCall = fetchNextTrainingWordByScenario.mock.calls.at(-1);
+    expect(retryCall?.[6]).toEqual(
+      expect.arrayContaining(["word-1:word-to-definition"]),
+    );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();

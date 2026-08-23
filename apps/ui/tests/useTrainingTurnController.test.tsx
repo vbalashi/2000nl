@@ -365,15 +365,25 @@ describe("useTrainingTurnController transition matrix", () => {
 
     expect(outcome).toBe("stalled");
     expect(controller.result.current.loadError).toBe("next_card_offline");
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
     expect(controller.setCurrentWord).not.toHaveBeenCalled();
     expect(controller.reviewLegacy).not.toHaveBeenCalled();
 
     await act(async () => {
-      await controller.result.current.loadNextWord();
+      await controller.result.current.retryAcceptedTransitionLoad();
     });
     expect(selectNext).toHaveBeenCalledTimes(2);
+    expect(selectNext.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        queueTurn: "review",
+        excludeCardKeys: expect.arrayContaining([
+          "word-1:word-to-definition",
+        ]),
+      }),
+    );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.reviewLegacy).not.toHaveBeenCalled();
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
   });
 
   test("retrying a rejected prepared card performs a fresh authoritative selection", async () => {
