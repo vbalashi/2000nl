@@ -386,6 +386,30 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
   });
 
+  test("a separate authoritative load clears accepted-transition recovery", async () => {
+    prepared.consume.mockReturnValue(null);
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("next_card_offline"))
+      .mockResolvedValueOnce(word2);
+    const controller = renderController({ selectNext });
+
+    await act(async () => {
+      await controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
+    await expect(
+      controller.result.current.retryAcceptedTransitionLoad(),
+    ).resolves.toBe("skipped");
+  });
+
   test("retrying a rejected prepared card performs a fresh authoritative selection", async () => {
     const recoveredWord = { ...word2, id: "word-due", headword: "leren" };
     const selectNext = vi.fn().mockResolvedValue(recoveredWord);
@@ -647,6 +671,29 @@ describe("useTrainingTurnController transition matrix", () => {
 
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
     expect(controller.result.current.loadingWord).toBe(false);
+  });
+
+  test("scope cancellation cannot resurrect accepted-transition recovery", async () => {
+    prepared.consume.mockReturnValue(null);
+    const slowSelection = deferred<TrainingWord | null>();
+    const selectNext = vi.fn(() => slowSelection.promise);
+    const controller = renderController({ selectNext });
+
+    let accepted!: Promise<"accepted" | "stalled">;
+    act(() => {
+      accepted = controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+    await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(1));
+
+    act(() => controller.result.current.beginSessionScopeChange());
+    await act(async () => slowSelection.resolve(word2));
+
+    await expect(accepted).resolves.toBe("accepted");
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
+    await expect(
+      controller.result.current.retryAcceptedTransitionLoad(),
+    ).resolves.toBe("skipped");
   });
 
   test("scope-key replacement cancels the old selection and presents exactly one new-scope result", async () => {

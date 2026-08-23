@@ -138,18 +138,24 @@ export function useTrainingTurnController(input: Inputs) {
   const nextCardOverrideWordIdRef = useRef<string | null>(null);
   const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
 
+  const clearAcceptedTransitionRecovery = useCallback(() => {
+    acceptedTransitionRetryRef.current = null;
+    setAcceptedTransitionLoadStalled(false);
+  }, []);
+
   const currentMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
 
   const presentWord = useCallback(
     (word: TrainingWord | null) => {
+      clearAcceptedTransitionRecovery();
       if (word) markTrainingEntryPresentationStarted(word.id);
       const presentationId = word ? generateReviewTurnId() : null;
       currentTurnIdRef.current = presentationId;
       setCurrentPresentationId(presentationId);
       setCurrentWord(word);
     },
-    [setCurrentWord],
+    [clearAcceptedTransitionRecovery, setCurrentWord],
   );
 
   const selectPreparedCandidate = useCallback(
@@ -194,9 +200,8 @@ export function useTrainingTurnController(input: Inputs) {
     rejectedCardKeysRef.current.clear();
     failedCardKeyRef.current = null;
     setUsableCandidatesExhausted(false);
-    acceptedTransitionRetryRef.current = null;
-    setAcceptedTransitionLoadStalled(false);
-  }, []);
+    clearAcceptedTransitionRecovery();
+  }, [clearAcceptedTransitionRecovery]);
 
   const cancelActiveSelection = useCallback(() => {
     loadGenerationRef.current += 1;
@@ -616,7 +621,7 @@ export function useTrainingTurnController(input: Inputs) {
           );
           return "error" as const;
         });
-        const stalled = loadOutcome === "error" || loadOutcome === "skipped";
+        const stalled = loadOutcome === "error";
         acceptedTransitionRetryRef.current = stalled ? retry : null;
         setAcceptedTransitionLoadStalled(stalled);
         void backgroundRefresh;
@@ -703,7 +708,7 @@ export function useTrainingTurnController(input: Inputs) {
           return "error" as const;
         },
       );
-      const stalled = outcome === "error" || outcome === "skipped";
+      const stalled = outcome === "error";
       if (!stalled) acceptedTransitionRetryRef.current = null;
       setAcceptedTransitionLoadStalled(stalled);
       return outcome;
