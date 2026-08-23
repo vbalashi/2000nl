@@ -61,7 +61,18 @@ for (const profile of profiles) {
     expect((sendBox?.width ?? 0) / (backBox?.width ?? 1)).toBeGreaterThan(1.8);
     await page.screenshot({ path: testInfo.outputPath(`${profile.name}-face-dark.png`) });
 
+    await dialog.getByRole("radio", { name: "Vertaling" }).click();
+    await dialog.locator("textarea").fill("wordt niet bewaard");
     await back.click();
+    await expect(dialog).toBeHidden();
+    await expect(report).toBeFocused();
+    await report.click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("radio", { name: "Vertaling" })).not.toBeChecked();
+    await expect(dialog.locator("textarea")).toHaveValue("");
+    const keyboardBack = dialog.getByRole("button", { name: "Terug" });
+    await keyboardBack.focus();
+    await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
     await expect(report).toBeFocused();
     await report.click();

@@ -147,7 +147,7 @@ function SenseCardReportSheet({
     <div
       data-training-hotkeys-suspended="true"
       className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/70 pt-8 backdrop-blur-[2px] sm:items-center sm:p-6"
-      onPointerDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) dismiss();
       }}
     >
@@ -236,12 +236,6 @@ function SenseCardReportSheet({
             ref={closeButtonRef}
             type="button"
             disabled={delivery === "sending"}
-            onPointerDown={(event) => {
-              if (event.pointerType === "mouse" && event.button !== 0) return;
-              event.preventDefault();
-              event.stopPropagation();
-              dismiss();
-            }}
             onClick={dismiss}
             className="h-11 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:border-slate-600 dark:bg-[#20252f] dark:text-slate-200 dark:hover:bg-slate-700"
           >

@@ -510,10 +510,18 @@ describe("TrainingSenseCardV2Session", () => {
     fireEvent.change(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)"), {
       target: { value: "wordt niet bewaard" },
     });
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Terug" }), {
+    const back = screen.getByRole("button", { name: "Terug" });
+    fireEvent.pointerDown(back, {
       button: 0,
       isPrimary: true,
     });
+    fireEvent.pointerCancel(back, { button: 0, isPrimary: true });
+    expect(screen.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Vertaling" })).toBeChecked();
+    expect(screen.getByPlaceholderText("Optionele opmerking (niet verplicht)")).toHaveValue(
+      "wordt niet bewaard",
+    );
+    fireEvent.click(back);
     expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
     await waitFor(() => expect(reportAction).toHaveFocus());
 
@@ -527,7 +535,11 @@ describe("TrainingSenseCardV2Session", () => {
 
     fireEvent.click(reportAction);
     const reopenedDialog = await screen.findByRole("dialog", { name: "Wat klopt er niet?" });
-    fireEvent.pointerDown(reopenedDialog.parentElement!, { button: 0, isPrimary: true });
+    const backdrop = reopenedDialog.parentElement!;
+    fireEvent.pointerDown(backdrop, { button: 0, isPrimary: true });
+    fireEvent.pointerCancel(backdrop, { button: 0, isPrimary: true });
+    expect(screen.getByRole("dialog", { name: "Wat klopt er niet?" })).toBeInTheDocument();
+    fireEvent.click(backdrop);
     expect(screen.queryByRole("dialog", { name: "Wat klopt er niet?" })).not.toBeInTheDocument();
     await waitFor(() => expect(reportAction).toHaveFocus());
 
