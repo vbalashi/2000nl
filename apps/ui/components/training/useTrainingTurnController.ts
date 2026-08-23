@@ -40,21 +40,13 @@ import {
   TrainingSelectionFailure,
   normalizeTrainingSelectionFailure,
 } from "@/lib/training/trainingSelectionFailure";
-
-export type TrainingEmptySelectionOutcome = "no-match" | "session-complete";
-
-export type TrainingSelectionLoadFailure =
-  | "statement-timeout"
-  | "network-error"
-  | "selection-error";
-
-export const isTrainingLoadFailure = (
-  result: LoadNextTrainingTurnResult,
-): result is TrainingSelectionLoadFailure | "error" =>
-  result === "statement-timeout" ||
-  result === "network-error" ||
-  result === "selection-error" ||
-  result === "error";
+import {
+  isTrainingLoadFailure,
+  trainingSelectionFailureOutcome,
+  type LoadNextTrainingTurnResult,
+  type TrainingEmptySelectionOutcome,
+  type TrainingSelectionLoadFailure,
+} from "@/lib/training/trainingSelectionOutcome";
 
 export type LoadNextTrainingTurnRequest = Omit<
   TrainingTurnSelectionRequest,
@@ -65,13 +57,6 @@ export type LoadNextTrainingTurnRequest = Omit<
   fallbackQueueTurnOnEmpty?: QueueTurn;
   emptyOutcome?: TrainingEmptySelectionOutcome;
 };
-
-export type LoadNextTrainingTurnResult =
-  | "loaded"
-  | TrainingEmptySelectionOutcome
-  | TrainingSelectionLoadFailure
-  | "error"
-  | "skipped";
 
 type AcceptedCardTransition = {
   word: TrainingWord;
@@ -466,11 +451,7 @@ export function useTrainingTurnController(input: Inputs) {
         }
         const outcome: TrainingSelectionLoadFailure | "error" =
           cause instanceof TrainingSelectionFailure
-            ? cause.kind === "statement-timeout"
-              ? "statement-timeout"
-              : cause.kind === "network"
-                ? "network-error"
-                : "selection-error"
+            ? trainingSelectionFailureOutcome(cause.kind)
             : "error";
         finishTrainingUserTransition(transitionId, outcome);
         if (!recoverLoadErrors) throw cause;

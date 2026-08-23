@@ -564,6 +564,26 @@ describe("useTrainingTurnController transition matrix", () => {
     );
   });
 
+  test("an aborted scheduler request has a distinct recoverable cancellation outcome", async () => {
+    const selectNext = vi.fn().mockRejectedValue(
+      new DOMException("The operation was aborted", "AbortError"),
+    );
+    const controller = renderController({ currentWord: null, selectNext });
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await controller.result.current.loadNextWord();
+    });
+
+    expect(outcome).toBe("request-cancelled");
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(null);
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "generated-transition",
+      "request-cancelled",
+    );
+  });
+
   test("an initial successful empty result is an authoritative no-match", async () => {
     const controller = renderController({
       currentWord: null,

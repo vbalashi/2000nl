@@ -23,7 +23,7 @@ import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitio
 import {
   isTrainingLoadFailure,
   type LoadNextTrainingTurnResult,
-} from "../useTrainingTurnController";
+} from "@/lib/training/trainingSelectionOutcome";
 
 type TrainingScope = {
   listId: string | null;

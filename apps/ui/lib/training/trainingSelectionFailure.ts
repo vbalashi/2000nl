@@ -1,5 +1,6 @@
 export type TrainingSelectionFailureKind =
   | "statement-timeout"
+  | "request-cancelled"
   | "network"
   | "database";
 
@@ -7,6 +8,8 @@ type ErrorLike = {
   code?: unknown;
   message?: unknown;
   name?: unknown;
+  details?: unknown;
+  hint?: unknown;
 };
 
 const asErrorLike = (cause: unknown): ErrorLike =>
@@ -17,19 +20,28 @@ export const classifyTrainingSelectionFailure = (
 ): TrainingSelectionFailureKind => {
   const candidate = asErrorLike(cause);
   const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
+  const evidence = [candidate.message, candidate.details, candidate.hint]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ")
+    .toLowerCase();
   const name = typeof candidate.name === "string" ? candidate.name : "";
 
-  if (code === "57014" || message.includes("statement timeout")) {
+  if (evidence.includes("statement timeout")) {
     return "statement-timeout";
+  }
+  if (
+    name === "AbortError" ||
+    code === "ABORT_ERR" ||
+    (code === "57014" && evidence.includes("user request"))
+  ) {
+    return "request-cancelled";
   }
   if (
     cause instanceof TypeError ||
     name === "TypeError" ||
-    message.includes("fetch failed") ||
-    message.includes("failed to fetch") ||
-    message.includes("network request")
+    evidence.includes("fetch failed") ||
+    evidence.includes("failed to fetch") ||
+    evidence.includes("network request")
   ) {
     return "network";
   }

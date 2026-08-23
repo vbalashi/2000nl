@@ -58,3 +58,19 @@ Analyze user learning history, intervals, and review patterns.
 - Use [technical-model.md](./technical-model.md) for table and RPC context.
 - Use [core.md](./core.md) when debugging user-visible training behavior.
 - Use [docs/runbooks/production-login.md](../../runbooks/production-login.md) for production auth workflows.
+
+## Next-card Selection Latency Benchmark
+
+**Added:** 2026-08-24
+**Issue:** #228
+
+`db/scripts/next_card_selection_latency_benchmark.mjs` compares the retired raw
+JSON exclusion predicate, the indexed anti-join, and the complete
+`get_next_card` scheduler on a disposable loopback database with at least
+18,000 entries. It requires exactly the isolated `test@2000nl.test` fixture
+identity and rejects database names that do not contain `issue228`.
+
+The enforced rollout budget is a plan-cold first call at most 2,000 ms, warm
+p95 at most 1,000 ms, and warm maximum at most 2,000 ms over 30 samples. This
+local benchmark does not flush PostgreSQL shared buffers or the OS cache, so it
+supports—but does not replace—bounded production cold/warm rollout evidence.
