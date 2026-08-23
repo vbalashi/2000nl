@@ -1013,7 +1013,9 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
     screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
   );
   fetchNextTrainingWordByScenario.mockRejectedValueOnce(
-    new Error("replacement_queue_failed"),
+    Object.assign(new Error("canceling statement due to statement timeout"), {
+      code: "57014",
+    }),
   );
   fireEvent.click(
     screen.getByRole("button", { name: /Start training|Training starten/ }),
@@ -1026,6 +1028,11 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
   ).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", {
+      name: /No cards match this setup|Geen kaarten voor deze selectie/,
+    }),
   ).not.toBeInTheDocument();
 });
 

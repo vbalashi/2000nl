@@ -271,6 +271,51 @@ describe("trainingService next-word selection", () => {
     );
   });
 
+  test("scenario selection does not classify a statement timeout as an empty result", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "57014",
+        message: "canceling statement due to statement timeout",
+      },
+    });
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({
+      code: "57014",
+      message: "canceling statement due to statement timeout",
+    });
+  });
+
+  test("scenario selection preserves a network rejection as a failure", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockRejectedValueOnce(new TypeError("fetch failed"));
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toThrow("fetch failed");
+  });
+
   test("scenario selection filters to supported audio card modes", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 

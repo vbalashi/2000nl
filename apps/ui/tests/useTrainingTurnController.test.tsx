@@ -515,6 +515,33 @@ describe("useTrainingTurnController transition matrix", () => {
     },
   );
 
+  test("a statement timeout retries selection without turning into empty", async () => {
+    const timeout = Object.assign(
+      new Error("canceling statement due to statement timeout"),
+      { code: "57014" },
+    );
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(timeout)
+      .mockResolvedValueOnce(word2);
+    const controller = renderController({ currentWord: null, selectNext });
+
+    let firstOutcome: unknown;
+    await act(async () => {
+      firstOutcome = await controller.result.current.loadNextWord();
+    });
+    expect(firstOutcome).toBe("error");
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(null);
+
+    let retryOutcome: unknown;
+    await act(async () => {
+      retryOutcome = await controller.result.current.loadNextWord();
+    });
+    expect(retryOutcome).toBe("loaded");
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+  });
+
   test("retrying after all usable candidates are exhausted exposes honest completion", async () => {
     const controller = renderController({
       currentWord: word2,

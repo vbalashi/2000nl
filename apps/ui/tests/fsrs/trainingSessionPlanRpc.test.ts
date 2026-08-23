@@ -25,6 +25,35 @@ describeDb("authoritative training session plan RPC", () => {
     await pool.end();
   });
 
+  test("uses the pointer-only index instead of reparsing every trainable raw entry", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows: functionRows } = await client.query(
+        `select pg_get_functiondef(
+           'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean)'::regprocedure
+         ) as definition`,
+      );
+      expect(functionRows[0]?.definition).toContain(
+        "FROM word_entries pointer_entry",
+      );
+
+      await client.query(`set local enable_seqscan = off`);
+      const { rows: planRows } = await client.query(
+        `explain (format json)
+         select entry.id, entry.dictionary_id
+         from word_entries entry
+         where not exists (
+           select 1
+           from word_entries pointer_entry
+           where pointer_entry.id = entry.id
+             and private.is_pointer_only_dictionary_entry_v1(pointer_entry.raw)
+         )`,
+      );
+      expect(JSON.stringify(planRows[0]["QUERY PLAN"])).toContain(
+        "word_entries_pointer_only_scheduler_exclusion_v1_idx",
+      );
+    });
+  });
+
   test("snapshots exact card identities reachable in the scheduler scope", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

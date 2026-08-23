@@ -205,10 +205,11 @@ export const fetchNextTrainingWord = async (
 
     const { data, error } = await supabase.rpc(rpcName, rpcPayload);
 
-    if (error || !data || data.length === 0) {
-      if (error) {
-        console.error("Error fetching next word via RPC", error);
-      }
+    if (error) {
+      console.error("Error fetching next word via RPC", error);
+      throw error;
+    }
+    if (!data || data.length === 0) {
       return null;
     }
 
@@ -432,10 +433,11 @@ export const fetchNextTrainingWordByScenario = async (
 
     const { data, error } = await supabase.rpc(rpcName, rpcPayload);
 
-    if (error || !data || data.length === 0) {
-      if (error) {
-        console.error("Error fetching next word via scenario RPC:", error);
-      }
+    if (error) {
+      console.error("Error fetching next word via scenario RPC:", error);
+      throw error;
+    }
+    if (!data || data.length === 0) {
       return null;
     }
 

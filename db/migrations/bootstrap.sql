@@ -369,3 +369,6 @@
 
 -- Browser-safe recent Training review history projection
 \i db/migrations/124_recent_training_review_history_projection.sql
+
+-- Scheduler scope excludes redirects through the positive partial index
+\i db/migrations/125_avoid_scheduler_pointer_json_rescan.sql
