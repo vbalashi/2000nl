@@ -136,7 +136,7 @@ const entries: FixtureEntry[] = Array.from({ length: 64 }, (_, index) => ({
 
 const userSession = {
   id: "training-attribution-user",
-  email: "training-attribution@example.invalid",
+  email: "test@2000nl.test",
 };
 
 export async function setupAuthenticatedTrainingAttributionPage(
@@ -153,6 +153,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     advanceLeaseClockMs?: number;
     advanceLeaseClockOnAction?: number;
     forceOnDemandLookupEveryAction?: boolean;
+    schedulerOutcomes?: Array<"statement-timeout" | "card" | "empty">;
     /** One valid deterministic state used only for visual QA. */
     visualProfile?: TrainingVisualState;
   } = {},
@@ -178,6 +179,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const visualFixture = options.visualProfile
     ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
     : null;
+  const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
 
   const correlatedHeaders = (surface: string) => {
     requestSequence += 1;
@@ -386,6 +388,33 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
+      const forcedOutcome = schedulerOutcomes.shift();
+      if (forcedOutcome === "statement-timeout") {
+        await fulfillJson(
+          route,
+          {
+            code: "57014",
+            details: null,
+            hint: null,
+            message: "canceling statement due to statement timeout",
+          },
+          "scheduler-timeout",
+          500,
+        );
+        return;
+      }
+      if (forcedOutcome === "empty") {
+        await fulfillJson(route, [], "scheduler-empty");
+        return;
+      }
+      if (forcedOutcome === "card") {
+        await fulfillJson(
+          route,
+          [buildSchedulerEntry(entries[nextEntryIndex]!)],
+          "scheduler-card",
+        );
+        return;
+      }
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
         ? body.p_exclude_card_keys
         : [];

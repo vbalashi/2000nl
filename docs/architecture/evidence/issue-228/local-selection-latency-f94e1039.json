@@ -1,0 +1,29 @@
+{
+  "capturedAt": "2026-08-24T01:40:00+03:00",
+  "fixture": {
+    "entries": 18184,
+    "relationBytes": 56459264,
+    "qaEmail": "test@2000nl.test"
+  },
+  "limitations": "first is plan-cold after DISCARD PLANS; shared buffers and OS cache are not flushed",
+  "budgetMs": {
+    "first": 2000,
+    "warmP95": 1000,
+    "warmMax": 2000
+  },
+  "withinBudget": true,
+  "series": {
+    "legacyRawPredicate": {
+      "first": 44.2,
+      "warm": { "count": 30, "p50": 18.8, "p95": 23.0, "max": 27.0 }
+    },
+    "indexedAntiJoin": {
+      "first": 2.3,
+      "warm": { "count": 30, "p50": 1.8, "p95": 2.0, "max": 2.0 }
+    },
+    "fullScheduler": {
+      "first": 142.1,
+      "warm": { "count": 30, "p50": 139.8, "p95": 145.0, "max": 146.2 }
+    }
+  }
+}

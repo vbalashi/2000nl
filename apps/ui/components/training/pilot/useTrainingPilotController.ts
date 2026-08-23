@@ -20,6 +20,10 @@ import type {
 } from "./TrainingTodaySetup";
 import { isTrainingSetupDraftSupported } from "./TrainingTodaySetup";
 import { measureTrainingTransitionStage } from "@/lib/training/trainingTransitionTiming";
+import {
+  isTrainingLoadFailure,
+  type LoadNextTrainingTurnResult,
+} from "@/lib/training/trainingSelectionOutcome";
 
 type TrainingScope = {
   listId: string | null;
@@ -42,7 +46,7 @@ type CommitPilotDraftParams = {
     scenario: string;
     cardFilter: CardFilter;
     focusFilter: TrainingFocusFilter;
-  }) => Promise<"loaded" | "empty" | "error" | "skipped">;
+  }) => Promise<LoadNextTrainingTurnResult>;
   reportError: (error: string | null) => void;
 };
 
@@ -132,7 +136,7 @@ export function useCommitTrainingPilotDraft({
         cardFilter: draft.cardFilter,
         focusFilter,
       });
-      if (loadResult === "error") reportError("training_load_failed");
+      if (isTrainingLoadFailure(loadResult)) reportError("training_load_failed");
       return loadResult === "loaded";
     },
     [

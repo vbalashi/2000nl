@@ -36,6 +36,17 @@ import type {
   TrainingTurnSelectionPort,
   TrainingTurnSelectionRequest,
 } from "./useTrainingTurnSelectionPort";
+import {
+  TrainingSelectionFailure,
+  normalizeTrainingSelectionFailure,
+} from "@/lib/training/trainingSelectionFailure";
+import {
+  isTrainingLoadFailure,
+  trainingSelectionFailureOutcome,
+  type LoadNextTrainingTurnResult,
+  type TrainingEmptySelectionOutcome,
+  type TrainingSelectionLoadFailure,
+} from "@/lib/training/trainingSelectionOutcome";
 
 export type LoadNextTrainingTurnRequest = Omit<
   TrainingTurnSelectionRequest,
@@ -44,9 +55,8 @@ export type LoadNextTrainingTurnRequest = Omit<
   queueTurn?: QueueTurn;
   transitionId?: string;
   fallbackQueueTurnOnEmpty?: QueueTurn;
+  emptyOutcome?: TrainingEmptySelectionOutcome;
 };
-
-export type LoadNextTrainingTurnResult = "loaded" | "empty" | "error" | "skipped";
 
 type AcceptedCardTransition = {
   word: TrainingWord;
@@ -116,6 +126,7 @@ export function useTrainingTurnController(input: Inputs) {
   const acceptedTransitionRetryRef = useRef<{
     queueTurn: QueueTurn;
     excludeCardKeys: string[];
+    emptyOutcome: "session-complete";
   } | null>(null);
   const [usableCandidatesExhausted, setUsableCandidatesExhausted] =
     useState(false);
@@ -291,6 +302,7 @@ export function useTrainingTurnController(input: Inputs) {
       queueTurn: requestedQueueTurn,
       transitionId = createTrainingTransitionId(),
       fallbackQueueTurnOnEmpty,
+      emptyOutcome = "no-match",
       ...request
     }: LoadNextTrainingTurnRequest = {}): Promise<LoadNextTrainingTurnResult> => {
       if (loadingInProgressRef.current) {
@@ -373,17 +385,21 @@ export function useTrainingTurnController(input: Inputs) {
             transitionId,
             "next-card.selection",
             () =>
-              selection.selectNext({
-                ...request,
-                excludeWordIds,
-                excludeCardKeys: [
-                  ...new Set([
-                    ...rejectedCardKeysRef.current,
-                    ...(request.excludeCardKeys ?? []),
-                  ]),
-                ],
-                queueTurn: selectionQueueTurn,
-              }),
+              selection
+                .selectNext({
+                  ...request,
+                  excludeWordIds,
+                  excludeCardKeys: [
+                    ...new Set([
+                      ...rejectedCardKeysRef.current,
+                      ...(request.excludeCardKeys ?? []),
+                    ]),
+                  ],
+                  queueTurn: selectionQueueTurn,
+                })
+                .catch((cause) => {
+                  throw normalizeTrainingSelectionFailure(cause);
+                }),
             (selected) => (selected ? "ready" : "empty"),
           );
         const primaryQueueTurn = requestedQueueTurn ?? queueTurn;
@@ -405,8 +421,9 @@ export function useTrainingTurnController(input: Inputs) {
         }
         if (!nextWord) {
           presentWord(null);
-          finishTrainingUserTransition(transitionId, "empty");
-          return "empty";
+          setUsableCandidatesExhausted(emptyOutcome === "session-complete");
+          finishTrainingUserTransition(transitionId, emptyOutcome);
+          return emptyOutcome;
         }
 
         const mode = nextWord.mode ?? enabledModes[0] ?? "word-to-definition";
@@ -432,12 +449,16 @@ export function useTrainingTurnController(input: Inputs) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
-        finishTrainingUserTransition(transitionId, "error-selection-failed");
+        const outcome: TrainingSelectionLoadFailure | "error" =
+          cause instanceof TrainingSelectionFailure
+            ? trainingSelectionFailureOutcome(cause.kind)
+            : "error";
+        finishTrainingUserTransition(transitionId, outcome);
         if (!recoverLoadErrors) throw cause;
         setLoadError(
           cause instanceof Error ? cause.message : "training_load_failed",
         );
-        return "error";
+        return outcome;
       } finally {
         if (generation === loadGenerationRef.current) {
           loadingInProgressRef.current = false;
@@ -478,12 +499,12 @@ export function useTrainingTurnController(input: Inputs) {
       transitionId,
       queueTurn,
       fallbackQueueTurnOnEmpty: queueTurn === "auto" ? undefined : "auto",
+      emptyOutcome: "session-complete",
       excludeCardKeys: [
         ...reviewedCardKeysRef.current,
         ...rejectedCardKeysRef.current,
       ],
     });
-    setUsableCandidatesExhausted(result === "empty");
     if (result === "loaded") failedCardKeyRef.current = null;
     return result;
   }, [loadNextWord, queueTurn, resetPreparedNextTurn]);
@@ -604,6 +625,7 @@ export function useTrainingTurnController(input: Inputs) {
       if (!prefetched) {
         const retry = {
           queueTurn: transition.nextQueueTurn,
+          emptyOutcome: "session-complete" as const,
           excludeCardKeys: [
             ...new Set([
               ...reviewedCardKeysRef.current,
@@ -621,7 +643,7 @@ export function useTrainingTurnController(input: Inputs) {
           );
           return "error" as const;
         });
-        const stalled = loadOutcome === "error";
+        const stalled = isTrainingLoadFailure(loadOutcome);
         acceptedTransitionRetryRef.current = stalled ? retry : null;
         setAcceptedTransitionLoadStalled(stalled);
         void backgroundRefresh;
@@ -708,7 +730,7 @@ export function useTrainingTurnController(input: Inputs) {
           return "error" as const;
         },
       );
-      const stalled = outcome === "error";
+      const stalled = isTrainingLoadFailure(outcome);
       if (!stalled) acceptedTransitionRetryRef.current = null;
       setAcceptedTransitionLoadStalled(stalled);
       return outcome;

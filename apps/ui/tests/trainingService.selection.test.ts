@@ -271,6 +271,148 @@ describe("trainingService next-word selection", () => {
     );
   });
 
+  test("scenario selection does not classify a statement timeout as an empty result", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "57014",
+        message: "canceling statement due to statement timeout",
+      },
+    });
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({
+      code: "57014",
+      kind: "statement-timeout",
+      message: "canceling statement due to statement timeout",
+    });
+  });
+
+  test("scenario selection preserves a network rejection as a failure", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockRejectedValueOnce(new TypeError("fetch failed"));
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({
+      kind: "network",
+      message: "fetch failed",
+    });
+  });
+
+  test("SQLSTATE 57014 without timeout evidence remains a generic database cancellation", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "57014",
+        message: "canceling statement due to administrator command",
+      },
+    });
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({ kind: "database", code: "57014" });
+  });
+
+  test("structured statement-timeout evidence classifies SQLSTATE 57014 precisely", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "57014",
+        message: "query canceled",
+        hint: "statement timeout exceeded",
+      },
+    });
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({ kind: "statement-timeout", code: "57014" });
+  });
+
+  test("SQLSTATE 57014 caused by a user request is a request cancellation", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: {
+        code: "57014",
+        message: "canceling statement due to user request",
+      },
+    });
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({ kind: "request-cancelled", code: "57014" });
+  });
+
+  test("an aborted selection is classified as a request cancellation", async () => {
+    const { fetchNextTrainingWordByScenario } = await importService();
+    rpc.mockRejectedValueOnce(
+      new DOMException("The operation was aborted", "AbortError"),
+    );
+
+    await expect(
+      fetchNextTrainingWordByScenario(
+        "user-1",
+        "understanding",
+        [],
+        undefined,
+        "both",
+        "auto",
+        [],
+        ["word-to-definition"],
+      ),
+    ).rejects.toMatchObject({ kind: "request-cancelled" });
+  });
+
   test("scenario selection filters to supported audio card modes", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 
