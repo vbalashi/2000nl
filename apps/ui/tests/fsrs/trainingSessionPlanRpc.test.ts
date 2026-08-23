@@ -54,6 +54,164 @@ describeDb("authoritative training session plan RPC", () => {
     });
   });
 
+  test("resolves readable dictionaries set-wise before building scheduler scope", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows } = await client.query(
+        `select pg_get_functiondef(
+           'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean)'::regprocedure
+         ) as definition`,
+      );
+      expect(rows[0].definition).toContain("readable_dictionaries AS MATERIALIZED");
+      expect(rows[0].definition).toContain(
+        "LEFT JOIN readable_dictionaries readable_dictionary",
+      );
+      expect(rows[0].definition.match(/can_access_dictionary\(/g)).toHaveLength(1);
+    });
+  });
+
+  test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
+    const userId = randomUUID();
+    const otherUserId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      await ensureUserWithSettings(client, otherUserId);
+      await client.query(
+        `insert into languages (code, name) values ('en', 'English')
+         on conflict (code) do nothing`,
+      );
+
+      const slugSuffix = randomUUID();
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           minimum_subscription_tier
+         ) values
+           ('nl', $1, 'System fixture', 'curated', 'system', null, 'free'),
+           ('nl', $2, 'Owned fixture', 'user', 'private', $6, 'free'),
+           ('nl', $3, 'Public fixture', 'curated', 'public', null, 'free'),
+           ('nl', $4, 'Entitled fixture', 'curated', 'private', null, 'free'),
+           ('nl', $5, 'Denied fixture', 'user', 'private', $7, 'free')
+         returning id, slug`,
+        [
+          `scheduler-system-${slugSuffix}`,
+          `scheduler-owned-${slugSuffix}`,
+          `scheduler-public-${slugSuffix}`,
+          `scheduler-entitled-${slugSuffix}`,
+          `scheduler-denied-${slugSuffix}`,
+          userId,
+          otherUserId,
+        ],
+      );
+      const dictionaries = new Map(
+        dictionaryRows.map((row) => [row.slug.split(`-${slugSuffix}`)[0], row.id]),
+      );
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [dictionaries.get("scheduler-entitled"), userId],
+      );
+
+      const orderedFixtures = [
+        ["scheduler-system", "6 days"],
+        ["scheduler-owned", "5 days"],
+        ["scheduler-public", "4 days"],
+        ["scheduler-entitled", "3 days"],
+        ["scheduler-denied", "2 days"],
+      ] as const;
+      const entryIds = new Map<string, string>();
+      for (const [dictionaryKey, age] of orderedFixtures) {
+        const { rows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, part_of_speech,
+             is_nt2_2000, raw
+           ) values ($1, 'nl', $2, 'noun', true, '{}'::jsonb)
+           returning id`,
+          [dictionaries.get(dictionaryKey), `${dictionaryKey}-${slugSuffix}`],
+        );
+        entryIds.set(dictionaryKey, rows[0].id);
+        await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, fsrs_enabled, hidden,
+             fsrs_last_interval, next_review_at
+           ) values ($1, $2, 'word-to-definition', true, false, 2, now() - $3::interval)`,
+          [userId, rows[0].id, age],
+        );
+      }
+      // The current write boundary rejects new dictionary-less entries, but the
+      // scheduler still has an explicit legacy-null read contract. Insert one
+      // historical row below the write trigger to characterize that contract.
+      await client.query(
+        `alter table word_entries disable trigger trg_word_entries_management`,
+      );
+      const { rows: nullRows } = await client.query(
+         `insert into word_entries (
+           dictionary_id, language_code, headword, part_of_speech,
+           is_nt2_2000, raw, management_kind, source_lifecycle,
+           normalized_pos_status
+         ) values (
+           null, 'en', $1, 'noun', true, '{}'::jsonb, 'source', 'active',
+           'unresolved'
+         )
+         returning id`,
+        [`scheduler-null-${slugSuffix}`],
+      );
+      await client.query(
+        `alter table word_entries enable trigger trg_word_entries_management`,
+      );
+      const nullEntryId = nullRows[0].id;
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, hidden,
+           fsrs_last_interval, next_review_at
+         ) values ($1, $2, 'word-to-definition', true, false, 2, now() - interval '1 day')`,
+        [userId, nullEntryId],
+      );
+
+      const { rows: planRows } = await client.query(
+        `select get_training_session_plan(
+          $1, ARRAY['word-to-definition'], null, 'curated', 'review', '{}'
+        ) as plan`,
+        [userId],
+      );
+      expect(planRows[0].plan).toEqual(
+        expect.objectContaining({
+          plannedNew: 0,
+          plannedReview: 5,
+          plannedPractice: 0,
+          plannedTotal: 5,
+        }),
+      );
+
+      const excluded: string[] = [];
+      const drained: string[] = [];
+      for (;;) {
+        const { rows } = await client.query(
+          `select get_next_card(
+            $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
+            'curated', 'review', 'auto', $2::text[]
+          ) as item`,
+          [userId, excluded],
+        );
+        const item = rows[0]?.item;
+        if (!item) break;
+        drained.push(item.id);
+        excluded.push(`${item.id}:${item.mode}`);
+      }
+      expect(drained).toEqual([
+        entryIds.get("scheduler-system"),
+        entryIds.get("scheduler-owned"),
+        entryIds.get("scheduler-public"),
+        entryIds.get("scheduler-entitled"),
+        nullEntryId,
+      ]);
+      expect(drained).not.toContain(entryIds.get("scheduler-denied"));
+    }, userId);
+  });
+
   test("snapshots exact card identities reachable in the scheduler scope", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
