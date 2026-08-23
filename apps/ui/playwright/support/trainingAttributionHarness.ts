@@ -3,6 +3,14 @@ import {
   buildFakeSupabaseSession,
   installSupabaseSession,
 } from "../utils/supabaseTestSession";
+import {
+  buildTrainingVisualFixtureBundle,
+  type TrainingVisualState,
+} from "./trainingVisualFixtureProfile";
+import type {
+  PlatformHeadwordGroupV2,
+  PlatformSenseCardCapabilityV2,
+} from "../../../../packages/shared/types/platformV2";
 
 export const TRAINING_ATTRIBUTION_THRESHOLD_MS = 1_000;
 export const TRAINING_ATTRIBUTION_TRANSITIONS = 20;
@@ -145,6 +153,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     advanceLeaseClockMs?: number;
     advanceLeaseClockOnAction?: number;
     forceOnDemandLookupEveryAction?: boolean;
+    /** One valid deterministic state used only for visual QA. */
+    visualProfile?: TrainingVisualState;
   } = {},
 ) {
   let nextEntryIndex = 0;
@@ -165,6 +175,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
+  const visualFixture = options.visualProfile
+    ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
+    : null;
 
   const correlatedHeaders = (surface: string) => {
     requestSequence += 1;
@@ -185,6 +198,19 @@ export async function setupAuthenticatedTrainingAttributionPage(
       headers: correlatedHeaders(surface),
       body: JSON.stringify(body),
     });
+
+  // Keep visual-only captures focused on the product surface; the harness
+  // intentionally replaces platform data and therefore cannot satisfy the
+  // development server's real database-contract health probe.
+  if (options.visualProfile) {
+    await page.route("**/api/health**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ status: "ok", checks: {} }),
+      }),
+    );
+  }
 
   await page.route("**/auth/v1/user**", async (route) => {
     if (route.request().method().toUpperCase() === "OPTIONS") {
@@ -225,13 +251,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
           intent: "training-review",
         },
         groups: entry
-          ? [
-              buildLookupGroup(
-                entry,
-                entries.indexOf(entry) < 3,
-                invalidEntryIds.has(entry.id),
-              ),
-            ]
+          ? [visualFixture
+              ? visualFixture.lookupGroups[entry.id]!
+              : buildLookupGroup(entry, entries.indexOf(entry) < 3, invalidEntryIds.has(entry.id))]
           : [],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       },
@@ -344,6 +366,23 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const url = new URL(request.url());
     const pathname = url.pathname;
     const body = request.postDataJSON?.() ?? {};
+
+    if (pathname.endsWith("/rpc/get_training_session_plan")) {
+      await fulfillJson(
+        route,
+        visualFixture
+          ? visualFixture.plan
+          : {
+              plannedNew: 30,
+              plannedReview: 20,
+              plannedPractice: 0,
+              plannedTotal: 50,
+              plannedAt: new Date(0).toISOString(),
+            },
+        "session-plan",
+      );
+      return;
+    }
 
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
@@ -527,17 +566,19 @@ export async function setupAuthenticatedTrainingAttributionPage(
       statsRequests.push({ ...body });
       await fulfillJson(
         route,
-        {
-          newWordsToday: 0,
-          newCardsToday: 0,
-          dailyNewLimit: 30,
-          reviewWordsDone: 0,
-          reviewCardsDone: 0,
-          reviewWordsDue: 20,
-          reviewCardsDue: 20,
-          totalWordsLearned: 0,
-          totalWordsInList: entries.length,
-        },
+        visualFixture
+          ? visualFixture.stats
+          : {
+              newWordsToday: 0,
+              newCardsToday: 0,
+              dailyNewLimit: 30,
+              reviewWordsDone: 0,
+              reviewCardsDone: 0,
+              reviewWordsDue: 20,
+              reviewCardsDue: 20,
+              totalWordsLearned: 0,
+              totalWordsInList: entries.length,
+            },
         "stats",
       );
       return;
@@ -576,7 +617,14 @@ export async function setupAuthenticatedTrainingAttributionPage(
       await fulfillJson(
         route,
         method === "GET" || method === "HEAD"
-          ? { ...learningPreferences(), theme_preference: "system", translation_lang: "ru", preferences: {} }
+          ? visualFixture
+            ? visualFixture.settings
+            : {
+                ...learningPreferences(),
+                theme_preference: "system",
+                translation_lang: "ru",
+                preferences: {},
+              }
           : [],
         "settings",
         method === "GET" || method === "HEAD" ? 200 : 201,
@@ -1051,14 +1099,23 @@ function buildLookupGroup(
   entry: FixtureEntry,
   learn: boolean,
   invalid = false,
-) {
+): PlatformHeadwordGroupV2 {
   const target = {
     kind: "sense-card" as const,
     entryId: entry.id,
     cardTypeId: "word-to-definition" as const,
     stateRevision: `state-${entry.id}`,
   };
-  const capabilities = learn
+  const reviewCapabilities = (["fail", "hard", "success", "easy"] as const).map(
+    (reviewResult) => ({
+      actionId: "review-card" as const,
+      elementId: `sense-card.review.${reviewResult}`,
+      messageKey: `senseCard.review.${reviewResult}`,
+      target,
+      reviewResult,
+    }),
+  );
+  const capabilities: PlatformSenseCardCapabilityV2[] = learn
     ? [
         {
           actionId: "start-learning" as const,
@@ -1067,13 +1124,7 @@ function buildLookupGroup(
           target,
         },
       ]
-    : (["fail", "hard", "success", "easy"] as const).map((reviewResult) => ({
-        actionId: "review-card" as const,
-        elementId: `sense-card.review.${reviewResult}`,
-        messageKey: `senseCard.review.${reviewResult}`,
-        target,
-        reviewResult,
-      }));
+    : reviewCapabilities;
   return {
     headwordGroupId: `group-${entry.id}`,
     dictionary: {
@@ -1118,6 +1169,7 @@ function buildLookupGroup(
               stateRevision: `state-${entry.id}`,
             },
         contentRevision: `content-${entry.id}`,
+        reportContentRevision: null,
         summaryContentNodeId: `definition-${entry.id}`,
         contentNodes: [
           {

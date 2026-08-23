@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
+import { TrainingSenseCardStage as TrainingSenseCardStageView } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
 import {
   singleSenseEntry,
@@ -13,6 +13,29 @@ import {
   nodigEntry,
   nodigGroup,
 } from "./platformV2IdiomHierarchyFixture";
+
+function TrainingSenseCardStage(
+  props: Omit<
+    React.ComponentProps<typeof TrainingSenseCardStageView>,
+    "side" | "onSideChange"
+  >,
+) {
+  const identity = props.model.entryId;
+  const [presentation, setPresentation] = React.useState<{
+    identity: string;
+    side: "face" | "answer";
+  }>(() => ({ identity, side: "face" }));
+  const side = presentation.identity === identity ? presentation.side : "face";
+  return (
+    <TrainingSenseCardStageView
+      {...props}
+      side={side}
+      onSideChange={(nextSide) =>
+        setPresentation({ identity, side: nextSide })
+      }
+    />
+  );
+}
 
 describe("TrainingSenseCardStage", () => {
   test("renders two nodig idioms and the goed expression hierarchy", () => {
@@ -72,7 +95,7 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
     expect(onAction).not.toHaveBeenCalled();
   });
-  test("keeps the audio control in the upper-left corner away from long headwords", () => {
+  test("keeps the Face audio control in the approved upper-right corner away from long headwords", () => {
     const baseModel = buildTrainingSenseCardModel({
       group: singleSenseGroup,
       entry: singleSenseEntry,
@@ -93,9 +116,77 @@ describe("TrainingSenseCardStage", () => {
 
     const corner = screen.getByTestId("training-card-audio-corner");
     expect(corner).toContainElement(screen.getByRole("button", { name: "Play audio" }));
+    expect(corner).toHaveClass("right-[18px]", "top-[18px]");
+    expect(corner).not.toHaveClass("left-5", "sm:left-7");
     expect(screen.getByTestId("sense-card-headword-lockup")).not.toContainElement(
       screen.getByRole("button", { name: "Play audio" }),
     );
+  });
+
+  test("uses the approved mobile Face and Answer geometry without visible key-hint chrome", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+
+    render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onOpenDetails={vi.fn()}
+        reportAction={<button type="button">Report</button>}
+        onAction={vi.fn()}
+      />,
+    );
+
+    const stage = screen.getByTestId("training-sense-card-stage");
+    const shell = screen.getByTestId("training-sense-card-shell");
+    const faceDock = screen.getByTestId("training-sense-card-dock");
+    const showAnswer = screen.getByRole("button", { name: "Show answer" });
+
+    expect(stage).toHaveAttribute("data-visual-spec", "training-v1.0");
+    expect(shell).toHaveClass("rounded-[14px]", "border");
+    expect(showAnswer).toHaveClass("h-[46px]", "rounded-xl");
+    expect(faceDock).toContainElement(screen.getByRole("button", { name: "Report" }));
+    expect(faceDock).toContainElement(screen.getByRole("button", { name: "Mark as known" }));
+    expect(screen.queryByText("Space")).not.toBeInTheDocument();
+
+    fireEvent.click(showAnswer);
+
+    const answerActions = screen.getByTestId("training-answer-header-actions");
+    expect(answerActions).toContainElement(screen.getByRole("button", { name: "Play audio" }));
+    expect(answerActions).toContainElement(screen.getByRole("button", { name: "Word details" }));
+    expect(screen.queryByTestId("training-card-audio-corner")).not.toBeInTheDocument();
+    expect(screen.getByTestId("training-review-grid"))
+      .toHaveClass("grid-cols-2");
+    expect(screen.getByRole("button", { name: "Again" })).toHaveClass("h-[42px]");
+    expect(screen.getByRole("button", { name: "Easy" })).toHaveClass("h-[42px]");
+  });
+
+  test("uses the product icon library for every visible redesign control", () => {
+    const model = buildTrainingSenseCardModel({
+      group: singleSenseGroup,
+      entry: singleSenseEntry,
+      interfaceLanguage: "en",
+    });
+    const { container } = render(
+      <TrainingSenseCardStage
+        model={model}
+        mode="word-to-definition"
+        interfaceLanguage="en"
+        onPlayAudio={vi.fn()}
+        onOpenDetails={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll("svg:not(.lucide)")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(container.querySelectorAll("svg:not(.lucide)")).toHaveLength(0);
+    expect(container.querySelectorAll("svg.lucide").length).toBeGreaterThan(0);
   });
   test("renders Report as an actionable, keyboard-focusable button", () => {
     const baseModel = buildTrainingSenseCardModel({
@@ -186,18 +277,14 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.queryByRole("button", { name: "Vertalen" })).not.toBeInTheDocument();
     const faceShell = screen.getByTestId("training-sense-card-shell");
     expect(faceShell.className).toContain("flex-1");
-    expect(faceShell.className).toContain("max-h-[500px]");
-    expect(faceShell.className).not.toContain("sm:max-h-[500px]");
-    expect(faceShell.className).toContain(
-      "[@media(hover:hover)_and_(pointer:fine)]:max-h-[500px]",
-    );
+    expect(faceShell.className).not.toContain("max-h-[500px]");
     expect(faceShell.className).toContain("bg-slate-50");
-    expect(faceShell.className).toContain("dark:bg-[#1d222b]");
+    expect(faceShell.className).toContain("dark:bg-[#20252D]");
     const dock = screen.getByTestId("training-sense-card-dock");
     expect(dock.className).toContain("shrink-0");
     expect(dock.className).toContain("h-[76px]");
     expect(screen.getByRole("button", { name: "Antwoord tonen" })).toHaveClass(
-      "h-11",
+      "h-[46px]",
     );
     expect(
       screen.queryByText(model.definitions[0].text),
@@ -221,7 +308,7 @@ describe("TrainingSenseCardStage", () => {
     expect(screen.getByTestId("training-sense-card-shell")).toBe(faceShell);
     expect(screen.getByText(model.definitions[0].text)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Goed" })).toBeInTheDocument();
-    expect(screen.getByText("2K")).toHaveClass("dark:text-indigo-200");
+    expect(screen.getByText("2K")).toHaveClass("dark:text-[#9D94FF]");
     expect(
       screen.queryByRole("button", { name: "Melden" }),
     ).not.toBeInTheDocument();
@@ -232,7 +319,7 @@ describe("TrainingSenseCardStage", () => {
       screen.getByRole("group", { name: "Hoe goed ken je deze betekenis?" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Goed" })).toHaveClass(
-      "sm:h-11",
+      "h-[42px]",
     );
     expect(screen.queryByText("Betekenis")).not.toBeInTheDocument();
     expect(
@@ -282,13 +369,13 @@ describe("TrainingSenseCardStage", () => {
     ).not.toHaveClass("text-[#dbc47e]");
     expect(
       container.querySelector('[data-testid="entry-translation"]'),
-    ).toHaveClass("text-sm", "font-[650]");
+    ).toHaveClass("text-[15px]", "font-bold");
     expect(
       container.querySelector('[data-testid="entry-translation"]'),
     ).not.toHaveClass("font-sense-serif", "italic");
     expect(
       container.querySelector('[data-content-translation="true"]'),
-    ).toHaveClass("text-[12.5px]", "leading-[1.45]");
+    ).toHaveClass("text-[13px]", "leading-[1.35]");
     expect(
       container.querySelector('[data-content-translation="true"]'),
     ).not.toHaveClass("font-sense-serif", "italic");

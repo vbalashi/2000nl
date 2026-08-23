@@ -22,6 +22,9 @@ import {
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
 export function SenseCardGateHarness() {
+  const [trainingSide, setTrainingSide] = React.useState<"face" | "answer">(
+    "face",
+  );
   const [collectionsOpen, setCollectionsOpen] = React.useState(false);
   const [collectionIds, setCollectionIds] = React.useState(["daily-review"]);
   const reportEntry = {
@@ -107,6 +110,8 @@ export function SenseCardGateHarness() {
                 model={trainingModel}
                 mode="word-to-definition"
                 interfaceLanguage="nl"
+                side={trainingSide}
+                onSideChange={setTrainingSide}
                 onPlayAudio={() => undefined}
                 onAction={() => undefined}
                 reportAction={

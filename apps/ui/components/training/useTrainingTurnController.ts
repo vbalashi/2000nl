@@ -111,6 +111,12 @@ export function useTrainingTurnController(input: Inputs) {
   const [loadingWord, setLoadingWord] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [acceptedTransitionLoadStalled, setAcceptedTransitionLoadStalled] =
+    useState(false);
+  const acceptedTransitionRetryRef = useRef<{
+    queueTurn: QueueTurn;
+    excludeCardKeys: string[];
+  } | null>(null);
   const [usableCandidatesExhausted, setUsableCandidatesExhausted] =
     useState(false);
   const [nextCardOverrideNotice, setNextCardOverrideNotice] = useState<
@@ -132,18 +138,24 @@ export function useTrainingTurnController(input: Inputs) {
   const nextCardOverrideWordIdRef = useRef<string | null>(null);
   const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
 
+  const clearAcceptedTransitionRecovery = useCallback(() => {
+    acceptedTransitionRetryRef.current = null;
+    setAcceptedTransitionLoadStalled(false);
+  }, []);
+
   const currentMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
 
   const presentWord = useCallback(
     (word: TrainingWord | null) => {
+      clearAcceptedTransitionRecovery();
       if (word) markTrainingEntryPresentationStarted(word.id);
       const presentationId = word ? generateReviewTurnId() : null;
       currentTurnIdRef.current = presentationId;
       setCurrentPresentationId(presentationId);
       setCurrentWord(word);
     },
-    [setCurrentWord],
+    [clearAcceptedTransitionRecovery, setCurrentWord],
   );
 
   const selectPreparedCandidate = useCallback(
@@ -188,7 +200,8 @@ export function useTrainingTurnController(input: Inputs) {
     rejectedCardKeysRef.current.clear();
     failedCardKeyRef.current = null;
     setUsableCandidatesExhausted(false);
-  }, []);
+    clearAcceptedTransitionRecovery();
+  }, [clearAcceptedTransitionRecovery]);
 
   const cancelActiveSelection = useCallback(() => {
     loadGenerationRef.current += 1;
@@ -557,8 +570,8 @@ export function useTrainingTurnController(input: Inputs) {
   const finishAcceptedCardTransition = useCallback(
     async (
       transition: AcceptedCardTransition,
-      options: { statsLabel: string },
-    ) => {
+      options: { statsLabel: string; recoverLoadFailure: boolean },
+    ): Promise<"accepted" | "stalled"> => {
       const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
         trainingDebug.log("Training counters refresh failed", cause);
       });
@@ -571,8 +584,13 @@ export function useTrainingTurnController(input: Inputs) {
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
         const ready = await prefetched.v2Ready.catch(() => false);
-        if (ready) presentPreparedCandidate(prefetched.word);
-        else {
+        if (ready) {
+          acceptedTransitionRetryRef.current = null;
+          setAcceptedTransitionLoadStalled(false);
+          presentPreparedCandidate(prefetched.word);
+          void backgroundRefresh;
+          return "accepted";
+        } else {
           recordTrainingTransitionTiming({
             transitionId: transition.transitionId,
             stage: "next-card.prefetch",
@@ -584,16 +602,35 @@ export function useTrainingTurnController(input: Inputs) {
       }
 
       if (!prefetched) {
-        await loadNextWord({
-          transitionId: transition.transitionId,
+        const retry = {
           queueTurn: transition.nextQueueTurn,
           excludeCardKeys: [
-            ...reviewedCardKeysRef.current,
-            transition.currentCardKey,
+            ...new Set([
+              ...reviewedCardKeysRef.current,
+              transition.currentCardKey,
+            ]),
           ],
+        };
+        const loadOutcome = await loadNextWord({
+          transitionId: transition.transitionId,
+          ...retry,
+        }).catch((cause) => {
+          if (!options.recoverLoadFailure) throw cause;
+          setLoadError(
+            cause instanceof Error ? cause.message : "training_load_failed",
+          );
+          return "error" as const;
         });
+        const stalled = loadOutcome === "error";
+        acceptedTransitionRetryRef.current = stalled ? retry : null;
+        setAcceptedTransitionLoadStalled(stalled);
+        void backgroundRefresh;
+        return stalled ? "stalled" : "accepted";
       }
+      acceptedTransitionRetryRef.current = null;
+      setAcceptedTransitionLoadStalled(false);
       void backgroundRefresh;
+      return "accepted";
     },
     [loadNextWord, presentPreparedCandidate, refreshAfterAccepted],
   );
@@ -622,6 +659,7 @@ export function useTrainingTurnController(input: Inputs) {
         );
         await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (${result})`,
+          recoverLoadFailure: false,
         });
       } finally {
         actionLoadingRef.current = false;
@@ -637,14 +675,15 @@ export function useTrainingTurnController(input: Inputs) {
 
   const acceptPlatformProgressAction = useCallback(
     async (_capability: PlatformV2TrainingActionCapability) => {
-      if (!currentWord || actionLoadingRef.current) return;
+      if (!currentWord || actionLoadingRef.current) return "stalled" as const;
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
         const transition = beginAcceptedCardTransition();
-        if (!transition) return;
-        await finishAcceptedCardTransition(transition, {
+        if (!transition) return "stalled" as const;
+        return await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (platform-v2)`,
+          recoverLoadFailure: true,
         });
       } finally {
         actionLoadingRef.current = false;
@@ -653,15 +692,43 @@ export function useTrainingTurnController(input: Inputs) {
     }, [beginAcceptedCardTransition, currentWord, finishAcceptedCardTransition],
   );
 
+  const retryAcceptedTransitionLoad = useCallback(async () => {
+    const retry = acceptedTransitionRetryRef.current;
+    if (!retry || actionLoadingRef.current) return "skipped" as const;
+    actionLoadingRef.current = true;
+    setActionLoading(true);
+    try {
+      const transitionId = createTrainingTransitionId();
+      beginTrainingUserTransition(transitionId, "retry");
+      const outcome = await loadNextWord({ transitionId, ...retry }).catch(
+        (cause) => {
+          setLoadError(
+            cause instanceof Error ? cause.message : "training_load_failed",
+          );
+          return "error" as const;
+        },
+      );
+      const stalled = outcome === "error";
+      if (!stalled) acceptedTransitionRetryRef.current = null;
+      setAcceptedTransitionLoadStalled(stalled);
+      return outcome;
+    } finally {
+      actionLoadingRef.current = false;
+      setActionLoading(false);
+    }
+  }, [loadNextWord]);
+
   return {
     currentMode,
     loadingWord,
     actionLoading,
     loadError,
+    acceptedTransitionLoadStalled,
     usableCandidatesExhausted,
     reportLoadError: setLoadError,
     reportCardLoadFailure,
     retryCardLoadFailure,
+    retryAcceptedTransitionLoad,
     nextTransitionId,
     currentPresentationId,
     nextCardOverrideNotice,

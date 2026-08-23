@@ -51,7 +51,7 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
 function TestTrainingSenseCardV2Session(
   props: Omit<
     React.ComponentProps<typeof TrainingSenseCardV2Session>,
-    "cacheOwnerId" | "presentationIdentity"
+    "cacheOwnerId" | "presentationIdentity" | "chrome" | "footer"
   > & { presentationIdentity?: string },
 ) {
   return (
@@ -61,6 +61,8 @@ function TestTrainingSenseCardV2Session(
         props.presentationIdentity ??
         `test-presentation:${props.word.id}:${props.mode}`
       }
+      chrome={<div data-testid="test-session-chrome" />}
+      footer={<div data-testid="test-session-footer" />}
       {...props}
     />
   );
@@ -115,6 +117,348 @@ describe("TrainingSenseCardV2Session", () => {
       accepted: true,
       card: singleSenseEntry.card,
     });
+  });
+
+  test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const onProgressActionAccepted = vi.fn();
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />,
+      );
+
+      await screen.findByRole("heading", { name: "hand" });
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      expect(wrapper).toHaveClass("motion-reduce:transition-none");
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 200, clientY: 0 }],
+      });
+      expect(wrapper.getAttribute("style")).toContain("translateX(200px)");
+      fireEvent.touchCancel(wrapper);
+      expect(wrapper.getAttribute("style")).toContain("translateX(0px)");
+      expect(performAction).not.toHaveBeenCalled();
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      const success = singleSenseEntry.capabilities.find(
+        (candidate) =>
+          candidate.actionId === "review-card" &&
+          candidate.reviewResult === "success",
+      );
+      await waitFor(() =>
+        expect(performAction).toHaveBeenCalledWith(
+          success,
+          expect.objectContaining({ onRequestFrozen: expect.any(Function) }),
+        ),
+      );
+      expect(onProgressActionAccepted).toHaveBeenCalledWith(success);
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("ignores answer swipes while a review action is busy", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      const swipeRight = () => {
+        fireEvent.touchStart(wrapper, {
+          touches: [{ clientX: 0, clientY: 0 }],
+        });
+        fireEvent.touchMove(wrapper, {
+          touches: [{ clientX: 500, clientY: 0 }],
+        });
+        fireEvent.touchEnd(wrapper);
+      };
+
+      swipeRight();
+      await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+      swipeRight();
+      expect(performAction).toHaveBeenCalledOnce();
+      await act(async () =>
+        resolveAction({
+          contractVersion: "platform-action-v2",
+          actionId: "review-card",
+          clientEventId: "event-1",
+          accepted: true,
+          card: singleSenseEntry.card,
+        }),
+      );
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("returns a rejected swipe to rest, shows the error, and allows retry", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    performAction
+      .mockRejectedValueOnce(new Error("platform_request_timeout"))
+      .mockResolvedValueOnce({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-retry",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          onProgressActionAccepted={vi.fn()}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      const swipeRight = () => {
+        fireEvent.touchStart(wrapper, {
+          touches: [{ clientX: 0, clientY: 0 }],
+        });
+        fireEvent.touchMove(wrapper, {
+          touches: [{ clientX: 500, clientY: 0 }],
+        });
+        fireEvent.touchEnd(wrapper);
+      };
+
+      swipeRight();
+      expect(await screen.findByRole("alert")).toBeVisible();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+        "data-side",
+        "answer",
+      );
+
+      swipeRight();
+      await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("returns an accepted but stalled transition to rest and retries only loading", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const retryLoad = vi.fn();
+
+    function StalledHarness() {
+      const [stalled, setStalled] = React.useState(false);
+      return (
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          notice={
+            stalled ? (
+              <div role="alert">
+                Next card failed to load
+                <button type="button" onClick={retryLoad}>
+                  Retry loading
+                </button>
+              </div>
+            ) : null
+          }
+          interactionDisabled={stalled}
+          onProgressActionAccepted={
+            (async () => {
+              setStalled(true);
+              return "stalled";
+            }) as never
+          }
+        />
+      );
+    }
+
+    try {
+      render(<StalledHarness />);
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      expect(await screen.findByText("Next card failed to load")).toBeVisible();
+      expect(screen.getByRole("button", { name: "Goed" })).toBeDisabled();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+      expect(performAction).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole("button", { name: "Retry loading" }));
+      expect(retryLoad).toHaveBeenCalledOnce();
+      expect(performAction).toHaveBeenCalledOnce();
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
+  test("replaces an answer with the next identity on its face in the same render", async () => {
+    const props = {
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "nl" as const,
+      onProgressActionAccepted: vi.fn(),
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session word={word} {...props} />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+
+    const replacementWord = { ...word, id: "entry-next" };
+    fetchSingleSense.mockResolvedValueOnce({
+      state: "ready",
+      group: singleSenseGroup,
+      entry: { ...singleSenseEntry, entryId: replacementWord.id },
+    });
+    rerender(
+      <TestTrainingSenseCardV2Session word={replacementWord} {...props} />,
+    );
+
+    expect(await screen.findByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
+  });
+
+  test("resets the same word to face for a new presentation identity", async () => {
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "nl" as const,
+      onProgressActionAccepted: vi.fn().mockResolvedValue("accepted" as const),
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-1"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "answer",
+    );
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        presentationIdentity="presentation-2"
+      />,
+    );
+
+    expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute(
+      "data-side",
+      "face",
+    );
   });
 
   test("offers one global report action on face and answer and sends without advancing", async () => {
@@ -583,6 +927,8 @@ describe("TrainingSenseCardV2Session", () => {
       "data-training-v2-state",
       "lookup-http-error",
     );
+    expect(errorState).toHaveAttribute("data-visual-spec", "training-v1.0");
+    expect(errorState).toHaveClass("flex-1", "rounded-[14px]", "dark:bg-[#20252D]");
     expect(screen.queryByText("Legacy card")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Opnieuw proberen" })).toBeInTheDocument();
   });

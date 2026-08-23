@@ -16,6 +16,7 @@ import type {
   TrainingScenario,
 } from "@/lib/types";
 import type { AppDestination } from "@/components/navigation/appDestination";
+import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -169,7 +170,9 @@ const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
 });
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
+const mockV2ProgressAction = vi.fn();
 const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
+let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
   {
@@ -493,6 +496,10 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onLoadFailure,
     onRetryAlternative,
     onProgressActionAccepted,
+    chrome,
+    footer,
+    notice,
+    interactionDisabled,
   }: {
     word: { headword: string };
     presentationIdentity: string | null;
@@ -501,9 +508,14 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onLoadFailure?: (failure: "model-invalid") => void;
     onRetryAlternative?: (failure: "model-invalid") => void;
     onProgressActionAccepted: (capability: { actionId: string }) => void;
+    chrome: React.ReactNode;
+    footer: React.ReactNode;
+    notice?: React.ReactNode;
+    interactionDisabled?: boolean;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
     const failed = word.headword === "broken-card";
+    const loading = mockV2SessionState === "loading";
     React.useEffect(() => {
       if (focusOnPresentation) stageRef.current?.focus();
     }, [focusOnPresentation]);
@@ -512,40 +524,57 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     }, [failed, onLoadFailure]);
     if (failed) {
       return (
-        <div role="alert" data-training-v2-state="model-invalid">
-          This training card could not be loaded.
-          <button
-            type="button"
-            onClick={() => onRetryAlternative?.("model-invalid")}
-          >
-            Try again
-          </button>
-        </div>
+        <TrainingSessionV2Layout phase="failure" chrome={chrome} footer={footer} notice={notice}>
+          <div role="alert" data-training-v2-state="model-invalid">
+            This training card could not be loaded.
+            <button
+              type="button"
+              onClick={() => onRetryAlternative?.("model-invalid")}
+            >
+              Try again
+            </button>
+          </div>
+        </TrainingSessionV2Layout>
+      );
+    }
+    if (loading) {
+      return (
+        <TrainingSessionV2Layout phase="loading" chrome={chrome} footer={footer} notice={notice}>
+          <div role="status" data-testid="training-v2-loading" data-training-v2-state="loading">
+            Loading training card
+          </div>
+        </TrainingSessionV2Layout>
       );
     }
     return (
-      <div
-        ref={stageRef}
-        tabIndex={-1}
-        data-testid="mock-training-sense-card-v2"
-        data-presentation-identity={presentationIdentity ?? ""}
-      >
-        <span aria-live="polite">
-          {focusOnPresentation ? "Next training card" : ""}
-        </span>
-        <h2>{word.headword}</h2>
-        {onOpenDetails ? (
-          <button type="button" onClick={onOpenDetails}>
-            Word details
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => onProgressActionAccepted({ actionId: "review-card" })}
+      <TrainingSessionV2Layout phase="ready" chrome={chrome} footer={footer} notice={notice}>
+        <div
+          ref={stageRef}
+          tabIndex={-1}
+          data-testid="mock-training-sense-card-v2"
+          data-presentation-identity={presentationIdentity ?? ""}
         >
-          Mock V2 grade
-        </button>
-      </div>
+          <span aria-live="polite">
+            {focusOnPresentation ? "Next training card" : ""}
+          </span>
+          <h2>{word.headword}</h2>
+          {onOpenDetails ? (
+            <button type="button" onClick={onOpenDetails}>
+              Word details
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={interactionDisabled}
+            onClick={() => {
+              mockV2ProgressAction();
+              onProgressActionAccepted({ actionId: "review-card" });
+            }}
+          >
+            Mock V2 grade
+          </button>
+        </div>
+      </TrainingSessionV2Layout>
     );
   },
   TrainingKnownUndoNotice: () => null,
@@ -2663,14 +2692,21 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /Card 1 · open session/,
+      /TRAININGNew \+ review1/,
+    );
+    expect(screen.getByTestId("training-session-position")).toHaveTextContent(
+      "1 / 2",
     );
     expect(
-      screen.getByRole("button", { name: "Theme: System" }),
+      screen.getByTestId("training-session-progress-track"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-app-header")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Settings" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Theme: System" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Settings" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Search" }),
     ).not.toBeInTheDocument();
@@ -2695,7 +2731,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(compactFooter).not.toHaveTextContent(/VanDale 2k|Begrip/);
     fireEvent.click(
-      within(screen.getByTestId("training-session-chrome")).getByRole(
+      within(screen.getByTestId("training-session-app-header")).getByRole(
         "button",
         { name: "Close session" },
       ),
@@ -2798,6 +2834,39 @@ test("keyboard return from History restores focus to its stable Training trigger
     );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("V2 loading retains the existing session chrome and footer", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  mockV2SessionState = "loading";
+  prefetchPlatformV2TrainingEntry.mockReset();
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Continue session|Sessie doorgaan/,
+      }),
+    );
+
+    expect(await screen.findByTestId("training-v2-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("training-session-footer-progress"),
+    ).toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    mockV2SessionState = "ready";
     prefetchPlatformV2TrainingEntry.mockReset();
     vi.unstubAllEnvs();
   }
@@ -3088,17 +3157,20 @@ test("publishes a new presentation identity when the same V2 word is presented a
       expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThan(1),
     );
 
-    const card = screen.getByTestId("mock-training-sense-card-v2");
-    const firstIdentity = card.getAttribute("data-presentation-identity");
+    const firstIdentity = screen
+      .getByTestId("mock-training-sense-card-v2")
+      .getAttribute("data-presentation-identity");
     expect(firstIdentity).toEqual(expect.any(String));
     expect(firstIdentity).not.toBe("");
 
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
 
     await waitFor(() =>
-      expect(card.getAttribute("data-presentation-identity")).not.toBe(
-        firstIdentity,
-      ),
+      expect(
+        screen
+          .getByTestId("mock-training-sense-card-v2")
+          .getAttribute("data-presentation-identity"),
+      ).not.toBe(firstIdentity),
     );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
@@ -3181,11 +3253,13 @@ test("uses only the on-demand fallback when grading before next-turn selection r
   }
 });
 
-test("keeps the current V2 card when the on-demand scheduler warm fails", async () => {
+test("shows load-only recovery and blocks a repeated V2 grade after an accepted action", async () => {
   const word1 = { ...mockWord, id: "word-1", headword: "huis" };
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  let word2Ready = false;
 
   platformV2TrainingUiEnabled.mockReturnValue(true);
+  mockV2ProgressAction.mockClear();
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario
     .mockResolvedValueOnce(word1)
@@ -3196,7 +3270,13 @@ test("keeps the current V2 card when the on-demand scheduler warm fails", async 
     (input: { entryId: string }) =>
       Promise.resolve(
         input.entryId === word2.id
-          ? { state: "lookup-http-error", status: 503 }
+          ? word2Ready
+            ? {
+                state: "ready",
+                group: { header: { audio: null, text: "boom" } },
+                entry: { entryId: word2.id },
+              }
+            : { state: "lookup-http-error", status: 503 }
           : {
               state: "ready",
               group: { header: { audio: null, text: "huis" } },
@@ -3228,6 +3308,26 @@ test("keeps the current V2 card when the on-demand scheduler warm fails", async 
     expect(
       screen.queryByRole("heading", { name: /Training could not be loaded/i }),
     ).not.toBeInTheDocument();
+    const recovery = await screen.findByRole("alert");
+    expect(recovery).toHaveTextContent(
+      /verbinding werd onderbroken|connection was interrupted|соединение прервалось/i,
+    );
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeDisabled();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+
+    word2Ready = true;
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Opnieuw proberen|Try again|Повторить/i,
+      }),
+    );
+
+    expect(await screen.findByRole("heading", { name: "boom" })).toBeInTheDocument();
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+    const retryCall = fetchNextTrainingWordByScenario.mock.calls.at(-1);
+    expect(retryCall?.[6]).toEqual(
+      expect.arrayContaining(["word-1:word-to-definition"]),
+    );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
