@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "contractId": "2000nl-db-125",
+  "rollout": {
+    "status": "hold",
+    "requiredMigrationId": 126,
+    "coordinationIssue": 232
+  },
+  "baseline": {
+    "migrationId": 122,
+    "probe": "db/deploy-contract/baseline-122.sql"
+  },
+  "ledger": {
+    "file": "db/deploy-contract/ledger-v1.sql",
+    "sha256": "a4868c65e0dae7da66f5eb6ddfdf592db265e8630808ec3fbbb5c12d3ceb9196"
+  },
+  "migrations": [
+    {
+      "migrationId": 123,
+      "file": "db/migrations/123_authoritative_training_session_plan.sql",
+      "sha256": "5d3bbd1aa59959f8296f43ca3cc237ff533780f32236d88ee7095476520b16f0"
+    },
+    {
+      "migrationId": 124,
+      "file": "db/migrations/124_recent_training_review_history_projection.sql",
+      "sha256": "41121d44cc2b5c5763d80dd7e93b6a2d5bc13d5aef93542aed0a4df1ac111cc3"
+    },
+    {
+      "migrationId": 125,
+      "file": "db/migrations/125_avoid_scheduler_pointer_json_rescan.sql",
+      "sha256": "757c24daae14af40eb25f837681d9634f160700cfffa4d21654ce436568c6c65"
+    }
+  ],
+  "postflightProbe": "db/deploy-contract/postflight-125.sql"
+}

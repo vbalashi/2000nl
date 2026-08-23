@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { appVersionInfo } from "@/lib/appVersion";
 import { rolloutProfileDiagnostics } from "@/lib/platform/platformV2Rollout";
+import { expectedDbContract } from "@/lib/deployment/dbContract";
+import { checkDatabaseContractHealth } from "@/lib/deployment/dbContractHealth";
+import { createHealthSupabaseClient } from "@/lib/server/healthSupabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,26 +59,14 @@ function databaseTargetLabel(url: string | undefined) {
 }
 
 async function checkPlatformRpcContract(): Promise<CheckResult> {
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey =
-    process.env.SUPABASE_SECRET_KEY ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SERVICE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
+  const supabase = createHealthSupabaseClient();
+  if (!supabase) {
     return {
       status: "warning",
       message:
         "Supabase server credentials are not configured; platform RPC contract was not checked.",
     };
   }
-
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => fetch(input as any, { ...(init ?? {}), cache: "no-store" }),
-    },
-  });
 
   const missing: string[] = [];
   for (const rpc of requiredPlatformRpcs) {
@@ -125,26 +115,14 @@ async function checkedCount(
 }
 
 async function checkDictionarySearchIndex(): Promise<CheckResult> {
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey =
-    process.env.SUPABASE_SECRET_KEY ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SERVICE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
+  const supabase = createHealthSupabaseClient();
+  if (!supabase) {
     return {
       status: "warning",
       message:
         "Supabase server credentials are not configured; dictionary search index readiness was not checked.",
     };
   }
-
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => fetch(input as any, { ...(init ?? {}), cache: "no-store" }),
-    },
-  });
 
   try {
     const documentRowCount = await checkedCount(
@@ -219,6 +197,7 @@ export async function GET(req: Request) {
   if (deep) {
     checks.platformRpcContract = await checkPlatformRpcContract();
     checks.dictionarySearchIndex = await checkDictionarySearchIndex();
+    checks.databaseContract = await checkDatabaseContractHealth();
   }
 
   const hasWarnings = Object.values(checks).some((check) => check.status === "warning");
@@ -230,6 +209,10 @@ export async function GET(req: Request) {
     timestamp: new Date().toISOString(),
     database: {
       target: databaseTargetLabel(process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL),
+      contract: {
+        expected: expectedDbContract.contractId,
+        expectedMigration: expectedDbContract.migrationId,
+      },
     },
     rollout: rolloutProfileDiagnostics(),
     ...(deep ? { checks } : null),
