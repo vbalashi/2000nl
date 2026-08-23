@@ -558,7 +558,7 @@ export function useTrainingTurnController(input: Inputs) {
     async (
       transition: AcceptedCardTransition,
       options: { statsLabel: string },
-    ) => {
+    ): Promise<"accepted" | "stalled"> => {
       const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
         trainingDebug.log("Training counters refresh failed", cause);
       });
@@ -571,8 +571,11 @@ export function useTrainingTurnController(input: Inputs) {
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
         const ready = await prefetched.v2Ready.catch(() => false);
-        if (ready) presentPreparedCandidate(prefetched.word);
-        else {
+        if (ready) {
+          presentPreparedCandidate(prefetched.word);
+          void backgroundRefresh;
+          return "accepted";
+        } else {
           recordTrainingTransitionTiming({
             transitionId: transition.transitionId,
             stage: "next-card.prefetch",
@@ -584,7 +587,7 @@ export function useTrainingTurnController(input: Inputs) {
       }
 
       if (!prefetched) {
-        await loadNextWord({
+        const loadOutcome = await loadNextWord({
           transitionId: transition.transitionId,
           queueTurn: transition.nextQueueTurn,
           excludeCardKeys: [
@@ -592,8 +595,13 @@ export function useTrainingTurnController(input: Inputs) {
             transition.currentCardKey,
           ],
         });
+        void backgroundRefresh;
+        return loadOutcome === "error" || loadOutcome === "skipped"
+          ? "stalled"
+          : "accepted";
       }
       void backgroundRefresh;
+      return "accepted";
     },
     [loadNextWord, presentPreparedCandidate, refreshAfterAccepted],
   );
@@ -637,13 +645,13 @@ export function useTrainingTurnController(input: Inputs) {
 
   const acceptPlatformProgressAction = useCallback(
     async (_capability: PlatformV2TrainingActionCapability) => {
-      if (!currentWord || actionLoadingRef.current) return;
+      if (!currentWord || actionLoadingRef.current) return "stalled" as const;
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
         const transition = beginAcceptedCardTransition();
-        if (!transition) return;
-        await finishAcceptedCardTransition(transition, {
+        if (!transition) return "stalled" as const;
+        return await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (platform-v2)`,
         });
       } finally {

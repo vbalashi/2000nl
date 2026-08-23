@@ -320,6 +320,76 @@ describe("TrainingSenseCardV2Session", () => {
     }
   });
 
+  test("returns an accepted but stalled transition to rest and retries only loading", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const retryLoad = vi.fn();
+
+    function StalledHarness() {
+      const [stalled, setStalled] = React.useState(false);
+      return (
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="nl"
+          notice={
+            stalled ? (
+              <div role="alert">
+                Next card failed to load
+                <button type="button" onClick={retryLoad}>
+                  Retry loading
+                </button>
+              </div>
+            ) : null
+          }
+          onProgressActionAccepted={
+            (async () => {
+              setStalled(true);
+              return "stalled";
+            }) as never
+          }
+        />
+      );
+    }
+
+    try {
+      render(<StalledHarness />);
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      expect(await screen.findByText("Next card failed to load")).toBeVisible();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+      expect(performAction).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByRole("button", { name: "Retry loading" }));
+      expect(retryLoad).toHaveBeenCalledOnce();
+      expect(performAction).toHaveBeenCalledOnce();
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
   test("replaces an answer with the next identity on its face in the same render", async () => {
     const props = {
       mode: "word-to-definition" as const,

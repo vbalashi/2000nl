@@ -10,7 +10,10 @@ type SwipeChoice<T> = {
   indicatorClass: string;
 };
 
-export type TrainingCardSwipeCommitOutcome = "accepted" | "rejected";
+export type TrainingCardSwipeCommitOutcome =
+  | "accepted"
+  | "stalled"
+  | "rejected";
 
 export function useTrainingCardSwipeSurface<T>({
   enabled,
@@ -112,7 +115,7 @@ export function useTrainingCardSwipeSurface<T>({
           .catch(() => "rejected" as const)
           .then((outcome) => {
             if (
-              outcome === "rejected" &&
+              outcome !== "accepted" &&
               identityRef.current === committedIdentity
             ) {
               reset();

@@ -245,7 +245,7 @@ describe("useTrainingTurnController transition matrix", () => {
     };
     const controller = renderController();
 
-    let accepted!: Promise<void>;
+    let accepted!: Promise<"accepted" | "stalled">;
     act(() => {
       accepted = controller.result.current.acceptPlatformProgressAction({} as any);
     });
@@ -344,6 +344,34 @@ describe("useTrainingTurnController transition matrix", () => {
     });
 
     expect(controller.selectNext).toHaveBeenCalledTimes(1);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+    expect(controller.reviewLegacy).not.toHaveBeenCalled();
+  });
+
+  test("reports an accepted mutation as stalled when recovery retains the same presentation", async () => {
+    prepared.consume.mockReturnValue(null);
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("next_card_offline"))
+      .mockResolvedValueOnce(word2);
+    const controller = renderController({ selectNext });
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await controller.result.current.acceptPlatformProgressAction(
+        {} as any,
+      );
+    });
+
+    expect(outcome).toBe("stalled");
+    expect(controller.result.current.loadError).toBe("next_card_offline");
+    expect(controller.setCurrentWord).not.toHaveBeenCalled();
+    expect(controller.reviewLegacy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+    expect(selectNext).toHaveBeenCalledTimes(2);
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.reviewLegacy).not.toHaveBeenCalled();
   });

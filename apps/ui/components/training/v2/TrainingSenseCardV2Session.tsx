@@ -72,7 +72,9 @@ type Props = {
   ) => void | Promise<void>;
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
-  ) => void | Promise<void>;
+  ) => Promise<
+    Extract<TrainingCardSwipeCommitOutcome, "accepted" | "stalled">
+  >;
   onProgressActionStarting?: () => void;
 };
 
@@ -360,7 +362,7 @@ export function TrainingSenseCardV2Session({
         } else {
           rememberPendingKnownUndo(null);
         }
-        await onProgressActionAccepted(capability);
+        return await onProgressActionAccepted(capability);
       }
       return "accepted";
     } catch (cause) {
