@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { Check, Flag, RotateCcw, X } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -34,6 +35,10 @@ export function SenseCardReportAction({
   const [frozenSnapshot, setFrozenSnapshot] = React.useState(snapshot);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const dismissReport = React.useCallback(() => {
+    setOpen(false);
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
 
   return (
     <>
@@ -50,16 +55,16 @@ export function SenseCardReportAction({
         <Flag aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
         {t("senseCard.report")}
       </button>
-      {open ? (
-        <SenseCardReportSheet
-          snapshot={frozenSnapshot}
-          interfaceLanguage={interfaceLanguage}
-          onClose={() => {
-            setOpen(false);
-            window.requestAnimationFrame(() => triggerRef.current?.focus());
-          }}
-        />
-      ) : null}
+      {open
+        ? createPortal(
+            <SenseCardReportSheet
+              snapshot={frozenSnapshot}
+              interfaceLanguage={interfaceLanguage}
+              onClose={dismissReport}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }
@@ -89,12 +94,15 @@ function SenseCardReportSheet({
       : delivery === "retry"
         ? t("senseCard.reportSheet.retry")
         : `${t(`senseCard.reportSheet.states.${delivery}.title`)}. ${t(`senseCard.reportSheet.states.${delivery}.body`)}`;
+  const dismiss = React.useCallback(() => {
+    if (delivery !== "sending") onClose();
+  }, [delivery, onClose]);
 
   React.useEffect(() => {
     if (terminal) closeButtonRef.current?.focus();
     else firstRadioRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && delivery !== "sending") onClose();
+      if (event.key === "Escape") dismiss();
       if (event.key !== "Tab" || !dialogRef.current) return;
       const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>(
         'button:not([disabled]), input:not([disabled]), textarea:not([disabled])',
@@ -117,7 +125,7 @@ function SenseCardReportSheet({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [delivery, onClose, terminal]);
+  }, [dismiss, terminal]);
 
   const submit = async () => {
     if (!kind || delivery === "sending") return;
@@ -139,8 +147,8 @@ function SenseCardReportSheet({
     <div
       data-training-hotkeys-suspended="true"
       className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/70 pt-8 backdrop-blur-[2px] sm:items-center sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && delivery !== "sending") onClose();
+      onClick={(event) => {
+        if (event.target === event.currentTarget) dismiss();
       }}
     >
       <div
@@ -228,7 +236,7 @@ function SenseCardReportSheet({
             ref={closeButtonRef}
             type="button"
             disabled={delivery === "sending"}
-            onClick={onClose}
+            onClick={dismiss}
             className="h-11 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:border-slate-600 dark:bg-[#20252f] dark:text-slate-200 dark:hover:bg-slate-700"
           >
             {terminal ? t("senseCard.reportSheet.close") : t("senseCard.reportSheet.back")}
