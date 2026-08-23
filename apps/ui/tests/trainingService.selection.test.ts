@@ -294,6 +294,7 @@ describe("trainingService next-word selection", () => {
       ),
     ).rejects.toMatchObject({
       code: "57014",
+      kind: "statement-timeout",
       message: "canceling statement due to statement timeout",
     });
   });
@@ -313,7 +314,10 @@ describe("trainingService next-word selection", () => {
         [],
         ["word-to-definition"],
       ),
-    ).rejects.toThrow("fetch failed");
+    ).rejects.toMatchObject({
+      kind: "network",
+      message: "fetch failed",
+    });
   });
 
   test("scenario selection filters to supported audio card modes", async () => {

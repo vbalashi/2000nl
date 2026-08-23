@@ -189,6 +189,24 @@ timeout, and cleanup policy checks run with:
 node --test db/scripts/platform_exact_group_latency_benchmark.test.mjs
 ```
 
+### Next-card selection latency
+
+`next_card_selection_latency_benchmark.mjs` compares the retired JSON predicate,
+the indexed anti-join, and the complete scheduler on a disposable local database.
+It refuses non-loopback targets and database names without `issue228`. The fixture
+must contain at least 18,000 entries and the isolated `test@2000nl.test` benchmark
+principal (`22800000-0000-0000-0000-000000000001`).
+
+```bash
+ISSUE_228_BENCHMARK_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/issue228_benchmark \
+  node db/scripts/next_card_selection_latency_benchmark.mjs
+```
+
+The rollout budget is: plan-cold first scheduler call at most 2,000 ms, warm p95
+at most 1,000 ms, and warm maximum at most 2,000 ms across 30 samples. The first
+sample discards prepared plans but cannot flush local shared buffers or the OS
+cache, so cold/warm production reads remain a rollout gate.
+
 ---
 
 ## Development

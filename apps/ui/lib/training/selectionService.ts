@@ -17,6 +17,7 @@ import {
   mapScenario,
   normalizeRaw,
 } from "./wordMappers";
+import { normalizeTrainingSelectionFailure } from "./trainingSelectionFailure";
 
 const MAX_CROSS_REFERENCE_SKIPS = 5;
 const DEFAULT_SCENARIO_MODES: TrainingMode[] = ["word-to-definition"];
@@ -203,11 +204,17 @@ export const fetchNextTrainingWord = async (
     rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc(rpcName, rpcPayload);
+    let response;
+    try {
+      response = await supabase.rpc(rpcName, rpcPayload);
+    } catch (cause) {
+      throw normalizeTrainingSelectionFailure(cause);
+    }
+    const { data, error } = response;
 
     if (error) {
       console.error("Error fetching next word via RPC", error);
-      throw error;
+      throw normalizeTrainingSelectionFailure(error);
     }
     if (!data || data.length === 0) {
       return null;
@@ -431,11 +438,17 @@ export const fetchNextTrainingWordByScenario = async (
     rpcPayload.p_exclude_entry_ids = Array.from(excludedIds);
     rpcPayload.p_exclude_card_keys = Array.from(excludedCardKeys);
 
-    const { data, error } = await supabase.rpc(rpcName, rpcPayload);
+    let response;
+    try {
+      response = await supabase.rpc(rpcName, rpcPayload);
+    } catch (cause) {
+      throw normalizeTrainingSelectionFailure(cause);
+    }
+    const { data, error } = response;
 
     if (error) {
       console.error("Error fetching next word via scenario RPC:", error);
-      throw error;
+      throw normalizeTrainingSelectionFailure(error);
     }
     if (!data || data.length === 0) {
       return null;

@@ -486,8 +486,8 @@ describe("useTrainingTurnController transition matrix", () => {
   });
 
   test.each([
-    ["empty", null, "empty"],
-    ["error", new Error("scheduler unavailable"), "error-selection-failed"],
+    ["session-complete", null, "session-complete"],
+    ["database error", new Error("scheduler unavailable"), "selection-error"],
   ] as const)(
     "retry reaches a classified %s terminal outcome",
     async (_label, selectionResult, outcome) => {
@@ -530,7 +530,11 @@ describe("useTrainingTurnController transition matrix", () => {
     await act(async () => {
       firstOutcome = await controller.result.current.loadNextWord();
     });
-    expect(firstOutcome).toBe("error");
+    expect(firstOutcome).toBe("statement-timeout");
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "generated-transition",
+      "statement-timeout",
+    );
     expect(controller.result.current.usableCandidatesExhausted).toBe(false);
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(null);
 
@@ -540,6 +544,43 @@ describe("useTrainingTurnController transition matrix", () => {
     });
     expect(retryOutcome).toBe("loaded");
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+  });
+
+  test("a network failure remains distinct from a scheduler or terminal outcome", async () => {
+    const selectNext = vi.fn().mockRejectedValue(new TypeError("fetch failed"));
+    const controller = renderController({ currentWord: null, selectNext });
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await controller.result.current.loadNextWord();
+    });
+
+    expect(outcome).toBe("network-error");
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+    expect(controller.setCurrentWord).not.toHaveBeenCalledWith(null);
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "generated-transition",
+      "network-error",
+    );
+  });
+
+  test("an initial successful empty result is an authoritative no-match", async () => {
+    const controller = renderController({
+      currentWord: null,
+      selectNext: vi.fn().mockResolvedValue(null),
+    });
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await controller.result.current.loadNextWord();
+    });
+
+    expect(outcome).toBe("no-match");
+    expect(controller.result.current.usableCandidatesExhausted).toBe(false);
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "generated-transition",
+      "no-match",
+    );
   });
 
   test("retrying after all usable candidates are exhausted exposes honest completion", async () => {
@@ -554,11 +595,35 @@ describe("useTrainingTurnController transition matrix", () => {
         "model-invalid",
       );
     });
+    let outcome: unknown;
     await act(async () => {
-      await controller.result.current.retryCardLoadFailure();
+      outcome = await controller.result.current.retryCardLoadFailure();
     });
 
+    expect(outcome).toBe("session-complete");
     expect(controller.result.current.usableCandidatesExhausted).toBe(true);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
+  });
+
+  test("an accepted card followed by a successful empty selection completes the session", async () => {
+    prepared.consume.mockReturnValue(null);
+    const controller = renderController({
+      currentWord: word2,
+      selectNext: vi.fn().mockResolvedValue(null),
+    });
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+
+    expect(outcome).toBe("accepted");
+    expect(controller.result.current.usableCandidatesExhausted).toBe(true);
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      "transition-1",
+      "session-complete",
+    );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
   });
 
@@ -599,7 +664,7 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(dueReview);
     expect(transitionTiming.finish).not.toHaveBeenCalledWith(
       "generated-transition",
-      "empty",
+      "session-complete",
     );
   });
 
@@ -675,7 +740,7 @@ describe("useTrainingTurnController transition matrix", () => {
     );
     expect(transitionTiming.finish).toHaveBeenCalledWith(
       "transition-1",
-      "error-selection-failed",
+      "selection-error",
     );
   });
 
@@ -756,6 +821,10 @@ describe("useTrainingTurnController transition matrix", () => {
     await act(async () => newSelection.resolve(word2));
     await act(async () => oldSelection.resolve(oldWord));
     await expect(oldLoad).resolves.toBe("skipped");
+    expect(transitionTiming.finish).toHaveBeenCalledWith(
+      expect.any(String),
+      "cancelled",
+    );
 
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
