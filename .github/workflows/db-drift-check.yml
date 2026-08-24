@@ -6,6 +6,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
@@ -22,6 +23,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
@@ -173,6 +175,8 @@ jobs:
       - name: Test fail-closed deployment contract gate
         env:
           DB_CONTRACT_INTEGRATION_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+          DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_IMAGE: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+          DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK: host
         run: |
           node --test db/scripts/deploy_db_contract.test.mjs
           node --test db/scripts/deploy_db_contract.integration.test.mjs

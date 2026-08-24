@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import {
+  preflightPostgresClient,
+  spawnPostgresClient,
+} from "./postgres_client.mjs";
 
 const defaultManifest = "packages/shared/deployment/db-contract.json";
 const sha256Pattern = /^[0-9a-f]{64}$/;
@@ -16,6 +19,9 @@ function parseArgs(argv) {
     repoRoot: path.resolve(import.meta.dirname, "../.."),
     manifestPath: defaultManifest,
     psqlBin: "psql",
+    psqlContainerImage: "",
+    psqlContainerNetwork: "bridge",
+    containerRuntimeBin: "docker",
     databaseUrlEnv: "SUPABASE_DB_URL",
     envFile: "",
     appCommit: process.env.DEPLOY_APP_COMMIT ?? process.env.GITHUB_SHA ?? "",
@@ -27,6 +33,9 @@ function parseArgs(argv) {
     if (arg === "--repo-root") options.repoRoot = path.resolve(value);
     else if (arg === "--manifest") options.manifestPath = value;
     else if (arg === "--psql-bin") options.psqlBin = value;
+    else if (arg === "--psql-container-image") options.psqlContainerImage = value;
+    else if (arg === "--psql-container-network") options.psqlContainerNetwork = value;
+    else if (arg === "--container-runtime-bin") options.containerRuntimeBin = value;
     else if (arg === "--database-url-env") options.databaseUrlEnv = value;
     else if (arg === "--env-file") options.envFile = value;
     else if (arg === "--app-commit") options.appCommit = value;
@@ -312,14 +321,18 @@ async function databaseUrl(options) {
 }
 
 function runPsql(options, sql, url) {
-  const childEnv = { ...process.env, ...databaseEnvironment(url) };
+  const childEnv = {
+    ...process.env,
+    ...databaseEnvironment(url),
+    PGCONNECT_TIMEOUT: "10",
+  };
   delete childEnv.SUPABASE_DB_URL;
   delete childEnv.DATABASE_URL;
   if (options.databaseUrlEnv !== "SUPABASE_DB_URL" && options.databaseUrlEnv !== "DATABASE_URL") {
     delete childEnv[options.databaseUrlEnv];
   }
-  const result = spawnSync(
-    options.psqlBin,
+  const result = spawnPostgresClient(
+    options,
     ["-X", "--no-psqlrc", "--quiet", "--set=ON_ERROR_STOP=1"],
     {
       input: sql,
@@ -331,7 +344,7 @@ function runPsql(options, sql, url) {
   );
   const safeOutput = redact(`${result.stdout ?? ""}${result.stderr ?? ""}`);
   if (safeOutput.trim()) process[result.status === 0 ? "stdout" : "stderr"].write(safeOutput);
-  if (result.error) throw new Error(`psql could not run: ${result.error.message}`);
+  if (result.error) throw new Error(`PostgreSQL client runtime failed: ${result.error.message}`);
   if (result.signal) throw new Error(`psql stopped by ${result.signal}`);
   if (result.status !== 0) process.exitCode = result.status ?? 1;
 }
@@ -350,6 +363,10 @@ async function main() {
     );
     return;
   }
+  if (options.command === "client-preflight") {
+    preflightPostgresClient(options, redact);
+    return;
+  }
   if (options.command === "validate") {
     await buildDeploymentSql(options.repoRoot, manifest, "0000000000000000000000000000000000000000");
     process.stdout.write(`db-contract-gate: valid ${manifest.contractId}\n`);
@@ -363,6 +380,7 @@ async function main() {
     process.exitCode = 78;
     return;
   }
+  if (options.psqlContainerImage) preflightPostgresClient(options, redact);
   const sql = await buildDeploymentSql(options.repoRoot, manifest, options.appCommit);
   runPsql(options, sql, await databaseUrl(options));
 }
@@ -371,5 +389,5 @@ main().catch((error) => {
   process.stderr.write(
     `db-contract-gate: ${redact(error instanceof Error ? error.message : String(error))}\n`,
   );
-  process.exitCode = process.exitCode || 1;
+  process.exitCode = process.exitCode || error?.exitCode || 1;
 });

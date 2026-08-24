@@ -19,13 +19,26 @@ transactionally, records them atomically, and runs the exact postflight probe.
 ```bash
 node db/scripts/deploy_db_contract.mjs expected
 node db/scripts/deploy_db_contract.mjs rollout-status
+node db/scripts/deploy_db_contract.mjs client-preflight \
+  --psql-container-image \
+  postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
 DEPLOY_APP_COMMIT="$(git rev-parse HEAD)" \
-  node db/scripts/deploy_db_contract.mjs apply --env-file .env.local
+  node db/scripts/deploy_db_contract.mjs apply \
+    --psql-container-image \
+    postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94 \
+    --env-file .env.local
 ```
 
 The repository contract can intentionally hold deployment before any database
 access. Follow `docs/runbooks/nuc-db-contract-deploy.md`; never bypass a hold or
 run the gate manually against production.
+
+NUC intentionally has no host `psql`. Its workflow uses the official
+PostgreSQL 17.6 Alpine image pinned by digest above. `client-preflight` pulls the
+exact image if missing and checks the client major inside a read-only,
+capability-free, no-network container before build or DB configuration access.
+Apply passes PG settings into the ephemeral client by environment-variable name
+only; the database URL and password never become Docker command arguments.
 
 CI also runs `deploy_db_contract.integration.test.mjs` against disposable real
 PostgreSQL. It proves transactional DDL/ledger rollback, repaired retry on the

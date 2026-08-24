@@ -33,6 +33,7 @@ describe("NUC database contract deployment", () => {
     const workflow = read(".github/workflows/deploy-nuc.yml");
     const validation = workflow.indexOf("deploy_db_contract.mjs validate");
     const hold = workflow.indexOf("rollout-status");
+    const clientPreflight = workflow.indexOf("client-preflight");
     const build = workflow.indexOf("docker compose build ui");
     const gate = workflow.indexOf("deploy_db_contract.mjs apply");
     const switchApp = workflow.indexOf("docker compose up -d --no-build ui", gate);
@@ -40,13 +41,18 @@ describe("NUC database contract deployment", () => {
 
     expect(validation).toBeGreaterThan(0);
     expect(hold).toBeGreaterThan(validation);
-    expect(build).toBeGreaterThan(hold);
+    expect(clientPreflight).toBeGreaterThan(hold);
+    expect(build).toBeGreaterThan(clientPreflight);
     expect(gate).toBeGreaterThan(build);
     expect(switchApp).toBeGreaterThan(gate);
     expect(health).toBeGreaterThan(switchApp);
     expect(workflow).toContain("previous app image restored; forward DB migrations retained");
     expect(workflow).toContain("no previous image existed; incompatible new app stopped");
     expect(workflow).not.toContain("psql \"$SUPABASE_DB_URL\"");
+    expect(workflow).toContain(
+      "postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94",
+    );
+    expect(workflow.match(/--psql-container-image/g)).toHaveLength(2);
   });
 
   test("gives every deployed image an immutable commit tag", () => {
