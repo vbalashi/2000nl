@@ -82,40 +82,33 @@ mkdir -p "$SESSION_ARTIFACT_DIR" "$(dirname "$PROFILE")"
 chmod 700 "$SESSION_ARTIFACT_DIR" "$(dirname "$PROFILE")" || true
 
 browser() {
-  bash "$REPO_ROOT/scripts/lib/run-sanitized-agent-browser.sh" "$@"
+  node "$REPO_ROOT/scripts/lib/bounded-command.mjs" \
+    --timeout-ms "$(browser_command_timeout_ms)" -- \
+    bash "$REPO_ROOT/scripts/lib/run-sanitized-agent-browser.sh" "$@"
 }
 
-run_bounded() {
-  "$@" &
-  local bounded_pid=$!
-  local attempt
-  for attempt in {1..80}; do
-    if ! kill -0 "$bounded_pid" 2>/dev/null; then
-      wait "$bounded_pid"
-      return $?
-    fi
-    sleep 0.1
-  done
-  kill -TERM "$bounded_pid" 2>/dev/null || true
-  for attempt in {1..10}; do
-    if ! kill -0 "$bounded_pid" 2>/dev/null; then
-      wait "$bounded_pid" 2>/dev/null || true
-      return 124
-    fi
-    sleep 0.1
-  done
-  kill -KILL "$bounded_pid" 2>/dev/null || true
-  wait "$bounded_pid" 2>/dev/null || true
-  return 124
+browser_command_timeout_ms() {
+  local requested="${QA_BROWSER_COMMAND_TIMEOUT_MS:-15000}"
+  if [[ ! "$requested" =~ ^[0-9]+$ || "$requested" -lt 100 ]]; then
+    requested="15000"
+  fi
+  if [[ "$requested" -gt 15000 ]]; then requested="15000"; fi
+  printf '%s' "$requested"
 }
 
-revoke_session() {
-  set -a
-  # shellcheck disable=SC1090
-  source "$ENV_FILE"
-  set +a
-  cd "$REPO_ROOT/apps/ui"
-  exec env QA_SESSION_JSON_PATH="$OUT_JSON" npx vite-node scripts/revoke-prod-qa-session.ts
+cleanup_command_timeout_ms() {
+  local requested="${QA_CLEANUP_COMMAND_TIMEOUT_MS:-8000}"
+  if [[ ! "$requested" =~ ^[0-9]+$ || "$requested" -lt 100 ]]; then
+    requested="8000"
+  fi
+  if [[ "$requested" -gt 8000 ]]; then requested="8000"; fi
+  printf '%s' "$requested"
+}
+
+revoke_session_bounded() {
+  node "$REPO_ROOT/scripts/lib/bounded-command.mjs" \
+    --timeout-ms "$(cleanup_command_timeout_ms)" -- \
+    bash "$REPO_ROOT/scripts/lib/revoke-prod-qa-session.sh" "$ENV_FILE" "$OUT_JSON" "$REPO_ROOT"
 }
 
 cleanup() {
@@ -125,18 +118,18 @@ cleanup() {
   trap - EXIT INT TERM
   set +e
   if [[ -f "$OUT_JSON" ]]; then
-    if run_bounded revoke_session >/dev/null; then
+    if revoke_session_bounded >/dev/null; then
       revoked="1"
     else
       echo "Error: global QA session revocation failed; protected recovery artifacts retained at $SESSION_ARTIFACT_DIR." >&2
       cleanup_failed="1"
     fi
   fi
-  if ! run_bounded browser --session "$SESSION" eval '(() => { for (const key of Object.keys(localStorage)) { if (key.startsWith("sb-")) localStorage.removeItem(key); } return true; })()' >/dev/null 2>&1; then
+  if ! browser --session "$SESSION" eval '(() => { for (const key of Object.keys(localStorage)) { if (key.startsWith("sb-")) localStorage.removeItem(key); } return true; })()' >/dev/null 2>&1; then
     echo "Warning: browser QA session cleanup did not complete." >&2
     cleanup_failed="1"
   fi
-  run_bounded browser --session "$SESSION" close >/dev/null 2>&1 || true
+  browser --session "$SESSION" close >/dev/null 2>&1 || true
   if [[ "$revoked" == "1" || ! -f "$OUT_JSON" ]]; then
     [[ -f "$OUT_JSON" ]] && unlink "$OUT_JSON"
     [[ -f "$OUT_B64" ]] && unlink "$OUT_B64"
@@ -188,18 +181,7 @@ cat <<EOF | browser --session "$SESSION" eval --stdin
 EOF
 
 browser --session "$SESSION" reload
-browser --session "$SESSION" wait --load networkidle
 
-cat <<'EOF' | browser --session "$SESSION" eval --stdin >/dev/null
-(async () => {
-  const todayLabels = ["Vandaag", "Today", "Сегодня"];
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    const text = document.body?.innerText || "";
-    if (todayLabels.some((label) => text.includes(label))) return { surface: "today" };
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  throw new Error("Authenticated Today surface did not become visible.");
-})()
-EOF
+node "$REPO_ROOT/scripts/lib/wait-for-prod-qa-surface.mjs" --session "$SESSION"
 
 echo "OK: dedicated QA session verified and startup surface loaded for $URL"
