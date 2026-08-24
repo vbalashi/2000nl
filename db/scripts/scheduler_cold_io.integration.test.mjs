@@ -88,7 +88,7 @@ function explainBuffers(plan) {
 }
 
 test(
-  "the production-shaped session plan has a bounded cold-I/O footprint",
+  "the production-shaped session plan and next-card selector have bounded cold-I/O",
   { skip: !baseDatabaseUrl, timeout: 120_000 },
   async () => {
     const base = assertLoopback(baseDatabaseUrl);
@@ -305,6 +305,51 @@ test(
       );
       assert.equal(writerAfterCommit.status, 0, writerAfterCommit.stderr);
 
+      const parityEntry = psql(
+        targetUrl,
+        "SELECT id FROM public.word_entries WHERE meaning_id = 2;\n",
+      );
+      assert.equal(parityEntry.status, 0, parityEntry.stderr);
+      const parityEntryId = parityEntry.stdout.trim();
+      assert.match(parityEntryId, /^[0-9a-f-]{36}$/);
+      const candidateSnapshot = (modes, cardFilter, excludedEntries, excludedCards) => {
+        const snapshot = psql(
+          targetUrl,
+          `SELECT md5(COALESCE(jsonb_agg(jsonb_build_object(
+             'entryId', candidate.entry_id,
+             'cardTypeId', candidate.card_type_id,
+             'queueSource', candidate.queue_source,
+             'newToday', candidate.new_today,
+             'dailyNewLimit', candidate.daily_new_limit,
+             'newPoolSize', candidate.new_pool_size,
+             'learningDueCount', candidate.learning_due_count,
+             'reviewPoolSize', candidate.review_pool_size
+           ) ORDER BY candidate.entry_id, candidate.card_type_id, candidate.queue_source)::text, '[]'))
+           FROM private.training_scheduler_candidates_v1(
+             '${qaUserId}', ${modes}, null, 'curated', '${cardFilter}', 'auto',
+             ${excludedEntries}, ${excludedCards}, '{}', false
+           ) candidate;\n`,
+        );
+        assert.equal(snapshot.status, 0, snapshot.stderr);
+        return snapshot.stdout.trim();
+      };
+      const parityCases = [
+        ["ARRAY['word-to-definition']", "both", "ARRAY[]::uuid[]", "ARRAY[]::text[]"],
+        ["ARRAY['word-to-definition']", "new", "ARRAY[]::uuid[]", "ARRAY[]::text[]"],
+        ["ARRAY['word-to-definition']", "review", `ARRAY['${parityEntryId}']::uuid[]`, "ARRAY[]::text[]"],
+        [
+          "ARRAY['word-to-definition','definition-to-word']",
+          "both",
+          "ARRAY[]::uuid[]",
+          `ARRAY['${parityEntryId}:word-to-definition']::text[]`,
+        ],
+      ];
+      applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
+      const legacyCandidates = parityCases.map((parityCase) => candidateSnapshot(...parityCase));
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const optimizedCandidates = parityCases.map((parityCase) => candidateSnapshot(...parityCase));
+      assert.deepEqual(optimizedCandidates, legacyCandidates);
+
       const parity = psql(
         targetUrl,
         `BEGIN READ ONLY;
@@ -385,8 +430,84 @@ test(
           `(${buffers.hits} hit, ${buffers.reads} read); the budgets are 2,000ms and 4,000 blocks`,
       );
 
+      const nextCardExplain = psql(
+        targetUrl,
+        `BEGIN READ ONLY;
+         SELECT set_config('request.jwt.claim.sub', '${qaUserId}', true);
+         SET LOCAL random_page_cost = 1.1;
+         SET LOCAL effective_io_concurrency = 200;
+         SET LOCAL jit = off;
+         DISCARD PLANS;
+         EXPLAIN (ANALYZE, BUFFERS, WAL, SETTINGS, FORMAT JSON)
+         SELECT * FROM public.get_next_card(
+           '${qaUserId}', ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
+           'curated', 'both', 'auto', ARRAY[]::text[]
+         );
+         ROLLBACK;\n`,
+      );
+      assert.equal(nextCardExplain.status, 0, nextCardExplain.stderr);
+      const nextCardJsonStart = nextCardExplain.stdout.indexOf("[");
+      const nextCardJsonEnd = nextCardExplain.stdout.lastIndexOf("]");
+      assert.ok(
+        nextCardJsonStart >= 0 && nextCardJsonEnd > nextCardJsonStart,
+        `next-card EXPLAIN JSON missing: ${nextCardExplain.stdout}`,
+      );
+      const nextCardPlan = JSON.parse(
+        nextCardExplain.stdout.slice(nextCardJsonStart, nextCardJsonEnd + 1),
+      );
+      const nextCardBuffers = explainBuffers(nextCardPlan);
+      const nextCardTotalBuffers = nextCardBuffers.hits + nextCardBuffers.reads;
+      const nextCardExecutionMs = nextCardPlan[0]["Execution Time"];
+
+      const measureComponent = (statement) => {
+        const componentExplain = psql(
+          targetUrl,
+          `BEGIN READ ONLY;
+           SET LOCAL jit = off;
+           EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${statement};
+           ROLLBACK;\n`,
+        );
+        assert.equal(componentExplain.status, 0, componentExplain.stderr);
+        const componentJsonStart = componentExplain.stdout.indexOf("[");
+        const componentJsonEnd = componentExplain.stdout.lastIndexOf("]");
+        assert.ok(componentJsonStart >= 0 && componentJsonEnd > componentJsonStart);
+        const componentPlan = JSON.parse(
+          componentExplain.stdout.slice(componentJsonStart, componentJsonEnd + 1),
+        );
+        const componentBuffers = explainBuffers(componentPlan);
+        return {
+          blocks: componentBuffers.hits + componentBuffers.reads,
+          ms: componentPlan[0]["Execution Time"],
+        };
+      };
+      const fixtureEntry = psql(
+        targetUrl,
+        "SELECT id FROM public.word_entries WHERE meaning_id = 1;\n",
+      );
+      assert.equal(fixtureEntry.status, 0, fixtureEntry.stderr);
+      const fixtureEntryId = fixtureEntry.stdout.trim();
+      assert.match(fixtureEntryId, /^[0-9a-f-]{36}$/);
+      const componentMetrics = [
+        measureComponent(`SELECT * FROM private.training_scheduler_candidates_v1(
+          '${qaUserId}', ARRAY['word-to-definition'], null, 'curated', 'both',
+          'auto', ARRAY[]::uuid[], ARRAY[]::text[], '{}', false
+        ) ORDER BY selection_order LIMIT 1`),
+        measureComponent(`SELECT private.project_training_scheduler_candidate_v1(
+          '${qaUserId}', '${fixtureEntryId}',
+          'word-to-definition', 'new', '{}', false, 0, 10, 10, 0, 0
+        )`),
+        measureComponent("SELECT private.pointer_only_dictionary_entry_ids_v1()"),
+      ];
+      assert.ok(
+        nextCardTotalBuffers <= 4_000 && nextCardExecutionMs <= 2_000,
+        `next-card selector used ${nextCardExecutionMs}ms and touched ` +
+          `${nextCardTotalBuffers} shared blocks (${nextCardBuffers.hits} hit, ` +
+          `${nextCardBuffers.reads} read); components scheduler/project/pointer=` +
+          `${JSON.stringify(componentMetrics)}; the budgets are 2,000ms and 4,000 blocks`,
+      );
+
       applySqlFile(targetUrl, "db/deploy-contract/ledger-v1.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
 
       const triggerDrift = psql(
         targetUrl,
@@ -399,7 +520,7 @@ test(
       const triggerDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
       );
       assert.notEqual(triggerDriftPostflight.status, 0);
       assert.match(triggerDriftPostflight.stderr, /bounded-scope-sync-contract/);
@@ -413,13 +534,181 @@ test(
       const functionDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
       );
       assert.notEqual(functionDriftPostflight.status, 0);
       assert.match(functionDriftPostflight.stderr, /bounded-scope-sync-function-contract/);
 
       applySqlFile(targetUrl, "db/migrations/127_bounded_training_session_plan_io.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      const schedulerSecurityDrift = psql(
+        targetUrl,
+        `ALTER FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) SECURITY INVOKER;\n`,
+      );
+      assert.equal(schedulerSecurityDrift.status, 0, schedulerSecurityDrift.stderr);
+      const schedulerSecurityDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerSecurityDriftPostflight.status, 0);
+      assert.match(
+        schedulerSecurityDriftPostflight.stderr,
+        /bounded-selector-function-contract/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const schedulerOwnerDrift = psql(
+        targetUrl,
+        `DROP ROLE IF EXISTS issue243_scheduler_drift_owner;
+         CREATE ROLE issue243_scheduler_drift_owner;
+         GRANT issue243_scheduler_drift_owner TO postgres;
+         GRANT CREATE ON SCHEMA private TO issue243_scheduler_drift_owner;
+         ALTER FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) OWNER TO issue243_scheduler_drift_owner;\n`,
+      );
+      assert.equal(schedulerOwnerDrift.status, 0, schedulerOwnerDrift.stderr);
+      const schedulerOwnerDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerOwnerDriftPostflight.status, 0);
+      assert.match(
+        schedulerOwnerDriftPostflight.stderr,
+        /bounded-selector-function-contract/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      const schedulerGrantDrift = psql(
+        targetUrl,
+        `GRANT EXECUTE ON FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) TO authenticated;\n`,
+      );
+      assert.equal(schedulerGrantDrift.status, 0, schedulerGrantDrift.stderr);
+      const schedulerGrantDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerGrantDriftPostflight.status, 0);
+      assert.match(schedulerGrantDriftPostflight.stderr, /grants/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const siblingIndexDrift = psql(
+        targetUrl,
+        `DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+         CREATE INDEX word_entries_training_sibling_count_v1_idx
+         ON public.word_entries (dictionary_id, language_code, headword)
+         WHERE false;\n`,
+      );
+      assert.equal(siblingIndexDrift.status, 0, siblingIndexDrift.stderr);
+      const siblingIndexDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(siblingIndexDriftPostflight.status, 0);
+      assert.match(siblingIndexDriftPostflight.stderr, /selector-sibling-index/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      const siblingIndexCollationDrift = psql(
+        targetUrl,
+        `DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+         CREATE INDEX word_entries_training_sibling_count_v1_idx
+         ON public.word_entries (
+           dictionary_id, language_code COLLATE "C", headword COLLATE "C"
+         );\n`,
+      );
+      assert.equal(
+        siblingIndexCollationDrift.status,
+        0,
+        siblingIndexCollationDrift.stderr,
+      );
+      const siblingIndexCollationDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(siblingIndexCollationDriftPostflight.status, 0);
+      assert.match(
+        siblingIndexCollationDriftPostflight.stderr,
+        /selector-sibling-index/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      const superuserCapability = psql(
+        targetUrl,
+        "SELECT rolsuper FROM pg_roles WHERE rolname = current_user;\n",
+      );
+      assert.equal(superuserCapability.status, 0, superuserCapability.stderr);
+      if (superuserCapability.stdout.trim() === "t") {
+        const siblingIndexOperatorClassDrift = psql(
+          targetUrl,
+          `CREATE SCHEMA issue243_drift;
+           CREATE OPERATOR CLASS issue243_drift.text_ops
+           FOR TYPE text USING btree AS
+             OPERATOR 1 < (text, text),
+             OPERATOR 2 <= (text, text),
+             OPERATOR 3 = (text, text),
+             OPERATOR 4 >= (text, text),
+             OPERATOR 5 > (text, text),
+             FUNCTION 1 pg_catalog.bttextcmp(text, text);
+           DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+           CREATE INDEX word_entries_training_sibling_count_v1_idx
+           ON public.word_entries (
+             dictionary_id,
+             language_code issue243_drift.text_ops,
+             headword issue243_drift.text_ops
+           );\n`,
+        );
+        assert.equal(
+          siblingIndexOperatorClassDrift.status,
+          0,
+          siblingIndexOperatorClassDrift.stderr,
+        );
+        const siblingIndexOperatorClassDriftPostflight = psql(
+          targetUrl,
+          "",
+          ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+        );
+        assert.notEqual(siblingIndexOperatorClassDriftPostflight.status, 0);
+        assert.match(
+          siblingIndexOperatorClassDriftPostflight.stderr,
+          /selector-sibling-index/,
+        );
+
+        applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+        applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+        const dropDriftSchema = psql(
+          targetUrl,
+          "DROP SCHEMA issue243_drift CASCADE;\n",
+        );
+        assert.equal(dropDriftSchema.status, 0, dropDriftSchema.stderr);
+      }
+
+      applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
+      const schedulerDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerDriftPostflight.status, 0);
+      assert.match(schedulerDriftPostflight.stderr, /bounded-selector-contract/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
     } finally {
       const terminate = psql(
         base.toString(),
@@ -429,6 +718,11 @@ test(
          DROP DATABASE IF EXISTS ${quotedDatabaseName};\n`,
       );
       assert.equal(terminate.status, 0, terminate.stderr);
+      const cleanupDriftOwner = psql(
+        base.toString(),
+        "DROP ROLE IF EXISTS issue243_scheduler_drift_owner;\n",
+      );
+      assert.equal(cleanupDriftOwner.status, 0, cleanupDriftOwner.stderr);
     }
   },
 );

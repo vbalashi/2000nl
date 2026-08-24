@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-127",
+  "contractId": "2000nl-db-128",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 127,
-    "coordinationIssue": 238
+    "requiredMigrationId": 128,
+    "coordinationIssue": 243
   },
   "baseline": {
     "migrationId": 122,
@@ -39,12 +39,17 @@
       "migrationId": 127,
       "file": "db/migrations/127_bounded_training_session_plan_io.sql",
       "sha256": "c202828f3c057950a333fcc02e2bac55784caa7a2272a8a22e24cd0a115a1ad4"
+    },
+    {
+      "migrationId": 128,
+      "file": "db/migrations/128_bound_authoritative_next_card_selector.sql",
+      "sha256": "52ce06bdcb50757b30a8f53374f448163286bc1ec56aab86124f951bb28a64ac"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-127.sql",
+  "postflightProbe": "db/deploy-contract/postflight-128.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-127.sql",
-    "sha256": "5a9d222b62c598f2e56a16e0be1a3ae26e6afa174821d9ac3f3cca5c3adb42f9",
+    "file": "db/deploy-contract/pre-switch-read-probe-128.sql",
+    "sha256": "995e081582409ef3310ffdaad2d6c138a41277fde665756d4a9f3e964bd7e4c8",
     "statementTimeoutMs": 2000
   }
 }

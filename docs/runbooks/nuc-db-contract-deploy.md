@@ -22,9 +22,11 @@ Issue #233 first integrated the gate with `rollout.status: hold` and
 database connection, migration, or container switch. The contract was first
 enabled after #232 appended migration 126 with its exact SHA-256. Issue #238
 advances it to migration 127 after the bounded pre-switch read exposed
-repeatable cold scheduler I/O even after migration 126.
+repeatable cold session-plan I/O even after migration 126. Issue #243 advances
+it to migration 128 after the now-fast plan exposed the remaining cold
+authoritative next-card selector.
 
-An enabled deployment must apply or verify migrations 123 through 127 in order
+An enabled deployment must apply or verify migrations 123 through 128 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -46,13 +48,14 @@ whose last migration is below the required migration.
 - Postflight checks exact RPC signatures, role grants, and a deterministic
   `EXPLAIN (FORMAT JSON)` contract proving the default NT2 scheduler scope uses
   its narrow synchronized projection instead of wide dictionary rows. It pins
-  materialized learner settings/status and readable-dictionary sets, the legacy
-  selector fallback, application compatibility, and the bounded health signal.
+  materialized learner settings/status and readable-dictionary sets, the
+  narrow default selector scope, the list selector branch, the selected-card
+  sibling-count index, application compatibility, and the bounded health signal.
 - Before compatibility is advertised, the gate executes the checksum-pinned
-  session-plan selector as exactly one `test@2000nl.test` principal inside
-  `BEGIN READ ONLY`, with a 2,000 ms statement timeout. It discards only the
-  deployment session's cached plans and cannot review, report, mark known, or
-  otherwise mutate learner state.
+  session-plan and actual next-card selector as exactly one `test@2000nl.test`
+  principal inside `BEGIN READ ONLY`, with one 2,000 ms statement timeout. It
+  discards only the deployment session's cached plans and cannot review,
+  report, mark known, or otherwise mutate learner state.
 - The pre-switch read runs on no-op retries too. This is deliberate: forward
   migrations commit independently, so a timed-out first read must not be
   bypassed merely because the retry sees those migrations in the ledger.
@@ -115,13 +118,13 @@ App rollback and DB recovery are deliberately separate:
   If no previous image exists, it stops the incompatible new container.
 - Forward DB migrations remain in place during app-image rollback. Every
   enabled migration must therefore be compatible with the previous app.
-- The migration's owning issue owns DB recovery. Issue #238 owns migration 127
-  and any reviewed corrective-forward or explicit rollback SQL. Issue #232
-  retains ownership of migration 126; #233 owns gate/ledger/probe machinery.
+- The migration's owning issue owns DB recovery. Issue #243 owns migration 128;
+  issue #238 owns migration 127. Issue #232 retains ownership of migration 126;
+  #233 owns gate/ledger/probe machinery.
 - Any explicit DB rollback must be reviewed as a complete contract transition:
   restore compatible functions and indexes, then reconcile the matching ledger
-  and state rows in the same recovery plan. Never advertise contract 127 after
-  removing its bounded plan function or index.
+  and state rows in the same recovery plan. Never advertise contract 128 after
+  removing its bounded selector function or sibling-count index.
 - Never improvise reverse SQL in the workflow. Preserve the failed run, exact
   commit, contract ID, last applied migration lines, and health response; then
   use the owning issue's reviewed recovery path.
@@ -164,6 +167,26 @@ the projection trigger and taking the backfill snapshot. Training and other
 readers remain available; dictionary import writes wait for the short migration
 transaction and then execute through the committed trigger. Do not split the
 lock, trigger installation, backfill, or reconciliation into separate runs.
+
+After migration 127, the exact production QA benchmark measured the session
+plan at 192.2 ms on its first call, but the actual `get_next_card` call still
+took 2,471.3 ms. The production-shaped dirty/wide fixture reproduced the split:
+the selector touched about 22,050 shared blocks, of which the scheduler owned
+about 16,254 and the final selected-card projection about 6,256. The pointer
+helper was only about 390 blocks.
+
+Migration 128 makes the existing authoritative scheduler use migration 127's
+narrow projection whenever no list is selected, while retaining the original
+wide membership branch for curated and user lists. Today's new words/cards,
+known marks, and learner status are materialized once instead of probed per
+candidate. An exact `(dictionary_id, language_code, headword)` index bounds the
+single selected card's `meanings_count`. The same dirty/wide fixture falls to
+3,037 blocks and 37.231 ms: 2,800 for scheduling, 726 for final projection, and
+411 for the pointer helper. Candidate results remain byte-identical after
+removing randomized `selection_order` across default `both`/`new`/`review`,
+multi-mode, entry exclusion, and exact-card exclusion cases. Existing FSRS RPC
+coverage remains authoritative for list, filtered, access, pointer, known,
+hidden, legacy null-dictionary, cap, and queue behavior.
 
 ## Production QA sessions
 

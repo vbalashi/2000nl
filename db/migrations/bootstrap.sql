@@ -378,3 +378,6 @@
 
 -- Default session-plan counts avoid selector-only work and wide cold scans
 \i db/migrations/127_bounded_training_session_plan_io.sql
+
+-- Authoritative next-card selection avoids repeated wide/correlated scans
+\i db/migrations/128_bound_authoritative_next_card_selector.sql

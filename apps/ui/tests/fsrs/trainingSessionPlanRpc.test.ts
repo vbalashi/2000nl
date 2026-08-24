@@ -35,6 +35,27 @@ describeDb("authoritative training session plan RPC", () => {
       expect(functionRows[0]?.definition).toContain(
         "FROM word_entries pointer_entry",
       );
+      expect(functionRows[0]?.definition).toContain(
+        "FROM private.default_training_scope_entries_v1 scope_entry",
+      );
+      expect(functionRows[0]?.definition).toContain(
+        "today_new_words AS MATERIALIZED",
+      );
+      expect(functionRows[0]?.definition).toContain(
+        "known_cards AS MATERIALIZED",
+      );
+      expect(functionRows[0]?.definition).toContain(
+        "learner_status AS MATERIALIZED",
+      );
+
+      const { rows: siblingIndexRows } = await client.query(
+        `select pg_get_indexdef(
+           'public.word_entries_training_sibling_count_v1_idx'::regclass
+         ) as definition`,
+      );
+      expect(siblingIndexRows[0]?.definition).toContain(
+        "(dictionary_id, language_code, headword)",
+      );
 
       await client.query(`set local enable_seqscan = off`);
       const { rows: planRows } = await client.query(
