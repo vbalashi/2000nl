@@ -56,12 +56,20 @@ must treat migrations 123, 124, 125, and 126 as one ordered gate:
    first ≤2 s, warm p95 ≤1 s, and max ≤2 s, then smoke only with
    `test@2000nl.test` and revoke the QA session.
 
-If any apply, probe, or budget gate fails, restore the captured exact pre-123
+Recovery follows `docs/runbooks/nuc-db-contract-deploy.md`. A migration failure
+inside its transaction rolls back automatically and is retried with the same
+immutable contract. A failure after the app switch restores the previous app
+image while committed forward DB migrations remain in place. Do not manually
+replace functions behind ledger state 126.
+
+If #232 approves an explicit DB rollback after a committed probe or budget
+failure, its reviewed SQL must atomically restore the captured exact pre-123
 `get_next_card` and `get_next_filtered_card` definitions, drop
-`get_training_session_plan(uuid,text[],uuid,text,text,jsonb)`, and verify that
-the migration-124 history RPC remains present. Do not roll back learning or
-history data: these migrations only replace read functions. Re-run the prior
-selector budget and app fallback smoke before declaring rollback complete.
+`get_training_session_plan(uuid,text[],uuid,text,text,jsonb)`, preserve the
+migration-124 history RPC, and reconcile the 123–126 ledger/state so the next
+gate does not treat reverted functions as compatible no-ops. Re-run the prior
+selector budget and app fallback smoke before declaring that explicit rollback
+complete. Learning and history data are not reverse-migrated.
 
 Issue #233 owns the generic deployment/migration gate. This branch rebases on
 that integrated gate and advances the commit-owned contract to migration 126.

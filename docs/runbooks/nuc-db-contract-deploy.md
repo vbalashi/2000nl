@@ -87,6 +87,11 @@ App rollback and DB recovery are deliberately separate:
 - The migration's owning issue owns DB recovery. For the first rollout, #232
   owns migration 126 and any reviewed corrective-forward or explicit rollback
   SQL. #233 owns failures in the gate/ledger/probe machinery.
+- A #232 explicit rollback after migrations 123–126 commit must be one reviewed
+  transaction that restores the exact pre-123 selector/fallback contract and
+  reconciles the 123–126 ledger/state. Never leave pre-123 functions behind a
+  state row that advertises contract 126; the next gate would otherwise no-op
+  the migrations and fail postflight indefinitely.
 - Never improvise reverse SQL in the workflow. Preserve the failed run, exact
   commit, contract ID, last applied migration lines, and health response; then
   use the owning issue's reviewed recovery path.
