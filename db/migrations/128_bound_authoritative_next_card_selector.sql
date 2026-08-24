@@ -10,6 +10,12 @@ DROP INDEX IF EXISTS public.word_entries_training_sibling_count_v1_idx;
 CREATE INDEX word_entries_training_sibling_count_v1_idx
 ON public.word_entries (dictionary_id, language_code, headword);
 
+-- CREATE OR REPLACE requires membership in the current owner role on recent
+-- PostgreSQL versions, so restore the reviewed owner before replacing drift.
+ALTER FUNCTION private.training_scheduler_candidates_v1(
+  uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+) OWNER TO postgres;
+
 CREATE OR REPLACE FUNCTION private.training_scheduler_candidates_v1(
   p_user_id uuid,
   p_card_type_ids text[],
@@ -294,6 +300,10 @@ SELECT entry_id,card_type_id,queue_source,
   diagnostics.learning_due_count,LEAST(diagnostics.review_pool_size,10)
 FROM ordered CROSS JOIN daily CROSS JOIN limits CROSS JOIN diagnostics;
 $$;
+
+ALTER FUNCTION private.training_scheduler_candidates_v1(
+  uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+) OWNER TO postgres;
 
 REVOKE ALL ON FUNCTION private.training_scheduler_candidates_v1(
   uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean

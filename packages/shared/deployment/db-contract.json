@@ -43,7 +43,7 @@
     {
       "migrationId": 128,
       "file": "db/migrations/128_bound_authoritative_next_card_selector.sql",
-      "sha256": "f753728aae2836f7fb7bf3c4238502763fd487e80a7488a4587d391d4b75430f"
+      "sha256": "52ce06bdcb50757b30a8f53374f448163286bc1ec56aab86124f951bb28a64ac"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-128.sql",

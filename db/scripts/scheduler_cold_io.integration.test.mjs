@@ -561,6 +561,38 @@ test(
       );
 
       applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const schedulerOwnerDrift = psql(
+        targetUrl,
+        `DROP ROLE IF EXISTS issue243_scheduler_drift_owner;
+         CREATE ROLE issue243_scheduler_drift_owner;
+         GRANT issue243_scheduler_drift_owner TO postgres;
+         GRANT CREATE ON SCHEMA private TO issue243_scheduler_drift_owner;
+         ALTER FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) OWNER TO issue243_scheduler_drift_owner;\n`,
+      );
+      assert.equal(schedulerOwnerDrift.status, 0, schedulerOwnerDrift.stderr);
+      const schedulerOwnerDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerOwnerDriftPostflight.status, 0);
+      assert.match(
+        schedulerOwnerDriftPostflight.stderr,
+        /bounded-selector-function-contract/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const dropDriftOwner = psql(
+        targetUrl,
+        `REVOKE CREATE ON SCHEMA private FROM issue243_scheduler_drift_owner;
+         REVOKE issue243_scheduler_drift_owner FROM postgres;
+         DROP ROLE issue243_scheduler_drift_owner;\n`,
+      );
+      assert.equal(dropDriftOwner.status, 0, dropDriftOwner.stderr);
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
       const schedulerGrantDrift = psql(
         targetUrl,
         `GRANT EXECUTE ON FUNCTION private.training_scheduler_candidates_v1(
@@ -592,6 +624,33 @@ test(
       );
       assert.notEqual(siblingIndexDriftPostflight.status, 0);
       assert.match(siblingIndexDriftPostflight.stderr, /selector-sibling-index/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      const siblingIndexCollationDrift = psql(
+        targetUrl,
+        `DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+         CREATE INDEX word_entries_training_sibling_count_v1_idx
+         ON public.word_entries (
+           dictionary_id, language_code COLLATE "C", headword COLLATE "C"
+         );\n`,
+      );
+      assert.equal(
+        siblingIndexCollationDrift.status,
+        0,
+        siblingIndexCollationDrift.stderr,
+      );
+      const siblingIndexCollationDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(siblingIndexCollationDriftPostflight.status, 0);
+      assert.match(
+        siblingIndexCollationDriftPostflight.stderr,
+        /selector-sibling-index/,
+      );
 
       applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
       applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");

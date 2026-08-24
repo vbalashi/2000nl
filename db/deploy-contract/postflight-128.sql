@@ -88,6 +88,27 @@ BEGIN
         (SELECT attribute.attnum FROM pg_attribute attribute
          WHERE attribute.attrelid = 'public.word_entries'::regclass
            AND attribute.attname = 'headword')
+      AND index_state.indcollation[0] =
+        (SELECT attribute.attcollation FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'dictionary_id')
+      AND index_state.indcollation[1] =
+        (SELECT attribute.attcollation FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'language_code')
+      AND index_state.indcollation[2] =
+        (SELECT attribute.attcollation FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'headword')
+      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
+           WHERE operator_class.oid = index_state.indclass[0]) = 'uuid_ops'
+      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
+           WHERE operator_class.oid = index_state.indclass[1]) = 'text_ops'
+      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
+           WHERE operator_class.oid = index_state.indclass[2]) = 'text_ops'
+      AND index_state.indoption[0] = 0
+      AND index_state.indoption[1] = 0
+      AND index_state.indoption[2] = 0
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed selector-sibling-index';
   END IF;
