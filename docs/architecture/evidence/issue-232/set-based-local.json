@@ -15,12 +15,12 @@
   },
   "series": {
     "sessionPlan": {
-      "first": 162.2,
-      "warm": { "count": 30, "p50": 158.3, "p95": 163.6, "max": 172.8 }
+      "first": 174.5,
+      "warm": { "count": 30, "p50": 173.7, "p95": 185.5, "max": 188.3 }
     },
     "nextCard": {
-      "first": 178.3,
-      "warm": { "count": 30, "p50": 173.6, "p95": 185.0, "max": 185.4 }
+      "first": 199.4,
+      "warm": { "count": 30, "p50": 183.3, "p95": 192.3, "max": 195.8 }
     }
   },
   "accessFunctionCalls": {

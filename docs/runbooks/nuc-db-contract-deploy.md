@@ -7,27 +7,18 @@ image first, applies only the manifest's contiguous reviewed-forward migrations,
 runs exact SQL probes, switches the container, and then accepts the release only
 when deep health reports the same commit and database contract.
 
-## Current rollout hold
+## Current coordinated rollout
 
-Issue #233 intentionally ships with `rollout.status` set to `hold` and
-`requiredMigrationId` set to `126`. Merging #233 alone therefore stops before
-Docker build, database connection, migration, or container switch. This prevents
-the reverted production scheduler from receiving migrations 123–125 before the
-set-based scheduler fix from #232 is present.
+Issue #233 first integrated the gate with `rollout.status: hold` and
+`requiredMigrationId: 126`. That held deployment stopped before Docker build,
+database connection, migration, or container switch. The current contract is
+enabled only after #232 appended migration 126 with its exact SHA-256 and
+advanced the postflight probe to the set-based scheduler contract.
 
-The first enabled rollout order is mandatory:
-
-1. integrate #233 while the manifest remains held;
-2. rebase #232 on the integrated gate;
-3. append migration 126 and its exact SHA-256 to the manifest;
-4. extend the postflight probe for migration 126;
-5. change only `rollout.status` from `hold` to `enabled` while retaining
-   `requiredMigrationId: 126`;
-6. merge #232 so one deploy applies or verifies 123, 124, 125, and 126 in order.
-
-The runner rejects an enabled manifest whose last migration is below the
-required migration. Do not enable the current 125 contract as an intermediate
-release.
+The first enabled deployment must apply or verify migrations 123, 124, 125,
+and 126 in order before it advertises compatibility. The runner rejects an
+enabled manifest whose last migration is below the required migration; the 125
+contract is never an acceptable intermediate release.
 
 ## What the gate guarantees
 
@@ -46,8 +37,9 @@ release.
   migration, stops deployment.
 - Postflight checks exact RPC signatures, role grants, and a deterministic
   `EXPLAIN (FORMAT JSON)` contract proving the scheduler's pointer-only
-  anti-join can use its partial index, plus legacy selector compatibility and
-  the bounded health signal grant.
+  anti-join can use its partial index. It also pins one canonical dictionary
+  access call inside a materialized readable-dictionary set, plus legacy
+  selector compatibility and the bounded health signal grant.
 - The database URL is passed to `psql` through `PG*` environment variables,
   never command arguments. Gate output redacts URLs and credential-like values.
 

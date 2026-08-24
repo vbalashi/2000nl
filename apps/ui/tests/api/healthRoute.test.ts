@@ -75,8 +75,8 @@ const contractStateFromMock = (options?: {
         data: options?.error
           ? null
           : {
-              contract_id: options?.contractId ?? "2000nl-db-125",
-              migration_id: options?.migrationId ?? 125,
+              contract_id: options?.contractId ?? "2000nl-db-126",
+              migration_id: options?.migrationId ?? 126,
             },
         error: options?.error ? { message: options.error } : null,
       })),
@@ -181,10 +181,10 @@ describe("/api/health", () => {
     expect(body.checks.databaseContract).toEqual({
       status: "ok",
       details: {
-        expected: "2000nl-db-125",
-        expectedMigration: 125,
-        actual: "2000nl-db-125",
-        actualMigration: 125,
+        expected: "2000nl-db-126",
+        expectedMigration: 126,
+        actual: "2000nl-db-126",
+        actualMigration: 126,
         compatible: true,
       },
     });
@@ -230,8 +230,8 @@ describe("/api/health", () => {
       .mockReturnValueOnce({ from: searchIndexFromMock() })
       .mockReturnValueOnce({
         from: contractStateFromMock({
-          contractId: "2000nl-db-124",
-          migrationId: 124,
+          contractId: "2000nl-db-125",
+          migrationId: 125,
         }),
       });
     rpc.mockResolvedValue({ data: { items: [], total: 0 }, error: null });
@@ -246,10 +246,10 @@ describe("/api/health", () => {
       status: "warning",
       message: "Application and database contracts are incompatible.",
       details: {
-        expected: "2000nl-db-125",
-        expectedMigration: 125,
-        actual: "2000nl-db-124",
-        actualMigration: 124,
+        expected: "2000nl-db-126",
+        expectedMigration: 126,
+        actual: "2000nl-db-125",
+        actualMigration: 125,
         compatible: false,
       },
     });

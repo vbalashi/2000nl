@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-125",
+  "contractId": "2000nl-db-126",
   "rollout": {
-    "status": "hold",
+    "status": "enabled",
     "requiredMigrationId": 126,
     "coordinationIssue": 232
   },
@@ -29,7 +29,12 @@
       "migrationId": 125,
       "file": "db/migrations/125_avoid_scheduler_pointer_json_rescan.sql",
       "sha256": "757c24daae14af40eb25f837681d9634f160700cfffa4d21654ce436568c6c65"
+    },
+    {
+      "migrationId": 126,
+      "file": "db/migrations/126_set_based_scheduler_dictionary_access.sql",
+      "sha256": "414fbafac3cd5778bba73532aa93ec9d320889735371a8220285b94e12ef3bd2"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-125.sql"
+  "postflightProbe": "db/deploy-contract/postflight-126.sql"
 }

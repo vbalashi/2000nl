@@ -27,8 +27,8 @@ only protects the scheduler's explicit historical read behavior.
 | --- | --- | ---: | ---: | ---: | ---: |
 | `3b0c1bb7` | session plan | 279.0 ms | 291.2 ms | 302.2 ms | 18,184 |
 | `3b0c1bb7` | next card | 291.4 ms | 307.7 ms | 309.2 ms | 18,184 |
-| migration 126 | session plan | 162.2 ms | 163.6 ms | 172.8 ms | 6 |
-| migration 126 | next card | 178.3 ms | 185.0 ms | 185.4 ms | 6 |
+| migration 126 | session plan | 174.5 ms | 185.5 ms | 188.3 ms | 6 |
+| migration 126 | next card | 199.4 ms | 192.3 ms | 195.8 ms | 6 |
 
 The fixed budget is first at most 2,000 ms, warm p95 at most 1,000 ms, and max
 at most 2,000 ms. Local first calls discard prepared plans but do not flush
@@ -63,7 +63,9 @@ the migration-124 history RPC remains present. Do not roll back learning or
 history data: these migrations only replace read functions. Re-run the prior
 selector budget and app fallback smoke before declaring rollback complete.
 
-Issue #233 owns the generic deployment/migration gate. Whichever branch lands
-second must rebase on current `main` and rerun a fresh bootstrap, all FSRS/RPC
-tests, and this benchmark. The deployment contract must require migration 126
-in the same first scheduler rollout so 123–125 cannot be accepted alone.
+Issue #233 owns the generic deployment/migration gate. This branch rebases on
+that integrated gate and advances the commit-owned contract to migration 126.
+A fresh bootstrap, all FSRS/RPC tests, the exact ledger/postflight gate, and
+this benchmark must pass on the final commit. The first enabled deployment
+therefore applies or verifies 123–126 together; 123–125 cannot be accepted
+alone.
