@@ -542,6 +542,60 @@ test(
       applySqlFile(targetUrl, "db/migrations/127_bounded_training_session_plan_io.sql");
       applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
 
+      const schedulerSecurityDrift = psql(
+        targetUrl,
+        `ALTER FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) SECURITY INVOKER;\n`,
+      );
+      assert.equal(schedulerSecurityDrift.status, 0, schedulerSecurityDrift.stderr);
+      const schedulerSecurityDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerSecurityDriftPostflight.status, 0);
+      assert.match(
+        schedulerSecurityDriftPostflight.stderr,
+        /bounded-selector-function-contract/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const schedulerGrantDrift = psql(
+        targetUrl,
+        `GRANT EXECUTE ON FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) TO authenticated;\n`,
+      );
+      assert.equal(schedulerGrantDrift.status, 0, schedulerGrantDrift.stderr);
+      const schedulerGrantDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerGrantDriftPostflight.status, 0);
+      assert.match(schedulerGrantDriftPostflight.stderr, /grants/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const siblingIndexDrift = psql(
+        targetUrl,
+        `DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+         CREATE INDEX word_entries_training_sibling_count_v1_idx
+         ON public.word_entries (dictionary_id, language_code, headword)
+         WHERE false;\n`,
+      );
+      assert.equal(siblingIndexDrift.status, 0, siblingIndexDrift.stderr);
+      const siblingIndexDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(siblingIndexDriftPostflight.status, 0);
+      assert.match(siblingIndexDriftPostflight.stderr, /selector-sibling-index/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
       applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
       const schedulerDriftPostflight = psql(
         targetUrl,

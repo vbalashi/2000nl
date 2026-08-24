@@ -32,6 +32,13 @@ tests continue to characterize curated/user lists, source filters, dictionary
 access, legacy null-dictionary entries, pointer-only/known/hidden exclusions,
 daily caps, overdue order, and future-due practice.
 
+Postflight pins the selector's security-definer boundary, exact search path,
+volatility, owner and denied caller roles. It also pins the sibling index to
+the expected table, btree access method, ordered plain keys, and non-partial,
+non-expression shape. Real PostgreSQL tamper tests prove that security, grant,
+or partial-index drift fails closed and that replaying migration 128 restores
+the exact contract before postflight can pass.
+
 The checksum-pinned pre-switch probe now executes both the session plan and
 the actual next-card RPC under the same 2,000 ms read-only transaction. Its
 real PostgreSQL integration proves two no-op/apply runs preserve card status,

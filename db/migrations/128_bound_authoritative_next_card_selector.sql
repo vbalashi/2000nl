@@ -6,7 +6,8 @@
 
 BEGIN;
 
-CREATE INDEX IF NOT EXISTS word_entries_training_sibling_count_v1_idx
+DROP INDEX IF EXISTS public.word_entries_training_sibling_count_v1_idx;
+CREATE INDEX word_entries_training_sibling_count_v1_idx
 ON public.word_entries (dictionary_id, language_code, headword);
 
 CREATE OR REPLACE FUNCTION private.training_scheduler_candidates_v1(

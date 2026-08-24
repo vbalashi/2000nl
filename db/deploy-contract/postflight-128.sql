@@ -18,7 +18,6 @@ DECLARE
   counts_definition text;
   sync_definition text;
   plan_definition text;
-  sibling_index_definition text;
   scheduler_access_call_count integer;
   scope_plan jsonb;
   scope_plan_text text;
@@ -36,6 +35,8 @@ BEGIN
      OR has_function_privilege('authenticated', sync_oid, 'EXECUTE')
      OR has_function_privilege('anon', sync_oid, 'EXECUTE')
      OR has_function_privilege('service_role', scheduler_oid, 'EXECUTE')
+     OR has_function_privilege('authenticated', scheduler_oid, 'EXECUTE')
+     OR has_function_privilege('anon', scheduler_oid, 'EXECUTE')
      OR NOT has_function_privilege(
        'authenticated', 'public.get_recent_training_review_history(integer)', 'EXECUTE'
      ) THEN
@@ -55,19 +56,68 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed scheduler-index';
   END IF;
 
-  SELECT pg_get_indexdef(index_relation.oid)
-  INTO sibling_index_definition
-  FROM pg_index index_state
-  JOIN pg_class index_relation ON index_relation.oid = index_state.indexrelid
-  JOIN pg_namespace index_namespace ON index_namespace.oid = index_relation.relnamespace
-  WHERE index_namespace.nspname = 'public'
-    AND index_relation.relname = 'word_entries_training_sibling_count_v1_idx'
-    AND index_state.indisvalid AND index_state.indisready;
-  IF sibling_index_definition IS NULL
-     OR position(
-       '(dictionary_id, language_code, headword)' IN sibling_index_definition
-     ) = 0 THEN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_index index_state
+    JOIN pg_class index_relation ON index_relation.oid = index_state.indexrelid
+    JOIN pg_namespace index_namespace ON index_namespace.oid = index_relation.relnamespace
+    JOIN pg_class table_relation ON table_relation.oid = index_state.indrelid
+    JOIN pg_namespace table_namespace ON table_namespace.oid = table_relation.relnamespace
+    JOIN pg_am access_method ON access_method.oid = index_relation.relam
+    WHERE index_namespace.nspname = 'public'
+      AND index_relation.relname = 'word_entries_training_sibling_count_v1_idx'
+      AND table_namespace.nspname = 'public'
+      AND table_relation.relname = 'word_entries'
+      AND access_method.amname = 'btree'
+      AND index_state.indisvalid
+      AND index_state.indisready
+      AND NOT index_state.indisunique
+      AND index_state.indnkeyatts = 3
+      AND index_state.indnatts = 3
+      AND index_state.indpred IS NULL
+      AND index_state.indexprs IS NULL
+      AND index_state.indkey[0] =
+        (SELECT attribute.attnum FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'dictionary_id')
+      AND index_state.indkey[1] =
+        (SELECT attribute.attnum FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'language_code')
+      AND index_state.indkey[2] =
+        (SELECT attribute.attnum FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'headword')
+  ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed selector-sibling-index';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_proc procedure_state
+    WHERE procedure_state.oid = scheduler_oid::oid
+      AND procedure_state.prosecdef
+      AND procedure_state.provolatile = 'v'
+      AND procedure_state.proconfig IS NOT DISTINCT FROM
+        ARRAY['search_path=public, private, pg_temp']::text[]
+      AND pg_get_userbyid(procedure_state.proowner) = 'postgres'
+  ) OR EXISTS (
+    SELECT 1
+    FROM pg_proc procedure_state
+    CROSS JOIN LATERAL aclexplode(
+      COALESCE(procedure_state.proacl, acldefault('f', procedure_state.proowner))
+    ) access_control
+    WHERE procedure_state.oid = scheduler_oid::oid
+      AND access_control.privilege_type = 'EXECUTE'
+      AND access_control.grantee IN (
+        0,
+        (SELECT oid FROM pg_roles WHERE rolname = 'anon'),
+        (SELECT oid FROM pg_roles WHERE rolname = 'authenticated'),
+        (SELECT oid FROM pg_roles WHERE rolname = 'service_role')
+      )
+  ) THEN
+    RAISE EXCEPTION
+      'db-contract-gate: postflight-failed bounded-selector-function-contract';
   END IF;
 
   scheduler_definition := upper(pg_get_functiondef(scheduler_oid));
