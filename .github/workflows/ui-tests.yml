@@ -4,11 +4,21 @@ on:
   pull_request:
     paths:
       - "apps/ui/**"
+      - "packages/shared/deployment/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy-nuc.yml"
+      - "scripts/verify-deploy-health.mjs"
+      - "scripts/verify-deploy-health.test.mjs"
       - ".github/workflows/ui-tests.yml"
   push:
     branches: [main, master]
     paths:
       - "apps/ui/**"
+      - "packages/shared/deployment/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy-nuc.yml"
+      - "scripts/verify-deploy-health.mjs"
+      - "scripts/verify-deploy-health.test.mjs"
       - ".github/workflows/ui-tests.yml"
   workflow_dispatch:
 
@@ -44,6 +54,9 @@ jobs:
       - name: Run UI tests
         run: npm test
         working-directory: apps/ui
+
+      - name: Test deploy health verifier
+        run: node --test scripts/verify-deploy-health.test.mjs
 
       - name: Run platform API smoke
         run: npm run test:platform

@@ -90,6 +90,14 @@ For temporary development migrations, you can create delta files (0040_*, etc.) 
 
 **IMPORTANT:** All schema changes MUST go through migration files. Never make manual changes in Supabase Dashboard or via adhoc SQL.
 
+The sole bootstrap exception is
+`db/deploy-contract/ledger-v1.sql`. It is still an immutable, checksummed
+migration file, but it lives beside the deploy contract because the ledger must
+exist before the first managed numbered migration can be recorded atomically.
+The deploy gate applies it only after the read-only baseline probe. Never edit
+ledger v1 after its first rollout; every later ledger/state schema change must
+use the next ordinary `db/migrations/NNN_*.sql` file.
+
 1. **Create migration file:**
    ```bash
    # Use sequential numbering: 006, 007, 008, etc.

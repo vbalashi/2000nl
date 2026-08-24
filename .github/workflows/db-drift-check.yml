@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'db/migrations/**'
+      - 'db/deploy-contract/**'
+      - 'db/scripts/deploy_db_contract*.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
@@ -12,11 +14,14 @@ on:
       - 'packages/ingestion/**'
       - 'packages/scraper/**'
       - 'packages/shared/schemas/nl/**'
+      - 'packages/shared/deployment/**'
       - '.github/workflows/db-drift-check.yml'
   push:
     branches: [main, master]
     paths:
       - 'db/migrations/**'
+      - 'db/deploy-contract/**'
+      - 'db/scripts/deploy_db_contract*.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
       - 'db/scripts/live_dictionary_migration*.sql'
@@ -25,6 +30,7 @@ on:
       - 'packages/ingestion/**'
       - 'packages/scraper/**'
       - 'packages/shared/schemas/nl/**'
+      - 'packages/shared/deployment/**'
       - '.github/workflows/db-drift-check.yml'
   workflow_dispatch:
 
@@ -49,6 +55,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -159,6 +170,16 @@ jobs:
           grep -q '051_remove_word_status_sync_bridge.sql' /tmp/live-dictionary-migration-plan.txt
           grep -q '052_drop_legacy_user_word_status.sql' /tmp/live-dictionary-migration-plan.txt
 
+      - name: Test fail-closed deployment contract gate
+        env:
+          DB_CONTRACT_INTEGRATION_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+        run: |
+          node --test db/scripts/deploy_db_contract.test.mjs
+          node --test db/scripts/deploy_db_contract.integration.test.mjs
+          node db/scripts/deploy_db_contract.mjs validate
+          node db/scripts/deploy_db_contract.mjs rollout-status
+          node db/scripts/deploy_db_contract.mjs expected
+
       - name: Apply bootstrap and probe contract
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
@@ -166,6 +187,13 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/plain_postgres_supabase_compat.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
+
+      - name: Execute exact deployment postflight against PostgreSQL
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-125.sql
 
       - name: Test versioned importer and populated bootstrap replay
         env:

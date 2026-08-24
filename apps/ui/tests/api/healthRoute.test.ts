@@ -62,6 +62,28 @@ const searchIndexFromMock = (options?: {
   });
 };
 
+const contractStateFromMock = (options?: {
+  contractId?: string;
+  migrationId?: number;
+  error?: string;
+}) =>
+  vi.fn(() => {
+    const query: any = {
+      select: vi.fn(() => query),
+      eq: vi.fn(() => query),
+      maybeSingle: vi.fn(async () => ({
+        data: options?.error
+          ? null
+          : {
+              contract_id: options?.contractId ?? "2000nl-db-125",
+              migration_id: options?.migrationId ?? 125,
+            },
+        error: options?.error ? { message: options.error } : null,
+      })),
+    };
+    return query;
+  });
+
 describe("/api/health", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -121,7 +143,8 @@ describe("/api/health", () => {
   test("warns when the platform RPC contract is missing", async () => {
     createClient
       .mockReturnValueOnce({ rpc })
-      .mockReturnValueOnce({ from: searchIndexFromMock() });
+      .mockReturnValueOnce({ from: searchIndexFromMock() })
+      .mockReturnValueOnce({ from: contractStateFromMock() });
     rpc.mockResolvedValue({ data: { items: [], total: 0 }, error: null });
     rpc.mockResolvedValueOnce({
       data: null,
@@ -155,6 +178,16 @@ describe("/api/health", () => {
         pendingBackfill: false,
       }),
     });
+    expect(body.checks.databaseContract).toEqual({
+      status: "ok",
+      details: {
+        expected: "2000nl-db-125",
+        expectedMigration: 125,
+        actual: "2000nl-db-125",
+        actualMigration: 125,
+        compatible: true,
+      },
+    });
   });
 
   test("deep health warns when grouped dictionary search index is not ready", async () => {
@@ -166,7 +199,8 @@ describe("/api/health", () => {
           fieldRowCount: 0,
           activeExtractionVersion: null,
         }),
-      });
+      })
+      .mockReturnValueOnce({ from: contractStateFromMock() });
     rpc.mockResolvedValue({ data: { items: [], total: 0 }, error: null });
 
     const { GET } = await import("@/app/api/health/route");
@@ -188,5 +222,38 @@ describe("/api/health", () => {
         pendingBackfill: true,
       }),
     });
+  });
+
+  test("deep health exposes only a bounded incompatible DB contract signal", async () => {
+    createClient
+      .mockReturnValueOnce({ rpc })
+      .mockReturnValueOnce({ from: searchIndexFromMock() })
+      .mockReturnValueOnce({
+        from: contractStateFromMock({
+          contractId: "2000nl-db-124",
+          migrationId: 124,
+        }),
+      });
+    rpc.mockResolvedValue({ data: { items: [], total: 0 }, error: null });
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request("?deep=1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("warning");
+    expect(body.checks.databaseContract).toEqual({
+      status: "warning",
+      message: "Application and database contracts are incompatible.",
+      details: {
+        expected: "2000nl-db-125",
+        expectedMigration: 125,
+        actual: "2000nl-db-124",
+        actualMigration: 124,
+        compatible: false,
+      },
+    });
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain("function");
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain("schema");
   });
 });

@@ -1,5 +1,6 @@
 services:
   ui:
+    image: 2000nl-ui:${UI_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: apps/ui/Dockerfile

@@ -10,6 +10,29 @@ Use `psql_supabase.sh` to connect to the Supabase database:
 
 Requires `SUPABASE_DB_URL` or `DATABASE_URL` environment variable.
 
+## Commit-owned deployment contract
+
+`deploy_db_contract.mjs` is the fail-closed NUC migration gate. It validates the
+checked-out manifest and migration checksums, applies missing managed migrations
+transactionally, records them atomically, and runs the exact postflight probe.
+
+```bash
+node db/scripts/deploy_db_contract.mjs expected
+node db/scripts/deploy_db_contract.mjs rollout-status
+DEPLOY_APP_COMMIT="$(git rev-parse HEAD)" \
+  node db/scripts/deploy_db_contract.mjs apply --env-file .env.local
+```
+
+The repository contract can intentionally hold deployment before any database
+access. Follow `docs/runbooks/nuc-db-contract-deploy.md`; never bypass a hold or
+run the gate manually against production.
+
+CI also runs `deploy_db_contract.integration.test.mjs` against disposable real
+PostgreSQL. It proves transactional DDL/ledger rollback, repaired retry on the
+same database, postflight success, and idempotent replay. Set
+`DB_CONTRACT_INTEGRATION_DATABASE_URL` only to a non-production PostgreSQL
+database whose user may create and drop a uniquely named test database.
+
 ---
 
 ## SRS History Analysis

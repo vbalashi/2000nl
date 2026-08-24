@@ -112,3 +112,7 @@ Do not conflate browser tooling failures:
 - Scheduler behavior, review state, policies, or RPCs: start in `db/migrations` and `apps/ui/tests/fsrs`.
 - Data import or dictionary shape issues: start in `packages/ingestion`, `packages/scraper`, and `packages/shared`.
 - Production login, TTS, and premium-provider troubleshooting: check the runbooks in `docs/`.
+- NUC database migration/deploy contract changes: follow
+  `docs/runbooks/nuc-db-contract-deploy.md`. An explicit manifest rollout hold
+  must never be bypassed; every enabled forward migration must be appended with
+  its exact checksum and postflight contract before deployment.
