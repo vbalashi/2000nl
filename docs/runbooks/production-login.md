@@ -45,6 +45,30 @@ entry, globally revokes the QA session, and deletes local token artifacts. Do
 not copy session JSON into another profile or bypass the wrapper with an inline
 OTP script.
 
+Every browser command has a 15-second outer process deadline. The final Today
+check uses short, independently bounded probes for at most 30 seconds; it does
+not rely on a timer inside the page or a second `networkidle` wait after session
+reload. Today labels are matched case-insensitively across Dutch, English, and
+Russian. A failed smoke reports one of these classes:
+
+- `Browser harness failure` — the browser command timed out or failed;
+- `App/auth failure` — the page remained visibly unauthenticated;
+- `App surface failure` — authentication was present, but Today never appeared.
+
+The wrapper then records a screenshot under `tmp/agent-browser/` and prints only
+the production URL path, the fixed visible-state class, and counts of console,
+page-error, and network records. Raw page/log/network content is never printed,
+because it may contain session or personal data. Token artifacts still follow
+the revocation-and-cleanup contract above. The screenshot is captured in a
+separate one-use browser session that opens only an opaque generated document
+containing the safe failure class and production origin. The production page is
+never present in that target, so neither navigation nor capture timing can
+expose raw app pixels. If that privacy gate or any diagnostic command fails, the
+field says
+`unavailable(privacy-gate-failed)`, `unavailable(timeout)`, or
+`unavailable(command-failed)` instead of hiding the harness failure behind an
+empty count.
+
 Production smoke checks should be read-only unless an owning issue explicitly
 authorizes a mutation. Loading the authenticated startup surface is safe;
 revealing/grading cards, reporting, changing settings, and starting learning are
