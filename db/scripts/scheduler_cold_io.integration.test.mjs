@@ -142,7 +142,10 @@ test(
          )
          SELECT '${dictionaryId}', 'nl', 'issue238-entry-' || sample, sample, 'noun',
            mod(sample::bigint * ${nt2EntryCount}, ${entryCount}) < ${nt2EntryCount},
-           jsonb_build_object('payload', encode(gen_random_bytes(800), 'hex'))
+           jsonb_build_object('payload', (
+             SELECT string_agg(md5(sample::text || ':' || chunk::text), '')
+             FROM generate_series(1, 50) chunk
+           ))
          FROM generate_series(1, ${entryCount}) sample;
 
          INSERT INTO public.user_card_status (user_id, entry_id, card_type_id)
