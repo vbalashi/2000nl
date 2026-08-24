@@ -272,12 +272,13 @@ warm maximum at most 2,000 ms for both RPCs over 30 warm samples. See
 `docs/architecture/evidence/issue-232/` for the baseline, set-based result, and
 the indivisible 123→126 production rollout/rollback gate.
 
-The deployment contract also runs the exact session-plan selector once before
-every app switch. It verifies that exactly one `test@2000nl.test` identity
-exists, starts a `BEGIN READ ONLY` transaction, discards only session-local
-plans, and applies a 2,000 ms statement timeout. The probe is repeated even
-when all migrations are no-ops so a prior timeout cannot be bypassed by a
-retry. It does not review a card, mark it known, or submit a report.
+The deployment contract also runs the exact session-plan and actual next-card
+selectors once before every app switch. It verifies that exactly one
+`test@2000nl.test` identity exists, starts a `BEGIN READ ONLY` transaction,
+discards only session-local plans, and applies a 2,000 ms statement timeout.
+The probe is repeated even when all migrations are no-ops so a prior timeout
+cannot be bypassed by a retry. It does not review a card, mark it known, or
+submit a report.
 
 ---
 

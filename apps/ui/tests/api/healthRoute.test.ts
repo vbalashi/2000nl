@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
+import contract from "../../../../packages/shared/deployment/db-contract.json";
+
+const expectedMigration = contract.migrations.at(-1)!.migrationId;
 
 const rpc = vi.fn();
 const from = vi.fn();
@@ -75,8 +78,8 @@ const contractStateFromMock = (options?: {
         data: options?.error
           ? null
           : {
-              contract_id: options?.contractId ?? "2000nl-db-127",
-              migration_id: options?.migrationId ?? 127,
+              contract_id: options?.contractId ?? contract.contractId,
+              migration_id: options?.migrationId ?? expectedMigration,
             },
         error: options?.error ? { message: options.error } : null,
       })),
@@ -181,10 +184,10 @@ describe("/api/health", () => {
     expect(body.checks.databaseContract).toEqual({
       status: "ok",
       details: {
-        expected: "2000nl-db-127",
-        expectedMigration: 127,
-        actual: "2000nl-db-127",
-        actualMigration: 127,
+        expected: contract.contractId,
+        expectedMigration,
+        actual: contract.contractId,
+        actualMigration: expectedMigration,
         compatible: true,
       },
     });
@@ -246,8 +249,8 @@ describe("/api/health", () => {
       status: "warning",
       message: "Application and database contracts are incompatible.",
       details: {
-        expected: "2000nl-db-127",
-        expectedMigration: 127,
+        expected: contract.contractId,
+        expectedMigration,
         actual: "2000nl-db-125",
         actualMigration: 125,
         compatible: false,

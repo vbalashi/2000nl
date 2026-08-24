@@ -10,7 +10,7 @@ const containerImage = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_IMAGE;
 const containerNetwork = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK ?? "bridge";
 const containerDatabaseHost = process.env.DB_CONTRACT_INTEGRATION_PSQL_HOST;
 const qaUserId = "23800000-0000-0000-0000-000000000001";
-const appCommit = "2380000000000000000000000000000000000000";
+const appCommit = "2430000000000000000000000000000000000000";
 
 function postgresEnvironment(urlString) {
   const url = new URL(urlString);
@@ -85,7 +85,7 @@ test(
     const localTarget = new URL(baseDatabaseUrl);
     if (
       !["127.0.0.1", "localhost", "::1"].includes(localTarget.hostname) ||
-      !/(contract_test|issue238)/i.test(localTarget.pathname)
+      !/(contract_test|issue238|issue243)/i.test(localTarget.pathname)
     ) {
       throw new Error("Pre-switch probe integration accepts only a scoped loopback database");
     }
@@ -115,13 +115,13 @@ test(
     const first = apply(containerTarget.toString());
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /pre-switch-read-probe passed/);
-    assert.match(first.stdout, /compatible 2000nl-db-127/);
+    assert.match(first.stdout, /compatible 2000nl-db-128/);
 
     const replay = apply(containerTarget.toString());
     assert.equal(replay.status, 0, replay.stderr);
-    assert.match(replay.stdout, /no-op 127/);
+    assert.match(replay.stdout, /no-op 128/);
     assert.match(replay.stdout, /pre-switch-read-probe passed/);
-    assert.match(replay.stdout, /compatible 2000nl-db-127/);
+    assert.match(replay.stdout, /compatible 2000nl-db-128/);
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
   },

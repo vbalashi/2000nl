@@ -88,7 +88,7 @@ function explainBuffers(plan) {
 }
 
 test(
-  "the production-shaped session plan has a bounded cold-I/O footprint",
+  "the production-shaped session plan and next-card selector have bounded cold-I/O",
   { skip: !baseDatabaseUrl, timeout: 120_000 },
   async () => {
     const base = assertLoopback(baseDatabaseUrl);
@@ -305,6 +305,51 @@ test(
       );
       assert.equal(writerAfterCommit.status, 0, writerAfterCommit.stderr);
 
+      const parityEntry = psql(
+        targetUrl,
+        "SELECT id FROM public.word_entries WHERE meaning_id = 2;\n",
+      );
+      assert.equal(parityEntry.status, 0, parityEntry.stderr);
+      const parityEntryId = parityEntry.stdout.trim();
+      assert.match(parityEntryId, /^[0-9a-f-]{36}$/);
+      const candidateSnapshot = (modes, cardFilter, excludedEntries, excludedCards) => {
+        const snapshot = psql(
+          targetUrl,
+          `SELECT md5(COALESCE(jsonb_agg(jsonb_build_object(
+             'entryId', candidate.entry_id,
+             'cardTypeId', candidate.card_type_id,
+             'queueSource', candidate.queue_source,
+             'newToday', candidate.new_today,
+             'dailyNewLimit', candidate.daily_new_limit,
+             'newPoolSize', candidate.new_pool_size,
+             'learningDueCount', candidate.learning_due_count,
+             'reviewPoolSize', candidate.review_pool_size
+           ) ORDER BY candidate.entry_id, candidate.card_type_id, candidate.queue_source)::text, '[]'))
+           FROM private.training_scheduler_candidates_v1(
+             '${qaUserId}', ${modes}, null, 'curated', '${cardFilter}', 'auto',
+             ${excludedEntries}, ${excludedCards}, '{}', false
+           ) candidate;\n`,
+        );
+        assert.equal(snapshot.status, 0, snapshot.stderr);
+        return snapshot.stdout.trim();
+      };
+      const parityCases = [
+        ["ARRAY['word-to-definition']", "both", "ARRAY[]::uuid[]", "ARRAY[]::text[]"],
+        ["ARRAY['word-to-definition']", "new", "ARRAY[]::uuid[]", "ARRAY[]::text[]"],
+        ["ARRAY['word-to-definition']", "review", `ARRAY['${parityEntryId}']::uuid[]`, "ARRAY[]::text[]"],
+        [
+          "ARRAY['word-to-definition','definition-to-word']",
+          "both",
+          "ARRAY[]::uuid[]",
+          `ARRAY['${parityEntryId}:word-to-definition']::text[]`,
+        ],
+      ];
+      applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
+      const legacyCandidates = parityCases.map((parityCase) => candidateSnapshot(...parityCase));
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      const optimizedCandidates = parityCases.map((parityCase) => candidateSnapshot(...parityCase));
+      assert.deepEqual(optimizedCandidates, legacyCandidates);
+
       const parity = psql(
         targetUrl,
         `BEGIN READ ONLY;
@@ -385,8 +430,84 @@ test(
           `(${buffers.hits} hit, ${buffers.reads} read); the budgets are 2,000ms and 4,000 blocks`,
       );
 
+      const nextCardExplain = psql(
+        targetUrl,
+        `BEGIN READ ONLY;
+         SELECT set_config('request.jwt.claim.sub', '${qaUserId}', true);
+         SET LOCAL random_page_cost = 1.1;
+         SET LOCAL effective_io_concurrency = 200;
+         SET LOCAL jit = off;
+         DISCARD PLANS;
+         EXPLAIN (ANALYZE, BUFFERS, WAL, SETTINGS, FORMAT JSON)
+         SELECT * FROM public.get_next_card(
+           '${qaUserId}', ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
+           'curated', 'both', 'auto', ARRAY[]::text[]
+         );
+         ROLLBACK;\n`,
+      );
+      assert.equal(nextCardExplain.status, 0, nextCardExplain.stderr);
+      const nextCardJsonStart = nextCardExplain.stdout.indexOf("[");
+      const nextCardJsonEnd = nextCardExplain.stdout.lastIndexOf("]");
+      assert.ok(
+        nextCardJsonStart >= 0 && nextCardJsonEnd > nextCardJsonStart,
+        `next-card EXPLAIN JSON missing: ${nextCardExplain.stdout}`,
+      );
+      const nextCardPlan = JSON.parse(
+        nextCardExplain.stdout.slice(nextCardJsonStart, nextCardJsonEnd + 1),
+      );
+      const nextCardBuffers = explainBuffers(nextCardPlan);
+      const nextCardTotalBuffers = nextCardBuffers.hits + nextCardBuffers.reads;
+      const nextCardExecutionMs = nextCardPlan[0]["Execution Time"];
+
+      const measureComponent = (statement) => {
+        const componentExplain = psql(
+          targetUrl,
+          `BEGIN READ ONLY;
+           SET LOCAL jit = off;
+           EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${statement};
+           ROLLBACK;\n`,
+        );
+        assert.equal(componentExplain.status, 0, componentExplain.stderr);
+        const componentJsonStart = componentExplain.stdout.indexOf("[");
+        const componentJsonEnd = componentExplain.stdout.lastIndexOf("]");
+        assert.ok(componentJsonStart >= 0 && componentJsonEnd > componentJsonStart);
+        const componentPlan = JSON.parse(
+          componentExplain.stdout.slice(componentJsonStart, componentJsonEnd + 1),
+        );
+        const componentBuffers = explainBuffers(componentPlan);
+        return {
+          blocks: componentBuffers.hits + componentBuffers.reads,
+          ms: componentPlan[0]["Execution Time"],
+        };
+      };
+      const fixtureEntry = psql(
+        targetUrl,
+        "SELECT id FROM public.word_entries WHERE meaning_id = 1;\n",
+      );
+      assert.equal(fixtureEntry.status, 0, fixtureEntry.stderr);
+      const fixtureEntryId = fixtureEntry.stdout.trim();
+      assert.match(fixtureEntryId, /^[0-9a-f-]{36}$/);
+      const componentMetrics = [
+        measureComponent(`SELECT * FROM private.training_scheduler_candidates_v1(
+          '${qaUserId}', ARRAY['word-to-definition'], null, 'curated', 'both',
+          'auto', ARRAY[]::uuid[], ARRAY[]::text[], '{}', false
+        ) ORDER BY selection_order LIMIT 1`),
+        measureComponent(`SELECT private.project_training_scheduler_candidate_v1(
+          '${qaUserId}', '${fixtureEntryId}',
+          'word-to-definition', 'new', '{}', false, 0, 10, 10, 0, 0
+        )`),
+        measureComponent("SELECT private.pointer_only_dictionary_entry_ids_v1()"),
+      ];
+      assert.ok(
+        nextCardTotalBuffers <= 4_000 && nextCardExecutionMs <= 2_000,
+        `next-card selector used ${nextCardExecutionMs}ms and touched ` +
+          `${nextCardTotalBuffers} shared blocks (${nextCardBuffers.hits} hit, ` +
+          `${nextCardBuffers.reads} read); components scheduler/project/pointer=` +
+          `${JSON.stringify(componentMetrics)}; the budgets are 2,000ms and 4,000 blocks`,
+      );
+
       applySqlFile(targetUrl, "db/deploy-contract/ledger-v1.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
 
       const triggerDrift = psql(
         targetUrl,
@@ -399,7 +520,7 @@ test(
       const triggerDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
       );
       assert.notEqual(triggerDriftPostflight.status, 0);
       assert.match(triggerDriftPostflight.stderr, /bounded-scope-sync-contract/);
@@ -413,13 +534,25 @@ test(
       const functionDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
       );
       assert.notEqual(functionDriftPostflight.status, 0);
       assert.match(functionDriftPostflight.stderr, /bounded-scope-sync-function-contract/);
 
       applySqlFile(targetUrl, "db/migrations/127_bounded_training_session_plan_io.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
+      const schedulerDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+      );
+      assert.notEqual(schedulerDriftPostflight.status, 0);
+      assert.match(schedulerDriftPostflight.stderr, /bounded-selector-contract/);
+
+      applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
     } finally {
       const terminate = psql(
         base.toString(),
