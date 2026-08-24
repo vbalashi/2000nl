@@ -75,8 +75,8 @@ const contractStateFromMock = (options?: {
         data: options?.error
           ? null
           : {
-              contract_id: options?.contractId ?? "2000nl-db-126",
-              migration_id: options?.migrationId ?? 126,
+              contract_id: options?.contractId ?? "2000nl-db-127",
+              migration_id: options?.migrationId ?? 127,
             },
         error: options?.error ? { message: options.error } : null,
       })),
@@ -181,10 +181,10 @@ describe("/api/health", () => {
     expect(body.checks.databaseContract).toEqual({
       status: "ok",
       details: {
-        expected: "2000nl-db-126",
-        expectedMigration: 126,
-        actual: "2000nl-db-126",
-        actualMigration: 126,
+        expected: "2000nl-db-127",
+        expectedMigration: 127,
+        actual: "2000nl-db-127",
+        actualMigration: 127,
         compatible: true,
       },
     });
@@ -246,8 +246,8 @@ describe("/api/health", () => {
       status: "warning",
       message: "Application and database contracts are incompatible.",
       details: {
-        expected: "2000nl-db-126",
-        expectedMigration: 126,
+        expected: "2000nl-db-127",
+        expectedMigration: 127,
         actual: "2000nl-db-125",
         actualMigration: 125,
         compatible: false,

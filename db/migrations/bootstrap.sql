@@ -375,3 +375,6 @@
 
 -- Scheduler resolves readable dictionaries once instead of once per entry
 \i db/migrations/126_set_based_scheduler_dictionary_access.sql
+
+-- Default session-plan counts avoid selector-only work and wide cold scans
+\i db/migrations/127_bounded_training_session_plan_io.sql

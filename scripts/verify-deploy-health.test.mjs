@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import test from "node:test";
 
 const script = path.resolve(import.meta.dirname, "verify-deploy-health.mjs");
+const contract = JSON.parse(readFileSync(
+  path.resolve(import.meta.dirname, "../packages/shared/deployment/db-contract.json"),
+  "utf8",
+));
+const expectedMigration = contract.migrations.at(-1).migrationId;
 const commit = "1234567890123456789012345678901234567890";
 
 function run(url) {
@@ -43,10 +49,10 @@ test("accepts only the exact app commit and DB contract", async () => {
       databaseContract: {
         status: "ok",
         details: {
-          expected: "2000nl-db-126",
-          actual: "2000nl-db-126",
-          expectedMigration: 126,
-          actualMigration: 126,
+          expected: contract.contractId,
+          actual: contract.contractId,
+          expectedMigration,
+          actualMigration: expectedMigration,
           compatible: true,
         },
       },
@@ -69,10 +75,10 @@ test("fails closed when health advertises a stale DB contract", async () => {
       databaseContract: {
         status: "warning",
         details: {
-          expected: "2000nl-db-126",
-          actual: "2000nl-db-125",
-          expectedMigration: 126,
-          actualMigration: 125,
+          expected: contract.contractId,
+          actual: "stale-db-contract",
+          expectedMigration,
+          actualMigration: expectedMigration - 1,
           compatible: false,
         },
       },
