@@ -28,7 +28,7 @@ export const surfaceProbeExpression = `(() => {
   return authenticatedShell ? "QA_SURFACE:AUTHENTICATED_OTHER" : "QA_SURFACE:AUTH_UNCONFIRMED";
 })()`;
 
-export function privacyOverlayExpression(lastClass, overlayId) {
+export function safeDiagnosticDataUrl(lastClass, panelId) {
   const safeClass = [
     "unauthenticated",
     "authenticated-without-today",
@@ -36,20 +36,10 @@ export function privacyOverlayExpression(lastClass, overlayId) {
     "browser-harness-unavailable",
     "loading-or-unclassified",
   ].includes(lastClass) ? lastClass : "unclassified";
-  return `(() => {
-    const overlay = document.createElement("div");
-    overlay.id = ${JSON.stringify(overlayId)};
-    overlay.setAttribute("role", "img");
-    overlay.setAttribute("aria-label", "2000NL safe QA diagnostic");
-    Object.assign(overlay.style, {
-      position: "fixed", inset: "0", zIndex: "2147483647", display: "grid",
-      placeItems: "center", padding: "48px", background: "#0f172a",
-      color: "#e2e8f0", font: "600 24px system-ui", whiteSpace: "pre-line"
-    });
-    overlay.textContent = ${JSON.stringify(`2000NL QA diagnostic\nState: ${safeClass}\nURL: https://2000.dilum.io/`)};
-    document.documentElement.appendChild(overlay);
-    return "QA_DIAGNOSTIC_OVERLAY_READY";
-  })()`;
+  const html = `<!doctype html><meta charset="utf-8"><title>2000NL QA diagnostic</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#0f172a}#${panelId}{box-sizing:border-box;width:100vw;height:100vh;display:grid;place-items:center;padding:48px;background:#0f172a;color:#e2e8f0;font:600 24px system-ui;white-space:pre-line}</style>
+<div id="${panelId}" role="img" aria-label="2000NL safe QA diagnostic">2000NL QA diagnostic\nState: ${safeClass}\nURL: https://2000.dilum.io/</div>`;
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 }
 
 function boundedEnvMs(name, fallback, maximum) {
@@ -94,16 +84,26 @@ async function collectDiagnostics(session, lastClass, commandTimeoutMs) {
   const consoleResult = await diagnostic(["console"]);
   const errors = await diagnostic(["errors"]);
   const network = await diagnostic(["network", "requests"]);
-  // Screenshot only the opaque overlay selected by an unguessable ID. If a
-  // redirect replaces the document between commands, the selector is absent
-  // and the screenshot fails instead of falling back to raw page pixels.
-  const overlayId = `qa-safe-diagnostic-${randomUUID()}`;
-  const overlay = await diagnostic(["eval", privacyOverlayExpression(lastClass, overlayId)]);
-  const overlayReady = overlay.code === 0
-    && overlay.stdout.includes("QA_DIAGNOSTIC_OVERLAY_READY");
-  const shot = overlayReady
-    ? await diagnostic(["screenshot", `#${overlayId}`, screenshot])
-    : { code: 1, stdout: "", stderr: "", timedOut: false };
+  // The screenshot runs in a one-use session containing only a generated safe
+  // data document. Production pixels are never present in this browser target,
+  // so selector resolution and capture cannot race production navigation.
+  const diagnosticId = randomUUID();
+  const diagnosticSession = `qa-diagnostic-${diagnosticId}`;
+  const panelId = `qa-safe-diagnostic-${diagnosticId}`;
+  const safeDocument = safeDiagnosticDataUrl(lastClass, panelId);
+  const opened = await browser(
+    diagnosticSession,
+    ["open", safeDocument],
+    Math.min(commandTimeoutMs, 2_000),
+  );
+  const shot = opened.code === 0
+    ? await browser(
+        diagnosticSession,
+        ["screenshot", `#${panelId}`, screenshot],
+        Math.min(commandTimeoutMs, 2_000),
+      )
+    : { code: 1, stdout: "", stderr: "", timedOut: opened.timedOut };
+  await browser(diagnosticSession, ["close"], Math.min(commandTimeoutMs, 1_000));
   const currentUrl = url.stdout.match(/https?:\/\/[^\s"']+/)?.[0];
   let safeUrl = "unavailable";
   if (currentUrl) {
@@ -114,7 +114,7 @@ async function collectDiagnostics(session, lastClass, commandTimeoutMs) {
   }
   const screenshotSummary = shot.code === 0 && fs.existsSync(screenshot)
     ? screenshot
-    : (!overlayReady
+    : (opened.code !== 0
         ? "unavailable(privacy-gate-failed)"
         : (shot.timedOut ? "unavailable(timeout)" : "unavailable(command-failed)"));
   console.error(`QA diagnostics: url=${safeUrl}; visible-state=${lastClass}; console=${diagnosticSummary(consoleResult)}; page-errors=${diagnosticSummary(errors)}; network=${diagnosticSummary(network)}; screenshot=${screenshotSummary}.`);

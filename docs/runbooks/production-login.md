@@ -59,12 +59,12 @@ The wrapper then records a screenshot under `tmp/agent-browser/` and prints only
 the production URL path, the fixed visible-state class, and counts of console,
 page-error, and network records. Raw page/log/network content is never printed,
 because it may contain session or personal data. Token artifacts still follow
-the revocation-and-cleanup contract above. Before the screenshot, the wrapper
-covers the viewport with an opaque fixed-content panel containing only the safe
-failure class and production origin. It screenshots that panel by an unguessable
-selector—not the page—so navigation removes the target and makes capture fail
-instead of exposing raw app pixels. If that privacy gate or any diagnostic
-command fails, the field says
+the revocation-and-cleanup contract above. The screenshot is captured in a
+separate one-use browser session that opens only an opaque generated document
+containing the safe failure class and production origin. The production page is
+never present in that target, so neither navigation nor capture timing can
+expose raw app pixels. If that privacy gate or any diagnostic command fails, the
+field says
 `unavailable(privacy-gate-failed)`, `unavailable(timeout)`, or
 `unavailable(command-failed)` instead of hiding the harness failure behind an
 empty count.
