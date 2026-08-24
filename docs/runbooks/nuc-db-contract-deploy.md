@@ -48,6 +48,14 @@ contract is never an acceptable intermediate release.
   anti-join can use its partial index. It also pins one canonical dictionary
   access call inside a materialized readable-dictionary set, plus legacy
   selector compatibility and the bounded health signal grant.
+- Before compatibility is advertised, the gate executes the checksum-pinned
+  session-plan selector as exactly one `test@2000nl.test` principal inside
+  `BEGIN READ ONLY`, with a 2,000 ms statement timeout. It discards only the
+  deployment session's cached plans and cannot review, report, mark known, or
+  otherwise mutate learner state.
+- The pre-switch read runs on no-op retries too. This is deliberate: forward
+  migrations commit independently, so a timed-out first read must not be
+  bypassed merely because the retry sees those migrations in the ledger.
 - The database URL is passed to `psql` through `PG*` environment variables,
   never command arguments. Gate output redacts URLs and credential-like values.
 - Containerized `psql` receives only named `PG*` variables, runs read-only with
@@ -84,7 +92,11 @@ The workflow keeps the current container running while it builds the new image.
 It stops without switching the app when the manifest is held, the pinned client
 preflight fails, the baseline is too old, the DB is newer than the app, a
 checksum differs, a migration fails, or postflight fails. Client preflight also
-runs before building. After the container switch, deep health must report:
+runs before building. A missing/ambiguous QA identity, read-only violation, or
+selector read exceeding 2,000 ms also stops before the app switch. The old app
+continues serving; rerunning the same immutable deployment repeats the read
+probe even when every forward migration is now a no-op. After the container
+switch, deep health must report:
 
 - the exact 40-character deployed commit;
 - overall `status: ok`;
@@ -121,7 +133,27 @@ App rollback and DB recovery are deliberately separate:
 CI proves that recovery path against a real disposable PostgreSQL database: a
 fixture fails after visible DDL, both the DDL and migration ledger row are
 verified absent, then the repaired immutable input succeeds on the same
-database and its next replay is verified as a no-op.
+database and its next replay is verified as a no-op. Separate real-PostgreSQL
+coverage proves that the pre-switch probe rejects writes, times out at its
+declared bound, reruns after committed migrations, and preserves all learner
+state for the exact QA identity.
+
+## First-call latency ownership
+
+The production migration-126 observation was 3,282.6 ms for the first
+read-only scheduler call, followed by warm p50 126.1 ms and p95 131.7 ms. An
+immediate new-connection repeat was already 772.4 ms on its first call. Local
+production-shaped characterization likewise measured connection setup at
+4–18 ms, plan-cold scheduler reads at 161–202 ms across fresh connections, and
+no material improvement from disabling JIT. The local shared service cannot
+safely reproduce a truly cold host page cache without disrupting other work, so
+the exact 3.28-second disk-cold sample was not manufactured locally.
+
+These results rule out connection setup, per-session plan compilation, and JIT
+as owners of a multi-second repeatable cost. The remaining evidence points to a
+one-time shared relation/index and host-page-cache fill after DDL. The bounded
+read is therefore placed in the deployment gate itself, before app switch,
+rather than adding application retries or changing scheduler SQL.
 
 ## Production QA sessions
 

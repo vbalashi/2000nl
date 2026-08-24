@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import contract from "../../../packages/shared/deployment/db-contract.json";
@@ -72,5 +73,27 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("scheduler_access_call_count <> 1");
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(workflow).toContain("-f db/deploy-contract/postflight-126.sql");
+  });
+
+  test("pins a bounded read-only QA selector before every compatible app switch", () => {
+    const probe = read(contract.preSwitchReadProbe.file);
+    const runner = read("db/scripts/deploy_db_contract.mjs");
+    const workflow = read(".github/workflows/deploy-nuc.yml");
+    const driftWorkflow = read(".github/workflows/db-drift-check.yml");
+    const gate = workflow.indexOf("deploy_db_contract.mjs apply");
+    const switchApp = workflow.indexOf("docker compose up -d --no-build ui", gate);
+
+    expect(contract.preSwitchReadProbe.statementTimeoutMs).toBe(2_000);
+    expect(createHash("sha256").update(probe).digest("hex")).toBe(
+      contract.preSwitchReadProbe.sha256,
+    );
+    expect(probe).toContain("auth_user.email = 'test@2000nl.test'");
+    expect(probe).toContain("public.get_training_session_plan");
+    expect(probe).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
+    expect(runner).toContain("BEGIN READ ONLY");
+    expect(runner).toContain("pre-switch-read-probe passed");
+    expect(driftWorkflow).toContain("pre_switch_read_probe.integration.test.mjs");
+    expect(gate).toBeGreaterThan(0);
+    expect(switchApp).toBeGreaterThan(gate);
   });
 });

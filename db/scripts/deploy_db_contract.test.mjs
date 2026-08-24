@@ -33,6 +33,10 @@ async function fixture() {
     "DO $$ BEGIN PERFORM 1; END $$;\n",
   );
   await writeFile(
+    path.join(root, "db/deploy-contract/pre-switch-read-probe-123.sql"),
+    "SELECT 'fixture-pre-switch-read-probe';\n",
+  );
+  await writeFile(
     path.join(root, "packages/shared/deployment/db-contract.json"),
     JSON.stringify({
       schemaVersion: 1,
@@ -58,6 +62,11 @@ async function fixture() {
         },
       ],
       postflightProbe: "db/deploy-contract/postflight-123.sql",
+      preSwitchReadProbe: {
+        file: "db/deploy-contract/pre-switch-read-probe-123.sql",
+        sha256: "1acff5a07e0e0f1fde97875d4e4bd0ce847b05cbdfd51a555de0ce74fd3a0202",
+        statementTimeoutMs: 50,
+      },
     }),
   );
 
@@ -183,6 +192,23 @@ test("validates every immutable contract file without database access", async ()
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout.trim(), "db-contract-gate: valid fixture-123");
+});
+
+test("rejects a pre-switch read probe above the rollout budget", async () => {
+  const root = await fixture();
+  const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.preSwitchReadProbe.statementTimeoutMs = 2_001;
+  await writeFile(manifestPath, JSON.stringify(manifest));
+
+  const result = spawnSync(
+    process.execPath,
+    [runner, "validate", "--repo-root", root, "--psql-bin", "/definitely/not/psql"],
+    { encoding: "utf8" },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Invalid pre-switch read probe contract/);
 });
 
 test("client preflight fails before database URL lookup when runtime is missing", async () => {
@@ -337,6 +363,26 @@ test("applies a missing migration and its ledger row in one transaction", async 
   assert.match(sql, /COMMIT;\s*\\echo db-contract-gate: applied 123/);
 });
 
+test("runs the exact bounded read-only probe after migrations and before compatibility", async () => {
+  const { capture, result } = await applyFixture("success");
+
+  assert.equal(result.status, 0, result.stderr);
+  const sql = await readFile(capture, "utf8");
+  const migrationCommit = sql.indexOf("db-contract-gate: applied 123");
+  const postflight = sql.indexOf("-- Exact RPC, grant, index/plan, and application compatibility contract.");
+  const readOnlyProbe = sql.indexOf("BEGIN READ ONLY", postflight);
+  const probeBody = sql.indexOf("fixture-pre-switch-read-probe");
+  const compatible = sql.indexOf("db-contract-gate: compatible fixture-123");
+
+  assert.ok(migrationCommit > 0);
+  assert.ok(postflight > migrationCommit);
+  assert.ok(readOnlyProbe > postflight);
+  assert.ok(probeBody > readOnlyProbe);
+  assert.ok(compatible > probeBody);
+  assert.match(sql, /SET LOCAL statement_timeout = '50ms'/);
+  assert.match(sql, /db-contract-gate: pre-switch-read-probe passed/);
+});
+
 test("accepts an already-applied no-op after validating the exact checksum", async () => {
   const { capture, result } = await applyFixture("noop");
 
@@ -345,6 +391,8 @@ test("accepts an already-applied no-op after validating the exact checksum", asy
   const sql = await readFile(capture, "utf8");
   assert.match(sql, /migration checksum drift/);
   assert.match(sql, /apply_migration_123/);
+  assert.match(sql, /BEGIN READ ONLY;[\s\S]*fixture-pre-switch-read-probe/);
+  assert.match(sql, /db-contract-gate: pre-switch-read-probe passed/);
 });
 
 test("fails closed on migration failure without exposing the database URL", async () => {

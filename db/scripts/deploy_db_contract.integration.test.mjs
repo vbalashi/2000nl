@@ -38,7 +38,17 @@ function psql(urlString, sql, databaseOverride) {
   });
 }
 
-async function writeFixture(root, migrationSource) {
+async function writeFixture(
+  root,
+  migrationSource,
+  preSwitchReadProbeSource = `DO $$
+BEGIN
+  IF current_setting('transaction_read_only') <> 'on' THEN
+    RAISE EXCEPTION 'pre-switch probe was not read-only';
+  END IF;
+END $$;
+`,
+) {
   const ledgerSource = `BEGIN;
 CREATE TABLE IF NOT EXISTS public.app_db_contract_migrations (
   migration_id integer PRIMARY KEY,
@@ -74,6 +84,10 @@ END $$;
   await writeFile(path.join(root, "db/deploy-contract/ledger-v1.sql"), ledgerSource);
   await writeFile(path.join(root, "db/deploy-contract/postflight-123.sql"), postflightSource);
   await writeFile(
+    path.join(root, "db/deploy-contract/pre-switch-read-probe-123.sql"),
+    preSwitchReadProbeSource,
+  );
+  await writeFile(
     path.join(root, "packages/shared/deployment/db-contract.json"),
     JSON.stringify({
       schemaVersion: 1,
@@ -89,6 +103,11 @@ END $$;
         },
       ],
       postflightProbe: "db/deploy-contract/postflight-123.sql",
+      preSwitchReadProbe: {
+        file: "db/deploy-contract/pre-switch-read-probe-123.sql",
+        sha256: sha256(preSwitchReadProbeSource),
+        statementTimeoutMs: 50,
+      },
     }),
   );
 }
@@ -128,9 +147,10 @@ test(
   async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "2000nl-db-contract-integration-"));
     const databaseName = `contract_gate_${process.pid}_${Date.now()}`;
-    const targetUrl = new URL(baseDatabaseUrl);
-    targetUrl.pathname = `/${databaseName}`;
-    targetUrl.searchParams.set("sslmode", "disable");
+    const nativeTargetUrl = new URL(baseDatabaseUrl);
+    nativeTargetUrl.pathname = `/${databaseName}`;
+    nativeTargetUrl.searchParams.set("sslmode", "disable");
+    const targetUrl = new URL(nativeTargetUrl);
     if (containerDatabaseHost) targetUrl.hostname = containerDatabaseHost;
 
     const create = psql(baseDatabaseUrl, `CREATE DATABASE ${databaseName};\n`);
@@ -166,7 +186,7 @@ COMMIT;
       assert.notEqual(failed.status, 0, "the migration must fail after creating visible DDL");
 
       const rolledBack = psql(
-        targetUrl.toString(),
+        nativeTargetUrl.toString(),
         `SELECT
           to_regclass('public.rollback_marker') IS NULL,
           count(*) FILTER (WHERE migration_id = 123),
@@ -185,10 +205,11 @@ COMMIT;
       const recovered = applyFixture(root, targetUrl.toString());
       assert.equal(recovered.status, 0, recovered.stderr);
       assert.match(recovered.stdout, /applied 123/);
+      assert.match(recovered.stdout, /pre-switch-read-probe passed/);
       assert.match(recovered.stdout, /compatible integration-123/);
 
       const committed = psql(
-        targetUrl.toString(),
+        nativeTargetUrl.toString(),
         `SELECT
           to_regclass('public.rollback_marker') IS NOT NULL,
           count(*) FILTER (WHERE migration_id = 123),
@@ -202,7 +223,72 @@ COMMIT;
       const replay = applyFixture(root, targetUrl.toString());
       assert.equal(replay.status, 0, replay.stderr);
       assert.match(replay.stdout, /no-op 123/);
+      assert.match(replay.stdout, /pre-switch-read-probe passed/);
       assert.match(replay.stdout, /compatible integration-123/);
+    } finally {
+      const drop = psql(
+        baseDatabaseUrl,
+        `DROP DATABASE IF EXISTS ${databaseName} WITH (FORCE);\n`,
+      );
+      await rm(root, { recursive: true, force: true });
+      assert.equal(drop.status, 0, drop.stderr);
+    }
+  },
+);
+
+test(
+  "real PostgreSQL bounds the probe and refuses writes before compatibility",
+  { skip: !baseDatabaseUrl },
+  async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "2000nl-db-probe-integration-"));
+    const databaseName = `contract_probe_${process.pid}_${Date.now()}`;
+    const nativeTargetUrl = new URL(baseDatabaseUrl);
+    nativeTargetUrl.pathname = `/${databaseName}`;
+    nativeTargetUrl.searchParams.set("sslmode", "disable");
+    const targetUrl = new URL(nativeTargetUrl);
+    if (containerDatabaseHost) targetUrl.hostname = containerDatabaseHost;
+
+    const create = psql(baseDatabaseUrl, `CREATE DATABASE ${databaseName};\n`);
+    assert.equal(create.status, 0, create.stderr);
+
+    try {
+      const migration = `BEGIN;
+CREATE TABLE public.rollback_marker(id integer PRIMARY KEY);
+COMMIT;
+`;
+      const mutatingProbe = `CREATE TABLE public.probe_must_remain_read_only(id integer);\n`;
+      await writeFixture(root, migration, mutatingProbe);
+      const rejectedWrite = applyFixture(root, targetUrl.toString());
+      assert.notEqual(rejectedWrite.status, 0);
+      assert.match(rejectedWrite.stderr, /read-only transaction/i);
+      assert.doesNotMatch(rejectedWrite.stdout, /compatible integration-123/);
+
+      const noProbeMutation = psql(
+        nativeTargetUrl.toString(),
+        `SELECT
+          to_regclass('public.rollback_marker') IS NOT NULL,
+          to_regclass('public.probe_must_remain_read_only') IS NULL,
+          count(*) FILTER (WHERE migration_id = 123)
+        FROM public.app_db_contract_migrations;\n`,
+      );
+      assert.equal(noProbeMutation.status, 0, noProbeMutation.stderr);
+      assert.equal(noProbeMutation.stdout.trim(), "t|t|1");
+
+      const slowProbe = `SELECT pg_sleep(0.075);\n`;
+      await writeFixture(root, migration, slowProbe);
+      const timedOut = applyFixture(root, targetUrl.toString());
+      assert.notEqual(timedOut.status, 0);
+      assert.match(timedOut.stderr, /statement timeout/i);
+      assert.match(timedOut.stderr, /no-op 123/);
+      assert.doesNotMatch(`${timedOut.stdout}\n${timedOut.stderr}`, /compatible integration-123/);
+
+      const safeProbe = `SELECT current_setting('transaction_read_only');\n`;
+      await writeFixture(root, migration, safeProbe);
+      const recovered = applyFixture(root, targetUrl.toString());
+      assert.equal(recovered.status, 0, recovered.stderr);
+      assert.match(recovered.stdout, /no-op 123/);
+      assert.match(recovered.stdout, /pre-switch-read-probe passed/);
+      assert.match(recovered.stdout, /compatible integration-123/);
     } finally {
       const drop = psql(
         baseDatabaseUrl,

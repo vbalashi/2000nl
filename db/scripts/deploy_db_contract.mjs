@@ -69,6 +69,16 @@ async function readManifest(repoRoot, manifestPath) {
   insideRepo(repoRoot, manifest.baseline.probe);
   insideRepo(repoRoot, manifest.postflightProbe);
   if (
+    typeof manifest.preSwitchReadProbe?.file !== "string" ||
+    !sha256Pattern.test(manifest.preSwitchReadProbe?.sha256 ?? "") ||
+    !Number.isSafeInteger(manifest.preSwitchReadProbe?.statementTimeoutMs) ||
+    manifest.preSwitchReadProbe.statementTimeoutMs < 1 ||
+    manifest.preSwitchReadProbe.statementTimeoutMs > 2_000
+  ) {
+    throw new Error("Invalid pre-switch read probe contract");
+  }
+  insideRepo(repoRoot, manifest.preSwitchReadProbe.file);
+  if (
     typeof manifest.ledger?.file !== "string" ||
     !sha256Pattern.test(manifest.ledger?.sha256 ?? "")
   ) {
@@ -158,6 +168,16 @@ async function buildDeploymentSql(repoRoot, manifest, appCommit) {
   }
   const baseline = await readFile(insideRepo(repoRoot, manifest.baseline.probe), "utf8");
   const postflight = await readFile(insideRepo(repoRoot, manifest.postflightProbe), "utf8");
+  const preSwitchReadProbe = await readFile(
+    insideRepo(repoRoot, manifest.preSwitchReadProbe.file),
+    "utf8",
+  );
+  const preSwitchReadProbeChecksum = createHash("sha256")
+    .update(preSwitchReadProbe)
+    .digest("hex");
+  if (preSwitchReadProbeChecksum !== manifest.preSwitchReadProbe.sha256) {
+    throw new Error("Pre-switch read probe checksum does not match the contract");
+  }
   const ledgerSource = await readFile(insideRepo(repoRoot, manifest.ledger.file), "utf8");
   const ledgerChecksum = createHash("sha256").update(ledgerSource).digest("hex");
   if (ledgerChecksum !== manifest.ledger.sha256) {
@@ -244,6 +264,17 @@ ${migrationSql}
 
 -- Exact RPC, grant, index/plan, and application compatibility contract.
 ${postflight}
+
+-- A scheduler DDL change may leave its first real read paying one-time shared
+-- cache and plan setup. Exercise the exact QA selector before every app switch.
+-- Re-running the bounded read is intentional: a timed-out first attempt must
+-- not be bypassed merely because its forward migrations already committed.
+DISCARD PLANS;
+BEGIN READ ONLY;
+SET LOCAL statement_timeout = '${manifest.preSwitchReadProbe.statementTimeoutMs}ms';
+${preSwitchReadProbe}
+COMMIT;
+\\echo db-contract-gate: pre-switch-read-probe passed
 
 DO $contract_state$
 BEGIN
