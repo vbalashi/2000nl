@@ -7,6 +7,8 @@ import test from "node:test";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const runner = path.join(repoRoot, "db/scripts/deploy_db_contract.mjs");
+const pinnedPsqlImage =
+  "postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94";
 
 async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), "2000nl-db-contract-"));
@@ -92,6 +94,42 @@ esac
   return executable;
 }
 
+async function fakeContainerRuntime(root, mode = "success") {
+  const executable = path.join(root, "fake-docker.sh");
+  await writeFile(
+    executable,
+    `#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$@" >> "$FAKE_CONTAINER_CAPTURE"
+printf '%s\n' '-- invocation --' >> "$FAKE_CONTAINER_CAPTURE"
+case "${mode}" in
+  success)
+    if [[ " $* " == *" psql --version "* ]]; then
+      if [[ "\${FAKE_ASSERT_DB_ENV_ABSENT:-0}" == "1" ]] &&
+         [[ -n "\${SUPABASE_DB_URL:-}\${DATABASE_URL:-}\${TEST_DATABASE_URL:-}\${PGPASSWORD:-}" ]]; then
+        printf '%s\n' 'preflight inherited database configuration' >&2
+        exit 12
+      fi
+      printf '%s\n' 'psql (PostgreSQL) 17.6'
+    else
+      cat >/dev/null
+      printf '%s\n' 'db-contract-gate: applied 123' 'db-contract-gate: compatible fixture-123'
+    fi
+    ;;
+  unusable)
+    printf '%s\n' 'runtime failed postgresql://user:leaked@db.invalid/prod' >&2
+    exit 9
+    ;;
+  wrong-version)
+    printf '%s\n' 'psql (PostgreSQL) 16.10'
+    ;;
+esac
+`,
+  );
+  await chmod(executable, 0o755);
+  return executable;
+}
+
 async function applyFixture(mode) {
   const root = await fixture();
   const psql = await fakePsql(root);
@@ -145,6 +183,129 @@ test("validates every immutable contract file without database access", async ()
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout.trim(), "db-contract-gate: valid fixture-123");
+});
+
+test("client preflight fails before database URL lookup when runtime is missing", async () => {
+  const root = await fixture();
+  const result = spawnSync(
+    process.execPath,
+    [
+      runner,
+      "client-preflight",
+      "--repo-root",
+      root,
+      "--psql-container-image",
+      pinnedPsqlImage,
+      "--container-runtime-bin",
+      "/definitely/not/docker",
+      "--database-url-env",
+      "DEFINITELY_MISSING_DATABASE_URL",
+    ],
+    { encoding: "utf8" },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /client runtime unavailable/i);
+  assert.doesNotMatch(result.stderr, /DEFINITELY_MISSING_DATABASE_URL|database URL/i);
+});
+
+test("client preflight rejects an unusable or wrong-major container without leaking output", async () => {
+  const root = await fixture();
+  const capture = path.join(root, "container-args.txt");
+  const unusableRuntime = await fakeContainerRuntime(root, "unusable");
+  const unusable = spawnSync(
+    process.execPath,
+    [
+      runner,
+      "client-preflight",
+      "--repo-root",
+      root,
+      "--psql-container-image",
+      pinnedPsqlImage,
+      "--container-runtime-bin",
+      unusableRuntime,
+    ],
+    { encoding: "utf8", env: { ...process.env, FAKE_CONTAINER_CAPTURE: capture } },
+  );
+  assert.equal(unusable.status, 9);
+  assert.match(unusable.stderr, /client unusable/i);
+  assert.doesNotMatch(unusable.stderr, /postgresql:\/\/|leaked/);
+
+  const wrongRuntime = await fakeContainerRuntime(root, "wrong-version");
+  const wrong = spawnSync(
+    process.execPath,
+    [
+      runner,
+      "client-preflight",
+      "--repo-root",
+      root,
+      "--psql-container-image",
+      pinnedPsqlImage,
+      "--container-runtime-bin",
+      wrongRuntime,
+    ],
+    { encoding: "utf8", env: { ...process.env, FAKE_CONTAINER_CAPTURE: capture } },
+  );
+  assert.notEqual(wrong.status, 0);
+  assert.match(wrong.stderr, /requires PostgreSQL client major 17/i);
+});
+
+test("container client requires a digest and forwards DB settings by name, never value", async () => {
+  const root = await fixture();
+  const capture = path.join(root, "container-args.txt");
+  const runtime = await fakeContainerRuntime(root);
+  const unpinned = spawnSync(
+    process.execPath,
+    [
+      runner,
+      "client-preflight",
+      "--repo-root",
+      root,
+      "--psql-container-image",
+      "postgres:17.6-alpine",
+      "--container-runtime-bin",
+      runtime,
+    ],
+    { encoding: "utf8", env: { ...process.env, FAKE_CONTAINER_CAPTURE: capture } },
+  );
+  assert.notEqual(unpinned.status, 0);
+  assert.match(unpinned.stderr, /digest-pinned/i);
+
+  const applied = spawnSync(
+    process.execPath,
+    [
+      runner,
+      "apply",
+      "--repo-root",
+      root,
+      "--psql-container-image",
+      pinnedPsqlImage,
+      "--container-runtime-bin",
+      runtime,
+      "--database-url-env",
+      "TEST_DATABASE_URL",
+      "--app-commit",
+      "1234567890123456789012345678901234567890",
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        TEST_DATABASE_URL: "postgresql://user:topsecret@db.example/prod",
+        SUPABASE_DB_URL: "postgresql://should:not-leak@db.invalid/prod",
+        FAKE_CONTAINER_CAPTURE: capture,
+        FAKE_ASSERT_DB_ENV_ABSENT: "1",
+      },
+    },
+  );
+
+  assert.equal(applied.status, 0, applied.stderr);
+  const args = await readFile(capture, "utf8");
+  assert.match(args, /--network\nnone[\s\S]*psql\n--version/);
+  assert.match(args, /--env\nPGPASSWORD/);
+  assert.match(args, /--env\nPGSSLMODE/);
+  assert.match(args, new RegExp(`${pinnedPsqlImage.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\npsql`));
+  assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
 test("the repository contract enables only the complete coordinated migration 126", () => {

@@ -9,6 +9,9 @@ import test from "node:test";
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const runner = path.join(repoRoot, "db/scripts/deploy_db_contract.mjs");
 const baseDatabaseUrl = process.env.DB_CONTRACT_INTEGRATION_DATABASE_URL;
+const containerImage = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_IMAGE;
+const containerNetwork = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK ?? "bridge";
+const containerDatabaseHost = process.env.DB_CONTRACT_INTEGRATION_PSQL_HOST;
 
 function sha256(source) {
   return createHash("sha256").update(source).digest("hex");
@@ -91,6 +94,14 @@ END $$;
 }
 
 function applyFixture(root, databaseUrl) {
+  const clientArgs = containerImage
+    ? [
+        "--psql-container-image",
+        containerImage,
+        "--psql-container-network",
+        containerNetwork,
+      ]
+    : [];
   return spawnSync(
     process.execPath,
     [
@@ -98,6 +109,7 @@ function applyFixture(root, databaseUrl) {
       "apply",
       "--repo-root",
       root,
+      ...clientArgs,
       "--database-url-env",
       "DB_CONTRACT_TEST_TARGET_URL",
       "--app-commit",
@@ -119,6 +131,7 @@ test(
     const targetUrl = new URL(baseDatabaseUrl);
     targetUrl.pathname = `/${databaseName}`;
     targetUrl.searchParams.set("sslmode", "disable");
+    if (containerDatabaseHost) targetUrl.hostname = containerDatabaseHost;
 
     const create = psql(baseDatabaseUrl, `CREATE DATABASE ${databaseName};\n`);
     assert.equal(create.status, 0, create.stderr);
@@ -131,6 +144,24 @@ SELECT 1 / 0;
 COMMIT;
 `;
       await writeFixture(root, brokenMigration);
+      if (containerImage) {
+        const preflight = spawnSync(
+          process.execPath,
+          [
+            runner,
+            "client-preflight",
+            "--repo-root",
+            root,
+            "--psql-container-image",
+            containerImage,
+            "--psql-container-network",
+            containerNetwork,
+          ],
+          { encoding: "utf8" },
+        );
+        assert.equal(preflight.status, 0, preflight.stderr);
+        assert.match(preflight.stdout, /client-ready PostgreSQL 17 container/);
+      }
       const failed = applyFixture(root, targetUrl.toString());
       assert.notEqual(failed.status, 0, "the migration must fail after creating visible DDL");
 

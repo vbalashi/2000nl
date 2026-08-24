@@ -9,6 +9,7 @@ on:
       - "db/migrations/**"
       - "db/deploy-contract/**"
       - "db/scripts/deploy_db_contract.mjs"
+      - "db/scripts/postgres_client.mjs"
       - "scripts/verify-deploy-health.mjs"
       - "supabase/**"
       - ".dockerignore"
@@ -32,6 +33,7 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       DEPLOY_SERVER_NAME: NUC (2000.dilum.io)
+      DB_PSQL_IMAGE: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
       # Dictionary/list filtering is a stable gated-RPC path, not a rollout flag.
       # See docs/runbooks/dictionary-search-rollout.md.
       APP_ROLLOUT_PROFILE: pilot
@@ -77,6 +79,7 @@ jobs:
           export NEXT_PUBLIC_APP_COMMIT="${COMMIT_FULL}"
           export NEXT_PUBLIC_BUILD_TIMESTAMP="${START_TS_ISO}"
           export NEXT_PUBLIC_APP_VERSION="${VERSION}"
+          export DEPLOY_APP_COMMIT="${COMMIT_FULL}"
 
           send_telegram "$(printf '%s\nTime: %s\nVersion: %s\nCommit: %s\nServer: %s' \
             '🚀 Deployment started' \
@@ -140,6 +143,11 @@ jobs:
             exit 0
           fi
 
+          # Pull and execute the digest-pinned PostgreSQL 17 client before the
+          # expensive app build. The preflight container has no network and the
+          # command does not read .env or open a database connection.
+          sg docker -c "node db/scripts/deploy_db_contract.mjs client-preflight --psql-container-image '${DB_PSQL_IMAGE}'"
+
           # Build first while the current container remains untouched. If the
           # DB gate fails, the old app keeps serving and the new image is never
           # advertised.
@@ -163,9 +171,7 @@ jobs:
           # The checked-out commit owns the exact immutable DB contract. The
           # runner reads .env without printing its database URL and applies only
           # the declared contiguous forward migrations under one advisory lock.
-          node db/scripts/deploy_db_contract.mjs apply \
-            --app-commit "${COMMIT_FULL}" \
-            --env-file .env
+          sg docker -c "node db/scripts/deploy_db_contract.mjs apply --psql-container-image '${DB_PSQL_IMAGE}' --env-file .env"
 
           APP_SWITCHED=1
           sg docker -c 'docker compose up -d --no-build ui'

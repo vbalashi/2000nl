@@ -7,6 +7,14 @@ image first, applies only the manifest's contiguous reviewed-forward migrations,
 runs exact SQL probes, switches the container, and then accepts the release only
 when deep health reports the same commit and database contract.
 
+The NUC host does not provide `psql` and must not be mutated to add it. The
+workflow runs PostgreSQL client 17 from the official digest-pinned container in
+`DB_PSQL_IMAGE`. Before the expensive app build it starts that image with no
+network and runs only `psql --version`. A missing Docker runtime, unavailable
+image, non-zero client, or wrong client major therefore stops deployment before
+`.env` is read or any database connection is possible. The apply command repeats
+that preflight and then reuses the already-pulled exact image.
+
 ## Current coordinated rollout
 
 Issue #233 first integrated the gate with `rollout.status: hold` and
@@ -42,6 +50,10 @@ contract is never an acceptable intermediate release.
   selector compatibility and the bounded health signal grant.
 - The database URL is passed to `psql` through `PG*` environment variables,
   never command arguments. Gate output redacts URLs and credential-like values.
+- Containerized `psql` receives only named `PG*` variables, runs read-only with
+  all Linux capabilities dropped and `no-new-privileges`, and mounts no host
+  files. TLS still defaults to `require`; the advisory lock, transactions,
+  postflight, health contract, and app-image rollback are unchanged.
 
 Inspect the commit-owned contract without database access:
 
@@ -49,13 +61,19 @@ Inspect the commit-owned contract without database access:
 node db/scripts/deploy_db_contract.mjs expected
 node db/scripts/deploy_db_contract.mjs rollout-status
 node db/scripts/deploy_db_contract.mjs validate
+node db/scripts/deploy_db_contract.mjs client-preflight \
+  --psql-container-image \
+  postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
 ```
 
 For a reviewed non-production database, run the same gate with an exact commit:
 
 ```bash
 DEPLOY_APP_COMMIT="$(git rev-parse HEAD)" \
-  node db/scripts/deploy_db_contract.mjs apply --env-file .env.local
+  node db/scripts/deploy_db_contract.mjs apply \
+    --psql-container-image \
+    postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94 \
+    --env-file .env.local
 ```
 
 Never point this command at production outside the NUC deployment workflow.
@@ -63,9 +81,10 @@ Never point this command at production outside the NUC deployment workflow.
 ## Deployment and stop conditions
 
 The workflow keeps the current container running while it builds the new image.
-It stops without switching the app when the manifest is held, the baseline is
-too old, the DB is newer than the app, a checksum differs, a migration fails, or
-postflight fails. After the container switch, deep health must report:
+It stops without switching the app when the manifest is held, the pinned client
+preflight fails, the baseline is too old, the DB is newer than the app, a
+checksum differs, a migration fails, or postflight fails. Client preflight also
+runs before building. After the container switch, deep health must report:
 
 - the exact 40-character deployed commit;
 - overall `status: ok`;
