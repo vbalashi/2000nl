@@ -19,14 +19,14 @@ that preflight and then reuses the already-pulled exact image.
 
 Issue #233 first integrated the gate with `rollout.status: hold` and
 `requiredMigrationId: 126`. That held deployment stopped before Docker build,
-database connection, migration, or container switch. The current contract is
-enabled only after #232 appended migration 126 with its exact SHA-256 and
-advanced the postflight probe to the set-based scheduler contract.
+database connection, migration, or container switch. The contract was first
+enabled after #232 appended migration 126 with its exact SHA-256. Issue #238
+advances it to migration 127 after the bounded pre-switch read exposed
+repeatable cold scheduler I/O even after migration 126.
 
-The first enabled deployment must apply or verify migrations 123, 124, 125,
-and 126 in order before it advertises compatibility. The runner rejects an
-enabled manifest whose last migration is below the required migration; the 125
-contract is never an acceptable intermediate release.
+An enabled deployment must apply or verify migrations 123 through 127 in order
+before it advertises compatibility. The runner rejects an enabled manifest
+whose last migration is below the required migration.
 
 ## What the gate guarantees
 
@@ -44,10 +44,10 @@ contract is never an acceptable intermediate release.
 - A database newer than the checked-out app, or a changed already-recorded
   migration, stops deployment.
 - Postflight checks exact RPC signatures, role grants, and a deterministic
-  `EXPLAIN (FORMAT JSON)` contract proving the scheduler's pointer-only
-  anti-join can use its partial index. It also pins one canonical dictionary
-  access call inside a materialized readable-dictionary set, plus legacy
-  selector compatibility and the bounded health signal grant.
+  `EXPLAIN (FORMAT JSON)` contract proving the default NT2 scheduler scope uses
+  its narrow covering index without reading wide dictionary rows. It also pins
+  materialized learner settings/status and readable-dictionary sets, the legacy
+  selector fallback, application compatibility, and the bounded health signal.
 - Before compatibility is advertised, the gate executes the checksum-pinned
   session-plan selector as exactly one `test@2000nl.test` principal inside
   `BEGIN READ ONLY`, with a 2,000 ms statement timeout. It discards only the
@@ -115,14 +115,13 @@ App rollback and DB recovery are deliberately separate:
   If no previous image exists, it stops the incompatible new container.
 - Forward DB migrations remain in place during app-image rollback. Every
   enabled migration must therefore be compatible with the previous app.
-- The migration's owning issue owns DB recovery. For the first rollout, #232
-  owns migration 126 and any reviewed corrective-forward or explicit rollback
-  SQL. #233 owns failures in the gate/ledger/probe machinery.
-- A #232 explicit rollback after migrations 123–126 commit must be one reviewed
-  transaction that restores the exact pre-123 selector/fallback contract and
-  reconciles the 123–126 ledger/state. Never leave pre-123 functions behind a
-  state row that advertises contract 126; the next gate would otherwise no-op
-  the migrations and fail postflight indefinitely.
+- The migration's owning issue owns DB recovery. Issue #238 owns migration 127
+  and any reviewed corrective-forward or explicit rollback SQL. Issue #232
+  retains ownership of migration 126; #233 owns gate/ledger/probe machinery.
+- Any explicit DB rollback must be reviewed as a complete contract transition:
+  restore compatible functions and indexes, then reconcile the matching ledger
+  and state rows in the same recovery plan. Never advertise contract 127 after
+  removing its bounded plan function or index.
 - Never improvise reverse SQL in the workflow. Preserve the failed run, exact
   commit, contract ID, last applied migration lines, and health response; then
   use the owning issue's reviewed recovery path.
@@ -140,20 +139,23 @@ state for the exact QA identity.
 
 ## First-call latency ownership
 
-The production migration-126 observation was 3,282.6 ms for the first
-read-only scheduler call, followed by warm p50 126.1 ms and p95 131.7 ms. An
-immediate new-connection repeat was already 772.4 ms on its first call. Local
-production-shaped characterization likewise measured connection setup at
-4–18 ms, plan-cold scheduler reads at 161–202 ms across fresh connections, and
-no material improvement from disabling JIT. The local shared service cannot
-safely reproduce a truly cold host page cache without disrupting other work, so
-the exact 3.28-second disk-cold sample was not manufactured locally.
+The migration-126 rollout first observed a 3,282.6 ms read followed by warm p50
+126.1 ms. A later no-op deployment timed out the same exact read after two
+seconds, disproving the earlier one-time-post-DDL explanation. Read-only
+production diagnostics then showed one warm call touching 18,853 shared blocks
+(about 147 MB of buffer traffic) for a 71 MB `word_entries` heap. The default
+scope had no narrow NT2 index, and session-plan counts still executed
+selector-only ordering plus repeated learner-setting lookups.
 
-These results rule out connection setup, per-session plan compilation, and JIT
-as owners of a multi-second repeatable cost. The remaining evidence points to a
-one-time shared relation/index and host-page-cache fill after DDL. The bounded
-read is therefore placed in the deployment gate itself, before app switch,
-rather than adding application retries or changing scheduler SQL.
+Migration 127 adds a partial covering index for trainable NT2 entry identities
+and a count-only default session-plan path. Dictionary access, learner settings,
+status, and today's review sets are each resolved once. List and filtered plans
+retain the authoritative selector fallback. On a disposable production-shaped
+fixture, the previous contract touched 15,409 shared blocks; the combined fix
+touched 1,976–1,980 and executed in 16.8 ms with identical queue counts across
+single-mode `both`/`new`/`review` and multi-mode cases. CI keeps a 4,000-block
+and 2,000-ms fail-closed budget; the production pre-switch probe remains exactly
+read-only and retains its two-second timeout.
 
 ## Production QA sessions
 
