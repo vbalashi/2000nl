@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -29,6 +31,33 @@ function psql(urlString, sql, extraArgs = []) {
     ["-X", "--no-psqlrc", "-At", "--set=ON_ERROR_STOP=1", ...extraArgs],
     { input: sql, encoding: "utf8", env: postgresEnvironment(urlString) },
   );
+}
+
+function psqlProcess(urlString, sql) {
+  const child = spawn("psql", ["-X", "--no-psqlrc", "-At", "--set=ON_ERROR_STOP=1"], {
+    env: postgresEnvironment(urlString),
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  child.stdin.end(sql);
+  return child;
+}
+
+function waitForMarker(child, marker) {
+  return new Promise((resolve, reject) => {
+    let output = "";
+    const timer = setTimeout(() => reject(new Error(`Timed out waiting for ${marker}`)), 5_000);
+    child.stdout.on("data", (chunk) => {
+      output += chunk.toString();
+      if (output.includes(marker)) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
 }
 
 function assertLoopback(urlString) {
@@ -61,7 +90,7 @@ function explainBuffers(plan) {
 test(
   "the production-shaped session plan has a bounded cold-I/O footprint",
   { skip: !baseDatabaseUrl, timeout: 120_000 },
-  () => {
+  async () => {
     const base = assertLoopback(baseDatabaseUrl);
     const databaseName = `issue238_${process.pid}_${Date.now()}`;
     const targetUrl = databaseUrl(base.toString(), databaseName);
@@ -71,6 +100,20 @@ test(
     assert.equal(create.status, 0, create.stderr);
 
     try {
+      const migrationSource = readFileSync(
+        path.join(repoRoot, "db/migrations/127_bounded_training_session_plan_io.sql"),
+        "utf8",
+      );
+      const lockOffset = migrationSource.indexOf(
+        "LOCK TABLE public.word_entries IN SHARE ROW EXCLUSIVE MODE",
+      );
+      assert.ok(lockOffset >= 0);
+      assert.ok(lockOffset < migrationSource.indexOf("CREATE TRIGGER sync_default_training_scope_entry_v1"));
+      assert.ok(lockOffset < migrationSource.indexOf(
+        "INSERT INTO private.default_training_scope_entries_v1",
+        lockOffset,
+      ));
+
       applySqlFile(targetUrl, "db/scripts/plain_postgres_supabase_compat.sql");
       applySqlFile(targetUrl, "db/migrations/bootstrap.sql");
 
@@ -213,6 +256,51 @@ test(
          END $$;\n`,
       );
       assert.equal(projectionSync.status, 0, projectionSync.stderr);
+
+      const lockHolder = psqlProcess(
+        targetUrl,
+        `BEGIN;
+         LOCK TABLE public.word_entries IN SHARE ROW EXCLUSIVE MODE;
+         \\echo issue238-lock-ready
+         SELECT pg_sleep(1);
+         COMMIT;\n`,
+      );
+      let lockStderr = "";
+      lockHolder.stderr.on("data", (chunk) => {
+        lockStderr += chunk.toString();
+      });
+      const lockClose = once(lockHolder, "close");
+      await waitForMarker(lockHolder, "issue238-lock-ready");
+
+      const blockedWriter = psql(
+        targetUrl,
+        `SET statement_timeout = '100ms';
+         UPDATE public.word_entries
+         SET dictionary_id = dictionary_id
+         WHERE id = (
+           SELECT id FROM public.word_entries WHERE is_nt2_2000 ORDER BY meaning_id LIMIT 1
+         );\n`,
+      );
+      assert.notEqual(blockedWriter.status, 0, "source writer unexpectedly bypassed migration lock");
+      assert.match(blockedWriter.stderr, /statement timeout/i);
+      const [lockExitCode] = await lockClose;
+      assert.equal(lockExitCode, 0, lockStderr);
+
+      const writerAfterCommit = psql(
+        targetUrl,
+        `UPDATE public.word_entries
+         SET dictionary_id = dictionary_id
+         WHERE id = (
+           SELECT id FROM public.word_entries WHERE is_nt2_2000 ORDER BY meaning_id LIMIT 1
+         );
+         DO $$
+         BEGIN
+           IF (SELECT count(*) FROM private.default_training_scope_entries_v1) <> ${nt2EntryCount}
+           THEN RAISE EXCEPTION 'issue238 projection stale after blocked writer retry';
+           END IF;
+         END $$;\n`,
+      );
+      assert.equal(writerAfterCommit.status, 0, writerAfterCommit.stderr);
 
       const parity = psql(
         targetUrl,

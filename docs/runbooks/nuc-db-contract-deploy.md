@@ -159,6 +159,12 @@ identical across single-mode `both`/`new`/`review` and multi-mode cases. CI keep
 a 4,000-block and 2,000-ms fail-closed budget; the production pre-switch probe
 remains exactly read-only and retains its two-second timeout.
 
+Migration 127 takes a `SHARE ROW EXCLUSIVE` source-table lock before installing
+the projection trigger and taking the backfill snapshot. Training and other
+readers remain available; dictionary import writes wait for the short migration
+transaction and then execute through the committed trigger. Do not split the
+lock, trigger installation, backfill, or reconciliation into separate runs.
+
 ## Production QA sessions
 
 The deploy never mints, copies, or revokes an Auth session. Production smoke

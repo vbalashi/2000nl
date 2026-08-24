@@ -40,5 +40,12 @@ blocks and 16.647 ms. Its counts match the migration-126 selector for `both`,
 `new`, `review`, and multi-mode cases. List and filtered requests continue
 through the authoritative selector fallback.
 
+Initial projection synchronization is atomic with trigger installation. The
+migration takes `SHARE ROW EXCLUSIVE` on `word_entries` before creating the
+trigger and before the backfill snapshot; reads continue, while concurrent
+source writes wait until commit and then pass through the visible trigger. The
+real PostgreSQL characterization proves a writer times out behind that lock and
+that its retry after commit remains represented in the projection.
+
 No production learner state was changed during diagnosis, and this evidence
 does not authorize a production merge or deployment.

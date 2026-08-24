@@ -37,6 +37,18 @@ $$;
 REVOKE ALL ON FUNCTION private.sync_default_training_scope_entry_v1()
 FROM PUBLIC, anon, authenticated, service_role;
 
+-- Hold source writes from the first synchronization snapshot until the trigger
+-- is visible at commit. Readers remain available throughout the migration.
+LOCK TABLE public.word_entries IN SHARE ROW EXCLUSIVE MODE;
+
+DROP TRIGGER IF EXISTS sync_default_training_scope_entry_v1
+ON public.word_entries;
+CREATE TRIGGER sync_default_training_scope_entry_v1
+AFTER INSERT OR UPDATE OF is_nt2_2000, raw, dictionary_id
+ON public.word_entries
+FOR EACH ROW
+EXECUTE FUNCTION private.sync_default_training_scope_entry_v1();
+
 INSERT INTO private.default_training_scope_entries_v1(entry_id, dictionary_id)
 SELECT entry.id, entry.dictionary_id
 FROM public.word_entries entry
@@ -53,14 +65,6 @@ WHERE NOT EXISTS (
     AND entry.is_nt2_2000 = true
     AND NOT private.is_pointer_only_dictionary_entry_v1(entry.raw)
 );
-
-DROP TRIGGER IF EXISTS sync_default_training_scope_entry_v1
-ON public.word_entries;
-CREATE TRIGGER sync_default_training_scope_entry_v1
-AFTER INSERT OR UPDATE OF is_nt2_2000, raw, dictionary_id
-ON public.word_entries
-FOR EACH ROW
-EXECUTE FUNCTION private.sync_default_training_scope_entry_v1();
 
 CREATE OR REPLACE FUNCTION private.default_training_session_plan_counts_v1(
   p_user_id uuid,
