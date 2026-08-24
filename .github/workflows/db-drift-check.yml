@@ -6,6 +6,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
@@ -23,6 +24,7 @@ on:
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
+      - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
@@ -198,6 +200,13 @@ jobs:
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-126.sql
+
+      - name: Test exact bounded pre-switch scheduler read
+        env:
+          PRE_SWITCH_PROBE_INTEGRATION_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test?sslmode=disable
+          DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_IMAGE: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+          DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETWORK: host
+        run: node --test db/scripts/pre_switch_read_probe.integration.test.mjs
 
       - name: Test versioned importer and populated bootstrap replay
         env:

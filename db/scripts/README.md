@@ -14,7 +14,8 @@ Requires `SUPABASE_DB_URL` or `DATABASE_URL` environment variable.
 
 `deploy_db_contract.mjs` is the fail-closed NUC migration gate. It validates the
 checked-out manifest and migration checksums, applies missing managed migrations
-transactionally, records them atomically, and runs the exact postflight probe.
+transactionally, records them atomically, runs the exact postflight probe, and
+executes the checksum-pinned pre-switch scheduler read.
 
 ```bash
 node db/scripts/deploy_db_contract.mjs expected
@@ -42,7 +43,10 @@ only; the database URL and password never become Docker command arguments.
 
 CI also runs `deploy_db_contract.integration.test.mjs` against disposable real
 PostgreSQL. It proves transactional DDL/ledger rollback, repaired retry on the
-same database, postflight success, and idempotent replay. Set
+same database, a fail-closed read-only/timeout probe, postflight success, and
+idempotent replay. A production-shaped integration check applies and replays
+the exact probe as `test@2000nl.test` and verifies that review, card status,
+known-mark, action, and report rows do not change. Set
 `DB_CONTRACT_INTEGRATION_DATABASE_URL` only to a non-production PostgreSQL
 database whose user may create and drop a uniquely named test database.
 
@@ -267,6 +271,13 @@ The enforced budget is first at most 2,000 ms, warm p95 at most 1,000 ms, and
 warm maximum at most 2,000 ms for both RPCs over 30 warm samples. See
 `docs/architecture/evidence/issue-232/` for the baseline, set-based result, and
 the indivisible 123→126 production rollout/rollback gate.
+
+The deployment contract also runs the exact session-plan selector once before
+every app switch. It verifies that exactly one `test@2000nl.test` identity
+exists, starts a `BEGIN READ ONLY` transaction, discards only session-local
+plans, and applies a 2,000 ms statement timeout. The probe is repeated even
+when all migrations are no-ops so a prior timeout cannot be bypassed by a
+retry. It does not review a card, mark it known, or submit a report.
 
 ---
 
