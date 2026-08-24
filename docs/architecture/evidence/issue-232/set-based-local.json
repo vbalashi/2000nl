@@ -1,0 +1,33 @@
+{
+  "fixture": {
+    "entries": 18184,
+    "nonNullDictionaryIds": 18184,
+    "readableEntries": 18182,
+    "deniedEntries": 2,
+    "entryDictionaries": 5,
+    "registeredDictionaries": 6,
+    "qaEmail": "test@2000nl.test"
+  },
+  "budgetMs": {
+    "first": 2000,
+    "warmP95": 1000,
+    "warmMax": 2000
+  },
+  "series": {
+    "sessionPlan": {
+      "first": 174.5,
+      "warm": { "count": 30, "p50": 173.7, "p95": 185.5, "max": 188.3 }
+    },
+    "nextCard": {
+      "first": 199.4,
+      "warm": { "count": 30, "p50": 183.3, "p95": 192.3, "max": 195.8 }
+    }
+  },
+  "accessFunctionCalls": {
+    "delta": 377,
+    "policyProbeCalls": 5,
+    "schedulerSamples": 62,
+    "perSchedulerSample": 6
+  },
+  "limitations": "Local first calls are plan-cold after DISCARD PLANS; shared buffers and OS cache are not flushed. Production cold/warm reads remain a rollout gate."
+}

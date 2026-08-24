@@ -372,3 +372,6 @@
 
 -- Scheduler scope excludes redirects through the positive partial index
 \i db/migrations/125_avoid_scheduler_pointer_json_rescan.sql
+
+-- Scheduler resolves readable dictionaries once instead of once per entry
+\i db/migrations/126_set_based_scheduler_dictionary_access.sql

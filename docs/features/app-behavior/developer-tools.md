@@ -74,3 +74,18 @@ The enforced rollout budget is a plan-cold first call at most 2,000 ms, warm
 p95 at most 1,000 ms, and warm maximum at most 2,000 ms over 30 samples. This
 local benchmark does not flush PostgreSQL shared buffers or the OS cache, so it
 supports—but does not replace—bounded production cold/warm rollout evidence.
+
+## Scheduler Dictionary-access Benchmark
+
+**Added:** 2026-08-24
+**Issue:** #232
+
+`db/scripts/scheduler_dictionary_access_benchmark.mjs` builds an exact
+18,184-entry, non-null dictionary fixture with realistic system, ownership,
+public, entitlement, and denial outcomes. It measures both the authoritative
+session plan and repeated selector and uses Postgres function statistics to
+reject a scheduler that calls `can_access_dictionary` per entry.
+
+The loopback/database-name and `test@2000nl.test` guards prevent accidental
+production use. The fixed first/warm budgets match the next-card rollout gate;
+production cold/warm reads remain mandatory after integration.

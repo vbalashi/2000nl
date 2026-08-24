@@ -230,6 +230,31 @@ at most 1,000 ms, and warm maximum at most 2,000 ms across 30 samples. The first
 sample discards prepared plans but cannot flush local shared buffers or the OS
 cache, so cold/warm production reads remain a rollout gate.
 
+### Scheduler dictionary-access scope
+
+`scheduler_dictionary_access_benchmark.mjs` exercises the session-plan and
+next-card RPCs against exactly 18,184 non-null dictionary-bound entries. The
+fixture covers system, owned, public, entitled, and denied dictionaries and
+requires the isolated `test@2000nl.test` identity. Function statistics prove
+that access checks scale with the registered dictionary set, not the entry set.
+It refuses non-loopback targets and database names without `issue232`.
+
+```bash
+ISSUE_232_BENCHMARK_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/issue232_benchmark \
+  node db/scripts/scheduler_dictionary_access_benchmark.mjs
+```
+
+Safety guards run without a database:
+
+```bash
+node --test db/scripts/scheduler_dictionary_access_benchmark.test.mjs
+```
+
+The enforced budget is first at most 2,000 ms, warm p95 at most 1,000 ms, and
+warm maximum at most 2,000 ms for both RPCs over 30 warm samples. See
+`docs/architecture/evidence/issue-232/` for the baseline, set-based result, and
+the indivisible 123→126 production rollout/rollback gate.
+
 ---
 
 ## Development

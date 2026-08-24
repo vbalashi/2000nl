@@ -14,12 +14,12 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.file).toBe("db/deploy-contract/ledger-v1.sql");
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
-      status: "hold",
+      status: "enabled",
       requiredMigrationId: 126,
       coordinationIssue: 232,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125,
+      123, 124, 125, 126,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -54,15 +54,17 @@ describe("NUC database contract deployment", () => {
     expect(compose).toContain("image: 2000nl-ui:${UI_IMAGE_TAG:-local}");
   });
 
-  test("postflight proves the scheduler anti-join can use the pointer-only index", () => {
-    const postflight = read("db/deploy-contract/postflight-125.sql");
+  test("postflight proves the pointer index and set-based dictionary access contracts", () => {
+    const postflight = read("db/deploy-contract/postflight-126.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
     expect(postflight).toContain('"Join Type": "Anti"');
     expect(postflight).toContain("word_entries_pointer_only_scheduler_exclusion_v1_idx");
     expect(postflight).toContain("enable_seqscan = off");
+    expect(postflight).toContain("READABLE_DICTIONARIES AS MATERIALIZED");
+    expect(postflight).toContain("scheduler_access_call_count <> 1");
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-125.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-126.sql");
   });
 });

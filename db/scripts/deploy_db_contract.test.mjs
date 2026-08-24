@@ -147,31 +147,20 @@ test("validates every immutable contract file without database access", async ()
   assert.equal(result.stdout.trim(), "db-contract-gate: valid fixture-123");
 });
 
-test("the repository contract holds all DB access until coordinated migration 126", () => {
+test("the repository contract enables only the complete coordinated migration 126", () => {
   const result = spawnSync(
     process.execPath,
     [
       runner,
-      "apply",
+      "rollout-status",
       "--repo-root",
       repoRoot,
-      "--psql-bin",
-      "/definitely/not/psql",
-      "--app-commit",
-      "1234567890123456789012345678901234567890",
     ],
-    {
-      encoding: "utf8",
-      env: {
-        ...process.env,
-        SUPABASE_DB_URL: "postgresql://user:topsecret@127.0.0.1/example?sslmode=disable",
-      },
-    },
+    { encoding: "utf8" },
   );
 
-  assert.equal(result.status, 78);
-  assert.match(result.stderr, /held.*migration 126/i);
-  assert.doesNotMatch(result.stderr, /psql could not run|topsecret/);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "enabled 126 232");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

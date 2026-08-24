@@ -43,10 +43,10 @@ test("accepts only the exact app commit and DB contract", async () => {
       databaseContract: {
         status: "ok",
         details: {
-          expected: "2000nl-db-125",
-          actual: "2000nl-db-125",
-          expectedMigration: 125,
-          actualMigration: 125,
+          expected: "2000nl-db-126",
+          actual: "2000nl-db-126",
+          expectedMigration: 126,
+          actualMigration: 126,
           compatible: true,
         },
       },
@@ -69,10 +69,10 @@ test("fails closed when health advertises a stale DB contract", async () => {
       databaseContract: {
         status: "warning",
         details: {
-          expected: "2000nl-db-125",
-          actual: "2000nl-db-124",
-          expectedMigration: 125,
-          actualMigration: 124,
+          expected: "2000nl-db-126",
+          actual: "2000nl-db-125",
+          expectedMigration: 126,
+          actualMigration: 125,
           compatible: false,
         },
       },
