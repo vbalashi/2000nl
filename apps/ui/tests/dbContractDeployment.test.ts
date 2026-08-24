@@ -71,6 +71,12 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("READABLE_DICTIONARIES AS MATERIALIZED");
     expect(postflight).toContain("scheduler_access_call_count <> 1");
     expect(postflight).toContain("LIMITS AS MATERIALIZED");
+    expect(postflight).toContain("trigger_state.tgfoid = sync_oid::oid");
+    expect(postflight).toContain("trigger_state.tgtype = 21");
+    expect(postflight).toContain("procedure_state.prosecdef");
+    expect(postflight).toContain("search_path=public, private, pg_temp");
+    expect(postflight).toContain("bounded-scope-sync-function-contract");
+    expect(postflight).toContain("constraint_state.confdeltype = 'c'");
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(workflow).toContain("-f db/deploy-contract/postflight-127.sql");
   });

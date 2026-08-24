@@ -384,6 +384,42 @@ test(
         `session plan used ${executionMs}ms and touched ${totalBuffers} shared blocks ` +
           `(${buffers.hits} hit, ${buffers.reads} read); the budgets are 2,000ms and 4,000 blocks`,
       );
+
+      applySqlFile(targetUrl, "db/deploy-contract/ledger-v1.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
+
+      const triggerDrift = psql(
+        targetUrl,
+        `DROP TRIGGER sync_default_training_scope_entry_v1 ON public.word_entries;
+         CREATE TRIGGER sync_default_training_scope_entry_v1
+         AFTER INSERT ON public.word_entries
+         FOR EACH ROW EXECUTE FUNCTION private.sync_default_training_scope_entry_v1();\n`,
+      );
+      assert.equal(triggerDrift.status, 0, triggerDrift.stderr);
+      const triggerDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+      );
+      assert.notEqual(triggerDriftPostflight.status, 0);
+      assert.match(triggerDriftPostflight.stderr, /bounded-scope-sync-contract/);
+
+      applySqlFile(targetUrl, "db/migrations/127_bounded_training_session_plan_io.sql");
+      const functionDrift = psql(
+        targetUrl,
+        `ALTER FUNCTION private.sync_default_training_scope_entry_v1() SECURITY INVOKER;\n`,
+      );
+      assert.equal(functionDrift.status, 0, functionDrift.stderr);
+      const functionDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-127.sql")],
+      );
+      assert.notEqual(functionDriftPostflight.status, 0);
+      assert.match(functionDriftPostflight.stderr, /bounded-scope-sync-function-contract/);
+
+      applySqlFile(targetUrl, "db/migrations/127_bounded_training_session_plan_io.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-127.sql");
     } finally {
       const terminate = psql(
         base.toString(),

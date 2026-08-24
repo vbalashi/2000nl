@@ -8,17 +8,21 @@ DECLARE
   counts_oid regprocedure := to_regprocedure(
     'private.default_training_session_plan_counts_v1(uuid,text[],text,text,jsonb)'
   );
+  sync_oid regprocedure := to_regprocedure(
+    'private.sync_default_training_scope_entry_v1()'
+  );
   plan_oid regprocedure := to_regprocedure(
     'public.get_training_session_plan(uuid,text[],uuid,text,text,jsonb)'
   );
   scheduler_definition text;
   counts_definition text;
+  sync_definition text;
   plan_definition text;
   scheduler_access_call_count integer;
   scope_plan jsonb;
   scope_plan_text text;
 BEGIN
-  IF scheduler_oid IS NULL OR counts_oid IS NULL OR plan_oid IS NULL
+  IF scheduler_oid IS NULL OR counts_oid IS NULL OR sync_oid IS NULL OR plan_oid IS NULL
      OR to_regclass('private.default_training_scope_entries_v1') IS NULL
      OR to_regprocedure('public.get_recent_training_review_history(integer)') IS NULL THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed rpc-signatures';
@@ -27,6 +31,9 @@ BEGIN
   IF NOT has_function_privilege('authenticated', plan_oid, 'EXECUTE')
      OR has_function_privilege('anon', plan_oid, 'EXECUTE')
      OR has_function_privilege('service_role', counts_oid, 'EXECUTE')
+     OR has_function_privilege('service_role', sync_oid, 'EXECUTE')
+     OR has_function_privilege('authenticated', sync_oid, 'EXECUTE')
+     OR has_function_privilege('anon', sync_oid, 'EXECUTE')
      OR has_function_privilege('service_role', scheduler_oid, 'EXECUTE')
      OR NOT has_function_privilege(
        'authenticated', 'public.get_recent_training_review_history(integer)', 'EXECUTE'
@@ -61,6 +68,7 @@ BEGIN
   END IF;
 
   counts_definition := upper(pg_get_functiondef(counts_oid));
+  sync_definition := upper(pg_get_functiondef(sync_oid));
   plan_definition := upper(pg_get_functiondef(plan_oid));
   IF position('LIMITS AS MATERIALIZED' IN counts_definition) = 0
      OR position('READABLE_DICTIONARIES AS MATERIALIZED' IN counts_definition) = 0
@@ -76,10 +84,40 @@ BEGIN
     FROM pg_trigger trigger_state
     WHERE trigger_state.tgrelid = 'public.word_entries'::regclass
       AND trigger_state.tgname = 'sync_default_training_scope_entry_v1'
+      AND trigger_state.tgfoid = sync_oid::oid
+      AND trigger_state.tgtype = 21 -- AFTER, ROW, INSERT | UPDATE
+      AND cardinality(trigger_state.tgattr::smallint[]) = 3
+      AND trigger_state.tgattr::smallint[] @> ARRAY[
+        (SELECT attribute.attnum::smallint FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'is_nt2_2000'),
+        (SELECT attribute.attnum::smallint FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'raw'),
+        (SELECT attribute.attnum::smallint FROM pg_attribute attribute
+         WHERE attribute.attrelid = 'public.word_entries'::regclass
+           AND attribute.attname = 'dictionary_id')
+      ]::smallint[]
       AND trigger_state.tgenabled <> 'D'
       AND NOT trigger_state.tgisinternal
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed bounded-scope-sync-contract';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_proc procedure_state
+    WHERE procedure_state.oid = sync_oid::oid
+      AND procedure_state.prosecdef
+      AND procedure_state.provolatile = 'v'
+      AND procedure_state.proconfig @> ARRAY['search_path=public, private, pg_temp']::text[]
+  ) OR position('NEW.IS_NT2_2000 = TRUE' IN sync_definition) = 0
+     OR position('PRIVATE.IS_POINTER_ONLY_DICTIONARY_ENTRY_V1(NEW.RAW)' IN sync_definition) = 0
+     OR position('INSERT INTO PRIVATE.DEFAULT_TRAINING_SCOPE_ENTRIES_V1' IN sync_definition) = 0
+     OR position('ON CONFLICT (ENTRY_ID) DO UPDATE' IN sync_definition) = 0
+     OR position('DELETE FROM PRIVATE.DEFAULT_TRAINING_SCOPE_ENTRIES_V1' IN sync_definition) = 0 THEN
+    RAISE EXCEPTION
+      'db-contract-gate: postflight-failed bounded-scope-sync-function-contract';
   END IF;
 
   IF (
@@ -90,6 +128,17 @@ BEGIN
       AND NOT attribute.attisdropped
   ) IS DISTINCT FROM ARRAY['entry_id', 'dictionary_id']::name[] THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed bounded-scope-shape-contract';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint constraint_state
+    WHERE constraint_state.conrelid = 'private.default_training_scope_entries_v1'::regclass
+      AND constraint_state.confrelid = 'public.word_entries'::regclass
+      AND constraint_state.contype = 'f'
+      AND constraint_state.confdeltype = 'c'
+  ) THEN
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed bounded-scope-delete-contract';
   END IF;
 
   -- The projection is deliberately narrow enough for either a sequential or
