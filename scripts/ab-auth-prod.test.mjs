@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import vm from "node:vm";
 import {
-  safeDiagnosticSvg,
+  privacyOverlayExpression,
   surfaceProbeExpression,
 } from "./lib/wait-for-prod-qa-surface.mjs";
 
@@ -79,12 +79,16 @@ test("surface probe does not treat a stale storage key as visible authentication
   assert.equal(marker, "QA_SURFACE:UNAUTHENTICATED");
 });
 
-test("diagnostic image contains only fixed safe classification and origin", () => {
-  const svg = safeDiagnosticSvg("authenticated-without-today");
-  assert.match(svg, /2000NL QA diagnostic/);
-  assert.match(svg, /authenticated-without-today/);
-  assert.match(svg, /https:\/\/2000\.dilum\.io\//);
-  assert.doesNotMatch(svg, /localStorage|getItem|innerText|access_token/);
+test("diagnostic overlay contains only fixed safe classification, origin, and selector ID", () => {
+  const expression = privacyOverlayExpression(
+    "authenticated-without-today",
+    "qa-safe-diagnostic-fixture",
+  );
+  assert.match(expression, /2000NL QA diagnostic/);
+  assert.match(expression, /authenticated-without-today/);
+  assert.match(expression, /https:\/\/2000\.dilum\.io\//);
+  assert.match(expression, /qa-safe-diagnostic-fixture/);
+  assert.doesNotMatch(expression, /localStorage|getItem|innerText|access_token/);
 });
 
 test("browser launcher receives no Supabase, database, or provider secrets", () => {
@@ -194,13 +198,20 @@ test("surface helper distinguishes auth failure and redacts diagnostic content",
   const fake = path.join(directory, "agent-browser");
   const lock = path.join(directory, "browser-command-lock");
   const collision = path.join(directory, "browser-command-collision");
+  const overlayReady = path.join(directory, "privacy-overlay-ready");
   fs.writeFileSync(
     fake,
     `#!/usr/bin/env bash
 if ! mkdir "${lock}" 2>/dev/null; then touch "${collision}"; exit 9; fi
 trap 'rmdir "${lock}"' EXIT
+if [[ "$*" == *"QA_DIAGNOSTIC_OVERLAY_READY"* ]]; then touch "${overlayReady}"; echo QA_DIAGNOSTIC_OVERLAY_READY; exit 0; fi
 if [[ "$*" == *" eval "* ]]; then echo 'QA_SURFACE:UNAUTHENTICATED'; exit 0; fi
 sleep 0.05
+if [[ "$*" == *" screenshot "* ]]; then
+  [[ -f "${overlayReady}" && "$*" == *"#qa-safe-diagnostic-"* ]] || { touch "${collision}"; exit 9; }
+  touch "${"$"}{@: -1}"
+  exit 0
+fi
 echo 'access_token=must-never-be-printed'
 `,
     { mode: 0o700 },
@@ -224,12 +235,10 @@ echo 'access_token=must-never-be-printed'
   assert.equal(result.status, 1);
   assert.match(result.stderr, /App\/auth failure/);
   assert.match(result.stderr, /visible-state=unauthenticated/);
-  const screenshot = result.stderr.match(/screenshot=([^;]+surface\.svg)/)?.[1];
+  const screenshot = result.stderr.match(/screenshot=([^;]+surface\.png)/)?.[1];
   assert.ok(screenshot && fs.existsSync(screenshot));
-  const diagnosticImage = fs.readFileSync(screenshot, "utf8");
-  assert.match(diagnosticImage, /State: unauthenticated/);
-  assert.doesNotMatch(diagnosticImage, /access_token|must-never-be-printed/);
   assert.doesNotMatch(result.stderr, /access_token|must-never-be-printed/);
+  assert.equal(fs.existsSync(overlayReady), true, "screenshot was not privacy-gated");
   assert.equal(fs.existsSync(collision), false, "diagnostics contended for one browser session");
 });
 
