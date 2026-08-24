@@ -6,11 +6,46 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import vm from "node:vm";
 import {
-  privacyOverlayExpression,
+  safeDiagnosticSvg,
   surfaceProbeExpression,
 } from "./lib/wait-for-prod-qa-surface.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
+
+const todayBrowser = `#!/usr/bin/env bash
+if [[ "$*" == *"eval --stdin"* ]]; then cat >/dev/null; fi
+if [[ "$*" == *"QA_SURFACE:TODAY"* ]]; then echo QA_SURFACE:TODAY; fi
+exit 0
+`;
+
+function createWrapperFixture(prefix, { agentBrowser, npx, env = "QA_FIXTURE=1\n" }) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const bin = path.join(directory, "bin");
+  const envFile = path.join(directory, "fixture.env");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "agent-browser"), agentBrowser, { mode: 0o700 });
+  fs.writeFileSync(path.join(bin, "npx"), npx, { mode: 0o700 });
+  fs.writeFileSync(envFile, env, { mode: 0o600 });
+  return {
+    directory,
+    run(session, options = {}) {
+      return spawnSync(
+        "bash",
+        ["scripts/ab-auth-prod.sh", "--env-file", envFile, "--session", session],
+        {
+          cwd: repoRoot,
+          encoding: "utf8",
+          timeout: options.timeout ?? 5_000,
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            ...options.env,
+          },
+        },
+      );
+    },
+  };
+}
 
 test("production wrapper rejects a caller-supplied URL before minting", () => {
   const result = spawnSync("bash", ["scripts/ab-auth-prod.sh", "--url", "https://attacker.example/"], {
@@ -44,12 +79,12 @@ test("surface probe does not treat a stale storage key as visible authentication
   assert.equal(marker, "QA_SURFACE:UNAUTHENTICATED");
 });
 
-test("diagnostic overlay contains only fixed safe classification and origin", () => {
-  const expression = privacyOverlayExpression("authenticated-without-today");
-  assert.match(expression, /2000NL QA diagnostic/);
-  assert.match(expression, /authenticated-without-today/);
-  assert.match(expression, /https:\/\/2000\.dilum\.io\//);
-  assert.doesNotMatch(expression, /localStorage|getItem|innerText|access_token/);
+test("diagnostic image contains only fixed safe classification and origin", () => {
+  const svg = safeDiagnosticSvg("authenticated-without-today");
+  assert.match(svg, /2000NL QA diagnostic/);
+  assert.match(svg, /authenticated-without-today/);
+  assert.match(svg, /https:\/\/2000\.dilum\.io\//);
+  assert.doesNotMatch(svg, /localStorage|getItem|innerText|access_token/);
 });
 
 test("browser launcher receives no Supabase, database, or provider secrets", () => {
@@ -73,13 +108,10 @@ test("browser launcher receives no Supabase, database, or provider secrets", () 
 });
 
 test("authenticated surface wait stays bounded when the browser command hangs", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-surface-hang-test-"));
-  const bin = path.join(directory, "bin");
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-surface-hang-state-"));
   const calls = path.join(directory, "eval-calls");
-  fs.mkdirSync(bin);
-  fs.writeFileSync(
-    path.join(bin, "agent-browser"),
-    `#!/usr/bin/env bash
+  const fixture = createWrapperFixture("qa-auth-surface-hang-test-", {
+    agentBrowser: `#!/usr/bin/env bash
 set -e
 if [[ "$*" == *" eval"* ]]; then
   [[ "$*" == *"eval --stdin"* ]] && cat >/dev/null
@@ -94,11 +126,7 @@ if [[ "$*" == *" eval"* ]]; then
 fi
 exit 0
 `,
-    { mode: 0o700 },
-  );
-  fs.writeFileSync(
-    path.join(bin, "npx"),
-    `#!/usr/bin/env bash
+    npx: `#!/usr/bin/env bash
 set -e
 if [[ "$*" == *"mint-prod-qa-session.ts"* ]]; then
   mkdir -p "$QA_SESSION_OUTPUT_DIR"
@@ -107,26 +135,14 @@ if [[ "$*" == *"mint-prod-qa-session.ts"* ]]; then
 fi
 exit 0
 `,
-    { mode: 0o700 },
-  );
-  const envFile = path.join(directory, "fixture.env");
-  fs.writeFileSync(envFile, "QA_FIXTURE=1\n", { mode: 0o600 });
+  });
   const started = Date.now();
-  const result = spawnSync(
-    "bash",
-    ["scripts/ab-auth-prod.sh", "--env-file", envFile, "--session", "qa-surface-hang-fixture"],
-    {
-      cwd: repoRoot,
-      encoding: "utf8",
-      timeout: 5_000,
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        QA_BROWSER_COMMAND_TIMEOUT_MS: "200",
-        QA_SURFACE_WAIT_TIMEOUT_MS: "600",
-      },
+  const result = fixture.run("qa-surface-hang-fixture", {
+    env: {
+      QA_BROWSER_COMMAND_TIMEOUT_MS: "200",
+      QA_SURFACE_WAIT_TIMEOUT_MS: "600",
     },
-  );
+  });
   const elapsed = Date.now() - started;
   assert.ok([1, 124].includes(result.status), `wrapper escaped its deadline after ${elapsed}ms`);
   assert.match(result.stderr, /browser harness.*timed out/i);
@@ -178,20 +194,13 @@ test("surface helper distinguishes auth failure and redacts diagnostic content",
   const fake = path.join(directory, "agent-browser");
   const lock = path.join(directory, "browser-command-lock");
   const collision = path.join(directory, "browser-command-collision");
-  const overlayReady = path.join(directory, "privacy-overlay-ready");
   fs.writeFileSync(
     fake,
     `#!/usr/bin/env bash
 if ! mkdir "${lock}" 2>/dev/null; then touch "${collision}"; exit 9; fi
 trap 'rmdir "${lock}"' EXIT
-if [[ "$*" == *"QA_DIAGNOSTIC_OVERLAY_READY"* ]]; then touch "${overlayReady}"; echo QA_DIAGNOSTIC_OVERLAY_READY; exit 0; fi
 if [[ "$*" == *" eval "* ]]; then echo 'QA_SURFACE:UNAUTHENTICATED'; exit 0; fi
 sleep 0.05
-if [[ "$*" == *" screenshot "* ]]; then
-  [[ -f "${overlayReady}" ]] || { touch "${collision}"; exit 9; }
-  touch "${"$"}{@: -1}"
-  exit 0
-fi
 echo 'access_token=must-never-be-printed'
 `,
     { mode: 0o700 },
@@ -215,9 +224,12 @@ echo 'access_token=must-never-be-printed'
   assert.equal(result.status, 1);
   assert.match(result.stderr, /App\/auth failure/);
   assert.match(result.stderr, /visible-state=unauthenticated/);
-  assert.match(result.stderr, /screenshot=.*surface\.png/);
+  const screenshot = result.stderr.match(/screenshot=([^;]+surface\.svg)/)?.[1];
+  assert.ok(screenshot && fs.existsSync(screenshot));
+  const diagnosticImage = fs.readFileSync(screenshot, "utf8");
+  assert.match(diagnosticImage, /State: unauthenticated/);
+  assert.doesNotMatch(diagnosticImage, /access_token|must-never-be-printed/);
   assert.doesNotMatch(result.stderr, /access_token|must-never-be-printed/);
-  assert.equal(fs.existsSync(overlayReady), true, "screenshot was not privacy-gated");
   assert.equal(fs.existsSync(collision), false, "diagnostics contended for one browser session");
 });
 
@@ -243,18 +255,11 @@ test("surface helper succeeds as soon as Today is visible", () => {
 });
 
 test("successful wrapper revokes globally and removes token artifacts", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-success-cleanup-test-"));
-  const bin = path.join(directory, "bin");
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-success-cleanup-state-"));
   const revokeLog = path.join(directory, "revoked");
-  fs.mkdirSync(bin);
-  fs.writeFileSync(
-    path.join(bin, "agent-browser"),
-    "#!/usr/bin/env bash\nif [[ \"$*\" == *\"eval --stdin\"* ]]; then cat >/dev/null; fi\nif [[ \"$*\" == *\"QA_SURFACE:TODAY\"* ]]; then echo QA_SURFACE:TODAY; fi\nexit 0\n",
-    { mode: 0o700 },
-  );
-  fs.writeFileSync(
-    path.join(bin, "npx"),
-    `#!/usr/bin/env bash
+  const fixture = createWrapperFixture("qa-auth-success-cleanup-test-", {
+    agentBrowser: todayBrowser,
+    npx: `#!/usr/bin/env bash
 set -e
 if [[ "$*" == *"mint-prod-qa-session.ts"* ]]; then
   mkdir -p "$QA_SESSION_OUTPUT_DIR"
@@ -266,26 +271,14 @@ if [[ "$*" == *"revoke-prod-qa-session.ts"* ]]; then
 fi
 exit 0
 `,
-    { mode: 0o700 },
-  );
-  const envFile = path.join(directory, "fixture.env");
-  fs.writeFileSync(envFile, "QA_FIXTURE=1\n", { mode: 0o600 });
+  });
   const artifactRoot = path.join(repoRoot, "tmp/agent-browser");
   const before = new Set(
     fs.existsSync(artifactRoot)
       ? fs.readdirSync(artifactRoot).filter((name) => name.startsWith("qa-session-"))
       : [],
   );
-  const result = spawnSync(
-    "bash",
-    ["scripts/ab-auth-prod.sh", "--env-file", envFile, "--session", "qa-success-cleanup"],
-    {
-      cwd: repoRoot,
-      encoding: "utf8",
-      timeout: 5_000,
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
-    },
-  );
+  const result = fixture.run("qa-success-cleanup");
   const after = fs.readdirSync(artifactRoot).filter(
     (name) => name.startsWith("qa-session-") && !before.has(name),
   );
@@ -351,17 +344,9 @@ exit 0
 });
 
 test("wrapper fails truthfully and retains protected artifacts when revocation fails", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-cleanup-test-"));
-  const bin = path.join(directory, "bin");
-  fs.mkdirSync(bin);
-  fs.writeFileSync(
-    path.join(bin, "agent-browser"),
-    "#!/usr/bin/env bash\nif [[ \"$*\" == *\"eval --stdin\"* ]]; then cat >/dev/null; fi\nif [[ \"$*\" == *\"QA_SURFACE:TODAY\"* ]]; then echo QA_SURFACE:TODAY; fi\nexit 0\n",
-    { mode: 0o700 },
-  );
-  fs.writeFileSync(
-    path.join(bin, "npx"),
-    `#!/usr/bin/env bash
+  const fixture = createWrapperFixture("qa-auth-cleanup-test-", {
+    agentBrowser: todayBrowser,
+    npx: `#!/usr/bin/env bash
 set -e
 if [[ "$*" == *"mint-prod-qa-session.ts"* ]]; then
   mkdir -p "$QA_SESSION_OUTPUT_DIR"
@@ -374,20 +359,10 @@ if [[ "$*" == *"revoke-prod-qa-session.ts"* && "${"$"}QA_FAKE_REVOKE_FAIL" == "1
 fi
 exit 0
 `,
-    { mode: 0o700 },
-  );
-  const envFile = path.join(directory, "fixture.env");
-  fs.writeFileSync(envFile, "QA_FAKE_REVOKE_FAIL=1\n", { mode: 0o600 });
+    env: "QA_FAKE_REVOKE_FAIL=1\n",
+  });
 
-  const result = spawnSync(
-    "bash",
-    ["scripts/ab-auth-prod.sh", "--env-file", envFile, "--session", "qa-cleanup-fixture"],
-    {
-      cwd: repoRoot,
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
-    },
-  );
+  const result = fixture.run("qa-cleanup-fixture");
   assert.equal(result.status, 1);
   assert.match(result.stderr, /revocation failed.*artifacts retained/i);
   const recoveryDirectory = result.stderr.match(/retained at ([^\s.]+(?:\.[^\s.]+)*)/)?.[1];
@@ -397,17 +372,9 @@ exit 0
 });
 
 test("wrapper kills a TERM-ignoring revoker within the cleanup deadline", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-auth-timeout-test-"));
-  const bin = path.join(directory, "bin");
-  fs.mkdirSync(bin);
-  fs.writeFileSync(
-    path.join(bin, "agent-browser"),
-    "#!/usr/bin/env bash\nif [[ \"$*\" == *\"eval --stdin\"* ]]; then cat >/dev/null; fi\nif [[ \"$*\" == *\"QA_SURFACE:TODAY\"* ]]; then echo QA_SURFACE:TODAY; fi\nexit 0\n",
-    { mode: 0o700 },
-  );
-  fs.writeFileSync(
-    path.join(bin, "npx"),
-    `#!/usr/bin/env bash
+  const fixture = createWrapperFixture("qa-auth-timeout-test-", {
+    agentBrowser: todayBrowser,
+    npx: `#!/usr/bin/env bash
 set -e
 if [[ "$*" == *"mint-prod-qa-session.ts"* ]]; then
   mkdir -p "$QA_SESSION_OUTPUT_DIR"
@@ -420,25 +387,14 @@ if [[ "$*" == *"revoke-prod-qa-session.ts"* ]]; then
   while true; do sleep 1; done
 fi
 `,
-    { mode: 0o700 },
-  );
-  const envFile = path.join(directory, "fixture.env");
-  fs.writeFileSync(envFile, "QA_FIXTURE=1\n", { mode: 0o600 });
+  });
   const started = Date.now();
-  const result = spawnSync(
-    "bash",
-    ["scripts/ab-auth-prod.sh", "--env-file", envFile, "--session", "qa-timeout-fixture"],
-    {
-      cwd: repoRoot,
-      encoding: "utf8",
-      timeout: 15_000,
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        QA_CLEANUP_COMMAND_TIMEOUT_MS: "300",
-      },
+  const result = fixture.run("qa-timeout-fixture", {
+    timeout: 15_000,
+    env: {
+      QA_CLEANUP_COMMAND_TIMEOUT_MS: "300",
     },
-  );
+  });
   const elapsed = Date.now() - started;
   assert.equal(result.status, 1);
   assert.ok(elapsed < 5_000, `cleanup took ${elapsed}ms`);

@@ -59,10 +59,11 @@ The wrapper then records a screenshot under `tmp/agent-browser/` and prints only
 the production URL path, the fixed visible-state class, and counts of console,
 page-error, and network records. Raw page/log/network content is never printed,
 because it may contain session or personal data. Token artifacts still follow
-the revocation-and-cleanup contract above. Before a diagnostic screenshot, the
-wrapper covers the page with an opaque, fixed-content panel containing only the
-safe failure class and production origin; it never persists raw app pixels. If
-that privacy gate or any diagnostic command fails, the field says
+the revocation-and-cleanup contract above. The diagnostic image is generated as
+a detached fixed-content SVG containing only the safe failure class and
+production origin; it never reads or persists raw app pixels, so navigation
+cannot race the privacy boundary. If that privacy gate or any diagnostic command
+fails, the field says
 `unavailable(privacy-gate-failed)`, `unavailable(timeout)`, or
 `unavailable(command-failed)` instead of hiding the harness failure behind an
 empty count.
