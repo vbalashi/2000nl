@@ -98,7 +98,7 @@ test(
            is_nt2_2000, raw
          )
          SELECT '${dictionaryId}', 'nl', 'issue238-entry-' || sample, sample, 'noun',
-           sample <= ${nt2EntryCount},
+           mod(sample::bigint * ${nt2EntryCount}, ${entryCount}) < ${nt2EntryCount},
            jsonb_build_object('payload', encode(gen_random_bytes(800), 'hex'))
          FROM generate_series(1, ${entryCount}) sample;
 
@@ -167,6 +167,53 @@ test(
       );
       assert.equal(seed.status, 0, seed.stderr);
 
+      const projectionSync = psql(
+        targetUrl,
+        `DO $$
+         DECLARE target_id uuid;
+         BEGIN
+           IF (SELECT count(*) FROM private.default_training_scope_entries_v1) <> ${nt2EntryCount}
+              OR EXISTS (
+                SELECT 1
+                FROM private.default_training_scope_entries_v1 projection
+                JOIN public.word_entries entry ON entry.id = projection.entry_id
+                WHERE NOT entry.is_nt2_2000
+                   OR private.is_pointer_only_dictionary_entry_v1(entry.raw)
+                   OR projection.dictionary_id IS DISTINCT FROM entry.dictionary_id
+              ) THEN
+             RAISE EXCEPTION 'issue238 initial scope projection mismatch';
+           END IF;
+
+           SELECT id INTO target_id
+           FROM public.word_entries
+           WHERE is_nt2_2000
+           ORDER BY meaning_id
+           LIMIT 1;
+           UPDATE public.word_entries
+           SET raw = raw || jsonb_build_object(
+             'cross_reference', 'issue238-target', 'meanings', '[]'::jsonb
+           )
+           WHERE id = target_id;
+           IF EXISTS (
+             SELECT 1 FROM private.default_training_scope_entries_v1
+             WHERE entry_id = target_id
+           ) THEN
+             RAISE EXCEPTION 'issue238 pointer projection was not removed';
+           END IF;
+
+           UPDATE public.word_entries
+           SET raw = raw - 'cross_reference' - 'meanings'
+           WHERE id = target_id;
+           IF NOT EXISTS (
+             SELECT 1 FROM private.default_training_scope_entries_v1
+             WHERE entry_id = target_id
+           ) THEN
+             RAISE EXCEPTION 'issue238 trainable projection was not restored';
+           END IF;
+         END $$;\n`,
+      );
+      assert.equal(projectionSync.status, 0, projectionSync.stderr);
+
       const parity = psql(
         targetUrl,
         `BEGIN READ ONLY;
@@ -207,6 +254,17 @@ test(
       );
       assert.equal(parity.status, 0, parity.stderr);
       assert.equal(parity.stdout.trim(), "", `optimized/legacy parity mismatch: ${parity.stdout}`);
+
+      // Production imports can leave recently changed heap pages outside the
+      // visibility map. Dirty every distributed NT2 row after the parity read
+      // so the budget cannot depend on a just-VACUUMed ideal index-only scan.
+      const dirtyVisibility = psql(
+        targetUrl,
+        `UPDATE public.word_entries
+         SET dictionary_id = dictionary_id
+         WHERE is_nt2_2000 = true;\n`,
+      );
+      assert.equal(dirtyVisibility.status, 0, dirtyVisibility.stderr);
 
       const explain = psql(
         targetUrl,

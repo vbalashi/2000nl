@@ -38,7 +38,7 @@
     {
       "migrationId": 127,
       "file": "db/migrations/127_bounded_training_session_plan_io.sql",
-      "sha256": "271a1391e32c08ab163b2aa63e0128f96f5b06735e160921664e01a946d0bf4d"
+      "sha256": "9ad8719e582d37b58d6e9fc5c87182e2053377000be6d4de946368eebfa1e944"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-127.sql",

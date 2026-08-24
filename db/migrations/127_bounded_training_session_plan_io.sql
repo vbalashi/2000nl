@@ -4,10 +4,63 @@
 
 BEGIN;
 
-CREATE INDEX IF NOT EXISTS word_entries_nt2_scheduler_scope_v1_idx
-ON public.word_entries (id) INCLUDE (dictionary_id)
-WHERE is_nt2_2000 = true
-  AND NOT private.is_pointer_only_dictionary_entry_v1(raw);
+CREATE TABLE IF NOT EXISTS private.default_training_scope_entries_v1 (
+  entry_id uuid PRIMARY KEY
+    REFERENCES public.word_entries(id) ON DELETE CASCADE,
+  dictionary_id uuid
+);
+
+REVOKE ALL ON TABLE private.default_training_scope_entries_v1
+FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION private.sync_default_training_scope_entry_v1()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, pg_temp
+AS $$
+BEGIN
+  IF NEW.is_nt2_2000 = true
+     AND NOT private.is_pointer_only_dictionary_entry_v1(NEW.raw) THEN
+    INSERT INTO private.default_training_scope_entries_v1(entry_id, dictionary_id)
+    VALUES (NEW.id, NEW.dictionary_id)
+    ON CONFLICT (entry_id) DO UPDATE
+    SET dictionary_id = EXCLUDED.dictionary_id;
+  ELSE
+    DELETE FROM private.default_training_scope_entries_v1
+    WHERE entry_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.sync_default_training_scope_entry_v1()
+FROM PUBLIC, anon, authenticated, service_role;
+
+INSERT INTO private.default_training_scope_entries_v1(entry_id, dictionary_id)
+SELECT entry.id, entry.dictionary_id
+FROM public.word_entries entry
+WHERE entry.is_nt2_2000 = true
+  AND NOT private.is_pointer_only_dictionary_entry_v1(entry.raw)
+ON CONFLICT (entry_id) DO UPDATE
+SET dictionary_id = EXCLUDED.dictionary_id;
+
+DELETE FROM private.default_training_scope_entries_v1 scope_entry
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM public.word_entries entry
+  WHERE entry.id = scope_entry.entry_id
+    AND entry.is_nt2_2000 = true
+    AND NOT private.is_pointer_only_dictionary_entry_v1(entry.raw)
+);
+
+DROP TRIGGER IF EXISTS sync_default_training_scope_entry_v1
+ON public.word_entries;
+CREATE TRIGGER sync_default_training_scope_entry_v1
+AFTER INSERT OR UPDATE OF is_nt2_2000, raw, dictionary_id
+ON public.word_entries
+FOR EACH ROW
+EXECUTE FUNCTION private.sync_default_training_scope_entry_v1();
 
 CREATE OR REPLACE FUNCTION private.default_training_session_plan_counts_v1(
   p_user_id uuid,
@@ -56,13 +109,11 @@ WITH args AS (
   FROM dictionaries dictionary
   WHERE can_access_dictionary(p_user_id, dictionary.id, 'read')
 ), scope AS MATERIALIZED (
-  SELECT entry.id
-  FROM word_entries entry
+  SELECT scope_entry.entry_id AS id
+  FROM private.default_training_scope_entries_v1 scope_entry
   LEFT JOIN readable_dictionaries readable_dictionary
-    ON readable_dictionary.id = entry.dictionary_id
-  WHERE entry.is_nt2_2000 = true
-    AND NOT private.is_pointer_only_dictionary_entry_v1(entry.raw)
-    AND (entry.dictionary_id IS NULL OR readable_dictionary.id IS NOT NULL)
+    ON readable_dictionary.id = scope_entry.dictionary_id
+  WHERE scope_entry.dictionary_id IS NULL OR readable_dictionary.id IS NOT NULL
 ), modes AS MATERIALIZED (
   SELECT requested_mode.card_type_id
   FROM args

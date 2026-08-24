@@ -66,13 +66,11 @@ describe("NUC database contract deployment", () => {
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
-    expect(postflight).toContain('"Node Type": "Index Only Scan"');
+    expect(postflight).toContain('"Relation Name": "default_training_scope_entries_v1"');
     expect(postflight).toContain("word_entries_pointer_only_scheduler_exclusion_v1_idx");
-    expect(postflight).toContain("enable_seqscan = off");
     expect(postflight).toContain("READABLE_DICTIONARIES AS MATERIALIZED");
     expect(postflight).toContain("scheduler_access_call_count <> 1");
     expect(postflight).toContain("LIMITS AS MATERIALIZED");
-    expect(postflight).toContain("word_entries_nt2_scheduler_scope_v1_idx");
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(workflow).toContain("-f db/deploy-contract/postflight-127.sql");
   });

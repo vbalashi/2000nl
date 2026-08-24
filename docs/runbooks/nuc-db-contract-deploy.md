@@ -45,7 +45,7 @@ whose last migration is below the required migration.
   migration, stops deployment.
 - Postflight checks exact RPC signatures, role grants, and a deterministic
   `EXPLAIN (FORMAT JSON)` contract proving the default NT2 scheduler scope uses
-  its narrow covering index without reading wide dictionary rows. It also pins
+  its narrow synchronized projection instead of wide dictionary rows. It pins
   materialized learner settings/status and readable-dictionary sets, the legacy
   selector fallback, application compatibility, and the bounded health signal.
 - Before compatibility is advertised, the gate executes the checksum-pinned
@@ -147,15 +147,17 @@ production diagnostics then showed one warm call touching 18,853 shared blocks
 scope had no narrow NT2 index, and session-plan counts still executed
 selector-only ordering plus repeated learner-setting lookups.
 
-Migration 127 adds a partial covering index for trainable NT2 entry identities
-and a count-only default session-plan path. Dictionary access, learner settings,
-status, and today's review sets are each resolved once. List and filtered plans
-retain the authoritative selector fallback. On a disposable production-shaped
-fixture, the previous contract touched 15,409 shared blocks; the combined fix
-touched 1,976–1,980 and executed in 16.8 ms with identical queue counts across
-single-mode `both`/`new`/`review` and multi-mode cases. CI keeps a 4,000-block
-and 2,000-ms fail-closed budget; the production pre-switch probe remains exactly
-read-only and retains its two-second timeout.
+Migration 127 adds a narrow, trigger-synchronized projection of trainable NT2
+entry identities and a count-only default session-plan path. Dictionary access,
+learner settings, status, and today's review sets are each resolved once. List
+and filtered plans retain the authoritative selector fallback. On a disposable
+production-shaped fixture, the previous contract touched 15,409 shared blocks.
+An index-only version fell back to 10,066 after distributed NT2 heap pages were
+dirtied; the synchronized projection stayed at 1,825 blocks and 16.647 ms after
+both source and projection visibility were invalidated. Queue counts remained
+identical across single-mode `both`/`new`/`review` and multi-mode cases. CI keeps
+a 4,000-block and 2,000-ms fail-closed budget; the production pre-switch probe
+remains exactly read-only and retains its two-second timeout.
 
 ## Production QA sessions
 
