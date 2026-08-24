@@ -584,13 +584,6 @@ test(
       );
 
       applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
-      const dropDriftOwner = psql(
-        targetUrl,
-        `REVOKE CREATE ON SCHEMA private FROM issue243_scheduler_drift_owner;
-         REVOKE issue243_scheduler_drift_owner FROM postgres;
-         DROP ROLE issue243_scheduler_drift_owner;\n`,
-      );
-      assert.equal(dropDriftOwner.status, 0, dropDriftOwner.stderr);
       applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
 
       const schedulerGrantDrift = psql(
@@ -655,6 +648,56 @@ test(
       applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
       applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
 
+      const superuserCapability = psql(
+        targetUrl,
+        "SELECT rolsuper FROM pg_roles WHERE rolname = current_user;\n",
+      );
+      assert.equal(superuserCapability.status, 0, superuserCapability.stderr);
+      if (superuserCapability.stdout.trim() === "t") {
+        const siblingIndexOperatorClassDrift = psql(
+          targetUrl,
+          `CREATE SCHEMA issue243_drift;
+           CREATE OPERATOR CLASS issue243_drift.text_ops
+           FOR TYPE text USING btree AS
+             OPERATOR 1 < (text, text),
+             OPERATOR 2 <= (text, text),
+             OPERATOR 3 = (text, text),
+             OPERATOR 4 >= (text, text),
+             OPERATOR 5 > (text, text),
+             FUNCTION 1 pg_catalog.bttextcmp(text, text);
+           DROP INDEX public.word_entries_training_sibling_count_v1_idx;
+           CREATE INDEX word_entries_training_sibling_count_v1_idx
+           ON public.word_entries (
+             dictionary_id,
+             language_code issue243_drift.text_ops,
+             headword issue243_drift.text_ops
+           );\n`,
+        );
+        assert.equal(
+          siblingIndexOperatorClassDrift.status,
+          0,
+          siblingIndexOperatorClassDrift.stderr,
+        );
+        const siblingIndexOperatorClassDriftPostflight = psql(
+          targetUrl,
+          "",
+          ["--file", path.join(repoRoot, "db/deploy-contract/postflight-128.sql")],
+        );
+        assert.notEqual(siblingIndexOperatorClassDriftPostflight.status, 0);
+        assert.match(
+          siblingIndexOperatorClassDriftPostflight.stderr,
+          /selector-sibling-index/,
+        );
+
+        applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
+        applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+        const dropDriftSchema = psql(
+          targetUrl,
+          "DROP SCHEMA issue243_drift CASCADE;\n",
+        );
+        assert.equal(dropDriftSchema.status, 0, dropDriftSchema.stderr);
+      }
+
       applySqlFile(targetUrl, "db/migrations/126_set_based_scheduler_dictionary_access.sql");
       const schedulerDriftPostflight = psql(
         targetUrl,
@@ -675,6 +718,11 @@ test(
          DROP DATABASE IF EXISTS ${quotedDatabaseName};\n`,
       );
       assert.equal(terminate.status, 0, terminate.stderr);
+      const cleanupDriftOwner = psql(
+        base.toString(),
+        "DROP ROLE IF EXISTS issue243_scheduler_drift_owner;\n",
+      );
+      assert.equal(cleanupDriftOwner.status, 0, cleanupDriftOwner.stderr);
     }
   },
 );

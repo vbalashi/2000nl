@@ -100,12 +100,33 @@ BEGIN
         (SELECT attribute.attcollation FROM pg_attribute attribute
          WHERE attribute.attrelid = 'public.word_entries'::regclass
            AND attribute.attname = 'headword')
-      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
-           WHERE operator_class.oid = index_state.indclass[0]) = 'uuid_ops'
-      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
-           WHERE operator_class.oid = index_state.indclass[1]) = 'text_ops'
-      AND (SELECT operator_class.opcname FROM pg_opclass operator_class
-           WHERE operator_class.oid = index_state.indclass[2]) = 'text_ops'
+      AND index_state.indclass[0] = (
+        SELECT operator_class.oid
+        FROM pg_opclass operator_class
+        WHERE operator_class.opcnamespace = 'pg_catalog'::regnamespace
+          AND operator_class.opcmethod = index_relation.relam
+          AND operator_class.opcname = 'uuid_ops'
+          AND operator_class.opcdefault
+          AND operator_class.opcintype = 'uuid'::regtype
+      )
+      AND index_state.indclass[1] = (
+        SELECT operator_class.oid
+        FROM pg_opclass operator_class
+        WHERE operator_class.opcnamespace = 'pg_catalog'::regnamespace
+          AND operator_class.opcmethod = index_relation.relam
+          AND operator_class.opcname = 'text_ops'
+          AND operator_class.opcdefault
+          AND operator_class.opcintype = 'text'::regtype
+      )
+      AND index_state.indclass[2] = (
+        SELECT operator_class.oid
+        FROM pg_opclass operator_class
+        WHERE operator_class.opcnamespace = 'pg_catalog'::regnamespace
+          AND operator_class.opcmethod = index_relation.relam
+          AND operator_class.opcname = 'text_ops'
+          AND operator_class.opcdefault
+          AND operator_class.opcintype = 'text'::regtype
+      )
       AND index_state.indoption[0] = 0
       AND index_state.indoption[1] = 0
       AND index_state.indoption[2] = 0

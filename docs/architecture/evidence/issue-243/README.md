@@ -35,7 +35,7 @@ daily caps, overdue order, and future-due practice.
 Postflight pins the selector's security-definer boundary, exact search path,
 volatility, owner and denied caller roles. It also pins the sibling index to
 the expected table, btree access method, ordered plain keys, source collations,
-default operator classes, options, and non-partial, non-expression shape. Real
+exact `pg_catalog` operator classes, options, and non-partial, non-expression shape. Real
 PostgreSQL tamper tests prove that security, owner, grant, partial-index, or
 collation drift fails closed and that replaying migration 128 restores the exact
 contract before postflight can pass.
