@@ -14,10 +14,44 @@ export const surfaceProbeExpression = `(() => {
     .some((label) => text.includes(label));
   if (today) return "QA_SURFACE:TODAY";
   const authKey = Object.keys(localStorage).find((key) => key.startsWith("sb-") && key.endsWith("-auth-token"));
+  let sessionValid = false;
+  try {
+    const stored = authKey ? JSON.parse(localStorage.getItem(authKey) || "null") : null;
+    const expiresAt = Number(stored?.expires_at || 0);
+    sessionValid = Boolean(stored?.access_token && expiresAt * 1000 > Date.now());
+  } catch {}
+  const authForm = Boolean(document.querySelector('input[type="email"], input[autocomplete="one-time-code"]'));
   const login = /magic link|sign in|log in|inloggen|войти/i.test(text);
-  if (login || !authKey) return "QA_SURFACE:UNAUTHENTICATED";
-  return document.body ? "QA_SURFACE:AUTHENTICATED_OTHER" : "QA_SURFACE:LOADING";
+  if (authForm || login || !sessionValid) return "QA_SURFACE:UNAUTHENTICATED";
+  const authenticatedShell = Boolean(document.querySelector('nav[aria-label="Primary"]'));
+  return authenticatedShell ? "QA_SURFACE:AUTHENTICATED_OTHER" : "QA_SURFACE:AUTH_UNCONFIRMED";
 })()`;
+
+export function privacyOverlayExpression(lastClass) {
+  const safeClass = [
+    "unauthenticated",
+    "authenticated-without-today",
+    "authentication-unconfirmed",
+    "browser-harness-unavailable",
+    "loading-or-unclassified",
+  ].includes(lastClass) ? lastClass : "unclassified";
+  return `(() => {
+    const previous = document.getElementById("qa-safe-diagnostic-overlay");
+    if (previous) previous.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "qa-safe-diagnostic-overlay";
+    overlay.setAttribute("role", "img");
+    overlay.setAttribute("aria-label", "2000NL safe QA diagnostic");
+    Object.assign(overlay.style, {
+      position: "fixed", inset: "0", zIndex: "2147483647", display: "grid",
+      placeItems: "center", padding: "48px", background: "#0f172a",
+      color: "#e2e8f0", font: "600 24px system-ui", whiteSpace: "pre-line"
+    });
+    overlay.textContent = ${JSON.stringify(`2000NL QA diagnostic\nState: ${safeClass}\nURL: https://2000.dilum.io/`)};
+    document.documentElement.appendChild(overlay);
+    return "QA_DIAGNOSTIC_OVERLAY_READY";
+  })()`;
+}
 
 function boundedEnvMs(name, fallback, maximum) {
   const value = Number(process.env[name] ?? fallback);
@@ -61,9 +95,14 @@ async function collectDiagnostics(session, lastClass, commandTimeoutMs) {
   const consoleResult = await diagnostic(["console"]);
   const errors = await diagnostic(["errors"]);
   const network = await diagnostic(["network", "requests"]);
-  // Screenshot is last: some browser/daemon failures can wedge that command,
-  // and textual classifications must remain available even when capture is not.
-  const shot = await diagnostic(["screenshot", screenshot]);
+  // Screenshot is last and gated behind an opaque fixed-content overlay. Raw
+  // app pixels can contain identity or error details and are never persisted.
+  const overlay = await diagnostic(["eval", privacyOverlayExpression(lastClass)]);
+  const overlayReady = overlay.code === 0
+    && overlay.stdout.includes("QA_DIAGNOSTIC_OVERLAY_READY");
+  const shot = overlayReady
+    ? await diagnostic(["screenshot", screenshot])
+    : { code: 1, stdout: "", stderr: "", timedOut: false };
   const currentUrl = url.stdout.match(/https?:\/\/[^\s"']+/)?.[0];
   let safeUrl = "unavailable";
   if (currentUrl) {
@@ -74,7 +113,9 @@ async function collectDiagnostics(session, lastClass, commandTimeoutMs) {
   }
   const screenshotSummary = shot.code === 0 && fs.existsSync(screenshot)
     ? screenshot
-    : (shot.timedOut ? "unavailable(timeout)" : "unavailable(command-failed)");
+    : (!overlayReady
+        ? "unavailable(privacy-gate-failed)"
+        : (shot.timedOut ? "unavailable(timeout)" : "unavailable(command-failed)"));
   console.error(`QA diagnostics: url=${safeUrl}; visible-state=${lastClass}; console=${diagnosticSummary(consoleResult)}; page-errors=${diagnosticSummary(errors)}; network=${diagnosticSummary(network)}; screenshot=${screenshotSummary}.`);
 }
 
@@ -104,13 +145,14 @@ async function main() {
     if (result.stdout.includes("QA_SURFACE:TODAY")) return 0;
     if (result.stdout.includes("QA_SURFACE:UNAUTHENTICATED")) lastClass = "unauthenticated";
     else if (result.stdout.includes("QA_SURFACE:AUTHENTICATED_OTHER")) lastClass = "authenticated-without-today";
+    else if (result.stdout.includes("QA_SURFACE:AUTH_UNCONFIRMED")) lastClass = "authentication-unconfirmed";
     else lastClass = "loading-or-unclassified";
     await new Promise((resolve) => setTimeout(resolve, Math.min(pollMs, Math.max(0, deadline - Date.now()))));
   }
 
-  console.error(lastClass === "unauthenticated"
-    ? "App/auth failure: the dedicated QA session did not reach an authenticated surface."
-    : "App surface failure: authentication was present but Today did not become visible.");
+  console.error(lastClass === "authenticated-without-today"
+    ? "App surface failure: authentication was visible but Today did not become visible."
+    : "App/auth failure: the dedicated QA session did not reach a visibly authenticated surface.");
   await collectDiagnostics(session, lastClass, Math.min(commandTimeoutMs, 2_000));
   return 1;
 }

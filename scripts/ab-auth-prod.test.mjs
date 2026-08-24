@@ -5,7 +5,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 import vm from "node:vm";
-import { surfaceProbeExpression } from "./lib/wait-for-prod-qa-surface.mjs";
+import {
+  privacyOverlayExpression,
+  surfaceProbeExpression,
+} from "./lib/wait-for-prod-qa-surface.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 
@@ -24,6 +27,29 @@ test("surface probe recognizes the approved uppercase Dutch Today label", () => 
     localStorage: {},
   });
   assert.equal(marker, "QA_SURFACE:TODAY");
+});
+
+test("surface probe does not treat a stale storage key as visible authentication", () => {
+  const marker = vm.runInNewContext(surfaceProbeExpression, {
+    Date,
+    document: {
+      body: { innerText: "Loading" },
+      querySelector: () => null,
+    },
+    localStorage: {
+      "sb-fixture-auth-token": "fixture",
+      getItem: () => JSON.stringify({ access_token: "expired", expires_at: 1 }),
+    },
+  });
+  assert.equal(marker, "QA_SURFACE:UNAUTHENTICATED");
+});
+
+test("diagnostic overlay contains only fixed safe classification and origin", () => {
+  const expression = privacyOverlayExpression("authenticated-without-today");
+  assert.match(expression, /2000NL QA diagnostic/);
+  assert.match(expression, /authenticated-without-today/);
+  assert.match(expression, /https:\/\/2000\.dilum\.io\//);
+  assert.doesNotMatch(expression, /localStorage|getItem|innerText|access_token/);
 });
 
 test("browser launcher receives no Supabase, database, or provider secrets", () => {
@@ -126,19 +152,46 @@ test("bounded command kills a TERM-ignoring browser process group", () => {
   assert.match(result.stderr, /timed out after 150ms/i);
 });
 
+test("bounded command still kills descendants after the leader exits on TERM", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-process-group-test-"));
+  const childPidFile = path.join(directory, "child-pid");
+  const result = spawnSync(
+    process.execPath,
+    [
+      "scripts/lib/bounded-command.mjs",
+      "--timeout-ms",
+      "150",
+      "--",
+      "bash",
+      "-c",
+      `(trap '' TERM; while true; do sleep 1; done) & echo $! > '${childPidFile}'; wait`,
+    ],
+    { cwd: repoRoot, encoding: "utf8", timeout: 2_000 },
+  );
+  assert.equal(result.status, 124);
+  const childPid = Number(fs.readFileSync(childPidFile, "utf8").trim());
+  assert.throws(() => process.kill(childPid, 0), { code: "ESRCH" });
+});
+
 test("surface helper distinguishes auth failure and redacts diagnostic content", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qa-surface-auth-test-"));
   const fake = path.join(directory, "agent-browser");
   const lock = path.join(directory, "browser-command-lock");
   const collision = path.join(directory, "browser-command-collision");
+  const overlayReady = path.join(directory, "privacy-overlay-ready");
   fs.writeFileSync(
     fake,
     `#!/usr/bin/env bash
 if ! mkdir "${lock}" 2>/dev/null; then touch "${collision}"; exit 9; fi
 trap 'rmdir "${lock}"' EXIT
+if [[ "$*" == *"QA_DIAGNOSTIC_OVERLAY_READY"* ]]; then touch "${overlayReady}"; echo QA_DIAGNOSTIC_OVERLAY_READY; exit 0; fi
 if [[ "$*" == *" eval "* ]]; then echo 'QA_SURFACE:UNAUTHENTICATED'; exit 0; fi
 sleep 0.05
-if [[ "$*" == *" screenshot "* ]]; then touch "${"$"}{@: -1}"; exit 0; fi
+if [[ "$*" == *" screenshot "* ]]; then
+  [[ -f "${overlayReady}" ]] || { touch "${collision}"; exit 9; }
+  touch "${"$"}{@: -1}"
+  exit 0
+fi
 echo 'access_token=must-never-be-printed'
 `,
     { mode: 0o700 },
@@ -164,6 +217,7 @@ echo 'access_token=must-never-be-printed'
   assert.match(result.stderr, /visible-state=unauthenticated/);
   assert.match(result.stderr, /screenshot=.*surface\.png/);
   assert.doesNotMatch(result.stderr, /access_token|must-never-be-printed/);
+  assert.equal(fs.existsSync(overlayReady), true, "screenshot was not privacy-gated");
   assert.equal(fs.existsSync(collision), false, "diagnostics contended for one browser session");
 });
 

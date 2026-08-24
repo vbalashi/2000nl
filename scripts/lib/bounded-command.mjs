@@ -34,6 +34,16 @@ export function runBounded(command, args, options = {}) {
     let stderr = "";
     let timedOut = false;
     let killTimer;
+    let killEscalated = false;
+    let closeResult;
+    let settled = false;
+
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(result);
+    };
 
     const append = (current, chunk) =>
       `${current}${chunk.toString("utf8")}`.slice(-maxOutputBytes);
@@ -47,22 +57,36 @@ export function runBounded(command, args, options = {}) {
     const timeout = setTimeout(() => {
       timedOut = true;
       killProcessGroup(child, "SIGTERM");
-      killTimer = setTimeout(() => killProcessGroup(child, "SIGKILL"), killGraceMs);
-      killTimer.unref();
+      killTimer = setTimeout(() => {
+        killEscalated = true;
+        killProcessGroup(child, "SIGKILL");
+        if (closeResult) setTimeout(() => finish(closeResult), 25);
+      }, killGraceMs);
     }, timeoutMs);
     timeout.unref();
 
-    child.once("error", reject);
-    child.once("close", (code, signal) => {
+    child.once("error", (error) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timeout);
       clearTimeout(killTimer);
-      resolve({
+      reject(error);
+    });
+    child.once("close", (code, signal) => {
+      const result = {
         code: timedOut ? 124 : (code ?? 1),
         signal,
         timedOut,
         stdout,
         stderr,
-      });
+      };
+      if (timedOut && !killEscalated) {
+        // The leader may obey TERM while a descendant ignores it. Preserve the
+        // scheduled group-wide KILL before allowing this wrapper to exit.
+        closeResult = result;
+        return;
+      }
+      finish(result);
     });
   });
 }
