@@ -1,0 +1,717 @@
+{
+  "checkedAt": "2026-09-05T07:57:55.285Z",
+  "baseline": "fad6c807a8c3ec4dac1c20c3b7eecd31174a4dd9",
+  "items": [
+    {
+      "path": "/Users/khrustal/dev/2000nl",
+      "head": "fad6c807a8c3ec4dac1c20c3b7eecd31174a4dd9",
+      "branch": "refs/heads/main",
+      "dirty": "",
+      "upstream": "origin/main",
+      "aheadBehindMain": "0\t0",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/.codex/worktrees/f917/2000nl",
+      "head": "36391bdb5b91b29848c25d2888fca4017a9917da",
+      "branch": null,
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "11\t137",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-august-release-integration",
+      "head": "a142b0faf5ac7e9d8db58412669da717c64adf4f",
+      "branch": "refs/heads/codex/august-field-release-integration",
+      "dirty": "",
+      "upstream": "origin/main",
+      "aheadBehindMain": "9\t126",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-azure-gpt56-luna-switch",
+      "head": "0888da9b6dc0211eb3ad8599d7991f0ef6ed69d8",
+      "branch": "refs/heads/codex/azure-gpt56-luna-switch",
+      "dirty": "",
+      "upstream": "origin/codex/azure-gpt56-luna-switch",
+      "aheadBehindMain": "1\t127",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/azure-gpt56-luna-switch"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-107-exec-plan-hygiene",
+      "head": "14b6f589675a4287646c67bae0e2c459c785cab6",
+      "branch": "refs/heads/codex/107-exec-plan-hygiene",
+      "dirty": "",
+      "upstream": "origin/codex/107-exec-plan-hygiene",
+      "aheadBehindMain": "1\t149",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/107-exec-plan-hygiene"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-121-closeout",
+      "head": "71dd8c730629b31dfc7bb16c7020658e81414949",
+      "branch": "refs/heads/codex/121-closeout",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "1\t138",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-121-training-today-setup",
+      "head": "d7aaf57d9015d152a2d4c538a22ef9bd4f63ea87",
+      "branch": "refs/heads/codex/121-training-today-setup",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "1\t139",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-124-training-sensecard-loop",
+      "head": "3247f4d9a644b59e6644436a5b278c3a49ea5285",
+      "branch": "refs/heads/codex/124-training-sensecard-loop",
+      "dirty": "",
+      "upstream": "origin/codex/124-training-sensecard-loop",
+      "aheadBehindMain": "11\t137",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/124-training-sensecard-loop"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-126-project-logbook",
+      "head": "69a4099907545461ee7cf7a2f1bd0b4017dd647a",
+      "branch": "refs/heads/codex/126-project-logbook",
+      "dirty": "",
+      "upstream": "origin/codex/126-project-logbook",
+      "aheadBehindMain": "1\t136",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/126-project-logbook"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-128-training-visual-polish",
+      "head": "25201fd1c43cc080328f45afb0a88e7ed8443a2c",
+      "branch": "refs/heads/codex/128-training-visual-polish",
+      "dirty": "",
+      "upstream": "origin/codex/128-training-visual-polish",
+      "aheadBehindMain": "1\t133",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/128-training-visual-polish"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-129-enable-pilot-prod",
+      "head": "180e487f7994441ef5e62a885b18fea81cf0375c",
+      "branch": "refs/heads/codex/129-enable-pilot-prod",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "1\t133",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-132-stabilize-language-footer-test",
+      "head": "4e7ce85e7ccbd5b6f2d8d41a58ef601d9b3047a4",
+      "branch": "refs/heads/codex/132-stabilize-language-footer-test",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "0\t134",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/128-training-visual-polish\nrefs/remotes/origin/codex/134-responsive-shell\nrefs/remotes/origin/codex/135-training-renderer-fallback\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/148-next-turn-preparation\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/151-pointer-scheduler-exclusion\nrefs/remotes/origin/codex/151-resolve-pointer-meanings\nrefs/remotes/origin/codex/152-153-library-release\nrefs/remotes/origin/codex/152-library-headword-groups\nrefs/remotes/origin/codex/153-stale-library-details\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/azure-gpt56-luna-switch\nrefs/remotes/origin/codex/issue-150-idiom-hierarchy\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/codex/vandale-image-downloader\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-134-responsive-shell",
+      "head": "2e4033b190737fe2fea63ba88e726e6b9fe8fe2a",
+      "branch": "refs/heads/codex/134-responsive-shell",
+      "dirty": "",
+      "upstream": "origin/codex/134-responsive-shell",
+      "aheadBehindMain": "0\t130",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/134-responsive-shell\nrefs/remotes/origin/codex/135-training-renderer-fallback\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/148-next-turn-preparation\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/151-pointer-scheduler-exclusion\nrefs/remotes/origin/codex/151-resolve-pointer-meanings\nrefs/remotes/origin/codex/152-153-library-release\nrefs/remotes/origin/codex/152-library-headword-groups\nrefs/remotes/origin/codex/153-stale-library-details\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/azure-gpt56-luna-switch\nrefs/remotes/origin/codex/issue-150-idiom-hierarchy\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/codex/vandale-image-downloader\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-135-training-renderer-fallback",
+      "head": "9dd0d6007c5c45261dc2756c448400490ddb5d28",
+      "branch": "refs/heads/codex/135-training-renderer-fallback",
+      "dirty": "",
+      "upstream": "origin/codex/135-training-renderer-fallback",
+      "aheadBehindMain": "1\t128",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/135-training-renderer-fallback"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-137-mobile-bottom-nav",
+      "head": "c259ddd124ce603edb147382c9922c9b83cf7cb1",
+      "branch": "refs/heads/codex/137-mobile-bottom-nav",
+      "dirty": "?? design-qa-evidence/desktop-today-1440x1000.png\n?? design-qa-evidence/mobile-library-390x844-cdp.png\n?? design-qa-evidence/mobile-library-390x844-full.png\n?? design-qa-evidence/mobile-library-390x844.png\n?? design-qa-evidence/mobile-session-390x844-cdp.png\n?? design-qa-evidence/mobile-session-390x844-full.png\n?? design-qa-evidence/mobile-session-390x844-visible.png\n?? design-qa-evidence/mobile-session-390x844.png\n?? design-qa-evidence/mobile-statistics-390x844-cdp.png\n?? design-qa-evidence/mobile-statistics-390x844-full.png\n?? design-qa-evidence/mobile-statistics-390x844.png\n?? design-qa-evidence/mobile-today-320x844.png\n?? design-qa-evidence/mobile-today-390x341-normal-scale.png\n?? design-qa-evidence/mobile-today-390x844-cdp.png\n?? design-qa-evidence/mobile-today-390x844-full.png\n?? design-qa-evidence/mobile-today-390x844.png\n?? design-qa-evidence/navigation-comparison.png\n?? design-qa-evidence/production-mobile-today-390x844.png\n?? design-qa-evidence/vZigu.png",
+      "upstream": null,
+      "aheadBehindMain": "1\t129",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-141-retire-training-sidebar",
+      "head": "dba89f280eb649354369bc0188a36f73bca8148c",
+      "branch": "refs/heads/codex/141-retire-training-sidebar",
+      "dirty": "",
+      "upstream": "origin/codex/141-retire-training-sidebar",
+      "aheadBehindMain": "0\t86",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-145-training-stability",
+      "head": "baac1bb6227ef69e692941f869fcfd903f3bd418",
+      "branch": "refs/heads/codex/145-training-stability",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "2\t127",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-147-review-reconciliation",
+      "head": "45da66189929401fdcf2874f85ef40290e6d31c1",
+      "branch": "refs/heads/codex/147-review-reconciliation",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "2\t120",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-148-next-turn-preparation",
+      "head": "9a937fbbfb048839e8919f572255048c99890571",
+      "branch": "refs/heads/codex/148-next-turn-preparation",
+      "dirty": "",
+      "upstream": "origin/codex/148-next-turn-preparation",
+      "aheadBehindMain": "5\t119",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/148-next-turn-preparation"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-149-idiom-only-artifact",
+      "head": "8cdc7127c2da5c4d5576c9f241d9374da5251d11",
+      "branch": "refs/heads/codex/149-idiom-only-artifact",
+      "dirty": "",
+      "upstream": "origin/codex/149-idiom-only-artifact",
+      "aheadBehindMain": "4\t105",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/149-idiom-only-artifact"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-149-sense-aware-translation",
+      "head": "6c6835cd733076e76d4a0c48f677e968f593be02",
+      "branch": "refs/heads/codex/149-sense-aware-translation",
+      "dirty": "",
+      "upstream": "origin/codex/149-sense-aware-translation",
+      "aheadBehindMain": "0\t106",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-150-idiom-hierarchy",
+      "head": "14ffd597f776da84990d55aed538215f5d297f51",
+      "branch": "refs/heads/codex/issue-150-idiom-hierarchy",
+      "dirty": "",
+      "upstream": "origin/codex/issue-150-idiom-hierarchy",
+      "aheadBehindMain": "3\t118",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-150-idiom-hierarchy"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-151-pointer-scheduler-exclusion",
+      "head": "2f0bc168152d7dc3d7102c981ee66c899db0732f",
+      "branch": "refs/heads/codex/151-pointer-scheduler-exclusion",
+      "dirty": "",
+      "upstream": "origin/codex/151-pointer-scheduler-exclusion",
+      "aheadBehindMain": "2\t116",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/151-pointer-scheduler-exclusion"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-151-resolve-pointer-meanings",
+      "head": "34502044b2238e9cd0655b8258cd1aaa3ea4788f",
+      "branch": "refs/heads/codex/151-resolve-pointer-meanings",
+      "dirty": "",
+      "upstream": "origin/codex/151-resolve-pointer-meanings",
+      "aheadBehindMain": "7\t117",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/151-resolve-pointer-meanings"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-152-library-headword-groups",
+      "head": "b5042a0e40337029574299137a10ddf342d565c7",
+      "branch": "refs/heads/codex/152-library-headword-groups",
+      "dirty": "",
+      "upstream": "origin/codex/152-library-headword-groups",
+      "aheadBehindMain": "0\t124",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/148-next-turn-preparation\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/151-pointer-scheduler-exclusion\nrefs/remotes/origin/codex/151-resolve-pointer-meanings\nrefs/remotes/origin/codex/152-153-library-release\nrefs/remotes/origin/codex/152-library-headword-groups\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/issue-150-idiom-hierarchy\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-153-stale-library-details",
+      "head": "d6b15fcc25c696fdc2777b4a269dbc2c44dd8755",
+      "branch": "refs/heads/codex/153-stale-library-details",
+      "dirty": "",
+      "upstream": "origin/codex/153-stale-library-details",
+      "aheadBehindMain": "1\t126",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/153-stale-library-details"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-154-diagnostic-report-shaping",
+      "head": "2ab59b79e9a5a3dbbbe54398049f140f40b86a13",
+      "branch": "refs/heads/codex/154-diagnostic-report-shaping",
+      "dirty": "",
+      "upstream": "origin/codex/154-diagnostic-report-shaping",
+      "aheadBehindMain": "9\t104",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/154-diagnostic-report-shaping"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-168-safe-provider-errors",
+      "head": "896bcd9ab050d124aa583f466ef68b5b6b27a651",
+      "branch": "refs/heads/codex/168-safe-provider-errors",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "4\t103",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-170-content-projection",
+      "head": "3beefdcd64e76a5af088cdb2a2bb39de4d177938",
+      "branch": "refs/heads/codex/170-shared-content-projection",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "3\t102",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-171-training-session-contract",
+      "head": "adcaf94f36cc587ffabdb5959c058937904e78df",
+      "branch": "refs/heads/codex/171-training-session-contract",
+      "dirty": "",
+      "upstream": "origin/codex/171-training-session-contract",
+      "aheadBehindMain": "4\t101",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/171-training-session-contract"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-172-training-turn-controller",
+      "head": "ca4bc76543c54d4195d9b69ee75568a703a4f0e4",
+      "branch": "refs/heads/codex/172-training-turn-controller",
+      "dirty": "",
+      "upstream": "origin/codex/172-training-turn-controller",
+      "aheadBehindMain": "9\t100",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/172-training-turn-controller"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-173-translation-coordinator",
+      "head": "9afb37f8a16f3cefc77882cc344c1e57380ede68",
+      "branch": "refs/heads/codex/173-translation-coordinator",
+      "dirty": "",
+      "upstream": "origin/codex/173-translation-coordinator",
+      "aheadBehindMain": "8\t98",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/173-translation-coordinator"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-174-platform-api-decomposition",
+      "head": "074b1aa0d19915e2082f9c8c2d131d1bd81c23f7",
+      "branch": "refs/heads/codex/174-platform-api-decomposition",
+      "dirty": "",
+      "upstream": "origin/codex/174-platform-api-decomposition",
+      "aheadBehindMain": "5\t94",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/174-platform-api-decomposition"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-175-unified-v2-lookup-transport",
+      "head": "7b5bd399956868b01abffc45280dbd388e035f9a",
+      "branch": "refs/heads/codex/175-unified-v2-lookup-transport",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "4\t99",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-176-dictionary-search-rollout",
+      "head": "32bd14c8575a278670259768ef43e686ecc99483",
+      "branch": "refs/heads/codex/176-dictionary-search-rollout",
+      "dirty": "",
+      "upstream": "origin/codex/176-dictionary-search-rollout",
+      "aheadBehindMain": "2\t93",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/176-dictionary-search-rollout"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-185-training-card-projection",
+      "head": "898bc4b306226a67479471c5e2f5f1727791259b",
+      "branch": "refs/heads/codex/185-training-card-projection",
+      "dirty": "",
+      "upstream": "origin/codex/185-training-card-projection",
+      "aheadBehindMain": "0\t90",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-189-training-transition-attribution",
+      "head": "d875112a0719d705e5a17c1b6188da257b00a6d1",
+      "branch": "refs/heads/codex/189-training-transition-attribution",
+      "dirty": "",
+      "upstream": "origin/codex/189-training-transition-attribution",
+      "aheadBehindMain": "0\t83",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-190-feedback-tracer",
+      "head": "8fab75345ca5e96e6a88ad2bb0f33be7eb4a299f",
+      "branch": "refs/heads/codex/190-feedback-tracer",
+      "dirty": "",
+      "upstream": "origin/codex/190-feedback-tracer",
+      "aheadBehindMain": "0\t64",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-191-report-melden-ui",
+      "head": "baca09da7cfac99b4bdc77ff9cc6f8581228be50",
+      "branch": "refs/heads/codex/191-report-melden-ui",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "0\t59",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-192-training-critical-path-remediation",
+      "head": "2e382cad7d9b5eefacc4d64c1484fc4ed11d466a",
+      "branch": "refs/heads/codex/192-training-critical-path-remediation",
+      "dirty": "",
+      "upstream": "origin/codex/192-training-critical-path-remediation",
+      "aheadBehindMain": "0\t79",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-193-unified-training-loading",
+      "head": "08b1263b334b5a4b004842965df57a70746e7d75",
+      "branch": "refs/heads/codex/193-unified-training-loading",
+      "dirty": "",
+      "upstream": "origin/codex/193-unified-training-loading",
+      "aheadBehindMain": "0\t57",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-194-training-visuals",
+      "head": "bc04f16d403ce41bed1437d7d85243edf5646934",
+      "branch": "refs/heads/codex/194-training-card-visuals",
+      "dirty": "M artifacts/design-qa/training-answer-dark-wide.png\n M artifacts/design-qa/training-answer-light-mobile.png\n M artifacts/design-qa/training-face-402x874.png\n M artifacts/design-qa/training-face-dark-wide.png\n M artifacts/design-qa/training-face-light-mobile.png\n M artifacts/design-qa/training-long-idiom-dark-wide.png\n M artifacts/design-qa/training-recoverable-error-light-mobile.png",
+      "upstream": "origin/codex/194-training-card-visuals",
+      "aheadBehindMain": "0\t28",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-196-typisch-prompt-diagnosis",
+      "head": "3673ca8203463e29fd21c58c9b170b96b4db316d",
+      "branch": "refs/heads/codex/196-typisch-prompt-diagnosis",
+      "dirty": "",
+      "upstream": "origin/codex/196-typisch-prompt-diagnosis",
+      "aheadBehindMain": "0\t61",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-197-displayed-translation-artifact",
+      "head": "6fba19ece08b49096f65f3321e7b28004f218588",
+      "branch": "refs/heads/codex/197-displayed-translation-artifact",
+      "dirty": "",
+      "upstream": "origin/codex/197-displayed-translation-artifact",
+      "aheadBehindMain": "0\t69",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-198-verifiable-training-action-receipt",
+      "head": "577aa53b18360468e0ace6103c45d1e8b10d1e2f",
+      "branch": "refs/heads/codex/198-verifiable-training-action-receipt",
+      "dirty": "",
+      "upstream": "origin/codex/198-verifiable-training-action-receipt",
+      "aheadBehindMain": "0\t71",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-199-bounded-sensecard-atoms",
+      "head": "1c52b0ef7bb4b8106dead65c031c6f2d16a4abbd",
+      "branch": "refs/heads/codex/199-bounded-sensecard-atoms",
+      "dirty": "",
+      "upstream": "origin/codex/199-bounded-sensecard-atoms",
+      "aheadBehindMain": "0\t73",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-201-training-card-load-recovery",
+      "head": "876f7291fc59ad2d2aa188cda6f30fcc3719e3b7",
+      "branch": "refs/heads/codex/201-training-card-load-recovery",
+      "dirty": "",
+      "upstream": "origin/codex/201-training-card-load-recovery",
+      "aheadBehindMain": "0\t81",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-205-training-prefetch-lease",
+      "head": "93ba1cda668a1ba9d748b6d371d0ac7401127b97",
+      "branch": "refs/heads/codex/205-training-prefetch-lease",
+      "dirty": "",
+      "upstream": "origin/codex/205-training-prefetch-lease",
+      "aheadBehindMain": "0\t77",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-207-exact-group-lookup-latency",
+      "head": "0e080e23f174362ddf0f6aaefb6218a22311a272",
+      "branch": "refs/heads/codex/207-exact-group-lookup-latency",
+      "dirty": "",
+      "upstream": "origin/codex/207-exact-group-lookup-latency",
+      "aheadBehindMain": "0\t75",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-216-qa-test-access",
+      "head": "78aba476bb0fd19d9ab0e1321f569ca0ed887f82",
+      "branch": "refs/heads/codex/216-qa-test-access",
+      "dirty": "",
+      "upstream": "origin/codex/216-qa-test-access",
+      "aheadBehindMain": "0\t55",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-218-training-audio-affordance",
+      "head": "14c81d5eeae1b8f2cbcac754793cd3e9775fbc91",
+      "branch": "refs/heads/codex/218-training-audio-affordance",
+      "dirty": "",
+      "upstream": "origin/codex/218-training-audio-affordance",
+      "aheadBehindMain": "0\t52",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-219-mark-known-notice",
+      "head": "5b31d7cc16b637274b72800cc745e7ad126b38cc",
+      "branch": "refs/heads/codex/219-mark-known-notice",
+      "dirty": "",
+      "upstream": "origin/codex/219-mark-known-notice",
+      "aheadBehindMain": "0\t47",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-224-session-total",
+      "head": "bad06cef3e1db4ae8b8e2639403fb1e44cb8b63c",
+      "branch": "refs/heads/codex/224-authoritative-session-total",
+      "dirty": "",
+      "upstream": "origin/codex/224-authoritative-session-total",
+      "aheadBehindMain": "0\t43",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-225-history-action",
+      "head": "21f8994f74f3ca78840f5bbf3a73187729955a87",
+      "branch": "refs/heads/codex/225-training-history-action",
+      "dirty": "",
+      "upstream": "origin/codex/225-training-history-action",
+      "aheadBehindMain": "0\t39",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-228-next-card-timeout",
+      "head": "e4f4f409fc7bf2bbd22e130aba0077a2d911a862",
+      "branch": "refs/heads/codex/228-next-card-timeout",
+      "dirty": "",
+      "upstream": "origin/codex/228-next-card-timeout",
+      "aheadBehindMain": "0\t24",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-229-report-back",
+      "head": "239feee27740a13dde2d7848abd9c4d16a04c0f2",
+      "branch": "refs/heads/codex/229-report-back",
+      "dirty": "",
+      "upstream": "origin/codex/229-report-back",
+      "aheadBehindMain": "0\t25",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-232-set-based-access",
+      "head": "104f1cc361e813fd67876605cccfb2f9d338b29c",
+      "branch": "refs/heads/codex/232-set-based-scheduler-access",
+      "dirty": "",
+      "upstream": "origin/codex/232-set-based-scheduler-access",
+      "aheadBehindMain": "0\t15",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-233-migration-gate",
+      "head": "4f0d0fb3b21401f53570394074bc258f8d9c7c05",
+      "branch": "refs/heads/codex/233-deploy-db-migration-gate",
+      "dirty": "",
+      "upstream": "origin/codex/233-deploy-db-migration-gate",
+      "aheadBehindMain": "0\t19",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-236-pinned-postgres-client",
+      "head": "65052a579865956b34ea61ab96a515bb1f053935",
+      "branch": "refs/heads/codex/236-pinned-postgres-client",
+      "dirty": "",
+      "upstream": "origin/codex/236-pinned-postgres-client",
+      "aheadBehindMain": "0\t13",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-238-cold-scheduler-query",
+      "head": "39dfd479627e4f53d7fd6b914f3d27ee3a34fd0f",
+      "branch": "refs/heads/codex/238-cold-scheduler-query-optimization",
+      "dirty": "",
+      "upstream": "origin/codex/238-cold-scheduler-query-optimization",
+      "aheadBehindMain": "0\t3",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-238-post-migration-warm-probe",
+      "head": "7eeface4f5b2627b1ab9c0ef00da613e01964b02",
+      "branch": "refs/heads/codex/238-post-migration-selector-warm-probe",
+      "dirty": "",
+      "upstream": "origin/codex/238-post-migration-selector-warm-probe",
+      "aheadBehindMain": "0\t11",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-239-bounded-qa-surface-wait",
+      "head": "c6fca6290e2f8553e7ee1e217e21fddc0fe5c98b",
+      "branch": "refs/heads/codex/239-bounded-qa-surface-wait",
+      "dirty": "",
+      "upstream": "origin/codex/239-bounded-qa-surface-wait",
+      "aheadBehindMain": "5\t1",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/239-bounded-qa-surface-wait"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-243-cold-next-card-selector",
+      "head": "91b1342fc64bec7a83123beb67788fef87bf378d",
+      "branch": "refs/heads/codex/243-cold-next-card-selector",
+      "dirty": "",
+      "upstream": "origin/codex/243-cold-next-card-selector",
+      "aheadBehindMain": "4\t2",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/243-cold-next-card-selector"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-246-target-state",
+      "head": "fad6c807a8c3ec4dac1c20c3b7eecd31174a4dd9",
+      "branch": "refs/heads/codex/246-target-state-plan",
+      "dirty": "?? docs/architecture/target-state-2026-09/README.md\n?? docs/architecture/target-state-2026-09/coverage.md\n?? docs/architecture/target-state-2026-09/session-ownership.md",
+      "upstream": "origin/main",
+      "aheadBehindMain": "0\t0",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-40-library-v2-latency",
+      "head": "f5b01b38ad92afe27cbb778a198e86dfbdf1a4e0",
+      "branch": "refs/heads/codex/40-library-v2-latency",
+      "dirty": "",
+      "upstream": "origin/codex/40-library-v2-latency",
+      "aheadBehindMain": "0\t95",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-68-sensecard-v1-freeze",
+      "head": "bc34081f8cbe4400b1c85d1aa60cadc223a56c5f",
+      "branch": "refs/heads/codex/issue-68-sensecard-v1-freeze",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "4\t165",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-69-sensecard-architecture-review",
+      "head": "c72b9f5e951506066418e27e64d0ae0bbc05d6b6",
+      "branch": "refs/heads/codex/issue-69-closeout",
+      "dirty": "",
+      "upstream": "origin/codex/issue-69-closeout",
+      "aheadBehindMain": "0\t160",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/107-exec-plan-hygiene\nrefs/remotes/origin/codex/124-training-sensecard-loop\nrefs/remotes/origin/codex/126-project-logbook\nrefs/remotes/origin/codex/128-training-visual-polish\nrefs/remotes/origin/codex/134-responsive-shell\nrefs/remotes/origin/codex/135-training-renderer-fallback\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/148-next-turn-preparation\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/151-pointer-scheduler-exclusion\nrefs/remotes/origin/codex/151-resolve-pointer-meanings\nrefs/remotes/origin/codex/152-153-library-release\nrefs/remotes/origin/codex/152-library-headword-groups\nrefs/remotes/origin/codex/153-stale-library-details\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/74-closeout\nrefs/remotes/origin/codex/azure-gpt56-luna-switch\nrefs/remotes/origin/codex/issue-150-idiom-hierarchy\nrefs/remotes/origin/codex/issue-69-closeout\nrefs/remotes/origin/codex/issue-70-platform-v2-contract\nrefs/remotes/origin/codex/issue-74-training-card-tracer\nrefs/remotes/origin/codex/issue-76-single-sense-ui\nrefs/remotes/origin/codex/issue-79-cross-product-sensecard-gate\nrefs/remotes/origin/codex/issue-93-stale-main-recovery\nrefs/remotes/origin/codex/issue-95-retire-stale-checkout\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/codex/preserved-main-2026-09-05\nrefs/remotes/origin/codex/vandale-image-downloader\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-70-platform-v2-contract",
+      "head": "934bde773dc2f48df6fbc5de66cfa6c7f7ccb960",
+      "branch": "refs/heads/codex/issue-70-platform-v2-contract",
+      "dirty": "",
+      "upstream": "origin/codex/issue-70-platform-v2-contract",
+      "aheadBehindMain": "14\t154",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-70-platform-v2-contract"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-71-audit",
+      "head": "0d7a20492bdbc8a20fb4689f62471fc82889e886",
+      "branch": "refs/heads/codex/issue-71-real-data-audit",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "3\t166",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-74-training-card-tracer",
+      "head": "0a03b2856ef6480d0a9a10e0719b8f2884cc4292",
+      "branch": "refs/heads/codex/issue-74-training-card-tracer",
+      "dirty": "",
+      "upstream": "origin/codex/issue-74-training-card-tracer",
+      "aheadBehindMain": "2\t149",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-74-training-card-tracer"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-77-multisense-training",
+      "head": "cc8a4479eab2ba65a58975393d2ab614c5231098",
+      "branch": "refs/heads/codex/issue-77-multisense-training",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "5\t148",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-79-cross-product-sensecard-gate",
+      "head": "418a108b5b5bab1905b4f7099ba8b59bfc74822c",
+      "branch": "refs/heads/codex/issue-79-cross-product-sensecard-gate",
+      "dirty": "",
+      "upstream": "origin/codex/issue-79-cross-product-sensecard-gate",
+      "aheadBehindMain": "12\t145",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-79-cross-product-sensecard-gate"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-86-vandale-parser-integration",
+      "head": "917da30443e4578978390f9310a606da0d5001d8",
+      "branch": "refs/heads/codex/issue-86-vandale-parser-integration",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "7\t164",
+      "remoteRefsContainingHead": ""
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-93-stale-main-recovery",
+      "head": "c0c42746620a9facb46eda669ba20a8f24b3fde1",
+      "branch": "refs/heads/codex/issue-93-stale-main-recovery",
+      "dirty": "",
+      "upstream": "origin/codex/issue-93-stale-main-recovery",
+      "aheadBehindMain": "7\t159",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-93-stale-main-recovery"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-issue-95-retire-stale-checkout",
+      "head": "1830c1c84e151446d1bac567ca5a4a8540bd2630",
+      "branch": "refs/heads/codex/issue-95-retire-stale-checkout",
+      "dirty": "",
+      "upstream": "origin/codex/issue-95-retire-stale-checkout",
+      "aheadBehindMain": "3\t158",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/issue-95-retire-stale-checkout"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-lexicography-prompt-eval",
+      "head": "2e37d19d87176add5874775b887367ae091b488f",
+      "branch": "refs/heads/codex/lexicography-prompt-eval",
+      "dirty": "",
+      "upstream": "origin/codex/lexicography-prompt-eval",
+      "aheadBehindMain": "9\t85",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/lexicography-prompt-eval"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-library-release",
+      "head": "e5dbb72ec3ba8d3243d9cb7344bd585731187c0a",
+      "branch": "refs/heads/codex/152-153-library-release",
+      "dirty": "",
+      "upstream": "origin/codex/152-153-library-release",
+      "aheadBehindMain": "0\t121",
+      "remoteRefsContainingHead": "refs/remotes/origin/HEAD\nrefs/remotes/origin/codex/141-retire-training-sidebar\nrefs/remotes/origin/codex/148-next-turn-preparation\nrefs/remotes/origin/codex/149-idiom-only-artifact\nrefs/remotes/origin/codex/149-sense-aware-translation\nrefs/remotes/origin/codex/151-pointer-scheduler-exclusion\nrefs/remotes/origin/codex/151-resolve-pointer-meanings\nrefs/remotes/origin/codex/152-153-library-release\nrefs/remotes/origin/codex/154-diagnostic-report-shaping\nrefs/remotes/origin/codex/171-training-session-contract\nrefs/remotes/origin/codex/172-training-turn-controller\nrefs/remotes/origin/codex/173-translation-coordinator\nrefs/remotes/origin/codex/174-platform-api-decomposition\nrefs/remotes/origin/codex/176-dictionary-search-rollout\nrefs/remotes/origin/codex/185-training-card-projection\nrefs/remotes/origin/codex/189-training-transition-attribution\nrefs/remotes/origin/codex/190-feedback-tracer\nrefs/remotes/origin/codex/192-training-critical-path-remediation\nrefs/remotes/origin/codex/193-unified-training-loading\nrefs/remotes/origin/codex/194-training-card-visuals\nrefs/remotes/origin/codex/196-typisch-prompt-diagnosis\nrefs/remotes/origin/codex/197-displayed-translation-artifact\nrefs/remotes/origin/codex/198-verifiable-training-action-receipt\nrefs/remotes/origin/codex/199-bounded-sensecard-atoms\nrefs/remotes/origin/codex/201-training-card-load-recovery\nrefs/remotes/origin/codex/205-training-prefetch-lease\nrefs/remotes/origin/codex/207-exact-group-lookup-latency\nrefs/remotes/origin/codex/216-qa-test-access\nrefs/remotes/origin/codex/218-training-audio-affordance\nrefs/remotes/origin/codex/219-mark-known-notice\nrefs/remotes/origin/codex/224-authoritative-session-total\nrefs/remotes/origin/codex/225-training-history-action\nrefs/remotes/origin/codex/228-next-card-timeout\nrefs/remotes/origin/codex/229-report-back\nrefs/remotes/origin/codex/232-set-based-scheduler-access\nrefs/remotes/origin/codex/233-deploy-db-migration-gate\nrefs/remotes/origin/codex/236-pinned-postgres-client\nrefs/remotes/origin/codex/238-cold-scheduler-query-optimization\nrefs/remotes/origin/codex/238-post-migration-selector-warm-probe\nrefs/remotes/origin/codex/239-bounded-qa-surface-wait\nrefs/remotes/origin/codex/243-cold-next-card-selector\nrefs/remotes/origin/codex/40-library-v2-latency\nrefs/remotes/origin/codex/issue-150-idiom-hierarchy\nrefs/remotes/origin/codex/lexicography-prompt-eval\nrefs/remotes/origin/main"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-vandale-image-downloader",
+      "head": "8d49018a869bd090b33a911ebdefec17be1bcc57",
+      "branch": "refs/heads/codex/vandale-image-downloader",
+      "dirty": "",
+      "upstream": "origin/codex/vandale-image-downloader",
+      "aheadBehindMain": "2\t127",
+      "remoteRefsContainingHead": "refs/remotes/origin/codex/vandale-image-downloader"
+    },
+    {
+      "path": "/Users/khrustal/adhoc/2000nl-vandale-parser-fidelity",
+      "head": "227416c6eaf8d18a0d266285124d01caad7694d1",
+      "branch": "refs/heads/codex/vandale-parser-fidelity",
+      "dirty": "",
+      "upstream": null,
+      "aheadBehindMain": "4\t166",
+      "remoteRefsContainingHead": ""
+    }
+  ]
+}
