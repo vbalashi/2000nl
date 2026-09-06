@@ -85,6 +85,16 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("user_settings_reading_size_desktop_check");
     expect(postflight).toContain("reading_size_phone");
     expect(postflight).toContain("reading_size_desktop");
+    expect(postflight).toContain("phone_default IS DISTINCT FROM '''normal''::text'");
+    expect(postflight).toContain("desktop_default IS DISTINCT FROM '''normal''::text'");
+    expect(postflight).toContain("phone_constraint_validated IS DISTINCT FROM true");
+    expect(postflight).toContain("desktop_constraint_validated IS DISTINCT FROM true");
+    expect(postflight).toContain(
+      "'CHECK ((reading_size_phone = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
+    );
+    expect(postflight).toContain(
+      "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
+    );
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(workflow).toContain("-f db/deploy-contract/postflight-129.sql");
   });

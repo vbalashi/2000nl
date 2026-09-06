@@ -300,6 +300,8 @@ DECLARE
   desktop_default text;
   phone_constraint text;
   desktop_constraint text;
+  phone_constraint_validated boolean;
+  desktop_constraint_validated boolean;
 BEGIN
   IF settings_oid IS NULL THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed reading-size-table';
@@ -327,37 +329,35 @@ BEGIN
     AND attribute_state.atttypid = 'text'::regtype
     AND attribute_state.attnotnull;
 
-  IF phone_default IS NULL OR phone_default NOT LIKE '%normal%' THEN
+  IF phone_default IS DISTINCT FROM '''normal''::text' THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed reading-size-phone-column';
   END IF;
-  IF desktop_default IS NULL OR desktop_default NOT LIKE '%normal%' THEN
+  IF desktop_default IS DISTINCT FROM '''normal''::text' THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed reading-size-desktop-column';
   END IF;
 
-  SELECT pg_get_constraintdef(constraint_state.oid)
-  INTO phone_constraint
+  SELECT pg_get_constraintdef(constraint_state.oid), constraint_state.convalidated
+  INTO phone_constraint, phone_constraint_validated
   FROM pg_constraint constraint_state
   WHERE constraint_state.conrelid = settings_oid
     AND constraint_state.conname = 'user_settings_reading_size_phone_check'
     AND constraint_state.contype = 'c';
 
-  SELECT pg_get_constraintdef(constraint_state.oid)
-  INTO desktop_constraint
+  SELECT pg_get_constraintdef(constraint_state.oid), constraint_state.convalidated
+  INTO desktop_constraint, desktop_constraint_validated
   FROM pg_constraint constraint_state
   WHERE constraint_state.conrelid = settings_oid
     AND constraint_state.conname = 'user_settings_reading_size_desktop_check'
     AND constraint_state.contype = 'c';
 
-  IF phone_constraint IS NULL
-     OR phone_constraint NOT LIKE '%normal%'
-     OR phone_constraint NOT LIKE '%large%'
-     OR phone_constraint NOT LIKE '%largest%' THEN
+  IF phone_constraint IS DISTINCT FROM
+       'CHECK ((reading_size_phone = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'
+     OR phone_constraint_validated IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed reading-size-phone-check';
   END IF;
-  IF desktop_constraint IS NULL
-     OR desktop_constraint NOT LIKE '%normal%'
-     OR desktop_constraint NOT LIKE '%large%'
-     OR desktop_constraint NOT LIKE '%largest%' THEN
+  IF desktop_constraint IS DISTINCT FROM
+       'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'
+     OR desktop_constraint_validated IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed reading-size-desktop-check';
   END IF;
 END
