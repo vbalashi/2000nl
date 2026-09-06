@@ -18,9 +18,12 @@ test("a stalled preference read fails within ten seconds instead of leaving Sett
   expect(await result).toEqual(new Error("reading_preferences_load_failed"));
 });
 
-test.each([[], [{ reading_size_phone: "obsolete", reading_size_desktop: null }]])(
-  "missing or invalid saved sizes default to Normal: %j",
-  async (rows) => {
+test.each([
+  { name: "no row", rows: [] },
+  { name: "unknown values", rows: [{ reading_size_phone: "obsolete", reading_size_desktop: null }] },
+])(
+  "missing or invalid saved sizes default to Normal: $name",
+  async ({ rows }) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(rows), {
       headers: { "Content-Type": "application/json" },
     })));
