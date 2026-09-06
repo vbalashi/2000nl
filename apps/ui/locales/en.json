@@ -1,7 +1,8 @@
 {
   "common": {
     "close": "Close",
-    "done": "Done"
+    "done": "Done",
+    "retry": "Retry"
   },
   "onboarding": {
     "steps": [
@@ -130,6 +131,7 @@
       "create": "Create",
       "items": "items",
       "empty": "No collections found",
+      "open": "Open collection",
       "saved": "Collection membership updated",
       "failed": "Collections could not be updated"
     },
@@ -147,6 +149,23 @@
     },
     "wordDetails": {
       "open": "Word details"
+    },
+    "actions": {
+      "freeze": "Practice later (F)",
+      "hide": "Hide from training (X)",
+      "copy": "Copy to my dictionary",
+      "copySuccess": "Copied to my dictionary.",
+      "copyFailed": "Could not copy to my dictionary."
+    },
+    "details": {
+      "loading": "Loading details…",
+      "unavailable": "Details are unavailable."
+    },
+    "lookup": {
+      "timeout": "The dictionary card took too long to load.",
+      "forbidden": "You do not have access to this dictionary card.",
+      "contract": "The dictionary card has an unsupported format.",
+      "unavailable": "The dictionary card is temporarily unavailable."
     }
   },
   "partOfSpeech": {

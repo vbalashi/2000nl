@@ -5,7 +5,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   fetchPlatformV2CrossReferenceTarget,
-  fetchPlatformV2MultiSenseGroup,
+  fetchPlatformV2LibraryGroup,
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
 import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingClient";
@@ -21,6 +21,7 @@ import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
+import { LibraryDetailsActions } from "./LibraryDetailsActions";
 import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
@@ -41,6 +42,8 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
+  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
 export function LibrarySenseCardV2Session({
@@ -55,6 +58,8 @@ export function LibrarySenseCardV2Session({
   userLists = [],
   onListsUpdated,
   onTrainWord,
+  onCopyToUserDictionary,
+  onOpenListMembership,
 }: Props) {
   const translationLanguage =
     translationTargetLanguageCode === "off"
@@ -133,7 +138,7 @@ export function LibrarySenseCardV2Session({
             translationTargetLanguageCode: translationLanguage,
             signal,
           })
-        : await fetchPlatformV2MultiSenseGroup({
+        : await fetchPlatformV2LibraryGroup({
             query: headword,
             entryId,
             cardTypeId,
@@ -205,8 +210,7 @@ export function LibrarySenseCardV2Session({
   const model = React.useMemo(() => {
     const matchesSelectedEntry = group?.entries.some((candidate) =>
       candidate.kind === "sense-card"
-        ? candidate.entryId === entryId &&
-          candidate.card?.cardTypeId === cardTypeId
+        ? candidate.entryId === entryId
         : candidate.crossReferenceId === entryId,
     );
     const compatibleGroup =
@@ -453,21 +457,7 @@ export function LibrarySenseCardV2Session({
   );
 
   const lookupErrorText = lookupError
-    ? interfaceLanguage === "nl"
-      ? lookupError === "timeout"
-        ? "De woordenboekkaart duurde te lang om te laden."
-        : lookupError === "forbidden"
-          ? "Je hebt geen toegang tot deze woordenboekkaart."
-          : lookupError === "contract"
-            ? "De woordenboekkaart heeft een onbekend formaat."
-            : "De woordenboekkaart is tijdelijk niet beschikbaar."
-      : lookupError === "timeout"
-        ? "The dictionary card took too long to load."
-        : lookupError === "forbidden"
-          ? "You do not have access to this dictionary card."
-          : lookupError === "contract"
-            ? "The dictionary card has an unsupported format."
-            : "The dictionary card is temporarily unavailable."
+    ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
   const errorNotice = lookupErrorText || error ? (
     <p
@@ -481,7 +471,7 @@ export function LibrarySenseCardV2Session({
           className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
           onClick={() => setLookupRetry((current) => current + 1)}
         >
-          {interfaceLanguage === "nl" ? "Opnieuw proberen" : "Retry"}
+          {platformV2Message(interfaceLanguage, "common.retry")}
         </button>
       ) : null}
     </p>
@@ -495,16 +485,14 @@ export function LibrarySenseCardV2Session({
             data-testid="library-sense-card-loading"
             className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
           >
-            {interfaceLanguage === "nl" ? "Details laden…" : "Loading details…"}
+            {platformV2Message(interfaceLanguage, "senseCard.details.loading")}
           </div>
         ) : (
           <div
             data-testid="library-sense-card-unavailable"
             className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
           >
-            {interfaceLanguage === "nl"
-              ? "Details zijn niet beschikbaar."
-              : "Details are unavailable."}
+            {platformV2Message(interfaceLanguage, "senseCard.details.unavailable")}
           </div>
         )}
         {errorNotice}
@@ -570,6 +558,13 @@ export function LibrarySenseCardV2Session({
         onAction={(capability) => void handleAction(capability)}
         bottomOverlayReserve={canReport}
       />
+      {onCopyToUserDictionary ? (
+        <LibraryDetailsActions
+          entryId={entryId}
+          interfaceLanguage={interfaceLanguage}
+          onCopyToUserDictionary={onCopyToUserDictionary}
+        />
+      ) : null}
       {canReport && group && selectedReportEntry?.kind === "sense-card" ? (
           <div className="absolute bottom-2 left-3 z-20 sm:left-5">
             <SenseCardReportAction
@@ -599,6 +594,7 @@ export function LibrarySenseCardV2Session({
         onClose={() => setCollectionsEntryId(null)}
         onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}
+        onOpenListMembership={onOpenListMembership}
       />
       {errorNotice}
     </div>

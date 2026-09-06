@@ -59,7 +59,7 @@ function singleSenseGroup(
 }
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
-  fetchPlatformV2MultiSenseGroup: (...args: unknown[]) => fetchGroup(...args),
+  fetchPlatformV2LibraryGroup: (...args: unknown[]) => fetchGroup(...args),
   fetchPlatformV2CrossReferenceTarget: (...args: unknown[]) =>
     fetchCrossReferenceTarget(...args),
   requestPlatformV2LibraryTranslation: (...args: unknown[]) =>
@@ -375,6 +375,55 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.queryByRole("heading", { name: "brug" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("keeps same-headword steen meanings on their exact entry identity", async () => {
+    const stoneObject = singleSenseGroup(
+      "group-steen-object",
+      "entry-steen-object",
+      "steen",
+      "a building stone",
+    );
+    const stoneMaterial = singleSenseGroup(
+      "group-steen-material",
+      "entry-steen-material",
+      "steen",
+      "stone as a material",
+    );
+    fetchGroup.mockImplementation(
+      ({ entryId }: { entryId: string }) =>
+        Promise.resolve(
+          entryId === "entry-steen-object" ? stoneObject : stoneMaterial,
+        ),
+    );
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-steen-object");
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId("entry-steen-material")}>
+            Select material steen
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="steen"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    expect(await screen.findByText("a building stone")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Select material steen" }));
+    expect(await screen.findByText("stone as a material")).toBeInTheDocument();
+    expect(screen.queryByText("a building stone")).not.toBeInTheDocument();
+    expect(fetchGroup).toHaveBeenLastCalledWith(
+      expect.objectContaining({ entryId: "entry-steen-material" }),
+    );
   });
 
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {

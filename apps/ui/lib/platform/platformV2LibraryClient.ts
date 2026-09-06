@@ -73,7 +73,7 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   };
 }
 
-export async function fetchPlatformV2MultiSenseGroup(input: {
+export async function fetchPlatformV2LibraryGroup(input: {
   query: string;
   entryId: string;
   cardTypeId: CardTypeId;
@@ -82,7 +82,7 @@ export async function fetchPlatformV2MultiSenseGroup(input: {
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
   const payload = await fetchPlatformV2LibraryLookup(input);
-  return selectPlatformV2MultiSenseGroup(payload, input.entryId);
+  return selectPlatformV2LibraryGroup(payload, input.entryId);
 }
 
 export async function fetchPlatformV2CrossReferenceTarget(input: {
@@ -122,7 +122,7 @@ export async function requestPlatformV2LibraryTranslation(input: {
   return payload?.status ?? "failed";
 }
 
-export function selectPlatformV2MultiSenseGroup(
+export function selectPlatformV2LibraryGroup(
   payload: PlatformLookupV2Response,
   entryId: string,
 ): PlatformHeadwordGroupV2 | null {

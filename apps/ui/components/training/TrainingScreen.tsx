@@ -66,6 +66,7 @@ import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPres
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { LibrarySenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
+import { LibraryDetailsActions } from "./library-v2/LibraryDetailsActions";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
@@ -348,10 +349,6 @@ export function TrainingScreen({
   } | null>(null);
   const [detailInitialGroup, setDetailInitialGroup] =
     useState<PlatformHeadwordGroupV2 | null>(null);
-  const [detailsActionMessage, setDetailsActionMessage] = useState<string | null>(
-    null,
-  );
-  const [detailsActionBusy, setDetailsActionBusy] = useState(false);
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
     newCardsToday: 0,
@@ -979,7 +976,6 @@ export function TrainingScreen({
       headword: entry.headword,
       contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
     });
-    setDetailsActionMessage(null);
     setDetailsOpen(true);
   }, [currentTrainingLanguage]);
 
@@ -997,7 +993,6 @@ export function TrainingScreen({
         contentLanguageCode:
           currentWord.language_code ?? currentTrainingLanguage,
       });
-      setDetailsActionMessage(null);
       setDetailsOpen(true);
     },
     [currentTrainingLanguage, currentWord],
@@ -2272,58 +2267,20 @@ export function TrainingScreen({
                   onTrainWord={handleTrainWord}
                 />
               </div>
-              <div className="shrink-0 space-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
-                <div className="flex flex-wrap gap-2">
-                  {detailSelection.entryId === currentWord?.id ? (
-                    <>
-                      <button
-                        type="button"
-                        disabled={!revealed || actionLoading}
-                        onClick={() => void handleAction("freeze")}
-                        className="rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
-                      >
-                        Later oefenen (F)
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!revealed || actionLoading}
-                        onClick={() => void handleAction("hide")}
-                        className="rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
-                      >
-                        Niet meer tonen (X)
-                      </button>
-                    </>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={detailsActionBusy}
-                    onClick={async () => {
-                      setDetailsActionBusy(true);
-                      setDetailsActionMessage(null);
-                      try {
-                        await copyEntryToUserDictionary({
-                          entryId: detailSelection.entryId,
-                        });
-                        setDetailsActionMessage("Gekopieerd naar mijn woordenboek.");
-                      } catch {
-                        setDetailsActionMessage(
-                          "Kon niet naar mijn woordenboek kopiëren.",
-                        );
-                      } finally {
-                        setDetailsActionBusy(false);
-                      }
-                    }}
-                    className="rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
-                  >
-                    Kopieer naar mijn woordenboek
-                  </button>
-                </div>
-                {detailsActionMessage ? (
-                  <p className="font-semibold text-slate-600 dark:text-slate-300">
-                    {detailsActionMessage}
-                  </p>
-                ) : null}
-              </div>
+              <LibraryDetailsActions
+                entryId={detailSelection.entryId}
+                interfaceLanguage={onboardingLang}
+                revealed={revealed}
+                actionLoading={actionLoading}
+                onTrainingAction={
+                  detailSelection.entryId === currentWord?.id
+                    ? (result) => void handleAction(result)
+                    : undefined
+                }
+                onCopyToUserDictionary={async (entryId) => {
+                  await copyEntryToUserDictionary({ entryId });
+                }}
+              />
             </div>
           ) : null}
         </TrainingDetailsDrawer>

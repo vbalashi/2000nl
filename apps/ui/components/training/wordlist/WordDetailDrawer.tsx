@@ -1,5 +1,6 @@
 import React from "react";
 import type {
+  EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
@@ -23,6 +24,8 @@ type Props = {
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (wordId: string) => void;
+  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
 export function WordDetailDrawer({
@@ -37,6 +40,8 @@ export function WordDetailDrawer({
   userLists,
   onListsUpdated,
   onTrainWord,
+  onCopyToUserDictionary,
+  onOpenListMembership,
 }: Props) {
   React.useEffect(() => {
     if (!open) return;
@@ -79,6 +84,8 @@ export function WordDetailDrawer({
           userLists={userLists}
           onListsUpdated={onListsUpdated}
           onTrainWord={onTrainWord}
+          onCopyToUserDictionary={onCopyToUserDictionary}
+          onOpenListMembership={onOpenListMembership}
           viewport="mobile"
         />
       </div>

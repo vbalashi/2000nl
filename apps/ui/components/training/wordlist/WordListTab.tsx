@@ -2,7 +2,9 @@ import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addWordsToUserList,
+  copyEntryToUserDictionary,
   createUserList,
+  fetchDictionaryEntryById,
   fetchUserListMembership,
   fetchWordsForList,
   removeWordsFromUserList,
@@ -334,6 +336,15 @@ export function WordListTab({
       setWordTotal((current) => Math.max(current, wordResults.length + 1));
     },
     [language, onUserDictionaryEntryCreated, wordResults.length],
+  );
+
+  const handleCopyToUserDictionary = useCallback(
+    async (entryId: string) => {
+      const copiedEntryId = await copyEntryToUserDictionary({ entryId });
+      const copiedEntry = await fetchDictionaryEntryById(copiedEntryId, userId);
+      if (copiedEntry) handleUserDictionaryEntryCreated(copiedEntry);
+    },
+    [handleUserDictionaryEntryCreated, userId],
   );
 
   const toggleIntentCardType = useCallback((mode: TrainingMode) => {
@@ -1587,7 +1598,9 @@ export function WordListTab({
           await reloadLists();
           notifyListsUpdated();
         }}
+        onOpenListMembership={onOpenListMembership}
         onTrainWord={onTrainWord}
+        onCopyToUserDictionary={handleCopyToUserDictionary}
       />
     </div>
   );

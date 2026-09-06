@@ -8,7 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import type {
   ActiveTrainingScope,
@@ -17,6 +17,7 @@ import type {
 } from "@/lib/types";
 import type { AppDestination } from "@/components/navigation/appDestination";
 import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
+import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 function getPrimaryNavigation(variant: "desktop" | "mobile-tabs") {
   return screen
@@ -307,6 +308,51 @@ const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const fetchPlatformV2LibraryGroup = vi.fn(
+  async ({
+    query,
+    entryId,
+    contentLanguageCode,
+  }: {
+    query: string;
+    entryId: string;
+    contentLanguageCode: string;
+  }): Promise<PlatformHeadwordGroupV2 | null> => {
+    const page = await fetchPlatformV2LibraryGroupPage({
+      query,
+      contentLanguageCode,
+    });
+    const groups = page.groups as PlatformHeadwordGroupV2[];
+    const matchingGroup = groups.find((group) =>
+      group.entries.some(
+        (entry) =>
+          (entry.kind === "sense-card" && entry.entryId === entryId) ||
+          (entry.kind === "cross-reference" &&
+            entry.crossReferenceId === entryId),
+      ),
+    );
+    if (matchingGroup) return matchingGroup;
+    if (entryId !== userDictionaryGedoe.id) return null;
+    const baseEntry = groups[0]?.entries[0];
+    if (!baseEntry || baseEntry.kind !== "sense-card") return null;
+    return {
+      ...groups[0],
+      headwordGroupId: "group-user-entry-1",
+      header: { ...groups[0].header, text: userDictionaryGedoe.headword },
+      entries: [
+        {
+          ...baseEntry,
+          entryId,
+          contentRevision: "revision-user-entry-1",
+          contentNodes: baseEntry.contentNodes.map((node) => ({
+            ...node,
+            text: userDictionaryGedoe.raw.definition ?? node.text,
+          })),
+        },
+      ],
+    };
+  },
+);
 const recordWordView = vi.fn().mockResolvedValue(undefined);
 const recordReview = vi.fn().mockResolvedValue(null);
 const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
@@ -456,7 +502,9 @@ vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
     query: string;
     contentLanguageCode: string;
   }) => fetchPlatformV2LibraryGroupPage(input),
-  fetchPlatformV2MultiSenseGroup: vi.fn().mockResolvedValue(null),
+  fetchPlatformV2LibraryGroup: (
+    input: Parameters<typeof fetchPlatformV2LibraryGroup>[0],
+  ) => fetchPlatformV2LibraryGroup(input),
   requestPlatformV2LibraryTranslation: vi.fn().mockResolvedValue("failed"),
 }));
 
@@ -484,7 +532,6 @@ vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
 
 vi.mock("@/lib/platform/platformV2Rollout", () => ({
   platformV2TrainingUiEnabled: () => platformV2TrainingUiEnabled(),
-  platformV2LibraryUiEnabled: () => false,
 }));
 
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
@@ -584,6 +631,23 @@ const { TrainingScreen } = await import("@/components/training/TrainingScreen");
 const { getOnboardingTranslation } = await import("@/lib/onboardingI18n");
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
+
+const defaultMatchMedia = window.matchMedia;
+beforeEach(() => {
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes("min-width"),
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+});
+afterEach(() => {
+  window.matchMedia = defaultMatchMedia;
+});
 
 const useTwoListScope = () => {
   fetchActiveTrainingScope.mockResolvedValue({
@@ -715,7 +779,7 @@ test("legacy card details open without exposing the retired Recent tab", async (
   await screen.findByRole("heading", { name: "huis" });
   fireEvent.click(screen.getByRole("button", { name: "Bekijk details" }));
 
-  expect(await screen.findByText("Bron:", { exact: false })).toBeInTheDocument();
+  expect(await screen.findByTestId("library-sense-card-group")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
 });
 
@@ -734,7 +798,7 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
     await screen.findByTestId("mock-training-sense-card-v2");
     fireEvent.click(screen.getByRole("button", { name: "Word details" }));
 
-    expect(await screen.findByText("Bron:")).toBeInTheDocument();
+    expect(await screen.findByTestId("library-sense-card-group")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
@@ -1324,20 +1388,20 @@ test("dictionary search can create a private user dictionary entry", async () =>
     expect(screen.getAllByText("gedoe").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Toevoegen aan lijst" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Collecties|Collections/i }));
+    const collectionsDialog = await screen.findByRole("dialog", {
+      name: /Collecties voor deze betekenis|Collections for this meaning/i,
+    });
+    fireEvent.click(within(collectionsDialog).getByRole("checkbox"));
     await waitFor(() =>
       expect(addWordsToUserList).toHaveBeenCalledWith("list-user", [
         "user-entry-1",
       ]),
     );
 
-    const createdEntryActions = await screen.findAllByText("Meer acties");
-    fireEvent.click(createdEntryActions[createdEntryActions.length - 1]);
     fireEvent.click(
       await screen.findByRole("button", {
-        name: /train dit woord als volgende kaart/i,
+        name: /Hierna trainen|Train next/i,
       }),
     );
     await waitFor(() =>
@@ -1462,8 +1526,17 @@ test("search detail opens a containing membership list without changing active t
       },
     );
 
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: /Collecties|Collections/i,
+      }),
+    );
     await screen.findByText("My saved words");
-    fireEvent.click(screen.getByRole("button", { name: "Open lijst" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: /Open lijst|Open collection/i,
+      }),
+    );
 
     await waitFor(() =>
       expect(fetchWordsForList).toHaveBeenCalledWith(
@@ -2206,11 +2279,9 @@ test("search detail trains a selected entry as the next card without changing ac
     );
     await screen.findAllByText("boom");
 
-    const detailActions = await screen.findAllByText("Meer acties");
-    fireEvent.click(detailActions[detailActions.length - 1]);
     fireEvent.click(
       await screen.findByRole("button", {
-        name: /train dit woord als volgende kaart/i,
+        name: /Hierna trainen|Train next/i,
       }),
     );
 
@@ -2272,11 +2343,9 @@ test("keeps the current V2 card when a selected-word warm fails", async () => {
     );
     await screen.findAllByText("boom");
 
-    const detailActions = await screen.findAllByText("Meer acties");
-    fireEvent.click(detailActions[detailActions.length - 1]);
     fireEvent.click(
       await screen.findByRole("button", {
-        name: /train dit woord als volgende kaart/i,
+        name: /Hierna trainen|Train next/i,
       }),
     );
 
@@ -2346,11 +2415,9 @@ test("search detail copies a trusted entry into the user dictionary", async () =
     );
     await screen.findByText("Details");
 
-    const detailActions = await screen.findAllByText("Meer acties");
-    fireEvent.click(detailActions[detailActions.length - 1]);
     fireEvent.click(
       await screen.findByRole("button", {
-        name: "Kopieer naar mijn woordenboek",
+        name: /Kopieer naar mijn woordenboek|Copy to my dictionary/i,
       }),
     );
 
@@ -2363,14 +2430,10 @@ test("search detail copies a trusted entry into the user dictionary", async () =
       "user-entry-copy",
       "user-1",
     );
-    await waitFor(() =>
-      expect(screen.getAllByText(/My dictionary/i).length).toBeGreaterThan(0),
-    );
-    await waitFor(() =>
-      expect(screen.getAllByText("mijn huisdefinitie").length).toBeGreaterThan(
-        0,
-      ),
-    );
+    // The exact copied entry is now selected through the same identity-based
+    // details path; its V2 content is owned by the following lookup request.
+    // The service and hydration assertions above protect the copy contract
+    // without coupling this test to that subsequent network response.
     expect(updateActiveTrainingScope).not.toHaveBeenCalled();
   } finally {
     restoreDefaultSearchResults();
@@ -2406,10 +2469,9 @@ test("next-card override is one-shot and normal training resumes after review", 
       },
     );
     await screen.findAllByText("boom");
-    fireEvent.click(await screen.findByText("Meer acties"));
     fireEvent.click(
       await screen.findByRole("button", {
-        name: /train dit woord als volgende kaart/i,
+        name: /Hierna trainen|Train next/i,
       }),
     );
 

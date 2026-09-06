@@ -3,6 +3,7 @@
 import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  copyEntryToUserDictionary,
   createUserDictionaryEntry,
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
@@ -342,6 +343,15 @@ export function DictionarySearchTab({
       }));
     },
     [onSearchStateChange, onUserDictionaryEntryCreated, searchLanguage],
+  );
+
+  const handleCopyToUserDictionary = useCallback(
+    async (entryId: string) => {
+      const copiedEntryId = await copyEntryToUserDictionary({ entryId });
+      const copiedEntry = await fetchDictionaryEntryById(copiedEntryId, userId);
+      if (copiedEntry) handleUserDictionaryEntryCreated(copiedEntry);
+    },
+    [handleUserDictionaryEntryCreated, userId],
   );
 
   const createCustomEntry = useCallback(async () => {
@@ -909,7 +919,9 @@ export function DictionarySearchTab({
                     await reloadLists();
                     notifyListsUpdated();
                   }}
+                  onOpenListMembership={onOpenListMembership}
                   onTrainWord={onTrainWord}
+                  onCopyToUserDictionary={handleCopyToUserDictionary}
                   viewport="desktop"
                 />
               </div>
@@ -937,7 +949,9 @@ export function DictionarySearchTab({
             await reloadLists();
             notifyListsUpdated();
           }}
+          onOpenListMembership={onOpenListMembership}
           onTrainWord={onTrainWord}
+          onCopyToUserDictionary={handleCopyToUserDictionary}
         />
       </div>
 

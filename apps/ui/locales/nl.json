@@ -1,7 +1,8 @@
 {
   "common": {
     "close": "Sluiten",
-    "done": "Gereed"
+    "done": "Gereed",
+    "retry": "Opnieuw proberen"
   },
   "onboarding": {
     "steps": [
@@ -130,6 +131,7 @@
       "create": "Maken",
       "items": "items",
       "empty": "Geen collecties gevonden",
+      "open": "Open lijst",
       "saved": "Collecties bijgewerkt",
       "failed": "Collecties konden niet worden bijgewerkt"
     },
@@ -147,6 +149,23 @@
     },
     "wordDetails": {
       "open": "Woorddetails"
+    },
+    "actions": {
+      "freeze": "Later oefenen (F)",
+      "hide": "Niet meer tonen (X)",
+      "copy": "Kopieer naar mijn woordenboek",
+      "copySuccess": "Gekopieerd naar mijn woordenboek.",
+      "copyFailed": "Kon niet naar mijn woordenboek kopiëren."
+    },
+    "details": {
+      "loading": "Details laden…",
+      "unavailable": "Details zijn niet beschikbaar."
+    },
+    "lookup": {
+      "timeout": "De woordenboekkaart duurde te lang om te laden.",
+      "forbidden": "Je hebt geen toegang tot deze woordenboekkaart.",
+      "contract": "De woordenboekkaart heeft een onbekend formaat.",
+      "unavailable": "De woordenboekkaart is tijdelijk niet beschikbaar."
     }
   },
   "partOfSpeech": {

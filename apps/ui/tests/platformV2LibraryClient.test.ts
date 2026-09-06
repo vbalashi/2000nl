@@ -3,7 +3,7 @@ import {
   fetchPlatformV2LibraryGroupPage,
   fetchPlatformV2CrossReferenceTarget,
   selectPlatformV2CrossReferenceTarget,
-  selectPlatformV2MultiSenseGroup,
+  selectPlatformV2LibraryGroup,
 } from "@/lib/platform/platformV2LibraryClient";
 import {
   financeEntry,
@@ -38,16 +38,16 @@ const payload = {
   page: { selectedTierComplete: true, nextGroupCursor: null },
 };
 
-describe("selectPlatformV2MultiSenseGroup", () => {
+describe("selectPlatformV2LibraryGroup", () => {
   test("selects the server group containing the exact selected entry", () => {
-    expect(selectPlatformV2MultiSenseGroup(payload, financeEntry.entryId)).toBe(
+    expect(selectPlatformV2LibraryGroup(payload, financeEntry.entryId)).toBe(
       multiSenseBankGroup,
     );
   });
 
   test("selects an exact single-sense group", () => {
     expect(
-      selectPlatformV2MultiSenseGroup(
+      selectPlatformV2LibraryGroup(
         {
           ...payload,
           groups: [
@@ -66,7 +66,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
 
   test("never falls back to matching by ordinal or headword", () => {
     expect(
-      selectPlatformV2MultiSenseGroup(payload, "missing-entry"),
+      selectPlatformV2LibraryGroup(payload, "missing-entry"),
     ).toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     };
 
     expect(
-      selectPlatformV2MultiSenseGroup(
+      selectPlatformV2LibraryGroup(
         { ...payload, query: "daar", groups: [pointerGroup] },
         "entry-daar-2",
       ),
