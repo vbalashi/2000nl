@@ -135,6 +135,7 @@
     },
     "training": {
       "next": "Hierna trainen",
+      "content": "Kaartinhoud",
       "cardChanged": "Volgende trainingskaart",
       "loading": "Trainingskaart laden…",
       "loadFailed": "Deze trainingskaart kon niet worden geladen.",

@@ -10,6 +10,69 @@ const viewports = [
   { name: "desktop", width: 1440, height: 960 },
 ];
 
+test("narrow reverse prompt remains readable to the last line without shrinking text", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openStudy(page, "variant=largest&mode=reverse&fixture=long&clean=1");
+  const prompt = page.getByTestId("reverse-prompt");
+  const dock = page.getByTestId("training-sense-card-dock");
+  const before = await dock.boundingBox();
+  const shell = await page.getByTestId("training-sense-card-shell").boundingBox();
+  await prompt.hover();
+  await page.mouse.wheel(0, 1000);
+  await expect.poll(async () => {
+    const box = await prompt.boundingBox();
+    return box!.y + box!.height;
+  }).toBeLessThanOrEqual(shell!.y + shell!.height);
+  expect(await fontSize(page, '[data-testid="reverse-prompt"]')).toBeCloseTo(29.6, 1);
+  expect(await dock.boundingBox()).toEqual(before);
+  await expect(page.getByRole("button", { name: "Antwoord tonen", exact: true })).toBeInViewport();
+});
+
+test("usage, example and idiom use one literary typography role", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStudy(page, "variant=largest&clean=1");
+  await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+  const styles = await page.locator('[data-section] [data-content-kind] > div > p').evaluateAll((elements) =>
+    elements.map((el) => {
+      const style = getComputedStyle(el);
+      return { size: style.fontSize, leading: style.lineHeight, family: style.fontFamily, style: style.fontStyle };
+    }),
+  );
+  expect(styles).toHaveLength(3);
+  expect(styles[0].size).toBe("20px");
+  expect(styles[1]).toEqual(styles[0]);
+  expect(styles[2]).toEqual(styles[0]);
+});
+
+for (const variant of variants) {
+  test(`article keeps half the headword size on both sides: ${variant.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openStudy(page, `variant=${variant.name}&clean=1`);
+    const lockup = page.getByTestId("sense-card-headword-lockup");
+    const ratio = () => lockup.evaluate((el) => {
+      const word = el.querySelector("h2")!;
+      const article = Array.from(el.querySelectorAll("span")).find((node) => node.textContent === "de")!;
+      return parseFloat(getComputedStyle(article).fontSize) / parseFloat(getComputedStyle(word).fontSize);
+    });
+    expect(await ratio()).toBeCloseTo(0.5, 2);
+    await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+    expect(await ratio()).toBeCloseTo(0.5, 2);
+  });
+}
+
+test("phone footer spends spare width on readable one-line progress", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStudy(page, "variant=normal&clean=1");
+  const progress = page.getByTestId("training-session-footer-progress");
+  expect(await progress.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(10.5);
+  const box = await progress.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(360);
+  const rows = await progress.locator(':scope > div').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top));
+  expect(new Set(rows).size).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
 async function openStudy(page: Page, query: string) {
   const origin = new URL(test.info().project.use.baseURL as string).origin;
   await page.route("**/*", (route) => {
@@ -102,8 +165,8 @@ for (const variant of variants) {
   });
 }
 
-// This is comparison evidence, not approval of every size. Record containment
-// independently so a readable short card cannot hide long reverse-prompt clipping.
+// Overflow is allowed only inside a keyboard- and pointer-scrollable region.
+// Capture the initial composition, then verify access to the last line.
 for (const viewport of [
   { name: "phone", width: 390, height: 844 },
   { name: "narrow", width: 320, height: 568 },
@@ -132,6 +195,16 @@ for (const viewport of [
         contentType: "application/json",
       });
       await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-long.png`) });
+      const region = page.getByRole("region", { name: "Kaartinhoud", exact: true });
+      await region.press("End");
+      await expect.poll(async () => {
+        const text = await prompt.boundingBox();
+        const frame = await region.boundingBox();
+        return text!.y + text!.height <= frame!.y + frame!.height;
+      }).toBe(true);
+      await region.press(" ");
+      await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
+      await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-end.png`) });
       const showAnswer = page.getByRole("button", { name: "Antwoord tonen", exact: true });
       await expect(showAnswer).toBeInViewport();
       await showAnswer.click();
@@ -140,3 +213,23 @@ for (const viewport of [
     });
   }
 }
+
+test("long reverse hint is reachable without covering the prompt or triggering an answer", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openStudy(page, "variant=largest&mode=reverse&fixture=long&clean=1");
+  await page.getByRole("button", { name: "Hint tonen", exact: true }).click();
+  const region = page.getByRole("region", { name: "Kaartinhoud", exact: true });
+  const prompt = page.getByTestId("reverse-prompt");
+  const hint = region.locator("aside");
+  const [p, h] = [await prompt.boundingBox(), await hint.boundingBox()];
+  expect(h!.y).toBeGreaterThanOrEqual(p!.y + p!.height);
+  await region.press("End");
+  await expect.poll(async () => {
+    const box = await hint.boundingBox();
+    const frame = await region.boundingBox();
+    return box!.y + box!.height <= frame!.y + frame!.height;
+  }).toBe(true);
+  await region.press("Home");
+  await expect.poll(async () => (await prompt.boundingBox())!.y).toBeGreaterThanOrEqual((await region.boundingBox())!.y);
+  await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
+});

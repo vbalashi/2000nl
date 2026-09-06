@@ -239,6 +239,7 @@ export function TrainingSenseCardStage({
             hint={hint}
             hintVisible={hintVisible}
             hintLabel={t("senseCard.hint.example")}
+            contentLabel={t("senseCard.training.content")}
           />
         )}
       </article>
@@ -403,6 +404,7 @@ function FaceBody({
   hint,
   hintVisible,
   hintLabel,
+  contentLabel,
 }: {
   model: TrainingSenseCardModel;
   mode: TrainingMode;
@@ -410,11 +412,22 @@ function FaceBody({
   hint?: TrainingSenseCardContent;
   hintVisible: boolean;
   hintLabel: string;
+  contentLabel: string;
 }) {
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col p-[18px]">
-      <div className="grid min-h-0 flex-1 place-items-center px-10">
-        <div className="flex flex-col items-center gap-4 text-center">
+    <div
+      data-testid="training-face-scroll"
+      role="region"
+      aria-label={contentLabel}
+      tabIndex={0}
+      onKeyDown={(event) => {
+        // Space scrolls a focused reading region; it must not reveal the answer.
+        if (event.key === " ") event.stopPropagation();
+      }}
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
+    >
+      <div className="flex min-h-full flex-col p-[18px]">
+        <div className="my-auto flex shrink-0 flex-col items-center gap-4 px-10 py-3 text-center">
           {mode === "definition-to-word" ? (
             <>
               <p
@@ -434,17 +447,17 @@ function FaceBody({
             />
           )}
         </div>
+        {hint && hintVisible ? (
+          <aside className="mt-4 shrink-0 rounded-2xl border border-slate-300 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#191e27]">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              {hintLabel}
+            </p>
+            <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-800 dark:text-slate-200">
+              {hint.text}
+            </p>
+          </aside>
+        ) : null}
       </div>
-      {hint && hintVisible ? (
-        <aside className="absolute inset-x-6 bottom-6 rounded-2xl border border-slate-300 bg-white px-4 py-3 dark:border-slate-700 dark:bg-[#191e27] sm:inset-x-9">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            {hintLabel}
-          </p>
-          <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-800 dark:text-slate-200">
-            {hint.text}
-          </p>
-        </aside>
-      ) : null}
     </div>
   );
 }
@@ -644,7 +657,6 @@ function ContentItem({
 }) {
   const nested = Boolean(item.parentContentNodeId);
   const nestedDefinition = nested && item.kind === "definition";
-  const compactIdiomLine = accent === "idiom" || (nested && item.kind === "example");
   const literary =
     accent === "usage" ||
     accent === "example" ||
@@ -671,11 +683,7 @@ function ContentItem({
             nestedDefinition
               ? "font-sense-sans text-[length:var(--reading-nested-size,13px)] leading-[var(--reading-nested-leading,1.35)] text-slate-500 dark:text-[#BFC7D4]"
               : literary
-              ? `font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] ${
-                  compactIdiomLine
-                    ? "text-[length:var(--reading-literary-compact-size,14px)] leading-[var(--reading-literary-compact-leading,1.25)]"
-                    : "text-[length:var(--reading-literary-size,16px)] leading-[var(--reading-literary-leading,1.4)]"
-                }`
+              ? "font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] text-[length:var(--reading-literary-size,16px)] leading-[var(--reading-literary-leading,1.4)]"
               : "font-sense-serif text-[length:var(--reading-body-size,16px)] leading-[var(--reading-body-leading,1.15)] text-slate-900 dark:text-[#F4F6FA]"
           }`}
         >
