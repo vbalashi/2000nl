@@ -375,10 +375,7 @@ function EntityHeader({
         <SenseCardReveal open={translationVisible}>
           <p
             data-testid="entry-translation"
-            className="mt-0 text-[15px] font-bold text-amber-700 dark:text-[#E9C46A]"
-            style={{
-              fontSize: "var(--reading-translation-emphasis-size, 15px)",
-            }}
+            className="mt-0 text-[length:var(--reading-translation-emphasis-size,15px)] font-bold text-amber-700 dark:text-[#E9C46A]"
           >
             {[
               model.entryTranslation,
@@ -422,11 +419,7 @@ function FaceBody({
             <>
               <p
                 data-testid="reverse-prompt"
-                className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
-                style={{
-                  fontSize:
-                    "var(--reading-body-prompt-size, clamp(1.55rem, 5cqi, 2.4rem))",
-                }}
+                className="max-w-[34rem] text-center font-sense-serif text-[length:var(--reading-body-prompt-size,clamp(1.55rem,5cqi,2.4rem))] leading-[1.22] text-slate-900 dark:text-slate-50"
               >
                 {reversePrompt?.text}
               </p>
@@ -676,20 +669,15 @@ function ContentItem({
         <p
           className={`min-w-0 flex-1 ${
             nestedDefinition
-              ? "font-sense-sans text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
+              ? "font-sense-sans text-[length:var(--reading-nested-size,13px)] leading-[var(--reading-nested-leading,1.35)] text-slate-500 dark:text-[#BFC7D4]"
               : literary
               ? `font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] ${
                   compactIdiomLine
-                    ? "text-[14px] leading-[1.25]"
-                    : "text-[16px] leading-[1.4]"
+                    ? "text-[length:var(--reading-literary-compact-size,14px)] leading-[var(--reading-literary-compact-leading,1.25)]"
+                    : "text-[length:var(--reading-literary-size,16px)] leading-[var(--reading-literary-leading,1.4)]"
                 }`
-              : "font-sense-serif text-[16px] leading-[1.15] text-slate-900 dark:text-[#F4F6FA]"
+              : "font-sense-serif text-[length:var(--reading-body-size,16px)] leading-[var(--reading-body-leading,1.15)] text-slate-900 dark:text-[#F4F6FA]"
           }`}
-          style={contentTypographyStyle({
-            nestedDefinition,
-            literary,
-            compactIdiomLine,
-          })}
         >
           {item.text}
         </p>
@@ -698,11 +686,7 @@ function ContentItem({
         <SenseCardReveal open={translationVisible}>
           <p
             data-content-translation="true"
-            className="mt-1 text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
-            style={{
-              fontSize: "var(--reading-translation-size, 13px)",
-              lineHeight: "var(--reading-translation-leading, 1.35)",
-            }}
+            className="mt-1 text-[length:var(--reading-translation-size,13px)] leading-[var(--reading-translation-leading,1.35)] text-slate-500 dark:text-[#BFC7D4]"
           >
             {item.translation}
           </p>
@@ -928,39 +912,6 @@ function hasTranslation(model: TrainingSenseCardModel) {
     model.entryTranslation ||
     [...model.definitions, ...model.examples].some(hasContentTranslation),
   );
-}
-
-function contentTypographyStyle({
-  nestedDefinition,
-  literary,
-  compactIdiomLine,
-}: {
-  nestedDefinition: boolean;
-  literary: boolean;
-  compactIdiomLine: boolean;
-}): React.CSSProperties {
-  if (nestedDefinition) {
-    return {
-      fontSize: "var(--reading-nested-size, 13px)",
-      lineHeight: "var(--reading-nested-leading, 1.35)",
-    };
-  }
-  if (literary && compactIdiomLine) {
-    return {
-      fontSize: "var(--reading-literary-compact-size, 14px)",
-      lineHeight: "var(--reading-literary-compact-leading, 1.25)",
-    };
-  }
-  if (literary) {
-    return {
-      fontSize: "var(--reading-literary-size, 16px)",
-      lineHeight: "var(--reading-literary-leading, 1.4)",
-    };
-  }
-  return {
-    fontSize: "var(--reading-body-size, 16px)",
-    lineHeight: "var(--reading-body-leading, 1.15)",
-  };
 }
 
 function hasContentTranslation(item: TrainingSenseCardContent): boolean {

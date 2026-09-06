@@ -7,10 +7,12 @@ reading-size proposals on the same real Training frame:
 `/dev/sense-card-gate?prototype=reading&variant=normal`
 
 Use `variant=normal`, `variant=large`, or `variant=largest`. The prototype also
-offers short/long deterministic local content and translations on/off. Add
-`clean=1` for a capture with the switcher hidden; the small prototype stamp is
-left visible. No authentication, database, network lookup, review action, or
-preference persistence is involved.
+offers `mode=direct|reverse`, short/long deterministic local content, and
+translations on/off. Add `clean=1` for a capture with the switcher hidden; the
+small prototype stamp is left visible. No authentication, database, network
+lookup, review action, or preference persistence is involved. The long fixture
+starts with a long definition so reverse mode exercises the same content-size
+pressure on its Face prompt.
 
 ## Proposed values
 

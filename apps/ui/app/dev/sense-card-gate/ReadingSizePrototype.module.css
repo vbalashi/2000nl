@@ -91,13 +91,6 @@
   padding: 3px 5px;
 }
 
-.variantLabel {
-  min-width: 5.5rem;
-  flex: 1;
-  text-align: center;
-  font-weight: 600;
-}
-
 .toolbarDetails {
   margin-top: 8px;
   border-top: 1px solid #334155;

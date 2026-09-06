@@ -84,7 +84,7 @@ function cloneEntry(
 }
 
 function makeLongContent(source: PlatformSenseCardEntryV2) {
-  const nodes = source.contentNodes.map((node) => ({
+  const nodes = source.contentNodes.filter((node) => node.kind !== "definition").map((node) => ({
     ...node,
     translations: node.translations.map((translation) => ({ ...translation })),
   }));
@@ -110,7 +110,7 @@ function makeLongContent(source: PlatformSenseCardEntryV2) {
       ],
     } satisfies PlatformContentNodeV2;
   });
-  return [...nodes, ...next];
+  return [...next, ...nodes];
 }
 
 const shortEntry = cloneEntry(gateFurnitureEntry, gateFurnitureEntry.contentNodes, true);

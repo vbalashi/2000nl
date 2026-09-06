@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { DetailedStats } from "@/lib/types";
+import type { DetailedStats, TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import {
   TrainingSessionAppHeader,
@@ -25,6 +25,7 @@ import {
 } from "./readingSizePrototypeFixtures";
 
 type ReadingVariant = "normal" | "large" | "largest";
+type ReadingMode = "direct" | "reverse";
 type ReadingStyleVars = React.CSSProperties & Record<`--${string}`, string>;
 
 const variants: ReadingVariant[] = ["normal", "large", "largest"];
@@ -32,6 +33,10 @@ const variantLabels: Record<ReadingVariant, string> = {
   normal: "Normal",
   large: "Large",
   largest: "Largest",
+};
+const modeLabels: Record<ReadingMode, string> = {
+  direct: "Direct",
+  reverse: "Reverse",
 };
 
 const styleVars: Record<ReadingVariant, ReadingStyleVars> = {
@@ -119,6 +124,7 @@ const presentation: TrainingSessionPresentationSnapshot = {
 const copy = {
   fixture: { short: "Short content", long: "Long content" },
   translations: { on: "Translations on", off: "Translations off" },
+  mode: modeLabels,
 } as const;
 
 function readVariant(value: string | null): ReadingVariant {
@@ -131,19 +137,31 @@ function readFixture(value: string | null): ReadingFixtureKey {
   return value === "long" ? "long" : "short";
 }
 
+function readMode(value: string | null): ReadingMode {
+  return value === "reverse" ? "reverse" : "direct";
+}
+
 export function ReadingSizePrototype() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const variant = readVariant(searchParams.get("variant"));
   const fixtureKey = readFixture(searchParams.get("fixture"));
+  const modeKey = readMode(searchParams.get("mode"));
+  const trainingMode: TrainingMode =
+    modeKey === "reverse" ? "definition-to-word" : "word-to-definition";
   const translationsEnabled = searchParams.get("translations") !== "off";
   const clean = searchParams.get("clean") === "1";
   const [side, setSide] = React.useState<"face" | "answer">("face");
   const [theme, setTheme] = React.useState<ThemePreference>("system");
 
   React.useEffect(() => {
-    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+    const root = document.documentElement;
+    const hadDarkClass = root.classList.contains("dark");
+    setTheme(hadDarkClass ? "dark" : "light");
+    return () => {
+      root.classList.toggle("dark", hadDarkClass);
+    };
   }, []);
 
   const setParam = React.useCallback(
@@ -204,6 +222,7 @@ export function ReadingSizePrototype() {
       data-reading-size-prototype="true"
       data-reading-size={variant}
       data-reading-fixture={fixtureKey}
+      data-reading-mode={modeKey}
       data-reading-translations={translationsEnabled ? "on" : "off"}
     >
       <TrainingSessionAppHeader
@@ -218,7 +237,7 @@ export function ReadingSizePrototype() {
           <TrainingSessionChrome
             interfaceLanguage="nl"
             scenario="comprehension"
-            mode="word-to-definition"
+            mode={trainingMode}
             cardFilter="both"
             presentation={presentation}
             sessionName="Leesritme · prototype"
@@ -229,7 +248,7 @@ export function ReadingSizePrototype() {
         footer={
           <FooterStats
             stats={stats}
-            enabledModes={["word-to-definition"]}
+            enabledModes={[trainingMode]}
             cardFilter="both"
             onModesChange={() => undefined}
             onCardFilterChange={() => undefined}
@@ -246,7 +265,7 @@ export function ReadingSizePrototype() {
         <div className="contents">
           <TrainingSenseCardStage
             model={model}
-            mode="word-to-definition"
+            mode={trainingMode}
             interfaceLanguage="nl"
             side={side}
             onSideChange={setSide}
@@ -270,9 +289,11 @@ export function ReadingSizePrototype() {
         <PrototypeToolbar
           variant={variant}
           fixtureKey={fixtureKey}
+          modeKey={modeKey}
           translationsEnabled={translationsEnabled}
           onVariantChange={(next) => setParam("variant", next)}
           onFixtureChange={(next) => setParam("fixture", next)}
+          onModeChange={(next) => setParam("mode", next)}
           onTranslationsChange={(next) => setParam("translations", next ? null : "off")}
           onPrevious={() => cycleVariant(-1)}
           onNext={() => cycleVariant(1)}
@@ -300,9 +321,11 @@ function PreviewReportAction() {
 function PrototypeToolbar({
   variant,
   fixtureKey,
+  modeKey,
   translationsEnabled,
   onVariantChange,
   onFixtureChange,
+  onModeChange,
   onTranslationsChange,
   onPrevious,
   onNext,
@@ -310,9 +333,11 @@ function PrototypeToolbar({
 }: {
   variant: ReadingVariant;
   fixtureKey: ReadingFixtureKey;
+  modeKey: ReadingMode;
   translationsEnabled: boolean;
   onVariantChange: (value: ReadingVariant) => void;
   onFixtureChange: (value: ReadingFixtureKey) => void;
+  onModeChange: (value: ReadingMode) => void;
   onTranslationsChange: (value: boolean) => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -365,6 +390,15 @@ function PrototypeToolbar({
             </button>
           </div>
           <div className={styles.toolbarRow}>
+            <select
+              aria-label="Training mode"
+              value={modeKey}
+              onChange={(event) => onModeChange(event.target.value as ReadingMode)}
+            >
+              {Object.keys(modeLabels).map((key) => (
+                <option key={key} value={key}>{copy.mode[key as ReadingMode]}</option>
+              ))}
+            </select>
             <select
               aria-label="Content fixture"
               value={fixtureKey}
