@@ -1,111 +1,91 @@
-# Training reading-size comparison — September 2026
+# Training reading-size comparison — revision 2, 2026-09-06
 
-This is a bounded, dev-only comparison for [#249](https://github.com/vbalashi/2000nl/issues/249).
-It keeps the accepted height-B Training composition and compares only three
-reading-size proposals on the same real Training frame:
+Dev-only study for [#249](https://github.com/vbalashi/2000nl/issues/249),
+draft [#263](https://github.com/vbalashi/2000nl/pull/263). Uses actual shared
+Training components, not a second card renderer. B is deployed; this study
+and its corrections are **not deployed**.
 
-`/dev/sense-card-gate?prototype=reading&variant=normal`
+Open `/dev/sense-card-gate?prototype=reading&variant=large` locally.
+Controls select Normal/Large/Largest, direct/reverse, short/long/long-word,
+translations and theme. `clean=1` hides controls with a recoverable stamp.
+No auth, DB, provider calls, grading or preference persistence.
+Long-word reuses an artificial gate fixture: layout evidence, not lexical QA.
 
-Use `variant=normal`, `variant=large`, or `variant=largest`. The prototype also
-offers `mode=direct|reverse`, short/long deterministic local content, and
-translations on/off. Add `clean=1` for a capture with the switcher hidden; the
-small prototype stamp is left visible. No authentication, database, network
-lookup, review action, or preference persistence is involved. The long fixture
-starts with a long definition so reverse mode exercises the same content-size
-pressure on its Face prompt.
+## Current proposed values
 
-## Proposed values
-
-The values below are comparison hypotheses, not an adopted product contract.
-Normal preserves the current runtime defaults. Body copy grows more strongly
-than the already-large headword, while utility labels and the fixed action
-dock remain unchanged.
+These are comparison hypotheses, not owner-approved presets or a new default.
 
 | Role | Normal | Large | Largest |
 | --- | --- | --- | --- |
-| Reading body | 16px / 1.15 | 18px / 1.28 | 20px / 1.38 |
-| Literary body | 16px / 1.4 | 18px / 1.5 | 20px / 1.55 |
-| Compact idiom | 14px / 1.25 | 15.5px / 1.35 | 17px / 1.4 |
+| Reading body: size / line height | 16px / 1.15 | 18px / 1.28 | 20px / 1.38 |
+| Examples, usage, idioms | 16px / 1.4 | 18px / 1.5 | 20px / 1.55 |
 | Nested definition | 13px / 1.35 | 14px / 1.4 | 15px / 1.45 |
 | Translation | 13px / 1.35 | 14px / 1.45 | 15px / 1.5 |
-| Headword (face / answer) | 48px / 44px | 50px / 46px | 52px / 48px |
+| Headword Face / Answer | 48px / 44px | 50px / 46px | 52px / 48px |
+| Article Face / Answer | 24px / 22px | 25px / 23px | 26px / 24px |
+| Long headword below / from 640px | 32px / 40px | 34px / 42px | 36px / 44px |
+| Any training article | 0.5 × actual word | 0.5 × actual word | 0.5 × actual word |
 | Headword translation | 15px | 16px | 17px |
-| Long headword (narrow / wide) | 32px / 40px | 34px / 42px | 36px / 44px |
-| Article (face / answer) | 24px / 20px | 25px / 21px | 26px / 22px |
 | Reverse prompt | clamp(1.55rem, 5cqi, 2.4rem) | clamp(1.7rem, 5.4cqi, 2.55rem) | clamp(1.85rem, 5.8cqi, 2.7rem) |
-| Utility labels | unchanged | unchanged | unchanged |
+| Footer below / from 768px | 10.5px / 11px | 10.5px / 11px | 10.5px / 11px |
 
-The prototype intentionally leaves the action dock height and session/footer
-geometry owned by the accepted B runtime. If larger body text increases scroll
-pressure or makes controls hard to reach, record that as comparison evidence;
-do not conceal it by changing the runtime dock height.
+Revision 2 removes the compact-idiom exception: examples, usage and idiom lines
+share one literary role. Nested definitions/translations retain distinct roles.
+Article inherits half the actual word, including long words.
+Mobile footer uses spare width and 10.5px instead of 9px, retaining one line
+and its 44px + safe-area height. Dock and action hit areas are unchanged.
 
-This is not a settings feature or a production rollout. Once the comparison has
-a decision, retain the decision in the issue and remove or absorb this throwaway
-surface.
+## Small-screen correction
 
-## Comparison and evidence — 2026-09-06
+Revision 1 clipped Large/Largest reverse prompts at 320×568. Face now has a
+named, focusable native scroll region. If content does not fit, scroll inside
+the card; both ends remain reachable. Hint is in flow below the prompt, not an
+overlay. Focused Space scrolls rather than reveals; Home/End and wheel work.
+Fixed actions stay outside. Selected reading text is not silently shrunk.
 
-[Open the screenshot comparison](comparison.html). These are actual rendered
-components, not a second mock card renderer. Fixture translations are Russian;
-controls are Dutch. The toolbar/stamp explicitly identifies the prototype.
+Partial initial content is expected when overflowing, not inaccessible clipping.
+At 320px footer labels can ellipsize; fixture counts remain visible. This still
+needs owner review with longer numbers and other languages.
 
-Source: `ac0ef784` (implementation `9d0e2da8`, review fixes `ac0ef784`).
-Base: `9effb923`, whose complete tree equals deployed main `2082b0b8`
-(release `0.18.516`). This experiment is **not deployed**.
+## Evidence and verification
 
-Independent Luna Spec and Standards re-reviews found no remaining source-code
-findings after the fixes. This does not approve all visual states.
+Final source: `248f7af8` (runtime `fc304fac`, subsequent test/dev corrections).
+Base `9effb923` has the exact tree of main `2082b0b8`, release `0.18.516`.
+No production or personal-account actions in this revision.
 
-Typecheck and lint pass; full unit/component suite: **908 passed / 123 skipped**.
-The skipped DB-dependent tests were not exercised: this is fixture-only visual
-QA, with no live Supabase, provider calls, auth, or learning-state mutations.
+Browser suite: `apps/ui/playwright/tests/training-reading-size-study.spec.ts`.
+Chromium, equal viewports, reduced motion, loaded fonts, animations disabled
+for screenshots. Fixture tests block cross-origin and API calls.
 
-Browser test: `apps/ui/playwright/tests/training-reading-size-study.spec.ts`.
-Final source run: **22 passed**, Chromium, reduced motion, loaded local fonts.
-The browser tests verify computed sizes, actual Newsreader family, Report/Known
-alignment, fixed controls, internal Answer scrolling, reveal/translation, and
-prototype controls. Six reverse tests capture containment separately: their
-pass status proves capture/reveal, **not absence of clipping**.
-
-| Captured state | Viewport / theme | Sizes | Result / acceptance |
+| State | Viewport / theme | Sizes | Checks |
 | --- | --- | --- | --- |
-| Direct Face → Answer → translated Answer | 390×844 and 1440×960; light + dark | all three | Captured; measured controls stable, owner size choice pending |
-| Long translated Answer, scrolled | 320×568; dark | all three | Internal scrolling works; pinned word/dock stable; reading region is small |
-| Long reverse Face → Answer | 390×844; dark | all three | Prompt contained, reveal reachable; owner choice pending |
-| Long reverse Face → Answer | 320×568; dark | Normal | Prompt contained for this fixture |
-| Long reverse Face → Answer | 320×568; dark | Large / Largest | **Gap: prompt clipped, no Face scroll; do not adopt yet** |
-| Tablet, landscape, OS text scaling/200% zoom, long headword, hint overlay, audio-only, waiting/error | — | — | Not covered by this study; not approved implicitly |
+| Face → Answer → translated Answer | 390×844, 1440×960; light/dark | all three | Computed typography, Report/Known and fixed controls |
+| Long translated Answer, scrolled | 320×568; dark | all three | Internal scroll, pinned word/actions |
+| Long reverse Face, initial and end | 390×844, 320×568; dark | all three | End reachable, prompt top recoverable, reveal reachable |
+| Long reverse with hint | 320×568; dark | Largest | Hint below prompt; keyboard/scroll |
+| Long word Face and Answer | 390×844, 768×844; dark | all three | Ratio 0.5, no horizontal document overflow |
+| OS scaling/200% zoom, real Safari/mobile device, landscape, audio-only, waiting/error | — | — | Not covered; not implicitly approved |
 
-Exact narrow reverse measurements: shell y=126…428px. Prompt bottom is 398px
-(Normal), 476.875px (Large), and 542.03125px (Largest). Therefore Large loses
-about 49px and Largest 114px below the shell. The default Normal fixture is
-not clipped; this finding must not be reported as a proven current-production
-failure. Fix overflow/reachability before a larger preset is adopted; do not
-shrink the font silently or change the accepted B dock to hide the problem.
-The follow-up remains tracked in #249 / #251.
+Independent Luna Spec/Standards reviews cover this correction slice. Review
+requests for long-word coverage and its missing toolbar option were addressed.
+Full unit/component suite: **908 passed / 123 skipped** (DB coverage not run).
+Typecheck/lint pass. Final source browser run: **35 passed**, 63 screenshots.
+The PR checkpoint links the evidence commit. Tests do not constitute visual acceptance.
 
-Current captures live under `assets/`, named
-`{phone|desktop}-{light|dark}-{normal|large|largest}-{face|answer|translated}.png`,
-plus `narrow-dark-*-long-scrolled.png` and
-`{phone|narrow}-dark-*-reverse-long.png` (45 screenshots in total).
+[Screenshot comparison](comparison.html) uses `assets/r2/`: 63 actual screenshots.
+Original 45 captures and `comparison.png` remain revision 1 history, not current
+results. Original report: commit `e1c36fcf`.
+Revision 2 HTML links were checked without reopening the file in a browser;
+the actual HTTP development gallery remains the interactive review surface.
 
-Capture tooling limitation: the `agent-browser` screenshot call stalled. The
-in-app Browser opened the real prototype successfully, but its returned API
-did not expose equal-viewport capture here. An isolated Playwright browser
-produced these deterministic screenshots; it did not reuse an account/profile.
+## Remaining decisions
 
-Next owner review is intentionally small: compare **Normal vs Large** on the
-same phone Answer. Large is a candidate, not a new default. Resolve narrow
-reverse overflow and expand the agreed coverage before implementing a saved
-reading-size preference. No new ADR or Pen approval was created by this study.
+- Choose preset values; 16→18px is 12.5%, 16→20px is 25%.
+- Reassess the continuation affordance over faded lower Answer text. Larger
+  copy reduces visible space; scroll success alone is not visual acceptance.
+- Approve further responsive/accessibility coverage before persisted settings.
+- No new ADR, automatic Pen approval or complete #249/#251 acceptance claim.
 
-Independent screenshot QA confirmed the same B frame in the three phone
-comparisons and recommends Normal → Large as the first comparison. It also
-flags that the centered continuation affordance occupies part of the faded
-bottom text region (already visible in Normal); with larger sizes, less of the
-next section is visible before scrolling. Reassess that affordance/readability
-with the overflow follow-up, rather than counting successful scrolling as
-proof that the presentation is fully accepted. The Large session-strip concern
-raised in the first review was withdrawn after checking the exact saved image;
-its session strip is present and aligned with the other variants.
+Separate diagnosed work: #252 removes actively reached old Word Details from
+single-sense Library and Training; #264 establishes one stable app frame.
+Neither is fixed by this typography slice.

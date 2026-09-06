@@ -23,7 +23,7 @@
   <h1>Один экран, три размера текста</h1>
   <p>Эксперимент на настоящей карточке. Компоновка B уже онлайн; эти размеры ещё не опубликованы и не выбраны как настройка.</p>
   <div class="controls">
-    <label>Экран<select id="screen"><option value="phone">Телефон · 390 × 844</option><option value="desktop">Десктоп · 1440 × 960</option><option value="reverse">Длинная обратная · 390 × 844</option><option value="narrow-reverse">Длинная обратная · 320 × 568</option><option value="narrow-answer">Длинный ответ после прокрутки · 320 × 568</option></select></label>
+    <label>Экран<select id="screen"><option value="phone">Телефон · 390 × 844</option><option value="desktop">Десктоп · 1440 × 960</option><option value="reverse">Длинная обратная · 390 × 844</option><option value="narrow-reverse">Длинная обратная · 320 × 568</option><option value="narrow-end">Обратная после прокрутки · 320 × 568</option><option value="narrow-answer">Длинный ответ после прокрутки · 320 × 568</option><option value="longword">Длинное слово · 390 × 844 · ответ</option></select></label>
     <label>Вид<select id="side"><option value="translated">Ответ + переводы</option><option value="answer">Ответ</option><option value="face">Лицевая сторона</option></select></label>
     <label>Тема<select id="theme"><option value="dark">Тёмная</option><option value="light">Светлая</option></select></label>
   </div>
@@ -40,13 +40,15 @@
   </div>
   <p id="state-note" class="note"></p>
   <table><thead><tr><th>Что меняется</th><th>Обычный</th><th>Крупный</th><th>Очень крупный</th></tr></thead><tbody>
-    <tr><td>Определения и примеры</td><td>16 px</td><td>18 px</td><td>20 px</td></tr>
+    <tr><td>Определения; примеры, использование и идиомы</td><td>16 px</td><td>18 px</td><td>20 px</td></tr>
     <tr><td>Переводы фраз</td><td>13 px</td><td>14 px</td><td>15 px</td></tr>
     <tr><td>Слово на ответе</td><td>44 px</td><td>46 px</td><td>48 px</td></tr>
     <tr><td>Кнопки и служебные подписи</td><td colspan="3">Не увеличиваются в этом эксперименте</td></tr>
+    <tr><td>Артикль</td><td colspan="3">Половина фактического размера слова на обеих сторонах</td></tr>
+    <tr><td>Нижняя статистика на телефоне</td><td colspan="3">10,5 px вместо 9 px; одна строка</td></tr>
   </tbody></table>
   <p>Моё предложение для первого сравнения — обычный и крупный. Увеличиваются также межстрочные интервалы: это не просто растяжение всего экрана.</p>
-  <p class="meta">Снимки 06.09.2026 · исходный код ac0ef784 · учебные данные без аккаунта. Нет проверки дикторов экрана, системного увеличения текста и всех видов карточек. Крупные размеры пока нельзя внедрять: на узком низком экране обратное задание обрезается.</p>
+  <p class="meta">Ревизия 2 · 06.09.2026 · исходный код 248f7af8 · учебные данные без аккаунта. Длинное обратное задание теперь прокручивается; размер текста и кнопок не уменьшается. Нет проверки дикторов экрана, системного увеличения текста и всех видов карточек. Размеры ещё не утверждены и не опубликованы. На ширине 320 px подписи статистики могут сокращаться.</p>
   <p class="meta"><a href="README.md">Таблица измерений и ограничения</a> · <a href="https://github.com/vbalashi/2000nl/issues/249">Задача #249</a> · <a href="http://127.0.0.1:3100/dev/sense-card-gate?prototype=reading&amp;variant=large">Живой локальный эксперимент</a></p>
 </main>
 <script>
@@ -62,13 +64,19 @@
       const size = figure.dataset.variant;
       const filename = screen === 'reverse' ? `phone-dark-${size}-reverse-long.png`
         : screen === 'narrow-reverse' ? `narrow-dark-${size}-reverse-long.png`
+        : screen === 'narrow-end' ? `narrow-dark-${size}-reverse-end.png`
+        : screen === 'longword' ? `longword-390-${size}-answer.png`
         : screen === 'narrow-answer' ? `narrow-dark-${size}-long-scrolled.png`
         : `${screen}-${themeSelect.value}-${size}-${sideSelect.value}.png`;
-      figure.querySelector('img').src = `assets/${filename}`;
-      figure.querySelector('a').href = `assets/${filename}`;
+      figure.querySelector('img').src = `assets/r2/${filename}`;
+      figure.querySelector('a').href = `assets/r2/${filename}`;
     });
     document.querySelector('#state-note').textContent = screen === 'narrow-reverse'
-      ? 'Обнаружено ограничение: крупный и очень крупный текст уходят за нижний край карточки. Прокрутки здесь пока нет. Обычный размер для этого примера помещается.'
+      ? 'Начало длинного задания. Если оно не помещается, текст можно прокрутить внутри карточки: см. отдельный вид после прокрутки. Кнопки остаются доступны.'
+      : screen === 'narrow-end'
+      ? 'Конец задания после прокрутки: последняя строка доступна во всех трёх размерах, нижние кнопки не сдвигаются.'
+      : screen === 'longword'
+      ? 'Искусственный пример для проверки длинного слова и пропорции артикля; содержание определения здесь не является словарным образцом.'
       : screen === 'narrow-answer'
       ? 'Текст прокручивается внутри карточки; слово и кнопки остаются на месте. На таком маленьком экране для чтения остаётся мало места.'
       : screen === 'reverse'
