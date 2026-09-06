@@ -4,10 +4,11 @@ import React from "react";
 import { LibraryWordDetail } from "@/components/training/library-v2/LibraryWordDetail";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { gateFinanceEntry, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import { readingSizeStyles, type ReadingSize } from "@/lib/reading/readingSize";
 
 // Real Details modules; browser tests replace only lookup HTTP responses and
 // record copy requests without mutating a dictionary or learning state.
-export function UnifiedDetailsGate() {
+export function UnifiedDetailsGate({ size = "normal" }: { size?: ReadingSize }) {
   const [entryId, setEntryId] = React.useState(gateFurnitureEntry.entryId);
   const [training, setTraining] = React.useState(false);
   const [copied, setCopied] = React.useState("");
@@ -20,7 +21,7 @@ export function UnifiedDetailsGate() {
     onCopyToUserDictionary: async (selected: string) => { setCopied(selected); },
   };
   return (
-    <main className="flex h-dvh flex-col gap-2 bg-background-light p-2 text-slate-900 dark:bg-background-dark dark:text-slate-100">
+    <main style={readingSizeStyles[size]} className="flex h-dvh flex-col gap-2 bg-background-light p-2 text-slate-900 dark:bg-background-dark dark:text-slate-100">
       <nav className="flex shrink-0 flex-wrap gap-3">
         <button onClick={() => setEntryId(gateFurnitureEntry.entryId)}>Single group</button>
         <button onClick={() => setEntryId(gateFinanceEntry.entryId)}>Multi group</button>

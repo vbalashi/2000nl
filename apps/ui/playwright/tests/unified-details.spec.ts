@@ -12,9 +12,25 @@ const multi = {
 };
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1440, height: 960 }]) {
-  test(`unified single/multi Details and reachable footer at ${viewport.width}`, async ({ page }, testInfo) => {
+  for (const size of ["normal", "largest"] as const) {
+  test(`unified single/multi Details and reachable footer at ${viewport.width} ${size}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
+    await page.emulateMedia({ colorScheme: size === "largest" ? "dark" : "light" });
     const lookups: string[] = [];
+    const selectedGroup = size === "largest" ? {
+      ...multi, senseCount: 20, entryCount: 20,
+      entries: [
+        ...Array.from({ length: 19 }, (_, index) => ({
+          ...gateFurnitureEntry,
+          entryId: `entry-spacer-${index}`,
+          meaningOrdinal: index + 1,
+          translation: null,
+          wordDetails: undefined,
+          capabilities: [],
+        })),
+        { ...withReport(gateFinanceEntry), meaningOrdinal: 20 },
+      ],
+    } : multi;
     await page.route("**/api/platform/v2/lookup", async route => {
       const request = route.request().postDataJSON();
       lookups.push(request.entryId);
@@ -22,12 +38,14 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
       await route.fulfill({ json: {
         contractVersion: "platform-lookup-v2", query: "bank",
         request: { ...request, contentLanguageCode: "nl", translationTargetLanguageCode: null },
-        groups: [request.entryId === gateFurnitureEntry.entryId ? single : multi],
+        groups: [request.entryId === gateFurnitureEntry.entryId ? single : selectedGroup],
         page: { selectedTierComplete: true, nextGroupCursor: null },
       } });
     });
-    await page.goto("/dev/sense-card-gate?prototype=details");
+    await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}`);
+    if (size === "largest") await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(page.getByTestId("library-sense-card-group")).toBeVisible();
+    await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", size === "largest" ? "48px" : "44px");
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
     const copy = page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true });
     const report = page.getByRole("button", { name: /Melden|Report/, exact: true });
@@ -44,18 +62,24 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     await copy.click();
     await expect(page.getByTestId("copied-entry")).toHaveText(gateFurnitureEntry.entryId);
     await page.getByRole("button", { name: "Multi group", exact: true }).click();
-    await expect(page.locator("[data-entry-id]")).toHaveCount(2);
+    await expect(page.locator("[data-entry-id]")).toHaveCount(selectedGroup.entryCount);
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByRole("button", { name: /betekenis inklappen/i })).toBeVisible();
     await copy.click();
     await expect(page.getByTestId("copied-entry")).toHaveText(gateFinanceEntry.entryId);
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByRole("button", { name: "Later oefenen (F)", exact: true })).toBeInViewport();
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead")).toBeInViewport();
+    const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
+    const scroller = page.getByTestId("library-sense-card-scroll-region");
+    const scrollBox = await scroller.boundingBox();
+    const topInset = await scroller.evaluate(node => node.scrollTop > 2 ? 44 : 0);
+    expect(lead!.y).toBeGreaterThanOrEqual(scrollBox!.y + topInset);
     await expect(copy).toBeInViewport();
     await expect(report).toBeInViewport();
     expect(lookups).toContain(gateFurnitureEntry.entryId);
     expect(lookups).toContain(gateFinanceEntry.entryId);
-    await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}.png`) });
+    await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}-${size}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  }
 }

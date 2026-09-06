@@ -50,6 +50,8 @@ type Props = {
   bottomOverlayReserve?: boolean;
 };
 
+const DETAILS_SCROLL_FADE_HEIGHT = 44;
+
 export function LibrarySenseCardGroup({
   model,
   interfaceLanguage,
@@ -146,10 +148,16 @@ export function LibrarySenseCardGroup({
     if (!target) return;
     const nodeRect = node.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
-    if (targetRect.top < nodeRect.top) {
-      node.scrollTop -= nodeRect.top - targetRect.top;
-    } else if (targetRect.bottom > nodeRect.bottom) {
-      node.scrollTop += targetRect.bottom - nodeRect.bottom;
+    const leadRect = (
+      target.querySelector<HTMLElement>("[data-meaning-lead]") ?? target
+    ).getBoundingClientRect();
+    if (
+      leadRect.top < nodeRect.top + DETAILS_SCROLL_FADE_HEIGHT ||
+      leadRect.bottom > nodeRect.bottom - DETAILS_SCROLL_FADE_HEIGHT
+    ) {
+      // Open at the beginning, not at the bottom of a card taller than the
+      // viewport. Keep the first line below the pinned top fade.
+      node.scrollTop += targetRect.top - nodeRect.top - DETAILS_SCROLL_FADE_HEIGHT;
     }
     updateScrollEdges();
   }, [activeMeaningId, activeMeaningScrollKey, updateScrollEdges]);
@@ -417,6 +425,7 @@ function MeaningCard({
       <div>
         <div
           data-testid="library-sense-card-lead"
+          data-meaning-lead
           className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
         >
           <div className="min-w-0">
@@ -788,7 +797,8 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
     <div
       aria-hidden="true"
       data-scroll-affordance={edge}
-      className={`pointer-events-none absolute inset-x-0 z-20 flex h-11 justify-center px-4 ${
+      style={{ height: DETAILS_SCROLL_FADE_HEIGHT }}
+      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
         isTop
           ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
           : "bottom-0 items-end bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent pb-1 dark:from-[#11151d] dark:via-[#11151d]/90"
