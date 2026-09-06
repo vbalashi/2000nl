@@ -23,7 +23,13 @@ export function LibraryDetailsActions({
 }: Props) {
   const [copyBusy, setCopyBusy] = React.useState(false);
   const [copyStatus, setCopyStatus] = React.useState<string | null>(null);
+  const entryIdRef = React.useRef(entryId);
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+
+  React.useEffect(() => {
+    entryIdRef.current = entryId;
+    setCopyStatus(null);
+  }, [entryId]);
 
   return (
     <div className="shrink-0 space-y-2 border-t border-slate-200 pt-3 text-xs dark:border-slate-700">
@@ -57,9 +63,13 @@ export function LibraryDetailsActions({
               setCopyStatus(null);
               try {
                 await onCopyToUserDictionary(entryId);
-                setCopyStatus(t("senseCard.actions.copySuccess"));
+                if (entryIdRef.current === entryId) {
+                  setCopyStatus(t("senseCard.actions.copySuccess"));
+                }
               } catch {
-                setCopyStatus(t("senseCard.actions.copyFailed"));
+                if (entryIdRef.current === entryId) {
+                  setCopyStatus(t("senseCard.actions.copyFailed"));
+                }
               } finally {
                 setCopyBusy(false);
               }

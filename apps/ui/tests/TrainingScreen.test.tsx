@@ -806,6 +806,55 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
   }
 });
 
+test("Training Details opens a containing user list through the existing list owner", async () => {
+  fetchAvailableLists.mockResolvedValue([defaultAvailableList, userOwnedList]);
+  fetchEntryListMemberships.mockResolvedValue(
+    new Map([
+      [
+        mockWord.id,
+        [
+          {
+            listId: userOwnedList.id,
+            listType: userOwnedList.type,
+            name: userOwnedList.name,
+            editable: true,
+            itemCount: userOwnedList.item_count,
+            isActiveTrainingList: false,
+          },
+        ],
+      ],
+    ]),
+  );
+  fetchWordsForList.mockClear();
+
+  try {
+    render(<TrainingScreen user={user} />);
+    await screen.findByRole("heading", { name: "huis" });
+    fireEvent.click(screen.getByRole("button", { name: "Bekijk details" }));
+    await screen.findByTestId("library-sense-card-group");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Collecties|Collections/i }),
+    );
+    const collectionsDialog = await screen.findByRole("dialog");
+    fireEvent.click(
+      within(collectionsDialog).getByRole("button", {
+        name: /Open lijst|Open collection/i,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(fetchWordsForList).toHaveBeenCalledWith(
+        userOwnedList.id,
+        userOwnedList.type,
+        expect.objectContaining({ page: 1 }),
+      ),
+    );
+  } finally {
+    restoreDefaultListScope();
+    fetchEntryListMemberships.mockResolvedValue(new Map());
+  }
+});
+
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] = React.useState<AppDestination>("training");

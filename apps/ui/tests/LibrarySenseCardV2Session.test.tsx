@@ -9,7 +9,11 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
-import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
+import {
+  financeEntry,
+  furnitureEntry,
+  multiSenseBankGroup,
+} from "./platformV2LibraryFixture";
 import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
@@ -426,6 +430,78 @@ describe("LibrarySenseCardV2Session", () => {
     );
   });
 
+  test("opens the requested second meaning and copies that exact entry", async () => {
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={furnitureEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onCopyToUserDictionary={copyEntry}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    expect(
+      screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`),
+    ).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(furnitureEntry.entryId));
+  });
+
+  test("does not refresh the previous detail after an action races with navigation", async () => {
+    const action = deferred<{
+      contractVersion: "platform-action-v2";
+      actionId: "start-learning";
+      clientEventId: string;
+      accepted: true;
+      card: typeof financeEntry.card;
+    }>();
+    performAction.mockReturnValue(action.promise);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState(financeEntry.entryId);
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId(furnitureEntry.entryId)}>
+            Select furniture meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText(financeEntry.contentNodes[0].text);
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select furniture meaning" }));
+    await screen.findByText(furnitureEntry.contentNodes[0].text);
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+
+    action.resolve({
+      contractVersion: "platform-action-v2",
+      actionId: "start-learning",
+      clientEventId: "event-race",
+      accepted: true,
+      card: financeEntry.card,
+    });
+    await act(async () => {
+      await action.promise;
+    });
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+  });
+
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
     const mixedDaarGroup: PlatformHeadwordGroupV2 = {
       ...multiSenseBankGroup,
@@ -468,8 +544,9 @@ describe("LibrarySenseCardV2Session", () => {
       header: { ...multiSenseBankGroup.header, text: "daar-" },
       senseCount: 1,
       entryCount: 1,
-      entries: [financeEntry],
+      entries: [{ ...financeEntry, entryId: "entry-daar-target" }],
     });
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
 
     render(
       <LibrarySenseCardV2Session
@@ -479,6 +556,7 @@ describe("LibrarySenseCardV2Session", () => {
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
         initialGroup={mixedDaarGroup}
+        onCopyToUserDictionary={copyEntry}
       />,
     );
 
@@ -514,6 +592,8 @@ describe("LibrarySenseCardV2Session", () => {
         "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
       ),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith("entry-daar-target"));
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {

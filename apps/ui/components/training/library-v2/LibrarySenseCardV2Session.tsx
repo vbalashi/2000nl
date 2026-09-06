@@ -43,6 +43,13 @@ type Props = {
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
   onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
+  trainingActionEntryId?: string | null;
+  revealed?: boolean;
+  actionLoading?: boolean;
+  onTrainingAction?: (
+    action: "freeze" | "hide",
+    entryId: string,
+  ) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
@@ -59,6 +66,10 @@ export function LibrarySenseCardV2Session({
   onListsUpdated,
   onTrainWord,
   onCopyToUserDictionary,
+  trainingActionEntryId = null,
+  revealed = true,
+  actionLoading = false,
+  onTrainingAction,
   onOpenListMembership,
 }: Props) {
   const translationLanguage =
@@ -106,9 +117,16 @@ export function LibrarySenseCardV2Session({
   const [collectionStatus, setCollectionStatus] = React.useState<string | null>(
     null,
   );
+  const [activeMeaningId, setActiveMeaningId] = React.useState<string>(entryId);
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
+  const detailIdentity = `${entryId}\u0000${activeReferenceTarget?.targetEntryId ?? activeReferenceTarget?.query ?? ""}`;
+  const detailIdentityRef = React.useRef(detailIdentity);
+
+  React.useEffect(() => {
+    detailIdentityRef.current = detailIdentity;
+  }, [detailIdentity]);
 
   React.useEffect(() => {
     translationSession.current += 1;
@@ -124,7 +142,17 @@ export function LibrarySenseCardV2Session({
   }, [entryId]);
 
   const load = React.useCallback(
-    async (signal?: AbortSignal, expectedTranslationSession?: number) => {
+    async (
+      signal?: AbortSignal,
+      expectedTranslationSession?: number,
+      expectedDetailIdentity?: string,
+    ) => {
+      if (
+        expectedDetailIdentity &&
+        expectedDetailIdentity !== detailIdentityRef.current
+      ) {
+        return null;
+      }
       const requestSequence = ++groupRequestSequence.current;
       setLoading(true);
       const next = activeReferenceTarget
@@ -150,7 +178,9 @@ export function LibrarySenseCardV2Session({
         signal?.aborted ||
         requestSequence !== groupRequestSequence.current ||
         (expectedTranslationSession != null &&
-          expectedTranslationSession !== translationSession.current)
+          expectedTranslationSession !== translationSession.current) ||
+        (expectedDetailIdentity &&
+          expectedDetailIdentity !== detailIdentityRef.current)
       ) {
         return next;
       }
@@ -224,6 +254,32 @@ export function LibrarySenseCardV2Session({
       : null;
   }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage]);
 
+  React.useEffect(() => {
+    setActiveMeaningId(entryId);
+  }, [entryId]);
+
+  React.useEffect(() => {
+    if (!group) return;
+    const preferredEntryId = activeReferenceTarget?.targetEntryId ?? activeMeaningId;
+    const matchingEntry = group.entries.find((candidate) =>
+      candidate.kind === "sense-card"
+        ? candidate.entryId === preferredEntryId
+        : candidate.crossReferenceId === preferredEntryId,
+    );
+    if (matchingEntry) {
+      setActiveMeaningId(
+        matchingEntry.kind === "sense-card"
+          ? matchingEntry.entryId
+          : matchingEntry.crossReferenceId,
+      );
+      return;
+    }
+    const firstMeaning = group.entries.find(
+      (candidate) => candidate.kind === "sense-card",
+    );
+    if (firstMeaning) setActiveMeaningId(firstMeaning.entryId);
+  }, [activeMeaningId, activeReferenceTarget, group]);
+
   const loadMemberships = React.useCallback(
     async (entryIds: string[]) => {
       if (!userId || !entryIds.length) {
@@ -253,6 +309,7 @@ export function LibrarySenseCardV2Session({
   }, [loadMemberships, model]);
 
   const handleAction = async (capability: LibraryMutationCapability) => {
+    const expectedDetailIdentity = detailIdentityRef.current;
     setBusyIdentity(
       librarySenseCardIdentity(
         capability.target.entryId,
@@ -262,7 +319,7 @@ export function LibrarySenseCardV2Session({
     setError(null);
     try {
       await performPlatformV2TrainingAction(capability);
-      await load();
+      await load(undefined, undefined, expectedDetailIdentity);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "action_failed");
     } finally {
@@ -500,15 +557,15 @@ export function LibrarySenseCardV2Session({
     );
   }
 
-  const selectedReportEntry = group?.entries.find(
+  const selectedActiveEntry = group?.entries.find(
     (candidate) =>
-      candidate.kind === "sense-card" && candidate.entryId === entryId,
+      candidate.kind === "sense-card" && candidate.entryId === activeMeaningId,
   );
   const canReport = Boolean(
     group &&
-    selectedReportEntry?.kind === "sense-card" &&
-    selectedReportEntry.reportContentRevision &&
-    selectedReportEntry.capabilities.some(
+    selectedActiveEntry?.kind === "sense-card" &&
+    selectedActiveEntry.reportContentRevision &&
+    selectedActiveEntry.capabilities.some(
       (capability) =>
         capability.actionId === "report-content" &&
         capability.target.kind === "entry",
@@ -516,67 +573,81 @@ export function LibrarySenseCardV2Session({
   );
 
   return (
-    <div className="relative h-full min-h-0">
-      <LibrarySenseCardGroup
-        model={model}
-        interfaceLanguage={interfaceLanguage}
-        busyIdentity={busyIdentity}
-        audioBusy={audioBusy}
-        onPlayAudio={
-          model.audioCapability ? () => void handlePlayAudio() : undefined
-        }
-        translationEnabled={
-          Boolean(translationLanguage) && model.meanings.length > 0
-        }
-        translationStates={translationStates}
-        collectionCounts={Object.fromEntries(
-          Object.entries(membershipsByEntryId).map(
-            ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
-          ),
-        )}
-        onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
-          void handleRequestTranslation(
-            meaningEntryId,
-            meaningCardTypeId,
-            translationStates[
-              librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
-            ] === "failed",
-          )
-        }
-        onOpenCollections={
-          userId
-            ? (meaning) => {
-                setCollectionStatus(null);
-                setCollectionsEntryId(meaning.entryId);
-              }
-            : undefined
-        }
-        onTrainNext={
-          onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
-        }
-        onFollowCrossReference={setActiveReferenceTarget}
-        onAction={(capability) => void handleAction(capability)}
-        bottomOverlayReserve={canReport}
-      />
-      {onCopyToUserDictionary ? (
-        <LibraryDetailsActions
-          entryId={entryId}
+    <div className="relative flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1">
+        <LibrarySenseCardGroup
+          model={model}
           interfaceLanguage={interfaceLanguage}
+          busyIdentity={busyIdentity}
+          audioBusy={audioBusy}
+          onPlayAudio={
+            model.audioCapability ? () => void handlePlayAudio() : undefined
+          }
+          translationEnabled={
+            Boolean(translationLanguage) && model.meanings.length > 0
+          }
+          translationStates={translationStates}
+          collectionCounts={Object.fromEntries(
+            Object.entries(membershipsByEntryId).map(
+              ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
+            ),
+          )}
+          activeMeaningId={activeMeaningId}
+          onActiveMeaningChange={setActiveMeaningId}
+          onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
+            void handleRequestTranslation(
+              meaningEntryId,
+              meaningCardTypeId,
+              translationStates[
+                librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
+              ] === "failed",
+            )
+          }
+          onOpenCollections={
+            userId
+              ? (meaning) => {
+                  setCollectionStatus(null);
+                  setCollectionsEntryId(meaning.entryId);
+                }
+              : undefined
+          }
+          onTrainNext={
+            onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
+          }
+          onFollowCrossReference={(target) => {
+            if (target.targetEntryId) setActiveMeaningId(target.targetEntryId);
+            setActiveReferenceTarget(target);
+          }}
+          onAction={(capability) => void handleAction(capability)}
+          bottomOverlayReserve={canReport}
+        />
+      </div>
+      {onCopyToUserDictionary || onTrainingAction ? (
+        <LibraryDetailsActions
+          entryId={activeMeaningId}
+          interfaceLanguage={interfaceLanguage}
+          revealed={revealed}
+          actionLoading={actionLoading}
+          onTrainingAction={
+            activeMeaningId === trainingActionEntryId
+              ? (action) => onTrainingAction?.(action, activeMeaningId)
+              : undefined
+          }
           onCopyToUserDictionary={onCopyToUserDictionary}
         />
       ) : null}
-      {canReport && group && selectedReportEntry?.kind === "sense-card" ? (
-          <div className="absolute bottom-2 left-3 z-20 sm:left-5">
-            <SenseCardReportAction
-              snapshot={freezeSenseCardDiagnosticSnapshot({
-                route: "library",
-                group,
-                entry: selectedReportEntry,
-              })}
-              interfaceLanguage={interfaceLanguage}
-              disabled={Boolean(busyIdentity)}
-            />
-          </div>
+      {canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+        <div className="absolute bottom-2 left-3 z-20 sm:left-5">
+          <SenseCardReportAction
+            snapshot={freezeSenseCardDiagnosticSnapshot({
+              route: "library",
+              group,
+              entry: selectedActiveEntry,
+            })}
+            interfaceLanguage={interfaceLanguage}
+            disabled={Boolean(busyIdentity)}
+          />
+        </div>
       ) : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}

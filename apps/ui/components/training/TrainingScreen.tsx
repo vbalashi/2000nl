@@ -66,7 +66,6 @@ import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPres
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { LibrarySenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
-import { LibraryDetailsActions } from "./library-v2/LibraryDetailsActions";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
@@ -2265,22 +2264,16 @@ export function TrainingScreen({
                   userLists={availableLists.filter((list) => list.type === "user")}
                   onListsUpdated={handleListsUpdated}
                   onTrainWord={handleTrainWord}
+                  trainingActionEntryId={currentWord?.id}
+                  revealed={revealed}
+                  actionLoading={actionLoading}
+                  onTrainingAction={(action) => void handleAction(action)}
+                  onCopyToUserDictionary={async (entryId) => {
+                    await copyEntryToUserDictionary({ entryId });
+                  }}
+                  onOpenListMembership={openMembershipList}
                 />
               </div>
-              <LibraryDetailsActions
-                entryId={detailSelection.entryId}
-                interfaceLanguage={onboardingLang}
-                revealed={revealed}
-                actionLoading={actionLoading}
-                onTrainingAction={
-                  detailSelection.entryId === currentWord?.id
-                    ? (result) => void handleAction(result)
-                    : undefined
-                }
-                onCopyToUserDictionary={async (entryId) => {
-                  await copyEntryToUserDictionary({ entryId });
-                }}
-              />
             </div>
           ) : null}
         </TrainingDetailsDrawer>
