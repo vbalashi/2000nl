@@ -462,6 +462,53 @@ describe("LibrarySenseCardV2Session", () => {
     await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
   });
 
+  test("brings the initially selected meaning into the internal scroll viewport", async () => {
+    const rect = (top: number, bottom: number) =>
+      ({
+        top,
+        bottom,
+        left: 0,
+        right: 320,
+        width: 320,
+        height: bottom - top,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.dataset.testid === "library-sense-card-scroll-region") {
+          return rect(0, 100);
+        }
+        if (this.dataset.entryId === financeEntry.entryId) {
+          return rect(140, 190);
+        }
+        return rect(0, 0);
+      });
+
+    try {
+      fetchGroup.mockResolvedValue(multiSenseBankGroup);
+      render(
+        <LibrarySenseCardV2Session
+          entryId={financeEntry.entryId}
+          headword="bank"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+        />,
+      );
+
+      const scrollRegion = await screen.findByTestId(
+        "library-sense-card-scroll-region",
+      );
+      await waitFor(() => expect(scrollRegion.scrollTop).toBeGreaterThan(0));
+      expect(document.documentElement.scrollTop).toBe(0);
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
   test("does not refresh the previous detail after an action races with navigation", async () => {
     const action = deferred<{
       contractVersion: "platform-action-v2";

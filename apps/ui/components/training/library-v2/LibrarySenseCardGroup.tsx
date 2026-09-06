@@ -79,6 +79,12 @@ export function LibrarySenseCardGroup({
   const meaningById = new Map(
     model.meanings.map((meaning) => [meaning.entryId, meaning]),
   );
+  const activeMeaningScrollKey = activeMeaningId
+    ? `${activeMeaningId}\u0000${model.meanings
+        .map((meaning) => meaning.entryId)
+        .join("\u0000")}`
+    : null;
+  const lastScrolledMeaningKey = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     setViewState((current) => {
@@ -123,6 +129,30 @@ export function LibrarySenseCardGroup({
       bottom: node.scrollTop + node.clientHeight >= node.scrollHeight - 2,
     });
   }, []);
+
+  React.useEffect(() => {
+    if (
+      !activeMeaningScrollKey ||
+      lastScrolledMeaningKey.current === activeMeaningScrollKey
+    ) {
+      return;
+    }
+    lastScrolledMeaningKey.current = activeMeaningScrollKey;
+    const node = scrollRef.current;
+    if (!node || !activeMeaningId) return;
+    const target = Array.from(
+      node.querySelectorAll<HTMLElement>("[data-entry-id]"),
+    ).find((candidate) => candidate.dataset.entryId === activeMeaningId);
+    if (!target) return;
+    const nodeRect = node.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    if (targetRect.top < nodeRect.top) {
+      node.scrollTop -= nodeRect.top - targetRect.top;
+    } else if (targetRect.bottom > nodeRect.bottom) {
+      node.scrollTop += targetRect.bottom - nodeRect.bottom;
+    }
+    updateScrollEdges();
+  }, [activeMeaningId, activeMeaningScrollKey, updateScrollEdges]);
 
   React.useEffect(() => {
     const node = scrollRef.current;
