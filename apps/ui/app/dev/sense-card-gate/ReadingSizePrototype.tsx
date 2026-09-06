@@ -110,7 +110,7 @@ const presentation: TrainingSessionPresentationSnapshot = {
 };
 
 const copy = {
-  fixture: { short: "Short content", long: "Long content" },
+  fixture: { short: "Short content", long: "Long content", "long-word": "Long word (layout fixture)" },
   translations: { on: "Translations on", off: "Translations off" },
   mode: modeLabels,
 } as const;
@@ -122,7 +122,7 @@ function readVariant(value: string | null): ReadingVariant {
 }
 
 function readFixture(value: string | null): ReadingFixtureKey {
-  return value === "long" ? "long" : "short";
+  return value === "long" || value === "long-word" ? value : "short";
 }
 
 function readMode(value: string | null): ReadingMode {

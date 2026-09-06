@@ -5,10 +5,11 @@ import type {
 } from "../../../../../packages/shared/types/platformV2";
 import {
   gateFurnitureEntry,
+  gateLongHeadwordGroup,
   gateSingleSenseGroup,
 } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 
-export type ReadingFixtureKey = "short" | "long";
+export type ReadingFixtureKey = "short" | "long" | "long-word";
 
 type ReadingFixture = {
   group: PlatformHeadwordGroupV2;
@@ -121,6 +122,10 @@ const longEntry = cloneEntry(
 );
 
 export const readingSizePrototypeFixtures: Record<ReadingFixtureKey, ReadingFixture> = {
+  "long-word": {
+    group: { ...gateLongHeadwordGroup, entries: [shortEntry] },
+    entry: shortEntry,
+  },
   short: {
     group: {
       ...gateSingleSenseGroup,

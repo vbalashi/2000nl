@@ -73,6 +73,28 @@ test("phone footer spends spare width on readable one-line progress", async ({ p
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
+for (const width of [390, 768]) {
+  for (const variant of variants) {
+    test(`long headword keeps article proportion at ${width}: ${variant.name}`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+      await openStudy(page, `variant=${variant.name}&fixture=long-word&clean=1`);
+      const word = page.getByRole("heading", { name: "arbeidsongeschiktheidsverzekering", exact: true });
+      await expect(word).toHaveAttribute("data-long-headword", "true");
+      for (const side of ["face", "answer"]) {
+        if (side === "answer") await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+        const ratio = await word.evaluate((el) => {
+          const article = el.previousElementSibling!;
+          return parseFloat(getComputedStyle(article).fontSize) / parseFloat(getComputedStyle(el).fontSize);
+        });
+        expect(ratio).toBeCloseTo(0.5, 2);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+        await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`longword-${width}-${variant.name}-${side}.png`) });
+      }
+    });
+  }
+}
+
 async function openStudy(page: Page, query: string) {
   const origin = new URL(test.info().project.use.baseURL as string).origin;
   await page.route("**/*", (route) => {
@@ -104,7 +126,7 @@ for (const viewport of viewports) {
         const dock = page.getByTestId("training-sense-card-dock");
         const faceDock = await dock.boundingBox();
         const stem = `${viewport.name}-${theme}-${variant.name}`;
-        await page.screenshot({ path: testInfo.outputPath(`${stem}-face.png`) });
+        await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`${stem}-face.png`) });
         await stage.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
         await expect.poll(() => fontSize(page, '[data-testid="sense-card-headword-lockup"] h2')).toBe(variant.headword);
         await expect.poll(() => fontSize(page, '[data-testid="training-answer-scroll"] p')).toBe(variant.body);
@@ -120,11 +142,11 @@ for (const viewport of viewports) {
         expect(answerDock!.y + answerDock!.height).toBeCloseTo(faceDock!.y + faceDock!.height, 0);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
         expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(viewport.height);
-        await page.screenshot({ path: testInfo.outputPath(`${stem}-answer.png`) });
+        await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`${stem}-answer.png`) });
         await stage.getByRole("button", { name: "Vertalen", exact: true }).click();
         await expect(stage.locator('[data-content-translation="true"]').first()).toBeVisible();
         expect(await fontSize(page, '[data-content-translation="true"]')).toBe(variant.translation);
-        await page.screenshot({ path: testInfo.outputPath(`${stem}-translated.png`) });
+        await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`${stem}-translated.png`) });
       });
     }
   }
@@ -161,7 +183,7 @@ for (const variant of variants) {
     await page.getByRole("button", { name: "Meer kaartinhoud tonen", exact: true }).click();
     await expect.poll(() => scroll.evaluate((el) => el.scrollTop)).toBeGreaterThan(10);
     expect([await word.boundingBox(), await dock.boundingBox()]).toEqual(before);
-    await page.screenshot({ path: testInfo.outputPath(`narrow-dark-${variant.name}-long-scrolled.png`) });
+    await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`narrow-dark-${variant.name}-long-scrolled.png`) });
   });
 }
 
@@ -194,7 +216,7 @@ for (const viewport of [
         body: JSON.stringify(bounds, null, 2),
         contentType: "application/json",
       });
-      await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-long.png`) });
+      await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-long.png`) });
       const region = page.getByRole("region", { name: "Kaartinhoud", exact: true });
       await region.press("End");
       await expect.poll(async () => {
@@ -204,7 +226,7 @@ for (const viewport of [
       }).toBe(true);
       await region.press(" ");
       await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
-      await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-end.png`) });
+      await page.screenshot({ animations: "disabled", path: testInfo.outputPath(`${viewport.name}-dark-${variant.name}-reverse-end.png`) });
       const showAnswer = page.getByRole("button", { name: "Antwoord tonen", exact: true });
       await expect(showAnswer).toBeInViewport();
       await showAnswer.click();
