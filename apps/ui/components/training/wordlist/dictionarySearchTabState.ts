@@ -13,7 +13,11 @@ export type DictionarySearchTabState = {
   page: number;
   languageCode: string | null;
   dictionaryId: string | null;
-  detailEntry: DictionaryEntry | null;
+  detailSelection: {
+    entryId: string;
+    headword: string;
+    contentLanguageCode: string;
+  } | null;
   mobileDetailOpen: boolean;
 };
 
@@ -29,6 +33,6 @@ export const createDictionarySearchTabState = (): DictionarySearchTabState => ({
   page: 1,
   languageCode: null,
   dictionaryId: null,
-  detailEntry: null,
+  detailSelection: null,
   mobileDetailOpen: false,
 });

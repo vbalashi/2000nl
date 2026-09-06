@@ -41,7 +41,6 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
-  fallback: React.ReactNode;
 };
 
 export function LibrarySenseCardV2Session({
@@ -56,7 +55,6 @@ export function LibrarySenseCardV2Session({
   userLists = [],
   onListsUpdated,
   onTrainWord,
-  fallback,
 }: Props) {
   const translationLanguage =
     translationTargetLanguageCode === "off"
@@ -69,11 +67,7 @@ export function LibrarySenseCardV2Session({
         : entry.crossReferenceId === entryId,
     );
     if (!initialGroup || !selectedEntry) return null;
-    if (selectedEntry.kind === "cross-reference") return initialGroup;
-    return initialGroup.senseCount > 1 ||
-      initialGroup.entries.some((entry) => entry.kind === "cross-reference")
-      ? initialGroup
-      : null;
+    return initialGroup;
   }, [entryId, initialGroup]);
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     compatibleInitialGroup,
@@ -94,6 +88,7 @@ export function LibrarySenseCardV2Session({
     "forbidden" | "timeout" | "contract" | "unavailable" | null
   >(null);
   const [lookupRetry, setLookupRetry] = React.useState(0);
+  const [loading, setLoading] = React.useState(!compatibleInitialGroup);
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
@@ -126,6 +121,7 @@ export function LibrarySenseCardV2Session({
   const load = React.useCallback(
     async (signal?: AbortSignal, expectedTranslationSession?: number) => {
       const requestSequence = ++groupRequestSequence.current;
+      setLoading(true);
       const next = activeReferenceTarget
         ? await fetchPlatformV2CrossReferenceTarget({
             query: activeReferenceTarget.query,
@@ -154,6 +150,8 @@ export function LibrarySenseCardV2Session({
         return next;
       }
       setGroup(next);
+      if (!next) setLookupError("unavailable");
+      setLoading(false);
       return next;
     },
     [
@@ -172,30 +170,35 @@ export function LibrarySenseCardV2Session({
     setError(null);
     setLookupError(null);
     if (compatibleInitialGroup && !activeReferenceTarget) {
+      setLoading(false);
       return () => controller.abort();
     }
-    void load(controller.signal).catch((cause) => {
-      const aborted =
-        controller.signal.aborted ||
-        Boolean(
-          cause &&
-            typeof cause === "object" &&
-            "name" in cause &&
-            cause.name === "AbortError",
-        );
-      if (!aborted) {
-        const message = cause instanceof Error ? cause.message : "";
-        setLookupError(
-          message === "platform_request_timeout"
-            ? "timeout"
-            : message === "contract-mismatch"
-              ? "contract"
-              : message === "lookup_http_401" || message === "lookup_http_403"
-                ? "forbidden"
-                : "unavailable",
-        );
-      }
-    });
+    void load(controller.signal)
+      .catch((cause) => {
+        const aborted =
+          controller.signal.aborted ||
+          Boolean(
+            cause &&
+              typeof cause === "object" &&
+              "name" in cause &&
+              cause.name === "AbortError",
+          );
+        if (!aborted) {
+          const message = cause instanceof Error ? cause.message : "";
+          setLookupError(
+            message === "platform_request_timeout"
+              ? "timeout"
+              : message === "contract-mismatch"
+                ? "contract"
+                : message === "lookup_http_401" || message === "lookup_http_403"
+                  ? "forbidden"
+                  : "unavailable",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, [activeReferenceTarget, compatibleInitialGroup, load, lookupRetry]);
 
@@ -487,7 +490,23 @@ export function LibrarySenseCardV2Session({
   if (!model) {
     return (
       <div className="relative h-full min-h-0">
-        {fallback}
+        {loading || !lookupError ? (
+          <div
+            data-testid="library-sense-card-loading"
+            className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
+          >
+            {interfaceLanguage === "nl" ? "Details laden…" : "Loading details…"}
+          </div>
+        ) : (
+          <div
+            data-testid="library-sense-card-unavailable"
+            className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
+          >
+            {interfaceLanguage === "nl"
+              ? "Details zijn niet beschikbaar."
+              : "Details are unavailable."}
+          </div>
+        )}
         {errorNotice}
       </div>
     );

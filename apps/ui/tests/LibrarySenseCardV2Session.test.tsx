@@ -112,7 +112,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -142,7 +141,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -172,7 +170,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -199,7 +196,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
   });
 
-  test("keeps fallback until a compatible group loads", async () => {
+  test("shows an explicit loading state until a compatible group loads", async () => {
     render(
       <LibrarySenseCardV2Session
         entryId={financeEntry.entryId}
@@ -207,15 +204,14 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
-    expect(screen.getByText("Legacy detail")).toBeInTheDocument();
+    expect(screen.getByTestId("library-sense-card-loading")).toBeInTheDocument();
     expect(
       await screen.findByTestId("library-sense-card-group"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("library-sense-card-loading")).not.toBeInTheDocument();
   });
 
   test.each([
@@ -233,7 +229,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -253,7 +248,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -272,7 +266,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -333,7 +326,6 @@ describe("LibrarySenseCardV2Session", () => {
             contentLanguageCode="nl"
             translationTargetLanguageCode="en"
             interfaceLanguage="en"
-            fallback={<p>Loading {selection.headword} details</p>}
           />
         </>
       );
@@ -350,10 +342,10 @@ describe("LibrarySenseCardV2Session", () => {
 
     expect(
       committedFrames.find(({ entryId }) => entryId === "entry-bridge")?.text,
-    ).toContain("Loading brug details");
+    ).toContain("Loading details");
     expect(
       committedFrames.find(({ entryId }) => entryId === "entry-canal")?.text,
-    ).toContain("Loading gracht details");
+    ).toContain("Loading details");
 
     await act(async () => {
       canalRequest.resolve(
@@ -438,7 +430,6 @@ describe("LibrarySenseCardV2Session", () => {
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
         initialGroup={mixedDaarGroup}
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -484,7 +475,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="off"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -522,7 +512,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -555,7 +544,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -605,7 +593,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -631,7 +618,6 @@ describe("LibrarySenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="en"
-          fallback={<p>Next legacy detail</p>}
         />,
       );
     });
@@ -665,7 +651,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -686,7 +671,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Next legacy detail</p>}
       />,
     );
     await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
@@ -703,7 +687,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 

@@ -134,11 +134,9 @@ export function selectPlatformV2MultiSenseGroup(
           : entry.crossReferenceId === entryId,
       );
       if (!selectedEntry) return false;
-      if (selectedEntry.kind === "cross-reference") return true;
-      return (
-        group.senseCount > 1 ||
-        group.entries.some((entry) => entry.kind === "cross-reference")
-      );
+      // Entry identity is authoritative. A one-sense group is still a complete
+      // V2 Details target; group cardinality is presentation data, not a gate.
+      return true;
     }) ?? null
   );
 }

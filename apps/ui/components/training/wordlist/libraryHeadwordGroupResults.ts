@@ -1,5 +1,4 @@
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
-import type { DictionaryEntry } from "@/lib/types";
 
 export type LibraryHeadwordGroupResult = {
   headwordGroupId: string;
@@ -8,7 +7,7 @@ export type LibraryHeadwordGroupResult = {
   dictionaryLabel: string;
   partOfSpeechLabels: string[];
   meaningCount: number;
-  detailEntry: DictionaryEntry;
+  selectedEntryId: string;
   group: PlatformHeadwordGroupV2;
 };
 
@@ -44,23 +43,7 @@ export function buildLibraryHeadwordGroupResults(
       dictionaryLabel: group.dictionary.displayName,
       partOfSpeechLabels,
       meaningCount: group.senseCount,
-      detailEntry: {
-        id: representative.entryId,
-        dictionary_id: group.dictionary.dictionaryId,
-        dictionary_name: group.dictionary.displayName,
-        language_code: group.dictionary.sourceLanguageCode,
-        headword: group.header.text,
-        part_of_speech: representative.partOfSpeech?.sourceValue,
-        meanings_count: group.senseCount,
-        raw: {
-          meanings: senseEntries.flatMap((entry) => {
-            const summary = entry.contentNodes.find(
-              (node) => node.contentNodeId === entry.summaryContentNodeId,
-            );
-            return summary ? [{ definition: summary.text }] : [];
-          }),
-        },
-      },
+      selectedEntryId: representative.entryId,
       group,
     });
   }

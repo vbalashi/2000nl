@@ -1,17 +1,18 @@
 import React from "react";
 import type {
-  DictionaryEntry,
-  EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
-import { WordDetailPanel } from "../WordDetailPanel";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
 type Props = {
-  entry: DictionaryEntry | null;
+  selection: {
+    entryId: string;
+    headword: string;
+    contentLanguageCode?: string;
+  } | null;
   initialGroup?: PlatformHeadwordGroupV2;
   open: boolean;
   onClose: () => void;
@@ -21,14 +22,11 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   userLists: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
-  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
-  onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
-  autoFetchTranslation?: boolean;
 };
 
 export function WordDetailDrawer({
-  entry,
+  selection,
   initialGroup,
   open,
   onClose,
@@ -38,10 +36,7 @@ export function WordDetailDrawer({
   interfaceLanguage,
   userLists,
   onListsUpdated,
-  onOpenListMembership,
-  onUserDictionaryEntryCreated,
   onTrainWord,
-  autoFetchTranslation = true,
 }: Props) {
   React.useEffect(() => {
     if (!open) return;
@@ -54,7 +49,7 @@ export function WordDetailDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open || !entry) return null;
+  if (!open || !selection) return null;
 
   return (
     <div className="absolute inset-0 z-30">
@@ -74,10 +69,10 @@ export function WordDetailDrawer({
           ×
         </button>
         <LibraryWordDetail
-          entryId={entry.id}
+          entryId={selection.entryId}
           initialGroup={initialGroup}
-          headword={entry.headword}
-          contentLanguageCode={entry.language_code ?? contentLanguageCode}
+          headword={selection.headword}
+          contentLanguageCode={selection.contentLanguageCode ?? contentLanguageCode}
           translationTargetLanguageCode={translationLang}
           interfaceLanguage={interfaceLanguage}
           userId={userId}
@@ -85,21 +80,6 @@ export function WordDetailDrawer({
           onListsUpdated={onListsUpdated}
           onTrainWord={onTrainWord}
           viewport="mobile"
-          fallback={
-            <WordDetailPanel
-              entry={entry}
-              userId={userId}
-              translationLang={translationLang}
-              userLists={userLists}
-              onListsUpdated={onListsUpdated}
-              onOpenListMembership={onOpenListMembership}
-              onUserDictionaryEntryCreated={onUserDictionaryEntryCreated}
-              onTrainWord={onTrainWord}
-              showHeader={true}
-              showActions={true}
-              autoFetchTranslation={autoFetchTranslation}
-            />
-          }
         />
       </div>
     </div>

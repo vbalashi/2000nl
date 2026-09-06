@@ -3,16 +3,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawer";
 
-vi.mock("@/components/training/WordDetailPanel", () => ({
-  WordDetailPanel: () => <p>Legacy detail</p>,
-}));
-
 describe("WordDetailDrawer", () => {
   test("offers a localized pointer close target on mobile", () => {
     const onClose = vi.fn();
     render(
       <WordDetailDrawer
-        entry={{ id: "entry-1", headword: "bank", raw: {} }}
+        selection={{ entryId: "entry-1", headword: "bank" }}
         open
         onClose={onClose}
         userId="user-1"

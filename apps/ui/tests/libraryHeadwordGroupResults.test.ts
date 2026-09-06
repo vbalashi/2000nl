@@ -95,11 +95,7 @@ describe("Library Headword Group results", () => {
       dictionaryLabel: "Van Dale",
       partOfSpeechLabels: ["bn", "bw"],
       meaningCount: 2,
-      detailEntry: {
-        id: "entry-goed-adjective",
-        headword: "goed",
-        meanings_count: 2,
-      },
+      selectedEntryId: "entry-goed-adjective",
     });
     expect(results[1]).toMatchObject({ homographNumber: 2, meaningCount: 1 });
     expect(results[2]).toMatchObject({

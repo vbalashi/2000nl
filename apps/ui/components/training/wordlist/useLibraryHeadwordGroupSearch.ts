@@ -85,12 +85,20 @@ export function useLibraryHeadwordGroupSearch({
           groupPageCursors: nextCursors,
           groupHasMore: Boolean(result.nextGroupCursor),
           selectedHeadwordGroupId:
-            current.detailEntry && !selectedStillVisible
+            current.detailSelection && !selectedStillVisible
               ? current.selectedHeadwordGroupId
               : selected?.headwordGroupId ?? null,
           wordResults: [],
           wordTotal: nextGroups.length,
-          detailEntry: current.detailEntry ?? selected?.detailEntry ?? null,
+          detailSelection:
+            current.detailSelection ??
+            (selected
+              ? {
+                  entryId: selected.selectedEntryId,
+                  headword: selected.headword,
+                  contentLanguageCode: selected.group.dictionary.sourceLanguageCode,
+                }
+              : null),
         };
       });
       return true;
@@ -110,7 +118,11 @@ export function useLibraryHeadwordGroupSearch({
       setState((current) => ({
         ...current,
         selectedHeadwordGroupId: result.headwordGroupId,
-        detailEntry: result.detailEntry,
+        detailSelection: {
+          entryId: result.selectedEntryId,
+          headword: result.headword,
+          contentLanguageCode: result.group.dictionary.sourceLanguageCode,
+        },
         mobileDetailOpen: true,
       }));
     },

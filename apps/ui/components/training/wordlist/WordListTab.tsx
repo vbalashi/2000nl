@@ -141,7 +141,11 @@ export function WordListTab({
   const [selectedWordIds, setSelectedWordIds] = useState<Set<string>>(
     new Set()
   );
-  const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
+  const [detailSelection, setDetailSelection] = useState<{
+    entryId: string;
+    headword: string;
+    contentLanguageCode?: string;
+  } | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [copyTargetMode, setCopyTargetMode] = useState<"existing" | "new">(
@@ -318,14 +322,18 @@ export function WordListTab({
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
       onUserDictionaryEntryCreated?.(entry);
-      setDetailEntry(entry);
+      setDetailSelection({
+        entryId: entry.id,
+        headword: entry.headword,
+        contentLanguageCode: entry.language_code ?? language,
+      });
       setWordResults((current) => [
         entry,
         ...current.filter((item) => item.id !== entry.id),
       ]);
       setWordTotal((current) => Math.max(current, wordResults.length + 1));
     },
-    [onUserDictionaryEntryCreated, wordResults.length],
+    [language, onUserDictionaryEntryCreated, wordResults.length],
   );
 
   const toggleIntentCardType = useCallback((mode: TrainingMode) => {
@@ -386,15 +394,15 @@ export function WordListTab({
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (!detailEntry) return;
+      if (!detailSelection) return;
       // Close drawer first (and prevent SettingsModal from closing).
       event.preventDefault();
       event.stopImmediatePropagation();
-      setDetailEntry(null);
+      setDetailSelection(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [detailEntry]);
+  }, [detailSelection]);
 
   const listTabs: Array<{
     key: "words" | "training" | "info" | "edit";
@@ -1305,7 +1313,13 @@ export function WordListTab({
                       items={wordResults}
                       selectedIds={selectedWordIds}
                       onToggleSelected={toggleSelected}
-                      onOpenDetails={(entry) => setDetailEntry(entry)}
+                      onOpenDetails={(entry) =>
+                        setDetailSelection({
+                          entryId: entry.id,
+                          headword: entry.headword,
+                          contentLanguageCode: entry.language_code ?? language,
+                        })
+                      }
                     />
                   </div>
 
@@ -1330,7 +1344,14 @@ export function WordListTab({
                                   ? "bg-primary/5"
                                   : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                               }`}
-                              onClick={() => setDetailEntry(word)}
+                              onClick={() =>
+                                setDetailSelection({
+                                  entryId: word.id,
+                                  headword: word.headword,
+                                  contentLanguageCode:
+                                    word.language_code ?? language,
+                                })
+                              }
                             >
                               <td
                                 className="w-12 px-4 py-3 text-center"
@@ -1554,9 +1575,9 @@ export function WordListTab({
       />
 
       <WordDetailDrawer
-        open={Boolean(detailEntry)}
-        entry={detailEntry}
-        onClose={() => setDetailEntry(null)}
+        open={Boolean(detailSelection)}
+        selection={detailSelection}
+        onClose={() => setDetailSelection(null)}
         userId={userId}
         contentLanguageCode={language}
         translationLang={translationLang}
@@ -1566,10 +1587,7 @@ export function WordListTab({
           await reloadLists();
           notifyListsUpdated();
         }}
-        onOpenListMembership={onOpenListMembership}
-        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
         onTrainWord={onTrainWord}
-        autoFetchTranslation={false}
       />
     </div>
   );

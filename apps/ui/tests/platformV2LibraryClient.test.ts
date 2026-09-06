@@ -45,7 +45,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     );
   });
 
-  test("does not replace the existing single-sense detail experience", () => {
+  test("selects an exact single-sense group", () => {
     expect(
       selectPlatformV2MultiSenseGroup(
         {
@@ -61,7 +61,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         },
         furnitureEntry.entryId,
       ),
-    ).toBeNull();
+    ).toEqual(expect.objectContaining({ entries: [furnitureEntry] }));
   });
 
   test("never falls back to matching by ordinal or headword", () => {
