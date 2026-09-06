@@ -577,11 +577,12 @@ export function LibrarySenseCardV2Session({
     (candidate) =>
       candidate.kind === "sense-card" && candidate.entryId === activeMeaningId,
   );
+  const activeSenseEntry =
+    selectedActiveEntry?.kind === "sense-card" ? selectedActiveEntry : null;
   const canReport = Boolean(
     group &&
-    selectedActiveEntry?.kind === "sense-card" &&
-    selectedActiveEntry.reportContentRevision &&
-    selectedActiveEntry.capabilities.some(
+    activeSenseEntry?.reportContentRevision &&
+    activeSenseEntry.capabilities.some(
       (capability) =>
         capability.actionId === "report-content" &&
         capability.target.kind === "entry",
@@ -638,18 +639,19 @@ export function LibrarySenseCardV2Session({
           bottomOverlayReserve={canReport}
         />
       </div>
-      {onCopyToUserDictionary || onTrainingAction || canReport ? (
+      {activeSenseEntry &&
+      (onCopyToUserDictionary || onTrainingAction || canReport) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
           revealed={revealed}
           actionLoading={actionLoading}
           onTrainingAction={
-            activeMeaningId === trainingActionEntryId
+            activeSenseEntry && activeMeaningId === trainingActionEntryId
               ? (action) => onTrainingAction?.(action, activeMeaningId)
               : undefined
           }
-          onCopyToUserDictionary={onCopyToUserDictionary}
+          onCopyToUserDictionary={activeSenseEntry ? onCopyToUserDictionary : undefined}
           leadingAction={
             canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
               <SenseCardReportAction

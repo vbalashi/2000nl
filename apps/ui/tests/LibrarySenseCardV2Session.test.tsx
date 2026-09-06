@@ -462,6 +462,33 @@ describe("LibrarySenseCardV2Session", () => {
     await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
   });
 
+  test("activating a collapsed meaning with its chevron changes copy identity", async () => {
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={furnitureEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onCopyToUserDictionary={copyEntry}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    const financeCard = screen.getByTestId(
+      `library-sense-card-${financeEntry.entryId}`,
+    );
+    fireEvent.click(
+      within(financeCard).getByRole("button", { name: "Expand meaning" }),
+    );
+    expect(financeCard).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
+  });
+
   test("brings the initially selected meaning into the internal scroll viewport", async () => {
     const rect = (top: number, bottom: number) =>
       ({
@@ -631,6 +658,9 @@ describe("LibrarySenseCardV2Session", () => {
     ).not.toBeInTheDocument();
     expect(
       within(pointer).queryByRole("button", { name: "Mark known" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy to my dictionary" }),
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open reference" }));
 

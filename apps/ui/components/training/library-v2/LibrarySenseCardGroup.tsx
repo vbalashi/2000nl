@@ -464,6 +464,7 @@ function MeaningCard({
               aria-expanded={state.expanded}
               onClick={(event) => {
                 event.stopPropagation();
+                onActiveMeaningChange?.(meaning.entryId);
                 onToggleExpanded();
               }}
               className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
@@ -621,7 +622,10 @@ function MeaningCard({
                 {translationState === "failed" ? (
                   <button
                     type="button"
-                    onClick={onRetryTranslation}
+                    onClick={() => {
+                      onActiveMeaningChange?.(meaning.entryId);
+                      onRetryTranslation();
+                    }}
                     className="ml-2 font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300"
                   >
                     {t("senseCard.translation.retry")}
