@@ -2246,6 +2246,7 @@ function TrainingScreenContent({
         ) : null}
 
         <TrainingDetailsDrawer
+          interfaceLanguage={onboardingLang}
           open={detailsOpen}
           onClose={() => {
             setDetailsOpen(false);

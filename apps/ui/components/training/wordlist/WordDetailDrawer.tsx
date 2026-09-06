@@ -5,7 +5,7 @@ import type {
 } from "@/lib/types";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import { WordDetailsHeader } from "../WordDetailsHeader";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
 type Props = {
@@ -64,30 +64,25 @@ export function WordDetailDrawer({
         aria-hidden="true"
       />
 
-      <div className="absolute inset-y-0 right-0 w-full max-w-full overflow-hidden bg-white shadow-2xl dark:bg-slate-900 sm:w-[460px]">
-        <button
-          type="button"
-          aria-label={platformV2Message(interfaceLanguage, "common.close")}
-          onClick={onClose}
-          className="absolute right-3 top-3 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white/90 text-xl text-slate-600 shadow-sm backdrop-blur dark:border-slate-600 dark:bg-slate-900/90 dark:text-slate-200"
-        >
-          ×
-        </button>
-        <LibraryWordDetail
-          entryId={selection.entryId}
-          initialGroup={initialGroup}
-          headword={selection.headword}
-          contentLanguageCode={selection.contentLanguageCode ?? contentLanguageCode}
-          translationTargetLanguageCode={translationLang}
-          interfaceLanguage={interfaceLanguage}
-          userId={userId}
-          userLists={userLists}
-          onListsUpdated={onListsUpdated}
-          onTrainWord={onTrainWord}
-          onCopyToUserDictionary={onCopyToUserDictionary}
-          onOpenListMembership={onOpenListMembership}
-          viewport="mobile"
-        />
+      <div className="absolute inset-y-0 right-0 flex w-full max-w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-900 sm:w-[460px]">
+        <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
+        <div className="min-h-0 flex-1">
+          <LibraryWordDetail
+            entryId={selection.entryId}
+            initialGroup={initialGroup}
+            headword={selection.headword}
+            contentLanguageCode={selection.contentLanguageCode ?? contentLanguageCode}
+            translationTargetLanguageCode={translationLang}
+            interfaceLanguage={interfaceLanguage}
+            userId={userId}
+            userLists={userLists}
+            onListsUpdated={onListsUpdated}
+            onTrainWord={onTrainWord}
+            onCopyToUserDictionary={onCopyToUserDictionary}
+            onOpenListMembership={onOpenListMembership}
+            viewport="mobile"
+          />
+        </div>
       </div>
     </div>
   );

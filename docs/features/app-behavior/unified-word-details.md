@@ -20,6 +20,13 @@ overlap content or controls at 320, 390, or 1440 CSS px.
 Typography comes from the common reading-size variables, not a second Details
 font scale. See [reading preferences](reading-size-preferences.md).
 
+Both mobile drawers use `WordDetailsHeader`: a separate 52 px row with a 40 px
+close control, never an overlay on the card's translation control. The reading
+region scrolls independently. Each edge fade is at most 44 px and at most 25%
+of that region's height, leaving its middle half unobscured even on short
+screens. Opening a meaning positions its beginning below the same top inset;
+the selected reading size is not reduced to make content fit.
+
 Copy and Report use the active meaning, including after cross-reference
 navigation. Training Freeze/Hide is offered only for the matching current
 training entry. Late completion from a previous selection must not replace
@@ -52,9 +59,11 @@ fallback. Current Details requires the pilot server controls; see the
   and returning to Training.
 - HTTP/client tests cover exact reads outside the query tier, denied entries,
   malformed combined selection, and public catalog restrictions.
-- Browser tests mount the real Details modules and replace only external lookup
-  responses. They verify single/multi routing, selection, footer reachability,
-  and geometry. This is not a claim of real production dictionary-data QA.
+- Browser tests mount the real Details modules, including both mobile drawers,
+  and replace only external lookup responses. They verify single/multi routing,
+  selection, footer reachability, close/translation separation, and short-screen
+  fade geometry at 320×568, 390×844, and 1440×960 in Normal/light and
+  Largest/dark. This is not a claim of real production dictionary-data QA.
 - Forms, sources, and shared notes require article identity/data work in #70;
   they must not be invented by grouping matching headword spellings.
 - App-shell consistency remains #264; all remaining legacy owners remain #255.

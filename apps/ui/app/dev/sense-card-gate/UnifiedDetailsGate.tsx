@@ -5,10 +5,12 @@ import { LibraryWordDetail } from "@/components/training/library-v2/LibraryWordD
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { gateFinanceEntry, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import { readingSizeStyles, type ReadingSize } from "@/lib/reading/readingSize";
+import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
+import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawer";
 
 // Real Details modules; browser tests replace only lookup HTTP responses and
 // record copy requests without mutating a dictionary or learning state.
-export function UnifiedDetailsGate({ size = "normal" }: { size?: ReadingSize }) {
+export function UnifiedDetailsGate({ size = "normal", drawer = false }: { size?: ReadingSize; drawer?: boolean }) {
   const [entryId, setEntryId] = React.useState(gateFurnitureEntry.entryId);
   const [training, setTraining] = React.useState(false);
   const [copied, setCopied] = React.useState("");
@@ -16,7 +18,7 @@ export function UnifiedDetailsGate({ size = "normal" }: { size?: ReadingSize }) 
     entryId,
     headword: "bank",
     contentLanguageCode: "nl",
-    translationTargetLanguageCode: null,
+    translationTargetLanguageCode: "en",
     interfaceLanguage: "nl" as const,
     onCopyToUserDictionary: async (selected: string) => { setCopied(selected); },
   };
@@ -27,9 +29,13 @@ export function UnifiedDetailsGate({ size = "normal" }: { size?: ReadingSize }) 
         <button onClick={() => setEntryId(gateFinanceEntry.entryId)}>Multi group</button>
         <button onClick={() => setTraining(!training)}>Toggle Training Details</button>
       </nav>
-      <div data-testid="details-viewport" className="mx-auto min-h-0 w-full max-w-[680px] flex-1">
+      <div data-testid="details-viewport" className="relative mx-auto min-h-0 w-full max-w-[680px] flex-1 [transform:translateZ(0)]">
         {training ? (
-          <LibrarySenseCardV2Session {...props} trainingActionEntryId={entryId} onTrainingAction={() => undefined} />
+          <TrainingDetailsDrawer open onClose={() => setTraining(false)} interfaceLanguage="nl">
+            <LibrarySenseCardV2Session {...props} trainingActionEntryId={entryId} onTrainingAction={() => undefined} />
+          </TrainingDetailsDrawer>
+        ) : drawer ? (
+          <WordDetailDrawer selection={{ entryId, headword: "bank" }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" onCopyToUserDictionary={props.onCopyToUserDictionary} />
         ) : <LibraryWordDetail {...props} />}
       </div>
       <output data-testid="copied-entry" className="shrink-0 text-xs">{copied}</output>

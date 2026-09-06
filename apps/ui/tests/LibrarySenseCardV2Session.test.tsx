@@ -580,7 +580,14 @@ describe("LibrarySenseCardV2Session", () => {
         if (this.dataset.entryId === financeEntry.entryId) {
           return rect(140, 190);
         }
+        if (this.hasAttribute("data-meaning-lead") && this.closest("[data-entry-id]")?.getAttribute("data-entry-id") === financeEntry.entryId) {
+          return rect(150, 180);
+        }
         return rect(0, 0);
+      });
+    const heightSpy = vi.spyOn(HTMLElement.prototype, "clientHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.dataset.testid === "library-sense-card-scroll-region" ? 100 : 0;
       });
 
     try {
@@ -598,10 +605,11 @@ describe("LibrarySenseCardV2Session", () => {
       const scrollRegion = await screen.findByTestId(
         "library-sense-card-scroll-region",
       );
-      await waitFor(() => expect(scrollRegion.scrollTop).toBeGreaterThan(0));
+      await waitFor(() => expect(scrollRegion.scrollTop).toBe(115));
       expect(document.documentElement.scrollTop).toBe(0);
     } finally {
       rectSpy.mockRestore();
+      heightSpy.mockRestore();
     }
   });
 

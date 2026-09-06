@@ -42,11 +42,23 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
         page: { selectedTierComplete: true, nextGroupCursor: null },
       } });
     });
-    await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}`);
+    await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
     if (size === "largest") await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(page.getByTestId("library-sense-card-group")).toBeVisible();
     await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", size === "largest" ? "48px" : "44px");
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
+    if (viewport.width < 1024) {
+      const close = page.getByRole("button", { name: "Sluiten", exact: true });
+      const translate = page.getByRole("button", { name: "Vertalen", exact: true });
+      const closeBox = await close.boundingBox();
+      const translateBox = await translate.boundingBox();
+      expect(closeBox && translateBox).toBeTruthy();
+      if (closeBox && translateBox) {
+        const overlap = Math.min(closeBox.x + closeBox.width, translateBox.x + translateBox.width) > Math.max(closeBox.x, translateBox.x)
+          && Math.min(closeBox.y + closeBox.height, translateBox.y + translateBox.height) > Math.max(closeBox.y, translateBox.y);
+        expect(overlap).toBe(false);
+      }
+    }
     const copy = page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true });
     const report = page.getByRole("button", { name: /Melden|Report/, exact: true });
     await expect(copy).toBeInViewport();
@@ -72,8 +84,14 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
     const scroller = page.getByTestId("library-sense-card-scroll-region");
     const scrollBox = await scroller.boundingBox();
-    const topInset = await scroller.evaluate(node => node.scrollTop > 2 ? 44 : 0);
+    const topInset = await scroller.evaluate(node => node.scrollTop > 2 ? Math.min(44, node.clientHeight / 4) : 0);
     expect(lead!.y).toBeGreaterThanOrEqual(scrollBox!.y + topInset);
+    // On a short drawer, decorative fades must leave at least half of the
+    // reading region unobscured, without reducing the chosen text size.
+    for (const fade of await page.locator("[data-scroll-affordance]").all()) {
+      const fadeBox = await fade.boundingBox();
+      expect(fadeBox!.height).toBeLessThanOrEqual(scrollBox!.height / 4 + 1);
+    }
     await expect(copy).toBeInViewport();
     await expect(report).toBeInViewport();
     expect(lookups).toContain(gateFurnitureEntry.entryId);

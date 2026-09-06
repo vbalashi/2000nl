@@ -147,17 +147,18 @@ export function LibrarySenseCardGroup({
     ).find((candidate) => candidate.dataset.entryId === activeMeaningId);
     if (!target) return;
     const nodeRect = node.getBoundingClientRect();
+    const fadeHeight = Math.min(DETAILS_SCROLL_FADE_HEIGHT, node.clientHeight / 4);
     const targetRect = target.getBoundingClientRect();
     const leadRect = (
       target.querySelector<HTMLElement>("[data-meaning-lead]") ?? target
     ).getBoundingClientRect();
     if (
-      leadRect.top < nodeRect.top + DETAILS_SCROLL_FADE_HEIGHT ||
-      leadRect.bottom > nodeRect.bottom - DETAILS_SCROLL_FADE_HEIGHT
+      leadRect.top < nodeRect.top + fadeHeight ||
+      leadRect.bottom > nodeRect.bottom - fadeHeight
     ) {
       // Open at the beginning, not at the bottom of a card taller than the
       // viewport. Keep the first line below the pinned top fade.
-      node.scrollTop += targetRect.top - nodeRect.top - DETAILS_SCROLL_FADE_HEIGHT;
+      node.scrollTop += targetRect.top - nodeRect.top - fadeHeight;
     }
     updateScrollEdges();
   }, [activeMeaningId, activeMeaningScrollKey, updateScrollEdges]);
@@ -797,7 +798,9 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
     <div
       aria-hidden="true"
       data-scroll-affordance={edge}
-      style={{ height: DETAILS_SCROLL_FADE_HEIGHT }}
+      // Leave at least half of a short reading region free from decoration.
+      // Keep the selected-meaning scroll inset above in sync with this cap.
+      style={{ height: `min(${DETAILS_SCROLL_FADE_HEIGHT}px, 25%)` }}
       className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
         isTop
           ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
