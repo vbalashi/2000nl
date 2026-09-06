@@ -452,7 +452,7 @@ function FaceBody({
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
               {hintLabel}
             </p>
-            <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-lg italic leading-7 text-slate-800 dark:text-slate-200">
+            <p className="border-l-[3px] border-indigo-400 pl-3 font-sense-serif text-[length:var(--reading-hint-size,18px)] italic leading-[var(--reading-hint-leading,28px)] text-slate-800 dark:text-slate-200">
               {hint.text}
             </p>
           </aside>

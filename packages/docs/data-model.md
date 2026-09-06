@@ -20,7 +20,7 @@ Training and events:
 - `user_events(id, user_id, word_id, mode, event_type, created_at, meta)` – generic event log.
 
 User features:
-- `user_settings(user_id, daily_new_limit, daily_review_limit, target_retention, new_review_ratio, modes_enabled, card_filter, active_scenario, active_list_id, active_list_type, translation_lang, subscription_tier, training_sidebar_pinned, preferences, audio_quality, updated_at)` – preferences and account-tier state.
+- `user_settings(user_id, daily_new_limit, daily_review_limit, target_retention, new_review_ratio, modes_enabled, card_filter, active_scenario, active_list_id, active_list_type, translation_lang, subscription_tier, training_sidebar_pinned, preferences, audio_quality, reading_size_phone, reading_size_desktop, updated_at)` – preferences and account-tier state. `reading_size_phone` and `reading_size_desktop` are independent app-local UI preferences constrained to `normal`, `large`, or `largest`, defaulting to `normal`.
 - `user_word_lists(id, user_id, language_code, primary_language_code, name, description, created_at, updated_at)` – user-created lists.
 - `user_word_list_items(list_id, word_id, added_at)` – membership for user-created lists.
 - `word_entry_translations(word_entry_id, target_lang, provider, status, overlay, note, source_fingerprint, error_message, created_at, updated_at)` – shared translation overlays and provider cache metadata.

@@ -10,6 +10,27 @@ const viewports = [
   { name: "desktop", width: 1440, height: 960 },
 ];
 
+for (const variant of [
+  { name: "normal", hint: "18px" },
+  { name: "large", hint: "20px" },
+  { name: "largest", hint: "22px" },
+]) {
+  test(`hint keeps the chosen reading size: ${variant.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await openStudy(page, `variant=${variant.name}&mode=reverse&fixture=long&clean=1`);
+    await page.getByRole("button", { name: "Hint tonen", exact: true }).click();
+    const region = page.getByRole("region", { name: "Kaartinhoud", exact: true });
+    await expect(region.locator("aside p").last()).toHaveCSS("font-size", variant.hint);
+    await region.press("End");
+    const hint = region.locator("aside");
+    await expect.poll(async () => {
+      const box = await hint.boundingBox();
+      const frame = await region.boundingBox();
+      return box!.y + box!.height <= frame!.y + frame!.height;
+    }).toBe(true);
+  });
+}
+
 test("narrow reverse prompt remains readable to the last line without shrinking text", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -257,4 +278,27 @@ test("long reverse hint is reachable without covering the prompt or triggering a
   await region.press("Home");
   await expect.poll(async () => (await prompt.boundingBox())!.y).toBeGreaterThanOrEqual((await region.boundingBox())!.y);
   await expect(page.getByTestId("training-sense-card-stage")).toHaveAttribute("data-side", "face");
+});
+
+test("200% zoom-equivalent desktop viewport retains largest-text controls and scroll access", async ({ browser }) => {
+  // Equivalent CSS space to a 1280×800 desktop at 200% zoom. This tests
+  // reflow/containment, not the browser's native zoom-menu implementation.
+  const context = await browser.newContext({
+    baseURL: test.info().project.use.baseURL,
+    viewport: { width: 640, height: 400 },
+    deviceScaleFactor: 2,
+  });
+  try {
+    const page = await context.newPage();
+    await openStudy(page, "variant=largest&mode=reverse&fixture=long&clean=1");
+    await page.getByRole("button", { name: "Hint tonen", exact: true }).click();
+    const region = page.getByRole("region", { name: "Kaartinhoud", exact: true });
+    await region.press("End");
+    await expect(region.locator("aside p").last()).toBeInViewport();
+    await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Goed", exact: true })).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(640);
+  } finally {
+    await context.close();
+  }
 });

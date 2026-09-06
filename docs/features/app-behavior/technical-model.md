@@ -30,6 +30,7 @@
 
 **`user_settings`**
 - Training preferences: active scenario, enabled modes, active list, card filter, new/review ratio, translation language, theme, audio quality, subscription tier
+- App-local reading-size preferences: `reading_size_phone` and `reading_size_desktop`, each independently set to `normal`, `large`, or `largest` (default `normal`)
 
 **`word_entry_translations` / `user_word_notes`**
 - Shared translation overlays per word/language and per-user notes
