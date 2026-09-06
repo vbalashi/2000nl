@@ -4,6 +4,10 @@ import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBrea
 
 type Tone = "light" | "dark";
 
+// Shared Training dock treatment: a quiet text action with a visible keyboard focus.
+export const senseCardQuietActionClassName =
+  "inline-flex h-6 min-h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-0 bg-transparent px-0 font-sense-sans text-[11.5px] font-normal leading-none text-slate-500 outline-none hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:text-[#7B8694] dark:hover:text-slate-100";
+
 export function SenseCardHeadwordLockup({
   article,
   headword,
