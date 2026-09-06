@@ -15,7 +15,10 @@ import {
   multiSenseBankGroup,
 } from "./platformV2LibraryFixture";
 import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
-import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import type {
+  PlatformHeadwordGroupV2,
+  PlatformSenseCardCapabilityV2,
+} from "../../../packages/shared/types/platformV2";
 import type { EntryLearningListMembership } from "@/lib/types";
 
 const fetchGroup = vi.fn();
@@ -45,6 +48,46 @@ function membership(listId: string): EntryLearningListMembership {
   };
 }
 
+function remapCapabilityEntryId(
+  capability: PlatformSenseCardCapabilityV2,
+  entryId: string,
+): PlatformSenseCardCapabilityV2 {
+  switch (capability.actionId) {
+    case "start-learning":
+    case "mark-known":
+    case "review-card":
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          stateRevision: `state-${entryId}`,
+        },
+      };
+    case "undo-known":
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          stateRevision: `state-${entryId}`,
+        },
+      };
+    case "report-content":
+      if (capability.target.kind !== "entry") return capability;
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          contentRevision: `content-${entryId}`,
+        },
+      };
+    default:
+      return capability;
+  }
+}
+
 function singleSenseGroup(
   headwordGroupId: string,
   entryId: string,
@@ -71,21 +114,9 @@ function singleSenseGroup(
           contentNodeId: `${node.kind}-${entryId}`,
           text: index === 0 ? definition : node.text,
         })),
-        capabilities: financeEntry.capabilities.map((capability) => ({
-          ...capability,
-          target:
-            capability.target.kind === "sense-card"
-              ? {
-                  ...capability.target,
-                  entryId,
-                  stateRevision: `state-${entryId}`,
-                }
-              : {
-                  ...capability.target,
-                  entryId,
-                  contentRevision: `content-${entryId}`,
-                },
-        })) as typeof financeEntry.capabilities,
+        capabilities: financeEntry.capabilities.map((capability) =>
+          remapCapabilityEntryId(capability, entryId),
+        ),
       },
     ],
   };
