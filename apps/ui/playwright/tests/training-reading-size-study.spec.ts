@@ -79,7 +79,7 @@ for (const width of [390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
       await openStudy(page, `variant=${variant.name}&fixture=long-word&clean=1`);
-      const word = page.getByRole("heading", { name: "arbeidsongeschiktheidsverzekering", exact: true });
+      const word = page.getByRole("heading", { name: "ar·beids·on·ge·schikt·heids·ver·ze·ke·ring", exact: true });
       await expect(word).toHaveAttribute("data-long-headword", "true");
       for (const side of ["face", "answer"]) {
         if (side === "answer") await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
