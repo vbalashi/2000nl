@@ -32,6 +32,11 @@ export function SenseCardHeadwordLockup({
   const longHeadword = headword.replaceAll("·", "").length > 18;
   const training = variant !== "default";
   const answer = variant === "training-answer";
+  const trainingWordSize = longHeadword
+    ? "text-[length:var(--reading-headword-long-size,32px)] sm:text-[length:var(--reading-headword-long-size-sm,40px)]"
+    : answer
+      ? "text-[length:var(--reading-headword-answer-size,44px)]"
+      : "text-[length:var(--reading-headword-face-size,48px)]";
   const primaryText =
     tone === "dark" ? "text-slate-50" : "text-slate-900 dark:text-slate-100";
   const mutedText =
@@ -79,7 +84,7 @@ export function SenseCardHeadwordLockup({
             }`}
           >
             <div
-              className={`flex min-w-0 items-baseline gap-[0.22em] ${
+              className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} gap-[0.22rem]` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
             >
@@ -87,9 +92,7 @@ export function SenseCardHeadwordLockup({
                 <span
                   className={`shrink-0 leading-none ${mutedText} ${
                     training
-                      ? answer
-                        ? "pb-[0.16em] text-[20px]"
-                        : "pb-[0.16em] text-[24px]"
+                      ? "pb-[0.16em] text-[0.5em]"
                       : "text-[1.35rem] sm:text-[1.5rem]"
                   }`}
                 >
@@ -101,11 +104,7 @@ export function SenseCardHeadwordLockup({
                 data-long-headword={longHeadword ? "true" : "false"}
                 className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
                   training
-                    ? longHeadword
-                      ? "text-[32px] font-medium leading-[1] sm:text-[40px]"
-                      : answer
-                        ? "text-[44px] font-medium leading-[1]"
-                        : "text-[48px] font-medium leading-[1]"
+                    ? "text-[1em] font-medium leading-[1]"
                     : longHeadword
                       ? "text-[1.75rem] font-normal leading-[0.96] sm:text-[2.2rem]"
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"

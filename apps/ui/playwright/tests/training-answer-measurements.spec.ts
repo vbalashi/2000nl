@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Pen 30.95.08 / twUIm, M2/M3/M6, accepted 2026-09-06 in #251.
+// #249 revision 2: owner-requested article correction preserves a 1:2 ratio on both sides.
 // The existing dev gate renders the real card with deterministic data: no login or DB writes.
 for (const colorScheme of ["light", "dark"] as const) {
   test(`Answer preserves the measured reading hierarchy (${colorScheme})`, async ({ page }, testInfo) => {
@@ -18,7 +19,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     await stage.getByRole("button", { name: "Antwoord tonen" }).click();
     await expect(stage).toHaveAttribute("data-side", "answer");
     await expect(lockup.getByRole("heading")).toHaveCSS("font-size", "44px");
-    await expect(lockup.getByText("de", { exact: true })).toHaveCSS("font-size", "20px");
+    await expect(lockup.getByText("de", { exact: true })).toHaveCSS("font-size", "22px");
     const headerActions = stage.getByTestId("training-answer-header-actions");
     const gap = await headerActions.evaluate((actions) => {
       const metadata = actions.parentElement!;

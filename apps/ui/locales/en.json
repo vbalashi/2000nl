@@ -135,6 +135,7 @@
     },
     "training": {
       "next": "Train next",
+      "content": "Card content",
       "cardChanged": "Next training card",
       "loading": "Loading training card…",
       "loadFailed": "This training card could not be loaded.",

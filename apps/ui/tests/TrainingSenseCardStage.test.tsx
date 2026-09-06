@@ -299,7 +299,7 @@ describe("TrainingSenseCardStage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hint tonen" }));
     const hint = screen.getByText(model.examples[0].text).closest("aside");
     expect(hint).toBeInTheDocument();
-    expect(hint).toHaveClass("absolute");
+    expect(screen.getByRole("region", { name: "Kaartinhoud" })).toContainElement(hint);
     expect(
       screen.queryByText(model.definitions[0].text),
     ).not.toBeInTheDocument();
@@ -369,13 +369,19 @@ describe("TrainingSenseCardStage", () => {
     ).not.toHaveClass("text-[#dbc47e]");
     expect(
       container.querySelector('[data-testid="entry-translation"]'),
-    ).toHaveClass("text-[15px]", "font-bold");
+    ).toHaveClass(
+      "text-[length:var(--reading-translation-emphasis-size,15px)]",
+      "font-bold",
+    );
     expect(
       container.querySelector('[data-testid="entry-translation"]'),
     ).not.toHaveClass("font-sense-serif", "italic");
     expect(
       container.querySelector('[data-content-translation="true"]'),
-    ).toHaveClass("text-[13px]", "leading-[1.35]");
+    ).toHaveClass(
+      "text-[length:var(--reading-translation-size,13px)]",
+      "leading-[var(--reading-translation-leading,1.35)]",
+    );
     expect(
       container.querySelector('[data-content-translation="true"]'),
     ).not.toHaveClass("font-sense-serif", "italic");
