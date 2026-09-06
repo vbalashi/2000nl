@@ -116,6 +116,7 @@ export function SenseCardGateHarness() {
                 onAction={() => undefined}
                 reportAction={
                   <SenseCardReportAction
+                    appearance="training-text"
                     snapshot={freezeSenseCardDiagnosticSnapshot({
                       route: "training",
                       group: reportGroup,

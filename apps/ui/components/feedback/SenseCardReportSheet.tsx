@@ -3,6 +3,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { Check, Flag, RotateCcw, X } from "lucide-react";
+import { senseCardQuietActionClassName } from "@/components/training/SenseCardChrome";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -26,10 +27,12 @@ export function SenseCardReportAction({
   snapshot,
   interfaceLanguage,
   disabled = false,
+  appearance = "button",
 }: {
   snapshot: SenseCardDiagnosticSnapshot;
   interfaceLanguage: OnboardingLanguage;
   disabled?: boolean;
+  appearance?: "button" | "training-text";
 }) {
   const [open, setOpen] = React.useState(false);
   const [frozenSnapshot, setFrozenSnapshot] = React.useState(snapshot);
@@ -50,7 +53,7 @@ export function SenseCardReportAction({
           setFrozenSnapshot(snapshot);
           setOpen(true);
         }}
-        className="inline-flex h-8 min-h-8 items-center gap-1.5 rounded-lg border border-transparent px-2 text-xs font-medium text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+        className={appearance === "training-text" ? senseCardQuietActionClassName : "inline-flex h-8 min-h-8 items-center gap-1.5 rounded-lg border border-transparent px-2 text-xs font-medium text-slate-500 outline-none transition hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"}
       >
         <Flag aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
         {t("senseCard.report")}
