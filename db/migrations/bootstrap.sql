@@ -381,3 +381,6 @@
 
 -- Authoritative next-card selection avoids repeated wide/correlated scans
 \i db/migrations/128_bound_authoritative_next_card_selector.sql
+
+-- Bounded per-profile reading-size preferences for the first-party UI
+\i db/migrations/129_bounded_reading_size_settings.sql

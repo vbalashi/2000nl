@@ -245,7 +245,7 @@ For local migration/RPC validation, prefer `scripts/db-local-supabase.sh test-fs
 
 ### User Features
 
-- `user_settings` - User preferences (limits, modes, theme, subscription tier)
+- `user_settings` - User preferences (limits, modes, theme, subscription tier, independently bounded phone/desktop reading sizes)
 - `user_word_lists` / `user_word_list_items` - User-created lists
 - `word_entry_translations` - Shared translations per word
 - `user_word_notes` - Per-user notes on words

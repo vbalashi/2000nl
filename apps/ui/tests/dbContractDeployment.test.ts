@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 128,
-      coordinationIssue: 243,
+      requiredMigrationId: 129,
+      coordinationIssue: 265,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128,
+      123, 124, 125, 126, 127, 128, 129,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -62,7 +62,7 @@ describe("NUC database contract deployment", () => {
   });
 
   test("postflight proves the bounded default scheduler contract", () => {
-    const postflight = read("db/deploy-contract/postflight-128.sql");
+    const postflight = read("db/deploy-contract/postflight-129.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
@@ -81,8 +81,12 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("bounded-selector-contract");
     expect(postflight).toContain("TODAY_NEW_WORDS AS MATERIALIZED");
     expect(postflight).toContain("KNOWN_CARDS AS MATERIALIZED");
+    expect(postflight).toContain("user_settings_reading_size_phone_check");
+    expect(postflight).toContain("user_settings_reading_size_desktop_check");
+    expect(postflight).toContain("reading_size_phone");
+    expect(postflight).toContain("reading_size_desktop");
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-128.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-129.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {
