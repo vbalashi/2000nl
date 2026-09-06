@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Flag, History, Moon, Settings, Sun, X } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
+import { senseCardQuietActionClassName } from "@/components/training/SenseCardChrome";
 import { buildTrainingSenseCardModel } from "@/components/training/v2/trainingSenseCardModel";
 import { gateFurnitureEntry, gateSingleSenseGroup } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import styles from "./HeightPrototype.module.css";
@@ -31,7 +32,7 @@ const extraExamples = [
 export function HeightPrototype() {
   const params = useSearchParams();
   const router = useRouter();
-  const variant = params.get("variant") === "inset" ? "inset" : "full";
+  const variant = params.get("variant") === "full" ? "full" : "inset";
   const dark = params.get("theme") !== "light";
   const canvas = params.get("canvas") === "1";
   const content = params.get("content") === "long" ? "long" : "short";
@@ -143,7 +144,7 @@ export function HeightPrototype() {
           </section>
           <TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="nl" side={side} onSideChange={setSide}
             onPlayAudio={stub} onOpenDetails={stub} onAction={stub}
-            reportAction={<button className={styles.report} onClick={stub}><Flag aria-hidden="true" />Melden</button>} />
+            reportAction={<button className={senseCardQuietActionClassName} onClick={stub}><Flag aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />Melden</button>} />
         </div>
       </div>
       <footer className={styles.stats} aria-label="Статистика — пример данных">
@@ -162,7 +163,7 @@ export function HeightPrototype() {
       <header className={styles.galleryHeader}>
         <p>2000NL · исследование высоты · НЕ РЕЛИЗ</p>
         <h1>Карточка в целом экране</h1>
-        <p>Меняем только внешние поля по высоте. Карточка — настоящий компонент из PR #258. Цифры сессии и окружающие панели — демонстрационные.</p>
+        <p>B принят для планшета и десктопа; на телефоне остаётся вся доступная высота. Карточка — настоящий компонент из PR #258/#260. Цифры сессии и окружающие панели — демонстрационные.</p>
       </header>
       <div className={styles.controls}>
         <label>Экран<select value={deviceKey} onChange={(e) => change({ device: e.target.value })}>{Object.entries(devices).map(([key, item]) => <option value={key} key={key}>{item.label} · {item.width}×{item.height}</option>)}</select></label>
@@ -184,12 +185,12 @@ export function HeightPrototype() {
           <tr><th>Сессия + карточка + кнопки</th><td>{measurements.stackHeight ?? "…"} px по высоте</td></tr>
           <tr><th>Внешние поля сверху / снизу</th><td>{measurements.outerTop ?? "…"} / {measurements.outerBottom ?? "…"} px</td></tr>
         </tbody></table>
-        <p>Внешние панели, ширина, поля и порог 768 px — кандидаты для сравнения, не утверждённые токены. Кнопки обучения ничего не сохраняют. Перевод, Face/Answer и прокрутка работают локально.</p>
+        <p>Приняты ширина до 760 px и поля B: 40 px на больших экранах, 10 px на телефоне. Внешние панели и порог 768 px ещё требуют проверки при переносе. Кнопки обучения и Melden здесь только демонстрационные: ничего не сохраняют. Перевод, Face/Answer и прокрутка работают локально.</p>
       </section>
       <nav className={styles.switcher} aria-label="Варианты высоты">
         <button aria-label="Предыдущий вариант" onClick={() => change({ variant: variant === "full" ? "inset" : "full" })}><ArrowLeft size={18} /></button>
         <button onClick={() => change({ variant: "full" })} aria-pressed={variant === "full"}>A · Вся высота</button>
-        <button onClick={() => change({ variant: "inset" })} aria-pressed={variant === "inset"}>B · С полями</button>
+        <button onClick={() => change({ variant: "inset" })} aria-pressed={variant === "inset"}>B · Принят</button>
         <button aria-label="Следующий вариант" onClick={() => change({ variant: variant === "full" ? "inset" : "full" })}><ArrowRight size={18} /></button>
       </nav>
     </main>

@@ -9,6 +9,15 @@ const base = 'http://127.0.0.1:3100';
 const out = path.join(__dirname, 'assets');
 const sizes = { phone: [390, 844], tablet: [834, 1112], desktop: [1440, 960] };
 
+async function assertSecondaryAlignment(page) {
+  const report = await page.getByRole('button', { name: 'Melden', exact: true }).boundingBox();
+  const known = await page.getByRole('button', { name: 'Markeer als bekend', exact: true }).boundingBox();
+  assert.ok(report && known);
+  assert.equal(report.height, 24);
+  assert.equal(known.height, 24);
+  assert.ok(Math.abs(report.y - known.y) < 1, 'Secondary actions must share one line');
+}
+
 (async () => {
   await fs.mkdir(out, { recursive: true });
   const browser = await chromium.launch({ headless: true });
@@ -55,17 +64,21 @@ const sizes = { phone: [390, 844], tablet: [834, 1112], desktop: [1440, 960] };
         assert.ok(geometry.fonts.some(f => f.family.includes('Newsreader') && f.style === 'italic'));
         assert.ok(geometry.fonts.some(f => f.family.includes('Newsreader') && f.style === 'normal'));
         assert.ok(geometry.fonts.some(f => f.family.includes('Inter')));
+        await assertSecondaryAlignment(page);
         await page.screenshot({ path: path.join(out, `${device}-${variant}-answer-dark.png`) });
 
         // Same viewport/layout in light mode, not a CSS recoloring of the screenshot.
         url.searchParams.set('theme', 'light');
+        await page.emulateMedia({ colorScheme: 'light' });
         await page.goto(url.href, { waitUntil: 'networkidle' });
         await page.evaluate(() => document.fonts.ready);
         await page.locator('html:not(.dark)').waitFor();
+        await assertSecondaryAlignment(page);
         await page.screenshot({ path: path.join(out, `${device}-${variant}-answer-light.png`) });
 
         // Long content: real continuation action; pinned headword and dock must not move.
         url.searchParams.set('theme', 'dark');
+        await page.emulateMedia({ colorScheme: 'dark' });
         url.searchParams.set('content', 'long');
         await page.goto(url.href, { waitUntil: 'networkidle' });
         const word = page.getByTestId('sense-card-headword-lockup');
@@ -96,6 +109,7 @@ const sizes = { phone: [390, 844], tablet: [834, 1112], desktop: [1440, 960] };
         url.searchParams.set('content', 'short');
         await page.goto(url.href, { waitUntil: 'networkidle' });
         await page.evaluate(() => document.fonts.ready);
+        await assertSecondaryAlignment(page);
         await page.screenshot({ path: path.join(out, `${device}-${variant}-face-dark.png`) });
         await page.getByRole('button', { name: 'Antwoord tonen', exact: true }).click();
         await page.getByRole('button', { name: 'Vertalen', exact: true }).click();

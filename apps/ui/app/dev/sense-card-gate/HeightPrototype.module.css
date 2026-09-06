@@ -17,7 +17,6 @@
 .sessionName{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500}
 .position{font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .sessionProgress{position:absolute;bottom:0;left:0;right:0;height:3px;background:#94a3b820}.sessionProgress span{display:block;width:20%;height:100%;background:#8b89f6}
-.report{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;line-height:1;white-space:nowrap}.report svg{width:14px;height:14px;stroke-width:1.5}
 .stats{display:flex;align-items:center;justify-content:center;gap:12px;border-top:1px solid var(--line);padding:0 10px;font-size:9px;font-variant-numeric:tabular-nums;white-space:nowrap;background:var(--surface)}
 .stats>div{display:flex;align-items:center;gap:4px}.stats i{display:block;width:22px;height:3px;background:#94a3b840;border-radius:2px;overflow:hidden}.stats b{display:block;height:100%}
 .stats{padding-bottom:env(safe-area-inset-bottom)}
