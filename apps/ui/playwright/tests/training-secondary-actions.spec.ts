@@ -4,8 +4,9 @@ import { expect, test } from "@playwright/test";
 // Exercise the real Report trigger, not a substitute button in the gallery.
 for (const width of [390, 834, 1440]) {
   for (const theme of ["light", "dark"]) {
-    test(`secondary actions align at ${width}px in ${theme}`, async ({ page }) => {
+    test(`secondary actions align at ${width}px in ${theme}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: 960 });
+      await page.emulateMedia({ colorScheme: theme as "light" | "dark", reducedMotion: "reduce" });
       await page.route("**/*", (route) => {
         const url = new URL(route.request().url());
         return url.origin === "http://127.0.0.1:3100" && !url.pathname.startsWith("/api/")
@@ -52,6 +53,12 @@ for (const width of [390, 834, 1440]) {
         await dialog.getByRole("button", { name: "Terug", exact: true }).click();
         await expect(report).toBeFocused();
         await expect(stage).toHaveAttribute("data-side", side);
+        await report.evaluate((el) => el.blur());
+        await page.mouse.move(0, 0);
+        expect(await page.locator("html").evaluate((el) => el.classList.contains("dark"))).toBe(theme === "dark");
+        await stage.getByTestId("training-sense-card-dock").screenshot({
+          path: testInfo.outputPath(`actions-${width}-${theme}-${side}.png`),
+        });
       }
     });
   }
