@@ -549,6 +549,7 @@ export function TrainingSenseCardV2Session({
           reportAction={
             model.reportCapabilities.length && result.entry.reportContentRevision ? (
               <SenseCardReportAction
+                appearance="training-text"
                 snapshot={freezeSenseCardDiagnosticSnapshot({
                   route: "training",
                   group: result.group,

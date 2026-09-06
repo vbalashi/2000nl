@@ -21,6 +21,7 @@ import {
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
+  senseCardQuietActionClassName,
 } from "../SenseCardChrome";
 import type { PlatformSenseCardCapabilityV2 } from "../../../../../packages/shared/types/platformV2";
 import type {
@@ -768,7 +769,7 @@ function FaceDock({
         </button>
       </div>
       {reportAction || model.markKnownCapability ? (
-        <div className="flex h-6 items-end justify-between gap-3 text-[11.5px] leading-none text-slate-500 dark:text-[#7B8694]">
+        <SecondaryActionRow>
           {reportAction ?? <span />}
           {model.markKnownCapability ? (
             <MarkKnownAction
@@ -778,7 +779,7 @@ function FaceDock({
               onAction={onAction}
             />
           ) : null}
-        </div>
+        </SecondaryActionRow>
       ) : null}
     </div>
   );
@@ -860,7 +861,7 @@ function AnswerDock({
         </div>
       ) : null}
 
-      <div className="flex h-6 min-h-6 shrink-0 items-end justify-between gap-3 text-[11.5px] leading-none text-slate-500 dark:text-[#7B8694]">
+      <SecondaryActionRow>
         {reportAction ?? <span />}
         {model.markKnownCapability ? (
           <MarkKnownAction
@@ -870,7 +871,15 @@ function AnswerDock({
             onAction={onAction}
           />
         ) : null}
-      </div>
+      </SecondaryActionRow>
+    </div>
+  );
+}
+
+function SecondaryActionRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-6 min-h-6 shrink-0 items-center justify-between gap-3">
+      {children}
     </div>
   );
 }
@@ -891,7 +900,7 @@ function MarkKnownAction({
       type="button"
       disabled={busy}
       onClick={() => onAction(capability)}
-      className="flex h-6 min-h-6 items-center gap-1.5 rounded-lg px-0 hover:text-slate-900 disabled:opacity-50 dark:hover:text-slate-100"
+      className={senseCardQuietActionClassName}
     >
       <Check aria-hidden="true" className="h-4 w-4" /> {label}
     </button>
