@@ -280,7 +280,7 @@ export type PlatformLookupV2Request = PlatformLookupV2RequestBase &
     | {
         entryId: string;
         query?: never;
-        intent: "training-review";
+        intent: "training-review" | "dictionary-lookup";
         cursor?: never;
       }
   );

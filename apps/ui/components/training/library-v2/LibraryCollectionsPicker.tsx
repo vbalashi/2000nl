@@ -20,6 +20,7 @@ type Props = {
   onClose: () => void;
   onToggleList: (list: WordListSummary, included: boolean) => void;
   onCreateList: (name: string) => void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
 export function LibraryCollectionsPicker({
@@ -34,6 +35,7 @@ export function LibraryCollectionsPicker({
   onClose,
   onToggleList,
   onCreateList,
+  onOpenListMembership,
 }: Props) {
   const [query, setQuery] = React.useState("");
   const [newListName, setNewListName] = React.useState("");
@@ -151,18 +153,22 @@ export function LibraryCollectionsPicker({
               {visibleLists.map((list) => {
                 const included = membershipIds.has(list.id);
                 return (
-                  <label
+                  <div
                     key={list.id}
                     className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-slate-100 dark:hover:bg-slate-700/50"
                   >
                     <input
+                      id={`library-collection-${list.id}`}
                       type="checkbox"
                       checked={included}
                       disabled={busyListId !== null}
                       onChange={() => onToggleList(list, included)}
                       className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="min-w-0 flex-1">
+                    <label
+                      htmlFor={`library-collection-${list.id}`}
+                      className="min-w-0 flex-1"
+                    >
                       <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                         {list.name}
                       </span>
@@ -171,8 +177,23 @@ export function LibraryCollectionsPicker({
                           {list.item_count} {t("senseCard.collections.items")}
                         </span>
                       ) : null}
-                    </span>
-                  </label>
+                    </label>
+                    {included && onOpenListMembership ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          const membership = memberships.find(
+                            (item) => item.listId === list.id,
+                          );
+                          if (membership) onOpenListMembership(membership);
+                        }}
+                        className="shrink-0 rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200"
+                      >
+                        {t("senseCard.collections.open")}
+                      </button>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

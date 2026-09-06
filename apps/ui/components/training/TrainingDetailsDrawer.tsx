@@ -1,17 +1,21 @@
 "use client";
 
 import React from "react";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { WordDetailsHeader } from "./WordDetailsHeader";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  interfaceLanguage: OnboardingLanguage;
 };
 
 export function TrainingDetailsDrawer({
   open,
   onClose,
   children,
+  interfaceLanguage,
 }: Props) {
   const [swipeOffset, setSwipeOffset] = React.useState(0);
   const [swipeEngaged, setSwipeEngaged] = React.useState(false);
@@ -96,28 +100,14 @@ export function TrainingDetailsDrawer({
 
       <div className="absolute inset-y-0 right-0 w-full max-w-full sm:w-[460px]">
         <div
-          className="relative h-full bg-white shadow-2xl dark:bg-slate-900"
+          className="relative flex h-full flex-col bg-white shadow-2xl dark:bg-slate-900"
           style={{
             transform: swipeOffset ? `translateX(${swipeOffset}px)` : undefined,
             transition: swipeEngaged ? "none" : "transform 200ms ease-out",
           }}
         >
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Details
-            </span>
-            <div className="flex-1" />
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/60"
-            >
-              Sluiten
-            </button>
-          </div>
-
-          <div className="h-[calc(100%-52px)] p-3">{children}</div>
+          <WordDetailsHeader onClose={onClose} interfaceLanguage={interfaceLanguage} />
+          <div className="min-h-0 flex-1 p-3">{children}</div>
         </div>
       </div>
     </div>

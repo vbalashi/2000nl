@@ -2,9 +2,8 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import type { WordListSummary } from "@/lib/types";
+import type { EntryLearningListMembership, WordListSummary } from "@/lib/types";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
-import { platformV2LibraryUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { LibrarySenseCardV2Session } from "./LibrarySenseCardV2Session";
 
 type Props = {
@@ -18,7 +17,8 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
-  fallback: React.ReactNode;
+  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   viewport?: "all" | "desktop" | "mobile";
 };
 
@@ -33,7 +33,8 @@ export function LibraryWordDetail({
   userLists,
   onListsUpdated,
   onTrainWord,
-  fallback,
+  onCopyToUserDictionary,
+  onOpenListMembership,
   viewport = "all",
 }: Props) {
   const [viewportMatches, setViewportMatches] = React.useState(
@@ -53,8 +54,11 @@ export function LibraryWordDetail({
     return () => media.removeEventListener("change", sync);
   }, [viewport]);
 
-  if (!platformV2LibraryUiEnabled()) return <>{fallback}</>;
-  if (!viewportMatches) return <>{fallback}</>;
+  if (!viewportMatches) {
+    return (
+      <div data-testid="library-word-detail-loading" className="h-full animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+    );
+  }
 
   return (
     <LibrarySenseCardV2Session
@@ -68,7 +72,8 @@ export function LibraryWordDetail({
       userLists={userLists}
       onListsUpdated={onListsUpdated}
       onTrainWord={onTrainWord}
-      fallback={fallback}
+      onCopyToUserDictionary={onCopyToUserDictionary}
+      onOpenListMembership={onOpenListMembership}
     />
   );
 }

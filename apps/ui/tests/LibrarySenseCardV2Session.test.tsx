@@ -9,22 +9,83 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
-import { financeEntry, multiSenseBankGroup } from "./platformV2LibraryFixture";
+import {
+  financeEntry,
+  furnitureEntry,
+  multiSenseBankGroup,
+} from "./platformV2LibraryFixture";
 import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
-import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import type {
+  PlatformHeadwordGroupV2,
+  PlatformSenseCardCapabilityV2,
+} from "../../../packages/shared/types/platformV2";
+import type { EntryLearningListMembership } from "@/lib/types";
 
 const fetchGroup = vi.fn();
 const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 const queueDiagnosticReport = vi.fn();
+const fetchMemberships = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((next) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((next, fail) => {
     resolve = next;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
+}
+
+function membership(listId: string): EntryLearningListMembership {
+  return {
+    listId,
+    listType: "user",
+    name: listId,
+    editable: true,
+    isActiveTrainingList: false,
+  };
+}
+
+function remapCapabilityEntryId(
+  capability: PlatformSenseCardCapabilityV2,
+  entryId: string,
+): PlatformSenseCardCapabilityV2 {
+  switch (capability.actionId) {
+    case "start-learning":
+    case "mark-known":
+    case "review-card":
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          stateRevision: `state-${entryId}`,
+        },
+      };
+    case "undo-known":
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          stateRevision: `state-${entryId}`,
+        },
+      };
+    case "report-content":
+      if (capability.target.kind !== "entry") return capability;
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          contentRevision: `content-${entryId}`,
+        },
+      };
+    default:
+      return capability;
+  }
 }
 
 function singleSenseGroup(
@@ -53,13 +114,16 @@ function singleSenseGroup(
           contentNodeId: `${node.kind}-${entryId}`,
           text: index === 0 ? definition : node.text,
         })),
+        capabilities: financeEntry.capabilities.map((capability) =>
+          remapCapabilityEntryId(capability, entryId),
+        ),
       },
     ],
   };
 }
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
-  fetchPlatformV2MultiSenseGroup: (...args: unknown[]) => fetchGroup(...args),
+  fetchPlatformV2LibraryGroup: (...args: unknown[]) => fetchGroup(...args),
   fetchPlatformV2CrossReferenceTarget: (...args: unknown[]) =>
     fetchCrossReferenceTarget(...args),
   requestPlatformV2LibraryTranslation: (...args: unknown[]) =>
@@ -78,6 +142,13 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
     queueDiagnosticReport(...args),
 }));
 
+vi.mock("@/lib/trainingService", () => ({
+  addWordsToUserList: vi.fn(),
+  createUserList: vi.fn(),
+  fetchEntryListMemberships: (...args: unknown[]) => fetchMemberships(...args),
+  removeWordsFromUserList: vi.fn(),
+}));
+
 describe("LibrarySenseCardV2Session", () => {
   beforeEach(() => {
     fetchGroup.mockReset();
@@ -85,6 +156,7 @@ describe("LibrarySenseCardV2Session", () => {
     performAction.mockReset();
     requestTranslation.mockReset();
     queueDiagnosticReport.mockReset();
+    fetchMemberships.mockReset();
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
     performAction.mockResolvedValue({
       contractVersion: "platform-action-v2",
@@ -94,6 +166,7 @@ describe("LibrarySenseCardV2Session", () => {
       card: financeEntry.card,
     });
     queueDiagnosticReport.mockResolvedValue({ state: "sent" });
+    fetchMemberships.mockResolvedValue(new Map());
   });
 
   test("uses one global report action and no per-node flags", async () => {
@@ -112,12 +185,17 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
+        onCopyToUserDictionary={vi.fn()}
       />,
     );
 
     await screen.findByTestId("library-sense-card-group");
     expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Report" }).closest(
+        '[data-testid="library-details-actions"]',
+      ),
+    ).not.toBeNull();
     expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Report" }));
     expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
@@ -142,7 +220,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -172,7 +249,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -199,7 +275,7 @@ describe("LibrarySenseCardV2Session", () => {
     );
   });
 
-  test("keeps fallback until a compatible group loads", async () => {
+  test("shows an explicit loading state until a compatible group loads", async () => {
     render(
       <LibrarySenseCardV2Session
         entryId={financeEntry.entryId}
@@ -207,15 +283,14 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
-    expect(screen.getByText("Legacy detail")).toBeInTheDocument();
+    expect(screen.getByTestId("library-sense-card-loading")).toBeInTheDocument();
     expect(
       await screen.findByTestId("library-sense-card-group"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Legacy detail")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("library-sense-card-loading")).not.toBeInTheDocument();
   });
 
   test.each([
@@ -233,7 +308,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -253,7 +327,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -272,7 +345,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -333,7 +405,6 @@ describe("LibrarySenseCardV2Session", () => {
             contentLanguageCode="nl"
             translationTargetLanguageCode="en"
             interfaceLanguage="en"
-            fallback={<p>Loading {selection.headword} details</p>}
           />
         </>
       );
@@ -350,10 +421,10 @@ describe("LibrarySenseCardV2Session", () => {
 
     expect(
       committedFrames.find(({ entryId }) => entryId === "entry-bridge")?.text,
-    ).toContain("Loading brug details");
+    ).toContain("Loading details");
     expect(
       committedFrames.find(({ entryId }) => entryId === "entry-canal")?.text,
-    ).toContain("Loading gracht details");
+    ).toContain("Loading details");
 
     await act(async () => {
       canalRequest.resolve(
@@ -383,6 +454,412 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       screen.queryByRole("heading", { name: "brug" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("keeps same-headword steen meanings on their exact entry identity", async () => {
+    const stoneObject = singleSenseGroup(
+      "group-steen-object",
+      "entry-steen-object",
+      "steen",
+      "a building stone",
+    );
+    const stoneMaterial = singleSenseGroup(
+      "group-steen-material",
+      "entry-steen-material",
+      "steen",
+      "stone as a material",
+    );
+    fetchGroup.mockImplementation(
+      ({ entryId }: { entryId: string }) =>
+        Promise.resolve(
+          entryId === "entry-steen-object" ? stoneObject : stoneMaterial,
+        ),
+    );
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-steen-object");
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId("entry-steen-material")}>
+            Select material steen
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="steen"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    expect(await screen.findByText("a building stone")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Select material steen" }));
+    expect(await screen.findByText("stone as a material")).toBeInTheDocument();
+    expect(screen.queryByText("a building stone")).not.toBeInTheDocument();
+    expect(fetchGroup).toHaveBeenLastCalledWith(
+      expect.objectContaining({ entryId: "entry-steen-material" }),
+    );
+  });
+
+  test("opens the requested second meaning and copies that exact entry", async () => {
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={financeEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onCopyToUserDictionary={copyEntry}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    expect(
+      screen.getByTestId(`library-sense-card-${financeEntry.entryId}`),
+    ).toHaveAttribute("data-expanded", "true");
+    expect(
+      screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`),
+    ).toHaveAttribute("data-expanded", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
+  });
+
+  test("activating a collapsed meaning with its chevron changes copy identity", async () => {
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    render(
+      <LibrarySenseCardV2Session
+        entryId={furnitureEntry.entryId}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onCopyToUserDictionary={copyEntry}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    const financeCard = screen.getByTestId(
+      `library-sense-card-${financeEntry.entryId}`,
+    );
+    fireEvent.click(
+      within(financeCard).getByRole("button", { name: "Expand meaning" }),
+    );
+    expect(financeCard).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
+  });
+
+  test("brings the initially selected meaning into the internal scroll viewport", async () => {
+    const rect = (top: number, bottom: number) =>
+      ({
+        top,
+        bottom,
+        left: 0,
+        right: 320,
+        width: 320,
+        height: bottom - top,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.dataset.testid === "library-sense-card-scroll-region") {
+          return rect(0, 100);
+        }
+        if (this.dataset.entryId === financeEntry.entryId) {
+          return rect(140, 190);
+        }
+        if (this.hasAttribute("data-meaning-lead") && this.closest("[data-entry-id]")?.getAttribute("data-entry-id") === financeEntry.entryId) {
+          return rect(150, 180);
+        }
+        return rect(0, 0);
+      });
+    const heightSpy = vi.spyOn(HTMLElement.prototype, "clientHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.dataset.testid === "library-sense-card-scroll-region" ? 100 : 0;
+      });
+
+    try {
+      fetchGroup.mockResolvedValue(multiSenseBankGroup);
+      render(
+        <LibrarySenseCardV2Session
+          entryId={financeEntry.entryId}
+          headword="bank"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+        />,
+      );
+
+      const scrollRegion = await screen.findByTestId(
+        "library-sense-card-scroll-region",
+      );
+      await waitFor(() => expect(scrollRegion.scrollTop).toBe(115));
+      expect(document.documentElement.scrollTop).toBe(0);
+    } finally {
+      rectSpy.mockRestore();
+      heightSpy.mockRestore();
+    }
+  });
+
+  test("does not refresh the previous detail after an action races with navigation", async () => {
+    const action = deferred<{
+      contractVersion: "platform-action-v2";
+      actionId: "start-learning";
+      clientEventId: string;
+      accepted: true;
+      card: typeof financeEntry.card;
+    }>();
+    performAction.mockReturnValue(action.promise);
+    fetchGroup.mockResolvedValue(multiSenseBankGroup);
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState(financeEntry.entryId);
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId(furnitureEntry.entryId)}>
+            Select furniture meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText(financeEntry.contentNodes[0].text);
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select furniture meaning" }));
+    await screen.findByText(furnitureEntry.contentNodes[0].text);
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+
+    action.resolve({
+      contractVersion: "platform-action-v2",
+      actionId: "start-learning",
+      clientEventId: "event-race",
+      accepted: true,
+      card: financeEntry.card,
+    });
+    await act(async () => {
+      await action.promise;
+    });
+    expect(fetchGroup).toHaveBeenCalledTimes(2);
+  });
+
+  test("keeps the newest action busy state when overlapping actions finish out of order", async () => {
+    const actionA = deferred<unknown>();
+    const actionB = deferred<unknown>();
+    const groupA = singleSenseGroup(
+      "group-action-a",
+      "entry-action-a",
+      "bank",
+      "first action meaning",
+    );
+    const groupB = singleSenseGroup(
+      "group-action-b",
+      "entry-action-b",
+      "bank",
+      "second action meaning",
+    );
+    fetchGroup.mockImplementation(({ entryId }: { entryId: string }) =>
+      Promise.resolve(entryId === "entry-action-a" ? groupA : groupB),
+    );
+    performAction
+      .mockImplementationOnce(() => actionA.promise)
+      .mockImplementationOnce(() => actionB.promise);
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-action-a");
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId("entry-action-b")}>
+            Select second action meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText("first action meaning");
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select second action meaning" }),
+    );
+    await screen.findByText("second action meaning");
+    const learnButton = screen.getByRole("button", { name: "Learn" });
+    fireEvent.click(learnButton);
+    await waitFor(() => expect(learnButton).toBeDisabled());
+
+    actionA.reject(new Error("stale action failed"));
+    await act(async () => {
+      await actionA.promise.catch(() => undefined);
+    });
+    expect(learnButton).toBeDisabled();
+    expect(screen.queryByText("stale action failed")).not.toBeInTheDocument();
+
+    actionB.resolve(undefined);
+    await act(async () => {
+      await actionB.promise;
+    });
+    await waitFor(() => expect(learnButton).not.toBeDisabled());
+  });
+
+  test("does not let an older membership response overwrite the current group", async () => {
+    const membershipA = deferred<Map<string, EntryLearningListMembership[]>>();
+    const membershipB = deferred<Map<string, EntryLearningListMembership[]>>();
+    const groupA = singleSenseGroup(
+      "group-membership-a",
+      "entry-membership-a",
+      "bank",
+      "first membership meaning",
+    );
+    const groupB = singleSenseGroup(
+      "group-membership-b",
+      "entry-membership-b",
+      "bank",
+      "second membership meaning",
+    );
+    fetchGroup.mockImplementation(({ entryId }: { entryId: string }) =>
+      Promise.resolve(entryId === "entry-membership-a" ? groupA : groupB),
+    );
+    fetchMemberships.mockImplementation((entryIds: string[]) =>
+      entryIds.includes("entry-membership-b")
+        ? membershipB.promise
+        : membershipA.promise,
+    );
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-membership-a");
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => setEntryId("entry-membership-b")}
+          >
+            Select second membership meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+            userId="user-membership"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText("first membership meaning");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select second membership meaning" }),
+    );
+    await screen.findByText("second membership meaning");
+    await waitFor(() => expect(fetchMemberships).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      membershipB.resolve(
+        new Map([["entry-membership-b", [membership("list-b")]]]),
+      );
+      await membershipB.promise;
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collections · 1" }),
+      ).toBeInTheDocument(),
+    );
+
+    membershipA.resolve(
+      new Map([["entry-membership-a", [membership("list-a")]]]),
+    );
+    await act(async () => {
+      await membershipA.promise;
+    });
+    expect(
+      screen.getByRole("button", { name: "Collections · 1" }),
+    ).toBeInTheDocument();
+  });
+
+  test("does not refresh an old lookup dimension after translation changes", async () => {
+    const action = deferred<unknown>();
+    const lookupCalls: Array<{ translationTargetLanguageCode: string | null }> =
+      [];
+    performAction.mockReturnValue(action.promise);
+    fetchGroup.mockImplementation(
+      (input: { translationTargetLanguageCode: string | null }) => {
+        lookupCalls.push({
+          translationTargetLanguageCode: input.translationTargetLanguageCode,
+        });
+        return Promise.resolve(multiSenseBankGroup);
+      },
+    );
+
+    function TranslationHarness() {
+      const [translation, setTranslation] = React.useState<string | null>("en");
+      return (
+        <>
+          <button type="button" onClick={() => setTranslation("ru")}>
+            Change translation language
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={financeEntry.entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode={translation}
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<TranslationHarness />);
+    await screen.findByText(financeEntry.contentNodes[0].text);
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change translation language" }),
+    );
+    await waitFor(() =>
+      expect(lookupCalls).toEqual([
+        { translationTargetLanguageCode: "en" },
+        { translationTargetLanguageCode: "ru" },
+      ]),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Learn" })).not.toBeDisabled(),
+    );
+
+    action.resolve(undefined);
+    await act(async () => {
+      await action.promise;
+    });
+    expect(lookupCalls).toEqual([
+      { translationTargetLanguageCode: "en" },
+      { translationTargetLanguageCode: "ru" },
+    ]);
   });
 
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
@@ -425,10 +902,12 @@ describe("LibrarySenseCardV2Session", () => {
     fetchCrossReferenceTarget.mockResolvedValue({
       ...multiSenseBankGroup,
       header: { ...multiSenseBankGroup.header, text: "daar-" },
-      senseCount: 1,
-      entryCount: 1,
-      entries: [financeEntry],
+      entries: [
+        { ...financeEntry, entryId: "entry-daar-target" },
+        furnitureEntry,
+      ],
     });
+    const copyEntry = vi.fn().mockResolvedValue(undefined);
 
     render(
       <LibrarySenseCardV2Session
@@ -438,7 +917,7 @@ describe("LibrarySenseCardV2Session", () => {
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
         initialGroup={mixedDaarGroup}
-        fallback={<p>Legacy detail</p>}
+        onCopyToUserDictionary={copyEntry}
       />,
     );
 
@@ -457,6 +936,9 @@ describe("LibrarySenseCardV2Session", () => {
     expect(
       within(pointer).queryByRole("button", { name: "Mark known" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy to my dictionary" }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open reference" }));
 
     await waitFor(() =>
@@ -474,6 +956,17 @@ describe("LibrarySenseCardV2Session", () => {
         "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
       ),
     ).toBeInTheDocument();
+    const targetCard = screen.getByTestId("library-sense-card-entry-daar-target");
+    const alternateCard = screen.getByTestId(
+      `library-sense-card-${furnitureEntry.entryId}`,
+    );
+    expect(targetCard).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(alternateCard);
+    expect(alternateCard).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
+    await waitFor(() =>
+      expect(copyEntry).toHaveBeenCalledWith(furnitureEntry.entryId),
+    );
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {
@@ -484,7 +977,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="off"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -522,7 +1014,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 
@@ -555,7 +1046,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -605,7 +1095,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -631,7 +1120,6 @@ describe("LibrarySenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="en"
-          fallback={<p>Next legacy detail</p>}
         />,
       );
     });
@@ -665,7 +1153,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
     await screen.findByTestId("library-sense-card-group");
@@ -686,7 +1173,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Next legacy detail</p>}
       />,
     );
     await waitFor(() => expect(fetchGroup).toHaveBeenCalledTimes(2));
@@ -703,7 +1189,6 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
-        fallback={<p>Legacy detail</p>}
       />,
     );
 

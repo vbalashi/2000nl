@@ -13,6 +13,7 @@ import {
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchStats,
+  copyEntryToUserDictionary,
   isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   type ReviewResult,
@@ -31,6 +32,7 @@ import type {
   WordListSummary,
   WordListType,
 } from "@/lib/types";
+import type { PlatformHeadwordGroupV2 } from "../../../../packages/shared/types/platformV2";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useCardParams } from "@/lib/cardParams";
 import {
@@ -63,7 +65,7 @@ import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
-import { WordDetailPanel } from "./WordDetailPanel";
+import { LibrarySenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
@@ -346,7 +348,13 @@ function TrainingScreenContent({
   >([]);
   const [wordLookupNotice, setWordLookupNotice] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailEntry, setDetailEntry] = useState<DictionaryEntry | null>(null);
+  const [detailSelection, setDetailSelection] = useState<{
+    entryId: string;
+    headword: string;
+    contentLanguageCode?: string;
+  } | null>(null);
+  const [detailInitialGroup, setDetailInitialGroup] =
+    useState<PlatformHeadwordGroupV2 | null>(null);
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
     newCardsToday: 0,
@@ -968,25 +976,33 @@ function TrainingScreenContent({
   }, [listHydrated, loadNextWord, trainingFocusFilterKey, user?.id]);
 
   const handleShowDetails = useCallback((entry: DictionaryEntry) => {
-    setDetailEntry(entry);
+    setDetailInitialGroup(null);
+    setDetailSelection({
+      entryId: entry.id,
+      headword: entry.headword,
+      contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
+    });
     setDetailsOpen(true);
-  }, []);
+  }, [currentTrainingLanguage]);
 
   // Show details for the current training word
-  const handleShowCurrentWordDetails = useCallback(() => {
-    if (!currentWord) return;
-    // Convert TrainingWord to DictionaryEntry
-    const entry: DictionaryEntry = {
-      id: currentWord.id,
-      headword: currentWord.headword,
-      part_of_speech: currentWord.part_of_speech,
-      gender: currentWord.gender,
-      raw: currentWord.raw,
-      is_nt2_2000: currentWord.is_nt2_2000,
-      meanings_count: currentWord.meanings_count,
-    };
-    handleShowDetails(entry);
-  }, [currentWord, handleShowDetails]);
+  const handleShowCurrentWordDetails = useCallback(
+    (details?: {
+      group: PlatformHeadwordGroupV2;
+      entry: { entryId: string };
+    }) => {
+      if (!currentWord) return;
+      setDetailInitialGroup(details?.group ?? null);
+      setDetailSelection({
+        entryId: details?.entry?.entryId ?? currentWord.id,
+        headword: details?.group?.header.text ?? currentWord.headword,
+        contentLanguageCode:
+          currentWord.language_code ?? currentTrainingLanguage,
+      });
+      setDetailsOpen(true);
+    },
+    [currentTrainingLanguage, currentWord],
+  );
 
   const openSearch = useCallback(() => {
     if (onRequestDestination) {
@@ -1029,10 +1045,14 @@ function TrainingScreenContent({
 
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
-      setDetailEntry(entry);
+      setDetailSelection({
+        entryId: entry.id,
+        headword: entry.headword,
+        contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
+      });
       setSelectedEntry(entry);
     },
-    [],
+    [currentTrainingLanguage],
   );
 
   const cycleThemePreference = useCallback(() => {
@@ -2226,25 +2246,43 @@ function TrainingScreenContent({
         ) : null}
 
         <TrainingDetailsDrawer
+          interfaceLanguage={onboardingLang}
           open={detailsOpen}
-          onClose={() => setDetailsOpen(false)}
+          onClose={() => {
+            setDetailsOpen(false);
+            setDetailSelection(null);
+            setDetailInitialGroup(null);
+          }}
         >
-          {detailEntry ? (
-            <WordDetailPanel
-              entry={detailEntry}
-              userId={user.id}
-              translationLang={translationLang}
-              userLists={availableLists.filter((list) => list.type === "user")}
-              onListsUpdated={handleListsUpdated}
-              onOpenListMembership={openMembershipList}
-              onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-              onTrainWord={handleTrainWord}
-              showHeader
-              showActions
-              currentTrainingEntryId={currentWord?.id ?? null}
-              onTrainingAction={(result) => void handleAction(result)}
-              trainingActionDisabled={!revealed || actionLoading}
-            />
+          {detailSelection ? (
+            <div className="flex h-full min-h-0 flex-col gap-3">
+              <div className="min-h-0 flex-1">
+                <LibrarySenseCardV2Session
+                  entryId={detailSelection.entryId}
+                  initialGroup={detailInitialGroup ?? undefined}
+                  headword={detailSelection.headword}
+                  contentLanguageCode={
+                    detailSelection.contentLanguageCode ?? currentTrainingLanguage
+                  }
+                  translationTargetLanguageCode={
+                    translationLang === "off" ? null : translationLang
+                  }
+                  interfaceLanguage={onboardingLang}
+                  userId={user.id}
+                  userLists={availableLists.filter((list) => list.type === "user")}
+                  onListsUpdated={handleListsUpdated}
+                  onTrainWord={handleTrainWord}
+                  trainingActionEntryId={currentWord?.id}
+                  revealed={revealed}
+                  actionLoading={actionLoading}
+                  onTrainingAction={(action) => void handleAction(action)}
+                  onCopyToUserDictionary={async (entryId) => {
+                    await copyEntryToUserDictionary({ entryId });
+                  }}
+                  onOpenListMembership={openMembershipList}
+                />
+              </div>
+            </div>
           ) : null}
         </TrainingDetailsDrawer>
 

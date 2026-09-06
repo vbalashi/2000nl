@@ -15,6 +15,7 @@ import {
   preloadPlatformV2Audio,
   requestPlatformV2Translation,
   resolvePlatformV2Audio,
+  type PlatformV2TrainingEntryResult,
   type PlatformV2TrainingLookupResult,
 } from "@/lib/platform/platformV2TrainingClient";
 import {
@@ -63,7 +64,9 @@ type Props = {
   interactionDisabled?: boolean;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
-  onOpenDetails?: () => void;
+  onOpenDetails?: (
+    details: Pick<PlatformV2TrainingEntryResult, "group" | "entry">,
+  ) => void;
   onExit?: () => void;
   onLoadFailure?: (
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
@@ -545,7 +548,11 @@ export function TrainingSenseCardV2Session({
               ? () => void handlePlayAudio()
               : undefined
           }
-          onOpenDetails={onOpenDetails}
+          onOpenDetails={
+            onOpenDetails
+              ? () => onOpenDetails({ group: result.group, entry: result.entry })
+              : undefined
+          }
           reportAction={
             model.reportCapabilities.length && result.entry.reportContentRevision ? (
               <SenseCardReportAction

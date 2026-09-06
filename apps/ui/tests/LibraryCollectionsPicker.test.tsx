@@ -7,6 +7,7 @@ describe("LibraryCollectionsPicker", () => {
   it("edits list membership for the selected meaning", () => {
     const onToggleList = vi.fn();
     const onCreateList = vi.fn();
+    const onOpenListMembership = vi.fn();
 
     render(
       <LibraryCollectionsPicker
@@ -42,6 +43,7 @@ describe("LibraryCollectionsPicker", () => {
         onClose={vi.fn()}
         onToggleList={onToggleList}
         onCreateList={onCreateList}
+        onOpenListMembership={onOpenListMembership}
       />,
     );
 
@@ -56,5 +58,10 @@ describe("LibraryCollectionsPicker", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Maken" }));
     expect(onCreateList).toHaveBeenCalledWith("Werkwoorden");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open lijst" }));
+    expect(onOpenListMembership).toHaveBeenCalledWith(
+      expect.objectContaining({ listId: "daily-review" }),
+    );
   });
 });

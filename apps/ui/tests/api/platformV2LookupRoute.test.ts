@@ -420,7 +420,7 @@ describe("/api/platform/v2/lookup", () => {
     );
   });
 
-  test("resolves an authenticated training entry exactly and returns its complete readable group", async () => {
+  test.each(["training-review", "dictionary-lookup"])("resolves an authenticated %s entry exactly and returns its complete readable group", async (intent) => {
     const { POST } = await import("@/app/api/platform/v2/lookup/route");
     const targetEntryId = "00000000-0000-4000-8000-000000000101";
     const siblingEntryId = "00000000-0000-4000-8000-000000000102";
@@ -503,7 +503,7 @@ describe("/api/platform/v2/lookup", () => {
         entryId: targetEntryId,
         contentLanguageCode: "nl",
         cardTypeId: "word-to-definition",
-        intent: "training-review",
+        intent,
       }),
     );
 
@@ -688,7 +688,7 @@ describe("/api/platform/v2/lookup", () => {
     );
   });
 
-  test("does not expose an inaccessible exact training entry", async () => {
+  test.each(["training-review", "dictionary-lookup"])("does not expose an inaccessible exact %s entry", async (intent) => {
     const { POST } = await import("@/app/api/platform/v2/lookup/route");
     const entryId = "00000000-0000-4000-8000-000000000301";
     getUser.mockResolvedValueOnce({
@@ -714,7 +714,7 @@ describe("/api/platform/v2/lookup", () => {
       authenticatedRequest({
         entryId,
         cardTypeId: "word-to-definition",
-        intent: "training-review",
+        intent,
       }),
     );
 
@@ -730,7 +730,7 @@ describe("/api/platform/v2/lookup", () => {
 
   test.each([
     {
-      name: "ordinary authenticated lookup",
+      name: "external-click authenticated lookup",
       importRoute: () => import("@/app/api/platform/v2/lookup/route"),
       request: authenticatedRequest,
       authenticate: () =>
@@ -738,7 +738,7 @@ describe("/api/platform/v2/lookup", () => {
           data: { user: { id: "user-1" } },
           error: null,
         }),
-      intent: "dictionary-lookup",
+      intent: "external-click",
     },
     {
       name: "catalog lookup",
@@ -747,6 +747,13 @@ describe("/api/platform/v2/lookup", () => {
       request: catalogRequest,
       authenticate: () => undefined,
       intent: "training-review",
+    },
+    {
+      name: "catalog dictionary lookup",
+      importRoute: () => import("@/app/api/platform/v2/catalog/lookup/route"),
+      request: catalogRequest,
+      authenticate: () => undefined,
+      intent: "dictionary-lookup",
     },
   ])(
     "rejects entryId on $name",
@@ -770,6 +777,21 @@ describe("/api/platform/v2/lookup", () => {
       expect(rpc).not.toHaveBeenCalled();
     },
   );
+
+  test.each([
+    { query: "bank", error: "query_not_allowed_with_entry_id" },
+    { cursor: "next-page", error: "cursor_not_allowed_with_entry_id" },
+  ])("rejects ambiguous exact dictionary lookup: $error", async ({ error, ...extra }) => {
+    const { POST } = await import("@/app/api/platform/v2/lookup/route");
+    getUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } }, error: null });
+    const response = await POST(authenticatedRequest({
+      entryId: "00000000-0000-4000-8000-000000000401",
+      cardTypeId: "word-to-definition", intent: "dictionary-lookup", ...extra,
+    }));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error });
+    expect(rpc).not.toHaveBeenCalled();
+  });
 
   test("requires an explicit cardTypeId", async () => {
     const { POST } = await import("@/app/api/platform/v2/lookup/route");

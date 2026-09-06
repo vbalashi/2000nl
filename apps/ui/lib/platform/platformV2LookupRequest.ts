@@ -4,7 +4,7 @@ import { isPlatformCardTypeId } from "./cardTypeRegistry";
 
 export function parsePlatformV2LookupRequest(
   value: unknown,
-  options: { allowTrainingEntryId?: boolean } = {},
+  options: { allowAuthenticatedEntryId?: boolean } = {},
 ):
   | { ok: true; request: PlatformLookupV2Request }
   | { ok: false; error: string } {
@@ -18,7 +18,10 @@ export function parsePlatformV2LookupRequest(
   }
   const intent = lookupIntent(body.intent);
   const entryId = optionalString(body.entryId);
-  if (entryId && (!options.allowTrainingEntryId || intent !== "training-review")) {
+  if (
+    entryId &&
+    (!options.allowAuthenticatedEntryId || intent === "external-click")
+  ) {
     return { ok: false, error: "entry_id_not_allowed" };
   }
   if (entryId && !isUuid(entryId)) {
@@ -43,7 +46,8 @@ export function parsePlatformV2LookupRequest(
           translationTargetLanguageCode: optionalString(
             body.translationTargetLanguageCode,
           ),
-          intent: "training-review",
+          intent:
+            intent === "training-review" ? "training-review" : "dictionary-lookup",
         }
       : {
           query,

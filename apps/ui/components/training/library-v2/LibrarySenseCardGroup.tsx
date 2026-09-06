@@ -35,6 +35,8 @@ type Props = {
   translationEnabled?: boolean;
   translationStates?: Record<string, "pending" | "failed">;
   collectionCounts?: Record<string, number>;
+  activeMeaningId?: string | null;
+  onActiveMeaningChange?: (entryId: string) => void;
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
@@ -48,6 +50,8 @@ type Props = {
   bottomOverlayReserve?: boolean;
 };
 
+const DETAILS_SCROLL_FADE_HEIGHT = 44;
+
 export function LibrarySenseCardGroup({
   model,
   interfaceLanguage,
@@ -57,6 +61,8 @@ export function LibrarySenseCardGroup({
   translationEnabled = false,
   translationStates = {},
   collectionCounts = {},
+  activeMeaningId = null,
+  onActiveMeaningChange,
   onRequestTranslation,
   onOpenCollections,
   onTrainNext,
@@ -65,7 +71,7 @@ export function LibrarySenseCardGroup({
   bottomOverlayReserve = false,
 }: Props) {
   const [viewState, setViewState] = React.useState<LibrarySenseCardViewState>(
-    () => initialViewState(model),
+    () => initialViewState(model, activeMeaningId),
   );
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [scrollEdges, setScrollEdges] = React.useState({
@@ -75,12 +81,30 @@ export function LibrarySenseCardGroup({
   const meaningById = new Map(
     model.meanings.map((meaning) => [meaning.entryId, meaning]),
   );
+  const activeMeaningScrollKey = activeMeaningId
+    ? `${activeMeaningId}\u0000${model.meanings
+        .map((meaning) => meaning.entryId)
+        .join("\u0000")}`
+    : null;
+  const lastScrolledMeaningKey = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    setViewState((current) =>
-      reconcileLibrarySenseCardViewState(current, model.meanings),
-    );
-  }, [model.meanings]);
+    setViewState((current) => {
+      const next = reconcileLibrarySenseCardViewState(current, model.meanings);
+      const activeMeaning = activeMeaningId
+        ? model.meanings.find((meaning) => meaning.entryId === activeMeaningId)
+        : null;
+      if (!activeMeaning) return next;
+      const identity = librarySenseCardIdentity(
+        activeMeaning.entryId,
+        activeMeaning.cardTypeId,
+      );
+      return {
+        ...next,
+        [identity]: { ...next[identity], expanded: true },
+      };
+    });
+  }, [activeMeaningId, model.meanings]);
 
   const updateEntry = (
     identity: string,
@@ -107,6 +131,37 @@ export function LibrarySenseCardGroup({
       bottom: node.scrollTop + node.clientHeight >= node.scrollHeight - 2,
     });
   }, []);
+
+  React.useEffect(() => {
+    if (
+      !activeMeaningScrollKey ||
+      lastScrolledMeaningKey.current === activeMeaningScrollKey
+    ) {
+      return;
+    }
+    lastScrolledMeaningKey.current = activeMeaningScrollKey;
+    const node = scrollRef.current;
+    if (!node || !activeMeaningId) return;
+    const target = Array.from(
+      node.querySelectorAll<HTMLElement>("[data-entry-id]"),
+    ).find((candidate) => candidate.dataset.entryId === activeMeaningId);
+    if (!target) return;
+    const nodeRect = node.getBoundingClientRect();
+    const fadeHeight = Math.min(DETAILS_SCROLL_FADE_HEIGHT, node.clientHeight / 4);
+    const targetRect = target.getBoundingClientRect();
+    const leadRect = (
+      target.querySelector<HTMLElement>("[data-meaning-lead]") ?? target
+    ).getBoundingClientRect();
+    if (
+      leadRect.top < nodeRect.top + fadeHeight ||
+      leadRect.bottom > nodeRect.bottom - fadeHeight
+    ) {
+      // Open at the beginning, not at the bottom of a card taller than the
+      // viewport. Keep the first line below the pinned top fade.
+      node.scrollTop += targetRect.top - nodeRect.top - fadeHeight;
+    }
+    updateScrollEdges();
+  }, [activeMeaningId, activeMeaningScrollKey, updateScrollEdges]);
 
   React.useEffect(() => {
     const node = scrollRef.current;
@@ -291,12 +346,16 @@ export function LibrarySenseCardGroup({
                       expanded: !current.expanded,
                     }))
                   }
+                  onActiveMeaningChange={onActiveMeaningChange}
                   onRetryTranslation={() =>
                     onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
                   }
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
-                  onAction={onAction}
+                  onAction={(capability) => {
+                    onActiveMeaningChange?.(capability.target.entryId);
+                    onAction(capability);
+                  }}
                 />
               );
             })}
@@ -318,6 +377,7 @@ function MeaningCard({
   translationState,
   collectionCount,
   onToggleExpanded,
+  onActiveMeaningChange,
   onRetryTranslation,
   onOpenCollections,
   onTrainNext,
@@ -331,6 +391,7 @@ function MeaningCard({
   translationState: "pending" | "failed" | null;
   collectionCount: number;
   onToggleExpanded: () => void;
+  onActiveMeaningChange?: (entryId: string) => void;
   onRetryTranslation: () => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
@@ -339,6 +400,7 @@ function MeaningCard({
   const t = (key: string, variables?: Record<string, string | number>) =>
     platformV2Message(interfaceLanguage, key, variables);
   const activateCard = () => {
+    onActiveMeaningChange?.(meaning.entryId);
     if (!state.expanded) onToggleExpanded();
   };
   const hasVisibleLeadTranslation =
@@ -364,6 +426,7 @@ function MeaningCard({
       <div>
         <div
           data-testid="library-sense-card-lead"
+          data-meaning-lead
           className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
         >
           <div className="min-w-0">
@@ -411,6 +474,7 @@ function MeaningCard({
               aria-expanded={state.expanded}
               onClick={(event) => {
                 event.stopPropagation();
+                onActiveMeaningChange?.(meaning.entryId);
                 onToggleExpanded();
               }}
               className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:text-slate-800 dark:bg-[#171b22] dark:text-slate-400 dark:hover:text-slate-100"
@@ -508,7 +572,10 @@ function MeaningCard({
               {onOpenCollections ? (
                 <button
                   type="button"
-                  onClick={() => onOpenCollections(meaning)}
+                  onClick={() => {
+                    onActiveMeaningChange?.(meaning.entryId);
+                    onOpenCollections(meaning);
+                  }}
                   className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 font-semibold text-slate-600 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-600 dark:text-slate-300 dark:hover:text-indigo-200"
                 >
                   <ListIcon className="h-3.5 w-3.5" />
@@ -521,7 +588,10 @@ function MeaningCard({
               {onTrainNext ? (
                 <button
                   type="button"
-                  onClick={() => onTrainNext(meaning)}
+                  onClick={() => {
+                    onActiveMeaningChange?.(meaning.entryId);
+                    onTrainNext(meaning);
+                  }}
                   className="min-h-10 rounded-xl border border-indigo-400 bg-indigo-500/10 px-3 font-semibold text-indigo-700 transition hover:bg-indigo-500/15 dark:text-indigo-200"
                 >
                   {t("senseCard.training.next")}
@@ -562,7 +632,10 @@ function MeaningCard({
                 {translationState === "failed" ? (
                   <button
                     type="button"
-                    onClick={onRetryTranslation}
+                    onClick={() => {
+                      onActiveMeaningChange?.(meaning.entryId);
+                      onRetryTranslation();
+                    }}
                     className="ml-2 font-semibold text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-300"
                   >
                     {t("senseCard.translation.retry")}
@@ -725,7 +798,10 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
     <div
       aria-hidden="true"
       data-scroll-affordance={edge}
-      className={`pointer-events-none absolute inset-x-0 z-20 flex h-11 justify-center px-4 ${
+      // Leave at least half of a short reading region free from decoration.
+      // Keep the selected-meaning scroll inset above in sync with this cap.
+      style={{ height: `min(${DETAILS_SCROLL_FADE_HEIGHT}px, 25%)` }}
+      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
         isTop
           ? "top-0 items-start bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent pt-1 dark:from-[#11151d] dark:via-[#11151d]/90"
           : "bottom-0 items-end bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent pb-1 dark:from-[#11151d] dark:via-[#11151d]/90"
@@ -742,8 +818,31 @@ function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
 
 function initialViewState(
   model: LibrarySenseCardGroupModel,
+  activeMeaningId: string | null = null,
 ): LibrarySenseCardViewState {
-  return reconcileLibrarySenseCardViewState({}, model.meanings);
+  const state = reconcileLibrarySenseCardViewState({}, model.meanings);
+  if (!activeMeaningId) return state;
+  const meaning = model.meanings.find(
+    (candidate) => candidate.entryId === activeMeaningId,
+  );
+  if (!meaning) return state;
+  return {
+    ...Object.fromEntries(
+      model.meanings.map((candidate) => {
+        const identity = librarySenseCardIdentity(
+          candidate.entryId,
+          candidate.cardTypeId,
+        );
+        return [
+          identity,
+          {
+            ...state[identity],
+            expanded: candidate.entryId === meaning.entryId,
+          },
+        ];
+      }),
+    ),
+  };
 }
 
 const contentPresentation: Record<

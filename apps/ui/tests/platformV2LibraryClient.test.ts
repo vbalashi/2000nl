@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  fetchPlatformV2LibraryGroup,
   fetchPlatformV2LibraryGroupPage,
   fetchPlatformV2CrossReferenceTarget,
   selectPlatformV2CrossReferenceTarget,
-  selectPlatformV2MultiSenseGroup,
+  selectPlatformV2LibraryGroup,
 } from "@/lib/platform/platformV2LibraryClient";
 import {
   financeEntry,
@@ -38,16 +39,66 @@ const payload = {
   page: { selectedTierComplete: true, nextGroupCursor: null },
 };
 
-describe("selectPlatformV2MultiSenseGroup", () => {
+describe("selectPlatformV2LibraryGroup", () => {
+  test("loads the selected entry even when ordinary search omits its dictionary tier", async () => {
+    const fetchMock = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({
+        ...payload,
+        groups: body.entryId === financeEntry.entryId ? [multiSenseBankGroup] : [],
+      }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const group = await fetchPlatformV2LibraryGroup({
+      entryId: financeEntry.entryId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+    expect(group).toEqual(multiSenseBankGroup);
+    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toEqual({
+      entryId: financeEntry.entryId, intent: "dictionary-lookup",
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+  });
+
   test("selects the server group containing the exact selected entry", () => {
-    expect(selectPlatformV2MultiSenseGroup(payload, financeEntry.entryId)).toBe(
+    expect(selectPlatformV2LibraryGroup(payload, financeEntry.entryId)).toBe(
       multiSenseBankGroup,
     );
   });
 
-  test("does not replace the existing single-sense detail experience", () => {
+  test("uses exact entry identity when following a resolved cross-reference", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2CrossReferenceTarget({
+      query: "bank", sourceDictionaryId: "vandale",
+      targetEntryId: financeEntry.entryId,
+      targetHeadwordGroupId: multiSenseBankGroup.headwordGroupId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    })).resolves.toEqual(multiSenseBankGroup);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      entryId: financeEntry.entryId, intent: "dictionary-lookup",
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    });
+  });
+
+  test("does not retry an inaccessible exact entry as a headword search", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(fetchPlatformV2LibraryGroup({
+      entryId: financeEntry.entryId,
+      cardTypeId: "word-to-definition", contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+    })).rejects.toMatchObject({ kind: "http-error", status: 404 });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  test("selects an exact single-sense group", () => {
     expect(
-      selectPlatformV2MultiSenseGroup(
+      selectPlatformV2LibraryGroup(
         {
           ...payload,
           groups: [
@@ -61,12 +112,12 @@ describe("selectPlatformV2MultiSenseGroup", () => {
         },
         furnitureEntry.entryId,
       ),
-    ).toBeNull();
+    ).toEqual(expect.objectContaining({ entries: [furnitureEntry] }));
   });
 
   test("never falls back to matching by ordinal or headword", () => {
     expect(
-      selectPlatformV2MultiSenseGroup(payload, "missing-entry"),
+      selectPlatformV2LibraryGroup(payload, "missing-entry"),
     ).toBeNull();
   });
 
@@ -99,7 +150,7 @@ describe("selectPlatformV2MultiSenseGroup", () => {
     };
 
     expect(
-      selectPlatformV2MultiSenseGroup(
+      selectPlatformV2LibraryGroup(
         { ...payload, query: "daar", groups: [pointerGroup] },
         "entry-daar-2",
       ),
@@ -359,16 +410,16 @@ describe("fetchPlatformV2LibraryGroupPage", () => {
         "/api/platform/v2/lookup",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({
-            query: "goed",
-            cardTypeId: "word-to-definition",
-            contentLanguageCode: "nl",
-            translationTargetLanguageCode: "en",
-            intent: "dictionary-lookup",
-            cursor: "current-group-page",
-          }),
         }),
       );
+      expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toEqual({
+        query: "goed",
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+        intent: "dictionary-lookup",
+        cursor: "current-group-page",
+      });
       expect(page?.groups).toBe(payload.groups);
       expect(page?.nextGroupCursor).toBe("next-group-page");
     } finally {

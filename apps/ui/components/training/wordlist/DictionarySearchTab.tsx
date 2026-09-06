@@ -3,6 +3,7 @@
 import React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  copyEntryToUserDictionary,
   createUserDictionaryEntry,
   fetchAvailableDictionarySources,
   fetchAvailableLearningLanguages,
@@ -18,7 +19,6 @@ import type {
 } from "@/lib/types";
 import { hidePerfectParticiple } from "@/lib/definitionFormat";
 import { getAllMeanings } from "@/lib/wordUtils";
-import { WordDetailPanel } from "../WordDetailPanel";
 import { WordDetailDrawer } from "./WordDetailDrawer";
 import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -139,7 +139,7 @@ export function DictionarySearchTab({
     page,
     languageCode,
     dictionaryId,
-    detailEntry,
+    detailSelection,
     mobileDetailOpen,
   } = searchState;
   const [searchLoading, setSearchLoading] = useState(false);
@@ -197,12 +197,12 @@ export function DictionarySearchTab({
   const detailEntryInCurrentResults = useMemo(
     () =>
       Boolean(
-        detailEntry &&
+        detailSelection &&
           (useViewedListFilter
-            ? wordResults.some((resultEntry) => resultEntry.id === detailEntry.id)
+            ? wordResults.some((resultEntry) => resultEntry.id === detailSelection.entryId)
             : selectedGroupResult),
       ),
-    [detailEntry, selectedGroupResult, useViewedListFilter, wordResults],
+    [detailSelection, selectedGroupResult, useViewedListFilter, wordResults],
   );
 
   const runSearch = useCallback(async () => {
@@ -217,7 +217,7 @@ export function DictionarySearchTab({
         groupHasMore: false,
         selectedHeadwordGroupId: null,
         wordTotal: 0,
-        detailEntry: null,
+        detailSelection: null,
         mobileDetailOpen: false,
       });
       return;
@@ -247,7 +247,16 @@ export function DictionarySearchTab({
         ...current,
         wordResults: result.items,
         wordTotal: result.total,
-        detailEntry: current.detailEntry ?? result.items[0] ?? null,
+        detailSelection:
+          current.detailSelection ??
+          (result.items[0]
+            ? {
+                entryId: result.items[0].id,
+                headword: result.items[0].headword,
+                contentLanguageCode:
+                  result.items[0].language_code ?? searchLanguage,
+              }
+            : null),
       }));
     } catch (cause) {
       if (
@@ -281,6 +290,7 @@ export function DictionarySearchTab({
     updateSearchState,
     useViewedListFilter,
     runGroupSearch,
+    searchLanguage,
     viewedList?.type,
     viewedListId,
   ]);
@@ -290,7 +300,11 @@ export function DictionarySearchTab({
       const requestId = latestDetailRequestRef.current + 1;
       latestDetailRequestRef.current = requestId;
       updateSearchState({
-        detailEntry: entry,
+        detailSelection: {
+          entryId: entry.id,
+          headword: entry.headword,
+          contentLanguageCode: entry.language_code ?? searchLanguage,
+        },
         mobileDetailOpen: true,
       });
 
@@ -298,13 +312,17 @@ export function DictionarySearchTab({
       if (!hydrated || latestDetailRequestRef.current !== requestId) return;
       onSearchStateChange((current) => ({
         ...current,
-        detailEntry: hydrated,
+        detailSelection: {
+          entryId: hydrated.id,
+          headword: hydrated.headword,
+          contentLanguageCode: hydrated.language_code ?? searchLanguage,
+        },
         wordResults: current.wordResults.map((item) =>
           item.id === hydrated.id ? { ...item, ...hydrated } : item,
         ),
       }));
     },
-    [onSearchStateChange, updateSearchState, userId],
+    [onSearchStateChange, searchLanguage, updateSearchState, userId],
   );
 
   const handleUserDictionaryEntryCreated = useCallback(
@@ -312,7 +330,11 @@ export function DictionarySearchTab({
       onUserDictionaryEntryCreated?.(entry);
       onSearchStateChange((current) => ({
         ...current,
-        detailEntry: entry,
+        detailSelection: {
+          entryId: entry.id,
+          headword: entry.headword,
+          contentLanguageCode: entry.language_code ?? searchLanguage,
+        },
         wordResults: [
           entry,
           ...current.wordResults.filter((item) => item.id !== entry.id),
@@ -320,7 +342,16 @@ export function DictionarySearchTab({
         wordTotal: Math.max(current.wordTotal, current.wordResults.length + 1),
       }));
     },
-    [onSearchStateChange, onUserDictionaryEntryCreated],
+    [onSearchStateChange, onUserDictionaryEntryCreated, searchLanguage],
+  );
+
+  const handleCopyToUserDictionary = useCallback(
+    async (entryId: string) => {
+      const copiedEntryId = await copyEntryToUserDictionary({ entryId });
+      const copiedEntry = await fetchDictionaryEntryById(copiedEntryId, userId);
+      if (copiedEntry) handleUserDictionaryEntryCreated(copiedEntry);
+    },
+    [handleUserDictionaryEntryCreated, userId],
   );
 
   const createCustomEntry = useCallback(async () => {
@@ -452,7 +483,7 @@ export function DictionarySearchTab({
     query.trim() ||
       applyListFilter ||
       page !== 1 ||
-      detailEntry ||
+      detailSelection ||
       groupResults.length ||
       wordResults.length ||
       wordTotal,
@@ -730,7 +761,7 @@ export function DictionarySearchTab({
         ) : wordResults.length ? (
           <div className="space-y-2">
             {wordResults.map((entry, index) => {
-              const selected = detailEntry?.id === entry.id;
+              const selected = detailSelection?.entryId === entry.id;
               const previousGroup = index > 0 ? wordResults[index - 1]?.search_group_id : null;
               const showGroupHeader =
                 groupedSearchActive &&
@@ -860,7 +891,7 @@ export function DictionarySearchTab({
       <div className="flex min-h-0 flex-1">
         {results}
         <aside className="hidden w-[380px] shrink-0 border-l border-slate-100 lg:block dark:border-slate-800">
-          {detailEntry ? (
+          {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
               <div className="border-b border-slate-100 bg-slate-50 px-5 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
                 <div className="font-semibold text-slate-700 dark:text-slate-200">
@@ -874,11 +905,11 @@ export function DictionarySearchTab({
               </div>
               <div className="min-h-0 flex-1">
                 <LibraryWordDetail
-                  entryId={detailEntry.id}
+                  entryId={detailSelection.entryId}
                   initialGroup={selectedGroupResult?.group}
-                  headword={detailEntry.headword}
+                  headword={detailSelection.headword}
                   contentLanguageCode={
-                    detailEntry.language_code ?? searchLanguage
+                    detailSelection.contentLanguageCode
                   }
                   translationTargetLanguageCode={translationLang}
                   interfaceLanguage={interfaceLanguage}
@@ -888,26 +919,10 @@ export function DictionarySearchTab({
                     await reloadLists();
                     notifyListsUpdated();
                   }}
+                  onOpenListMembership={onOpenListMembership}
                   onTrainWord={onTrainWord}
+                  onCopyToUserDictionary={handleCopyToUserDictionary}
                   viewport="desktop"
-                  fallback={
-                    <WordDetailPanel
-                      entry={detailEntry}
-                      userId={userId}
-                      translationLang={translationLang}
-                      userLists={userLists}
-                      onListsUpdated={async () => {
-                        await reloadLists();
-                        notifyListsUpdated();
-                      }}
-                      onOpenListMembership={onOpenListMembership}
-                      onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-                      onTrainWord={onTrainWord}
-                      showHeader={true}
-                      showActions={true}
-                      autoFetchTranslation={false}
-                    />
-                  }
                 />
               </div>
             </div>
@@ -921,9 +936,9 @@ export function DictionarySearchTab({
 
       <div className="lg:hidden">
         <WordDetailDrawer
-          entry={detailEntry}
+          selection={detailSelection}
           initialGroup={selectedGroupResult?.group}
-          open={mobileDetailOpen && Boolean(detailEntry)}
+          open={mobileDetailOpen && Boolean(detailSelection)}
           onClose={() => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}
           contentLanguageCode={searchLanguage}
@@ -935,9 +950,8 @@ export function DictionarySearchTab({
             notifyListsUpdated();
           }}
           onOpenListMembership={onOpenListMembership}
-          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
           onTrainWord={onTrainWord}
-          autoFetchTranslation={false}
+          onCopyToUserDictionary={handleCopyToUserDictionary}
         />
       </div>
 

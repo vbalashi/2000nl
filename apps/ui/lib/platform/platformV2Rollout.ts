@@ -15,13 +15,6 @@ export function platformV2TrainingUiEnabled() {
   return value === "1" || value === "true";
 }
 
-export function platformV2LibraryUiEnabled() {
-  const value = process.env.NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI
-    ?.trim()
-    .toLowerCase();
-  return value === "1" || value === "true";
-}
-
 function envFlagEnabled(value: string | undefined) {
   const normalized = value?.trim().toLowerCase();
   return normalized === "1" || normalized === "true";
@@ -33,7 +26,6 @@ export function rolloutProfileDiagnostics() {
     platformV2Lookup: platformV2LookupEnabled(),
     platformV2Actions: platformV2ActionsEnabled(),
     platformV2TrainingUi: platformV2TrainingUiEnabled(),
-    platformV2LibraryUi: platformV2LibraryUiEnabled(),
     navigationShellV1: envFlagEnabled(
       process.env.NEXT_PUBLIC_NAVIGATION_SHELL_V1,
     ),

@@ -162,7 +162,13 @@ product CSS change was made.
 - [x] Record final product-owner approval of the synchronized cross-product set.
 - [x] Publish rollout, rollback and follow-up decisions.
 
-## Rollout boundary (draft)
+## Rollout boundary (historical pre-#252 draft)
+
+> Historical status: this pre-#252 evidence records the former independent
+> Library UI switch and its V1 rollback recommendation. Issue #252 retired
+> that Library-only switch when unified Details became V2-only; current profile
+> and operator guidance lives in `apps/ui/config/README.md` and
+> `docs/runbooks/dictionary-search-rollout.md`.
 
 Do not enable flags from this gate branch. Candidate rollout controls are:
 

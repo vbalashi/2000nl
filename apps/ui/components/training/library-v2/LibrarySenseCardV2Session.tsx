@@ -5,7 +5,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   fetchPlatformV2CrossReferenceTarget,
-  fetchPlatformV2MultiSenseGroup,
+  fetchPlatformV2LibraryGroup,
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
 import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingClient";
@@ -21,6 +21,7 @@ import type { CardTypeId } from "../../../../../packages/shared/types/platform";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 import { LibrarySenseCardGroup } from "./LibrarySenseCardGroup";
 import { LibraryCollectionsPicker } from "./LibraryCollectionsPicker";
+import { LibraryDetailsActions } from "./LibraryDetailsActions";
 import { SenseCardReportAction } from "@/components/feedback/SenseCardReportSheet";
 import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticReportClient";
 import {
@@ -41,7 +42,15 @@ type Props = {
   userLists?: WordListSummary[];
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
-  fallback: React.ReactNode;
+  onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
+  trainingActionEntryId?: string | null;
+  revealed?: boolean;
+  actionLoading?: boolean;
+  onTrainingAction?: (
+    action: "freeze" | "hide",
+    entryId: string,
+  ) => Promise<void> | void;
+  onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
 export function LibrarySenseCardV2Session({
@@ -56,7 +65,12 @@ export function LibrarySenseCardV2Session({
   userLists = [],
   onListsUpdated,
   onTrainWord,
-  fallback,
+  onCopyToUserDictionary,
+  trainingActionEntryId = null,
+  revealed = true,
+  actionLoading = false,
+  onTrainingAction,
+  onOpenListMembership,
 }: Props) {
   const translationLanguage =
     translationTargetLanguageCode === "off"
@@ -69,11 +83,7 @@ export function LibrarySenseCardV2Session({
         : entry.crossReferenceId === entryId,
     );
     if (!initialGroup || !selectedEntry) return null;
-    if (selectedEntry.kind === "cross-reference") return initialGroup;
-    return initialGroup.senseCount > 1 ||
-      initialGroup.entries.some((entry) => entry.kind === "cross-reference")
-      ? initialGroup
-      : null;
+    return initialGroup;
   }, [entryId, initialGroup]);
   const [group, setGroup] = React.useState<PlatformHeadwordGroupV2 | null>(
     compatibleInitialGroup,
@@ -94,6 +104,7 @@ export function LibrarySenseCardV2Session({
     "forbidden" | "timeout" | "contract" | "unavailable" | null
   >(null);
   const [lookupRetry, setLookupRetry] = React.useState(0);
+  const [loading, setLoading] = React.useState(!compatibleInitialGroup);
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
@@ -106,9 +117,36 @@ export function LibrarySenseCardV2Session({
   const [collectionStatus, setCollectionStatus] = React.useState<string | null>(
     null,
   );
+  const [activeMeaningId, setActiveMeaningId] = React.useState<string>(entryId);
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
+  const actionGeneration = React.useRef(0);
+  const membershipGeneration = React.useRef(0);
+  const detailIdentity = JSON.stringify([
+    entryId,
+    userId ?? null,
+    cardTypeId,
+    contentLanguageCode,
+    translationLanguage,
+    activeReferenceTarget?.query ?? null,
+    activeReferenceTarget?.sourceDictionaryId ?? null,
+    activeReferenceTarget?.targetHeadwordGroupId ?? null,
+    activeReferenceTarget?.targetEntryId ?? null,
+  ]);
+  const detailIdentityRef = React.useRef(detailIdentity);
+
+  React.useEffect(() => {
+    detailIdentityRef.current = detailIdentity;
+    actionGeneration.current += 1;
+    membershipGeneration.current += 1;
+    setBusyIdentity(null);
+    setError(null);
+    setMembershipsByEntryId({});
+    setCollectionsEntryId(null);
+    setCollectionBusyListId(null);
+    setCollectionStatus(null);
+  }, [detailIdentity]);
 
   React.useEffect(() => {
     translationSession.current += 1;
@@ -124,8 +162,19 @@ export function LibrarySenseCardV2Session({
   }, [entryId]);
 
   const load = React.useCallback(
-    async (signal?: AbortSignal, expectedTranslationSession?: number) => {
+    async (
+      signal?: AbortSignal,
+      expectedTranslationSession?: number,
+      expectedDetailIdentity?: string,
+    ) => {
+      if (
+        expectedDetailIdentity &&
+        expectedDetailIdentity !== detailIdentityRef.current
+      ) {
+        return null;
+      }
       const requestSequence = ++groupRequestSequence.current;
+      setLoading(true);
       const next = activeReferenceTarget
         ? await fetchPlatformV2CrossReferenceTarget({
             query: activeReferenceTarget.query,
@@ -137,8 +186,7 @@ export function LibrarySenseCardV2Session({
             translationTargetLanguageCode: translationLanguage,
             signal,
           })
-        : await fetchPlatformV2MultiSenseGroup({
-            query: headword,
+        : await fetchPlatformV2LibraryGroup({
             entryId,
             cardTypeId,
             contentLanguageCode,
@@ -149,11 +197,15 @@ export function LibrarySenseCardV2Session({
         signal?.aborted ||
         requestSequence !== groupRequestSequence.current ||
         (expectedTranslationSession != null &&
-          expectedTranslationSession !== translationSession.current)
+          expectedTranslationSession !== translationSession.current) ||
+        (expectedDetailIdentity &&
+          expectedDetailIdentity !== detailIdentityRef.current)
       ) {
         return next;
       }
       setGroup(next);
+      if (!next) setLookupError("unavailable");
+      setLoading(false);
       return next;
     },
     [
@@ -161,7 +213,6 @@ export function LibrarySenseCardV2Session({
       cardTypeId,
       contentLanguageCode,
       entryId,
-      headword,
       translationLanguage,
     ],
   );
@@ -172,38 +223,42 @@ export function LibrarySenseCardV2Session({
     setError(null);
     setLookupError(null);
     if (compatibleInitialGroup && !activeReferenceTarget) {
+      setLoading(false);
       return () => controller.abort();
     }
-    void load(controller.signal).catch((cause) => {
-      const aborted =
-        controller.signal.aborted ||
-        Boolean(
-          cause &&
-            typeof cause === "object" &&
-            "name" in cause &&
-            cause.name === "AbortError",
-        );
-      if (!aborted) {
-        const message = cause instanceof Error ? cause.message : "";
-        setLookupError(
-          message === "platform_request_timeout"
-            ? "timeout"
-            : message === "contract-mismatch"
-              ? "contract"
-              : message === "lookup_http_401" || message === "lookup_http_403"
-                ? "forbidden"
-                : "unavailable",
-        );
-      }
-    });
+    void load(controller.signal)
+      .catch((cause) => {
+        const aborted =
+          controller.signal.aborted ||
+          Boolean(
+            cause &&
+              typeof cause === "object" &&
+              "name" in cause &&
+              cause.name === "AbortError",
+          );
+        if (!aborted) {
+          const message = cause instanceof Error ? cause.message : "";
+          setLookupError(
+            message === "platform_request_timeout"
+              ? "timeout"
+              : message === "contract-mismatch"
+                ? "contract"
+                : message === "lookup_http_401" || message === "lookup_http_403"
+                  ? "forbidden"
+                  : "unavailable",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, [activeReferenceTarget, compatibleInitialGroup, load, lookupRetry]);
 
   const model = React.useMemo(() => {
     const matchesSelectedEntry = group?.entries.some((candidate) =>
       candidate.kind === "sense-card"
-        ? candidate.entryId === entryId &&
-          candidate.card?.cardTypeId === cardTypeId
+        ? candidate.entryId === entryId
         : candidate.crossReferenceId === entryId,
     );
     const compatibleGroup =
@@ -217,14 +272,65 @@ export function LibrarySenseCardV2Session({
       : null;
   }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage]);
 
+  React.useEffect(() => {
+    setActiveMeaningId(entryId);
+  }, [entryId]);
+
+  React.useEffect(() => {
+    if (!group) return;
+    const matchingActiveEntry = group.entries.find((candidate) =>
+      candidate.kind === "sense-card"
+        ? candidate.entryId === activeMeaningId
+        : candidate.crossReferenceId === activeMeaningId,
+    );
+    if (matchingActiveEntry) return;
+
+    const targetEntryId = activeReferenceTarget?.targetEntryId;
+    if (targetEntryId) {
+      const matchingTargetEntry = group.entries.find(
+        (candidate) =>
+          candidate.kind === "sense-card" &&
+          candidate.entryId === targetEntryId,
+      );
+      if (matchingTargetEntry) {
+        setActiveMeaningId(targetEntryId);
+      }
+      return;
+    }
+
+    if (activeReferenceTarget) {
+      const firstMeaning = group.entries.find(
+        (candidate) => candidate.kind === "sense-card",
+      );
+      if (firstMeaning) setActiveMeaningId(firstMeaning.entryId);
+      return;
+    }
+
+    const firstMeaning = group.entries.find(
+      (candidate) => candidate.kind === "sense-card",
+    );
+    if (firstMeaning) {
+      setActiveMeaningId(firstMeaning.entryId);
+    }
+  }, [activeMeaningId, activeReferenceTarget, group]);
+
   const loadMemberships = React.useCallback(
-    async (entryIds: string[]) => {
+    async (
+      entryIds: string[],
+      expectedDetailIdentity: string,
+    ) => {
+      if (expectedDetailIdentity !== detailIdentityRef.current) return;
+      const expectedMembershipGeneration = ++membershipGeneration.current;
+      const isCurrent = () =>
+        expectedDetailIdentity === detailIdentityRef.current &&
+        expectedMembershipGeneration === membershipGeneration.current;
       if (!userId || !entryIds.length) {
-        setMembershipsByEntryId({});
+        if (isCurrent()) setMembershipsByEntryId({});
         return;
       }
       try {
         const memberships = await fetchEntryListMemberships(entryIds);
+        if (!isCurrent()) return;
         setMembershipsByEntryId(
           Object.fromEntries(
             entryIds.map((meaningEntryId) => [
@@ -234,18 +340,30 @@ export function LibrarySenseCardV2Session({
           ),
         );
       } catch {
-        setMembershipsByEntryId({});
+        if (isCurrent()) setMembershipsByEntryId({});
       }
     },
     [userId],
   );
 
   React.useEffect(() => {
-    if (!model) return;
-    void loadMemberships(model.meanings.map((meaning) => meaning.entryId));
-  }, [loadMemberships, model]);
+    if (!model) {
+      membershipGeneration.current += 1;
+      setMembershipsByEntryId({});
+      return;
+    }
+    void loadMemberships(
+      model.meanings.map((meaning) => meaning.entryId),
+      detailIdentity,
+    );
+  }, [detailIdentity, loadMemberships, model]);
 
   const handleAction = async (capability: LibraryMutationCapability) => {
+    const expectedDetailIdentity = detailIdentityRef.current;
+    const expectedActionGeneration = ++actionGeneration.current;
+    const isCurrentAction = () =>
+      expectedDetailIdentity === detailIdentityRef.current &&
+      expectedActionGeneration === actionGeneration.current;
     setBusyIdentity(
       librarySenseCardIdentity(
         capability.target.entryId,
@@ -255,11 +373,14 @@ export function LibrarySenseCardV2Session({
     setError(null);
     try {
       await performPlatformV2TrainingAction(capability);
-      await load();
+      if (!isCurrentAction()) return;
+      await load(undefined, undefined, expectedDetailIdentity);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "action_failed");
+      if (isCurrentAction()) {
+        setError(cause instanceof Error ? cause.message : "action_failed");
+      }
     } finally {
-      setBusyIdentity(null);
+      if (isCurrentAction()) setBusyIdentity(null);
     }
   };
 
@@ -288,11 +409,15 @@ export function LibrarySenseCardV2Session({
 
   const refreshMemberships = React.useCallback(async () => {
     if (!model) return;
-    await loadMemberships(model.meanings.map((meaning) => meaning.entryId));
-  }, [loadMemberships, model]);
+    await loadMemberships(
+      model.meanings.map((meaning) => meaning.entryId),
+      detailIdentity,
+    );
+  }, [detailIdentity, loadMemberships, model]);
 
   const handleToggleList = async (list: WordListSummary, included: boolean) => {
     if (!collectionsEntryId) return;
+    const isCurrent = () => detailIdentity === detailIdentityRef.current;
     setCollectionBusyListId(list.id);
     setCollectionStatus(null);
     try {
@@ -301,21 +426,26 @@ export function LibrarySenseCardV2Session({
         : await addWordsToUserList(list.id, [collectionsEntryId]);
       if (result.error) throw result.error;
       await refreshMemberships();
+      if (!isCurrent()) return;
       await onListsUpdated?.();
+      if (!isCurrent()) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
     } catch {
-      setCollectionStatus(
-        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
-      );
+      if (isCurrent()) {
+        setCollectionStatus(
+          platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+        );
+      }
     } finally {
-      setCollectionBusyListId(null);
+      if (isCurrent()) setCollectionBusyListId(null);
     }
   };
 
   const handleCreateList = async (name: string) => {
     if (!userId || !collectionsEntryId) return;
+    const isCurrent = () => detailIdentity === detailIdentityRef.current;
     setCollectionBusyListId("__new__");
     setCollectionStatus(null);
     try {
@@ -328,16 +458,20 @@ export function LibrarySenseCardV2Session({
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
       await refreshMemberships();
+      if (!isCurrent()) return;
       await onListsUpdated?.();
+      if (!isCurrent()) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
     } catch {
-      setCollectionStatus(
-        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
-      );
+      if (isCurrent()) {
+        setCollectionStatus(
+          platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+        );
+      }
     } finally {
-      setCollectionBusyListId(null);
+      if (isCurrent()) setCollectionBusyListId(null);
     }
   };
 
@@ -450,58 +584,63 @@ export function LibrarySenseCardV2Session({
   );
 
   const lookupErrorText = lookupError
-    ? interfaceLanguage === "nl"
-      ? lookupError === "timeout"
-        ? "De woordenboekkaart duurde te lang om te laden."
-        : lookupError === "forbidden"
-          ? "Je hebt geen toegang tot deze woordenboekkaart."
-          : lookupError === "contract"
-            ? "De woordenboekkaart heeft een onbekend formaat."
-            : "De woordenboekkaart is tijdelijk niet beschikbaar."
-      : lookupError === "timeout"
-        ? "The dictionary card took too long to load."
-        : lookupError === "forbidden"
-          ? "You do not have access to this dictionary card."
-          : lookupError === "contract"
-            ? "The dictionary card has an unsupported format."
-            : "The dictionary card is temporarily unavailable."
+    ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
-  const errorNotice = lookupErrorText || error ? (
-    <p
-      role="alert"
-      className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
-    >
-      {lookupErrorText ?? error}
-      {lookupError ? (
-        <button
-          type="button"
-          className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
-          onClick={() => setLookupRetry((current) => current + 1)}
-        >
-          {interfaceLanguage === "nl" ? "Opnieuw proberen" : "Retry"}
-        </button>
-      ) : null}
-    </p>
-  ) : null;
+  const errorNotice =
+    lookupErrorText || error ? (
+      <p
+        role="alert"
+        className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
+      >
+        {lookupErrorText ?? error}
+        {lookupError ? (
+          <button
+            type="button"
+            className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
+            onClick={() => setLookupRetry((current) => current + 1)}
+          >
+            {platformV2Message(interfaceLanguage, "common.retry")}
+          </button>
+        ) : null}
+      </p>
+    ) : null;
 
   if (!model) {
     return (
       <div className="relative h-full min-h-0">
-        {fallback}
+        {loading || !lookupError ? (
+          <div
+            data-testid="library-sense-card-loading"
+            className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
+          >
+            {platformV2Message(interfaceLanguage, "senseCard.details.loading")}
+          </div>
+        ) : (
+          <div
+            data-testid="library-sense-card-unavailable"
+            className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
+          >
+            {platformV2Message(
+              interfaceLanguage,
+              "senseCard.details.unavailable",
+            )}
+          </div>
+        )}
         {errorNotice}
       </div>
     );
   }
 
-  const selectedReportEntry = group?.entries.find(
+  const selectedActiveEntry = group?.entries.find(
     (candidate) =>
-      candidate.kind === "sense-card" && candidate.entryId === entryId,
+      candidate.kind === "sense-card" && candidate.entryId === activeMeaningId,
   );
+  const activeSenseEntry =
+    selectedActiveEntry?.kind === "sense-card" ? selectedActiveEntry : null;
   const canReport = Boolean(
     group &&
-    selectedReportEntry?.kind === "sense-card" &&
-    selectedReportEntry.reportContentRevision &&
-    selectedReportEntry.capabilities.some(
+    activeSenseEntry?.reportContentRevision &&
+    activeSenseEntry.capabilities.some(
       (capability) =>
         capability.actionId === "report-content" &&
         capability.target.kind === "entry",
@@ -509,60 +648,84 @@ export function LibrarySenseCardV2Session({
   );
 
   return (
-    <div className="relative h-full min-h-0">
-      <LibrarySenseCardGroup
-        model={model}
-        interfaceLanguage={interfaceLanguage}
-        busyIdentity={busyIdentity}
-        audioBusy={audioBusy}
-        onPlayAudio={
-          model.audioCapability ? () => void handlePlayAudio() : undefined
-        }
-        translationEnabled={
-          Boolean(translationLanguage) && model.meanings.length > 0
-        }
-        translationStates={translationStates}
-        collectionCounts={Object.fromEntries(
-          Object.entries(membershipsByEntryId).map(
-            ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
-          ),
-        )}
-        onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
-          void handleRequestTranslation(
-            meaningEntryId,
-            meaningCardTypeId,
-            translationStates[
-              librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
-            ] === "failed",
-          )
-        }
-        onOpenCollections={
-          userId
-            ? (meaning) => {
-                setCollectionStatus(null);
-                setCollectionsEntryId(meaning.entryId);
-              }
-            : undefined
-        }
-        onTrainNext={
-          onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
-        }
-        onFollowCrossReference={setActiveReferenceTarget}
-        onAction={(capability) => void handleAction(capability)}
-        bottomOverlayReserve={canReport}
-      />
-      {canReport && group && selectedReportEntry?.kind === "sense-card" ? (
-          <div className="absolute bottom-2 left-3 z-20 sm:left-5">
-            <SenseCardReportAction
-              snapshot={freezeSenseCardDiagnosticSnapshot({
-                route: "library",
-                group,
-                entry: selectedReportEntry,
-              })}
-              interfaceLanguage={interfaceLanguage}
-              disabled={Boolean(busyIdentity)}
-            />
-          </div>
+    <div className="relative flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1">
+        <LibrarySenseCardGroup
+          model={model}
+          interfaceLanguage={interfaceLanguage}
+          busyIdentity={busyIdentity}
+          audioBusy={audioBusy}
+          onPlayAudio={
+            model.audioCapability ? () => void handlePlayAudio() : undefined
+          }
+          translationEnabled={
+            Boolean(translationLanguage) && model.meanings.length > 0
+          }
+          translationStates={translationStates}
+          collectionCounts={Object.fromEntries(
+            Object.entries(membershipsByEntryId).map(
+              ([meaningEntryId, lists]) => [meaningEntryId, lists.length],
+            ),
+          )}
+          activeMeaningId={activeMeaningId}
+          onActiveMeaningChange={setActiveMeaningId}
+          onRequestTranslation={(meaningEntryId, meaningCardTypeId) =>
+            void handleRequestTranslation(
+              meaningEntryId,
+              meaningCardTypeId,
+              translationStates[
+                librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
+              ] === "failed",
+            )
+          }
+          onOpenCollections={
+            userId
+              ? (meaning) => {
+                  setCollectionStatus(null);
+                  setCollectionsEntryId(meaning.entryId);
+                }
+              : undefined
+          }
+          onTrainNext={
+            onTrainWord ? (meaning) => onTrainWord(meaning.entryId) : undefined
+          }
+          onFollowCrossReference={(target) => {
+            if (target.targetEntryId) setActiveMeaningId(target.targetEntryId);
+            setActiveReferenceTarget(target);
+          }}
+          onAction={(capability) => void handleAction(capability)}
+          bottomOverlayReserve={canReport}
+        />
+      </div>
+      {activeSenseEntry &&
+      (onCopyToUserDictionary || onTrainingAction || canReport) ? (
+        <LibraryDetailsActions
+          entryId={activeMeaningId}
+          interfaceLanguage={interfaceLanguage}
+          revealed={revealed}
+          actionLoading={actionLoading}
+          onTrainingAction={
+            activeSenseEntry && activeMeaningId === trainingActionEntryId
+              ? (action) => onTrainingAction?.(action, activeMeaningId)
+              : undefined
+          }
+          onCopyToUserDictionary={
+            activeSenseEntry ? onCopyToUserDictionary : undefined
+          }
+          leadingAction={
+            canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+              <SenseCardReportAction
+                snapshot={freezeSenseCardDiagnosticSnapshot({
+                  route: "library",
+                  group,
+                  entry: selectedActiveEntry,
+                })}
+                interfaceLanguage={interfaceLanguage}
+                disabled={Boolean(busyIdentity)}
+              />
+            ) : null
+          }
+        />
       ) : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
@@ -580,6 +743,7 @@ export function LibrarySenseCardV2Session({
         onClose={() => setCollectionsEntryId(null)}
         onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}
+        onOpenListMembership={onOpenListMembership}
       />
       {errorNotice}
     </div>
