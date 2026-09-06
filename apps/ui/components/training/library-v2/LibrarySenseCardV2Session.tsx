@@ -121,11 +121,31 @@ export function LibrarySenseCardV2Session({
   const translationPollTimers = React.useRef<Record<string, number>>({});
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
-  const detailIdentity = `${entryId}\u0000${activeReferenceTarget?.targetEntryId ?? activeReferenceTarget?.query ?? ""}`;
+  const actionGeneration = React.useRef(0);
+  const membershipGeneration = React.useRef(0);
+  const detailIdentity = JSON.stringify([
+    entryId,
+    userId ?? null,
+    cardTypeId,
+    contentLanguageCode,
+    translationLanguage,
+    activeReferenceTarget?.query ?? null,
+    activeReferenceTarget?.sourceDictionaryId ?? null,
+    activeReferenceTarget?.targetHeadwordGroupId ?? null,
+    activeReferenceTarget?.targetEntryId ?? null,
+  ]);
   const detailIdentityRef = React.useRef(detailIdentity);
 
   React.useEffect(() => {
     detailIdentityRef.current = detailIdentity;
+    actionGeneration.current += 1;
+    membershipGeneration.current += 1;
+    setBusyIdentity(null);
+    setError(null);
+    setMembershipsByEntryId({});
+    setCollectionsEntryId(null);
+    setCollectionBusyListId(null);
+    setCollectionStatus(null);
   }, [detailIdentity]);
 
   React.useEffect(() => {
@@ -165,7 +185,7 @@ export function LibrarySenseCardV2Session({
             contentLanguageCode,
             translationTargetLanguageCode: translationLanguage,
             signal,
-        })
+          })
         : await fetchPlatformV2LibraryGroup({
             entryId,
             cardTypeId,
@@ -290,20 +310,27 @@ export function LibrarySenseCardV2Session({
       (candidate) => candidate.kind === "sense-card",
     );
     if (firstMeaning) {
-      setActiveMeaningId(
-        firstMeaning.entryId,
-      );
+      setActiveMeaningId(firstMeaning.entryId);
     }
   }, [activeMeaningId, activeReferenceTarget, group]);
 
   const loadMemberships = React.useCallback(
-    async (entryIds: string[]) => {
+    async (
+      entryIds: string[],
+      expectedDetailIdentity: string,
+    ) => {
+      if (expectedDetailIdentity !== detailIdentityRef.current) return;
+      const expectedMembershipGeneration = ++membershipGeneration.current;
+      const isCurrent = () =>
+        expectedDetailIdentity === detailIdentityRef.current &&
+        expectedMembershipGeneration === membershipGeneration.current;
       if (!userId || !entryIds.length) {
-        setMembershipsByEntryId({});
+        if (isCurrent()) setMembershipsByEntryId({});
         return;
       }
       try {
         const memberships = await fetchEntryListMemberships(entryIds);
+        if (!isCurrent()) return;
         setMembershipsByEntryId(
           Object.fromEntries(
             entryIds.map((meaningEntryId) => [
@@ -313,19 +340,30 @@ export function LibrarySenseCardV2Session({
           ),
         );
       } catch {
-        setMembershipsByEntryId({});
+        if (isCurrent()) setMembershipsByEntryId({});
       }
     },
     [userId],
   );
 
   React.useEffect(() => {
-    if (!model) return;
-    void loadMemberships(model.meanings.map((meaning) => meaning.entryId));
-  }, [loadMemberships, model]);
+    if (!model) {
+      membershipGeneration.current += 1;
+      setMembershipsByEntryId({});
+      return;
+    }
+    void loadMemberships(
+      model.meanings.map((meaning) => meaning.entryId),
+      detailIdentity,
+    );
+  }, [detailIdentity, loadMemberships, model]);
 
   const handleAction = async (capability: LibraryMutationCapability) => {
     const expectedDetailIdentity = detailIdentityRef.current;
+    const expectedActionGeneration = ++actionGeneration.current;
+    const isCurrentAction = () =>
+      expectedDetailIdentity === detailIdentityRef.current &&
+      expectedActionGeneration === actionGeneration.current;
     setBusyIdentity(
       librarySenseCardIdentity(
         capability.target.entryId,
@@ -335,11 +373,14 @@ export function LibrarySenseCardV2Session({
     setError(null);
     try {
       await performPlatformV2TrainingAction(capability);
+      if (!isCurrentAction()) return;
       await load(undefined, undefined, expectedDetailIdentity);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "action_failed");
+      if (isCurrentAction()) {
+        setError(cause instanceof Error ? cause.message : "action_failed");
+      }
     } finally {
-      setBusyIdentity(null);
+      if (isCurrentAction()) setBusyIdentity(null);
     }
   };
 
@@ -368,11 +409,15 @@ export function LibrarySenseCardV2Session({
 
   const refreshMemberships = React.useCallback(async () => {
     if (!model) return;
-    await loadMemberships(model.meanings.map((meaning) => meaning.entryId));
-  }, [loadMemberships, model]);
+    await loadMemberships(
+      model.meanings.map((meaning) => meaning.entryId),
+      detailIdentity,
+    );
+  }, [detailIdentity, loadMemberships, model]);
 
   const handleToggleList = async (list: WordListSummary, included: boolean) => {
     if (!collectionsEntryId) return;
+    const isCurrent = () => detailIdentity === detailIdentityRef.current;
     setCollectionBusyListId(list.id);
     setCollectionStatus(null);
     try {
@@ -381,21 +426,26 @@ export function LibrarySenseCardV2Session({
         : await addWordsToUserList(list.id, [collectionsEntryId]);
       if (result.error) throw result.error;
       await refreshMemberships();
+      if (!isCurrent()) return;
       await onListsUpdated?.();
+      if (!isCurrent()) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
     } catch {
-      setCollectionStatus(
-        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
-      );
+      if (isCurrent()) {
+        setCollectionStatus(
+          platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+        );
+      }
     } finally {
-      setCollectionBusyListId(null);
+      if (isCurrent()) setCollectionBusyListId(null);
     }
   };
 
   const handleCreateList = async (name: string) => {
     if (!userId || !collectionsEntryId) return;
+    const isCurrent = () => detailIdentity === detailIdentityRef.current;
     setCollectionBusyListId("__new__");
     setCollectionStatus(null);
     try {
@@ -408,16 +458,20 @@ export function LibrarySenseCardV2Session({
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
       await refreshMemberships();
+      if (!isCurrent()) return;
       await onListsUpdated?.();
+      if (!isCurrent()) return;
       setCollectionStatus(
         platformV2Message(interfaceLanguage, "senseCard.collections.saved"),
       );
     } catch {
-      setCollectionStatus(
-        platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
-      );
+      if (isCurrent()) {
+        setCollectionStatus(
+          platformV2Message(interfaceLanguage, "senseCard.collections.failed"),
+        );
+      }
     } finally {
-      setCollectionBusyListId(null);
+      if (isCurrent()) setCollectionBusyListId(null);
     }
   };
 
@@ -532,23 +586,24 @@ export function LibrarySenseCardV2Session({
   const lookupErrorText = lookupError
     ? platformV2Message(interfaceLanguage, `senseCard.lookup.${lookupError}`)
     : null;
-  const errorNotice = lookupErrorText || error ? (
-    <p
-      role="alert"
-      className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
-    >
-      {lookupErrorText ?? error}
-      {lookupError ? (
-        <button
-          type="button"
-          className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
-          onClick={() => setLookupRetry((current) => current + 1)}
-        >
-          {platformV2Message(interfaceLanguage, "common.retry")}
-        </button>
-      ) : null}
-    </p>
-  ) : null;
+  const errorNotice =
+    lookupErrorText || error ? (
+      <p
+        role="alert"
+        className="absolute inset-x-4 bottom-4 rounded-xl border border-rose-400/50 bg-rose-950/90 px-3 py-2 text-sm text-rose-100"
+      >
+        {lookupErrorText ?? error}
+        {lookupError ? (
+          <button
+            type="button"
+            className="ml-3 rounded-full border border-current px-3 py-1 font-semibold"
+            onClick={() => setLookupRetry((current) => current + 1)}
+          >
+            {platformV2Message(interfaceLanguage, "common.retry")}
+          </button>
+        ) : null}
+      </p>
+    ) : null;
 
   if (!model) {
     return (
@@ -565,7 +620,10 @@ export function LibrarySenseCardV2Session({
             data-testid="library-sense-card-unavailable"
             className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
           >
-            {platformV2Message(interfaceLanguage, "senseCard.details.unavailable")}
+            {platformV2Message(
+              interfaceLanguage,
+              "senseCard.details.unavailable",
+            )}
           </div>
         )}
         {errorNotice}
@@ -651,7 +709,9 @@ export function LibrarySenseCardV2Session({
               ? (action) => onTrainingAction?.(action, activeMeaningId)
               : undefined
           }
-          onCopyToUserDictionary={activeSenseEntry ? onCopyToUserDictionary : undefined}
+          onCopyToUserDictionary={
+            activeSenseEntry ? onCopyToUserDictionary : undefined
+          }
           leadingAction={
             canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
               <SenseCardReportAction
