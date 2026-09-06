@@ -116,11 +116,17 @@ describe("LibrarySenseCardV2Session", () => {
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
         interfaceLanguage="en"
+        onCopyToUserDictionary={vi.fn()}
       />,
     );
 
     await screen.findByTestId("library-sense-card-group");
     expect(screen.getAllByRole("button", { name: "Report" })).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Report" }).closest(
+        '[data-testid="library-details-actions"]',
+      ),
+    ).not.toBeNull();
     expect(screen.queryByRole("button", { name: /Report:/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Report" }));
     expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
@@ -542,9 +548,10 @@ describe("LibrarySenseCardV2Session", () => {
     fetchCrossReferenceTarget.mockResolvedValue({
       ...multiSenseBankGroup,
       header: { ...multiSenseBankGroup.header, text: "daar-" },
-      senseCount: 1,
-      entryCount: 1,
-      entries: [{ ...financeEntry, entryId: "entry-daar-target" }],
+      entries: [
+        { ...financeEntry, entryId: "entry-daar-target" },
+        furnitureEntry,
+      ],
     });
     const copyEntry = vi.fn().mockResolvedValue(undefined);
 
@@ -592,8 +599,17 @@ describe("LibrarySenseCardV2Session", () => {
         "een bedrijf dat jouw geld bewaart of waar je geld kunt lenen",
       ),
     ).toBeInTheDocument();
+    const targetCard = screen.getByTestId("library-sense-card-entry-daar-target");
+    const alternateCard = screen.getByTestId(
+      `library-sense-card-${furnitureEntry.entryId}`,
+    );
+    expect(targetCard).toHaveAttribute("data-expanded", "true");
+    fireEvent.click(alternateCard);
+    expect(alternateCard).toHaveAttribute("data-expanded", "true");
     fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
-    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith("entry-daar-target"));
+    await waitFor(() =>
+      expect(copyEntry).toHaveBeenCalledWith(furnitureEntry.entryId),
+    );
   });
 
   test("normalizes the translation-off sentinel before lookup", async () => {

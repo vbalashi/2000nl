@@ -165,9 +165,8 @@ export function LibrarySenseCardV2Session({
             contentLanguageCode,
             translationTargetLanguageCode: translationLanguage,
             signal,
-          })
+        })
         : await fetchPlatformV2LibraryGroup({
-            query: headword,
             entryId,
             cardTypeId,
             contentLanguageCode,
@@ -194,7 +193,6 @@ export function LibrarySenseCardV2Session({
       cardTypeId,
       contentLanguageCode,
       entryId,
-      headword,
       translationLanguage,
     ],
   );
@@ -260,24 +258,42 @@ export function LibrarySenseCardV2Session({
 
   React.useEffect(() => {
     if (!group) return;
-    const preferredEntryId = activeReferenceTarget?.targetEntryId ?? activeMeaningId;
-    const matchingEntry = group.entries.find((candidate) =>
+    const matchingActiveEntry = group.entries.find((candidate) =>
       candidate.kind === "sense-card"
-        ? candidate.entryId === preferredEntryId
-        : candidate.crossReferenceId === preferredEntryId,
+        ? candidate.entryId === activeMeaningId
+        : candidate.crossReferenceId === activeMeaningId,
     );
-    if (matchingEntry) {
-      setActiveMeaningId(
-        matchingEntry.kind === "sense-card"
-          ? matchingEntry.entryId
-          : matchingEntry.crossReferenceId,
+    if (matchingActiveEntry) return;
+
+    const targetEntryId = activeReferenceTarget?.targetEntryId;
+    if (targetEntryId) {
+      const matchingTargetEntry = group.entries.find(
+        (candidate) =>
+          candidate.kind === "sense-card" &&
+          candidate.entryId === targetEntryId,
       );
+      if (matchingTargetEntry) {
+        setActiveMeaningId(targetEntryId);
+      }
       return;
     }
+
+    if (activeReferenceTarget) {
+      const firstMeaning = group.entries.find(
+        (candidate) => candidate.kind === "sense-card",
+      );
+      if (firstMeaning) setActiveMeaningId(firstMeaning.entryId);
+      return;
+    }
+
     const firstMeaning = group.entries.find(
       (candidate) => candidate.kind === "sense-card",
     );
-    if (firstMeaning) setActiveMeaningId(firstMeaning.entryId);
+    if (firstMeaning) {
+      setActiveMeaningId(
+        firstMeaning.entryId,
+      );
+    }
   }, [activeMeaningId, activeReferenceTarget, group]);
 
   const loadMemberships = React.useCallback(
@@ -622,7 +638,7 @@ export function LibrarySenseCardV2Session({
           bottomOverlayReserve={canReport}
         />
       </div>
-      {onCopyToUserDictionary || onTrainingAction ? (
+      {onCopyToUserDictionary || onTrainingAction || canReport ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
@@ -634,20 +650,20 @@ export function LibrarySenseCardV2Session({
               : undefined
           }
           onCopyToUserDictionary={onCopyToUserDictionary}
+          leadingAction={
+            canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+              <SenseCardReportAction
+                snapshot={freezeSenseCardDiagnosticSnapshot({
+                  route: "library",
+                  group,
+                  entry: selectedActiveEntry,
+                })}
+                interfaceLanguage={interfaceLanguage}
+                disabled={Boolean(busyIdentity)}
+              />
+            ) : null
+          }
         />
-      ) : null}
-      {canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
-        <div className="absolute bottom-2 left-3 z-20 sm:left-5">
-          <SenseCardReportAction
-            snapshot={freezeSenseCardDiagnosticSnapshot({
-              route: "library",
-              group,
-              entry: selectedActiveEntry,
-            })}
-            interfaceLanguage={interfaceLanguage}
-            disabled={Boolean(busyIdentity)}
-          />
-        </div>
       ) : null}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
