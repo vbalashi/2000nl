@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>2000NL · три размера текста</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#10151c;color:#e8edf5;font:16px/1.5 system-ui,sans-serif}
+    main{max-width:1240px;margin:auto;padding:24px}h1{font-size:25px;margin:0 0 8px}p{margin:8px 0;color:#bbc6d7}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}label{display:grid;gap:4px;font-size:13px}
+    select,button{font:inherit;color:inherit;background:#202936;border:1px solid #64748b;border-radius:7px;padding:9px 12px}
+    button{cursor:pointer}button[aria-pressed=true]{border-color:#aaa6ff;background:#353163}button:focus-visible,select:focus-visible{outline:3px solid #aaa6ff;outline-offset:3px}
+    .sizes{display:flex;gap:8px;flex-wrap:wrap}.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}
+    figure{margin:0;min-width:0}figcaption{font-size:17px;font-weight:600;margin-bottom:8px}figcaption small{display:block;font-size:13px;font-weight:400;color:#bbc6d7}
+    img{display:block;width:100%;height:auto;border:1px solid #596377;border-radius:8px}a{color:#b6b1ff}
+    table{width:100%;border-collapse:collapse;margin:18px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid #384253}th{font-weight:500;color:#bbc6d7}
+    .note{padding:12px 16px;border-left:3px solid #e4b86d;background:#282419}.meta{font-size:13px}.mobile-only{display:none}
+    @media(max-width:700px){main{padding:16px}h1{font-size:22px}.gallery{grid-template-columns:1fr}.gallery figure:not(.selected){display:none}.mobile-only{display:block}th,td{padding:8px 4px;font-size:13px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Один экран, три размера текста</h1>
+  <p>Эксперимент на настоящей карточке. Компоновка B уже онлайн; эти размеры ещё не опубликованы и не выбраны как настройка.</p>
+  <div class="controls">
+    <label>Экран<select id="screen"><option value="phone">Телефон · 390 × 844</option><option value="desktop">Десктоп · 1440 × 960</option><option value="reverse">Длинная обратная · 390 × 844</option><option value="narrow-reverse">Длинная обратная · 320 × 568</option><option value="narrow-answer">Длинный ответ после прокрутки · 320 × 568</option></select></label>
+    <label>Вид<select id="side"><option value="translated">Ответ + переводы</option><option value="answer">Ответ</option><option value="face">Лицевая сторона</option></select></label>
+    <label>Тема<select id="theme"><option value="dark">Тёмная</option><option value="light">Светлая</option></select></label>
+  </div>
+  <p class="mobile-only">Переключайте размеры: кадр остаётся того же масштаба.</p>
+  <div class="sizes" aria-label="Размер текста">
+    <button data-size="normal" aria-pressed="false">Обычный</button>
+    <button data-size="large" aria-pressed="true">Крупный</button>
+    <button data-size="largest" aria-pressed="false">Очень крупный</button>
+  </div>
+  <div class="gallery">
+    <figure data-variant="normal"><figcaption>Обычный<small>Текст 16 px · слово на ответе 44 px</small></figcaption><a><img width="390" height="844" alt="Обычный размер: настоящая карточка 2000NL"></a></figure>
+    <figure data-variant="large" class="selected"><figcaption>Крупный<small>Текст 18 px · слово на ответе 46 px</small></figcaption><a><img width="390" height="844" alt="Крупный размер: настоящая карточка 2000NL"></a></figure>
+    <figure data-variant="largest"><figcaption>Очень крупный<small>Текст 20 px · слово на ответе 48 px</small></figcaption><a><img width="390" height="844" alt="Очень крупный размер: настоящая карточка 2000NL"></a></figure>
+  </div>
+  <p id="state-note" class="note"></p>
+  <table><thead><tr><th>Что меняется</th><th>Обычный</th><th>Крупный</th><th>Очень крупный</th></tr></thead><tbody>
+    <tr><td>Определения и примеры</td><td>16 px</td><td>18 px</td><td>20 px</td></tr>
+    <tr><td>Переводы фраз</td><td>13 px</td><td>14 px</td><td>15 px</td></tr>
+    <tr><td>Слово на ответе</td><td>44 px</td><td>46 px</td><td>48 px</td></tr>
+    <tr><td>Кнопки и служебные подписи</td><td colspan="3">Не увеличиваются в этом эксперименте</td></tr>
+  </tbody></table>
+  <p>Моё предложение для первого сравнения — обычный и крупный. Увеличиваются также межстрочные интервалы: это не просто растяжение всего экрана.</p>
+  <p class="meta">Снимки 06.09.2026 · исходный код ac0ef784 · учебные данные без аккаунта. Нет проверки дикторов экрана, системного увеличения текста и всех видов карточек. Крупные размеры пока нельзя внедрять: на узком низком экране обратное задание обрезается.</p>
+  <p class="meta"><a href="README.md">Таблица измерений и ограничения</a> · <a href="https://github.com/vbalashi/2000nl/issues/249">Задача #249</a> · <a href="http://127.0.0.1:3100/dev/sense-card-gate?prototype=reading&amp;variant=large">Живой локальный эксперимент</a></p>
+</main>
+<script>
+  const screenSelect = document.querySelector('#screen');
+  const sideSelect = document.querySelector('#side');
+  const themeSelect = document.querySelector('#theme');
+  function render() {
+    const screen = screenSelect.value;
+    const special = !['phone','desktop'].includes(screen);
+    sideSelect.disabled = special;
+    themeSelect.disabled = special;
+    document.querySelectorAll('figure').forEach(figure => {
+      const size = figure.dataset.variant;
+      const filename = screen === 'reverse' ? `phone-dark-${size}-reverse-long.png`
+        : screen === 'narrow-reverse' ? `narrow-dark-${size}-reverse-long.png`
+        : screen === 'narrow-answer' ? `narrow-dark-${size}-long-scrolled.png`
+        : `${screen}-${themeSelect.value}-${size}-${sideSelect.value}.png`;
+      figure.querySelector('img').src = `assets/${filename}`;
+      figure.querySelector('a').href = `assets/${filename}`;
+    });
+    document.querySelector('#state-note').textContent = screen === 'narrow-reverse'
+      ? 'Обнаружено ограничение: крупный и очень крупный текст уходят за нижний край карточки. Прокрутки здесь пока нет. Обычный размер для этого примера помещается.'
+      : screen === 'narrow-answer'
+      ? 'Текст прокручивается внутри карточки; слово и кнопки остаются на месте. На таком маленьком экране для чтения остаётся мало места.'
+      : screen === 'reverse'
+      ? 'На этом размере телефона длинное обратное задание помещается во всех трёх вариантах. На экране 320 × 568 результат другой — см. отдельный вид.'
+      : 'Снимки сделаны при одинаковом размере окна и после загрузки шрифтов. Чем крупнее текст, тем меньше помещается без прокрутки; нижние кнопки остаются доступными.';
+  }
+  [screenSelect,sideSelect,themeSelect].forEach(control => control.addEventListener('change',render));
+  document.querySelectorAll('[data-size]').forEach(button => button.addEventListener('click',() => {
+    document.querySelectorAll('[data-size]').forEach(other => other.setAttribute('aria-pressed',String(other === button)));
+    document.querySelectorAll('figure').forEach(figure => figure.classList.toggle('selected',figure.dataset.variant === button.dataset.size));
+  }));
+  render();
+</script>
+</body>
+</html>
