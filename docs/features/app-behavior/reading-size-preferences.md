@@ -3,6 +3,11 @@
 Owner decision: 2026-09-06. This extends the approved #249 three-size study,
 not a new renderer or a responsive-layout redesign.
 
+The deployed application uses the approved `pilot` rollout profile. Controls
+are added to its canonical `SettingsDestination`, not copied into the outgoing
+legacy `SettingsModal` or the old Training renderer. Their remaining removal
+belongs to #255/#264; this slice must not create a second legacy font system.
+
 ## Product contract
 
 | Preference | Ownership | Rule |
@@ -25,6 +30,7 @@ Navigation, badges and action controls do not inherit reading-text sizes.
 | Reading role (px) | Normal | Large | Largest |
 | --- | ---: | ---: | ---: |
 | Definitions, examples, usage, expressions | 16 | 18 | 20 |
+| Face hint (retains published Normal) | 18 | 20 | 22 |
 | Nested notes / translations | 13 | 14 | 15 |
 | Emphasized translation | 15 | 16 | 17 |
 | Face headword | 48 | 50 | 52 |
