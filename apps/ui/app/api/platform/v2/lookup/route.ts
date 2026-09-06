@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const body = await readJson(request);
   const parsed = parsePlatformV2LookupRequest(body, {
-    allowTrainingEntryId: true,
+    allowAuthenticatedEntryId: true,
   });
   if (!parsed.ok) {
     return appendPlatformRouteHeaders(

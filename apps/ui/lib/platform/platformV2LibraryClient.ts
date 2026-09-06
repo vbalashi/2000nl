@@ -13,13 +13,14 @@ export type PlatformV2LibraryGroupPage = {
 };
 
 type PlatformV2LibraryLookupInput = {
-  query: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
-  cursor?: string | null;
   signal?: AbortSignal;
-};
+} & (
+  | { query: string; entryId?: never; cursor?: string | null }
+  | { entryId: string; query?: never; cursor?: never }
+);
 
 async function fetchPlatformV2LibraryLookup(
   input: PlatformV2LibraryLookupInput,
@@ -27,12 +28,16 @@ async function fetchPlatformV2LibraryLookup(
   const result = await requestPlatformV2Lookup({
     signal: input.signal,
     body: {
-      query: input.query,
+      ...(input.entryId !== undefined
+        ? { entryId: input.entryId }
+        : {
+            query: input.query,
+            ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
+          }),
       cardTypeId: input.cardTypeId,
       contentLanguageCode: input.contentLanguageCode,
       translationTargetLanguageCode: input.translationTargetLanguageCode,
       intent: "dictionary-lookup",
-      ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
     },
   });
   if (result.state === "http-error") {
@@ -81,7 +86,8 @@ export async function fetchPlatformV2LibraryGroup(input: {
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
-  const payload = await fetchPlatformV2LibraryLookup(input);
+  const { query: _query, ...exactInput } = input;
+  const payload = await fetchPlatformV2LibraryLookup(exactInput);
   return selectPlatformV2LibraryGroup(payload, input.entryId);
 }
 
@@ -95,7 +101,15 @@ export async function fetchPlatformV2CrossReferenceTarget(input: {
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
-  const payload = await fetchPlatformV2LibraryLookup(input);
+  const payload = await fetchPlatformV2LibraryLookup({
+    cardTypeId: input.cardTypeId,
+    contentLanguageCode: input.contentLanguageCode,
+    translationTargetLanguageCode: input.translationTargetLanguageCode,
+    signal: input.signal,
+    ...(input.targetEntryId
+      ? { entryId: input.targetEntryId }
+      : { query: input.query }),
+  });
   return selectPlatformV2CrossReferenceTarget(
     payload,
     input.query,

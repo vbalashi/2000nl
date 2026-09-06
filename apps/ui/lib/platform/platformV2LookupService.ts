@@ -90,7 +90,7 @@ export async function performPlatformV2Lookup(
     return { payload: { error: "missing_card_type_id" }, status: 400 };
   }
   const lookupResolution = request.entryId
-    ? await resolveExactTrainingGroup(context, request, timings)
+    ? await resolveExactReadableGroup(context, request, timings)
       : {
         ok: true as const,
         query,
@@ -487,7 +487,7 @@ export async function performPlatformV2Lookup(
   }
 }
 
-async function resolveExactTrainingGroup(
+async function resolveExactReadableGroup(
   context: PlatformV2LookupContext,
   request: PlatformLookupV2Request,
   timings: Array<{ name: string; durationMs: number }>,
@@ -497,7 +497,8 @@ async function resolveExactTrainingGroup(
 > {
   if (
     context.kind !== "authenticated" ||
-    request.intent !== "training-review" ||
+    (request.intent !== "training-review" &&
+      request.intent !== "dictionary-lookup") ||
     !request.entryId
   ) {
     return {
@@ -510,6 +511,8 @@ async function resolveExactTrainingGroup(
     timings,
     "lookup.exact-group",
     async () =>
+      // Historical RPC name; this is an access-checked, read-only dictionary
+      // group lookup. It neither requires nor creates a training enrollment.
       await context.service.supabase.rpc("read_platform_v2_training_group", {
         p_user_id: context.auth.user.id,
         p_entry_id: request.entryId,
