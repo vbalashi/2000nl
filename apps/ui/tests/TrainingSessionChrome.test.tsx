@@ -6,31 +6,56 @@ import {
   TrainingSessionChrome,
 } from "@/components/training/v2/TrainingSessionChrome";
 
-test("composes the approved compact app header without changing its actions", () => {
-  const onClose = vi.fn();
-  const onHistory = vi.fn();
+test("keeps the session name quiet without a separate Training eyebrow", () => {
+  render(
+    <TrainingSessionChrome
+      interfaceLanguage="nl"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      presentation={{ kind: "ordinal", position: 1 }}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(screen.queryByText("TRAINING")).not.toBeInTheDocument();
+  expect(screen.getByText("Nieuw + herhaling")).toBeInTheDocument();
+});
+
+test("keeps theme and settings in the app header, not session navigation", () => {
+  const onCycleTheme = vi.fn();
+  const onOpenSettings = vi.fn();
 
   render(
     <TrainingSessionAppHeader
       interfaceLanguage="en"
-      onHistory={onHistory}
-      onClose={onClose}
+      themePreference="system"
+      onCycleTheme={onCycleTheme}
+      onOpenSettings={onOpenSettings}
     />,
   );
 
   const header = screen.getByTestId("training-session-app-header");
-  expect(header).toHaveAttribute("data-visual-spec", "training-v1.0");
-  expect(header).toHaveClass("h-[58px]", "px-[18px]");
+  expect(header).toHaveAttribute("data-visual-spec", "training-height-b");
   expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "History" }));
-  fireEvent.click(screen.getByRole("button", { name: "Close session" }));
-  expect(onHistory).toHaveBeenCalledOnce();
-  expect(onClose).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button", { name: "Theme: System" }));
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  expect(onCycleTheme).toHaveBeenCalledOnce();
+  expect(onOpenSettings).toHaveBeenCalledOnce();
+  expect(
+    screen.queryByRole("button", { name: "Close session" }),
+  ).not.toBeInTheDocument();
 });
 
 test("omits History when the runtime does not provide an authoritative action", () => {
   render(
-    <TrainingSessionAppHeader interfaceLanguage="en" onClose={vi.fn()} />,
+    <TrainingSessionChrome
+      interfaceLanguage="en"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      presentation={{ kind: "ordinal", position: 1 }}
+      onClose={vi.fn()}
+    />,
   );
 
   expect(
@@ -38,31 +63,64 @@ test("omits History when the runtime does not provide an authoritative action", 
   ).not.toBeInTheDocument();
 });
 
+test("places History and Close with the session name and preserves their callbacks", () => {
+  const onHistory = vi.fn();
+  const onClose = vi.fn();
+  render(
+    <TrainingSessionChrome
+      interfaceLanguage="en"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      presentation={{ kind: "ordinal", position: 1 }}
+      onHistory={onHistory}
+      onClose={onClose}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "History" }));
+  fireEvent.click(screen.getByRole("button", { name: "Close session" }));
+  expect(onHistory).toHaveBeenCalledOnce();
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
 test.each([
   ["new", "word-to-definition", "Nieuw"],
   ["review", "word-to-definition", "Herhaling"],
   ["both", "word-to-definition", "Nieuw + herhaling"],
-  ["both", "definition-to-word", "Begrip · Definitie → woord · Nieuw + herhaling"],
-] as const)("projects the actual %s/%s session semantics", (cardFilter, mode, expectedLabel) => {
-  render(
-    <TrainingSessionChrome
-      interfaceLanguage="nl"
-      scenario="understanding"
-      mode={mode}
-      cardFilter={cardFilter}
-      presentation={{ kind: "ordinal", position: 10 }}
-    />,
-  );
+  [
+    "both",
+    "definition-to-word",
+    "Begrip · Definitie → woord · Nieuw + herhaling",
+  ],
+] as const)(
+  "projects the actual %s/%s session semantics",
+  (cardFilter, mode, expectedLabel) => {
+    render(
+      <TrainingSessionChrome
+        interfaceLanguage="nl"
+        scenario="understanding"
+        mode={mode}
+        cardFilter={cardFilter}
+        presentation={{ kind: "ordinal", position: 10 }}
+        onClose={vi.fn()}
+      />,
+    );
 
-  const chrome = screen.getByTestId("training-session-chrome");
-  expect(chrome).toHaveAttribute("data-visual-spec", "training-v1.0");
-  expect(chrome).toHaveClass("gap-[14px]");
-  expect(screen.getByText("TRAINING")).toBeInTheDocument();
-  expect(screen.getByText(expectedLabel)).toBeInTheDocument();
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("10");
-  expect(screen.getByTestId("training-session-position")).not.toHaveTextContent("/");
-  expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();
-});
+    const chrome = screen.getByTestId("training-session-chrome");
+    expect(chrome).toHaveAttribute("data-visual-spec", "training-height-b");
+    expect(screen.queryByText("TRAINING")).not.toBeInTheDocument();
+    expect(screen.getByText(expectedLabel)).toBeInTheDocument();
+    expect(screen.getByTestId("training-session-position")).toHaveTextContent(
+      "10",
+    );
+    expect(
+      screen.getByTestId("training-session-position"),
+    ).not.toHaveTextContent("/");
+    expect(
+      screen.queryByTestId("training-session-progress-track"),
+    ).not.toBeInTheDocument();
+  },
+);
 
 test("renders only the authoritative planned total and fraction", () => {
   render(
@@ -71,6 +129,7 @@ test("renders only the authoritative planned total and fraction", () => {
       scenario="understanding"
       mode="word-to-definition"
       cardFilter="both"
+      onClose={vi.fn()}
       presentation={{
         kind: "planned",
         position: 10,

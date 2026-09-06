@@ -50,6 +50,7 @@ import {
   TrainingSessionAppHeader,
   TrainingSessionChrome,
 } from "./v2/TrainingSessionChrome";
+import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
@@ -1711,12 +1712,12 @@ export function TrainingScreen({
     onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
   }, [onRequestDestination]);
 
-  const v2SessionChromeVisible = Boolean(
-    trainingTodaySetupEnabled &&
-    trainingSessionV2Enabled &&
-    currentWord &&
-    trainingPilot.surface === "session",
+  const v2SessionLayoutVisible = Boolean(
+    v2SessionOwned &&
+    (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
+  const v2SessionChromeVisible =
+    v2SessionLayoutVisible && trainingTodaySetupEnabled;
   const trainingSessionChrome = v2SessionChromeVisible ? (
     <TrainingSessionChrome
       interfaceLanguage={onboardingLang}
@@ -1724,6 +1725,9 @@ export function TrainingScreen({
       mode={currentMode}
       cardFilter={cardFilter}
       presentation={sessionPresentation}
+      onHistory={onRequestDestination ? openTrainingHistory : undefined}
+      historyButtonRef={historyButtonRef}
+      onClose={trainingPilot.returnToToday}
     />
   ) : null;
   const trainingSessionFooter = (
@@ -1783,24 +1787,22 @@ export function TrainingScreen({
   return (
     <>
       <div
-        data-training-session-layout={v2SessionChromeVisible ? "v2" : undefined}
+        data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
         aria-hidden={destination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
         className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:text-slate-100 ${
-          v2SessionChromeVisible
-            ? "font-sense-sans dark:bg-[#11141A] max-[480px]:rounded-[16px] max-[480px]:border max-[480px]:border-[#4B5360] max-[480px]:p-[10px]"
+          v2SessionLayoutVisible
+            ? `font-sense-sans ${sessionStyles.viewport}`
             : "dark:bg-background-dark"
         }`}
       >
         {v2SessionChromeVisible ? (
           <TrainingSessionAppHeader
             interfaceLanguage={onboardingLang}
-            onHistory={onRequestDestination ? openTrainingHistory : undefined}
-            historyButtonRef={historyButtonRef}
-            onClose={trainingPilot.returnToToday}
+            {...destinationUtilityNav}
           />
         ) : (
         <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 md:px-6 md:py-3">
@@ -1899,35 +1901,19 @@ export function TrainingScreen({
           />
         ) : (
           <>
-            <main data-training-session-main className={`flex grow flex-col items-center overflow-hidden bg-background-light ${
-              v2SessionOwned ? "dark:bg-[#11141A]" : "dark:bg-background-dark"
-            }`}>
+            <main data-training-session-main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
               {/* Center the training card while preserving its established width. */}
-              <div className={`flex h-full w-full flex-row justify-center ${
-                v2SessionOwned
-                  ? "max-w-[780px] px-[10px] pb-[8px] pt-[10px] max-[480px]:px-0 max-[480px]:pt-[6px]"
-                  : "max-w-[1200px] gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6"
-              }`}>
+              <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
                 {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
-                <section className={`flex h-full w-full flex-1 flex-col overflow-visible bg-transparent ${
-                  v2SessionOwned ? "max-w-[760px]" : "max-w-3xl rounded-3xl"
-                }`}>
+                <section className="flex h-full w-full max-w-3xl flex-1 flex-col overflow-visible rounded-3xl bg-transparent">
                   {/* 1. Scrollable Card Area */}
                   <div
                     data-testid="training-card-scroll-region"
-                    className={`flex flex-1 flex-col ${
-                      v2SessionOwned
-                        ? "min-h-0 overflow-clip px-0"
-                        : "overflow-y-auto overflow-x-visible px-2 scrollbar-hide md:px-4"
-                    }`}
+                    className="flex flex-1 flex-col overflow-y-auto overflow-x-visible px-2 scrollbar-hide md:px-4"
                   >
                     {/* Card Container */}
                     <div
-                      className={`flex flex-col justify-start md:justify-center ${
-                        v2SessionOwned
-                          ? "h-full min-h-0 py-0"
-                          : "min-h-full py-2 md:py-4"
-                      }`}
+                      className="flex min-h-full flex-col justify-start py-2 md:justify-center md:py-4"
                     >
                       {trainingSessionNotice}
                       {!trainingShellV2Enabled && !onRequestDestination ? (
@@ -2023,18 +2009,12 @@ export function TrainingScreen({
                    Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
                       <div
                         data-testid="training-card-frame"
-                        className={`mx-auto w-full transition-[height] duration-200 ${
-                          v2SessionOwned
-                            ? "min-h-0 flex-1 overflow-hidden"
-                            : "mb-6 h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] md:mb-8 md:aspect-[16/10] md:h-auto md:min-h-[400px]"
-                        }`}
+                        className="mx-auto mb-6 h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] w-full transition-[height] duration-200 md:mb-8 md:aspect-[16/10] md:h-auto md:min-h-[400px]"
                       >
                         <div
                           ref={cardSwipeRef}
                           data-testid="training-card-swipe-wrapper"
-                          className={`relative h-full ${
-                            v2SessionOwned ? "min-h-0 overflow-hidden" : ""
-                          }`}
+                          className="relative h-full"
                           style={swipeCardStyle}
                           onTouchStart={handleCardTouchStart}
                           onTouchMove={handleCardTouchMove}
@@ -2084,7 +2064,7 @@ export function TrainingScreen({
                   </div>
 
                   {/* 2. Fixed Buttons Area (Always Visible) */}
-                  {!v2SessionOwned && !usableCandidatesExhausted ? (
+                  {!usableCandidatesExhausted ? (
                     <div className="flex-none pt-4 pb-2 z-10">
                       {/* Translucent container for buttons */}
                       <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">

@@ -11,6 +11,7 @@ import { DropUpSelect } from "./DropUpSelect";
 import { appVersionInfo } from "@/lib/appVersion";
 import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 
 type Props = {
   stats: DetailedStats;
@@ -90,32 +91,28 @@ function CompactProgressStat({
   label,
   value,
   total,
-  colorClass,
   barColorClass,
 }: {
   label: string;
   value: number;
   total: number;
-  colorClass: string;
   barColorClass: string;
 }) {
   const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
   return (
-    <div className="flex h-[33px] w-[104px] flex-col gap-[3px] font-mono">
-      <span className={`text-[8px] font-bold uppercase ${colorClass}`}>
+    <div className={sessionStyles.stat}>
+      <span className={sessionStyles.statLabel} title={label}>
         {label}
       </span>
-      <div className="flex h-[14px] items-center gap-[6px]">
-        <div className="h-1 w-[52px] overflow-hidden rounded-sm bg-slate-200 dark:bg-[#4B5360]">
-          <div
-            className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <span className="whitespace-nowrap text-[10px] font-semibold text-slate-600 dark:text-[#BFC7D4]">
-          {value} / {total}
-        </span>
+      <div className={sessionStyles.statBar} aria-hidden="true">
+        <div
+          className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
+          style={{ width: `${progress}%` }}
+        />
       </div>
+      <span className={sessionStyles.statValue}>
+        {value}/{total}
+      </span>
     </div>
   );
 }
@@ -192,33 +189,30 @@ export function FooterStats({
     return (
       <footer
         data-compact="true"
-        data-visual-spec="training-v1.0"
-        className="z-10 flex h-[44px] w-full shrink-0 items-end justify-center border-t border-slate-200 bg-white px-4 pb-1 dark:border-[#272C35] dark:bg-[#11141A]"
+        data-visual-spec="training-height-b"
+        className={`${sessionStyles.footer} font-sense-sans`}
       >
         <div
           data-testid="training-session-footer-progress"
-          className="flex h-[33px] w-[326px] max-w-full items-center gap-[7px]"
+          className={sessionStyles.stats}
         >
           <CompactProgressStat
             label={text.new}
             value={newCardsToday}
             total={dailyNewLimit}
-            colorClass="text-[#9D94FF]"
-            barColorClass="bg-[#9D94FF]"
+            barColorClass="bg-blue-400"
           />
           <CompactProgressStat
             label={text.review}
             value={reviewCardsDone}
             total={reviewTotal}
-            colorClass="text-[#E9C46A]"
-            barColorClass="bg-[#E9C46A]"
+            barColorClass="bg-amber-400"
           />
           <CompactProgressStat
             label={text.total}
             value={totalWordsLearned}
             total={totalWordsInList}
-            colorClass="text-[#37D99B]"
-            barColorClass="bg-[#37D99B]"
+            barColorClass="bg-emerald-400"
           />
         </div>
       </footer>

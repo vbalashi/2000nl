@@ -2663,6 +2663,26 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
   expect(frame.className).toContain("md:h-auto");
 });
 
+test("V2 layout keeps its theme owner when Today setup is disabled", async () => {
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    const card = await screen.findByTestId("mock-training-sense-card-v2");
+    const viewport = card.closest('[data-training-session-layout="v2"]');
+    expect(viewport).not.toBeNull();
+    expect(viewport?.className).toContain("viewport");
+    expect(screen.queryByTestId("training-session-chrome")).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
   platformV2TrainingUiEnabled.mockReturnValue(true);
@@ -2699,7 +2719,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /TRAININGNew \+ review1/,
+      /New \+ review1/,
     );
     expect(screen.getByTestId("training-session-position")).toHaveTextContent(
       "1 / 2",
@@ -2710,10 +2730,10 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(screen.getByTestId("training-session-app-header")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Theme: System" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Settings" }),
-    ).not.toBeInTheDocument();
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Search" }),
     ).not.toBeInTheDocument();
@@ -2738,7 +2758,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(compactFooter).not.toHaveTextContent(/VanDale 2k|Begrip/);
     fireEvent.click(
-      within(screen.getByTestId("training-session-app-header")).getByRole(
+      within(screen.getByTestId("training-session-chrome")).getByRole(
         "button",
         { name: "Close session" },
       ),
