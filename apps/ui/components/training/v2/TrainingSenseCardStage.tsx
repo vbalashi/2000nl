@@ -376,6 +376,9 @@ function EntityHeader({
           <p
             data-testid="entry-translation"
             className="mt-0 text-[15px] font-bold text-amber-700 dark:text-[#E9C46A]"
+            style={{
+              fontSize: "var(--reading-translation-emphasis-size, 15px)",
+            }}
           >
             {[
               model.entryTranslation,
@@ -420,6 +423,10 @@ function FaceBody({
               <p
                 data-testid="reverse-prompt"
                 className="max-w-[34rem] text-center font-sense-serif text-[clamp(1.55rem,5cqi,2.4rem)] leading-[1.22] text-slate-900 dark:text-slate-50"
+                style={{
+                  fontSize:
+                    "var(--reading-body-prompt-size, clamp(1.55rem, 5cqi, 2.4rem))",
+                }}
               >
                 {reversePrompt?.text}
               </p>
@@ -678,6 +685,11 @@ function ContentItem({
                 }`
               : "font-sense-serif text-[16px] leading-[1.15] text-slate-900 dark:text-[#F4F6FA]"
           }`}
+          style={contentTypographyStyle({
+            nestedDefinition,
+            literary,
+            compactIdiomLine,
+          })}
         >
           {item.text}
         </p>
@@ -687,6 +699,10 @@ function ContentItem({
           <p
             data-content-translation="true"
             className="mt-1 text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
+            style={{
+              fontSize: "var(--reading-translation-size, 13px)",
+              lineHeight: "var(--reading-translation-leading, 1.35)",
+            }}
           >
             {item.translation}
           </p>
@@ -912,6 +928,39 @@ function hasTranslation(model: TrainingSenseCardModel) {
     model.entryTranslation ||
     [...model.definitions, ...model.examples].some(hasContentTranslation),
   );
+}
+
+function contentTypographyStyle({
+  nestedDefinition,
+  literary,
+  compactIdiomLine,
+}: {
+  nestedDefinition: boolean;
+  literary: boolean;
+  compactIdiomLine: boolean;
+}): React.CSSProperties {
+  if (nestedDefinition) {
+    return {
+      fontSize: "var(--reading-nested-size, 13px)",
+      lineHeight: "var(--reading-nested-leading, 1.35)",
+    };
+  }
+  if (literary && compactIdiomLine) {
+    return {
+      fontSize: "var(--reading-literary-compact-size, 14px)",
+      lineHeight: "var(--reading-literary-compact-leading, 1.25)",
+    };
+  }
+  if (literary) {
+    return {
+      fontSize: "var(--reading-literary-size, 16px)",
+      lineHeight: "var(--reading-literary-leading, 1.4)",
+    };
+  }
+  return {
+    fontSize: "var(--reading-body-size, 16px)",
+    lineHeight: "var(--reading-body-leading, 1.15)",
+  };
 }
 
 function hasContentTranslation(item: TrainingSenseCardContent): boolean {

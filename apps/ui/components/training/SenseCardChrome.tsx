@@ -88,8 +88,8 @@ export function SenseCardHeadwordLockup({
                   className={`shrink-0 leading-none ${mutedText} ${
                     training
                       ? answer
-                        ? "pb-[0.16em] text-[20px]"
-                        : "pb-[0.16em] text-[24px]"
+                        ? "pb-[0.16em] text-[length:var(--reading-article-answer-size,20px)]"
+                        : "pb-[0.16em] text-[length:var(--reading-article-face-size,24px)]"
                       : "text-[1.35rem] sm:text-[1.5rem]"
                   }`}
                 >
@@ -102,10 +102,10 @@ export function SenseCardHeadwordLockup({
                 className={`min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
                   training
                     ? longHeadword
-                      ? "text-[32px] font-medium leading-[1] sm:text-[40px]"
+                      ? "text-[length:var(--reading-headword-long-size,32px)] font-medium leading-[1] sm:text-[length:var(--reading-headword-long-size-sm,40px)]"
                       : answer
-                        ? "text-[44px] font-medium leading-[1]"
-                        : "text-[48px] font-medium leading-[1]"
+                        ? "text-[length:var(--reading-headword-answer-size,44px)] font-medium leading-[1]"
+                        : "text-[length:var(--reading-headword-face-size,48px)] font-medium leading-[1]"
                     : longHeadword
                       ? "text-[1.75rem] font-normal leading-[0.96] sm:text-[2.2rem]"
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
