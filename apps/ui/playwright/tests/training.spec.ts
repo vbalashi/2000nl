@@ -576,7 +576,8 @@ test("training flow persists review and dictionary lookup", async ({
     page.getByRole("heading", { level: 2, name: /gracht/i })
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Sluiten" }).click();
+  // This fixture uses the default English interface, not its Dutch study language.
+  await drawer.getByRole("button", { name: "Close", exact: true }).click();
   await expect(drawer).toBeHidden();
 
   // Grade the card to advance to the next word.
@@ -644,7 +645,7 @@ test("dictionary search and stable list filters render on mobile", async ({
     page.getByRole("heading", { level: 2, name: /gracht/i }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Sluiten" }).click();
+  await detailsDrawer.getByRole("button", { name: "Close", exact: true }).click();
   await expect(detailsDrawer).toBeHidden();
 
   await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
