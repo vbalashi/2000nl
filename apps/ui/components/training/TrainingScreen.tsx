@@ -79,6 +79,7 @@ import {
 } from "@/components/navigation/AppUtilityNav";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
+import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
   TrainingTodaySetup,
@@ -213,7 +214,13 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
   }));
 }
 
-export function TrainingScreen({
+export function TrainingScreen(props: Props) {
+  return <ReadingPreferencesProvider userId={props.user.id}>
+    <TrainingScreenContent {...props} />
+  </ReadingPreferencesProvider>;
+}
+
+function TrainingScreenContent({
   user,
   initialTransitionId,
   destination = "training",

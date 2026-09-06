@@ -176,6 +176,7 @@ export function LibrarySenseCardGroup({
         <SenseCardHeadwordLockup
           article={model.article}
           headword={model.headword}
+          variant="training-answer"
           partOfSpeech={model.partOfSpeech}
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
@@ -368,7 +369,7 @@ function MeaningCard({
           <div className="min-w-0">
             {meaning.entryTranslation ? (
               <SenseCardReveal open={state.translationVisible}>
-                <p className="mb-1 text-sm font-[650] text-amber-700 dark:text-[#dbc47e]">
+                <p className="mb-1 text-[length:var(--reading-translation-emphasis-size,15px)] font-[650] text-amber-700 dark:text-[#dbc47e]">
                   {[
                     meaning.entryTranslation,
                     ...(meaning.entryTranslationAlternatives ?? []),
@@ -377,13 +378,13 @@ function MeaningCard({
               </SenseCardReveal>
             ) : null}
             <div className="flex items-start gap-2">
-              <p className="min-w-0 flex-1 text-[14.5px] leading-[1.45] text-slate-800 dark:text-slate-100">
+              <p className="min-w-0 flex-1 text-[length:var(--reading-body-size,16px)] leading-[var(--reading-body-leading,1.15)] text-slate-800 dark:text-slate-100">
                 {meaning.definition?.text ?? "—"}
               </p>
             </div>
             {meaning.definition?.translation ? (
               <SenseCardReveal open={state.translationVisible}>
-                <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-[length:var(--reading-translation-size,13px)] leading-[var(--reading-translation-leading,1.35)] text-slate-500 dark:text-slate-400">
                   {meaning.definition.translation}
                 </p>
               </SenseCardReveal>
@@ -680,7 +681,7 @@ function ContentText({
       </div>
       {item.translation ? (
         <SenseCardReveal open={translationVisible}>
-          <p className="mt-1 text-[12.5px] leading-[1.45] text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-[length:var(--reading-translation-size,13px)] leading-[var(--reading-translation-leading,1.35)] text-slate-500 dark:text-slate-400">
             {item.translation}
           </p>
         </SenseCardReveal>
@@ -759,42 +760,42 @@ const contentPresentation: Record<
     labelKey: "senseCard.sections.definition",
     borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
-      "text-[14.5px] leading-[1.45] text-slate-700 dark:text-slate-200",
+      "text-[length:var(--reading-body-size,16px)] leading-[var(--reading-body-leading,1.15)] text-slate-700 dark:text-slate-200",
   },
   "usage-pattern": {
     sectionGroup: "usage",
     labelKey: "senseCard.sections.usagePattern",
     borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
-      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-[length:var(--reading-literary-size,16px)] italic leading-[var(--reading-literary-leading,1.4)] text-slate-700 dark:text-slate-200",
   },
   example: {
     sectionGroup: "examples",
     labelKey: "senseCard.sections.examples",
     borderClassName: "border-l-[3px] border-indigo-400",
     textClassName:
-      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-[length:var(--reading-literary-size,16px)] italic leading-[var(--reading-literary-leading,1.4)] text-slate-700 dark:text-slate-200",
   },
   idiom: {
     sectionGroup: "idioms",
     labelKey: "senseCard.sections.idioms",
     borderClassName: "border-l-[3px] border-amber-400",
     textClassName:
-      "font-sense-serif text-base italic leading-[1.35] text-slate-700 dark:text-slate-200",
+      "font-sense-serif text-[length:var(--reading-literary-size,16px)] italic leading-[var(--reading-literary-leading,1.4)] text-slate-700 dark:text-slate-200",
   },
   "idiom-explanation": {
     sectionGroup: "idioms",
     labelKey: null,
     borderClassName: "border-l-[3px] border-amber-300",
     textClassName:
-      "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
+      "text-[length:var(--reading-nested-size,13px)] leading-[var(--reading-nested-leading,1.35)] text-slate-600 dark:text-slate-300",
   },
   "usage-note": {
     sectionGroup: "notes",
     labelKey: "senseCard.sections.notes",
     borderClassName: "border-l-[3px] border-slate-400",
     textClassName:
-      "text-[14.5px] leading-[1.45] text-slate-600 dark:text-slate-300",
+      "text-[length:var(--reading-nested-size,13px)] leading-[var(--reading-nested-leading,1.35)] text-slate-600 dark:text-slate-300",
   },
 };
 
