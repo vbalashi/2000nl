@@ -442,7 +442,7 @@ describe("LibrarySenseCardV2Session", () => {
 
     render(
       <LibrarySenseCardV2Session
-        entryId={furnitureEntry.entryId}
+        entryId={financeEntry.entryId}
         headword="bank"
         contentLanguageCode="nl"
         translationTargetLanguageCode="en"
@@ -453,10 +453,13 @@ describe("LibrarySenseCardV2Session", () => {
 
     await screen.findByTestId("library-sense-card-group");
     expect(
-      screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`),
+      screen.getByTestId(`library-sense-card-${financeEntry.entryId}`),
     ).toHaveAttribute("data-expanded", "true");
+    expect(
+      screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`),
+    ).toHaveAttribute("data-expanded", "false");
     fireEvent.click(screen.getByRole("button", { name: "Copy to my dictionary" }));
-    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(furnitureEntry.entryId));
+    await waitFor(() => expect(copyEntry).toHaveBeenCalledWith(financeEntry.entryId));
   });
 
   test("does not refresh the previous detail after an action races with navigation", async () => {

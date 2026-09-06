@@ -779,13 +779,22 @@ function initialViewState(
     (candidate) => candidate.entryId === activeMeaningId,
   );
   if (!meaning) return state;
-  const identity = librarySenseCardIdentity(
-    meaning.entryId,
-    meaning.cardTypeId,
-  );
   return {
-    ...state,
-    [identity]: { ...state[identity], expanded: true },
+    ...Object.fromEntries(
+      model.meanings.map((candidate) => {
+        const identity = librarySenseCardIdentity(
+          candidate.entryId,
+          candidate.cardTypeId,
+        );
+        return [
+          identity,
+          {
+            ...state[identity],
+            expanded: candidate.entryId === meaning.entryId,
+          },
+        ];
+      }),
+    ),
   };
 }
 
