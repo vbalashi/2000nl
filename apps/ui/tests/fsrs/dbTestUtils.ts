@@ -123,6 +123,12 @@ export async function runMigrations(pool: Pool) {
       await pool.query(sql);
       await pool.query(`insert into public.__fsrs_test_migrations (filename) values ($1)`, [file]);
     }
+
+    // Supabase grants authenticated access to public tables by default. Keep
+    // the plain-Postgres CI shim equivalent for app-local RLS storage tests.
+    await pool.query(
+      `grant select, insert, update on public.user_settings to authenticated`,
+    );
   } finally {
     await pool.query(`select pg_advisory_unlock(hashtext('2000nl_fsrs_test_migrations'))`);
   }

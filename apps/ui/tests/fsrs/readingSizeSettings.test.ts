@@ -6,15 +6,17 @@ import { getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
 const databaseUrl = getDbUrl();
 const describeDb = databaseUrl ? describe : describe.skip;
 
-async function assumeAuthenticatedIfSupported(client: PoolClient, userId: string) {
+async function assumeAuthenticated(client: PoolClient, userId: string) {
   const { rows } = await client.query(
-    `select has_table_privilege('authenticated', 'public.user_settings', 'UPDATE') as can_update`,
+    `select
+       has_table_privilege('authenticated', 'public.user_settings', 'SELECT') as can_select,
+       has_table_privilege('authenticated', 'public.user_settings', 'INSERT') as can_insert,
+       has_table_privilege('authenticated', 'public.user_settings', 'UPDATE') as can_update`,
   );
-  if (!rows[0]?.can_update) return false;
+  expect(rows[0]).toEqual({ can_select: true, can_insert: true, can_update: true });
 
   await client.query(`set local role authenticated`);
   await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [userId]);
-  return true;
 }
 
 describeDb("reading-size user settings storage", () => {
@@ -49,7 +51,7 @@ describeDb("reading-size user settings storage", () => {
         expect(policies).toHaveLength(1);
         expect(policies[0].qual).toContain("auth.uid()");
         expect(policies[0].with_check).toContain("auth.uid()");
-        const usesRlsRole = await assumeAuthenticatedIfSupported(client, userId);
+        await assumeAuthenticated(client, userId);
         await client.query(
           `update user_settings
            set preferences = '{"onboarding":"complete"}'::jsonb
@@ -98,13 +100,27 @@ describeDb("reading-size user settings storage", () => {
           preferences: { onboarding: "complete" },
         });
 
-        if (usesRlsRole) {
-          const { rowCount: otherUserUpdateCount } = await client.query(
-            `update user_settings set reading_size_phone = 'largest' where user_id = $1`,
+        const { rows: otherUserRows } = await client.query(
+          `select user_id from user_settings where user_id = $1`,
+          [otherUserId],
+        );
+        expect(otherUserRows).toEqual([]);
+
+        const { rowCount: otherUserUpdateCount } = await client.query(
+          `update user_settings set reading_size_phone = 'largest' where user_id = $1`,
+          [otherUserId],
+        );
+        expect(otherUserUpdateCount).toBe(0);
+
+        await expect(
+          client.query(
+            `insert into user_settings (user_id, reading_size_phone)
+             values ($1, 'large')
+             on conflict (user_id) do update
+               set reading_size_phone = excluded.reading_size_phone`,
             [otherUserId],
-          );
-          expect(otherUserUpdateCount).toBe(0);
-        }
+          ),
+        ).rejects.toThrow(/row-level security|policy/);
       },
       userId,
     );
@@ -120,7 +136,7 @@ describeDb("reading-size user settings storage", () => {
           `insert into auth.users (id, email) values ($1, $2)`,
           [userId, `${userId}@test.local`],
         );
-        await assumeAuthenticatedIfSupported(client, userId);
+        await assumeAuthenticated(client, userId);
 
         await expect(
           client.query(
@@ -150,7 +166,7 @@ describeDb("reading-size user settings storage", () => {
 
       const save = async (client: typeof phoneClient, column: string, value: string) => {
         await client.query("begin");
-        await assumeAuthenticatedIfSupported(client, userId);
+        await assumeAuthenticated(client, userId);
         await client.query(
           `insert into user_settings (user_id, ${column}) values ($1, $2)
            on conflict (user_id) do update set ${column} = excluded.${column}`,
