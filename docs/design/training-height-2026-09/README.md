@@ -6,7 +6,23 @@ Base: PR #258, `3a41dd552a86ee8651b17a4c6e897020c2d72389`.
 
 Question: should the width-bounded tablet/desktop interaction stack use all
 available height or have modest extra space above/below? Phone uses the full
-available height in both variants. This is not an approved responsive contract.
+available height in both variants.
+
+## Owner decision — 2026-09-06
+
+**B accepted for tablet/desktop; phone remains full available height.**
+This supersedes the pending-choice notes in the historical checkpoint below.
+Accepted geometry row H1: stack maximum width 760 CSS px; outer vertical
+space 40 px at the compared wide viewports, 10 px on phone. Reference: the
+24 screenshots in evidence commit `97a93c9c`, runtime source `220bee17`.
+See [decision receipt](https://github.com/vbalashi/2000nl/issues/249#issuecomment-5560140395).
+
+This approval does not cover every prototype control, illustrative session
+number, icon, color or type detail. The 768 px switch threshold and actual
+mobile safe-area/short-viewport handling still need explicit implementation
+checks. Owner additionally spotted Report/Known at different vertical positions;
+that defect is being addressed in the shared Training action row under #251.
+The prototype is not a deployed app and must still be retired after adoption.
 
 ## Run / inspect
 
@@ -47,13 +63,13 @@ No card renderer is copied or overridden. `BrandLogo` is also reused.
 
 | Parameter | Study value | Provenance / state |
 | --- | --- | --- |
-| Maximum card/stack width | 760 px | Existing Stage and Pen 30.90.07; not new width approval |
+| Maximum card/stack width | 760 px | Existing Stage and Pen 30.90.07; accepted H1 comparison geometry |
 | Outer horizontal space | 16 px phone; 24 px wide | Comparison candidate; phone matches 30.90.07 |
 | Wide-layout threshold | 768 CSS px | Comparison candidate, not final breakpoint |
 | App header / stats footer | 58 / 44 px + device safe areas | Candidate composition; production still unchanged |
 | Session row / following gap | 48 / 10 px | Candidate; same in A and B |
 | A top/bottom outer space | 10 mobile / 12 wide | Candidate |
-| B top/bottom outer space | 10 mobile / 40 wide | Candidate |
+| B top/bottom outer space | 10 mobile / 40 wide | Accepted H1, 2026-09-06 |
 | Answer type / inner geometry | PR #258 M2/M3/M6 | Previously approved small implementation slice |
 
 Historical source inspected read-only through Pencil on 2026-09-06:
@@ -111,7 +127,8 @@ mobile browser/safe-area, keyboard, authenticated Training or database QA.
 | Tablet | [Screenshot](assets/tablet-full-answer-dark.png) | [Screenshot](assets/tablet-inset-answer-dark.png) |
 | Desktop | [Screenshot](assets/desktop-full-answer-dark.png) | [Screenshot](assets/desktop-inset-answer-dark.png) |
 
-Owner choice of tablet/desktop height remains pending. Clean screenshots and
+At the capture checkpoint, owner choice of tablet/desktop height was pending;
+it was subsequently resolved as B in H1 above. Clean screenshots and
 review do not constitute approval of every surrounding control or typography
 detail, and no production rollout has occurred.
 
@@ -124,7 +141,7 @@ contrast and interaction acceptance belongs to the production UI contract.
 
 ## Retirement
 
-After the owner chooses geometry, transfer only the accepted numbers and
+Now that the owner has chosen B, transfer only the accepted numbers and
 behavior into #249's matrix and tested production components through #251.
 Delete `HeightPrototype.tsx`, its CSS and the `prototype=height` page branch.
 Keep this receipt and selected images as history; do not merge an enduring
