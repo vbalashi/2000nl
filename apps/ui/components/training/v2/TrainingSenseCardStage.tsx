@@ -310,7 +310,7 @@ function EntityHeader({
 }) {
   return (
     <header className="relative z-10 flex shrink-0 flex-col gap-0">
-      <div className="flex min-h-[34px] items-center justify-between gap-2">
+      <div className="mb-2 flex min-h-[34px] items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-[7px] text-[13px] text-slate-500 dark:text-[#BFC7D4]">
           {model.partOfSpeech ? (
             <span className="inline-flex items-center gap-2 font-medium">
@@ -368,7 +368,7 @@ function EntityHeader({
         headword={model.headword}
         tone="light"
         showMetadata={false}
-        variant="training"
+        variant="training-answer"
       />
       {model.entryTranslation ? (
         <SenseCardReveal open={translationVisible}>
@@ -429,7 +429,7 @@ function FaceBody({
               headword={model.headword}
               tone="light"
               showMetadata={false}
-              variant="training"
+              variant="training-face"
             />
           )}
         </div>
@@ -644,7 +644,6 @@ function ContentItem({
   const nested = Boolean(item.parentContentNodeId);
   const nestedDefinition = nested && item.kind === "definition";
   const compactIdiomLine = accent === "idiom" || (nested && item.kind === "example");
-  const compactExampleLine = accent === "example";
   const literary =
     accent === "usage" ||
     accent === "example" ||
@@ -672,9 +671,7 @@ function ContentItem({
               ? "font-sense-sans text-[13px] leading-[1.35] text-slate-500 dark:text-[#BFC7D4]"
               : literary
               ? `font-sense-serif italic text-slate-900 dark:text-[#F4F6FA] ${
-                  compactExampleLine
-                    ? "text-[13px] leading-[1.4]"
-                    : compactIdiomLine
+                  compactIdiomLine
                     ? "text-[14px] leading-[1.25]"
                     : "text-[16px] leading-[1.4]"
                 }`
