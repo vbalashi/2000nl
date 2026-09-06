@@ -24,6 +24,20 @@ checks. Owner additionally spotted Report/Known at different vertical positions;
 that defect is being addressed in the shared Training action row under #251.
 The prototype is not a deployed app and must still be retired after adoption.
 
+Preview synchronized after the action-row fix: source `5d41d75b` includes
+reviewed PR #260 (`e2329fa3`) on top of #258. B is now the default and visibly
+accepted. The demo Report button uses the same quiet action class as the real
+Training Report/Known pair; its separate prototype CSS was removed. It still
+shows a non-mutating demo notice, not the actual report form. Actual form/focus
+behavior is covered by #260's separate real-component regression.
+
+All six full-screen cases were recaptured after synchronization; the runner
+now also checks 24px action heights/alignment on both sides and matches the OS
+theme before each theme capture. Typecheck/lint passed. Independent delta and
+phone/desktop B visual review found no material blockers. The updated PNGs
+and `capture-evidence.json` refer to this newer source; the original owner
+comparison remains immutable in `97a93c9c`.
+
 ## Run / inspect
 
 From `apps/ui`, with dependencies installed:
@@ -57,7 +71,7 @@ Non-core controls show a dismissible temporary notice instead of mutating data.
 
 ## Ownership / source versus proposals
 
-The card is imported `TrainingSenseCardStage` from PR #258: real content,
+The card is imported `TrainingSenseCardStage` from PR #258/#260: real content,
 headword, actions, translation reveal, internal scroll/fades, Face/Answer.
 No card renderer is copied or overridden. `BrandLogo` is also reused.
 
@@ -93,12 +107,13 @@ Measured inside the real iframe (CSS pixels, Answer, no translation):
 | Desktop 1440×960, A | 760×690 | 834 px | 12/12 |
 | Desktop 1440×960, B | 760×634 | 778 px | 40/40 |
 
-Typecheck and lint passed, including the theme-cleanup correction from the
+At the initial study checkpoint, typecheck and lint passed, including the theme-cleanup correction from the
 independent static review. In the long desktop B fixture, the reading area was
 504 px high for 1065 px of content. Its actual continuation button moved scroll
 position from 0 to 327.78 px while headword top stayed 217.0486 px; the top fade
 changed from clear to faded. The full-screen layout does not rely on scrolling
-the outer app to reach content. No production card source was changed.
+the outer app to reach content. No production card source was changed in that
+initial study; the later shared action-row correction is owned by PR #260.
 
 The initial in-app screenshot surface distorted scale/crops at its current
 zoom; those images are not acceptance evidence. The owner subsequently
