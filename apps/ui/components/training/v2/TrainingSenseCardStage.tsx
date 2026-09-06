@@ -429,7 +429,7 @@ function FaceBody({
               headword={model.headword}
               tone="light"
               showMetadata={false}
-        variant="training-face"
+              variant="training-face"
             />
           )}
         </div>
