@@ -1,0 +1,366 @@
+{
+  "sourceCommit": "220bee17f637612d082593fb2e5a077c408c480f",
+  "cases": [
+    {
+      "device": "phone",
+      "variant": "full",
+      "geometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "width": 390,
+          "height": 844
+        },
+        "card": {
+          "x": 16,
+          "y": 126,
+          "width": 358,
+          "height": 534,
+          "bottom": 660
+        },
+        "dock": {
+          "x": 16,
+          "y": 670,
+          "width": 358,
+          "height": 120,
+          "bottom": 790
+        },
+        "footer": {
+          "x": 0,
+          "y": 800,
+          "width": 390,
+          "height": 44,
+          "bottom": 844
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 263,
+        "height": 404,
+        "scrollHeight": 1502
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    },
+    {
+      "device": "phone",
+      "variant": "inset",
+      "geometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "width": 390,
+          "height": 844
+        },
+        "card": {
+          "x": 16,
+          "y": 126,
+          "width": 358,
+          "height": 534,
+          "bottom": 660
+        },
+        "dock": {
+          "x": 16,
+          "y": 670,
+          "width": 358,
+          "height": 120,
+          "bottom": 790
+        },
+        "footer": {
+          "x": 0,
+          "y": 800,
+          "width": 390,
+          "height": 44,
+          "bottom": 844
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 263,
+        "height": 404,
+        "scrollHeight": 1502
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    },
+    {
+      "device": "tablet",
+      "variant": "full",
+      "geometry": {
+        "viewport": {
+          "width": 834,
+          "height": 1112
+        },
+        "document": {
+          "width": 834,
+          "height": 1112
+        },
+        "card": {
+          "x": 37,
+          "y": 128,
+          "width": 760,
+          "height": 842,
+          "bottom": 970
+        },
+        "dock": {
+          "x": 37,
+          "y": 980,
+          "width": 760,
+          "height": 76,
+          "bottom": 1056
+        },
+        "footer": {
+          "x": 0,
+          "y": 1068,
+          "width": 834,
+          "height": 44,
+          "bottom": 1112
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 354,
+        "height": 712,
+        "scrollHeight": 1066
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    },
+    {
+      "device": "tablet",
+      "variant": "inset",
+      "geometry": {
+        "viewport": {
+          "width": 834,
+          "height": 1112
+        },
+        "document": {
+          "width": 834,
+          "height": 1112
+        },
+        "card": {
+          "x": 37,
+          "y": 156,
+          "width": 760,
+          "height": 786,
+          "bottom": 942
+        },
+        "dock": {
+          "x": 37,
+          "y": 952,
+          "width": 760,
+          "height": 76,
+          "bottom": 1028
+        },
+        "footer": {
+          "x": 0,
+          "y": 1068,
+          "width": 834,
+          "height": 44,
+          "bottom": 1112
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 410,
+        "height": 656,
+        "scrollHeight": 1066
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    },
+    {
+      "device": "desktop",
+      "variant": "full",
+      "geometry": {
+        "viewport": {
+          "width": 1440,
+          "height": 960
+        },
+        "document": {
+          "width": 1440,
+          "height": 960
+        },
+        "card": {
+          "x": 340,
+          "y": 128,
+          "width": 760,
+          "height": 690,
+          "bottom": 818
+        },
+        "dock": {
+          "x": 340,
+          "y": 828,
+          "width": 760,
+          "height": 76,
+          "bottom": 904
+        },
+        "footer": {
+          "x": 0,
+          "y": 916,
+          "width": 1440,
+          "height": 44,
+          "bottom": 960
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 364,
+        "height": 560,
+        "scrollHeight": 1066
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    },
+    {
+      "device": "desktop",
+      "variant": "inset",
+      "geometry": {
+        "viewport": {
+          "width": 1440,
+          "height": 960
+        },
+        "document": {
+          "width": 1440,
+          "height": 960
+        },
+        "card": {
+          "x": 340,
+          "y": 156,
+          "width": 760,
+          "height": 634,
+          "bottom": 790
+        },
+        "dock": {
+          "x": 340,
+          "y": 800,
+          "width": 760,
+          "height": 76,
+          "bottom": 876
+        },
+        "footer": {
+          "x": 0,
+          "y": 916,
+          "width": 1440,
+          "height": 44,
+          "bottom": 960
+        },
+        "fonts": [
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Inter_fcbcbf",
+            "style": "normal"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "italic"
+          },
+          {
+            "family": "__Newsreader_cb6b13",
+            "style": "normal"
+          }
+        ]
+      },
+      "scrollProof": {
+        "top": 328,
+        "height": 504,
+        "scrollHeight": 1066
+      },
+      "faceAnswerTranslation": "passed",
+      "errors": []
+    }
+  ],
+  "blockedRequests": []
+}

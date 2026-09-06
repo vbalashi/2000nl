@@ -84,12 +84,43 @@ position from 0 to 327.78 px while headword top stayed 217.0486 px; the top fade
 changed from clear to faded. The full-screen layout does not rely on scrolling
 the outer app to reach content. No production card source was changed.
 
-Clean screenshot capture and independent visual acceptance are still pending;
-do not treat the table or static review as full visual QA. The in-app screenshot
-surface distorted scale/crops at its current zoom; those images are not
-acceptance evidence. Owner permission to use isolated Playwright capture was
-requested; it has not yet been received at this checkpoint. No alternative
-browser has been started.
+The initial in-app screenshot surface distorted scale/crops at its current
+zoom; those images are not acceptance evidence. The owner subsequently
+authorized any browser. Clean captures now use Chromium in a fresh isolated
+context per case, without authentication, storage reuse or service workers.
+The runner blocks external origins and `/api/` requests; none were attempted.
+
+Reproduce from repository root with the local gallery running:
+
+```sh
+node docs/design/training-height-2026-09/capture.cjs
+```
+
+All six device/height cases passed: exact viewport/card dimensions, no outer
+document overflow, action dock above footer, real Inter/Newsreader fonts loaded,
+internal scrolling with stationary headword/dock, Face → Answer and translation
+reveal. No page JavaScript errors were observed. The 24 screenshots cover dark
+Answer, light Answer, dark Face and scrolled long Answer for every case.
+See [machine-readable evidence](capture-evidence.json) for the source commit,
+geometry and final scroll positions. This is Chromium fixture QA, not real
+mobile browser/safe-area, keyboard, authenticated Training or database QA.
+
+| View | A: maximum height | B: more space around stack |
+| --- | --- | --- |
+| Phone (identical geometry) | [Screenshot](assets/phone-full-answer-dark.png) | [Screenshot](assets/phone-inset-answer-dark.png) |
+| Tablet | [Screenshot](assets/tablet-full-answer-dark.png) | [Screenshot](assets/tablet-inset-answer-dark.png) |
+| Desktop | [Screenshot](assets/desktop-full-answer-dark.png) | [Screenshot](assets/desktop-inset-answer-dark.png) |
+
+Owner choice of tablet/desktop height remains pending. Clean screenshots and
+review do not constitute approval of every surrounding control or typography
+detail, and no production rollout has occurred.
+
+Independent visual review inspected all 24 PNGs and found no material clipping,
+fixed-control, theme or composition blockers at these six viewports. Phone A/B
+are visually identical. Reviewer and primary agent tentatively prefer B on
+tablet/desktop for the modest surrounding space; this is a recommendation, not
+owner approval. Muted Report/Known labels remain low-emphasis; their complete
+contrast and interaction acceptance belongs to the production UI contract.
 
 ## Retirement
 
