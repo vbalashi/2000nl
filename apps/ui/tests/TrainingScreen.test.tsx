@@ -2663,6 +2663,26 @@ test("mobile card uses hybrid height so content can scroll within the card", asy
   expect(frame.className).toContain("md:h-auto");
 });
 
+test("V2 layout keeps its theme owner when Today setup is disabled", async () => {
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+    const card = await screen.findByTestId("mock-training-sense-card-v2");
+    const viewport = card.closest('[data-training-session-layout="v2"]');
+    expect(viewport).not.toBeNull();
+    expect(viewport?.className).toContain("viewport");
+    expect(screen.queryByTestId("training-session-chrome")).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    prefetchPlatformV2TrainingEntry.mockReset();
+  }
+});
+
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
   platformV2TrainingUiEnabled.mockReturnValue(true);

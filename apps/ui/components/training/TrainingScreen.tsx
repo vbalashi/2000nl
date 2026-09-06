@@ -1712,12 +1712,12 @@ export function TrainingScreen({
     onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
   }, [onRequestDestination]);
 
-  const v2SessionChromeVisible = Boolean(
-    trainingTodaySetupEnabled &&
-    trainingSessionV2Enabled &&
-    currentWord &&
-    trainingPilot.surface === "session",
+  const v2SessionLayoutVisible = Boolean(
+    v2SessionOwned &&
+    (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
+  const v2SessionChromeVisible =
+    v2SessionLayoutVisible && trainingTodaySetupEnabled;
   const trainingSessionChrome = v2SessionChromeVisible ? (
     <TrainingSessionChrome
       interfaceLanguage={onboardingLang}
@@ -1787,14 +1787,14 @@ export function TrainingScreen({
   return (
     <>
       <div
-        data-training-session-layout={v2SessionChromeVisible ? "v2" : undefined}
+        data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
         aria-hidden={destination !== "training"}
         data-training-today-setup={
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
         className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:text-slate-100 ${
-          v2SessionChromeVisible
+          v2SessionLayoutVisible
             ? `font-sense-sans ${sessionStyles.viewport}`
             : "dark:bg-background-dark"
         }`}
