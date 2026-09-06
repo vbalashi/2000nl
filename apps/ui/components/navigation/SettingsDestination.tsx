@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ReadingSettingsSection } from "@/components/reading/ReadingSettingsSection";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -151,6 +152,7 @@ export function SettingsDestination({
           </p>
 
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
+            <ReadingSettingsSection language={interfaceLanguage} />
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-base font-bold">{text.theme}</h2>
               <div className="mt-4 grid grid-cols-3 gap-2">

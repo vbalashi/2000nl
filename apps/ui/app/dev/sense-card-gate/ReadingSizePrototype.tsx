@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
+import { ReadingSettingsSection } from "@/components/reading/ReadingSettingsSection";
+import { readingSizeStyles as styleVars } from "@/lib/reading/readingSize";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DetailedStats, TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
@@ -26,7 +29,6 @@ import {
 
 type ReadingVariant = "normal" | "large" | "largest";
 type ReadingMode = "direct" | "reverse";
-type ReadingStyleVars = React.CSSProperties & Record<`--${string}`, string>;
 
 const variants: ReadingVariant[] = ["normal", "large", "largest"];
 const variantLabels: Record<ReadingVariant, string> = {
@@ -37,57 +39,6 @@ const variantLabels: Record<ReadingVariant, string> = {
 const modeLabels: Record<ReadingMode, string> = {
   direct: "Direct",
   reverse: "Reverse",
-};
-
-const styleVars: Record<ReadingVariant, ReadingStyleVars> = {
-  normal: {
-    "--reading-body-size": "16px",
-    "--reading-body-leading": "1.15",
-    "--reading-body-prompt-size": "clamp(1.55rem, 5cqi, 2.4rem)",
-    "--reading-literary-size": "16px",
-    "--reading-literary-leading": "1.4",
-    "--reading-nested-size": "13px",
-    "--reading-nested-leading": "1.35",
-    "--reading-translation-size": "13px",
-    "--reading-translation-leading": "1.35",
-    "--reading-translation-emphasis-size": "15px",
-    "--reading-headword-face-size": "48px",
-    "--reading-headword-answer-size": "44px",
-    "--reading-headword-long-size": "32px",
-    "--reading-headword-long-size-sm": "40px",
-  },
-  large: {
-    "--reading-body-size": "18px",
-    "--reading-body-leading": "1.28",
-    "--reading-body-prompt-size": "clamp(1.7rem, 5.4cqi, 2.55rem)",
-    "--reading-literary-size": "18px",
-    "--reading-literary-leading": "1.5",
-    "--reading-nested-size": "14px",
-    "--reading-nested-leading": "1.4",
-    "--reading-translation-size": "14px",
-    "--reading-translation-leading": "1.45",
-    "--reading-translation-emphasis-size": "16px",
-    "--reading-headword-face-size": "50px",
-    "--reading-headword-answer-size": "46px",
-    "--reading-headword-long-size": "34px",
-    "--reading-headword-long-size-sm": "42px",
-  },
-  largest: {
-    "--reading-body-size": "20px",
-    "--reading-body-leading": "1.38",
-    "--reading-body-prompt-size": "clamp(1.85rem, 5.8cqi, 2.7rem)",
-    "--reading-literary-size": "20px",
-    "--reading-literary-leading": "1.55",
-    "--reading-nested-size": "15px",
-    "--reading-nested-leading": "1.45",
-    "--reading-translation-size": "15px",
-    "--reading-translation-leading": "1.5",
-    "--reading-translation-emphasis-size": "17px",
-    "--reading-headword-face-size": "52px",
-    "--reading-headword-answer-size": "48px",
-    "--reading-headword-long-size": "36px",
-    "--reading-headword-long-size-sm": "44px",
-  },
 };
 
 const stats: DetailedStats = {
@@ -129,7 +80,15 @@ function readMode(value: string | null): ReadingMode {
   return value === "reverse" ? "reverse" : "direct";
 }
 
-export function ReadingSizePrototype() {
+// Uses the actual settings repository. Browser tests intercept its external
+// storage boundary; this dev-only harness never mints an authenticated session.
+export function ReadingSettingsGate() {
+  return <ReadingPreferencesProvider userId="00000000-0000-4000-8000-000000000265">
+    <ReadingSizePrototype persistedSettings />
+  </ReadingPreferencesProvider>;
+}
+
+export function ReadingSizePrototype({ persistedSettings = false }: { persistedSettings?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -142,6 +101,7 @@ export function ReadingSizePrototype() {
   const clean = searchParams.get("clean") === "1";
   const [side, setSide] = React.useState<"face" | "answer">("face");
   const [theme, setTheme] = React.useState<ThemePreference>("system");
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -206,9 +166,9 @@ export function ReadingSizePrototype() {
   return (
     <div
       className={`${sessionStyles.viewport} flex h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
-      style={styleVars[variant]}
+      style={persistedSettings ? undefined : styleVars[variant]}
       data-reading-size-prototype="true"
-      data-reading-size={variant}
+      data-reading-size={persistedSettings ? undefined : variant}
       data-reading-fixture={fixtureKey}
       data-reading-mode={modeKey}
       data-reading-translations={translationsEnabled ? "on" : "off"}
@@ -217,7 +177,7 @@ export function ReadingSizePrototype() {
         interfaceLanguage="nl"
         themePreference={theme}
         onCycleTheme={cycleTheme}
-        onOpenSettings={() => undefined}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <TrainingSessionV2Layout
         phase="ready"
@@ -264,7 +224,7 @@ export function ReadingSizePrototype() {
           />
         </div>
       </TrainingSessionV2Layout>
-      {clean ? (
+      {persistedSettings ? null : clean ? (
         <button
           type="button"
           className={styles.cleanStamp}
@@ -288,6 +248,12 @@ export function ReadingSizePrototype() {
           onClean={() => setParam("clean", "1")}
         />
       )}
+      {settingsOpen && <div role="dialog" aria-label="Reading settings" className="fixed inset-0 z-50 overflow-y-auto bg-slate-50 p-4 dark:bg-slate-950">
+        <div className="mx-auto max-w-3xl">
+          <button type="button" className="mb-4 min-h-11 rounded-xl border px-4" onClick={() => setSettingsOpen(false)}>Back to card</button>
+          <ReadingSettingsSection language="en" />
+        </div>
+      </div>}
     </div>
   );
 }

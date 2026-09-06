@@ -81,7 +81,8 @@ describe("LibrarySenseCardGroup", () => {
     ).toBeTruthy();
     expect(headword).toHaveAttribute("data-long-headword", "true");
     expect(scrollRegion).not.toContainElement(headword);
-    expect(headword.className).toContain("text-[1.75rem]");
+    // Details now inherits the same headword size/proportion as Training Answer.
+    expect(headword.className).toContain("text-[1em]");
     expect(headword.className).not.toContain("cqw");
     expect(screen.queryByText("Значения")).not.toBeInTheDocument();
     expect(

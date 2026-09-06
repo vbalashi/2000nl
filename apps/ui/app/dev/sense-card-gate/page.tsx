@@ -1,5 +1,5 @@
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
-import { ReadingSizePrototype } from "./ReadingSizePrototype";
+import { ReadingSizePrototype, ReadingSettingsGate } from "./ReadingSizePrototype";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,9 @@ export default function SenseCardGatePage({
   }
   if (searchParams?.prototype === "reading") {
     return <ReadingSizePrototype />;
+  }
+  if (searchParams?.prototype === "reading-settings") {
+    return <ReadingSettingsGate />;
   }
   return <SenseCardGateHarness />;
 }

@@ -26,7 +26,10 @@ repeatable cold session-plan I/O even after migration 126. Issue #243 advances
 it to migration 128 after the now-fast plan exposed the remaining cold
 authoritative next-card selector.
 
-An enabled deployment must apply or verify migrations 123 through 128 in order
+Issue #265 advances it to migration 129 for additive app-local reading-size
+storage on `user_settings`.
+
+An enabled deployment must apply or verify migrations 123 through 129 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -187,6 +190,13 @@ removing randomized `selection_order` across default `both`/`new`/`review`,
 multi-mode, entry exclusion, and exact-card exclusion cases. Existing FSRS RPC
 coverage remains authoritative for list, filtered, access, pointer, known,
 hidden, legacy null-dictionary, cap, and queue behavior.
+
+Migration 129 adds independent `reading_size_phone` and
+`reading_size_desktop` text columns to `user_settings`. Each defaults to
+`normal` and is constrained to `normal`, `large`, or `largest`; existing rows
+are backfilled to `normal` without changing unrelated preferences. The
+first-party UI may update these app-local columns directly under the existing
+user-scoped RLS policy.
 
 ## Production QA sessions
 
