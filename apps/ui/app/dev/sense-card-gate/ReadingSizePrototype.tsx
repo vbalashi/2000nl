@@ -394,6 +394,7 @@ function PrototypeToolbar({
             >
               <option value="short">{copy.fixture.short}</option>
               <option value="long">{copy.fixture.long}</option>
+              <option value="long-word">{copy.fixture["long-word"]}</option>
             </select>
             <button type="button" onClick={() => onTranslationsChange(!translationsEnabled)}>
               {translationsEnabled ? copy.translations.on : copy.translations.off}

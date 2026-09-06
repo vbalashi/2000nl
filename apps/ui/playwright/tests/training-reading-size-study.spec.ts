@@ -163,6 +163,9 @@ test("size controls preserve the revealed card and are recoverable after clean c
   await page.getByRole("button", { name: "Reading · Large", exact: true }).click();
   await page.getByLabel("Reading size", { exact: true }).selectOption("largest");
   await expect(page.locator("[data-reading-size]")).toHaveAttribute("data-reading-size", "largest");
+  await page.getByLabel("Content fixture", { exact: true }).selectOption("long-word");
+  await expect(page.getByLabel("Content fixture", { exact: true })).toHaveValue("long-word");
+  await expect(page.getByRole("heading", { level: 2 })).toHaveAttribute("data-long-headword", "true");
   await page.getByRole("button", { name: "Clean", exact: true }).click();
   await expect(page.getByRole("button", { name: "Show reading size prototype controls" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Goed", exact: true })).toBeVisible();
