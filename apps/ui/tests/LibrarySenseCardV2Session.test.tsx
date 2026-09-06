@@ -16,19 +16,33 @@ import {
 } from "./platformV2LibraryFixture";
 import { goedEntry, goedGroup } from "./platformV2IdiomHierarchyFixture";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import type { EntryLearningListMembership } from "@/lib/types";
 
 const fetchGroup = vi.fn();
 const fetchCrossReferenceTarget = vi.fn();
 const requestTranslation = vi.fn();
 const performAction = vi.fn();
 const queueDiagnosticReport = vi.fn();
+const fetchMemberships = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((next) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((next, fail) => {
     resolve = next;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
+}
+
+function membership(listId: string): EntryLearningListMembership {
+  return {
+    listId,
+    listType: "user",
+    name: listId,
+    editable: true,
+    isActiveTrainingList: false,
+  };
 }
 
 function singleSenseGroup(
@@ -57,6 +71,21 @@ function singleSenseGroup(
           contentNodeId: `${node.kind}-${entryId}`,
           text: index === 0 ? definition : node.text,
         })),
+        capabilities: financeEntry.capabilities.map((capability) => ({
+          ...capability,
+          target:
+            capability.target.kind === "sense-card"
+              ? {
+                  ...capability.target,
+                  entryId,
+                  stateRevision: `state-${entryId}`,
+                }
+              : {
+                  ...capability.target,
+                  entryId,
+                  contentRevision: `content-${entryId}`,
+                },
+        })) as typeof financeEntry.capabilities,
       },
     ],
   };
@@ -82,6 +111,13 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
     queueDiagnosticReport(...args),
 }));
 
+vi.mock("@/lib/trainingService", () => ({
+  addWordsToUserList: vi.fn(),
+  createUserList: vi.fn(),
+  fetchEntryListMemberships: (...args: unknown[]) => fetchMemberships(...args),
+  removeWordsFromUserList: vi.fn(),
+}));
+
 describe("LibrarySenseCardV2Session", () => {
   beforeEach(() => {
     fetchGroup.mockReset();
@@ -89,6 +125,7 @@ describe("LibrarySenseCardV2Session", () => {
     performAction.mockReset();
     requestTranslation.mockReset();
     queueDiagnosticReport.mockReset();
+    fetchMemberships.mockReset();
     fetchGroup.mockResolvedValue(multiSenseBankGroup);
     performAction.mockResolvedValue({
       contractVersion: "platform-action-v2",
@@ -98,6 +135,7 @@ describe("LibrarySenseCardV2Session", () => {
       card: financeEntry.card,
     });
     queueDiagnosticReport.mockResolvedValue({ state: "sent" });
+    fetchMemberships.mockResolvedValue(new Map());
   });
 
   test("uses one global report action and no per-node flags", async () => {
@@ -583,6 +621,206 @@ describe("LibrarySenseCardV2Session", () => {
       await action.promise;
     });
     expect(fetchGroup).toHaveBeenCalledTimes(2);
+  });
+
+  test("keeps the newest action busy state when overlapping actions finish out of order", async () => {
+    const actionA = deferred<unknown>();
+    const actionB = deferred<unknown>();
+    const groupA = singleSenseGroup(
+      "group-action-a",
+      "entry-action-a",
+      "bank",
+      "first action meaning",
+    );
+    const groupB = singleSenseGroup(
+      "group-action-b",
+      "entry-action-b",
+      "bank",
+      "second action meaning",
+    );
+    fetchGroup.mockImplementation(({ entryId }: { entryId: string }) =>
+      Promise.resolve(entryId === "entry-action-a" ? groupA : groupB),
+    );
+    performAction
+      .mockImplementationOnce(() => actionA.promise)
+      .mockImplementationOnce(() => actionB.promise);
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-action-a");
+      return (
+        <>
+          <button type="button" onClick={() => setEntryId("entry-action-b")}>
+            Select second action meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText("first action meaning");
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select second action meaning" }),
+    );
+    await screen.findByText("second action meaning");
+    const learnButton = screen.getByRole("button", { name: "Learn" });
+    fireEvent.click(learnButton);
+    await waitFor(() => expect(learnButton).toBeDisabled());
+
+    actionA.reject(new Error("stale action failed"));
+    await act(async () => {
+      await actionA.promise.catch(() => undefined);
+    });
+    expect(learnButton).toBeDisabled();
+    expect(screen.queryByText("stale action failed")).not.toBeInTheDocument();
+
+    actionB.resolve(undefined);
+    await act(async () => {
+      await actionB.promise;
+    });
+    await waitFor(() => expect(learnButton).not.toBeDisabled());
+  });
+
+  test("does not let an older membership response overwrite the current group", async () => {
+    const membershipA = deferred<Map<string, EntryLearningListMembership[]>>();
+    const membershipB = deferred<Map<string, EntryLearningListMembership[]>>();
+    const groupA = singleSenseGroup(
+      "group-membership-a",
+      "entry-membership-a",
+      "bank",
+      "first membership meaning",
+    );
+    const groupB = singleSenseGroup(
+      "group-membership-b",
+      "entry-membership-b",
+      "bank",
+      "second membership meaning",
+    );
+    fetchGroup.mockImplementation(({ entryId }: { entryId: string }) =>
+      Promise.resolve(entryId === "entry-membership-a" ? groupA : groupB),
+    );
+    fetchMemberships.mockImplementation((entryIds: string[]) =>
+      entryIds.includes("entry-membership-b")
+        ? membershipB.promise
+        : membershipA.promise,
+    );
+
+    function SelectionHarness() {
+      const [entryId, setEntryId] = React.useState("entry-membership-a");
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => setEntryId("entry-membership-b")}
+          >
+            Select second membership meaning
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode="en"
+            interfaceLanguage="en"
+            userId="user-membership"
+          />
+        </>
+      );
+    }
+
+    render(<SelectionHarness />);
+    await screen.findByText("first membership meaning");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select second membership meaning" }),
+    );
+    await screen.findByText("second membership meaning");
+    await waitFor(() => expect(fetchMemberships).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      membershipB.resolve(
+        new Map([["entry-membership-b", [membership("list-b")]]]),
+      );
+      await membershipB.promise;
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collections · 1" }),
+      ).toBeInTheDocument(),
+    );
+
+    membershipA.resolve(
+      new Map([["entry-membership-a", [membership("list-a")]]]),
+    );
+    await act(async () => {
+      await membershipA.promise;
+    });
+    expect(
+      screen.getByRole("button", { name: "Collections · 1" }),
+    ).toBeInTheDocument();
+  });
+
+  test("does not refresh an old lookup dimension after translation changes", async () => {
+    const action = deferred<unknown>();
+    const lookupCalls: Array<{ translationTargetLanguageCode: string | null }> =
+      [];
+    performAction.mockReturnValue(action.promise);
+    fetchGroup.mockImplementation(
+      (input: { translationTargetLanguageCode: string | null }) => {
+        lookupCalls.push({
+          translationTargetLanguageCode: input.translationTargetLanguageCode,
+        });
+        return Promise.resolve(multiSenseBankGroup);
+      },
+    );
+
+    function TranslationHarness() {
+      const [translation, setTranslation] = React.useState<string | null>("en");
+      return (
+        <>
+          <button type="button" onClick={() => setTranslation("ru")}>
+            Change translation language
+          </button>
+          <LibrarySenseCardV2Session
+            entryId={financeEntry.entryId}
+            headword="bank"
+            contentLanguageCode="nl"
+            translationTargetLanguageCode={translation}
+            interfaceLanguage="en"
+          />
+        </>
+      );
+    }
+
+    render(<TranslationHarness />);
+    await screen.findByText(financeEntry.contentNodes[0].text);
+    fireEvent.click(screen.getByRole("button", { name: "Learn" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change translation language" }),
+    );
+    await waitFor(() =>
+      expect(lookupCalls).toEqual([
+        { translationTargetLanguageCode: "en" },
+        { translationTargetLanguageCode: "ru" },
+      ]),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Learn" })).not.toBeDisabled(),
+    );
+
+    action.resolve(undefined);
+    await act(async () => {
+      await action.promise;
+    });
+    expect(lookupCalls).toEqual([
+      { translationTargetLanguageCode: "en" },
+      { translationTargetLanguageCode: "ru" },
+    ]);
   });
 
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
