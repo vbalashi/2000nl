@@ -79,15 +79,13 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
 }
 
 export async function fetchPlatformV2LibraryGroup(input: {
-  query: string;
   entryId: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
 }): Promise<PlatformHeadwordGroupV2 | null> {
-  const { query: _query, ...exactInput } = input;
-  const payload = await fetchPlatformV2LibraryLookup(exactInput);
+  const payload = await fetchPlatformV2LibraryLookup(input);
   return selectPlatformV2LibraryGroup(payload, input.entryId);
 }
 

@@ -50,7 +50,7 @@ describe("selectPlatformV2LibraryGroup", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
     const group = await fetchPlatformV2LibraryGroup({
-      query: "bank", entryId: financeEntry.entryId,
+      entryId: financeEntry.entryId,
       cardTypeId: "word-to-definition", contentLanguageCode: "nl",
       translationTargetLanguageCode: "en",
     });
@@ -89,7 +89,7 @@ describe("selectPlatformV2LibraryGroup", () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 404 }));
     vi.stubGlobal("fetch", fetchMock);
     await expect(fetchPlatformV2LibraryGroup({
-      query: "bank", entryId: financeEntry.entryId,
+      entryId: financeEntry.entryId,
       cardTypeId: "word-to-definition", contentLanguageCode: "nl",
       translationTargetLanguageCode: "en",
     })).rejects.toMatchObject({ kind: "http-error", status: 404 });

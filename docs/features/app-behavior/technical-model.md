@@ -42,6 +42,7 @@
 - `apps/ui/components/training/TrainingCard.tsx`
 - `apps/ui/components/training/FirstTimeButtonGroup.tsx`
 - `apps/ui/components/training/TrainingDetailsDrawer.tsx`
+- Shared Details selection/routing contract: [unified-word-details.md](unified-word-details.md)
 - `apps/ui/components/training/library-v2/LibrarySenseCardV2Session.tsx`
 - `apps/ui/components/training/SettingsModal.tsx`
 - `apps/ui/components/Tooltip.tsx`
