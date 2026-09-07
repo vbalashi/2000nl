@@ -3,8 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
-import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import type { UserPreferences } from "@/lib/trainingService";
+import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
 import {
   appDestinationUrl,
   parseAppDestination,
@@ -31,18 +30,14 @@ const destinationFromLocation = (
 
 type Props = {
   user: User;
-  initialTransitionId?: string;
-  initialInterfaceLanguage?: OnboardingLanguage;
-  initialPreferences?: UserPreferences;
+  startupSnapshot: TrainingStartupSnapshot;
   enabled?: boolean;
   extendedDestinationsEnabled?: boolean;
 };
 
 export function TrainingLibraryShell({
   user,
-  initialTransitionId,
-  initialInterfaceLanguage,
-  initialPreferences,
+  startupSnapshot,
   enabled = navigationShellEnabled,
   extendedDestinationsEnabled = settingsStatisticsDestinationsEnabled,
 }: Props) {
@@ -124,9 +119,7 @@ export function TrainingLibraryShell({
     return (
       <TrainingScreen
         user={user}
-        initialTransitionId={initialTransitionId}
-        initialInterfaceLanguage={initialInterfaceLanguage}
-        initialPreferences={initialPreferences}
+        startupSnapshot={startupSnapshot}
       />
     );
   }
@@ -134,9 +127,7 @@ export function TrainingLibraryShell({
   return (
     <TrainingScreen
       user={user}
-      initialTransitionId={initialTransitionId}
-      initialInterfaceLanguage={initialInterfaceLanguage}
-      initialPreferences={initialPreferences}
+      startupSnapshot={startupSnapshot}
       destination={destination}
       extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}

@@ -3,6 +3,11 @@ import {
   buildFakeSupabaseSession,
   installSupabaseSession,
 } from "../utils/supabaseTestSession";
+import {
+  installTrainingAttributionCollector,
+  readTrainingAttributionCapture,
+  setupAuthenticatedTrainingAttributionPage,
+} from "../support/trainingAttributionHarness";
 
 const profiles = [
   {
@@ -222,3 +227,55 @@ for (const profile of profiles) {
     );
   });
 }
+
+test("delayed list hydration and card selection are attributed to startup", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await installTrainingAttributionCollector(page);
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    bootstrapReadDelayMs: 40,
+    activeScopeDelayMs: 180,
+    listSummaryDelayMs: 220,
+    schedulerDelayMs: 180,
+  });
+
+  const startCurrentSettings = page.getByRole("button", {
+    name: /Начать с текущими настройками|Start (?:with current settings|current setup)|Start met huidige instellingen/i,
+  });
+  await expect(startCurrentSettings).toBeVisible();
+  await startCurrentSettings.click();
+
+  // The card is the observable end of the complete startup chain: auth,
+  // saved-list hydration, scheduler selection, and card presentation.
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+
+  const capture = await readTrainingAttributionCapture(page);
+  const hydration = capture.timings.find(
+    (event) => event.stage === "training.active-scope-hydration",
+  );
+  expect(hydration).toMatchObject({ outcome: "ready" });
+  expect(hydration?.durationMs ?? 0).toBeGreaterThanOrEqual(170);
+
+  const startupSelection = capture.timings.find(
+    (event) =>
+      event.stage === "next-card.selection" &&
+      event.transitionId === hydration?.transitionId,
+  );
+  expect(startupSelection).toMatchObject({ outcome: "ready" });
+  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(150);
+  expect(startupSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
+    startupSelection?.monotonicEndedAtMs ?? 0,
+  );
+
+  // A delayed list request must not be mistaken for a card-selection delay;
+  // both stages remain separately visible under the same startup transition.
+  expect(
+    capture.timings.filter(
+      (event) =>
+        event.transitionId === hydration?.transitionId &&
+        event.stage === "next-card.selection",
+    ),
+  ).toEqual(expect.arrayContaining([expect.objectContaining({ outcome: "ready" })]));
+});

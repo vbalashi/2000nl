@@ -10,37 +10,42 @@ import { TrainingBootstrapShell } from "@/components/training/pilot/TrainingBoot
 import {
   getOnboardingLanguage,
   getStoredOnboardingLanguage,
+  isOnboardingLanguage,
   setOnboardingLanguage,
   type OnboardingLanguage,
 } from "@/lib/onboardingI18n";
-import {
-  fetchUserPreferences,
-  type UserPreferences,
-} from "@/lib/trainingService";
+import { fetchUserPreferences } from "@/lib/trainingService";
 import {
   createTrainingTransitionId,
   measureTrainingTransitionStage,
   recordTrainingTransitionTiming,
 } from "@/lib/training/trainingTransitionTiming";
+import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [bootstrapStatus, setBootstrapStatus] = useState<
     "loading" | "long-running" | "error" | "ready"
   >("loading");
-  const [initialTransitionId] = useState(createTrainingTransitionId);
+  const [activeTransitionId, setActiveTransitionId] = useState(
+    createTrainingTransitionId,
+  );
   const [interfaceLanguage, setInterfaceLanguage] =
     useState<OnboardingLanguage>("en");
   const [interfaceLanguageReady, setInterfaceLanguageReady] = useState(false);
   const [browserLanguageResolved, setBrowserLanguageResolved] = useState(false);
-  const [initialPreferences, setInitialPreferences] =
-    useState<UserPreferences | null>(null);
+  const [startupSnapshot, setStartupSnapshot] =
+    useState<TrainingStartupSnapshot | null>(null);
   const initialAuthRequestStartedRef = useRef(false);
-  const bootstrapReadyRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
+  const requestedUserIdRef = useRef<string | null | undefined>(undefined);
+  const bootstrapRequestRef = useRef(0);
 
   const loadSession = useCallback((transitionId: string) => {
-    bootstrapReadyRef.current = false;
+    const requestId = bootstrapRequestRef.current + 1;
+    bootstrapRequestRef.current = requestId;
+    requestedUserIdRef.current = undefined;
+    setActiveTransitionId(transitionId);
     setBootstrapStatus("loading");
     void measureTrainingTransitionStage(
       transitionId,
@@ -49,12 +54,13 @@ export default function HomePage() {
       ({ data }) => (data?.session?.user ? "authenticated" : "anonymous"),
     )
       .then(async ({ data }) => {
+        if (bootstrapRequestRef.current !== requestId) return;
         const authenticatedUser = data?.session?.user ?? null;
+        requestedUserIdRef.current = authenticatedUser?.id ?? null;
         if (!authenticatedUser) {
           currentUserIdRef.current = null;
           setUser(null);
-          setInitialPreferences(null);
-          bootstrapReadyRef.current = true;
+          setStartupSnapshot(null);
           setBootstrapStatus("ready");
           return;
         }
@@ -65,18 +71,27 @@ export default function HomePage() {
           "training.preferences",
           () => fetchUserPreferences(authenticatedUser.id),
         );
-        const accountLanguage = preferences.preferences.onboardingLanguage;
-        const resolvedLanguage = browserLanguage ?? accountLanguage ?? "en";
+        if (bootstrapRequestRef.current !== requestId) return;
+        const rawAccountLanguage = preferences.preferences.onboardingLanguage;
+        const accountLanguage = isOnboardingLanguage(rawAccountLanguage)
+          ? rawAccountLanguage
+          : null;
+        const resolvedLanguage =
+          accountLanguage ?? browserLanguage ?? getOnboardingLanguage();
         setOnboardingLanguage(resolvedLanguage);
         setInterfaceLanguage(resolvedLanguage);
         setInterfaceLanguageReady(true);
-        setInitialPreferences(preferences);
+        setStartupSnapshot({
+          transitionId,
+          interfaceLanguage: resolvedLanguage,
+          preferences,
+        });
         currentUserIdRef.current = authenticatedUser.id;
         setUser(authenticatedUser);
-        bootstrapReadyRef.current = true;
         setBootstrapStatus("ready");
       })
       .catch(() => {
+        if (bootstrapRequestRef.current !== requestId) return;
         setBootstrapStatus("error");
       });
   }, []);
@@ -88,12 +103,12 @@ export default function HomePage() {
     setInterfaceLanguageReady(Boolean(storedLanguage));
     setBrowserLanguageResolved(true);
     recordTrainingTransitionTiming({
-      transitionId: initialTransitionId,
+      transitionId: activeTransitionId,
       stage: "training.interface-language",
       durationMs: 0,
       outcome: storedLanguage ? `local-${storedLanguage}` : "local-missing",
     });
-  }, [initialTransitionId]);
+  }, [activeTransitionId]);
 
   useEffect(() => {
     if (bootstrapStatus !== "loading") return;
@@ -109,20 +124,25 @@ export default function HomePage() {
     if (!browserLanguageResolved) return;
     if (!initialAuthRequestStartedRef.current) {
       initialAuthRequestStartedRef.current = true;
-      loadSession(initialTransitionId);
+      loadSession(activeTransitionId);
     }
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_, session) => {
-      if (!bootstrapReadyRef.current) return;
       const nextUserId = session?.user?.id ?? null;
-      if (nextUserId === currentUserIdRef.current) return;
+      if (requestedUserIdRef.current === undefined) {
+        loadSession(createTrainingTransitionId());
+        return;
+      }
+      const knownUserId =
+        requestedUserIdRef.current ?? currentUserIdRef.current;
+      if (nextUserId === knownUserId) return;
       loadSession(createTrainingTransitionId());
     });
 
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, [browserLanguageResolved, initialTransitionId, loadSession]);
+  }, [activeTransitionId, browserLanguageResolved, loadSession]);
 
   if (bootstrapStatus !== "ready") {
     return (
@@ -135,7 +155,7 @@ export default function HomePage() {
     );
   }
 
-  if (!user) {
+  if (!user || !startupSnapshot) {
     return <AuthScreen />;
   }
 
@@ -145,9 +165,7 @@ export default function HomePage() {
       <TrainingLibraryShell
         key={user.id}
         user={user}
-        initialTransitionId={initialTransitionId}
-        initialInterfaceLanguage={interfaceLanguage}
-        initialPreferences={initialPreferences ?? undefined}
+        startupSnapshot={startupSnapshot}
       />
     </>
   );

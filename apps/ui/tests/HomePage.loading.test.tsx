@@ -14,6 +14,10 @@ type SessionResult = {
 };
 
 let resolveSession: (result: SessionResult) => void;
+let authStateHandler: (
+  event: string,
+  session: SessionResult["data"]["session"],
+) => void;
 
 const getSession = vi.fn(
   () =>
@@ -28,9 +32,10 @@ vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     auth: {
       getSession,
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe } },
-      })),
+      onAuthStateChange: vi.fn((handler) => {
+        authStateHandler = handler;
+        return { data: { subscription: { unsubscribe } } };
+      }),
     },
   },
 }));
@@ -51,19 +56,24 @@ vi.mock("@/lib/training/trainingTransitionTiming", () => ({
 
 vi.mock("@/components/navigation/TrainingLibraryShell", () => ({
   TrainingLibraryShell: ({
-    initialInterfaceLanguage,
+    startupSnapshot,
   }: {
-    initialInterfaceLanguage: "en" | "nl" | "ru";
+    startupSnapshot: {
+      transitionId: string;
+      interfaceLanguage: "en" | "nl" | "ru";
+    };
   }) => {
+    const { interfaceLanguage, transitionId } = startupSnapshot;
     const heading = {
       en: "Loading Training",
       nl: "Training laden",
       ru: "Загрузка тренировки",
-    }[initialInterfaceLanguage];
+    }[interfaceLanguage];
     return (
       <div
         data-testid="authenticated-training-shell"
-        data-interface-language={initialInterfaceLanguage}
+        data-interface-language={interfaceLanguage}
+        data-transition-id={transitionId}
       >
         <h1>{heading}</h1>
         <p role="status">…</p>
@@ -245,7 +255,7 @@ test("keeps the saved language visible while account preferences are delayed", a
 
   expect(screen.getByTestId("authenticated-training-shell")).toHaveAttribute(
     "data-interface-language",
-    "ru",
+    "en",
   );
 });
 
@@ -298,6 +308,17 @@ test.each([
   "hands saved %s to authenticated Training without an English fallback",
   async (language, bootstrapHeading, authenticatedHeading) => {
     window.localStorage.setItem("onboarding_language", language);
+    fetchUserPreferences.mockResolvedValueOnce({
+      themePreference: "system",
+      audioQuality: "free",
+      modesEnabled: ["word-to-definition"],
+      cardFilter: "both",
+      languageCode: "nl",
+      newReviewRatio: 2,
+      activeScenario: "understanding",
+      translationLang: "ru",
+      preferences: { onboardingLanguage: language },
+    });
     render(<HomePage />);
 
     expect(
@@ -331,6 +352,53 @@ test.each([
     }
   },
 );
+
+test("discards an authenticated bootstrap that finishes after sign-out", async () => {
+  let resolvePreferences!: (value: Record<string, unknown>) => void;
+  fetchUserPreferences.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolvePreferences = resolve;
+      }),
+  );
+
+  render(<HomePage />);
+  await act(async () => {
+    resolveSession({
+      data: {
+        session: {
+          user: { id: "user-1", email: "test@2000nl.test" } as User,
+        },
+      },
+    });
+  });
+  expect(fetchUserPreferences).toHaveBeenCalledWith("user-1");
+
+  act(() => authStateHandler("SIGNED_OUT", null));
+  await act(async () => {
+    resolveSession({ data: { session: null } });
+  });
+  expect(await screen.findByText("Auth")).toBeInTheDocument();
+
+  await act(async () => {
+    resolvePreferences({
+      themePreference: "system",
+      audioQuality: "free",
+      modesEnabled: ["word-to-definition"],
+      cardFilter: "both",
+      languageCode: "nl",
+      newReviewRatio: 2,
+      activeScenario: "understanding",
+      translationLang: "ru",
+      preferences: { onboardingLanguage: "ru" },
+    });
+  });
+
+  expect(screen.getByText("Auth")).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("authenticated-training-shell"),
+  ).not.toBeInTheDocument();
+});
 
 test("auth failure stays in the shell and retry resolves the destination", async () => {
   const interaction = userEvent.setup();

@@ -1,5 +1,11 @@
 export type OnboardingLanguage = "en" | "ru" | "nl";
 
+export function isOnboardingLanguage(
+  value: unknown,
+): value is OnboardingLanguage {
+  return value === "en" || value === "ru" || value === "nl";
+}
+
 export type OnboardingTranslation = {
   onboarding: {
     steps: Array<{

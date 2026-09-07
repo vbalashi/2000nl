@@ -44,9 +44,39 @@ vi.mock("@/components/training/TrainingScreen", () => ({
   },
 }));
 
-const { TrainingLibraryShell } = await import(
+const { TrainingLibraryShell: ProductionTrainingLibraryShell } = await import(
   "@/components/navigation/TrainingLibraryShell"
 );
+
+const defaultStartupSnapshot = {
+  transitionId: "test-startup",
+  interfaceLanguage: "en" as const,
+  preferences: {
+    themePreference: "system" as const,
+    audioQuality: "free" as const,
+    modesEnabled: ["word-to-definition" as const],
+    cardFilter: "both" as const,
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: "ru",
+    preferences: { onboardingLanguage: "en" as const },
+  },
+};
+
+function TrainingLibraryShell(
+  props: Omit<
+    React.ComponentProps<typeof ProductionTrainingLibraryShell>,
+    "startupSnapshot"
+  >,
+) {
+  return (
+    <ProductionTrainingLibraryShell
+      {...props}
+      startupSnapshot={defaultStartupSnapshot}
+    />
+  );
+}
 
 const user = { id: "user-1", email: "user@test.com" } as User;
 

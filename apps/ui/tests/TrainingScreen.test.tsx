@@ -627,8 +627,40 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingKnownUndoNotice: () => null,
 }));
 
-const { TrainingScreen } = await import("@/components/training/TrainingScreen");
+const { TrainingScreen: ProductionTrainingScreen } = await import(
+  "@/components/training/TrainingScreen"
+);
 const { getOnboardingTranslation } = await import("@/lib/onboardingI18n");
+
+const defaultStartupSnapshot = {
+  transitionId: "test-startup",
+  interfaceLanguage: "en" as const,
+  preferences: {
+    themePreference: "system" as const,
+    audioQuality: "free" as const,
+    modesEnabled: ["word-to-definition" as const],
+    cardFilter: "both" as const,
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "understanding",
+    translationLang: "ru",
+    preferences: { onboardingLanguage: "en" as const },
+  },
+};
+
+function TrainingScreen(
+  props: Omit<
+    React.ComponentProps<typeof ProductionTrainingScreen>,
+    "startupSnapshot"
+  >,
+) {
+  return (
+    <ProductionTrainingScreen
+      {...props}
+      startupSnapshot={defaultStartupSnapshot}
+    />
+  );
+}
 
 const user: User = { id: "user-1", email: "user@test.com" } as User;
 

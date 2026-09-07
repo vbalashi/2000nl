@@ -18,7 +18,6 @@ import {
   updateActiveTrainingScope,
   type ReviewResult,
   type TrainingScenarioCatalog,
-  type UserPreferences,
 } from "@/lib/trainingService";
 import type {
   ActiveTrainingScope,
@@ -106,12 +105,11 @@ import {
   markTrainingEntryPresentationStarted,
   registerTrainingEntryTransition,
 } from "@/lib/training/trainingTransitionTiming";
+import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
 
 type Props = {
   user: User;
-  initialTransitionId?: string;
-  initialInterfaceLanguage?: OnboardingLanguage;
-  initialPreferences?: UserPreferences;
+  startupSnapshot: TrainingStartupSnapshot;
   destination?: AppDestination;
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
@@ -227,9 +225,7 @@ export function TrainingScreen(props: Props) {
 
 function TrainingScreenContent({
   user,
-  initialTransitionId,
-  initialInterfaceLanguage,
-  initialPreferences,
+  startupSnapshot,
   destination = "training",
   extendedDestinationsEnabled = process.env
     .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
@@ -239,6 +235,11 @@ function TrainingScreenContent({
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
+  const {
+    transitionId: initialTransitionId,
+    interfaceLanguage: initialInterfaceLanguage,
+    preferences: initialPreferences,
+  } = startupSnapshot;
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const previousDestinationRef = useRef(destination);
 
@@ -413,9 +414,8 @@ function TrainingScreenContent({
     startOnboarding,
   } = useTrainingOnboarding({
     userId: user?.id,
-    translationLang,
-    initialInterfaceLanguage,
-    initialPreferences: initialPreferences?.preferences,
+    interfaceLanguage: initialInterfaceLanguage,
+    preferences: initialPreferences.preferences,
   });
 
   useEffect(() => {

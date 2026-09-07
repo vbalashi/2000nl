@@ -21,8 +21,8 @@ describe("useTrainingOnboarding", () => {
     const { result } = renderHook(() =>
       useTrainingOnboarding({
         userId: "user-1",
-        translationLang: "ru",
-        initialPreferences: {
+        interfaceLanguage: "ru",
+        preferences: {
           onboardingCompleted: false,
           unrelated: "keep",
         },
@@ -45,11 +45,10 @@ describe("useTrainingOnboarding", () => {
     const { result } = renderHook(() =>
       useTrainingOnboarding({
         userId: "user-1",
-        translationLang: "en",
-        initialInterfaceLanguage: "en",
-        initialPreferences: {
-        onboardingCompleted: false,
-        unrelated: "keep",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingCompleted: false,
+          unrelated: "keep",
         },
       }),
     );
@@ -78,11 +77,10 @@ describe("useTrainingOnboarding", () => {
     const { result } = renderHook(() =>
       useTrainingOnboarding({
         userId: "user-1",
-        translationLang: "en",
-        initialInterfaceLanguage: "en",
-        initialPreferences: {
-        onboardingCompleted: true,
-        unrelated: "keep",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingCompleted: true,
+          unrelated: "keep",
         },
       }),
     );
@@ -111,11 +109,10 @@ describe("useTrainingOnboarding", () => {
     const { result } = renderHook(() =>
       useTrainingOnboarding({
         userId: "user-1",
-        translationLang: "en",
-        initialInterfaceLanguage: "en",
-        initialPreferences: {
-        onboardingLanguage: "en",
-        unrelated: "keep",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingLanguage: "en",
+          unrelated: "keep",
         },
       }),
     );
