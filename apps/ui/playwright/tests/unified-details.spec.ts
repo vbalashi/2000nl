@@ -17,8 +17,14 @@ const multi = {
 };
 
 const viewports = [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1440, height: 960 }];
-const readingSizes = ["normal", "largest"] as const;
+const readingSizes = ["normal", "large", "largest"] as const;
 const colorSchemes = ["light", "dark"] as const;
+
+const regularHeadwordSize = { normal: "44px", large: "46px", largest: "48px" } as const;
+const longHeadwordSize = {
+  mobile: { normal: "32px", large: "34px", largest: "36px" },
+  desktop: { normal: "40px", large: "42px", largest: "44px" },
+} as const;
 
 async function expectReviewedHeaderGeometry(page: import("@playwright/test").Page) {
   const row = page.getByTestId("sense-card-header-row");
@@ -26,7 +32,9 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   const actions = row.getByTestId("sense-card-header-actions");
   const translate = actions.getByRole("button", { name: "Vertalen", exact: true });
   const audio = actions.getByRole("button", { name: "Afspelen", exact: true });
-  const headword = page.getByTestId("sense-card-headword-lockup").getByRole("heading", { level: 2 });
+  const lockup = page.getByTestId("sense-card-headword-lockup");
+  const headword = lockup.getByRole("heading", { level: 2 });
+  const header = page.getByTestId("library-sense-card-group").locator(":scope > header");
 
   await expect(row).toHaveCount(1);
   await expect(actions.getByRole("button")).toHaveCount(2);
@@ -34,20 +42,31 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Afspelen");
   await expect(page.getByTestId("sense-card-headword-lockup").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
 
-  const [rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
-    row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
+  const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
+    header.boundingBox(), lockup.boundingBox(), row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
   ]);
-  expect(rowBox && metadataBox && actionsBox && translateBox && audioBox && headwordBox).toBeTruthy();
-  expect(metadataBox!.x + metadataBox!.width).toBeLessThanOrEqual(actionsBox!.x + 1);
-  expect(actionsBox!.x + actionsBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
+  expect(headerBox && lockupBox && rowBox && metadataBox && actionsBox && translateBox && audioBox && headwordBox).toBeTruthy();
+  const expectedHorizontalPadding = page.viewportSize()!.width >= 640 ? 28 : 16;
+  expect(rowBox!.x - headerBox!.x).toBe(expectedHorizontalPadding);
+  expect(headerBox!.x + headerBox!.width - (rowBox!.x + rowBox!.width)).toBe(expectedHorizontalPadding);
+  expect(rowBox!.y - headerBox!.y).toBe(16);
+  expect(headerBox!.y + headerBox!.height - (lockupBox!.y + lockupBox!.height)).toBe(20);
+  expect(actionsBox!.x + actionsBox!.width).toBe(rowBox!.x + rowBox!.width);
+  expect(actionsBox!.x - (metadataBox!.x + metadataBox!.width)).toBeGreaterThanOrEqual(11.5);
   expect(translateBox!.width).toBe(40);
   expect(translateBox!.height).toBe(40);
   expect(audioBox!.width).toBe(40);
   expect(audioBox!.height).toBe(40);
   await expect(translate).toHaveCSS("border-radius", "16px");
   await expect(audio).toHaveCSS("border-radius", "16px");
-  expect(translateBox!.x + translateBox!.width).toBeLessThanOrEqual(audioBox!.x);
-  expect(headwordBox!.y).toBeGreaterThanOrEqual(rowBox!.y + rowBox!.height + 11);
+  await expect(translate.locator("svg")).toHaveCSS("width", "20px");
+  await expect(translate.locator("svg")).toHaveCSS("height", "20px");
+  await expect(audio.locator("svg")).toHaveCSS("width", "20px");
+  await expect(audio.locator("svg")).toHaveCSS("height", "20px");
+  expect(audioBox!.x - (translateBox!.x + translateBox!.width)).toBe(8);
+  const rowToHeadwordGap = headwordBox!.y - (rowBox!.y + rowBox!.height);
+  expect(rowToHeadwordGap).toBeGreaterThanOrEqual(11.5);
+  expect(rowToHeadwordGap).toBeLessThanOrEqual(12.5);
 }
 
 for (const viewport of viewports) {
@@ -85,7 +104,7 @@ for (const viewport of viewports) {
     await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
     if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(page.getByTestId("library-sense-card-group")).toBeVisible();
-    await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", size === "largest" ? "48px" : "44px");
+    await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", regularHeadwordSize[size]);
     await expectReviewedHeaderGeometry(page);
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
     if (viewport.width < 1024) {
@@ -102,8 +121,8 @@ for (const viewport of viewports) {
     }
     const copy = page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true });
     const report = page.getByRole("button", { name: /Melden|Report/, exact: true });
-    await expect(copy).toBeInViewport();
-    await expect(report).toBeInViewport();
+    await expect(copy).toBeInViewport({ ratio: 1 });
+    await expect(report).toBeInViewport({ ratio: 1 });
     const copyBox = await copy.boundingBox();
     const reportBox = await report.boundingBox();
     expect(copyBox && reportBox).toBeTruthy();
@@ -128,6 +147,7 @@ for (const viewport of viewports) {
     await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Vertalen", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Afspelen", exact: true })).toBeVisible();
+    await expectReviewedHeaderGeometry(page);
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead")).toBeInViewport();
     const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
     const scroller = page.getByTestId("library-sense-card-scroll-region");
@@ -146,7 +166,7 @@ for (const viewport of viewports) {
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
-    await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}-${size}-${colorScheme}.png`) });
+    await page.screenshot({ path: testInfo.outputPath(`details-training-more-${viewport.width}-${size}-${colorScheme}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
   }
@@ -174,9 +194,7 @@ for (const viewport of viewports) {
     await expect(headword).toBeVisible();
     await expect(headword).toHaveCSS(
       "font-size",
-      viewport.width >= 640
-        ? size === "largest" ? "44px" : "40px"
-        : size === "largest" ? "36px" : "32px",
+      viewport.width >= 640 ? longHeadwordSize.desktop[size] : longHeadwordSize.mobile[size],
     );
     await expectReviewedHeaderGeometry(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

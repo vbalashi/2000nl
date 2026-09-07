@@ -70,8 +70,10 @@ fallback. Current Details requires the pilot server controls; see the
 - Browser tests mount the real Details modules, including both mobile drawers,
   and replace only external lookup responses. They verify single/multi routing,
   selection, footer reachability, close/translation separation, and short-screen
-  fade geometry at 320×568, 390×844, and 1440×960 in Normal/light and
-  Largest/dark. This is not a claim of real production dictionary-data QA.
+  fade geometry at 320×568, 390×844, and 1440×960. Normal, Large, and Largest
+  are each checked independently in light and dark themes. The same header
+  geometry is asserted in Library Details and after opening Training More.
+  This is not a claim of real production dictionary-data QA.
 - Forms, sources, and shared notes require article identity/data work in #70;
   they must not be invented by grouping matching headword spellings.
 - App-shell consistency remains #264; all remaining legacy owners remain #255.

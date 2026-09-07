@@ -50,11 +50,11 @@ the fixed 12 px interval starts below it, so actions never cover the word.
 
 ## Required state matrix
 
-| Width | Short | Long | Normal | Largest | Light | Dark | Library | Training More |
-| ---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 320 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| 390 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| 1440 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Width | Short | Long | Normal | Large | Largest | Light | Dark | Library | Training More |
+| ---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 320 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 390 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 1440 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 The browser check keeps reading size and theme independent instead of treating
 Normal as light and Largest as dark. It asserts one shared action row, exact
@@ -66,3 +66,4 @@ and the #268 rule that Training More does not inherit Library footer actions.
 - [320 · short · Normal · light](assets/320-short-normal-light.png)
 - [390 · long · Largest · dark](assets/390-long-largest-dark.png)
 - [1440 · long · Largest · light](assets/1440-long-largest-light.png)
+- [390 · Training More · Normal · dark](assets/390-training-more-normal-dark.png)
