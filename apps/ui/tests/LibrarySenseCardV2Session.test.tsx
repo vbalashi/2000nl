@@ -8,7 +8,10 @@ import {
   within,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
+import {
+  LibrarySenseCardV2Session,
+  TrainingMoreSenseCardV2Session,
+} from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import {
   financeEntry,
   furnitureEntry,
@@ -150,6 +153,15 @@ vi.mock("@/lib/trainingService", () => ({
 }));
 
 describe("LibrarySenseCardV2Session", () => {
+  const groupWithFinanceReportRevision = () => ({
+    ...multiSenseBankGroup,
+    entries: multiSenseBankGroup.entries.map((entry) =>
+      entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
+        ? { ...entry, reportContentRevision: "a".repeat(64) }
+        : entry,
+    ),
+  });
+
   beforeEach(() => {
     fetchGroup.mockReset();
     fetchCrossReferenceTarget.mockReset();
@@ -170,14 +182,7 @@ describe("LibrarySenseCardV2Session", () => {
   });
 
   test("uses one global report action and no per-node flags", async () => {
-    fetchGroup.mockResolvedValue({
-      ...multiSenseBankGroup,
-      entries: multiSenseBankGroup.entries.map((entry) =>
-        entry.kind === "sense-card" && entry.entryId === financeEntry.entryId
-          ? { ...entry, reportContentRevision: "a".repeat(64) }
-          : entry,
-      ),
-    });
+    fetchGroup.mockResolvedValue(groupWithFinanceReportRevision());
     render(
       <LibrarySenseCardV2Session
         entryId={financeEntry.entryId}
@@ -201,6 +206,48 @@ describe("LibrarySenseCardV2Session", () => {
     expect(await screen.findByRole("dialog", { name: "What is wrong?" })).toBeInTheDocument();
     expect(screen.getAllByRole("radio")).toHaveLength(6);
     expect(performAction).not.toHaveBeenCalled();
+  });
+
+  test("keeps Training More details free of global footer actions", async () => {
+    const trainingGroup = groupWithFinanceReportRevision();
+    const trainNext = vi.fn();
+
+    render(
+      <TrainingMoreSenseCardV2Session
+        entryId={financeEntry.entryId}
+        initialGroup={trainingGroup}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        userId="training-user"
+        onTrainWord={trainNext}
+        trainingActionEntryId={financeEntry.entryId}
+        onTrainingAction={vi.fn()}
+        onCopyToUserDictionary={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    expect(screen.queryByTestId("library-details-actions")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Report" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Practice later (F)" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Hide from training (X)" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy to my dictionary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collections" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Collections" }));
+    expect(
+      screen.getByRole("dialog", { name: "Collections for this meaning" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Train next" }));
+    expect(trainNext).toHaveBeenCalledWith(financeEntry.entryId);
   });
 
   test("keeps idiom reporting on the sole global Library action", async () => {

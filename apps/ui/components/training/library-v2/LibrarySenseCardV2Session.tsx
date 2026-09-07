@@ -53,7 +53,18 @@ type Props = {
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
-export function LibrarySenseCardV2Session({
+type DetailsContext = "library" | "training-more";
+
+export function LibrarySenseCardV2Session(props: Props) {
+  return <SenseCardV2Session {...props} context="library" />;
+}
+
+export function TrainingMoreSenseCardV2Session(props: Props) {
+  return <SenseCardV2Session {...props} context="training-more" />;
+}
+
+function SenseCardV2Session({
+  context,
   entryId,
   initialGroup,
   headword,
@@ -71,7 +82,7 @@ export function LibrarySenseCardV2Session({
   actionLoading = false,
   onTrainingAction,
   onOpenListMembership,
-}: Props) {
+}: Props & { context: DetailsContext }) {
   const translationLanguage =
     translationTargetLanguageCode === "off"
       ? null
@@ -646,6 +657,7 @@ export function LibrarySenseCardV2Session({
         capability.target.kind === "entry",
     ),
   );
+  const showGlobalDetailsActions = context === "library";
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -694,10 +706,11 @@ export function LibrarySenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          bottomOverlayReserve={canReport}
+          bottomOverlayReserve={showGlobalDetailsActions && canReport}
         />
       </div>
-      {activeSenseEntry &&
+      {showGlobalDetailsActions &&
+      activeSenseEntry &&
       (onCopyToUserDictionary || onTrainingAction || canReport) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}

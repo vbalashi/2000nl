@@ -2,7 +2,7 @@
 
 import React from "react";
 import { LibraryWordDetail } from "@/components/training/library-v2/LibraryWordDetail";
-import { LibrarySenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
+import { TrainingMoreSenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
 import { gateFinanceEntry, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import { readingSizeStyles, type ReadingSize } from "@/lib/reading/readingSize";
 import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
@@ -32,7 +32,11 @@ export function UnifiedDetailsGate({ size = "normal", drawer = false }: { size?:
       <div data-testid="details-viewport" className="relative mx-auto min-h-0 w-full max-w-[680px] flex-1 [transform:translateZ(0)]">
         {training ? (
           <TrainingDetailsDrawer open onClose={() => setTraining(false)} interfaceLanguage="nl">
-            <LibrarySenseCardV2Session {...props} trainingActionEntryId={entryId} onTrainingAction={() => undefined} />
+            <TrainingMoreSenseCardV2Session
+              {...props}
+              trainingActionEntryId={entryId}
+              onTrainingAction={() => undefined}
+            />
           </TrainingDetailsDrawer>
         ) : drawer ? (
           <WordDetailDrawer selection={{ entryId, headword: "bank" }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" onCopyToUserDictionary={props.onCopyToUserDictionary} />
