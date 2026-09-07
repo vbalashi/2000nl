@@ -1,6 +1,7 @@
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
 import { ReadingSizePrototype, ReadingSettingsGate } from "./ReadingSizePrototype";
 import { UnifiedDetailsGate } from "./UnifiedDetailsGate";
+import { AppFramePrototype } from "./AppFramePrototype";
 import { normalizeReadingSize } from "@/lib/reading/readingSize";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ export default function SenseCardGatePage({
     size?: string;
     wrapper?: string;
     fixture?: string;
+    variant?: string;
+    mode?: string;
   };
 }) {
   if (process.env.NODE_ENV === "production") {
@@ -32,6 +35,14 @@ export default function SenseCardGatePage({
   }
   if (searchParams?.prototype === "reading-settings") {
     return <ReadingSettingsGate />;
+  }
+  if (searchParams?.prototype === "app-frame") {
+    return (
+      <AppFramePrototype
+        initialVariant={searchParams.variant}
+        initialMode={searchParams.mode}
+      />
+    );
   }
   return <SenseCardGateHarness />;
 }
