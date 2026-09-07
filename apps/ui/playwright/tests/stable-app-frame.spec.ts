@@ -126,6 +126,9 @@ test.describe("stable application frame", () => {
     await expect(
       page.getByRole("heading", { name: "Bibliotheek" }),
     ).toBeVisible();
+    await expect(
+      navigation.getByRole("button", { name: "Bibliotheek" }),
+    ).toHaveAttribute("aria-current", "page");
     const libraryFrame = await frameSnapshot(page);
     expect(libraryFrame.headerBox).toEqual(sessionFrame.headerBox);
     expect(libraryFrame.colors).toEqual(sessionFrame.colors);
@@ -138,6 +141,9 @@ test.describe("stable application frame", () => {
     await expect(
       page.getByRole("heading", { name: "Statistieken" }),
     ).toBeVisible();
+    await expect(
+      navigation.getByRole("button", { name: "Statistieken" }),
+    ).toHaveAttribute("aria-current", "page");
     const statisticsFrame = await frameSnapshot(page);
     expect(statisticsFrame.headerBox).toEqual(sessionFrame.headerBox);
     expect(statisticsFrame.colors).toEqual(sessionFrame.colors);

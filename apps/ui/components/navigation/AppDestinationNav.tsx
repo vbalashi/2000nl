@@ -86,7 +86,7 @@ export function AppDestinationNav({
           disabled={disabled}
           aria-current={active === destination ? "page" : undefined}
           onClick={() => onNavigate(destination)}
-          className={`flex min-h-9 items-center gap-2 rounded-lg px-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`flex min-h-9 items-center gap-2 rounded-lg px-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
             active === destination
               ? "bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white"
               : "text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
