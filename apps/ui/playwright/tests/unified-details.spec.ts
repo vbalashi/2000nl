@@ -40,7 +40,7 @@ async function expectReviewedHeaderGeometry(page: import("@playwright/test").Pag
   await expect(actions.getByRole("button")).toHaveCount(2);
   await expect(actions.getByRole("button").nth(0)).toHaveAttribute("aria-label", "Vertalen");
   await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Afspelen");
-  await expect(page.getByTestId("sense-card-headword-lockup").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("library-sense-card-group").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
 
   const [headerBox, lockupBox, rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
     header.boundingBox(), lockup.boundingBox(), row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
@@ -199,6 +199,11 @@ for (const viewport of viewports) {
     await expectReviewedHeaderGeometry(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`details-long-${viewport.width}-${size}-${colorScheme}.png`) });
+    await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
+    await expectReviewedHeaderGeometry(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`details-long-training-more-${viewport.width}-${size}-${colorScheme}.png`) });
   });
   }
   }
