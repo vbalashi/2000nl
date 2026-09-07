@@ -36,6 +36,7 @@ export default function HomePage() {
   const [browserLanguageResolved, setBrowserLanguageResolved] = useState(false);
   const [startupSnapshot, setStartupSnapshot] =
     useState<TrainingStartupSnapshot | null>(null);
+  const initialTransitionIdRef = useRef(activeTransitionId);
   const initialAuthRequestStartedRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
   const requestedUserIdRef = useRef<string | null | undefined>(undefined);
@@ -124,10 +125,14 @@ export default function HomePage() {
     if (!browserLanguageResolved) return;
     if (!initialAuthRequestStartedRef.current) {
       initialAuthRequestStartedRef.current = true;
-      loadSession(activeTransitionId);
+      loadSession(initialTransitionIdRef.current);
     }
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      // getSession() above owns the initial read. Supabase also emits the same
+      // state when the listener is registered; treating that as a change would
+      // duplicate or repeatedly restart bootstrap.
+      if (event === "INITIAL_SESSION") return;
       const nextUserId = session?.user?.id ?? null;
       if (requestedUserIdRef.current === undefined) {
         loadSession(createTrainingTransitionId());
@@ -142,7 +147,7 @@ export default function HomePage() {
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, [activeTransitionId, browserLanguageResolved, loadSession]);
+  }, [browserLanguageResolved, loadSession]);
 
   if (bootstrapStatus !== "ready") {
     return (

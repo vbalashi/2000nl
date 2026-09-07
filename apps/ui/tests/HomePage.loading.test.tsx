@@ -116,6 +116,14 @@ test("server bootstrap does not invent an English language before browser state 
   expect(html).not.toContain("Loading Training");
 });
 
+test("does not restart bootstrap for Supabase's initial subscription event", () => {
+  render(<HomePage />);
+
+  expect(getSession).toHaveBeenCalledTimes(1);
+  act(() => authStateHandler("INITIAL_SESSION", null));
+  expect(getSession).toHaveBeenCalledTimes(1);
+});
+
 test("uses the account language without an English waiting screen on a new browser", async () => {
   window.localStorage.clear();
   fetchUserPreferences.mockResolvedValueOnce({
