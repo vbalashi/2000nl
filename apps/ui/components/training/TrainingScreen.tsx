@@ -105,10 +105,11 @@ import {
   markTrainingEntryPresentationStarted,
   registerTrainingEntryTransition,
 } from "@/lib/training/trainingTransitionTiming";
+import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
 
 type Props = {
   user: User;
-  initialTransitionId?: string;
+  startupSnapshot: TrainingStartupSnapshot;
   destination?: AppDestination;
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
@@ -224,7 +225,7 @@ export function TrainingScreen(props: Props) {
 
 function TrainingScreenContent({
   user,
-  initialTransitionId,
+  startupSnapshot,
   destination = "training",
   extendedDestinationsEnabled = process.env
     .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
@@ -234,6 +235,11 @@ function TrainingScreenContent({
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
+  const {
+    transitionId: initialTransitionId,
+    interfaceLanguage: initialInterfaceLanguage,
+    preferences: initialPreferences,
+  } = startupSnapshot;
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const previousDestinationRef = useRef(destination);
 
@@ -277,7 +283,7 @@ function TrainingScreenContent({
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
-  } = useTrainingPreferences(user?.id, initialTransitionId);
+  } = useTrainingPreferences(user?.id, initialTransitionId, initialPreferences);
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
     useState(language);
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
@@ -408,7 +414,8 @@ function TrainingScreenContent({
     startOnboarding,
   } = useTrainingOnboarding({
     userId: user?.id,
-    translationLang,
+    interfaceLanguage: initialInterfaceLanguage,
+    preferences: initialPreferences.preferences,
   });
 
   useEffect(() => {

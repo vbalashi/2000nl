@@ -148,6 +148,12 @@ export async function setupAuthenticatedTrainingAttributionPage(
     abortActionNumber?: number;
     reconcileDelayMs?: number;
     bootstrapReadDelayMs?: number;
+    /** Delay the active-scope/list hydration request independently of other bootstrap reads. */
+    activeScopeDelayMs?: number;
+    /** Delay the authoritative list summary used to resolve the saved scope. */
+    listSummaryDelayMs?: number;
+    /** Delay scheduler selection so the attribution test covers a slow card pick. */
+    schedulerDelayMs?: number;
     lookupDelayMs?: number;
     actionDelayMs?: number;
     advanceLeaseClockMs?: number;
@@ -388,6 +394,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
+      await wait(options.schedulerDelayMs ?? 0);
       const forcedOutcome = schedulerOutcomes.shift();
       if (forcedOutcome === "statement-timeout") {
         await fulfillJson(
@@ -543,7 +550,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/rpc/get_active_training_scope")) {
-      await wait(options.bootstrapReadDelayMs ?? 0);
+      await wait(options.activeScopeDelayMs ?? options.bootstrapReadDelayMs ?? 0);
       await fulfillJson(
         route,
         {
@@ -588,6 +595,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
     if (pathname.endsWith("/rpc/get_word_list_summary")) {
+      await wait(options.listSummaryDelayMs ?? 0);
       await fulfillJson(route, wordListSummary(), "list-summary");
       return;
     }

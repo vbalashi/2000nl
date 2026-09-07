@@ -139,7 +139,7 @@ test("pending Start cannot be submitted twice", () => {
 });
 
 test.each([
-  ["loading", "Loading Training", null],
+  ["loading", "Loading card", null],
   ["empty", "No cards match this setup", "Adjust filters"],
   ["error", "Training could not be loaded", "Try again"],
   ["first-use", "Create your first training", "Set up training"],

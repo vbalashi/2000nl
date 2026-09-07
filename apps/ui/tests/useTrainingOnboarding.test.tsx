@@ -2,34 +2,31 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
 
-const { fetchUserPreferences, updateUserPreferences } = vi.hoisted(() => ({
-  fetchUserPreferences: vi.fn(),
+const { updateUserPreferences } = vi.hoisted(() => ({
   updateUserPreferences: vi.fn(),
 }));
 
 vi.mock("@/lib/trainingService", () => ({
-  fetchUserPreferences,
   updateUserPreferences,
 }));
 
 describe("useTrainingOnboarding", () => {
   beforeEach(() => {
-    fetchUserPreferences.mockReset();
     updateUserPreferences.mockReset();
     updateUserPreferences.mockResolvedValue({ error: null });
     window.localStorage.clear();
   });
 
   test("auto-detects missing language and merges into existing preferences", async () => {
-    fetchUserPreferences.mockResolvedValue({
-      preferences: {
-        onboardingCompleted: false,
-        unrelated: "keep",
-      },
-    });
-
     const { result } = renderHook(() =>
-      useTrainingOnboarding({ userId: "user-1", translationLang: "ru" }),
+      useTrainingOnboarding({
+        userId: "user-1",
+        interfaceLanguage: "ru",
+        preferences: {
+          onboardingCompleted: false,
+          unrelated: "keep",
+        },
+      }),
     );
 
     await waitFor(() => expect(result.current.onboardingLang).toBe("ru"));
@@ -45,18 +42,18 @@ describe("useTrainingOnboarding", () => {
   });
 
   test("language selection persists merged preferences and starts the tour", async () => {
-    fetchUserPreferences.mockResolvedValue({
-      preferences: {
-        onboardingCompleted: false,
-        unrelated: "keep",
-      },
-    });
-
     const { result } = renderHook(() =>
-      useTrainingOnboarding({ userId: "user-1", translationLang: "en" }),
+      useTrainingOnboarding({
+        userId: "user-1",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingCompleted: false,
+          unrelated: "keep",
+        },
+      }),
     );
 
-    await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalled());
+    await waitFor(() => expect(updateUserPreferences).toHaveBeenCalled());
     updateUserPreferences.mockClear();
 
     await act(async () => {
@@ -77,18 +74,18 @@ describe("useTrainingOnboarding", () => {
   });
 
   test("settings language choice persists without starting onboarding", async () => {
-    fetchUserPreferences.mockResolvedValue({
-      preferences: {
-        onboardingCompleted: true,
-        unrelated: "keep",
-      },
-    });
-
     const { result } = renderHook(() =>
-      useTrainingOnboarding({ userId: "user-1", translationLang: "en" }),
+      useTrainingOnboarding({
+        userId: "user-1",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingCompleted: true,
+          unrelated: "keep",
+        },
+      }),
     );
 
-    await waitFor(() => expect(fetchUserPreferences).toHaveBeenCalled());
+    await waitFor(() => expect(updateUserPreferences).toHaveBeenCalled());
     updateUserPreferences.mockClear();
 
     await act(async () => {
@@ -109,15 +106,15 @@ describe("useTrainingOnboarding", () => {
   });
 
   test("completion persists without clobbering other preferences", async () => {
-    fetchUserPreferences.mockResolvedValue({
-      preferences: {
-        onboardingLanguage: "en",
-        unrelated: "keep",
-      },
-    });
-
     const { result } = renderHook(() =>
-      useTrainingOnboarding({ userId: "user-1", translationLang: "en" }),
+      useTrainingOnboarding({
+        userId: "user-1",
+        interfaceLanguage: "en",
+        preferences: {
+          onboardingLanguage: "en",
+          unrelated: "keep",
+        },
+      }),
     );
 
     await waitFor(() => expect(result.current.onboardingLang).toBe("en"));

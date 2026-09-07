@@ -1,5 +1,11 @@
 export type OnboardingLanguage = "en" | "ru" | "nl";
 
+export function isOnboardingLanguage(
+  value: unknown,
+): value is OnboardingLanguage {
+  return value === "en" || value === "ru" || value === "nl";
+}
+
 export type OnboardingTranslation = {
   onboarding: {
     steps: Array<{
@@ -36,8 +42,8 @@ const translations: Record<OnboardingLanguage, OnboardingTranslation> = {
   nl: nl as OnboardingTranslation,
 };
 
-export function getOnboardingLanguage(): OnboardingLanguage {
-  if (typeof window === "undefined") return "en";
+export function getStoredOnboardingLanguage(): OnboardingLanguage | null {
+  if (typeof window === "undefined") return null;
   try {
     const saved = window.localStorage.getItem(ONBOARDING_LANG_KEY);
     if (saved === "en" || saved === "ru" || saved === "nl") {
@@ -46,7 +52,11 @@ export function getOnboardingLanguage(): OnboardingLanguage {
   } catch {
     // Ignore storage errors
   }
-  return "en"; // Default to English
+  return null;
+}
+
+export function getOnboardingLanguage(): OnboardingLanguage {
+  return getStoredOnboardingLanguage() ?? "en";
 }
 
 // Auto-detect onboarding language from system/user preferences

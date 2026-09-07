@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
+import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
 import {
   appDestinationUrl,
   parseAppDestination,
@@ -29,14 +30,14 @@ const destinationFromLocation = (
 
 type Props = {
   user: User;
-  initialTransitionId?: string;
+  startupSnapshot: TrainingStartupSnapshot;
   enabled?: boolean;
   extendedDestinationsEnabled?: boolean;
 };
 
 export function TrainingLibraryShell({
   user,
-  initialTransitionId,
+  startupSnapshot,
   enabled = navigationShellEnabled,
   extendedDestinationsEnabled = settingsStatisticsDestinationsEnabled,
 }: Props) {
@@ -118,7 +119,7 @@ export function TrainingLibraryShell({
     return (
       <TrainingScreen
         user={user}
-        initialTransitionId={initialTransitionId}
+        startupSnapshot={startupSnapshot}
       />
     );
   }
@@ -126,7 +127,7 @@ export function TrainingLibraryShell({
   return (
     <TrainingScreen
       user={user}
-      initialTransitionId={initialTransitionId}
+      startupSnapshot={startupSnapshot}
       destination={destination}
       extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}

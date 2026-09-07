@@ -1,69 +1,69 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CallBackProps } from "react-joyride";
 import { STATUS } from "react-joyride";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
-  detectOnboardingLanguage,
-  getOnboardingLanguage,
+  isOnboardingLanguage,
   setOnboardingLanguage,
   type OnboardingLanguage,
 } from "@/lib/onboardingI18n";
-import { fetchUserPreferences, updateUserPreferences } from "../trainingService";
-
-async function updateOnboardingPreferences(
-  userId: string,
-  patch: Record<string, any>,
-) {
-  const prefs = await fetchUserPreferences(userId);
-  const preferences = prefs.preferences ?? {};
-  await updateUserPreferences({
-    userId,
-    preferences: {
-      ...preferences,
-      ...patch,
-    },
-  });
-}
+import type { UserPreferences } from "@/lib/trainingService";
+import { updateUserPreferences } from "../trainingService";
 
 export function useTrainingOnboarding(params: {
   userId?: string;
-  translationLang: string | null;
+  interfaceLanguage: OnboardingLanguage;
+  preferences: UserPreferences["preferences"];
 }) {
-  const { userId, translationLang } = params;
+  const { userId, interfaceLanguage, preferences } = params;
   const [runTour, setRunTour] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
   const [onboardingLang, setOnboardingLang] =
-    useState<OnboardingLanguage>("en");
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+    useState<OnboardingLanguage>(interfaceLanguage);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(
+    Boolean(preferences.onboardingCompleted),
+  );
+  const preferencesRef = useRef<UserPreferences["preferences"]>(preferences);
+  const initializedUserRef = useRef<string | undefined>();
+
+  const updateOnboardingPreferences = useCallback(
+    async (patch: Record<string, any>) => {
+      if (!userId) return;
+      const preferences = {
+        ...preferencesRef.current,
+        ...patch,
+      };
+      preferencesRef.current = preferences;
+      await updateUserPreferences({ userId, preferences });
+    },
+    [userId],
+  );
 
   useEffect(() => {
     if (!userId) return;
+    if (initializedUserRef.current === userId) return;
+    initializedUserRef.current = userId;
 
-    const loadOnboardingPrefs = async () => {
-      try {
-        const prefs = await fetchUserPreferences(userId);
-        const preferences = prefs.preferences ?? {};
-        const { onboardingCompleted, onboardingLanguage } = preferences;
+    const savedLanguage = preferences.onboardingLanguage;
+    if (isOnboardingLanguage(savedLanguage)) {
+      setOnboardingLanguage(savedLanguage);
+      return;
+    }
 
-        setOnboardingCompleted(Boolean(onboardingCompleted));
-
-        if (!onboardingLanguage) {
-          const detected = detectOnboardingLanguage(translationLang);
-          setOnboardingLang(detected);
-          await updateOnboardingPreferences(userId, {
-            onboardingLanguage: detected,
-          });
-        } else {
-          setOnboardingLang(onboardingLanguage as OnboardingLanguage);
-        }
-      } catch (e) {
-        console.error("[Onboarding] Failed to load preferences:", e);
-      }
-    };
-
-    void loadOnboardingPrefs();
-  }, [translationLang, userId]);
+    setOnboardingLang(interfaceLanguage);
+    setOnboardingLanguage(interfaceLanguage);
+    void updateOnboardingPreferences({
+      onboardingLanguage: interfaceLanguage,
+    }).catch((e) => {
+      console.error("[Onboarding] Failed to save detected language:", e);
+    });
+  }, [
+    interfaceLanguage,
+    preferences.onboardingLanguage,
+    updateOnboardingPreferences,
+    userId,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -97,7 +97,7 @@ export function useTrainingOnboarding(params: {
 
       if (userId) {
         try {
-          await updateOnboardingPreferences(userId, {
+          await updateOnboardingPreferences({
             onboardingLanguage: lang,
           });
         } catch (e) {
@@ -105,7 +105,7 @@ export function useTrainingOnboarding(params: {
         }
       }
     },
-    [setOnboardingLanguageChoice, userId],
+    [setOnboardingLanguageChoice, updateOnboardingPreferences, userId],
   );
 
   const handleLanguageSelect = useCallback(
@@ -122,7 +122,7 @@ export function useTrainingOnboarding(params: {
     setOnboardingCompleted(false);
 
     if (userId) {
-      void updateOnboardingPreferences(userId, {
+      void updateOnboardingPreferences({
         onboardingCompleted: false,
       }).catch((e) => {
         console.error("[Onboarding] Failed to reset completion:", e);
@@ -130,7 +130,7 @@ export function useTrainingOnboarding(params: {
     }
 
     setRunTour(true);
-  }, [userId]);
+  }, [updateOnboardingPreferences, userId]);
 
   const handleJoyrideCallback = useCallback(
     async (data: CallBackProps) => {
@@ -142,7 +142,7 @@ export function useTrainingOnboarding(params: {
         setOnboardingCompleted(true);
 
         try {
-          await updateOnboardingPreferences(userId, {
+          await updateOnboardingPreferences({
             onboardingCompleted: true,
           });
           trainingDebug.log("[Onboarding] Marked as completed in DB");
@@ -151,7 +151,7 @@ export function useTrainingOnboarding(params: {
         }
       }
     },
-    [userId],
+    [updateOnboardingPreferences, userId],
   );
 
   return {
@@ -168,5 +168,3 @@ export function useTrainingOnboarding(params: {
     startOnboarding,
   };
 }
-
-export { getOnboardingLanguage };

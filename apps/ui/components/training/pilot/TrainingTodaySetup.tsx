@@ -11,7 +11,7 @@ import type {
 import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
 
 export type TrainingPilotStatus =
-  "ready" | "loading" | "empty" | "error" | "first-use";
+  "ready" | "preparing" | "loading" | "empty" | "error" | "first-use";
 
 export type TrainingSetupDraft = {
   scenarioId: string;
@@ -335,7 +335,7 @@ export function TrainingTodaySetup({
     ) : (
       <TrainingPilotStatePanel
         interfaceLanguage={interfaceLanguage}
-        status="loading"
+        status={status === "preparing" ? "preparing" : "loading"}
         context="training"
       />
     );
