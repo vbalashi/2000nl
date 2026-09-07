@@ -94,6 +94,14 @@ const { default: HomePage } = await import("@/app/page");
 
 beforeEach(() => {
   vi.clearAllMocks();
+  getSession.mockReset();
+  getSession.mockImplementation(
+    () =>
+      new Promise<SessionResult>((resolve) => {
+        resolveSession = resolve;
+      }),
+  );
+  fetchUserPreferences.mockReset();
   window.localStorage.setItem("onboarding_language", "nl");
   fetchUserPreferences.mockResolvedValue({
     themePreference: "system",
@@ -141,7 +149,9 @@ test("uses the account language without an English waiting screen on a new brows
   render(<HomePage />);
 
   expect(screen.getByTestId("training-loading-indicator")).toBeInTheDocument();
-  expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Preparing training" }),
+  ).toBeInTheDocument();
 
   await act(async () => {
     resolveSession({

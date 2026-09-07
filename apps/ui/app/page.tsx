@@ -103,7 +103,10 @@ export default function HomePage() {
     const storedLanguage = getStoredOnboardingLanguage();
     const initialLanguage = storedLanguage ?? detectOnboardingLanguage();
     setInterfaceLanguage(initialLanguage);
-    setInterfaceLanguageReady(Boolean(storedLanguage));
+    // The server renders no language-specific copy. Once the browser can
+    // detect a safe local language, the waiting state becomes explanatory;
+    // authenticated account preferences still become authoritative later.
+    setInterfaceLanguageReady(true);
     setBrowserLanguageResolved(true);
     recordTrainingTransitionTiming({
       transitionId: activeTransitionId,

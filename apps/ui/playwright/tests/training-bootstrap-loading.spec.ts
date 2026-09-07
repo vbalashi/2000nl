@@ -238,13 +238,26 @@ test("delayed list hydration and card selection are attributed to startup", asyn
     bootstrapReadDelayMs: 40,
     activeScopeDelayMs: 600,
     listSummaryDelayMs: 700,
-    schedulerDelayMs: 600,
+    schedulerDelayMs: 1_200,
   });
 
-  const startupStatus = page.getByRole("status");
-  await expect(startupStatus).toBeVisible();
-  await expect(startupStatus).toHaveAttribute("aria-busy", "true");
+  const authenticatedStatus = page.locator(
+    '[role="status"][data-context="training"]',
+  );
+  await expect(authenticatedStatus).toBeVisible();
+  await expect(authenticatedStatus).toHaveAttribute("aria-busy", "true");
+  await expect(
+    authenticatedStatus.getByRole("heading", {
+      name: /Preparing training|Training voorbereiden|Подготавливаем тренировку/i,
+    }),
+  ).toBeVisible();
   await expect(page.getByText("Loading training")).toHaveCount(0);
+
+  await expect(
+    authenticatedStatus.getByRole("heading", {
+      name: /Loading card|Kaart laden|Загружаем карточку/i,
+    }),
+  ).toBeVisible();
 
   const startCurrentSettings = page.getByRole("button", {
     name: /Начать с текущими настройками|Start (?:with current settings|current setup)|Start met huidige instellingen/i,
@@ -269,7 +282,7 @@ test("delayed list hydration and card selection are attributed to startup", asyn
       event.transitionId === hydration?.transitionId,
   );
   expect(startupSelection).toMatchObject({ outcome: "ready" });
-  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(550);
+  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(1_100);
   expect(startupSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
     startupSelection?.monotonicEndedAtMs ?? 0,
   );

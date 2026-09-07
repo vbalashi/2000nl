@@ -218,7 +218,9 @@ export function useTrainingPilotController({
 
   const status: TrainingPilotStatus = loadError
     ? "error"
-    : !listHydrated || (loadingWord && !hasCurrentWord)
+    : !listHydrated
+      ? "preparing"
+      : loadingWord && !hasCurrentWord
       ? "loading"
       : listOptions.length === 0
         ? "first-use"

@@ -10,7 +10,7 @@ type SharedProps = {
 };
 
 type Props =
-  | (SharedProps & { status: "loading" | "long-running" })
+  | (SharedProps & { status: "preparing" | "loading" | "long-running" })
   | (SharedProps & { status: "error"; onRetry: () => void })
   | (SharedProps & {
       status: "empty" | "first-use";
@@ -85,6 +85,12 @@ export function TrainingPilotStatePanel(props: Props) {
   const t = copy[props.interfaceLanguage];
   const stateCopy = (() => {
     switch (props.status) {
+      case "preparing":
+        return {
+          heading: t.bootstrapLoading,
+          body: null,
+          action: null,
+        };
       case "loading":
         return {
           heading:
@@ -119,7 +125,10 @@ export function TrainingPilotStatePanel(props: Props) {
             };
     }
   })();
-  const busy = props.status === "loading" || props.status === "long-running";
+  const busy =
+    props.status === "preparing" ||
+    props.status === "loading" ||
+    props.status === "long-running";
   const copyVisible = props.copyVisible ?? true;
   const onAction =
     props.status === "error"
@@ -132,6 +141,7 @@ export function TrainingPilotStatePanel(props: Props) {
     <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <section
         role={props.status === "error" ? "alert" : "status"}
+        data-context={props.context}
         aria-busy={busy}
         aria-label={copyVisible ? undefined : stateCopy.heading}
         aria-live="polite"
