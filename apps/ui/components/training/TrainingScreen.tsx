@@ -33,7 +33,6 @@ import type {
   WordListType,
 } from "@/lib/types";
 import type { PlatformHeadwordGroupV2 } from "../../../../packages/shared/types/platformV2";
-import { BrandLogo } from "@/components/BrandLogo";
 import { useCardParams } from "@/lib/cardParams";
 import {
   useTrainingPreferences,
@@ -48,10 +47,7 @@ import {
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
-import {
-  TrainingSessionAppHeader,
-  TrainingSessionChrome,
-} from "./v2/TrainingSessionChrome";
+import { TrainingSessionChrome } from "./v2/TrainingSessionChrome";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
@@ -71,14 +67,7 @@ import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
-import {
-  AppDestinationNav,
-  MobileAppDestinationNav,
-} from "@/components/navigation/AppDestinationNav";
-import {
-  AppUtilityNav,
-  type AppUtilityNavProps,
-} from "@/components/navigation/AppUtilityNav";
+import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferencesProvider";
@@ -111,7 +100,6 @@ type Props = {
   user: User;
   startupSnapshot: TrainingStartupSnapshot;
   destination?: AppDestination;
-  extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
   onReturnFromHistory?: () => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
@@ -186,10 +174,7 @@ const trainingFilterKey = (filter: TrainingFocusFilter) =>
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
 
-const dictionaryLookupNotice = (
-  language: OnboardingLanguage,
-  word: string,
-) =>
+const dictionaryLookupNotice = (language: OnboardingLanguage, word: string) =>
   ({
     nl: `Geen woordenboekvermelding gevonden voor “${word}”.`,
     en: `No dictionary entry found for “${word}”.`,
@@ -218,17 +203,17 @@ function buildJoyrideSteps(lang: OnboardingLanguage): Step[] {
 }
 
 export function TrainingScreen(props: Props) {
-  return <ReadingPreferencesProvider userId={props.user.id}>
-    <TrainingScreenContent {...props} />
-  </ReadingPreferencesProvider>;
+  return (
+    <ReadingPreferencesProvider userId={props.user.id}>
+      <TrainingScreenContent {...props} />
+    </ReadingPreferencesProvider>
+  );
 }
 
 function TrainingScreenContent({
   user,
   startupSnapshot,
   destination = "training",
-  extendedDestinationsEnabled = process.env
-    .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
   onRequestDestination,
   onReturnFromHistory,
   onNavigationBlockedChange,
@@ -252,11 +237,15 @@ function TrainingScreenContent({
     ) {
       return;
     }
-    const frame = window.requestAnimationFrame(() => historyButtonRef.current?.focus());
+    const frame = window.requestAnimationFrame(() =>
+      historyButtonRef.current?.focus(),
+    );
     return () => window.cancelAnimationFrame(frame);
   }, [destination]);
 
-  const trainingScenarioCatalogRef = useRef<TrainingScenarioCatalog | null>(null);
+  const trainingScenarioCatalogRef = useRef<TrainingScenarioCatalog | null>(
+    null,
+  );
   if (!trainingScenarioCatalogRef.current) {
     trainingScenarioCatalogRef.current = createTrainingScenarioCatalog();
   }
@@ -496,7 +485,7 @@ function TrainingScreenContent({
   const v2SessionMode =
     trainingShellV2Enabled &&
     (currentMode === "word-to-definition" ||
-    currentMode === "definition-to-word")
+      currentMode === "definition-to-word")
       ? currentMode
       : null;
   const trainingSessionV2Enabled = Boolean(v2SessionMode);
@@ -698,15 +687,12 @@ function TrainingScreenContent({
       languageHydrationObservedNotReadyRef.current = false;
       setCurrentTrainingLanguage(language);
     }
-  }, [
-    beginSessionScopeChange,
-    currentTrainingLanguage,
-    language,
-  ]);
+  }, [beginSessionScopeChange, currentTrainingLanguage, language]);
 
   useEffect(() => {
     if (!activeTrainingScope) return;
-    if (lastAppliedActiveTrainingScopeRef.current === activeTrainingScope) return;
+    if (lastAppliedActiveTrainingScopeRef.current === activeTrainingScope)
+      return;
     lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
     const current = localTrainingPreferencesRef.current;
     const nextModes = activeTrainingScope.modesEnabled as TrainingMode[];
@@ -719,7 +705,9 @@ function TrainingScreenContent({
       setActiveScenario(activeTrainingScope.activeScenario, { persist: false });
     }
     if (current.cardFilter !== activeTrainingScope.cardFilter) {
-      setCardFilterPreference(activeTrainingScope.cardFilter, { persist: false });
+      setCardFilterPreference(activeTrainingScope.cardFilter, {
+        persist: false,
+      });
     }
     if (current.enabledModes.join("|") !== nextModes.join("|")) {
       setEnabledModes(nextModes, { persist: false });
@@ -944,8 +932,8 @@ function TrainingScreenContent({
   useEffect(() => {
     const awaitingDefaultScenario = Boolean(
       activeList?.default_scenario_id &&
-        !activeTrainingScope?.hasSavedScope &&
-        activeScenario !== activeList.default_scenario_id,
+      !activeTrainingScope?.hasSavedScope &&
+      activeScenario !== activeList.default_scenario_id,
     );
     if (!user?.id || !listHydrated || awaitingDefaultScenario) {
       return;
@@ -982,15 +970,18 @@ function TrainingScreenContent({
     void loadNextWord();
   }, [listHydrated, loadNextWord, trainingFocusFilterKey, user?.id]);
 
-  const handleShowDetails = useCallback((entry: DictionaryEntry) => {
-    setDetailInitialGroup(null);
-    setDetailSelection({
-      entryId: entry.id,
-      headword: entry.headword,
-      contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
-    });
-    setDetailsOpen(true);
-  }, [currentTrainingLanguage]);
+  const handleShowDetails = useCallback(
+    (entry: DictionaryEntry) => {
+      setDetailInitialGroup(null);
+      setDetailSelection({
+        entryId: entry.id,
+        headword: entry.headword,
+        contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
+      });
+      setDetailsOpen(true);
+    },
+    [currentTrainingLanguage],
+  );
 
   // Show details for the current training word
   const handleShowCurrentWordDetails = useCallback(
@@ -1025,7 +1016,7 @@ function TrainingScreenContent({
   }, [actionLoading, onRequestDestination]);
 
   const openAppSettings = useCallback(() => {
-    if (extendedDestinationsEnabled && onRequestDestination) {
+    if (onRequestDestination) {
       if (!actionLoading) {
         onRequestDestination("settings");
       }
@@ -1035,7 +1026,7 @@ function TrainingScreenContent({
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(false);
     setShowSettings(true);
-  }, [actionLoading, extendedDestinationsEnabled, onRequestDestination]);
+  }, [actionLoading, onRequestDestination]);
 
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
@@ -1712,8 +1703,7 @@ function TrainingScreenContent({
   });
 
   const legacyTrainingCardPresentation = React.useMemo(
-    () =>
-      currentWord ? projectTrainingCardPresentation(currentWord) : null,
+    () => (currentWord ? projectTrainingCardPresentation(currentWord) : null),
     [currentWord],
   );
   const legacyTrainingCard = (
@@ -1737,11 +1727,12 @@ function TrainingScreenContent({
     />
   );
 
-  const destinationUtilityNav = {
-    themePreference,
-    onCycleTheme: cycleThemePreference,
-    onOpenSettings: openAppSettings,
-  } satisfies Omit<AppUtilityNavProps, "interfaceLanguage">;
+  const activePrimaryDestination =
+    destination === "library" || destination === "statistics"
+      ? destination
+      : destination === "settings"
+        ? null
+        : "training";
   const openTrainingHistory = useCallback(() => {
     onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
   }, [onRequestDestination]);
@@ -1750,9 +1741,9 @@ function TrainingScreenContent({
     v2SessionOwned &&
     (!trainingTodaySetupEnabled || trainingPilot.surface === "session"),
   );
-  const v2SessionChromeVisible =
-    v2SessionLayoutVisible && trainingTodaySetupEnabled;
-  const trainingSessionChrome = v2SessionChromeVisible ? (
+  const sessionChromeVisible =
+    trainingTodaySetupEnabled && trainingPilot.surface === "session";
+  const sessionChrome = sessionChromeVisible ? (
     <TrainingSessionChrome
       interfaceLanguage={onboardingLang}
       scenario={activeScenario}
@@ -1762,8 +1753,10 @@ function TrainingScreenContent({
       onHistory={onRequestDestination ? openTrainingHistory : undefined}
       historyButtonRef={historyButtonRef}
       onClose={trainingPilot.returnToToday}
+      disabled={actionLoading}
     />
   ) : null;
+  const trainingSessionChrome = v2SessionLayoutVisible ? sessionChrome : null;
   const trainingSessionFooter = (
     <FooterStats
       stats={stats}
@@ -1819,7 +1812,16 @@ function TrainingScreenContent({
     </div>
   ) : null;
   return (
-    <>
+    <AppFrame
+      activeDestination={activePrimaryDestination}
+      interfaceLanguage={onboardingLang}
+      themePreference={themePreference}
+      settingsActive={destination === "settings"}
+      navigationDisabled={actionLoading}
+      onNavigate={(nextDestination) => onRequestDestination?.(nextDestination)}
+      onCycleTheme={cycleThemePreference}
+      onOpenSettings={openAppSettings}
+    >
       <div
         data-training-session-layout={v2SessionLayoutVisible ? "v2" : undefined}
         aria-hidden={destination !== "training"}
@@ -1827,63 +1829,19 @@ function TrainingScreenContent({
           trainingTodaySetupEnabled ? "enabled" : "disabled"
         }
         data-training-pilot-surface={trainingPilot.surface}
-        className={`${destination === "training" ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:text-slate-100 ${
+        className={`${destination === "training" ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 ${
           v2SessionLayoutVisible
             ? `font-sense-sans ${sessionStyles.viewport}`
             : "dark:bg-background-dark"
         }`}
       >
-        {v2SessionChromeVisible ? (
-          <TrainingSessionAppHeader
-            interfaceLanguage={onboardingLang}
-            {...destinationUtilityNav}
-          />
-        ) : (
-        <header className="relative z-40 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/80 px-3 py-2.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 md:px-6 md:py-3">
-          <div className="flex min-w-0 items-center gap-2 justify-self-start">
-            <div className="flex h-9 min-w-0 items-center gap-2 md:h-10">
-              <BrandLogo />
-            </div>
-            {trainingTodaySetupEnabled &&
-            trainingPilot.surface === "session" &&
-            !v2SessionChromeVisible ? (
-              <button
-                type="button"
-                aria-label="Terug naar Vandaag"
-                onClick={trainingPilot.returnToToday}
-                className="ml-1 min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                <span aria-hidden="true">←</span>
-                <span className="hidden sm:inline"> Vandaag</span>
-              </button>
-            ) : null}
+        {sessionChromeVisible && !v2SessionLayoutVisible ? (
+          <div
+            className={`${sessionStyles.viewport} flex-none px-4 pt-2 md:px-6`}
+          >
+            <div className="mx-auto w-full max-w-[760px]">{sessionChrome}</div>
           </div>
-          {onRequestDestination ? (
-            <div className="justify-self-center">
-              <AppDestinationNav
-                active="training"
-                interfaceLanguage={onboardingLang}
-                disabled={actionLoading}
-                extendedDestinationsEnabled={extendedDestinationsEnabled}
-                onNavigate={onRequestDestination}
-              />
-            </div>
-          ) : (
-            <div />
-          )}
-          {destination === "training" ? (
-            <AppUtilityNav
-              interfaceLanguage={onboardingLang}
-              themePreference={themePreference}
-              onCycleTheme={cycleThemePreference}
-              onOpenSettings={openAppSettings}
-            />
-          ) : (
-            <div />
-          )}
-        </header>
-        )}
-
+        ) : null}
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             interfaceLanguage={onboardingLang}
@@ -1935,7 +1893,10 @@ function TrainingScreenContent({
           />
         ) : (
           <>
-            <main data-training-session-main className="flex grow flex-col items-center overflow-hidden bg-background-light dark:bg-background-dark">
+            <div
+              data-training-session-main
+              className="flex grow flex-col items-center overflow-hidden bg-transparent"
+            >
               {/* Center the training card while preserving its established width. */}
               <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
                 {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
@@ -1946,9 +1907,7 @@ function TrainingScreenContent({
                     className="flex flex-1 flex-col overflow-y-auto overflow-x-visible px-2 scrollbar-hide md:px-4"
                   >
                     {/* Card Container */}
-                    <div
-                      className="flex min-h-full flex-col justify-start py-2 md:justify-center md:py-4"
-                    >
+                    <div className="flex min-h-full flex-col justify-start py-2 md:justify-center md:py-4">
                       {trainingSessionNotice}
                       {!trainingShellV2Enabled && !onRequestDestination ? (
                         <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
@@ -2214,27 +2173,12 @@ function TrainingScreenContent({
                     </div>
                   ) : null}
                 </section>
-
               </div>
-            </main>
-
-            <div>
-              {trainingSessionFooter}
             </div>
+
+            <div>{trainingSessionFooter}</div>
           </>
         )}
-
-        {trainingTodaySetupEnabled &&
-        trainingPilot.surface !== "session" &&
-        onRequestDestination ? (
-          <MobileAppDestinationNav
-            active="training"
-            interfaceLanguage={onboardingLang}
-            disabled={actionLoading}
-            extendedDestinationsEnabled={extendedDestinationsEnabled}
-            onNavigate={onRequestDestination}
-          />
-        ) : null}
 
         {trainingShellV2Enabled ? (
           <TrainingKnownUndoNotice
@@ -2269,14 +2213,17 @@ function TrainingScreenContent({
                   initialGroup={detailInitialGroup ?? undefined}
                   headword={detailSelection.headword}
                   contentLanguageCode={
-                    detailSelection.contentLanguageCode ?? currentTrainingLanguage
+                    detailSelection.contentLanguageCode ??
+                    currentTrainingLanguage
                   }
                   translationTargetLanguageCode={
                     translationLang === "off" ? null : translationLang
                   }
                   interfaceLanguage={onboardingLang}
                   userId={user.id}
-                  userLists={availableLists.filter((list) => list.type === "user")}
+                  userLists={availableLists.filter(
+                    (list) => list.type === "user",
+                  )}
                   onListsUpdated={handleListsUpdated}
                   onTrainWord={handleTrainWord}
                   trainingActionEntryId={currentWord?.id}
@@ -2293,7 +2240,7 @@ function TrainingScreenContent({
           ) : null}
         </TrainingDetailsDrawer>
 
-        {showSettings && !extendedDestinationsEnabled && (
+        {showSettings && !onRequestDestination && (
           <SettingsModal
             open={showSettings}
             onClose={() => {
@@ -2409,9 +2356,6 @@ function TrainingScreenContent({
           lists={availableLists}
           activeList={activeList ?? null}
           onReloadLists={handleListsUpdated}
-          extendedDestinationsEnabled={extendedDestinationsEnabled}
-          onNavigate={onRequestDestination}
-          utilityNav={destinationUtilityNav}
           onOpenListMembership={(membership) => {
             onRequestDestination("training");
             openMembershipList(membership);
@@ -2423,13 +2367,12 @@ function TrainingScreenContent({
           }}
         />
       ) : null}
-      {onRequestDestination && extendedDestinationsEnabled ? (
+      {onRequestDestination ? (
         <StatisticsDestination
           open={destination === "statistics"}
           interfaceLanguage={onboardingLang}
           stats={stats}
-          onNavigate={onRequestDestination}
-          utilityNav={destinationUtilityNav}
+          onStartTraining={() => onRequestDestination("training")}
         />
       ) : null}
       {onRequestDestination && destination === TRAINING_HISTORY_DESTINATION ? (
@@ -2437,14 +2380,12 @@ function TrainingScreenContent({
           open
           userId={user.id}
           interfaceLanguage={onboardingLang}
-          onNavigate={onRequestDestination}
           onReturnToTraining={
             onReturnFromHistory ?? (() => onRequestDestination("training"))
           }
-          utilityNav={destinationUtilityNav}
         />
       ) : null}
-      {onRequestDestination && extendedDestinationsEnabled ? (
+      {onRequestDestination ? (
         <SettingsDestination
           open={destination === "settings"}
           interfaceLanguage={onboardingLang}
@@ -2453,11 +2394,10 @@ function TrainingScreenContent({
           onThemeChange={setTheme}
           onInterfaceLanguageChange={saveOnboardingLanguageChoice}
           onTranslationLanguageChange={setTranslationLang}
-          onNavigate={onRequestDestination}
           userEmail={user.email ?? ""}
           onSignOut={handleSignOut}
         />
       ) : null}
-    </>
+    </AppFrame>
   );
 }

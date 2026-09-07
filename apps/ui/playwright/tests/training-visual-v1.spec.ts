@@ -227,10 +227,7 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
     new MutationObserver(() => {
       if (!document.querySelector('[data-training-v2-state="model-invalid"]')) return;
       requestAnimationFrame(() => {
-        for (const testId of [
-          "training-session-chrome",
-          "training-session-footer-progress",
-        ]) {
+        for (const testId of ["training-session-footer-progress"]) {
           const element = document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
           if (element && element.getClientRects().length > 0) {
             runtime.__errorLayoutViolations?.push(testId);
@@ -245,16 +242,16 @@ test("captures the approved recoverable-error state", async ({ browser }) => {
     })
     .click();
   await expect(page.getByTestId("training-v2-failure")).toBeVisible();
-  await expect(page.getByTestId("training-session-app-header")).toBeVisible();
+  await expect(page.getByTestId("app-header")).toBeVisible();
   await expect(
     page
-      .getByTestId("training-session-app-header")
+      .getByTestId("app-header")
       .getByText("2000nl", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Sessie sluiten|Close session|Закрыть сессию/i }),
   ).toBeVisible();
-  await expect(page.getByTestId("training-session-chrome")).toBeHidden();
+  await expect(page.getByTestId("training-session-chrome")).toBeVisible();
   await expect(page.getByTestId("training-session-footer-progress")).toBeHidden();
   await page.evaluate(() => new Promise(requestAnimationFrame));
   expect(

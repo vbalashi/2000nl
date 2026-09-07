@@ -343,7 +343,7 @@ export function TrainingTodaySetup({
 
   if (screen === "today") {
     return (
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-10">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           <header>
             <p className="font-mono text-xs font-bold tracking-[0.22em] text-slate-500 dark:text-slate-400">
@@ -423,7 +423,7 @@ export function TrainingTodaySetup({
             </button>
           </section>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -469,7 +469,7 @@ export function TrainingTodaySetup({
     });
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-8">
+    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-8">
       <div className="mx-auto w-full max-w-5xl">
         <button
           type="button"
@@ -689,6 +689,6 @@ export function TrainingTodaySetup({
           </button>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

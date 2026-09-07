@@ -1,10 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import {
-  TrainingSessionAppHeader,
-  TrainingSessionChrome,
-} from "@/components/training/v2/TrainingSessionChrome";
+import { TrainingSessionChrome } from "@/components/training/v2/TrainingSessionChrome";
 
 test("keeps the session name quiet without a separate Training eyebrow", () => {
   render(
@@ -19,31 +16,6 @@ test("keeps the session name quiet without a separate Training eyebrow", () => {
   );
   expect(screen.queryByText("TRAINING")).not.toBeInTheDocument();
   expect(screen.getByText("Nieuw + herhaling")).toBeInTheDocument();
-});
-
-test("keeps theme and settings in the app header, not session navigation", () => {
-  const onCycleTheme = vi.fn();
-  const onOpenSettings = vi.fn();
-
-  render(
-    <TrainingSessionAppHeader
-      interfaceLanguage="en"
-      themePreference="system"
-      onCycleTheme={onCycleTheme}
-      onOpenSettings={onOpenSettings}
-    />,
-  );
-
-  const header = screen.getByTestId("training-session-app-header");
-  expect(header).toHaveAttribute("data-visual-spec", "training-height-b");
-  expect(screen.getByLabelText("2000nl")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Theme: System" }));
-  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-  expect(onCycleTheme).toHaveBeenCalledOnce();
-  expect(onOpenSettings).toHaveBeenCalledOnce();
-  expect(
-    screen.queryByRole("button", { name: "Close session" }),
-  ).not.toBeInTheDocument();
 });
 
 test("omits History when the runtime does not provide an authoritative action", () => {
@@ -81,6 +53,24 @@ test("places History and Close with the session name and preserves their callbac
   fireEvent.click(screen.getByRole("button", { name: "Close session" }));
   expect(onHistory).toHaveBeenCalledOnce();
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("blocks History and Close while an accepted action is still settling", () => {
+  render(
+    <TrainingSessionChrome
+      interfaceLanguage="en"
+      scenario="understanding"
+      mode="word-to-definition"
+      cardFilter="both"
+      presentation={{ kind: "ordinal", position: 1 }}
+      onHistory={vi.fn()}
+      onClose={vi.fn()}
+      disabled
+    />,
+  );
+
+  expect(screen.getByRole("button", { name: "History" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Close session" })).toBeDisabled();
 });
 
 test.each([

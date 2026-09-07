@@ -13,48 +13,27 @@ import {
 
 export type { AppDestination } from "./appDestination";
 
-const navigationShellEnabled =
-  process.env.NEXT_PUBLIC_NAVIGATION_SHELL_V1 === "true";
-const settingsStatisticsDestinationsEnabled =
-  process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true";
-
-const destinationFromLocation = (
-  extendedDestinationsEnabled: boolean,
-): AppDestination => {
+const destinationFromLocation = (): AppDestination => {
   if (typeof window === "undefined") return "training";
   return parseAppDestination(
     new URL(window.location.href).searchParams.get("destination"),
-    extendedDestinationsEnabled,
   );
 };
 
 type Props = {
   user: User;
   startupSnapshot: TrainingStartupSnapshot;
-  enabled?: boolean;
-  extendedDestinationsEnabled?: boolean;
 };
 
-export function TrainingLibraryShell({
-  user,
-  startupSnapshot,
-  enabled = navigationShellEnabled,
-  extendedDestinationsEnabled = settingsStatisticsDestinationsEnabled,
-}: Props) {
-  const [destination, setDestination] = useState<AppDestination>(() =>
-    enabled ? destinationFromLocation(extendedDestinationsEnabled) : "training",
+export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
+  const [destination, setDestination] = useState<AppDestination>(
+    destinationFromLocation,
   );
   const [navigationBlocked, setNavigationBlocked] = useState(false);
 
   const requestDestination = useCallback(
     (nextDestination: AppDestination) => {
       if (navigationBlocked || nextDestination === destination) return;
-      if (
-        !extendedDestinationsEnabled &&
-        (nextDestination === "statistics" || nextDestination === "settings")
-      ) {
-        return;
-      }
       window.history.pushState(
         {},
         "",
@@ -62,7 +41,7 @@ export function TrainingLibraryShell({
       );
       setDestination(nextDestination);
     },
-    [destination, extendedDestinationsEnabled, navigationBlocked],
+    [destination, navigationBlocked],
   );
 
   const returnFromHistory = useCallback(() => {
@@ -76,14 +55,10 @@ export function TrainingLibraryShell({
   }, [destination]);
 
   useEffect(() => {
-    if (!enabled) return;
     const rawDestination = new URL(window.location.href).searchParams.get(
       "destination",
     );
-    const normalized = parseAppDestination(
-      rawDestination,
-      extendedDestinationsEnabled,
-    );
+    const normalized = parseAppDestination(rawDestination);
     if (rawDestination && normalized === "training") {
       window.history.replaceState(
         {},
@@ -91,15 +66,11 @@ export function TrainingLibraryShell({
         appDestinationUrl(window.location.href, "training"),
       );
     }
-  }, [enabled, extendedDestinationsEnabled]);
+  }, []);
 
   useEffect(() => {
-    if (!enabled) return;
-
     const handlePopState = () => {
-      const nextDestination = destinationFromLocation(
-        extendedDestinationsEnabled,
-      );
+      const nextDestination = destinationFromLocation();
       if (navigationBlocked && nextDestination !== destination) {
         window.history.replaceState(
           {},
@@ -113,23 +84,13 @@ export function TrainingLibraryShell({
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [destination, enabled, extendedDestinationsEnabled, navigationBlocked]);
-
-  if (!enabled) {
-    return (
-      <TrainingScreen
-        user={user}
-        startupSnapshot={startupSnapshot}
-      />
-    );
-  }
+  }, [destination, navigationBlocked]);
 
   return (
     <TrainingScreen
       user={user}
       startupSnapshot={startupSnapshot}
       destination={destination}
-      extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}
       onReturnFromHistory={returnFromHistory}
       onNavigationBlockedChange={setNavigationBlocked}

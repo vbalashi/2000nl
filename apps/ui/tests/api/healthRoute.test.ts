@@ -119,8 +119,6 @@ describe("/api/health", () => {
     vi.stubEnv("PLATFORM_V2_LOOKUP_ENABLED", "true");
     vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "true");
     vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-    vi.stubEnv("NEXT_PUBLIC_NAVIGATION_SHELL_V1", "true");
-    vi.stubEnv("NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1", "true");
     vi.stubEnv("NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1", "true");
 
     const { GET } = await import("@/app/api/health/route");
@@ -134,8 +132,6 @@ describe("/api/health", () => {
         platformV2Lookup: true,
         platformV2Actions: true,
         platformV2TrainingUi: true,
-        navigationShellV1: true,
-        settingsStatisticsDestinationsV1: true,
         trainingTodaySetupV1: true,
       },
     });
@@ -254,7 +250,11 @@ describe("/api/health", () => {
         compatible: false,
       },
     });
-    expect(JSON.stringify(body.checks.databaseContract)).not.toContain("function");
-    expect(JSON.stringify(body.checks.databaseContract)).not.toContain("schema");
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain(
+      "function",
+    );
+    expect(JSON.stringify(body.checks.databaseContract)).not.toContain(
+      "schema",
+    );
   });
 });

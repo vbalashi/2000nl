@@ -12,9 +12,11 @@ vi.mock("@/components/training/TrainingScreen", () => ({
     onReturnFromHistory,
     onNavigationBlockedChange,
   }: {
-    destination?: "training" | "library" | "statistics" | "settings" | "history";
+    destination?:
+      "training" | "library" | "statistics" | "settings" | "history";
     onRequestDestination?: (
-      destination: "training" | "library" | "statistics" | "settings" | "history",
+      destination:
+        "training" | "library" | "statistics" | "settings" | "history",
     ) => void;
     onReturnFromHistory?: () => void;
     onNavigationBlockedChange?: (blocked: boolean) => void;
@@ -29,24 +31,29 @@ vi.mock("@/components/training/TrainingScreen", () => ({
       <div>
         <p>training mount {mountNumber.current}</p>
         <p>destination {destination ?? "legacy"}</p>
-        <button onClick={() => onRequestDestination?.("library")}>Library</button>
+        <button onClick={() => onRequestDestination?.("library")}>
+          Library
+        </button>
         <button onClick={() => onRequestDestination?.("statistics")}>
           Statistics
         </button>
         <button onClick={() => onRequestDestination?.("settings")}>
           Settings
         </button>
-        <button onClick={() => onRequestDestination?.("history")}>History</button>
-        <button onClick={() => onReturnFromHistory?.()}>Return from History</button>
+        <button onClick={() => onRequestDestination?.("history")}>
+          History
+        </button>
+        <button onClick={() => onReturnFromHistory?.()}>
+          Return from History
+        </button>
         <button onClick={() => onNavigationBlockedChange?.(true)}>Block</button>
       </div>
     );
   },
 }));
 
-const { TrainingLibraryShell: ProductionTrainingLibraryShell } = await import(
-  "@/components/navigation/TrainingLibraryShell"
-);
+const { TrainingLibraryShell: ProductionTrainingLibraryShell } =
+  await import("@/components/navigation/TrainingLibraryShell");
 
 const defaultStartupSnapshot = {
   transitionId: "test-startup",
@@ -86,7 +93,7 @@ beforeEach(() => {
 });
 
 test("Training and Library share one mounted Training session across history navigation", () => {
-  render(<TrainingLibraryShell user={user} enabled />);
+  render(<TrainingLibraryShell user={user} />);
 
   expect(screen.getByText("training mount 1")).toBeInTheDocument();
   expect(screen.getByText("destination training")).toBeInTheDocument();
@@ -108,7 +115,7 @@ test("Training and Library share one mounted Training session across history nav
 });
 
 test("pending review blocks both deliberate and history destination changes", () => {
-  render(<TrainingLibraryShell user={user} enabled />);
+  render(<TrainingLibraryShell user={user} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Block" }));
   fireEvent.click(screen.getByRole("button", { name: "Library" }));
@@ -125,23 +132,8 @@ test("pending review blocks both deliberate and history destination changes", ()
   expect(screen.getByText("destination training")).toBeInTheDocument();
 });
 
-test("disabled rollout preserves the legacy Training entry point", () => {
-  window.history.replaceState({}, "", "/?destination=library");
-
-  render(<TrainingLibraryShell user={user} enabled={false} />);
-
-  expect(screen.getByText("destination legacy")).toBeInTheDocument();
-  expect(window.location.search).toBe("?destination=library");
-});
-
-test("extended destinations share the mounted Training session and browser history", () => {
-  render(
-    <TrainingLibraryShell
-      user={user}
-      enabled
-      extendedDestinationsEnabled
-    />,
-  );
+test("all destinations share the mounted Training session and browser history", () => {
+  render(<TrainingLibraryShell user={user} />);
 
   fireEvent.click(screen.getByRole("button", { name: "Statistics" }));
   expect(window.location.search).toBe("?destination=statistics");
@@ -160,29 +152,17 @@ test("extended destinations share the mounted Training session and browser histo
   expect(trainingMounts).toBe(1);
 });
 
-test("extended destination flag off normalizes unsupported direct links to Training", () => {
+test("a direct Statistics URL survives shell hydration", () => {
   window.history.replaceState({}, "", "/?destination=statistics");
 
-  render(
-    <TrainingLibraryShell
-      user={user}
-      enabled
-      extendedDestinationsEnabled={false}
-    />,
-  );
+  render(<TrainingLibraryShell user={user} />);
 
-  expect(screen.getByText("destination training")).toBeInTheDocument();
-  expect(window.location.search).toBe("");
+  expect(screen.getByText("destination statistics")).toBeInTheDocument();
+  expect(window.location.search).toBe("?destination=statistics");
 });
 
-test("Training history is a secondary destination even when extended destinations are off", () => {
-  render(
-    <TrainingLibraryShell
-      user={user}
-      enabled
-      extendedDestinationsEnabled={false}
-    />,
-  );
+test("Training history is a secondary destination in the common shell", () => {
+  render(<TrainingLibraryShell user={user} />);
 
   fireEvent.click(screen.getByRole("button", { name: "History" }));
 
@@ -202,22 +182,20 @@ test("Training history is a secondary destination even when extended destination
 test("a direct Training history URL survives shell hydration", () => {
   window.history.replaceState({}, "", "/?destination=history");
 
-  render(
-    <TrainingLibraryShell
-      user={user}
-      enabled
-      extendedDestinationsEnabled={false}
-    />,
-  );
+  render(<TrainingLibraryShell user={user} />);
 
   expect(screen.getByText("destination history")).toBeInTheDocument();
   expect(window.location.search).toBe("?destination=history");
 });
 
 test("returning from History replaces its entry so Back cannot loop into History", async () => {
-  window.history.replaceState({ origin: "before-training" }, "", "/?origin=before");
+  window.history.replaceState(
+    { origin: "before-training" },
+    "",
+    "/?origin=before",
+  );
   window.history.pushState({}, "", "/");
-  render(<TrainingLibraryShell user={user} enabled />);
+  render(<TrainingLibraryShell user={user} />);
 
   fireEvent.click(screen.getByRole("button", { name: "History" }));
   expect(window.location.search).toBe("?destination=history");

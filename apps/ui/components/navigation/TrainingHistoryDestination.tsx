@@ -1,15 +1,11 @@
 "use client";
 
 import React from "react";
-import { BrandLogo } from "@/components/BrandLogo";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   fetchRecentTrainingHistory,
   type RecentTrainingHistoryItem,
 } from "@/lib/training/trainingHistoryService";
-import { AppDestinationNav, MobileAppDestinationNav } from "./AppDestinationNav";
-import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
-import type { AppDestination } from "./appDestination";
 
 const copy = {
   nl: {
@@ -127,18 +123,14 @@ type Props = {
   open: boolean;
   userId: string;
   interfaceLanguage: OnboardingLanguage;
-  onNavigate: (destination: AppDestination) => void;
   onReturnToTraining: () => void;
-  utilityNav: Omit<AppUtilityNavProps, "interfaceLanguage">;
 };
 
 export function TrainingHistoryDestination({
   open,
   userId,
   interfaceLanguage,
-  onNavigate,
   onReturnToTraining,
-  utilityNav,
 }: Props) {
   const text = copy[interfaceLanguage];
   const headingRef = React.useRef<HTMLHeadingElement>(null);
@@ -191,42 +183,13 @@ export function TrainingHistoryDestination({
           items: [],
           hasMore: false,
         };
-  const navigateFromHistory = React.useCallback(
-    (destination: AppDestination) => {
-      if (destination === "training") {
-        onReturnToTraining();
-        return;
-      }
-      onNavigate(destination);
-    },
-    [onNavigate, onReturnToTraining],
-  );
-
   return (
     <section
       aria-hidden={!open}
       aria-busy={open && visibleLoadState.status === "loading"}
-      className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
+      className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}
     >
-      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 md:px-6 md:py-3">
-        <div className="min-w-0 justify-self-start">
-          <BrandLogo />
-        </div>
-        <div className="justify-self-center">
-          <AppDestinationNav
-            active={null}
-            interfaceLanguage={interfaceLanguage}
-            onNavigate={navigateFromHistory}
-          />
-        </div>
-        {open ? (
-          <AppUtilityNav interfaceLanguage={interfaceLanguage} {...utilityNav} />
-        ) : (
-          <div />
-        )}
-      </header>
-
-      <main className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8">
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-3xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -323,12 +286,7 @@ export function TrainingHistoryDestination({
             ) : null}
           </section>
         </div>
-      </main>
-      <MobileAppDestinationNav
-        active={null}
-        interfaceLanguage={interfaceLanguage}
-        onNavigate={navigateFromHistory}
-      />
+      </div>
     </section>
   );
 }

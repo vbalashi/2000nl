@@ -34,6 +34,7 @@ export type AppUtilityNavProps = {
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
   settingsActive?: boolean;
+  disabled?: boolean;
   onCycleTheme: () => void;
   onOpenSettings: () => void;
   appearance?: "default" | "quiet";
@@ -46,6 +47,7 @@ function UtilityButton({
   children,
   tour,
   appearance = "default",
+  disabled = false,
 }: {
   label: string;
   current?: boolean;
@@ -53,6 +55,7 @@ function UtilityButton({
   children: React.ReactNode;
   tour?: string;
   appearance?: AppUtilityNavProps["appearance"];
+  disabled?: boolean;
 }) {
   return (
     <Tooltip content={label} side="bottom" showOnFocus={false}>
@@ -61,12 +64,13 @@ function UtilityButton({
         aria-label={label}
         aria-current={current ? "page" : undefined}
         aria-pressed={current}
+        disabled={disabled}
         data-tour={tour}
         onClick={onClick}
         className={
           appearance === "quiet"
-            ? "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-600 outline-none hover:bg-slate-400/10 focus-visible:ring-2 focus-visible:ring-indigo-400 dark:text-[#BFC7D4] md:h-10 md:w-10"
-            : `relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm transition md:h-10 md:w-10 ${
+            ? "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-600 outline-none hover:bg-slate-400/10 focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#BFC7D4] md:h-10 md:w-10"
+            : `relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:w-10 ${
                 current
                   ? "border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-200 dark:ring-indigo-900"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -83,6 +87,7 @@ export function AppUtilityNav({
   interfaceLanguage,
   themePreference,
   settingsActive = false,
+  disabled = false,
   onCycleTheme,
   onOpenSettings,
   appearance = "default",
@@ -95,6 +100,7 @@ export function AppUtilityNav({
       <UtilityButton
         label={themeLabel}
         onClick={onCycleTheme}
+        disabled={disabled}
         appearance={appearance}
       >
         <SunMoon
@@ -107,6 +113,7 @@ export function AppUtilityNav({
         label={text.settings}
         current={settingsActive}
         onClick={onOpenSettings}
+        disabled={disabled}
         tour="settings-button"
         appearance={appearance}
       >

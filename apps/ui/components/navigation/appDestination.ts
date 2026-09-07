@@ -1,8 +1,5 @@
 export type PrimaryAppDestination =
-  | "training"
-  | "library"
-  | "statistics"
-  | "settings";
+  "training" | "library" | "statistics" | "settings";
 export type SecondaryAppDestination = "history";
 export type AppDestination = PrimaryAppDestination | SecondaryAppDestination;
 export type PrimaryNavigationDestination = Exclude<
@@ -12,18 +9,12 @@ export type PrimaryNavigationDestination = Exclude<
 
 export const TRAINING_HISTORY_DESTINATION: SecondaryAppDestination = "history";
 
-export const parseAppDestination = (
-  value: string | null,
-  extendedDestinationsEnabled: boolean,
-): AppDestination => {
+export const parseAppDestination = (value: string | null): AppDestination => {
   if (value === "library") return "library";
   if (value === TRAINING_HISTORY_DESTINATION) {
     return TRAINING_HISTORY_DESTINATION;
   }
-  if (
-    extendedDestinationsEnabled &&
-    (value === "statistics" || value === "settings")
-  ) {
+  if (value === "statistics" || value === "settings") {
     return value;
   }
   return "training";

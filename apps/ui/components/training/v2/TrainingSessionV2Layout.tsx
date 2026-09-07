@@ -40,17 +40,17 @@ export function TrainingSessionV2Layout({
   readySurface?: TrainingSessionReadySurface;
   children: React.ReactNode;
 }) {
-  const showSessionDetail = phase !== "failure";
+  const showFooter = phase !== "failure";
   const interaction = phase === "ready" ? readySurface : undefined;
   return (
     <>
-      <main
+      <div
         data-training-session-main
         data-training-session-phase={phase}
         className={styles.main}
       >
         <section className={styles.stack}>
-          {showSessionDetail ? chrome : null}
+          {chrome}
           <div
             data-testid="training-card-scroll-region"
             className="flex min-h-0 flex-1 flex-col overflow-clip px-0"
@@ -76,8 +76,8 @@ export function TrainingSessionV2Layout({
             </div>
           </div>
         </section>
-      </main>
-      {showSessionDetail ? footer : null}
+      </div>
+      {showFooter ? footer : null}
     </>
   );
 }

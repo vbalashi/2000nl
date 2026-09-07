@@ -1,7 +1,8 @@
 # Stable application frame contract
 
 Owner: [#264](https://github.com/vbalashi/2000nl/issues/264), within #58.
-Status: draft until the mobile navigation preview is selected.
+Status: implementation candidate; compact mobile destination switcher is in
+owner review.
 
 This document describes the application around the learning card. It does not
 change card typography or idiom presentation (#249, #251, #272), and it does
@@ -57,19 +58,20 @@ permission for each screen to invent a value.
 
 | State | Same AppHeader | Desktop primary nav | Mobile primary nav | Session row | Inner width |
 | --- | :---: | :---: | --- | :---: | ---: |
-| Bootstrap/loading | required | visible, disabled while unavailable | preview decision | — | loading content only |
-| Training Today/setup | required | visible | preview decision | — | max 1024 px today |
-| Training Face | required | visible | preview decision | required | max 760 px |
-| Training Answer | required | visible | preview decision | required | max 760 px |
-| Training More | required | visible | preview decision | remains behind drawer | drawer contract #252/#271 |
-| Library | required | visible | preview decision | — | pending owner comparison |
-| Statistics | required | visible | preview decision | — | pending owner comparison |
-| Settings | required | visible | preview decision | — | pending owner comparison |
-| History | required | visible | preview decision | — | max 768 px today |
+| Bootstrap/loading | required | visible, disabled while unavailable | compact switcher, disabled | — | loading content only |
+| Training Today/setup | required | visible | compact switcher | — | max 1024 px today |
+| Training Face | required | visible | compact switcher | required | max 760 px |
+| Training Answer | required | visible | compact switcher | required | max 760 px |
+| Training More | required | visible | compact switcher remains behind drawer | remains behind drawer | drawer contract #252/#271 |
+| Library | required | visible | compact switcher | — | pending owner comparison |
+| Statistics | required | visible | compact switcher | — | pending owner comparison |
+| Settings | required | visible | compact switcher | — | pending owner comparison |
+| History | required | visible | compact switcher | — | max 768 px today |
 
-## Mobile preview question
+## Mobile navigation decision
 
-The development gate compares three structures at 390×844 and 320×568:
+The development gate compared three structures at 390×844 and 320×568 before
+the production component was implemented:
 
 1. `top-tabs` — destination tabs form a second row of the common header; no
    bottom navigation competes with Training progress.
@@ -78,8 +80,13 @@ The development gate compares three structures at 390×844 and 320×568:
 3. `menu` — the common header stays one row tall and a compact destination menu
    opens the three choices; more card height, but navigation needs an extra tap.
 
-The winner must be used in every destination. Desktop is not allowed to switch
-to the phone layout merely because a desktop window becomes narrow.
+`bottom-tabs` was rejected because Training already owns a bottom progress row.
+`top-tabs` costs a complete extra row on a 320×568 phone. The selected target is
+`menu`: its visible label is the current destination (for example, Training),
+and one tap exposes all three destinations. The comparison-only implementations
+were deleted after the decision, so they cannot drift back into production.
+The same treatment is used in every mobile destination. Desktop is not allowed
+to switch to the phone layout merely because a desktop window becomes narrow.
 
 ## Width policy
 
@@ -130,3 +137,14 @@ inside this shell-only slice.
 - Pending mutation cannot be abandoned. The final recovery guarantee remains
   blocked on #250; #264 must not invent a second transition owner.
 
+## Representative implementation renders
+
+- [1440 × 960 · active Training · light](assets/1440-active-training-light.png)
+- [1440 × 960 · Library · dark](assets/1440-library-dark.png)
+- [390 × 844 · Training menu open · dark](assets/390-training-menu-dark.png)
+- [320 × 568 · Training · dark](assets/320-training-dark.png)
+
+These renders use the deterministic authenticated Training fixture. The 320 px
+check also asserts no horizontal overflow and keeps the session Close control
+visible. The menu-open image is evidence of the navigation treatment, not a
+default open state.

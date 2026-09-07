@@ -7,13 +7,9 @@ import { readingSizeStyles as styleVars } from "@/lib/reading/readingSize";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DetailedStats, TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
-import {
-  TrainingSessionAppHeader,
-  TrainingSessionChrome,
-} from "@/components/training/v2/TrainingSessionChrome";
-import {
-  TrainingSessionV2Layout,
-} from "@/components/training/v2/TrainingSessionV2Layout";
+import { AppHeader } from "@/components/navigation/AppFrame";
+import { TrainingSessionChrome } from "@/components/training/v2/TrainingSessionChrome";
+import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 import type { TrainingSessionPresentationSnapshot } from "@/components/training/v2/useTrainingSessionPresentation";
 import { FlagIcon, senseCardQuietActionClassName } from "@/components/training/SenseCardChrome";
 import sessionStyles from "@/components/training/v2/TrainingSessionLayout.module.css";
@@ -173,9 +169,11 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
       data-reading-mode={modeKey}
       data-reading-translations={translationsEnabled ? "on" : "off"}
     >
-      <TrainingSessionAppHeader
+      <AppHeader
+        activeDestination="training"
         interfaceLanguage="nl"
         themePreference={theme}
+        onNavigate={() => undefined}
         onCycleTheme={cycleTheme}
         onOpenSettings={() => setSettingsOpen(true)}
       />

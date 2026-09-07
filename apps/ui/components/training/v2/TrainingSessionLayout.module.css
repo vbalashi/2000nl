@@ -14,16 +14,6 @@
   --session-ink: #bfc7d4;
   --session-line: #394353;
 }
-.appHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  height: calc(58px + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) 18px 0;
-  border-bottom: 1px solid var(--session-line, #cbd5e1);
-  background: var(--session-surface, #f1f5f9);
-}
 .main {
   display: flex;
   flex: 1;
@@ -83,6 +73,13 @@
 }
 .utilities button:hover {
   background: #94a3b81a;
+}
+.utilities button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+.utilities button:disabled:hover {
+  background: transparent;
 }
 .utilities button:focus-visible {
   outline: 2px solid #8b89f6;

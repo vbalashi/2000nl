@@ -1,22 +1,14 @@
 "use client";
 
 import React from "react";
-import { BrandLogo } from "@/components/BrandLogo";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { DetailedStats } from "@/lib/types";
-import {
-  AppDestinationNav,
-  MobileAppDestinationNav,
-} from "./AppDestinationNav";
-import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
-import type { AppDestination } from "./appDestination";
 
 const copy = {
   nl: {
     title: "Statistieken",
     eyebrow: "Voortgang",
     subtitle: "Een overzicht op basis van je huidige leergegevens.",
-    back: "Terug naar Training",
     start: "Start training",
     newToday: "Nieuw vandaag",
     reviewedToday: "Herhaald vandaag",
@@ -27,7 +19,6 @@ const copy = {
     title: "Statistics",
     eyebrow: "Progress",
     subtitle: "An overview based on your current learning data.",
-    back: "Back to Training",
     start: "Start training",
     newToday: "New today",
     reviewedToday: "Reviewed today",
@@ -38,7 +29,6 @@ const copy = {
     title: "Статистика",
     eyebrow: "Прогресс",
     subtitle: "Обзор на основе ваших текущих данных обучения.",
-    back: "Вернуться к тренировке",
     start: "Начать тренировку",
     newToday: "Новых сегодня",
     reviewedToday: "Повторено сегодня",
@@ -51,16 +41,14 @@ type Props = {
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   stats: DetailedStats;
-  onNavigate: (destination: AppDestination) => void;
-  utilityNav: Omit<AppUtilityNavProps, "interfaceLanguage">;
+  onStartTraining: () => void;
 };
 
 export function StatisticsDestination({
   open,
   interfaceLanguage,
   stats,
-  onNavigate,
-  utilityNav,
+  onStartTraining,
 }: Props) {
   const text = copy[interfaceLanguage];
   const total = Math.max(stats.totalWordsInList, 0);
@@ -84,30 +72,9 @@ export function StatisticsDestination({
   return (
     <section
       aria-hidden={!open}
-      className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
+      className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}
     >
-      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
-        <div className="min-w-0 justify-self-start">
-          <BrandLogo />
-        </div>
-        <div className="justify-self-center">
-          <AppDestinationNav
-            active="statistics"
-            interfaceLanguage={interfaceLanguage}
-            onNavigate={onNavigate}
-          />
-        </div>
-        {open ? (
-          <AppUtilityNav
-            interfaceLanguage={interfaceLanguage}
-            {...utilityNav}
-          />
-        ) : (
-          <div />
-        )}
-      </header>
-
-      <main className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8">
+      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 md:px-8">
         <div className="mx-auto w-full max-w-6xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -123,7 +90,7 @@ export function StatisticsDestination({
             </div>
             <button
               type="button"
-              onClick={() => onNavigate("training")}
+              onClick={onStartTraining}
               className="min-h-11 rounded-xl border border-indigo-500 bg-indigo-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500"
             >
               {text.start}
@@ -159,12 +126,7 @@ export function StatisticsDestination({
             </div>
           </section>
         </div>
-      </main>
-      <MobileAppDestinationNav
-        active="statistics"
-        interfaceLanguage={interfaceLanguage}
-        onNavigate={onNavigate}
-      />
+      </div>
     </section>
   );
 }

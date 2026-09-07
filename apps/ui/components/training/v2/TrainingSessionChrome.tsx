@@ -2,11 +2,6 @@
 
 import React from "react";
 import { History, X } from "lucide-react";
-import { BrandLogo } from "@/components/BrandLogo";
-import {
-  AppUtilityNav,
-  type AppUtilityNavProps,
-} from "@/components/navigation/AppUtilityNav";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { CardFilter, TrainingMode } from "@/lib/types";
 import { trainingSessionLabel } from "./trainingSessionLabels";
@@ -19,22 +14,6 @@ const copy = {
   ru: { close: "Закрыть сессию", history: "История" },
 } satisfies Record<OnboardingLanguage, { close: string; history: string }>;
 
-export function TrainingSessionAppHeader(props: AppUtilityNavProps) {
-  return (
-    <header
-      data-testid="training-session-app-header"
-      data-visual-spec="training-height-b"
-      className={`${styles.appHeader} font-sense-sans`}
-    >
-      <BrandLogo
-        className="text-[26px] font-normal leading-none tracking-tight text-slate-800 dark:text-[#F3F5F9]"
-        accentClassName="text-indigo-600 dark:text-[#AAB0FF]"
-      />
-      <AppUtilityNav {...props} appearance="quiet" />
-    </header>
-  );
-}
-
 export function TrainingSessionChrome({
   interfaceLanguage,
   scenario,
@@ -45,6 +24,7 @@ export function TrainingSessionChrome({
   onHistory,
   historyButtonRef,
   onClose,
+  disabled = false,
 }: {
   interfaceLanguage: OnboardingLanguage;
   scenario: string;
@@ -55,6 +35,7 @@ export function TrainingSessionChrome({
   onHistory?: () => void;
   historyButtonRef?: React.Ref<HTMLButtonElement>;
   onClose: () => void;
+  disabled?: boolean;
 }) {
   const text = copy[interfaceLanguage];
   const name =
@@ -83,12 +64,18 @@ export function TrainingSessionChrome({
             ref={historyButtonRef}
             type="button"
             aria-label={text.history}
+            disabled={disabled}
             onClick={onHistory}
           >
             <History aria-hidden="true" />
           </button>
         ) : null}
-        <button type="button" aria-label={text.close} onClick={onClose}>
+        <button
+          type="button"
+          aria-label={text.close}
+          disabled={disabled}
+          onClick={onClose}
+        >
           <X aria-hidden="true" />
         </button>
       </div>
