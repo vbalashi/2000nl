@@ -24,7 +24,6 @@ import type {
   CardFilter,
   DetailedStats,
   DictionaryEntry,
-  EntryLearningListMembership,
   TrainingFocusFilter,
   TrainingFilterSource,
   TrainingMode,
@@ -65,7 +64,6 @@ import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2S
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
-import { SettingsModal } from "./SettingsModal";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
@@ -100,7 +98,7 @@ type Props = {
   user: User;
   startupSnapshot: TrainingStartupSnapshot;
   destination?: AppDestination;
-  onRequestDestination?: (destination: AppDestination) => void;
+  onRequestDestination: (destination: AppDestination) => void;
   onReturnFromHistory?: () => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
   trainingTodaySetupEnabled?: boolean;
@@ -265,10 +263,8 @@ function TrainingScreenContent({
     themePreference,
     translationLang,
     setActiveScenario,
-    setAudioQuality,
     setCardFilter: setCardFilterPreference,
     setEnabledModes,
-    setLanguage,
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
@@ -365,14 +361,6 @@ function TrainingScreenContent({
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
   const [showHotkeys, setShowHotkeys] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<
-    "zoeken" | "lijsten" | "statistieken" | "instellingen"
-  >("instellingen");
-  const [settingsInitialViewedListScope, setSettingsInitialViewedListScope] =
-    useState<{ id: string; type: WordListType } | null>(null);
-  const [settingsAutoFocusWordSearch, setSettingsAutoFocusWordSearch] =
-    useState(false);
   const {
     audioModeEnabled,
     playAudio,
@@ -400,7 +388,6 @@ function TrainingScreenContent({
     runTour,
     saveOnboardingLanguageChoice,
     showLanguageSelection,
-    startOnboarding,
   } = useTrainingOnboarding({
     userId: user?.id,
     interfaceLanguage: initialInterfaceLanguage,
@@ -446,7 +433,7 @@ function TrainingScreenContent({
   } = useTrainingActiveList({
     userId: user?.id,
     language: currentTrainingLanguage,
-    showSettings,
+    showSettings: destination === "library",
     initialTransitionId,
   });
 
@@ -907,7 +894,6 @@ function TrainingScreenContent({
   const handleTrainWord = useCallback(
     (wordId: string) => {
       requestNextCardOverride(wordId);
-      setShowSettings(false);
       void loadNextWord({
         excludeWordIds: [currentWord?.id].filter((x): x is string =>
           Boolean(x),
@@ -1006,43 +992,16 @@ function TrainingScreenContent({
   );
 
   const openSearch = useCallback(() => {
-    if (onRequestDestination) {
-      if (!navigationBlocked) {
-        onRequestDestination("library");
-      }
-      return;
+    if (!navigationBlocked) {
+      onRequestDestination("library");
     }
-    setSettingsInitialTab("zoeken");
-    setSettingsInitialViewedListScope(null);
-    setSettingsAutoFocusWordSearch(true);
-    setShowSettings(true);
   }, [navigationBlocked, onRequestDestination]);
 
   const openAppSettings = useCallback(() => {
-    if (onRequestDestination) {
-      if (!navigationBlocked) {
-        onRequestDestination("settings");
-      }
-      return;
+    if (!navigationBlocked) {
+      onRequestDestination("settings");
     }
-    setSettingsInitialTab("instellingen");
-    setSettingsInitialViewedListScope(null);
-    setSettingsAutoFocusWordSearch(false);
-    setShowSettings(true);
   }, [navigationBlocked, onRequestDestination]);
-
-  const openMembershipList = useCallback(
-    (membership: EntryLearningListMembership) => {
-      setSettingsInitialTab("lijsten");
-      setSettingsInitialViewedListScope({
-        id: membership.listId,
-        type: membership.listType,
-      });
-      setSettingsAutoFocusWordSearch(false);
-      setShowSettings(true);
-    },
-    [],
-  );
 
   const handleUserDictionaryEntryCreated = useCallback(
     (entry: DictionaryEntry) => {
@@ -1244,31 +1203,6 @@ function TrainingScreenContent({
       playSentenceTTS,
       resolveAudioUrl,
       user?.id,
-    ],
-  );
-
-  const handleMakeActiveTrainingList = useCallback(
-    async (list: WordListSummary) => {
-      const nextScenario = list.default_scenario_id ?? activeScenario;
-      beginSessionScopeChange();
-      const scope = await persistListChange(list, {
-        activeScenario: nextScenario,
-      });
-      if (!scope) return;
-      setActiveScenario(nextScenario, { persist: false });
-      void loadStats({ listId: list.id, listType: list.type });
-      void replaceSessionScopeAndLoad({
-        scope: { listId: list.id, listType: list.type },
-        scenario: nextScenario,
-      });
-    },
-    [
-      activeScenario,
-      beginSessionScopeChange,
-      loadStats,
-      replaceSessionScopeAndLoad,
-      persistListChange,
-      setActiveScenario,
     ],
   );
 
@@ -1731,7 +1665,7 @@ function TrainingScreenContent({
   );
 
   const openTrainingHistory = useCallback(() => {
-    onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
+    onRequestDestination(TRAINING_HISTORY_DESTINATION);
   }, [onRequestDestination]);
 
   const v2SessionLayoutVisible = Boolean(
@@ -1747,7 +1681,7 @@ function TrainingScreenContent({
       mode={currentMode}
       cardFilter={cardFilter}
       presentation={sessionPresentation}
-      onHistory={onRequestDestination ? openTrainingHistory : undefined}
+      onHistory={openTrainingHistory}
       historyButtonRef={historyButtonRef}
       onClose={trainingPilot.returnToToday}
       disabled={navigationBlocked}
@@ -1769,10 +1703,7 @@ function TrainingScreenContent({
       activeListValue={activeListValue}
       listOptions={listOptions}
       onListChange={handleFooterListChange}
-      onOpenSettings={() => {
-        setSettingsInitialViewedListScope(null);
-        setShowSettings(true);
-      }}
+      onOpenSettings={openAppSettings}
       activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
       initialReviewDue={initialReviewDue}
       inlineControlsEnabled={!trainingTodaySetupEnabled}
@@ -1815,7 +1746,7 @@ function TrainingScreenContent({
       themePreference={themePreference}
       settingsActive={destination === "settings"}
       navigationDisabled={navigationBlocked}
-      onNavigate={(nextDestination) => onRequestDestination?.(nextDestination)}
+      onNavigate={onRequestDestination}
       onCycleTheme={cycleThemePreference}
       onOpenSettings={openAppSettings}
     >
@@ -1907,7 +1838,7 @@ function TrainingScreenContent({
                     {/* Card Container */}
                     <div className="flex min-h-full flex-col justify-start py-2 md:justify-center md:py-4">
                       {trainingSessionNotice}
-                      {!trainingShellV2Enabled && !onRequestDestination ? (
+                      {!trainingShellV2Enabled ? (
                         <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
                           <div className="flex flex-col gap-2 md:flex-row md:items-center">
                             <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -2231,65 +2162,11 @@ function TrainingScreenContent({
                   onCopyToUserDictionary={async (entryId) => {
                     await copyEntryToUserDictionary({ entryId });
                   }}
-                  onOpenListMembership={openMembershipList}
                 />
               </div>
             </div>
           ) : null}
         </TrainingDetailsDrawer>
-
-        {showSettings && !onRequestDestination && (
-          <SettingsModal
-            open={showSettings}
-            onClose={() => {
-              setShowSettings(false);
-              setSettingsInitialTab("instellingen");
-              setSettingsInitialViewedListScope(null);
-              setSettingsAutoFocusWordSearch(false);
-            }}
-            initialTab={settingsInitialTab}
-            autoFocusWordSearch={settingsAutoFocusWordSearch}
-            initialViewedListScope={settingsInitialViewedListScope}
-            onListsUpdated={handleListsUpdated}
-            themePreference={themePreference}
-            onThemeChange={setTheme}
-            audioQuality={audioQuality}
-            onAudioQualityChange={setAudioQuality}
-            onboardingLanguage={onboardingLang}
-            onOnboardingLanguageChange={saveOnboardingLanguageChoice}
-            onStartOnboarding={() => {
-              setShowSettings(false);
-              setSettingsInitialTab("instellingen");
-              setSettingsInitialViewedListScope(null);
-              setSettingsAutoFocusWordSearch(false);
-              startOnboarding();
-            }}
-            language={currentTrainingLanguage}
-            onLanguageChange={handleTrainingLanguageChange}
-            languageOptions={trainingLanguageOptions}
-            defaultLanguage={language}
-            onDefaultLanguageChange={setLanguage}
-            translationLang={translationLang}
-            onTranslationLangChange={setTranslationLang}
-            wordListId={wordListId}
-            wordListType={wordListType}
-            activeTrainingList={activeList}
-            onMakeActiveForTraining={handleMakeActiveTrainingList}
-            onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-            enabledModes={enabledModes}
-            cardFilter={cardFilter}
-            onModesChange={handleModesChange}
-            onCardFilterChange={handleCardFilterChange}
-            newReviewRatio={newReviewRatio}
-            onNewReviewRatioChange={handleNewReviewRatioChange}
-            stats={stats}
-            userEmail={user.email ?? ""}
-            userId={user.id}
-            activeScenario={activeScenario}
-            onScenarioChange={handleScenarioChange}
-            onTrainWord={handleTrainWord}
-          />
-        )}
 
         {/* Language Selection Modal */}
         <LanguageSelectionModal
@@ -2344,36 +2221,28 @@ function TrainingScreenContent({
           onClose={() => setShowHotkeys(false)}
         />
       )}
-      {onRequestDestination ? (
-        <LibraryDestination
-          open={destination === "library"}
-          userId={user.id}
-          language={currentTrainingLanguage}
-          translationLang={translationLang}
-          interfaceLanguage={onboardingLang}
-          lists={availableLists}
-          activeList={activeList ?? null}
-          onReloadLists={handleListsUpdated}
-          onOpenListMembership={(membership) => {
-            onRequestDestination("training");
-            openMembershipList(membership);
-          }}
-          onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
-          onTrainWord={(wordId) => {
-            handleTrainWord(wordId);
-            onRequestDestination("training");
-          }}
-        />
-      ) : null}
-      {onRequestDestination ? (
-        <StatisticsDestination
-          open={destination === "statistics"}
-          interfaceLanguage={onboardingLang}
-          stats={stats}
-          onStartTraining={() => onRequestDestination("training")}
-        />
-      ) : null}
-      {onRequestDestination && destination === TRAINING_HISTORY_DESTINATION ? (
+      <LibraryDestination
+        open={destination === "library"}
+        userId={user.id}
+        language={currentTrainingLanguage}
+        translationLang={translationLang}
+        interfaceLanguage={onboardingLang}
+        lists={availableLists}
+        activeList={activeList ?? null}
+        onReloadLists={handleListsUpdated}
+        onUserDictionaryEntryCreated={handleUserDictionaryEntryCreated}
+        onTrainWord={(wordId) => {
+          handleTrainWord(wordId);
+          onRequestDestination("training");
+        }}
+      />
+      <StatisticsDestination
+        open={destination === "statistics"}
+        interfaceLanguage={onboardingLang}
+        stats={stats}
+        onStartTraining={() => onRequestDestination("training")}
+      />
+      {destination === TRAINING_HISTORY_DESTINATION ? (
         <LazyTrainingHistoryDestination
           open
           userId={user.id}
@@ -2383,19 +2252,17 @@ function TrainingScreenContent({
           }
         />
       ) : null}
-      {onRequestDestination ? (
-        <SettingsDestination
-          open={destination === "settings"}
-          interfaceLanguage={onboardingLang}
-          themePreference={themePreference}
-          translationLanguage={translationLang}
-          onThemeChange={setTheme}
-          onInterfaceLanguageChange={saveOnboardingLanguageChoice}
-          onTranslationLanguageChange={setTranslationLang}
-          userEmail={user.email ?? ""}
-          onSignOut={handleSignOut}
-        />
-      ) : null}
+      <SettingsDestination
+        open={destination === "settings"}
+        interfaceLanguage={onboardingLang}
+        themePreference={themePreference}
+        translationLanguage={translationLang}
+        onThemeChange={setTheme}
+        onInterfaceLanguageChange={saveOnboardingLanguageChoice}
+        onTranslationLanguageChange={setTranslationLang}
+        userEmail={user.email ?? ""}
+        onSignOut={handleSignOut}
+      />
     </AppFrame>
   );
 }

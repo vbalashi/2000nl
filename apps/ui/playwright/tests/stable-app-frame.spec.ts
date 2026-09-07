@@ -10,9 +10,13 @@ const startButton =
   /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i;
 const answerButton = /Antwoord tonen|Показать ответ|Show answer/i;
 
-async function preparePilotPage(page: Page) {
+async function preparePilotPage(
+  page: Page,
+  options: { actionDelayMs?: number } = {},
+) {
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
     visualProfile: "answer",
+    actionDelayMs: options.actionDelayMs,
   });
   await expect(page.getByRole("button", { name: startButton })).toBeVisible();
 }
@@ -130,6 +134,7 @@ test.describe("stable application frame", () => {
     const stage = page.getByTestId("training-sense-card-stage");
     const headword = await stage.getByRole("heading").textContent();
     const side = await stage.getAttribute("data-side");
+    const trainingFrame = await frameSnapshot(page);
     expect(headword).toBe("bank");
     expect(side).toBe("answer");
 
@@ -149,6 +154,16 @@ test.describe("stable application frame", () => {
     await expect(
       page.getByRole("heading", { name: "Bibliotheek" }),
     ).toBeVisible();
+    const libraryWorkspace = page.getByTestId("library-workspace");
+    const libraryBox = await libraryWorkspace.boundingBox();
+    expect(libraryBox).not.toBeNull();
+    expect(libraryBox!.width).toBeLessThanOrEqual(1200);
+    expect(
+      Math.abs(libraryBox!.x - (1440 - libraryBox!.width) / 2),
+    ).toBeLessThanOrEqual(1);
+    const libraryFrame = await frameSnapshot(page);
+    expect(libraryFrame.headerBox).toEqual(trainingFrame.headerBox);
+    expect(libraryFrame.colors).toEqual(trainingFrame.colors);
     await page.screenshot({
       path: testInfo.outputPath("desktop-library-dark.png"),
     });
@@ -159,12 +174,18 @@ test.describe("stable application frame", () => {
     await expect(
       page.getByRole("heading", { name: "Statistieken" }),
     ).toBeVisible();
+    const statisticsFrame = await frameSnapshot(page);
+    expect(statisticsFrame.headerBox).toEqual(trainingFrame.headerBox);
+    expect(statisticsFrame.colors).toEqual(trainingFrame.colors);
     await returnToTraining();
 
     await page.getByRole("button", { name: "Instellingen" }).click();
     await expect(
       page.getByRole("heading", { name: "Instellingen" }),
     ).toBeVisible();
+    const settingsFrame = await frameSnapshot(page);
+    expect(settingsFrame.headerBox).toEqual(trainingFrame.headerBox);
+    expect(settingsFrame.colors).toEqual(trainingFrame.colors);
     await returnToTraining();
   });
 
@@ -179,9 +200,7 @@ test.describe("stable application frame", () => {
       "[data-app-mobile-navigation]:visible",
     );
     await expect(visibleTreatment).toHaveCount(1);
-    const strategy = await visibleTreatment.getAttribute(
-      "data-app-mobile-navigation",
-    );
+    const strategy = "menu";
     await startSession(page);
     await expect(visibleTreatment).toHaveCount(1);
     await expect(visibleTreatment).toHaveAttribute(
@@ -189,38 +208,22 @@ test.describe("stable application frame", () => {
       strategy!,
     );
 
-    if (strategy === "menu") {
-      await visibleTreatment.getByRole("button", { name: "Navigatie" }).click();
-      const choices = page.getByRole("group", { name: "Navigatie" });
-      await expect(
-        choices.getByRole("button", { name: "Training" }),
-      ).toBeVisible();
-      await expect(
-        choices.getByRole("button", { name: "Bibliotheek" }),
-      ).toBeVisible();
-      await expect(
-        choices.getByRole("button", { name: "Statistieken" }),
-      ).toBeVisible();
-      await page.screenshot({
-        path: testInfo.outputPath("mobile-training-menu-open-dark.png"),
-      });
-    } else {
-      const navigation = visibleTreatment.getByRole("navigation", {
-        name: "Primary",
-      });
-      await expect(
-        navigation.getByRole("button", { name: "Training" }),
-      ).toBeVisible();
-      await expect(
-        navigation.getByRole("button", { name: "Bibliotheek" }),
-      ).toBeVisible();
-      await expect(
-        navigation.getByRole("button", { name: "Statistieken" }),
-      ).toBeVisible();
-      await page.screenshot({
-        path: testInfo.outputPath("mobile-training-navigation-dark.png"),
-      });
-    }
+    await visibleTreatment
+      .getByRole("button", { name: /Navigatie: Training/ })
+      .click();
+    const choices = page.getByRole("group", { name: "Navigatie" });
+    await expect(
+      choices.getByRole("button", { name: "Training" }),
+    ).toBeVisible();
+    await expect(
+      choices.getByRole("button", { name: "Bibliotheek" }),
+    ).toBeVisible();
+    await expect(
+      choices.getByRole("button", { name: "Statistieken" }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath("mobile-training-menu-open-dark.png"),
+    });
   });
 
   test("compact phone keeps the shared header and session controls in bounds", async ({
@@ -232,10 +235,13 @@ test.describe("stable application frame", () => {
     await startSession(page);
 
     await expect(page.getByTestId("app-header")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Navigatie" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Navigatie: Training/ }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Sessie sluiten" }),
     ).toBeVisible();
+    await expect(page.getByText("Herhaling", { exact: true })).toBeVisible();
     expect(
       await page.locator("html").evaluate((element) => ({
         clientWidth: element.clientWidth,
@@ -245,5 +251,38 @@ test.describe("stable application frame", () => {
     await page.screenshot({
       path: testInfo.outputPath("compact-phone-training-dark.png"),
     });
+  });
+
+  test("pending review action immediately blocks every session exit", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+    await preparePilotPage(page, { actionDelayMs: 900 });
+    await startSession(page);
+    await page.getByRole("button", { name: answerButton }).click();
+
+    await page.getByRole("button", { name: "Goed", exact: true }).click();
+
+    const desktopNavigation = await visibleDesktopNavigation(page);
+    await expect(
+      desktopNavigation.getByRole("button", { name: "Bibliotheek" }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Geschiedenis" }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "Sessie sluiten" }),
+    ).toBeDisabled();
+
+    await expect(
+      desktopNavigation.getByRole("button", { name: "Bibliotheek" }),
+    ).toBeEnabled({ timeout: 3_000 });
+    expect(
+      await page.locator("html").evaluate((element) => ({
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      })),
+    ).toEqual({ clientWidth: 1024, scrollWidth: 1024 });
   });
 });

@@ -1,8 +1,7 @@
 # Stable application frame contract
 
 Owner: [#264](https://github.com/vbalashi/2000nl/issues/264), within #58.
-Status: implementation candidate; compact mobile destination switcher is in
-owner review.
+Status: implemented in draft PR #275; final independent review is in progress.
 
 This document describes the application around the learning card. It does not
 change card typography or idiom presentation (#249, #251, #272), and it does
@@ -63,7 +62,7 @@ permission for each screen to invent a value.
 | Training Face | required | visible | compact switcher | required | max 760 px |
 | Training Answer | required | visible | compact switcher | required | max 760 px |
 | Training More | required | visible | compact switcher remains behind drawer | remains behind drawer | drawer contract #252/#271 |
-| Library | required | visible | compact switcher | — | pending owner comparison |
+| Library | required | visible | compact switcher | — | max 1200 px |
 | Statistics | required | visible | compact switcher | — | pending owner comparison |
 | Settings | required | visible | compact switcher | — | pending owner comparison |
 | History | required | visible | compact switcher | — | max 768 px today |
@@ -82,8 +81,10 @@ the production component was implemented:
 
 `bottom-tabs` was rejected because Training already owns a bottom progress row.
 `top-tabs` costs a complete extra row on a 320×568 phone. The selected target is
-`menu`: its visible label is the current destination (for example, Training),
-and one tap exposes all three destinations. The comparison-only implementations
+`menu`: its visible label is the current destination (including Settings and
+History), and one tap exposes all three primary destinations. Escape, an outside
+tap and a destination choice all close it; keyboard focus returns to its trigger.
+The comparison-only implementations
 were deleted after the decision, so they cannot drift back into production.
 The same treatment is used in every mobile destination. Desktop is not allowed
 to switch to the phone layout merely because a desktop window becomes narrow.
@@ -97,7 +98,7 @@ expresses the job of the destination:
 | --- | ---: | ---: | --- |
 | Training card/session row | 760 px | 760 px | confirmed |
 | Training Today/setup | 1024 px | 1024 px | preserve unless preview disproves |
-| Library two-column workspace | uncapped | 1200 px | owner preview required |
+| Library two-column workspace | 1200 px | 1200 px | implemented; visual acceptance pending |
 | Statistics | 1152 px | 1152 px | preserve, then compare |
 | Settings | 1024 px | 1024 px | preserve, then compare |
 | History | 768 px | 768 px | preserve, then compare |
@@ -136,6 +137,13 @@ inside this shell-only slice.
 - Returning from destinations preserves exact Training card and side.
 - Pending mutation cannot be abandoned. The final recovery guarantee remains
   blocked on #250; #264 must not invent a second transition owner.
+
+Automated evidence now asserts the 1440×960 header geometry and colors across
+Training, Library, Statistics and Settings; exact Training card/side restoration;
+the 1200 px centered Library workspace; the selected menu at 390×844; complete
+one-line footer labels and no horizontal overflow at 320×568; and immediate
+blocking of destination, History and Close controls during a delayed mutation at
+1024×600. Final owner visual acceptance remains a separate gate before merge.
 
 ## Representative implementation renders
 
