@@ -9,35 +9,56 @@ const profiles = [
     name: "desktop-1280x900-light",
     viewport: { width: 1280, height: 900 },
     colorScheme: "light" as const,
+    language: "en" as const,
   },
   {
     name: "desktop-1280x900-dark",
     viewport: { width: 1280, height: 900 },
     colorScheme: "dark" as const,
+    language: "nl" as const,
+  },
+  {
+    name: "mobile-320x568-dark",
+    viewport: { width: 320, height: 568 },
+    colorScheme: "dark" as const,
+    language: "ru" as const,
   },
   {
     name: "mobile-375x812-dark",
     viewport: { width: 375, height: 812 },
     colorScheme: "dark" as const,
+    language: "ru" as const,
   },
   {
     name: "mobile-390x844-dark",
     viewport: { width: 390, height: 844 },
     colorScheme: "dark" as const,
+    language: "nl" as const,
   },
   {
     name: "mobile-402x874-light",
     viewport: { width: 402, height: 874 },
     colorScheme: "light" as const,
+    language: "en" as const,
   },
   {
     name: "mobile-412x915-dark",
     viewport: { width: 412, height: 915 },
     colorScheme: "dark" as const,
+    language: "ru" as const,
   },
 ];
 
-async function holdSessionRefresh(page: Page) {
+const bootstrapHeading = {
+  en: "Preparing training",
+  nl: "Training voorbereiden",
+  ru: "Подготавливаем тренировку",
+};
+
+async function holdSessionRefresh(
+  page: Page,
+  language: keyof typeof bootstrapHeading,
+) {
   const validSession = buildFakeSupabaseSession({
     id: "loading-qa-user",
     email: "loading-qa@2000nl.test",
@@ -52,6 +73,11 @@ async function holdSessionRefresh(page: Page) {
     releaseRefresh = resolve;
   });
   let refreshRequested = false;
+  let releasePreferences: () => void = () => undefined;
+  const preferencesGate = new Promise<void>((resolve) => {
+    releasePreferences = resolve;
+  });
+  const preferenceRequests = new Set<string>();
 
   await page.route("**/auth/v1/token**", async (route) => {
     refreshRequested = true;
@@ -62,14 +88,53 @@ async function holdSessionRefresh(page: Page) {
       body: JSON.stringify(validSession),
     });
   });
-  await installSupabaseSession(page, expiredSession);
-  await page.addInitScript(() => {
-    window.localStorage.setItem("onboarding_language", "nl");
+  await page.route("**/rest/v1/user_settings?**", async (route) => {
+    preferenceRequests.add("app");
+    await preferencesGate;
+    await route.fulfill({
+      status: 200,
+      headers: {
+        "content-type": "application/json",
+        "content-range": "0-0/1",
+      },
+      body: JSON.stringify([
+        {
+          theme_preference: "system",
+          audio_quality: "free",
+          translation_lang: language,
+          preferences: { onboardingLanguage: language },
+        },
+      ]),
+    });
   });
+  await page.route(
+    "**/rest/v1/rpc/get_learning_preferences",
+    async (route) => {
+      preferenceRequests.add("learning");
+      await preferencesGate;
+      await route.fulfill({
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          modes_enabled: ["word-to-definition"],
+          card_filter: "both",
+          language_code: "nl",
+          new_review_ratio: 2,
+          active_scenario: "understanding",
+        }),
+      });
+    },
+  );
+  await installSupabaseSession(page, expiredSession);
+  await page.addInitScript((savedLanguage) => {
+    window.localStorage.setItem("onboarding_language", savedLanguage);
+  }, language);
 
   return {
     releaseRefresh,
     refreshRequested: () => refreshRequested,
+    releasePreferences,
+    preferencesRequested: () => preferenceRequests.size === 2,
   };
 }
 
@@ -82,7 +147,7 @@ for (const profile of profiles) {
       colorScheme: profile.colorScheme,
       reducedMotion: "reduce",
     });
-    const refresh = await holdSessionRefresh(page);
+    const refresh = await holdSessionRefresh(page, profile.language);
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect.poll(refresh.refreshRequested).toBe(true);
@@ -90,11 +155,18 @@ for (const profile of profiles) {
     const shell = page.getByTestId("training-bootstrap-shell");
     await expect(shell).toBeVisible();
     await expect(
-      shell.getByRole("heading", { name: "Training laden" }),
+      shell.getByRole("heading", {
+        name: bootstrapHeading[profile.language],
+      }),
     ).toBeVisible();
-    await expect(shell).toContainText(
-      "We controleren je sessie voordat Training opent.",
-    );
+    await expect(shell.getByTestId("training-loading-indicator")).toBeVisible();
+    for (const misleadingCopy of [
+      "Your navigation stays available",
+      "De navigatie blijft beschikbaar",
+      "Навигация остаётся доступной",
+    ]) {
+      await expect(shell).not.toContainText(misleadingCopy);
+    }
     await expect(page.getByText("Laden…")).toHaveCount(0);
     await expect.poll(async () =>
       shell.evaluate((element) =>
@@ -122,6 +194,14 @@ for (const profile of profiles) {
     });
 
     refresh.releaseRefresh();
+    await expect.poll(refresh.preferencesRequested).toBe(true);
+    await expect(shell).toBeVisible();
+    await expect(
+      shell.getByRole("heading", {
+        name: bootstrapHeading[profile.language],
+      }),
+    ).toBeVisible();
+    refresh.releasePreferences();
     const destinationShell = page.locator("[data-training-pilot-surface]");
     await expect(destinationShell).toBeVisible();
     await expect(shell).toHaveCount(0);

@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { AudioQuality } from "@/lib/audio/types";
 import { trainingDebug } from "@/lib/trainingDebug";
 import type { CardFilter, TrainingMode } from "@/lib/types";
-import { fetchUserPreferences, updateUserPreferences } from "../trainingService";
+import {
+  fetchUserPreferences,
+  updateUserPreferences,
+  type UserPreferences,
+} from "../trainingService";
 import { measureTrainingTransitionStage } from "./trainingTransitionTiming";
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -11,27 +15,42 @@ type PersistOptions = { persist?: boolean };
 export function useTrainingPreferences(
   userId?: string,
   initialTransitionId?: string,
+  initialPreferences?: UserPreferences,
 ) {
   const [themePreference, setThemePreference] =
-    useState<ThemePreference>("system");
+    useState<ThemePreference>(initialPreferences?.themePreference ?? "system");
   const [audioQuality, setAudioQualityState] = useState<AudioQuality>(
-    (process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) || "free",
+    initialPreferences?.audioQuality ??
+      ((process.env.NEXT_PUBLIC_AUDIO_QUALITY_DEFAULT as AudioQuality) ||
+        "free"),
   );
-  const [enabledModes, setEnabledModesState] = useState<TrainingMode[]>([
-    "word-to-definition",
-  ]);
-  const [cardFilter, setCardFilterState] = useState<CardFilter>("both");
-  const [language, setLanguageState] = useState("nl");
-  const [newReviewRatio, setNewReviewRatioState] = useState(2);
+  const [enabledModes, setEnabledModesState] = useState<TrainingMode[]>(
+    initialPreferences?.modesEnabled ?? ["word-to-definition"],
+  );
+  const [cardFilter, setCardFilterState] = useState<CardFilter>(
+    initialPreferences?.cardFilter ?? "both",
+  );
+  const [language, setLanguageState] = useState(
+    initialPreferences?.languageCode ?? "nl",
+  );
+  const [newReviewRatio, setNewReviewRatioState] = useState(
+    initialPreferences?.newReviewRatio ?? 2,
+  );
   const [activeScenario, setActiveScenarioState] =
-    useState<string>("understanding");
+    useState<string>(initialPreferences?.activeScenario ?? "understanding");
   const [translationLang, setTranslationLangState] = useState<string | null>(
-    null,
+    initialPreferences?.translationLang ?? null,
   );
   const initialTransitionIdRef = useRef(initialTransitionId);
+  const initialPreferencesRef = useRef(initialPreferences);
 
   useEffect(() => {
     if (!userId) return;
+    if (initialPreferencesRef.current) {
+      initialPreferencesRef.current = undefined;
+      initialTransitionIdRef.current = undefined;
+      return;
+    }
 
     const loadPreferences = async () => {
       const transitionId = initialTransitionIdRef.current;

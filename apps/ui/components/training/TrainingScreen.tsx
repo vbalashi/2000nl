@@ -18,6 +18,7 @@ import {
   updateActiveTrainingScope,
   type ReviewResult,
   type TrainingScenarioCatalog,
+  type UserPreferences,
 } from "@/lib/trainingService";
 import type {
   ActiveTrainingScope,
@@ -109,6 +110,8 @@ import {
 type Props = {
   user: User;
   initialTransitionId?: string;
+  initialInterfaceLanguage?: OnboardingLanguage;
+  initialPreferences?: UserPreferences;
   destination?: AppDestination;
   extendedDestinationsEnabled?: boolean;
   onRequestDestination?: (destination: AppDestination) => void;
@@ -225,6 +228,8 @@ export function TrainingScreen(props: Props) {
 function TrainingScreenContent({
   user,
   initialTransitionId,
+  initialInterfaceLanguage,
+  initialPreferences,
   destination = "training",
   extendedDestinationsEnabled = process.env
     .NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true",
@@ -277,7 +282,7 @@ function TrainingScreenContent({
     setNewReviewRatio,
     setTheme,
     setTranslationLang,
-  } = useTrainingPreferences(user?.id, initialTransitionId);
+  } = useTrainingPreferences(user?.id, initialTransitionId, initialPreferences);
   const [currentTrainingLanguage, setCurrentTrainingLanguage] =
     useState(language);
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
@@ -409,6 +414,8 @@ function TrainingScreenContent({
   } = useTrainingOnboarding({
     userId: user?.id,
     translationLang,
+    initialInterfaceLanguage,
+    initialPreferences: initialPreferences?.preferences,
   });
 
   useEffect(() => {

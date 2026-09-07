@@ -1,5 +1,6 @@
 export type TrainingTransitionStage =
   | "auth.session"
+  | "training.interface-language"
   | "training.preferences"
   | "training.active-scope-hydration"
   | "training.scenarios"

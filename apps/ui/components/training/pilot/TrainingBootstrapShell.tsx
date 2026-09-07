@@ -15,16 +15,19 @@ const extendedDestinationsEnabled =
 type Props =
   | {
       interfaceLanguage: OnboardingLanguage;
+      interfaceLanguageReady?: boolean;
       status?: "loading" | "long-running";
     }
   | {
       interfaceLanguage: OnboardingLanguage;
+      interfaceLanguageReady?: boolean;
       status: "error";
       onRetry: () => void;
     };
 
 export function TrainingBootstrapShell(props: Props) {
   const { interfaceLanguage } = props;
+  const interfaceLanguageReady = props.interfaceLanguageReady ?? true;
   const inertNavigate = () => undefined;
 
   return (
@@ -38,7 +41,7 @@ export function TrainingBootstrapShell(props: Props) {
             <BrandLogo />
           </div>
         </div>
-        {navigationShellEnabled ? (
+        {navigationShellEnabled && interfaceLanguageReady ? (
           <div className="justify-self-center">
             <AppDestinationNav
               active="training"
@@ -66,10 +69,11 @@ export function TrainingBootstrapShell(props: Props) {
           interfaceLanguage={interfaceLanguage}
           status={props.status ?? "loading"}
           context="bootstrap"
+          copyVisible={interfaceLanguageReady}
         />
       )}
 
-      {navigationShellEnabled ? (
+      {navigationShellEnabled && interfaceLanguageReady ? (
         <MobileAppDestinationNav
           active="training"
           interfaceLanguage={interfaceLanguage}

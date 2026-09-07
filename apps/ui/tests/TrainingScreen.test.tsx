@@ -1057,7 +1057,7 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
 
     expect(
       await screen.findByRole("heading", {
-        name: /Loading Training|Training laden/,
+        name: /Loading card|Kaart laden/,
       }),
     ).toBeInTheDocument();
     const todayShell = document.querySelector<HTMLElement>(

@@ -6,6 +6,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 type SharedProps = {
   interfaceLanguage: OnboardingLanguage;
   context: "bootstrap" | "training";
+  copyVisible?: boolean;
 };
 
 type Props =
@@ -18,10 +19,11 @@ type Props =
 
 const copy = {
   en: {
-    loading: "Loading Training",
-    loadingBody: "Your navigation stays available while the session loads.",
-    bootstrapLoadingBody: "We’re checking your session before Training opens.",
-    longRunningBody: "This is taking longer than usual. We’re still trying.",
+    loading: "Loading card",
+    bootstrapLoading: "Preparing training",
+    longRunning: "Still loading your card",
+    bootstrapLongRunning: "Still preparing your training",
+    longRunningBody: "This is taking a little longer than expected.",
     empty: "No cards match this setup",
     emptyBody: "Adjust the selection without losing your current session.",
     trainingError: "Training could not be loaded",
@@ -35,10 +37,11 @@ const copy = {
     setUp: "Set up training",
   },
   nl: {
-    loading: "Training laden",
-    loadingBody: "De navigatie blijft beschikbaar terwijl je sessie laadt.",
-    bootstrapLoadingBody: "We controleren je sessie voordat Training opent.",
-    longRunningBody: "Dit duurt langer dan normaal. We blijven proberen.",
+    loading: "Kaart laden",
+    bootstrapLoading: "Training voorbereiden",
+    longRunning: "Je kaart wordt nog geladen",
+    bootstrapLongRunning: "Training wordt nog voorbereid",
+    longRunningBody: "Dit duurt iets langer dan verwacht.",
     empty: "Geen kaarten voor deze selectie",
     emptyBody: "Pas de selectie aan zonder je huidige sessie te verliezen.",
     trainingError: "Training kon niet worden geladen",
@@ -54,11 +57,11 @@ const copy = {
     setUp: "Training samenstellen",
   },
   ru: {
-    loading: "Загрузка тренировки",
-    loadingBody: "Навигация остаётся доступной, пока загружается сессия.",
-    bootstrapLoadingBody: "Проверяем ваш сеанс перед открытием тренировки.",
-    longRunningBody:
-      "Это занимает больше времени, чем обычно. Мы продолжаем попытки.",
+    loading: "Загружаем карточку",
+    bootstrapLoading: "Подготавливаем тренировку",
+    longRunning: "Карточка всё ещё загружается",
+    bootstrapLongRunning: "Тренировка всё ещё подготавливается",
+    longRunningBody: "Это занимает немного больше времени, чем ожидалось.",
     empty: "Для этих настроек нет карточек",
     emptyBody: "Измените выбор, не теряя текущую сессию.",
     trainingError: "Не удалось загрузить тренировку",
@@ -84,15 +87,20 @@ export function TrainingPilotStatePanel(props: Props) {
     switch (props.status) {
       case "loading":
         return {
-          heading: t.loading,
-          body:
-            props.context === "bootstrap"
-              ? t.bootstrapLoadingBody
-              : t.loadingBody,
+          heading:
+            props.context === "bootstrap" ? t.bootstrapLoading : t.loading,
+          body: null,
           action: null,
         };
       case "long-running":
-        return { heading: t.loading, body: t.longRunningBody, action: null };
+        return {
+          heading:
+            props.context === "bootstrap"
+              ? t.bootstrapLongRunning
+              : t.longRunning,
+          body: t.longRunningBody,
+          action: null,
+        };
       case "empty":
         return { heading: t.empty, body: t.emptyBody, action: t.adjustFilters };
       case "first-use":
@@ -112,6 +120,7 @@ export function TrainingPilotStatePanel(props: Props) {
     }
   })();
   const busy = props.status === "loading" || props.status === "long-running";
+  const copyVisible = props.copyVisible ?? true;
   const onAction =
     props.status === "error"
       ? props.onRetry
@@ -122,25 +131,38 @@ export function TrainingPilotStatePanel(props: Props) {
   return (
     <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <section
+        role={props.status === "error" ? "alert" : "status"}
         aria-busy={busy}
         aria-live="polite"
         className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12"
       >
-        <div
-          aria-hidden="true"
-          className={`mx-auto mb-5 h-12 w-12 rounded-2xl border ${
-            props.status === "error"
-              ? "border-red-400/60 bg-red-500/10"
-              : "border-indigo-400/60 bg-indigo-500/10"
-          }`}
-        />
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
-          {stateCopy.heading}
-        </h1>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">
-          {stateCopy.body}
-        </p>
-        {stateCopy.action ? (
+        {busy ? (
+          <div
+            data-testid="training-loading-indicator"
+            aria-hidden="true"
+            className="mx-auto mb-6 h-1.5 w-28 overflow-hidden rounded-full bg-indigo-500/15"
+          >
+            <div className="h-full w-1/2 rounded-full bg-indigo-500/70 motion-safe:animate-pulse motion-reduce:opacity-70" />
+          </div>
+        ) : (
+          <div
+            aria-hidden="true"
+            className={`mx-auto mb-5 h-3 w-3 rounded-full ${
+              props.status === "error" ? "bg-red-500/70" : "bg-indigo-500/70"
+            }`}
+          />
+        )}
+        {copyVisible ? (
+          <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">
+            {stateCopy.heading}
+          </h1>
+        ) : null}
+        {copyVisible && stateCopy.body ? (
+          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+            {stateCopy.body}
+          </p>
+        ) : null}
+        {copyVisible && stateCopy.action ? (
           <button
             type="button"
             onClick={onAction}
@@ -148,11 +170,7 @@ export function TrainingPilotStatePanel(props: Props) {
           >
             {stateCopy.action}
           </button>
-        ) : (
-          <p aria-hidden="true" className="mt-8 text-sm font-semibold text-indigo-500">
-            …
-          </p>
-        )}
+        ) : null}
       </section>
     </main>
   );
