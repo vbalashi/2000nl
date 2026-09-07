@@ -228,7 +228,7 @@ for (const profile of profiles) {
   });
 }
 
-test("delayed list hydration and card selection are attributed to startup", async ({
+test("delayed list hydration and card selection are attributed to startup @pilot", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
