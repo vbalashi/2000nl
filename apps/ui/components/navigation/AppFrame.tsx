@@ -10,7 +10,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
-export type AppHeaderProps = {
+export type AppFrameProps = {
   activeDestination: AppDestination;
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
@@ -20,12 +20,11 @@ export type AppHeaderProps = {
   onNavigate: (destination: AppDestination) => void;
   onCycleTheme: AppUtilityNavProps["onCycleTheme"];
   onOpenSettings: AppUtilityNavProps["onOpenSettings"];
-};
-
-export type AppFrameProps = AppHeaderProps & {
   children: React.ReactNode;
   className?: string;
 };
+
+type AppHeaderProps = Omit<AppFrameProps, "children" | "className">;
 
 const mobileLabels = {
   nl: { destinations: "Navigatie" },

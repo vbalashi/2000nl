@@ -207,6 +207,10 @@ test.describe("stable application frame", () => {
       "data-app-mobile-navigation",
       strategy!,
     );
+    const stage = page.getByTestId("training-sense-card-stage");
+    await expect(stage).toHaveAttribute("data-side", "face");
+    await page.getByRole("button", { name: answerButton }).click();
+    await expect(stage).toHaveAttribute("data-side", "answer");
 
     await visibleTreatment
       .getByRole("button", { name: /Navigatie: Training/ })
@@ -224,7 +228,63 @@ test.describe("stable application frame", () => {
     await page.screenshot({
       path: testInfo.outputPath("mobile-training-menu-open-dark.png"),
     });
+    await choices.getByRole("button", { name: "Bibliotheek" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Bibliotheek" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Navigatie: Bibliotheek/ }),
+    ).toBeVisible();
   });
+
+  for (const viewport of [
+    { name: "phone", width: 390, height: 844 },
+    { name: "compact", width: 320, height: 568 },
+  ]) {
+    test(`${viewport.name} light keeps navigation through Face, Answer and Library`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({
+        width: viewport.width,
+        height: viewport.height,
+      });
+      await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      await preparePilotPage(page);
+      await expect(
+        page.getByRole("button", { name: /Navigatie: Training/ }),
+      ).toBeVisible();
+
+      await startSession(page);
+      const stage = page.getByTestId("training-sense-card-stage");
+      await expect(stage).toHaveAttribute("data-side", "face");
+      await page.getByRole("button", { name: answerButton }).click();
+      await expect(stage).toHaveAttribute("data-side", "answer");
+      await expect(
+        page.getByRole("button", { name: /Navigatie: Training/ }),
+      ).toBeVisible();
+
+      await page.getByRole("button", { name: /Navigatie: Training/ }).click();
+      await page
+        .getByRole("group", { name: "Navigatie" })
+        .getByRole("button", { name: "Bibliotheek" })
+        .click();
+      await expect(
+        page.getByRole("heading", { name: "Bibliotheek" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /Navigatie: Bibliotheek/ }),
+      ).toBeVisible();
+      expect(
+        await page.locator("html").evaluate((element) => ({
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+        })),
+      ).toEqual({ clientWidth: viewport.width, scrollWidth: viewport.width });
+      await page.screenshot({
+        path: testInfo.outputPath(`${viewport.name}-library-light.png`),
+      });
+    });
+  }
 
   test("compact phone keeps the shared header and session controls in bounds", async ({
     page,
@@ -251,6 +311,14 @@ test.describe("stable application frame", () => {
     await page.screenshot({
       path: testInfo.outputPath("compact-phone-training-dark.png"),
     });
+    await page.getByRole("button", { name: /Navigatie: Training/ }).click();
+    await page
+      .getByRole("group", { name: "Navigatie" })
+      .getByRole("button", { name: "Bibliotheek" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Bibliotheek" }),
+    ).toBeVisible();
   });
 
   test("pending review action immediately blocks every session exit", async ({

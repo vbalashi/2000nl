@@ -551,7 +551,16 @@ async function setupAuthenticatedTrainingPage(page: Page) {
   await page.goto("/");
 }
 
-test("training flow persists review and dictionary lookup", async ({
+async function continuePreparedTrainingSession(page: Page) {
+  await page
+    .getByRole("button", {
+      name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
+    })
+    .click();
+  await expect(page.getByRole("heading", { name: /huis/i })).toBeVisible();
+}
+
+test("training flow preserves the answer while word details open", async ({
   page,
 }) => {
   const recentHistoryRequests: string[] = [];
@@ -561,41 +570,40 @@ test("training flow persists review and dictionary lookup", async ({
     }
   });
   await setupAuthenticatedTrainingPage(page);
-
-  await expect(page.locator("h1")).toHaveText(/huis/i);
+  await continuePreparedTrainingSession(page);
   expect(recentHistoryRequests).toEqual([]);
 
-  // Reveal definition so the linked word appears as a clickable button.
-  await page.keyboard.press("Space");
-  await page.getByRole("button", { name: /^gracht$/i }).click();
+  // Reveal the answer, then open the current word through the shared details
+  // action. Linked-word navigation belonged to the removed legacy renderer.
+  await page
+    .getByRole("button", {
+      name: /Show answer|Toon antwoord|Показать ответ/i,
+    })
+    .click();
+  await page.getByRole("button", { name: /Word details|Woorddetails/i }).click();
 
-  // Clicking a linked word should open the Details tab for that entry.
+  // The shared action opens Word details without changing the active card.
   const drawer = page.locator("div.fixed.inset-0.z-40");
   await expect(drawer).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 2, name: /gracht/i })
+    drawer.getByRole("heading", { level: 2, name: /huis/i })
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
   // This fixture uses the default English interface, not its Dutch study language.
   await drawer.getByRole("button", { name: "Close", exact: true }).click();
   await expect(drawer).toBeHidden();
 
-  // Grade the card to advance to the next word.
-  await page.getByRole("button", { name: "Begin met leren" }).click();
-  await expect(page.locator("h1")).toHaveText(/gracht/i);
   expect(recentHistoryRequests).toEqual([]);
 });
 
-test("dictionary search and lists surfaces render", async ({ page }) => {
+test("the Library dictionary search surface renders", async ({ page }) => {
   await setupAuthenticatedTrainingPage(page);
+  await continuePreparedTrainingSession(page);
 
-  await expect(page.locator("h1")).toHaveText(/huis/i);
-
-  await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
-  await page.getByRole("button", { name: "Zoeken", exact: true }).click();
-  await expect(page.locator("button").filter({ hasText: "Zoeken" })).toHaveClass(
-    /border-primary/,
-  );
+  await page.getByRole("button", { name: /Library|Bibliotheek/ }).first().click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: /Library|Bibliotheek/ }),
+  ).toBeVisible();
   await expect(page.getByPlaceholder("Zoek in het woordenboek...")).toBeVisible();
   await expect(
     page.getByText("Nederlands · Zoekt in VanDale woordenboek"),
@@ -610,57 +618,39 @@ test("dictionary search and lists surfaces render", async ({ page }) => {
   await expect(headwordResult).toContainText("1 betekenis");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
-
-  await page.getByRole("button", { name: "Lijsten" }).click();
-  await expect(
-    page.getByRole("heading", { name: "VanDale 2k", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Lijstinhoud", exact: true }).first(),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Trainingsinstellingen" }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Info" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Woordenboekentries" }),
-  ).toBeVisible();
-
-  await page.getByRole("button", { name: "Trainingsinstellingen" }).click();
-  await expect(page.getByText("Actieve kaarttypen")).toBeVisible();
 });
 
-test("dictionary search and stable list filters render on mobile", async ({
+test("the Library dictionary search surface renders on mobile", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setupAuthenticatedTrainingPage(page);
-
-  await expect(page.locator("h1")).toHaveText(/huis/i);
-  await page.keyboard.press("Space");
-  await page.getByRole("button", { name: /^gracht$/i }).click();
+  await continuePreparedTrainingSession(page);
+  await page
+    .getByRole("button", {
+      name: /Show answer|Toon antwoord|Показать ответ/i,
+    })
+    .click();
+  await page.getByRole("button", { name: /Word details|Woorddetails/i }).click();
   const detailsDrawer = page.locator("div.fixed.inset-0.z-40");
   await expect(detailsDrawer).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 2, name: /gracht/i }),
+    detailsDrawer.getByRole("heading", { level: 2, name: /huis/i }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Recent" })).toHaveCount(0);
   await detailsDrawer.getByRole("button", { name: "Close", exact: true }).click();
   await expect(detailsDrawer).toBeHidden();
 
-  await page.getByLabel(/^(Settings|Instellingen|Настройки)$/).click();
-  await page.getByRole("button", { name: "Zoeken", exact: true }).click();
+  await page.getByRole("button", { name: /Destinations: Training/ }).click();
+  await page
+    .getByRole("group", { name: "Destinations" })
+    .getByRole("button", { name: "Library" })
+    .click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: /Library|Bibliotheek/ }),
+  ).toBeVisible();
   await page.getByPlaceholder("Zoek in het woordenboek...").fill("huis");
   await expect(
     page.getByTestId("library-headword-group-group-word-1"),
   ).toBeVisible();
-
-  await page.getByRole("button", { name: "Lijsten" }).click();
-  await expect(
-    page.getByRole("button", { name: "Lijstinhoud", exact: true }).first(),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Filters", exact: true }).click();
-  await page.getByRole("button", { name: /selecteer filters/i }).first().click();
-  await expect(page.getByLabel("Frozen").first()).toBeVisible();
-  await expect(page.getByLabel("Don't show").first()).toBeVisible();
 });

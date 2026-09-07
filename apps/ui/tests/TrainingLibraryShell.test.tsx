@@ -159,6 +159,26 @@ test("a blocked browser Back is reversed without overwriting the previous entry"
   go.mockRestore();
 });
 
+test("a blocked unknown entry cannot change the URL while keeping the same parsed destination", () => {
+  render(<TrainingLibraryShell user={user} />);
+  fireEvent.click(screen.getByRole("button", { name: "Block" }));
+
+  act(() => {
+    window.history.replaceState(
+      { external: "keep-me" },
+      "",
+      "/outside?source=external",
+    );
+    window.dispatchEvent(
+      new PopStateEvent("popstate", { state: { external: "keep-me" } }),
+    );
+  });
+
+  expect(window.location.pathname).toBe("/");
+  expect(window.location.search).toBe("");
+  expect(screen.getByText("destination training")).toBeInTheDocument();
+});
+
 test("all destinations share the mounted Training session and browser history", () => {
   render(<TrainingLibraryShell user={user} />);
 

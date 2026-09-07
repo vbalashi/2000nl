@@ -141,6 +141,7 @@ inside this shell-only slice.
 Automated evidence now asserts the 1440×960 header geometry and colors across
 Training, Library, Statistics and Settings; exact Training card/side restoration;
 the 1200 px centered Library workspace; the selected menu at 390×844; complete
+Face → Answer → Library navigation in light and dark mobile layouts; complete
 one-line footer labels and no horizontal overflow at 320×568; and immediate
 blocking of destination, History and Close controls during a delayed mutation at
 1024×600. Final owner visual acceptance remains a separate gate before merge.
@@ -151,6 +152,8 @@ blocking of destination, History and Close controls during a delayed mutation at
 - [1440 × 960 · Library · dark](assets/1440-library-dark.png)
 - [390 × 844 · Training menu open · dark](assets/390-training-menu-dark.png)
 - [320 × 568 · Training · dark](assets/320-training-dark.png)
+- [390 × 844 · Library after Face/Answer · light](assets/390-library-light.png)
+- [320 × 568 · Library after Face/Answer · light](assets/320-library-light.png)
 
 These renders use the deterministic authenticated Training fixture. The 320 px
 check also asserts no horizontal overflow and keeps the session Close control

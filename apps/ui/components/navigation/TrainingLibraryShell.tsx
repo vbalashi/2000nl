@@ -47,17 +47,22 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
   );
   const [navigationBlocked, setNavigationBlocked] = useState(false);
   const historyPositionRef = useRef(0);
+  const currentUrlRef = useRef(
+    typeof window === "undefined" ? "" : window.location.href,
+  );
 
   const requestDestination = useCallback(
     (nextDestination: AppDestination) => {
       if (navigationBlocked || nextDestination === destination) return;
       const nextPosition = historyPositionRef.current + 1;
+      const nextUrl = appDestinationUrl(window.location.href, nextDestination);
       window.history.pushState(
         stateAtPosition(nextPosition),
         "",
-        appDestinationUrl(window.location.href, nextDestination),
+        nextUrl,
       );
       historyPositionRef.current = nextPosition;
+      currentUrlRef.current = nextUrl;
       setDestination(nextDestination);
     },
     [destination, navigationBlocked],
@@ -65,11 +70,13 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
 
   const returnFromHistory = useCallback(() => {
     if (destination !== TRAINING_HISTORY_DESTINATION) return;
+    const nextUrl = appDestinationUrl(window.location.href, "training");
     window.history.replaceState(
       stateAtPosition(historyPositionRef.current),
       "",
-      appDestinationUrl(window.location.href, "training"),
+      nextUrl,
     );
+    currentUrlRef.current = nextUrl;
     setDestination("training");
   }, [destination]);
 
@@ -91,11 +98,15 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
     );
     const normalized = parseAppDestination(rawDestination);
     if (rawDestination && normalized === "training") {
+      const nextUrl = appDestinationUrl(window.location.href, "training");
       window.history.replaceState(
         stateAtPosition(historyPositionRef.current),
         "",
-        appDestinationUrl(window.location.href, "training"),
+        nextUrl,
       );
+      currentUrlRef.current = nextUrl;
+    } else {
+      currentUrlRef.current = window.location.href;
     }
   }, []);
 
@@ -103,7 +114,11 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
     const handlePopState = (event: PopStateEvent) => {
       const nextDestination = destinationFromLocation();
       const nextPosition = historyPosition(event.state);
-      if (navigationBlocked && nextDestination !== destination) {
+      const movedAwayFromCurrentEntry =
+        nextPosition === null ||
+        nextPosition !== historyPositionRef.current ||
+        nextDestination !== destination;
+      if (navigationBlocked && movedAwayFromCurrentEntry) {
         if (
           nextPosition !== null &&
           nextPosition !== historyPositionRef.current
@@ -116,12 +131,13 @@ export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
           window.history.pushState(
             stateAtPosition(historyPositionRef.current),
             "",
-            appDestinationUrl(window.location.href, destination),
+            currentUrlRef.current,
           );
         }
         return;
       }
       if (nextPosition !== null) historyPositionRef.current = nextPosition;
+      currentUrlRef.current = window.location.href;
       setDestination(nextDestination);
     };
 
