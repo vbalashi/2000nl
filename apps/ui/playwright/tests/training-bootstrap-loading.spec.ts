@@ -236,10 +236,15 @@ test("delayed list hydration and card selection are attributed to startup", asyn
   await installTrainingAttributionCollector(page);
   await setupAuthenticatedTrainingAttributionPage(page, 0, {
     bootstrapReadDelayMs: 40,
-    activeScopeDelayMs: 180,
-    listSummaryDelayMs: 220,
-    schedulerDelayMs: 180,
+    activeScopeDelayMs: 600,
+    listSummaryDelayMs: 700,
+    schedulerDelayMs: 600,
   });
+
+  const startupStatus = page.getByRole("status");
+  await expect(startupStatus).toBeVisible();
+  await expect(startupStatus).toHaveAttribute("aria-busy", "true");
+  await expect(page.getByText("Loading training")).toHaveCount(0);
 
   const startCurrentSettings = page.getByRole("button", {
     name: /Начать с текущими настройками|Start (?:with current settings|current setup)|Start met huidige instellingen/i,
@@ -256,7 +261,7 @@ test("delayed list hydration and card selection are attributed to startup", asyn
     (event) => event.stage === "training.active-scope-hydration",
   );
   expect(hydration).toMatchObject({ outcome: "ready" });
-  expect(hydration?.durationMs ?? 0).toBeGreaterThanOrEqual(170);
+  expect(hydration?.durationMs ?? 0).toBeGreaterThanOrEqual(550);
 
   const startupSelection = capture.timings.find(
     (event) =>
@@ -264,7 +269,7 @@ test("delayed list hydration and card selection are attributed to startup", asyn
       event.transitionId === hydration?.transitionId,
   );
   expect(startupSelection).toMatchObject({ outcome: "ready" });
-  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(150);
+  expect(startupSelection?.durationMs ?? 0).toBeGreaterThanOrEqual(550);
   expect(startupSelection?.monotonicStartedAtMs ?? 0).toBeLessThan(
     startupSelection?.monotonicEndedAtMs ?? 0,
   );

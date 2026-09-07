@@ -112,7 +112,7 @@ test("server bootstrap does not invent an English language before browser state 
   const html = renderToString(<HomePage />);
 
   expect(html).toContain("training-loading-indicator");
-  expect(html).not.toContain("Preparing training");
+  expect(html).not.toContain("<h1");
   expect(html).not.toContain("Loading Training");
 });
 

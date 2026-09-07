@@ -8,7 +8,7 @@ import { TrainingLibraryShell } from "@/components/navigation/TrainingLibraryShe
 import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 import { TrainingBootstrapShell } from "@/components/training/pilot/TrainingBootstrapShell";
 import {
-  getOnboardingLanguage,
+  detectOnboardingLanguage,
   getStoredOnboardingLanguage,
   isOnboardingLanguage,
   setOnboardingLanguage,
@@ -78,7 +78,9 @@ export default function HomePage() {
           ? rawAccountLanguage
           : null;
         const resolvedLanguage =
-          accountLanguage ?? browserLanguage ?? getOnboardingLanguage();
+          accountLanguage ??
+          browserLanguage ??
+          detectOnboardingLanguage(preferences.translationLang);
         setOnboardingLanguage(resolvedLanguage);
         setInterfaceLanguage(resolvedLanguage);
         setInterfaceLanguageReady(true);
@@ -99,7 +101,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const storedLanguage = getStoredOnboardingLanguage();
-    const initialLanguage = storedLanguage ?? getOnboardingLanguage();
+    const initialLanguage = storedLanguage ?? detectOnboardingLanguage();
     setInterfaceLanguage(initialLanguage);
     setInterfaceLanguageReady(Boolean(storedLanguage));
     setBrowserLanguageResolved(true);

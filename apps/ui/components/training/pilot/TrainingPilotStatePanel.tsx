@@ -133,6 +133,7 @@ export function TrainingPilotStatePanel(props: Props) {
       <section
         role={props.status === "error" ? "alert" : "status"}
         aria-busy={busy}
+        aria-label={copyVisible ? undefined : stateCopy.heading}
         aria-live="polite"
         className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/60 md:p-12"
       >
