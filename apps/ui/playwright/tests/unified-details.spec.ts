@@ -79,7 +79,14 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     await copy.click();
     await expect(page.getByTestId("copied-entry")).toHaveText(gateFinanceEntry.entryId);
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Later oefenen (F)", exact: true })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Sluiten", exact: true })).toBeVisible();
+    await expect(page.getByTestId("library-details-actions")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Melden", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Later oefenen (F)", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Verbergen voor training (X)", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Kopieer naar mijn woordenboek", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Vertalen", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Afspelen", exact: true })).toBeVisible();
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead")).toBeInViewport();
     const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
     const scroller = page.getByTestId("library-sense-card-scroll-region");
@@ -92,10 +99,12 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
       const fadeBox = await fade.boundingBox();
       expect(fadeBox!.height).toBeLessThanOrEqual(scrollBox!.height / 4 + 1);
     }
-    await expect(copy).toBeInViewport();
-    await expect(report).toBeInViewport();
     expect(lookups).toContain(gateFurnitureEntry.entryId);
     expect(lookups).toContain(gateFinanceEntry.entryId);
+    await page.getByRole("button", { name: "Sluiten", exact: true }).click();
+    await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
+    await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
+    await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
     await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}-${size}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });

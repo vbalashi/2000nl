@@ -65,7 +65,7 @@ import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
 import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
-import { LibrarySenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
+import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
@@ -2257,7 +2257,7 @@ function TrainingScreenContent({
           {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col gap-3">
               <div className="min-h-0 flex-1">
-                <LibrarySenseCardV2Session
+                <TrainingMoreSenseCardV2Session
                   entryId={detailSelection.entryId}
                   initialGroup={detailInitialGroup ?? undefined}
                   headword={detailSelection.headword}

@@ -785,6 +785,7 @@ test("legacy card details open without exposing the retired Recent tab", async (
 
 test("V2 answer-card overflow opens the retained details surface", async () => {
   platformV2TrainingUiEnabled.mockReturnValue(true);
+  mockV2ProgressAction.mockClear();
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -795,11 +796,31 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
   try {
     render(<TrainingScreen user={user} />);
 
-    await screen.findByTestId("mock-training-sense-card-v2");
+    const stageBefore = await screen.findByTestId("mock-training-sense-card-v2");
+    const presentationIdentity = stageBefore.getAttribute(
+      "data-presentation-identity",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Word details" }));
 
     expect(await screen.findByTestId("library-sense-card-group")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Recent" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("library-details-actions")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /^(Close|Sluiten)$/ }),
+    );
+    const stageAfter = await screen.findByTestId("mock-training-sense-card-v2");
+    expect(stageAfter).toHaveAttribute(
+      "data-presentation-identity",
+      presentationIdentity,
+    );
+    expect(
+      within(stageAfter).getByRole("heading", { name: "huis" }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(stageAfter).getByRole("button", { name: "Mock V2 grade" }),
+    );
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
