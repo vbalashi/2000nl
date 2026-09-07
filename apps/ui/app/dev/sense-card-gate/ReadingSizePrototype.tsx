@@ -7,7 +7,7 @@ import { readingSizeStyles as styleVars } from "@/lib/reading/readingSize";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DetailedStats, TrainingMode } from "@/lib/types";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
-import { AppHeader } from "@/components/navigation/AppFrame";
+import { AppFrame } from "@/components/navigation/AppFrame";
 import { TrainingSessionChrome } from "@/components/training/v2/TrainingSessionChrome";
 import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 import type { TrainingSessionPresentationSnapshot } from "@/components/training/v2/useTrainingSessionPresentation";
@@ -169,59 +169,61 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
       data-reading-mode={modeKey}
       data-reading-translations={translationsEnabled ? "on" : "off"}
     >
-      <AppHeader
+      <AppFrame
+        className={sessionStyles.viewport}
         activeDestination="training"
         interfaceLanguage="nl"
         themePreference={theme}
         onNavigate={() => undefined}
         onCycleTheme={cycleTheme}
         onOpenSettings={() => setSettingsOpen(true)}
-      />
-      <TrainingSessionV2Layout
-        phase="ready"
-        chrome={
-          <TrainingSessionChrome
-            interfaceLanguage="nl"
-            scenario="comprehension"
-            mode={trainingMode}
-            cardFilter="both"
-            presentation={presentation}
-            sessionName="Leesritme · prototype"
-            onHistory={() => undefined}
-            onClose={() => undefined}
-          />
-        }
-        footer={
-          <FooterStats
-            stats={stats}
-            enabledModes={[trainingMode]}
-            cardFilter="both"
-            onModesChange={() => undefined}
-            onCardFilterChange={() => undefined}
-            language="nl"
-            onLanguageChange={() => undefined}
-            activeScenarioName="Begrip"
-            initialReviewDue={9}
-            inlineControlsEnabled={false}
-            compact
-            interfaceLanguage="nl"
-          />
-        }
       >
-        <div className="contents">
-          <TrainingSenseCardStage
-            model={model}
-            mode={trainingMode}
-            interfaceLanguage="nl"
-            side={side}
-            onSideChange={setSide}
-            onPlayAudio={() => undefined}
-            onOpenDetails={() => undefined}
-            reportAction={<PreviewReportAction />}
-            onAction={() => undefined}
-          />
-        </div>
-      </TrainingSessionV2Layout>
+        <TrainingSessionV2Layout
+          phase="ready"
+          chrome={
+            <TrainingSessionChrome
+              interfaceLanguage="nl"
+              scenario="comprehension"
+              mode={trainingMode}
+              cardFilter="both"
+              presentation={presentation}
+              sessionName="Leesritme · prototype"
+              onHistory={() => undefined}
+              onClose={() => undefined}
+            />
+          }
+          footer={
+            <FooterStats
+              stats={stats}
+              enabledModes={[trainingMode]}
+              cardFilter="both"
+              onModesChange={() => undefined}
+              onCardFilterChange={() => undefined}
+              language="nl"
+              onLanguageChange={() => undefined}
+              activeScenarioName="Begrip"
+              initialReviewDue={9}
+              inlineControlsEnabled={false}
+              compact
+              interfaceLanguage="nl"
+            />
+          }
+        >
+          <div className="contents">
+            <TrainingSenseCardStage
+              model={model}
+              mode={trainingMode}
+              interfaceLanguage="nl"
+              side={side}
+              onSideChange={setSide}
+              onPlayAudio={() => undefined}
+              onOpenDetails={() => undefined}
+              reportAction={<PreviewReportAction />}
+              onAction={() => undefined}
+            />
+          </div>
+        </TrainingSessionV2Layout>
+      </AppFrame>
       {persistedSettings ? null : clean ? (
         <button
           type="button"

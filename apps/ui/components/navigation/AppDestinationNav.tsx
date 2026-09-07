@@ -10,24 +10,34 @@ import type {
 
 const labels: Record<
   OnboardingLanguage,
-  Record<PrimaryNavigationDestination, string>
+  Record<AppDestination, string>
 > = {
   nl: {
     training: "Training",
     library: "Bibliotheek",
     statistics: "Statistieken",
+    settings: "Instellingen",
+    history: "Geschiedenis",
   },
-  en: { training: "Training", library: "Library", statistics: "Statistics" },
+  en: {
+    training: "Training",
+    library: "Library",
+    statistics: "Statistics",
+    settings: "Settings",
+    history: "History",
+  },
   ru: {
     training: "Тренировка",
     library: "Библиотека",
     statistics: "Статистика",
+    settings: "Настройки",
+    history: "История",
   },
 };
 
 export function appDestinationLabel(
   interfaceLanguage: OnboardingLanguage,
-  destination: PrimaryNavigationDestination,
+  destination: AppDestination,
 ) {
   return labels[interfaceLanguage][destination];
 }

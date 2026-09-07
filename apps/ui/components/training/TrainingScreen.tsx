@@ -668,6 +668,9 @@ function TrainingScreenContent({
     reviewLegacy,
     refreshAfterAccepted,
   });
+  const [platformProgressActionPending, setPlatformProgressActionPending] =
+    useState(false);
+  const navigationBlocked = actionLoading || platformProgressActionPending;
   const currentPresentationIdentity =
     currentWord && currentPresentationId
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
@@ -786,9 +789,9 @@ function TrainingScreenContent({
   }, [currentTrainingLanguage, enabledModesKey, listHydrated, loadNextWord]);
 
   useEffect(() => {
-    onNavigationBlockedChange?.(actionLoading);
+    onNavigationBlockedChange?.(navigationBlocked);
     return () => onNavigationBlockedChange?.(false);
-  }, [actionLoading, onNavigationBlockedChange]);
+  }, [navigationBlocked, onNavigationBlockedChange]);
 
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
@@ -1004,7 +1007,7 @@ function TrainingScreenContent({
 
   const openSearch = useCallback(() => {
     if (onRequestDestination) {
-      if (!actionLoading) {
+      if (!navigationBlocked) {
         onRequestDestination("library");
       }
       return;
@@ -1013,11 +1016,11 @@ function TrainingScreenContent({
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(true);
     setShowSettings(true);
-  }, [actionLoading, onRequestDestination]);
+  }, [navigationBlocked, onRequestDestination]);
 
   const openAppSettings = useCallback(() => {
     if (onRequestDestination) {
-      if (!actionLoading) {
+      if (!navigationBlocked) {
         onRequestDestination("settings");
       }
       return;
@@ -1026,7 +1029,7 @@ function TrainingScreenContent({
     setSettingsInitialViewedListScope(null);
     setSettingsAutoFocusWordSearch(false);
     setShowSettings(true);
-  }, [actionLoading, onRequestDestination]);
+  }, [navigationBlocked, onRequestDestination]);
 
   const openMembershipList = useCallback(
     (membership: EntryLearningListMembership) => {
@@ -1727,12 +1730,6 @@ function TrainingScreenContent({
     />
   );
 
-  const activePrimaryDestination =
-    destination === "library" || destination === "statistics"
-      ? destination
-      : destination === "settings"
-        ? null
-        : "training";
   const openTrainingHistory = useCallback(() => {
     onRequestDestination?.(TRAINING_HISTORY_DESTINATION);
   }, [onRequestDestination]);
@@ -1753,7 +1750,7 @@ function TrainingScreenContent({
       onHistory={onRequestDestination ? openTrainingHistory : undefined}
       historyButtonRef={historyButtonRef}
       onClose={trainingPilot.returnToToday}
-      disabled={actionLoading}
+      disabled={navigationBlocked}
     />
   ) : null;
   const trainingSessionChrome = v2SessionLayoutVisible ? sessionChrome : null;
@@ -1813,11 +1810,11 @@ function TrainingScreenContent({
   ) : null;
   return (
     <AppFrame
-      activeDestination={activePrimaryDestination}
+      activeDestination={destination}
       interfaceLanguage={onboardingLang}
       themePreference={themePreference}
       settingsActive={destination === "settings"}
-      navigationDisabled={actionLoading}
+      navigationDisabled={navigationBlocked}
       onNavigate={(nextDestination) => onRequestDestination?.(nextDestination)}
       onCycleTheme={cycleThemePreference}
       onOpenSettings={openAppSettings}
@@ -1883,6 +1880,7 @@ function TrainingScreenContent({
             onOpenDetails={handleShowCurrentWordDetails}
             onProgressActionAccepted={handleV2ProgressActionAccepted}
             onProgressActionStarting={prepareV2ProgressAction}
+            onProgressActionPendingChange={setPlatformProgressActionPending}
             onLoadFailure={(failure) => {
               reportCardLoadFailure(currentWord, failure);
             }}

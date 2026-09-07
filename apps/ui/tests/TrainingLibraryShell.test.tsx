@@ -132,6 +132,33 @@ test("pending review blocks both deliberate and history destination changes", ()
   expect(screen.getByText("destination training")).toBeInTheDocument();
 });
 
+test("a blocked browser Back is reversed without overwriting the previous entry", () => {
+  render(<TrainingLibraryShell user={user} />);
+  fireEvent.click(screen.getByRole("button", { name: "Library" }));
+  expect(screen.getByText("destination library")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Block" }));
+  const go = vi.spyOn(window.history, "go").mockImplementation(() => undefined);
+
+  act(() => {
+    window.history.replaceState(
+      { __2000nlAppPosition: 0, original: "keep-me" },
+      "",
+      "/",
+    );
+    window.dispatchEvent(
+      new PopStateEvent("popstate", {
+        state: { __2000nlAppPosition: 0, original: "keep-me" },
+      }),
+    );
+  });
+
+  expect(go).toHaveBeenCalledWith(1);
+  expect(window.history.state.original).toBe("keep-me");
+  expect(screen.getByText("destination library")).toBeInTheDocument();
+  go.mockRestore();
+});
+
 test("all destinations share the mounted Training session and browser history", () => {
   render(<TrainingLibraryShell user={user} />);
 

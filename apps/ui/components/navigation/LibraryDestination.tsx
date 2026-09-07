@@ -73,7 +73,10 @@ export function LibraryDestination({
       aria-hidden={!open}
       className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}
     >
-      <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8">
+      <div
+        data-testid="library-workspace"
+        className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8"
+      >
         <div className="mb-4 flex-none">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
             {text.eyebrow}

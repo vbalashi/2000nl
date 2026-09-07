@@ -5,16 +5,13 @@ import { Menu } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
-import type {
-  AppDestination,
-  PrimaryNavigationDestination,
-} from "./appDestination";
+import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
 export type AppHeaderProps = {
-  activeDestination: PrimaryNavigationDestination | null;
+  activeDestination: AppDestination;
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;
   settingsActive?: boolean;
@@ -50,29 +47,55 @@ function MobileMenu({
 >) {
   const [open, setOpen] = React.useState(false);
   const menuId = React.useId();
+  const controlRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const currentLabel = appDestinationLabel(
+    interfaceLanguage,
+    activeDestination,
+  );
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (controlRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [open]);
 
   const navigate = (destination: AppDestination) => {
     setOpen(false);
+    triggerRef.current?.focus();
     onNavigate(destination);
   };
 
   return (
-    <>
+    <div ref={controlRef} className={styles.mobileMenuControl}>
       <button
+        ref={triggerRef}
         type="button"
         className={styles.mobileMenuButton}
         disabled={navigationDisabled}
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={mobileLabels[interfaceLanguage].destinations}
+        aria-label={`${mobileLabels[interfaceLanguage].destinations}: ${currentLabel}`}
         onClick={() => setOpen((current) => !current)}
       >
         <Menu aria-hidden="true" className="h-4 w-4" />
         <span>
-          {activeDestination
-            ? appDestinationLabel(interfaceLanguage, activeDestination)
-            : mobileLabels[interfaceLanguage].destinations}
+          {currentLabel}
         </span>
       </button>
       {open ? (
@@ -83,18 +106,24 @@ function MobileMenu({
           aria-label={mobileLabels[interfaceLanguage].destinations}
         >
           <AppDestinationNav
-            active={activeDestination}
+            active={
+              activeDestination === "training" ||
+              activeDestination === "library" ||
+              activeDestination === "statistics"
+                ? activeDestination
+                : null
+            }
             interfaceLanguage={interfaceLanguage}
             disabled={navigationDisabled}
             onNavigate={navigate}
           />
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 
-export function AppHeader({
+function AppHeader({
   activeDestination,
   interfaceLanguage,
   themePreference,
@@ -117,7 +146,13 @@ export function AppHeader({
       />
       <div className={styles.desktopNav} data-app-primary-navigation="desktop">
         <AppDestinationNav
-          active={activeDestination}
+          active={
+            activeDestination === "training" ||
+            activeDestination === "library" ||
+            activeDestination === "statistics"
+              ? activeDestination
+              : null
+          }
           interfaceLanguage={interfaceLanguage}
           disabled={navigationDisabled}
           onNavigate={onNavigate}

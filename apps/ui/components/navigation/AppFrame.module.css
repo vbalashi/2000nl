@@ -85,6 +85,11 @@
   display: none;
 }
 
+.mobileMenuControl {
+  display: flex;
+  min-width: 0;
+}
+
 .mobileMenuButton {
   display: inline-flex;
   min-height: 36px;
