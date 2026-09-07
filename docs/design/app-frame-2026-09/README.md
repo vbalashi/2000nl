@@ -149,6 +149,8 @@ blocking of destination, History and Close controls during a delayed mutation at
 ## Representative implementation renders
 
 - [1440 × 960 · active Training · light](assets/1440-active-training-light.png)
+- [1440 × 960 · Library · light](assets/1440-library-light.png)
+- [1440 × 960 · Statistics · light](assets/1440-statistics-light.png)
 - [1440 × 960 · Library · dark](assets/1440-library-dark.png)
 - [390 × 844 · Training menu open · dark](assets/390-training-menu-dark.png)
 - [320 × 568 · Training · dark](assets/320-training-dark.png)

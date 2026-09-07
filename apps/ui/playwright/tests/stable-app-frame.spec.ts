@@ -120,6 +120,30 @@ test.describe("stable application frame", () => {
     await page.screenshot({
       path: testInfo.outputPath("desktop-active-training-light.png"),
     });
+
+    let navigation = await visibleDesktopNavigation(page);
+    await navigation.getByRole("button", { name: "Bibliotheek" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Bibliotheek" }),
+    ).toBeVisible();
+    const libraryFrame = await frameSnapshot(page);
+    expect(libraryFrame.headerBox).toEqual(sessionFrame.headerBox);
+    expect(libraryFrame.colors).toEqual(sessionFrame.colors);
+    await page.screenshot({
+      path: testInfo.outputPath("desktop-library-light.png"),
+    });
+
+    navigation = await visibleDesktopNavigation(page);
+    await navigation.getByRole("button", { name: "Statistieken" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Statistieken" }),
+    ).toBeVisible();
+    const statisticsFrame = await frameSnapshot(page);
+    expect(statisticsFrame.headerBox).toEqual(sessionFrame.headerBox);
+    expect(statisticsFrame.colors).toEqual(sessionFrame.colors);
+    await page.screenshot({
+      path: testInfo.outputPath("desktop-statistics-light.png"),
+    });
   });
 
   test("Library, Statistics and Settings return to the exact active card and side", async ({
@@ -293,8 +317,19 @@ test.describe("stable application frame", () => {
     await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
     await preparePilotPage(page);
     await startSession(page);
+    const stage = page.getByTestId("training-sense-card-stage");
+    await expect(stage).toHaveAttribute("data-side", "face");
+    await page.getByRole("button", { name: answerButton }).click();
+    await expect(stage).toHaveAttribute("data-side", "answer");
 
     await expect(page.getByTestId("app-header")).toBeVisible();
+    const brand = page.getByLabel("2000nl");
+    await expect(brand).toBeVisible();
+    expect(
+      await brand.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true);
     await expect(
       page.getByRole("button", { name: /Navigatie: Training/ }),
     ).toBeVisible();
