@@ -90,6 +90,30 @@ describe("LibrarySenseCardGroup", () => {
     ).toBeInTheDocument();
   });
 
+  test("keeps metadata, audio, and translation in one Details header row", () => {
+    render(
+      <LibrarySenseCardGroup
+        model={buildLibrarySenseCardGroupModel(gateSingleSenseGroup, "nl")}
+        interfaceLanguage="nl"
+        translationEnabled
+        onPlayAudio={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    const headerRow = screen.getByTestId("sense-card-header-row");
+    const actions = within(headerRow).getByTestId("sense-card-header-actions");
+    const audio = within(actions).getByRole("button", { name: "Afspelen" });
+    const translate = within(actions).getByRole("button", { name: "Vertalen" });
+    const headword = screen.getByRole("heading", { name: "bank" });
+
+    expect(within(headerRow).getByTestId("sense-card-metadata")).toBeVisible();
+    expect(translate).toHaveAttribute("aria-pressed", "false");
+    expect(translate.compareDocumentPosition(audio) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(headerRow.compareDocumentPosition(headword) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /meer|more/i })).not.toBeInTheDocument();
+  });
+
   test("does not create a meaning ordinal badge for a one-sense group", () => {
     const { container } = render(
       <LibrarySenseCardGroup

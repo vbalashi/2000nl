@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { gateBankGroup, gateFinanceEntry, gateFurnitureEntry } from "../../lib/platform/fixtures/senseCardV1GateFixture";
+import {
+  gateBankGroup,
+  gateFinanceEntry,
+  gateFurnitureEntry,
+  gateLongHeadwordGroup,
+} from "../../lib/platform/fixtures/senseCardV1GateFixture";
 
 const withReport = (entry: typeof gateFurnitureEntry) => ({ ...entry, reportContentRevision: "a".repeat(64) });
 const single = {
@@ -11,11 +16,46 @@ const multi = {
   entries: [withReport(gateFurnitureEntry), withReport(gateFinanceEntry)],
 };
 
-for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1440, height: 960 }]) {
-  for (const size of ["normal", "largest"] as const) {
-  test(`unified single/multi Details and reachable footer at ${viewport.width} ${size}`, async ({ page }, testInfo) => {
+const viewports = [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1440, height: 960 }];
+const readingSizes = ["normal", "largest"] as const;
+const colorSchemes = ["light", "dark"] as const;
+
+async function expectReviewedHeaderGeometry(page: import("@playwright/test").Page) {
+  const row = page.getByTestId("sense-card-header-row");
+  const metadata = row.getByTestId("sense-card-metadata");
+  const actions = row.getByTestId("sense-card-header-actions");
+  const translate = actions.getByRole("button", { name: "Vertalen", exact: true });
+  const audio = actions.getByRole("button", { name: "Afspelen", exact: true });
+  const headword = page.getByTestId("sense-card-headword-lockup").getByRole("heading", { level: 2 });
+
+  await expect(row).toHaveCount(1);
+  await expect(actions.getByRole("button")).toHaveCount(2);
+  await expect(actions.getByRole("button").nth(0)).toHaveAttribute("aria-label", "Vertalen");
+  await expect(actions.getByRole("button").nth(1)).toHaveAttribute("aria-label", "Afspelen");
+  await expect(page.getByTestId("sense-card-headword-lockup").getByRole("button", { name: /Meer|More/, exact: true })).toHaveCount(0);
+
+  const [rowBox, metadataBox, actionsBox, translateBox, audioBox, headwordBox] = await Promise.all([
+    row.boundingBox(), metadata.boundingBox(), actions.boundingBox(), translate.boundingBox(), audio.boundingBox(), headword.boundingBox(),
+  ]);
+  expect(rowBox && metadataBox && actionsBox && translateBox && audioBox && headwordBox).toBeTruthy();
+  expect(metadataBox!.x + metadataBox!.width).toBeLessThanOrEqual(actionsBox!.x + 1);
+  expect(actionsBox!.x + actionsBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
+  expect(translateBox!.width).toBe(40);
+  expect(translateBox!.height).toBe(40);
+  expect(audioBox!.width).toBe(40);
+  expect(audioBox!.height).toBe(40);
+  await expect(translate).toHaveCSS("border-radius", "16px");
+  await expect(audio).toHaveCSS("border-radius", "16px");
+  expect(translateBox!.x + translateBox!.width).toBeLessThanOrEqual(audioBox!.x);
+  expect(headwordBox!.y).toBeGreaterThanOrEqual(rowBox!.y + rowBox!.height + 11);
+}
+
+for (const viewport of viewports) {
+  for (const size of readingSizes) {
+  for (const colorScheme of colorSchemes) {
+  test(`unified single/multi Details and reachable footer at ${viewport.width} ${size} ${colorScheme}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
-    await page.emulateMedia({ colorScheme: size === "largest" ? "dark" : "light" });
+    await page.emulateMedia({ colorScheme });
     const lookups: string[] = [];
     const selectedGroup = size === "largest" ? {
       ...multi, senseCount: 20, entryCount: 20,
@@ -43,9 +83,10 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
       } });
     });
     await page.goto(`/dev/sense-card-gate?prototype=details&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
-    if (size === "largest") await page.evaluate(() => document.documentElement.classList.add("dark"));
+    if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(page.getByTestId("library-sense-card-group")).toBeVisible();
     await expect(page.getByTestId("library-sense-card-group").getByRole("heading", { level: 2 })).toHaveCSS("font-size", size === "largest" ? "48px" : "44px");
+    await expectReviewedHeaderGeometry(page);
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
     if (viewport.width < 1024) {
       const close = page.getByRole("button", { name: "Sluiten", exact: true });
@@ -105,8 +146,42 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
     await page.getByRole("button", { name: "Toggle Training Details", exact: true }).click();
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`)).toHaveAttribute("data-expanded", "true");
-    await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}-${size}.png`) });
+    await page.screenshot({ path: testInfo.outputPath(`details-${viewport.width}-${size}-${colorScheme}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  }
+  }
+}
+
+for (const viewport of viewports) {
+  for (const size of readingSizes) {
+  for (const colorScheme of colorSchemes) {
+  test(`long Word Details header stays separate at ${viewport.width} ${size} ${colorScheme}`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ colorScheme });
+    await page.route("**/api/platform/v2/lookup", async route => {
+      const request = route.request().postDataJSON();
+      await route.fulfill({ json: {
+        contractVersion: "platform-lookup-v2", query: gateLongHeadwordGroup.header.text,
+        request: { ...request, contentLanguageCode: "nl", translationTargetLanguageCode: null },
+        groups: [gateLongHeadwordGroup],
+        page: { selectedTierComplete: true, nextGroupCursor: null },
+      } });
+    });
+    await page.goto(`/dev/sense-card-gate?prototype=details&fixture=long&size=${size}${viewport.width < 1024 ? "&wrapper=drawer" : ""}`);
+    if (colorScheme === "dark") await page.evaluate(() => document.documentElement.classList.add("dark"));
+    const headword = page.getByRole("heading", { name: gateLongHeadwordGroup.header.displayPronunciation! });
+    await expect(headword).toBeVisible();
+    await expect(headword).toHaveCSS(
+      "font-size",
+      viewport.width >= 640
+        ? size === "largest" ? "44px" : "40px"
+        : size === "largest" ? "36px" : "32px",
+    );
+    await expectReviewedHeaderGeometry(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`details-long-${viewport.width}-${size}-${colorScheme}.png`) });
+  });
+  }
   }
 }

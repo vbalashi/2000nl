@@ -20,6 +20,14 @@ overlap content or controls at 320, 390, or 1440 CSS px.
 Typography comes from the common reading-size variables, not a second Details
 font scale. See [reading preferences](reading-size-preferences.md).
 
+The shared card header, not an outer drawer shell, owns the visible word
+actions. Metadata is on the left; Translate then Audio form one 40 px action
+row on the right; article/headword is a separate row 12 px below it. There is
+no inline audio branch and no More action inside an already-open Details view.
+This same composition is used by desktop Library, mobile Library and Training
+More. Exact geometry and coverage are recorded in
+[`docs/design/word-details-header-2026-09/README.md`](../../design/word-details-header-2026-09/README.md).
+
 Both mobile drawers use `WordDetailsHeader`: a separate 52 px row with a 40 px
 close control, never an overlay on the card's translation control. The reading
 region scrolls independently. Each edge fade is at most 44 px and at most 25%
