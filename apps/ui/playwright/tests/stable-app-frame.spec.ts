@@ -67,7 +67,7 @@ async function frameSnapshot(page: Page) {
   };
 }
 
-test.describe("stable application frame", () => {
+test.describe("stable application frame @pilot", () => {
   test("active Training keeps the desktop app header and primary navigation", async ({
     page,
   }, testInfo) => {

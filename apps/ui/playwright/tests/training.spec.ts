@@ -552,15 +552,21 @@ async function setupAuthenticatedTrainingPage(page: Page) {
 }
 
 async function continuePreparedTrainingSession(page: Page) {
-  await page
-    .getByRole("button", {
-      name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
-    })
-    .click();
-  await expect(page.getByRole("heading", { name: /huis/i })).toBeVisible();
+  const continueButton = page.getByRole("button", {
+    name: /Continue session|Sessie doorgaan|Продолжить сессию/i,
+  });
+  const cardHeading = page.getByRole("heading", { name: /huis/i });
+  await expect
+    .poll(
+      async () =>
+        (await continueButton.isVisible()) || (await cardHeading.isVisible()),
+    )
+    .toBe(true);
+  if (await continueButton.isVisible()) await continueButton.click();
+  await expect(cardHeading).toBeVisible();
 }
 
-test("training flow preserves the answer while word details open", async ({
+test("training flow preserves the answer while word details open @pilot", async ({
   page,
 }) => {
   const recentHistoryRequests: string[] = [];
@@ -596,7 +602,7 @@ test("training flow preserves the answer while word details open", async ({
   expect(recentHistoryRequests).toEqual([]);
 });
 
-test("the Library dictionary search surface renders", async ({ page }) => {
+test("the Library dictionary search surface renders @pilot", async ({ page }) => {
   await setupAuthenticatedTrainingPage(page);
   await continuePreparedTrainingSession(page);
 
@@ -620,7 +626,7 @@ test("the Library dictionary search surface renders", async ({ page }) => {
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
 });
 
-test("the Library dictionary search surface renders on mobile", async ({
+test("the Library dictionary search surface renders on mobile @pilot", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
