@@ -3,20 +3,36 @@
 import React from "react";
 import { LibraryWordDetail } from "@/components/training/library-v2/LibraryWordDetail";
 import { TrainingMoreSenseCardV2Session } from "@/components/training/library-v2/LibrarySenseCardV2Session";
-import { gateFinanceEntry, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import {
+  gateFinanceEntry,
+  gateFurnitureEntry,
+  gateLongHeadwordGroup,
+} from "@/lib/platform/fixtures/senseCardV1GateFixture";
 import { readingSizeStyles, type ReadingSize } from "@/lib/reading/readingSize";
 import { TrainingDetailsDrawer } from "@/components/training/TrainingDetailsDrawer";
 import { WordDetailDrawer } from "@/components/training/wordlist/WordDetailDrawer";
 
 // Real Details modules; browser tests replace only lookup HTTP responses and
 // record copy requests without mutating a dictionary or learning state.
-export function UnifiedDetailsGate({ size = "normal", drawer = false }: { size?: ReadingSize; drawer?: boolean }) {
+export function UnifiedDetailsGate({
+  size = "normal",
+  drawer = false,
+  fixture = "bank",
+}: {
+  size?: ReadingSize;
+  drawer?: boolean;
+  fixture?: "bank" | "long";
+}) {
+  const longFixture = fixture === "long";
   const [entryId, setEntryId] = React.useState(gateFurnitureEntry.entryId);
   const [training, setTraining] = React.useState(false);
   const [copied, setCopied] = React.useState("");
   const props = {
     entryId,
-    headword: "bank",
+    headword: longFixture
+      ? gateLongHeadwordGroup.header.displayPronunciation ??
+        gateLongHeadwordGroup.header.text
+      : "bank",
     contentLanguageCode: "nl",
     translationTargetLanguageCode: "en",
     interfaceLanguage: "nl" as const,
@@ -39,7 +55,7 @@ export function UnifiedDetailsGate({ size = "normal", drawer = false }: { size?:
             />
           </TrainingDetailsDrawer>
         ) : drawer ? (
-          <WordDetailDrawer selection={{ entryId, headword: "bank" }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" onCopyToUserDictionary={props.onCopyToUserDictionary} />
+          <WordDetailDrawer selection={{ entryId, headword: props.headword }} open onClose={() => setTraining(false)} userId="" userLists={[]} contentLanguageCode="nl" translationLang="en" interfaceLanguage="nl" onCopyToUserDictionary={props.onCopyToUserDictionary} />
         ) : <LibraryWordDetail {...props} />}
       </div>
       <output data-testid="copied-entry" className="shrink-0 text-xs">{copied}</output>

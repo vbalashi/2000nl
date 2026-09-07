@@ -20,6 +20,14 @@ overlap content or controls at 320, 390, or 1440 CSS px.
 Typography comes from the common reading-size variables, not a second Details
 font scale. See [reading preferences](reading-size-preferences.md).
 
+The shared card header, not an outer drawer shell, owns the visible word
+actions. Metadata is on the left; Translate then Audio form one 40 px action
+row on the right; article/headword is a separate row 12 px below it. There is
+no inline audio branch and no More action inside an already-open Details view.
+This same composition is used by desktop Library, mobile Library and Training
+More. Exact geometry and coverage are recorded in
+[`docs/design/word-details-header-2026-09/README.md`](../../design/word-details-header-2026-09/README.md).
+
 Both mobile drawers use `WordDetailsHeader`: a separate 52 px row with a 40 px
 close control, never an overlay on the card's translation control. The reading
 region scrolls independently. Each edge fade is at most 44 px and at most 25%
@@ -62,8 +70,10 @@ fallback. Current Details requires the pilot server controls; see the
 - Browser tests mount the real Details modules, including both mobile drawers,
   and replace only external lookup responses. They verify single/multi routing,
   selection, footer reachability, close/translation separation, and short-screen
-  fade geometry at 320×568, 390×844, and 1440×960 in Normal/light and
-  Largest/dark. This is not a claim of real production dictionary-data QA.
+  fade geometry at 320×568, 390×844, and 1440×960. Normal, Large, and Largest
+  are each checked independently in light and dark themes. The same header
+  geometry is asserted in Library Details and after opening Training More.
+  This is not a claim of real production dictionary-data QA.
 - Forms, sources, and shared notes require article identity/data work in #70;
   they must not be invented by grouping matching headword spellings.
 - App-shell consistency remains #264; all remaining legacy owners remain #255.

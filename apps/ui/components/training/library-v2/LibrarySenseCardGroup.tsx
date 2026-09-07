@@ -9,6 +9,7 @@ import {
   ExposureBadge,
   IdiomIcon,
   NewExposureBadge,
+  SenseCardHeaderAction,
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
@@ -235,37 +236,36 @@ export function LibrarySenseCardGroup({
           partOfSpeech={model.partOfSpeech}
           coreVocabularyLabel={model.coreVocabularyLabel}
           tone="light"
-          inlineAction={
-            onPlayAudio && model.audioCapability ? (
-              <button
-                type="button"
-                disabled={audioBusy}
-                aria-label={platformV2Message(
-                  interfaceLanguage,
-                  "senseCard.audio.play",
-                )}
-                onClick={onPlayAudio}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-              >
-                <AudioIcon />
-              </button>
-            ) : null
-          }
-          topActions={
-            translationEnabled ? (
-              <button
-                type="button"
-                aria-label={platformV2Message(
-                  interfaceLanguage,
-                  "senseCard.translation.request",
-                )}
-                aria-pressed={translationsVisible}
-                onClick={toggleGroupTranslation}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-300 text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
-              >
-                <TranslateIcon />
-              </button>
-            ) : null
+          headerActions={
+            translationEnabled || (onPlayAudio && model.audioCapability) ? (
+              <>
+                {translationEnabled ? (
+                  <SenseCardHeaderAction
+                    label={platformV2Message(
+                      interfaceLanguage,
+                      "senseCard.translation.request",
+                    )}
+                    accent
+                    pressed={translationsVisible}
+                    onClick={toggleGroupTranslation}
+                  >
+                    <TranslateIcon />
+                  </SenseCardHeaderAction>
+                ) : null}
+                {onPlayAudio && model.audioCapability ? (
+                  <SenseCardHeaderAction
+                    label={platformV2Message(
+                      interfaceLanguage,
+                      "senseCard.audio.play",
+                    )}
+                    disabled={audioBusy}
+                    onClick={onPlayAudio}
+                  >
+                    <AudioIcon />
+                  </SenseCardHeaderAction>
+                ) : null}
+              </>
+            ) : undefined
           }
         />
       </header>

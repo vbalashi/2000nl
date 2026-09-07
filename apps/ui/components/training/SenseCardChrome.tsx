@@ -14,8 +14,7 @@ export function SenseCardHeadwordLockup({
   partOfSpeech,
   coreVocabularyLabel,
   tone,
-  inlineAction,
-  topActions,
+  headerActions,
   showMetadata = true,
   variant = "default",
 }: {
@@ -24,8 +23,7 @@ export function SenseCardHeadwordLockup({
   partOfSpeech?: string | null;
   coreVocabularyLabel?: string | null;
   tone: Tone;
-  inlineAction?: React.ReactNode;
-  topActions?: React.ReactNode;
+  headerActions?: React.ReactNode;
   showMetadata?: boolean;
   variant?: "default" | "training-face" | "training-answer";
 }) {
@@ -41,48 +39,60 @@ export function SenseCardHeadwordLockup({
     tone === "dark" ? "text-slate-50" : "text-slate-900 dark:text-slate-100";
   const mutedText =
     tone === "dark" ? "text-slate-400" : "text-slate-500 dark:text-slate-400";
+  const metadataVisible =
+    showMetadata && Boolean(partOfSpeech || coreVocabularyLabel);
 
   return (
     <div className="relative min-w-0" data-testid="sense-card-headword-lockup">
-      {topActions ? (
-        <div className="absolute right-0 top-0 flex shrink-0 items-center gap-2">
-          {topActions}
-        </div>
-      ) : null}
-      {showMetadata && (partOfSpeech || coreVocabularyLabel) ? (
+      {metadataVisible || headerActions ? (
         <div
-          className={`mb-2 flex min-h-5 flex-wrap items-center gap-2 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText} ${
-            topActions ? "pr-[clamp(5.5rem,24cqw,8rem)]" : ""
-          }`}
-          data-testid="sense-card-metadata"
+          className="flex min-h-10 min-w-0 items-start justify-between gap-3"
+          data-testid="sense-card-header-row"
         >
-          {partOfSpeech ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {partOfSpeech}
-            </span>
-          ) : null}
-          {coreVocabularyLabel ? (
-            <span
-              className={`rounded-md px-2 py-0.5 font-semibold ${
-                tone === "dark"
-                  ? "bg-indigo-400/10 text-indigo-200"
-                  : "bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200"
-              }`}
+          {metadataVisible ? (
+            <div
+              className={`flex min-h-5 min-w-0 flex-wrap items-center gap-2 pt-0.5 text-[clamp(0.68rem,2.9cqw,0.78rem)] ${mutedText}`}
+              data-testid="sense-card-metadata"
             >
-              {coreVocabularyLabel}
-            </span>
+              {partOfSpeech ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {partOfSpeech}
+                </span>
+              ) : null}
+              {coreVocabularyLabel ? (
+                <span
+                  className={`rounded-md px-2 py-0.5 font-semibold ${
+                    tone === "dark"
+                      ? "bg-indigo-400/10 text-indigo-200"
+                      : "bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-200"
+                  }`}
+                >
+                  {coreVocabularyLabel}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <span />
+          )}
+          {headerActions ? (
+            <div
+              className="flex shrink-0 items-center gap-2"
+              data-testid="sense-card-header-actions"
+            >
+              {headerActions}
+            </div>
           ) : null}
         </div>
       ) : null}
 
-      <div className="flex min-w-0 items-start">
+      <div
+        className={`flex min-w-0 items-start ${
+          metadataVisible || headerActions ? "mt-3" : ""
+        }`}
+      >
         <div className="min-w-0 flex-1">
-          <div
-            className={`flex min-w-0 items-center font-sense-serif ${
-              topActions ? "pr-12" : ""
-            }`}
-          >
+          <div className="flex min-w-0 items-center font-sense-serif">
             <div
               className={`flex min-w-0 items-baseline ${training ? `${trainingWordSize} gap-[0.22rem]` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
@@ -113,15 +123,43 @@ export function SenseCardHeadwordLockup({
                 <HeadwordWithPronunciationBreaks text={headword} />
               </h2>
             </div>
-            {inlineAction ? (
-              <span className="ml-4 shrink-0">
-                {inlineAction}
-              </span>
-            ) : null}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export function SenseCardHeaderAction({
+  label,
+  accent = false,
+  pressed,
+  disabled = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  accent?: boolean;
+  pressed?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50 ${
+        accent
+          ? "border-indigo-300 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-400/10"
+          : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

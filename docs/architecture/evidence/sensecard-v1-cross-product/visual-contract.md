@@ -30,9 +30,11 @@ is the nearest light reference.
 
 ## Shared component rules
 
-- `SenseCardHeadwordLockup`: metadata above; article and headword share one
-  baseline; audio is optically centered beside the headword; Full and Narrow
-  share one viewport-responsive type scale.
+- `SenseCardHeadwordLockup`: metadata and available group actions occupy one
+  header row; article and headword share one baseline in a separate row below.
+  Word Details puts Translate then Audio in the header action group and has no
+  inline-action slot or recursive More action. Full and Narrow share one
+  viewport-responsive type scale.
 - `SenseSectionHeader`: one quiet divider; list marker for examples, braces for
   usage, quotation mark for idioms.
 - Expanded content uses the stable section order: usage pattern, examples,
@@ -91,3 +93,25 @@ but must not select a second set of typography or spacing values.
 
 Any later change must update this matrix or explicitly supersede the relevant
 Pen revision before implementation.
+
+### Word Details header geometry
+
+Issue #271 supersedes the split action placement visible in approved component
+`10.32.01`: Audio no longer sits beside the headword while Translate occupies
+the metadata row. The shared Details header uses these values in both Library
+and Training More:
+
+- header padding: 16 px top, 16 px horizontal and 20 px bottom below 640 px;
+  horizontal padding becomes 28 px from 640 px;
+- metadata and actions share one row with a 12 px minimum horizontal gap;
+- actions are ordered Translate, Audio; each target is 40 × 40 px with a 16 px
+  radius and 20 × 20 px icon; the gap between actions is 8 px;
+- article/headword begins 12 px after the bottom of the complete header row;
+  if localized metadata wraps, the row grows instead of overlapping the word;
+- Normal/Large/Largest headword sizes remain 44/46/48 px; long-headword sizes
+  remain 32/34/36 px below 640 px and 40/42/44 px from 640 px;
+- the action row does not change between short/long content, light/dark theme,
+  or the Library and Training More entry points.
+
+The measured matrix and screenshots live in
+[`docs/design/word-details-header-2026-09/README.md`](../../../design/word-details-header-2026-09/README.md).
