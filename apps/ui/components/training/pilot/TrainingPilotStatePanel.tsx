@@ -138,7 +138,7 @@ export function TrainingPilotStatePanel(props: Props) {
         : undefined;
 
   return (
-    <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
+    <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <section
         role={props.status === "error" ? "alert" : "status"}
         data-context={props.context}
@@ -183,6 +183,6 @@ export function TrainingPilotStatePanel(props: Props) {
           </button>
         ) : null}
       </section>
-    </main>
+    </div>
   );
 }

@@ -681,6 +681,7 @@ describe("TrainingSenseCardV2Session", () => {
   test("uses the exact server capability, then asks the session owner to advance", async () => {
     const onProgressActionAccepted = vi.fn();
     const onProgressActionStarting = vi.fn();
+    const onProgressActionPendingChange = vi.fn();
 
     render(
       <TestTrainingSenseCardV2Session
@@ -690,6 +691,7 @@ describe("TrainingSenseCardV2Session", () => {
         translationTargetLanguageCode="en"
         interfaceLanguage="nl"
         onProgressActionStarting={onProgressActionStarting}
+        onProgressActionPendingChange={onProgressActionPendingChange}
         onProgressActionAccepted={onProgressActionAccepted}
       />,
     );
@@ -723,6 +725,8 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionStarting.mock.invocationCallOrder[0]).toBeLessThan(
       performAction.mock.invocationCallOrder[0]!,
     );
+    expect(onProgressActionPendingChange).toHaveBeenNthCalledWith(1, true);
+    expect(onProgressActionPendingChange).toHaveBeenLastCalledWith(false);
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
   });
 

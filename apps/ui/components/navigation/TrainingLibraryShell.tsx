@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { TrainingScreen } from "@/components/training/TrainingScreen";
 import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
@@ -13,123 +13,143 @@ import {
 
 export type { AppDestination } from "./appDestination";
 
-const navigationShellEnabled =
-  process.env.NEXT_PUBLIC_NAVIGATION_SHELL_V1 === "true";
-const settingsStatisticsDestinationsEnabled =
-  process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1 === "true";
-
-const destinationFromLocation = (
-  extendedDestinationsEnabled: boolean,
-): AppDestination => {
+const destinationFromLocation = (): AppDestination => {
   if (typeof window === "undefined") return "training";
   return parseAppDestination(
     new URL(window.location.href).searchParams.get("destination"),
-    extendedDestinationsEnabled,
   );
 };
+
+const HISTORY_POSITION_KEY = "__2000nlAppPosition";
+
+function historyPosition(state: unknown): number | null {
+  if (!state || typeof state !== "object") return null;
+  const value = (state as Record<string, unknown>)[HISTORY_POSITION_KEY];
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function stateAtPosition(position: number) {
+  const existing =
+    window.history.state && typeof window.history.state === "object"
+      ? window.history.state
+      : {};
+  return { ...existing, [HISTORY_POSITION_KEY]: position };
+}
 
 type Props = {
   user: User;
   startupSnapshot: TrainingStartupSnapshot;
-  enabled?: boolean;
-  extendedDestinationsEnabled?: boolean;
 };
 
-export function TrainingLibraryShell({
-  user,
-  startupSnapshot,
-  enabled = navigationShellEnabled,
-  extendedDestinationsEnabled = settingsStatisticsDestinationsEnabled,
-}: Props) {
-  const [destination, setDestination] = useState<AppDestination>(() =>
-    enabled ? destinationFromLocation(extendedDestinationsEnabled) : "training",
+export function TrainingLibraryShell({ user, startupSnapshot }: Props) {
+  const [destination, setDestination] = useState<AppDestination>(
+    destinationFromLocation,
   );
   const [navigationBlocked, setNavigationBlocked] = useState(false);
+  const historyPositionRef = useRef(0);
+  const currentUrlRef = useRef(
+    typeof window === "undefined" ? "" : window.location.href,
+  );
 
   const requestDestination = useCallback(
     (nextDestination: AppDestination) => {
       if (navigationBlocked || nextDestination === destination) return;
-      if (
-        !extendedDestinationsEnabled &&
-        (nextDestination === "statistics" || nextDestination === "settings")
-      ) {
-        return;
-      }
+      const nextPosition = historyPositionRef.current + 1;
+      const nextUrl = appDestinationUrl(window.location.href, nextDestination);
       window.history.pushState(
-        {},
+        stateAtPosition(nextPosition),
         "",
-        appDestinationUrl(window.location.href, nextDestination),
+        nextUrl,
       );
+      historyPositionRef.current = nextPosition;
+      currentUrlRef.current = nextUrl;
       setDestination(nextDestination);
     },
-    [destination, extendedDestinationsEnabled, navigationBlocked],
+    [destination, navigationBlocked],
   );
 
   const returnFromHistory = useCallback(() => {
     if (destination !== TRAINING_HISTORY_DESTINATION) return;
+    const nextUrl = appDestinationUrl(window.location.href, "training");
     window.history.replaceState(
-      {},
+      stateAtPosition(historyPositionRef.current),
       "",
-      appDestinationUrl(window.location.href, "training"),
+      nextUrl,
     );
+    currentUrlRef.current = nextUrl;
     setDestination("training");
   }, [destination]);
 
   useEffect(() => {
-    if (!enabled) return;
+    const existingPosition = historyPosition(window.history.state);
+    if (existingPosition === null) {
+      window.history.replaceState(
+        stateAtPosition(0),
+        "",
+        window.location.href,
+      );
+      historyPositionRef.current = 0;
+    } else {
+      historyPositionRef.current = existingPosition;
+    }
+
     const rawDestination = new URL(window.location.href).searchParams.get(
       "destination",
     );
-    const normalized = parseAppDestination(
-      rawDestination,
-      extendedDestinationsEnabled,
-    );
+    const normalized = parseAppDestination(rawDestination);
     if (rawDestination && normalized === "training") {
+      const nextUrl = appDestinationUrl(window.location.href, "training");
       window.history.replaceState(
-        {},
+        stateAtPosition(historyPositionRef.current),
         "",
-        appDestinationUrl(window.location.href, "training"),
+        nextUrl,
       );
+      currentUrlRef.current = nextUrl;
+    } else {
+      currentUrlRef.current = window.location.href;
     }
-  }, [enabled, extendedDestinationsEnabled]);
+  }, []);
 
   useEffect(() => {
-    if (!enabled) return;
-
-    const handlePopState = () => {
-      const nextDestination = destinationFromLocation(
-        extendedDestinationsEnabled,
-      );
-      if (navigationBlocked && nextDestination !== destination) {
-        window.history.replaceState(
-          {},
-          "",
-          appDestinationUrl(window.location.href, destination),
-        );
+    const handlePopState = (event: PopStateEvent) => {
+      const nextDestination = destinationFromLocation();
+      const nextPosition = historyPosition(event.state);
+      const movedAwayFromCurrentEntry =
+        nextPosition === null ||
+        nextPosition !== historyPositionRef.current ||
+        nextDestination !== destination;
+      if (navigationBlocked && movedAwayFromCurrentEntry) {
+        if (
+          nextPosition !== null &&
+          nextPosition !== historyPositionRef.current
+        ) {
+          window.history.go(historyPositionRef.current - nextPosition);
+        } else {
+          // Unknown entries (for example a link created outside this shell) are
+          // left intact. Add the current destination back on top instead of
+          // overwriting the entry the user may want to return to later.
+          window.history.pushState(
+            stateAtPosition(historyPositionRef.current),
+            "",
+            currentUrlRef.current,
+          );
+        }
         return;
       }
+      if (nextPosition !== null) historyPositionRef.current = nextPosition;
+      currentUrlRef.current = window.location.href;
       setDestination(nextDestination);
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [destination, enabled, extendedDestinationsEnabled, navigationBlocked]);
-
-  if (!enabled) {
-    return (
-      <TrainingScreen
-        user={user}
-        startupSnapshot={startupSnapshot}
-      />
-    );
-  }
+  }, [destination, navigationBlocked]);
 
   return (
     <TrainingScreen
       user={user}
       startupSnapshot={startupSnapshot}
       destination={destination}
-      extendedDestinationsEnabled={extendedDestinationsEnabled}
       onRequestDestination={requestDestination}
       onReturnFromHistory={returnFromHistory}
       onNavigationBlockedChange={setNavigationBlocked}

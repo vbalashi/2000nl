@@ -13,7 +13,8 @@ async function startFixture(
   // Fail closed outside deterministic transport handlers; never use a real account/DB.
   await page.route("**/*", (route) => {
     const url = new URL(route.request().url());
-    return url.origin === "http://127.0.0.1:3100" &&
+    return url.protocol === "http:" &&
+      url.hostname === "127.0.0.1" &&
       !url.pathname.startsWith("/api/")
       ? route.continue()
       : route.abort();
@@ -78,13 +79,13 @@ test("History and Settings return to the revealed card, while theme stays app-ow
   await expect(stage).toHaveAttribute("data-side", "answer");
   await expect(history).toBeFocused();
   await page
-    .getByTestId("training-session-app-header")
+    .getByTestId("app-header")
     .getByRole("button", { name: "Instellingen" })
     .click();
   await page.getByRole("button", { name: "Training", exact: true }).click();
   await expect(stage).toHaveAttribute("data-side", "answer");
   const theme = page
-    .getByTestId("training-session-app-header")
+    .getByTestId("app-header")
     .getByRole("button", { name: /Thema:/ });
   const oldLabel = await theme.getAttribute("aria-label");
   await theme.click();
@@ -100,7 +101,10 @@ test("failure remains recoverable without exposing rating controls", async ({
   await startFixture(page, "recoverable-error");
   const failure = page.getByTestId("training-v2-failure");
   await expect(failure).toBeVisible();
-  await expect(page.getByTestId("training-session-chrome")).toBeHidden();
+  await expect(page.getByTestId("training-session-chrome")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Sessie sluiten" }),
+  ).toBeVisible();
   await expect(page.getByTestId("training-sense-card-dock")).toBeHidden();
   await expect(failure.getByRole("button")).toHaveCount(2);
   await page.screenshot({
@@ -119,7 +123,7 @@ for (const viewport of viewports) {
       const stage = page.getByTestId("training-sense-card-stage");
       await expect(stage).toHaveAttribute("data-side", "face");
       await page.evaluate(() => document.fonts.ready);
-      const header = page.getByTestId("training-session-app-header");
+      const header = page.getByTestId("app-header");
       const session = page.getByTestId("training-session-chrome");
       await expect(session.getByText("TRAINING", { exact: true })).toHaveCount(
         0,

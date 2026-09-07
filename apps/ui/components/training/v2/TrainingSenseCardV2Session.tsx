@@ -80,6 +80,7 @@ type Props = {
     Extract<TrainingCardSwipeCommitOutcome, "accepted" | "stalled">
   >;
   onProgressActionStarting?: () => void;
+  onProgressActionPendingChange?: (pending: boolean) => void;
 };
 
 type TrainingV2SessionState =
@@ -112,6 +113,7 @@ export function TrainingSenseCardV2Session({
   onRetryAlternative,
   onProgressActionAccepted,
   onProgressActionStarting,
+  onProgressActionPendingChange,
 }: Props) {
   const lookupInput = React.useMemo(
     () => ({
@@ -275,6 +277,7 @@ export function TrainingSenseCardV2Session({
     setBusy(true);
     setError(null);
     let frozenRequest: PlatformActionV2Request | null = null;
+    let progressActionPending = false;
     try {
       if (capability.actionId === "request-translation") {
         await requestPlatformV2Translation(capability);
@@ -313,6 +316,8 @@ export function TrainingSenseCardV2Session({
         capability.actionId === "start-learning" ||
         capability.actionId === "review-card"
       ) {
+        progressActionPending = true;
+        onProgressActionPendingChange?.(true);
         onProgressActionStarting?.();
       }
       setNoticeTone("error");
@@ -412,6 +417,7 @@ export function TrainingSenseCardV2Session({
       }
       return "rejected";
     } finally {
+      if (progressActionPending) onProgressActionPendingChange?.(false);
       interactionBusyRef.current = false;
       setBusy(false);
     }

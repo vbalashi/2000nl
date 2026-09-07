@@ -13,18 +13,11 @@ const { TrainingHistoryDestination } = await import(
   "@/components/navigation/TrainingHistoryDestination"
 );
 
-const utilityNav = {
-  themePreference: "system" as const,
-  onCycleTheme: vi.fn(),
-  onOpenSettings: vi.fn(),
-};
-
 beforeEach(() => {
   fetchRecentTrainingHistory.mockReset();
 });
 
 test("loads recent authoritative activity only when opened and returns to Training", async () => {
-  const onNavigate = vi.fn();
   const onReturnToTraining = vi.fn();
   fetchRecentTrainingHistory.mockResolvedValueOnce({
     items: [
@@ -45,9 +38,7 @@ test("loads recent authoritative activity only when opened and returns to Traini
       open={false}
       userId="user-1"
       interfaceLanguage="nl"
-      onNavigate={onNavigate}
       onReturnToTraining={onReturnToTraining}
-      utilityNav={utilityNav}
     />,
   );
   expect(fetchRecentTrainingHistory).not.toHaveBeenCalled();
@@ -57,9 +48,7 @@ test("loads recent authoritative activity only when opened and returns to Traini
       open
       userId="user-1"
       interfaceLanguage="nl"
-      onNavigate={onNavigate}
       onReturnToTraining={onReturnToTraining}
-      utilityNav={utilityNav}
     />,
   );
 
@@ -72,7 +61,6 @@ test("loads recent authoritative activity only when opened and returns to Traini
 
   await userEvent.click(screen.getByRole("button", { name: "Terug naar training" }));
   expect(onReturnToTraining).toHaveBeenCalledOnce();
-  expect(onNavigate).not.toHaveBeenCalledWith("training");
 });
 
 test("distinguishes an empty day from a load failure and retries", async () => {
@@ -85,9 +73,7 @@ test("distinguishes an empty day from a load failure and retries", async () => {
       open
       userId="user-1"
       interfaceLanguage="en"
-      onNavigate={vi.fn()}
       onReturnToTraining={vi.fn()}
-      utilityNav={utilityNav}
     />,
   );
 
@@ -128,9 +114,7 @@ test("never renders principal A history while principal B is loading", async () 
   const props = {
     open: true,
     interfaceLanguage: "en" as const,
-    onNavigate: vi.fn(),
     onReturnToTraining: vi.fn(),
-    utilityNav,
   };
   const { rerender } = render(
     <TrainingHistoryDestination {...props} userId="principal-a" />,

@@ -52,16 +52,14 @@ describe("rollout profile compilation", () => {
 
   test("compiles every approved pilot flag from one profile", () => {
     const env = readRolloutEnv("pilot");
-    const flags = Object.entries(env).filter(([name]) =>
-      name.includes("PLATFORM_V2") ||
-      name.includes("NAVIGATION_SHELL") ||
-      name.includes("SETTINGS_STATISTICS") ||
-      name.includes("TRAINING_TODAY_SETUP"),
+    const flags = Object.entries(env).filter(
+      ([name]) =>
+        name.includes("PLATFORM_V2") || name.includes("TRAINING_TODAY_SETUP"),
     );
 
     expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
     expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
-    expect(flags).toHaveLength(6);
+    expect(flags).toHaveLength(4);
     expect(flags.every(([, value]) => value === "true")).toBe(true);
   });
 });

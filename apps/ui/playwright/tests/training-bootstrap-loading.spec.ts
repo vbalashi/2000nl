@@ -211,8 +211,9 @@ for (const profile of profiles) {
     await expect(destinationShell).toBeVisible();
     await expect(shell).toHaveCount(0);
     await expect(page.getByText("Laden…")).toHaveCount(0);
-    const destinationBox = await destinationShell.boundingBox();
-    const destinationHeaderBox = await destinationShell.locator(":scope > header").boundingBox();
+    const destinationFrame = page.locator('[data-app-frame="true"]');
+    const destinationBox = await destinationFrame.boundingBox();
+    const destinationHeaderBox = await page.getByTestId("app-header").boundingBox();
     expect(destinationBox).not.toBeNull();
     expect(destinationHeaderBox).not.toBeNull();
     expect(destinationBox!.width).toBe(shellBox!.width);

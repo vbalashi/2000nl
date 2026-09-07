@@ -1,14 +1,8 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { SettingsDestination } from "@/components/navigation/SettingsDestination";
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
-
-const utilityNav = {
-  themePreference: "system" as const,
-  onCycleTheme: vi.fn(),
-  onOpenSettings: vi.fn(),
-};
 
 test("App Settings exposes application preferences and the signed-in account", () => {
   const onThemeChange = vi.fn();
@@ -25,7 +19,6 @@ test("App Settings exposes application preferences and the signed-in account", (
       onThemeChange={onThemeChange}
       onInterfaceLanguageChange={onInterfaceLanguageChange}
       onTranslationLanguageChange={onTranslationLanguageChange}
-      onNavigate={vi.fn()}
       userEmail="learner@example.com"
       onSignOut={onSignOut}
     />,
@@ -40,19 +33,8 @@ test("App Settings exposes application preferences and the signed-in account", (
   expect(screen.queryByText(/audio quality/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/subscription/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/training setup/i)).not.toBeInTheDocument();
-  const primary = screen.getByRole("navigation", { name: "Primary" });
-  expect(
-    within(primary).queryByRole("button", { name: "Settings" }),
-  ).not.toBeInTheDocument();
-  for (const destination of ["Training", "Library", "Statistics"]) {
-    expect(
-      within(primary).getByRole("button", { name: destination }),
-    ).not.toHaveAttribute("aria-current");
-  }
-  expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
@@ -71,7 +53,7 @@ test("App Settings exposes application preferences and the signed-in account", (
 });
 
 test("Statistics uses real available counters and returns to Training", () => {
-  const onNavigate = vi.fn();
+  const onStartTraining = vi.fn();
   render(
     <StatisticsDestination
       open
@@ -87,8 +69,7 @@ test("Statistics uses real available counters and returns to Training", () => {
         totalWordsLearned: 120,
         totalWordsInList: 2000,
       }}
-      onNavigate={onNavigate}
-      utilityNav={utilityNav}
+      onStartTraining={onStartTraining}
     />,
   );
 
@@ -101,21 +82,13 @@ test("Statistics uses real available counters and returns to Training", () => {
   expect(screen.getByText("120 / 2000")).toBeInTheDocument();
   expect(screen.queryByText(/retention/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/streak/i)).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Search" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "History" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Account" })).not.toBeInTheDocument();
-  const primaryNavigations = screen.getAllByRole("navigation", {
-    name: "Primary",
-  });
-  expect(primaryNavigations).toHaveLength(2);
-  for (const navigation of primaryNavigations) {
-    expect(
-      within(navigation).getByRole("button", { name: "Statistics" }),
-    ).toHaveAttribute("aria-current", "page");
-  }
+  expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
-  expect(onNavigate).toHaveBeenCalledWith("training");
+  expect(onStartTraining).toHaveBeenCalledOnce();
 });

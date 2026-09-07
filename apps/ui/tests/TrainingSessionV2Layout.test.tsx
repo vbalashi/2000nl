@@ -35,7 +35,7 @@ describe("TrainingSessionV2Layout", () => {
   );
 
   test.each(knownFailures)(
-    "maps the known %s state to an error-only first render",
+    "maps the known %s state to a recoverable render with session controls",
     (state) => {
       expect(resolveTrainingSessionLayoutPhase(state)).toBe("failure");
       render(
@@ -48,7 +48,7 @@ describe("TrainingSessionV2Layout", () => {
         </TrainingSessionV2Layout>,
       );
 
-      expect(screen.queryByTestId("chrome")).not.toBeInTheDocument();
+      expect(screen.getByTestId("chrome")).toBeInTheDocument();
       expect(screen.queryByTestId("footer")).not.toBeInTheDocument();
       expect(screen.getByTestId("failure")).toBeInTheDocument();
     },

@@ -26,12 +26,6 @@ export function rolloutProfileDiagnostics() {
     platformV2Lookup: platformV2LookupEnabled(),
     platformV2Actions: platformV2ActionsEnabled(),
     platformV2TrainingUi: platformV2TrainingUiEnabled(),
-    navigationShellV1: envFlagEnabled(
-      process.env.NEXT_PUBLIC_NAVIGATION_SHELL_V1,
-    ),
-    settingsStatisticsDestinationsV1: envFlagEnabled(
-      process.env.NEXT_PUBLIC_SETTINGS_STATISTICS_DESTINATIONS_V1,
-    ),
     trainingTodaySetupV1: envFlagEnabled(
       process.env.NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1,
     ),

@@ -27,14 +27,13 @@ test("desktop destinations keep icons without rendering a mobile selector", () =
   ).not.toBeInTheDocument();
 });
 
-test("mobile tabs expose all peer destinations and navigate directly", () => {
+test("exposes all peer destinations in the selected interface language", () => {
   const onNavigate = vi.fn();
 
   render(
     <AppDestinationNav
       active="statistics"
       interfaceLanguage="ru"
-      variant="mobile-tabs"
       onNavigate={onNavigate}
     />,
   );
@@ -47,18 +46,4 @@ test("mobile tabs expose all peer destinations and navigate directly", () => {
     within(mobileTabs).getByRole("button", { name: "Библиотека" }),
   );
   expect(onNavigate).toHaveBeenCalledWith("library");
-});
-
-test("keeps the compact mobile bottom tabs free of destination icons", () => {
-  render(
-    <AppDestinationNav
-      active="training"
-      interfaceLanguage="en"
-      variant="mobile-tabs"
-      onNavigate={vi.fn()}
-    />,
-  );
-
-  const mobileTabs = screen.getByRole("navigation", { name: "Primary" });
-  expect(mobileTabs.querySelector("svg")).not.toBeInTheDocument();
 });

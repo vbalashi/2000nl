@@ -13,6 +13,7 @@ export default function SenseCardGatePage({
     size?: string;
     wrapper?: string;
     fixture?: string;
+    mode?: string;
   };
 }) {
   if (process.env.NODE_ENV === "production") {

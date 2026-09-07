@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { BrandLogo } from "@/components/BrandLogo";
 import {
   createDictionarySearchTabState,
   DictionarySearchTab,
@@ -13,30 +12,21 @@ import type {
   EntryLearningListMembership,
   WordListSummary,
 } from "@/lib/types";
-import {
-  AppDestinationNav,
-  MobileAppDestinationNav,
-} from "./AppDestinationNav";
-import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
-import type { AppDestination } from "./appDestination";
 
 const copy: Record<
   OnboardingLanguage,
-  { title: string; back: string; eyebrow: string }
+  { title: string; eyebrow: string }
 > = {
   nl: {
     title: "Bibliotheek",
-    back: "Terug naar Training",
     eyebrow: "Woorden, bronnen en collecties",
   },
   en: {
     title: "Library",
-    back: "Back to Training",
     eyebrow: "Words, sources and collections",
   },
   ru: {
     title: "Библиотека",
-    back: "Вернуться к тренировке",
     eyebrow: "Слова, источники и коллекции",
   },
 };
@@ -50,9 +40,6 @@ type Props = {
   lists: WordListSummary[];
   activeList: WordListSummary | null;
   onReloadLists: () => Promise<void>;
-  extendedDestinationsEnabled?: boolean;
-  onNavigate: (destination: AppDestination) => void;
-  utilityNav: Omit<AppUtilityNavProps, "interfaceLanguage">;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
   onUserDictionaryEntryCreated?: (entry: DictionaryEntry) => void;
   onTrainWord?: (wordId: string) => void;
@@ -67,9 +54,6 @@ export function LibraryDestination({
   lists,
   activeList,
   onReloadLists,
-  extendedDestinationsEnabled = false,
-  onNavigate,
-  utilityNav,
   onOpenListMembership,
   onUserDictionaryEntryCreated,
   onTrainWord,
@@ -87,31 +71,12 @@ export function LibraryDestination({
   return (
     <section
       aria-hidden={!open}
-      className={`${open ? "flex" : "hidden"} h-screen h-[100dvh] flex-col overflow-hidden bg-background-light text-slate-900 dark:bg-background-dark dark:text-slate-100`}
+      className={`${open ? "flex" : "hidden"} h-full min-h-0 flex-col overflow-hidden`}
     >
-      <header className="relative z-20 grid flex-none grid-cols-[1fr_auto_1fr] items-center border-b border-slate-200 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur md:px-6 md:py-3 dark:border-slate-800 dark:bg-slate-900/80">
-        <div className="min-w-0 justify-self-start">
-          <BrandLogo />
-        </div>
-        <div className="justify-self-center">
-          <AppDestinationNav
-            active="library"
-            interfaceLanguage={interfaceLanguage}
-            extendedDestinationsEnabled={extendedDestinationsEnabled}
-            onNavigate={onNavigate}
-          />
-        </div>
-        {open ? (
-          <AppUtilityNav
-            interfaceLanguage={interfaceLanguage}
-            {...utilityNav}
-          />
-        ) : (
-          <div />
-        )}
-      </header>
-
-      <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8">
+      <div
+        data-testid="library-workspace"
+        className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col px-4 pb-4 pt-5 sm:px-6 md:px-8"
+      >
         <div className="mb-4 flex-none">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
             {text.eyebrow}
@@ -142,12 +107,6 @@ export function LibraryDestination({
           />
         </div>
       </div>
-      <MobileAppDestinationNav
-        active="library"
-        interfaceLanguage={interfaceLanguage}
-        extendedDestinationsEnabled={extendedDestinationsEnabled}
-        onNavigate={onNavigate}
-      />
     </section>
   );
 }
