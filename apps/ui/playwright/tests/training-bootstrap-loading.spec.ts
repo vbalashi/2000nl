@@ -251,7 +251,7 @@ test("delayed list hydration and card selection are attributed to startup", asyn
       name: /Preparing training|Training voorbereiden|Подготавливаем тренировку/i,
     }),
   ).toBeVisible();
-  await expect(page.getByText("Loading training")).toHaveCount(0);
+  await expect(page.getByText(/Loading Training/i)).toHaveCount(0);
 
   await expect(
     authenticatedStatus.getByRole("heading", {

@@ -149,9 +149,7 @@ test("uses the account language without an English waiting screen on a new brows
   render(<HomePage />);
 
   expect(screen.getByTestId("training-loading-indicator")).toBeInTheDocument();
-  expect(
-    screen.getByRole("heading", { name: "Preparing training" }),
-  ).toBeInTheDocument();
+  expect(screen.queryByRole("heading")).not.toBeInTheDocument();
 
   await act(async () => {
     resolveSession({

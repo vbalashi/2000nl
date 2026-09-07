@@ -103,10 +103,11 @@ export default function HomePage() {
     const storedLanguage = getStoredOnboardingLanguage();
     const initialLanguage = storedLanguage ?? detectOnboardingLanguage();
     setInterfaceLanguage(initialLanguage);
-    // The server renders no language-specific copy. Once the browser can
-    // detect a safe local language, the waiting state becomes explanatory;
-    // authenticated account preferences still become authoritative later.
-    setInterfaceLanguageReady(true);
+    // A global browser-language guess is not account-specific. Keep this
+    // first frame language-neutral unless it is backed by a saved hint; the
+    // accessible progress label remains available until account preferences
+    // become authoritative.
+    setInterfaceLanguageReady(Boolean(storedLanguage));
     setBrowserLanguageResolved(true);
     recordTrainingTransitionTiming({
       transitionId: activeTransitionId,
