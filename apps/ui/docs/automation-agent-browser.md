@@ -7,10 +7,14 @@ the UI process points at the local Supabase stack instead of any production or
 staging values in `.env.local`.
 
 ```bash
-scripts/db-local-supabase.sh all
-scripts/ui-local-dev.sh --port 3100
+scripts/db-local-supabase.sh check
+scripts/ui-local-dev.sh --pilot --port 3100
 curl -sS 'http://localhost:3100/api/health?deep=1'
 ```
+
+Reuse populated data. A failed check requires diagnosis under
+`docs/runbooks/local-supabase-test-env.md`, not a reset. Health alone cannot
+prove migration receipts or that local dictionary content matches production.
 
 Expected health gate:
 

@@ -71,7 +71,7 @@ scripts/db-local-supabase.sh test-fsrs
 For a clean end-to-end local regression run, use:
 
 ```bash
-scripts/db-local-supabase.sh all
+scripts/db-local-supabase.sh all --confirm-reset
 ```
 
 See [docs/runbooks/local-supabase-test-env.md](../docs/runbooks/local-supabase-test-env.md) for install steps, dictionary import, reset, and staging handoff.

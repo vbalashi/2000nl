@@ -17,7 +17,35 @@ brew install colima docker docker-compose
 colima start --cpu 4 --memory 8
 ```
 
-## Fast Path
+## Reuse the existing database first
+
+For routine QA, run the read-only check before starting or replacing the UI:
+
+```bash
+scripts/db-local-supabase.sh check
+scripts/ui-local-dev.sh --pilot --port 3100
+```
+
+`check` never starts services, applies migrations, imports, or resets. It reports
+content/progress counts, verifies managed migration receipts against the current
+manifest, and runs existing platform/postflight checks with read-only sessions.
+If the stack is stopped, use `start` and repeat `check`.
+
+A matching health version alone does not prove the schema was verified. Missing
+ledger entries require the reviewed migration gate described in
+[nuc-db-contract-deploy.md](nuc-db-contract-deploy.md), pointed explicitly at the
+local database. That gate also requires its dedicated QA principal for the read
+probe. Never manually insert a contract version or receipt to make health green.
+
+If `check` fails, preserve the database and diagnose the reported condition.
+Bootstrap includes all numbered migrations (CI checks coverage), but is not a
+production snapshot and does not create verified deployment receipts. Dictionary
+JSON import restores source content, not user histories, generated entries,
+translation caches or all forms. Compare dataset provenance/counts separately;
+passing schema probes does not prove identical production content or ordering.
+Search index backfill is also separate from dictionary import.
+
+## Fresh disposable database only
 
 From the repo root:
 
@@ -49,13 +77,24 @@ The wrapper links the common DB URL names for the test process:
 - `apps/ui/tests/fsrs` resolves DB URLs in this order: `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, `DATABASE_URL`.
 - `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from env, then falls back to repo `.env.local`.
 
-Or run the whole local DB harness:
+For an intentional rebuild after preserving any needed data, run the whole
+local DB harness:
 
 ```bash
-scripts/db-local-supabase.sh all
+scripts/db-local-supabase.sh all --confirm-reset
 ```
 
-`all` resets the local Supabase database, applies bootstrap, runs probes, runs FSRS tests on the clean DB, imports dictionary data when present, and runs probes again.
+`all` resets the local Supabase database, applies bootstrap, runs probes, runs
+FSRS tests on the clean DB, imports dictionary data when present, and runs probes
+again. The default directory is imported automatically when it exists; an
+explicit directory is optional. Wait for command completion before using the
+database. Do not insert ad-hoc source rows while import is running: source rows
+must have exact coverage by the importer's source bindings.
+
+Unacknowledged `all` and `reset` stop before any service/database command.
+Local wrapper commands accept only loopback PostgreSQL URIs without connection
+overrides. Reset requires port 54322 and database `postgres`, matching the
+checked-in Supabase configuration. Do not use this wrapper for remote staging.
 
 ## Useful URLs And Env
 
@@ -74,7 +113,7 @@ For UI development, prefer the wrapper so `.env.local` production Supabase value
 do not leak into local smoke tests:
 
 ```bash
-scripts/ui-local-dev.sh --port 3100
+scripts/ui-local-dev.sh --pilot --port 3100
 ```
 
 Then open the dev-login helper on the same origin:
@@ -105,9 +144,9 @@ Expected high-level result:
 
 If the response is `"status": "warning"` and mentions a missing RPC such as
 `fetch_dictionary_entry_by_id_gated`, the UI is connected to an old or wrong
-Supabase database. Run `scripts/db-local-supabase.sh all` for local development,
-or apply the current migrations to the target project before using platform
-routes like lookup, actions, translation, or dictionary details.
+Supabase database. Preserve existing data, inspect the checkout and migration
+receipts with `check`, then plan the necessary forward migrations. Do not reset
+a populated environment to silence a missing-RPC or index warning.
 
 Manual alternative: copy the exports from `scripts/db-local-supabase.sh env` into
 your shell, including the local anon/service keys printed by `supabase status -o env`.
@@ -117,10 +156,12 @@ your shell, including the local anon/service keys printed by `supabase status -o
 To rebuild the local DB from scratch:
 
 ```bash
-scripts/db-local-supabase.sh reset
+scripts/db-local-supabase.sh reset --confirm-reset
 scripts/db-local-supabase.sh probe
 ```
 
 ## Staging
 
-After local `apply/import/probe` passes, repeat the same bootstrap/import/probe sequence against a separate Supabase staging project using that project's database URL. Keep staging project secrets out of committed files.
+Use the reviewed deployment gate for a populated staging database. Bootstrap is
+for a fresh disposable target only. Never pass a remote URL to the local wrapper.
+Keep staging project secrets out of committed files.
