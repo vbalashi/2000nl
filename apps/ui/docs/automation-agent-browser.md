@@ -8,7 +8,7 @@ staging values in `.env.local`.
 
 ```bash
 scripts/db-local-supabase.sh check
-scripts/ui-local-dev.sh --pilot --port 3100
+scripts/ui-local-dev.sh --port 3100
 curl -sS 'http://localhost:3100/api/health?deep=1'
 ```
 
@@ -40,10 +40,11 @@ For production auth injection (https://2000.dilum.io), see `docs/runbooks/produc
    ```bash
    scripts/db-local-supabase.sh start
    scripts/db-local-supabase.sh check
-   scripts/ui-local-dev.sh --pilot --port 3100
+   scripts/ui-local-dev.sh --port 3100
    ```
 
-   `start` only starts a stopped stack. Do not run bootstrap (`apply`) on a
+   `start` only starts a stopped stack. The launcher uses the current UI
+   profile automatically. Do not run bootstrap (`apply`) on a
    populated QA database. If `check` fails, follow the canonical runbook above.
 
 2. Server-side env vars exist in `apps/ui/.env.local` (gitignored):

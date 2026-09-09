@@ -107,7 +107,7 @@ describe("/api/health", () => {
     expect(body.status).toBe("ok");
     expect(body.checks).toBeUndefined();
     expect(body.rollout).toEqual({
-      profile: "legacy",
+      profile: "pilot",
       approvedPilot: false,
       flags: expect.any(Object),
     });

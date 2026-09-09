@@ -6,17 +6,14 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 
 port="${PORT:-3100}"
 host="${HOST:-0.0.0.0}"
-pilot=false
-
 usage() {
   cat <<'EOF'
-Usage: scripts/ui-local-dev.sh [--pilot] [--port PORT]
+Usage: scripts/ui-local-dev.sh [--port PORT]
 
 Start apps/ui against the local Supabase stack, overriding any production
 Supabase values from .env.local for this process only.
 
 Options:
-  --pilot          Enable the complete owner-review UI profile.
   --port PORT      UI port. Default: 3100.
 
 Environment:
@@ -28,10 +25,6 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --pilot)
-      pilot=true
-      shift
-      ;;
     --port)
       port="${2:?Missing value for --port}"
       shift 2
@@ -89,7 +82,7 @@ export QA_TEST_USER_EMAIL_ALLOWLIST="${QA_TEST_USER_EMAIL_ALLOWLIST:-$QA_TEST_US
 export NEXT_PUBLIC_SITE_URL="http://localhost:$port"
 export NEXT_DIST_DIR="${NEXT_DIST_DIR:-.next-dev}"
 
-export APP_ROLLOUT_PROFILE="$([[ "$pilot" == true ]] && printf 'pilot' || printf 'legacy')"
+export APP_ROLLOUT_PROFILE="pilot"
 
 echo "Starting UI against local Supabase:"
 echo "  UI:       http://localhost:$port"
@@ -97,7 +90,7 @@ echo "  Supabase: $NEXT_PUBLIC_SUPABASE_URL"
 echo "  Dev auth: http://localhost:$port/dev/test-login?redirectTo=/"
 echo "  Health:   http://localhost:$port/api/health?deep=1"
 echo "  Cache:    $NEXT_DIST_DIR"
-echo "  Profile:  $APP_ROLLOUT_PROFILE"
+echo "  Profile:  $APP_ROLLOUT_PROFILE (current)"
 
 cd "$repo_root/apps/ui"
 node scripts/ensure-local-qa-account.js

@@ -5,11 +5,6 @@ import {
   setupAuthenticatedTrainingAttributionPage,
 } from "../support/trainingAttributionHarness";
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run this recovery check with APP_ROLLOUT_PROFILE=pilot.",
-);
-
 test("a failed prepared card recovers after closing and continuing on desktop and mobile", async ({
   browser,
 }) => {

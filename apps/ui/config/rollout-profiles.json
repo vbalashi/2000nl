@@ -1,10 +1,4 @@
 {
-  "legacy": {
-    "PLATFORM_V2_LOOKUP_ENABLED": false,
-    "PLATFORM_V2_ACTIONS_ENABLED": false,
-    "NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI": false,
-    "NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1": false
-  },
   "pilot": {
     "PLATFORM_V2_LOOKUP_ENABLED": true,
     "PLATFORM_V2_ACTIONS_ENABLED": true,

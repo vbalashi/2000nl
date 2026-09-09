@@ -21,7 +21,7 @@ function envFlagEnabled(value: string | undefined) {
 }
 
 export function rolloutProfileDiagnostics() {
-  const profile = process.env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE ?? "legacy";
+  const profile = process.env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE ?? "pilot";
   const flags = {
     platformV2Lookup: platformV2LookupEnabled(),
     platformV2Actions: platformV2ActionsEnabled(),

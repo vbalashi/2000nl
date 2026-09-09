@@ -27,7 +27,7 @@ of plain `npm run dev`:
 ```
 cd ../..
 scripts/db-local-supabase.sh check
-scripts/ui-local-dev.sh --pilot --port 3100
+scripts/ui-local-dev.sh --port 3100
 ```
 
 Reuse the existing populated local database. If `check` fails, follow

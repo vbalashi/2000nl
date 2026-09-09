@@ -1,11 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Requires the existing pilot runtime profile.",
-);
-
 async function startFixture(
   page: Page,
   profile: "answer" | "long-idiom" | "recoverable-error" = "answer",

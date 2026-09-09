@@ -18,11 +18,6 @@ const compositions = [
   { name: "overlapped", lookupDelayMs: 300 },
 ] as const;
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run through the pilot browser harness.",
-);
-
 test("models serialized versus overlapped exact lookup composition without optimistic card advance", async ({
   browser,
 }, testInfo) => {

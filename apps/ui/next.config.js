@@ -32,7 +32,7 @@ const audioQualityDefault =
   "free";
 
 const rolloutProfileName =
-  envNonEmpty(process.env.APP_ROLLOUT_PROFILE) ?? "legacy";
+  envNonEmpty(process.env.APP_ROLLOUT_PROFILE) ?? "pilot";
 const rolloutProfile = rolloutProfiles[rolloutProfileName];
 
 if (!rolloutProfile) {
