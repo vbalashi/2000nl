@@ -334,7 +334,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 265 reading-size contract", () => {
+test("the repository contract enables the issue 278 learning-observability contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -347,7 +347,7 @@ test("the repository contract enables the issue 265 reading-size contract", () =
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 129 265");
+  assert.equal(result.stdout.trim(), "enabled 130 278");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {
