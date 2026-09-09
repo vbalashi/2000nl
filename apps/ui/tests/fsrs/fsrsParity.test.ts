@@ -99,6 +99,31 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
       expect(dbResult.difficulty!).toBeCloseTo(tsResult.difficulty!, 4);
     }
   );
+
+  const referenceVectors: Record<string, { stability: number; difficulty: number }> = {
+    "new-card-again": { stability: 0.212, difficulty: 6.4133 },
+    "new-card-hard": { stability: 1.2931, difficulty: 5.112171 },
+    "new-card-good": { stability: 2.3065, difficulty: 2.118104 },
+    "new-card-easy": { stability: 8.2956, difficulty: 1 },
+    "same-day-good-good": { stability: 2.3065, difficulty: 2.111214 },
+    "same-day-good-hard": { stability: 1.333379, difficulty: 4.752858 },
+    "same-day-good-again": { stability: 0.775084, difficulty: 7.394503 },
+    "again-good-same-day": { stability: 0.246689, difficulty: 6.402115 },
+  };
+
+  test.each(Object.entries(referenceVectors))(
+    "matches pinned fsrs-rs v4.1.1 vector for %s",
+    async (name, expected) => {
+      const history = fsrsCorpus.find((candidate) => candidate.name === name)?.history;
+      if (!history) throw new Error(`Missing corpus case: ${name}`);
+      const tsResult = runTs(history);
+      const dbResult = await runDb(history);
+      expect(tsResult.stability).toBeCloseTo(expected.stability, 5);
+      expect(dbResult.stability!).toBeCloseTo(expected.stability, 5);
+      expect(tsResult.difficulty).toBeCloseTo(expected.difficulty, 5);
+      expect(dbResult.difficulty!).toBeCloseTo(expected.difficulty, 5);
+    },
+  );
 });
 
 if (!hasDb) {

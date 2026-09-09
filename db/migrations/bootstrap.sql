@@ -387,3 +387,6 @@
 
 -- Observable Learn/enrollment and graded Training history projections
 \i db/migrations/130_learning_observability.sql
+
+-- FSRS same-day short-term stability parity with the pinned reference
+\i db/migrations/131_fsrs_same_day_short_term_parity.sql

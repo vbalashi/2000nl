@@ -17,6 +17,18 @@ export const fsrsCorpus: FsrsCorpusCase[] = [
     history: [{ grade: 3, elapsedDays: 0 }],
   },
   {
+    name: "new-card-again",
+    history: [{ grade: 1, elapsedDays: 0 }],
+  },
+  {
+    name: "new-card-hard",
+    history: [{ grade: 2, elapsedDays: 0 }],
+  },
+  {
+    name: "new-card-easy",
+    history: [{ grade: 4, elapsedDays: 0 }],
+  },
+  {
     name: "learning-good-good-easy",
     history: [
       { grade: 3, elapsedDays: 0 },
@@ -38,6 +50,34 @@ export const fsrsCorpus: FsrsCorpusCase[] = [
       { grade: 3, elapsedDays: 0 },
       { grade: 3, elapsedDays: 5 },
       { grade: 3, elapsedDays: 30 }, // overdue to exercise cap logic
+    ],
+  },
+  {
+    name: "same-day-good-good",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "same-day-good-hard",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "same-day-good-again",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 1, elapsedDays: 0 },
+    ],
+  },
+  {
+    name: "again-good-same-day",
+    history: [
+      { grade: 1, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 0 },
     ],
   },
 ];

@@ -28,9 +28,10 @@ authoritative next-card selector.
 
 Issue #265 advances it to migration 129 for additive app-local reading-size
 storage on `user_settings`. Issue #278 advances it to migration 130 for the
-observable Learn/enrollment and graded-history projections.
+observable Learn/enrollment and graded-history projections. Issue #279 advances
+it to migration 131 for the pinned FSRS same-day short-term parity correction.
 
-An enabled deployment must apply or verify migrations 123 through 130 in order
+An enabled deployment must apply or verify migrations 123 through 131 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 130,
-      coordinationIssue: 278,
+      requiredMigrationId: 131,
+      coordinationIssue: 279,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130,
+      123, 124, 125, 126, 127, 128, 129, 130, 131,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -63,6 +63,7 @@ describe("NUC database contract deployment", () => {
 
   test("postflight proves the bounded default scheduler contract", () => {
     const postflight =
+      read("db/deploy-contract/postflight-131.sql") +
       read("db/deploy-contract/postflight-130.sql") +
       read("db/deploy-contract/postflight-129.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
@@ -101,13 +102,15 @@ describe("NUC database contract deployment", () => {
       "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
     );
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-130.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-131.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {
     const probe = read(contract.preSwitchReadProbe.file);
     const probeSource =
-      probe + read("db/deploy-contract/pre-switch-read-probe-129.sql");
+      probe +
+      read("db/deploy-contract/pre-switch-read-probe-130.sql") +
+      read("db/deploy-contract/pre-switch-read-probe-129.sql");
     const runner = read("db/scripts/deploy_db_contract.mjs");
     const workflow = read(".github/workflows/deploy-nuc.yml");
     const driftWorkflow = read(".github/workflows/db-drift-check.yml");

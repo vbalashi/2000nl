@@ -29,4 +29,18 @@ describe("fsrsCompute", () => {
     const good = fsrsCompute(3, start);
     expect(hard.stability).toBeLessThan(good.stability);
   });
+
+  test("same-day good never reduces stability", () => {
+    const start = { stability: 2.3065, difficulty: 2.118104, lastReview: 0, lapses: 0, reps: 1 };
+    const result = fsrsCompute(3, start);
+    expect(result.stability).toBeCloseTo(2.3065, 6);
+    expect(result.difficulty).toBeCloseTo(2.111214, 6);
+  });
+
+  test("same-day again uses the short-term stability path", () => {
+    const start = { stability: 0.212, difficulty: 6.4133, lastReview: 0, lapses: 1, reps: 1 };
+    const result = fsrsCompute(3, start);
+    expect(result.stability).toBeCloseTo(0.246689, 6);
+    expect(result.difficulty).toBeCloseTo(6.402115, 6);
+  });
 });
