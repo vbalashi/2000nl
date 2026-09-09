@@ -7,11 +7,6 @@ import {
   type TrainingTimingEvent,
 } from "../support/trainingAttributionHarness";
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run this lease check with APP_ROLLOUT_PROFILE=pilot.",
-);
-
 const PRODUCTION_SYMPTOM_BUDGET_MS = 400;
 
 async function waitForPreparedCount(page: Page, count: number) {

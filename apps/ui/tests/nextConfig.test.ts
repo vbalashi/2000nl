@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
+import profiles from "../config/rollout-profiles.json";
 
 const uiRoot = path.resolve(__dirname, "..");
 
@@ -41,13 +42,21 @@ describe("Next build directory isolation", () => {
 });
 
 describe("rollout profile compilation", () => {
-  test("keeps ordinary builds on the legacy profile by default", () => {
+  test("registers only the current profile", () => {
+    expect(Object.keys(profiles)).toEqual(["pilot"]);
+  });
+
+  test("uses the current profile by default", () => {
     const env = readRolloutEnv();
 
-    expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("legacy");
-    expect(env.NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI).toBe("false");
+    expect(env.NEXT_PUBLIC_APP_ROLLOUT_PROFILE).toBe("pilot");
+    expect(env.NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI).toBe("true");
     expect(env.NEXT_PUBLIC_PLATFORM_V2_LIBRARY_UI).toBeUndefined();
     expect(env.NEXT_PUBLIC_DICTIONARY_SEARCH_V2).toBeUndefined();
+  });
+
+  test("rejects the retired legacy profile", () => {
+    expect(() => readRolloutEnv("legacy")).toThrow(/Unknown APP_ROLLOUT_PROFILE/);
   });
 
   test("compiles every approved pilot flag from one profile", () => {

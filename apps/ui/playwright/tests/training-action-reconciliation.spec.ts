@@ -5,11 +5,6 @@ import {
   setupAuthenticatedTrainingAttributionPage,
 } from "../support/trainingAttributionHarness";
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run this action recovery check with APP_ROLLOUT_PROFILE=pilot.",
-);
-
 test("a disconnected Learn response reconciles without repeating the mutation", async ({
   page,
 }) => {

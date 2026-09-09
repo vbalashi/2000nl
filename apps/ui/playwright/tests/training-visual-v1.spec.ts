@@ -26,11 +26,6 @@ async function advanceToApprovedPosition(page: import("@playwright/test").Page) 
   }
 }
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run through the pilot browser harness.",
-);
-
 test("captures the approved Training face and answer at the authoritative viewport", async ({
   browser,
 }) => {

@@ -23,7 +23,7 @@ For routine QA, run the read-only check before starting or replacing the UI:
 
 ```bash
 scripts/db-local-supabase.sh check
-scripts/ui-local-dev.sh --pilot --port 3100
+scripts/ui-local-dev.sh --port 3100
 ```
 
 `check` never starts services, applies migrations, imports, or resets. It reports
@@ -113,7 +113,7 @@ For UI development, prefer the wrapper so `.env.local` production Supabase value
 do not leak into local smoke tests:
 
 ```bash
-scripts/ui-local-dev.sh --pilot --port 3100
+scripts/ui-local-dev.sh --port 3100
 ```
 
 Then open the dev-login helper on the same origin:

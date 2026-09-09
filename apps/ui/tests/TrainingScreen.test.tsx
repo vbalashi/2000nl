@@ -1115,17 +1115,6 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
   }
 });
 
-test("rollout-off keeps the legacy Training card as the entry surface", async () => {
-  render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
-
-  expect(
-    await screen.findByRole("heading", { name: "huis" }),
-  ).toBeInTheDocument();
-  expect(
-    screen.queryByRole("heading", { name: /Good morning|Goedemorgen/ }),
-  ).not.toBeInTheDocument();
-});
-
 test("pilot Start persists the complete selection in one scope update", async () => {
   fetchTrainingScenarios.mockResolvedValueOnce([
     {

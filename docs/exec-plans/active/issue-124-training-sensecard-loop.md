@@ -26,23 +26,23 @@ existing Platform V2 lookup/action routes, SenseCard renderer, Training queue,
 and review callbacks. It adds no DB, scheduler, dictionary, provenance, or
 public Platform contract.
 
-The pilot remains reversible through existing rollout flags. History and Word
-Details retain their current legacy contracts; their push/overlay behavior is
+The current profile is now the only supported runtime path. History and Word
+Details retain their current contracts; their push/overlay behavior is
 explicitly outside this slice.
 
 ## Public seams under test
 
 These seams were agreed in the owner-approved sequence for this slice:
 
-1. The owner-review `--pilot` launcher enables the complete existing Training
-   V2 route/UI profile, not only Today/Setup and Library.
+1. The local launcher enables the complete current Training V2 route/UI
+   profile, not only Today/Setup and Library.
 2. `TrainingScreen` in the pilot session renders the approved reusable
    SenseCard Face/Answer interaction and does not expose duplicate legacy
    period/source/footer session controls.
 3. An accepted review/start/known action advances through the existing queue
    owner without duplicating the mutation.
-4. Missing/unavailable V2 presentation data preserves the existing legacy
-   fallback and rollback path.
+4. Missing/unavailable V2 presentation data preserves the explicit current
+   loading/error and rollback paths.
 
 ## TDD sequence
 

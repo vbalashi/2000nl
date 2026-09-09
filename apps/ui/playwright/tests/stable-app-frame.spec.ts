@@ -1,11 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
-test.skip(
-  process.env.APP_ROLLOUT_PROFILE !== "pilot",
-  "Run the stable application-frame characterization through the pilot harness.",
-);
-
 const startButton =
   /Начать с текущими настройками|Start with current settings|Start met huidige instellingen|Huidige selectie starten/i;
 const answerButton = /Antwoord tonen|Показать ответ|Show answer/i;

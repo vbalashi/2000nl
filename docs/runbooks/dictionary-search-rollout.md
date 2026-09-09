@@ -17,11 +17,11 @@ did not represent Frozen and Don't show filters.
 
 ## Deployment and rollback
 
-The NUC deployment selects `APP_ROLLOUT_PROFILE=pilot`. The pre-#252 `legacy`
-profile remains for unrelated Training compatibility, but it is not compatible
-with the unified Details surface because its server V2 lookup/actions controls
-are disabled. Release smoke must cover desktop and mobile Library lookup plus
-filtered list browsing.
+The NUC deployment selects the only supported runtime profile,
+`APP_ROLLOUT_PROFILE=pilot`. A pre-#252 `legacy` value is retired and must fail
+before startup; remaining TrainingCard/listening migration is tracked in #142.
+Release smoke must cover desktop and mobile Library lookup plus filtered list
+browsing.
 
 Rollback of a #252 build is an application redeploy to a pre-#252 compatible
 commit; disabling the server V2 controls while serving the #252 UI would leave
