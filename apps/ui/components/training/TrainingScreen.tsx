@@ -48,6 +48,7 @@ import {
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
 import { TrainingSessionChrome } from "./v2/TrainingSessionChrome";
+import { TrainingSessionV2Layout } from "./v2/TrainingSessionV2Layout";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
@@ -1827,6 +1828,23 @@ function TrainingScreenContent({
             }}
             onExit={trainingPilot.returnToToday}
           />
+        ) : trainingShellV2Enabled && sessionChromeVisible ? (
+          <TrainingSessionV2Layout
+            phase="loading"
+            chrome={trainingSessionChrome}
+            footer={trainingSessionFooter}
+            notice={trainingSessionNotice}
+          >
+            <div
+              role="status"
+              data-testid="training-v2-loading"
+              data-training-renderer="v2"
+              data-training-v2-state="loading"
+              className="mx-auto grid h-full min-h-0 w-full max-w-[760px] flex-1 place-items-center rounded-3xl border border-slate-300 bg-slate-50 px-6 text-sm font-medium text-slate-600 dark:border-slate-600 dark:bg-[#1d222b] dark:text-slate-300"
+            >
+              {platformV2Message(onboardingLang, "senseCard.training.loading")}
+            </div>
+          </TrainingSessionV2Layout>
         ) : (
           <>
             <div
