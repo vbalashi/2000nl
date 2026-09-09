@@ -90,7 +90,16 @@ export function fsrsCompute(
   const difficulty = clamp(w7 * d0Easy + (1 - w7) * tmpD, 1, 10);
 
   let stability: number;
-  if (grade === 1) {
+  const sameSchedulerDay = (state.lastReview ?? 0) === 0;
+  if (sameSchedulerDay) {
+    const shortTermStability =
+      state.stability *
+      Math.exp(w17 * (grade - 3 + w18)) *
+      Math.pow(state.stability, -w19);
+    stability = grade >= 3
+      ? Math.max(state.stability, shortTermStability)
+      : shortTermStability;
+  } else if (grade === 1) {
     stability =
       w11 *
       Math.pow(difficulty, -w12) *

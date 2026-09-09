@@ -1,7 +1,9 @@
 # FSRS-6 parity baseline
 
-Status: characterization only. This document records the first comparison for
-issue #279; it does not change scheduling behavior.
+Status: implementation candidate in PR #282. Migration 131 aligns the
+same-scheduler-day stability update in TypeScript and SQL with the pinned
+reference vectors. The online system remains on contract 130 until review and
+rollout are complete.
 
 ## Pinned reference
 
@@ -19,20 +21,20 @@ The initial state uses the default 21 parameters already present in
 | Transition | Reference expectation | Current SQL observation | Current TypeScript behavior |
 | --- | ---: | ---: | ---: |
 | New → Good, first grade | `S=2.306500`, `D≈2.118104` | `S=2.306500`, `D=2.118104` | same initial values |
-| Good → Good, same scheduler day | `S=2.306500` (short-term result clamped not below prior `S`) | `S=2.293814`, `D=2.111214` | `S=2.306500`, `D=2.111214` because the regular path sees elapsed `0` |
+| Good → Good, same scheduler day | `S=2.306500` (short-term result clamped not below prior `S`) | `S=2.293814`, `D=2.111214` before migration 131 | `S=2.306500`, `D=2.111214` after the parity branch |
 | New → Again, first grade | `S=0.212000`, `D≈6.413300`; not a mature lapse | initial values are available through `fsrs6_compute` | initial values are available through `fsrsCompute` |
 
 The SQL observation was reproduced against the local database after migration
 130 with a first `Good`, followed immediately by a second `Good` using the same
-timestamp. The relevant SQL branch applies the same-day formula but does not
-apply the reference clamp for successful grades. The TypeScript helper does not
-have a dedicated same-day branch; it therefore does not match the reference for
-same-day `Hard` and other short-term cases even where the `Good` value happens
-to stay unchanged.
+timestamp. Migration 131 adds the same-day branch and successful-grade clamp to
+both implementations. The parity suite now covers the initial four grades,
+same-day `Good/Hard/Again`, and `Again → Good` and compares both implementations
+with the pinned reference vectors.
 
 ## What remains to be measured
 
-Before any runtime change, the parity suite must add vectors for:
+The following remain outside migration 131 and require a separate decision or
+follow-up issue:
 
 1. initial `Again`, `Hard`, `Good`, and `Easy`;
 2. same-day repeated `Again`, `Hard`, `Good`, and `Easy`;
@@ -42,7 +44,7 @@ Before any runtime change, the parity suite must add vectors for:
 6. scheduler-day rollover and time-zone/DST boundaries;
 7. short-term threshold and interval rounding around `0.5` days.
 
-The first implementation decision is intentionally deferred: either both
-implementations are brought to the pinned reference, or a documented product
-deviation is approved. No scheduler or user-history migration should be
-merged as part of the characterization step.
+Migration 131 intentionally does not change scheduler-day rollover/time-zone
+calculation, Learning Steps, or review-history storage. It also does not
+rewrite existing cards; it only makes future same-day computations use the
+same formula in SQL and TypeScript.
