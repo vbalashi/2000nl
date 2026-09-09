@@ -36,13 +36,15 @@ with the pinned reference vectors.
 The following remain outside migration 131 and require a separate decision or
 follow-up issue:
 
-1. initial `Again`, `Hard`, `Good`, and `Easy`;
-2. same-day repeated `Again`, `Hard`, `Good`, and `Easy`;
-3. `Again → Good` on the same scheduler day;
-4. an interday transition with exact integer `days_elapsed`;
-5. the `New → Again` versus `Review → Again` lapse counter distinction;
-6. scheduler-day rollover and time-zone/DST boundaries;
-7. short-term threshold and interval rounding around `0.5` days.
+1. an interday transition with exact integer `days_elapsed`;
+2. the `New → Again` versus `Review → Again` lapse counter distinction;
+3. scheduler-day rollover and time-zone/DST boundaries;
+4. short-term threshold and interval rounding around `0.5` days;
+5. the boundary between FSRS short-term scheduling and any product-level
+   Learning Steps policy.
+
+The initial `Again/Hard/Good/Easy`, same-day `Good/Hard/Again`, and
+`Again → Good` vectors are covered by migration 131's parity suite.
 
 Migration 131 intentionally does not change scheduler-day rollover/time-zone
 calculation, Learning Steps, or review-history storage. It also does not
