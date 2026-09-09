@@ -49,6 +49,32 @@ describe("recent Training history", () => {
     });
   });
 
+  test("projects an accepted Learn action as a distinct history activity", async () => {
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          entry_id: "entry-1",
+          headword: "bank",
+          part_of_speech: "zn.",
+          review_result: "learning_started",
+          card_type_id: "word-to-definition",
+          reviewed_at: "2026-08-21T11:59:00.000Z",
+          has_more: false,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchRecentTrainingHistory()).resolves.toEqual({
+      items: [
+        expect.objectContaining({
+          reviewResult: "learning_started",
+        }),
+      ],
+      hasMore: false,
+    });
+  });
+
   test("fails visibly instead of presenting a backend error as empty history", async () => {
     rpc.mockResolvedValueOnce({
       data: null,

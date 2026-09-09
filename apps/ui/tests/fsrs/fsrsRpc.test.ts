@@ -1069,6 +1069,71 @@ describeIfDb("FSRS RPC integration", () => {
     });
   });
 
+  test("counts accepted Learn and exposes it in history without creating an FSRS grade", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `learning-observable-${Date.now()}`);
+      const clientEventId = randomUUID();
+
+      const { rows: acceptedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [userId, wordId, mode, clientEventId],
+      );
+      expect(acceptedRows[0].result.status).toBe("accepted");
+      const { rows: duplicateRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [
+          userId,
+          wordId,
+          mode,
+          clientEventId,
+        ],
+      );
+      expect(duplicateRows[0].result.status).toBe("duplicate");
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated') as stats`,
+        [userId, mode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 1,
+          newCardsToday: 1,
+          learningStartedToday: 1,
+          graduatedNewWordsToday: 0,
+        }),
+      );
+
+      const { rows: historyRows } = await client.query(
+        `select * from get_recent_training_review_history(50)`,
+      );
+      expect(historyRows).toHaveLength(1);
+      expect(historyRows[0]).toEqual(
+        expect.objectContaining({
+          entry_id: wordId,
+          review_result: "learning_started",
+          card_type_id: mode,
+          has_more: false,
+        }),
+      );
+
+      const { rows: reviewRows } = await client.query(
+        `select count(*)::int as count
+           from user_review_log
+          where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(reviewRows[0].count).toBe(0);
+    }, userId);
+  });
+
   test("get_card_user_state returns one accessible card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

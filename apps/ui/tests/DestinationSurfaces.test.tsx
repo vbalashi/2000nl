@@ -61,6 +61,8 @@ test("Statistics uses real available counters and returns to Training", () => {
       stats={{
         newWordsToday: 4,
         newCardsToday: 5,
+        learningStartedToday: 4,
+        graduatedNewWordsToday: 0,
         dailyNewLimit: 10,
         reviewWordsDone: 6,
         reviewCardsDone: 7,

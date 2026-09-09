@@ -32,6 +32,8 @@ export async function fetchStats(
     return {
       newWordsToday: 0,
       newCardsToday: 0,
+      learningStartedToday: 0,
+      graduatedNewWordsToday: 0,
       dailyNewLimit: 10,
       reviewWordsDone: 0,
       reviewCardsDone: 0,
@@ -45,6 +47,8 @@ export async function fetchStats(
   const stats = {
     newWordsToday: data.newWordsToday ?? 0,
     newCardsToday: data.newCardsToday ?? 0,
+    learningStartedToday: data.learningStartedToday ?? 0,
+    graduatedNewWordsToday: data.graduatedNewWordsToday ?? 0,
     dailyNewLimit: data.dailyNewLimit ?? 10,
     reviewWordsDone: data.reviewWordsDone ?? 0,
     reviewCardsDone: data.reviewCardsDone ?? 0,

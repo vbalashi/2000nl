@@ -349,6 +349,8 @@ function TrainingScreenContent({
   const [stats, setStats] = useState<DetailedStats>({
     newWordsToday: 0,
     newCardsToday: 0,
+    learningStartedToday: 0,
+    graduatedNewWordsToday: 0,
     dailyNewLimit: 10,
     reviewWordsDone: 0,
     reviewCardsDone: 0,

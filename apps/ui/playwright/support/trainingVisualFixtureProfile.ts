@@ -103,6 +103,8 @@ export function buildTrainingVisualFixtureBundle(
     stats: Object.freeze({
       newWordsToday: 0,
       newCardsToday: 0,
+      learningStartedToday: 0,
+      graduatedNewWordsToday: 0,
       dailyNewLimit: 10,
       reviewWordsDone: 6,
       reviewCardsDone: 6,
