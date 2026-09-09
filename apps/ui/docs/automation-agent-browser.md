@@ -39,10 +39,12 @@ For production auth injection (https://2000.dilum.io), see `docs/runbooks/produc
 1. Local dev server is running through the wrapper:
    ```bash
    scripts/db-local-supabase.sh start
-   scripts/db-local-supabase.sh apply
-   scripts/db-local-supabase.sh probe
-   scripts/ui-local-dev.sh --port 3100
+   scripts/db-local-supabase.sh check
+   scripts/ui-local-dev.sh --pilot --port 3100
    ```
+
+   `start` only starts a stopped stack. Do not run bootstrap (`apply`) on a
+   populated QA database. If `check` fails, follow the canonical runbook above.
 
 2. Server-side env vars exist in `apps/ui/.env.local` (gitignored):
    - `NEXT_PUBLIC_SUPABASE_URL`
