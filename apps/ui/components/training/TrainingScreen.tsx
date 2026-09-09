@@ -27,6 +27,7 @@ import type {
   TrainingFocusFilter,
   TrainingFilterSource,
   TrainingMode,
+  TrainingSessionSize,
   TrainingWord,
   WordListSummary,
   WordListType,
@@ -72,6 +73,7 @@ import { ReadingPreferencesProvider } from "@/components/reading/ReadingPreferen
 import { StatisticsDestination } from "@/components/navigation/StatisticsDestination";
 import {
   TrainingTodaySetup,
+  DEFAULT_SESSION_SIZE,
   type TrainingSetupDraft,
 } from "./pilot/TrainingTodaySetup";
 import {
@@ -253,6 +255,12 @@ function TrainingScreenContent({
   const [hintRevealed, setHintRevealed] = useState(false);
   const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
+  const [sessionSize, setSessionSize] = useState<TrainingSessionSize>(
+    DEFAULT_SESSION_SIZE,
+  );
+  const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
+    null,
+  );
   const {
     activeScenario,
     audioQuality,
@@ -572,6 +580,7 @@ function TrainingScreenContent({
     wordListType,
     cardFilter,
     focusFilter: trainingFocusFilter,
+    allowPractice: !trainingTodaySetupEnabled,
     resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
   const reviewLegacy = useLegacyTrainingReviewPort({
@@ -595,6 +604,7 @@ function TrainingScreenContent({
     trainingFocusFilterKey,
     wordListId ?? "",
     wordListType ?? "",
+    String(sessionSize),
   ].join("|");
   const {
     loadingWord,
@@ -632,6 +642,7 @@ function TrainingScreenContent({
     firstEncounter,
     trainingShellV2Enabled,
     recoverLoadErrors: trainingTodaySetupEnabled,
+    sessionPlannedTotal,
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
     selection: selectionPort,
@@ -1308,12 +1319,14 @@ function TrainingScreenContent({
       setEnabledModes(draft.modes, { persist: false });
       setCardFilterPreference(draft.cardFilter, { persist: false });
       setNewReviewRatio(draft.newReviewRatio, { persist: false });
+      setSessionSize(draft.sessionSize ?? DEFAULT_SESSION_SIZE);
     },
     [
       setActiveScenario,
       setCardFilterPreference,
       setEnabledModes,
       setNewReviewRatio,
+      setSessionSize,
     ],
   );
   const commitPilotSessionDraft = useCommitTrainingPilotDraft({
@@ -1324,6 +1337,7 @@ function TrainingScreenContent({
     applyListLocally: applyListLocal,
     applyPreferences: applyPilotPreferences,
     applyFocusFilter: setTrainingFocusFilter,
+    onPlanReady: (plan) => setSessionPlannedTotal(plan.plannedTotal),
     resetQueue: resetFocusQueueState,
     loadStats: (scope) => void loadStats(scope),
     loadWord: loadNextWord,
@@ -1568,6 +1582,7 @@ function TrainingScreenContent({
     cardFilter,
     activeListValue,
     newReviewRatio,
+    sessionSize,
     focusFilter: trainingFocusFilter,
     listOptions,
     sourceOptions: pilotSourceOptions,
@@ -1597,8 +1612,9 @@ function TrainingScreenContent({
       ...(wordListType ? { listType: wordListType } : {}),
       cardFilter,
       trainingFilter: trainingFocusFilter,
+      sessionSize,
     }),
-    [cardFilter, trainingFocusFilter, wordListId, wordListType],
+    [cardFilter, sessionSize, trainingFocusFilter, wordListId, wordListType],
   );
   const {
     scopeKey: trainingSessionPlanScopeKey,
@@ -1611,6 +1627,11 @@ function TrainingScreenContent({
     modes: enabledModes,
     scope: trainingSessionPlanScope,
   });
+  useEffect(() => {
+    if (trainingSessionPlanSnapshot) {
+      setSessionPlannedTotal(trainingSessionPlanSnapshot.plan.plannedTotal);
+    }
+  }, [trainingSessionPlanSnapshot]);
   const {
     presentation: sessionPresentation,
     isSubsequentCard: isSubsequentSessionCard,

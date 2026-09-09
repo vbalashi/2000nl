@@ -7,6 +7,7 @@ import type {
   DetailedStats,
   TrainingDateWindow,
   TrainingMode,
+  TrainingSessionSize,
 } from "@/lib/types";
 import { TrainingPilotStatePanel } from "./TrainingPilotStatePanel";
 
@@ -22,7 +23,11 @@ export type TrainingSetupDraft = {
   dateWindow: TrainingDateWindow;
   daysAgo?: number;
   sourceValue: string;
+  /** Maximum unique card targets for this session; omitted by old callers. */
+  sessionSize?: TrainingSessionSize;
 };
+
+export const DEFAULT_SESSION_SIZE: TrainingSessionSize = 10;
 
 export type TrainingSetupOption = {
   value: string;
@@ -112,7 +117,9 @@ const copy = {
     ratio: "New / review rhythm",
     ratioOption: (value: number) => `1 new · ${value} review`,
     sessionSize: "Session size",
-    allMatching: "All matching cards",
+    fiveCards: "5 cards",
+    tenCards: "10 cards",
+    allDueToday: "All due today",
     daysAgo: "Days ago",
     loading: "Loading Training",
     chooseGoal: "Choose a training goal",
@@ -155,7 +162,9 @@ const copy = {
     ratio: "Ritme nieuw / herhaling",
     ratioOption: (value: number) => `1 nieuw · ${value} herhaling`,
     sessionSize: "Sessiegrootte",
-    allMatching: "Alle passende kaarten",
+    fiveCards: "5 kaarten",
+    tenCards: "10 kaarten",
+    allDueToday: "Alles voor vandaag",
     daysAgo: "Dagen geleden",
     loading: "Training laden",
     chooseGoal: "Kies een trainingsdoel",
@@ -198,7 +207,9 @@ const copy = {
     ratio: "Ритм новых / повторений",
     ratioOption: (value: number) => `1 новая · ${value} повторений`,
     sessionSize: "Размер сессии",
-    allMatching: "Все подходящие карточки",
+    fiveCards: "5 карточек",
+    tenCards: "10 карточек",
+    allDueToday: "Всё на сегодня",
     daysAgo: "Дней назад",
     loading: "Загрузка тренировки",
     chooseGoal: "Выберите цель тренировки",
@@ -253,10 +264,18 @@ export function TrainingTodaySetup({
 }: Props) {
   const t = copy[interfaceLanguage];
   const [screen, setScreen] = useState<"today" | "setup">("today");
-  const [draft, setDraft] = useState(initialDraft);
+  const [draft, setDraft] = useState({
+    ...initialDraft,
+    sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,
+  });
 
   useEffect(() => {
-    if (screen === "today") setDraft(initialDraft);
+    if (screen === "today") {
+      setDraft({
+        ...initialDraft,
+        sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,
+      });
+    }
   }, [initialDraft, screen]);
 
   useEffect(() => {
@@ -308,7 +327,10 @@ export function TrainingTodaySetup({
   );
 
   const openSetup = () => {
-    setDraft(initialDraft);
+    setDraft({
+      ...initialDraft,
+      sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,
+    });
     setScreen("setup");
   };
 
@@ -662,14 +684,32 @@ export function TrainingTodaySetup({
           </label>
         </div>
 
-        <section className="mt-5 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/75 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/55 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <section className="mt-5 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/75 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/55 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
               {t.sessionSize}
             </p>
-            <p className="mt-1 font-semibold text-slate-950 dark:text-white">
-              {t.allMatching}
-            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {(
+                [
+                  [5, t.fiveCards],
+                  [10, t.tenCards],
+                  ["all-due-today", t.allDueToday],
+                ] as const
+              ).map(([value, label]) => (
+                <ChoiceButton
+                  key={String(value)}
+                  active={(draft.sessionSize ?? DEFAULT_SESSION_SIZE) === value}
+                  label={label}
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      sessionSize: value,
+                    }))
+                  }
+                />
+              ))}
+            </div>
           </div>
           <button
             type="button"

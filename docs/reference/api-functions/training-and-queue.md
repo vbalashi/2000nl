@@ -27,6 +27,11 @@ get_next_card(
 ) RETURNS SETOF jsonb
 ```
 
+The finite-session overload adds a required `p_allow_practice boolean` as the
+ninth argument. The current pilot sends `false`, so a 5-card, 10-card, or
+all-due-today session cannot silently grow with future practice cards. The
+original eight-argument overload remains available for older non-pilot flows.
+
 Parameters:
 - `p_user_id`
 - `p_card_type_ids`
@@ -68,6 +73,18 @@ get_training_session_plan(
     p_training_filter jsonb DEFAULT '{}'
 ) RETURNS jsonb
 ```
+
+The finite-session overload adds a required `p_session_size text` as the
+seventh argument. It accepts `5`, `10`, or `all-due-today`; finite values cap
+the unique new/due card targets, while `all-due-today` includes today's new
+budget plus due learning/review work and excludes future practice. FSRS
+calculations and review intervals are unchanged. The current Training pilot
+uses this overload and stops after the planned number of accepted cards.
+For finite sizes, `plannedTotal` is the authoritative stopping value; the
+`plannedNew`/`plannedReview` fields describe the bounded pool rather than a
+promise that the scheduler will present all new cards before all reviews.
+Exact server-latched membership is intentionally deferred to the session
+snapshot work tracked separately from this count-bound slice.
 
 The response contains `plannedNew`, `plannedReview`, `plannedPractice`,
 `plannedTotal`, and `plannedAt`. `plannedReview` includes due learning and

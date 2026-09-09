@@ -124,6 +124,7 @@ test("Setup is a draft: Back discards changes and Start applies one selection", 
   expect(onStart).toHaveBeenCalledOnce();
   expect(onStart).toHaveBeenCalledWith({
     ...initialDraft,
+    sessionSize: 10,
     scenarioId: "understanding",
     cardFilter: "both",
     modes: ["word-to-definition", "definition-to-word"],
@@ -138,6 +139,19 @@ test("pending Start cannot be submitted twice", () => {
   expect(screen.getByRole("button", { name: "Starting…" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Starting…" }));
   expect(onStart).not.toHaveBeenCalled();
+});
+
+test("session size is an explicit per-session choice", () => {
+  const onStart = vi.fn();
+  render(<TrainingTodaySetup {...baseProps} onStart={onStart} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Adjust training" }));
+  fireEvent.click(screen.getByRole("button", { name: "5 cards" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
+
+  expect(onStart).toHaveBeenCalledWith(
+    expect.objectContaining({ sessionSize: 5 }),
+  );
 });
 
 test.each([

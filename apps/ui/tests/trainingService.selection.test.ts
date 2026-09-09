@@ -78,6 +78,7 @@ describe("trainingService next-word selection", () => {
       p_list_id: "list-1",
       p_list_type: "user",
       p_card_filter: "both",
+      p_session_size: 10,
       p_training_filter: {},
     });
   });
@@ -187,6 +188,7 @@ describe("trainingService next-word selection", () => {
       p_exclude_card_keys: ["word-2:definition-to-word"],
       p_card_filter: "review",
       p_queue_turn: "review",
+      p_allow_practice: false,
       p_list_id: "list-1",
       p_list_type: "user",
     });
@@ -254,6 +256,7 @@ describe("trainingService next-word selection", () => {
       p_queue_turn: "new",
       p_list_id: "list-1",
       p_list_type: "curated",
+      p_allow_practice: false,
     });
     expect(word).toEqual(
       expect.objectContaining({

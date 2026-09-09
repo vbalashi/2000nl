@@ -394,3 +394,6 @@
 
 -- FSRS same-day short-term stability parity with the pinned reference
 \i db/migrations/131_fsrs_same_day_short_term_parity.sql
+
+-- Finite Training session sizes with explicit practice-card selection
+\i db/migrations/132_finite_training_session_sizes.sql

@@ -8,6 +8,7 @@ import type {
   TrainingFilterSource,
   TrainingMode,
   TrainingScenario,
+  TrainingSessionSize,
   TrainingSessionPlan,
   TrainingWord,
   WordListType,
@@ -38,7 +39,10 @@ export type TrainingSessionPlanScope = {
   listType?: WordListType;
   cardFilter: CardFilter;
   trainingFilter?: TrainingFocusFilter | null;
+  sessionSize?: TrainingSessionSize;
 };
+
+export const DEFAULT_TRAINING_SESSION_SIZE: TrainingSessionSize = 10;
 
 export const isTrainingFocusFilterActive = (
   filter?: TrainingFocusFilter | null,
@@ -90,6 +94,7 @@ const trainingSessionPlanScopePayload = (
     p_list_id: input.listId ?? null,
     p_list_type: input.listId ? input.listType ?? "curated" : "curated",
     p_card_filter: input.cardFilter,
+    p_session_size: input.sessionSize ?? DEFAULT_TRAINING_SESSION_SIZE,
     p_training_filter: isTrainingFocusFilterActive(input.trainingFilter)
       ? normalizeTrainingFocusFilter(input.trainingFilter)
       : {},
@@ -112,13 +117,12 @@ export async function fetchTrainingSessionPlan(
   const payload: Record<string, unknown> = {
     p_user_id: scope.p_user_id,
     p_card_type_ids: scope.p_card_type_ids,
+    p_list_id: scope.p_list_id,
+    p_list_type: scope.p_list_type,
     p_card_filter: scope.p_card_filter,
+    p_session_size: scope.p_session_size,
     p_training_filter: scope.p_training_filter,
   };
-  if (scope.p_list_id) {
-    payload.p_list_id = scope.p_list_id;
-    payload.p_list_type = scope.p_list_type;
-  }
 
   const { data, error } = await supabase.rpc(
     "get_training_session_plan",
@@ -176,20 +180,20 @@ export const fetchNextTrainingWord = async (
   queueTurn: QueueTurn = "auto",
   excludeCardKeys: string[] = [],
   trainingFilter?: TrainingFocusFilter | null,
+  allowPractice = false,
 ): Promise<TrainingWord | null> => {
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
     p_card_type_ids: modes,
     p_exclude_entry_ids: excludeWordIds,
     p_exclude_card_keys: excludeCardKeys,
+    p_list_id: listScope?.listId ?? null,
+    p_list_type: listScope?.listType ?? "curated",
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
+    p_allow_practice: allowPractice,
   };
 
-  if (listScope?.listId) {
-    rpcPayload.p_list_id = listScope.listId;
-    rpcPayload.p_list_type = listScope.listType ?? "curated";
-  }
   if (isTrainingFocusFilterActive(trainingFilter)) {
     rpcPayload.p_training_filter = normalizeTrainingFocusFilter(trainingFilter);
   }
@@ -406,6 +410,7 @@ export const fetchNextTrainingWordByScenario = async (
   trainingFilter?: TrainingFocusFilter | null,
   resolveModes: (scenarioId: string) => Promise<TrainingMode[] | null> =
     resolveScenarioModes,
+  allowPractice = false,
 ): Promise<TrainingWord | null> => {
   const modes = modeOverride ?? (await resolveModes(scenarioId));
   if (!modes) return null;
@@ -416,14 +421,13 @@ export const fetchNextTrainingWordByScenario = async (
     p_card_type_ids: modes,
     p_exclude_entry_ids: excludeWordIds,
     p_exclude_card_keys: excludeCardKeys,
+    p_list_id: listScope?.listId ?? null,
+    p_list_type: listScope?.listType ?? "curated",
     p_card_filter: cardFilter,
     p_queue_turn: queueTurn,
+    p_allow_practice: allowPractice,
   };
 
-  if (listScope?.listId) {
-    rpcPayload.p_list_id = listScope.listId;
-    rpcPayload.p_list_type = listScope.listType ?? "curated";
-  }
   if (isTrainingFocusFilterActive(trainingFilter)) {
     rpcPayload.p_training_filter = normalizeTrainingFocusFilter(trainingFilter);
   }
