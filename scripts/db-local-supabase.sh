@@ -17,11 +17,13 @@ Commands:
   status                Show Supabase local service status.
   env                   Print shell exports for local DB/UI/test usage.
   apply                 Apply db/migrations/bootstrap.sql to local Supabase.
-  reset                 Reset local Supabase DB, then apply bootstrap.sql.
+  reset --confirm-reset Erase local Supabase DB, then apply bootstrap.sql.
   probe                 Run SQL contract probes against local Supabase.
+  check                 Read-only content, migration receipts and contract checks.
   import [data-dir]     Import dictionary JSON files (default: db/data/words_content).
   test-fsrs             Run apps/ui FSRS tests against local Supabase.
-  all [data-dir]        Start, reset/apply, probe, FSRS tests, optional import, final probe.
+  all --confirm-reset [data-dir]
+                        Erase DB, bootstrap, test, import if present, then probe.
 
 Environment:
   LOCAL_SUPABASE_DB_URL Override the local Postgres URL.
@@ -110,6 +112,45 @@ run_fsrs_tests() {
 cmd="${1:-}"
 shift || true
 
+# Validate the entire invocation before starting services or touching a database.
+case "$cmd" in
+  reset|all)
+    if [[ "${1:-}" != "--confirm-reset" ]]; then
+      echo "$cmd erases the local database. Reuse it with 'check'; rebuilding requires --confirm-reset." >&2
+      exit 1
+    fi
+    shift
+    if [[ ( "$cmd" == reset && $# -ne 0 ) || $# -gt 1 || "${1:-}" == -* ]]; then
+      echo "Unexpected rebuild arguments. See --help." >&2
+      exit 1
+    fi
+    ;;
+  import)
+    if [[ $# -gt 1 || "${1:-}" == -* ]]; then
+      echo "Expected at most one dictionary directory." >&2
+      exit 1
+    fi
+    ;;
+  *)
+    if [[ $# -ne 0 ]]; then
+      echo "Unexpected arguments. See --help." >&2
+      exit 1
+    fi
+    ;;
+esac
+
+case "$cmd" in
+  start|stop|status|env|apply|probe|check|import|test-fsrs|reset|all)
+    need_cmd node
+    target_check="target"
+    if [[ "$cmd" == reset || "$cmd" == all ]]; then target_check="reset-target"; fi
+    export LOCAL_SUPABASE_DB_URL="$local_db_url"
+    node "$script_dir/lib/local-db-check.mjs" "$target_check"
+    # A hostaddr/service inherited from another project must not redirect libpq.
+    unset PGHOSTADDR PGSERVICE PGSERVICEFILE
+    ;;
+esac
+
 case "$cmd" in
   start)
     start_stack
@@ -135,6 +176,14 @@ case "$cmd" in
     ;;
   probe)
     run_probe
+    ;;
+  check)
+    ensure_psql
+    (cd "$repo_root" &&
+      node db/scripts/deploy_db_contract.mjs validate &&
+      node scripts/lib/local-db-check.mjs sql |
+        PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=30000' \
+        psql "$local_db_url" -X -v ON_ERROR_STOP=1)
     ;;
   import)
     import_dictionary "${1:-$default_data_dir}"

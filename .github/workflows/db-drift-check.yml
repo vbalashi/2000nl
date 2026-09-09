@@ -3,6 +3,8 @@ name: Database Drift Check
 on:
   pull_request:
     paths:
+      - 'scripts/db-local-supabase*'
+      - 'scripts/lib/local-db-check.mjs'
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
@@ -22,6 +24,8 @@ on:
   push:
     branches: [main, master]
     paths:
+      - 'scripts/db-local-supabase*'
+      - 'scripts/lib/local-db-check.mjs'
       - 'db/migrations/**'
       - 'db/deploy-contract/**'
       - 'db/scripts/deploy_db_contract*.mjs'
@@ -168,6 +172,11 @@ jobs:
 
           migration_count="$(wc -l < "$migration_list" | tr -d ' ')"
           echo "Found $migration_count numbered migration files; bootstrap coverage is complete."
+
+      - name: Verify local database reuse and reset guards
+        run: |
+          bash -n scripts/db-local-supabase.sh
+          node --test scripts/db-local-supabase.test.mjs
 
       - name: Check live migration helper syntax
         run: |

@@ -59,19 +59,20 @@ PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstra
 
 ## Local Supabase Test Environment
 
-For migration validation, prefer the local Supabase Docker stack over plain Postgres:
+For routine QA, reuse the populated local Supabase Docker stack and verify it
+without changing its data (`start` is only needed if the stack is stopped):
 
 ```bash
 scripts/db-local-supabase.sh start
-scripts/db-local-supabase.sh apply
-scripts/db-local-supabase.sh probe
-scripts/db-local-supabase.sh test-fsrs
+scripts/db-local-supabase.sh check
 ```
 
-For a clean end-to-end local regression run, use:
+Do not run bootstrap (`apply`) on a populated QA database. A failed check needs
+diagnosis, not a reset. For an explicitly disposable database, a full rebuild
+and regression run requires acknowledgement and destroys its existing data:
 
 ```bash
-scripts/db-local-supabase.sh all
+scripts/db-local-supabase.sh all --confirm-reset
 ```
 
 See [docs/runbooks/local-supabase-test-env.md](../docs/runbooks/local-supabase-test-env.md) for install steps, dictionary import, reset, and staging handoff.

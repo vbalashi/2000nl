@@ -1,5 +1,9 @@
 -- Bootstrap: Apply all migrations in order for a fresh deploy.
--- Generated: 2026-02-09
+-- The consolidated baseline below dates from 2026-02-09; forward migrations
+-- continue through the final include. CI checks numbered migration coverage.
+-- This installs schema/system seeds, not a production data snapshot or a
+-- verified deployment ledger. For a populated local database use the read-only
+-- scripts/db-local-supabase.sh check before planning any changes.
 --
 -- Run from repo root:
 --   PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql

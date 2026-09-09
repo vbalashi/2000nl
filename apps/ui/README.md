@@ -26,9 +26,12 @@ of plain `npm run dev`:
 
 ```
 cd ../..
-scripts/db-local-supabase.sh all
-scripts/ui-local-dev.sh --port 3100
+scripts/db-local-supabase.sh check
+scripts/ui-local-dev.sh --pilot --port 3100
 ```
+
+Reuse the existing populated local database. If `check` fails, follow
+`docs/runbooks/local-supabase-test-env.md`; never use a reset as a routine repair.
 
 Plain `npm run dev` uses `.env.local` as-is. If that file points at an older
 Supabase project, platform routes can fail with missing-RPC errors such as
