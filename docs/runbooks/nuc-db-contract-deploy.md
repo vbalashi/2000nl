@@ -27,9 +27,10 @@ it to migration 128 after the now-fast plan exposed the remaining cold
 authoritative next-card selector.
 
 Issue #265 advances it to migration 129 for additive app-local reading-size
-storage on `user_settings`.
+storage on `user_settings`. Issue #278 advances it to migration 130 for the
+observable Learn/enrollment and graded-history projections.
 
-An enabled deployment must apply or verify migrations 123 through 129 in order
+An enabled deployment must apply or verify migrations 123 through 130 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

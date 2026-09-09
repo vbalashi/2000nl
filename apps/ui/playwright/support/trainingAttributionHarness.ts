@@ -608,6 +608,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
           : {
               newWordsToday: 0,
               newCardsToday: 0,
+              learningStartedToday: 0,
+              graduatedNewWordsToday: 0,
               dailyNewLimit: 30,
               reviewWordsDone: 0,
               reviewCardsDone: 0,

@@ -41,6 +41,8 @@ describe("trainingService stats", () => {
     ).resolves.toEqual({
       newWordsToday: 0,
       newCardsToday: 4,
+      learningStartedToday: 0,
+      graduatedNewWordsToday: 0,
       dailyNewLimit: 10,
       reviewWordsDone: 0,
       reviewCardsDone: 5,
@@ -68,6 +70,8 @@ describe("trainingService stats", () => {
       {
         newWordsToday: 0,
         newCardsToday: 0,
+        learningStartedToday: 0,
+        graduatedNewWordsToday: 0,
         dailyNewLimit: 10,
         reviewWordsDone: 0,
         reviewCardsDone: 0,

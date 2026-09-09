@@ -98,10 +98,14 @@
 - Feed footer counters, settings/statistics views, and scenario-level progress
 
 **`get_recent_training_review_history(p_limit)`**
-- Feeds the code-split, on-demand Training History destination from authoritative review records
+- Feeds the code-split, on-demand Training History destination from immutable
+  `learning_started` action events and authoritative review records
 - Derives the principal from `auth.uid()` and owns the trailing 24-hour boundary in Postgres
 - Returns only display fields, caps output at the latest 50 rows, and exposes truncation metadata
 - Enforces dictionary visibility in Postgres; the browser never receives raw dictionary or FSRS state
+
+`learning_started` is an enrollment activity, not an FSRS review result. The
+first actual Again/Hard/Good/Easy answer remains the first graded review.
 
 ### Queue Mechanism
 

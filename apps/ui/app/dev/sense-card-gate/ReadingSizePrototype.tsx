@@ -40,6 +40,8 @@ const modeLabels: Record<ReadingMode, string> = {
 const stats: DetailedStats = {
   newWordsToday: 4,
   newCardsToday: 4,
+  learningStartedToday: 4,
+  graduatedNewWordsToday: 0,
   dailyNewLimit: 10,
   reviewWordsDone: 3,
   reviewCardsDone: 3,

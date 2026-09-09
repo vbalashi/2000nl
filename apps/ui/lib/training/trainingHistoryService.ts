@@ -2,6 +2,7 @@ import { supabase } from "../supabaseClient";
 import type { TrainingMode } from "../types";
 
 export type TrainingHistoryReviewResult =
+  | "learning_started"
   | "review_fail"
   | "review_hard"
   | "review_success"
@@ -35,6 +36,7 @@ const isString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
 const reviewResults = new Set<TrainingHistoryReviewResult>([
+  "learning_started",
   "review_fail",
   "review_hard",
   "review_success",

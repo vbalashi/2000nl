@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 129,
-      coordinationIssue: 265,
+      requiredMigrationId: 130,
+      coordinationIssue: 278,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129,
+      123, 124, 125, 126, 127, 128, 129, 130,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -62,7 +62,9 @@ describe("NUC database contract deployment", () => {
   });
 
   test("postflight proves the bounded default scheduler contract", () => {
-    const postflight = read("db/deploy-contract/postflight-129.sql");
+    const postflight =
+      read("db/deploy-contract/postflight-130.sql") +
+      read("db/deploy-contract/postflight-129.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
@@ -87,6 +89,9 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("reading_size_desktop");
     expect(postflight).toContain("phone_default IS DISTINCT FROM '''normal''::text'");
     expect(postflight).toContain("desktop_default IS DISTINCT FROM '''normal''::text'");
+    expect(postflight).toContain("learning-observability-definition");
+    expect(postflight).toContain("LEARNINGSTARTEDTODAY");
+    expect(postflight).toContain("GRADUATEDNEWWORDSTODAY");
     expect(postflight).toContain("phone_constraint_validated IS DISTINCT FROM true");
     expect(postflight).toContain("desktop_constraint_validated IS DISTINCT FROM true");
     expect(postflight).toContain(
@@ -96,11 +101,13 @@ describe("NUC database contract deployment", () => {
       "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
     );
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-129.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-130.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {
     const probe = read(contract.preSwitchReadProbe.file);
+    const probeSource =
+      probe + read("db/deploy-contract/pre-switch-read-probe-129.sql");
     const runner = read("db/scripts/deploy_db_contract.mjs");
     const workflow = read(".github/workflows/deploy-nuc.yml");
     const driftWorkflow = read(".github/workflows/db-drift-check.yml");
@@ -111,15 +118,15 @@ describe("NUC database contract deployment", () => {
     expect(createHash("sha256").update(probe).digest("hex")).toBe(
       contract.preSwitchReadProbe.sha256,
     );
-    expect(probe).toContain("auth_user.email = 'test@2000nl.test'");
-    expect(probe).toContain("public.get_training_session_plan");
-    expect(probe).toContain("public.get_next_card");
-    expect(probe).toContain("$pre_switch_session_plan$");
-    expect(probe).toContain("$pre_switch_next_card$");
-    expect(probe.indexOf("public.get_next_card")).toBeGreaterThan(
-      probe.indexOf("public.get_training_session_plan"),
+    expect(probeSource).toContain("auth_user.email = 'test@2000nl.test'");
+    expect(probeSource).toContain("public.get_training_session_plan");
+    expect(probeSource).toContain("public.get_next_card");
+    expect(probeSource).toContain("$pre_switch_session_plan$");
+    expect(probeSource).toContain("$pre_switch_next_card$");
+    expect(probeSource.indexOf("public.get_next_card")).toBeGreaterThan(
+      probeSource.indexOf("public.get_training_session_plan"),
     );
-    expect(probe).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
+    expect(probeSource).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
     expect(runner).toContain("BEGIN READ ONLY");
     expect(runner).toContain("pre-switch-read-probe passed");
     expect(driftWorkflow).toContain("pre_switch_read_probe.integration.test.mjs");

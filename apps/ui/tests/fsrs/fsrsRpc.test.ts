@@ -1069,6 +1069,219 @@ describeIfDb("FSRS RPC integration", () => {
     });
   });
 
+  test("counts accepted Learn and exposes it in history without creating an FSRS grade", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `learning-observable-${Date.now()}`);
+      const clientEventId = randomUUID();
+
+      const { rows: acceptedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [userId, wordId, mode, clientEventId],
+      );
+      expect(acceptedRows[0].result.status).toBe("accepted");
+      const { rows: duplicateRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [
+          userId,
+          wordId,
+          mode,
+          clientEventId,
+        ],
+      );
+      expect(duplicateRows[0].result.status).toBe("duplicate");
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated') as stats`,
+        [userId, mode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 1,
+          newCardsToday: 1,
+          learningStartedToday: 1,
+          graduatedNewWordsToday: 0,
+        }),
+      );
+
+      const { rows: historyRows } = await client.query(
+        `select * from get_recent_training_review_history(50)`,
+      );
+      expect(historyRows).toHaveLength(1);
+      expect(historyRows[0]).toEqual(
+        expect.objectContaining({
+          entry_id: wordId,
+          review_result: "learning_started",
+          card_type_id: mode,
+          has_more: false,
+        }),
+      );
+
+      const { rows: reviewRows } = await client.query(
+        `select count(*)::int as count
+           from user_review_log
+          where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(reviewRows[0].count).toBe(0);
+    }, userId);
+  });
+
+  test("keeps a five-new and one-review mixed run explainable across card directions", async () => {
+    const userId = randomUUID();
+    const reverseMode = "definition-to-word";
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+
+      const newEntryIds: string[] = [];
+      for (let index = 0; index < 5; index += 1) {
+        newEntryIds.push(
+          await insertWord(client, `learning-mixed-${Date.now()}-${index}`),
+        );
+      }
+      for (const [index, entryId] of newEntryIds.entries()) {
+        await client.query(
+          `select perform_platform_v2_card_action(
+            $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+            null, null, null, $4::uuid, null, 'first_party', null
+          )`,
+          [
+            userId,
+            entryId,
+            index === 4 ? reverseMode : mode,
+            randomUUID(),
+          ],
+        );
+      }
+
+      const reviewEntryId = await insertWord(
+        client,
+        `learning-mixed-review-${Date.now()}`,
+      );
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled,
+           fsrs_stability, fsrs_difficulty, fsrs_reps,
+           fsrs_last_interval, next_review_at, last_reviewed_at,
+           in_learning, seen_count
+         ) values ($1, $2, $3, true, 4.0, 5.0, 1, 4.0,
+                   now() - interval '1 day', now() - interval '1 day',
+                   false, 1)`,
+        [userId, reviewEntryId, reverseMode],
+      );
+      await client.query(
+        `select handle_card_review($1::uuid, $2::uuid, $3::text, 'success', NULL)`,
+        [userId, reviewEntryId, reverseMode],
+      );
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats(
+           $1, ARRAY[$2, $3]::text[], NULL, 'curated'
+         ) as stats`,
+        [userId, mode, reverseMode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 5,
+          newCardsToday: 5,
+          learningStartedToday: 5,
+          graduatedNewWordsToday: 0,
+          reviewWordsDone: 1,
+          reviewCardsDone: 1,
+        }),
+      );
+
+      const { rows: historyRows } = await client.query(
+        `select review_result, card_type_id
+           from get_recent_training_review_history(50)`,
+      );
+      expect(historyRows).toHaveLength(6);
+      expect(historyRows.filter((row) => row.review_result === "learning_started"))
+        .toHaveLength(5);
+      expect(historyRows).toEqual(
+        expect.arrayContaining([
+          { review_result: "review_success", card_type_id: reverseMode },
+        ]),
+      );
+    }, userId);
+  });
+
+  test("keeps Learn distinct when the first real grade is Good", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `learning-first-grade-${Date.now()}`);
+      const learnEventId = randomUUID();
+
+      const { rows: learnedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [userId, wordId, mode, learnEventId],
+      );
+      expect(learnedRows[0].result.status).toBe("accepted");
+
+      const { rows: gradedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+          null, null, 'success', $5::uuid, null, 'first_party', null
+        ) as result`,
+        [
+          userId,
+          wordId,
+          mode,
+          learnedRows[0].result.card.stateRevision,
+          randomUUID(),
+        ],
+      );
+      expect(gradedRows[0].result.status).toBe("accepted");
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated') as stats`,
+        [userId, mode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 1,
+          newCardsToday: 1,
+          learningStartedToday: 1,
+          graduatedNewWordsToday: 1,
+        }),
+      );
+
+      const { rows: reviewRows } = await client.query(
+        `select review_type, interval_after
+           from user_review_log
+          where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(reviewRows).toHaveLength(1);
+      expect(reviewRows[0].review_type).toBe("new");
+      expect(Number(reviewRows[0].interval_after)).toBeGreaterThanOrEqual(1);
+
+      const { rows: historyRows } = await client.query(
+        `select review_result
+           from get_recent_training_review_history(50)
+          order by reviewed_at asc, review_result asc`,
+      );
+      expect(historyRows).toHaveLength(2);
+      expect(historyRows).toEqual(
+        expect.arrayContaining([
+          { review_result: "learning_started" },
+          { review_result: "review_success" },
+        ]),
+      );
+    }, userId);
+  });
+
   test("get_card_user_state returns one accessible card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

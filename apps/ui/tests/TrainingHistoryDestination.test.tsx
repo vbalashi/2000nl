@@ -56,7 +56,7 @@ test("loads recent authoritative activity only when opened and returns to Traini
   expect(await screen.findByText("bank")).toBeInTheDocument();
   expect(screen.getByText("Goed")).toBeInTheDocument();
   expect(screen.getByText("Woord → betekenis")).toBeInTheDocument();
-  expect(screen.getByText("De 50 meest recente beoordelingen worden getoond.")).toBeInTheDocument();
+  expect(screen.getByText("De 50 meest recente trainingsactiviteiten worden getoond.")).toBeInTheDocument();
   expect(fetchRecentTrainingHistory).toHaveBeenCalledWith();
 
   await userEvent.click(screen.getByRole("button", { name: "Terug naar training" }));
