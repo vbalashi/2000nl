@@ -112,6 +112,7 @@ function renderController(overrides: {
   setCurrentWord?: (word: TrainingWord | null) => void;
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
   recoverLoadErrors?: boolean;
+  sessionPlannedTotal?: number | null;
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -149,6 +150,7 @@ function renderController(overrides: {
       recoverLoadErrors: overrides.recoverLoadErrors ?? true,
       focusFilter: { dateWindow: "all" },
       sessionScopeKey,
+      sessionPlannedTotal: overrides.sessionPlannedTotal,
       selection: { selectNext, lookupOverride },
       audioEnabled: false,
       preloadAudio: vi.fn(),
@@ -200,6 +202,18 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(prepared.refresh).toHaveBeenCalledWith(
       "word-1:word-to-definition",
     );
+  });
+
+  test("ends a finite session after the planned number of accepted cards", async () => {
+    const controller = renderController({ sessionPlannedTotal: 1 });
+
+    await act(async () => {
+      await controller.result.current.submitLegacyReview("success");
+    });
+
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
+    expect(controller.selectNext).not.toHaveBeenCalled();
+    expect(controller.result.current.usableCandidatesExhausted).toBe(true);
   });
 
   test("fast prepared legacy candidate presents immediately while one mutation remains in flight", async () => {

@@ -90,6 +90,59 @@ describeDb("authoritative training session plan RPC", () => {
     });
   });
 
+  test("bounds finite sessions and excludes future practice cards", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      for (let index = 0; index < 12; index += 1) {
+        await insertWord(client, `finite-session-${userId}-${index}`);
+      }
+
+      const callPlan = async (size: string) => {
+        const { rows } = await client.query(
+          `select get_training_session_plan(
+            $1, ARRAY['word-to-definition'], NULL, 'curated', 'both', '{}', $2
+          ) as plan`,
+          [userId, size],
+        );
+        return rows[0].plan;
+      };
+
+      expect(await callPlan("5")).toEqual(
+        expect.objectContaining({
+          plannedNew: 5,
+          plannedReview: 0,
+          plannedPractice: 0,
+          plannedTotal: 5,
+        }),
+      );
+      expect(await callPlan("10")).toEqual(
+        expect.objectContaining({
+          plannedNew: 10,
+          plannedReview: 0,
+          plannedPractice: 0,
+          plannedTotal: 10,
+        }),
+      );
+      expect(await callPlan("all-due-today")).toEqual(
+        expect.objectContaining({ plannedPractice: 0 }),
+      );
+      expect((await callPlan("all-due-today")).plannedTotal).toBeGreaterThanOrEqual(12);
+
+      const { rows: selectionRows } = await client.query(
+        `select get_next_card(
+          $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], NULL,
+          'curated', 'both', 'new', ARRAY[]::text[], false
+        ) as item`,
+        [userId],
+      );
+      expect(selectionRows[0]?.item?.stats?.source).not.toBe("practice");
+    }, userId);
+  });
+
   test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
     const userId = randomUUID();
     const otherUserId = randomUUID();

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchTrainingScenarios,
+  fetchTrainingSessionPlan,
   updateActiveTrainingScope,
 } from "@/lib/trainingService";
 import type {
@@ -9,6 +10,8 @@ import type {
   TrainingFocusFilter,
   TrainingMode,
   TrainingScenario,
+  TrainingSessionSize,
+  TrainingSessionPlan,
   WordListSummary,
   WordListType,
 } from "@/lib/types";
@@ -48,6 +51,7 @@ type CommitPilotDraftParams = {
     focusFilter: TrainingFocusFilter;
   }) => Promise<LoadNextTrainingTurnResult>;
   reportError: (error: string | null) => void;
+  onPlanReady?: (plan: TrainingSessionPlan) => void;
 };
 
 type PilotControllerParams = {
@@ -62,6 +66,7 @@ type PilotControllerParams = {
   cardFilter: CardFilter;
   activeListValue: string;
   newReviewRatio: number;
+  sessionSize: TrainingSessionSize;
   focusFilter: TrainingFocusFilter;
   listOptions: TrainingSetupOption[];
   sourceOptions: TrainingSetupOption[];
@@ -88,6 +93,7 @@ export function useCommitTrainingPilotDraft({
   loadStats,
   loadWord,
   reportError,
+  onPlanReady,
 }: CommitPilotDraftParams) {
   return useCallback(
     async (draft: TrainingSetupDraft) => {
@@ -123,6 +129,19 @@ export function useCommitTrainingPilotDraft({
         return false;
       }
 
+      const plan = await fetchTrainingSessionPlan(userId, draft.modes, {
+        listId: scope.listId,
+        listType: scope.listType ?? undefined,
+        cardFilter: draft.cardFilter,
+        trainingFilter: focusFilter,
+        sessionSize: draft.sessionSize,
+      });
+      if (!plan) {
+        reportError("training_plan_unavailable");
+        return false;
+      }
+      onPlanReady?.(plan);
+
       reportError(null);
       if (selectedList) applyListLocally(selectedList);
       applyPreferences(draft);
@@ -147,6 +166,7 @@ export function useCommitTrainingPilotDraft({
       languageCode,
       loadStats,
       loadWord,
+      onPlanReady,
       reportError,
       resetQueue,
       resolveList,
@@ -167,6 +187,7 @@ export function useTrainingPilotController({
   cardFilter,
   activeListValue,
   newReviewRatio,
+  sessionSize,
   focusFilter,
   listOptions,
   sourceOptions,
@@ -234,6 +255,7 @@ export function useTrainingPilotController({
     cardFilter,
     listValue: activeListValue,
     newReviewRatio,
+    sessionSize,
     dateWindow: focusFilter.dateWindow,
     daysAgo: focusFilter.daysAgo,
     sourceValue: focusFilter.sourceId

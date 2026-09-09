@@ -6,6 +6,12 @@ export type TrainingMode =
 export type CardFilter = "new" | "review" | "both";
 export type QueueTurn = "new" | "review" | "auto";
 
+/** User-selected bound for one Training session. */
+export type TrainingSessionSize =
+  | 5
+  | 10
+  | "all-due-today";
+
 export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
 
 export type TrainingFocusFilter = {

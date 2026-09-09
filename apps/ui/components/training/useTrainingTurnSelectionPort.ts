@@ -24,6 +24,7 @@ export type TrainingTurnSelectionRequest = {
   excludeCardKeys?: string[];
   cardFilter?: CardFilter;
   focusFilter?: TrainingFocusFilter;
+  allowPractice?: boolean;
 };
 
 export type TrainingTurnSelectionPort = {
@@ -40,6 +41,7 @@ type Inputs = {
   wordListType: WordListType | null;
   cardFilter: CardFilter;
   focusFilter: TrainingFocusFilter;
+  allowPractice: boolean;
   resolveScenarioModes: (
     scenarioId: string,
   ) => Promise<TrainingMode[] | null>;
@@ -70,6 +72,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
     wordListType,
     cardFilter,
     focusFilter,
+    allowPractice: defaultAllowPractice,
     resolveScenarioModes,
   } = input;
 
@@ -84,6 +87,9 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
             list.type === (effectiveListType ?? "curated"),
         ) ?? activeList;
       const effectiveFocusFilter = request.focusFilter ?? focusFilter;
+      // The finite-session contract is intentionally limited to new/due
+      // cards. Future practice tails would make the session count surprising.
+      const allowPractice = request.allowPractice ?? defaultAllowPractice;
 
       return fetchNextTrainingWordByScenario(
         userId,
@@ -101,6 +107,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
           ? effectiveFocusFilter
           : null,
         resolveScenarioModes,
+        allowPractice,
       );
     },
     [
@@ -109,6 +116,7 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
       availableLists,
       cardFilter,
       focusFilter,
+      defaultAllowPractice,
       resolveScenarioModes,
       userId,
       wordListId,

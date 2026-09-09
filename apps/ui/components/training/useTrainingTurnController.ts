@@ -82,6 +82,7 @@ type Inputs = {
   trainingShellV2Enabled: boolean;
   recoverLoadErrors: boolean;
   focusFilter: TrainingFocusFilter;
+  sessionPlannedTotal?: number | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
   audioEnabled: boolean;
@@ -112,6 +113,7 @@ export function useTrainingTurnController(input: Inputs) {
     trainingShellV2Enabled,
     recoverLoadErrors,
     focusFilter,
+    sessionPlannedTotal = null,
     sessionScopeKey,
     selection,
     audioEnabled,
@@ -599,6 +601,18 @@ export function useTrainingTurnController(input: Inputs) {
         trainingDebug.log("Training counters refresh failed", cause);
       });
 
+      const reachedSessionLimit =
+        sessionPlannedTotal !== null &&
+        reviewedCardKeysRef.current.size >= sessionPlannedTotal;
+      if (reachedSessionLimit) {
+        presentWord(null);
+        acceptedTransitionRetryRef.current = null;
+        setAcceptedTransitionLoadStalled(false);
+        setUsableCandidatesExhausted(true);
+        void backgroundRefresh;
+        return "accepted";
+      }
+
       if (transition.isNextCardOverride) {
         nextCardOverrideActiveKeyRef.current = null;
         setNextCardOverrideNotice(null);
@@ -656,7 +670,13 @@ export function useTrainingTurnController(input: Inputs) {
       void backgroundRefresh;
       return "accepted";
     },
-    [loadNextWord, presentPreparedCandidate, refreshAfterAccepted],
+    [
+      loadNextWord,
+      presentPreparedCandidate,
+      presentWord,
+      refreshAfterAccepted,
+      sessionPlannedTotal,
+    ],
   );
 
   const submitLegacyReview = useCallback(
