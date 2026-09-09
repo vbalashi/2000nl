@@ -53,7 +53,7 @@
     {
       "migrationId": 130,
       "file": "db/migrations/130_learning_observability.sql",
-      "sha256": "6b112c63a3e9c17cf92c8e8d9c43af05857213a0a03ec5912d963ce151fb5943"
+      "sha256": "eedc604cf3f1ea075df0f803c3f0aa8c27a4ab32185532dc3d1686438f276a40"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-130.sql",

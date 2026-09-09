@@ -1134,6 +1134,85 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("keeps a five-new and one-review mixed run explainable across card directions", async () => {
+    const userId = randomUUID();
+    const reverseMode = "definition-to-word";
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+
+      const newEntryIds: string[] = [];
+      for (let index = 0; index < 5; index += 1) {
+        newEntryIds.push(
+          await insertWord(client, `learning-mixed-${Date.now()}-${index}`),
+        );
+      }
+      for (const [index, entryId] of newEntryIds.entries()) {
+        await client.query(
+          `select perform_platform_v2_card_action(
+            $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+            null, null, null, $4::uuid, null, 'first_party', null
+          )`,
+          [
+            userId,
+            entryId,
+            index === 4 ? reverseMode : mode,
+            randomUUID(),
+          ],
+        );
+      }
+
+      const reviewEntryId = await insertWord(
+        client,
+        `learning-mixed-review-${Date.now()}`,
+      );
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled,
+           fsrs_stability, fsrs_difficulty, fsrs_reps,
+           fsrs_last_interval, next_review_at, last_reviewed_at,
+           in_learning, seen_count
+         ) values ($1, $2, $3, true, 4.0, 5.0, 1, 4.0,
+                   now() - interval '1 day', now() - interval '1 day',
+                   false, 1)`,
+        [userId, reviewEntryId, reverseMode],
+      );
+      await client.query(
+        `select handle_card_review($1::uuid, $2::uuid, $3::text, 'success', NULL)`,
+        [userId, reviewEntryId, reverseMode],
+      );
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats(
+           $1, ARRAY[$2, $3]::text[], NULL, 'curated'
+         ) as stats`,
+        [userId, mode, reverseMode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 5,
+          newCardsToday: 5,
+          learningStartedToday: 5,
+          graduatedNewWordsToday: 0,
+          reviewWordsDone: 1,
+          reviewCardsDone: 1,
+        }),
+      );
+
+      const { rows: historyRows } = await client.query(
+        `select review_result, card_type_id
+           from get_recent_training_review_history(50)`,
+      );
+      expect(historyRows).toHaveLength(6);
+      expect(historyRows.filter((row) => row.review_result === "learning_started"))
+        .toHaveLength(5);
+      expect(historyRows).toEqual(
+        expect.arrayContaining([
+          { review_result: "review_success", card_type_id: reverseMode },
+        ]),
+      );
+    }, userId);
+  });
+
   test("get_card_user_state returns one accessible card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {

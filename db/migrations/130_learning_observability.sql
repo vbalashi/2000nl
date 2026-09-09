@@ -134,15 +134,12 @@ BEGIN
     SELECT COUNT(DISTINCT rl.word_id)
     INTO v_graduated_new_words_today
     FROM user_review_log rl
-    JOIN user_card_status s ON s.entry_id = rl.word_id
-        AND s.user_id = rl.user_id
-        AND s.card_type_id = rl.mode
     JOIN accessible_entries ae ON ae.id = rl.word_id
     WHERE rl.user_id = p_user_id
       AND rl.mode = ANY(p_modes)
       AND rl.review_type = 'new'
       AND rl.reviewed_at::date = current_date
-      AND s.fsrs_last_interval >= 1.0;
+      AND rl.interval_after >= 1.0;
 
     WITH accessible_entries AS (
         SELECT w.id
