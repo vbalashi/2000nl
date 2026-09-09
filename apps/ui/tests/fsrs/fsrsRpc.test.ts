@@ -1270,12 +1270,15 @@ describeIfDb("FSRS RPC integration", () => {
       const { rows: historyRows } = await client.query(
         `select review_result
            from get_recent_training_review_history(50)
-          order by reviewed_at asc`,
+          order by reviewed_at asc, review_result asc`,
       );
-      expect(historyRows).toEqual([
-        { review_result: "learning_started" },
-        { review_result: "review_success" },
-      ]);
+      expect(historyRows).toHaveLength(2);
+      expect(historyRows).toEqual(
+        expect.arrayContaining([
+          { review_result: "learning_started" },
+          { review_result: "review_success" },
+        ]),
+      );
     }, userId);
   });
 

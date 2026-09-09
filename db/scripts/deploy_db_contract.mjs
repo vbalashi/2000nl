@@ -146,6 +146,37 @@ function stripTransactionWrapper(source, migrationId) {
   );
 }
 
+async function inlinePsqlIncludes(repoRoot, source, stack = []) {
+  const output = [];
+  for (const line of source.replaceAll("\r\n", "\n").split("\n")) {
+    const match = line.match(/^\\i\s+(.+?)\s*$/);
+    if (!match) {
+      output.push(line);
+      continue;
+    }
+
+    const relativePath = match[1].trim().replace(/^(?:['"])(.*)(?:['"])$/, "$1");
+    const absolutePath = insideRepo(repoRoot, relativePath);
+    if (stack.includes(absolutePath)) {
+      throw new Error(`Contract include cycle: ${[...stack, absolutePath].join(" -> ")}`);
+    }
+    let included = await readFile(absolutePath, "utf8");
+    included = await inlinePsqlIncludes(repoRoot, included, [...stack, absolutePath]);
+
+    // Chained postflight files historically carry their own transaction wrappers.
+    // The current postflight must remain one transaction when sent via stdin or a
+    // container client, so inline only the body of those established wrappers.
+    if (/^postflight-\d+\.sql$/i.test(path.basename(absolutePath))) {
+      included = included
+        .split("\n")
+        .filter((includedLine) => !["BEGIN;", "COMMIT;"].includes(includedLine.trim()))
+        .join("\n");
+    }
+    output.push(`-- inlined ${relativePath}\n${included.trimEnd()}`);
+  }
+  return output.join("\n");
+}
+
 async function verifiedMigrations(repoRoot, manifest) {
   const verified = [];
   for (const migration of manifest.migrations) {
@@ -167,13 +198,17 @@ async function buildDeploymentSql(repoRoot, manifest, appCommit) {
     throw new Error("--app-commit must be the exact 40-character commit SHA");
   }
   const baseline = await readFile(insideRepo(repoRoot, manifest.baseline.probe), "utf8");
-  const postflight = await readFile(insideRepo(repoRoot, manifest.postflightProbe), "utf8");
-  const preSwitchReadProbe = await readFile(
+  const postflight = await inlinePsqlIncludes(
+    repoRoot,
+    await readFile(insideRepo(repoRoot, manifest.postflightProbe), "utf8"),
+  );
+  const preSwitchReadProbeSource = await readFile(
     insideRepo(repoRoot, manifest.preSwitchReadProbe.file),
     "utf8",
   );
+  const preSwitchReadProbe = await inlinePsqlIncludes(repoRoot, preSwitchReadProbeSource);
   const preSwitchReadProbeChecksum = createHash("sha256")
-    .update(preSwitchReadProbe)
+    .update(preSwitchReadProbeSource)
     .digest("hex");
   if (preSwitchReadProbeChecksum !== manifest.preSwitchReadProbe.sha256) {
     throw new Error("Pre-switch read probe checksum does not match the contract");

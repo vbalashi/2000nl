@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { chmod, mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -139,8 +140,9 @@ esac
   return executable;
 }
 
-async function applyFixture(mode) {
+async function applyFixture(mode, prepare) {
   const root = await fixture();
+  if (prepare) await prepare(root);
   const psql = await fakePsql(root);
   const capture = path.join(root, "captured.sql");
   const result = spawnSync(
@@ -192,6 +194,43 @@ test("validates every immutable contract file without database access", async ()
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout.trim(), "db-contract-gate: valid fixture-123");
+});
+
+test("inlines chained postflight and pre-switch probes for stdin clients", async () => {
+  const { capture, result } = await applyFixture("success", async (root) => {
+    const postflightInclude = "BEGIN;\nSELECT 'included-postflight';\nCOMMIT;\n";
+    const preSwitchInclude = "SELECT 'included-pre-switch';\n";
+    await writeFile(
+      path.join(root, "db/deploy-contract/postflight-122.sql"),
+      postflightInclude,
+    );
+    await writeFile(
+      path.join(root, "db/deploy-contract/pre-switch-read-probe-122.sql"),
+      preSwitchInclude,
+    );
+    await writeFile(
+      path.join(root, "db/deploy-contract/postflight-123.sql"),
+      "\\i db/deploy-contract/postflight-122.sql\n",
+    );
+    await writeFile(
+      path.join(root, "db/deploy-contract/pre-switch-read-probe-123.sql"),
+      "\\i db/deploy-contract/pre-switch-read-probe-122.sql\n",
+    );
+    const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.preSwitchReadProbe.sha256 = createHash("sha256")
+      .update("\\i db/deploy-contract/pre-switch-read-probe-122.sql\n")
+      .digest("hex");
+    await writeFile(manifestPath, JSON.stringify(manifest));
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const sql = await readFile(capture, "utf8");
+  assert.match(sql, /included-postflight/);
+  assert.match(sql, /included-pre-switch/);
+  assert.doesNotMatch(sql, /\\i db\/deploy-contract\/postflight-122\.sql/);
+  assert.doesNotMatch(sql, /\\i db\/deploy-contract\/pre-switch-read-probe-122\.sql/);
+  assert.doesNotMatch(sql, /BEGIN;\nSELECT 'included-postflight';\nCOMMIT;/);
 });
 
 test("rejects a pre-switch read probe above the rollout budget", async () => {
