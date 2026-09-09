@@ -462,7 +462,6 @@ function TrainingScreenContent({
   const initialLoadDone = useRef(false);
   const statsRequestGenerationRef = useRef(0);
   const lastAppliedTrainingFocusFilterKey = useRef(trainingFocusFilterKey);
-  const autoPlayedAudioCardRef = useRef<string | null>(null);
   const lastReloadedLanguageModeScopeRef = useRef(
     `${currentTrainingLanguage}|${enabledModesKey}`,
   );
@@ -474,27 +473,12 @@ function TrainingScreenContent({
   const v2SessionMode =
     trainingShellV2Enabled &&
     (currentMode === "word-to-definition" ||
-      currentMode === "definition-to-word")
+      currentMode === "definition-to-word" ||
+      currentMode === "listen-recognize")
       ? currentMode
       : null;
   const trainingSessionV2Enabled = Boolean(v2SessionMode);
   const v2SessionOwned = Boolean(v2SessionMode && currentWord);
-
-  useEffect(() => {
-    if (!currentWord || currentMode !== "listen-recognize") {
-      autoPlayedAudioCardRef.current = null;
-      return;
-    }
-
-    const cardKey = getTrainingCardKey(currentWord, currentMode);
-    if (autoPlayedAudioCardRef.current === cardKey) return;
-    autoPlayedAudioCardRef.current = cardKey;
-
-    const audioUrl = resolveAudioUrl(currentWord.raw);
-    if (audioUrl) {
-      playAudio(audioUrl, currentWord.headword);
-    }
-  }, [currentMode, currentWord, playAudio, resolveAudioUrl]);
 
   const revealAnswer = useCallback(() => {
     setTranslationTooltipOpen(false);

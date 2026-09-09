@@ -70,7 +70,7 @@ function TestTrainingSenseCardV2Session(
 
 function testPresentationIdentity(
   nextWord: TrainingWord,
-  mode: "word-to-definition" | "definition-to-word",
+  mode: "word-to-definition" | "definition-to-word" | "listen-recognize" | "listen-type",
 ) {
   return `test-presentation:${nextWord.id}:${mode}`;
 }
@@ -117,6 +117,30 @@ describe("TrainingSenseCardV2Session", () => {
       accepted: true,
       card: singleSenseEntry.card,
     });
+  });
+
+  test("uses the V2 listening face and reveals the same answer surface", async () => {
+    render(
+      <TestTrainingSenseCardV2Session
+        word={{ ...word, mode: "listen-recognize" }}
+        mode="listen-recognize"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onPlayResolvedAudio={vi.fn()}
+        onProgressActionAccepted={vi.fn()}
+      />,
+    );
+
+    await screen.findByTestId("training-listening-face");
+    expect(screen.getByRole("button", { name: "Play audio" })).toBeVisible();
+    await waitFor(() => expect(resolveAudio).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("heading", { name: "hand" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(await screen.findByRole("heading", { name: "hand" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Not recognized" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Recognized" })).toBeVisible();
   });
 
   test("reviews an answer past the swipe threshold and resets a cancelled swipe", async () => {

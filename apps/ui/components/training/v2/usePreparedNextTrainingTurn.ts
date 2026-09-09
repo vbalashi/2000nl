@@ -267,6 +267,10 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
 
 function isPlatformV2TrainingMode(
   mode: TrainingMode,
-): mode is "word-to-definition" | "definition-to-word" {
-  return mode === "word-to-definition" || mode === "definition-to-word";
+): mode is "word-to-definition" | "definition-to-word" | "listen-recognize" {
+  return (
+    mode === "word-to-definition" ||
+    mode === "definition-to-word" ||
+    mode === "listen-recognize"
+  );
 }
