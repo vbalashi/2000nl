@@ -12,7 +12,7 @@ import {
   type TrainingAttributionProfileReport,
 } from "../support/trainingAttributionHarness";
 
-test("authenticated Training transition attribution harness", async ({
+test("authenticated Training transition attribution harness @pilot", async ({
   browser,
 }, testInfo) => {
   test.setTimeout(120_000);
