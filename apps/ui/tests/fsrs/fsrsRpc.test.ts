@@ -1213,6 +1213,72 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
+  test("keeps Learn distinct when the first real grade is Good", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const wordId = await insertWord(client, `learning-first-grade-${Date.now()}`);
+      const learnEventId = randomUUID();
+
+      const { rows: learnedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
+          null, null, null, $4::uuid, null, 'first_party', null
+        ) as result`,
+        [userId, wordId, mode, learnEventId],
+      );
+      expect(learnedRows[0].result.status).toBe("accepted");
+
+      const { rows: gradedRows } = await client.query(
+        `select perform_platform_v2_card_action(
+          $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
+          null, null, 'success', $5::uuid, null, 'first_party', null
+        ) as result`,
+        [
+          userId,
+          wordId,
+          mode,
+          learnedRows[0].result.card.stateRevision,
+          randomUUID(),
+        ],
+      );
+      expect(gradedRows[0].result.status).toBe("accepted");
+
+      const { rows: statsRows } = await client.query(
+        `select get_detailed_training_stats($1, ARRAY[$2]::text[], NULL, 'curated') as stats`,
+        [userId, mode],
+      );
+      expect(statsRows[0].stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 1,
+          newCardsToday: 1,
+          learningStartedToday: 1,
+          graduatedNewWordsToday: 1,
+        }),
+      );
+
+      const { rows: reviewRows } = await client.query(
+        `select review_type, interval_after
+           from user_review_log
+          where user_id = $1 and word_id = $2 and mode = $3`,
+        [userId, wordId, mode],
+      );
+      expect(reviewRows).toHaveLength(1);
+      expect(reviewRows[0].review_type).toBe("new");
+      expect(Number(reviewRows[0].interval_after)).toBeGreaterThanOrEqual(1);
+
+      const { rows: historyRows } = await client.query(
+        `select review_result
+           from get_recent_training_review_history(50)
+          order by reviewed_at asc`,
+      );
+      expect(historyRows).toEqual([
+        { review_result: "learning_started" },
+        { review_result: "review_success" },
+      ]);
+    }, userId);
+  });
+
   test("get_card_user_state returns one accessible card state", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
