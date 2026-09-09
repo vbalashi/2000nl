@@ -27,7 +27,7 @@ if [[ '${tool}' == psql && "$*" != *'-f '* ]]; then cat >> "$QA_CALL_LOG"; fi
       cwd: root, encoding: "utf8", timeout: 10_000,
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}`,
         QA_CALL_LOG: log, LOCAL_SUPABASE_DB_URL: target,
-        PGHOSTADDR: "203.0.113.1", PGSERVICE: "remote-fixture" },
+        PGHOSTADDR: "203.0.113.1", PGSERVICE: "remote-fixture", PGPORT: "64321" },
     }),
     calls: () => existsSync(log) ? readFileSync(log, "utf8") : "",
   };
@@ -44,6 +44,7 @@ for (const args of [["all"], ["reset"], ["all", "some-data"],
 
 for (const target of [
   "postgresql://postgres:fixture-secret@production.example/postgres",
+  localUrl.replace(":54322", ""),
   `${localUrl}?host=production.example`, `${localUrl}?hostaddr=10.1.2.3`,
   `${localUrl}?service=other`, `${localUrl}#fragment`, "not-a-url-fixture-secret",
 ]) {

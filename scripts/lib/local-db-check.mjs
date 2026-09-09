@@ -5,7 +5,7 @@ function validateTarget() {
   const url = new URL(process.env.LOCAL_SUPABASE_DB_URL);
   if (!["postgres:", "postgresql:"].includes(url.protocol) ||
       !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
-      !url.username || url.hash || !/^\/[a-zA-Z0-9_-]+$/.test(url.pathname) ||
+      !url.username || !url.port || url.hash || !/^\/[a-zA-Z0-9_-]+$/.test(url.pathname) ||
       [...url.searchParams.keys()].some((key) => key !== "sslmode") ||
       url.searchParams.getAll("sslmode").length > 1 ||
       (url.searchParams.has("sslmode") &&

@@ -92,7 +92,7 @@ database. Do not insert ad-hoc source rows while import is running: source rows
 must have exact coverage by the importer's source bindings.
 
 Unacknowledged `all` and `reset` stop before any service/database command.
-Local wrapper commands accept only loopback PostgreSQL URIs without connection
+Local wrapper commands accept only loopback PostgreSQL URIs with an explicit port and without connection
 overrides. Reset requires port 54322 and database `postgres`, matching the
 checked-in Supabase configuration. Do not use this wrapper for remote staging.
 
