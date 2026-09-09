@@ -13,6 +13,21 @@ get_detailed_training_stats(
 ) RETURNS jsonb
 ```
 
+The JSON projection distinguishes the historical facts used by the footer and
+diagnostics:
+
+- `newWordsToday` / `newCardsToday`: entries and exact entry + card-type pairs
+  introduced today by an accepted `Learn` action, with a first new review as a
+  compatibility fallback;
+- `learningStartedToday`: exact entry + card-type pairs with an accepted
+  `Learn` action today;
+- `graduatedNewWordsToday`: introduced entries whose new review has reached an
+  interday interval. This is separate from the New counter and is not inferred
+  from an enrollment-only event.
+
+The projection is read-only. It does not create an FSRS grade or change queue
+selection.
+
 ## `get_scenario_word_stats`
 
 Get FSRS stats for a specific word in a scenario.

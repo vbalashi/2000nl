@@ -384,3 +384,6 @@
 
 -- Bounded per-profile reading-size preferences for the first-party UI
 \i db/migrations/129_bounded_reading_size_settings.sql
+
+-- Observable Learn/enrollment and graded Training history projections
+\i db/migrations/130_learning_observability.sql
