@@ -83,6 +83,7 @@ export function TrainingSenseCardStage({
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
+  const listeningMode = mode === "listen-recognize";
 
   React.useEffect(() => {
     if (!focusOnMount) return;
@@ -232,15 +233,25 @@ export function TrainingSenseCardStage({
             />
           </>
         ) : (
-          <FaceBody
-            model={model}
-            mode={mode}
-            reversePrompt={reversePrompt}
-            hint={hint}
-            hintVisible={hintVisible}
-            hintLabel={t("senseCard.hint.example")}
-            contentLabel={t("senseCard.training.content")}
-          />
+          mode === "listen-recognize" ? (
+            <ListeningFaceBody
+              mode={mode}
+              interfaceLanguage={interfaceLanguage}
+              onPlayAudio={onPlayAudio}
+              busy={busy}
+              contentLabel={t("senseCard.training.content")}
+            />
+          ) : (
+            <FaceBody
+              model={model}
+              mode={mode}
+              reversePrompt={reversePrompt}
+              hint={hint}
+              hintVisible={hintVisible}
+              hintLabel={t("senseCard.hint.example")}
+              contentLabel={t("senseCard.training.content")}
+            />
+          )
         )}
       </article>
 
@@ -259,6 +270,7 @@ export function TrainingSenseCardStage({
         {answerVisible ? (
           <AnswerDock
             model={model}
+            mode={mode}
             busy={busy}
             interfaceLanguage={interfaceLanguage}
             primaryActionRef={primaryAnswerActionRef}
@@ -270,7 +282,7 @@ export function TrainingSenseCardStage({
             model={model}
             busy={busy}
             interfaceLanguage={interfaceLanguage}
-            hintAvailable={Boolean(hint)}
+            hintAvailable={!listeningMode && Boolean(hint)}
             hintVisible={hintVisible}
             showHintLabel={t("senseCard.hint.show")}
             hideHintLabel={t("senseCard.hint.hide")}
@@ -457,6 +469,51 @@ function FaceBody({
             </p>
           </aside>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ListeningFaceBody({
+  mode,
+  interfaceLanguage,
+  onPlayAudio,
+  busy,
+  contentLabel,
+}: {
+  mode: "listen-recognize";
+  interfaceLanguage: OnboardingLanguage;
+  onPlayAudio?: () => void;
+  busy: boolean;
+  contentLabel: string;
+}) {
+  const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  return (
+    <div
+      data-testid="training-listening-face"
+      data-listening-mode={mode}
+      role="region"
+      aria-label={contentLabel}
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin]"
+    >
+      <div className="flex min-h-full flex-col items-center justify-center gap-5 p-[18px] text-center">
+        {onPlayAudio ? (
+          <IconButton
+            label={t("senseCard.audio.play")}
+            disabled={busy}
+            onClick={onPlayAudio}
+          >
+            <Volume2 aria-hidden="true" className="h-9 w-9" />
+          </IconButton>
+        ) : null}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            {t("senseCard.listening.label")}
+          </p>
+          <p className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+            {t("senseCard.listening.prompt")}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -795,6 +852,7 @@ function FaceDock({
 
 function AnswerDock({
   model,
+  mode,
   busy,
   interfaceLanguage,
   primaryActionRef,
@@ -802,6 +860,7 @@ function AnswerDock({
   reportAction,
 }: {
   model: TrainingSenseCardModel;
+  mode: TrainingMode;
   busy: boolean;
   interfaceLanguage: OnboardingLanguage;
   primaryActionRef: React.RefObject<HTMLButtonElement>;
@@ -809,6 +868,14 @@ function AnswerDock({
   reportAction?: React.ReactNode;
 }) {
   const t = (key: string) => platformV2Message(interfaceLanguage, key);
+  const reviewCapabilities =
+    mode === "listen-recognize"
+      ? model.reviewCapabilities.filter(
+          (capability) =>
+            capability.reviewResult === "fail" ||
+            capability.reviewResult === "success",
+        )
+      : model.reviewCapabilities;
 
   if (model.isKnown && model.undoKnownCapability) {
     return (
@@ -843,7 +910,7 @@ function AnswerDock({
         </button>
       ) : null}
 
-      {model.reviewCapabilities.length ? (
+      {reviewCapabilities.length ? (
         <div
           role="group"
           aria-label={t("senseCard.sections.reviewPrompt")}
@@ -853,7 +920,7 @@ function AnswerDock({
             data-testid="training-review-grid"
             className="grid h-[90px] grid-cols-2 grid-rows-2 gap-[6px] sm:h-[42px] sm:grid-cols-4 sm:grid-rows-1"
           >
-            {model.reviewCapabilities.map((capability, index) => (
+            {reviewCapabilities.map((capability, index) => (
               <button
                 key={capability.reviewResult}
                 ref={index === 0 ? primaryActionRef : undefined}
@@ -862,7 +929,13 @@ function AnswerDock({
                 onClick={() => onAction(capability)}
                 className={`relative h-[42px] overflow-hidden rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold outline-none transition before:absolute before:inset-y-0 before:left-0 before:w-1 hover:bg-slate-100 focus-visible:bg-slate-100 disabled:opacity-50 dark:border-[#7B8491] dark:bg-[#11141A] dark:hover:bg-[#202630] dark:focus-visible:bg-[#202630] ${reviewTone[capability.reviewResult]}`}
               >
-                {t(capability.messageKey)}
+                {mode === "listen-recognize"
+                  ? t(
+                      capability.reviewResult === "fail"
+                        ? "senseCard.listening.fail"
+                        : "senseCard.listening.success",
+                    )
+                  : t(capability.messageKey)}
               </button>
             ))}
           </div>

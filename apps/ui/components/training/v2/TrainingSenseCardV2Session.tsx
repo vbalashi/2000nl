@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import type { TrainingMode } from "@/lib/types";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   beginTrainingUserTransition,
@@ -54,7 +55,7 @@ type Props = {
   nextTransitionId?: string;
   presentationIdentity: string | null;
   word: TrainingWord;
-  mode: "word-to-definition" | "definition-to-word";
+  mode: TrainingMode;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
@@ -152,6 +153,7 @@ export function TrainingSenseCardV2Session({
   const interactionBusyRef = React.useRef(false);
   const loadGenerationRef = React.useRef(0);
   const presentationHandledRef = React.useRef(false);
+  const autoPlayedCardRef = React.useRef<string | null>(null);
 
   const load = React.useCallback(
     async (
@@ -444,6 +446,20 @@ export function TrainingSenseCardV2Session({
       setBusy(false);
     }
   };
+
+  React.useEffect(() => {
+    if (
+      mode !== "listen-recognize" ||
+      sessionState !== "ready" ||
+      !result?.group.header.audio ||
+      !onPlayResolvedAudio ||
+      autoPlayedCardRef.current === cardIdentity
+    ) {
+      return;
+    }
+    autoPlayedCardRef.current = cardIdentity;
+    void handlePlayAudio();
+  }, [cardIdentity, mode, onPlayResolvedAudio, result, sessionState]);
 
   const swipeLeftCapability = model?.reviewCapabilities.find(
     (capability) => capability.reviewResult === "fail",

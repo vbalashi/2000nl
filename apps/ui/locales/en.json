@@ -79,13 +79,19 @@
       "hide": "Hide hint",
       "example": "Hint · example"
     },
-    "answer": {
+  "answer": {
       "show": "Show answer",
       "prompt": "What does this word mean?",
       "reversePrompt": "Which word matches this meaning?",
       "revealed": "Answer shown",
-      "hidden": "Answer hidden"
-    },
+    "hidden": "Answer hidden"
+  },
+  "listening": {
+    "label": "Listen",
+    "prompt": "Do you recognize this word?",
+    "fail": "Not recognized",
+    "success": "Recognized"
+  },
     "sections": {
       "meaning": "Meaning",
       "meanings": "Meanings",

@@ -79,13 +79,19 @@
       "hide": "Hint verbergen",
       "example": "Hint · voorbeeld"
     },
-    "answer": {
+  "answer": {
       "show": "Antwoord tonen",
       "prompt": "Wat betekent dit woord?",
       "reversePrompt": "Welk woord hoort bij deze betekenis?",
       "revealed": "Antwoord getoond",
-      "hidden": "Antwoord verborgen"
-    },
+    "hidden": "Antwoord verborgen"
+  },
+  "listening": {
+    "label": "Luister",
+    "prompt": "Herken je dit woord?",
+    "fail": "Niet herkend",
+    "success": "Herkend"
+  },
     "sections": {
       "meaning": "Betekenis",
       "meanings": "Betekenissen",
