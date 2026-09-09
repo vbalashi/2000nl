@@ -87,30 +87,30 @@ BEGIN
     FROM introduced_cards ic
     JOIN accessible_entries ae ON ae.id = ic.entry_id;
 
-    SELECT COUNT(DISTINCT e.entry_id)
+    SELECT COUNT(*)
     INTO v_learning_started_today
-    FROM user_card_action_events e
-    WHERE e.user_id = p_user_id
-      AND e.card_type_id = ANY(p_modes)
-      AND e.action = 'start-learning'
-      AND e.created_at::date = current_date
-      AND EXISTS (
-          SELECT 1 FROM word_entries w
-          WHERE w.id = e.entry_id
-            AND (w.dictionary_id IS NULL OR can_access_dictionary(p_user_id, w.dictionary_id, 'read'))
-            AND (
-                  (p_list_id IS NULL AND w.is_nt2_2000 = true)
-               OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
-                      SELECT 1 FROM word_list_items li
-                      WHERE li.list_id = p_list_id AND li.word_id = w.id
-                  ))
-               OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
-                      SELECT 1 FROM user_word_list_items li
-                      JOIN user_word_lists l ON l.id = li.list_id
-                      WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
-                  ))
-            )
-      );
+    FROM (
+        SELECT DISTINCT e.entry_id, e.card_type_id
+        FROM user_card_action_events e
+        JOIN word_entries w ON w.id = e.entry_id
+        WHERE e.user_id = p_user_id
+          AND e.card_type_id = ANY(p_modes)
+          AND e.action = 'start-learning'
+          AND e.created_at::date = current_date
+          AND (w.dictionary_id IS NULL OR can_access_dictionary(p_user_id, w.dictionary_id, 'read'))
+          AND (
+                (p_list_id IS NULL AND w.is_nt2_2000 = true)
+             OR (p_list_id IS NOT NULL AND p_list_type = 'curated' AND EXISTS (
+                    SELECT 1 FROM word_list_items li
+                    WHERE li.list_id = p_list_id AND li.word_id = w.id
+                ))
+             OR (p_list_id IS NOT NULL AND p_list_type = 'user' AND EXISTS (
+                    SELECT 1 FROM user_word_list_items li
+                    JOIN user_word_lists l ON l.id = li.list_id
+                    WHERE li.list_id = p_list_id AND li.word_id = w.id AND l.user_id = p_user_id
+                ))
+          )
+    ) started;
 
     -- A graduated-new metric is kept separate from the introduced metric so
     -- callers can explain both concepts without overloading `newWordsToday`.

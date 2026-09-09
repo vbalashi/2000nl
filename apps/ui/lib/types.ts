@@ -260,7 +260,7 @@ export type DetailedStats = {
   // New cards introduced today (Learn action or first new grade).
   newWordsToday: number;      // Distinct entries introduced today
   newCardsToday: number;      // Distinct entry + card-type pairs introduced today
-  learningStartedToday: number; // Distinct entries with an accepted Learn action
+  learningStartedToday: number; // Distinct entry + card-type pairs with an accepted Learn action
   graduatedNewWordsToday: number; // Introduced entries whose new review reached an interday interval
   dailyNewLimit: number;      // Target (default 10)
   
