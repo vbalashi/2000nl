@@ -62,6 +62,7 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
+  trainingSessionId?: string | null;
   sessionChrome?: TrainingSessionChromeProps | null;
   sessionFooter: FooterStatsProps;
   sessionNotice?: TrainingSessionNoticeInput | null;
@@ -112,6 +113,7 @@ export function TrainingSenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
+  trainingSessionId,
   sessionChrome,
   sessionFooter,
   sessionNotice,
@@ -353,11 +355,15 @@ export function TrainingSenseCardV2Session({
             () =>
               performPlatformV2TrainingAction(capability, {
                 transitionId: nextTransitionId,
+                trainingSessionId: trainingSessionId ?? undefined,
                 onRequestFrozen,
               }),
             () => "accepted",
           )
-        : await performPlatformV2TrainingAction(capability, { onRequestFrozen });
+        : await performPlatformV2TrainingAction(capability, {
+            trainingSessionId: trainingSessionId ?? undefined,
+            onRequestFrozen,
+          });
       if (frozenRequest) {
         setReportOperation({
           request: frozenRequest,

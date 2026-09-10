@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchTrainingScenarios,
-  fetchTrainingSessionPlan,
+  startTrainingSession,
   updateActiveTrainingScope,
 } from "@/lib/trainingService";
+import type { TrainingSession } from "@/lib/trainingService";
 import type {
   CardFilter,
   DetailedStats,
@@ -49,9 +50,11 @@ type CommitPilotDraftParams = {
     scenario: string;
     cardFilter: CardFilter;
     focusFilter: TrainingFocusFilter;
+    trainingSessionId?: string;
   }) => Promise<LoadNextTrainingTurnResult>;
   reportError: (error: string | null) => void;
   onPlanReady?: (plan: TrainingSessionPlan) => void;
+  onSessionReady?: (session: TrainingSession) => void;
 };
 
 type PilotControllerParams = {
@@ -94,6 +97,7 @@ export function useCommitTrainingPilotDraft({
   loadWord,
   reportError,
   onPlanReady,
+  onSessionReady,
 }: CommitPilotDraftParams) {
   return useCallback(
     async (draft: TrainingSetupDraft) => {
@@ -129,18 +133,19 @@ export function useCommitTrainingPilotDraft({
         return false;
       }
 
-      const plan = await fetchTrainingSessionPlan(userId, draft.modes, {
+      const session = await startTrainingSession(userId, draft.modes, {
         listId: scope.listId,
         listType: scope.listType ?? undefined,
         cardFilter: draft.cardFilter,
         trainingFilter: focusFilter,
         sessionSize: draft.sessionSize,
       });
-      if (!plan) {
+      if (!session) {
         reportError("training_plan_unavailable");
         return false;
       }
-      onPlanReady?.(plan);
+      onSessionReady?.(session);
+      onPlanReady?.(session);
 
       reportError(null);
       if (selectedList) applyListLocally(selectedList);
@@ -154,6 +159,7 @@ export function useCommitTrainingPilotDraft({
         scenario: draft.scenarioId,
         cardFilter: draft.cardFilter,
         focusFilter,
+        trainingSessionId: session.sessionId,
       });
       if (isTrainingLoadFailure(loadResult)) reportError("training_load_failed");
       return loadResult === "loaded";
@@ -167,6 +173,7 @@ export function useCommitTrainingPilotDraft({
       loadStats,
       loadWord,
       onPlanReady,
+      onSessionReady,
       reportError,
       resetQueue,
       resolveList,

@@ -23,9 +23,7 @@ export async function performPlatformV2Action(
     request.actionId === "undo-known" ? request.target : null;
   const reviewResult =
     request.actionId === "review-card" ? request.reviewResult : null;
-  const { data, error } = await service.supabase.rpc(
-    "perform_platform_v2_card_action_as_principal",
-    {
+  const actionPayload = {
       p_user_id: auth.user.id,
       p_action_id: request.actionId,
       p_entry_id: request.target.entryId,
@@ -38,7 +36,13 @@ export async function performPlatformV2Action(
       p_source_context: request.sourceContext ?? null,
       p_auth_kind: auth.principal.authKind,
       p_connected_client_id: auth.principal.connectedClientId,
-    },
+      ...(request.trainingSessionId
+        ? { p_training_session_id: request.trainingSessionId }
+        : {}),
+    };
+  const { data, error } = await service.supabase.rpc(
+    "perform_platform_v2_card_action_as_principal",
+    actionPayload,
   );
 
   if (error) return actionError(error);

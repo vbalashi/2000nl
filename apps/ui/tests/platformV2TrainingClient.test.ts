@@ -74,6 +74,23 @@ describe("buildPlatformV2TrainingActionRequest", () => {
     });
   });
 
+  test("attaches the opaque training session id without changing the target", () => {
+    const capability = reviewCapability("success");
+    expect(
+      buildPlatformV2TrainingActionRequest(
+        capability,
+        "a4dc56fd-c087-47aa-85d2-a20f66ca2822",
+        "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      ),
+    ).toEqual({
+      actionId: "review-card",
+      clientEventId: "a4dc56fd-c087-47aa-85d2-a20f66ca2822",
+      trainingSessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      target: capability.target,
+      reviewResult: "success",
+    });
+  });
+
   test("preserves the active mark evidence required for undo", () => {
     const capability: PlatformSenseCardCapabilityV2 = {
       actionId: "undo-known",

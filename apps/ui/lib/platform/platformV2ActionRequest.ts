@@ -24,6 +24,13 @@ export function parsePlatformV2ActionRequest(
   if (!clientEventId) {
     return { ok: false, error: "invalid_client_event_id", status: 400 };
   }
+  const trainingSessionId =
+    body.trainingSessionId === undefined
+      ? undefined
+      : asUuid(body.trainingSessionId);
+  if (body.trainingSessionId !== undefined && !trainingSessionId) {
+    return { ok: false, error: "invalid_training_session_id", status: 400 };
+  }
 
   const target = asRecord(body.target);
   if (target.kind !== "sense-card") {
@@ -104,6 +111,7 @@ export function parsePlatformV2ActionRequest(
           activeKnownMarkId,
           knownMarkRevision,
         },
+        ...(trainingSessionId ? { trainingSessionId } : {}),
         ...(sourceContext ? { sourceContext } : {}),
       },
     };
@@ -134,6 +142,7 @@ export function parsePlatformV2ActionRequest(
       request: {
         actionId,
         clientEventId,
+        ...(trainingSessionId ? { trainingSessionId } : {}),
         target: senseCardTarget,
         reviewResult,
         ...(sourceContext ? { sourceContext } : {}),
@@ -160,6 +169,7 @@ export function parsePlatformV2ActionRequest(
     request: {
       actionId,
       clientEventId,
+      ...(trainingSessionId ? { trainingSessionId } : {}),
       target: senseCardTarget,
       ...(sourceContext ? { sourceContext } : {}),
     },

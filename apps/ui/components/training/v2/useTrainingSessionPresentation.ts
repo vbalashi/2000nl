@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { TrainingSessionPlanSnapshot } from "./useTrainingSessionPlan";
+import type { TrainingSessionPlan } from "@/lib/types";
 
 type TrainingSurface = "today" | "setup" | "session";
 
@@ -25,6 +26,7 @@ export function useTrainingSessionPresentation({
   sessionGeneration,
   scopeKey,
   planSnapshot,
+  planOverride = null,
   resetKey,
 }: {
   surface: TrainingSurface;
@@ -32,17 +34,20 @@ export function useTrainingSessionPresentation({
   sessionGeneration: number;
   scopeKey: string;
   planSnapshot: TrainingSessionPlanSnapshot | null;
+  /** A server-latched plan takes precedence over any later dynamic estimate. */
+  planOverride?: TrainingSessionPlan | null;
   /**
    * Explicit reset token owned by TrainingScreen; scope hydration alone is not
    * a reset.
    */
   resetKey: number;
 }): TrainingSessionPresentation {
-  const currentPlan =
+  const currentPlan = planOverride ?? (
     planSnapshot?.sessionGeneration === sessionGeneration &&
     planSnapshot.scopeKey === scopeKey
       ? planSnapshot.plan
-      : null;
+      : null
+  );
   const plannedTotal = currentPlan?.plannedTotal ?? null;
   const [actualCardOrdinal, setActualCardOrdinal] = React.useState(1);
   const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);

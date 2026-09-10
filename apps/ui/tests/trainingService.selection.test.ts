@@ -20,6 +20,7 @@ const importService = async () => {
     fetchNextTrainingWord: service.fetchNextTrainingWord,
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
     fetchTrainingSessionPlan: service.fetchTrainingSessionPlan,
+    startTrainingSession: service.startTrainingSession,
     fetchScenarioStats: service.fetchScenarioStats,
     fetchTrainingScenarios: service.fetchTrainingScenarios,
   };
@@ -114,6 +115,47 @@ describe("trainingService next-word selection", () => {
 
     expect(first).toBe(same);
     expect(changed).not.toBe(first);
+  });
+
+  test("starts a server-latched session and returns its opaque id", async () => {
+    const { startTrainingSession } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+        sessionSize: "5",
+        plannedNew: 3,
+        plannedReview: 2,
+        plannedPractice: 0,
+        plannedTotal: 5,
+        plannedAt: "2026-09-10T12:00:00.000Z",
+      },
+      error: null,
+    });
+
+    await expect(
+      startTrainingSession("user-1", ["word-to-definition"], {
+        listId: "list-1",
+        listType: "user",
+        cardFilter: "both",
+        sessionSize: 5,
+      }),
+    ).resolves.toEqual({
+      sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      plannedNew: 3,
+      plannedReview: 2,
+      plannedPractice: 0,
+      plannedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+    });
+    expect(rpc).toHaveBeenCalledWith("start_training_session", {
+      p_user_id: "user-1",
+      p_card_type_ids: ["word-to-definition"],
+      p_list_id: "list-1",
+      p_list_type: "user",
+      p_card_filter: "both",
+      p_training_filter: {},
+      p_session_size: "5",
+    });
   });
 
   test("fetchTrainingSessionPlan rejects inconsistent or failed snapshots", async () => {
@@ -215,6 +257,46 @@ describe("trainingService next-word selection", () => {
         }),
       }),
     );
+  });
+
+  test("uses the session selector when an opaque session id is supplied", async () => {
+    const { fetchNextTrainingWord } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "word-session-1",
+          headword: "sessie",
+          raw: { meanings: [{ definition: "vaste reeks" }] },
+          mode: "word-to-definition",
+          stats: { source: "new", mode: "word-to-definition" },
+          trainingSessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+          trainingSessionOrdinal: 1,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchNextTrainingWord(
+        "user-1",
+        ["word-to-definition"],
+        [],
+        undefined,
+        "both",
+        "new",
+        [],
+        null,
+        false,
+        "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      ),
+    ).resolves.toEqual(
+      expect.objectContaining({ id: "word-session-1", isFirstEncounter: true }),
+    );
+    expect(rpc).toHaveBeenCalledWith("get_next_training_session_card", {
+      p_user_id: "user-1",
+      p_session_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+    });
+    expect(rpc).not.toHaveBeenCalledWith("get_next_card", expect.anything());
   });
 
   test("fetchNextTrainingWordByScenario resolves scenario modes and preserves RPC mode for first encounters", async () => {

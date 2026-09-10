@@ -52,9 +52,11 @@ export {
   fetchScenarioStats,
   fetchTrainingScenarios,
   fetchTrainingSessionPlan,
+  startTrainingSession,
   isTrainingFocusFilterActive,
   type TrainingScenarioCatalog,
   type TrainingSessionPlanScope,
+  type TrainingSession,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";
