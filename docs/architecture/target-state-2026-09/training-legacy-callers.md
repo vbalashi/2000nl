@@ -91,8 +91,9 @@ git -C /Users/khrustal/dev/audiofilms grep -n -E 'platform-action-v2|start-learn
 
 ## Worktree evidence
 
-The main and #142 trees are clean/pushed at audit start. Closed #297 is clean
-and pushed but intentionally unmerged. #137 contains untracked design evidence;
-#194 contains seven modified screenshots. Preserve both visual trees. Clean
+`origin/main` is `ef91acd9` and PR #300 carries the #142 deletion commit
+`51270c02`. Closed #297 is clean and pushed but intentionally unmerged. #137
+contains untracked design evidence; #194 contains seven modified screenshots.
+Preserve both visual trees. Clean
 does not mean integrated, and this audit does not authorize deleting their
 unmerged evidence. #143 and draft #144 remain outside the work scope.
