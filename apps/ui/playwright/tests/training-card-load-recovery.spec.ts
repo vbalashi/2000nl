@@ -108,3 +108,49 @@ test("a failed prepared card recovers after closing and continuing on desktop an
     await page.close();
   }
 });
+
+test("a missing Platform presentation identity is retired before the next session card", async ({
+  browser,
+}) => {
+  const page = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  await installTrainingAttributionCollector(page);
+  const fixture = await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    projectionMissingEntryIds: ["attribution-word-5"],
+  });
+
+  await page
+    .getByRole("button", {
+      name: /Начать с текущими настройками|Start with current settings|Start met huidige instellingen/i,
+    })
+    .click();
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await expect
+    .poll(() => fixture.requests.projectionLookups.length)
+    .toBeGreaterThan(0);
+  await page
+    .getByRole("button", {
+      name: /Antwoord Tonen|Показать ответ|Show answer/i,
+    })
+    .click();
+  await page
+    .getByRole("button", {
+      name: /Begin met leren|Учить|Start learning/i,
+    })
+    .click();
+
+  // The permanent projection failure is detected while the next card is
+  // prefetched. It is retired and replaced before the user sees a failure
+  // screen, so the accepted Learn action lands directly on the next card.
+  await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
+  await expect
+    .poll(() => fixture.requests.unavailable.length)
+    .toBeGreaterThan(0);
+  expect(fixture.requests.unavailable[0]).toMatchObject({
+    p_entry_id: "attribution-word-5",
+    p_reason: "projection-missing",
+  });
+
+  await page.close();
+});

@@ -180,10 +180,13 @@ BEGIN
         50
       );
       IF v_platform_group->>'error' = 'presentation_identity_incomplete'
-         OR NOT EXISTS (
-           SELECT 1
-           FROM jsonb_array_elements(COALESCE(v_platform_group->'items', '[]'::jsonb)) item
-           WHERE item->>'id' = v_member.entry_id::text
+         OR (
+           v_platform_group->>'error' IS NULL
+           AND NOT EXISTS (
+             SELECT 1
+             FROM jsonb_array_elements(COALESCE(v_platform_group->'items', '[]'::jsonb)) item
+             WHERE item->>'id' = v_member.entry_id::text
+           )
          ) THEN
         v_evidence_reason := 'projection-missing';
       END IF;

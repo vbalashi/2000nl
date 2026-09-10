@@ -100,6 +100,12 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
             unavailableReason: "entry-not-found",
           } as const;
         }
+        if (lookup.state === "projection-missing") {
+          return {
+            ready: false,
+            unavailableReason: "projection-missing",
+          } as const;
+        }
         return false;
       } catch {
         return false;
@@ -187,16 +193,23 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
           signal: controllerRef.current?.signal,
         },
       ).then((lookup) => {
-        const ready = lookup.state === "ready";
+        const warmResult: TrainingWarmResult =
+          lookup.state === "ready"
+            ? true
+            : lookup.state === "entry-not-found"
+              ? { ready: false, unavailableReason: "entry-not-found" }
+              : lookup.state === "projection-missing"
+                ? { ready: false, unavailableReason: "projection-missing" }
+                : false;
         recordTrainingTransitionTiming({
           transitionId: candidate.transitionId,
           stage: "next-card.prefetch",
           durationMs: 0,
-          outcome: ready
+          outcome: warmResult === true
             ? "proactive-refresh-ready"
             : "proactive-refresh-failed",
         });
-        return ready;
+        return warmResult;
       });
       candidate.v2Ready = refreshed;
       return refreshed;

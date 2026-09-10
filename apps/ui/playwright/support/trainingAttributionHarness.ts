@@ -144,6 +144,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   injectedDelayMs: number,
   options: {
     invalidEntryIds?: string[];
+    projectionMissingEntryIds?: string[];
     abortFirstActionAfterMs?: number;
     abortActionNumber?: number;
     reconcileDelayMs?: number;
@@ -176,6 +177,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
   const sessionRequests: Record<string, unknown>[] = [];
+  const projectionLookupRequests: Record<string, unknown>[] = [];
+  const unavailableSessionRequests: Record<string, unknown>[] = [];
   const sessionMembers = entries.slice(0, 50);
   const consumedSessionEntryIds = new Set<string>();
   const unavailableSessionEntryIds = new Set<string>();
@@ -184,6 +187,9 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const failWarmupLookupsForEntries = new Set<string>();
   const lookupAttempts = new Map<string, number>();
   const invalidEntryIds = new Set(options.invalidEntryIds ?? []);
+  const projectionMissingEntryIds = new Set(
+    options.projectionMissingEntryIds ?? [],
+  );
   let abortFirstAction = options.abortFirstActionAfterMs !== undefined;
   let pendingActionReceipt: Record<string, unknown> | null = null;
   const splitDelayMs = injectedDelayMs > 0 ? Math.ceil(injectedDelayMs * 0.55) : 0;
@@ -253,6 +259,16 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const body = route.request().postDataJSON?.() ?? {};
     const entryId = typeof body.entryId === "string" ? body.entryId : "";
     const entry = entries.find((candidate) => candidate.id === entryId);
+    if (projectionMissingEntryIds.has(entryId)) {
+      projectionLookupRequests.push({ ...body });
+      await fulfillJson(
+        route,
+        { error: "presentation_identity_incomplete" },
+        "lookup-projection-missing",
+        409,
+      );
+      return;
+    }
     const attempt = (lookupAttempts.get(entryId) ?? 0) + 1;
     lookupAttempts.set(entryId, attempt);
     if (failWarmupLookupsForEntries.has(entryId) && attempt <= 2) {
@@ -527,14 +543,22 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/get_next_training_session_card")) {
       sessionRequests.push({ ...body });
-      const invalidEntry = entries.find((entry) => invalidEntryIds.has(entry.id));
-      const isInvalidPreparedCandidate =
-        Boolean(invalidEntry) && sessionRequests.length >= 2 && sessionRequests.length <= 3;
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
         ? body.p_exclude_card_keys.filter(
             (value: unknown): value is string => typeof value === "string",
           )
         : [];
+      const invalidEntry = entries.find(
+        (entry) =>
+          (invalidEntryIds.has(entry.id) ||
+            projectionMissingEntryIds.has(entry.id)) &&
+          !unavailableSessionEntryIds.has(entry.id),
+      );
+      const isInvalidPreparedCandidate =
+        Boolean(invalidEntry) &&
+        sessionRequests.length >= 2 &&
+        sessionRequests.length <= 3 &&
+        !excludedCardKeys.includes(`${invalidEntry!.id}:word-to-definition`);
       if (
         options.forceOnDemandLookupEveryAction &&
         excludedCardKeys.length > 0 &&
@@ -563,6 +587,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     }
 
     if (pathname.endsWith("/rpc/mark_training_session_member_unavailable")) {
+      unavailableSessionRequests.push({ ...body });
       const entryId =
         typeof body.p_entry_id === "string" ? body.p_entry_id : null;
       if (entryId) unavailableSessionEntryIds.add(entryId);
@@ -802,6 +827,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     requests: {
       scheduler: schedulerRequests,
       session: sessionRequests,
+      projectionLookups: projectionLookupRequests,
+      unavailable: unavailableSessionRequests,
       stats: statsRequests,
       scenarios: scenarioRequests,
     },

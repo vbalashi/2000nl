@@ -99,6 +99,7 @@ type TrainingV2SessionState =
   | "loading"
   | "ready"
   | "lookup-http-error"
+  | "projection-missing"
   | "contract-mismatch"
   | "entry-not-found"
   | "model-invalid"

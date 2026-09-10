@@ -1184,6 +1184,25 @@ describe("fetchPlatformV2TrainingEntry", () => {
     );
   });
 
+  test("classifies the permanent missing-presentation response separately from transport failures", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: "presentation_identity_incomplete" }),
+        { status: 409 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      fetchPlatformV2TrainingEntry({
+        entryId: singleSenseEntry.entryId,
+        cardTypeId: "word-to-definition",
+        contentLanguageCode: "nl",
+        translationTargetLanguageCode: "en",
+      }),
+    ).resolves.toEqual({ state: "projection-missing" });
+  });
+
   test("classifies an incompatible response contract", async () => {
     vi.stubGlobal(
       "fetch",

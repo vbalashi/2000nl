@@ -65,6 +65,7 @@ export type LoadNextTrainingTurnRequest = Omit<
 type AcceptedCardTransition = {
   word: TrainingWord;
   wordMode: TrainingMode;
+  trainingSessionId: string | null;
   currentCardKey: string;
   loadGeneration: number;
   turnIdForReview: string | null;
@@ -100,6 +101,7 @@ const unavailableReasonForFailure = (
 ): TrainingSessionUnavailableReason | null => {
   switch (failure) {
     case "entry-not-found":
+    case "projection-missing":
     case "model-invalid":
     case "reverse-definition-missing":
       return failure;
@@ -321,7 +323,8 @@ export function useTrainingTurnController(input: Inputs) {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
       const cardKey = getTrainingCardKey(word, mode);
       const reason = unavailableReasonForFailure(failure);
-      const effectiveSessionId = sessionIdOverride ?? trainingSessionId;
+      const effectiveSessionId =
+        sessionIdOverride === undefined ? trainingSessionId : sessionIdOverride;
       if (
         cardFailureRef.current?.cardKey === cardKey &&
         cardFailureRef.current.failure === failure &&
@@ -575,7 +578,9 @@ export function useTrainingTurnController(input: Inputs) {
     const failure = cardFailureRef.current;
     if (!failure) return "skipped" as const;
     const effectiveTrainingSessionId =
-      failure.trainingSessionId ?? trainingSessionId;
+      failure.trainingSessionId === null
+        ? null
+        : failure.trainingSessionId ?? trainingSessionId;
     let markedUnavailable = !failure.reason || !effectiveTrainingSessionId;
     if (
       failure.reason &&
@@ -664,6 +669,7 @@ export function useTrainingTurnController(input: Inputs) {
     return {
       word: currentWord,
       wordMode,
+      trainingSessionId,
       currentCardKey,
       loadGeneration: loadGenerationRef.current,
       turnIdForReview,
@@ -683,6 +689,7 @@ export function useTrainingTurnController(input: Inputs) {
     presentPreparedCandidate,
     queueTurn,
     reviewCounter,
+    trainingSessionId,
   ]);
 
   const preparePlatformProgressAction = useCallback(() => {
@@ -744,6 +751,7 @@ export function useTrainingTurnController(input: Inputs) {
           await reportCardLoadFailure(
             prefetched.word,
             trainingWarmFailure(warmResult),
+            transition.trainingSessionId,
           );
           recordTrainingTransitionTiming({
             transitionId: transition.transitionId,

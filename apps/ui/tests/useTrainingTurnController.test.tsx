@@ -1102,6 +1102,37 @@ describe("useTrainingTurnController transition matrix", () => {
     );
   });
 
+  test("does not resurrect the previous session when a replacement warmup fails", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const controller = renderController({
+      selectNext,
+      trainingSessionId: "old-session",
+      markUnavailable,
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: null,
+      });
+    });
+    await act(async () => {
+      await controller.result.current.reportCardLoadFailure(
+        word2,
+        "entry-not-found",
+        null,
+      );
+    });
+
+    expect(markUnavailable).not.toHaveBeenCalled();
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+    expect(selectNext).toHaveBeenLastCalledWith(
+      expect.objectContaining({ trainingSessionId: null }),
+    );
+  });
+
   test("override identity uses the presented mode and clears its notice after review", async () => {
     prepared.consume.mockReturnValue(null);
     const overrideWord = {

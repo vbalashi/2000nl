@@ -157,7 +157,8 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
       cardTypeId: TrainingMode;
       reason: TrainingSessionUnavailableReason;
     }) => {
-      const effectiveSessionId = sessionId ?? activeTrainingSessionId;
+      const effectiveSessionId =
+        sessionId === undefined ? activeTrainingSessionId : sessionId;
       if (!effectiveSessionId) return false;
       const result = await markTrainingSessionMemberUnavailable(
         userId,

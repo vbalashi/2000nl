@@ -45,6 +45,7 @@ type PlatformV2TrainingEntrySelection = Omit<
 export type PlatformV2TrainingLookupResult =
   | PlatformV2TrainingEntryResult
   | { state: "lookup-http-error"; status: number }
+  | { state: "projection-missing" }
   | { state: "contract-mismatch" }
   | { state: "entry-not-found" };
 
@@ -107,6 +108,12 @@ export async function fetchPlatformV2TrainingEntry(
     );
   }
   if (result.state === "http-error") {
+    if (
+      result.status === 409 &&
+      (await responseReportsPresentationIdentityIncomplete(result.response))
+    ) {
+      return { state: "projection-missing" };
+    }
     return { state: "lookup-http-error", status: result.status };
   }
   if (result.state === "contract-mismatch") {
@@ -120,6 +127,22 @@ export async function fetchPlatformV2TrainingEntry(
   return selected
     ? { state: "ready", ...selected }
     : { state: "entry-not-found" };
+}
+
+async function responseReportsPresentationIdentityIncomplete(
+  response: Response,
+): Promise<boolean> {
+  const payload = await response
+    .clone()
+    .json()
+    .catch(() => null);
+  return (
+    Boolean(payload) &&
+    typeof payload === "object" &&
+    !Array.isArray(payload) &&
+    (payload as Record<string, unknown>).error ===
+      "presentation_identity_incomplete"
+  );
 }
 
 export function prefetchPlatformV2TrainingEntry(
