@@ -47,7 +47,8 @@ BEGIN
     'curated',
     'both',
     'auto',
-    ARRAY[]::text[]
+    ARRAY[]::text[],
+    false
   );
 END
 $pre_switch_next_card$;

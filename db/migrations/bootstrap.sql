@@ -403,3 +403,6 @@
 \i db/migrations/134_session_scoped_card_selection.sql
 \i db/migrations/135_session_selector_exclusions.sql
 \i db/migrations/136_training_unavailable_members.sql
+
+-- Remove the retired scheduler compatibility overloads after caller migration
+\i db/migrations/137_retire_legacy_scheduler_overloads.sql

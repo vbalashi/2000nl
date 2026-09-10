@@ -441,7 +441,7 @@ test(
          EXPLAIN (ANALYZE, BUFFERS, WAL, SETTINGS, FORMAT JSON)
          SELECT * FROM public.get_next_card(
            '${qaUserId}', ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
-           'curated', 'both', 'auto', ARRAY[]::text[]
+           'curated', 'both', 'auto', ARRAY[]::text[], false
          );
          ROLLBACK;\n`,
       );

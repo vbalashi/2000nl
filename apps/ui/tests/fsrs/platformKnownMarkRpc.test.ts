@@ -875,7 +875,8 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
              'user',
              'review',
              'review',
-             ARRAY[]::text[]
+             ARRAY[]::text[],
+             false
            ) as item`,
           [userId, cardTypeId, listId],
         );
@@ -891,41 +892,22 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
              'review',
              'review',
              ARRAY[]::text[],
-             '{}'::jsonb
+             '{}'::jsonb,
+             false
            ) as item`,
           [userId, cardTypeId, listId],
         );
         expect(filtered.rows).toEqual([]);
 
-        const bypassPrivileges = await client.query(
+        const bypassFunctions = await client.query(
           `select
-             has_function_privilege(
-               'authenticated',
-               'public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])',
-               'EXECUTE'
-             ) as authenticated_card,
-             has_function_privilege(
-               'service_role',
-               'public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])',
-               'EXECUTE'
-             ) as service_card,
-             has_function_privilege(
-               'authenticated',
-               'public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)',
-               'EXECUTE'
-             ) as authenticated_filtered,
-             has_function_privilege(
-               'service_role',
-               'public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)',
-               'EXECUTE'
-             ) as service_filtered`,
+             to_regprocedure('public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])') is null as card_removed,
+             to_regprocedure('public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is null as filtered_removed`,
         );
-        expect(bypassPrivileges.rows).toEqual([
+        expect(bypassFunctions.rows).toEqual([
           {
-            authenticated_card: false,
-            service_card: false,
-            authenticated_filtered: false,
-            service_filtered: false,
+            card_removed: true,
+            filtered_removed: true,
           },
         ]);
 

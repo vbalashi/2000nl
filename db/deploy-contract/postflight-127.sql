@@ -155,13 +155,18 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed bounded-plan-explain-contract';
   END IF;
 
-  IF to_regprocedure(
-    'public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])'
-  ) IS NULL OR to_regprocedure(
-    'public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)'
+  IF COALESCE(
+    to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)'),
+    to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])')
+  ) IS NULL OR COALESCE(
+    to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)'),
+    to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)')
   ) IS NULL OR NOT has_function_privilege(
     'authenticated',
-    'public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])',
+    COALESCE(
+      to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)'),
+      to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])')
+    ),
     'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed app-compatibility';

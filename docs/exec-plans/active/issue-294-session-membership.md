@@ -1,11 +1,11 @@
 # Issue #294 — server-latched Training membership
 
-Status re-audited 2026-09-10 against `origin/main` at
-`1ccc271e8644a31731cb678063ff6d6e78d0186c` (DB135). The UI wiring and
-refresh/resume path are already shipped. The current #311 branch adds the
-unavailable-member outcome and five-card evidence; it is pending final review
-and merge. Safe retirement of internal scheduler overload callers remains a
-separate follow-up.
+Status re-audited 2026-09-11 against the #294 final-gates worktree. The UI
+wiring, refresh/resume path, and unavailable-member outcome are shipped through
+PR #317 (DB136). This slice adds the five-card mutation/retry proof, migrates
+all remaining repository callers to the explicit scheduler contract, and
+retires the compatibility overloads in migration 137. Final review, CI, and
+deployment remain the completion gates for #294.
 
 ## Problem
 
@@ -47,10 +47,11 @@ The two quantities must stay separate:
 
 The current UI already uses migration-132 explicit RPC signatures. Direct
 lookups in AudioFilms and Pontix were checked at their fetched `origin/main`
-revisions and do not call these scheduler RPCs. Remaining old signatures are
-internal SQL fixtures, diagnostics, and deployment probes; they must be
-migrated and covered by a no-caller check before a forward migration drops the
-compatibility overloads.
+revisions and do not call these scheduler RPCs. The remaining repository
+references were internal SQL fixtures, diagnostics, and deployment probes;
+they are now migrated and guarded by
+`db/scripts/scheduler_legacy_callers.test.mjs`. Migration 137 removes the old
+eight/nine-argument and `_without_known` entry points from the live database.
 
 ## Ordered implementation slices
 
@@ -63,20 +64,23 @@ compatibility overloads.
    opaque id through start → selection → action, persist/resume it after
    refresh, exclude the current/consumed card keys, and explicitly clear it on
    scope replacement. Migration 135 is the current additive exclusion guard.
-4. **Implemented on the #311 branch — unavailable members.** The read-only
+4. **Shipped via PR #317 — unavailable members.** The read-only
    selector returns a permanent access/content diagnostic; the explicit
    `mark_training_session_member_unavailable` action records
    `unavailable_at`/reason, continues to the next member, and completes the
    session when no available members remain. Transient failures stay retryable,
-   and unavailable members never count as learned or accepted reviews. The
-   branch still needs final review, CI, and merge.
-5. **Then — caller retirement.** Migrate internal probes, diagnostics and test
-   fixtures to explicit signatures; run an executable no-caller check; remove
-   compatibility overloads in a separate forward migration only after the gate
-   is green.
-6. **Final gates.** Run spec, architecture, refactoring and UI-QA reviews.
-   Deploy only after the five-card mutation/retry scenario proves that the
-   original denominator and membership remain stable.
+   and unavailable members never count as learned or accepted reviews.
+5. **Implemented in this final-gates slice — caller retirement and evidence.**
+   Internal probes, diagnostics, benchmarks, and test fixtures now use explicit
+   signatures. The executable no-caller check is wired into the database drift
+   workflow. Migration 137 removes the compatibility overloads only after that
+   repository gate, and the training RPC suite proves a five-card session keeps
+   its original membership through queue mutation, retry, duplicate action, and
+   completion.
+6. **Final gates.** Run spec, architecture, refactoring and UI-QA reviews;
+   apply migration 137 to the populated test database; run the postflight and
+   pre-switch probes; then deploy and verify the live health/UI path. Close
+   #294 only when all of those checks are green.
 
 ## Explicit non-goals
 
