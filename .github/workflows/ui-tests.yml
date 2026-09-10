@@ -8,6 +8,7 @@ on:
       - "docker-compose.yml"
       - ".github/workflows/deploy-nuc.yml"
       - "scripts/verify-deploy-health.mjs"
+      - "scripts/check-training-retirements.mjs"
       - "scripts/verify-deploy-health.test.mjs"
       - "scripts/ab-auth-prod.sh"
       - "scripts/ab-auth-prod.test.mjs"
@@ -24,6 +25,7 @@ on:
       - "docker-compose.yml"
       - ".github/workflows/deploy-nuc.yml"
       - "scripts/verify-deploy-health.mjs"
+      - "scripts/check-training-retirements.mjs"
       - "scripts/verify-deploy-health.test.mjs"
       - "scripts/ab-auth-prod.sh"
       - "scripts/ab-auth-prod.test.mjs"
@@ -58,6 +60,9 @@ jobs:
       - name: Lint UI
         run: npm run lint
         working-directory: apps/ui
+
+      - name: Check retired Training wiring
+        run: node scripts/check-training-retirements.mjs
 
       - name: Typecheck UI
         run: npm run typecheck

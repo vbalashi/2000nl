@@ -2523,37 +2523,130 @@ test("V2 loading retains the existing session chrome and footer", async () => {
   }
 });
 
-test("classifies the listening renderer as an explicit legacy exception", async () => {
+test("routes listening mode through the V2 renderer without a legacy marker", async () => {
   vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
   platformV2TrainingUiEnabled.mockReturnValue(true);
-  fetchActiveTrainingScope.mockResolvedValueOnce({
+  fetchActiveTrainingScope.mockReset();
+  fetchActiveTrainingScope.mockResolvedValue({
     ...defaultActiveTrainingScope,
     activeScenario: "listening",
     modesEnabled: ["listen-recognize"],
   });
-  fetchNextTrainingWordByScenario.mockResolvedValueOnce({
+  fetchUserPreferences.mockReset();
+  fetchUserPreferences.mockResolvedValue({
+    themePreference: "system",
+    modesEnabled: ["listen-recognize"],
+    cardFilter: "both",
+    languageCode: "nl",
+    newReviewRatio: 2,
+    activeScenario: "listening",
+    translationLang: null,
+  });
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue({
     ...mockWord,
     mode: "listen-recognize",
   });
+  prefetchPlatformV2TrainingEntry.mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
 
   try {
-    const { container } = render(<TrainingScreen user={user} />);
+    const { container } = render(
+      <TrainingScreen user={user} trainingTodaySetupEnabled={false} />,
+    );
 
     await waitFor(() =>
       expect(
-        container.querySelector('[data-training-v2-state="listening-mode"]'),
-      ).toBeInTheDocument(),
+        container.querySelector('[data-testid="mock-training-sense-card-v2"]'),
+      ).not.toBeNull(),
     );
-    const renderer = container.querySelector(
-      '[data-training-v2-state="listening-mode"]',
+    expect(
+      container.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    fetchActiveTrainingScope.mockReset();
+    fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
+    fetchUserPreferences.mockReset();
+    fetchUserPreferences.mockResolvedValue({
+      themePreference: "system",
+      modesEnabled: ["word-to-definition"],
+      cardFilter: "both",
+      languageCode: "nl",
+      newReviewRatio: 2,
+      activeScenario: "understanding",
+      translationLang: null,
+    });
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    prefetchPlatformV2TrainingEntry.mockReset();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("keeps the V2 loading surface when the pilot has no current card yet", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockImplementationOnce(
+    () => new Promise(() => undefined),
+  );
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+
+    expect(await screen.findByTestId("training-v2-loading")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("training-card-scroll-region"),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+  } finally {
+    platformV2TrainingUiEnabled.mockReturnValue(false);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+    vi.unstubAllEnvs();
+  }
+});
+
+test("renders an explicit V2 state instead of falling back for unsupported listen-type", async () => {
+  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
+  platformV2TrainingUiEnabled.mockReturnValue(true);
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario.mockResolvedValue({
+    ...mockWord,
+    mode: "listen-type",
+  });
+
+  try {
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
+
+    expect(
+      await screen.findByTestId("training-v2-unsupported-mode"),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[data-training-renderer="legacy"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Terug naar Vandaag|Back to Today|Вернуться на Сегодня/i,
+      }),
     );
-    expect(renderer).toHaveAttribute("data-training-renderer", "legacy");
-    expect(renderer).toHaveAttribute(
-      "data-training-v2-state",
-      "listening-mode",
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("training-v2-unsupported-mode"),
+      ).not.toBeInTheDocument(),
     );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
     vi.unstubAllEnvs();
   }
 });
