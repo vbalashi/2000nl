@@ -570,11 +570,49 @@ describe("useTrainingTurnController transition matrix", () => {
     });
 
     expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
       entryId: "word-2",
       cardTypeId: "word-to-definition",
       reason: "dictionary-access-revoked",
     });
     expect(selectNext).toHaveBeenCalledTimes(2);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("uses the per-request session id when the initial session load races React state", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-2",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      )
+      .mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: "session-1",
+      });
+    });
+
+    expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-2",
+      cardTypeId: "word-to-definition",
+      reason: "dictionary-access-revoked",
+    });
     expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
   });
 

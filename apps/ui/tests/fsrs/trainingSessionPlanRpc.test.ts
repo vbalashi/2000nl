@@ -423,6 +423,14 @@ describeDb("authoritative training session plan RPC", () => {
         expect.objectContaining({ status: "unavailable", remaining: 4 }),
       );
 
+      const { rows: members } = await client.query(
+        `select entry_id as "entryId", card_type_id as "cardTypeId"
+         from training_session_members
+         where session_id = $1
+         order by ordinal`,
+        [sessionId],
+      );
+
       const { rows: unavailableConsumeRows } = await client.query(
         `select private.consume_training_session_member(
           $1::uuid, $2::uuid, $3::uuid, 'word-to-definition'
@@ -432,6 +440,18 @@ describeDb("authoritative training session plan RPC", () => {
       expect(unavailableConsumeRows[0].result).toEqual(
         expect.objectContaining({ status: "unavailable", ordinal: 1 }),
       );
+
+      await client.query("savepoint unavailable_reason_mismatch");
+      await expect(
+        client.query(
+          `select mark_training_session_member_unavailable(
+            $1::uuid, $2::uuid, $3::uuid, 'word-to-definition',
+            'dictionary-access-revoked'
+          ) as result`,
+          [userId, sessionId, members[1].entryId],
+        ),
+      ).rejects.toThrow(/evidence mismatch/);
+      await client.query("rollback to savepoint unavailable_reason_mismatch");
 
       const { rows: secondRowsAfterMark } = await client.query(
         `select get_next_training_session_card($1::uuid, $2::uuid, ARRAY[]::text[]) as card`,
@@ -455,7 +475,7 @@ describeDb("authoritative training session plan RPC", () => {
       const markUnavailable = async (entryId: string) => {
         const { rows } = await client.query(
           `select mark_training_session_member_unavailable(
-            $1::uuid, $2::uuid, $3::uuid, 'word-to-definition', 'entry-not-found'
+            $1::uuid, $2::uuid, $3::uuid, 'word-to-definition', 'model-invalid'
           ) as result`,
           [userId, sessionId, entryId],
         );
@@ -489,7 +509,7 @@ describeDb("authoritative training session plan RPC", () => {
       expect(completedRows[0].snapshot.members).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ unavailableReason: "dictionary-access-revoked" }),
-          expect.objectContaining({ unavailableReason: "entry-not-found" }),
+          expect.objectContaining({ unavailableReason: "model-invalid" }),
         ]),
       );
       expect(completedRows[0].snapshot.members).toHaveLength(5);

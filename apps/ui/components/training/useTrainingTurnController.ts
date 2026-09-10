@@ -366,6 +366,10 @@ export function useTrainingTurnController(input: Inputs) {
       setLoadingWord(true);
       setUsableCandidatesExhausted(false);
       setLoadError(null);
+      const effectiveTrainingSessionId =
+        request.trainingSessionId === undefined
+          ? trainingSessionId
+          : request.trainingSessionId;
       try {
         const overrideWordId = nextCardOverrideWordIdRef.current;
         if (overrideWordId) {
@@ -452,13 +456,14 @@ export function useTrainingTurnController(input: Inputs) {
               }
               const diagnostic = cause.diagnostic;
               if (
-                !trainingSessionId ||
+                !effectiveTrainingSessionId ||
                 !selection.markUnavailable ||
-                diagnostic.trainingSessionId !== trainingSessionId
+                diagnostic.trainingSessionId !== effectiveTrainingSessionId
               ) {
                 throw cause;
               }
               const marked = await selection.markUnavailable({
+                sessionId: effectiveTrainingSessionId,
                 entryId: diagnostic.entryId,
                 cardTypeId: diagnostic.cardTypeId,
                 reason: diagnostic.reason,

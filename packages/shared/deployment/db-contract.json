@@ -83,7 +83,7 @@
     {
       "migrationId": 136,
       "file": "db/migrations/136_training_unavailable_members.sql",
-      "sha256": "dda822318943f7a495f20e03581e1e15ad7775c07d6c9f6ff62a0b2b41bca62f"
+      "sha256": "8934180ff6dd54c4f2660cde91587195cf9626da31acc38db0144b36a26b1070"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-136.sql",

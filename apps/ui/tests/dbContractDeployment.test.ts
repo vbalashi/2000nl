@@ -63,6 +63,7 @@ describe("NUC database contract deployment", () => {
 
   test("postflight proves the bounded default scheduler contract", () => {
     const postflight =
+      read("db/deploy-contract/postflight-136.sql") +
       read("db/deploy-contract/postflight-134.sql") +
       read("db/deploy-contract/postflight-130.sql") +
       read("db/deploy-contract/postflight-129.sql");
@@ -95,6 +96,8 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("GRADUATEDNEWWORDSTODAY");
     expect(postflight).toContain("phone_constraint_validated IS DISTINCT FROM true");
     expect(postflight).toContain("desktop_constraint_validated IS DISTINCT FROM true");
+    expect(postflight).toContain("mark_training_session_member_unavailable");
+    expect(postflight).toContain("unavailable-member selector must be STABLE");
     expect(postflight).toContain(
       "'CHECK ((reading_size_phone = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
     );
@@ -102,7 +105,7 @@ describe("NUC database contract deployment", () => {
       "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
     );
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-131.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-136.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

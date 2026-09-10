@@ -38,6 +38,9 @@ DECLARE
   v_session public.training_sessions%rowtype;
   v_member public.training_session_members%rowtype;
   v_expected_member public.training_session_members%rowtype;
+  v_entry public.word_entries%rowtype;
+  v_projected_card jsonb;
+  v_evidence_reason text;
   v_remaining integer;
 BEGIN
   IF (select auth.uid()) IS NULL OR p_user_id IS DISTINCT FROM (select auth.uid()) THEN
@@ -86,6 +89,60 @@ BEGIN
       'ordinal', v_member.ordinal,
       'reason', v_member.unavailable_reason
     );
+  END IF;
+
+  -- Do not let a client retire an otherwise valid member by naming an
+  -- arbitrary allowed reason. Re-check the current server state at the
+  -- mutation boundary. The selector is read-only, so this check is the
+  -- authoritative evidence that makes the retirement legal.
+  SELECT entry.* INTO v_entry
+  FROM public.word_entries entry
+  WHERE entry.id = v_member.entry_id;
+  IF NOT FOUND THEN
+    v_evidence_reason := 'entry-not-found';
+  ELSIF NOT (
+    v_entry.dictionary_id IS NULL
+    OR public.can_access_dictionary(p_user_id, v_entry.dictionary_id)
+  ) THEN
+    v_evidence_reason := 'dictionary-access-revoked';
+  ELSE
+    v_projected_card := private.project_training_scheduler_candidate_v1(
+      p_user_id,
+      v_member.entry_id,
+      v_member.card_type_id,
+      v_member.queue_source,
+      COALESCE(v_session.training_filter, '{}'::jsonb),
+      private.training_filter_target_date(COALESCE(v_session.training_filter, '{}'::jsonb)) IS NOT NULL
+        OR NULLIF(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceId', '') IS NOT NULL
+        OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceKind'), '') IS NOT NULL
+        OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'externalId'), '') IS NOT NULL,
+      0,
+      0,
+      0,
+      0,
+      0
+    );
+    IF v_projected_card IS NULL THEN
+      v_evidence_reason := 'projection-missing';
+    ELSIF jsonb_typeof(v_entry.raw) IS DISTINCT FROM 'object' THEN
+      v_evidence_reason := 'model-invalid';
+    ELSIF jsonb_typeof(v_entry.raw->'meanings') IS DISTINCT FROM 'array' THEN
+      v_evidence_reason := 'model-invalid';
+    ELSIF v_member.card_type_id = 'definition-to-word'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(COALESCE(v_entry.raw->'meanings', '[]'::jsonb)) meaning
+        WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
+      ) THEN
+      v_evidence_reason := 'reverse-definition-missing';
+    END IF;
+  END IF;
+
+  IF v_evidence_reason IS DISTINCT FROM p_reason THEN
+    RAISE EXCEPTION
+      'training session unavailable evidence mismatch: requested %, observed %',
+      p_reason,
+      COALESCE(v_evidence_reason, 'member-renderable');
   END IF;
 
   IF NOT p_allow_out_of_order THEN

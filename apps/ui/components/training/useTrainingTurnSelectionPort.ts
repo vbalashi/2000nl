@@ -34,6 +34,7 @@ export type TrainingTurnSelectionPort = {
   selectNext: (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>;
   lookupOverride: (wordId: string) => Promise<TrainingWord | null>;
   markUnavailable?: (input: {
+    sessionId?: string | null;
     entryId: string;
     cardTypeId: TrainingMode;
     reason: TrainingSessionUnavailableReason;
@@ -150,15 +151,17 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
   );
 
   const markUnavailable = useCallback(
-    async ({ entryId, cardTypeId, reason }: {
+    async ({ sessionId, entryId, cardTypeId, reason }: {
+      sessionId?: string | null;
       entryId: string;
       cardTypeId: TrainingMode;
       reason: TrainingSessionUnavailableReason;
     }) => {
-      if (!activeTrainingSessionId) return false;
+      const effectiveSessionId = sessionId ?? activeTrainingSessionId;
+      if (!effectiveSessionId) return false;
       const result = await markTrainingSessionMemberUnavailable(
         userId,
-        activeTrainingSessionId,
+        effectiveSessionId,
         entryId,
         cardTypeId,
         reason,
