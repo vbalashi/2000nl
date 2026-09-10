@@ -148,6 +148,7 @@
       "loading": "Trainingskaart laden…",
       "loadFailed": "Deze trainingskaart kon niet worden geladen.",
       "exhausted": "Er zijn geen bruikbare trainingskaarten meer in deze sessie.",
+      "unsupportedMode": "Deze trainingsmodus is nog niet beschikbaar.",
       "stateRefreshed": "De kaart is elders gewijzigd. De nieuwste staat wordt nu getoond.",
       "temporaryFailure": "De verbinding werd onderbroken. Probeer het opnieuw.",
       "exit": "Terug naar Vandaag",

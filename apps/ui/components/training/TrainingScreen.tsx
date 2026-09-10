@@ -47,6 +47,7 @@ import {
   TrainingSenseCardV2Session,
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
+import { TrainingUnsupportedMode } from "./v2/TrainingUnsupportedMode";
 import { TrainingSessionChrome } from "./v2/TrainingSessionChrome";
 import { TrainingSessionV2Layout } from "./v2/TrainingSessionV2Layout";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
@@ -1828,14 +1829,25 @@ function TrainingScreenContent({
             }}
             onExit={trainingPilot.returnToToday}
           />
-        ) : trainingShellV2Enabled && sessionChromeVisible ? (
+        ) : trainingShellV2Enabled ? (
           <TrainingSessionV2Layout
-            phase={usableCandidatesExhausted ? "failure" : "loading"}
+            phase={
+              currentWord && !v2SessionMode
+                ? "failure"
+                : usableCandidatesExhausted
+                  ? "failure"
+                  : "loading"
+            }
             chrome={trainingSessionChrome}
             footer={trainingSessionFooter}
             notice={trainingSessionNotice}
           >
-            {usableCandidatesExhausted ? (
+            {currentWord && !v2SessionMode ? (
+              <TrainingUnsupportedMode
+                interfaceLanguage={onboardingLang}
+                onExit={trainingPilot.returnToToday}
+              />
+            ) : usableCandidatesExhausted ? (
               <TrainingUsableCandidatesExhausted
                 interfaceLanguage={onboardingLang}
                 onExit={trainingPilot.returnToToday}
