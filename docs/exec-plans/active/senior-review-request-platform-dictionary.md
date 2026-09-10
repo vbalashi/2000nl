@@ -31,7 +31,7 @@ Then inspect the current implementation paths that matter:
 - `apps/ui/components/training/wordlist/DictionarySearchTab.tsx`
 - `apps/ui/components/training/wordlist/WordListTab.tsx`
 - `apps/ui/components/training/TrainingScreen.tsx`
-- `apps/ui/components/training/TrainingCard.tsx`
+- `apps/ui/components/training/v2/TrainingSenseCardV2Session.tsx`
 - `apps/ui/app/api/translation/route.ts`
 - `apps/ui/app/api/tts/route.ts`
 

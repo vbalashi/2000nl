@@ -62,7 +62,7 @@ dictionary transformation.
 - `apps/ui/lib/platform/platformApi.ts`
 - `apps/ui/lib/wordUtils.ts`
 - `apps/ui/components/training/TrainingScreen.tsx`
-- `apps/ui/components/training/TrainingCard.tsx`
+- `apps/ui/components/training/v2/TrainingSenseCardV2Session.tsx`
 - `apps/ui/components/training/wordlist/DictionarySearchTab.tsx`
 - `apps/ui/components/training/wordlist/WordListTab.tsx`
 - `apps/ui/app/api/translation/route.ts`
