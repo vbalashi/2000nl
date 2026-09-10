@@ -115,65 +115,14 @@ BEGIN
   ) THEN
     v_evidence_reason := 'dictionary-access-revoked';
   ELSE
-    SELECT dictionary.schema_key, schema_row.render_capabilities
-    INTO v_schema_key, v_render_capabilities
-    FROM public.dictionaries dictionary
-    LEFT JOIN public.dictionary_schemas schema_row
-      ON schema_row.schema_key = dictionary.schema_key
-     AND schema_row.version = dictionary.schema_version
-    WHERE dictionary.id = v_entry.dictionary_id;
-
-    v_projected_card := private.project_training_scheduler_candidate_v1(
-      p_user_id,
-      v_member.entry_id,
-      v_member.card_type_id,
-      v_member.queue_source,
-      COALESCE(v_session.training_filter, '{}'::jsonb),
-      private.training_filter_target_date(COALESCE(v_session.training_filter, '{}'::jsonb)) IS NOT NULL
-        OR NULLIF(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceId', '') IS NOT NULL
-        OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceKind'), '') IS NOT NULL
-        OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'externalId'), '') IS NOT NULL,
-      0,
-      0,
-      0,
-      0,
-      0
-    );
-    IF v_projected_card IS NULL THEN
-      v_evidence_reason := 'projection-missing';
-    ELSIF jsonb_typeof(v_entry.raw) IS DISTINCT FROM 'object' THEN
-      v_evidence_reason := 'model-invalid';
-    ELSIF v_schema_key = 'user-entry-v1'
-      AND (
-        NULLIF(trim(v_entry.headword), '') IS NULL
-        OR NOT (
-          NULLIF(trim(v_entry.raw->>'definition'), '') IS NOT NULL
-          OR NULLIF(trim(v_entry.raw->'translation'->>'text'), '') IS NOT NULL
-          OR NULLIF(trim(v_entry.raw->'example'->>'source'), '') IS NOT NULL
-          OR NULLIF(trim(v_entry.raw->>'notes'), '') IS NOT NULL
-        )
-      ) THEN
-      v_evidence_reason := 'model-invalid';
-    ELSIF 'definitions' = ANY(COALESCE(v_render_capabilities, ARRAY[]::text[]))
-      AND v_schema_key <> 'user-entry-v1'
-      AND jsonb_typeof(v_entry.raw->'meanings') IS DISTINCT FROM 'array' THEN
-      v_evidence_reason := 'model-invalid';
-    ELSIF v_member.card_type_id = 'definition-to-word' AND (
-      (v_schema_key = 'user-entry-v1'
-        AND NULLIF(trim(v_entry.raw->>'definition'), '') IS NULL)
-      OR (v_schema_key <> 'user-entry-v1'
-        AND NOT EXISTS (
-          SELECT 1
-          FROM jsonb_array_elements(COALESCE(v_entry.raw->'meanings', '[]'::jsonb)) meaning
-          WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
-        ))
-    ) THEN
-      v_evidence_reason := 'reverse-definition-missing';
-    ELSE
-      -- The Platform V2 renderer depends on the same presentation identity
-      -- contract as the UI lookup route. A dictionary row can be present while
-      -- its headword group/bindings have been retired, which is a permanent
-      -- projection failure even though the scheduler projection still exists.
+    -- Keep the evidence order aligned with the client lookup contract when
+    -- the observed lookup failure is projection-missing. A missing Platform
+    -- presentation identity is then authoritative even when the underlying
+    -- raw payload is also malformed; otherwise the mark RPC could reject the
+    -- exact diagnostic that caused the retry. For other requested reasons we
+    -- preserve the more specific model checks below and only use identity as
+    -- the fallback.
+    IF p_reason = 'projection-missing' THEN
       v_platform_group := public.read_platform_v2_training_group(
         p_user_id,
         v_member.entry_id,
@@ -189,6 +138,82 @@ BEGIN
            )
          ) THEN
         v_evidence_reason := 'projection-missing';
+      END IF;
+    END IF;
+
+    IF v_evidence_reason IS NULL THEN
+      SELECT dictionary.schema_key, schema_row.render_capabilities
+      INTO v_schema_key, v_render_capabilities
+      FROM public.dictionaries dictionary
+      LEFT JOIN public.dictionary_schemas schema_row
+        ON schema_row.schema_key = dictionary.schema_key
+       AND schema_row.version = dictionary.schema_version
+      WHERE dictionary.id = v_entry.dictionary_id;
+
+      v_projected_card := private.project_training_scheduler_candidate_v1(
+        p_user_id,
+        v_member.entry_id,
+        v_member.card_type_id,
+        v_member.queue_source,
+        COALESCE(v_session.training_filter, '{}'::jsonb),
+        private.training_filter_target_date(COALESCE(v_session.training_filter, '{}'::jsonb)) IS NOT NULL
+          OR NULLIF(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceId', '') IS NOT NULL
+          OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'sourceKind'), '') IS NOT NULL
+          OR NULLIF(trim(COALESCE(v_session.training_filter, '{}'::jsonb)->>'externalId'), '') IS NOT NULL,
+        0,
+        0,
+        0,
+        0,
+        0
+      );
+      IF v_projected_card IS NULL THEN
+        v_evidence_reason := 'projection-missing';
+      ELSIF jsonb_typeof(v_entry.raw) IS DISTINCT FROM 'object' THEN
+        v_evidence_reason := 'model-invalid';
+      ELSIF v_schema_key = 'user-entry-v1'
+        AND (
+          NULLIF(trim(v_entry.headword), '') IS NULL
+          OR NOT (
+            NULLIF(trim(v_entry.raw->>'definition'), '') IS NOT NULL
+            OR NULLIF(trim(v_entry.raw->'translation'->>'text'), '') IS NOT NULL
+            OR NULLIF(trim(v_entry.raw->'example'->>'source'), '') IS NOT NULL
+            OR NULLIF(trim(v_entry.raw->>'notes'), '') IS NOT NULL
+          )
+        ) THEN
+        v_evidence_reason := 'model-invalid';
+      ELSIF 'definitions' = ANY(COALESCE(v_render_capabilities, ARRAY[]::text[]))
+        AND v_schema_key <> 'user-entry-v1'
+        AND jsonb_typeof(v_entry.raw->'meanings') IS DISTINCT FROM 'array' THEN
+        v_evidence_reason := 'model-invalid';
+      ELSIF v_member.card_type_id = 'definition-to-word' AND (
+        (v_schema_key = 'user-entry-v1'
+          AND NULLIF(trim(v_entry.raw->>'definition'), '') IS NULL)
+        OR (v_schema_key <> 'user-entry-v1'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(COALESCE(v_entry.raw->'meanings', '[]'::jsonb)) meaning
+            WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
+          ))
+      ) THEN
+        v_evidence_reason := 'reverse-definition-missing';
+      END IF;
+      IF v_evidence_reason IS NULL THEN
+        v_platform_group := public.read_platform_v2_training_group(
+          p_user_id,
+          v_member.entry_id,
+          50
+        );
+        IF v_platform_group->>'error' = 'presentation_identity_incomplete'
+           OR (
+             v_platform_group->>'error' IS NULL
+             AND NOT EXISTS (
+               SELECT 1
+               FROM jsonb_array_elements(COALESCE(v_platform_group->'items', '[]'::jsonb)) item
+               WHERE item->>'id' = v_member.entry_id::text
+             )
+           ) THEN
+          v_evidence_reason := 'projection-missing';
+        END IF;
       END IF;
     END IF;
   END IF;

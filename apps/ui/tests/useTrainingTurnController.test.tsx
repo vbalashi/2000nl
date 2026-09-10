@@ -581,6 +581,51 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
   });
 
+  test("reconciles more than 64 unavailable session members without a fixed cap", async () => {
+    const unavailableCount = 65;
+    const replacement = { ...word2, id: "word-final" };
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const selectNext = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        throw new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-unavailable-1",
+          cardTypeId: "word-to-definition",
+          reason: "projection-missing",
+        });
+      });
+    for (let ordinal = 2; ordinal <= unavailableCount; ordinal += 1) {
+      selectNext.mockImplementationOnce(async () => {
+        throw new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: ordinal,
+          entryId: `word-unavailable-${ordinal}`,
+          cardTypeId: "word-to-definition",
+          reason: "projection-missing",
+        });
+      });
+    }
+    selectNext.mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+
+    expect(markUnavailable).toHaveBeenCalledTimes(unavailableCount);
+    expect(selectNext).toHaveBeenCalledTimes(unavailableCount + 1);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
   test("uses the per-request session id when the initial session load races React state", async () => {
     const markUnavailable = vi.fn().mockResolvedValue(true);
     const replacement = { ...word2, id: "word-3" };

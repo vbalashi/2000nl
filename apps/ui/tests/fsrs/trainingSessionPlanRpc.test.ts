@@ -519,6 +519,74 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("accepts the observed projection reason when identity and model evidence fail together", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           minimum_subscription_tier, schema_key, schema_version
+         ) values (
+           'nl', $1, 'Projection precedence fixture', 'curated', 'private', null,
+           'free', 'nl-vandale-v1', 1
+         ) returning id`,
+        [`projection-precedence-${userId}`],
+      );
+      const dictionaryId = dictionaryRows[0].id as string;
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [dictionaryId, userId],
+      );
+      const { rows: entryRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, part_of_speech,
+           is_nt2_2000, raw
+         ) values ($1, 'nl', 'projection-precedence', 'noun', true, '{}'::jsonb)
+         returning id`,
+        [dictionaryId],
+      );
+      const entryId = entryRows[0].id as string;
+      const { rows: sessionRows } = await client.query(
+        `insert into training_sessions (
+           user_id, session_size, card_type_ids, list_type, card_filter,
+           training_filter, planned_new, planned_review, planned_total
+         ) values (
+           $1, '5', ARRAY['word-to-definition']::text[], 'curated', 'both',
+           '{}'::jsonb, 1, 0, 1
+         ) returning id`,
+        [userId],
+      );
+      const sessionId = sessionRows[0].id as string;
+      await client.query(
+        `insert into training_session_members (
+           session_id, ordinal, entry_id, card_type_id, queue_source
+         ) values ($1, 1, $2, 'word-to-definition', 'new')`,
+        [sessionId, entryId],
+      );
+
+      const { rows } = await client.query(
+        `select mark_training_session_member_unavailable(
+          $1::uuid, $2::uuid, $3::uuid, 'word-to-definition',
+          'projection-missing'
+        ) as result`,
+        [userId, sessionId, entryId],
+      );
+      expect(rows[0].result).toEqual(
+        expect.objectContaining({
+          status: "unavailable-complete",
+          reason: "projection-missing",
+          remaining: 0,
+        }),
+      );
+    }, userId);
+  });
+
   test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
     const userId = randomUUID();
     const otherUserId = randomUUID();

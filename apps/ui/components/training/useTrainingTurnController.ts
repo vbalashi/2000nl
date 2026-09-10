@@ -463,8 +463,14 @@ export function useTrainingTurnController(input: Inputs) {
 
           // The session selector is read-only. If it reports a permanent
           // access/projection failure, retire that member through the explicit
-          // mutation boundary and ask the selector for the next member.
-          for (let attempt = 0; attempt < 64; attempt += 1) {
+          // mutation boundary and ask the selector for the next member. Do
+          // not use a fixed attempt cap: `all-due-today` sessions can
+          // legitimately contain more than 64 members. A repeated
+          // diagnostic is the real safety boundary; it means the server did
+          // not advance after a successful retirement and retrying would
+          // loop forever.
+          const reconciledDiagnostics = new Set<string>();
+          for (;;) {
             try {
               return await measureTrainingTransitionStage(
                 transitionId,
@@ -484,6 +490,16 @@ export function useTrainingTurnController(input: Inputs) {
               ) {
                 throw cause;
               }
+              const diagnosticKey = [
+                diagnostic.trainingSessionId,
+                diagnostic.trainingSessionOrdinal,
+                diagnostic.entryId,
+                diagnostic.cardTypeId,
+                diagnostic.reason,
+              ].join(":");
+              if (reconciledDiagnostics.has(diagnosticKey)) {
+                throw new Error("training_session_unavailable_reconciliation_stalled");
+              }
               const marked = await selection.markUnavailable({
                 sessionId: effectiveTrainingSessionId,
                 entryId: diagnostic.entryId,
@@ -491,9 +507,9 @@ export function useTrainingTurnController(input: Inputs) {
                 reason: diagnostic.reason,
               });
               if (!marked) throw cause;
+              reconciledDiagnostics.add(diagnosticKey);
             }
           }
-          throw new Error("training_session_unavailable_reconciliation_limit");
         };
         const primaryQueueTurn = requestedQueueTurn ?? queueTurn;
         let nextWord = await selectForQueueTurn(primaryQueueTurn);
