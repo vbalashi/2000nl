@@ -2911,7 +2911,7 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
       })),
     };
     expect(
-      observed.heading?.includes("fiets"),
+      Boolean(screen.queryByRole("heading", { name: "fiets" })),
       JSON.stringify(observed),
     ).toBe(true);
   });
