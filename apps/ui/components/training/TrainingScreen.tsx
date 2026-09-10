@@ -306,7 +306,7 @@ function TrainingScreenContent({
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const [showHotkeys, setShowHotkeys] = useState(false);
-  const { playAudio } = useTrainingAudio(audioQuality);
+  const { playAudio } = useTrainingAudio();
 
   const {
     handleJoyrideCallback,

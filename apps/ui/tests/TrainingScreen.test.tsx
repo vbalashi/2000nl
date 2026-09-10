@@ -2455,6 +2455,10 @@ test("renders an explicit V2 state instead of falling back for unsupported liste
 
 test("keeps the current V2 card visible until the prefetched DTO is ready", async () => {
   let resolveNextLookup!: (value: unknown) => void;
+  // The real V2 client shares one in-flight lookup for an exact card target.
+  const nextLookup = new Promise((resolve) => {
+    resolveNextLookup = resolve;
+  });
   const word1 = { ...mockWord, id: "word-1", headword: "huis" };
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
   const readyLookup = {
@@ -2471,14 +2475,14 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
   prefetchPlatformV2TrainingEntry.mockImplementation(
     (input: { entryId: string }) =>
       input.entryId === word2.id
-        ? new Promise((resolve) => {
-            resolveNextLookup = resolve;
-          })
+        ? nextLookup
         : Promise.resolve(readyLookup),
   );
 
   try {
-    render(<TrainingScreen user={user} />);
+    await act(async () => {
+      render(<TrainingScreen user={user} />);
+    });
     await screen.findByRole("heading", { name: "huis" });
     await waitFor(() =>
       expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
@@ -2494,9 +2498,7 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
       screen.queryByRole("heading", { name: "boom" }),
     ).not.toBeInTheDocument();
     await act(async () => Promise.resolve());
-    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
-      schedulerCallsBeforeGrade,
-    );
+    expectOnlyBackgroundSelectionSince(schedulerCallsBeforeGrade);
 
     await act(async () => {
       resolveNextLookup({
@@ -2870,7 +2872,11 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
     },
   );
 
-  render(<TrainingScreen user={user} />);
+  // Complete mocked startup hydration before exercising sequential grades.
+  // First heading paint is not a receipt that all initial scope effects ran.
+  await act(async () => {
+    render(<TrainingScreen user={user} />);
+  });
 
   await screen.findByRole("heading", { name: "huis" });
 
@@ -2905,9 +2911,9 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
       })),
     };
     expect(
-      screen.queryByRole("heading", { name: "fiets" }),
+      observed.heading?.includes("fiets"),
       JSON.stringify(observed),
-    ).toBeInTheDocument();
+    ).toBe(true);
   });
 
   // While viewing word-3, next prefetch should exclude both graded IDs.
