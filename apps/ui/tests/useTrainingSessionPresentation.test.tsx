@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { useTrainingSessionPresentation } from "@/components/training/v2/useTrainingSessionPresentation";
 import type { TrainingSessionPlanSnapshot } from "@/components/training/v2/useTrainingSessionPlan";
 
@@ -24,7 +24,6 @@ const snapshot = (
 
 describe("useTrainingSessionPresentation", () => {
   test("distinguishes first, subsequent, same-card remount, and re-entry", () => {
-    const onEnterSession = vi.fn();
     const view = renderHook(
       ({ surface, cardKey }) =>
         useTrainingSessionPresentation({
@@ -33,7 +32,7 @@ describe("useTrainingSessionPresentation", () => {
           sessionGeneration: 1,
           scopeKey: "default",
           planSnapshot: snapshot(3),
-          onEnterSession,
+          resetKey: 0,
         }),
       {
         initialProps: {
@@ -80,7 +79,7 @@ describe("useTrainingSessionPresentation", () => {
           sessionGeneration: 1,
           scopeKey: "default",
           planSnapshot: snapshot(plannedTotal),
-          onEnterSession: vi.fn(),
+          resetKey: 0,
         }),
       {
         initialProps: {
@@ -108,16 +107,22 @@ describe("useTrainingSessionPresentation", () => {
   });
 
   test("never decreases a plan mid-session and resets it for an exact scope or session restart", () => {
-    const onEnterSession = vi.fn();
     const view = renderHook(
-      ({ surface, sessionKey, sessionGeneration, plannedTotal, cardKey }) =>
+      ({
+        surface,
+        sessionKey,
+        sessionGeneration,
+        plannedTotal,
+        cardKey,
+        resetKey,
+      }) =>
         useTrainingSessionPresentation({
           surface,
           scopeKey: sessionKey,
           sessionGeneration,
           planSnapshot: snapshot(plannedTotal, sessionGeneration, sessionKey),
           presentedCardKey: cardKey,
-          onEnterSession,
+          resetKey,
         }),
       {
         initialProps: {
@@ -126,6 +131,7 @@ describe("useTrainingSessionPresentation", () => {
           sessionGeneration: 1,
           plannedTotal: null as number | null,
           cardKey: null as string | null,
+          resetKey: 0,
         },
       },
     );
@@ -136,6 +142,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 5,
       cardKey: "entry-1:a",
+      resetKey: 0,
     });
     view.rerender({
       surface: "session",
@@ -143,6 +150,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 3,
       cardKey: "entry-2:a",
+      resetKey: 0,
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
@@ -157,6 +165,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 2,
       cardKey: "entry-3:a",
+      resetKey: 1,
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
@@ -171,6 +180,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: null,
       cardKey: null,
+      resetKey: 1,
     });
     expect(view.result.current.presentation).toEqual({
       kind: "ordinal",
@@ -182,6 +192,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 2,
       plannedTotal: 4,
       cardKey: "entry-4:a",
+      resetKey: 2,
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
@@ -189,6 +200,39 @@ describe("useTrainingSessionPresentation", () => {
       total: 4,
       fraction: 0.25,
     });
-    expect(onEnterSession).toHaveBeenCalledTimes(3);
+  });
+
+  test("scope-key hydration only changes progress state", () => {
+    const view = renderHook(
+      ({ scopeKey, cardKey, plannedTotal }) =>
+        useTrainingSessionPresentation({
+          surface: "session",
+          presentedCardKey: cardKey,
+          sessionGeneration: 1,
+          scopeKey,
+          planSnapshot: snapshot(plannedTotal, 1, scopeKey),
+          resetKey: 0,
+        }),
+      {
+        initialProps: {
+          scopeKey: "hydrating",
+          cardKey: "entry-1:a",
+          plannedTotal: 5,
+        },
+      },
+    );
+
+    view.rerender({
+      scopeKey: "hydrated",
+      cardKey: "entry-2:a",
+      plannedTotal: 5,
+    });
+
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 2,
+      total: 5,
+      fraction: 0.4,
+    });
   });
 });
