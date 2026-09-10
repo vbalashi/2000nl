@@ -1,6 +1,7 @@
 # Issue #294 — server-latched Training membership
 
-Status: design and characterization slice, based on `3f02f9e8`.
+Status: server contract slices 1–2 prepared; UI wiring remains, based on
+`d2dee1eb`.
 
 ## Problem
 
@@ -51,13 +52,18 @@ compatibility overloads.
 
 1. Add the session/membership schema and start/inspect RPCs with database
    characterization tests. No UI behavior changes in this slice.
-2. Route the Training selection port through the opaque session id and a
-   session-scoped next-card RPC. Preserve the existing #250 accepted-action
-   and load-retry state machine.
-3. Migrate internal probes and tests to explicit scheduler signatures, add the
+2. Add the session-scoped next-card and idempotent consume boundaries. The
+   selector returns the first unconsumed member and re-checks dictionary access;
+   the private consumer is callable only from the Platform action wrapper and
+   consumes the member in the same transaction as an accepted progress action.
+   The UI still needs to pass the opaque id and use this boundary end to end;
+   until then the migration-132 selector remains the live client path.
+3. Route the Training selection port through the opaque session id and preserve
+   the existing #250 accepted-action and load-retry state machine.
+4. Migrate internal probes and tests to explicit scheduler signatures, add the
    executable no-caller check, then remove compatibility overloads in a
    separate migration.
-4. Run spec, architecture, refactoring, and UI QA reviews. Deploy only after
+5. Run spec, architecture, refactoring, and UI QA reviews. Deploy only after
    the five-card mutation/retry scenario proves the denominator and membership
    remain stable.
 
