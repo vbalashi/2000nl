@@ -416,6 +416,66 @@ describe("TrainingSenseCardV2Session", () => {
     }
   });
 
+  test("does not make an accepted action retryable when next-card handling throws", async () => {
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get() {
+        return 1000;
+      },
+    });
+    const onProgressActionAccepted = vi.fn().mockRejectedValue(
+      new Error("presentation_failed"),
+    );
+
+    try {
+      render(
+        <TestTrainingSenseCardV2Session
+          word={word}
+          mode="word-to-definition"
+          contentLanguageCode="nl"
+          translationTargetLanguageCode="en"
+          interfaceLanguage="en"
+          onProgressActionAccepted={onProgressActionAccepted}
+        />,
+      );
+      await screen.findByRole("heading", { name: "hand" });
+      fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+      const wrapper = screen.getByTestId("training-card-swipe-wrapper");
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+
+      await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+      expect(onProgressActionAccepted).toHaveBeenCalledOnce();
+      expect(await screen.findByText("presentation_failed")).toBeVisible();
+      await waitFor(() =>
+        expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
+      );
+
+      fireEvent.touchStart(wrapper, {
+        touches: [{ clientX: 0, clientY: 0 }],
+      });
+      fireEvent.touchMove(wrapper, {
+        touches: [{ clientX: 500, clientY: 0 }],
+      });
+      fireEvent.touchEnd(wrapper);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      expect(performAction).toHaveBeenCalledOnce();
+    } finally {
+      if (original) {
+        Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
+      }
+    }
+  });
+
   test("replaces an answer with the next identity on its face in the same render", async () => {
     const props = {
       mode: "word-to-definition" as const,

@@ -30,6 +30,7 @@ import {
   usePreparedNextTrainingTurn,
   type PreparedNextTrainingTurn,
 } from "./v2/usePreparedNextTrainingTurn";
+import type { TrainingCardSwipeCommitOutcome } from "./v2/useTrainingCardSwipeSurface";
 import type {
   TrainingTurnSelectionPort,
   TrainingTurnSelectionRequest,
@@ -545,7 +546,14 @@ export function useTrainingTurnController(input: Inputs) {
     async (
       transition: AcceptedCardTransition,
       options: { statsLabel: string; recoverLoadFailure: boolean },
-    ): Promise<"accepted" | "stalled"> => {
+    ): Promise<
+      Extract<
+        TrainingCardSwipeCommitOutcome,
+        | "accepted-next-presented"
+        | "accepted-session-complete"
+        | "accepted-next-unavailable"
+      >
+    > => {
       const backgroundRefresh = refreshAfterAccepted(options).catch((cause) => {
         trainingDebug.log("Training counters refresh failed", cause);
       });
@@ -559,7 +567,7 @@ export function useTrainingTurnController(input: Inputs) {
         setAcceptedTransitionLoadStalled(false);
         setUsableCandidatesExhausted(true);
         void backgroundRefresh;
-        return "accepted";
+        return "accepted-session-complete";
       }
 
       if (transition.isNextCardOverride) {
@@ -575,14 +583,14 @@ export function useTrainingTurnController(input: Inputs) {
           // invalidate an on-demand selection. The accepted mutation remains
           // settled, but an old candidate must not replace the new session.
           void backgroundRefresh;
-          return "accepted";
+          return "accepted-next-unavailable";
         }
         if (ready) {
           acceptedTransitionRetryRef.current = null;
           setAcceptedTransitionLoadStalled(false);
           presentPreparedCandidate(prefetched.word);
           void backgroundRefresh;
-          return "accepted";
+          return "accepted-next-presented";
         } else {
           recordTrainingTransitionTiming({
             transitionId: transition.transitionId,
@@ -619,12 +627,18 @@ export function useTrainingTurnController(input: Inputs) {
         acceptedTransitionRetryRef.current = stalled ? retry : null;
         setAcceptedTransitionLoadStalled(stalled);
         void backgroundRefresh;
-        return stalled ? "stalled" : "accepted";
+        if (stalled) return "accepted-next-unavailable";
+        if (loadOutcome === "session-complete") {
+          return "accepted-session-complete";
+        }
+        return loadOutcome === "loaded"
+          ? "accepted-next-presented"
+          : "accepted-next-unavailable";
       }
       acceptedTransitionRetryRef.current = null;
       setAcceptedTransitionLoadStalled(false);
       void backgroundRefresh;
-      return "accepted";
+      return "accepted-next-presented";
     },
     [
       loadNextWord,
@@ -637,12 +651,14 @@ export function useTrainingTurnController(input: Inputs) {
 
   const acceptPlatformProgressAction = useCallback(
     async (_capability: PlatformV2TrainingActionCapability) => {
-      if (!currentWord || actionLoadingRef.current) return "stalled" as const;
+      if (!currentWord || actionLoadingRef.current) {
+        return "accepted-next-unavailable" as const;
+      }
       actionLoadingRef.current = true;
       setActionLoading(true);
       try {
         const transition = beginAcceptedCardTransition();
-        if (!transition) return "stalled" as const;
+        if (!transition) return "accepted-next-unavailable" as const;
         return await finishAcceptedCardTransition(transition, {
           statsLabel: `AFTER ${transition.word.headword} (platform-v2)`,
           recoverLoadFailure: true,

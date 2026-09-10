@@ -10,8 +10,16 @@ type SwipeChoice<T> = {
   indicatorClass: string;
 };
 
+/**
+ * A progress action can be accepted even when presentation of the next turn
+ * has not completed. Keep that receipt separate so callers can safely retry
+ * loading without ever repeating the accepted mutation.
+ */
 export type TrainingCardSwipeCommitOutcome =
   | "accepted"
+  | "accepted-next-presented"
+  | "accepted-session-complete"
+  | "accepted-next-unavailable"
   | "stalled"
   | "rejected";
 
@@ -114,8 +122,12 @@ export function useTrainingCardSwipeSurface<T>({
         void onCommit(choice.value)
           .catch(() => "rejected" as const)
           .then((outcome) => {
+            const leavesCommittedCardOffscreen =
+              outcome === "accepted" ||
+              outcome === "accepted-next-presented" ||
+              outcome === "accepted-session-complete";
             if (
-              outcome !== "accepted" &&
+              !leavesCommittedCardOffscreen &&
               identityRef.current === committedIdentity
             ) {
               reset();
