@@ -81,8 +81,6 @@ type Inputs = {
   sessionPlannedTotal?: number | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
-  audioEnabled: boolean;
-  preloadAudio: (word: TrainingWord) => void;
   refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
 };
 
@@ -101,8 +99,6 @@ export function useTrainingTurnController(input: Inputs) {
     sessionPlannedTotal = null,
     sessionScopeKey,
     selection,
-    audioEnabled,
-    preloadAudio,
     refreshAfterAccepted,
   } = input;
   const [loadingWord, setLoadingWord] = useState(true);
@@ -189,8 +185,6 @@ export function useTrainingTurnController(input: Inputs) {
     reviewCounter,
     newReviewRatio,
     selectNext: selectPreparedCandidate,
-    audioEnabled,
-    preloadAudio,
   });
 
   const clearReviewedSession = useCallback(() => {
@@ -246,13 +240,8 @@ export function useTrainingTurnController(input: Inputs) {
     (word: TrainingWord) => {
       setLoadingWord(false);
       presentWord(word);
-      if (audioEnabled) preloadAudio(word);
     },
-    [
-      audioEnabled,
-      preloadAudio,
-      presentWord,
-    ],
+    [presentWord],
   );
 
   const rememberRejectedCard = useCallback(

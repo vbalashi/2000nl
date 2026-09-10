@@ -18,11 +18,12 @@ and loaded states. Returning replaces the History URL entry and restores focus
 to the trigger. It does not restore the former permanent Recent sidebar or
 claim to be an all-time audit log.
 
-### Audio Mode Definition Playback
-**Added:** 2026-01-29
-**User Story:** US-055.1
+### Audio in V2 Training
 
-Definition and sentence taps play full-sentence audio in audio mode.
+The typed Platform audio capability controls availability, resolution and
+preloading. The former local audio-mode toggle and sentence-tap playback belong
+to the retired renderer; they are not current Training controls. Supported card
+modes use the V2 stage, including listen-recognize when enabled by the scenario.
 
 ### Line Spacing Consistency (Examples)
 **Added:** 2026-01-29
@@ -46,7 +47,9 @@ Cards and action buttons reflect swipe direction and intensity.
 **Added:** 2026-02-06
 **User Story:** US-069.1
 
-First-encounter cards support swipe-based start/hide actions.
+Historical start/hide swipe mapping was retired with the legacy renderer.
+Current gestures execute only the actions exposed by the V2 capability contract;
+Learn and Mark as known are not aliases for Fail and Hide.
 
 ### Hide Past Perfect Participle in Definitions
 **Added:** 2026-02-06

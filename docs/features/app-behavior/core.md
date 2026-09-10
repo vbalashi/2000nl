@@ -23,33 +23,35 @@
    - `hard`: Remembered with difficulty
    - `good`: Remembered correctly
    - `easy`: Remembered easily
-   - `hide`: Exclude word from queue (user already knows it)
+   - `start-learning`: Begin learning a new card; recorded separately from a graded recall attempt
+   - `mark-known`: Exclude this card from training without erasing its existing FSRS progress
 4. **Interval Calculation**: `handle_card_review` records the action and updates FSRS state. The UI sends a client-generated `turnId` when available so duplicate submits are no-ops.
 
 ### Word States
 
-- **First Encounter** (`source="new"`): Word never seen before
-  - Shows **FirstTimeButtonGroup** (2 buttons)
-  - Always displays in **W→D direction**
-  - Actions: "Start learning" (fail) or "I know it already" (hide)
+- **New**: Card has not started learning
+  - The V2 capability contract determines its prompt and available actions
+  - The answer offers **Learn**; **Mark as known** is a separate action
+  - Learn does not invent an Again rating; first exposure and graded recall remain distinct events
 - **Learning** (`source="learning"`): Active sub-day learning step with FSRS interval under one day
   - Shows standard **4-button interface** (again/hard/good/easy)
   - Direction varies based on backend scenario selection
 - **Review** (`source="review"`): Graduated card due or in review rotation
   - Shows standard **4-button interface** (again/hard/good/easy)
   - Direction varies based on backend scenario selection
-- **Hidden**: User marked "I know it already"
-  - Excluded from training queue
-  - Stored with `hidden=true` or equivalent flag
+- **Known**: Explicit user mark stored in `user_card_known_marks`
+  - Excluded from training; any existing scheduling state is preserved
+  - Separate from the older Hide/Freeze operations, which are not controls in the current Training details screen
 
 ### Card Components
 
 - **Main Card**: Large central card showing current word/definition
 - **Details Drawer**: On-demand word details opened from answer-card actions or linked dictionary text; there is no permanent sidebar
-- **Training History**: A separate, code-split destination showing the authenticated latest 50 review records from the server-owned 24-hour window without remounting the current Training session
+- **Training History**: A separate, code-split destination showing the authenticated latest 50 learning-start/review events from the server-owned 24-hour window without remounting the current Training session
 - **Action Buttons**:
-  - FirstTimeButtonGroup (first encounter): 2 buttons
-  - Standard rating buttons are rendered by `TrainingScreen.tsx` for learning/review cards
+  - `TrainingSenseCardV2Session` executes the typed capabilities supplied to the shared V2 stage
+  - The stage owns Learn, rating buttons, known marks, audio, translation, and Details entry points
+  - `TrainingScreen` coordinates the session; it does not render a second legacy rating bar
 
 ## Related Docs
 

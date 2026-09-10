@@ -139,8 +139,6 @@ function renderController(overrides: {
       sessionScopeKey,
       sessionPlannedTotal: overrides.sessionPlannedTotal,
       selection: { selectNext, lookupOverride },
-      audioEnabled: true,
-      preloadAudio: vi.fn(),
       refreshAfterAccepted,
       }),
     {

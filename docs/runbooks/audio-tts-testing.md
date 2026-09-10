@@ -1,5 +1,13 @@
 # Audio / Sentence Playback Testing
 
+> **Historical sentence-playback procedure, not current Training QA.** The
+> headphones toggle and clickable-text renderer below were retired in #142.
+> Current V2 Training/Details use typed Platform audio capabilities and the
+> audio button; preloading belongs to V2 preparation, not raw-payload selection.
+> Verify actual playback separately from button rendering. A provider 502 in a
+> local environment without audio configuration is not a passed playback test.
+> Use only the dedicated test identity from the current login runbook.
+
 Production UI: https://2000.dilum.io
 
 This app has two audio paths:
@@ -9,7 +17,7 @@ This app has two audio paths:
 
 This doc focuses on sentence playback.
 
-## Quick Manual Test (UI)
+## Historical Manual Test (retired UI; do not execute)
 
 1. Log into `https://2000.dilum.io` (see `docs/runbooks/production-login.md` for debugging-friendly login).
 2. Toggle **Luistermodus actief** (headphones icon).
@@ -19,14 +27,14 @@ This doc focuses on sentence playback.
 Expected:
 
 - The client logs a click like:
-  - `InteractiveText click: ...`
+  - A legacy clickable-text diagnostic (renderer now removed)
   - `Calling onWordClick ... sentence: <full sentence>`
 - A request is made:
   - `POST https://2000.dilum.io/api/tts`
 - The response includes a `url` field.
 - Audio plays.
 
-## Debug with `agent-browser` (Console + Trace)
+## Historical Browser Recipe (retired UI; do not execute)
 
 ```bash
 cd /path/to/2000nl

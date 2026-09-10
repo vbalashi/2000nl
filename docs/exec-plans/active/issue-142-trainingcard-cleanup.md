@@ -19,6 +19,18 @@ change as part of the cleanup.
   Supported Screen scenarios are re-baselined on V2 with no skipped tests;
   the caller inventory records the disposition of every retired V1 assertion.
   Integration still requires final reviews, full CI and browser smoke.
+- Final review removed duplicate raw-payload audio preloading from the turn
+  controller; normalized V2 preparation remains the owner. The unreferenced
+  `FirstTimeButtonGroup`, `AudioModeToggle` and `InteractiveText` components are
+  deleted and forbidden by the final-retirement CI guard.
+- The multi-grade Screen characterization now waits for each accepted
+  transition receipt, not just the next mounted heading. Actual V2 rapid click
+  and hotkey deduplication remains covered separately.
+- Local dedicated-account QA verified Learn and Good as distinct History
+  entries, Details/navigation preservation, mobile card rendering and retry
+  from an unusable reverse prompt. Retry recovered; its ordinal increment
+  without a grade is recorded under #294. Audio/translation provider failures
+  in this local environment are not counted as passed media QA.
 
 ## Remaining dependencies
 

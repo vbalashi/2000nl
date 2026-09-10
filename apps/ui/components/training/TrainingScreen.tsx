@@ -306,7 +306,7 @@ function TrainingScreenContent({
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const [showHotkeys, setShowHotkeys] = useState(false);
-  const { playAudio, preloadAudioForWord } = useTrainingAudio(audioQuality);
+  const { playAudio } = useTrainingAudio(audioQuality);
 
   const {
     handleJoyrideCallback,
@@ -530,8 +530,6 @@ function TrainingScreenContent({
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
     selection: selectionPort,
-    audioEnabled: true,
-    preloadAudio: preloadAudioForWord,
     refreshAfterAccepted,
   });
   const [platformProgressActionPending, setPlatformProgressActionPending] =

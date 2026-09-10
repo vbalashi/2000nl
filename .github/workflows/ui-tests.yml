@@ -62,7 +62,7 @@ jobs:
         working-directory: apps/ui
 
       - name: Check retired Training wiring
-        run: node scripts/check-training-retirements.mjs
+        run: node scripts/check-training-retirements.mjs --final-training
 
       - name: Typecheck UI
         run: npm run typecheck

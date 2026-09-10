@@ -180,6 +180,7 @@ const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const mockV2ProgressAction = vi.fn();
+const mockV2ProgressActionCompleted = vi.fn();
 let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
@@ -647,7 +648,10 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
                 // The real session awaits the server mutation before invoking
                 // acceptance. Do not turn a click into a synchronous receipt.
                 await Promise.resolve();
-                await onProgressActionAccepted({ actionId: "review-card" });
+                const result = await onProgressActionAccepted({
+                  actionId: "review-card",
+                });
+                mockV2ProgressActionCompleted(result);
               } finally {
                 busyRef.current = false;
                 setBusy(false);
@@ -2874,16 +2878,37 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(1, "accepted");
+  });
   await screen.findByRole("heading", { name: "boom" });
 
-  // Grade word-2.
+  // This test exercises two completed transitions, not overlapping actions.
+  // A new keyed card can mount before its predecessor's acceptance settles.
+  // The real V2 session's duplicate-input boundary is tested separately.
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
   );
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   });
-  await screen.findByRole("heading", { name: "fiets" });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(2, "accepted");
+  });
+  await waitFor(() => {
+    const observed = {
+      heading: screen.queryByTestId("mock-training-sense-card-v2")?.textContent,
+      actions: mockV2ProgressAction.mock.calls.length,
+      selections: fetchNextTrainingWordByScenario.mock.calls.map((call) => ({
+        turn: call[5],
+        excluded: call[6],
+      })),
+    };
+    expect(
+      screen.queryByRole("heading", { name: "fiets" }),
+      JSON.stringify(observed),
+    ).toBeInTheDocument();
+  });
 
   // While viewing word-3, next prefetch should exclude both graded IDs.
   await waitFor(() => {

@@ -43,8 +43,6 @@ type Inputs = {
     predictedQueueTurn: QueueTurn,
     currentCardKey: string,
   ) => Promise<TrainingWord | null>;
-  audioEnabled: boolean;
-  preloadAudio: (word: TrainingWord) => void;
 };
 
 export function usePreparedNextTrainingTurn(input: Inputs) {
@@ -60,8 +58,6 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     reviewCounter,
     newReviewRatio,
     selectNext,
-    audioEnabled,
-    preloadAudio,
   } = input;
   const tokenRef = useRef(0);
   const [nextTransitionId, setNextTransitionId] = useState<string | null>(null);
@@ -241,19 +237,16 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
           v2Ready,
           transitionId,
         };
-        if (audioEnabled) preloadAudio(word);
       })
       .catch(() => undefined);
 
     return cancelCurrent;
   }, [
-    audioEnabled,
     cardFilter,
     currentMode,
     currentWord,
     enabledModes,
     newReviewRatio,
-    preloadAudio,
     queueTurn,
     reviewCounter,
     selectNext,
