@@ -18,13 +18,18 @@ import type {
   TrainingMode,
   TrainingWord,
 } from "@/lib/types";
+import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
+
+export type TrainingWarmResult =
+  | boolean
+  | { ready: false; unavailableReason: TrainingSessionUnavailableReason };
 
 export type PreparedNextTrainingTurn = {
   forWordId: string;
   forCardKey: string;
   queueTurn: QueueTurn;
   word: TrainingWord;
-  v2Ready: Promise<boolean> | null;
+  v2Ready: Promise<TrainingWarmResult> | null;
   transitionId: string;
 };
 
@@ -87,7 +92,21 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
         const lookupRequest = prefetchPlatformV2TrainingEntry(preparation);
         void preparePlatformV2TrainingEntry(preparation).catch(() => undefined);
         const lookup = await lookupRequest;
-        return !signal?.aborted && lookup.state === "ready";
+        if (signal?.aborted) return false;
+        if (lookup.state === "ready") return true;
+        if (lookup.state === "entry-not-found") {
+          return {
+            ready: false,
+            unavailableReason: "entry-not-found",
+          } as const;
+        }
+        if (lookup.state === "projection-missing") {
+          return {
+            ready: false,
+            unavailableReason: "projection-missing",
+          } as const;
+        }
+        return false;
       } catch {
         return false;
       }
@@ -174,16 +193,23 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
           signal: controllerRef.current?.signal,
         },
       ).then((lookup) => {
-        const ready = lookup.state === "ready";
+        const warmResult: TrainingWarmResult =
+          lookup.state === "ready"
+            ? true
+            : lookup.state === "entry-not-found"
+              ? { ready: false, unavailableReason: "entry-not-found" }
+              : lookup.state === "projection-missing"
+                ? { ready: false, unavailableReason: "projection-missing" }
+                : false;
         recordTrainingTransitionTiming({
           transitionId: candidate.transitionId,
           stage: "next-card.prefetch",
           durationMs: 0,
-          outcome: ready
+          outcome: warmResult === true
             ? "proactive-refresh-ready"
             : "proactive-refresh-failed",
         });
-        return ready;
+        return warmResult;
       });
       candidate.v2Ready = refreshed;
       return refreshed;

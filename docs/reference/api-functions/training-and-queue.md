@@ -60,10 +60,10 @@ Notes:
 ## `get_next_training_session_card`
 
 Read the first still-available member of a server-owned finite session. Reads
-are side-effect free: they never consume a member. The exclusion-aware form is
-used by speculative next-card preparation so the card currently on screen (or
-another card already accepted in this browser session) cannot be returned as
-the next member.
+are side-effect free: they never consume or retire a member. The
+exclusion-aware form is used by speculative next-card preparation so the card
+currently on screen (or another card already accepted in this browser
+session) cannot be returned as the next member.
 
 ```sql
 get_next_training_session_card(
@@ -76,8 +76,35 @@ get_next_training_session_card(
 `p_exclude_card_keys` uses the same `entry_id:card_type_id` identity as
 `get_next_card`. The two-argument form remains an explicit wrapper around the
 three-argument implementation for callers that do not need exclusions; it does
-not create a second selection algorithm. Membership is consumed only by the
-authenticated Platform action transaction, not by this selector.
+not create a second selection algorithm. If the first latched member has lost
+dictionary access or can no longer be projected into a card, the selector
+returns a diagnostic object with `trainingSessionUnavailable`, `entryId`,
+`cardTypeId`, `trainingSessionOrdinal`, and a stable `reason`; it does not
+change the database. The caller must then invoke the explicit authenticated
+`mark_training_session_member_unavailable` action and retry selection. Network
+or provider failures are not this diagnostic and remain retryable on the same
+member. Membership is consumed only by the authenticated Platform action
+transaction, not by this selector.
+
+## `mark_training_session_member_unavailable`
+
+Retire one latched member after the selector has returned a permanent access or
+content diagnostic. This is the sole mutation path for `unavailable_at` and
+`unavailable_reason`; it enforces ordinal order, is safe to retry, and marks
+the session complete when no unconsumed available members remain.
+
+```sql
+mark_training_session_member_unavailable(
+    p_user_id uuid,
+    p_session_id uuid,
+    p_entry_id uuid,
+    p_card_type_id text,
+    p_reason text
+) RETURNS jsonb
+```
+
+Allowed reasons are `dictionary-access-revoked`, `projection-missing`,
+`entry-not-found`, `model-invalid`, and `reverse-definition-missing`.
 
 ## `get_training_session_plan`
 

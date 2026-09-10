@@ -9,7 +9,11 @@ import {
 } from "vitest";
 import { useTrainingTurnController } from "@/components/training/useTrainingTurnController";
 import type { TrainingTurnSelectionRequest } from "@/components/training/useTrainingTurnSelectionPort";
-import type { TrainingWord } from "@/lib/types";
+import type { TrainingMode, TrainingWord } from "@/lib/types";
+import {
+  TrainingSessionMemberUnavailableError,
+  type TrainingSessionUnavailableReason,
+} from "@/lib/training/selectionService";
 
 const prepared = vi.hoisted(() => ({
   candidate: null as any,
@@ -104,9 +108,16 @@ function renderController(overrides: {
   selectNext?: (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>;
   setCurrentWord?: (word: TrainingWord | null) => void;
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
+  markUnavailable?: (input: {
+    sessionId?: string | null;
+    entryId: string;
+    cardTypeId: TrainingMode;
+    reason: TrainingSessionUnavailableReason;
+  }) => Promise<boolean>;
   recoverLoadErrors?: boolean;
   sessionPlannedTotal?: number | null;
   sessionConsumedCardKeys?: string[];
+  trainingSessionId?: string | null;
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -117,6 +128,9 @@ function renderController(overrides: {
   >;
   const refreshAfterAccepted = vi.fn().mockResolvedValue(undefined);
   const lookupOverride = vi.fn(overrides.lookupOverride ?? (() => Promise.resolve(null)));
+  const markUnavailable = vi.fn(
+    overrides.markUnavailable ?? (() => Promise.resolve(true)),
+  );
   const initialCurrentWord = overrides.currentWord ?? word1;
   const hook = renderHook(
     ({
@@ -140,7 +154,8 @@ function renderController(overrides: {
       sessionScopeKey,
       sessionPlannedTotal: overrides.sessionPlannedTotal,
       sessionConsumedCardKeys: overrides.sessionConsumedCardKeys,
-      selection: { selectNext, lookupOverride },
+      trainingSessionId: overrides.trainingSessionId,
+      selection: { selectNext, lookupOverride, markUnavailable },
       refreshAfterAccepted,
       }),
     {
@@ -155,6 +170,7 @@ function renderController(overrides: {
     selectNext,
     setCurrentWord,
     refreshAfterAccepted,
+    markUnavailable,
   };
 }
 
@@ -443,6 +459,249 @@ describe("useTrainingTurnController transition matrix", () => {
     );
   });
 
+  test("retries the same card after a transient lookup failure", async () => {
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const controller = renderController({
+      currentWord: word2,
+      selectNext,
+    });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "lookup-http-error",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({ excludeCardKeys: [] }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+  });
+
+  test("does not mark a session member unavailable for a transient lookup failure", async () => {
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const controller = renderController({
+      currentWord: word2,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "lookup-http-error",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(markUnavailable).not.toHaveBeenCalled();
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({ excludeCardKeys: [] }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
+  });
+
+  test("marks a permanent session-card failure before selecting its replacement", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi.fn().mockResolvedValue(replacement);
+    const controller = renderController({
+      currentWord: word2,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    act(() => {
+      controller.result.current.reportCardLoadFailure(
+        word2,
+        "reverse-definition-missing",
+      );
+    });
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-2",
+      cardTypeId: "word-to-definition",
+      reason: "reverse-definition-missing",
+    });
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        excludeCardKeys: ["word-2:word-to-definition"],
+      }),
+    );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("retires a permanent selector diagnostic through the explicit mutation path", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-2",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      )
+      .mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+
+    expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-2",
+      cardTypeId: "word-to-definition",
+      reason: "dictionary-access-revoked",
+    });
+    expect(selectNext).toHaveBeenCalledTimes(2);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("reconciles more than 64 unavailable session members without a fixed cap", async () => {
+    const unavailableCount = 65;
+    const replacement = { ...word2, id: "word-final" };
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const selectNext = vi
+      .fn()
+      .mockImplementationOnce(async () => {
+        throw new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-unavailable-1",
+          cardTypeId: "word-to-definition",
+          reason: "projection-missing",
+        });
+      });
+    for (let ordinal = 2; ordinal <= unavailableCount; ordinal += 1) {
+      selectNext.mockImplementationOnce(async () => {
+        throw new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: ordinal,
+          entryId: `word-unavailable-${ordinal}`,
+          cardTypeId: "word-to-definition",
+          reason: "projection-missing",
+        });
+      });
+    }
+    selectNext.mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+
+    expect(markUnavailable).toHaveBeenCalledTimes(unavailableCount);
+    expect(selectNext).toHaveBeenCalledTimes(unavailableCount + 1);
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("uses the per-request session id when the initial session load races React state", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-2",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      )
+      .mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: "session-1",
+      });
+    });
+
+    expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-2",
+      cardTypeId: "word-to-definition",
+      reason: "dictionary-access-revoked",
+    });
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("uses the per-request session id when initial-card warmup fails permanently", async () => {
+    prepared.warm.mockResolvedValueOnce({
+      ready: false,
+      unavailableReason: "entry-not-found",
+    });
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi.fn().mockResolvedValue(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable: vi.fn().mockResolvedValue(true),
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: "session-1",
+      });
+    });
+
+    expect(controller.markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-3",
+      cardTypeId: "word-to-definition",
+      reason: "entry-not-found",
+    });
+
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+    expect(controller.selectNext).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        trainingSessionId: "session-1",
+        excludeCardKeys: ["word-3:word-to-definition"],
+      }),
+    );
+  });
+
   test("background prefetch keeps rejected card keys excluded for the session", async () => {
     const selectNext = vi.fn().mockResolvedValue(word1);
     const controller = renderController({ currentWord: word2, selectNext });
@@ -721,7 +980,7 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(selectNext).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        excludeCardKeys: ["word-2:word-to-definition"],
+        excludeCardKeys: [],
       }),
     );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(recoveredWord);
@@ -885,6 +1144,37 @@ describe("useTrainingTurnController transition matrix", () => {
         scenario: "new-scope",
         trainingSessionId: null,
       }),
+    );
+  });
+
+  test("does not resurrect the previous session when a replacement warmup fails", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const controller = renderController({
+      selectNext,
+      trainingSessionId: "old-session",
+      markUnavailable,
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: null,
+      });
+    });
+    await act(async () => {
+      await controller.result.current.reportCardLoadFailure(
+        word2,
+        "entry-not-found",
+        null,
+      );
+    });
+
+    expect(markUnavailable).not.toHaveBeenCalled();
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+    expect(selectNext).toHaveBeenLastCalledWith(
+      expect.objectContaining({ trainingSessionId: null }),
     );
   });
 

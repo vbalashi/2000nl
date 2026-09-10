@@ -21,6 +21,8 @@ const importService = async () => {
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
     fetchTrainingSessionPlan: service.fetchTrainingSessionPlan,
     fetchTrainingSessionSnapshot: service.fetchTrainingSessionSnapshot,
+    markTrainingSessionMemberUnavailable:
+      service.markTrainingSessionMemberUnavailable,
     startTrainingSession: service.startTrainingSession,
     fetchScenarioStats: service.fetchScenarioStats,
     fetchTrainingScenarios: service.fetchTrainingScenarios,
@@ -261,6 +263,41 @@ describe("trainingService next-word selection", () => {
     ).rejects.toEqual(error);
   });
 
+  test("marks a session member unavailable with an explicit reason", async () => {
+    const { markTrainingSessionMemberUnavailable } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "unavailable",
+        ordinal: 2,
+        reason: "reverse-definition-missing",
+        remaining: 3,
+      },
+      error: null,
+    });
+
+    await expect(
+      markTrainingSessionMemberUnavailable(
+        "user-1",
+        "session-1",
+        "entry-2",
+        "definition-to-word",
+        "reverse-definition-missing",
+      ),
+    ).resolves.toEqual({
+      status: "unavailable",
+      ordinal: 2,
+      reason: "reverse-definition-missing",
+      remaining: 3,
+    });
+    expect(rpc).toHaveBeenCalledWith("mark_training_session_member_unavailable", {
+      p_user_id: "user-1",
+      p_session_id: "session-1",
+      p_entry_id: "entry-2",
+      p_card_type_id: "definition-to-word",
+      p_reason: "reverse-definition-missing",
+    });
+  });
+
   test("fetchNextTrainingWord forwards modes, list scope, card filter, queue turn, and excludes", async () => {
     const { fetchNextTrainingWord } = await importService();
 
@@ -413,6 +450,44 @@ describe("trainingService next-word selection", () => {
       p_user_id: "user-1",
       p_session_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
       p_exclude_card_keys: ["word-session-1:word-to-definition"],
+    });
+  });
+
+  test("surfaces a permanent unavailable-member diagnostic without mutating selection", async () => {
+    const { fetchNextTrainingWord } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          trainingSessionUnavailable: true,
+          trainingSessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+          trainingSessionOrdinal: 1,
+          entryId: "entry-1",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchNextTrainingWord(
+        "user-1",
+        ["word-to-definition"],
+        [],
+        undefined,
+        "both",
+        "new",
+        [],
+        null,
+        false,
+        "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      ),
+    ).rejects.toMatchObject({
+      name: "TrainingSessionMemberUnavailableError",
+      diagnostic: expect.objectContaining({
+        entryId: "entry-1",
+        reason: "dictionary-access-revoked",
+      }),
     });
   });
 

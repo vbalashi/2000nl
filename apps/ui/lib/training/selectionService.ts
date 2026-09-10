@@ -53,6 +53,73 @@ export type TrainingSessionSnapshotMember = {
   queueSource: string;
   consumedAt: string | null;
   unavailableAt: string | null;
+  unavailableReason?: TrainingSessionUnavailableReason | null;
+};
+
+export type TrainingSessionUnavailableReason =
+  | "dictionary-access-revoked"
+  | "projection-missing"
+  | "entry-not-found"
+  | "model-invalid"
+  | "reverse-definition-missing";
+
+export type TrainingSessionUnavailableResult = {
+  status:
+    | "unavailable"
+    | "unavailable-complete"
+    | "consumed"
+    | "not-member"
+    | "out-of-order";
+  ordinal?: number;
+  reason?: TrainingSessionUnavailableReason;
+  remaining?: number;
+};
+
+export type TrainingSessionUnavailableDiagnostic = {
+  trainingSessionUnavailable: true;
+  trainingSessionId: string;
+  trainingSessionOrdinal: number;
+  entryId: string;
+  cardTypeId: TrainingMode;
+  reason: TrainingSessionUnavailableReason;
+};
+
+export class TrainingSessionMemberUnavailableError extends Error {
+  readonly diagnostic: TrainingSessionUnavailableDiagnostic;
+
+  constructor(diagnostic: TrainingSessionUnavailableDiagnostic) {
+    super(
+      `training_session_member_unavailable:${diagnostic.entryId}:${diagnostic.cardTypeId}:${diagnostic.reason}`,
+    );
+    this.name = "TrainingSessionMemberUnavailableError";
+    this.diagnostic = diagnostic;
+  }
+}
+
+export const isTrainingSessionUnavailableError = (
+  value: unknown,
+): value is TrainingSessionMemberUnavailableError =>
+  value instanceof TrainingSessionMemberUnavailableError ||
+  (value instanceof Error &&
+    value.name === "TrainingSessionMemberUnavailableError" &&
+    Boolean((value as Partial<TrainingSessionMemberUnavailableError>).diagnostic));
+
+const isTrainingSessionUnavailableDiagnostic = (
+  value: unknown,
+): value is TrainingSessionUnavailableDiagnostic => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    candidate.trainingSessionUnavailable === true &&
+    typeof candidate.trainingSessionId === "string" &&
+    typeof candidate.trainingSessionOrdinal === "number" &&
+    Number.isInteger(candidate.trainingSessionOrdinal) &&
+    candidate.trainingSessionOrdinal > 0 &&
+    typeof candidate.entryId === "string" &&
+    typeof candidate.cardTypeId === "string" &&
+    SUPPORTED_CARD_MODES.has(candidate.cardTypeId as TrainingMode) &&
+    isTrainingSessionUnavailableReason(candidate.reason)
+  );
 };
 
 export type TrainingSessionSnapshot = TrainingSession & {
@@ -137,7 +204,10 @@ const mapTrainingSessionSnapshot = (
       typeof item.cardTypeId !== "string" ||
       typeof item.queueSource !== "string" ||
       (item.consumedAt !== null && typeof item.consumedAt !== "string") ||
-      (item.unavailableAt !== null && typeof item.unavailableAt !== "string")
+      (item.unavailableAt !== null && typeof item.unavailableAt !== "string") ||
+      (item.unavailableReason !== undefined &&
+        item.unavailableReason !== null &&
+        !isTrainingSessionUnavailableReason(item.unavailableReason))
     ) {
       return [];
     }
@@ -148,6 +218,12 @@ const mapTrainingSessionSnapshot = (
       queueSource: item.queueSource,
       consumedAt: item.consumedAt as string | null,
       unavailableAt: item.unavailableAt as string | null,
+      ...(item.unavailableReason !== undefined
+        ? {
+            unavailableReason:
+              item.unavailableReason as TrainingSessionUnavailableReason | null,
+          }
+        : {}),
     }];
   });
   if (members.length !== candidate.members.length) return null;
@@ -157,6 +233,15 @@ const mapTrainingSessionSnapshot = (
     members,
   };
 };
+
+const isTrainingSessionUnavailableReason = (
+  value: unknown,
+): value is TrainingSessionUnavailableReason =>
+  value === "dictionary-access-revoked" ||
+  value === "projection-missing" ||
+  value === "entry-not-found" ||
+  value === "model-invalid" ||
+  value === "reverse-definition-missing";
 
 const trainingSessionPlanScopePayload = (
   userId: string,
@@ -249,6 +334,51 @@ export async function fetchTrainingSessionSnapshot(
   return mapTrainingSessionSnapshot(data);
 }
 
+export async function markTrainingSessionMemberUnavailable(
+  userId: string,
+  sessionId: string,
+  entryId: string,
+  cardTypeId: TrainingMode,
+  reason: TrainingSessionUnavailableReason,
+): Promise<TrainingSessionUnavailableResult> {
+  const { data, error } = await supabase.rpc(
+    "mark_training_session_member_unavailable",
+    {
+      p_user_id: userId,
+      p_session_id: sessionId,
+      p_entry_id: entryId,
+      p_card_type_id: cardTypeId,
+      p_reason: reason,
+    },
+  );
+  if (error) {
+    console.error("Error marking training session member unavailable:", error);
+    throw error;
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("invalid_training_session_unavailable_response");
+  }
+  const result = data as Record<string, unknown>;
+  const status = result.status;
+  if (
+    status !== "unavailable" &&
+    status !== "unavailable-complete" &&
+    status !== "consumed" &&
+    status !== "not-member" &&
+    status !== "out-of-order"
+  ) {
+    throw new Error("invalid_training_session_unavailable_response");
+  }
+  return {
+    status,
+    ...(typeof result.ordinal === "number" ? { ordinal: result.ordinal } : {}),
+    ...(isTrainingSessionUnavailableReason(result.reason)
+      ? { reason: result.reason }
+      : {}),
+    ...(typeof result.remaining === "number" ? { remaining: result.remaining } : {}),
+  };
+}
+
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
   if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
@@ -312,6 +442,9 @@ export const fetchNextTrainingWord = async (
     }
     const item = Array.isArray(data) ? data[0] : data;
     if (!item) return null;
+    if (isTrainingSessionUnavailableDiagnostic(item)) {
+      throw new TrainingSessionMemberUnavailableError(item);
+    }
     const rawData = normalizeRaw(item.raw);
     if (isCrossReferenceOnly(rawData)) return null;
     return mapSelectionItem(item, rawData);

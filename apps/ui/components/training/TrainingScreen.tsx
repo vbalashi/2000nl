@@ -565,11 +565,32 @@ function TrainingScreenContent({
     recoverLoadErrors: trainingTodaySetupEnabled,
     sessionPlannedTotal,
     sessionConsumedCardKeys,
+    trainingSessionId,
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
     selection: selectionPort,
     refreshAfterAccepted,
   });
+  const clearResumeAfterCompletedRetry = useCallback(
+    (result: unknown) => {
+      if (result === "session-complete" && user?.id) {
+        // A confirmed empty session is terminal. Transient retry outcomes
+        // keep the resumable record intact for the next attempt.
+        clearTrainingSessionResume(user.id);
+      }
+    },
+    [user?.id],
+  );
+  const retryCardLoadFailureAndPersist = useCallback(async () => {
+    const result = await retryCardLoadFailure();
+    clearResumeAfterCompletedRetry(result);
+    return result;
+  }, [clearResumeAfterCompletedRetry, retryCardLoadFailure]);
+  const retryAcceptedTransitionLoadAndPersist = useCallback(async () => {
+    const result = await retryAcceptedTransitionLoad();
+    clearResumeAfterCompletedRetry(result);
+    return result;
+  }, [clearResumeAfterCompletedRetry, retryAcceptedTransitionLoad]);
   const [platformProgressActionPending, setPlatformProgressActionPending] =
     useState(false);
   const [presentationResetKey, setPresentationResetKey] = useState(0);
@@ -1204,7 +1225,7 @@ function TrainingScreenContent({
         sessionResumeAttemptedRef.current = false;
         return;
       }
-      const recovery = await retryCardLoadFailure();
+      const recovery = await retryCardLoadFailureAndPersist();
       if (recovery === "skipped") await loadNextWord();
     },
   });
@@ -1521,7 +1542,7 @@ function TrainingScreenContent({
             "senseCard.training.retry",
           ),
           retryDisabled: actionLoading,
-          onRetry: () => void retryAcceptedTransitionLoad(),
+          onRetry: () => void retryAcceptedTransitionLoadAndPersist(),
         }
       : nextCardOverrideNotice
         ? { kind: "status", message: nextCardOverrideNotice }
@@ -1599,7 +1620,7 @@ function TrainingScreenContent({
               reportCardLoadFailure(currentWord, failure);
             }}
             onRetryAlternative={() => {
-              void retryCardLoadFailure();
+              void retryCardLoadFailureAndPersist();
             }}
             onExit={trainingPilot.returnToToday}
           />

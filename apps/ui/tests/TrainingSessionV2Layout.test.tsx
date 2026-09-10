@@ -8,6 +8,7 @@ import {
 
 const knownFailures = [
   "lookup-http-error",
+  "projection-missing",
   "contract-mismatch",
   "entry-not-found",
   "model-invalid",

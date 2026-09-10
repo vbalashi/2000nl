@@ -1,10 +1,11 @@
 # Issue #294 — server-latched Training membership
 
 Status re-audited 2026-09-10 against `origin/main` at
-`1018c7bd3f55e76c2df3c31bbd63ffd863ac9ba8` (DB135). The old status line was
-stale: the UI wiring and refresh/resume path are already shipped. The remaining
-work is the explicit unavailable-member outcome in #311, five-card evidence,
-and safe retirement of internal scheduler overload callers.
+`1ccc271e8644a31731cb678063ff6d6e78d0186c` (DB135). The UI wiring and
+refresh/resume path are already shipped. The current #311 branch adds the
+unavailable-member outcome and five-card evidence; it is pending final review
+and merge. Safe retirement of internal scheduler overload callers remains a
+separate follow-up.
 
 ## Problem
 
@@ -62,10 +63,13 @@ compatibility overloads.
    opaque id through start → selection → action, persist/resume it after
    refresh, exclude the current/consumed card keys, and explicitly clear it on
    scope replacement. Migration 135 is the current additive exclusion guard.
-4. **Next — unavailable members (#311).** Mark a permanent access/content
-   failure as `unavailable_at` with a reason, continue to the next available
-   member, and leave transient failures retryable. Do not count unavailable
-   members as learned or accepted reviews.
+4. **Implemented on the #311 branch — unavailable members.** The read-only
+   selector returns a permanent access/content diagnostic; the explicit
+   `mark_training_session_member_unavailable` action records
+   `unavailable_at`/reason, continues to the next member, and completes the
+   session when no available members remain. Transient failures stay retryable,
+   and unavailable members never count as learned or accepted reviews. The
+   branch still needs final review, CI, and merge.
 5. **Then — caller retirement.** Migrate internal probes, diagnostics and test
    fixtures to explicit signatures; run an executable no-caller check; remove
    compatibility overloads in a separate forward migration only after the gate
