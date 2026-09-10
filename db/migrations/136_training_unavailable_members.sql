@@ -40,6 +40,7 @@ DECLARE
   v_expected_member public.training_session_members%rowtype;
   v_entry public.word_entries%rowtype;
   v_projected_card jsonb;
+  v_platform_group jsonb;
   v_evidence_reason text;
   v_remaining integer;
 BEGIN
@@ -135,6 +136,24 @@ BEGIN
         WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
       ) THEN
       v_evidence_reason := 'reverse-definition-missing';
+    ELSE
+      -- The Platform V2 renderer depends on the same presentation identity
+      -- contract as the UI lookup route. A dictionary row can be present while
+      -- its headword group/bindings have been retired, which is a permanent
+      -- projection failure even though the scheduler projection still exists.
+      v_platform_group := public.read_platform_v2_training_group(
+        p_user_id,
+        v_member.entry_id,
+        50
+      );
+      IF v_platform_group->>'error' = 'presentation_identity_incomplete'
+         OR NOT EXISTS (
+           SELECT 1
+           FROM jsonb_array_elements(COALESCE(v_platform_group->'items', '[]'::jsonb)) item
+           WHERE item->>'id' = v_member.entry_id::text
+         ) THEN
+        v_evidence_reason := 'projection-missing';
+      END IF;
     END IF;
   END IF;
 
