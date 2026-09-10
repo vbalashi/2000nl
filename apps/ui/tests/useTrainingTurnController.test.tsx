@@ -318,7 +318,7 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
   });
 
-  test("reports an accepted mutation as stalled when recovery retains the same presentation", async () => {
+  test("reports an accepted mutation with next-card unavailable when recovery retains the same presentation", async () => {
     prepared.consume.mockReturnValue(null);
     const selectNext = vi
       .fn()
@@ -709,7 +709,7 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(recoveredWord);
   });
 
-  test("an accepted transition reports a stalled load when the next selection fails", async () => {
+  test("an accepted transition reports next-card unavailable when the next selection fails", async () => {
     prepared.consume.mockReturnValue(null);
     const controller = renderController({
       recoverLoadErrors: false,

@@ -138,6 +138,8 @@ export function TrainingSenseCardV2Session({
       peekPrefetchedPlatformV2TrainingEntry(lookupInput),
   );
   const [busy, setBusy] = React.useState(false);
+  const [acceptedActionRecoveryPending, setAcceptedActionRecoveryPending] =
+    React.useState(false);
   const cardIdentity = presentationIdentity ?? `${word.id}:${mode}`;
   const [cardPresentation, setCardPresentation] = React.useState<{
     identity: string;
@@ -263,6 +265,7 @@ export function TrainingSenseCardV2Session({
 
   React.useEffect(() => {
     setReportOperation(null);
+    setAcceptedActionRecoveryPending(false);
   }, [cacheOwnerId, nextTransitionId, word.id]);
 
   React.useEffect(() => {
@@ -281,7 +284,13 @@ export function TrainingSenseCardV2Session({
   const handleAction = async (
     capability: PlatformSenseCardCapabilityV2,
   ): Promise<TrainingCardSwipeCommitOutcome> => {
-    if (interactionDisabled || interactionBusyRef.current) return "rejected";
+    if (
+      interactionDisabled ||
+      acceptedActionRecoveryPending ||
+      interactionBusyRef.current
+    ) {
+      return "rejected";
+    }
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
@@ -384,12 +393,17 @@ export function TrainingSenseCardV2Session({
         try {
           return await onProgressActionAccepted(capability);
         } catch (cause) {
+          setAcceptedActionRecoveryPending(true);
           setError(
             cause instanceof Error
               ? cause.message
               : temporaryFailureMessage(interfaceLanguage),
           );
-          return "stalled";
+          // The platform action has already returned an accepted receipt. A
+          // failure while presenting the next card must never make the
+          // mutation retryable: preserve the accepted grade and expose only
+          // load/presentation recovery to the caller.
+          return "accepted-next-unavailable";
         }
       }
       return "accepted";
@@ -476,7 +490,7 @@ export function TrainingSenseCardV2Session({
   );
   const swipeSurface = useTrainingCardSwipeSurface({
     enabled: sessionState === "ready" && cardSide === "answer",
-    busy: busy || interactionDisabled,
+    busy: busy || interactionDisabled || acceptedActionRecoveryPending,
     identity: cardIdentity,
     left: swipeLeftCapability
       ? {
@@ -570,7 +584,7 @@ export function TrainingSenseCardV2Session({
           model={model}
           mode={mode}
           interfaceLanguage={interfaceLanguage}
-          busy={busy || interactionDisabled}
+          busy={busy || interactionDisabled || acceptedActionRecoveryPending}
           focusOnMount={handlePresentation}
           onPlayAudio={
             result.group.header.audio && onPlayResolvedAudio
@@ -593,7 +607,9 @@ export function TrainingSenseCardV2Session({
                   operation: reportOperation,
                 })}
                 interfaceLanguage={interfaceLanguage}
-                disabled={busy || interactionDisabled}
+                disabled={
+                  busy || interactionDisabled || acceptedActionRecoveryPending
+                }
               />
             ) : undefined
           }
