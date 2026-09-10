@@ -1,7 +1,10 @@
 # Issue #294 — server-latched Training membership
 
-Status: server contract slices 1–2 prepared; UI wiring remains, based on
-`d2dee1eb`.
+Status re-audited 2026-09-10 against `origin/main` at
+`1018c7bd3f55e76c2df3c31bbd63ffd863ac9ba8` (DB135). The old status line was
+stale: the UI wiring and refresh/resume path are already shipped. The remaining
+work is the explicit unavailable-member outcome in #311, five-card evidence,
+and safe retirement of internal scheduler overload callers.
 
 ## Problem
 
@@ -50,22 +53,26 @@ compatibility overloads.
 
 ## Ordered implementation slices
 
-1. Add the session/membership schema and start/inspect RPCs with database
-   characterization tests. No UI behavior changes in this slice.
-2. Add the session-scoped next-card and idempotent consume boundaries. The
-   selector returns the first unconsumed member and re-checks dictionary access;
-   the private consumer is callable only from the Platform action wrapper and
-   consumes the member in the same transaction as an accepted progress action.
-   The UI still needs to pass the opaque id and use this boundary end to end;
-   until then the migration-132 selector remains the live client path.
-3. Route the Training selection port through the opaque session id and preserve
-   the existing #250 accepted-action and load-retry state machine.
-4. Migrate internal probes and tests to explicit scheduler signatures, add the
-   executable no-caller check, then remove compatibility overloads in a
-   separate migration.
-5. Run spec, architecture, refactoring, and UI QA reviews. Deploy only after
-   the five-card mutation/retry scenario proves the denominator and membership
-   remain stable.
+1. **Shipped — schema and membership snapshot.** #306 added migration 133,
+   `training_sessions`, `training_session_members`, and start/inspect RPCs.
+2. **Shipped — scoped selection and consume.** #307 added migration 134: the
+   selector returns the first unconsumed member, and the action wrapper consumes
+   it atomically and idempotently.
+3. **Shipped — UI and recovery wiring.** #308–#310, #312 and #313 carry the
+   opaque id through start → selection → action, persist/resume it after
+   refresh, exclude the current/consumed card keys, and explicitly clear it on
+   scope replacement. Migration 135 is the current additive exclusion guard.
+4. **Next — unavailable members (#311).** Mark a permanent access/content
+   failure as `unavailable_at` with a reason, continue to the next available
+   member, and leave transient failures retryable. Do not count unavailable
+   members as learned or accepted reviews.
+5. **Then — caller retirement.** Migrate internal probes, diagnostics and test
+   fixtures to explicit signatures; run an executable no-caller check; remove
+   compatibility overloads in a separate forward migration only after the gate
+   is green.
+6. **Final gates.** Run spec, architecture, refactoring and UI-QA reviews.
+   Deploy only after the five-card mutation/retry scenario proves that the
+   original denominator and membership remain stable.
 
 ## Explicit non-goals
 
@@ -73,3 +80,11 @@ compatibility overloads.
 - no rewrite of review history;
 - no change to `Learn`, `Good`, `Hard`, or `Easy` semantics;
 - no visual redesign beyond displaying the already-latched session state.
+
+## Dependency boundary
+
+#250 owns the client transition owner and load-only recovery. Its accepted
+action must remain separate from this issue's membership consume operation.
+#311 is the next implementation slice for this issue; it must not introduce a
+second Training controller or alter Learn/Again semantics. #279 and #290 wait
+until the membership/error outcome is proven.
