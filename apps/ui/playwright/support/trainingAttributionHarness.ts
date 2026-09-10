@@ -174,6 +174,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let acceptedScenario: "hit" | "miss" | "fallback" = "hit";
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
+  const sessionRequests: Record<string, unknown>[] = [];
   const statsRequests: Record<string, unknown>[] = [];
   const scenarioRequests: Record<string, unknown>[] = [];
   const failWarmupLookupsForEntries = new Set<string>();
@@ -375,6 +376,24 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const pathname = url.pathname;
     const body = request.postDataJSON?.() ?? {};
 
+    if (pathname.endsWith("/rpc/start_training_session")) {
+      await fulfillJson(
+        route,
+        visualFixture
+          ? { sessionId: "training-session-fixture", ...visualFixture.plan }
+          : {
+              sessionId: "training-session-fixture",
+              plannedNew: 30,
+              plannedReview: 20,
+              plannedPractice: 0,
+              plannedTotal: 50,
+              plannedAt: new Date(0).toISOString(),
+            },
+        "start-session",
+      );
+      return;
+    }
+
     if (pathname.endsWith("/rpc/get_training_session_plan")) {
       await fulfillJson(
         route,
@@ -472,6 +491,21 @@ export async function setupAuthenticatedTrainingAttributionPage(
         nextEntryIndex = Math.min(nextEntryIndex + 1, entries.length - 1);
       }
       await fulfillJson(route, [buildSchedulerEntry(entries[nextEntryIndex]!)], "scheduler");
+      return;
+    }
+
+    if (pathname.endsWith("/rpc/get_next_training_session_card")) {
+      sessionRequests.push({ ...body });
+      const invalidEntry = entries.find((entry) => invalidEntryIds.has(entry.id));
+      const isInvalidPreparedCandidate =
+        Boolean(invalidEntry) && sessionRequests.length >= 2 && sessionRequests.length <= 3;
+      const entry = isInvalidPreparedCandidate
+        ? invalidEntry!
+        : entries[Math.min(nextEntryIndex, entries.length - 1)]!;
+      if (!isInvalidPreparedCandidate) {
+        nextEntryIndex = Math.min(nextEntryIndex + 1, entries.length - 1);
+      }
+      await fulfillJson(route, buildSchedulerEntry(entry), "session-card");
       return;
     }
 
@@ -694,6 +728,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   return {
     requests: {
       scheduler: schedulerRequests,
+      session: sessionRequests,
       stats: statsRequests,
       scenarios: scenarioRequests,
     },
