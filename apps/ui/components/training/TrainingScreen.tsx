@@ -525,6 +525,7 @@ function TrainingScreenContent({
     activeScenario,
     currentTrainingLanguage,
     enabledModesKey,
+    cardFilter,
     trainingFocusFilterKey,
     wordListId ?? "",
     wordListType ?? "",
@@ -717,11 +718,29 @@ function TrainingScreenContent({
 
   const setCardFilter = useCallback(
     (newFilter: CardFilter) => {
+      if (newFilter === cardFilter) return;
+      // Card-filter changes leave the current finite session. Clear its id
+      // before the next selection so an old session cannot leak across the
+      // replacement boundary.
+      beginSessionScopeChange();
       setCardFilterPreference(newFilter, { persist: false });
       persistCurrentTrainingScope({ cardFilter: newFilter });
       resetQueueForFilter(newFilter);
+      if (initialLoadDone.current) {
+        void loadNextWord({
+          cardFilter: newFilter,
+          trainingSessionId: null,
+        });
+      }
     },
-    [persistCurrentTrainingScope, resetQueueForFilter, setCardFilterPreference],
+    [
+      beginSessionScopeChange,
+      cardFilter,
+      loadNextWord,
+      persistCurrentTrainingScope,
+      resetQueueForFilter,
+      setCardFilterPreference,
+    ],
   );
 
   const resetFocusQueueState = useCallback(() => {
@@ -818,11 +837,20 @@ function TrainingScreenContent({
       return;
     }
     lastAppliedTrainingFocusFilterKey.current = trainingFocusFilterKey;
-    void loadNextWord();
+    // A focus-filter change is a scope replacement. Explicitly clear the
+    // previous finite-session id so the selection port cannot reuse it from
+    // the render that initiated the change.
+    beginSessionScopeChange();
+    void loadNextWord({
+      focusFilter: trainingFocusFilter,
+      trainingSessionId: null,
+    });
   }, [
+    beginSessionScopeChange,
     listHydrated,
     loadNextWord,
     sessionResumeResolved,
+    trainingFocusFilter,
     trainingFocusFilterKey,
     user?.id,
   ]);
@@ -1090,6 +1118,12 @@ function TrainingScreenContent({
       setSessionConsumedCardKeys([]);
       setTrainingSessionId(session.sessionId);
       setLatchedSessionPlan(session);
+      // The explicit session-start load below owns this filter. Mark it as
+      // already applied so the focus-filter observer does not issue a
+      // second, unscoped replacement request after React commits the state.
+      lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
+        context.focusFilter,
+      );
       writeTrainingSessionResume({
         sessionId: session.sessionId,
         userId: user.id,

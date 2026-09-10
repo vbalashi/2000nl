@@ -93,8 +93,14 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
       // The finite-session contract is intentionally limited to new/due
       // cards. Future practice tails would make the session count surprising.
       const allowPractice = request.allowPractice ?? defaultAllowPractice;
+      // `null` is an explicit boundary signal from a scope replacement: do
+      // not fall back to the id captured by this render. Using `??` here
+      // could briefly select from the previous latched session while React is
+      // applying the replacement state.
       const trainingSessionId =
-        request.trainingSessionId ?? activeTrainingSessionId;
+        request.trainingSessionId === undefined
+          ? activeTrainingSessionId
+          : request.trainingSessionId;
 
       return fetchNextTrainingWordByScenario(
         userId,

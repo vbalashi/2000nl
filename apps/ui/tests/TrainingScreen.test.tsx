@@ -1959,6 +1959,37 @@ test("footer list selector still changes active training scope", async () => {
   }
 });
 
+test("footer card-filter change reloads without the previous finite session", async () => {
+  fetchNextTrainingWordByScenario
+    .mockReset()
+    .mockImplementationOnce(() => new Promise(() => undefined))
+    .mockResolvedValue(mockWord);
+
+  render(<TrainingScreen user={user} />);
+  await screen.findByRole("button", { name: "Wijzigen" });
+
+  fetchNextTrainingWordByScenario.mockClear();
+  fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Nieuw \+ Herhaling/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Alleen nieuw/ }),
+  );
+
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.some(
+        (call) => call[4] === "new",
+      ),
+    ).toBe(true),
+  );
+  const replacementCall = fetchNextTrainingWordByScenario.mock.calls.find(
+    (call) => call[4] === "new",
+  );
+  expect(replacementCall?.[11]).toBeUndefined();
+});
+
 test("initial load waits for an unsaved list default scenario", async () => {
   fetchActiveTrainingScope.mockResolvedValue({
     ...defaultActiveTrainingScope,

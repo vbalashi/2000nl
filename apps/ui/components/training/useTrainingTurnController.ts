@@ -473,7 +473,11 @@ export function useTrainingTurnController(input: Inputs) {
   const replaceSessionScopeAndLoad = useCallback(
     (request: LoadNextTrainingTurnRequest) => {
       beginSessionScopeChange();
-      return loadNextWord(request);
+      // The replacement request must not inherit the previous render's
+      // session id through the selection port's closure. A new server-latched
+      // session is created by the next explicit session start; this load is
+      // intentionally unscoped until then.
+      return loadNextWord({ ...request, trainingSessionId: null });
     },
     [beginSessionScopeChange, loadNextWord],
   );
