@@ -109,6 +109,7 @@ function renderController(overrides: {
   setCurrentWord?: (word: TrainingWord | null) => void;
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
   markUnavailable?: (input: {
+    sessionId?: string | null;
     entryId: string;
     cardTypeId: TrainingMode;
     reason: TrainingSessionUnavailableReason;
@@ -530,6 +531,7 @@ describe("useTrainingTurnController transition matrix", () => {
     });
 
     expect(markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
       entryId: "word-2",
       cardTypeId: "word-to-definition",
       reason: "reverse-definition-missing",
@@ -614,6 +616,45 @@ describe("useTrainingTurnController transition matrix", () => {
       reason: "dictionary-access-revoked",
     });
     expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("uses the per-request session id when initial-card warmup fails permanently", async () => {
+    prepared.warm.mockResolvedValueOnce({
+      ready: false,
+      unavailableReason: "entry-not-found",
+    });
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi.fn().mockResolvedValue(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable: vi.fn().mockResolvedValue(true),
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord({
+        trainingSessionId: "session-1",
+      });
+    });
+
+    expect(controller.markUnavailable).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      entryId: "word-3",
+      cardTypeId: "word-to-definition",
+      reason: "entry-not-found",
+    });
+
+    await act(async () => {
+      await controller.result.current.retryCardLoadFailure();
+    });
+
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+    expect(controller.selectNext).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        trainingSessionId: "session-1",
+        excludeCardKeys: ["word-3:word-to-definition"],
+      }),
+    );
   });
 
   test("background prefetch keeps rejected card keys excluded for the session", async () => {
