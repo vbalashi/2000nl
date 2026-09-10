@@ -220,7 +220,9 @@ function TrainingScreenContent({
   // missing or stale resume record is resolved immediately and preserves the
   // ordinary first-use flow.
   const [sessionResumeResolved, setSessionResumeResolved] = useState(
-    () => !trainingTodaySetupEnabled,
+    () =>
+      !trainingTodaySetupEnabled ||
+      !readTrainingSessionResume(user.id),
   );
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const sessionResumeAttemptedRef = useRef(false);
