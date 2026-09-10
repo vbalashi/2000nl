@@ -397,3 +397,6 @@
 
 -- Finite Training session sizes with explicit practice-card selection
 \i db/migrations/132_finite_training_session_sizes.sql
+
+-- Server-latched finite Training session membership
+\i db/migrations/133_latched_training_session_membership.sql

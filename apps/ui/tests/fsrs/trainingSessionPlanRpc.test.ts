@@ -143,6 +143,78 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("latches finite membership even when the scheduler input changes", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      const wordIds: string[] = [];
+      for (let index = 0; index < 8; index += 1) {
+        wordIds.push(await insertWord(client, `latched-session-${userId}-${index}`));
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+          $1::uuid,
+          ARRAY['word-to-definition']::text[],
+          NULL::uuid,
+          'curated',
+          'both',
+          '{}'::jsonb,
+          '5'
+        ) as session`,
+        [userId],
+      );
+      const started = startRows[0]?.session;
+      expect(started).toEqual(
+        expect.objectContaining({
+          sessionSize: "5",
+          plannedTotal: 5,
+        }),
+      );
+
+      const { rows: beforeRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, started.sessionId],
+      );
+      const before = beforeRows[0]?.snapshot;
+      expect(before.members).toHaveLength(5);
+      const beforeKeys = before.members.map(
+        (member: { entryId: string; cardTypeId: string }) =>
+          `${member.entryId}:${member.cardTypeId}`,
+      );
+
+      // Make the live scheduler input different after the session starts. The
+      // session snapshot must not be rebuilt from this changed queue.
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id, fsrs_stability, fsrs_difficulty,
+          fsrs_reps, fsrs_lapses, fsrs_last_interval, fsrs_last_grade,
+          fsrs_enabled, next_review_at, last_seen_at
+        ) values ($1, $2, 'word-to-definition', 2, 5, 2, 0, 2, 3, true,
+                  now() - interval '1 day', now())`,
+        [userId, wordIds[0]],
+      );
+      await insertWord(client, `latched-session-added-after-${userId}`);
+
+      const { rows: afterRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, started.sessionId],
+      );
+      const after = afterRows[0]?.snapshot;
+      expect(after.plannedTotal).toBe(5);
+      expect(after.members).toHaveLength(5);
+      expect(
+        after.members.map(
+          (member: { entryId: string; cardTypeId: string }) =>
+            `${member.entryId}:${member.cardTypeId}`,
+        ),
+      ).toEqual(beforeKeys);
+    }, userId);
+  });
+
   test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
     const userId = randomUUID();
     const otherUserId = randomUUID();
