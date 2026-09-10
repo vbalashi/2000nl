@@ -50,8 +50,6 @@ export function UnifiedDetailsGate({
           <TrainingDetailsDrawer open onClose={() => setTraining(false)} interfaceLanguage="nl">
             <TrainingMoreSenseCardV2Session
               {...props}
-              trainingActionEntryId={entryId}
-              onTrainingAction={() => undefined}
             />
           </TrainingDetailsDrawer>
         ) : drawer ? (

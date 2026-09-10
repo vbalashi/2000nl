@@ -43,13 +43,6 @@ type Props = {
   onListsUpdated?: () => Promise<void> | void;
   onTrainWord?: (entryId: string) => void;
   onCopyToUserDictionary?: (entryId: string) => Promise<void> | void;
-  trainingActionEntryId?: string | null;
-  revealed?: boolean;
-  actionLoading?: boolean;
-  onTrainingAction?: (
-    action: "freeze" | "hide",
-    entryId: string,
-  ) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
 
@@ -77,10 +70,6 @@ function SenseCardV2Session({
   onListsUpdated,
   onTrainWord,
   onCopyToUserDictionary,
-  trainingActionEntryId = null,
-  revealed = true,
-  actionLoading = false,
-  onTrainingAction,
   onOpenListMembership,
 }: Props & { context: DetailsContext }) {
   const translationLanguage =
@@ -711,17 +700,10 @@ function SenseCardV2Session({
       </div>
       {showGlobalDetailsActions &&
       activeSenseEntry &&
-      (onCopyToUserDictionary || onTrainingAction || canReport) ? (
+      (onCopyToUserDictionary || canReport) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
-          revealed={revealed}
-          actionLoading={actionLoading}
-          onTrainingAction={
-            activeSenseEntry && activeMeaningId === trainingActionEntryId
-              ? (action) => onTrainingAction?.(action, activeMeaningId)
-              : undefined
-          }
           onCopyToUserDictionary={
             activeSenseEntry ? onCopyToUserDictionary : undefined
           }

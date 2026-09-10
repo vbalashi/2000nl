@@ -18,25 +18,30 @@ change as part of the cleanup.
 
 ## Remaining dependencies
 
-1. **Details action placement.** Training More is the read-only surface from
-   #269. Do not add footer actions there. Any future freeze/hide action must
-   first be designed as part of the ellipsis menu, then get its own typed
-   contract and caller migration before the shared legacy review port is removed.
+1. **Details boundary verified.** Training More suppresses global footer
+   actions under #269. Its freeze/hide callback was unreachable; Library
+   callers supplied no such callback. Remove that dead wiring, not replace it
+   with new actions. A future menu design is independent of renderer removal.
 2. **`listen-type`.** It is not a supported V2 mode: it needs an input and
    answer-checking contract. Do not route it to V2 by predicate alone and do
    not silently keep it as an active production fallback.
-3. **Caller inventory (#255).** Confirm no external or compatibility caller
-   still requires the old renderer, controller port, or presentation helper.
+3. **Caller inventory (#255).** The [bounded inventory](../../architecture/target-state-2026-09/training-legacy-callers.md)
+   identifies the internal renderer/test callers and distinguishes them from
+   active public learning actions. No AudioFilms/Pontix import of the internal
+   renderer was found. Public `start-learning` remains current in both V1 and
+   V2 and is not scheduled for deletion by #142.
 
 ## Removal sequence
 
-1. Add characterization tests for listening, loading, exhausted and Details
-   actions.
+1. Preserve characterization tests for listening, loading, exhausted and the
+   absence of global footer actions in Training More.
 2. Make the V2 mode predicate single-source in Screen, controller and
    prefetch; keep `listen-type` explicitly unsupported until its own feature
    exists.
-3. Resolve the separately designed Details-menu action contract, then remove
-   `useLegacyTrainingReviewPort` from Details.
+3. Remove unreachable Details callbacks. Remove `useLegacyTrainingReviewPort`
+   and `submitLegacyReview` together with their remaining legacy Training
+   button, keyboard and swipe callers; preserve the shared acceptance/recovery
+   controller used by V2.
 4. Migrate or retire legacy-only TrainingScreen tests and remove the fallback
    JSX, old reveal/grading state, projection and imports.
 5. Move any still-valid presentation tests to V2 model/stage tests, then
@@ -49,5 +54,6 @@ change as part of the cleanup.
 
 - Do not touch draft PR #144 or blind review #143.
 - Do not rewrite historical migrations or reset learning identities.
-- Do not delete the old path until the Details-menu action decision and the
-  actual-caller inventory are complete.
+- No future Details-menu design or external action migration blocks deletion
+  of the internal TrainingCard renderer. Remove only the verified internal
+  paths and retain active Platform actions and their DB implementations.

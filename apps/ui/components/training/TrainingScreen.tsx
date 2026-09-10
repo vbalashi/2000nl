@@ -13,7 +13,6 @@ import {
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchStats,
-  copyEntryToUserDictionary,
   isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   type ReviewResult,
@@ -2207,13 +2206,6 @@ function TrainingScreenContent({
                   )}
                   onListsUpdated={handleListsUpdated}
                   onTrainWord={handleTrainWord}
-                  trainingActionEntryId={currentWord?.id}
-                  revealed={revealed}
-                  actionLoading={actionLoading}
-                  onTrainingAction={(action) => void handleAction(action)}
-                  onCopyToUserDictionary={async (entryId) => {
-                    await copyEntryToUserDictionary({ entryId });
-                  }}
                 />
               </div>
             </div>

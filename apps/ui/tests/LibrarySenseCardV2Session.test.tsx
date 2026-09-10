@@ -222,8 +222,6 @@ describe("LibrarySenseCardV2Session", () => {
         interfaceLanguage="en"
         userId="training-user"
         onTrainWord={trainNext}
-        trainingActionEntryId={financeEntry.entryId}
-        onTrainingAction={vi.fn()}
         onCopyToUserDictionary={vi.fn()}
       />,
     );
