@@ -18,9 +18,10 @@ change as part of the cleanup.
 
 ## Remaining dependencies
 
-1. **#296 — Details actions.** `TrainingMoreSenseCardV2Session` still sends
-   `freeze` and `hide` through `useLegacyTrainingReviewPort`. Migrate these
-   actions to an explicit typed V2 contract before deleting that port.
+1. **Details action placement.** Training More is the read-only surface from
+   #269. Do not add footer actions there. Any future freeze/hide action must
+   first be designed as part of the ellipsis menu, then get its own typed
+   contract and caller migration before the shared legacy review port is removed.
 2. **`listen-type`.** It is not a supported V2 mode: it needs an input and
    answer-checking contract. Do not route it to V2 by predicate alone and do
    not silently keep it as an active production fallback.
@@ -34,7 +35,8 @@ change as part of the cleanup.
 2. Make the V2 mode predicate single-source in Screen, controller and
    prefetch; keep `listen-type` explicitly unsupported until its own feature
    exists.
-3. Migrate #296 and remove `useLegacyTrainingReviewPort` from Details.
+3. Resolve the separately designed Details-menu action contract, then remove
+   `useLegacyTrainingReviewPort` from Details.
 4. Migrate or retire legacy-only TrainingScreen tests and remove the fallback
    JSX, old reveal/grading state, projection and imports.
 5. Move any still-valid presentation tests to V2 model/stage tests, then
@@ -47,5 +49,5 @@ change as part of the cleanup.
 
 - Do not touch draft PR #144 or blind review #143.
 - Do not rewrite historical migrations or reset learning identities.
-- Do not delete the old path until #296 and the actual-caller inventory are
-  complete.
+- Do not delete the old path until the Details-menu action decision and the
+  actual-caller inventory are complete.

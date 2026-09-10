@@ -2633,6 +2633,16 @@ test("renders an explicit V2 state instead of falling back for unsupported liste
     expect(
       screen.queryByTestId("mock-training-sense-card-v2"),
     ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Terug naar Vandaag|Back to Today|Вернуться на Сегодня/i,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByTestId("training-v2-unsupported-mode"),
+      ).not.toBeInTheDocument(),
+    );
   } finally {
     platformV2TrainingUiEnabled.mockReturnValue(false);
     fetchNextTrainingWordByScenario.mockReset();

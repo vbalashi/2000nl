@@ -1605,6 +1605,11 @@ function TrainingScreenContent({
     }
     trainingPilot.continueSession();
   }, [currentWord, trainingPilot]);
+  const exitUnsupportedTrainingMode = useCallback(() => {
+    setCurrentWord(null);
+    resetCardPresentation();
+    trainingPilot.returnToToday();
+  }, [resetCardPresentation, trainingPilot]);
   const handleEnterTrainingSession = useCallback(() => {
     clearReviewedSession();
   }, [clearReviewedSession]);
@@ -1845,7 +1850,7 @@ function TrainingScreenContent({
             {currentWord && !v2SessionMode ? (
               <TrainingUnsupportedMode
                 interfaceLanguage={onboardingLang}
-                onExit={trainingPilot.returnToToday}
+                onExit={exitUnsupportedTrainingMode}
               />
             ) : usableCandidatesExhausted ? (
               <TrainingUsableCandidatesExhausted
