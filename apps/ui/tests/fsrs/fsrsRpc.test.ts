@@ -84,7 +84,9 @@ describeIfDb("FSRS RPC integration", () => {
       await expectUnauthorizedRpc(
         client,
         "null_auth_next_card",
-        `select get_next_card($1, ARRAY[$2]::text[], ARRAY[]::uuid[])`,
+        `select get_next_card(
+          $1, ARRAY[$2]::text[], ARRAY[]::uuid[], NULL, 'curated', 'both', 'auto', ARRAY[]::text[], false
+        )`,
         [userId, mode],
       );
       await expectUnauthorizedRpc(
@@ -2802,7 +2804,8 @@ describeIfDb("FSRS RPC integration", () => {
           'user',
           'both',
           'new',
-          ARRAY[]::text[]
+          ARRAY[]::text[],
+          false
         ) as item`,
         [userId, mode, listId],
       );
@@ -2877,7 +2880,8 @@ describeIfDb("FSRS RPC integration", () => {
           'user',
           'both',
           'new',
-          ARRAY[]::text[]
+          ARRAY[]::text[],
+          false
         ) as item`,
         [userId, mode, firstWordId, listId],
       );
@@ -2937,7 +2941,8 @@ describeIfDb("FSRS RPC integration", () => {
           'user',
           'both',
           'new',
-          ARRAY[]::text[]
+          ARRAY[]::text[],
+          false
         ) as item`,
         [userId, mode, listId],
       );
@@ -2953,7 +2958,8 @@ describeIfDb("FSRS RPC integration", () => {
           'both',
           'new',
           ARRAY[]::text[],
-          '{}'::jsonb
+          '{}'::jsonb,
+          false
         ) as item`,
         [userId, mode, listId],
       );
@@ -2980,7 +2986,8 @@ describeIfDb("FSRS RPC integration", () => {
           'user',
           'review',
           'review',
-          ARRAY[]::text[]
+          ARRAY[]::text[],
+          false
         ) as item`,
         [userId, mode, listId],
       );
@@ -3023,7 +3030,8 @@ describeIfDb("FSRS RPC integration", () => {
             'user',
             'both',
             'auto',
-            ARRAY[]::text[]
+            ARRAY[]::text[],
+            false
           ) as item`,
           [userId, mode, listId],
         );
@@ -3097,7 +3105,8 @@ describeIfDb("FSRS RPC integration", () => {
           'curated',
           'review',
           'review',
-          $3::text[]
+          $3::text[],
+          false
         ) as item`,
         [userId, [mode, reverseMode], [`${wordId}:${mode}`]],
       );
@@ -3164,7 +3173,8 @@ describeIfDb("FSRS RPC integration", () => {
             'both',
             'auto',
             ARRAY[]::text[],
-            $3::jsonb
+            $3::jsonb,
+            false
           ) as item`,
           [userId, mode, JSON.stringify({ timezone: "UTC", ...filter })],
         );

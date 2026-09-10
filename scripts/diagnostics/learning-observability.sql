@@ -34,7 +34,7 @@ RETURNS void LANGUAGE plpgsql AS $$
 DECLARE stats jsonb; selected jsonb;
 BEGIN
   stats := get_detailed_training_stats(p_user,ARRAY['word-to-definition'],p_list,'curated');
-  selected := get_next_card(p_user,ARRAY['word-to-definition'],ARRAY[]::uuid[],p_list,'curated','both','review',ARRAY[]::text[]);
+  selected := get_next_card(p_user,ARRAY['word-to-definition'],ARRAY[]::uuid[],p_list,'curated','both','review',ARRAY[]::text[],false);
   INSERT INTO observations
   SELECT p_scenario,p_stage,count(*)::int,
     count(*) FILTER (WHERE s.fsrs_reps > 0)::int,

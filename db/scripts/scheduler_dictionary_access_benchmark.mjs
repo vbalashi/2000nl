@@ -199,7 +199,7 @@ try {
     nextCard: {
       sql: `select get_next_card(
         $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
-        'curated', 'both', 'new', ARRAY[]::text[]
+        'curated', 'both', 'new', ARRAY[]::text[], false
       )`,
       params: [USER_ID],
     },

@@ -46,7 +46,7 @@ const queries = {
   },
   fullScheduler: {
     sql: `select get_next_card(
-      $1, $2::text[], array[]::uuid[], null, 'curated', 'both', 'new', array[]::text[]
+      $1, $2::text[], array[]::uuid[], null, 'curated', 'both', 'new', array[]::text[], false
     )`,
     params: [benchmarkUserId, ["word-to-definition"]],
   },

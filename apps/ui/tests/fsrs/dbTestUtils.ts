@@ -209,7 +209,9 @@ export async function callGetNextCard(
   exclude: string[] = []
 ) {
   const { rows } = await client.query(
-    `select get_next_card($1, ARRAY[$2]::text[], $3::uuid[]) as item`,
+    `select get_next_card(
+      $1, ARRAY[$2]::text[], $3::uuid[], NULL, 'curated', 'both', 'auto', ARRAY[]::text[], false
+    ) as item`,
     [userId, mode, exclude]
   );
   return rows[0]?.item as any | undefined;

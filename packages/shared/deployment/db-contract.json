@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-136",
+  "contractId": "2000nl-db-137",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 136,
+    "requiredMigrationId": 137,
     "coordinationIssue": 250
   },
   "baseline": {
@@ -84,12 +84,17 @@
       "migrationId": 136,
       "file": "db/migrations/136_training_unavailable_members.sql",
       "sha256": "81c678973787e737714cb3c4fadb146a49e15834a03e16d7803bf5f0f0f3d827"
+    },
+    {
+      "migrationId": 137,
+      "file": "db/migrations/137_retire_legacy_scheduler_overloads.sql",
+      "sha256": "c601e71422c6606e057473620c99badb4a7ab71055ecffa174a9dc7e6446ce93"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-136.sql",
+  "postflightProbe": "db/deploy-contract/postflight-137.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-136.sql",
-    "sha256": "d1690cd8865580eaf01dcff852bc24afcb8a9885356283f8261928ef29b2b0a9",
+    "file": "db/deploy-contract/pre-switch-read-probe-137.sql",
+    "sha256": "c98ab7e65ff7b5fcf3fe4b7d8beb9e4650a2b9cc9f0893d9b451636a6ded2281",
     "statementTimeoutMs": 2000
   }
 }

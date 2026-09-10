@@ -10,6 +10,7 @@ on:
       - 'db/scripts/deploy_db_contract*.mjs'
       - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
+      - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
@@ -31,6 +32,7 @@ on:
       - 'db/scripts/deploy_db_contract*.mjs'
       - 'db/scripts/pre_switch_read_probe.integration.test.mjs'
       - 'db/scripts/scheduler_cold_io.integration.test.mjs'
+      - 'db/scripts/scheduler_legacy_callers.test.mjs'
       - 'db/scripts/postgres_client.mjs'
       - 'db/scripts/local_supabase_probe.sql'
       - 'db/scripts/plain_postgres_supabase_compat.sql'
@@ -197,6 +199,9 @@ jobs:
           node db/scripts/deploy_db_contract.mjs rollout-status
           node db/scripts/deploy_db_contract.mjs expected
 
+      - name: Prove retired scheduler overloads have no active callers
+        run: node --test db/scripts/scheduler_legacy_callers.test.mjs
+
       - name: Apply bootstrap and probe contract
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
@@ -210,7 +215,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-136.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-137.sql
 
       - name: Test exact bounded pre-switch scheduler read
         env:

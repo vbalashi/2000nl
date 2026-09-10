@@ -312,6 +312,160 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("drains exactly five latched members despite queue mutation and selector retries", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 50,
+        daily_review_limit: 50,
+      });
+      const initialEntryIds: string[] = [];
+      for (let index = 0; index < 5; index += 1) {
+        initialEntryIds.push(
+          await insertWord(client, `immutable-session-${userId}-${index}`),
+        );
+      }
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Immutable session ${userId}`],
+      );
+      const listId = listRows[0].id as string;
+      for (const entryId of initialEntryIds) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+          $1::uuid,
+          ARRAY['word-to-definition']::text[],
+          $2::uuid,
+          'user',
+          'both',
+          '{}'::jsonb,
+          '5'
+        ) as session`,
+        [userId, listId],
+      );
+      const started = startRows[0].session;
+      const sessionId = started.sessionId as string;
+      expect(started.plannedTotal).toBe(5);
+
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      const snapshot = snapshotRows[0].snapshot;
+      const latchedKeys = new Set(
+        snapshot.members.map(
+          (member: { entryId: string; cardTypeId: string }) =>
+            `${member.entryId}:${member.cardTypeId}`,
+        ),
+      );
+      expect(latchedKeys.size).toBe(5);
+      expect(snapshot.members.map((member: { entryId: string }) => member.entryId)).toEqual(
+        expect.arrayContaining(initialEntryIds),
+      );
+
+      // Add fresh scheduler candidates after the session starts. They must not
+      // enter this session, even when the browser asks for the same member
+      // again while a network/render retry is in flight.
+      for (let index = 0; index < 8; index += 1) {
+        const entryId = await insertWord(client, `post-start-queue-${userId}-${index}`);
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+
+      const consumedKeys: string[] = [];
+      await client.query(
+        `select set_config('request.jwt.claim.role', 'service_role', true)`,
+      );
+      for (let ordinal = 1; ordinal <= 5; ordinal += 1) {
+        const { rows: firstRows } = await client.query(
+          `select get_next_training_session_card(
+            $1::uuid, $2::uuid, $3::text[]
+          ) as card`,
+          [userId, sessionId, []],
+        );
+        const first = firstRows[0]?.card;
+        expect(first).toEqual(
+          expect.objectContaining({
+            trainingSessionId: sessionId,
+            trainingSessionOrdinal: ordinal,
+          }),
+        );
+        const key = `${first.id}:${first.mode}`;
+        expect(latchedKeys.has(key)).toBe(true);
+
+        const { rows: retryRows } = await client.query(
+          `select get_next_training_session_card(
+            $1::uuid, $2::uuid, $3::text[]
+          ) as card`,
+          [userId, sessionId, []],
+        );
+        expect(retryRows[0].card).toEqual(first);
+
+        const actionEventId = randomUUID();
+        const { rows: consumeRows } = await client.query(
+          `select perform_platform_v2_card_action_as_principal(
+            $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+            null, null, null, $5::uuid, null, 'first_party', null, $6::uuid
+          ) as result`,
+          [userId, first.id, first.mode, first.stateRevision, actionEventId, sessionId],
+        );
+        expect(consumeRows[0].result).toEqual(
+          expect.objectContaining({
+            status: "accepted",
+            actionId: "start-learning",
+          }),
+        );
+        consumedKeys.push(key);
+
+        const { rows: duplicateRows } = await client.query(
+          `select perform_platform_v2_card_action_as_principal(
+            $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+            null, null, null, $5::uuid, null, 'first_party', null, $6::uuid
+          ) as result`,
+          [userId, first.id, first.mode, first.stateRevision, actionEventId, sessionId],
+        );
+        expect(duplicateRows[0].result).toEqual(
+          expect.objectContaining({ status: "duplicate", actionId: "start-learning" }),
+        );
+      }
+
+      expect(new Set(consumedKeys).size).toBe(5);
+      const { rows: exhaustedRows } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid) as card`,
+        [userId, sessionId],
+      );
+      expect(exhaustedRows[0]?.card).toBeUndefined();
+
+      const { rows: completionRows } = await client.query(
+        `select completed_at, planned_total,
+                (select count(*) from training_session_members member
+                 where member.session_id = session.id and member.consumed_at is not null) as consumed
+           from training_sessions session
+          where session.id = $1`,
+        [sessionId],
+      );
+      expect(completionRows[0]).toEqual(
+        expect.objectContaining({
+          planned_total: 5,
+          consumed: "5",
+          completed_at: expect.any(Date),
+        }),
+      );
+    }, userId);
+  });
+
   test("retires a non-renderable member with a reason and drains the remaining five-card session", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -710,7 +864,7 @@ describeDb("authoritative training session plan RPC", () => {
         const { rows } = await client.query(
           `select get_next_card(
             $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
-            'curated', 'review', 'auto', $2::text[]
+            'curated', 'review', 'auto', $2::text[], false
           ) as item`,
           [userId, excluded],
         );
@@ -794,7 +948,7 @@ describeDb("authoritative training session plan RPC", () => {
         const { rows: selectedRows } = await client.query(
           `select get_next_card(
             $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], $2,
-            'user', 'both', 'auto', $3::text[]
+            'user', 'both', 'auto', $3::text[], false
           ) as item`,
           [userId, listId, excluded],
         );
@@ -853,7 +1007,7 @@ describeDb("authoritative training session plan RPC", () => {
       for (let attempt = 0; attempt < 24; attempt += 1) {
         const { rows } = await client.query(
           `select get_next_card(
-            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'new', ARRAY[]::text[]
+            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'new', ARRAY[]::text[], false
           ) as item`,
           [userId, modes, listId],
         );
@@ -880,7 +1034,7 @@ describeDb("authoritative training session plan RPC", () => {
         ).size;
         const { rows } = await client.query(
           `select get_next_card(
-            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[]
+            $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[], false
           ) as item`,
           [userId, modes, listId, excluded],
         );
@@ -968,7 +1122,7 @@ describeDb("authoritative training session plan RPC", () => {
         for (;;) {
           const { rows } = await client.query(
             `select get_next_card(
-              $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[]
+              $1, $2::text[], ARRAY[]::uuid[], $3, 'user', 'both', 'auto', $4::text[], false
             ) as item`,
             [userId, modes, listId, excluded],
           );
@@ -1141,7 +1295,7 @@ describeDb("authoritative training session plan RPC", () => {
       const { rows: learningSelectionRows } = await client.query(
         `select get_next_card(
           $1, ARRAY['word-to-definition'], ARRAY[]::uuid[], NULL,
-          'curated', 'both', 'auto', ARRAY[]::text[]
+          'curated', 'both', 'auto', ARRAY[]::text[], false
         ) as item`,
         [userId],
       );
@@ -1170,7 +1324,7 @@ describeDb("authoritative training session plan RPC", () => {
         const { rows: selectedRows } = await client.query(
           `select get_next_card(
             $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
-            'curated', 'review', 'auto', $3::text[]
+            'curated', 'review', 'auto', $3::text[], true
           ) as item`,
           [userId, reverse, practiceKeys],
         );
@@ -1229,7 +1383,7 @@ describeDb("authoritative training session plan RPC", () => {
       const { rows: firstSelection } = await client.query(
         `select get_next_filtered_card(
           $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
-          'curated', 'review', 'auto', ARRAY[]::text[], $3::jsonb
+          'curated', 'review', 'auto', ARRAY[]::text[], $3::jsonb, true
         ) as item`,
         [userId, reverse, trainingFilter],
       );
@@ -1249,7 +1403,7 @@ describeDb("authoritative training session plan RPC", () => {
       const { rows: secondSelection } = await client.query(
         `select get_next_filtered_card(
           $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
-          'curated', 'review', 'auto', ARRAY[$3]::text[], $4::jsonb
+          'curated', 'review', 'auto', ARRAY[$3]::text[], $4::jsonb, true
         ) as item`,
         [userId, reverse, firstKey, trainingFilter],
       );
@@ -1261,7 +1415,7 @@ describeDb("authoritative training session plan RPC", () => {
       const { rows: exhaustedSelection } = await client.query(
         `select get_next_filtered_card(
           $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
-          'curated', 'review', 'auto', ARRAY[$3, $4]::text[], $5::jsonb
+          'curated', 'review', 'auto', ARRAY[$3, $4]::text[], $5::jsonb, true
         ) as item`,
         [userId, reverse, firstKey, secondKey, trainingFilter],
       );

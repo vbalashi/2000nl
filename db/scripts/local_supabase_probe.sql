@@ -29,8 +29,22 @@ begin
     raise exception 'missing auth.uid()';
   end if;
 
-  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])') is null then
-    raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])';
+  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)') is null then
+    raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)';
+  end if;
+
+  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null
+     or to_regprocedure('public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null then
+    raise exception 'legacy get_next_card overloads still exist';
+  end if;
+
+  if to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)') is null then
+    raise exception 'missing public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)';
+  end if;
+
+  if to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is not null
+     or to_regprocedure('public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is not null then
+    raise exception 'legacy get_next_filtered_card overloads still exist';
   end if;
 
   if exists (
@@ -478,7 +492,7 @@ begin
 
   with sensitive_functions(signature) as (
     values
-      ('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])'::regprocedure),
+      ('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)'::regprocedure),
       ('public.handle_card_review(uuid,uuid,text,text,uuid)'::regprocedure),
       ('public.record_card_view(uuid,uuid,text)'::regprocedure),
       ('public.start_learning_entry_card(uuid,uuid,text)'::regprocedure),

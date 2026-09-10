@@ -17,20 +17,23 @@ Get the next card for training. The current fresh-deploy function accepts explic
 ```sql
 get_next_card(
     p_user_id uuid,
-    p_card_type_ids text[] DEFAULT ARRAY['word-to-definition'],
-    p_exclude_entry_ids uuid[] DEFAULT ARRAY[]::uuid[],
-    p_list_id uuid DEFAULT NULL,
-    p_list_type text DEFAULT 'curated',
-    p_card_filter text DEFAULT 'both',
-    p_queue_turn text DEFAULT 'auto',
-    p_exclude_card_keys text[] DEFAULT ARRAY[]::text[]
+    p_card_type_ids text[],
+    p_exclude_entry_ids uuid[],
+    p_list_id uuid,
+    p_list_type text,
+    p_card_filter text,
+    p_queue_turn text,
+    p_exclude_card_keys text[],
+    p_allow_practice boolean
 ) RETURNS SETOF jsonb
 ```
 
-The finite-session overload adds a required `p_allow_practice boolean` as the
+The finite-session contract adds a required `p_allow_practice boolean` as the
 ninth argument. The current pilot sends `false`, so a 5-card, 10-card, or
-all-due-today session cannot silently grow with future practice cards. The
-original eight-argument overload remains available for older non-pilot flows.
+all-due-today session cannot silently grow with future practice cards. The old
+eight-argument compatibility overload was removed by migration `137` after
+all application, test, benchmark, and deployment callers moved to this
+explicit contract.
 
 Parameters:
 - `p_user_id`
@@ -49,7 +52,11 @@ const { data: cards } = await supabase.rpc('get_next_card', {
   p_card_type_ids: ['word-to-definition'],
   p_exclude_entry_ids: [],
   p_exclude_card_keys: [],
-  p_card_filter: 'both'
+  p_card_filter: 'both',
+  p_list_id: null,
+  p_list_type: 'curated',
+  p_queue_turn: 'auto',
+  p_allow_practice: false
 });
 ```
 
@@ -132,8 +139,10 @@ uses this overload and stops after the planned number of accepted cards.
 For finite sizes, `plannedTotal` is the authoritative stopping value; the
 `plannedNew`/`plannedReview` fields describe the bounded pool rather than a
 promise that the scheduler will present all new cards before all reviews.
-Exact server-latched membership is intentionally deferred to the session
-snapshot work tracked separately from this count-bound slice.
+Finite sessions now create a server-owned membership snapshot through
+`start_training_session`; subsequent reads use `get_next_training_session_card`
+and accepted actions consume that snapshot atomically. The plan RPC remains the
+read-only planning contract used before a session starts.
 
 The response contains `plannedNew`, `plannedReview`, `plannedPractice`,
 `plannedTotal`, and `plannedAt`. `plannedReview` includes due learning and
