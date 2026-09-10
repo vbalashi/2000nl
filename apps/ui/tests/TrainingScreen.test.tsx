@@ -2617,6 +2617,10 @@ test("uses only the on-demand fallback when grading before next-turn selection r
         1,
       ),
     );
+    // Let the initial selection effect and its replacement request settle
+    // before recording the baseline; otherwise a slower runner can classify
+    // that replacement as a post-grade fallback.
+    await act(async () => Promise.resolve());
     const callsBeforeGrade = fetchNextTrainingWordByScenario.mock.calls.length;
 
     allowFallback = true;
