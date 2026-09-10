@@ -512,7 +512,6 @@ function TrainingScreenContent({
     requestNextCardOverride,
     resetFocusQueue,
     resetQueueForFilter,
-    clearReviewedSession,
     preparePlatformProgressAction: prepareV2ProgressAction,
     acceptPlatformProgressAction: handleV2ProgressActionAccepted,
   } = useTrainingTurnController({
@@ -534,6 +533,7 @@ function TrainingScreenContent({
   });
   const [platformProgressActionPending, setPlatformProgressActionPending] =
     useState(false);
+  const [presentationResetKey, setPresentationResetKey] = useState(0);
   const navigationBlocked = actionLoading || platformProgressActionPending;
   const currentPresentationIdentity =
     currentWord && currentPresentationId
@@ -542,6 +542,7 @@ function TrainingScreenContent({
   const beginSessionScopeChange = useCallback(() => {
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
+    setPresentationResetKey((key) => key + 1);
   }, [beginTrainingTurnScopeChange, trainingScenarioCatalog]);
 
   useEffect(() => {
@@ -1081,6 +1082,32 @@ function TrainingScreenContent({
       if (recovery === "skipped") await loadNextWord();
     },
   });
+  const previousTrainingSurfaceRef = useRef(trainingPilot.surface);
+  const previousTrainingSessionGenerationRef = useRef(
+    trainingPilot.sessionGeneration,
+  );
+  useEffect(() => {
+    const enteredSession =
+      previousTrainingSurfaceRef.current !== "session" &&
+      trainingPilot.surface === "session";
+    const restartedSession =
+      trainingPilot.surface === "session" &&
+      previousTrainingSessionGenerationRef.current !==
+        trainingPilot.sessionGeneration;
+
+    previousTrainingSurfaceRef.current = trainingPilot.surface;
+    previousTrainingSessionGenerationRef.current =
+      trainingPilot.sessionGeneration;
+
+    // TrainingScreen owns queue reset at explicit session boundaries. The
+    // presentation hook only derives progress and must never clear accepted
+    // cards when late hydration changes its scope key.
+    if (enteredSession || restartedSession) beginSessionScopeChange();
+  }, [
+    beginSessionScopeChange,
+    trainingPilot.sessionGeneration,
+    trainingPilot.surface,
+  ]);
   const handleContinueTrainingSession = useCallback(() => {
     if (currentWord) {
       const transitionId = createTrainingTransitionId();
@@ -1131,7 +1158,7 @@ function TrainingScreenContent({
     sessionGeneration: trainingPilot.sessionGeneration,
     scopeKey: trainingSessionPlanScopeKey,
     planSnapshot: trainingSessionPlanSnapshot,
-    onEnterSession: clearReviewedSession,
+    resetKey: presentationResetKey,
   });
 
   const openTrainingHistory = useCallback(() => {

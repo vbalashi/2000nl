@@ -25,14 +25,18 @@ export function useTrainingSessionPresentation({
   sessionGeneration,
   scopeKey,
   planSnapshot,
-  onEnterSession,
+  resetKey,
 }: {
   surface: TrainingSurface;
   presentedCardKey: string | null;
   sessionGeneration: number;
   scopeKey: string;
   planSnapshot: TrainingSessionPlanSnapshot | null;
-  onEnterSession: () => void;
+  /**
+   * Explicit reset token owned by TrainingScreen; scope hydration alone is not
+   * a reset.
+   */
+  resetKey: number;
 }): TrainingSessionPresentation {
   const currentPlan =
     planSnapshot?.sessionGeneration === sessionGeneration &&
@@ -40,11 +44,11 @@ export function useTrainingSessionPresentation({
       ? planSnapshot.plan
       : null;
   const plannedTotal = currentPlan?.plannedTotal ?? null;
-  const sessionKey = `${sessionGeneration}:${scopeKey}`;
   const [actualCardOrdinal, setActualCardOrdinal] = React.useState(1);
   const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);
   const previousSurfaceRef = React.useRef(surface);
-  const previousSessionKeyRef = React.useRef(sessionKey);
+  const previousSessionGenerationRef = React.useRef(sessionGeneration);
+  const previousResetKeyRef = React.useRef(resetKey);
   const previousCardKeyRef = React.useRef<string | null>(null);
   const isEnteringSession =
     previousSurfaceRef.current !== "session" && surface === "session";
@@ -52,21 +56,23 @@ export function useTrainingSessionPresentation({
   React.useEffect(() => {
     const enteringSession =
       previousSurfaceRef.current !== "session" && surface === "session";
-    const scopeChanged = previousSessionKeyRef.current !== sessionKey;
+    const sessionRestarted =
+      previousSessionGenerationRef.current !== sessionGeneration;
+    const explicitReset = previousResetKeyRef.current !== resetKey;
     previousSurfaceRef.current = surface;
-    previousSessionKeyRef.current = sessionKey;
+    previousSessionGenerationRef.current = sessionGeneration;
+    previousResetKeyRef.current = resetKey;
 
     if (surface !== "session") {
       previousCardKeyRef.current = null;
       return;
     }
-    if (!enteringSession && !scopeChanged) return;
+    if (!enteringSession && !sessionRestarted && !explicitReset) return;
 
-    onEnterSession();
     setActualCardOrdinal(1);
     setAcceptedTotal(normalizePlannedTotal(plannedTotal));
     previousCardKeyRef.current = presentedCardKey;
-  }, [onEnterSession, plannedTotal, presentedCardKey, sessionKey, surface]);
+  }, [plannedTotal, presentedCardKey, resetKey, sessionGeneration, surface]);
 
   React.useEffect(() => {
     if (surface !== "session" || acceptedTotal !== null) return;
