@@ -8,7 +8,6 @@ import {
   type MockedFunction,
 } from "vitest";
 import { useTrainingTurnController } from "@/components/training/useTrainingTurnController";
-import type { LegacyTrainingReviewRequest } from "@/components/training/useLegacyTrainingReviewPort";
 import type { TrainingTurnSelectionRequest } from "@/components/training/useTrainingTurnSelectionPort";
 import type { TrainingWord } from "@/lib/types";
 
@@ -20,7 +19,6 @@ const prepared = vi.hoisted(() => ({
   refresh: vi.fn(),
   selectNext: null as null | ((queueTurn: "new" | "review", cardKey: string) => Promise<TrainingWord | null>),
 }));
-const recordWordView = vi.hoisted(() => vi.fn());
 const transitionTiming = vi.hoisted(() => ({
   begin: vi.fn(),
   measure: vi.fn(),
@@ -45,10 +43,6 @@ vi.mock("@/components/training/v2/usePreparedNextTrainingTurn", () => ({
       nextTransitionId: "transition-1",
     };
   },
-}));
-
-vi.mock("@/lib/trainingService", () => ({
-  recordWordView: (...args: unknown[]) => recordWordView(...args),
 }));
 
 vi.mock("@/lib/platform/platformV2TrainingClient", () => ({
@@ -108,7 +102,6 @@ function deferred<T>(): Deferred<T> {
 function renderController(overrides: {
   currentWord?: TrainingWord | null;
   selectNext?: (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>;
-  reviewLegacy?: (request: LegacyTrainingReviewRequest) => Promise<unknown>;
   setCurrentWord?: (word: TrainingWord | null) => void;
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
   recoverLoadErrors?: boolean;
@@ -118,16 +111,11 @@ function renderController(overrides: {
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
     (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>
   >;
-  const reviewLegacy = (overrides.reviewLegacy ??
-    vi.fn().mockResolvedValue(null)) as MockedFunction<
-    (request: LegacyTrainingReviewRequest) => Promise<unknown>
-  >;
   const setCurrentWord = (overrides.setCurrentWord ?? vi.fn()) as MockedFunction<
     (word: TrainingWord | null) => void
   >;
   const refreshAfterAccepted = vi.fn().mockResolvedValue(undefined);
   const lookupOverride = vi.fn(overrides.lookupOverride ?? (() => Promise.resolve(null)));
-  const resetCardPresentation = vi.fn();
   const initialCurrentWord = overrides.currentWord ?? word1;
   const hook = renderHook(
     ({
@@ -146,16 +134,13 @@ function renderController(overrides: {
       translationTargetLanguageCode: "en",
       cardFilter: "both",
       newReviewRatio: 2,
-      trainingShellV2Enabled: false,
       recoverLoadErrors: overrides.recoverLoadErrors ?? true,
       focusFilter: { dateWindow: "all" },
       sessionScopeKey,
       sessionPlannedTotal: overrides.sessionPlannedTotal,
       selection: { selectNext, lookupOverride },
-      audioEnabled: false,
+      audioEnabled: true,
       preloadAudio: vi.fn(),
-      resetCardPresentation,
-      reviewLegacy,
       refreshAfterAccepted,
       }),
     {
@@ -168,10 +153,8 @@ function renderController(overrides: {
   return {
     ...hook,
     selectNext,
-    reviewLegacy,
     setCurrentWord,
     refreshAfterAccepted,
-    resetCardPresentation,
   };
 }
 
@@ -185,7 +168,6 @@ describe("useTrainingTurnController transition matrix", () => {
     prepared.warm.mockResolvedValue(true);
     prepared.refresh.mockReset();
     prepared.selectNext = null;
-    recordWordView.mockReset();
     transitionTiming.begin.mockReset();
     transitionTiming.measure.mockReset();
     transitionTiming.record.mockReset();
@@ -208,43 +190,12 @@ describe("useTrainingTurnController transition matrix", () => {
     const controller = renderController({ sessionPlannedTotal: 1 });
 
     await act(async () => {
-      await controller.result.current.submitLegacyReview("success");
+      await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
     expect(controller.setCurrentWord).toHaveBeenCalledWith(null);
     expect(controller.selectNext).not.toHaveBeenCalled();
     expect(controller.result.current.usableCandidatesExhausted).toBe(true);
-  });
-
-  test("fast prepared legacy candidate presents immediately while one mutation remains in flight", async () => {
-    const mutation = deferred<null>();
-    const reviewLegacy = vi.fn(() => mutation.promise);
-    prepared.candidate = {
-      forWordId: word1.id,
-      forCardKey: "word-1:word-to-definition",
-      queueTurn: "review",
-      word: word2,
-      v2Ready: null,
-      transitionId: "transition-1",
-    };
-    const controller = renderController({ reviewLegacy });
-
-    let submission!: Promise<void>;
-    act(() => {
-      submission = controller.result.current.submitLegacyReview("success");
-    });
-
-    expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
-    expect(transitionTiming.begin).toHaveBeenCalledWith(
-      "transition-1",
-      "review",
-    );
-    expect(reviewLegacy).toHaveBeenCalledTimes(1);
-    expect(controller.selectNext).not.toHaveBeenCalled();
-
-    await act(async () => mutation.resolve(null));
-    await submission;
-    expect(controller.refreshAfterAccepted).toHaveBeenCalledTimes(1);
   });
 
   test("prepared V2 candidate stays owned until its DTO is ready", async () => {
@@ -277,7 +228,7 @@ describe("useTrainingTurnController transition matrix", () => {
     const controller = renderController();
 
     await act(async () => {
-      await controller.result.current.submitLegacyReview("success");
+      await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
     expect(controller.selectNext).toHaveBeenCalledTimes(1);
@@ -359,7 +310,6 @@ describe("useTrainingTurnController transition matrix", () => {
 
     expect(controller.selectNext).toHaveBeenCalledTimes(1);
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
-    expect(controller.reviewLegacy).not.toHaveBeenCalled();
   });
 
   test("reports an accepted mutation as stalled when recovery retains the same presentation", async () => {
@@ -381,7 +331,6 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.result.current.loadError).toBe("next_card_offline");
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
     expect(controller.setCurrentWord).not.toHaveBeenCalled();
-    expect(controller.reviewLegacy).not.toHaveBeenCalled();
 
     await act(async () => {
       await controller.result.current.retryAcceptedTransitionLoad();
@@ -396,7 +345,6 @@ describe("useTrainingTurnController transition matrix", () => {
       }),
     );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
-    expect(controller.reviewLegacy).not.toHaveBeenCalled();
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
   });
 
@@ -755,27 +703,21 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).toHaveBeenCalledWith(recoveredWord);
   });
 
-  test("a non-pilot selection failure terminates the accepted transition before rethrowing", async () => {
+  test("an accepted transition reports a stalled load when the next selection fails", async () => {
     prepared.consume.mockReturnValue(null);
     const controller = renderController({
       recoverLoadErrors: false,
       selectNext: vi.fn().mockRejectedValue(new Error("scheduler unavailable")),
     });
 
+    let outcome: unknown;
     await act(async () => {
-      await expect(
-        controller.result.current.submitLegacyReview("success"),
-      ).rejects.toThrow("scheduler unavailable");
+      outcome = await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
-    expect(transitionTiming.begin).toHaveBeenCalledWith(
-      "transition-1",
-      "review",
-    );
-    expect(transitionTiming.finish).toHaveBeenCalledWith(
-      "transition-1",
-      "selection-error",
-    );
+    expect(outcome).toBe("stalled");
+    expect(controller.result.current.loadError).toBe("scheduler unavailable");
+    expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
   });
 
   test("reset invalidates a slow on-demand completion and releases selection ownership", async () => {
@@ -784,9 +726,9 @@ describe("useTrainingTurnController transition matrix", () => {
     const selectNext = vi.fn(() => slowSelection.promise);
     const controller = renderController({ selectNext });
 
-    let submission!: Promise<void>;
+    let submission!: Promise<"accepted" | "stalled">;
     act(() => {
-      submission = controller.result.current.submitLegacyReview("success");
+      submission = controller.result.current.acceptPlatformProgressAction({} as any);
     });
     await waitFor(() => expect(selectNext).toHaveBeenCalledTimes(1));
 
@@ -890,7 +832,7 @@ describe("useTrainingTurnController transition matrix", () => {
       currentWord: { ...overrideWord, mode: "word-to-definition" },
     });
     await act(async () => {
-      await controller.result.current.submitLegacyReview("success");
+      await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
     expect(controller.result.current.nextCardOverrideNotice).toBeNull();

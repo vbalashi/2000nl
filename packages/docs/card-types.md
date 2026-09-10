@@ -1,6 +1,6 @@
 # Card Types (Scenarios)
 
-Card types define what is shown on the prompt vs reveal side for training. The registry is a shared contract, while the current production UI implements the active Dutch modes directly in `apps/ui/components/training/TrainingCard.tsx` and related helpers.
+Card types define what is shown on the prompt vs reveal side for training. The registry is a shared contract, while the current production UI implements the active Dutch modes through the V2 session/card components in `apps/ui/components/training/v2/`.
 
 Registry: `packages/shared/card-types/card-types.json`.
 
@@ -10,7 +10,7 @@ Current primitives:
 - Extendable: audio-first cards, spelling drills, or multiple-choice require both registry updates and implementation in UI/DB selection logic.
 
 Rendering rules:
-- UI rendering currently reads `word_entries.raw` through `wordUtils` and `TrainingCard` helpers. Registry-driven rendering remains the intended extension point, not a complete runtime abstraction.
+- V2 UI rendering reads `word_entries.raw` through the shared projection/content helpers. Registry-driven rendering remains the intended extension point for new modes, not a fallback to the retired renderer.
 - Examples and idioms are optional and shown when present.
 - Multi-meaning entries can select `meanings[n]` or pick one at session build time.
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { recordWordView, type ReviewResult } from "@/lib/trainingService";
 import { trainingDebug } from "@/lib/trainingDebug";
 import { clearPlatformV2TrainingClientCaches } from "@/lib/platform/platformV2TrainingClient";
 import type { PlatformV2TrainingActionCapability } from "@/lib/platform/platformV2TrainingActionClient";
@@ -31,7 +30,6 @@ import {
   usePreparedNextTrainingTurn,
   type PreparedNextTrainingTurn,
 } from "./v2/usePreparedNextTrainingTurn";
-import type { LegacyTrainingReviewRequest } from "./useLegacyTrainingReviewPort";
 import type {
   TrainingTurnSelectionPort,
   TrainingTurnSelectionRequest,
@@ -78,8 +76,6 @@ type Inputs = {
   translationTargetLanguageCode: string | null;
   cardFilter: CardFilter;
   newReviewRatio: number;
-  firstEncounter?: boolean;
-  trainingShellV2Enabled: boolean;
   recoverLoadErrors: boolean;
   focusFilter: TrainingFocusFilter;
   sessionPlannedTotal?: number | null;
@@ -87,17 +83,8 @@ type Inputs = {
   selection: TrainingTurnSelectionPort;
   audioEnabled: boolean;
   preloadAudio: (word: TrainingWord) => void;
-  resetCardPresentation: () => void;
-  reviewLegacy: (request: LegacyTrainingReviewRequest) => Promise<unknown>;
   refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
 };
-
-const isPlatformV2TrainingMode = (
-  mode: TrainingMode,
-): mode is "word-to-definition" | "definition-to-word" | "listen-recognize" =>
-  mode === "word-to-definition" ||
-  mode === "definition-to-word" ||
-  mode === "listen-recognize";
 
 export function useTrainingTurnController(input: Inputs) {
   const {
@@ -109,8 +96,6 @@ export function useTrainingTurnController(input: Inputs) {
     translationTargetLanguageCode,
     cardFilter,
     newReviewRatio,
-    firstEncounter,
-    trainingShellV2Enabled,
     recoverLoadErrors,
     focusFilter,
     sessionPlannedTotal = null,
@@ -118,8 +103,6 @@ export function useTrainingTurnController(input: Inputs) {
     selection,
     audioEnabled,
     preloadAudio,
-    resetCardPresentation,
-    reviewLegacy,
     refreshAfterAccepted,
   } = input;
   const [loadingWord, setLoadingWord] = useState(true);
@@ -259,31 +242,16 @@ export function useTrainingTurnController(input: Inputs) {
     [userId],
   );
 
-  const recordPresentation = useCallback(
-    (word: TrainingWord, mode: TrainingMode) => {
-      if (!trainingShellV2Enabled || !isPlatformV2TrainingMode(mode)) {
-        void recordWordView({ userId, wordId: word.id, mode });
-      }
-    },
-    [trainingShellV2Enabled, userId],
-  );
-
   const presentPreparedCandidate = useCallback(
     (word: TrainingWord) => {
       setLoadingWord(false);
-      resetCardPresentation();
       presentWord(word);
-      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      recordPresentation(word, mode);
       if (audioEnabled) preloadAudio(word);
     },
     [
       audioEnabled,
-      enabledModes,
       preloadAudio,
       presentWord,
-      recordPresentation,
-      resetCardPresentation,
     ],
   );
 
@@ -322,7 +290,6 @@ export function useTrainingTurnController(input: Inputs) {
       const generation = (loadGenerationRef.current += 1);
       setLoadingWord(true);
       setUsableCandidatesExhausted(false);
-      resetCardPresentation();
       setLoadError(null);
       try {
         const overrideWordId = nextCardOverrideWordIdRef.current;
@@ -337,9 +304,6 @@ export function useTrainingTurnController(input: Inputs) {
             const mode = currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
             const preparedOverrideWord: TrainingWord = {
               ...overrideWord,
-              ...(typeof firstEncounter === "boolean"
-                ? { isFirstEncounter: firstEncounter }
-                : {}),
               mode,
               debugStats: { source: "next-card-override", mode },
             };
@@ -347,7 +311,6 @@ export function useTrainingTurnController(input: Inputs) {
               preparedOverrideWord,
               mode,
             );
-            recordPresentation(preparedOverrideWord, mode);
             const overrideReady = await warmWord(
               preparedOverrideWord,
               undefined,
@@ -430,8 +393,6 @@ export function useTrainingTurnController(input: Inputs) {
           return emptyOutcome;
         }
 
-        const mode = nextWord.mode ?? enabledModes[0] ?? "word-to-definition";
-        recordPresentation(nextWord, mode);
         const ready = await warmWord(nextWord, undefined, transitionId);
         if (generation !== loadGenerationRef.current) {
           finishTrainingUserTransition(transitionId, "cancelled");
@@ -473,13 +434,10 @@ export function useTrainingTurnController(input: Inputs) {
     [
       currentWord?.mode,
       enabledModes,
-      firstEncounter,
       presentWord,
       queueTurn,
-      recordPresentation,
       recoverLoadErrors,
       rememberRejectedCard,
-      resetCardPresentation,
       selection,
       warmWord,
     ],
@@ -679,44 +637,6 @@ export function useTrainingTurnController(input: Inputs) {
     ],
   );
 
-  const submitLegacyReview = useCallback(
-    async (result: ReviewResult) => {
-      if (!currentWord || actionLoadingRef.current) return;
-      actionLoadingRef.current = true;
-      setActionLoading(true);
-      try {
-        const transition = beginAcceptedCardTransition();
-        if (!transition) return;
-        beginTrainingUserTransition(transition.transitionId, "review");
-        const request: LegacyTrainingReviewRequest = {
-          word: transition.word,
-          mode: transition.wordMode,
-          result,
-          turnId: transition.turnIdForReview,
-        };
-        const mutation = () => reviewLegacy(request);
-        await measureTrainingTransitionStage(
-          transition.transitionId,
-          "review.mutation",
-          mutation,
-          () => "accepted",
-        );
-        await finishAcceptedCardTransition(transition, {
-          statsLabel: `AFTER ${transition.word.headword} (${result})`,
-          recoverLoadFailure: false,
-        });
-      } finally {
-        actionLoadingRef.current = false;
-        setActionLoading(false);
-      }
-    }, [
-      beginAcceptedCardTransition,
-      currentWord,
-      finishAcceptedCardTransition,
-      reviewLegacy,
-    ],
-  );
-
   const acceptPlatformProgressAction = useCallback(
     async (_capability: PlatformV2TrainingActionCapability) => {
       if (!currentWord || actionLoadingRef.current) return "stalled" as const;
@@ -783,7 +703,6 @@ export function useTrainingTurnController(input: Inputs) {
     resetFocusQueue,
     resetQueueForFilter,
     clearReviewedSession,
-    submitLegacyReview,
     preparePlatformProgressAction,
     acceptPlatformProgressAction,
   };

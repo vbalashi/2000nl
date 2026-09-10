@@ -224,10 +224,9 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     ).then((word) => {
       if (!word || controller.signal.aborted || tokenRef.current !== token) return;
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      const v2Ready =
-        trainingV2Enabled && isPlatformV2TrainingMode(mode)
-          ? warmWord(word, controller.signal, transitionId)
-          : null;
+      const v2Ready = trainingV2Enabled && isPlatformV2TrainingMode(mode)
+        ? warmWord(word, controller.signal, transitionId)
+        : null;
       candidateRef.current = {
         forWordId,
         forCardKey,

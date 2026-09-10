@@ -1,6 +1,6 @@
 # 2000NL Design Guide
 
-Comprehensive reference for all visual design values used in the training card UI. Values are extracted directly from source code (`TrainingCard.tsx`, `TrainingScreen.tsx`, `tailwind.config.js`).
+Comprehensive reference for all visual design values used in the training card UI. Values are extracted directly from the V2 card/session source (`components/training/v2/`, `TrainingScreen.tsx`, `tailwind.config.js`).
 
 ## 1. Color System
 

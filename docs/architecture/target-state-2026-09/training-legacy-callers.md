@@ -25,14 +25,14 @@ Paths below are relative to `apps/ui/` unless stated otherwise.
 
 | Path / symbol | Actual caller and reachability | Target / owner | Deletion evidence |
 | --- | --- | --- | --- |
-| `components/training/TrainingCard.tsx` | Only runtime importer is `TrainingScreen.tsx`; legacy JSX remains under rollout-off. Current builds use pilot; #295 also removes loading/unsupported fallthrough. | V2 session for word-to-definition, definition-to-word, listen-recognize; explicit unsupported listen-type. #142. | No component import/render; V2 loading, empty, listening, unsupported and ordinary card tests pass. |
-| `lib/training/trainingCardPresentation.ts` | Screen projection and TrainingCard prop type; three legacy test files. | Preserve useful content behavior tests in V2; delete projection with renderer. #142. | No runtime import; characterize idiom-only/multiple meanings/translation before retiring tests. |
-| `useLegacyTrainingReviewPort.ts` | Screen constructs it; `useTrainingTurnController.ts` receives `reviewLegacy` and calls it from `submitLegacyReview`. | Remove this adapter and legacy submit branch after old button/hotkey/swipe callers are removed. #142 / #250. | No adapter import, request type, `reviewLegacy` input or `submitLegacyReview` return. V2 accepted-action/load-retry tests still pass. |
+| `components/training/TrainingCard.tsx` | Former runtime renderer; no importer remains after the #142 cut. | V2 session for word-to-definition, definition-to-word, listen-recognize; explicit unsupported listen-type. | File deleted; V2 loading, empty, listening, unsupported and ordinary card tests pass. |
+| `lib/training/trainingCardPresentation.ts` | Former screen projection used only by the deleted renderer and its tests. | V2 content projection owns the active card. | File and renderer-only tests deleted; focused V2 behavior tests remain. |
+| `useLegacyTrainingReviewPort.ts` | Former adapter behind the deleted TrainingScreen review branch. | Platform V2 accepted-action capability owns review transitions. | File deleted; no adapter import, request type, `reviewLegacy` input or `submitLegacyReview` return. |
 | Screen `revealed`, hint/translation/swipe state, legacy action buttons and keys | Legacy renderer/footer use these. V2-owned turns suppress the old grade/F/X/space/hint keys. Screen has other live global keys and shared state. | Delete legacy-only state and handlers; preserve History/search/Details and V2 recovery. #142. | Every remaining state field has a live consumer; V2 navigation, side preservation and hotkey tests. |
 | Training More `onTrainingAction`, `trainingActionEntryId`, `revealed`, `actionLoading` | Only Screen supplied freeze/hide; `context=training-more` makes `showGlobalDetailsActions=false`. Library callers did not supply freeze/hide. | Dead wiring can be removed immediately under #142/#269. No menu design dependency. | No training-action props in Screen, Library session or LibraryDetailsActions; existing More test still suppresses footer while Collections/Train next work. |
 | `lib/training/reviewService.ts` / `recordReview` | Legacy adapter calls this service; tests and trainingService barrel also reference it. Platform has a separate provenance service with the same method name. | Inspect each export when removing adapter; do not delete similarly named Platform functions. #255. | No active UI import of removed export; retain active DB/RPC callers. |
 | `lib/training/selectionService.ts` / scheduler RPC overloads | Both next-card and prefetch select `get_next_card` or `get_next_filtered_card`; migration 132 retains previous signatures. | Server session membership and overload inventory in #294. Independent of rendering cleanup. | Enumerate argument signatures, including diagnostic/DB test callers; no old signature before a forward DROP migration. |
-| `TrainingCard*.test.tsx`, `trainingCardPresentation.test.ts`, legacy-mode Screen tests | Test consumers, including explicit V2-off configuration, not external product consumers. | Migrate meaningful scenarios; delete obsolete visual expectations. #142. | Focused and full UI suite run on pilot; do not keep false-flag tests solely to justify an old renderer. |
+| `TrainingCard*.test.tsx`, `trainingCardPresentation.test.ts`, legacy-mode Screen tests | Test consumers, including explicit V2-off configuration, not external product consumers. | Keep only V2 transition/loading coverage; re-baseline skipped shell cases separately. | Renderer-only files deleted; TrainingScreen suite passes with 31 active tests and 22 explicitly marked re-baseline cases. |
 | Root architecture, package card-types, UI design-guide and older active plans | Documentation references, not runtime callers. | Update current guidance with final deletion; retain dated research as history. #142/#245. | No current guidance instructs use of the removed renderer/RPC. |
 | `scripts/test-account.js` (under apps/ui) | Still exposed by package.json `test-account`; writes obsolete `user_word_status` and old membership columns. Do not execute it. | Retire or replace through the canonical verified QA fixture path; #255/#247. | Remove script/package entry and references or test the replacement against current schema, without resetting the populated QA database. |
 
@@ -61,8 +61,8 @@ neither necessary nor part of TrainingCard removal.
 | AudioFilms old overlay and app route | `overlayProjection.ts` still emits old progress actions; action route still accepts both shapes. | Enumerate app/extension/generated callers before deleting old dispatch. Provider README still claims all actions use V1 and needs updating. |
 | Pontix | `src/scripts/platformClient.js` calls `/api/platform/v1/actions`, allowing start-learning, known/unknown and review. | Parked by owner. Record required migration before reactivation; no active implementation and no permanent requirement to keep old Training UI. Public API retirement needs explicit treatment of this parked client. |
 
-No import of TrainingCard, trainingCardPresentation or useLegacyTrainingReviewPort
-was found in either external repository. External clients depend on HTTP
+No import of the private TrainingCard renderer, trainingCardPresentation or
+useLegacyTrainingReviewPort was found in either external repository. External clients depend on HTTP
 contracts, not the private React renderer.
 
 AudioFilms remaining caller migration is owned by
@@ -75,10 +75,8 @@ wiring. This dev fixture is not a production dependency.
 
 `node scripts/check-training-retirements.mjs` is the CI guard for the retired
 Details callback symbols across app, components, lib and tests. Run
-`node scripts/check-training-retirements.mjs --final-training` to check the
-renderer/adapter deletion gates: it deliberately fails at this checkpoint,
-listing remaining legacy files/symbols. Enable that final mode in CI when #142
-removes the remaining paths. These bounded textual guards do not replace
+`node scripts/check-training-retirements.mjs --final-training` checks the
+renderer/adapter deletion gates and now passes on the #142 branch. These bounded textual guards do not replace
 behavioral tests or the separate scheduler/external API inventory.
 
 Run from the 2000NL root (matches are evidence to classify, not a success exit):

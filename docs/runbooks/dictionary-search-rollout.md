@@ -19,7 +19,7 @@ did not represent Frozen and Don't show filters.
 
 The NUC deployment selects the only supported runtime profile,
 `APP_ROLLOUT_PROFILE=pilot`. A pre-#252 `legacy` value is retired and must fail
-before startup; remaining TrainingCard/listening migration is tracked in #142.
+before startup; TrainingCard migration is complete in #142.
 Release smoke must cover desktop and mobile Library lookup plus filtered list
 browsing.
 
