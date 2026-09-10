@@ -312,6 +312,146 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("retires a non-renderable member with a reason and drains the remaining five-card session", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      const wordIds: string[] = [];
+      for (let index = 0; index < 5; index += 1) {
+        const { rows: dictionaryRows } = await client.query(
+          `insert into dictionaries (
+             language_code, slug, name, kind, visibility, owner_user_id,
+             minimum_subscription_tier
+           ) values ('nl', $1, 'Unavailable member fixture', 'curated', 'private', null, 'free')
+           returning id`,
+          [`unavailable-member-${userId}-${index}`],
+        );
+        const dictionaryId = dictionaryRows[0].id as string;
+        await client.query(
+          `insert into dictionary_entitlements (
+             dictionary_id, subject_type, subject_key, permission
+           ) values ($1, 'user', $2, 'read')`,
+          [dictionaryId, userId],
+        );
+        const { rows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, part_of_speech,
+             is_nt2_2000, raw
+           ) values ($1, 'nl', $2, 'noun', true, '{}'::jsonb)
+           returning id`,
+          [dictionaryId, `unavailable-member-${userId}-${index}`],
+        );
+        wordIds.push(rows[0].id as string);
+      }
+
+      const { rows: startRows } = await client.query(
+        `insert into training_sessions (
+           user_id, session_size, card_type_ids, list_type, card_filter,
+           training_filter, planned_new, planned_review, planned_total
+         ) values (
+           $1, '5', ARRAY['word-to-definition']::text[], 'curated', 'both',
+           '{}'::jsonb, 5, 0, 5
+         )
+         returning id`,
+        [userId],
+      );
+      const sessionId = startRows[0].id as string;
+      await client.query(
+        `insert into training_session_members (
+           session_id, ordinal, entry_id, card_type_id, queue_source
+         )
+         select $1, row_number() over (order by entry_id), entry_id,
+                'word-to-definition', 'new'
+         from unnest($2::uuid[]) as entries(entry_id)`,
+        [sessionId, wordIds],
+      );
+
+      const { rows: firstMemberRows } = await client.query(
+        `select entry_id from training_session_members
+         where session_id = $1 and ordinal = 1`,
+        [sessionId],
+      );
+      const firstEntryId = firstMemberRows[0].entry_id as string;
+      const { rows: firstDictionaryRows } = await client.query(
+        `select dictionary_id from word_entries where id = $1`,
+        [firstEntryId],
+      );
+      const firstDictionaryId = firstDictionaryRows[0].dictionary_id as string;
+
+      // The membership is already latched. Revoke the dictionary entitlement;
+      // the selector must retire the first member rather than loop.
+      await client.query(
+        `delete from dictionary_entitlements
+         where dictionary_id = $1 and subject_type = 'user' and subject_key = $2`,
+        [firstDictionaryId, userId],
+      );
+
+      const { rows: firstRows } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid, ARRAY[]::text[]) as card`,
+        [userId, sessionId],
+      );
+      expect(firstRows[0].card.trainingSessionOrdinal).toBe(2);
+
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      const snapshot = snapshotRows[0].snapshot;
+      expect(snapshot.plannedTotal).toBe(5);
+      expect(snapshot.members[0]).toEqual(
+        expect.objectContaining({
+          unavailableAt: expect.any(String),
+          unavailableReason: "dictionary-access-revoked",
+        }),
+      );
+
+      const markUnavailable = async (entryId: string) => {
+        const { rows } = await client.query(
+          `select mark_training_session_member_unavailable(
+            $1::uuid, $2::uuid, $3::uuid, 'word-to-definition', 'entry-not-found'
+          ) as result`,
+          [userId, sessionId, entryId],
+        );
+        return rows[0].result;
+      };
+
+      const orderedRemainingEntryIds = snapshot.members
+        .filter((member: { unavailableAt?: string | null }) => !member.unavailableAt)
+        .map((member: { entryId: string }) => member.entryId);
+      expect(await markUnavailable(orderedRemainingEntryIds[0])).toEqual(
+        expect.objectContaining({ status: "unavailable", remaining: 3 }),
+      );
+      expect(await markUnavailable(orderedRemainingEntryIds[1])).toEqual(
+        expect.objectContaining({ status: "unavailable", remaining: 2 }),
+      );
+      expect(await markUnavailable(orderedRemainingEntryIds[2])).toEqual(
+        expect.objectContaining({ status: "unavailable", remaining: 1 }),
+      );
+      expect(await markUnavailable(orderedRemainingEntryIds[3])).toEqual(
+        expect.objectContaining({
+          status: "unavailable-complete",
+          remaining: 0,
+        }),
+      );
+
+      const { rows: completedRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      expect(completedRows[0].snapshot.plannedTotal).toBe(5);
+      expect(completedRows[0].snapshot.members).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ unavailableReason: "dictionary-access-revoked" }),
+          expect.objectContaining({ unavailableReason: "entry-not-found" }),
+        ]),
+      );
+      expect(completedRows[0].snapshot.members).toHaveLength(5);
+    }, userId);
+  });
+
   test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
     const userId = randomUUID();
     const otherUserId = randomUUID();

@@ -53,6 +53,7 @@ export {
   fetchScenarioStats,
   fetchTrainingScenarios,
   fetchTrainingSessionPlan,
+  markTrainingSessionMemberUnavailable,
   startTrainingSession,
   isTrainingFocusFilterActive,
   type TrainingScenarioCatalog,
@@ -60,6 +61,7 @@ export {
   type TrainingSession,
   type TrainingSessionSnapshot,
   type TrainingSessionSnapshotMember,
+  type TrainingSessionUnavailableReason,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";

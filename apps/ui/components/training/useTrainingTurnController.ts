@@ -26,6 +26,7 @@ import type {
   TrainingWord,
   WordListType,
 } from "@/lib/types";
+import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
 import {
   usePreparedNextTrainingTurn,
   type PreparedNextTrainingTurn,
@@ -82,12 +83,26 @@ type Inputs = {
   focusFilter: TrainingFocusFilter;
   sessionPlannedTotal?: number | null;
   sessionConsumedCardKeys?: string[];
+  trainingSessionId?: string | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
   refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
 };
 
 const EMPTY_SESSION_CARD_KEYS: string[] = [];
+
+const unavailableReasonForFailure = (
+  failure: string,
+): TrainingSessionUnavailableReason | null => {
+  switch (failure) {
+    case "entry-not-found":
+    case "model-invalid":
+    case "reverse-definition-missing":
+      return failure;
+    default:
+      return null;
+  }
+};
 
 export function useTrainingTurnController(input: Inputs) {
   const {
@@ -103,6 +118,7 @@ export function useTrainingTurnController(input: Inputs) {
     focusFilter,
     sessionPlannedTotal = null,
     sessionConsumedCardKeys = EMPTY_SESSION_CARD_KEYS,
+    trainingSessionId = null,
     sessionScopeKey,
     selection,
     refreshAfterAccepted,
@@ -134,7 +150,13 @@ export function useTrainingTurnController(input: Inputs) {
   const currentTurnIdRef = useRef<string | null>(null);
   const reviewedCardKeysRef = useRef<Set<string>>(new Set());
   const rejectedCardKeysRef = useRef<Set<string>>(new Set());
-  const failedCardKeyRef = useRef<string | null>(null);
+  const cardFailureRef = useRef<{
+    cardKey: string;
+    word: TrainingWord;
+    failure: string;
+    reason: TrainingSessionUnavailableReason | null;
+  } | null>(null);
+  const unavailableMarkPromiseRef = useRef<Promise<boolean> | null>(null);
   const nextCardOverrideWordIdRef = useRef<string | null>(null);
   const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
 
@@ -200,7 +222,8 @@ export function useTrainingTurnController(input: Inputs) {
   const clearReviewedSession = useCallback(() => {
     reviewedCardKeysRef.current.clear();
     rejectedCardKeysRef.current.clear();
-    failedCardKeyRef.current = null;
+    cardFailureRef.current = null;
+    unavailableMarkPromiseRef.current = null;
     setUsableCandidatesExhausted(false);
     clearAcceptedTransitionRecovery();
   }, [clearAcceptedTransitionRecovery]);
@@ -237,7 +260,8 @@ export function useTrainingTurnController(input: Inputs) {
     return () => {
       reviewed.clear();
       rejected.clear();
-      failedCardKeyRef.current = null;
+      cardFailureRef.current = null;
+      unavailableMarkPromiseRef.current = null;
     };
   }, []);
 
@@ -261,10 +285,50 @@ export function useTrainingTurnController(input: Inputs) {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
       const cardKey = getTrainingCardKey(word, mode);
       rejectedCardKeysRef.current.add(cardKey);
-      failedCardKeyRef.current = cardKey;
+      cardFailureRef.current = {
+        cardKey,
+        word,
+        failure,
+        reason: unavailableReasonForFailure(failure),
+      };
       recordTrainingEntryTerminalFailure(word.id, failure);
     },
     [enabledModes],
+  );
+
+  const reportCardLoadFailure = useCallback(
+    (word: TrainingWord, failure: string) => {
+      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
+      const cardKey = getTrainingCardKey(word, mode);
+      const reason = unavailableReasonForFailure(failure);
+      if (
+        cardFailureRef.current?.cardKey === cardKey &&
+        cardFailureRef.current.failure === failure &&
+        (cardFailureRef.current.reason === null ||
+          unavailableMarkPromiseRef.current !== null)
+      ) {
+        return;
+      }
+      cardFailureRef.current = { cardKey, word, failure, reason };
+      if (!reason || !trainingSessionId || !selection.markUnavailable) {
+        if (reason) rememberRejectedCard(word, failure);
+        return;
+      }
+
+      const markPromise = selection
+        .markUnavailable({
+          entryId: word.id,
+          cardTypeId: mode,
+          reason,
+        })
+        .catch(() => false);
+      unavailableMarkPromiseRef.current = markPromise;
+      void markPromise.then((marked) => {
+        if (marked) rememberRejectedCard(word, failure);
+        else unavailableMarkPromiseRef.current = null;
+      });
+    },
+    [enabledModes, rememberRejectedCard, selection, trainingSessionId],
   );
 
   const loadNextWord = useCallback(
@@ -320,7 +384,7 @@ export function useTrainingTurnController(input: Inputs) {
               return "skipped";
             }
             if (!overrideReady) {
-              rememberRejectedCard(
+              reportCardLoadFailure(
                 preparedOverrideWord,
                 "platform-v2-lookup-failed",
               );
@@ -398,7 +462,7 @@ export function useTrainingTurnController(input: Inputs) {
           return "skipped";
         }
         if (!ready) {
-          rememberRejectedCard(nextWord, "platform-v2-lookup-failed");
+          reportCardLoadFailure(nextWord, "platform-v2-lookup-failed");
           setLoadError("platform_v2_lookup_failed");
           finishTrainingUserTransition(
             transitionId,
@@ -436,21 +500,19 @@ export function useTrainingTurnController(input: Inputs) {
       presentWord,
       queueTurn,
       recoverLoadErrors,
-      rememberRejectedCard,
+      reportCardLoadFailure,
       selection,
       warmWord,
     ],
   );
 
-  const reportCardLoadFailure = useCallback(
-    (word: TrainingWord, failure: string) => {
-      rememberRejectedCard(word, failure);
-    },
-    [rememberRejectedCard],
-  );
-
   const retryCardLoadFailure = useCallback(async () => {
-    if (!failedCardKeyRef.current) return "skipped" as const;
+    const failure = cardFailureRef.current;
+    if (!failure) return "skipped" as const;
+    let markedUnavailable = !failure.reason || !trainingSessionId;
+    if (failure.reason && trainingSessionId && unavailableMarkPromiseRef.current) {
+      markedUnavailable = await unavailableMarkPromiseRef.current;
+    }
     // Recovery returns ownership to the authoritative scheduler instead of
     // repeatedly fetching the same unusable presentation candidate.
     resetPreparedNextTurn();
@@ -463,12 +525,15 @@ export function useTrainingTurnController(input: Inputs) {
       emptyOutcome: "session-complete",
       excludeCardKeys: [
         ...reviewedCardKeysRef.current,
-        ...rejectedCardKeysRef.current,
+        ...(markedUnavailable ? rejectedCardKeysRef.current : []),
       ],
     });
-    if (result === "loaded") failedCardKeyRef.current = null;
+    if (result === "loaded") {
+      cardFailureRef.current = null;
+      unavailableMarkPromiseRef.current = null;
+    }
     return result;
-  }, [loadNextWord, queueTurn, resetPreparedNextTurn]);
+  }, [loadNextWord, queueTurn, resetPreparedNextTurn, trainingSessionId]);
 
   const replaceSessionScopeAndLoad = useCallback(
     (request: LoadNextTrainingTurnRequest) => {

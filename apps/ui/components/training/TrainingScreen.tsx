@@ -565,6 +565,7 @@ function TrainingScreenContent({
     recoverLoadErrors: trainingTodaySetupEnabled,
     sessionPlannedTotal,
     sessionConsumedCardKeys,
+    trainingSessionId,
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
     selection: selectionPort,

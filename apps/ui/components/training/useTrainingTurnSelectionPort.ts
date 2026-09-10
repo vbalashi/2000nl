@@ -5,7 +5,9 @@ import {
   fetchNextTrainingWordByScenario,
   fetchTrainingWordByLookup,
   isTrainingFocusFilterActive,
+  markTrainingSessionMemberUnavailable,
 } from "@/lib/trainingService";
+import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
 import type {
   CardFilter,
   QueueTurn,
@@ -31,6 +33,11 @@ export type TrainingTurnSelectionRequest = {
 export type TrainingTurnSelectionPort = {
   selectNext: (request: TrainingTurnSelectionRequest) => Promise<TrainingWord | null>;
   lookupOverride: (wordId: string) => Promise<TrainingWord | null>;
+  markUnavailable?: (input: {
+    entryId: string;
+    cardTypeId: TrainingMode;
+    reason: TrainingSessionUnavailableReason;
+  }) => Promise<boolean>;
 };
 
 type Inputs = {
@@ -142,8 +149,30 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
     [userId],
   );
 
+  const markUnavailable = useCallback(
+    async ({ entryId, cardTypeId, reason }: {
+      entryId: string;
+      cardTypeId: TrainingMode;
+      reason: TrainingSessionUnavailableReason;
+    }) => {
+      if (!activeTrainingSessionId) return false;
+      const result = await markTrainingSessionMemberUnavailable(
+        userId,
+        activeTrainingSessionId,
+        entryId,
+        cardTypeId,
+        reason,
+      );
+      return (
+        result.status === "unavailable" ||
+        result.status === "unavailable-complete"
+      );
+    },
+    [activeTrainingSessionId, userId],
+  );
+
   return useMemo(
-    () => ({ selectNext, lookupOverride }),
-    [lookupOverride, selectNext],
+    () => ({ selectNext, lookupOverride, markUnavailable }),
+    [lookupOverride, markUnavailable, selectNext],
   );
 }
