@@ -106,6 +106,34 @@ describe("useTrainingSessionPresentation", () => {
     });
   });
 
+  test("prefers a latched session plan over a later dynamic estimate", () => {
+    const view = renderHook(
+      ({ latchedTotal, estimatedTotal }) =>
+        useTrainingSessionPresentation({
+          surface: "session",
+          presentedCardKey: "entry-1:word-to-definition",
+          sessionGeneration: 1,
+          scopeKey: "default",
+          planSnapshot: snapshot(estimatedTotal),
+          planOverride: snapshot(latchedTotal)?.plan ?? null,
+          resetKey: 0,
+        }),
+      {
+        initialProps: {
+          latchedTotal: 5,
+          estimatedTotal: 7474,
+        },
+      },
+    );
+
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 1,
+      total: 5,
+      fraction: 1 / 5,
+    });
+  });
+
   test("never decreases a plan mid-session and resets it for an exact scope or session restart", () => {
     const view = renderHook(
       ({

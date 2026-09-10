@@ -45,11 +45,14 @@ export function isPlatformV2TrainingActionCapability(
 export function buildPlatformV2TrainingActionRequest(
   capability: PlatformV2TrainingActionCapability,
   clientEventId: string,
+  trainingSessionId?: string,
 ): PlatformActionV2Request {
+  const session = trainingSessionId ? { trainingSessionId } : {};
   if (capability.actionId === "review-card") {
     return {
       actionId: capability.actionId,
       clientEventId,
+      ...session,
       target: capability.target,
       reviewResult: capability.reviewResult,
     };
@@ -58,12 +61,14 @@ export function buildPlatformV2TrainingActionRequest(
     return {
       actionId: capability.actionId,
       clientEventId,
+      ...session,
       target: capability.target,
     };
   }
   return {
     actionId: capability.actionId,
     clientEventId,
+    ...session,
     target: capability.target,
   };
 }
@@ -72,12 +77,14 @@ export async function performPlatformV2TrainingAction(
   capability: PlatformV2TrainingActionCapability,
   context: {
     transitionId?: string;
+    trainingSessionId?: string;
     onRequestFrozen?: (request: PlatformActionV2Request) => void;
   } = {},
 ): Promise<PlatformActionV2Response> {
   const request = buildPlatformV2TrainingActionRequest(
     capability,
     crypto.randomUUID(),
+    context.trainingSessionId,
   );
   context.onRequestFrozen?.(structuredClone(request));
   const headers = await platformV2AuthenticatedJsonHeaders();
