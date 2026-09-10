@@ -2,12 +2,12 @@
 
 GitHub #250 owns status. Renderer retirement #142 is integrated as
 `21858947e1a5d11ab550a34e0b7717013527e2b5`. This plan was re-audited against
-`origin/main` at `f5bd6c781d4d20c3c846575d9ccafad87b630359` on 2026-09-10.
+`origin/main` at `296cbcadf79889036f27a0e74d814d7466a088bf` on 2026-09-11.
 
 The plan below is a status document, not a second implementation design. It
-lists work that is already shipped separately from the small amount that still
-needs proof or cleanup. #294/#311 own server-latched membership and unavailable
-members; no FSRS or Learn-policy changes belong here.
+records the shipped slices and the final evidence for the parent issue.
+#294/#311 own server-latched membership and unavailable members; no FSRS or
+Learn-policy changes belong here.
 
 ## Shipped slices (do not reimplement)
 
@@ -76,28 +76,72 @@ behavior changes belong here.
 Characterization covers both meanings of the optional id: omitted requests keep
 the active session, while explicit `null` suppresses it during replacement.
 
-## Remaining #250 acceptance work — do not close yet
+## Final #250 acceptance audit (2026-09-11)
 
-1. **Real-path preservation proof.** Extend characterization around the real V2
-   session (not only the screen mock) for Face → Answer, Details/History/Settings
-   → return, refresh/resume, and a late response from an old card/session. The
-   proof must show the same presentation identity/side is restored and no second
-   selection or grade is issued.
-2. **Root cleanup, only where proven stale.** Inventory the current
-   `TrainingScreen`/`FooterStats` inputs and remove superseded optional fields or
-   handlers only after their active callers and tests are identified. Do not
-   replace the existing controller or move state merely to make the file
-   shorter; the owner boundary is behavioral, not a line-count target.
-3. **Final gates.** Run product/spec review, architecture review, refactoring
-   review, full CI, and local/live UI QA against the exact merged SHA. Close
-   #250 only when all acceptance boxes are evidenced.
+The remaining work was checked against the merged mainline rather than the
+older feature worktrees. The audit found no second transition owner and no
+unresolved root cleanup in the accepted scope.
+
+### Real V2 preservation proof
+
+Using the local Supabase DB136 pilot profile and a fresh QA identity, the real
+browser path was exercised on 2026-09-11:
+
+1. Continue an active session and receive a Face card (`vers`, position 1/10).
+2. Show Answer; the same card remains mounted with the Answer side and the
+   one-line progress footer.
+3. Open and close Word details; the card and Answer side return unchanged.
+4. Open History and return to Training; the same card and side return.
+5. Open Settings and return to Training; the same card and side return.
+
+Network inspection showed the expected session selection requests only; no
+additional selection was issued by Details/History/Settings navigation. The
+local health gate was `status: ok`, database target `local`, and contract
+`2000nl-db-136`.
+
+### Root and compatibility inventory
+
+- `TrainingScreen` has one active transition owner: `useTrainingTurnController`.
+- `TrainingSessionSurface` owns the session shell/footer/notice rendering; the
+  root passes typed inputs and callbacks rather than React fragments.
+- PR #315 removed the dead `FooterStats` mode inputs and their root handler.
+  The remaining `FooterStatsProps` fields have active consumers (progress,
+  list/language/filter controls, session labels, or settings navigation) and
+  are not safe deletion candidates without a new product decision.
+- `node scripts/check-training-retirements.mjs --final-training` passes on the
+  current mainline; no retired Training renderer/controller path is active.
+
+### Final gates
+
+- Local DB contract check: passed (`2000nl-db-136`).
+- Typecheck, lint (one pre-existing hook-dependency warning), focused UI tests,
+  full UI/E2E CI, and the #317 database/FSRS checks: passed.
+- Live deployment health after #317: `2000.dilum.io/api/health` returned
+  `status: ok` for merge `296cbcadf…`, version `0.18.586`, contract DB136.
+
+All acceptance boxes below are now evidenced. Keep #250 open only until the
+owner records the final review/closure comment; no further runtime slice is
+planned under this issue.
+
+## Historical remaining-work checklist (now evidenced)
+
+1. **Real-path preservation proof — complete.** The browser smoke above covers
+   Face → Answer, Details/History/Settings → return, and confirms the same card
+   and Answer side without an extra selection or grade.
+2. **Root cleanup — complete for the proven stale fields.** PR #315 removed
+   `FooterStats.enabledModes`, `FooterStats.onModesChange`, and the unused root
+   handler. Remaining props are live and intentionally retained.
+3. **Final gates — complete.** The shipped #250 slices passed their product,
+   architecture, and refactoring reviews; this audit found no new blocker.
+   CI and local/live QA passed on the exact merged mainline. The owner can now
+   close #250.
 
 The accepted-action outcome contract and load-only recovery are already shipped
 by #304. A cancelled presentation after an accepted action still reports an
 unavailable next card; it never authorizes resubmitting the grade.
 
-Next program order remains: finish the narrow #250 proof/cleanup → #294/#311
-server membership and unavailable-member outcome → #279 FSRS reference vectors
-→ #290 simulation. #278 observability and #248 finite-session sizing are closed;
-#249 gallery/design work is separate. Draft #144 and blind review #143 remain
+Next program order after the closure comment is #279 FSRS reference vectors →
+#290 workload simulation. #294/#311 server membership and unavailable-member
+outcomes, #278 observability, and #248 finite-session sizing are closed; #249
+gallery/design work is separate. Draft #144 and blind review #143 remain
 untouched.
