@@ -197,9 +197,7 @@ export function ReadingSizePrototype({ persistedSettings = false }: { persistedS
           footer={
             <FooterStats
               stats={stats}
-              enabledModes={[trainingMode]}
               cardFilter="both"
-              onModesChange={() => undefined}
               onCardFilterChange={() => undefined}
               language="nl"
               onLanguageChange={() => undefined}
