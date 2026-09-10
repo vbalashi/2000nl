@@ -12,7 +12,6 @@ import {
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchStats,
-  isTrainingFocusFilterActive,
   updateActiveTrainingScope,
   type TrainingScenarioCatalog,
 } from "@/lib/trainingService";
@@ -337,8 +336,6 @@ function TrainingScreenContent({
     );
   }, [currentWord, currentWord?.id]);
 
-  const trainingFocusFilterActive =
-    isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
 
   const {
@@ -674,75 +671,6 @@ function TrainingScreenContent({
   const resetFocusQueueState = useCallback(() => {
     resetFocusQueue();
   }, [resetFocusQueue]);
-
-  const handleTrainingDateWindowChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      setTrainingFocusFilter((current) => ({
-        ...current,
-        dateWindow:
-          value === "today" || value === "yesterday" || value === "daysAgo"
-            ? value
-            : "all",
-        ...(value === "daysAgo"
-          ? { daysAgo: current.daysAgo ?? 7 }
-          : { daysAgo: undefined }),
-      }));
-    },
-    [resetFocusQueueState],
-  );
-
-  const handleTrainingDaysAgoChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      const daysAgo = Math.max(0, Math.min(365, Number(value) || 0));
-      setTrainingFocusFilter((current) => ({
-        ...current,
-        dateWindow: "daysAgo",
-        daysAgo,
-      }));
-    },
-    [resetFocusQueueState],
-  );
-
-  const handleTrainingSourceFilterChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      setTrainingFocusFilter((current) => {
-        if (value === "all") {
-          return {
-            ...current,
-            sourceId: undefined,
-            sourceKind: undefined,
-            externalId: undefined,
-          };
-        }
-        if (value === "kind:youtube") {
-          return {
-            ...current,
-            sourceId: undefined,
-            sourceKind: "youtube",
-            externalId: undefined,
-          };
-        }
-        if (value.startsWith("source:")) {
-          return {
-            ...current,
-            sourceId: value.slice("source:".length),
-            sourceKind: undefined,
-            externalId: undefined,
-          };
-        }
-        return current;
-      });
-    },
-    [resetFocusQueueState],
-  );
-
-  const clearTrainingFocusFilter = useCallback(() => {
-    resetFocusQueueState();
-    setTrainingFocusFilter(DEFAULT_TRAINING_FOCUS_FILTER);
-  }, [resetFocusQueueState]);
 
   // Apply theme to document (client-side only)
   useEffect(() => {
@@ -1127,29 +1055,6 @@ function TrainingScreenContent({
     }
   };
 
-  const sourceFilterValue = trainingFocusFilter.sourceId
-    ? `source:${trainingFocusFilter.sourceId}`
-    : trainingFocusFilter.sourceKind === "youtube"
-      ? "kind:youtube"
-      : "all";
-  const activeSourceFilterLabel = trainingFocusFilter.sourceId
-    ? trainingFilterSources.find(
-        (source) => source.sourceId === trainingFocusFilter.sourceId,
-      )?.label
-    : trainingFocusFilter.sourceKind === "youtube"
-      ? "YouTube"
-      : null;
-  const dateFilterLabel =
-    trainingFocusFilter.dateWindow === "today"
-      ? "vandaag"
-      : trainingFocusFilter.dateWindow === "yesterday"
-        ? "gisteren"
-        : trainingFocusFilter.dateWindow === "daysAgo"
-          ? `${trainingFocusFilter.daysAgo ?? 7} dagen geleden`
-          : null;
-  const activeFilterCopy = [dateFilterLabel, activeSourceFilterLabel]
-    .filter(Boolean)
-    .join(" · ");
   const pilotSourceOptions = trainingFilterSources.map((source) => ({
     value: `source:${source.sourceId}`,
     label: source.label,

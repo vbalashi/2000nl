@@ -32,9 +32,34 @@ Paths below are relative to `apps/ui/` unless stated otherwise.
 | Training More `onTrainingAction`, `trainingActionEntryId`, `revealed`, `actionLoading` | Only Screen supplied freeze/hide; `context=training-more` makes `showGlobalDetailsActions=false`. Library callers did not supply freeze/hide. | Dead wiring can be removed immediately under #142/#269. No menu design dependency. | No training-action props in Screen, Library session or LibraryDetailsActions; existing More test still suppresses footer while Collections/Train next work. |
 | `lib/training/reviewService.ts` / `recordReview` | Legacy adapter calls this service; tests and trainingService barrel also reference it. Platform has a separate provenance service with the same method name. | Inspect each export when removing adapter; do not delete similarly named Platform functions. #255. | No active UI import of removed export; retain active DB/RPC callers. |
 | `lib/training/selectionService.ts` / scheduler RPC overloads | Both next-card and prefetch select `get_next_card` or `get_next_filtered_card`; migration 132 retains previous signatures. | Server session membership and overload inventory in #294. Independent of rendering cleanup. | Enumerate argument signatures, including diagnostic/DB test callers; no old signature before a forward DROP migration. |
-| `TrainingCard*.test.tsx`, `trainingCardPresentation.test.ts`, legacy-mode Screen tests | Test consumers, including explicit V2-off configuration, not external product consumers. | Keep only V2 transition/loading coverage; re-baseline the remaining legacy-only cases separately. | Renderer-only files deleted; TrainingScreen suite passes with 35 active tests and 18 explicitly marked legacy/re-baseline cases (62 active across TrainingScreen + controller suites). |
+| `TrainingCard*.test.tsx`, `trainingCardPresentation.test.ts`, legacy-mode Screen tests | Test consumers, including explicit V2-off configuration, not external product consumers. | Migrate supported behavior to V2 and delete obsolete V1-only assertions. | Renderer-only files and V1-only Screen tests deleted; Screen has no skipped cases or mock rollout switch. See the coverage mapping below. |
 | Root architecture, package card-types, UI design-guide and older active plans | Documentation references, not runtime callers. | Update current guidance with final deletion; retain dated research as history. #142/#245. | No current guidance instructs use of the removed renderer/RPC. |
 | `scripts/test-account.js` (under apps/ui) | Still exposed by package.json `test-account`; writes obsolete `user_word_status` and old membership columns. Do not execute it. | Retire or replace through the canonical verified QA fixture path; #255/#247. | Remove script/package entry and references or test the replacement against current schema, without resetting the populated QA database. |
+
+## Retired test coverage map (#301)
+
+The Screen fixture models the accepted-action boundary, not the V2 card's
+internal rendering. Core queue and preparation mocks are reset per test.
+Navigation assertions wait for initial background selection and then check
+unchanged fetch count, mounted DOM node and presentation identity. The grade
+stub awaits the transition, matching the real session's busy lifetime.
+
+| Former V1 assertion | Current evidence / disposition |
+| --- | --- |
+| Details and Recent | Screen V2 overflow and global Details/help tests preserve the turn and forbid global Details footer actions. |
+| Inline source/date selectors | Screen pilot Setup test chooses Source/Time window and asserts the committed selector filter; no filter is applied while merely editing the draft. |
+| Footer learning-language selector | Removed from the compact V2 session; no replacement in-session control is claimed. Language-scope persistence remains covered in `trainingService.listsPreferences.test.ts`; Library search language isolation is covered in Screen. Future language controls belong to Setup design, not renderer compatibility. |
+| Full footer scope summary | `TrainingSessionChrome.test.tsx` projects current scenario/mode/filter; pilot Start commits the full scope. The old multi-line summary is not the accepted compact footer. |
+| Search → Train next, failed warmup, copy, one-shot override | Four active Screen integration cases exercise Library and the V2 transition owner. |
+| Legacy `recordReview` hotkeys / duplicate submission | `TrainingSenseCardStage.test.tsx` routes grade keys to exact capabilities; `TrainingSenseCardV2Session.test.tsx` checks one mutation for repeated clicks and repeated hotkeys. |
+| Old mobile height / scroll wrapper | Screen V2 scroll ownership, `TrainingSessionV2Layout.test.tsx` and Stage scroll/focus tests; desktop/mobile browser smoke remains required. |
+| First-encounter swipe `fail` / `hide` | Those V1 action mappings are not current. V2 Stage/Session and projection tests own Start Learning and Mark Known capabilities; Known is not a Hide grade. |
+| Advance before review resolves | Rejected old expectation. Screen waits for the prepared DTO; controller/session tests separate accepted, rejected, stalled and presented outcomes. |
+| V1 translation overlay Escape/Ctrl+Tab | Overlay removed. V2 Stage tests own face/answer translation visibility; Session tests preserve the mounted card during translation refresh. |
+
+Inactive Screen handlers for the removed inline filters and obsolete F/X
+shortcut-help entries are deleted too. Public Freeze/Hide operations and
+Start Learning semantics are not changed by this cleanup.
 
 ## Start Learning remains current
 

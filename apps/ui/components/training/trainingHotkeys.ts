@@ -10,8 +10,6 @@ type TrainingHotkeyId =
   | "hard"
   | "good"
   | "easy"
-  | "freeze"
-  | "hide"
   | "overview";
 
 const hotkeys: Array<{ key: string; id: TrainingHotkeyId }> = [
@@ -24,15 +22,10 @@ const hotkeys: Array<{ key: string; id: TrainingHotkeyId }> = [
   { key: "J", id: "hard" },
   { key: "K", id: "good" },
   { key: "L", id: "easy" },
-  { key: "F", id: "freeze" },
-  { key: "X", id: "hide" },
   { key: "?", id: "overview" },
 ];
 
-const labels: Record<
-  OnboardingLanguage,
-  Record<TrainingHotkeyId, string>
-> = {
+const labels: Record<OnboardingLanguage, Record<TrainingHotkeyId, string>> = {
   nl: {
     answer: "Antwoord tonen of verbergen",
     hint: "Hint met context en voorbeeld",
@@ -43,8 +36,6 @@ const labels: Record<
     hard: "Moeilijk",
     good: "Goed",
     easy: "Makkelijk",
-    freeze: "Bevriezen tot morgen",
-    hide: "Niet meer tonen",
     overview: "Sneltoetsenoverzicht tonen",
   },
   en: {
@@ -57,8 +48,6 @@ const labels: Record<
     hard: "Hard",
     good: "Good",
     easy: "Easy",
-    freeze: "Freeze until tomorrow",
-    hide: "Do not show again",
     overview: "Show the shortcut overview",
   },
   ru: {
@@ -71,8 +60,6 @@ const labels: Record<
     hard: "Трудно",
     good: "Хорошо",
     easy: "Легко",
-    freeze: "Отложить до завтра",
-    hide: "Больше не показывать",
     overview: "Показать список горячих клавиш",
   },
 };
@@ -81,6 +68,8 @@ export const getTrainingHotkeys = (language: OnboardingLanguage) =>
   hotkeys.map(({ key, id }) => ({ key, description: labels[language][id] }));
 
 export function areTrainingHotkeysSuspended() {
-  return typeof document !== "undefined" &&
-    document.querySelector('[data-training-hotkeys-suspended="true"]') !== null;
+  return (
+    typeof document !== "undefined" &&
+    document.querySelector('[data-training-hotkeys-suspended="true"]') !== null
+  );
 }
