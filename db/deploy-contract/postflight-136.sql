@@ -6,7 +6,7 @@ DECLARE
   selector_volatility "char";
 BEGIN
   IF to_regprocedure('public.mark_training_session_member_unavailable(uuid,uuid,uuid,text,text)') IS NULL
-     OR to_regprocedure('private.mark_training_session_member_unavailable(uuid,uuid,uuid,text,text,boolean)') IS NULL THEN
+     OR to_regprocedure('private.mark_training_session_member_unavailable(uuid,uuid,uuid,text,text)') IS NULL THEN
     RAISE EXCEPTION 'required migration 136 unavailable-member function is missing';
   END IF;
 

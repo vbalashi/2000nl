@@ -323,9 +323,12 @@ describeDb("authoritative training session plan RPC", () => {
       for (let index = 0; index < 5; index += 1) {
         const { rows: dictionaryRows } = await client.query(
           `insert into dictionaries (
-             language_code, slug, name, kind, visibility, owner_user_id,
-             minimum_subscription_tier
-           ) values ('nl', $1, 'Unavailable member fixture', 'curated', 'private', null, 'free')
+           language_code, slug, name, kind, visibility, owner_user_id,
+             minimum_subscription_tier, schema_key, schema_version
+           ) values (
+             'nl', $1, 'Unavailable member fixture', 'curated', 'private', null,
+             'free', 'nl-vandale-v1', 1
+           )
            returning id`,
           [`unavailable-member-${userId}-${index}`],
         );

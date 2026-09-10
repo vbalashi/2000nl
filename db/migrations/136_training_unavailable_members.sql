@@ -21,13 +21,19 @@ ALTER TABLE public.training_session_members
 COMMENT ON COLUMN public.training_session_members.unavailable_reason IS
   'Stable server reason for excluding a latched member from this session; never set for transient failures.';
 
+-- The private bypass was never used by the UI or any external consumer. Drop
+-- it while introducing the evidence-checked mutation so no alternate caller
+-- can silently bypass ordered-session reconciliation.
+DROP FUNCTION IF EXISTS private.mark_training_session_member_unavailable(
+  uuid, uuid, uuid, text, text, boolean
+);
+
 CREATE OR REPLACE FUNCTION private.mark_training_session_member_unavailable(
   p_user_id uuid,
   p_session_id uuid,
   p_entry_id uuid,
   p_card_type_id text,
-  p_reason text,
-  p_allow_out_of_order boolean DEFAULT false
+  p_reason text
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -41,6 +47,8 @@ DECLARE
   v_entry public.word_entries%rowtype;
   v_projected_card jsonb;
   v_platform_group jsonb;
+  v_schema_key text;
+  v_render_capabilities text[];
   v_evidence_reason text;
   v_remaining integer;
 BEGIN
@@ -107,6 +115,14 @@ BEGIN
   ) THEN
     v_evidence_reason := 'dictionary-access-revoked';
   ELSE
+    SELECT dictionary.schema_key, schema_row.render_capabilities
+    INTO v_schema_key, v_render_capabilities
+    FROM public.dictionaries dictionary
+    LEFT JOIN public.dictionary_schemas schema_row
+      ON schema_row.schema_key = dictionary.schema_key
+     AND schema_row.version = dictionary.schema_version
+    WHERE dictionary.id = v_entry.dictionary_id;
+
     v_projected_card := private.project_training_scheduler_candidate_v1(
       p_user_id,
       v_member.entry_id,
@@ -127,14 +143,31 @@ BEGIN
       v_evidence_reason := 'projection-missing';
     ELSIF jsonb_typeof(v_entry.raw) IS DISTINCT FROM 'object' THEN
       v_evidence_reason := 'model-invalid';
-    ELSIF jsonb_typeof(v_entry.raw->'meanings') IS DISTINCT FROM 'array' THEN
-      v_evidence_reason := 'model-invalid';
-    ELSIF v_member.card_type_id = 'definition-to-word'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements(COALESCE(v_entry.raw->'meanings', '[]'::jsonb)) meaning
-        WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
+    ELSIF v_schema_key = 'user-entry-v1'
+      AND (
+        NULLIF(trim(v_entry.headword), '') IS NULL
+        OR NOT (
+          NULLIF(trim(v_entry.raw->>'definition'), '') IS NOT NULL
+          OR NULLIF(trim(v_entry.raw->'translation'->>'text'), '') IS NOT NULL
+          OR NULLIF(trim(v_entry.raw->'example'->>'source'), '') IS NOT NULL
+          OR NULLIF(trim(v_entry.raw->>'notes'), '') IS NOT NULL
+        )
       ) THEN
+      v_evidence_reason := 'model-invalid';
+    ELSIF 'definitions' = ANY(COALESCE(v_render_capabilities, ARRAY[]::text[]))
+      AND v_schema_key <> 'user-entry-v1'
+      AND jsonb_typeof(v_entry.raw->'meanings') IS DISTINCT FROM 'array' THEN
+      v_evidence_reason := 'model-invalid';
+    ELSIF v_member.card_type_id = 'definition-to-word' AND (
+      (v_schema_key = 'user-entry-v1'
+        AND NULLIF(trim(v_entry.raw->>'definition'), '') IS NULL)
+      OR (v_schema_key <> 'user-entry-v1'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM jsonb_array_elements(COALESCE(v_entry.raw->'meanings', '[]'::jsonb)) meaning
+          WHERE NULLIF(trim(meaning->>'definition'), '') IS NOT NULL
+        ))
+    ) THEN
       v_evidence_reason := 'reverse-definition-missing';
     ELSE
       -- The Platform V2 renderer depends on the same presentation identity
@@ -164,23 +197,21 @@ BEGIN
       COALESCE(v_evidence_reason, 'member-renderable');
   END IF;
 
-  IF NOT p_allow_out_of_order THEN
-    SELECT member.* INTO v_expected_member
-    FROM public.training_session_members member
-    WHERE member.session_id = p_session_id
-      AND member.consumed_at IS NULL
-      AND member.unavailable_at IS NULL
-    ORDER BY member.ordinal
-    LIMIT 1;
-    IF NOT FOUND
-       OR v_expected_member.entry_id IS DISTINCT FROM v_member.entry_id
-       OR v_expected_member.card_type_id IS DISTINCT FROM v_member.card_type_id THEN
-      RETURN jsonb_build_object(
-        'status', 'out-of-order',
-        'ordinal', v_member.ordinal,
-        'expectedOrdinal', v_expected_member.ordinal
-      );
-    END IF;
+  SELECT member.* INTO v_expected_member
+  FROM public.training_session_members member
+  WHERE member.session_id = p_session_id
+    AND member.consumed_at IS NULL
+    AND member.unavailable_at IS NULL
+  ORDER BY member.ordinal
+  LIMIT 1;
+  IF NOT FOUND
+     OR v_expected_member.entry_id IS DISTINCT FROM v_member.entry_id
+     OR v_expected_member.card_type_id IS DISTINCT FROM v_member.card_type_id THEN
+    RETURN jsonb_build_object(
+      'status', 'out-of-order',
+      'ordinal', v_member.ordinal,
+      'expectedOrdinal', v_expected_member.ordinal
+    );
   END IF;
 
   UPDATE public.training_session_members
@@ -211,10 +242,10 @@ END;
 $$;
 
 ALTER FUNCTION private.mark_training_session_member_unavailable(
-  uuid, uuid, uuid, text, text, boolean
+  uuid, uuid, uuid, text, text
 ) OWNER TO postgres;
 REVOKE ALL ON FUNCTION private.mark_training_session_member_unavailable(
-  uuid, uuid, uuid, text, text, boolean
+  uuid, uuid, uuid, text, text
 ) FROM PUBLIC, anon, authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.mark_training_session_member_unavailable(
@@ -234,8 +265,7 @@ AS $$
     p_session_id,
     p_entry_id,
     p_card_type_id,
-    p_reason,
-    false
+    p_reason
   );
 $$;
 
