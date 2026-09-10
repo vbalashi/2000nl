@@ -34,6 +34,7 @@ Paths below are relative to `apps/ui/` unless stated otherwise.
 | `lib/training/selectionService.ts` / scheduler RPC overloads | Both next-card and prefetch select `get_next_card` or `get_next_filtered_card`; migration 132 retains previous signatures. | Server session membership and overload inventory in #294. Independent of rendering cleanup. | Enumerate argument signatures, including diagnostic/DB test callers; no old signature before a forward DROP migration. |
 | `TrainingCard*.test.tsx`, `trainingCardPresentation.test.ts`, legacy-mode Screen tests | Test consumers, including explicit V2-off configuration, not external product consumers. | Migrate meaningful scenarios; delete obsolete visual expectations. #142. | Focused and full UI suite run on pilot; do not keep false-flag tests solely to justify an old renderer. |
 | Root architecture, package card-types, UI design-guide and older active plans | Documentation references, not runtime callers. | Update current guidance with final deletion; retain dated research as history. #142/#245. | No current guidance instructs use of the removed renderer/RPC. |
+| `scripts/test-account.js` (under apps/ui) | Still exposed by package.json `test-account`; writes obsolete `user_word_status` and old membership columns. Do not execute it. | Retire or replace through the canonical verified QA fixture path; #255/#247. | Remove script/package entry and references or test the replacement against current schema, without resetting the populated QA database. |
 
 ## Start Learning remains current
 
@@ -71,6 +72,14 @@ Typechecking also found the no-op legacy callback props in
 wiring. This dev fixture is not a production dependency.
 
 ## Reproduce the source inventory
+
+`node scripts/check-training-retirements.mjs` is the CI guard for the retired
+Details callback symbols across app, components, lib and tests. Run
+`node scripts/check-training-retirements.mjs --final-training` to check the
+renderer/adapter deletion gates: it deliberately fails at this checkpoint,
+listing remaining legacy files/symbols. Enable that final mode in CI when #142
+removes the remaining paths. These bounded textual guards do not replace
+behavioral tests or the separate scheduler/external API inventory.
 
 Run from the 2000NL root (matches are evidence to classify, not a success exit):
 
