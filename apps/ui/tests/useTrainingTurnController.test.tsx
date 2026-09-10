@@ -870,6 +870,24 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(oldWord);
   });
 
+  test("scope replacement explicitly clears the previous session id", async () => {
+    const selectNext = vi.fn().mockResolvedValue(word2);
+    const controller = renderController({ selectNext });
+
+    await act(async () => {
+      await controller.result.current.replaceSessionScopeAndLoad({
+        scenario: "new-scope",
+      });
+    });
+
+    expect(selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scenario: "new-scope",
+        trainingSessionId: null,
+      }),
+    );
+  });
+
   test("override identity uses the presented mode and clears its notice after review", async () => {
     prepared.consume.mockReturnValue(null);
     const overrideWord = {

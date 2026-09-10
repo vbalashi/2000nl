@@ -43,6 +43,19 @@ with #294 after active callers are migrated.
 Tradeoff: during this short boundary, reveal/hint/report are disabled along with
 grading. The card remains visible. This slice does not add layout or copy.
 
+## Slice 3: explicit scope replacement boundary (2026-09-10)
+
+When a list, scenario, mode, language, or filter changes, the controller now
+passes an explicit `trainingSessionId: null` to the immediate replacement load.
+The selection port distinguishes that boundary from an omitted override, so a
+callback captured by the previous render cannot reuse the old latched session.
+This is a client-side safety boundary only; the next explicit finite-session
+start still creates the new server session. No scheduler, FSRS, or visual
+behavior changes belong here.
+
+Characterization covers both meanings of the optional id: omitted requests keep
+the active session, while explicit `null` suppresses it during replacement.
+
 ## Remaining after slice 1 — do not close #250 yet
 
 1. Remove mutation of reviewed/excluded state from presentation effects. Make
