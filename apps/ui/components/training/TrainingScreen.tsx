@@ -726,10 +726,17 @@ function TrainingScreenContent({
       setCardFilterPreference(newFilter, { persist: false });
       persistCurrentTrainingScope({ cardFilter: newFilter });
       resetQueueForFilter(newFilter);
+      if (initialLoadDone.current) {
+        void loadNextWord({
+          cardFilter: newFilter,
+          trainingSessionId: null,
+        });
+      }
     },
     [
       beginSessionScopeChange,
       cardFilter,
+      loadNextWord,
       persistCurrentTrainingScope,
       resetQueueForFilter,
       setCardFilterPreference,

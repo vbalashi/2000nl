@@ -48,7 +48,8 @@ grading. The card remains visible. This slice does not add layout or copy.
 When a list, scenario, mode, language, or filter changes, the controller now
 passes an explicit `trainingSessionId: null` to the immediate replacement load
 (including the focus-filter observer); card-filter changes also clear the
-active finite-session boundary before the next selection. The selection port
+active finite-session boundary before issuing their immediate replacement
+selection. The selection port
 distinguishes that boundary from an omitted override, so a callback captured by
 the previous render cannot reuse the old latched session. The explicit session
 start and resume paths mark their filter as already owned by their authoritative
