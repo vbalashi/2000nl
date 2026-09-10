@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import type {
   CardFilter,
   DetailedStats,
-  TrainingMode,
   WordListSummary,
 } from "@/lib/types";
 import { Tooltip } from "@/components/Tooltip";
@@ -15,11 +14,7 @@ import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 
 export type FooterStatsProps = {
   stats: DetailedStats;
-  /** @deprecated Use activeScenario instead */
-  enabledModes: TrainingMode[];
   cardFilter: CardFilter;
-  /** @deprecated Use onOpenSettings instead */
-  onModesChange: (modes: TrainingMode[]) => void;
   onCardFilterChange: (filter: CardFilter) => void;
   language: string;
   onLanguageChange: (value: string) => void;

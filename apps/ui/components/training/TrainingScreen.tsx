@@ -1037,15 +1037,6 @@ function TrainingScreenContent({
     setActiveScenario,
   ]);
 
-  const handleModesChange = useCallback(
-    (newModes: TrainingMode[]) => {
-      beginSessionScopeChange();
-      setEnabledModes(newModes, { persist: false });
-      persistCurrentTrainingScope({ modesEnabled: newModes });
-    },
-    [beginSessionScopeChange, persistCurrentTrainingScope, setEnabledModes],
-  );
-
   const handleScenarioChange = useCallback(
     (newScenario: string) => {
       trainingDebug.log("[Settings] Changing scenario to:", newScenario);
@@ -1500,9 +1491,7 @@ function TrainingScreenContent({
   const trainingSessionChrome = sessionChrome;
   const trainingSessionFooter: FooterStatsProps = {
     stats,
-    enabledModes,
     cardFilter,
-    onModesChange: handleModesChange,
     onCardFilterChange: handleCardFilterChange,
     language: currentTrainingLanguage,
     onLanguageChange: handleTrainingLanguageChange,
