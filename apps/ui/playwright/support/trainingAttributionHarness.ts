@@ -178,6 +178,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
   const sessionRequests: Record<string, unknown>[] = [];
   const sessionMembers = entries.slice(0, 50);
   const consumedSessionEntryIds = new Set<string>();
+  const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
   const scenarioRequests: Record<string, unknown>[] = [];
   const failWarmupLookupsForEntries = new Set<string>();
@@ -400,6 +401,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
 
     if (pathname.endsWith("/rpc/start_training_session")) {
       consumedSessionEntryIds.clear();
+      unavailableSessionEntryIds.clear();
       sessionOnDemandReady = false;
       await fulfillJson(
         route,
@@ -549,12 +551,33 @@ export async function setupAuthenticatedTrainingAttributionPage(
         : sessionMembers.find(
             (candidate) =>
               !consumedSessionEntryIds.has(candidate.id) &&
+              !unavailableSessionEntryIds.has(candidate.id) &&
               !excludedCardKeys.includes(`${candidate.id}:word-to-definition`),
           );
       await fulfillJson(
         route,
         entry ? buildSchedulerEntry(entry) : [],
         "session-card",
+      );
+      return;
+    }
+
+    if (pathname.endsWith("/rpc/mark_training_session_member_unavailable")) {
+      const entryId =
+        typeof body.p_entry_id === "string" ? body.p_entry_id : null;
+      if (entryId) unavailableSessionEntryIds.add(entryId);
+      await fulfillJson(
+        route,
+        {
+          status: "unavailable",
+          ordinal: sessionMembers.findIndex((entry) => entry.id === entryId) + 1,
+          reason: body.p_reason ?? "model-invalid",
+          remaining: Math.max(
+            0,
+            sessionMembers.length - unavailableSessionEntryIds.size,
+          ),
+        },
+        "session-unavailable",
       );
       return;
     }
