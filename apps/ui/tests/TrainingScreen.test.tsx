@@ -644,6 +644,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
               setBusy(true);
               try {
                 mockV2ProgressAction();
+                // The real session awaits the server mutation before invoking
+                // acceptance. Do not turn a click into a synchronous receipt.
+                await Promise.resolve();
                 await onProgressActionAccepted({ actionId: "review-card" });
               } finally {
                 busyRef.current = false;
@@ -778,6 +781,14 @@ const waitForInitialTrainingFetches = async () => {
       fetchNextTrainingWordByScenario.mock.calls.length,
     ).toBeGreaterThanOrEqual(2),
   );
+};
+
+const expectOnlyBackgroundSelectionSince = (callCount: number) => {
+  // Settings/hydration may refresh preparation. That may select ahead, but it
+  // must exclude the displayed card and must not replace its presentation.
+  for (const call of fetchNextTrainingWordByScenario.mock.calls.slice(callCount)) {
+    expect(call[6]).toContain("word-1:word-to-definition");
+  }
 };
 
 test("search action opens the dedicated dictionary search surface", async () => {
@@ -964,9 +975,7 @@ test("shell Library replaces the visible destination without remounting the curr
   ).toBeInTheDocument();
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
-    trainingFetchCount,
-  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 
   fireEvent.click(
     within(getPrimaryNavigation()).getByRole("button", {
@@ -980,9 +989,7 @@ test("shell Library replaces the visible destination without remounting the curr
     "data-presentation-identity",
     presentationBefore,
   );
-  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
-    trainingFetchCount,
-  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
 test("Statistics and Settings destinations preserve the current Training turn", async () => {
@@ -1039,9 +1046,7 @@ test("Statistics and Settings destinations preserve the current Training turn", 
     "data-presentation-identity",
     presentationBefore,
   );
-  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(
-    trainingFetchCount,
-  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
 test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
@@ -2866,14 +2871,18 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
   await screen.findByRole("heading", { name: "huis" });
 
   // Grade word-1.
-  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
   await screen.findByRole("heading", { name: "boom" });
 
   // Grade word-2.
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
   await screen.findByRole("heading", { name: "fiets" });
 
   // While viewing word-3, next prefetch should exclude both graded IDs.

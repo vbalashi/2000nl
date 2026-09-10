@@ -41,8 +41,10 @@ Paths below are relative to `apps/ui/` unless stated otherwise.
 The Screen fixture models the accepted-action boundary, not the V2 card's
 internal rendering. Core queue and preparation mocks are reset per test.
 Navigation assertions wait for initial background selection and then check
-unchanged fetch count, mounted DOM node and presentation identity. The grade
-stub awaits the transition, matching the real session's busy lifetime.
+the mounted DOM node and presentation identity. Any subsequent background
+selection must exclude the current card; an authoritative reload is forbidden.
+The grade stub awaits the asynchronous receipt and transition, matching the
+real session's busy lifetime; repeated user events wait for the React boundary.
 
 | Former V1 assertion | Current evidence / disposition |
 | --- | --- |
