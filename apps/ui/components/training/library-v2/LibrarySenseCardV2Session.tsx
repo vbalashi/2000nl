@@ -27,6 +27,8 @@ import { freezeSenseCardDiagnosticSnapshot } from "@/lib/feedback/diagnosticRepo
 import {
   buildLibrarySenseCardGroupModel,
   librarySenseCardIdentity,
+  type LibraryFreezeCapability,
+  type LibraryHideCapability,
   type LibraryMutationCapability,
 } from "./librarySenseCardModel";
 
@@ -47,8 +49,7 @@ type Props = {
   revealed?: boolean;
   actionLoading?: boolean;
   onTrainingAction?: (
-    action: "freeze" | "hide",
-    entryId: string,
+    capability: LibraryFreezeCapability | LibraryHideCapability,
   ) => Promise<void> | void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
 };
@@ -648,7 +649,9 @@ function SenseCardV2Session({
   );
   const activeSenseEntry =
     selectedActiveEntry?.kind === "sense-card" ? selectedActiveEntry : null;
+  const showLibraryOnlyActions = context === "library";
   const canReport = Boolean(
+    showLibraryOnlyActions &&
     group &&
     activeSenseEntry?.reportContentRevision &&
     activeSenseEntry.capabilities.some(
@@ -657,7 +660,18 @@ function SenseCardV2Session({
         capability.target.kind === "entry",
     ),
   );
-  const showGlobalDetailsActions = context === "library";
+  // Library keeps its report/copy footer. Training More exposes only the two
+  // explicit training controls when its caller supplies the V2 action port;
+  // the old Practice later/Hide/Copy footer is intentionally not restored.
+  const hasTrainingActions = Boolean(
+    activeSenseEntry?.capabilities.some(
+      (capability) =>
+        capability.actionId === "freeze-card" ||
+        capability.actionId === "hide-card",
+    ),
+  );
+  const showGlobalDetailsActions =
+    showLibraryOnlyActions || (Boolean(onTrainingAction) && hasTrainingActions);
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -706,27 +720,47 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onAction={(capability) => void handleAction(capability)}
-          bottomOverlayReserve={showGlobalDetailsActions && canReport}
+          bottomOverlayReserve={showLibraryOnlyActions && canReport}
         />
       </div>
       {showGlobalDetailsActions &&
       activeSenseEntry &&
-      (onCopyToUserDictionary || onTrainingAction || canReport) ? (
+      (onCopyToUserDictionary || hasTrainingActions || canReport) ? (
         <LibraryDetailsActions
           entryId={activeMeaningId}
           interfaceLanguage={interfaceLanguage}
           revealed={revealed}
           actionLoading={actionLoading}
           onTrainingAction={
-            activeSenseEntry && activeMeaningId === trainingActionEntryId
-              ? (action) => onTrainingAction?.(action, activeMeaningId)
+            hasTrainingActions &&
+            activeSenseEntry &&
+            activeMeaningId === trainingActionEntryId
+              ? (action) => {
+                  const capability =
+                    action === "freeze-card"
+                      ? activeSenseEntry.capabilities.find(
+                          (candidate): candidate is LibraryFreezeCapability =>
+                            candidate.actionId === "freeze-card",
+                        )
+                      : activeSenseEntry.capabilities.find(
+                          (candidate): candidate is LibraryHideCapability =>
+                            candidate.actionId === "hide-card",
+                        );
+                  if (capability) return onTrainingAction?.(capability);
+                  return undefined;
+                }
               : undefined
           }
           onCopyToUserDictionary={
-            activeSenseEntry ? onCopyToUserDictionary : undefined
+            showLibraryOnlyActions && activeSenseEntry
+              ? onCopyToUserDictionary
+              : undefined
           }
           leadingAction={
-            canReport && group && selectedActiveEntry?.kind === "sense-card" ? (
+            showLibraryOnlyActions &&
+            canReport &&
+            group &&
+            selectedActiveEntry?.kind === "sense-card" ? (
               <SenseCardReportAction
                 snapshot={freezeSenseCardDiagnosticSnapshot({
                   route: "library",

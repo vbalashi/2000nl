@@ -136,6 +136,56 @@ describe("/api/platform/v2/actions", () => {
     );
   });
 
+  test("accepts an explicit Details freeze action through its dedicated RPC", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "freeze-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "frozen", frozenUntil: "2026-09-11T08:00:00.000Z" },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "freeze-card",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "00000000-0000-4000-8000-000000000005",
+        },
+      }),
+    );
+
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_details_action_as_principal",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_action_id: "freeze-card",
+        p_entry_id: "00000000-0000-4000-8000-000000000003",
+        p_card_type_id: "word-to-definition",
+        p_state_revision: "00000000-0000-4000-8000-000000000005",
+        p_client_event_id: "00000000-0000-4000-8000-000000000002",
+        p_source_context: null,
+        p_auth_kind: "first_party",
+        p_connected_client_id: null,
+      },
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ actionId: "freeze-card", accepted: true }),
+    );
+  });
+
   test("rejects a stale Undo as a typed conflict", async () => {
     rpc.mockResolvedValueOnce({
       data: null,

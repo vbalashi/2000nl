@@ -138,6 +138,12 @@ export type PlatformSenseCardCapabilityV2 =
       reviewResult: "fail" | "hard" | "success" | "easy";
     }
   | {
+      actionId: "freeze-card" | "hide-card";
+      elementId: string;
+      messageKey: string;
+      target: PlatformSenseCardTargetV2;
+    }
+  | {
       actionId: "request-translation";
       elementId: string;
       messageKey: string;
@@ -322,6 +328,12 @@ export type PlatformActionV2Request =
       clientEventId: string;
       target: PlatformSenseCardTargetV2;
       reviewResult: "fail" | "hard" | "success" | "easy";
+      sourceContext?: PlatformSourceContextV2;
+    }
+  | {
+      actionId: "freeze-card" | "hide-card";
+      clientEventId: string;
+      target: PlatformSenseCardTargetV2;
       sourceContext?: PlatformSourceContextV2;
     };
 

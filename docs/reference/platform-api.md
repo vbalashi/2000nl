@@ -226,7 +226,7 @@ Authorization: Bearer <access_token>
 
 The request must be one of the discriminated mutation variants in
 `packages/shared/types/platformV2.ts`: `start-learning`, `mark-known`,
-`undo-known`, or `review-card`. Every request carries a UUID
+`undo-known`, `review-card`, `freeze-card`, or `hide-card`. Every request carries a UUID
 `clientEventId` and the exact `target` returned by lookup, including
 `stateRevision`. Undo additionally carries the current `activeKnownMarkId`
 and `knownMarkRevision`.
@@ -250,6 +250,13 @@ only the current mark and reveals the preserved state. Consumers must dispatch
 the returned capability target verbatim and must not simulate either state
 locally.
 
+`freeze-card` means “Practice later”: the exact card is excluded until tomorrow
+and its existing FSRS fields are preserved. `hide-card` means “Hide from
+training”: the exact card is excluded from training indefinitely. Both actions
+write an immutable action event and receipt, but intentionally create no
+`user_review_log` row and do not change FSRS scheduling. Details actions use the
+same revision check and reconciliation rules as other V2 mutations.
+
 #### Reconcile an ambiguous V2 action
 
 ```http
@@ -263,7 +270,8 @@ Content-Type: application/json
 Use this read only when an explicit card-action response ends ambiguously at the
 transport boundary. Do not repeat the mutation first: reconcile its durable
 receipt directly. This applies to `start-learning`, `mark-known`, `undo-known`,
-and `review-card`, and requires the same `platform:write` scope as the mutation.
+`review-card`, `freeze-card`, and `hide-card`, and requires the same
+`platform:write` scope as the mutation.
 The server derives the authenticated user, waits for an in-flight mutation
 using that user/event ID, and reads only that user's durable receipt. Reuse the
 original UUID; do not create another action event merely to reconcile the

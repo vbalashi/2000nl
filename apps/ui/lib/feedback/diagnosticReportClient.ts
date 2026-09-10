@@ -144,6 +144,15 @@ function trainingActionTarget(
   request: PlatformActionV2Request,
   contentRevision: string,
 ) {
+  if (request.actionId === "freeze-card" || request.actionId === "hide-card") {
+    return {
+      kind: "sense-card" as const,
+      entryId: request.target.entryId,
+      cardTypeId: request.target.cardTypeId,
+      stateRevision: request.target.stateRevision,
+      contentRevision,
+    };
+  }
   return {
     kind: "training-action" as const,
     entryId: request.target.entryId,

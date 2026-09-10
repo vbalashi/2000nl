@@ -28,6 +28,14 @@ export type LibraryUndoKnownCapability = Extract<
   PlatformSenseCardCapabilityV2,
   { actionId: "undo-known" }
 >;
+export type LibraryFreezeCapability = Extract<
+  PlatformSenseCardCapabilityV2,
+  { actionId: "freeze-card" }
+>;
+export type LibraryHideCapability = Extract<
+  PlatformSenseCardCapabilityV2,
+  { actionId: "hide-card" }
+>;
 export type LibraryReportCapability = Extract<
   PlatformSenseCardCapabilityV2,
   { actionId: "report-content" }
@@ -35,7 +43,9 @@ export type LibraryReportCapability = Extract<
 export type LibraryMutationCapability =
   | LibraryStartLearningCapability
   | LibraryMarkKnownCapability
-  | LibraryUndoKnownCapability;
+  | LibraryUndoKnownCapability
+  | LibraryFreezeCapability
+  | LibraryHideCapability;
 
 export type LibrarySenseContent = PlatformV2SenseContentNode;
 
@@ -55,6 +65,8 @@ export type LibrarySenseCardModel = {
   startLearning: LibraryStartLearningCapability | null;
   markKnown: LibraryMarkKnownCapability | null;
   undoKnown: LibraryUndoKnownCapability | null;
+  freeze: LibraryFreezeCapability | null;
+  hide: LibraryHideCapability | null;
   reportCapability: LibraryReportCapability | null;
 };
 
@@ -242,6 +254,8 @@ function buildMeaning(
     startLearning: capability(entry, "start-learning"),
     markKnown: capability(entry, "mark-known"),
     undoKnown: capability(entry, "undo-known"),
+    freeze: capability(entry, "freeze-card"),
+    hide: capability(entry, "hide-card"),
     reportCapability:
       entry.capabilities.find(
         (candidate): candidate is LibraryReportCapability =>
@@ -265,7 +279,20 @@ function capability(
 ): LibraryUndoKnownCapability | null;
 function capability(
   entry: PlatformSenseCardEntryV2,
-  actionId: "start-learning" | "mark-known" | "undo-known",
+  actionId: "freeze-card",
+): LibraryFreezeCapability | null;
+function capability(
+  entry: PlatformSenseCardEntryV2,
+  actionId: "hide-card",
+): LibraryHideCapability | null;
+function capability(
+  entry: PlatformSenseCardEntryV2,
+  actionId:
+    | "start-learning"
+    | "mark-known"
+    | "undo-known"
+    | "freeze-card"
+    | "hide-card",
 ): LibraryMutationCapability | null {
   return (entry.capabilities.find(
     (candidate) => candidate.actionId === actionId,

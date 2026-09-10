@@ -452,6 +452,25 @@ function capabilitiesFor(params: {
         target,
       });
     }
+    if (
+      card.scheduler.phase !== "hidden" &&
+      card.scheduler.phase !== "frozen"
+    ) {
+      capabilities.push(
+        {
+          actionId: "freeze-card",
+          elementId: "sense-card.training.freeze",
+          messageKey: "senseCard.actions.freeze",
+          target,
+        },
+        {
+          actionId: "hide-card",
+          elementId: "sense-card.training.hide",
+          messageKey: "senseCard.actions.hide",
+          target,
+        },
+      );
+    }
   }
   if (params.allowMutations) {
     if (

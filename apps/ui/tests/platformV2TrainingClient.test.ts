@@ -100,6 +100,31 @@ describe("buildPlatformV2TrainingActionRequest", () => {
       target: capability.target,
     });
   });
+
+  test("builds an explicit freeze action without an FSRS review result", () => {
+    const capability: PlatformSenseCardCapabilityV2 = {
+      actionId: "freeze-card",
+      elementId: "sense-card.training.freeze",
+      messageKey: "senseCard.actions.freeze",
+      target: {
+        kind: "sense-card",
+        entryId: "f64f87a5-4889-4b89-b742-153b85b0c1c9",
+        cardTypeId: "word-to-definition",
+        stateRevision: "f6a45546-2c14-4fa5-9538-41f64c5d7d35",
+      },
+    };
+
+    expect(
+      buildPlatformV2TrainingActionRequest(
+        capability,
+        "a4dc56fd-c087-47aa-85d2-a20f66ca2822",
+      ),
+    ).toEqual({
+      actionId: "freeze-card",
+      clientEventId: "a4dc56fd-c087-47aa-85d2-a20f66ca2822",
+      target: capability.target,
+    });
+  });
 });
 
 describe("performPlatformV2TrainingAction", () => {

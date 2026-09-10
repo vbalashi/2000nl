@@ -15,7 +15,9 @@ export function parsePlatformV2ActionRequest(
     actionId !== "start-learning" &&
     actionId !== "mark-known" &&
     actionId !== "undo-known" &&
-    actionId !== "review-card"
+    actionId !== "review-card" &&
+    actionId !== "freeze-card" &&
+    actionId !== "hide-card"
   ) {
     return { ok: false, error: "unsupported_action", status: 400 };
   }

@@ -159,6 +159,7 @@
     "actions": {
       "freeze": "Later oefenen (F)",
       "hide": "Niet meer tonen (X)",
+      "actionFailed": "Deze kaart kon niet worden bijgewerkt.",
       "copy": "Kopieer naar mijn woordenboek",
       "copySuccess": "Gekopieerd naar mijn woordenboek.",
       "copyFailed": "Kon niet naar mijn woordenboek kopiëren."

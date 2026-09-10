@@ -23,22 +23,32 @@ export async function performPlatformV2Action(
     request.actionId === "undo-known" ? request.target : null;
   const reviewResult =
     request.actionId === "review-card" ? request.reviewResult : null;
+  const detailsAction =
+    request.actionId === "freeze-card" || request.actionId === "hide-card";
+  const actionParams = {
+    p_user_id: auth.user.id,
+    p_action_id: request.actionId,
+    p_entry_id: request.target.entryId,
+    p_card_type_id: request.target.cardTypeId,
+    p_state_revision: request.target.stateRevision,
+    p_client_event_id: request.clientEventId,
+    p_source_context: request.sourceContext ?? null,
+    p_auth_kind: auth.principal.authKind,
+    p_connected_client_id: auth.principal.connectedClientId,
+  };
+  const rpcParams = detailsAction
+    ? actionParams
+    : {
+        ...actionParams,
+        p_active_known_mark_id: undoTarget?.activeKnownMarkId ?? null,
+        p_known_mark_revision: undoTarget?.knownMarkRevision ?? null,
+        p_review_result: reviewResult,
+      };
   const { data, error } = await service.supabase.rpc(
-    "perform_platform_v2_card_action_as_principal",
-    {
-      p_user_id: auth.user.id,
-      p_action_id: request.actionId,
-      p_entry_id: request.target.entryId,
-      p_card_type_id: request.target.cardTypeId,
-      p_state_revision: request.target.stateRevision,
-      p_active_known_mark_id: undoTarget?.activeKnownMarkId ?? null,
-      p_known_mark_revision: undoTarget?.knownMarkRevision ?? null,
-      p_review_result: reviewResult,
-      p_client_event_id: request.clientEventId,
-      p_source_context: request.sourceContext ?? null,
-      p_auth_kind: auth.principal.authKind,
-      p_connected_client_id: auth.principal.connectedClientId,
-    },
+    detailsAction
+      ? "perform_platform_v2_details_action_as_principal"
+      : "perform_platform_v2_card_action_as_principal",
+    rpcParams,
   );
 
   if (error) return actionError(error);
@@ -121,7 +131,9 @@ function platformActionId(
   return value === "start-learning" ||
     value === "mark-known" ||
     value === "undo-known" ||
-    value === "review-card"
+    value === "review-card" ||
+    value === "freeze-card" ||
+    value === "hide-card"
     ? value
     : null;
 }

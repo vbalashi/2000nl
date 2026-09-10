@@ -67,6 +67,9 @@ function capability(value: unknown): value is PlatformSenseCardCapabilityV2 {
         string(value.target.activeKnownMarkId) && string(value.target.knownMarkRevision);
     case "review-card":
       return target(value.target, "sense-card") && REVIEW_RESULTS.has(String(value.reviewResult));
+    case "freeze-card":
+    case "hide-card":
+      return target(value.target, "sense-card");
     case "request-translation":
       return target(value.target, "entry") && string(value.targetLanguageCode);
     case "report-content":

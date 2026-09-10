@@ -159,6 +159,7 @@
     "actions": {
       "freeze": "Practice later (F)",
       "hide": "Hide from training (X)",
+      "actionFailed": "Could not update this card.",
       "copy": "Copy to my dictionary",
       "copySuccess": "Copied to my dictionary.",
       "copyFailed": "Could not copy to my dictionary."

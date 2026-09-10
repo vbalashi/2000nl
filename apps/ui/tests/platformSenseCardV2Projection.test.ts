@@ -542,6 +542,28 @@ describe("Platform V2 SenseCard projection", () => {
                   },
                 },
                 {
+                  actionId: "freeze-card",
+                  elementId: "sense-card.training.freeze",
+                  messageKey: "senseCard.actions.freeze",
+                  target: {
+                    kind: "sense-card",
+                    entryId: "entry-1",
+                    cardTypeId: "word-to-definition",
+                    stateRevision: "state-revision-1",
+                  },
+                },
+                {
+                  actionId: "hide-card",
+                  elementId: "sense-card.training.hide",
+                  messageKey: "senseCard.actions.hide",
+                  target: {
+                    kind: "sense-card",
+                    entryId: "entry-1",
+                    cardTypeId: "word-to-definition",
+                    stateRevision: "state-revision-1",
+                  },
+                },
+                {
                   actionId: "request-translation",
                   elementId: "sense-card.translation.request",
                   messageKey: "senseCard.translation.request",

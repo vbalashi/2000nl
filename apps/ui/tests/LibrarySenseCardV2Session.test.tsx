@@ -76,6 +76,16 @@ function remapCapabilityEntryId(
           stateRevision: `state-${entryId}`,
         },
       };
+    case "freeze-card":
+    case "hide-card":
+      return {
+        ...capability,
+        target: {
+          ...capability.target,
+          entryId,
+          stateRevision: `state-${entryId}`,
+        },
+      };
     case "report-content":
       if (capability.target.kind !== "entry") return capability;
       return {
@@ -248,6 +258,72 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "Train next" }));
     expect(trainNext).toHaveBeenCalledWith(financeEntry.entryId);
+  });
+
+  test("routes Training More freeze and hide through the supplied V2 action port", async () => {
+    const trainingGroup = groupWithFinanceReportRevision();
+    const actionEntry = trainingGroup.entries.find(
+      (entry) => entry.kind === "sense-card" && entry.entryId === financeEntry.entryId,
+    );
+    if (!actionEntry || actionEntry.kind !== "sense-card") throw new Error("fixture entry missing");
+    const target = {
+      kind: "sense-card" as const,
+      entryId: actionEntry.entryId,
+      cardTypeId: "word-to-definition" as const,
+      stateRevision: actionEntry.card?.stateRevision ?? "state-entry-bank-finance",
+    };
+    const withActions: PlatformHeadwordGroupV2 = {
+      ...trainingGroup,
+      entries: trainingGroup.entries.map((entry) =>
+        entry.kind === "sense-card" && entry.entryId === actionEntry.entryId
+          ? {
+              ...entry,
+              capabilities: [
+                ...entry.capabilities,
+                {
+                  actionId: "freeze-card" as const,
+                  elementId: "sense-card.training.freeze",
+                  messageKey: "senseCard.actions.freeze",
+                  target,
+                },
+                {
+                  actionId: "hide-card" as const,
+                  elementId: "sense-card.training.hide",
+                  messageKey: "senseCard.actions.hide",
+                  target,
+                },
+              ],
+            }
+          : entry,
+      ),
+    };
+    const onTrainingAction = vi.fn();
+
+    render(
+      <TrainingMoreSenseCardV2Session
+        entryId={financeEntry.entryId}
+        initialGroup={withActions}
+        headword="bank"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        userId="training-user"
+        trainingActionEntryId={financeEntry.entryId}
+        onTrainingAction={onTrainingAction}
+      />,
+    );
+
+    await screen.findByTestId("library-sense-card-group");
+    fireEvent.click(screen.getByRole("button", { name: "Practice later (F)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hide from training (X)" }));
+    expect(onTrainingAction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ actionId: "freeze-card" }),
+    );
+    expect(onTrainingAction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ actionId: "hide-card" }),
+    );
   });
 
   test("keeps idiom reporting on the sole global Library action", async () => {

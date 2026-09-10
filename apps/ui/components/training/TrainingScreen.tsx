@@ -54,6 +54,10 @@ import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentat
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
 import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
+import {
+  performPlatformV2TrainingAction,
+  type PlatformV2TrainingActionCapability,
+} from "@/lib/platform/platformV2TrainingActionClient";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
 import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
 import { useTrainingTurnController } from "./useTrainingTurnController";
@@ -92,6 +96,7 @@ import {
   beginTrainingUserTransition,
   createTrainingTransitionId,
   markTrainingEntryPresentationStarted,
+  measureTrainingTransitionStage,
   registerTrainingEntryTransition,
 } from "@/lib/training/trainingTransitionTiming";
 import type { TrainingStartupSnapshot } from "@/lib/training/trainingStartupSnapshot";
@@ -655,6 +660,40 @@ function TrainingScreenContent({
   const [platformProgressActionPending, setPlatformProgressActionPending] =
     useState(false);
   const navigationBlocked = actionLoading || platformProgressActionPending;
+  const handleDetailsTrainingAction = useCallback(
+    async (capability: PlatformV2TrainingActionCapability) => {
+      setPlatformProgressActionPending(true);
+      const transitionId = nextTransitionId ?? createTrainingTransitionId();
+      beginTrainingUserTransition(transitionId, "review");
+      try {
+        await measureTrainingTransitionStage(
+          transitionId,
+          "review.mutation",
+          () =>
+            performPlatformV2TrainingAction(capability, {
+              transitionId,
+            }),
+          () => "accepted",
+        );
+        await handleV2ProgressActionAccepted(capability);
+      } catch (cause) {
+        trainingDebug.log("Training Details action failed", cause);
+        setWordLookupNotice(
+          platformV2Message(
+            onboardingLang,
+            "senseCard.training.temporaryFailure",
+          ),
+        );
+      } finally {
+        setPlatformProgressActionPending(false);
+      }
+    },
+    [
+      handleV2ProgressActionAccepted,
+      nextTransitionId,
+      onboardingLang,
+    ],
+  );
   const currentPresentationIdentity =
     currentWord && currentPresentationId
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
@@ -2165,7 +2204,7 @@ function TrainingScreenContent({
                   trainingActionEntryId={currentWord?.id}
                   revealed={revealed}
                   actionLoading={actionLoading}
-                  onTrainingAction={(action) => void handleAction(action)}
+                  onTrainingAction={handleDetailsTrainingAction}
                   onCopyToUserDictionary={async (entryId) => {
                     await copyEntryToUserDictionary({ entryId });
                   }}

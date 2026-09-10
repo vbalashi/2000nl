@@ -19,7 +19,9 @@ export type PlatformV2TrainingActionCapability =
       | "start-learning"
       | "mark-known"
       | "undo-known"
-      | "review-card";
+      | "review-card"
+      | "freeze-card"
+      | "hide-card";
   };
 
 const PROGRESS_ACTION_AUTHORITATIVE_REQUEST_COUNT = 2;
@@ -38,7 +40,9 @@ export function isPlatformV2TrainingActionCapability(
     capability.actionId === "start-learning" ||
     capability.actionId === "mark-known" ||
     capability.actionId === "undo-known" ||
-    capability.actionId === "review-card"
+    capability.actionId === "review-card" ||
+    capability.actionId === "freeze-card" ||
+    capability.actionId === "hide-card"
   );
 }
 

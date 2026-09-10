@@ -397,3 +397,6 @@
 
 -- Finite Training session sizes with explicit practice-card selection
 \i db/migrations/132_finite_training_session_sizes.sql
+
+-- V2 Word Details freeze/hide actions with explicit idempotent RPC boundary
+\i db/migrations/133_platform_v2_details_actions.sql
