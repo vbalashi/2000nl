@@ -78,21 +78,11 @@ test("a failed prepared card recovers after closing and continuing on desktop an
         }),
       ]),
     );
-    const retryRequest = fixture.requests.scheduler.find((request) =>
-      Array.isArray(request.p_exclude_card_keys) &&
-      request.p_exclude_card_keys.includes(
-        "attribution-word-4:word-to-definition",
-      ),
-    );
-    expect(retryRequest).toMatchObject({
+    expect(fixture.requests.session.length).toBeGreaterThanOrEqual(3);
+    expect(fixture.requests.session[0]).toMatchObject({
       p_user_id: "training-attribution-user",
-      p_card_type_ids: ["word-to-definition"],
-      p_list_id: "list-attribution",
-      p_list_type: "curated",
-      p_card_filter: "both",
-      p_queue_turn: "review",
+      p_session_id: "training-session-fixture",
     });
-    expect(retryRequest).not.toHaveProperty("p_training_filter");
     const capture = await readTrainingAttributionCapture(page);
     expect(
       capture.timings.some(

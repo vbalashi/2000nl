@@ -46,6 +46,20 @@ export type TrainingSession = TrainingSessionPlan & {
   sessionId: string;
 };
 
+export type TrainingSessionSnapshotMember = {
+  ordinal: number;
+  entryId: string;
+  cardTypeId: string;
+  queueSource: string;
+  consumedAt: string | null;
+  unavailableAt: string | null;
+};
+
+export type TrainingSessionSnapshot = TrainingSession & {
+  sessionSize: TrainingSessionSize;
+  members: TrainingSessionSnapshotMember[];
+};
+
 export const DEFAULT_TRAINING_SESSION_SIZE: TrainingSessionSize = 10;
 
 export const isTrainingFocusFilterActive = (
@@ -93,6 +107,55 @@ const mapTrainingSession = (value: unknown): TrainingSession | null => {
   }
   const plan = mapTrainingSessionPlan(candidate);
   return plan ? { sessionId: candidate.sessionId, ...plan } : null;
+};
+
+const mapTrainingSessionSnapshot = (
+  value: unknown,
+): TrainingSessionSnapshot | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  const session = mapTrainingSession(candidate);
+  const sessionSize =
+    candidate.sessionSize === "5" || candidate.sessionSize === 5
+      ? 5
+      : candidate.sessionSize === "10" || candidate.sessionSize === 10
+        ? 10
+        : candidate.sessionSize === "all-due-today"
+          ? "all-due-today"
+          : null;
+  if (!session || sessionSize === null || !Array.isArray(candidate.members)) {
+    return null;
+  }
+  const members = candidate.members.flatMap((member): TrainingSessionSnapshotMember[] => {
+    if (!member || typeof member !== "object" || Array.isArray(member)) return [];
+    const item = member as Record<string, unknown>;
+    if (
+      typeof item.ordinal !== "number" ||
+      !Number.isInteger(item.ordinal) ||
+      item.ordinal < 1 ||
+      typeof item.entryId !== "string" ||
+      typeof item.cardTypeId !== "string" ||
+      typeof item.queueSource !== "string" ||
+      (item.consumedAt !== null && typeof item.consumedAt !== "string") ||
+      (item.unavailableAt !== null && typeof item.unavailableAt !== "string")
+    ) {
+      return [];
+    }
+    return [{
+      ordinal: item.ordinal,
+      entryId: item.entryId,
+      cardTypeId: item.cardTypeId,
+      queueSource: item.queueSource,
+      consumedAt: item.consumedAt as string | null,
+      unavailableAt: item.unavailableAt as string | null,
+    }];
+  });
+  if (members.length !== candidate.members.length) return null;
+  return {
+    ...session,
+    sessionSize,
+    members,
+  };
 };
 
 const trainingSessionPlanScopePayload = (
@@ -169,6 +232,21 @@ export async function startTrainingSession(
     return null;
   }
   return mapTrainingSession(data);
+}
+
+export async function fetchTrainingSessionSnapshot(
+  userId: string,
+  sessionId: string,
+): Promise<TrainingSessionSnapshot | null> {
+  const { data, error } = await supabase.rpc("get_training_session_snapshot", {
+    p_user_id: userId,
+    p_session_id: sessionId,
+  });
+  if (error) {
+    console.error("Error fetching training session snapshot:", error);
+    throw error;
+  }
+  return mapTrainingSessionSnapshot(data);
 }
 
 const formatInterval = (interval: number | null | undefined): string => {

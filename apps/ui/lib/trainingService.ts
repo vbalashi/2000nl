@@ -49,6 +49,7 @@ export {
   fetchNextTrainingWord,
   fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
+  fetchTrainingSessionSnapshot,
   fetchScenarioStats,
   fetchTrainingScenarios,
   fetchTrainingSessionPlan,
@@ -57,6 +58,8 @@ export {
   type TrainingScenarioCatalog,
   type TrainingSessionPlanScope,
   type TrainingSession,
+  type TrainingSessionSnapshot,
+  type TrainingSessionSnapshotMember,
 } from "./training/selectionService";
 
 export { type ReviewResult } from "./types";
