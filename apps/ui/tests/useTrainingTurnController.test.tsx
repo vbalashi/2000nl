@@ -762,6 +762,34 @@ describe("useTrainingTurnController transition matrix", () => {
     ).resolves.toBe("skipped");
   });
 
+  test("scope reset ignores a detached prefetched candidate that settles late", async () => {
+    const readiness = deferred<boolean>();
+    prepared.consume.mockReturnValue({
+      forWordId: word1.id,
+      forCardKey: "word-1:word-to-definition",
+      queueTurn: "review",
+      word: word2,
+      v2Ready: readiness.promise,
+      transitionId: "prefetch-transition",
+    });
+    const controller = renderController({ currentWord: word1 });
+
+    try {
+      let accepted!: Promise<"accepted" | "stalled">;
+      act(() => {
+        accepted = controller.result.current.acceptPlatformProgressAction({} as any);
+      });
+
+      act(() => controller.result.current.beginSessionScopeChange());
+      await act(async () => readiness.resolve(true));
+
+      await expect(accepted).resolves.toBe("accepted");
+      expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
+    } finally {
+      readiness.resolve(true);
+    }
+  });
+
   test("scope-key replacement cancels the old selection and presents exactly one new-scope result", async () => {
     const oldSelection = deferred<TrainingWord | null>();
     const newSelection = deferred<TrainingWord | null>();

@@ -60,6 +60,7 @@ type AcceptedCardTransition = {
   word: TrainingWord;
   wordMode: TrainingMode;
   currentCardKey: string;
+  loadGeneration: number;
   turnIdForReview: string | null;
   isNextCardOverride: boolean;
   nextQueueTurn: QueueTurn;
@@ -514,6 +515,7 @@ export function useTrainingTurnController(input: Inputs) {
       word: currentWord,
       wordMode,
       currentCardKey,
+      loadGeneration: loadGenerationRef.current,
       turnIdForReview,
       isNextCardOverride:
         nextCardOverrideActiveKeyRef.current === currentCardKey,
@@ -568,6 +570,13 @@ export function useTrainingTurnController(input: Inputs) {
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
         const ready = await prefetched.v2Ready.catch(() => false);
+        if (transition.loadGeneration !== loadGenerationRef.current) {
+          // Scope changes/reset invalidate a detached prefetch just as they
+          // invalidate an on-demand selection. The accepted mutation remains
+          // settled, but an old candidate must not replace the new session.
+          void backgroundRefresh;
+          return "accepted";
+        }
         if (ready) {
           acceptedTransitionRetryRef.current = null;
           setAcceptedTransitionLoadStalled(false);

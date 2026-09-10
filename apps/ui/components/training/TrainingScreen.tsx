@@ -1275,7 +1275,9 @@ function TrainingScreenContent({
             chrome={trainingSessionChrome}
             footer={trainingSessionFooter}
             notice={trainingSessionNotice}
-            interactionDisabled={acceptedTransitionLoadStalled}
+            interactionDisabled={
+              navigationBlocked || acceptedTransitionLoadStalled
+            }
             focusOnPresentation={isSubsequentSessionCard}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails}
