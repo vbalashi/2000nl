@@ -14,6 +14,19 @@ const copy = {
   ru: { close: "Закрыть сессию", history: "История" },
 } satisfies Record<OnboardingLanguage, { close: string; history: string }>;
 
+export type TrainingSessionChromeProps = {
+  interfaceLanguage: OnboardingLanguage;
+  scenario: string;
+  mode: TrainingMode;
+  cardFilter: CardFilter;
+  presentation: TrainingSessionPresentationSnapshot;
+  sessionName?: string;
+  onHistory?: () => void;
+  historyButtonRef?: React.Ref<HTMLButtonElement>;
+  onClose: () => void;
+  disabled?: boolean;
+};
+
 export function TrainingSessionChrome({
   interfaceLanguage,
   scenario,
@@ -25,18 +38,7 @@ export function TrainingSessionChrome({
   historyButtonRef,
   onClose,
   disabled = false,
-}: {
-  interfaceLanguage: OnboardingLanguage;
-  scenario: string;
-  mode: TrainingMode;
-  cardFilter: CardFilter;
-  presentation: TrainingSessionPresentationSnapshot;
-  sessionName?: string;
-  onHistory?: () => void;
-  historyButtonRef?: React.Ref<HTMLButtonElement>;
-  onClose: () => void;
-  disabled?: boolean;
-}) {
+}: TrainingSessionChromeProps) {
   const text = copy[interfaceLanguage];
   const name =
     sessionName ??

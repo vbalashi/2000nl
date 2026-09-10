@@ -6,6 +6,7 @@ import {
   TrainingSenseCardV2Session,
 } from "@/components/training/v2/TrainingSenseCardV2Session";
 import type { TrainingWord } from "@/lib/types";
+import type { FooterStatsProps } from "@/components/training/FooterStats";
 import {
   projectedTrainingAudioResult,
   singleSenseEntry,
@@ -51,9 +52,32 @@ vi.mock("@/lib/feedback/diagnosticReportClient", () => ({
 function TestTrainingSenseCardV2Session(
   props: Omit<
     React.ComponentProps<typeof TrainingSenseCardV2Session>,
-    "cacheOwnerId" | "presentationIdentity" | "chrome" | "footer"
+    "cacheOwnerId" | "presentationIdentity" | "sessionChrome" | "sessionFooter"
   > & { presentationIdentity?: string },
 ) {
+  const sessionFooter: FooterStatsProps = {
+    stats: {
+      newWordsToday: 0,
+      newCardsToday: 0,
+      learningStartedToday: 0,
+      graduatedNewWordsToday: 0,
+      dailyNewLimit: 10,
+      reviewWordsDone: 0,
+      reviewCardsDone: 0,
+      reviewWordsDue: 0,
+      reviewCardsDue: 0,
+      totalWordsLearned: 0,
+      totalWordsInList: 0,
+    },
+    enabledModes: ["word-to-definition"],
+    cardFilter: "both",
+    onModesChange: vi.fn(),
+    onCardFilterChange: vi.fn(),
+    language: "nl",
+    onLanguageChange: vi.fn(),
+    compact: true,
+    interfaceLanguage: "nl",
+  };
   return (
     <TrainingSenseCardV2Session
       cacheOwnerId="test-user"
@@ -61,8 +85,8 @@ function TestTrainingSenseCardV2Session(
         props.presentationIdentity ??
         `test-presentation:${props.word.id}:${props.mode}`
       }
-      chrome={<div data-testid="test-session-chrome" />}
-      footer={<div data-testid="test-session-footer" />}
+      sessionChrome={null}
+      sessionFooter={sessionFooter}
       {...props}
     />
   );
@@ -366,15 +390,15 @@ describe("TrainingSenseCardV2Session", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
-          notice={
-            stalled ? (
-              <div role="alert">
-                Next card failed to load
-                <button type="button" onClick={retryLoad}>
-                  Retry loading
-                </button>
-              </div>
-            ) : null
+          sessionNotice={
+            stalled
+              ? {
+                  kind: "error",
+                  message: "Next card failed to load",
+                  retryLabel: "Retry loading",
+                  onRetry: retryLoad,
+                }
+              : null
           }
           interactionDisabled={stalled}
           onProgressActionAccepted={

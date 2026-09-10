@@ -43,8 +43,10 @@ import {
 } from "./v2/TrainingSenseCardV2Session";
 import { TrainingUsableCandidatesExhausted } from "./v2/TrainingUsableCandidatesExhausted";
 import { TrainingUnsupportedMode } from "./v2/TrainingUnsupportedMode";
-import { TrainingSessionChrome } from "./v2/TrainingSessionChrome";
-import { TrainingSessionV2Layout } from "./v2/TrainingSessionV2Layout";
+import {
+  TrainingSessionSurface,
+  type TrainingSessionNoticeInput,
+} from "./v2/TrainingSessionSurface";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
@@ -55,7 +57,7 @@ import { useTrainingTurnController } from "./useTrainingTurnController";
 import { getTrainingCardKey } from "@/lib/training/trainingQueue";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
-import { FooterStats } from "./FooterStats";
+import type { FooterStatsProps } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
@@ -1175,71 +1177,59 @@ function TrainingScreenContent({
   );
   const sessionChromeVisible =
     trainingTodaySetupEnabled && trainingPilot.surface === "session";
-  const sessionChrome = sessionChromeVisible ? (
-    <TrainingSessionChrome
-      interfaceLanguage={onboardingLang}
-      scenario={activeScenario}
-      mode={currentMode}
-      cardFilter={cardFilter}
-      presentation={sessionPresentation}
-      onHistory={openTrainingHistory}
-      historyButtonRef={historyButtonRef}
-      onClose={trainingPilot.returnToToday}
-      disabled={navigationBlocked}
-    />
-  ) : null;
-  const trainingSessionChrome = v2SessionLayoutVisible ? sessionChrome : null;
-  const trainingSessionFooter = (
-    <FooterStats
-      stats={stats}
-      enabledModes={enabledModes}
-      cardFilter={cardFilter}
-      onModesChange={handleModesChange}
-      onCardFilterChange={handleCardFilterChange}
-      language={currentTrainingLanguage}
-      onLanguageChange={handleTrainingLanguageChange}
-      languageOptions={trainingLanguageOptions}
-      activeList={activeList}
-      activeListName={wordListLabel}
-      activeListValue={activeListValue}
-      listOptions={listOptions}
-      onListChange={handleFooterListChange}
-      onOpenSettings={openAppSettings}
-      activeScenarioName={trainingScenarioLabel("nl", activeScenario)}
-      initialReviewDue={initialReviewDue}
-      inlineControlsEnabled={!trainingTodaySetupEnabled}
-      compact={v2SessionOwned}
-      interfaceLanguage={onboardingLang}
-    />
-  );
-  const trainingSessionNotice = acceptedTransitionLoadStalled ? (
-    <div
-      role="alert"
-      className="mx-auto mb-3 flex w-full max-w-2xl items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 shadow-sm dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200"
-    >
-      <span>
-        {platformV2Message(
-          onboardingLang,
-          "senseCard.training.temporaryFailure",
-        )}
-      </span>
-      <button
-        type="button"
-        disabled={actionLoading}
-        onClick={() => void retryAcceptedTransitionLoad()}
-        className="min-h-9 shrink-0 rounded-lg border border-red-300 px-3 py-1.5 disabled:cursor-wait disabled:opacity-60 dark:border-red-800"
-      >
-        {platformV2Message(onboardingLang, "senseCard.training.retry")}
-      </button>
-    </div>
-  ) : nextCardOverrideNotice ? (
-    <div
-      role="status"
-      className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200"
-    >
-      {nextCardOverrideNotice}
-    </div>
-  ) : null;
+  const sessionChrome = sessionChromeVisible
+    ? {
+        interfaceLanguage: onboardingLang,
+        scenario: activeScenario,
+        mode: currentMode,
+        cardFilter,
+        presentation: sessionPresentation,
+        onHistory: openTrainingHistory,
+        historyButtonRef,
+        onClose: trainingPilot.returnToToday,
+        disabled: navigationBlocked,
+      }
+    : null;
+  const trainingSessionChrome = sessionChrome;
+  const trainingSessionFooter: FooterStatsProps = {
+    stats,
+    enabledModes,
+    cardFilter,
+    onModesChange: handleModesChange,
+    onCardFilterChange: handleCardFilterChange,
+    language: currentTrainingLanguage,
+    onLanguageChange: handleTrainingLanguageChange,
+    languageOptions: trainingLanguageOptions,
+    activeList,
+    activeListName: wordListLabel,
+    activeListValue,
+    listOptions,
+    onListChange: handleFooterListChange,
+    onOpenSettings: openAppSettings,
+    activeScenarioName: trainingScenarioLabel("nl", activeScenario),
+    initialReviewDue,
+    inlineControlsEnabled: !trainingTodaySetupEnabled,
+    compact: v2SessionOwned,
+    interfaceLanguage: onboardingLang,
+  };
+  const trainingSessionNotice: TrainingSessionNoticeInput | null =
+    acceptedTransitionLoadStalled
+      ? {
+          kind: "error",
+          message: platformV2Message(
+            onboardingLang,
+            "senseCard.training.temporaryFailure",
+          ),
+          retryLabel: platformV2Message(
+            onboardingLang,
+            "senseCard.training.retry",
+          ),
+          retryDisabled: actionLoading,
+          onRetry: () => void retryAcceptedTransitionLoad(),
+        }
+      : nextCardOverrideNotice
+        ? { kind: "status", message: nextCardOverrideNotice }
+        : null;
   return (
     <AppFrame
       activeDestination={destination}
@@ -1264,13 +1254,6 @@ function TrainingScreenContent({
             : "dark:bg-background-dark"
         }`}
       >
-        {sessionChromeVisible && !v2SessionLayoutVisible ? (
-          <div
-            className={`${sessionStyles.viewport} flex-none px-4 pt-2 md:px-6`}
-          >
-            <div className="mx-auto w-full max-w-[760px]">{sessionChrome}</div>
-          </div>
-        ) : null}
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             interfaceLanguage={onboardingLang}
@@ -1303,9 +1286,9 @@ function TrainingScreenContent({
               translationLang === "off" ? null : translationLang
             }
             interfaceLanguage={onboardingLang}
-            chrome={trainingSessionChrome}
-            footer={trainingSessionFooter}
-            notice={trainingSessionNotice}
+            sessionChrome={trainingSessionChrome}
+            sessionFooter={trainingSessionFooter}
+            sessionNotice={trainingSessionNotice}
             interactionDisabled={
               navigationBlocked || acceptedTransitionLoadStalled
             }
@@ -1324,7 +1307,7 @@ function TrainingScreenContent({
             onExit={trainingPilot.returnToToday}
           />
         ) : (
-          <TrainingSessionV2Layout
+          <TrainingSessionSurface
             phase={
               currentWord && !v2SessionMode
                 ? "failure"
@@ -1360,7 +1343,7 @@ function TrainingScreenContent({
                 )}
               </div>
             )}
-          </TrainingSessionV2Layout>
+          </TrainingSessionSurface>
         )}
         <TrainingKnownUndoNotice
           interfaceLanguage={onboardingLang}

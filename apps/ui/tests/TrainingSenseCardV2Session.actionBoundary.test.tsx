@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TrainingSenseCardV2Session } from "@/components/training/v2/TrainingSenseCardV2Session";
 import type { TrainingWord } from "@/lib/types";
+import type { FooterStatsProps } from "@/components/training/FooterStats";
 import { singleSenseEntry, singleSenseGroup } from "./platformV2TrainingFixture";
 
 const fetchTrainingEntry = vi.hoisted(() => vi.fn());
@@ -45,6 +46,30 @@ const word: TrainingWord = {
   raw: {},
   isFirstEncounter: false,
   mode: "word-to-definition",
+};
+
+const sessionFooter: FooterStatsProps = {
+  stats: {
+    newWordsToday: 0,
+    newCardsToday: 0,
+    learningStartedToday: 0,
+    graduatedNewWordsToday: 0,
+    dailyNewLimit: 10,
+    reviewWordsDone: 0,
+    reviewCardsDone: 0,
+    reviewWordsDue: 0,
+    reviewCardsDue: 0,
+    totalWordsLearned: 0,
+    totalWordsInList: 0,
+  },
+  enabledModes: ["word-to-definition"],
+  cardFilter: "both",
+  onModesChange: vi.fn(),
+  onCardFilterChange: vi.fn(),
+  language: "nl",
+  onLanguageChange: vi.fn(),
+  compact: true,
+  interfaceLanguage: "nl",
 };
 
 function acceptedActionResponse() {
@@ -94,8 +119,8 @@ describe("TrainingSenseCardV2Session action boundary", () => {
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
-          chrome={<div />}
-          footer={<div />}
+          sessionChrome={null}
+          sessionFooter={sessionFooter}
           interactionDisabled={actionPending}
           onProgressActionPendingChange={setActionPending}
           onProgressActionAccepted={async () => {
