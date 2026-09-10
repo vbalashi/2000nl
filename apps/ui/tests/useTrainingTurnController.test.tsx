@@ -106,6 +106,7 @@ function renderController(overrides: {
   lookupOverride?: (wordId: string) => Promise<TrainingWord | null>;
   recoverLoadErrors?: boolean;
   sessionPlannedTotal?: number | null;
+  sessionConsumedCardKeys?: string[];
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -138,6 +139,7 @@ function renderController(overrides: {
       focusFilter: { dateWindow: "all" },
       sessionScopeKey,
       sessionPlannedTotal: overrides.sessionPlannedTotal,
+      sessionConsumedCardKeys: overrides.sessionConsumedCardKeys,
       selection: { selectNext, lookupOverride },
       refreshAfterAccepted,
       }),
@@ -181,6 +183,22 @@ describe("useTrainingTurnController transition matrix", () => {
     expect(prepared.refresh).toHaveBeenCalledOnce();
     expect(prepared.refresh).toHaveBeenCalledWith(
       "word-1:word-to-definition",
+    );
+  });
+
+  test("keeps consumed session members out of speculative selection after resume", async () => {
+    const controller = renderController({
+      sessionConsumedCardKeys: ["word-1:word-to-definition"],
+    });
+
+    await act(async () => {
+      await prepared.selectNext?.("new", "word-2:word-to-definition");
+    });
+
+    expect(controller.selectNext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        excludeCardKeys: expect.arrayContaining(["word-1:word-to-definition"]),
+      }),
     );
   });
 

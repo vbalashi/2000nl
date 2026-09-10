@@ -23,6 +23,7 @@ const normalizePlannedTotal = (value: number | null | undefined) =>
 export function useTrainingSessionPresentation({
   surface,
   presentedCardKey,
+  consumedCardCount = 0,
   sessionGeneration,
   scopeKey,
   planSnapshot,
@@ -31,6 +32,8 @@ export function useTrainingSessionPresentation({
 }: {
   surface: TrainingSurface;
   presentedCardKey: string | null;
+  /** Number of session members already consumed before this render (resume). */
+  consumedCardCount?: number;
   sessionGeneration: number;
   scopeKey: string;
   planSnapshot: TrainingSessionPlanSnapshot | null;
@@ -49,11 +52,14 @@ export function useTrainingSessionPresentation({
       : null
   );
   const plannedTotal = currentPlan?.plannedTotal ?? null;
-  const [actualCardOrdinal, setActualCardOrdinal] = React.useState(1);
+  const [actualCardOrdinal, setActualCardOrdinal] = React.useState(() =>
+    Math.max(1, consumedCardCount + 1),
+  );
   const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);
   const previousSurfaceRef = React.useRef(surface);
   const previousSessionGenerationRef = React.useRef(sessionGeneration);
   const previousResetKeyRef = React.useRef(resetKey);
+  const previousConsumedCardCountRef = React.useRef(consumedCardCount);
   const previousCardKeyRef = React.useRef<string | null>(null);
   const isEnteringSession =
     previousSurfaceRef.current !== "session" && surface === "session";
@@ -64,20 +70,39 @@ export function useTrainingSessionPresentation({
     const sessionRestarted =
       previousSessionGenerationRef.current !== sessionGeneration;
     const explicitReset = previousResetKeyRef.current !== resetKey;
+    const lateResumeHydration =
+      surface === "session" &&
+      previousConsumedCardCountRef.current === 0 &&
+      consumedCardCount > 0 &&
+      previousCardKeyRef.current === null;
     previousSurfaceRef.current = surface;
     previousSessionGenerationRef.current = sessionGeneration;
     previousResetKeyRef.current = resetKey;
+    previousConsumedCardCountRef.current = consumedCardCount;
 
     if (surface !== "session") {
       previousCardKeyRef.current = null;
       return;
     }
-    if (!enteringSession && !sessionRestarted && !explicitReset) return;
+    if (
+      !enteringSession &&
+      !sessionRestarted &&
+      !explicitReset &&
+      !lateResumeHydration
+    )
+      return;
 
-    setActualCardOrdinal(1);
+    setActualCardOrdinal(Math.max(1, consumedCardCount + 1));
     setAcceptedTotal(normalizePlannedTotal(plannedTotal));
     previousCardKeyRef.current = presentedCardKey;
-  }, [plannedTotal, presentedCardKey, resetKey, sessionGeneration, surface]);
+  }, [
+    consumedCardCount,
+    plannedTotal,
+    presentedCardKey,
+    resetKey,
+    sessionGeneration,
+    surface,
+  ]);
 
   React.useEffect(() => {
     if (surface !== "session" || acceptedTotal !== null) return;

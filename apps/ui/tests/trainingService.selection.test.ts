@@ -372,8 +372,48 @@ describe("trainingService next-word selection", () => {
     expect(rpc).toHaveBeenCalledWith("get_next_training_session_card", {
       p_user_id: "user-1",
       p_session_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      p_exclude_card_keys: [],
     });
     expect(rpc).not.toHaveBeenCalledWith("get_next_card", expect.anything());
+  });
+
+  test("passes the current card exclusion to the session selector", async () => {
+    const { fetchNextTrainingWord } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          id: "word-session-2",
+          headword: "volgende",
+          raw: { meanings: [{ definition: "next" }] },
+          mode: "word-to-definition",
+          stats: { source: "new", mode: "word-to-definition" },
+          trainingSessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+          trainingSessionOrdinal: 2,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchNextTrainingWord(
+        "user-1",
+        ["word-to-definition"],
+        [],
+        undefined,
+        "both",
+        "new",
+        ["word-session-1:word-to-definition"],
+        null,
+        false,
+        "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      ),
+    ).resolves.toEqual(expect.objectContaining({ id: "word-session-2" }));
+
+    expect(rpc).toHaveBeenCalledWith("get_next_training_session_card", {
+      p_user_id: "user-1",
+      p_session_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      p_exclude_card_keys: ["word-session-1:word-to-definition"],
+    });
   });
 
   test("fetchNextTrainingWordByScenario resolves scenario modes and preserves RPC mode for first encounters", async () => {

@@ -81,10 +81,13 @@ type Inputs = {
   recoverLoadErrors: boolean;
   focusFilter: TrainingFocusFilter;
   sessionPlannedTotal?: number | null;
+  sessionConsumedCardKeys?: string[];
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
   refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
 };
+
+const EMPTY_SESSION_CARD_KEYS: string[] = [];
 
 export function useTrainingTurnController(input: Inputs) {
   const {
@@ -99,6 +102,7 @@ export function useTrainingTurnController(input: Inputs) {
     recoverLoadErrors,
     focusFilter,
     sessionPlannedTotal = null,
+    sessionConsumedCardKeys = EMPTY_SESSION_CARD_KEYS,
     sessionScopeKey,
     selection,
     refreshAfterAccepted,
@@ -133,6 +137,10 @@ export function useTrainingTurnController(input: Inputs) {
   const failedCardKeyRef = useRef<string | null>(null);
   const nextCardOverrideWordIdRef = useRef<string | null>(null);
   const nextCardOverrideActiveKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    reviewedCardKeysRef.current = new Set(sessionConsumedCardKeys);
+  }, [sessionConsumedCardKeys, sessionScopeKey]);
 
   const clearAcceptedTransitionRecovery = useCallback(() => {
     acceptedTransitionRetryRef.current = null;

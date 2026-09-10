@@ -1,8 +1,9 @@
 # #250 — one owner for Training transitions
 
 GitHub #250 owns status. Renderer retirement #142 is integrated as `21858947`.
-This worktree starts from the same tree at `a5ecc88b`; #294 owns immutable
-server-side session membership. No FSRS or learning-policy changes belong here.
+The original plan was drafted against `a5ecc88b`; the current implementation
+slice is based on `origin/main` at `7a45141b`. #294 owns immutable server-side
+session membership. No FSRS or learning-policy changes belong here.
 
 ## Slice 1: action boundary and stale prepared cards
 
@@ -19,6 +20,25 @@ Characterization: delayed acceptance across keyed card remount; real V2 session
 and action client with intercepted transport; delayed detached prefetch after
 scope cancellation. Test gates release even on assertion failure. The Screen
 regression fails without the combined interaction-disabled input.
+
+## Slice 2: session exclusions and refresh position (2026-09-10)
+
+This implementation slice adds the exclusion-aware session selector and threads
+the current/consumed card keys through speculative selection. A prepared candidate
+can no longer be the card that is still being answered. A resumed session
+restores its first unconsumed member and the visible `position / total`; the
+StrictMode mount guard is also covered so refresh hydration is not abandoned.
+The selector filters dictionary access before choosing the first member, so a
+revoked/private entry does not hide later accessible members. Resume position
+counts the complete prefix, including members explicitly marked unavailable.
+The attribution fixture now consumes session members only after an accepted
+action instead of advancing membership on every read.
+
+This slice does not close #250. It does not yet make scope changes create a
+replacement server session, nor does it finish the accepted-action/next-card
+outcome contract or remove the remaining root orchestration. Migration 135 is
+the additive database contract needed by this slice; overload retirement stays
+with #294 after active callers are migrated.
 
 Tradeoff: during this short boundary, reveal/hint/report are disabled along with
 grading. The card remains visible. This slice does not add layout or copy.
