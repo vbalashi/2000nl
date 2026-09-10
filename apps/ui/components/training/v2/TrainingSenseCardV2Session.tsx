@@ -78,7 +78,14 @@ type Props = {
   onProgressActionAccepted: (
     capability: PlatformV2TrainingActionCapability,
   ) => Promise<
-    Extract<TrainingCardSwipeCommitOutcome, "accepted" | "stalled">
+    Extract<
+      TrainingCardSwipeCommitOutcome,
+      | "accepted"
+      | "accepted-next-presented"
+      | "accepted-session-complete"
+      | "accepted-next-unavailable"
+      | "stalled"
+    >
   >;
   onProgressActionStarting?: () => void;
   onProgressActionPendingChange?: (pending: boolean) => void;

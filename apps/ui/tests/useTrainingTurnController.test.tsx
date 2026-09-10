@@ -208,7 +208,11 @@ describe("useTrainingTurnController transition matrix", () => {
     };
     const controller = renderController();
 
-    let accepted!: Promise<"accepted" | "stalled">;
+    let accepted!: Promise<
+      | "accepted-next-presented"
+      | "accepted-session-complete"
+      | "accepted-next-unavailable"
+    >;
     act(() => {
       accepted = controller.result.current.acceptPlatformProgressAction({} as any);
     });
@@ -225,10 +229,14 @@ describe("useTrainingTurnController transition matrix", () => {
     prepared.consume.mockReturnValue(null);
     const controller = renderController();
 
+    let outcome: unknown;
     await act(async () => {
-      await controller.result.current.acceptPlatformProgressAction({} as any);
+      outcome = await controller.result.current.acceptPlatformProgressAction(
+        {} as any,
+      );
     });
 
+    expect(outcome).toBe("accepted-next-presented");
     expect(controller.selectNext).toHaveBeenCalledTimes(1);
     expect(controller.selectNext).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -325,7 +333,7 @@ describe("useTrainingTurnController transition matrix", () => {
       );
     });
 
-    expect(outcome).toBe("stalled");
+    expect(outcome).toBe("accepted-next-unavailable");
     expect(controller.result.current.loadError).toBe("next_card_offline");
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
     expect(controller.setCurrentWord).not.toHaveBeenCalled();
@@ -597,7 +605,7 @@ describe("useTrainingTurnController transition matrix", () => {
       outcome = await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
-    expect(outcome).toBe("accepted");
+    expect(outcome).toBe("accepted-session-complete");
     expect(controller.result.current.usableCandidatesExhausted).toBe(true);
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
     expect(transitionTiming.finish).toHaveBeenCalledWith(
@@ -713,7 +721,7 @@ describe("useTrainingTurnController transition matrix", () => {
       outcome = await controller.result.current.acceptPlatformProgressAction({} as any);
     });
 
-    expect(outcome).toBe("stalled");
+    expect(outcome).toBe("accepted-next-unavailable");
     expect(controller.result.current.loadError).toBe("scheduler unavailable");
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(true);
   });
@@ -724,7 +732,11 @@ describe("useTrainingTurnController transition matrix", () => {
     const selectNext = vi.fn(() => slowSelection.promise);
     const controller = renderController({ selectNext });
 
-    let submission!: Promise<"accepted" | "stalled">;
+    let submission!: Promise<
+      | "accepted-next-presented"
+      | "accepted-session-complete"
+      | "accepted-next-unavailable"
+    >;
     act(() => {
       submission = controller.result.current.acceptPlatformProgressAction({} as any);
     });
@@ -745,7 +757,11 @@ describe("useTrainingTurnController transition matrix", () => {
     const selectNext = vi.fn(() => slowSelection.promise);
     const controller = renderController({ selectNext });
 
-    let accepted!: Promise<"accepted" | "stalled">;
+    let accepted!: Promise<
+      | "accepted-next-presented"
+      | "accepted-session-complete"
+      | "accepted-next-unavailable"
+    >;
     act(() => {
       accepted = controller.result.current.acceptPlatformProgressAction({} as any);
     });
@@ -754,7 +770,7 @@ describe("useTrainingTurnController transition matrix", () => {
     act(() => controller.result.current.beginSessionScopeChange());
     await act(async () => slowSelection.resolve(word2));
 
-    await expect(accepted).resolves.toBe("accepted");
+    await expect(accepted).resolves.toBe("accepted-next-unavailable");
     expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
     await expect(
@@ -775,7 +791,11 @@ describe("useTrainingTurnController transition matrix", () => {
     const controller = renderController({ currentWord: word1 });
 
     try {
-      let accepted!: Promise<"accepted" | "stalled">;
+      let accepted!: Promise<
+        | "accepted-next-presented"
+        | "accepted-session-complete"
+        | "accepted-next-unavailable"
+      >;
       act(() => {
         accepted = controller.result.current.acceptPlatformProgressAction({} as any);
       });
@@ -783,7 +803,7 @@ describe("useTrainingTurnController transition matrix", () => {
       act(() => controller.result.current.beginSessionScopeChange());
       await act(async () => readiness.resolve(true));
 
-      await expect(accepted).resolves.toBe("accepted");
+      await expect(accepted).resolves.toBe("accepted-next-unavailable");
       expect(controller.setCurrentWord).not.toHaveBeenCalledWith(word2);
     } finally {
       readiness.resolve(true);

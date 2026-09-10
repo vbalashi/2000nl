@@ -2883,7 +2883,9 @@ test("keeps a newly keyed card disabled until its predecessor acceptance settles
 
     await act(async () => releaseAcceptance());
     await waitFor(() =>
-      expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted"),
+      expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith(
+        "accepted-next-presented",
+      ),
     );
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
@@ -2937,7 +2939,10 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   });
   await waitFor(() => {
-    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(1, "accepted");
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(
+      1,
+      "accepted-next-presented",
+    );
   });
   await screen.findByRole("heading", { name: "boom" });
 
@@ -2951,7 +2956,10 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
     fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   });
   await waitFor(() => {
-    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(2, "accepted");
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(
+      2,
+      "accepted-next-presented",
+    );
   });
   await waitFor(() => {
     const observed = {

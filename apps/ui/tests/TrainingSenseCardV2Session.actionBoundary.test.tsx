@@ -103,7 +103,7 @@ describe("TrainingSenseCardV2Session action boundary", () => {
             // predecessor's V2 handler finally clears its pending flag.
             setPresentationIdentity("presentation-2");
             await acceptanceSettled;
-            return "accepted";
+            return "accepted-next-presented";
           }}
         />
       );
