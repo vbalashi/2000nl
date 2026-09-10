@@ -1175,7 +1175,6 @@ function TrainingScreenContent({
     if (
       !trainingTodaySetupEnabled ||
       !user?.id ||
-      !listHydrated ||
       sessionResumeResolved ||
       sessionResumeAttemptedRef.current
     ) {
@@ -1185,8 +1184,20 @@ function TrainingScreenContent({
     const resumeGeneration = sessionResumeGenerationRef.current;
     const resolveResume = async () => {
       const record = readTrainingSessionResume(user.id);
+      // An ordinary first visit has no resumable session. Resolve immediately
+      // instead of waiting for optional list hydration that may not be
+      // available on an empty or fixture-backed setup surface.
+      if (!record) {
+        if (componentMountedRef.current) setSessionResumeResolved(true);
+        return;
+      }
+      // A saved session must still validate its list against the hydrated
+      // catalogue before it can be resumed.
+      if (!listHydrated) {
+        sessionResumeAttemptedRef.current = false;
+        return;
+      }
       if (
-        !record ||
         record.languageCode !== currentTrainingLanguage ||
         (record.listId !== null &&
           !availableLists.some(
