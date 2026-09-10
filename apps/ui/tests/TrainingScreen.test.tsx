@@ -181,6 +181,7 @@ const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const mockV2ProgressAction = vi.fn();
 const mockV2ProgressActionCompleted = vi.fn();
+let mockV2AcceptanceGate: Promise<void> | null = null;
 let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
@@ -544,6 +545,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onLoadFailure,
     onRetryAlternative,
     onProgressActionAccepted,
+    onProgressActionPendingChange,
     chrome,
     footer,
     notice,
@@ -558,6 +560,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onProgressActionAccepted: (capability: {
       actionId: string;
     }) => Promise<unknown>;
+    onProgressActionPendingChange?: (pending: boolean) => void;
     chrome: React.ReactNode;
     footer: React.ReactNode;
     notice?: React.ReactNode;
@@ -643,6 +646,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
               if (busyRef.current || interactionDisabled) return;
               busyRef.current = true;
               setBusy(true);
+              onProgressActionPendingChange?.(true);
               try {
                 mockV2ProgressAction();
                 // The real session awaits the server mutation before invoking
@@ -651,8 +655,10 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
                 const result = await onProgressActionAccepted({
                   actionId: "review-card",
                 });
+                if (mockV2AcceptanceGate) await mockV2AcceptanceGate;
                 mockV2ProgressActionCompleted(result);
               } finally {
+                onProgressActionPendingChange?.(false);
                 busyRef.current = false;
                 setBusy(false);
               }
@@ -719,6 +725,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
   mockV2SessionState = "ready";
+  mockV2AcceptanceGate = null;
   prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
     state: "ready",
     group: { header: { audio: null, text: "huis" } },
@@ -2844,6 +2851,51 @@ test("US-094.3: after grading a card, the next prefetch exclude list includes th
     });
     expect(hasExclude).toBe(true);
   });
+});
+
+test("keeps a newly keyed card disabled until its predecessor acceptance settles", async () => {
+  const word1 = { ...mockWord, id: "word-1", headword: "huis" };
+  const word2 = { ...mockWord, id: "word-2", headword: "boom" };
+  let releaseAcceptance = () => {};
+  mockV2AcceptanceGate = new Promise((resolve) => {
+    releaseAcceptance = resolve;
+  });
+  fetchNextTrainingWordByScenario.mockReset();
+  fetchNextTrainingWordByScenario
+    .mockResolvedValueOnce(word1)
+    .mockResolvedValue(word2);
+
+  try {
+    await act(async () => {
+      render(<TrainingScreen user={user} />);
+    });
+    await screen.findByRole("heading", { name: "huis" });
+    await waitFor(() =>
+      expect(fetchNextTrainingWordByScenario.mock.calls.length).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await screen.findByRole("heading", { name: "boom" });
+
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
+
+    await act(async () => releaseAcceptance());
+    await waitFor(() =>
+      expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted"),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    await waitFor(() => expect(mockV2ProgressAction).toHaveBeenCalledTimes(2));
+  } finally {
+    releaseAcceptance();
+    mockV2AcceptanceGate = null;
+    fetchNextTrainingWordByScenario.mockReset();
+    fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  }
 });
 
 test("US-094.3: after grading multiple cards, all graded card keys are in the exclude list", async () => {
