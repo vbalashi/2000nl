@@ -2033,7 +2033,7 @@ describe("TrainingSenseCardV2Session", () => {
     expect(screen.getByRole("heading", { name: "hand" })).toBeInTheDocument();
   });
 
-  test("submits only one action for two immediate grade clicks", async () => {
+  test.each(["clicks", "hotkeys"])("submits only one action for two immediate grade %s", async (input) => {
     let resolveAction!: (value: unknown) => void;
     performAction.mockImplementationOnce(
       () => new Promise((resolve) => { resolveAction = resolve; }),
@@ -2050,8 +2050,13 @@ describe("TrainingSenseCardV2Session", () => {
     );
     await screen.findByRole("heading", { name: "hand" });
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
-    fireEvent.click(screen.getByRole("button", { name: "Good" }));
-    fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+    if (input === "clicks") {
+      fireEvent.click(screen.getByRole("button", { name: "Good" }));
+      fireEvent.click(screen.getByRole("button", { name: "Hard" }));
+    } else {
+      fireEvent.keyDown(window, { key: "k" });
+      fireEvent.keyDown(window, { key: "j" });
+    }
 
     expect(performAction).toHaveBeenCalledTimes(1);
     await act(async () => {

@@ -92,11 +92,11 @@ Docker Supabase URL. For local DB/RPC checks, prefer
   modules beside it. Extend the owning module instead of putting
   implementation back into the facade. Protect any further decomposition with
   route/facade characterization first.
-- The reachable legacy/listening Training renderer has its own anti-corruption
-  boundary: `apps/ui/lib/wordUtils.ts` owns compatibility normalization of
-  `WordRaw`, and `apps/ui/lib/training/trainingCardPresentation.ts` projects the
-  closed model consumed by `TrainingCard.tsx`. The renderer owns layout and
-  interactions only; it must not accept or inspect `TrainingWord.raw`.
+- Training is rendered through the V2 sense-card session. Platform payloads are
+  normalized in the V2 preparation/client modules before they reach the UI;
+  the session components own layout and interactions and do not inspect raw
+  provider payloads. Any remaining compatibility normalization belongs at the
+  platform boundary, not in a second card renderer.
 - UI-only changes: validate with `npm run lint` and relevant UI tests in `apps/ui`.
 - FSRS or DB changes: validate migrations plus `apps/ui/tests/fsrs/*.test.ts`; prefer the local Supabase Docker harness in `docs/runbooks/local-supabase-test-env.md`, and avoid production DBs for migration-driven tests.
 - Auth/provider changes: confirm required env vars, callback URLs, and service-role boundaries remain server-side.

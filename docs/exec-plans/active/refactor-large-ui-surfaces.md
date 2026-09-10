@@ -1,5 +1,10 @@
 # Refactor Large UI Surfaces
 
+> Status (2026-09-10): superseded for Training by #142. The historical
+> `TrainingCard` measurements and extraction steps below describe the retired
+> renderer; use the V2 sense-card session and current architecture docs for new
+> work. Keep this file only as a record of the earlier refactor sequence.
+
 ## Goal
 
 Reduce the largest UI surfaces through behavior-preserving domain hooks without changing the rendered training experience. The August Platform V2 design work has now reopened the non-visual Training lifecycle slice; visual decomposition remains separately gated.

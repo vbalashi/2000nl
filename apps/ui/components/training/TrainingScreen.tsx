@@ -9,13 +9,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { trainingDebug } from "@/lib/trainingDebug";
 import {
   createTrainingScenarioCatalog,
-  fetchDictionaryEntry,
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
   fetchStats,
-  isTrainingFocusFilterActive,
   updateActiveTrainingScope,
-  type ReviewResult,
   type TrainingScenarioCatalog,
 } from "@/lib/trainingService";
 import type {
@@ -40,7 +37,6 @@ import {
 import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 import { useTrainingOnboarding } from "@/lib/training/useTrainingOnboarding";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
-import { TrainingCard } from "./TrainingCard";
 import {
   TrainingKnownUndoNotice,
   TrainingSenseCardV2Session,
@@ -53,14 +49,10 @@ import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 import { trainingScenarioLabel } from "./v2/trainingSessionLabels";
 import { useTrainingSessionPresentation } from "./v2/useTrainingSessionPresentation";
 import { useAuthoritativeTrainingSessionPlan } from "./v2/useTrainingSessionPlan";
-import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { useTrainingTurnSelectionPort } from "./useTrainingTurnSelectionPort";
-import { useLegacyTrainingReviewPort } from "./useLegacyTrainingReviewPort";
 import { useTrainingTurnController } from "./useTrainingTurnController";
 import { getTrainingCardKey } from "@/lib/training/trainingQueue";
-import { projectTrainingCardPresentation } from "@/lib/training/trainingCardPresentation";
-import { FirstTimeButtonGroup } from "./FirstTimeButtonGroup";
 import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
 import { FooterStats } from "./FooterStats";
@@ -115,48 +107,6 @@ const LazyTrainingHistoryDestination = dynamic(
   { ssr: false },
 );
 
-const ACTION_LABELS: Record<
-  ReviewResult,
-  {
-    label: string;
-    keyHint: string;
-    tone: "fail" | "hard" | "success" | "easy" | "neutral";
-  }
-> = {
-  fail: { label: "Opnieuw", keyHint: "H", tone: "fail" },
-  hard: { label: "Moeilijk", keyHint: "J", tone: "hard" },
-  success: { label: "Goed", keyHint: "K", tone: "success" },
-  easy: { label: "Makkelijk", keyHint: "L", tone: "easy" },
-  freeze: { label: "Bevriezen", keyHint: "F", tone: "neutral" },
-  hide: { label: "Niet meer tonen", keyHint: "X", tone: "neutral" },
-};
-
-const buttonStyles: Record<
-  "fail" | "hard" | "success" | "easy" | "neutral",
-  string
-> = {
-  fail: "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/45",
-  hard: "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/45",
-  success:
-    "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/45",
-  easy: "bg-green-200 text-green-800 hover:bg-green-300 dark:bg-green-900/40 dark:text-green-200 dark:hover:bg-green-900/55",
-  neutral:
-    "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70",
-};
-
-const swipeIndicatorStyles: Record<"left" | "right", string> = {
-  left: "border-red-200/70 bg-red-100/80 text-red-700 dark:border-red-900/40 dark:bg-red-900/40 dark:text-red-200",
-  right:
-    "border-emerald-200/70 bg-emerald-100/80 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/40 dark:text-emerald-200",
-};
-
-const mobileActionOrder: Partial<Record<ReviewResult, string>> = {
-  fail: "order-1 md:order-1",
-  success: "order-2 md:order-3",
-  hard: "order-3 md:order-2",
-  easy: "order-4 md:order-4",
-};
-
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
@@ -174,13 +124,6 @@ const trainingFilterKey = (filter: TrainingFocusFilter) =>
 
 const fallbackLanguageLabel = (code: string) =>
   code ? code.toUpperCase() : "Onbekend";
-
-const dictionaryLookupNotice = (language: OnboardingLanguage, word: string) =>
-  ({
-    nl: `Geen woordenboekvermelding gevonden voor “${word}”.`,
-    en: `No dictionary entry found for “${word}”.`,
-    ru: `Словарная статья для «${word}» не найдена.`,
-  })[language];
 
 const STEP_TARGETS: Array<{
   target: string;
@@ -251,14 +194,10 @@ function TrainingScreenContent({
     trainingScenarioCatalogRef.current = createTrainingScenarioCatalog();
   }
   const trainingScenarioCatalog = trainingScenarioCatalogRef.current;
-  const { wordId, devMode, firstEncounter } = useCardParams();
-  const [revealed, setRevealed] = useState(false);
-  const [hintRevealed, setHintRevealed] = useState(false);
-  const [translationTooltipOpen, setTranslationTooltipOpen] = useState(false);
+  const { wordId, devMode } = useCardParams();
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [sessionSize, setSessionSize] = useState<TrainingSessionSize>(
-    DEFAULT_SESSION_SIZE,
-  );
+  const [sessionSize, setSessionSize] =
+    useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
     null,
   );
@@ -338,15 +277,11 @@ function TrainingScreenContent({
     };
   }, [user?.id]);
 
-  const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
-    null,
-  );
   const [trainingFocusFilter, setTrainingFocusFilter] =
     useState<TrainingFocusFilter>(DEFAULT_TRAINING_FOCUS_FILTER);
   const [trainingFilterSources, setTrainingFilterSources] = useState<
     TrainingFilterSource[]
   >([]);
-  const [wordLookupNotice, setWordLookupNotice] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailSelection, setDetailSelection] = useState<{
     entryId: string;
@@ -370,26 +305,8 @@ function TrainingScreenContent({
   });
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
-  const showFirstTimeButtons = currentWord?.isFirstEncounter === true;
   const [showHotkeys, setShowHotkeys] = useState(false);
-  const {
-    audioModeEnabled,
-    playAudio,
-    playSentenceTTS,
-    preloadAudioForWord,
-    resolveAudioUrl,
-    setAudioModeEnabled,
-    ttsLoading,
-  } = useTrainingAudio(audioQuality);
-  const cardSwipeRef = useRef<HTMLDivElement | null>(null);
-  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
-  const swipeTrackingRef = useRef(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
-    null,
-  );
-  const [swipeAnimating, setSwipeAnimating] = useState(false);
-  const [swipeActive, setSwipeActive] = useState(false);
+  const { playAudio } = useTrainingAudio();
 
   const {
     handleJoyrideCallback,
@@ -419,12 +336,6 @@ function TrainingScreenContent({
     );
   }, [currentWord, currentWord?.id]);
 
-  const toggleHint = useCallback(() => {
-    setHintRevealed((prev) => !prev);
-  }, []);
-
-  const trainingFocusFilterActive =
-    isTrainingFocusFilterActive(trainingFocusFilter);
   const trainingFocusFilterKey = trainingFilterKey(trainingFocusFilter);
 
   const {
@@ -478,30 +389,13 @@ function TrainingScreenContent({
   // Get the current mode for the active card (from the card itself, or fallback to first enabled mode)
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
-  const trainingShellV2Enabled = platformV2TrainingUiEnabled();
   const v2SessionMode =
-    trainingShellV2Enabled &&
-    (currentMode === "word-to-definition" ||
-      currentMode === "definition-to-word" ||
-      currentMode === "listen-recognize")
+    currentMode === "word-to-definition" ||
+    currentMode === "definition-to-word" ||
+    currentMode === "listen-recognize"
       ? currentMode
       : null;
-  const trainingSessionV2Enabled = Boolean(v2SessionMode);
   const v2SessionOwned = Boolean(v2SessionMode && currentWord);
-
-  const revealAnswer = useCallback(() => {
-    setTranslationTooltipOpen(false);
-    setRevealed(true);
-  }, []);
-
-  const resetSwipe = useCallback(() => {
-    swipeStartRef.current = null;
-    swipeTrackingRef.current = false;
-    setSwipeOffset(0);
-    setSwipeDirection(null);
-    setSwipeAnimating(false);
-    setSwipeActive(false);
-  }, []);
 
   const persistCurrentTrainingScope = useCallback(
     (
@@ -584,14 +478,6 @@ function TrainingScreenContent({
     allowPractice: !trainingTodaySetupEnabled,
     resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
-  const reviewLegacy = useLegacyTrainingReviewPort({
-    userId: user.id,
-    stats,
-  });
-  const resetCardPresentation = useCallback(() => {
-    setRevealed(false);
-    setHintRevealed(false);
-  }, []);
   const refreshAfterAccepted = useCallback(
     async ({ statsLabel }: { statsLabel: string }) => {
       await loadStats(undefined, statsLabel);
@@ -627,7 +513,6 @@ function TrainingScreenContent({
     resetFocusQueue,
     resetQueueForFilter,
     clearReviewedSession,
-    submitLegacyReview: handleAction,
     preparePlatformProgressAction: prepareV2ProgressAction,
     acceptPlatformProgressAction: handleV2ProgressActionAccepted,
   } = useTrainingTurnController({
@@ -640,17 +525,11 @@ function TrainingScreenContent({
       translationLang === "off" ? null : translationLang,
     cardFilter,
     newReviewRatio,
-    firstEncounter,
-    trainingShellV2Enabled,
     recoverLoadErrors: trainingTodaySetupEnabled,
     sessionPlannedTotal,
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
     selection: selectionPort,
-    audioEnabled: audioModeEnabled,
-    preloadAudio: preloadAudioForWord,
-    resetCardPresentation,
-    reviewLegacy,
     refreshAfterAccepted,
   });
   const [platformProgressActionPending, setPlatformProgressActionPending] =
@@ -791,75 +670,6 @@ function TrainingScreenContent({
     resetFocusQueue();
   }, [resetFocusQueue]);
 
-  const handleTrainingDateWindowChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      setTrainingFocusFilter((current) => ({
-        ...current,
-        dateWindow:
-          value === "today" || value === "yesterday" || value === "daysAgo"
-            ? value
-            : "all",
-        ...(value === "daysAgo"
-          ? { daysAgo: current.daysAgo ?? 7 }
-          : { daysAgo: undefined }),
-      }));
-    },
-    [resetFocusQueueState],
-  );
-
-  const handleTrainingDaysAgoChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      const daysAgo = Math.max(0, Math.min(365, Number(value) || 0));
-      setTrainingFocusFilter((current) => ({
-        ...current,
-        dateWindow: "daysAgo",
-        daysAgo,
-      }));
-    },
-    [resetFocusQueueState],
-  );
-
-  const handleTrainingSourceFilterChange = useCallback(
-    (value: string) => {
-      resetFocusQueueState();
-      setTrainingFocusFilter((current) => {
-        if (value === "all") {
-          return {
-            ...current,
-            sourceId: undefined,
-            sourceKind: undefined,
-            externalId: undefined,
-          };
-        }
-        if (value === "kind:youtube") {
-          return {
-            ...current,
-            sourceId: undefined,
-            sourceKind: "youtube",
-            externalId: undefined,
-          };
-        }
-        if (value.startsWith("source:")) {
-          return {
-            ...current,
-            sourceId: value.slice("source:".length),
-            sourceKind: undefined,
-            externalId: undefined,
-          };
-        }
-        return current;
-      });
-    },
-    [resetFocusQueueState],
-  );
-
-  const clearTrainingFocusFilter = useCallback(() => {
-    resetFocusQueueState();
-    setTrainingFocusFilter(DEFAULT_TRAINING_FOCUS_FILTER);
-  }, [resetFocusQueueState]);
-
   // Apply theme to document (client-side only)
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -900,21 +710,6 @@ function TrainingScreenContent({
     },
     [currentWord?.id, loadNextWord, requestNextCardOverride],
   );
-
-  // ... (keep useEffect for initial load)
-
-  const handleFirstTimeStart = useCallback(() => {
-    void handleAction("fail");
-  }, [handleAction]);
-
-  const handleFirstTimeAlreadyKnow = useCallback(() => {
-    void handleAction("hide");
-  }, [handleAction]);
-
-  useEffect(() => {
-    // New card => close translation overlay.
-    setTranslationTooltipOpen(false);
-  }, [currentWord?.id]);
 
   useEffect(() => {
     const awaitingDefaultScenario = Boolean(
@@ -995,6 +790,60 @@ function TrainingScreenContent({
     }
   }, [navigationBlocked, onRequestDestination]);
 
+  // Keep the navigation-oriented shortcuts available in the V2 session.
+  // Card grading/reveal shortcuts belong to the V2 card itself; this boundary
+  // only owns actions that remain valid for the whole Training surface.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (areTrainingHotkeysSuspended() || navigationBlocked) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (
+        key === "s" &&
+        !event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        openSearch();
+        return;
+      }
+      if (
+        key === "i" &&
+        event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        handleShowCurrentWordDetails();
+        return;
+      }
+      if (
+        event.key === "?" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        setShowHotkeys(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleShowCurrentWordDetails, navigationBlocked, openSearch]);
+
   const openAppSettings = useCallback(() => {
     if (!navigationBlocked) {
       onRequestDestination("settings");
@@ -1008,7 +857,6 @@ function TrainingScreenContent({
         headword: entry.headword,
         contentLanguageCode: entry.language_code ?? currentTrainingLanguage,
       });
-      setSelectedEntry(entry);
     },
     [currentTrainingLanguage],
   );
@@ -1022,187 +870,6 @@ function TrainingScreenContent({
           : "light";
     setTheme(next);
   }, [setTheme, themePreference]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (areTrainingHotkeysSuspended()) return;
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      if (actionLoading) return;
-
-      const normalized = event.key.toLowerCase();
-
-      if (
-        v2SessionOwned &&
-        (normalized === "t" ||
-          normalized === "h" ||
-          normalized === "j" ||
-          normalized === "k" ||
-          normalized === "l" ||
-          normalized === "f" ||
-          normalized === "x" ||
-          (normalized === "i" && !event.shiftKey) ||
-          event.key === " ")
-      ) {
-        return;
-      }
-
-      if (normalized === "t") {
-        if (!revealed) return;
-        event.preventDefault();
-        setTranslationTooltipOpen((prev) => !prev);
-        return;
-      }
-
-      // Arrow keys should not close translation overlay (they're used for scrolling)
-      if (
-        event.key === "ArrowUp" ||
-        event.key === "ArrowDown" ||
-        event.key === "ArrowLeft" ||
-        event.key === "ArrowRight"
-      ) {
-        return;
-      }
-
-      if (normalized === "s") {
-        event.preventDefault();
-        openSearch();
-        return;
-      }
-
-      if (normalized === "h") {
-        void handleAction("fail"); // Again
-      } else if (normalized === "j") {
-        void handleAction("hard"); // Hard
-      } else if (normalized === "k") {
-        void handleAction("success"); // Good
-      } else if (normalized === "l") {
-        void handleAction("easy"); // Easy
-      } else if (normalized === "f") {
-        void handleAction("freeze");
-      } else if (normalized === "x") {
-        void handleAction("hide");
-      } else if (normalized === "?") {
-        setShowHotkeys(true);
-      } else if (event.key === "I" && event.shiftKey) {
-        // Shift+I: Open the current word's details drawer.
-        event.preventDefault();
-        handleShowCurrentWordDetails();
-      } else if (normalized === "i") {
-        // Lowercase i: Toggle hint for W->D mode (shows context + example)
-        toggleHint();
-      } else if (normalized === " ") {
-        // Space key toggles reveal
-        event.preventDefault();
-        setRevealed((prev) => !prev);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    actionLoading,
-    handleAction,
-    handleShowCurrentWordDetails,
-    openSearch,
-    revealed,
-    toggleHint,
-    v2SessionOwned,
-  ]);
-
-  const handleDefinitionClick = useCallback(
-    async (clickedWord: string) => {
-      trainingDebug.log("🔍 Word clicked:", clickedWord);
-      setTranslationTooltipOpen(false);
-
-      if (!user?.id) {
-        trainingDebug.log("❌ No user ID");
-        return;
-      }
-
-      // 1. Try exact match
-      const entry = await fetchDictionaryEntry(clickedWord, user.id);
-
-      if (!entry) {
-        trainingDebug.log("No dictionary entry found for:", clickedWord);
-        setWordLookupNotice(
-          dictionaryLookupNotice(onboardingLang, clickedWord),
-        );
-
-        return;
-      }
-
-      trainingDebug.log("✅ Found entry:", entry.headword);
-      setWordLookupNotice(null);
-      setSelectedEntry(entry);
-      handleShowDetails(entry);
-    },
-    [handleShowDetails, onboardingLang, user?.id],
-  );
-
-  const handleTrainingWordClick = useCallback(
-    async (
-      clickedWord: string,
-      options?: { forceAudio?: boolean; sentence?: string },
-    ) => {
-      // Headword always plays audio (forceAudio is set for headword clicks)
-      const isHeadwordClick = options?.forceAudio;
-
-      // For non-headword clicks: audio mode ON = play sentence TTS, audio mode OFF = show translation
-      if (!isHeadwordClick && !audioModeEnabled) {
-        await handleDefinitionClick(clickedWord);
-        return;
-      }
-
-      // If clicking a word in a sentence context AND audio mode is enabled, play sentence TTS
-      if (!isHeadwordClick && options?.sentence && audioModeEnabled) {
-        await playSentenceTTS(options.sentence);
-        return;
-      }
-
-      // Otherwise, play word audio (headword or clicked word)
-      let audioUrl: string | undefined;
-      if (
-        currentWord &&
-        clickedWord.toLowerCase() === currentWord.headword.toLowerCase()
-      ) {
-        audioUrl = resolveAudioUrl(currentWord.raw);
-      }
-
-      if (!audioUrl) {
-        if (!user?.id) {
-          console.error("[Audio] Missing user id for:", clickedWord);
-          return;
-        }
-
-        const entry = await fetchDictionaryEntry(clickedWord, user.id);
-        audioUrl = resolveAudioUrl(entry?.raw ?? null);
-      }
-
-      if (!audioUrl) {
-        console.error("[Audio] No audio link available for:", clickedWord);
-        return;
-      }
-
-      playAudio(audioUrl, clickedWord);
-    },
-    [
-      audioModeEnabled,
-      currentWord,
-      handleDefinitionClick,
-      playAudio,
-      playSentenceTTS,
-      resolveAudioUrl,
-      user?.id,
-    ],
-  );
 
   const handleFooterListChange = useCallback(
     async (value: string) => {
@@ -1270,7 +937,6 @@ function TrainingScreenContent({
   const handleModesChange = useCallback(
     (newModes: TrainingMode[]) => {
       beginSessionScopeChange();
-      setRevealed(false);
       setEnabledModes(newModes, { persist: false });
       persistCurrentTrainingScope({ modesEnabled: newModes });
     },
@@ -1281,7 +947,6 @@ function TrainingScreenContent({
     (newScenario: string) => {
       trainingDebug.log("[Settings] Changing scenario to:", newScenario);
       beginSessionScopeChange();
-      setRevealed(false);
       setActiveScenario(newScenario, { persist: false });
       persistCurrentTrainingScope({ activeScenario: newScenario });
       void replaceSessionScopeAndLoad({
@@ -1345,112 +1010,6 @@ function TrainingScreenContent({
     reportError: setTrainingLoadError,
   });
 
-  const canSwipe =
-    revealed && !actionLoading && !loadingWord && Boolean(currentWord);
-
-  const handleCardTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      const touch = event.touches[0];
-      if (!touch) return;
-
-      swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
-      swipeTrackingRef.current = false;
-      setSwipeAnimating(false);
-    },
-    [],
-  );
-
-  const handleCardTouchMove = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      const start = swipeStartRef.current;
-      if (!start) return;
-
-      const touch = event.touches[0];
-      if (!touch) return;
-
-      const dx = touch.clientX - start.x;
-      const dy = touch.clientY - start.y;
-      const absX = Math.abs(dx);
-      const absY = Math.abs(dy);
-
-      if (!swipeTrackingRef.current) {
-        if (absX < 6 && absY < 6) return;
-        if (absX <= absY) return;
-        if (!canSwipe) {
-          swipeStartRef.current = null;
-          return;
-        }
-
-        swipeTrackingRef.current = true;
-        setSwipeActive(true);
-      }
-
-      if (!swipeTrackingRef.current) return;
-      event.preventDefault();
-
-      const cardWidth = cardSwipeRef.current?.offsetWidth ?? 0;
-      const maxOffset = cardWidth * 0.6;
-      const clamped = Math.max(-maxOffset, Math.min(maxOffset, dx));
-      setSwipeOffset(clamped);
-      setSwipeDirection(clamped >= 0 ? "right" : "left");
-    },
-    [canSwipe],
-  );
-
-  const handleCardTouchEnd = useCallback(() => {
-    if (actionLoading) {
-      resetSwipe();
-      return;
-    }
-
-    const cardWidth = cardSwipeRef.current?.offsetWidth ?? 0;
-    const threshold = cardWidth * 0.35;
-
-    if (
-      swipeTrackingRef.current &&
-      cardWidth > 0 &&
-      Math.abs(swipeOffset) >= threshold &&
-      canSwipe
-    ) {
-      const direction = swipeOffset >= 0 ? "right" : "left";
-      const result: ReviewResult = showFirstTimeButtons
-        ? direction === "right"
-          ? "fail"
-          : "hide"
-        : direction === "right"
-          ? "success"
-          : "fail";
-
-      setSwipeAnimating(true);
-      setSwipeOffset((direction === "right" ? 1 : -1) * cardWidth * 1.1);
-      setSwipeDirection(direction);
-      setSwipeActive(false);
-      swipeTrackingRef.current = false;
-      swipeStartRef.current = null;
-
-      void handleAction(result);
-      return;
-    }
-
-    setSwipeAnimating(true);
-    setSwipeOffset(0);
-    setSwipeDirection(null);
-    setSwipeActive(false);
-    swipeTrackingRef.current = false;
-    swipeStartRef.current = null;
-  }, [
-    actionLoading,
-    canSwipe,
-    handleAction,
-    resetSwipe,
-    showFirstTimeButtons,
-    swipeOffset,
-  ]);
-
-  useEffect(() => {
-    resetSwipe();
-  }, [currentWord?.id, resetSwipe]);
-
   const handleSignOut = async () => {
     // Supabase can return `session_not_found` if the JWT refers to a session
     // that was already revoked/expired server-side. Treat that as a successful
@@ -1494,79 +1053,6 @@ function TrainingScreenContent({
     }
   };
 
-  const swipeUi = showFirstTimeButtons
-    ? {
-        left: {
-          label: "Ik ken dit al",
-          indicatorClass:
-            "border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-200",
-          tintColor: "rgb(100 116 139)", // slate-500
-        },
-        right: {
-          label: "Begin met leren",
-          indicatorClass: swipeIndicatorStyles.right,
-          tintColor: "rgb(16 185 129)", // emerald-500
-        },
-      }
-    : {
-        left: {
-          label: ACTION_LABELS.fail.label,
-          indicatorClass: swipeIndicatorStyles.left,
-          tintColor: "rgb(239 68 68)", // red-500
-        },
-        right: {
-          label: ACTION_LABELS.success.label,
-          indicatorClass: swipeIndicatorStyles.right,
-          tintColor: "rgb(16 185 129)", // emerald-500
-        },
-      };
-
-  const swipeIndicator =
-    swipeDirection === "left"
-      ? { direction: "left" as const, ...swipeUi.left }
-      : swipeDirection === "right"
-        ? { direction: "right" as const, ...swipeUi.right }
-        : null;
-  const swipeThreshold = (cardSwipeRef.current?.offsetWidth ?? 0) * 0.35;
-  const swipeProgress =
-    swipeThreshold > 0
-      ? Math.min(1, Math.abs(swipeOffset) / swipeThreshold)
-      : 0;
-  // Use swipe distance (scaled by threshold) as the single "intensity" signal
-  // for all swipe feedback (indicator, card tint, and button highlight).
-  const swipeFeedbackIntensity =
-    swipeIndicator && (swipeActive || swipeAnimating) ? swipeProgress : 0;
-  const swipeIndicatorOpacity = swipeFeedbackIntensity;
-  const swipeTintColor = swipeIndicator?.tintColor ?? null;
-  const swipeTintOpacity = swipeFeedbackIntensity * 0.14;
-  const swipeCardStyle: React.CSSProperties = {
-    transform: `translateX(${swipeOffset}px) rotate(${swipeOffset / 40}deg)`,
-    transition: swipeAnimating ? "transform 200ms ease" : "none",
-    touchAction: "pan-y",
-  };
-  const sourceFilterValue = trainingFocusFilter.sourceId
-    ? `source:${trainingFocusFilter.sourceId}`
-    : trainingFocusFilter.sourceKind === "youtube"
-      ? "kind:youtube"
-      : "all";
-  const activeSourceFilterLabel = trainingFocusFilter.sourceId
-    ? trainingFilterSources.find(
-        (source) => source.sourceId === trainingFocusFilter.sourceId,
-      )?.label
-    : trainingFocusFilter.sourceKind === "youtube"
-      ? "YouTube"
-      : null;
-  const dateFilterLabel =
-    trainingFocusFilter.dateWindow === "today"
-      ? "vandaag"
-      : trainingFocusFilter.dateWindow === "yesterday"
-        ? "gisteren"
-        : trainingFocusFilter.dateWindow === "daysAgo"
-          ? `${trainingFocusFilter.daysAgo ?? 7} dagen geleden`
-          : null;
-  const activeFilterCopy = [dateFilterLabel, activeSourceFilterLabel]
-    .filter(Boolean)
-    .join(" · ");
   const pilotSourceOptions = trainingFilterSources.map((source) => ({
     value: `source:${source.sourceId}`,
     label: source.label,
@@ -1606,12 +1092,8 @@ function TrainingScreenContent({
   }, [currentWord, trainingPilot]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
-    resetCardPresentation();
     trainingPilot.returnToToday();
-  }, [resetCardPresentation, trainingPilot]);
-  const handleEnterTrainingSession = useCallback(() => {
-    clearReviewedSession();
-  }, [clearReviewedSession]);
+  }, [trainingPilot]);
   const trainingSessionPlanScope = React.useMemo(
     () => ({
       listId: wordListId,
@@ -1649,33 +1131,8 @@ function TrainingScreenContent({
     sessionGeneration: trainingPilot.sessionGeneration,
     scopeKey: trainingSessionPlanScopeKey,
     planSnapshot: trainingSessionPlanSnapshot,
-    onEnterSession: handleEnterTrainingSession,
+    onEnterSession: clearReviewedSession,
   });
-
-  const legacyTrainingCardPresentation = React.useMemo(
-    () => (currentWord ? projectTrainingCardPresentation(currentWord) : null),
-    [currentWord],
-  );
-  const legacyTrainingCard = (
-    <TrainingCard
-      card={legacyTrainingCardPresentation}
-      mode={currentMode}
-      revealed={revealed}
-      hintRevealed={hintRevealed}
-      loading={loadingWord}
-      highlightedWord={selectedEntry?.headword}
-      onWordClick={handleTrainingWordClick}
-      userId={user.id}
-      translationLang={translationLang}
-      translationTooltipOpen={translationTooltipOpen}
-      onTranslationTooltipOpenChange={setTranslationTooltipOpen}
-      onToggleHint={toggleHint}
-      onRequestReveal={revealAnswer}
-      onShowDetails={handleShowCurrentWordDetails}
-      audioModeEnabled={audioModeEnabled}
-      onToggleAudioMode={() => setAudioModeEnabled((prev) => !prev)}
-    />
-  );
 
   const openTrainingHistory = useCallback(() => {
     onRequestDestination(TRAINING_HISTORY_DESTINATION);
@@ -1833,7 +1290,7 @@ function TrainingScreenContent({
             }}
             onExit={trainingPilot.returnToToday}
           />
-        ) : trainingShellV2Enabled ? (
+        ) : (
           <TrainingSessionV2Layout
             phase={
               currentWord && !v2SessionMode
@@ -1871,310 +1328,11 @@ function TrainingScreenContent({
               </div>
             )}
           </TrainingSessionV2Layout>
-        ) : (
-          <>
-            <div
-              data-training-session-main
-              className="flex grow flex-col items-center overflow-hidden bg-transparent"
-            >
-              {/* Center the training card while preserving its established width. */}
-              <div className="flex h-full w-full max-w-[1200px] flex-row justify-center gap-2 px-1 py-3 md:gap-4 md:px-4 lg:gap-6 lg:px-6">
-                {/* Left/Main Column: Constrained to max-w-3xl to improve desktop line length */}
-                <section className="flex h-full w-full max-w-3xl flex-1 flex-col overflow-visible rounded-3xl bg-transparent">
-                  {/* 1. Scrollable Card Area */}
-                  <div
-                    data-testid="training-card-scroll-region"
-                    className="flex flex-1 flex-col overflow-y-auto overflow-x-visible px-2 scrollbar-hide md:px-4"
-                  >
-                    {/* Card Container */}
-                    <div className="flex min-h-full flex-col justify-start py-2 md:justify-center md:py-4">
-                      {trainingSessionNotice}
-                      {!trainingShellV2Enabled ? (
-                        <div className="mx-auto mb-3 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/50">
-                          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                            <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                              Periode
-                              <select
-                                value={trainingFocusFilter.dateWindow}
-                                onChange={(event) =>
-                                  handleTrainingDateWindowChange(
-                                    event.target.value,
-                                  )
-                                }
-                                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                              >
-                                <option value="all">Alle dagen</option>
-                                <option value="today">Vandaag</option>
-                                <option value="yesterday">Gisteren</option>
-                                <option value="daysAgo">N dagen geleden</option>
-                              </select>
-                            </label>
-                            {trainingFocusFilter.dateWindow === "daysAgo" ? (
-                              <label className="flex w-full flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 md:w-28">
-                                Dagen
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={365}
-                                  value={trainingFocusFilter.daysAgo ?? 7}
-                                  onChange={(event) =>
-                                    handleTrainingDaysAgoChange(
-                                      event.target.value,
-                                    )
-                                  }
-                                  className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                                />
-                              </label>
-                            ) : null}
-                            <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                              Bron
-                              <select
-                                value={sourceFilterValue}
-                                onChange={(event) =>
-                                  handleTrainingSourceFilterChange(
-                                    event.target.value,
-                                  )
-                                }
-                                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                              >
-                                <option value="all">Alle bronnen</option>
-                                <option value="kind:youtube">YouTube</option>
-                                {trainingFilterSources.map((source) => (
-                                  <option
-                                    key={source.sourceId}
-                                    value={`source:${source.sourceId}`}
-                                  >
-                                    {source.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            {trainingFocusFilterActive ? (
-                              <button
-                                type="button"
-                                onClick={clearTrainingFocusFilter}
-                                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900 md:self-end"
-                              >
-                                Wissen
-                              </button>
-                            ) : null}
-                          </div>
-                          {trainingFocusFilterActive ? (
-                            <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                              Gefilterde training:{" "}
-                              {activeFilterCopy || "aangepaste selectie"}.
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                      {trainingFocusFilterActive &&
-                      !loadingWord &&
-                      !currentWord ? (
-                        <div
-                          role="status"
-                          className="mx-auto mb-3 w-full max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
-                        >
-                          Geen kaarten gevonden voor{" "}
-                          {activeFilterCopy || "dit filter"}.
-                        </div>
-                      ) : null}
-                      {/* Desktop: 16/10 aspect-ratio.
-                   Mobile: hybrid height (min + max) so content scrolls *within* the card and buttons stay stable. */}
-                      <div
-                        data-testid="training-card-frame"
-                        className="mx-auto mb-6 h-[clamp(360px,55dvh,520px)] min-h-[360px] max-h-[520px] w-full transition-[height] duration-200 md:mb-8 md:aspect-[16/10] md:h-auto md:min-h-[400px]"
-                      >
-                        <div
-                          ref={cardSwipeRef}
-                          data-testid="training-card-swipe-wrapper"
-                          className="relative h-full"
-                          style={swipeCardStyle}
-                          onTouchStart={handleCardTouchStart}
-                          onTouchMove={handleCardTouchMove}
-                          onTouchEnd={handleCardTouchEnd}
-                          onTouchCancel={handleCardTouchEnd}
-                        >
-                          {swipeTintColor && swipeTintOpacity > 0 && (
-                            <div
-                              className="pointer-events-none absolute inset-0 z-10 rounded-3xl"
-                              style={{
-                                backgroundColor: swipeTintColor,
-                                opacity: swipeTintOpacity,
-                              }}
-                            />
-                          )}
-                          {swipeIndicator && (
-                            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-                              <div
-                                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] shadow-sm ${swipeIndicator.indicatorClass}`}
-                                style={{ opacity: swipeIndicatorOpacity }}
-                              >
-                                {swipeIndicator.label}
-                              </div>
-                            </div>
-                          )}
-                          {usableCandidatesExhausted ? (
-                            <TrainingUsableCandidatesExhausted
-                              interfaceLanguage={onboardingLang}
-                              onExit={trainingPilot.returnToToday}
-                            />
-                          ) : (
-                            <div
-                              className="contents"
-                              data-training-renderer="legacy"
-                              data-training-v2-state={
-                                currentMode === "listen-recognize"
-                                  ? "listening-mode"
-                                  : "pilot-disabled"
-                              }
-                            >
-                              {legacyTrainingCard}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 2. Fixed Buttons Area (Always Visible) */}
-                  {!usableCandidatesExhausted ? (
-                    <div className="flex-none pt-4 pb-2 z-10">
-                      {/* Translucent container for buttons */}
-                      <div className="w-full rounded-2xl bg-white/50 backdrop-blur-sm p-3 border border-white/20 shadow-lg dark:bg-slate-900/50 dark:border-slate-800/50 transition-all duration-300">
-                        <div data-tour="rating-buttons">
-                          {revealed ? (
-                            <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                              {showFirstTimeButtons ? (
-                                <FirstTimeButtonGroup
-                                  onStartLearning={handleFirstTimeStart}
-                                  onAlreadyKnow={handleFirstTimeAlreadyKnow}
-                                  disabled={actionLoading}
-                                  swipeDirection={swipeDirection}
-                                  swipeIntensity={swipeFeedbackIntensity}
-                                />
-                              ) : (
-                                <div
-                                  className={`grid gap-2 md:gap-3 w-full ${
-                                    currentMode === "listen-recognize"
-                                      ? "grid-cols-2"
-                                      : "grid-cols-2 md:grid-cols-4"
-                                  }`}
-                                >
-                                  {(currentMode === "listen-recognize"
-                                    ? (["fail", "success"] as ReviewResult[])
-                                    : ([
-                                        "fail",
-                                        "hard",
-                                        "success",
-                                        "easy",
-                                      ] as ReviewResult[])
-                                  ).map((actionKey) => {
-                                    const defaultAction =
-                                      ACTION_LABELS[actionKey];
-                                    const label =
-                                      currentMode === "listen-recognize" &&
-                                      actionKey === "fail"
-                                        ? "Niet herkend"
-                                        : currentMode === "listen-recognize" &&
-                                            actionKey === "success"
-                                          ? "Herkend"
-                                          : defaultAction.label;
-                                    const { keyHint, tone } = defaultAction;
-                                    const swipeButtonHighlight =
-                                      actionKey === "fail" &&
-                                      swipeDirection === "left"
-                                        ? swipeFeedbackIntensity
-                                        : actionKey === "success" &&
-                                            swipeDirection === "right"
-                                          ? swipeFeedbackIntensity
-                                          : 0;
-                                    const swipeButtonRgb =
-                                      actionKey === "fail"
-                                        ? "239, 68, 68" // red-500
-                                        : "16, 185, 129"; // emerald-500
-                                    const swipeButtonColor =
-                                      actionKey === "fail"
-                                        ? "rgb(239 68 68)" // red-500
-                                        : "rgb(16 185 129)"; // emerald-500
-                                    return (
-                                      <button
-                                        key={actionKey}
-                                        type="button"
-                                        disabled={actionLoading}
-                                        onClick={() => handleAction(actionKey)}
-                                        style={
-                                          swipeButtonHighlight > 0
-                                            ? {
-                                                outline: `2px solid rgba(${swipeButtonRgb}, ${0.65 * swipeButtonHighlight})`,
-                                                outlineOffset: 2,
-                                              }
-                                            : undefined
-                                        }
-                                        className={`relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl px-3 text-xs md:text-sm font-semibold uppercase tracking-wide transition shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-60 ${buttonStyles[tone]} ${mobileActionOrder[actionKey] ?? ""}`}
-                                      >
-                                        {(actionKey === "fail" ||
-                                          actionKey === "success") && (
-                                          <span
-                                            aria-hidden="true"
-                                            className="pointer-events-none absolute inset-0 rounded-xl"
-                                            style={{
-                                              backgroundColor: swipeButtonColor,
-                                              opacity:
-                                                0.22 * swipeButtonHighlight,
-                                            }}
-                                          />
-                                        )}
-                                        <span className="relative z-10">
-                                          {label}
-                                        </span>
-                                        <span className="relative z-10 text-[10px] md:text-xs font-normal opacity-70">
-                                          ({keyHint})
-                                        </span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            /* Show Answer Button - Wide, colored, distinct */
-                            <button
-                              type="button"
-                              onClick={() => {
-                                revealAnswer();
-                              }}
-                              className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-[0.2em] transition-all hover:bg-blue-500/20 hover:border-blue-500/30 hover:scale-[1.01] active:scale-[0.99] dark:bg-blue-400/10 dark:text-blue-400 dark:border-blue-400/20"
-                            >
-                              Antwoord Tonen
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </section>
-              </div>
-            </div>
-
-            <div>{trainingSessionFooter}</div>
-          </>
         )}
-
-        {trainingShellV2Enabled ? (
-          <TrainingKnownUndoNotice
-            interfaceLanguage={onboardingLang}
-            currentPresentationIdentity={currentPresentationIdentity}
-          />
-        ) : null}
-
-        {wordLookupNotice ? (
-          <div
-            role="status"
-            className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-xl dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
-          >
-            {wordLookupNotice}
-          </div>
-        ) : null}
+        <TrainingKnownUndoNotice
+          interfaceLanguage={onboardingLang}
+          currentPresentationIdentity={currentPresentationIdentity}
+        />
 
         <TrainingDetailsDrawer
           interfaceLanguage={onboardingLang}

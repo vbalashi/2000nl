@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { platformV2TrainingUiEnabled } from "@/lib/platform/platformV2Rollout";
 import {
   ensurePlatformV2TrainingEntryValidThroughProgressAction,
   prefetchPlatformV2TrainingEntry,
@@ -44,8 +43,6 @@ type Inputs = {
     predictedQueueTurn: QueueTurn,
     currentCardKey: string,
   ) => Promise<TrainingWord | null>;
-  audioEnabled: boolean;
-  preloadAudio: (word: TrainingWord) => void;
 };
 
 export function usePreparedNextTrainingTurn(input: Inputs) {
@@ -61,8 +58,6 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     reviewCounter,
     newReviewRatio,
     selectNext,
-    audioEnabled,
-    preloadAudio,
   } = input;
   const tokenRef = useRef(0);
   const [nextTransitionId, setNextTransitionId] = useState<string | null>(null);
@@ -70,8 +65,6 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
   const controllerRef = useRef<AbortController | null>(null);
   const activeTransitionIdRef = useRef<string | null>(null);
   const ownedForCardKeyRef = useRef<string | null>(null);
-  const trainingV2Enabled = platformV2TrainingUiEnabled();
-
   const warmWord = useCallback(
     async (
       word: TrainingWord,
@@ -79,7 +72,7 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       transitionId = createTrainingTransitionId(),
     ) => {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      if (!trainingV2Enabled || !isPlatformV2TrainingMode(mode)) return true;
+      if (!isPlatformV2TrainingMode(mode)) return true;
       try {
         const preparation = {
           cacheOwnerId,
@@ -98,12 +91,12 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       } catch {
         return false;
       }
-    }, [
+    },
+    [
       cacheOwnerId,
       contentLanguageCode,
       enabledModes,
       translationTargetLanguageCode,
-      trainingV2Enabled,
     ],
   );
 
@@ -129,25 +122,28 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
     cancelCurrent();
   }, [cancelCurrent]);
 
-  const consumeForCard = useCallback((cardKey: string) => {
-    const candidate = candidateRef.current;
-    if (!candidate || candidate.forCardKey !== cardKey) {
-      // Acceptance closes preparation for the card being left even when its
-      // candidate has not materialized. The on-demand fallback is now the sole
-      // owner of next-card selection, so abort and invalidate the old chain.
-      cancelCurrent();
+  const consumeForCard = useCallback(
+    (cardKey: string) => {
+      const candidate = candidateRef.current;
+      if (!candidate || candidate.forCardKey !== cardKey) {
+        // Acceptance closes preparation for the card being left even when its
+        // candidate has not materialized. The on-demand fallback is now the sole
+        // owner of next-card selection, so abort and invalidate the old chain.
+        cancelCurrent();
+        ownedForCardKeyRef.current = cardKey;
+        return null;
+      }
+      candidateRef.current = null;
+      // The accepted transition now owns this in-flight preparation. Detach its
+      // controller so the next queue-turn effect cannot abort work that the
+      // current transition is explicitly waiting for.
+      controllerRef.current = null;
+      activeTransitionIdRef.current = null;
       ownedForCardKeyRef.current = cardKey;
-      return null;
-    }
-    candidateRef.current = null;
-    // The accepted transition now owns this in-flight preparation. Detach its
-    // controller so the next queue-turn effect cannot abort work that the
-    // current transition is explicitly waiting for.
-    controllerRef.current = null;
-    activeTransitionIdRef.current = null;
-    ownedForCardKeyRef.current = cardKey;
-    return candidate;
-  }, [cancelCurrent]);
+      return candidate;
+    },
+    [cancelCurrent],
+  );
 
   const refreshForCard = useCallback(
     (cardKey: string) => {
@@ -167,21 +163,25 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       });
       const mode =
         candidate.word.mode ?? enabledModes[0] ?? "word-to-definition";
-      const refreshed = ensurePlatformV2TrainingEntryValidThroughProgressAction({
-        cacheOwnerId,
-        entryId: candidate.word.id,
-        cardTypeId: mode,
-        contentLanguageCode,
-        translationTargetLanguageCode,
-        transitionId: candidate.transitionId,
-        signal: controllerRef.current?.signal,
-      }).then((lookup) => {
+      const refreshed = ensurePlatformV2TrainingEntryValidThroughProgressAction(
+        {
+          cacheOwnerId,
+          entryId: candidate.word.id,
+          cardTypeId: mode,
+          contentLanguageCode,
+          translationTargetLanguageCode,
+          transitionId: candidate.transitionId,
+          signal: controllerRef.current?.signal,
+        },
+      ).then((lookup) => {
         const ready = lookup.state === "ready";
         recordTrainingTransitionTiming({
           transitionId: candidate.transitionId,
           stage: "next-card.prefetch",
           durationMs: 0,
-          outcome: ready ? "proactive-refresh-ready" : "proactive-refresh-failed",
+          outcome: ready
+            ? "proactive-refresh-ready"
+            : "proactive-refresh-failed",
         });
         return ready;
       });
@@ -221,38 +221,36 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       "next-card.selection",
       () => selectNext(predictedQueueTurn, forCardKey),
       (selected) => (selected ? "ready" : "empty"),
-    ).then((word) => {
-      if (!word || controller.signal.aborted || tokenRef.current !== token) return;
-      const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
-      const v2Ready =
-        trainingV2Enabled && isPlatformV2TrainingMode(mode)
+    )
+      .then((word) => {
+        if (!word || controller.signal.aborted || tokenRef.current !== token)
+          return;
+        const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
+        const v2Ready = isPlatformV2TrainingMode(mode)
           ? warmWord(word, controller.signal, transitionId)
           : null;
-      candidateRef.current = {
-        forWordId,
-        forCardKey,
-        queueTurn: predictedQueueTurn,
-        word,
-        v2Ready,
-        transitionId,
-      };
-      if (audioEnabled) preloadAudio(word);
-    }).catch(() => undefined);
+        candidateRef.current = {
+          forWordId,
+          forCardKey,
+          queueTurn: predictedQueueTurn,
+          word,
+          v2Ready,
+          transitionId,
+        };
+      })
+      .catch(() => undefined);
 
     return cancelCurrent;
   }, [
-    audioEnabled,
     cardFilter,
     currentMode,
     currentWord,
     enabledModes,
     newReviewRatio,
-    preloadAudio,
     queueTurn,
     reviewCounter,
     selectNext,
     cancelCurrent,
-    trainingV2Enabled,
     warmWord,
   ]);
 

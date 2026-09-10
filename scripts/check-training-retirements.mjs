@@ -7,7 +7,8 @@ const finalTraining = process.argv.includes("--final-training");
 const retired = ["onTrainingAction", "trainingActionEntryId"];
 if (finalTraining) {
   retired.push("useLegacyTrainingReviewPort", "submitLegacyReview", "reviewLegacy",
-    "projectTrainingCardPresentation", "TrainingCard", "TrainingCardPresentation");
+    "projectTrainingCardPresentation", "TrainingCard", "TrainingCardPresentation",
+    "FirstTimeButtonGroup", "AudioModeToggle", "InteractiveText");
 }
 const failures = [];
 
@@ -32,6 +33,9 @@ for (const directory of ["app", "components", "lib", "tests"]) {
 if (finalTraining) {
   for (const path of [
     "components/training/TrainingCard.tsx",
+    "components/training/FirstTimeButtonGroup.tsx",
+    "components/training/AudioModeToggle.tsx",
+    "components/training/InteractiveText.tsx",
     "components/training/useLegacyTrainingReviewPort.ts",
     "lib/training/trainingCardPresentation.ts",
     "tests/TrainingCard.test.tsx",

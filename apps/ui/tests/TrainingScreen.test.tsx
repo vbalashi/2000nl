@@ -19,6 +19,10 @@ import type { AppDestination } from "@/components/navigation/appDestination";
 import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
+// Screen integration tests exercise the real V2 transition owner. The card
+// stub models asynchronous acceptance; actual capabilities, keys, swipe and
+// content are covered by TrainingSenseCardV2Session/Stage tests.
+
 function getPrimaryNavigation() {
   return screen.getByRole("navigation", { name: "Primary" });
 }
@@ -163,7 +167,11 @@ const fetchStats = vi.fn().mockResolvedValue({
   totalWordsLearned: 0,
   totalWordsInList: 2000,
 });
-const prefetchPlatformV2TrainingEntry = vi.fn();
+const prefetchPlatformV2TrainingEntry = vi.fn().mockResolvedValue({
+  state: "ready",
+  group: { header: { audio: null, text: "huis" } },
+  entry: { entryId: mockWord.id },
+});
 const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
   state: "ready",
   translation: "cached",
@@ -172,7 +180,7 @@ const preparePlatformV2TrainingEntry = vi.fn().mockResolvedValue({
 const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const mockV2ProgressAction = vi.fn();
-const platformV2TrainingUiEnabled = vi.fn().mockReturnValue(false);
+const mockV2ProgressActionCompleted = vi.fn();
 let mockV2SessionState: "ready" | "loading" = "ready";
 const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
 const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
@@ -353,9 +361,6 @@ const fetchPlatformV2LibraryGroup = vi.fn(
     };
   },
 );
-const recordWordView = vi.fn().mockResolvedValue(undefined);
-const recordReview = vi.fn().mockResolvedValue(null);
-const recordDefinitionClick = vi.fn().mockResolvedValue(undefined);
 const fetchDictionaryEntry = vi.fn().mockResolvedValue(null);
 const fetchDictionaryEntryById = vi.fn().mockResolvedValue(null);
 const fetchTrainingWordByLookup = vi.fn().mockResolvedValue(overrideWord);
@@ -488,9 +493,6 @@ vi.mock("@/lib/trainingService", () => ({
   deleteUserList,
   updateUserList,
   updateActiveTrainingScope,
-  recordDefinitionClick,
-  recordReview,
-  recordWordView,
   fetchTrainingWordByLookup,
   fetchUserPreferences,
   updateUserPreferences,
@@ -533,10 +535,6 @@ vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
     preparePlatformV2TrainingEntry(...args),
 }));
 
-vi.mock("@/lib/platform/platformV2Rollout", () => ({
-  platformV2TrainingUiEnabled: () => platformV2TrainingUiEnabled(),
-}));
-
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     word,
@@ -557,13 +555,19 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onOpenDetails?: () => void;
     onLoadFailure?: (failure: "model-invalid") => void;
     onRetryAlternative?: (failure: "model-invalid") => void;
-    onProgressActionAccepted: (capability: { actionId: string }) => void;
+    onProgressActionAccepted: (capability: {
+      actionId: string;
+    }) => Promise<unknown>;
     chrome: React.ReactNode;
     footer: React.ReactNode;
     notice?: React.ReactNode;
     interactionDisabled?: boolean;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
+    // Match the real V2 session: a grade stays busy until the accepted-action
+    // transition resolves, not merely until the next headword is rendered.
+    const [busy, setBusy] = React.useState(false);
+    const busyRef = React.useRef(false);
     const failed = word.headword === "broken-card";
     const loading = mockV2SessionState === "loading";
     React.useEffect(() => {
@@ -634,10 +638,24 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           ) : null}
           <button
             type="button"
-            disabled={interactionDisabled}
-            onClick={() => {
-              mockV2ProgressAction();
-              onProgressActionAccepted({ actionId: "review-card" });
+            disabled={busy || interactionDisabled}
+            onClick={async () => {
+              if (busyRef.current || interactionDisabled) return;
+              busyRef.current = true;
+              setBusy(true);
+              try {
+                mockV2ProgressAction();
+                // The real session awaits the server mutation before invoking
+                // acceptance. Do not turn a click into a synchronous receipt.
+                await Promise.resolve();
+                const result = await onProgressActionAccepted({
+                  actionId: "review-card",
+                });
+                mockV2ProgressActionCompleted(result);
+              } finally {
+                busyRef.current = false;
+                setBusy(false);
+              }
             }}
           >
             Mock V2 grade
@@ -682,6 +700,7 @@ function TrainingScreen(
   return (
     <ProductionTrainingScreen
       {...props}
+      trainingTodaySetupEnabled={props.trainingTodaySetupEnabled ?? false}
       destination={
         props.onRequestDestination ? props.destination : internalDestination
       }
@@ -697,6 +716,14 @@ const user: User = { id: "user-1", email: "user@test.com" } as User;
 
 const defaultMatchMedia = window.matchMedia;
 beforeEach(() => {
+  vi.clearAllMocks();
+  fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
+  mockV2SessionState = "ready";
+  prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
+    state: "ready",
+    group: { header: { audio: null, text: "huis" } },
+    entry: { entryId: mockWord.id },
+  });
   window.matchMedia = ((query: string) => ({
     matches: query.includes("min-width"),
     media: query,
@@ -760,6 +787,14 @@ const waitForInitialTrainingFetches = async () => {
   );
 };
 
+const expectOnlyBackgroundSelectionSince = (callCount: number) => {
+  // Settings/hydration may refresh preparation. That may select ahead, but it
+  // must exclude the displayed card and must not replace its presentation.
+  for (const call of fetchNextTrainingWordByScenario.mock.calls.slice(callCount)) {
+    expect(call[6]).toContain("word-1:word-to-definition");
+  }
+};
+
 test("search action opens the dedicated dictionary search surface", async () => {
   render(<TrainingScreen user={user} />);
 
@@ -767,16 +802,18 @@ test("search action opens the dedicated dictionary search surface", async () => 
 
   fireEvent.keyDown(window, { key: "s" });
 
-  expect(
-    await screen.findByRole("heading", { name: /Bibliotheek|Library/ }),
-  ).toBeInTheDocument();
+  await screen.findByTestId("library-workspace");
   await screen.findByPlaceholderText(/zoek in het woordenboek/i);
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
   expect(screen.getByText(/Zoekt in VanDale woordenboek/i)).toBeInTheDocument();
   expect(screen.getByText("Typ een woord om te zoeken")).toBeInTheDocument();
   expect(screen.getByLabelText(/alleen deze lijst/i)).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Zoeken" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Lijsten" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Zoeken" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Lijsten" }),
+  ).not.toBeInTheDocument();
   expect(screen.queryByText(/Alleen actieve lijst/i)).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
@@ -837,22 +874,7 @@ test("does not expose Recent through the global R shortcut", async () => {
   });
 });
 
-test("legacy card details open without exposing the retired Recent tab", async () => {
-  render(<TrainingScreen user={user} />);
-
-  await screen.findByRole("heading", { name: "huis" });
-  fireEvent.click(screen.getByRole("button", { name: "Bekijk details" }));
-
-  expect(
-    await screen.findByTestId("library-sense-card-group"),
-  ).toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "Recent" }),
-  ).not.toBeInTheDocument();
-});
-
 test("V2 answer-card overflow opens the retained details surface", async () => {
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   mockV2ProgressAction.mockClear();
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
@@ -896,9 +918,37 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
     );
     expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
   }
+});
+
+test("global Details and shortcut help preserve the V2 turn and omit retired actions", async () => {
+  render(<TrainingScreen user={user} />);
+  await waitForInitialTrainingFetches();
+  const stage = screen.getByTestId("mock-training-sense-card-v2");
+  const identity = stage.getAttribute("data-presentation-identity");
+
+  fireEvent.keyDown(window, { key: "I", shiftKey: true });
+  expect(
+    await screen.findByTestId("library-sense-card-group"),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("library-details-actions"),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /^(Close|Sluiten)$/ }));
+
+  fireEvent.keyDown(window, { key: "?", shiftKey: true });
+  expect(
+    await screen.findByRole("heading", { name: "Keyboard shortcuts" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Freeze until tomorrow")).not.toBeInTheDocument();
+  expect(screen.queryByText("Do not show again")).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(
+    screen.queryByRole("heading", { name: "Keyboard shortcuts" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stage);
+  expect(stage).toHaveAttribute("data-presentation-identity", identity);
 });
 
 test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
@@ -916,9 +966,11 @@ test("shell Library replaces the visible destination without remounting the curr
 
   render(<Harness />);
 
-  await screen.findByRole("heading", { name: "huis" });
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
+  await waitForInitialTrainingFetches();
+  const stageBefore = screen.getByTestId("mock-training-sense-card-v2");
+  const presentationBefore = stageBefore.getAttribute(
+    "data-presentation-identity",
+  );
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
   fireEvent.keyDown(window, { key: "s" });
 
@@ -927,9 +979,7 @@ test("shell Library replaces the visible destination without remounting the curr
   ).toBeInTheDocument();
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
-    trainingFetchCount,
-  );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 
   fireEvent.click(
     within(getPrimaryNavigation()).getByRole("button", {
@@ -938,13 +988,15 @@ test("shell Library replaces the visible destination without remounting the curr
   );
 
   expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
-  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
-    trainingFetchCount,
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
+  expect(stageBefore).toHaveAttribute(
+    "data-presentation-identity",
+    presentationBefore,
   );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
-test("Statistics and Settings destinations preserve the revealed Training turn", async () => {
+test("Statistics and Settings destinations preserve the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] =
       React.useState<AppDestination>("training");
@@ -959,9 +1011,11 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
 
   render(<Harness />);
 
-  await screen.findByRole("heading", { name: "huis" });
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
+  await waitForInitialTrainingFetches();
+  const stageBefore = screen.getByTestId("mock-training-sense-card-v2");
+  const presentationBefore = stageBefore.getAttribute(
+    "data-presentation-identity",
+  );
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
 
   fireEvent.click(
@@ -978,7 +1032,7 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
       name: "Training",
     }),
   );
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
 
   fireEvent.click(screen.getByLabelText("Settings"));
   expect(
@@ -991,10 +1045,12 @@ test("Statistics and Settings destinations preserve the revealed Training turn",
       name: "Training",
     }),
   );
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
-  expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
-    trainingFetchCount,
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBe(stageBefore);
+  expect(stageBefore).toHaveAttribute(
+    "data-presentation-identity",
+    presentationBefore,
   );
+  expectOnlyBackgroundSelectionSince(trainingFetchCount);
 });
 
 test("first-pilot Training opens on Today and Continue reveals the mounted card", async () => {
@@ -1156,6 +1212,42 @@ test("pilot Start persists the complete selection in one scope update", async ()
     modesEnabled: ["word-to-definition", "definition-to-word"],
     newReviewRatio: 3,
   });
+});
+
+test("pilot Setup applies source and date filters only when Start commits the draft", async () => {
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  await waitFor(() =>
+    expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id),
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Adjust training|Training aanpassen/ }),
+  );
+  fireEvent.change(screen.getByLabelText("Time window"), {
+    target: { value: "today" },
+  });
+  fireEvent.change(screen.getByLabelText("Source"), {
+    target: { value: "source:source-youtube-1" },
+  });
+  expect(
+    fetchNextTrainingWordByScenario.mock.calls.some(
+      (call) => call[8]?.sourceId === "source-youtube-1",
+    ),
+  ).toBe(false);
+  fetchNextTrainingWordByScenario.mockClear();
+  fireEvent.click(
+    screen.getByRole("button", { name: /Start training|Training starten/ }),
+  );
+  await waitFor(() =>
+    expect(
+      fetchNextTrainingWordByScenario.mock.calls.map((call) => call[8]),
+    ).toContainEqual(
+      expect.objectContaining({
+        dateWindow: "today",
+        sourceId: "source-youtube-1",
+      }),
+    ),
+  );
 });
 
 test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
@@ -1356,38 +1448,6 @@ test("pilot does not start a card mode omitted by the authoritative scenario", a
     expect(updateActiveTrainingScope).toHaveBeenCalledWith(
       expect.objectContaining({ modesEnabled: ["word-to-definition"] }),
     ),
-  );
-});
-
-test("training focus filters pass date and source scope to card selection", async () => {
-  render(<TrainingScreen user={user} />);
-
-  await waitForInitialTrainingFetches();
-  await waitFor(() =>
-    expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id),
-  );
-  fetchNextTrainingWordByScenario.mockClear();
-
-  fireEvent.change(screen.getByLabelText("Periode"), {
-    target: { value: "today" },
-  });
-  fireEvent.change(screen.getByLabelText("Bron"), {
-    target: { value: "source:source-youtube-1" },
-  });
-
-  await waitFor(() =>
-    expect(
-      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
-        const filter = call[8];
-        return (
-          filter?.dateWindow === "today" &&
-          filter?.sourceId === "source-youtube-1"
-        );
-      }),
-    ).toBe(true),
-  );
-  expect(screen.getByText(/Gefilterde training:/i)).toHaveTextContent(
-    /vandaag.*YouTube/i,
   );
 });
 
@@ -1810,126 +1870,6 @@ test("initial load waits for an unsaved list default scenario", async () => {
   }
 });
 
-test("footer language selector switches current training language without changing defaults", async () => {
-  let resolveEnglishScope!: (scope: ActiveTrainingScope) => void;
-  const englishScope = new Promise<ActiveTrainingScope>((resolve) => {
-    resolveEnglishScope = resolve;
-  });
-  fetchActiveTrainingScope.mockImplementation(
-    async ({ languageCode }: { languageCode: string }) => {
-      const scope = {
-        ...defaultActiveTrainingScope,
-        languageCode,
-        activeListId: languageCode === "en" ? secondaryList.id : activeList.id,
-        activeListType: "curated",
-        activeScenario: languageCode === "en" ? "listening" : "understanding",
-        cardFilter: languageCode === "en" ? "review" : "both",
-        modesEnabled:
-          languageCode === "en" ? ["listen-recognize"] : ["word-to-definition"],
-        newReviewRatio: languageCode === "en" ? 1 : 2,
-        hasSavedScope: true,
-      };
-      return languageCode === "en" ? englishScope : scope;
-    },
-  );
-  fetchListSummaryById.mockImplementation(
-    async ({ listId }: { listId: string }) =>
-      listId === secondaryList.id ? secondaryList : activeList,
-  );
-  fetchAvailableLists.mockImplementation(
-    async (_userId: string, languageCode?: string) =>
-      languageCode === "en" ? [secondaryList] : [activeList],
-  );
-  updateUserPreferences.mockClear();
-  updateActiveTrainingScope.mockClear();
-
-  try {
-    render(<TrainingScreen user={user} />);
-
-    await screen.findByRole("heading", { name: "huis" });
-    const footerScope = await screen.findByRole("region", {
-      name: "Training",
-    });
-    expect(
-      within(footerScope).getByText(
-        /Huidige training: Nederlands · Active list · .* · Nieuw \+ herhaling/,
-      ),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Wijzigen" }));
-    fireEvent.click(screen.getByRole("button", { name: /Nederlands/ }));
-    fetchNextTrainingWordByScenario.mockClear();
-    fireEvent.click(await screen.findByRole("button", { name: /English/ }));
-
-    await waitFor(() =>
-      expect(fetchActiveTrainingScope).toHaveBeenCalledWith({
-        userId: "user-1",
-        languageCode: "en",
-      }),
-    );
-    expect(
-      fetchNextTrainingWordByScenario.mock.calls.some((call) => {
-        const scope = call[3] as { listId?: string };
-        return scope.listId === secondaryList.id;
-      }),
-    ).toBe(false);
-    await act(async () =>
-      resolveEnglishScope({
-        ...defaultActiveTrainingScope,
-        languageCode: "en",
-        activeListId: secondaryList.id,
-        activeListType: "curated",
-        activeScenario: "listening",
-        cardFilter: "review",
-        modesEnabled: ["listen-recognize"],
-        newReviewRatio: 1,
-        hasSavedScope: true,
-      }),
-    );
-    await waitFor(() =>
-      expect(
-        within(footerScope).getByText(
-          "Huidige training: English · Secondary list · Luisteren · Alleen herhaling",
-        ),
-      ).toBeInTheDocument(),
-    );
-    await waitFor(() =>
-      expect(
-        fetchNextTrainingWordByScenario.mock.calls.some((call) => {
-          const scope = call[3] as { listId?: string };
-          return call[1] === "listening" && scope.listId === secondaryList.id;
-        }),
-      ).toBe(true),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /English/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Nederlands/ }));
-
-    await waitFor(() =>
-      expect(fetchActiveTrainingScope).toHaveBeenCalledWith({
-        userId: "user-1",
-        languageCode: "nl",
-      }),
-    );
-    await waitFor(() =>
-      expect(
-        within(footerScope).getByText(
-          "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
-        ),
-      ).toBeInTheDocument(),
-    );
-    expect(updateActiveTrainingScope).not.toHaveBeenCalled();
-    expect(updateUserPreferences).not.toHaveBeenCalledWith(
-      expect.objectContaining({ languageCode: "en" }),
-    );
-  } finally {
-    restoreDefaultListScope();
-    fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
-    fetchAvailableLists.mockResolvedValue([defaultAvailableList]);
-    fetchListSummaryById.mockResolvedValue(null);
-  }
-});
-
 test("search detail trains a selected entry as the next card without changing active scope", async () => {
   useTwoListScope();
   searchDictionaryGroups.mockResolvedValue({
@@ -1999,7 +1939,6 @@ test("keeps the current V2 card when a selected-word warm fails", async () => {
   });
   fetchTrainingWordByLookup.mockClear();
   fetchTrainingWordByLookup.mockResolvedValueOnce(overrideWord);
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockImplementation(
     (input: { entryId: string }) =>
@@ -2049,7 +1988,6 @@ test("keeps the current V2 card when a selected-word warm fails", async () => {
       screen.queryByRole("heading", { name: "boom" }),
     ).not.toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     restoreDefaultSearchResults();
     restoreDefaultListScope();
@@ -2131,8 +2069,6 @@ test("next-card override is one-shot and normal training resumes after review", 
   fetchNextTrainingWordByScenario
     .mockResolvedValueOnce(mockWord)
     .mockResolvedValue(normalNextWord);
-  recordReview.mockReset();
-  recordReview.mockResolvedValue(null);
 
   try {
     render(<TrainingScreen user={user} />);
@@ -2158,15 +2094,10 @@ test("next-card override is one-shot and normal training resumes after review", 
       expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1),
     );
 
-    fireEvent.keyDown(window, { key: " " });
-    await screen.findByRole("button", { name: /opnieuw/i });
-    fireEvent.keyDown(window, { key: "k" });
-
-    await waitFor(() =>
-      expect(recordReview).toHaveBeenCalledWith(
-        expect.objectContaining({ wordId: "word-2", result: "success" }),
-      ),
-    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+    });
+    expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
     await screen.findByRole("heading", { name: "fiets" });
     expect(fetchTrainingWordByLookup).toHaveBeenCalledTimes(1);
     expect(
@@ -2176,111 +2107,11 @@ test("next-card override is one-shot and normal training resumes after review", 
     restoreDefaultSearchResults();
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
-    recordReview.mockReset();
-    recordReview.mockResolvedValue(null);
     fetchTrainingWordByLookup.mockResolvedValue(overrideWord);
   }
 });
 
-test("training UI shows active list, scenario, card filter, and list policy as one effective scope", async () => {
-  useTwoListScope();
-
-  try {
-    render(<TrainingScreen user={user} />);
-
-    await screen.findByRole("heading", { name: "huis" });
-
-    const footerScope = await screen.findByRole("region", {
-      name: "Training",
-    });
-    expect(
-      within(footerScope).getByText(
-        "Huidige training: Nederlands · Active list · Begrip · Nieuw + herhaling",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      within(footerScope).getByLabelText(/Beperkt tot Luisteren/),
-    ).toBeInTheDocument();
-  } finally {
-    restoreDefaultListScope();
-  }
-});
-
-test("hotkey triggers recordReview like button click", async () => {
-  const dispatch = vi.spyOn(window, "dispatchEvent");
-  render(<TrainingScreen user={user} />);
-
-  await waitFor(() =>
-    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
-  );
-  await screen.findByRole("heading", { name: "huis" });
-
-  // Reveal answer (Space)
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
-
-  // Grade "Goed" (K)
-  fireEvent.keyDown(window, { key: "k" });
-  await waitFor(() =>
-    expect(recordReview).toHaveBeenCalledWith(
-      expect.objectContaining({ result: "success" }),
-    ),
-  );
-  expect(
-    dispatch.mock.calls.some(
-      ([event]) =>
-        event instanceof CustomEvent &&
-        event.type === "2000nl:training-transition-timing" &&
-        event.detail.stage === "review.mutation" &&
-        event.detail.outcome === "accepted",
-    ),
-  ).toBe(true);
-});
-
-test("rapid hotkeys while review is in-flight trigger only one review (US-093.5)", async () => {
-  // Keep the review in-flight so the sync guard stays active.
-  recordReview.mockReset();
-  recordReview.mockImplementation(() => new Promise(() => {}));
-
-  try {
-    render(<TrainingScreen user={user} />);
-
-    await screen.findByRole("heading", { name: "huis" });
-
-    // Reveal answer so grade hotkeys are available.
-    fireEvent.keyDown(window, { key: " " });
-    await screen.findByRole("button", { name: /opnieuw/i });
-
-    // Two rapid grades should only submit once.
-    fireEvent.keyDown(window, { key: "k" });
-    fireEvent.keyDown(window, { key: "h" });
-
-    await waitFor(() => expect(recordReview).toHaveBeenCalledTimes(1));
-    expect(recordReview).toHaveBeenCalledWith(
-      expect.objectContaining({ result: "success" }),
-    );
-  } finally {
-    recordReview.mockReset();
-    recordReview.mockResolvedValue(null);
-  }
-});
-
-test("mobile card uses hybrid height so content can scroll within the card", async () => {
-  render(<TrainingScreen user={user} />);
-
-  await screen.findByRole("heading", { name: "huis" });
-
-  const frame = screen.getByTestId("training-card-frame");
-  expect(frame.className).toContain("min-h-[360px]");
-  expect(frame.className).toContain("h-[clamp(360px,55dvh,520px)]");
-  expect(frame.className).toContain("max-h-[520px]");
-  // Desktop behavior remains aspect-ratio driven.
-  expect(frame.className).toContain("md:aspect-[16/10]");
-  expect(frame.className).toContain("md:h-auto");
-});
-
 test("V2 layout keeps its theme owner when Today setup is disabled", async () => {
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
     group: { header: { audio: null, text: "huis" } },
@@ -2296,14 +2127,11 @@ test("V2 layout keeps its theme owner when Today setup is disabled", async () =>
       screen.queryByTestId("training-session-chrome"),
     ).not.toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
   }
 });
 
 test("V2 card owns scrolling without a second legacy scroll region", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -2359,9 +2187,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(
       screen.queryByRole("button", { name: "Help" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getAllByRole("button", { name: "History" }),
-    ).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "History" })).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Account" }),
     ).not.toBeInTheDocument();
@@ -2389,15 +2215,11 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
       screen.queryByTestId("training-session-chrome"),
     ).not.toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
-    vi.unstubAllEnvs();
   }
 });
 
 test("approved Training History control requests the authoritative destination by keyboard", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -2428,15 +2250,11 @@ test("approved Training History control requests the authoritative destination b
 
     expect(onRequestDestination).toHaveBeenCalledWith("history");
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
-    vi.unstubAllEnvs();
   }
 });
 
 test("keyboard return from History restores focus to its stable Training trigger", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
     state: "ready",
@@ -2482,15 +2300,11 @@ test("keyboard return from History restores focus to its stable Training trigger
       expect(screen.getByRole("button", { name: "History" })).toHaveFocus(),
     );
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
-    vi.unstubAllEnvs();
   }
 });
 
 test("V2 loading retains the existing session chrome and footer", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   mockV2SessionState = "loading";
   prefetchPlatformV2TrainingEntry.mockReset();
   prefetchPlatformV2TrainingEntry.mockResolvedValue({
@@ -2516,16 +2330,12 @@ test("V2 loading retains the existing session chrome and footer", async () => {
       screen.getByTestId("training-session-footer-progress"),
     ).toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     mockV2SessionState = "ready";
     prefetchPlatformV2TrainingEntry.mockReset();
-    vi.unstubAllEnvs();
   }
 });
 
 test("routes listening mode through the V2 renderer without a legacy marker", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchActiveTrainingScope.mockReset();
   fetchActiveTrainingScope.mockResolvedValue({
     ...defaultActiveTrainingScope,
@@ -2567,7 +2377,6 @@ test("routes listening mode through the V2 renderer without a legacy marker", as
       container.querySelector('[data-training-renderer="legacy"]'),
     ).not.toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     fetchActiveTrainingScope.mockReset();
     fetchActiveTrainingScope.mockResolvedValue(defaultActiveTrainingScope);
     fetchUserPreferences.mockReset();
@@ -2583,13 +2392,10 @@ test("routes listening mode through the V2 renderer without a legacy marker", as
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
     prefetchPlatformV2TrainingEntry.mockReset();
-    vi.unstubAllEnvs();
   }
 });
 
 test("keeps the V2 loading surface when the pilot has no current card yet", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockImplementationOnce(
     () => new Promise(() => undefined),
   );
@@ -2597,7 +2403,9 @@ test("keeps the V2 loading surface when the pilot has no current card yet", asyn
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
 
-    expect(await screen.findByTestId("training-v2-loading")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("training-v2-loading"),
+    ).toBeInTheDocument();
     expect(
       screen.queryByTestId("training-card-scroll-region"),
     ).toBeInTheDocument();
@@ -2605,16 +2413,12 @@ test("keeps the V2 loading surface when the pilot has no current card yet", asyn
       document.querySelector('[data-training-renderer="legacy"]'),
     ).not.toBeInTheDocument();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
-    vi.unstubAllEnvs();
   }
 });
 
 test("renders an explicit V2 state instead of falling back for unsupported listen-type", async () => {
-  vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockResolvedValue({
     ...mockWord,
@@ -2644,177 +2448,17 @@ test("renders an explicit V2 state instead of falling back for unsupported liste
       ).not.toBeInTheDocument(),
     );
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
-    vi.unstubAllEnvs();
-  }
-});
-
-test("first encounter: swipe right triggers Start learning (fail)", async () => {
-  const original = Object.getOwnPropertyDescriptor(
-    HTMLElement.prototype,
-    "offsetWidth",
-  );
-  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
-    configurable: true,
-    get() {
-      return 1000;
-    },
-  });
-
-  try {
-    fetchNextTrainingWordByScenario.mockResolvedValueOnce({
-      ...mockWord,
-      isFirstEncounter: true,
-    });
-
-    render(<TrainingScreen user={user} />);
-    await waitFor(() =>
-      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
-    );
-    await screen.findByRole("heading", { name: "huis" });
-
-    fireEvent.keyDown(window, { key: " " });
-    await screen.findByRole("button", { name: /begin met leren/i });
-
-    recordReview.mockClear();
-    const wrapper = screen.getByTestId("training-card-swipe-wrapper");
-    fireEvent.touchStart(wrapper, {
-      touches: [{ clientX: 0, clientY: 0 }],
-    });
-    fireEvent.touchMove(wrapper, {
-      touches: [{ clientX: 500, clientY: 0 }],
-    });
-    fireEvent.touchEnd(wrapper);
-
-    await waitFor(() =>
-      expect(recordReview).toHaveBeenCalledWith(
-        expect.objectContaining({ result: "fail" }),
-      ),
-    );
-  } finally {
-    if (original) {
-      Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
-    }
-  }
-});
-
-test("first encounter: swipe left triggers I already know (hide)", async () => {
-  const original = Object.getOwnPropertyDescriptor(
-    HTMLElement.prototype,
-    "offsetWidth",
-  );
-  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
-    configurable: true,
-    get() {
-      return 1000;
-    },
-  });
-
-  try {
-    fetchNextTrainingWordByScenario.mockResolvedValueOnce({
-      ...mockWord,
-      isFirstEncounter: true,
-    });
-
-    render(<TrainingScreen user={user} />);
-    await waitFor(() =>
-      expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
-    );
-    await screen.findByRole("heading", { name: "huis" });
-
-    fireEvent.keyDown(window, { key: " " });
-    await screen.findByRole("button", { name: /ik ken dit al/i });
-
-    recordReview.mockClear();
-    const wrapper = screen.getByTestId("training-card-swipe-wrapper");
-    fireEvent.touchStart(wrapper, {
-      touches: [{ clientX: 600, clientY: 0 }],
-    });
-    fireEvent.touchMove(wrapper, {
-      touches: [{ clientX: 100, clientY: 0 }],
-    });
-    fireEvent.touchEnd(wrapper);
-
-    await waitFor(() =>
-      expect(recordReview).toHaveBeenCalledWith(
-        expect.objectContaining({ result: "hide" }),
-      ),
-    );
-  } finally {
-    if (original) {
-      Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
-    }
-  }
-});
-
-test("uses prefetched next card for instant transition on answer", async () => {
-  const randomUUID = vi
-    .fn()
-    .mockReturnValueOnce("turn-1")
-    .mockReturnValueOnce("turn-2")
-    .mockReturnValueOnce("turn-3");
-  vi.stubGlobal("crypto", { randomUUID } as unknown as Crypto);
-
-  try {
-    const word1 = {
-      ...mockWord,
-      id: "word-1",
-      headword: "huis",
-    };
-    const word2 = {
-      ...mockWord,
-      id: "word-2",
-      headword: "boom",
-    };
-
-    // First call = initial card. Subsequent calls = prefetch (and any retries).
-    fetchNextTrainingWordByScenario.mockReset();
-    fetchNextTrainingWordByScenario
-      .mockResolvedValueOnce(word1)
-      .mockResolvedValue(word2);
-
-    recordReview.mockReset();
-    // Keep the review in-flight to prove the UI switches without waiting for it.
-    recordReview.mockImplementation(() => new Promise(() => {}));
-
-    render(<TrainingScreen user={user} />);
-
-    await screen.findByRole("heading", { name: "huis" });
-
-    // Wait for the background prefetch to at least start and resolve.
-    await waitFor(() =>
-      expect(
-        fetchNextTrainingWordByScenario.mock.calls.length,
-      ).toBeGreaterThanOrEqual(2),
-    );
-
-    // Reveal answer then grade.
-    fireEvent.keyDown(window, { key: " " });
-    await screen.findByRole("button", { name: /opnieuw/i });
-
-    fireEvent.keyDown(window, { key: "k" });
-
-    // The UI should advance to the prefetched next card without waiting for recordReview.
-    await screen.findByRole("heading", { name: "boom" });
-
-    await waitFor(() =>
-      expect(recordReview).toHaveBeenCalledWith(
-        expect.objectContaining({ result: "success", turnId: "turn-1" }),
-      ),
-    );
-  } finally {
-    recordReview.mockReset();
-    recordReview.mockResolvedValue(null);
-    if (typeof (vi as any).unstubAllGlobals === "function") {
-      (vi as any).unstubAllGlobals();
-    }
   }
 });
 
 test("keeps the current V2 card visible until the prefetched DTO is ready", async () => {
   let resolveNextLookup!: (value: unknown) => void;
+  // The real V2 client shares one in-flight lookup for an exact card target.
+  const nextLookup = new Promise((resolve) => {
+    resolveNextLookup = resolve;
+  });
   const word1 = { ...mockWord, id: "word-1", headword: "huis" };
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
   const readyLookup = {
@@ -2823,7 +2467,6 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
     entry: { entryId: "word-1" },
   };
 
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario
     .mockResolvedValueOnce(word1)
@@ -2832,14 +2475,14 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
   prefetchPlatformV2TrainingEntry.mockImplementation(
     (input: { entryId: string }) =>
       input.entryId === word2.id
-        ? new Promise((resolve) => {
-            resolveNextLookup = resolve;
-          })
+        ? nextLookup
         : Promise.resolve(readyLookup),
   );
 
   try {
-    render(<TrainingScreen user={user} />);
+    await act(async () => {
+      render(<TrainingScreen user={user} />);
+    });
     await screen.findByRole("heading", { name: "huis" });
     await waitFor(() =>
       expect(prefetchPlatformV2TrainingEntry).toHaveBeenCalledWith(
@@ -2855,9 +2498,7 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
       screen.queryByRole("heading", { name: "boom" }),
     ).not.toBeInTheDocument();
     await act(async () => Promise.resolve());
-    expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
-      schedulerCallsBeforeGrade,
-    );
+    expectOnlyBackgroundSelectionSince(schedulerCallsBeforeGrade);
 
     await act(async () => {
       resolveNextLookup({
@@ -2872,7 +2513,6 @@ test("keeps the current V2 card visible until the prefetched DTO is ready", asyn
     expect(screen.getByText("Next training card")).toBeInTheDocument();
     expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveFocus();
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
     fetchNextTrainingWordByScenario.mockReset();
@@ -2888,7 +2528,6 @@ test("publishes a new presentation identity when the same V2 word is presented a
     entry: { entryId: repeatedWord.id },
   };
 
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockResolvedValue(repeatedWord);
   prefetchPlatformV2TrainingEntry.mockReset();
@@ -2919,7 +2558,6 @@ test("publishes a new presentation identity when the same V2 word is presented a
       ).not.toBe(firstIdentity),
     );
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
     fetchNextTrainingWordByScenario.mockReset();
@@ -2940,7 +2578,6 @@ test("uses only the on-demand fallback when grading before next-turn selection r
     entry: { entryId: word2.id },
   };
 
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementation(() => {
     selectionCall += 1;
@@ -2991,7 +2628,6 @@ test("uses only the on-demand fallback when grading before next-turn selection r
       callsAfterPresentation,
     );
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     prefetchPlatformV2TrainingEntry.mockResolvedValue(readyLookup);
     fetchNextTrainingWordByScenario.mockReset();
@@ -3004,7 +2640,6 @@ test("shows load-only recovery and blocks a repeated V2 grade after an accepted 
   const word2 = { ...mockWord, id: "word-2", headword: "boom" };
   let word2Ready = false;
 
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   mockV2ProgressAction.mockClear();
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario
@@ -3079,7 +2714,6 @@ test("shows load-only recovery and blocks a repeated V2 grade after an accepted 
       expect.arrayContaining(["word-1:word-to-definition"]),
     );
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
@@ -3096,7 +2730,6 @@ test("a rejected prepared card retries through the scheduler and reaches an avai
   const dueWord = { ...mockWord, id: "word-due", headword: "due-review" };
   let initialSelected = false;
 
-  platformV2TrainingUiEnabled.mockReturnValue(true);
   fetchNextTrainingWordByScenario.mockReset();
   fetchNextTrainingWordByScenario.mockImplementation(
     async (
@@ -3151,7 +2784,6 @@ test("a rejected prepared card retries through the scheduler and reaches an avai
       ),
     ).toBe(true);
   } finally {
-    platformV2TrainingUiEnabled.mockReturnValue(false);
     prefetchPlatformV2TrainingEntry.mockReset();
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
@@ -3182,8 +2814,6 @@ test("US-094.3: after grading a card, the next prefetch exclude list includes th
       );
     },
   );
-  recordReview.mockReset();
-  recordReview.mockResolvedValue(null);
 
   render(<TrainingScreen user={user} />);
 
@@ -3196,10 +2826,8 @@ test("US-094.3: after grading a card, the next prefetch exclude list includes th
     ).toBeGreaterThanOrEqual(2),
   );
 
-  // Reveal then grade current card.
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
-  fireEvent.keyDown(window, { key: "k" });
+  // The V2 card owns the answer/review action in one control.
+  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
 
   // Should advance to next card (prefetched or on-demand).
   await screen.findByRole("heading", { name: "boom" });
@@ -3243,24 +2871,50 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
       );
     },
   );
-  recordReview.mockReset();
-  recordReview.mockResolvedValue(null);
 
-  render(<TrainingScreen user={user} />);
+  // Complete mocked startup hydration before exercising sequential grades.
+  // First heading paint is not a receipt that all initial scope effects ran.
+  await act(async () => {
+    render(<TrainingScreen user={user} />);
+  });
 
   await screen.findByRole("heading", { name: "huis" });
 
   // Grade word-1.
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
-  fireEvent.keyDown(window, { key: "k" });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(1, "accepted");
+  });
   await screen.findByRole("heading", { name: "boom" });
 
-  // Grade word-2.
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
-  fireEvent.keyDown(window, { key: "k" });
-  await screen.findByRole("heading", { name: "fiets" });
+  // This test exercises two completed transitions, not overlapping actions.
+  // A new keyed card can mount before its predecessor's acceptance settles.
+  // The real V2 session's duplicate-input boundary is tested separately.
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Mock V2 grade" })).toBeEnabled(),
+  );
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  });
+  await waitFor(() => {
+    expect(mockV2ProgressActionCompleted).toHaveBeenNthCalledWith(2, "accepted");
+  });
+  await waitFor(() => {
+    const observed = {
+      heading: screen.queryByTestId("mock-training-sense-card-v2")?.textContent,
+      actions: mockV2ProgressAction.mock.calls.length,
+      selections: fetchNextTrainingWordByScenario.mock.calls.map((call) => ({
+        turn: call[5],
+        excluded: call[6],
+      })),
+    };
+    expect(
+      Boolean(screen.queryByRole("heading", { name: "fiets" })),
+      JSON.stringify(observed),
+    ).toBe(true);
+  });
 
   // While viewing word-3, next prefetch should exclude both graded IDs.
   await waitFor(() => {
@@ -3274,65 +2928,4 @@ test("US-094.3: after grading multiple cards, all graded card keys are in the ex
     });
     expect(hasExclude).toBe(true);
   });
-});
-
-test("translation overlay is not dismissed by Escape or Ctrl+Tab (US-087.1)", async () => {
-  fetchNextTrainingWordByScenario.mockReset();
-  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
-
-  // TrainingScreen currently calls fetchUserPreferences from 2 different effects:
-  // - onboarding init expects `prefs.preferences.*`
-  // - settings load expects flat fields (themePreference, translationLang, etc.)
-  // Return a shape that supports both.
-  fetchUserPreferences.mockReset();
-  fetchUserPreferences.mockImplementation(async () => ({
-    themePreference: "system",
-    modesEnabled: ["word-to-definition"],
-    cardFilter: "both",
-    languageCode: "nl",
-    newReviewRatio: 2,
-    activeScenario: "understanding",
-    translationLang: "en",
-    preferences: {
-      onboardingCompleted: false,
-      onboardingLanguage: null,
-    },
-  }));
-
-  render(<TrainingScreen user={user} />);
-
-  await waitFor(() =>
-    expect(fetchNextTrainingWordByScenario).toHaveBeenCalled(),
-  );
-  await screen.findByRole("heading", { name: "huis" });
-
-  // Reveal answer (Space) so translation UI becomes available.
-  fireEvent.keyDown(window, { key: " " });
-
-  const translateBtn = await screen.findByRole("button", {
-    name: /translate \(t\)/i,
-  });
-
-  // Open via hotkey.
-  fireEvent.keyDown(window, { key: "t" });
-  await waitFor(() =>
-    expect(translateBtn).toHaveAttribute("aria-pressed", "true"),
-  );
-
-  // Should not dismiss.
-  fireEvent.keyDown(window, { key: "Escape" });
-  await waitFor(() =>
-    expect(translateBtn).toHaveAttribute("aria-pressed", "true"),
-  );
-
-  fireEvent.keyDown(window, { key: "Tab", ctrlKey: true });
-  await waitFor(() =>
-    expect(translateBtn).toHaveAttribute("aria-pressed", "true"),
-  );
-
-  // Only T toggles it off.
-  fireEvent.keyDown(window, { key: "t" });
-  await waitFor(() =>
-    expect(translateBtn).toHaveAttribute("aria-pressed", "false"),
-  );
 });

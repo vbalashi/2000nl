@@ -1,6 +1,6 @@
 # Issue #142 — retire the legacy TrainingCard renderer
 
-Status: in progress. Base: `origin/main` at `f076fba7`.
+Implementation/review: PR #300, based on `ef91acd9`. GitHub #142 owns live status.
 
 ## Goal
 
@@ -13,8 +13,24 @@ change as part of the cleanup.
 
 - `listen-recognize` is routed through the V2 session/stage (PR #292).
 - Pilot-session loading and exhausted-queue states stay inside
-  `TrainingSessionV2Layout` (PR #295, draft; CI and browser smoke green).
+  `TrainingSessionV2Layout` (PR #295, integrated as `ef91acd9`).
 - The old renderer is no longer used for these two pilot transitions.
+- PR #300 removes the remaining renderer, projection and review adapter.
+  Supported Screen scenarios are re-baselined on V2 with no skipped tests;
+  the caller inventory records the disposition of every retired V1 assertion.
+  Integration still requires final reviews, full CI and browser smoke.
+- Final review removed duplicate raw-payload audio preloading from the turn
+  controller; normalized V2 preparation remains the owner. The unreferenced
+  `FirstTimeButtonGroup`, `AudioModeToggle` and `InteractiveText` components are
+  deleted and forbidden by the final-retirement CI guard.
+- The multi-grade Screen characterization now waits for each accepted
+  transition receipt, not just the next mounted heading. Actual V2 rapid click
+  and hotkey deduplication remains covered separately.
+- Local dedicated-account QA verified Learn and Good as distinct History
+  entries, Details/navigation preservation, mobile card rendering and retry
+  from an unusable reverse prompt. Retry recovered; its ordinal increment
+  without a grade is recorded under #294. Audio/translation provider failures
+  in this local environment are not counted as passed media QA.
 
 ## Remaining dependencies
 

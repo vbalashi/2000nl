@@ -289,7 +289,7 @@ Shared contract should provide:
 
 App-specific rendering should stay in:
 
-- `apps/ui/components/training/TrainingCard.tsx`,
+- `apps/ui/components/training/v2/TrainingSenseCardV2Session.tsx`,
 - future extension UI code,
 - future mobile/tablet-specific views.
 

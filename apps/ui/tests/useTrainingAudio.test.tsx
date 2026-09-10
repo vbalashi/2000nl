@@ -1,31 +1,16 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  resolveTrainingAudioUrl,
-  useTrainingAudio,
-} from "@/lib/training/useTrainingAudio";
+import { useTrainingAudio } from "@/lib/training/useTrainingAudio";
 
-const audioLoad = vi.fn();
 const audioPlay = vi.fn(() => Promise.resolve());
 const audioConstructor = vi.fn().mockImplementation(() => ({
-  load: audioLoad,
   play: audioPlay,
-  preload: "",
 }));
 
 describe("useTrainingAudio", () => {
   beforeEach(() => {
     vi.stubGlobal("Audio", audioConstructor);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({ url: "/api/tts?key=abc" }),
-      })),
-    );
-    window.localStorage.clear();
     audioConstructor.mockClear();
-    audioLoad.mockClear();
     audioPlay.mockClear();
   });
 
@@ -34,69 +19,62 @@ describe("useTrainingAudio", () => {
     vi.unstubAllEnvs();
   });
 
-  test("resolves direct and base-prefixed audio URLs", () => {
-    expect(
-      resolveTrainingAudioUrl({ audio_links: { nl: "https://cdn/audio.mp3" } }),
-    ).toBe("https://cdn/audio.mp3");
-
-    vi.stubEnv("NEXT_PUBLIC_AUDIO_BASE_URL", "https://audio.example/base/");
-
-    expect(resolveTrainingAudioUrl({ audio_links: { nl: "/huis.mp3" } })).toBe(
-      "https://audio.example/base/huis.mp3",
-    );
-    expect(resolveTrainingAudioUrl({ audio_links: { nl: "huis.mp3" } })).toBe(
-      "https://audio.example/base/huis.mp3",
-    );
-    expect(resolveTrainingAudioUrl({})).toBeUndefined();
-  });
-
-  test("persists audio mode locally and preloads word audio", async () => {
-    window.localStorage.setItem("audioModeEnabled", "true");
-
-    const { result } = renderHook(() => useTrainingAudio("premium"));
-
-    expect(result.current.audioModeEnabled).toBe(true);
-    await waitFor(() =>
-      expect(window.localStorage.getItem("audioModeEnabled")).toBe("true"),
-    );
+  test("plays a resolved V2 audio URL", () => {
+    const { result } = renderHook(() => useTrainingAudio());
 
     act(() => {
-      result.current.setAudioModeEnabled(false);
+      result.current.playAudio("https://audio.example/huis.mp3", "huis");
     });
 
-    await waitFor(() =>
-      expect(window.localStorage.getItem("audioModeEnabled")).toBe("false"),
+    expect(audioConstructor).toHaveBeenCalledWith(
+      "https://audio.example/huis.mp3",
     );
-
-    act(() => {
-      result.current.preloadAudioForWord({
-        id: "word-1",
-        headword: "huis",
-        raw: { audio_links: { nl: "/huis.mp3" } },
-      } as any);
-    });
-
-    expect(audioConstructor).toHaveBeenCalledWith("/huis.mp3");
-    expect(audioLoad).toHaveBeenCalled();
+    expect(audioPlay).toHaveBeenCalledOnce();
   });
 
-  test("playSentenceTTS sends quality and plays returned audio", async () => {
-    const { result } = renderHook(() => useTrainingAudio("premium"));
+  test("reports a missing audio URL without constructing audio", () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const { result } = renderHook(() => useTrainingAudio());
 
+    act(() => {
+      result.current.playAudio(undefined, "huis");
+    });
+
+    expect(audioConstructor).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      "[Audio] Missing audio URL for:",
+      "huis",
+    );
+  });
+
+  test("reports playback failures", async () => {
+    const failure = new Error("blocked");
+    audioPlay.mockRejectedValueOnce(failure);
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const { result } = renderHook(() => useTrainingAudio());
+
+    act(() => {
+      result.current.playAudio("https://audio.example/huis.mp3", "huis");
+    });
     await act(async () => {
-      await result.current.playSentenceTTS("  Dit is een zin.  ");
+      await Promise.resolve();
     });
 
-    expect(fetch).toHaveBeenCalledWith("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: "Dit is een zin.",
-        quality: "premium",
-      }),
-    });
-    expect(audioConstructor).toHaveBeenCalledWith("/api/tts?key=abc");
-    expect(audioPlay).toHaveBeenCalled();
-    expect(result.current.ttsLoading).toBe(false);
+    expect(consoleError).toHaveBeenCalledWith(
+      "[Audio] Audio playback failed:",
+      failure,
+    );
+  });
+
+  test("has no retired toggle, preload, or sentence-TTS side effect", () => {
+    window.localStorage.clear();
+    const { result } = renderHook(() => useTrainingAudio());
+
+    expect(result.current).toEqual({ playAudio: expect.any(Function) });
+    expect(window.localStorage.getItem("audioModeEnabled")).toBeNull();
   });
 });
