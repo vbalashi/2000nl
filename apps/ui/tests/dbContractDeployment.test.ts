@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 133,
+      requiredMigrationId: 134,
       coordinationIssue: 279,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -63,7 +63,7 @@ describe("NUC database contract deployment", () => {
 
   test("postflight proves the bounded default scheduler contract", () => {
     const postflight =
-      read("db/deploy-contract/postflight-133.sql") +
+      read("db/deploy-contract/postflight-134.sql") +
       read("db/deploy-contract/postflight-130.sql") +
       read("db/deploy-contract/postflight-129.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");

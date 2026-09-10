@@ -215,6 +215,94 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("selects the first unconsumed member and consumes it idempotently", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      for (let index = 0; index < 3; index += 1) {
+        await insertWord(client, `session-selection-${userId}-${index}`);
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+          $1::uuid,
+          ARRAY['word-to-definition']::text[],
+          NULL::uuid,
+          'curated',
+          'both',
+          '{}'::jsonb,
+          '5'
+        ) as session`,
+        [userId],
+      );
+      const started = startRows[0].session;
+      const sessionId = started.sessionId as string;
+
+      const { rows: firstRows } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid) as card`,
+        [userId, sessionId],
+      );
+      const first = firstRows[0].card;
+      expect(first.trainingSessionId).toBe(sessionId);
+      expect(first.trainingSessionOrdinal).toBe(1);
+
+      const { rows: members } = await client.query(
+        `select entry_id as "entryId", card_type_id as "cardTypeId"
+         from training_session_members
+         where session_id = $1
+         order by ordinal`,
+        [sessionId],
+      );
+      const secondMember = members[1];
+      const { rows: outOfOrderRows } = await client.query(
+        `select private.consume_training_session_member(
+          $1::uuid, $2::uuid, $3::uuid, $4::text
+        ) as result`,
+        [userId, sessionId, secondMember.entryId, secondMember.cardTypeId],
+      );
+      expect(outOfOrderRows[0].result).toEqual(
+        expect.objectContaining({
+          status: "out-of-order",
+          ordinal: 2,
+          expectedOrdinal: 1,
+        }),
+      );
+
+      const { rows: consumedRows } = await client.query(
+        `select private.consume_training_session_member(
+          $1::uuid, $2::uuid, $3::uuid, $4::text
+        ) as result`,
+        [userId, sessionId, first.id, first.mode],
+      );
+      expect(consumedRows[0].result).toEqual(
+        expect.objectContaining({
+          status: "consumed",
+          remaining: started.plannedTotal - 1,
+        }),
+      );
+
+      const { rows: duplicateRows } = await client.query(
+        `select private.consume_training_session_member(
+          $1::uuid, $2::uuid, $3::uuid, $4::text
+        ) as result`,
+        [userId, sessionId, first.id, first.mode],
+      );
+      expect(duplicateRows[0].result).toEqual(
+        expect.objectContaining({ status: "duplicate", ordinal: 1 }),
+      );
+
+      const { rows: secondRows } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid) as card`,
+        [userId, sessionId],
+      );
+      expect(secondRows[0].card.id).not.toBe(first.id);
+      expect(secondRows[0].card.trainingSessionOrdinal).toBe(2);
+    }, userId);
+  });
+
   test("keeps scheduler dictionary access identical for system, owned, public, entitled, denied, and null entries", async () => {
     const userId = randomUUID();
     const otherUserId = randomUUID();
