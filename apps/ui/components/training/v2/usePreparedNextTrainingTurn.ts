@@ -92,15 +92,15 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
         const lookupRequest = prefetchPlatformV2TrainingEntry(preparation);
         void preparePlatformV2TrainingEntry(preparation).catch(() => undefined);
         const lookup = await lookupRequest;
-      if (signal?.aborted) return false;
-      if (lookup.state === "ready") return true;
-      if (lookup.state === "entry-not-found") {
-        return {
-          ready: false,
-          unavailableReason: "entry-not-found",
-        } as const;
-      }
-      return false;
+        if (signal?.aborted) return false;
+        if (lookup.state === "ready") return true;
+        if (lookup.state === "entry-not-found") {
+          return {
+            ready: false,
+            unavailableReason: "entry-not-found",
+          } as const;
+        }
+        return false;
       } catch {
         return false;
       }
