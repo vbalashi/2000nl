@@ -2,7 +2,7 @@
 
 GitHub #250 owns status. Renderer retirement #142 is integrated as `21858947`.
 The original plan was drafted against `a5ecc88b`; the current implementation
-slice is based on `origin/main` at `7a45141b`. #294 owns immutable server-side
+slice is based on `origin/main` at `12885442`. #294 owns immutable server-side
 session membership. No FSRS or learning-policy changes belong here.
 
 ## Slice 1: action boundary and stale prepared cards
