@@ -14,4 +14,4 @@ End-to-end flow: scrape → ingest → store → serve → learn.
 Contracts:
 - Artifacts: current structured entries are JSON files under source-data directories such as `packages/ingestion/nl/vandale-nt2/data/words_content/`; preserve the `word_entries.raw` shape expected by UI helpers and ingestion.
 - Shared types: keep DB-adjacent code, ingestion, and UI expectations aligned.
-- Card rendering: active Dutch modes are implemented in `apps/ui/components/training/TrainingCard.tsx` and related helpers. The shared registry remains the intended extension point, not a complete runtime abstraction.
+- Card rendering: active Dutch training modes are rendered by the V2 session/card components under `apps/ui/components/training/v2/`. `TrainingCard.tsx` remains only as a compatibility path while issue #142 completes the caller inventory and removes the last legacy entry points. The shared registry remains the extension point for adding modes; it is not a fallback renderer.
