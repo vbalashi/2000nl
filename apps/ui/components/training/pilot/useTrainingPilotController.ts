@@ -34,6 +34,13 @@ type TrainingScope = {
   listType: WordListType | null;
 };
 
+export type TrainingSessionStartContext = {
+  languageCode: string;
+  scope: TrainingScope;
+  draft: TrainingSetupDraft;
+  focusFilter: TrainingFocusFilter;
+};
+
 type CommitPilotDraftParams = {
   userId?: string;
   languageCode: string;
@@ -54,7 +61,10 @@ type CommitPilotDraftParams = {
   }) => Promise<LoadNextTrainingTurnResult>;
   reportError: (error: string | null) => void;
   onPlanReady?: (plan: TrainingSessionPlan) => void;
-  onSessionReady?: (session: TrainingSession) => void;
+  onSessionReady?: (
+    session: TrainingSession,
+    context: TrainingSessionStartContext,
+  ) => void;
 };
 
 type PilotControllerParams = {
@@ -144,7 +154,12 @@ export function useCommitTrainingPilotDraft({
         reportError("training_plan_unavailable");
         return false;
       }
-      onSessionReady?.(session);
+      onSessionReady?.(session, {
+        languageCode,
+        scope,
+        draft,
+        focusFilter,
+      });
       onPlanReady?.(session);
 
       reportError(null);
@@ -312,6 +327,13 @@ export function useTrainingPilotController({
     [onCommitDraft, scenarioOptions, scenariosResolved],
   );
 
+  const continueSession = useCallback(() => {
+    setSessionGeneration((generation) => generation + 1);
+    setSurface("session");
+  }, []);
+  const resumeSession = useCallback(() => setSurface("session"), []);
+  const returnToToday = useCallback(() => setSurface("today"), []);
+
   return {
     surface,
     sessionGeneration,
@@ -321,11 +343,9 @@ export function useTrainingPilotController({
     sourceOptions,
     startPending,
     scenarioLoading: !scenariosResolved,
-    continueSession: () => {
-      setSessionGeneration((generation) => generation + 1);
-      setSurface("session");
-    },
-    returnToToday: () => setSurface("today"),
+    continueSession,
+    resumeSession,
+    returnToToday,
     startSession,
     retry: onRetry,
   };

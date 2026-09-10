@@ -11,9 +11,11 @@ import {
   createTrainingScenarioCatalog,
   fetchAvailableLearningLanguages,
   fetchTrainingFilterSources,
+  fetchTrainingSessionSnapshot,
   fetchStats,
   updateActiveTrainingScope,
   type TrainingScenarioCatalog,
+  type TrainingSessionSnapshot,
 } from "@/lib/trainingService";
 import type {
   ActiveTrainingScope,
@@ -76,6 +78,11 @@ import {
   useCommitTrainingPilotDraft,
   useTrainingPilotController,
 } from "./pilot/useTrainingPilotController";
+import {
+  clearTrainingSessionResume,
+  readTrainingSessionResume,
+  writeTrainingSessionResume,
+} from "@/lib/training/sessionResumeStore";
 import {
   TRAINING_HISTORY_DESTINATION,
   type AppDestination,
@@ -209,6 +216,19 @@ function TrainingScreenContent({
   const [trainingSessionId, setTrainingSessionId] = useState<string | null>(
     null,
   );
+  // The first card load waits for a possible server-backed session resume. A
+  // missing or stale resume record is resolved immediately and preserves the
+  // ordinary first-use flow.
+  const [sessionResumeResolved, setSessionResumeResolved] = useState(
+    () => !trainingTodaySetupEnabled,
+  );
+  const [sessionResumeError, setSessionResumeError] = useState(false);
+  const sessionResumeAttemptedRef = useRef(false);
+  const sessionResumeGenerationRef = useRef(0);
+  const componentMountedRef = useRef(true);
+  useEffect(() => () => {
+    componentMountedRef.current = false;
+  }, []);
   const {
     activeScenario,
     audioQuality,
@@ -549,13 +569,15 @@ function TrainingScreenContent({
       ? `${currentPresentationId}:${currentWord.id}:${currentMode}`
       : null;
   const beginSessionScopeChange = useCallback(() => {
+    sessionResumeGenerationRef.current += 1;
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
+    if (user?.id) clearTrainingSessionResume(user.id);
     setPresentationResetKey((key) => key + 1);
     setTrainingSessionId(null);
     setLatchedSessionPlan(null);
     setSessionPlannedTotal(null);
-  }, [beginTrainingTurnScopeChange, trainingScenarioCatalog]);
+  }, [beginTrainingTurnScopeChange, trainingScenarioCatalog, user?.id]);
 
   useEffect(() => {
     if (
@@ -571,6 +593,10 @@ function TrainingScreenContent({
 
   useEffect(() => {
     if (!activeTrainingScope) return;
+    // On a refresh, the server scope arrives before the persisted session
+    // record has been validated. Let resume apply its exact scope first;
+    // otherwise this hydration observer could clear the resumable session.
+    if (trainingTodaySetupEnabled && !sessionResumeResolved) return;
     if (lastAppliedActiveTrainingScopeRef.current === activeTrainingScope)
       return;
     lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
@@ -602,6 +628,8 @@ function TrainingScreenContent({
     setCardFilterPreference,
     setEnabledModes,
     setNewReviewRatio,
+    sessionResumeResolved,
+    trainingTodaySetupEnabled,
   ]);
 
   useEffect(() => {
@@ -648,6 +676,7 @@ function TrainingScreenContent({
 
   useEffect(() => {
     const nextKey = `${currentTrainingLanguage}|${enabledModesKey}`;
+    if (!sessionResumeResolved) return;
     if (lastReloadedLanguageModeScopeRef.current === nextKey) return;
     if (languageHydrationPendingRef.current) {
       if (!listHydrated) {
@@ -663,7 +692,13 @@ function TrainingScreenContent({
     if (!initialLoadDone.current) return;
     lastReloadedLanguageModeScopeRef.current = nextKey;
     void loadNextWord();
-  }, [currentTrainingLanguage, enabledModesKey, listHydrated, loadNextWord]);
+  }, [
+    currentTrainingLanguage,
+    enabledModesKey,
+    listHydrated,
+    loadNextWord,
+    sessionResumeResolved,
+  ]);
 
   useEffect(() => {
     onNavigationBlockedChange?.(navigationBlocked);
@@ -730,7 +765,12 @@ function TrainingScreenContent({
       !activeTrainingScope?.hasSavedScope &&
       activeScenario !== activeList.default_scenario_id,
     );
-    if (!user?.id || !listHydrated || awaitingDefaultScenario) {
+    if (
+      !user?.id ||
+      !listHydrated ||
+      awaitingDefaultScenario ||
+      !sessionResumeResolved
+    ) {
       return;
     }
     // Prevent double-loading due to loadNextWord changing when queueTurn changes
@@ -751,11 +791,17 @@ function TrainingScreenContent({
     user?.id,
     listHydrated,
     initialTransitionId,
+    sessionResumeResolved,
     wordId,
   ]);
 
   useEffect(() => {
-    if (!user?.id || !listHydrated || !initialLoadDone.current) {
+    if (
+      !user?.id ||
+      !listHydrated ||
+      !sessionResumeResolved ||
+      !initialLoadDone.current
+    ) {
       return;
     }
     if (lastAppliedTrainingFocusFilterKey.current === trainingFocusFilterKey) {
@@ -763,7 +809,13 @@ function TrainingScreenContent({
     }
     lastAppliedTrainingFocusFilterKey.current = trainingFocusFilterKey;
     void loadNextWord();
-  }, [listHydrated, loadNextWord, trainingFocusFilterKey, user?.id]);
+  }, [
+    listHydrated,
+    loadNextWord,
+    sessionResumeResolved,
+    trainingFocusFilterKey,
+    user?.id,
+  ]);
 
   const handleShowDetails = useCallback(
     (entry: DictionaryEntry) => {
@@ -1021,9 +1073,22 @@ function TrainingScreenContent({
     loadStats: (scope) => void loadStats(scope),
     loadWord: loadNextWord,
     reportError: setTrainingLoadError,
-    onSessionReady: (session) => {
+    onSessionReady: (session, context) => {
       setTrainingSessionId(session.sessionId);
       setLatchedSessionPlan(session);
+      writeTrainingSessionResume({
+        sessionId: session.sessionId,
+        userId: user.id,
+        languageCode: context.languageCode,
+        listId: context.scope.listId,
+        listType: context.scope.listType,
+        scenarioId: context.draft.scenarioId,
+        modes: context.draft.modes,
+        cardFilter: context.draft.cardFilter,
+        newReviewRatio: context.draft.newReviewRatio,
+        focusFilter: context.focusFilter,
+        sessionSize: context.draft.sessionSize ?? DEFAULT_SESSION_SIZE,
+      });
     },
   });
 
@@ -1094,10 +1159,165 @@ function TrainingScreenContent({
     loadTrainingScenarios: trainingScenarioCatalog.fetch,
     onCommitDraft: commitPilotSessionDraft,
     onRetry: async () => {
+      if (sessionResumeError) {
+        setTrainingLoadError(null);
+        setSessionResumeError(false);
+        sessionResumeAttemptedRef.current = false;
+        return;
+      }
       const recovery = await retryCardLoadFailure();
       if (recovery === "skipped") await loadNextWord();
     },
   });
+  const { resumeSession } = trainingPilot;
+
+  useEffect(() => {
+    if (
+      !trainingTodaySetupEnabled ||
+      !user?.id ||
+      !listHydrated ||
+      sessionResumeResolved ||
+      sessionResumeAttemptedRef.current
+    ) {
+      return;
+    }
+    sessionResumeAttemptedRef.current = true;
+    const resumeGeneration = sessionResumeGenerationRef.current;
+    const resolveResume = async () => {
+      const record = readTrainingSessionResume(user.id);
+      if (
+        !record ||
+        record.languageCode !== currentTrainingLanguage ||
+        (record.listId !== null &&
+          !availableLists.some(
+            (list) => list.id === record.listId && list.type === record.listType,
+          ))
+      ) {
+        if (record) clearTrainingSessionResume(user.id);
+        if (componentMountedRef.current) setSessionResumeResolved(true);
+        return;
+      }
+
+      let snapshot: TrainingSessionSnapshot | null;
+      try {
+        snapshot = await fetchTrainingSessionSnapshot(
+          user.id,
+          record.sessionId,
+        );
+      } catch {
+        if (
+          componentMountedRef.current &&
+          sessionResumeGenerationRef.current === resumeGeneration
+        ) {
+          setSessionResumeError(true);
+          setTrainingLoadError("training_resume_failed");
+        }
+        return;
+      }
+      if (
+        !componentMountedRef.current ||
+        sessionResumeGenerationRef.current !== resumeGeneration
+      ) {
+        return;
+      }
+      const hasRemainingMember = Boolean(
+        snapshot?.members.some(
+          (member) => !member.consumedAt && !member.unavailableAt,
+        ),
+      );
+      if (!snapshot || !hasRemainingMember) {
+        clearTrainingSessionResume(user.id);
+        setSessionResumeResolved(true);
+        return;
+      }
+
+      const activeList = record.listId
+        ? availableLists.find(
+            (list) => list.id === record.listId && list.type === record.listType,
+          )
+        : null;
+      if (activeList) applyListLocal(activeList);
+      // Scope hydration was intentionally deferred while resume was pending.
+      // Mark the observed server scope as handled before applying the persisted
+      // session context so it cannot trigger a second scope reset afterward.
+      if (activeTrainingScope) {
+        lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+      }
+      setActiveScenario(record.scenarioId, { persist: false });
+      setEnabledModes(record.modes, { persist: false });
+      setCardFilterPreference(record.cardFilter, { persist: false });
+      setNewReviewRatio(record.newReviewRatio, { persist: false });
+      setSessionSize(record.sessionSize);
+      setTrainingFocusFilter(record.focusFilter);
+      setTrainingSessionId(snapshot.sessionId);
+      setLatchedSessionPlan(snapshot);
+      setSessionPlannedTotal(snapshot.plannedTotal);
+      // These refs are initialized from the pre-hydration preferences. Align
+      // them with the resumed context so hydration does not trigger a second,
+      // unscoped load beside the session-bound request below.
+      lastReloadedLanguageModeScopeRef.current =
+        `${record.languageCode}|${record.modes.join("|")}`;
+      lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
+        record.focusFilter,
+      );
+
+      // Claim the initial-load slot before requesting the resumed member so
+      // the ordinary loader cannot race and create a different selection.
+      initialLoadDone.current = true;
+      const result = await loadNextWord({
+        scope: { listId: record.listId, listType: record.listType },
+        queueTurn: "new",
+        scenario: record.scenarioId,
+        cardFilter: record.cardFilter,
+        focusFilter: record.focusFilter,
+        trainingSessionId: snapshot.sessionId,
+      });
+      if (
+        !componentMountedRef.current ||
+        sessionResumeGenerationRef.current !== resumeGeneration
+      ) {
+        return;
+      }
+      if (result === "loaded") {
+        setSessionResumeResolved(true);
+        resumeSession();
+      } else if (
+        result === "error" ||
+        result === "statement-timeout" ||
+        result === "network-error" ||
+        result === "selection-error" ||
+        result === "request-cancelled" ||
+        result === "skipped"
+      ) {
+        setSessionResumeError(true);
+        setTrainingLoadError("training_resume_failed");
+      } else {
+        clearTrainingSessionResume(user.id);
+        setSessionResumeResolved(true);
+      }
+    };
+
+    void resolveResume();
+  }, [
+    activeTrainingScope,
+    applyListLocal,
+    availableLists,
+    componentMountedRef,
+    currentTrainingLanguage,
+    listHydrated,
+    loadNextWord,
+    sessionResumeResolved,
+    setActiveScenario,
+    setCardFilterPreference,
+    setEnabledModes,
+    setNewReviewRatio,
+    setTrainingLoadError,
+    setTrainingFocusFilter,
+    resumeSession,
+    sessionResumeError,
+    trainingTodaySetupEnabled,
+    user?.id,
+  ]);
   const previousTrainingSurfaceRef = useRef(trainingPilot.surface);
   const previousTrainingSessionGenerationRef = useRef(
     trainingPilot.sessionGeneration,
@@ -1163,10 +1383,10 @@ function TrainingScreenContent({
     scope: trainingSessionPlanScope,
   });
   useEffect(() => {
-    if (trainingSessionPlanSnapshot) {
+    if (trainingSessionPlanSnapshot && !trainingSessionId && !latchedSessionPlan) {
       setSessionPlannedTotal(trainingSessionPlanSnapshot.plan.plannedTotal);
     }
-  }, [trainingSessionPlanSnapshot]);
+  }, [latchedSessionPlan, trainingSessionId, trainingSessionPlanSnapshot]);
   const {
     presentation: sessionPresentation,
     isSubsequentCard: isSubsequentSessionCard,

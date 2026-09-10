@@ -20,6 +20,7 @@ const importService = async () => {
     fetchNextTrainingWord: service.fetchNextTrainingWord,
     fetchNextTrainingWordByScenario: service.fetchNextTrainingWordByScenario,
     fetchTrainingSessionPlan: service.fetchTrainingSessionPlan,
+    fetchTrainingSessionSnapshot: service.fetchTrainingSessionSnapshot,
     startTrainingSession: service.startTrainingSession,
     fetchScenarioStats: service.fetchScenarioStats,
     fetchTrainingScenarios: service.fetchTrainingScenarios,
@@ -182,6 +183,82 @@ describe("trainingService next-word selection", () => {
         cardFilter: "both",
       }),
     ).resolves.toBeNull();
+  });
+
+  test("fetchTrainingSessionSnapshot maps the latched members and normalizes enum size", async () => {
+    const { fetchTrainingSessionSnapshot } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        sessionId: "session-1",
+        sessionSize: "5",
+        plannedNew: 2,
+        plannedReview: 3,
+        plannedPractice: 0,
+        plannedTotal: 5,
+        plannedAt: "2026-09-10T12:00:00.000Z",
+        members: [
+          {
+            ordinal: 1,
+            entryId: "entry-1",
+            cardTypeId: "word-to-definition",
+            queueSource: "new",
+            consumedAt: null,
+            unavailableAt: null,
+          },
+          {
+            ordinal: 2,
+            entryId: "entry-2",
+            cardTypeId: "word-to-definition",
+            queueSource: "review",
+            consumedAt: "2026-09-10T12:01:00.000Z",
+            unavailableAt: null,
+          },
+        ],
+      },
+      error: null,
+    });
+
+    await expect(fetchTrainingSessionSnapshot("user-1", "session-1")).resolves.toEqual({
+      sessionId: "session-1",
+      sessionSize: 5,
+      plannedNew: 2,
+      plannedReview: 3,
+      plannedPractice: 0,
+      plannedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "entry-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+        {
+          ordinal: 2,
+          entryId: "entry-2",
+          cardTypeId: "word-to-definition",
+          queueSource: "review",
+          consumedAt: "2026-09-10T12:01:00.000Z",
+          unavailableAt: null,
+        },
+      ],
+    });
+    expect(rpc).toHaveBeenCalledWith("get_training_session_snapshot", {
+      p_user_id: "user-1",
+      p_session_id: "session-1",
+    });
+  });
+
+  test("fetchTrainingSessionSnapshot preserves transport errors for retryable resume", async () => {
+    const { fetchTrainingSessionSnapshot } = await importService();
+    const error = { message: "offline" };
+    rpc.mockResolvedValueOnce({ data: null, error });
+
+    await expect(
+      fetchTrainingSessionSnapshot("user-1", "session-1"),
+    ).rejects.toEqual(error);
   });
 
   test("fetchNextTrainingWord forwards modes, list scope, card filter, queue turn, and excludes", async () => {

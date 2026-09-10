@@ -432,6 +432,7 @@ const fetchTrainingFilterSources = vi.fn().mockResolvedValue([
     lastSeenAt: "2026-06-23T10:00:00Z",
   },
 ]);
+const fetchTrainingSessionSnapshot = vi.fn().mockResolvedValue(null);
 const isTrainingFocusFilterActive = vi.fn((filter) =>
   Boolean(
     filter &&
@@ -485,6 +486,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchNextTrainingWord: vi.fn().mockResolvedValue(mockWord),
   fetchNextTrainingWordByScenario,
   fetchTrainingFilterSources,
+  fetchTrainingSessionSnapshot,
   fetchTrainingScenarios,
   fetchTrainingSessionPlan,
   startTrainingSession,
@@ -735,6 +737,7 @@ const user: User = { id: "user-1", email: "user@test.com" } as User;
 const defaultMatchMedia = window.matchMedia;
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
   mockV2SessionState = "ready";
   mockV2AcceptanceGate = null;
@@ -1169,6 +1172,7 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
     expect(screen.queryByTestId("training-card-frame")).not.toBeInTheDocument();
     expect(screen.queryByText("Laden…")).not.toBeInTheDocument();
 
+    await waitFor(() => expect(resolveFirstCard).toEqual(expect.any(Function)));
     await act(async () => resolveFirstCard(mockWord));
 
     expect(
@@ -1188,6 +1192,60 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
     fetchNextTrainingWordByScenario.mockReset();
     fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
   }
+});
+
+test("resumes a still-active server session after refresh without starting another session", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-resume",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    }),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-resume",
+    sessionSize: 5,
+    plannedNew: 1,
+    plannedReview: 1,
+    plannedPractice: 0,
+    plannedTotal: 2,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await waitFor(() => expect(fetchTrainingSessionSnapshot).toHaveBeenCalled());
+  expect(
+    await screen.findByTestId("mock-training-sense-card-v2"),
+  ).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+    "user-1",
+    "session-resume",
+  );
+  expect(startTrainingSession).not.toHaveBeenCalled();
+  expect(
+    fetchNextTrainingWordByScenario.mock.calls.some((args) =>
+      args.some((value: unknown) => value === "session-resume"),
+    ),
+  ).toBe(true);
 });
 
 test("pilot Start persists the complete selection in one scope update", async () => {
