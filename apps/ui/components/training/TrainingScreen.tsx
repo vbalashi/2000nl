@@ -1101,14 +1101,18 @@ function TrainingScreenContent({
 
     // TrainingScreen owns queue reset at explicit session boundaries. The
     // presentation hook only derives progress and must never clear accepted
-    // cards when late hydration changes its scope key.
-    if (enteredSession || restartedSession) beginSessionScopeChange();
+    // cards when late hydration changes its scope key. Do not cancel a card
+    // load from this render-only lifecycle observation.
+    if (enteredSession || restartedSession) {
+      setPresentationResetKey((key) => key + 1);
+    }
   }, [
-    beginSessionScopeChange,
     trainingPilot.sessionGeneration,
     trainingPilot.surface,
   ]);
   const handleContinueTrainingSession = useCallback(() => {
+    resetFocusQueueState();
+    setPresentationResetKey((key) => key + 1);
     if (currentWord) {
       const transitionId = createTrainingTransitionId();
       beginTrainingUserTransition(transitionId, "continue");
@@ -1116,7 +1120,7 @@ function TrainingScreenContent({
       markTrainingEntryPresentationStarted(currentWord.id);
     }
     trainingPilot.continueSession();
-  }, [currentWord, trainingPilot]);
+  }, [currentWord, resetFocusQueueState, trainingPilot]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     trainingPilot.returnToToday();
