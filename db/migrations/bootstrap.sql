@@ -401,3 +401,4 @@
 -- Server-latched finite Training session membership
 \i db/migrations/133_latched_training_session_membership.sql
 \i db/migrations/134_session_scoped_card_selection.sql
+\i db/migrations/135_session_selector_exclusions.sql

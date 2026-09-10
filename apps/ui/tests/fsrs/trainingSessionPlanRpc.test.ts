@@ -249,6 +249,15 @@ describeDb("authoritative training session plan RPC", () => {
       expect(first.trainingSessionId).toBe(sessionId);
       expect(first.trainingSessionOrdinal).toBe(1);
 
+      const { rows: excludedRows } = await client.query(
+        `select get_next_training_session_card(
+          $1::uuid, $2::uuid, $3::text[]
+        ) as card`,
+        [userId, sessionId, [`${first.id}:${first.mode}`]],
+      );
+      expect(excludedRows[0].card.id).not.toBe(first.id);
+      expect(excludedRows[0].card.trainingSessionOrdinal).toBe(2);
+
       const { rows: members } = await client.query(
         `select entry_id as "entryId", card_type_id as "cardTypeId"
          from training_session_members

@@ -300,7 +300,11 @@ export const fetchNextTrainingWord = async (
   if (trainingSessionId) {
     const { data, error } = await supabase.rpc(
       "get_next_training_session_card",
-      { p_user_id: userId, p_session_id: trainingSessionId },
+      {
+        p_user_id: userId,
+        p_session_id: trainingSessionId,
+        p_exclude_card_keys: excludeCardKeys,
+      },
     );
     if (error) {
       console.error("Error fetching next session card via RPC", error);

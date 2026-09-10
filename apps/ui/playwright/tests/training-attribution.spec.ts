@@ -60,6 +60,22 @@ test("authenticated Training transition attribution harness", async ({
     await continueSession.click();
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
     if (!stableEvidence) fixture.beginMeasuredTransitions();
+    // The first card can become visible before the speculative next-card
+    // preparation has published its transition id. Wait for that preparation
+    // so the action loop measures the same user transition in both the hit and
+    // fallback paths instead of racing the background prefetch.
+    await page.waitForFunction(() => {
+      const capture = (
+        window as typeof window & {
+          __trainingAttributionCapture: {
+            timings: Array<{ stage: string; outcome: string }>;
+          };
+        }
+      ).__trainingAttributionCapture;
+      return capture.timings.some(
+        (event) => event.stage === "next-card.selection" && event.outcome === "ready",
+      );
+    });
 
     for (let index = 0; index < TRAINING_ATTRIBUTION_TRANSITIONS; index += 1) {
       const reveal = page.getByRole("button", {

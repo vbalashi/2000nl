@@ -1214,10 +1214,10 @@ test("resumes a still-active server session after refresh without starting anoth
   fetchTrainingSessionSnapshot.mockResolvedValueOnce({
     sessionId: "session-resume",
     sessionSize: 5,
-    plannedNew: 1,
-    plannedReview: 1,
+    plannedNew: 3,
+    plannedReview: 2,
     plannedPractice: 0,
-    plannedTotal: 2,
+    plannedTotal: 5,
     plannedAt: "2026-09-10T12:00:00.000Z",
     members: [
       {
@@ -1225,17 +1225,56 @@ test("resumes a still-active server session after refresh without starting anoth
         entryId: "word-1",
         cardTypeId: "word-to-definition",
         queueSource: "new",
+        consumedAt: "2026-09-10T12:01:00.000Z",
+        unavailableAt: null,
+      },
+      {
+        ordinal: 2,
+        entryId: "word-2",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: "2026-09-10T12:02:30.000Z",
+      },
+      {
+        ordinal: 3,
+        entryId: "word-3",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
+        consumedAt: "2026-09-10T12:03:00.000Z",
+        unavailableAt: null,
+      },
+      {
+        ordinal: 4,
+        entryId: "word-4",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+      {
+        ordinal: 5,
+        entryId: "word-5",
+        cardTypeId: "word-to-definition",
+        queueSource: "review",
         consumedAt: null,
         unavailableAt: null,
       },
     ],
   });
 
-  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  render(
+    <React.StrictMode>
+      <TrainingScreen user={user} trainingTodaySetupEnabled />
+    </React.StrictMode>,
+  );
   await waitFor(() => expect(fetchTrainingSessionSnapshot).toHaveBeenCalled());
   expect(
     await screen.findByTestId("mock-training-sense-card-v2"),
   ).toBeInTheDocument();
+  expect(await screen.findByTestId("training-session-position")).toHaveTextContent(
+    "4 / 5",
+  );
   expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
     "user-1",
     "session-resume",

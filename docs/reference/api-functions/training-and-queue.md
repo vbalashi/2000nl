@@ -57,6 +57,28 @@ Notes:
 - Legacy `get_next_word` overloads are dropped after migration `053_get_next_card_primary.sql`.
 - Selection is filtered through `can_access_dictionary(...)`; inaccessible private dictionaries are not schedulable.
 
+## `get_next_training_session_card`
+
+Read the first still-available member of a server-owned finite session. Reads
+are side-effect free: they never consume a member. The exclusion-aware form is
+used by speculative next-card preparation so the card currently on screen (or
+another card already accepted in this browser session) cannot be returned as
+the next member.
+
+```sql
+get_next_training_session_card(
+    p_user_id uuid,
+    p_session_id uuid,
+    p_exclude_card_keys text[]
+) RETURNS SETOF jsonb
+```
+
+`p_exclude_card_keys` uses the same `entry_id:card_type_id` identity as
+`get_next_card`. The two-argument form remains an explicit wrapper around the
+three-argument implementation for callers that do not need exclusions; it does
+not create a second selection algorithm. Membership is consumed only by the
+authenticated Platform action transaction, not by this selector.
+
 ## `get_training_session_plan`
 
 Return the authoritative exact-card work snapshot for one effective Training

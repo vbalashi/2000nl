@@ -134,6 +134,71 @@ describe("useTrainingSessionPresentation", () => {
     });
   });
 
+  test("starts resumed sessions at the first unconsumed ordinal", () => {
+    const view = renderHook(
+      ({ consumedCardCount, cardKey }) =>
+        useTrainingSessionPresentation({
+          surface: "session",
+          presentedCardKey: cardKey,
+          consumedCardCount,
+          sessionGeneration: 1,
+          scopeKey: "default",
+          planSnapshot: snapshot(5),
+          resetKey: 0,
+        }),
+      {
+        initialProps: {
+          consumedCardCount: 3,
+          cardKey: "entry-4:word-to-definition",
+        },
+      },
+    );
+
+    act(() => view.rerender({
+      consumedCardCount: 3,
+      cardKey: "entry-4:word-to-definition",
+    }));
+
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 4,
+      total: 5,
+      fraction: 4 / 5,
+    });
+  });
+
+  test("hydrates a resumed ordinal when the snapshot arrives after the session surface", () => {
+    const view = renderHook(
+      ({ consumedCardCount, cardKey }: { consumedCardCount: number; cardKey: string | null }) =>
+        useTrainingSessionPresentation({
+          surface: "session",
+          presentedCardKey: cardKey,
+          consumedCardCount,
+          sessionGeneration: 1,
+          scopeKey: "default",
+          planSnapshot: snapshot(5),
+          resetKey: 0,
+        }),
+      {
+        initialProps: { consumedCardCount: 0, cardKey: null as string | null },
+      },
+    );
+
+    act(() =>
+      view.rerender({
+        consumedCardCount: 3,
+        cardKey: "entry-4:word-to-definition",
+      }),
+    );
+
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 4,
+      total: 5,
+      fraction: 4 / 5,
+    });
+  });
+
   test("never decreases a plan mid-session and resets it for an exact scope or session restart", () => {
     const view = renderHook(
       ({

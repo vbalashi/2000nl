@@ -171,10 +171,13 @@ export async function setupAuthenticatedTrainingAttributionPage(
   let lifecycleScenariosEnabled = false;
   let backgroundScenarioIndex = 0;
   let expectOnDemandSelection = false;
+  let sessionOnDemandReady = false;
   let acceptedScenario: "hit" | "miss" | "fallback" = "hit";
   let slowEligibleCount = 0;
   const schedulerRequests: Record<string, unknown>[] = [];
   const sessionRequests: Record<string, unknown>[] = [];
+  const sessionMembers = entries.slice(0, 50);
+  const consumedSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
   const scenarioRequests: Record<string, unknown>[] = [];
   const failWarmupLookupsForEntries = new Set<string>();
@@ -187,6 +190,21 @@ export async function setupAuthenticatedTrainingAttributionPage(
     ? buildTrainingVisualFixtureBundle(options.visualProfile, entries)
     : null;
   const schedulerOutcomes = [...(options.schedulerOutcomes ?? [])];
+
+  const consumeSessionMember = (body: Record<string, unknown>) => {
+    const sessionId = body.trainingSessionId;
+    const target = body.target;
+    const entryId =
+      target && typeof target === "object" && !Array.isArray(target)
+        ? (target as Record<string, unknown>).entryId
+        : undefined;
+    if (
+      sessionId === "training-session-fixture" &&
+      typeof entryId === "string"
+    ) {
+      consumedSessionEntryIds.add(entryId);
+    }
+  };
 
   const correlatedHeaders = (surface: string) => {
     requestSequence += 1;
@@ -321,6 +339,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
       },
       "action",
     );
+    consumeSessionMember(body);
+    sessionOnDemandReady = true;
   });
 
   await page.route("**/api/platform/v2/actions/reconcile", async (route) => {
@@ -354,6 +374,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
       },
       "action-reconcile",
     );
+    consumeSessionMember(pendingActionReceipt);
+    sessionOnDemandReady = true;
     pendingActionReceipt = null;
   });
 
@@ -377,6 +399,8 @@ export async function setupAuthenticatedTrainingAttributionPage(
     const body = request.postDataJSON?.() ?? {};
 
     if (pathname.endsWith("/rpc/start_training_session")) {
+      consumedSessionEntryIds.clear();
+      sessionOnDemandReady = false;
       await fulfillJson(
         route,
         visualFixture
@@ -444,6 +468,16 @@ export async function setupAuthenticatedTrainingAttributionPage(
       const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
         ? body.p_exclude_card_keys
         : [];
+      if (
+        options.forceOnDemandLookupEveryAction &&
+        excludedCardKeys.length > 0
+      ) {
+        if (!sessionOnDemandReady) {
+          await fulfillJson(route, [], "scheduler-prefetch-miss");
+          return;
+        }
+        sessionOnDemandReady = false;
+      }
       if (lifecycleScenariosEnabled && excludedCardKeys.length > 0) {
         if (expectOnDemandSelection) {
           expectOnDemandSelection = false;
@@ -457,11 +491,6 @@ export async function setupAuthenticatedTrainingAttributionPage(
             [buildSchedulerEntry(entries[nextEntryIndex]!)],
             "scheduler-fallback",
           );
-          return;
-        }
-        if (options.forceOnDemandLookupEveryAction) {
-          expectOnDemandSelection = true;
-          await fulfillJson(route, [], "scheduler-prefetch-miss");
           return;
         }
         backgroundScenarioIndex += 1;
@@ -499,13 +528,34 @@ export async function setupAuthenticatedTrainingAttributionPage(
       const invalidEntry = entries.find((entry) => invalidEntryIds.has(entry.id));
       const isInvalidPreparedCandidate =
         Boolean(invalidEntry) && sessionRequests.length >= 2 && sessionRequests.length <= 3;
+      const excludedCardKeys = Array.isArray(body.p_exclude_card_keys)
+        ? body.p_exclude_card_keys.filter(
+            (value: unknown): value is string => typeof value === "string",
+          )
+        : [];
+      if (
+        options.forceOnDemandLookupEveryAction &&
+        excludedCardKeys.length > 0 &&
+        !sessionOnDemandReady
+      ) {
+        await fulfillJson(route, [], "session-prefetch-miss");
+        return;
+      }
+      if (options.forceOnDemandLookupEveryAction && excludedCardKeys.length > 0) {
+        sessionOnDemandReady = false;
+      }
       const entry = isInvalidPreparedCandidate
         ? invalidEntry!
-        : entries[Math.min(nextEntryIndex, entries.length - 1)]!;
-      if (!isInvalidPreparedCandidate) {
-        nextEntryIndex = Math.min(nextEntryIndex + 1, entries.length - 1);
-      }
-      await fulfillJson(route, buildSchedulerEntry(entry), "session-card");
+        : sessionMembers.find(
+            (candidate) =>
+              !consumedSessionEntryIds.has(candidate.id) &&
+              !excludedCardKeys.includes(`${candidate.id}:word-to-definition`),
+          );
+      await fulfillJson(
+        route,
+        entry ? buildSchedulerEntry(entry) : [],
+        "session-card",
+      );
       return;
     }
 
