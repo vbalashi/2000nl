@@ -13,7 +13,7 @@ import { EffectiveTrainingScopeSummary } from "./EffectiveTrainingScopeSummary";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 
-type Props = {
+export type FooterStatsProps = {
   stats: DetailedStats;
   /** @deprecated Use activeScenario instead */
   enabledModes: TrainingMode[];
@@ -135,7 +135,7 @@ export function FooterStats({
   inlineControlsEnabled = true,
   compact = false,
   interfaceLanguage = "nl",
-}: Props) {
+}: FooterStatsProps) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
   const text = footerCopy[interfaceLanguage];

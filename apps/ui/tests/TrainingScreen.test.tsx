@@ -16,7 +16,10 @@ import type {
   TrainingScenario,
 } from "@/lib/types";
 import type { AppDestination } from "@/components/navigation/appDestination";
-import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
+import { TrainingSessionSurface } from "@/components/training/v2/TrainingSessionSurface";
+import type { TrainingSessionNoticeInput } from "@/components/training/v2/TrainingSessionSurface";
+import type { TrainingSessionChromeProps } from "@/components/training/v2/TrainingSessionChrome";
+import type { FooterStatsProps } from "@/components/training/FooterStats";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
 // Screen integration tests exercise the real V2 transition owner. The card
@@ -546,9 +549,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     onRetryAlternative,
     onProgressActionAccepted,
     onProgressActionPendingChange,
-    chrome,
-    footer,
-    notice,
+    sessionChrome,
+    sessionFooter,
+    sessionNotice,
     interactionDisabled,
   }: {
     word: { headword: string };
@@ -561,9 +564,9 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
       actionId: string;
     }) => Promise<unknown>;
     onProgressActionPendingChange?: (pending: boolean) => void;
-    chrome: React.ReactNode;
-    footer: React.ReactNode;
-    notice?: React.ReactNode;
+    sessionChrome?: TrainingSessionChromeProps | null;
+    sessionFooter: FooterStatsProps;
+    sessionNotice?: TrainingSessionNoticeInput | null;
     interactionDisabled?: boolean;
   }) => {
     const stageRef = React.useRef<HTMLDivElement>(null);
@@ -581,11 +584,11 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     }, [failed, onLoadFailure]);
     if (failed) {
       return (
-        <TrainingSessionV2Layout
+        <TrainingSessionSurface
           phase="failure"
-          chrome={chrome}
-          footer={footer}
-          notice={notice}
+          chrome={sessionChrome}
+          footer={sessionFooter}
+          notice={sessionNotice}
         >
           <div role="alert" data-training-v2-state="model-invalid">
             This training card could not be loaded.
@@ -596,16 +599,16 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
               Try again
             </button>
           </div>
-        </TrainingSessionV2Layout>
+        </TrainingSessionSurface>
       );
     }
     if (loading) {
       return (
-        <TrainingSessionV2Layout
+        <TrainingSessionSurface
           phase="loading"
-          chrome={chrome}
-          footer={footer}
-          notice={notice}
+          chrome={sessionChrome}
+          footer={sessionFooter}
+          notice={sessionNotice}
         >
           <div
             role="status"
@@ -614,15 +617,15 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           >
             Loading training card
           </div>
-        </TrainingSessionV2Layout>
+        </TrainingSessionSurface>
       );
     }
     return (
-      <TrainingSessionV2Layout
+      <TrainingSessionSurface
         phase="ready"
-        chrome={chrome}
-        footer={footer}
-        notice={notice}
+        chrome={sessionChrome}
+        footer={sessionFooter}
+        notice={sessionNotice}
       >
         <div
           ref={stageRef}
@@ -667,7 +670,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
             Mock V2 grade
           </button>
         </div>
-      </TrainingSessionV2Layout>
+      </TrainingSessionSurface>
     );
   },
   TrainingKnownUndoNotice: () => null,

@@ -41,10 +41,13 @@ import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
 } from "./pendingKnownUndoStore";
+import { resolveTrainingSessionLayoutPhase } from "./TrainingSessionV2Layout";
 import {
-  resolveTrainingSessionLayoutPhase,
-  TrainingSessionV2Layout,
-} from "./TrainingSessionV2Layout";
+  TrainingSessionSurface,
+  type TrainingSessionNoticeInput,
+} from "./TrainingSessionSurface";
+import type { FooterStatsProps } from "../FooterStats";
+import type { TrainingSessionChromeProps } from "./TrainingSessionChrome";
 import { useTrainingCardSwipeSurface } from "./useTrainingCardSwipeSurface";
 import type { TrainingCardSwipeCommitOutcome } from "./useTrainingCardSwipeSurface";
 
@@ -59,9 +62,9 @@ type Props = {
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   interfaceLanguage: OnboardingLanguage;
-  chrome: React.ReactNode;
-  footer: React.ReactNode;
-  notice?: React.ReactNode;
+  sessionChrome?: TrainingSessionChromeProps | null;
+  sessionFooter: FooterStatsProps;
+  sessionNotice?: TrainingSessionNoticeInput | null;
   interactionDisabled?: boolean;
   focusOnPresentation?: boolean;
   onPlayResolvedAudio?: (url: string, label: string) => void;
@@ -109,9 +112,9 @@ export function TrainingSenseCardV2Session({
   contentLanguageCode,
   translationTargetLanguageCode,
   interfaceLanguage,
-  chrome,
-  footer,
-  notice,
+  sessionChrome,
+  sessionFooter,
+  sessionNotice,
   interactionDisabled = false,
   focusOnPresentation = false,
   onPlayResolvedAudio,
@@ -519,16 +522,16 @@ export function TrainingSenseCardV2Session({
     </span>
   );
   const renderLayout = (content: React.ReactNode) => (
-    <TrainingSessionV2Layout
+    <TrainingSessionSurface
       phase={resolveTrainingSessionLayoutPhase(sessionState)}
-      chrome={chrome}
-      footer={footer}
-      notice={notice}
+      chrome={sessionChrome}
+      footer={sessionFooter}
+      notice={sessionNotice}
       readySurface={swipeSurface}
     >
       {cardAnnouncementRegion}
       {content}
-    </TrainingSessionV2Layout>
+    </TrainingSessionSurface>
   );
 
   if (sessionState === "loading") {
