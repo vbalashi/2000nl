@@ -58,6 +58,7 @@ import { TrainingDetailsDrawer } from "./TrainingDetailsDrawer";
 import { TrainingMoreSenseCardV2Session } from "./library-v2/LibrarySenseCardV2Session";
 import { FooterStats } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
+import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { LanguageSelectionModal } from "./LanguageSelectionModal";
 import { AppFrame } from "@/components/navigation/AppFrame";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
@@ -196,9 +197,8 @@ function TrainingScreenContent({
   const trainingScenarioCatalog = trainingScenarioCatalogRef.current;
   const { wordId, devMode } = useCardParams();
   const [currentWord, setCurrentWord] = useState<TrainingWord | null>(null);
-  const [sessionSize, setSessionSize] = useState<TrainingSessionSize>(
-    DEFAULT_SESSION_SIZE,
-  );
+  const [sessionSize, setSessionSize] =
+    useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
     null,
   );
@@ -307,10 +307,7 @@ function TrainingScreenContent({
   // Fixed Y value for HERHALING counter - set once at session start, never changes
   const [initialReviewDue, setInitialReviewDue] = useState<number | null>(null);
   const [showHotkeys, setShowHotkeys] = useState(false);
-  const {
-    playAudio,
-    preloadAudioForWord,
-  } = useTrainingAudio(audioQuality);
+  const { playAudio, preloadAudioForWord } = useTrainingAudio(audioQuality);
 
   const {
     handleJoyrideCallback,
@@ -339,7 +336,6 @@ function TrainingScreenContent({
       currentWord.isFirstEncounter,
     );
   }, [currentWord, currentWord?.id]);
-
 
   const trainingFocusFilterActive =
     isTrainingFocusFilterActive(trainingFocusFilter);
@@ -397,9 +393,9 @@ function TrainingScreenContent({
   const currentMode: TrainingMode =
     currentWord?.mode ?? enabledModes[0] ?? "word-to-definition";
   const v2SessionMode =
-    (currentMode === "word-to-definition" ||
-      currentMode === "definition-to-word" ||
-      currentMode === "listen-recognize")
+    currentMode === "word-to-definition" ||
+    currentMode === "definition-to-word" ||
+    currentMode === "listen-recognize"
       ? currentMode
       : null;
   const v2SessionOwned = Boolean(v2SessionMode && currentWord);
@@ -867,6 +863,60 @@ function TrainingScreenContent({
       onRequestDestination("library");
     }
   }, [navigationBlocked, onRequestDestination]);
+
+  // Keep the navigation-oriented shortcuts available in the V2 session.
+  // Card grading/reveal shortcuts belong to the V2 card itself; this boundary
+  // only owns actions that remain valid for the whole Training surface.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (areTrainingHotkeysSuspended() || navigationBlocked) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (
+        key === "s" &&
+        !event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        openSearch();
+        return;
+      }
+      if (
+        key === "i" &&
+        event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        handleShowCurrentWordDetails();
+        return;
+      }
+      if (
+        event.key === "?" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        setShowHotkeys(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleShowCurrentWordDetails, navigationBlocked, openSearch]);
 
   const openAppSettings = useCallback(() => {
     if (!navigationBlocked) {

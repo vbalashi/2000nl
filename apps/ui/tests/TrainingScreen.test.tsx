@@ -19,10 +19,10 @@ import type { AppDestination } from "@/components/navigation/appDestination";
 import { TrainingSessionV2Layout } from "@/components/training/v2/TrainingSessionV2Layout";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 
-// This file still contains broad shell/library scenarios whose assertions are
-// tied to the retired V1 card controls. They remain visible as skipped cases
-// until the dedicated V2 fixtures are re-baselined; the active V2 transition
-// and loading cases below continue to run in this slice.
+// A small set of historical tests below still describe controls that were
+// intentionally removed with the V1 renderer. They remain explicit skips
+// until equivalent V2 fixtures are added; all active shell, lookup, loading,
+// transition, and recovery cases exercise the current V2 surface.
 
 function getPrimaryNavigation() {
   return screen.getByRole("navigation", { name: "Primary" });
@@ -789,8 +789,12 @@ test("search action opens the dedicated dictionary search surface", async () => 
   expect(screen.getByText(/Zoekt in VanDale woordenboek/i)).toBeInTheDocument();
   expect(screen.getByText("Typ een woord om te zoeken")).toBeInTheDocument();
   expect(screen.getByLabelText(/alleen deze lijst/i)).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Zoeken" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Lijsten" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Zoeken" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Lijsten" }),
+  ).not.toBeInTheDocument();
   expect(screen.queryByText(/Alleen actieve lijst/i)).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /wis zoekopdracht/i }),
@@ -916,7 +920,7 @@ test("V2 answer-card overflow opens the retained details surface", async () => {
   }
 });
 
-test.skip("shell Library replaces the visible destination without remounting the current Training turn", async () => {
+test("shell Library replaces the visible destination without remounting the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] =
       React.useState<AppDestination>("training");
@@ -932,8 +936,6 @@ test.skip("shell Library replaces the visible destination without remounting the
   render(<Harness />);
 
   await screen.findByRole("heading", { name: "huis" });
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
   fireEvent.keyDown(window, { key: "s" });
 
@@ -953,13 +955,13 @@ test.skip("shell Library replaces the visible destination without remounting the
   );
 
   expect(screen.getByRole("heading", { name: "huis" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
   expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
     trainingFetchCount,
   );
 });
 
-test.skip("Statistics and Settings destinations preserve the revealed Training turn", async () => {
+test("Statistics and Settings destinations preserve the current Training turn", async () => {
   function Harness() {
     const [destination, setDestination] =
       React.useState<AppDestination>("training");
@@ -975,8 +977,6 @@ test.skip("Statistics and Settings destinations preserve the revealed Training t
   render(<Harness />);
 
   await screen.findByRole("heading", { name: "huis" });
-  fireEvent.keyDown(window, { key: " " });
-  await screen.findByRole("button", { name: /opnieuw/i });
   const trainingFetchCount = fetchNextTrainingWordByScenario.mock.calls.length;
 
   fireEvent.click(
@@ -993,7 +993,7 @@ test.skip("Statistics and Settings destinations preserve the revealed Training t
       name: "Training",
     }),
   );
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
 
   fireEvent.click(screen.getByLabelText("Settings"));
   expect(
@@ -1006,7 +1006,7 @@ test.skip("Statistics and Settings destinations preserve the revealed Training t
       name: "Training",
     }),
   );
-  expect(screen.getByRole("button", { name: /opnieuw/i })).toBeInTheDocument();
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toBeInTheDocument();
   expect(fetchNextTrainingWordByScenario).toHaveBeenCalledTimes(
     trainingFetchCount,
   );
@@ -1406,7 +1406,7 @@ test.skip("training focus filters pass date and source scope to card selection",
   );
 });
 
-test.skip("dictionary search scope changes lookup language without changing training", async () => {
+test("dictionary search scope changes lookup language without changing training", async () => {
   updateActiveTrainingScope.mockClear();
   searchDictionaryGroups.mockClear();
 
@@ -1436,7 +1436,7 @@ test.skip("dictionary search scope changes lookup language without changing trai
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
 });
 
-test.skip("dictionary search can create a private user dictionary entry", async () => {
+test("dictionary search can create a private user dictionary entry", async () => {
   fetchAvailableLists.mockResolvedValue([defaultAvailableList, userOwnedList]);
   createUserDictionaryEntry.mockClear();
   addWordsToUserList.mockClear();
@@ -1526,7 +1526,7 @@ test.skip("dictionary search can create a private user dictionary entry", async 
   }
 });
 
-test.skip("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
+test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
   searchDictionaryGroups.mockImplementation(
     async ({ query }: { query?: string }) =>
       query === "boom"
@@ -1559,7 +1559,7 @@ test.skip("dictionary lookup preserves an open entry with an explicit stale-deta
   }
 });
 
-test.skip("dictionary lookup ignores stale responses from older queries", async () => {
+test("dictionary lookup ignores stale responses from older queries", async () => {
   const deferred = <T,>() => {
     let resolve!: (value: T) => void;
     const promise = new Promise<T>((done) => {
@@ -1631,7 +1631,7 @@ test.skip("dictionary lookup ignores stale responses from older queries", async 
   }
 });
 
-test.skip("dictionary lookup preserves server Headword Group order", async () => {
+test("dictionary lookup preserves server Headword Group order", async () => {
   searchDictionaryGroups.mockResolvedValueOnce({
     items: [
       {
@@ -2376,9 +2376,7 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     expect(
       screen.queryByRole("button", { name: "Help" }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getAllByRole("button", { name: "History" }),
-    ).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "History" })).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Account" }),
     ).not.toBeInTheDocument();
@@ -2614,7 +2612,9 @@ test("keeps the V2 loading surface when the pilot has no current card yet", asyn
   try {
     render(<TrainingScreen user={user} trainingTodaySetupEnabled={false} />);
 
-    expect(await screen.findByTestId("training-v2-loading")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("training-v2-loading"),
+    ).toBeInTheDocument();
     expect(
       screen.queryByTestId("training-card-scroll-region"),
     ).toBeInTheDocument();
