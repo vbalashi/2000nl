@@ -180,7 +180,7 @@ CREATE OR REPLACE FUNCTION public.get_next_training_session_card(
 )
 RETURNS SETOF jsonb
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$
@@ -206,8 +206,9 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Walk the latched order. Permanent access/projection failures are retired
-  -- in the same call, so a session cannot stall forever on one bad member.
+  -- Walk the latched order. A permanent access/projection failure is returned
+  -- as a diagnostic for the explicit mutation RPC. The selector remains a
+  -- read-only lookup: it never changes membership or session completion.
   FOR v_member IN
     SELECT member.*
     FROM public.training_session_members member
@@ -225,16 +226,36 @@ BEGIN
       SELECT 1
       FROM public.word_entries entry
       WHERE entry.id = v_member.entry_id
+    ) THEN
+      RETURN NEXT jsonb_build_object(
+        'trainingSessionUnavailable', true,
+        'trainingSessionId', v_session.id,
+        'trainingSessionOrdinal', v_member.ordinal,
+        'entryId', v_member.entry_id,
+        'cardTypeId', v_member.card_type_id,
+        'reason', 'entry-not-found'
+      );
+      RETURN;
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.word_entries entry
+      WHERE entry.id = v_member.entry_id
         AND (
           entry.dictionary_id IS NULL
           OR public.can_access_dictionary(p_user_id, entry.dictionary_id)
         )
     ) THEN
-      PERFORM private.mark_training_session_member_unavailable(
-        p_user_id, p_session_id, v_member.entry_id, v_member.card_type_id,
-        'dictionary-access-revoked', true
+      RETURN NEXT jsonb_build_object(
+        'trainingSessionUnavailable', true,
+        'trainingSessionId', v_session.id,
+        'trainingSessionOrdinal', v_member.ordinal,
+        'entryId', v_member.entry_id,
+        'cardTypeId', v_member.card_type_id,
+        'reason', 'dictionary-access-revoked'
       );
-      CONTINUE;
+      RETURN;
     END IF;
 
     v_filter := COALESCE(v_session.training_filter, '{}'::jsonb);
@@ -257,11 +278,15 @@ BEGIN
       0
     );
     IF v_card IS NULL THEN
-      PERFORM private.mark_training_session_member_unavailable(
-        p_user_id, p_session_id, v_member.entry_id, v_member.card_type_id,
-        'projection-missing', true
+      RETURN NEXT jsonb_build_object(
+        'trainingSessionUnavailable', true,
+        'trainingSessionId', v_session.id,
+        'trainingSessionOrdinal', v_member.ordinal,
+        'entryId', v_member.entry_id,
+        'cardTypeId', v_member.card_type_id,
+        'reason', 'projection-missing'
       );
-      CONTINUE;
+      RETURN;
     END IF;
 
     RETURN NEXT v_card || jsonb_build_object(
@@ -286,7 +311,7 @@ CREATE OR REPLACE FUNCTION public.get_next_training_session_card(
 )
 RETURNS SETOF jsonb
 LANGUAGE sql
-VOLATILE
+STABLE
 SECURITY DEFINER
 SET search_path = public, private, pg_temp
 AS $$

@@ -13,8 +13,8 @@ BEGIN
   SELECT proc.provolatile INTO selector_volatility
   FROM pg_proc proc
   WHERE proc.oid = 'public.get_next_training_session_card(uuid,uuid,text[])'::regprocedure;
-  IF selector_volatility IS DISTINCT FROM 'v' THEN
-    RAISE EXCEPTION 'unavailable-member selector must be VOLATILE';
+  IF selector_volatility IS DISTINCT FROM 's' THEN
+    RAISE EXCEPTION 'unavailable-member selector must be STABLE';
   END IF;
 
   IF NOT has_function_privilege(

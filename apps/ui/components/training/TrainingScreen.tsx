@@ -1206,6 +1206,11 @@ function TrainingScreenContent({
         return;
       }
       const recovery = await retryCardLoadFailure();
+      if (recovery === "session-complete" && user?.id) {
+        // A confirmed empty session is terminal. Remove only this resumable
+        // record; transient retry outcomes keep it intact for the next retry.
+        clearTrainingSessionResume(user.id);
+      }
       if (recovery === "skipped") await loadNextWord();
     },
   });

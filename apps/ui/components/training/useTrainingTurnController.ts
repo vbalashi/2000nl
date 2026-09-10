@@ -26,10 +26,14 @@ import type {
   TrainingWord,
   WordListType,
 } from "@/lib/types";
-import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
+import {
+  isTrainingSessionUnavailableError,
+  type TrainingSessionUnavailableReason,
+} from "@/lib/training/selectionService";
 import {
   usePreparedNextTrainingTurn,
   type PreparedNextTrainingTurn,
+  type TrainingWarmResult,
 } from "./v2/usePreparedNextTrainingTurn";
 import type { TrainingCardSwipeCommitOutcome } from "./v2/useTrainingCardSwipeSurface";
 import type {
@@ -103,6 +107,12 @@ const unavailableReasonForFailure = (
       return null;
   }
 };
+
+const isTrainingWarmReady = (result: TrainingWarmResult): boolean =>
+  result === true;
+
+const trainingWarmFailure = (result: TrainingWarmResult): string =>
+  typeof result === "object" ? result.unavailableReason : "platform-v2-lookup-failed";
 
 export function useTrainingTurnController(input: Inputs) {
   const {
@@ -297,7 +307,7 @@ export function useTrainingTurnController(input: Inputs) {
   );
 
   const reportCardLoadFailure = useCallback(
-    (word: TrainingWord, failure: string) => {
+    async (word: TrainingWord, failure: string): Promise<boolean> => {
       const mode = word.mode ?? enabledModes[0] ?? "word-to-definition";
       const cardKey = getTrainingCardKey(word, mode);
       const reason = unavailableReasonForFailure(failure);
@@ -307,12 +317,14 @@ export function useTrainingTurnController(input: Inputs) {
         (cardFailureRef.current.reason === null ||
           unavailableMarkPromiseRef.current !== null)
       ) {
-        return;
+        return unavailableMarkPromiseRef.current
+          ? unavailableMarkPromiseRef.current
+          : false;
       }
       cardFailureRef.current = { cardKey, word, failure, reason };
       if (!reason || !trainingSessionId || !selection.markUnavailable) {
         if (reason) rememberRejectedCard(word, failure);
-        return;
+        return false;
       }
 
       const markPromise = selection
@@ -323,10 +335,10 @@ export function useTrainingTurnController(input: Inputs) {
         })
         .catch(() => false);
       unavailableMarkPromiseRef.current = markPromise;
-      void markPromise.then((marked) => {
-        if (marked) rememberRejectedCard(word, failure);
-        else unavailableMarkPromiseRef.current = null;
-      });
+      const marked = await markPromise;
+      if (marked) rememberRejectedCard(word, failure);
+      else unavailableMarkPromiseRef.current = null;
+      return marked;
     },
     [enabledModes, rememberRejectedCard, selection, trainingSessionId],
   );
@@ -374,7 +386,7 @@ export function useTrainingTurnController(input: Inputs) {
               preparedOverrideWord,
               mode,
             );
-            const overrideReady = await warmWord(
+            const overrideWarmResult = await warmWord(
               preparedOverrideWord,
               undefined,
               transitionId,
@@ -383,10 +395,10 @@ export function useTrainingTurnController(input: Inputs) {
               finishTrainingUserTransition(transitionId, "cancelled");
               return "skipped";
             }
-            if (!overrideReady) {
-              reportCardLoadFailure(
+            if (!isTrainingWarmReady(overrideWarmResult)) {
+              await reportCardLoadFailure(
                 preparedOverrideWord,
-                "platform-v2-lookup-failed",
+                trainingWarmFailure(overrideWarmResult),
               );
               nextCardOverrideActiveKeyRef.current = null;
               setNextCardOverrideNotice(
@@ -410,28 +422,52 @@ export function useTrainingTurnController(input: Inputs) {
           );
         }
 
-        const selectForQueueTurn = (selectionQueueTurn: QueueTurn) =>
-          measureTrainingTransitionStage(
-            transitionId,
-            "next-card.selection",
-            () =>
-              selection
-                .selectNext({
-                  ...request,
-                  excludeWordIds,
-                  excludeCardKeys: [
-                    ...new Set([
-                      ...rejectedCardKeysRef.current,
-                      ...(request.excludeCardKeys ?? []),
-                    ]),
-                  ],
-                  queueTurn: selectionQueueTurn,
-                })
-                .catch((cause) => {
-                  throw normalizeTrainingSelectionFailure(cause);
-                }),
-            (selected) => (selected ? "ready" : "empty"),
-          );
+        const selectForQueueTurn = async (selectionQueueTurn: QueueTurn) => {
+          const selectionRequest = {
+            ...request,
+            excludeWordIds,
+            excludeCardKeys: [
+              ...new Set([
+                ...rejectedCardKeysRef.current,
+                ...(request.excludeCardKeys ?? []),
+              ]),
+            ],
+            queueTurn: selectionQueueTurn,
+          };
+
+          // The session selector is read-only. If it reports a permanent
+          // access/projection failure, retire that member through the explicit
+          // mutation boundary and ask the selector for the next member.
+          for (let attempt = 0; attempt < 64; attempt += 1) {
+            try {
+              return await measureTrainingTransitionStage(
+                transitionId,
+                "next-card.selection",
+                () => selection.selectNext(selectionRequest),
+                (selected) => (selected ? "ready" : "empty"),
+              );
+            } catch (cause) {
+              if (!isTrainingSessionUnavailableError(cause)) {
+                throw normalizeTrainingSelectionFailure(cause);
+              }
+              const diagnostic = cause.diagnostic;
+              if (
+                !trainingSessionId ||
+                !selection.markUnavailable ||
+                diagnostic.trainingSessionId !== trainingSessionId
+              ) {
+                throw cause;
+              }
+              const marked = await selection.markUnavailable({
+                entryId: diagnostic.entryId,
+                cardTypeId: diagnostic.cardTypeId,
+                reason: diagnostic.reason,
+              });
+              if (!marked) throw cause;
+            }
+          }
+          throw new Error("training_session_unavailable_reconciliation_limit");
+        };
         const primaryQueueTurn = requestedQueueTurn ?? queueTurn;
         let nextWord = await selectForQueueTurn(primaryQueueTurn);
         if (generation !== loadGenerationRef.current) {
@@ -456,13 +492,16 @@ export function useTrainingTurnController(input: Inputs) {
           return emptyOutcome;
         }
 
-        const ready = await warmWord(nextWord, undefined, transitionId);
+        const warmResult = await warmWord(nextWord, undefined, transitionId);
         if (generation !== loadGenerationRef.current) {
           finishTrainingUserTransition(transitionId, "cancelled");
           return "skipped";
         }
-        if (!ready) {
-          reportCardLoadFailure(nextWord, "platform-v2-lookup-failed");
+        if (!isTrainingWarmReady(warmResult)) {
+          await reportCardLoadFailure(
+            nextWord,
+            trainingWarmFailure(warmResult),
+          );
           setLoadError("platform_v2_lookup_failed");
           finishTrainingUserTransition(
             transitionId,
@@ -502,6 +541,7 @@ export function useTrainingTurnController(input: Inputs) {
       recoverLoadErrors,
       reportCardLoadFailure,
       selection,
+      trainingSessionId,
       warmWord,
     ],
   );
@@ -654,7 +694,7 @@ export function useTrainingTurnController(input: Inputs) {
 
       let prefetched = transition.prefetched;
       if (prefetched?.v2Ready) {
-        const ready = await prefetched.v2Ready.catch(() => false);
+        const warmResult = await prefetched.v2Ready.catch(() => false);
         if (transition.loadGeneration !== loadGenerationRef.current) {
           // Scope changes/reset invalidate a detached prefetch just as they
           // invalidate an on-demand selection. The accepted mutation remains
@@ -662,13 +702,17 @@ export function useTrainingTurnController(input: Inputs) {
           void backgroundRefresh;
           return "accepted-next-unavailable";
         }
-        if (ready) {
+        if (isTrainingWarmReady(warmResult)) {
           acceptedTransitionRetryRef.current = null;
           setAcceptedTransitionLoadStalled(false);
           presentPreparedCandidate(prefetched.word);
           void backgroundRefresh;
           return "accepted-next-presented";
         } else {
+          await reportCardLoadFailure(
+            prefetched.word,
+            trainingWarmFailure(warmResult),
+          );
           recordTrainingTransitionTiming({
             transitionId: transition.transitionId,
             stage: "next-card.prefetch",
@@ -721,6 +765,7 @@ export function useTrainingTurnController(input: Inputs) {
       loadNextWord,
       presentPreparedCandidate,
       presentWord,
+      reportCardLoadFailure,
       refreshAfterAccepted,
       sessionPlannedTotal,
     ],

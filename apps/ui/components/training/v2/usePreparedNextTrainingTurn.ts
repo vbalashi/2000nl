@@ -18,13 +18,18 @@ import type {
   TrainingMode,
   TrainingWord,
 } from "@/lib/types";
+import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
+
+export type TrainingWarmResult =
+  | boolean
+  | { ready: false; unavailableReason: TrainingSessionUnavailableReason };
 
 export type PreparedNextTrainingTurn = {
   forWordId: string;
   forCardKey: string;
   queueTurn: QueueTurn;
   word: TrainingWord;
-  v2Ready: Promise<boolean> | null;
+  v2Ready: Promise<TrainingWarmResult> | null;
   transitionId: string;
 };
 
@@ -87,7 +92,15 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
         const lookupRequest = prefetchPlatformV2TrainingEntry(preparation);
         void preparePlatformV2TrainingEntry(preparation).catch(() => undefined);
         const lookup = await lookupRequest;
-        return !signal?.aborted && lookup.state === "ready";
+      if (signal?.aborted) return false;
+      if (lookup.state === "ready") return true;
+      if (lookup.state === "entry-not-found") {
+        return {
+          ready: false,
+          unavailableReason: "entry-not-found",
+        } as const;
+      }
+      return false;
       } catch {
         return false;
       }

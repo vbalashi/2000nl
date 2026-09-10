@@ -382,7 +382,8 @@ describeDb("authoritative training session plan RPC", () => {
       const firstDictionaryId = firstDictionaryRows[0].dictionary_id as string;
 
       // The membership is already latched. Revoke the dictionary entitlement;
-      // the selector must retire the first member rather than loop.
+      // the read-only selector reports the first member for explicit
+      // reconciliation rather than mutating it or looping.
       await client.query(
         `delete from dictionary_entitlements
          where dictionary_id = $1 and subject_type = 'user' and subject_key = $2`,
@@ -393,7 +394,42 @@ describeDb("authoritative training session plan RPC", () => {
         `select get_next_training_session_card($1::uuid, $2::uuid, ARRAY[]::text[]) as card`,
         [userId, sessionId],
       );
-      expect(firstRows[0].card.trainingSessionOrdinal).toBe(2);
+      expect(firstRows[0].card).toEqual(
+        expect.objectContaining({
+          trainingSessionUnavailable: true,
+          trainingSessionOrdinal: 1,
+          entryId: firstEntryId,
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      );
+
+      const { rows: markRows } = await client.query(
+        `select mark_training_session_member_unavailable(
+          $1::uuid, $2::uuid, $3::uuid, 'word-to-definition',
+          'dictionary-access-revoked'
+        ) as result`,
+        [userId, sessionId, firstEntryId],
+      );
+      expect(markRows[0].result).toEqual(
+        expect.objectContaining({ status: "unavailable", remaining: 4 }),
+      );
+
+      const { rows: unavailableConsumeRows } = await client.query(
+        `select private.consume_training_session_member(
+          $1::uuid, $2::uuid, $3::uuid, 'word-to-definition'
+        ) as result`,
+        [userId, sessionId, firstEntryId],
+      );
+      expect(unavailableConsumeRows[0].result).toEqual(
+        expect.objectContaining({ status: "unavailable", ordinal: 1 }),
+      );
+
+      const { rows: secondRowsAfterMark } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid, ARRAY[]::text[]) as card`,
+        [userId, sessionId],
+      );
+      expect(secondRowsAfterMark[0].card.trainingSessionOrdinal).toBe(2);
 
       const { rows: snapshotRows } = await client.query(
         `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,

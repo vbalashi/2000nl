@@ -10,7 +10,10 @@ import {
 import { useTrainingTurnController } from "@/components/training/useTrainingTurnController";
 import type { TrainingTurnSelectionRequest } from "@/components/training/useTrainingTurnSelectionPort";
 import type { TrainingMode, TrainingWord } from "@/lib/types";
-import type { TrainingSessionUnavailableReason } from "@/lib/training/selectionService";
+import {
+  TrainingSessionMemberUnavailableError,
+  type TrainingSessionUnavailableReason,
+} from "@/lib/training/selectionService";
 
 const prepared = vi.hoisted(() => ({
   candidate: null as any,
@@ -536,6 +539,42 @@ describe("useTrainingTurnController transition matrix", () => {
         excludeCardKeys: ["word-2:word-to-definition"],
       }),
     );
+    expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
+  });
+
+  test("retires a permanent selector diagnostic through the explicit mutation path", async () => {
+    const markUnavailable = vi.fn().mockResolvedValue(true);
+    const replacement = { ...word2, id: "word-3" };
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new TrainingSessionMemberUnavailableError({
+          trainingSessionUnavailable: true,
+          trainingSessionId: "session-1",
+          trainingSessionOrdinal: 1,
+          entryId: "word-2",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        }),
+      )
+      .mockResolvedValueOnce(replacement);
+    const controller = renderController({
+      currentWord: null,
+      selectNext,
+      markUnavailable,
+      trainingSessionId: "session-1",
+    });
+
+    await act(async () => {
+      await controller.result.current.loadNextWord();
+    });
+
+    expect(markUnavailable).toHaveBeenCalledWith({
+      entryId: "word-2",
+      cardTypeId: "word-to-definition",
+      reason: "dictionary-access-revoked",
+    });
+    expect(selectNext).toHaveBeenCalledTimes(2);
     expect(controller.setCurrentWord).toHaveBeenCalledWith(replacement);
   });
 

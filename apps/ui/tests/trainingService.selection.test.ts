@@ -453,6 +453,44 @@ describe("trainingService next-word selection", () => {
     });
   });
 
+  test("surfaces a permanent unavailable-member diagnostic without mutating selection", async () => {
+    const { fetchNextTrainingWord } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: [
+        {
+          trainingSessionUnavailable: true,
+          trainingSessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+          trainingSessionOrdinal: 1,
+          entryId: "entry-1",
+          cardTypeId: "word-to-definition",
+          reason: "dictionary-access-revoked",
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchNextTrainingWord(
+        "user-1",
+        ["word-to-definition"],
+        [],
+        undefined,
+        "both",
+        "new",
+        [],
+        null,
+        false,
+        "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      ),
+    ).rejects.toMatchObject({
+      name: "TrainingSessionMemberUnavailableError",
+      diagnostic: expect.objectContaining({
+        entryId: "entry-1",
+        reason: "dictionary-access-revoked",
+      }),
+    });
+  });
+
   test("fetchNextTrainingWordByScenario resolves scenario modes and preserves RPC mode for first encounters", async () => {
     const { fetchNextTrainingWordByScenario } = await importService();
 

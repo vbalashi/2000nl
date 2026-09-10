@@ -75,6 +75,53 @@ export type TrainingSessionUnavailableResult = {
   remaining?: number;
 };
 
+export type TrainingSessionUnavailableDiagnostic = {
+  trainingSessionUnavailable: true;
+  trainingSessionId: string;
+  trainingSessionOrdinal: number;
+  entryId: string;
+  cardTypeId: TrainingMode;
+  reason: TrainingSessionUnavailableReason;
+};
+
+export class TrainingSessionMemberUnavailableError extends Error {
+  readonly diagnostic: TrainingSessionUnavailableDiagnostic;
+
+  constructor(diagnostic: TrainingSessionUnavailableDiagnostic) {
+    super(
+      `training_session_member_unavailable:${diagnostic.entryId}:${diagnostic.cardTypeId}:${diagnostic.reason}`,
+    );
+    this.name = "TrainingSessionMemberUnavailableError";
+    this.diagnostic = diagnostic;
+  }
+}
+
+export const isTrainingSessionUnavailableError = (
+  value: unknown,
+): value is TrainingSessionMemberUnavailableError =>
+  value instanceof TrainingSessionMemberUnavailableError ||
+  (value instanceof Error &&
+    value.name === "TrainingSessionMemberUnavailableError" &&
+    Boolean((value as Partial<TrainingSessionMemberUnavailableError>).diagnostic));
+
+const isTrainingSessionUnavailableDiagnostic = (
+  value: unknown,
+): value is TrainingSessionUnavailableDiagnostic => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    candidate.trainingSessionUnavailable === true &&
+    typeof candidate.trainingSessionId === "string" &&
+    typeof candidate.trainingSessionOrdinal === "number" &&
+    Number.isInteger(candidate.trainingSessionOrdinal) &&
+    candidate.trainingSessionOrdinal > 0 &&
+    typeof candidate.entryId === "string" &&
+    typeof candidate.cardTypeId === "string" &&
+    SUPPORTED_CARD_MODES.has(candidate.cardTypeId as TrainingMode) &&
+    isTrainingSessionUnavailableReason(candidate.reason)
+  );
+};
+
 export type TrainingSessionSnapshot = TrainingSession & {
   sessionSize: TrainingSessionSize;
   members: TrainingSessionSnapshotMember[];
@@ -395,6 +442,9 @@ export const fetchNextTrainingWord = async (
     }
     const item = Array.isArray(data) ? data[0] : data;
     if (!item) return null;
+    if (isTrainingSessionUnavailableDiagnostic(item)) {
+      throw new TrainingSessionMemberUnavailableError(item);
+    }
     const rawData = normalizeRaw(item.raw);
     if (isCrossReferenceOnly(rawData)) return null;
     return mapSelectionItem(item, rawData);

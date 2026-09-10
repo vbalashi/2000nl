@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 135,
+      requiredMigrationId: 136,
       coordinationIssue: 250,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
