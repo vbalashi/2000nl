@@ -1,9 +1,26 @@
 # #250 — one owner for Training transitions
 
-GitHub #250 owns status. Renderer retirement #142 is integrated as `21858947`.
-The original plan was drafted against `a5ecc88b`; the current implementation
-slice is based on `origin/main` at `12885442`. #294 owns immutable server-side
-session membership. No FSRS or learning-policy changes belong here.
+GitHub #250 owns status. Renderer retirement #142 is integrated as
+`21858947e1a5d11ab550a34e0b7717013527e2b5`. This plan was re-audited against
+`origin/main` at `f5bd6c781d4d20c3c846575d9ccafad87b630359` on 2026-09-10.
+
+The plan below is a status document, not a second implementation design. It
+lists work that is already shipped separately from the small amount that still
+needs proof or cleanup. #294/#311 own server-latched membership and unavailable
+members; no FSRS or Learn-policy changes belong here.
+
+## Shipped slices (do not reimplement)
+
+| Change | Delivered by | What is now true |
+| --- | --- | --- |
+| Accepted action boundary and stale prefetch protection | #302 | A pending accepted action blocks duplicate input; a stale prepared card cannot replace the current card. |
+| Explicit reset ownership | #303 | Queue/session resets happen at explicit Training boundaries; the presentation hook is render-only. |
+| Accepted action vs next-card outcome | #304 | The client distinguishes `accepted-next-presented`, `accepted-session-complete`, and `accepted-next-unavailable`; recovery retries only the read. |
+| Session surface composition | #305 | `TrainingSessionSurface` owns chrome/footer/notices; the root passes typed inputs and intents. Details/History/Settings navigation is preserved by characterization tests. |
+| Immutable session plumbing | #306–#310, #312–#313 | The server-latched session id is carried through start → selection → action, resume restores the position, unusable candidates are excluded, and scope changes explicitly clear the previous session id. |
+
+The previous “remaining” list incorrectly repeated #303–#305. Those items are
+closed and must not be reopened as new work.
 
 ## Slice 1: action boundary and stale prepared cards
 
@@ -34,11 +51,9 @@ counts the complete prefix, including members explicitly marked unavailable.
 The attribution fixture now consumes session members only after an accepted
 action instead of advancing membership on every read.
 
-This slice does not close #250. It does not yet make scope changes create a
-replacement server session, nor does it finish the accepted-action/next-card
-outcome contract or remove the remaining root orchestration. Migration 135 is
-the additive database contract needed by this slice; overload retirement stays
-with #294 after active callers are migrated.
+This slice did not close #250. Scope replacement is now covered by #313, while
+the server-side membership and overload retirement remain with #294/#311.
+Migration 135 is the current additive database contract.
 
 Tradeoff: during this short boundary, reveal/hint/report are disabled along with
 grading. The card remains visible. This slice does not add layout or copy.
@@ -61,21 +76,28 @@ behavior changes belong here.
 Characterization covers both meanings of the optional id: omitted requests keep
 the active session, while explicit `null` suppresses it during replacement.
 
-## Remaining after slice 1 — do not close #250 yet
+## Remaining #250 acceptance work — do not close yet
 
-1. Remove mutation of reviewed/excluded state from presentation effects. Make
-   reset/continue/new-session ownership explicit in the controller; characterize
-   delayed startup hydration before changing this behavior. See issue comment
-   `5617049802`; a mock failure is not proof of lost server writes.
-2. Separate action accepted, next loading, next presented, next failed/cancelled
-   in the internal contract. Preserve exact receipt identity and prove that
-   retry never repeats an already accepted grade.
-3. Move session composition behind the established owner, then remove replaced
-   root state/handlers. Preserve Details/History/Settings return and reveal.
-4. Complete spec/standards/refactor review, full CI and UI QA before rollout.
+1. **Real-path preservation proof.** Extend characterization around the real V2
+   session (not only the screen mock) for Face → Answer, Details/History/Settings
+   → return, refresh/resume, and a late response from an old card/session. The
+   proof must show the same presentation identity/side is restored and no second
+   selection or grade is issued.
+2. **Root cleanup, only where proven stale.** Inventory the current
+   `TrainingScreen`/`FooterStats` inputs and remove superseded optional fields or
+   handlers only after their active callers and tests are identified. Do not
+   replace the existing controller or move state merely to make the file
+   shorter; the owner boundary is behavioral, not a line-count target.
+3. **Final gates.** Run product/spec review, architecture review, refactoring
+   review, full CI, and local/live UI QA against the exact merged SHA. Close
+   #250 only when all acceptance boxes are evidenced.
 
-The stale-prefetch guard still returns `accepted` for an already accepted action
-whose presentation was cancelled; it does not claim a new card was shown. The
-explicit outcome contract remains step 2, not a completed part of this slice.
+The accepted-action outcome contract and load-only recovery are already shipped
+by #304. A cancelled presentation after an accepted action still reports an
+unavailable next card; it never authorizes resubmitting the grade.
 
-Next program order: #250 → #294 → #279 reference vectors → #290 simulation.
+Next program order remains: finish the narrow #250 proof/cleanup → #294/#311
+server membership and unavailable-member outcome → #279 FSRS reference vectors
+→ #290 simulation. #278 observability and #248 finite-session sizing are closed;
+#249 gallery/design work is separate. Draft #144 and blind review #143 remain
+untouched.
