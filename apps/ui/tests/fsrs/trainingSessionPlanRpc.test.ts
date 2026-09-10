@@ -404,6 +404,14 @@ describeDb("authoritative training session plan RPC", () => {
         }),
       );
 
+      const { rows: readOnlySnapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      expect(readOnlySnapshotRows[0].snapshot.members[0]).toEqual(
+        expect.objectContaining({ unavailableAt: null, unavailableReason: null }),
+      );
+
       const { rows: markRows } = await client.query(
         `select mark_training_session_member_unavailable(
           $1::uuid, $2::uuid, $3::uuid, 'word-to-definition',
