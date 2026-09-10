@@ -74,6 +74,7 @@ describe("/api/platform/v2/actions", () => {
         status: "accepted",
         actionId: "mark-known",
         clientEventId: "00000000-0000-4000-8000-000000000002",
+        trainingSessionId: "00000000-0000-4000-8000-000000000007",
         card: {
           cardTypeId: "word-to-definition",
           scheduler: { phase: "not-started" },
@@ -93,6 +94,7 @@ describe("/api/platform/v2/actions", () => {
       request({
         actionId: "mark-known",
         clientEventId: "00000000-0000-4000-8000-000000000002",
+        trainingSessionId: "00000000-0000-4000-8000-000000000007",
         target: {
           kind: "sense-card",
           entryId: "00000000-0000-4000-8000-000000000003",
@@ -117,6 +119,7 @@ describe("/api/platform/v2/actions", () => {
         p_source_context: null,
         p_auth_kind: "first_party",
         p_connected_client_id: null,
+        p_training_session_id: "00000000-0000-4000-8000-000000000007",
       },
     );
     expect(authenticatedRpc).not.toHaveBeenCalled();

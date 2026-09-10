@@ -42,6 +42,10 @@ export type TrainingSessionPlanScope = {
   sessionSize?: TrainingSessionSize;
 };
 
+export type TrainingSession = TrainingSessionPlan & {
+  sessionId: string;
+};
+
 export const DEFAULT_TRAINING_SESSION_SIZE: TrainingSessionSize = 10;
 
 export const isTrainingFocusFilterActive = (
@@ -79,6 +83,16 @@ const mapTrainingSessionPlan = (value: unknown): TrainingSessionPlan | null => {
     plannedTotal: candidate.plannedTotal,
     plannedAt: candidate.plannedAt,
   };
+};
+
+const mapTrainingSession = (value: unknown): TrainingSession | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.sessionId !== "string" || !candidate.sessionId) {
+    return null;
+  }
+  const plan = mapTrainingSessionPlan(candidate);
+  return plan ? { sessionId: candidate.sessionId, ...plan } : null;
 };
 
 const trainingSessionPlanScopePayload = (
@@ -135,6 +149,28 @@ export async function fetchTrainingSessionPlan(
   return mapTrainingSessionPlan(data);
 }
 
+export async function startTrainingSession(
+  userId: string,
+  modes: TrainingMode[],
+  input: TrainingSessionPlanScope,
+): Promise<TrainingSession | null> {
+  const scope = trainingSessionPlanScopePayload(userId, modes, input);
+  const { data, error } = await supabase.rpc("start_training_session", {
+    p_user_id: scope.p_user_id,
+    p_card_type_ids: scope.p_card_type_ids,
+    p_list_id: scope.p_list_id,
+    p_list_type: scope.p_list_type,
+    p_card_filter: scope.p_card_filter,
+    p_training_filter: scope.p_training_filter,
+    p_session_size: String(scope.p_session_size),
+  });
+  if (error) {
+    console.error("Error starting training session:", error);
+    return null;
+  }
+  return mapTrainingSession(data);
+}
+
 const formatInterval = (interval: number | null | undefined): string => {
   if (interval === null || interval === undefined) return "new";
   if (interval < 1) return `${(interval * 24 * 60).toFixed(0)}min`;
@@ -181,7 +217,24 @@ export const fetchNextTrainingWord = async (
   excludeCardKeys: string[] = [],
   trainingFilter?: TrainingFocusFilter | null,
   allowPractice = false,
+  trainingSessionId?: string,
 ): Promise<TrainingWord | null> => {
+  if (trainingSessionId) {
+    const { data, error } = await supabase.rpc(
+      "get_next_training_session_card",
+      { p_user_id: userId, p_session_id: trainingSessionId },
+    );
+    if (error) {
+      console.error("Error fetching next session card via RPC", error);
+      throw normalizeTrainingSelectionFailure(error);
+    }
+    const item = Array.isArray(data) ? data[0] : data;
+    if (!item) return null;
+    const rawData = normalizeRaw(item.raw);
+    if (isCrossReferenceOnly(rawData)) return null;
+    return mapSelectionItem(item, rawData);
+  }
+
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,
     p_card_type_ids: modes,
@@ -411,10 +464,26 @@ export const fetchNextTrainingWordByScenario = async (
   resolveModes: (scenarioId: string) => Promise<TrainingMode[] | null> =
     resolveScenarioModes,
   allowPractice = false,
+  trainingSessionId?: string,
 ): Promise<TrainingWord | null> => {
   const modes = modeOverride ?? (await resolveModes(scenarioId));
   if (!modes) return null;
   if (modes.length === 0) return null;
+
+  if (trainingSessionId) {
+    return fetchNextTrainingWord(
+      userId,
+      modes,
+      excludeWordIds,
+      listScope,
+      cardFilter,
+      queueTurn,
+      excludeCardKeys,
+      trainingFilter,
+      allowPractice,
+      trainingSessionId,
+    );
+  }
 
   const rpcPayload: Record<string, any> = {
     p_user_id: userId,

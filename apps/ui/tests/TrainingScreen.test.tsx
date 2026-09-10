@@ -462,6 +462,14 @@ const fetchTrainingSessionPlan = vi.fn().mockResolvedValue({
   plannedTotal: 2,
   plannedAt: "2026-08-21T12:00:00.000Z",
 });
+const startTrainingSession = vi.fn().mockResolvedValue({
+  sessionId: "00000000-0000-4000-8000-000000000901",
+  plannedNew: 1,
+  plannedReview: 1,
+  plannedPractice: 0,
+  plannedTotal: 2,
+  plannedAt: "2026-08-21T12:00:00.000Z",
+});
 const fetchRecentTrainingHistory = vi.fn().mockResolvedValue({
   items: [],
   hasMore: false,
@@ -479,6 +487,7 @@ vi.mock("@/lib/trainingService", () => ({
   fetchTrainingFilterSources,
   fetchTrainingScenarios,
   fetchTrainingSessionPlan,
+  startTrainingSession,
   isTrainingFocusFilterActive,
   fetchStats,
   fetchActiveTrainingScope,
@@ -2608,6 +2617,10 @@ test("uses only the on-demand fallback when grading before next-turn selection r
         1,
       ),
     );
+    // Let the initial selection effect and its replacement request settle
+    // before recording the baseline; otherwise a slower runner can classify
+    // that replacement as a post-grade fallback.
+    await act(async () => Promise.resolve());
     const callsBeforeGrade = fetchNextTrainingWordByScenario.mock.calls.length;
 
     allowFallback = true;

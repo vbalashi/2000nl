@@ -23,6 +23,7 @@ import type {
   TrainingFocusFilter,
   TrainingFilterSource,
   TrainingMode,
+  TrainingSessionPlan,
   TrainingSessionSize,
   TrainingWord,
   WordListSummary,
@@ -201,6 +202,11 @@ function TrainingScreenContent({
   const [sessionSize, setSessionSize] =
     useState<TrainingSessionSize>(DEFAULT_SESSION_SIZE);
   const [sessionPlannedTotal, setSessionPlannedTotal] = useState<number | null>(
+    null,
+  );
+  const [latchedSessionPlan, setLatchedSessionPlan] =
+    useState<TrainingSessionPlan | null>(null);
+  const [trainingSessionId, setTrainingSessionId] = useState<string | null>(
     null,
   );
   const {
@@ -478,6 +484,7 @@ function TrainingScreenContent({
     cardFilter,
     focusFilter: trainingFocusFilter,
     allowPractice: !trainingTodaySetupEnabled,
+    trainingSessionId,
     resolveScenarioModes: trainingScenarioCatalog.resolveModes,
   });
   const refreshAfterAccepted = useCallback(
@@ -545,6 +552,9 @@ function TrainingScreenContent({
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
     setPresentationResetKey((key) => key + 1);
+    setTrainingSessionId(null);
+    setLatchedSessionPlan(null);
+    setSessionPlannedTotal(null);
   }, [beginTrainingTurnScopeChange, trainingScenarioCatalog]);
 
   useEffect(() => {
@@ -1011,6 +1021,10 @@ function TrainingScreenContent({
     loadStats: (scope) => void loadStats(scope),
     loadWord: loadNextWord,
     reportError: setTrainingLoadError,
+    onSessionReady: (session) => {
+      setTrainingSessionId(session.sessionId);
+      setLatchedSessionPlan(session);
+    },
   });
 
   const handleSignOut = async () => {
@@ -1164,6 +1178,7 @@ function TrainingScreenContent({
     sessionGeneration: trainingPilot.sessionGeneration,
     scopeKey: trainingSessionPlanScopeKey,
     planSnapshot: trainingSessionPlanSnapshot,
+    planOverride: latchedSessionPlan,
     resetKey: presentationResetKey,
   });
 
@@ -1286,6 +1301,7 @@ function TrainingScreenContent({
               translationLang === "off" ? null : translationLang
             }
             interfaceLanguage={onboardingLang}
+            trainingSessionId={trainingSessionId}
             sessionChrome={trainingSessionChrome}
             sessionFooter={trainingSessionFooter}
             sessionNotice={trainingSessionNotice}

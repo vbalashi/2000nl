@@ -305,12 +305,14 @@ export type PlatformActionV2Request =
   | {
       actionId: "start-learning" | "mark-known";
       clientEventId: string;
+      trainingSessionId?: string;
       target: PlatformSenseCardTargetV2;
       sourceContext?: PlatformSourceContextV2;
     }
   | {
       actionId: "undo-known";
       clientEventId: string;
+      trainingSessionId?: string;
       target: PlatformSenseCardTargetV2 & {
         activeKnownMarkId: string;
         knownMarkRevision: string;
@@ -320,6 +322,7 @@ export type PlatformActionV2Request =
   | {
       actionId: "review-card";
       clientEventId: string;
+      trainingSessionId?: string;
       target: PlatformSenseCardTargetV2;
       reviewResult: "fail" | "hard" | "success" | "easy";
       sourceContext?: PlatformSourceContextV2;
