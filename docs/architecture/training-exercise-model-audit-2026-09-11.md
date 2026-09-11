@@ -1,8 +1,10 @@
 # Training Exercise Model Audit — bounded evidence
 
-Date: 2026-09-11  
-Repository: `2000nl`  
-Commit: `eb7a9a3c73ffdd292d7130735c85c81a0bbfbc2b`  
+Date: 2026-09-11
+
+Repository: `2000nl`
+
+Commit: `eb7a9a3c73ffdd292d7130735c85c81a0bbfbc2b`
 Scope: read-only application/content/data audit; only this evidence document and
 planning records are written. No production access or database mutations.
 
