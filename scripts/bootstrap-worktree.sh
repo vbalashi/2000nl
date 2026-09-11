@@ -22,8 +22,9 @@ if [[ "$mode" != "--install" && "$mode" != "--check" ]]; then
   exit 64
 fi
 
-repo_root="$(git rev-parse --show-toplevel)"
-common_git_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(git -C "$script_dir/.." rev-parse --show-toplevel)"
+common_git_dir="$(git -C "$script_dir/.." rev-parse --path-format=absolute --git-common-dir)"
 project_root="$(dirname "$common_git_dir")"
 ui_dir="$repo_root/apps/ui"
 lockfile="$ui_dir/package-lock.json"

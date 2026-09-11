@@ -41,8 +41,10 @@ fi
 common_git_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
 repo_root="$(dirname "$common_git_dir")"
 current_root="$(git rev-parse --show-toplevel)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_root="$(git -C "$script_dir/.." rev-parse --show-toplevel)"
 
-if [[ "$current_root" != "$repo_root" ]]; then
+if [[ "$current_root" != "$repo_root" || "$script_root" != "$repo_root" ]]; then
   printf 'Create worktrees from the 2000NL reference checkout: %s\n' "$repo_root" >&2
   exit 1
 fi
