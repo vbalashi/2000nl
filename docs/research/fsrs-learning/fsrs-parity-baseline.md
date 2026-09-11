@@ -25,6 +25,23 @@ The initial state uses the default 21 parameters already present in
 | New → Again, first grade | `S=0.212000`, `D≈6.413300`; not a mature lapse | initial values are available through `fsrs6_compute` | initial values are available through `fsrsCompute` |
 | Existing FSRS memory → Again after 1 day | `S=2.195161` (interday failure lower bound), `D≈7.394503` | `S≈0.529085`, `D≈7.394503` | same observed deviation |
 
+## Application history classification
+
+The raw FSRS function only computes memory state; the review RPC assigns the
+application's history label. The characterization test calls that review RPC
+directly (it does not claim full V2 action or browser coverage):
+`apps/ui/tests/fsrs/learningClassification.test.ts` pins that contract without
+changing the scheduler:
+
+| User action | History label | Application counters |
+| --- | --- | --- |
+| First `Again` on a card with no FSRS memory | `new` | `reps=1`, `lapses=1` |
+| `Again` after an existing interday memory | `review` | `reps=2`, `lapses=1` |
+
+The existing memory is retained on the second transition. These labels are
+application history, not a claim that the raw FSRS function itself carries an
+Anki scheduler state label.
+
 The SQL observation was reproduced against the local database after migration
 130 with a first `Good`, followed immediately by a second `Good` using the same
 timestamp. Migration 131 adds the same-day branch and successful-grade clamp to
@@ -38,10 +55,9 @@ The following remain outside migration 131 and require a separate decision or
 follow-up issue:
 
 1. an interday transition with exact integer `days_elapsed`;
-2. the `New → Again` versus `Review → Again` lapse counter distinction;
-3. scheduler-day rollover and time-zone/DST boundaries;
-4. short-term threshold and interval rounding around `0.5` days;
-5. the boundary between FSRS short-term scheduling and any product-level
+2. scheduler-day rollover and time-zone/DST boundaries;
+3. short-term threshold and interval rounding around `0.5` days;
+4. the boundary between FSRS short-term scheduling and any product-level
    Learning Steps policy.
 
 The initial `Again/Hard/Good/Easy`, same-day `Good/Hard/Again`, and
