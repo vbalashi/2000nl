@@ -1,0 +1,41 @@
+name: Active Guidance Drift Check
+
+on:
+  pull_request:
+    paths:
+      - '**/AGENTS.md'
+      - 'README.md'
+      - '.cursor/**'
+      - 'db/**/*.md'
+      - 'packages/docs/**'
+      - 'docs/reference/api-functions/**'
+      - 'docs/exec-plans/active/**'
+      - 'scripts/check-guidance-drift.*'
+      - '.github/workflows/guidance-drift-check.yml'
+  push:
+    branches: [main, master]
+    paths:
+      - '**/AGENTS.md'
+      - 'README.md'
+      - '.cursor/**'
+      - 'db/**/*.md'
+      - 'packages/docs/**'
+      - 'docs/reference/api-functions/**'
+      - 'docs/exec-plans/active/**'
+      - 'scripts/check-guidance-drift.*'
+      - '.github/workflows/guidance-drift-check.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check active guidance drift
+        run: node scripts/check-guidance-drift.mjs
+      - name: Test guidance drift check
+        run: node --test scripts/check-guidance-drift.test.mjs
