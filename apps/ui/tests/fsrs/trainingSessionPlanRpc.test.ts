@@ -143,6 +143,41 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("does not let a daily new limit shorten a requested finite session", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+      });
+      for (let index = 0; index < 5; index += 1) {
+        await insertWord(client, `session-budget-new-${userId}-${index}`);
+      }
+
+      const { rows } = await client.query(
+        `select start_training_session(
+          $1::uuid,
+          ARRAY['word-to-definition']::text[],
+          NULL::uuid,
+          'curated',
+          'both',
+          '{}'::jsonb,
+          '5'
+        ) as session`,
+        [userId],
+      );
+
+      expect(rows[0].session).toEqual(
+        expect.objectContaining({
+          sessionSize: '5',
+          plannedNew: 5,
+          plannedReview: 0,
+          plannedTotal: 5,
+        }),
+      );
+    }, userId);
+  });
+
   test("latches finite membership even when the scheduler input changes", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
