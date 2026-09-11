@@ -38,7 +38,7 @@ function run(args) {
 
 async function withHealthServer(payload, callback) {
   const server = createServer((request, response) => {
-    if (request.url !== "/api/health") {
+    if (request.url !== "/api/health?deep=1") {
       response.statusCode = 404;
       response.end();
       return;
@@ -67,6 +67,25 @@ function runServerCheck(args) {
     child.stderr.on("data", (chunk) => { stderr += chunk; });
     child.on("close", (status) => resolve({ status, stdout, stderr }));
   });
+}
+
+function healthyLocalQaPayload({
+  commit,
+  checkoutPath = "/tmp/2000nl-preview",
+  dirty = false,
+  workRef = "247",
+} = {}) {
+  return {
+    commit,
+    status: "ok",
+    database: { target: "local" },
+    checks: {
+      platformRpcContract: { status: "ok" },
+      dictionarySearchIndex: { status: "ok" },
+      databaseContract: { status: "ok", details: { compatible: true } },
+    },
+    qaSource: { mode: "preview", workRef, commit, checkoutPath, dirty },
+  };
 }
 
 test("accepts an explicitly identified preview checkout", () => {
@@ -172,10 +191,8 @@ test("refuses canonical startup from a dirty checkout", () => {
 
 test("reuses only an existing server with matching source evidence", async () => {
   const commit = "a".repeat(40);
-  const payload = {
-    commit,
-    qaSource: { mode: "preview", workRef: "247", commit },
-  };
+  const checkoutPath = "/tmp/2000nl-preview";
+  const payload = healthyLocalQaPayload({ commit, checkoutPath });
   await withHealthServer(payload, async (port) => {
     const result = await runServerCheck([
       "--port",
@@ -186,6 +203,10 @@ test("reuses only an existing server with matching source evidence", async () =>
       "247",
       "--expected-commit",
       commit,
+      "--expected-checkout-path",
+      checkoutPath,
+      "--expected-dirty",
+      "false",
     ]);
     assert.equal(result.status, 0, result.stderr);
 
@@ -198,8 +219,106 @@ test("reuses only an existing server with matching source evidence", async () =>
       "339",
       "--expected-commit",
       commit,
+      "--expected-checkout-path",
+      checkoutPath,
+      "--expected-dirty",
+      "false",
     ]);
     assert.notEqual(mismatch.status, 0);
     assert.match(mismatch.stderr, /does not match requested/);
+  });
+});
+
+test("refuses an unhealthy local server even when source fields match", async () => {
+  const commit = "b".repeat(40);
+  const checkoutPath = "/tmp/2000nl-preview";
+  const payload = healthyLocalQaPayload({ commit, checkoutPath });
+  payload.status = "warning";
+  await withHealthServer(payload, async (port) => {
+    const result = await runServerCheck([
+      "--port",
+      String(port),
+      "--mode",
+      "preview",
+      "--work-ref",
+      "247",
+      "--expected-commit",
+      commit,
+      "--expected-checkout-path",
+      checkoutPath,
+      "--expected-dirty",
+      "false",
+    ]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /local deep-health contract/);
+  });
+});
+
+test("refuses a healthy remote server even when source fields match", async () => {
+  const commit = "d".repeat(40);
+  const checkoutPath = "/tmp/2000nl-preview";
+  const payload = healthyLocalQaPayload({ commit, checkoutPath });
+  payload.database.target = "remote";
+  await withHealthServer(payload, async (port) => {
+    const result = await runServerCheck([
+      "--port",
+      String(port),
+      "--mode",
+      "preview",
+      "--work-ref",
+      "247",
+      "--expected-commit",
+      commit,
+      "--expected-checkout-path",
+      checkoutPath,
+      "--expected-dirty",
+      "false",
+    ]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /local deep-health contract/);
+  });
+});
+
+test("refuses a same-commit server from another checkout or dirty preview", async () => {
+  const commit = "c".repeat(40);
+  const checkoutPath = "/tmp/2000nl-requested";
+  await withHealthServer(
+    healthyLocalQaPayload({ commit, checkoutPath: "/tmp/2000nl-other" }),
+    async (port) => {
+      const otherCheckout = await runServerCheck([
+        "--port",
+        String(port),
+        "--mode",
+        "preview",
+        "--work-ref",
+        "247",
+        "--expected-commit",
+        commit,
+        "--expected-checkout-path",
+        checkoutPath,
+        "--expected-dirty",
+        "false",
+      ]);
+      assert.notEqual(otherCheckout.status, 0);
+      assert.match(otherCheckout.stderr, /does not match requested/);
+    },
+  );
+  await withHealthServer(healthyLocalQaPayload({ commit, checkoutPath, dirty: true }), async (port) => {
+    const dirtyPreview = await runServerCheck([
+      "--port",
+      String(port),
+      "--mode",
+      "preview",
+      "--work-ref",
+      "247",
+      "--expected-commit",
+      commit,
+      "--expected-checkout-path",
+      checkoutPath,
+      "--expected-dirty",
+      "true",
+    ]);
+    assert.notEqual(dirtyPreview.status, 0);
+    assert.match(dirtyPreview.stderr, /dirty preview/);
   });
 });

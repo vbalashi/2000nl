@@ -91,7 +91,9 @@ if server_check_output="$(node "$repo_root/scripts/check-qa-server.mjs" \
   --port "$port" \
   --mode "$QA_SOURCE_MODE" \
   --work-ref "$QA_SOURCE_WORK_REF" \
-  --expected-commit "$QA_SOURCE_COMMIT" 2>&1)"; then
+  --expected-commit "$QA_SOURCE_COMMIT" \
+  --expected-checkout-path "$QA_SOURCE_CHECKOUT_PATH" \
+  --expected-dirty "$QA_SOURCE_DIRTY" 2>&1)"; then
   echo "$server_check_output"
   exit 0
 else
