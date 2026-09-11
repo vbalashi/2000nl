@@ -216,6 +216,7 @@ function TrainingScreenContent({
   const [sessionConsumedCardKeys, setSessionConsumedCardKeys] = useState<
     string[]
   >([]);
+  const [sessionCompletedActions, setSessionCompletedActions] = useState(0);
   const [trainingSessionId, setTrainingSessionId] = useState<string | null>(
     null,
   );
@@ -525,6 +526,7 @@ function TrainingScreenContent({
     setSessionConsumedCardKeys((current) =>
       current.includes(cardKey) ? current : [...current, cardKey],
     );
+    setSessionCompletedActions((current) => current + 1);
   }, []);
   const sessionScopeKey = [
     activeScenario,
@@ -570,6 +572,7 @@ function TrainingScreenContent({
     recoverLoadErrors: trainingTodaySetupEnabled,
     sessionPlannedTotal,
     sessionConsumedCardKeys,
+    sessionCompletedActions,
     trainingSessionId,
     focusFilter: trainingFocusFilter,
     sessionScopeKey,
@@ -615,6 +618,7 @@ function TrainingScreenContent({
     setLatchedSessionPlan(null);
     setSessionPlannedTotal(null);
     setSessionConsumedCardKeys([]);
+    setSessionCompletedActions(0);
   }, [beginTrainingTurnScopeChange, trainingScenarioCatalog, user?.id]);
 
   useEffect(() => {
@@ -1126,7 +1130,8 @@ function TrainingScreenContent({
     applyFocusFilter: setTrainingFocusFilter,
     onPlanReady: (plan) => {
       setSessionConsumedCardKeys([]);
-      setSessionPlannedTotal(plan.plannedTotal);
+      setSessionCompletedActions(0);
+      setSessionPlannedTotal(plan.requestedTotal ?? plan.plannedTotal);
     },
     resetQueue: resetFocusQueueState,
     loadStats: (scope) => void loadStats(scope),
@@ -1134,6 +1139,7 @@ function TrainingScreenContent({
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
       setSessionConsumedCardKeys([]);
+      setSessionCompletedActions(0);
       setTrainingSessionId(session.sessionId);
       setLatchedSessionPlan(session);
       // The explicit session-start load below owns this filter. Mark it as
@@ -1328,18 +1334,15 @@ function TrainingScreenContent({
       setTrainingFocusFilter(record.focusFilter);
       setTrainingSessionId(snapshot.sessionId);
       setLatchedSessionPlan(snapshot);
-      setSessionPlannedTotal(snapshot.plannedTotal);
-      const firstRemainingMemberIndex = snapshot.members.findIndex(
-        (member) => !member.consumedAt && !member.unavailableAt,
-      );
-      const completedPrefix =
-        firstRemainingMemberIndex === -1
-          ? snapshot.members
-          : snapshot.members.slice(0, firstRemainingMemberIndex);
+      setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
       setSessionConsumedCardKeys(
-        completedPrefix.map(
+        snapshot.members.filter((member) => member.consumedAt).map(
           (member) => `${member.entryId}:${member.cardTypeId}`,
         ),
+      );
+      setSessionCompletedActions(
+        snapshot.completedActions ??
+          snapshot.members.filter((member) => member.consumedAt).length,
       );
       // These refs are initialized from the pre-hydration preferences. Align
       // them with the resumed context so hydration does not trigger a second,
@@ -1473,7 +1476,10 @@ function TrainingScreenContent({
   });
   useEffect(() => {
     if (trainingSessionPlanSnapshot && !trainingSessionId && !latchedSessionPlan) {
-      setSessionPlannedTotal(trainingSessionPlanSnapshot.plan.plannedTotal);
+      setSessionPlannedTotal(
+        trainingSessionPlanSnapshot.plan.requestedTotal ??
+          trainingSessionPlanSnapshot.plan.plannedTotal,
+      );
     }
   }, [latchedSessionPlan, trainingSessionId, trainingSessionPlanSnapshot]);
   const {
@@ -1484,7 +1490,7 @@ function TrainingScreenContent({
     presentedCardKey: currentWord
       ? getTrainingCardKey(currentWord, currentMode)
       : null,
-    consumedCardCount: sessionConsumedCardKeys.length,
+    consumedCardCount: sessionCompletedActions,
     sessionGeneration: trainingPilot.sessionGeneration,
     scopeKey: trainingSessionPlanScopeKey,
     planSnapshot: trainingSessionPlanSnapshot,

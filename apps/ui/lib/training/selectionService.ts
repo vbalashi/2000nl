@@ -67,6 +67,8 @@ export type TrainingSessionUnavailableResult = {
   status:
     | "unavailable"
     | "unavailable-complete"
+    | "unavailable-replaced"
+    | "unavailable-exhausted"
     | "consumed"
     | "not-member"
     | "out-of-order";
@@ -124,6 +126,9 @@ const isTrainingSessionUnavailableDiagnostic = (
 
 export type TrainingSessionSnapshot = TrainingSession & {
   sessionSize: TrainingSessionSize;
+  /** Authoritative server count of accepted session actions. */
+  completedActions?: number;
+  completionReason?: "completed" | "exhausted" | null;
   members: TrainingSessionSnapshotMember[];
 };
 
@@ -157,7 +162,14 @@ const mapTrainingSessionPlan = (value: unknown): TrainingSessionPlan | null => {
   ) {
     return null;
   }
+  if (
+    candidate.requestedTotal !== undefined &&
+    !isNonNegativeInteger(candidate.requestedTotal)
+  ) return null;
   return {
+    ...(candidate.requestedTotal !== undefined
+      ? { requestedTotal: candidate.requestedTotal }
+      : {}),
     plannedNew: candidate.plannedNew,
     plannedReview: candidate.plannedReview,
     plannedPractice: candidate.plannedPractice,
@@ -183,14 +195,27 @@ const mapTrainingSessionSnapshot = (
   const candidate = value as Record<string, unknown>;
   const session = mapTrainingSession(candidate);
   const sessionSize =
-    candidate.sessionSize === "5" || candidate.sessionSize === 5
-      ? 5
-      : candidate.sessionSize === "10" || candidate.sessionSize === 10
-        ? 10
-        : candidate.sessionSize === "all-due-today"
-          ? "all-due-today"
+    candidate.sessionSize === "all-due-today"
+      ? "all-due-today"
+      : typeof candidate.sessionSize === "number" &&
+          Number.isInteger(candidate.sessionSize) &&
+          candidate.sessionSize > 0
+        ? candidate.sessionSize
+        : typeof candidate.sessionSize === "string" &&
+            /^[1-9][0-9]*$/.test(candidate.sessionSize)
+          ? Number(candidate.sessionSize)
           : null;
-  if (!session || sessionSize === null || !Array.isArray(candidate.members)) {
+  if (
+    !session ||
+    sessionSize === null ||
+    !Array.isArray(candidate.members) ||
+    (candidate.completedActions !== undefined &&
+      !isNonNegativeInteger(candidate.completedActions)) ||
+    (candidate.completionReason !== undefined &&
+      candidate.completionReason !== null &&
+      candidate.completionReason !== "completed" &&
+      candidate.completionReason !== "exhausted")
+  ) {
     return null;
   }
   const members = candidate.members.flatMap((member): TrainingSessionSnapshotMember[] => {
@@ -230,6 +255,12 @@ const mapTrainingSessionSnapshot = (
   return {
     ...session,
     sessionSize,
+    ...(candidate.completedActions !== undefined
+      ? { completedActions: candidate.completedActions as number }
+      : {}),
+    ...(candidate.completionReason !== undefined
+      ? { completionReason: candidate.completionReason as "completed" | "exhausted" | null }
+      : {}),
     members,
   };
 };
@@ -363,6 +394,8 @@ export async function markTrainingSessionMemberUnavailable(
   if (
     status !== "unavailable" &&
     status !== "unavailable-complete" &&
+    status !== "unavailable-replaced" &&
+    status !== "unavailable-exhausted" &&
     status !== "consumed" &&
     status !== "not-member" &&
     status !== "out-of-order"

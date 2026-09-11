@@ -51,9 +51,9 @@ export function useTrainingSessionPresentation({
       ? planSnapshot.plan
       : null
   );
-  const plannedTotal = currentPlan?.plannedTotal ?? null;
+  const plannedTotal = currentPlan?.requestedTotal ?? currentPlan?.plannedTotal ?? null;
   const [actualCardOrdinal, setActualCardOrdinal] = React.useState(() =>
-    Math.max(1, consumedCardCount + 1),
+    Math.max(0, consumedCardCount),
   );
   const [acceptedTotal, setAcceptedTotal] = React.useState<number | null>(null);
   const previousSurfaceRef = React.useRef(surface);
@@ -89,14 +89,14 @@ export function useTrainingSessionPresentation({
     const sessionStateReset =
       enteringSession || sessionRestarted || explicitReset || lateResumeHydration;
     if (sessionStateReset) {
-      setActualCardOrdinal(Math.max(1, consumedCardCount + 1));
+      setActualCardOrdinal(Math.max(0, consumedCardCount));
       setAcceptedTotal(normalizePlannedTotal(plannedTotal));
       previousCardKeyRef.current = presentedCardKey;
       return;
     }
     if (surface !== "session" || !acceptedCardCountChanged) return;
 
-    setActualCardOrdinal(Math.max(1, consumedCardCount + 1));
+    setActualCardOrdinal(Math.max(0, consumedCardCount));
     previousCardKeyRef.current = presentedCardKey;
   }, [
     consumedCardCount,
@@ -129,6 +129,6 @@ export function useTrainingSessionPresentation({
           }
         : { kind: "ordinal", position: actualCardOrdinal },
     isSubsequentCard:
-      surface === "session" && !isEnteringSession && actualCardOrdinal > 1,
+      surface === "session" && !isEnteringSession && actualCardOrdinal > 0,
   };
 }

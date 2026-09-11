@@ -29,7 +29,7 @@ describeDb("authoritative training session plan RPC", () => {
     await withTransaction(pool, async (client) => {
       const { rows: functionRows } = await client.query(
         `select pg_get_functiondef(
-           'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean)'::regprocedure
+           'private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure
          ) as definition`,
       );
       expect(functionRows[0]?.definition).toContain(
@@ -79,7 +79,7 @@ describeDb("authoritative training session plan RPC", () => {
     await withTransaction(pool, async (client) => {
       const { rows } = await client.query(
         `select pg_get_functiondef(
-           'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean)'::regprocedure
+           'private.training_scheduler_candidates_v2(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'::regprocedure
          ) as definition`,
       );
       expect(rows[0].definition).toContain("readable_dictionaries AS MATERIALIZED");
@@ -175,6 +175,194 @@ describeDb("authoritative training session plan RPC", () => {
           plannedTotal: 5,
         }),
       );
+    }, userId);
+  });
+
+  test("keeps the requested action budget distinct from a scarce soft-mixed pool", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+        new_review_ratio: 5,
+      });
+      for (let index = 0; index < 3; index += 1) {
+        const entryId = await insertWord(client, `session-scarce-review-${userId}-${index}`);
+        await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, fsrs_stability, fsrs_difficulty,
+             fsrs_reps, fsrs_lapses, fsrs_last_interval, fsrs_last_grade,
+             fsrs_enabled, next_review_at, last_seen_at
+           ) values ($1, $2, 'word-to-definition', 2, 5, 2, 0, 2, 3, true,
+                     now() - interval '1 day', now())`,
+          [userId, entryId],
+        );
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+           $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'both', '{}'::jsonb, '5'
+         ) as session`,
+        [userId],
+      );
+      expect(startRows[0].session).toEqual(
+        expect.objectContaining({
+          requestedTotal: 5,
+          plannedNew: 0,
+          plannedReview: 3,
+          plannedTotal: 3,
+        }),
+      );
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, startRows[0].session.sessionId],
+      );
+      expect(snapshotRows[0].snapshot.members.map(
+        (member: { queueSource: string }) => member.queueSource,
+      )).toEqual(['review', 'review', 'review']);
+
+      const { rows: newOnlyRows } = await client.query(
+        `select get_training_session_plan(
+           $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'new', '{}'::jsonb, '5'
+         ) as plan`,
+        [userId],
+      );
+      expect(newOnlyRows[0].plan).toEqual(expect.objectContaining({
+        requestedTotal: 5,
+        plannedTotal: 0,
+      }));
+    }, userId);
+  });
+
+  test("latches the configured new-to-review order on the server", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+        new_review_ratio: 5,
+      });
+      const newEntryIds = await Promise.all(
+        Array.from({ length: 2 }, (_, index) =>
+          insertWord(client, `session-ratio-new-${userId}-${index}`),
+        ),
+      );
+      const reviewEntryIds = await Promise.all(
+        Array.from({ length: 8 }, (_, index) =>
+          insertWord(client, `session-ratio-review-${userId}-${index}`),
+        ),
+      );
+      for (const entryId of reviewEntryIds) {
+        await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, fsrs_stability, fsrs_difficulty,
+             fsrs_reps, fsrs_lapses, fsrs_last_interval, fsrs_last_grade,
+             fsrs_enabled, next_review_at, last_seen_at
+           ) values ($1, $2, 'word-to-definition', 2, 5, 2, 0, 2, 3, true,
+                     now() - interval '1 day', now())`,
+          [userId, entryId],
+        );
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+           $1::uuid,
+           ARRAY['word-to-definition']::text[],
+           NULL::uuid,
+           'curated',
+           'both',
+           '{}'::jsonb,
+           '10'
+         ) as session`,
+        [userId],
+      );
+      const started = startRows[0].session;
+      expect(started).toEqual(
+        expect.objectContaining({ plannedNew: 2, plannedReview: 8, plannedTotal: 10 }),
+      );
+
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, started.sessionId],
+      );
+      expect(
+        snapshotRows[0].snapshot.members.map(
+          (member: { queueSource: string }) => member.queueSource,
+        ),
+      ).toEqual([
+        'new',
+        'review',
+        'review',
+        'review',
+        'review',
+        'review',
+        'new',
+        'review',
+        'review',
+        'review',
+      ]);
+      expect(new Set(newEntryIds)).toHaveLength(2);
+    }, userId);
+  });
+
+  test("stops a fifty-exercise mixed session at its total budget", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+        new_review_ratio: 5,
+      });
+      for (let index = 0; index < 9; index += 1) {
+        await insertWord(client, `session-fifty-new-${userId}-${index}`);
+      }
+      for (let index = 0; index < 41; index += 1) {
+        const entryId = await insertWord(client, `session-fifty-review-${userId}-${index}`);
+        await client.query(
+          `insert into user_card_status (
+             user_id, entry_id, card_type_id, fsrs_stability, fsrs_difficulty,
+             fsrs_reps, fsrs_lapses, fsrs_last_interval, fsrs_last_grade,
+             fsrs_enabled, next_review_at, last_seen_at
+           ) values ($1, $2, 'word-to-definition', 2, 5, 2, 0, 2, 3, true,
+                     now() - interval '1 day', now())`,
+          [userId, entryId],
+        );
+      }
+
+      const { rows: startRows } = await client.query(
+        `select start_training_session(
+           $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'both', '{}'::jsonb, '50'
+         ) as session`,
+        [userId],
+      );
+      expect(startRows[0].session).toEqual(
+        expect.objectContaining({
+          sessionSize: '50',
+          requestedTotal: 50,
+          plannedNew: 9,
+          plannedReview: 41,
+          plannedTotal: 50,
+        }),
+      );
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, startRows[0].session.sessionId],
+      );
+      const sources = snapshotRows[0].snapshot.members.map(
+        (member: { queueSource: string }) => member.queueSource,
+      );
+      expect(sources).toHaveLength(50);
+      expect(sources.filter((source: string) => source === 'new')).toHaveLength(9);
+      expect(sources.filter((source: string) => source === 'review')).toHaveLength(41);
+      for (let index = 0; index < 48; index += 6) {
+        expect(sources.slice(index, index + 6)).toEqual([
+          'new', 'review', 'review', 'review', 'review', 'review',
+        ]);
+      }
+      expect(sources.slice(48)).toEqual(['new', 'review']);
     }, userId);
   });
 
@@ -501,7 +689,7 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
-  test("retires a non-renderable member with a reason and drains the remaining five-card session", async () => {
+  test("records exhaustion when no renderable replacement can preserve the requested session", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -688,7 +876,7 @@ describeDb("authoritative training session plan RPC", () => {
       );
       expect(await markUnavailable(orderedRemainingEntryIds[3])).toEqual(
         expect.objectContaining({
-          status: "unavailable-complete",
+          status: "unavailable-exhausted",
           remaining: 0,
         }),
       );
@@ -768,9 +956,124 @@ describeDb("authoritative training session plan RPC", () => {
       );
       expect(rows[0].result).toEqual(
         expect.objectContaining({
-          status: "unavailable-complete",
+          status: "unavailable-exhausted",
           reason: "projection-missing",
           remaining: 0,
+        }),
+      );
+    }, userId);
+  });
+
+  test("replaces an unavailable member without spending the accepted-action budget", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+      });
+      const validEntryId = await insertWord(client, `replacement-valid-${userId}`);
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           minimum_subscription_tier, schema_key, schema_version
+         ) values (
+           'nl', $1, 'Replacement failure fixture', 'curated', 'private', null,
+           'free', 'nl-vandale-v1', 1
+         ) returning id`,
+        [`replacement-invalid-${userId}`],
+      );
+      const dictionaryId = dictionaryRows[0].id as string;
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [dictionaryId, userId],
+      );
+      const { rows: invalidRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, part_of_speech,
+           is_nt2_2000, raw
+         ) values ($1, 'nl', $2, 'noun', true, '{}'::jsonb)
+         returning id`,
+        [dictionaryId, `replacement-invalid-${userId}`],
+      );
+      const invalidEntryId = invalidRows[0].id as string;
+      const { rows: sessionRows } = await client.query(
+        `insert into training_sessions (
+           user_id, session_size, card_type_ids, list_type, card_filter,
+           training_filter, requested_total, planned_new, planned_review, planned_total
+         ) values (
+           $1, '2', ARRAY['word-to-definition']::text[], 'curated', 'both',
+           '{}'::jsonb, 2, 1, 0, 1
+         ) returning id`,
+        [userId],
+      );
+      const sessionId = sessionRows[0].id as string;
+      await client.query(
+        `insert into training_session_members (
+           session_id, ordinal, entry_id, card_type_id, queue_source
+         ) values ($1, 1, $2, 'word-to-definition', 'new')`,
+        [sessionId, invalidEntryId],
+      );
+
+      const { rows: unavailableRows } = await client.query(
+        `select mark_training_session_member_unavailable(
+           $1::uuid, $2::uuid, $3::uuid, 'word-to-definition', 'model-invalid'
+         ) as result`,
+        [userId, sessionId, invalidEntryId],
+      );
+      expect(unavailableRows[0].result).toEqual(
+        expect.objectContaining({ status: 'unavailable-replaced', replacementOrdinal: 2 }),
+      );
+
+      const { rows: retriedUnavailableRows } = await client.query(
+        `select mark_training_session_member_unavailable(
+           $1::uuid, $2::uuid, $3::uuid, 'word-to-definition', 'model-invalid'
+         ) as result`,
+        [userId, sessionId, invalidEntryId],
+      );
+      expect(retriedUnavailableRows[0].result).toEqual(
+        expect.objectContaining({ status: 'unavailable', ordinal: 1 }),
+      );
+      const { rows: memberCountRows } = await client.query(
+        `select count(*)::integer as members
+         from training_session_members where session_id = $1`,
+        [sessionId],
+      );
+      expect(memberCountRows[0].members).toBe(2);
+
+      const { rows: replacementRows } = await client.query(
+        `select get_next_training_session_card($1::uuid, $2::uuid) as card`,
+        [userId, sessionId],
+      );
+      const replacement = replacementRows[0].card;
+      expect(replacement).toEqual(
+        expect.objectContaining({ id: validEntryId, trainingSessionOrdinal: 2 }),
+      );
+
+      await client.query(
+        `select set_config('request.jwt.claim.role', 'service_role', true)`,
+      );
+      const { rows: actionRows } = await client.query(
+        `select perform_platform_v2_card_action_as_principal(
+           $1::uuid, 'start-learning', $2::uuid, 'word-to-definition', $3::text,
+           null, null, null, $4::uuid, null, 'first_party', null, $5::uuid
+         ) as result`,
+        [userId, validEntryId, replacement.stateRevision, randomUUID(), sessionId],
+      );
+      expect(actionRows[0].result).toEqual(
+        expect.objectContaining({ status: 'accepted', actionId: 'start-learning' }),
+      );
+
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      expect(snapshotRows[0].snapshot).toEqual(
+        expect.objectContaining({
+          requestedTotal: 2,
+          completedActions: 1,
+          completionReason: 'exhausted',
         }),
       );
     }, userId);
