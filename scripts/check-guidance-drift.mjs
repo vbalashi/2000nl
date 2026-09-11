@@ -55,6 +55,7 @@ export function activeGuidanceFiles(repoRoot = root) {
     "README.md",
     "db",
     "packages/docs",
+    "docs/runbooks",
     "docs/reference/api-functions",
     "docs/exec-plans/active",
   ]) {
@@ -66,6 +67,10 @@ export function activeGuidanceFiles(repoRoot = root) {
 
 export function findGuidanceDrift(repoRoot = root) {
   const findings = [];
+  const contractPath = resolve(repoRoot, "packages/shared/deployment/db-contract.json");
+  const requiredMigrationId = existsSync(contractPath)
+    ? JSON.parse(readFileSync(contractPath, "utf8")).rollout.requiredMigrationId
+    : null;
   for (const path of activeGuidanceFiles(repoRoot)) {
     const lines = readFileSync(path, "utf8").split(/\r?\n/);
     lines.forEach((line, index) => {
@@ -77,6 +82,14 @@ export function findGuidanceDrift(repoRoot = root) {
             name,
           });
         }
+      }
+      const managedRange = /migrations?\s+123\s+through\s+(\d+)/i.exec(line);
+      if (managedRange && requiredMigrationId !== null && Number(managedRange[1]) !== requiredMigrationId) {
+        findings.push({
+          path: relative(repoRoot, path),
+          line: index + 1,
+          name: `stale managed migration range 123-${managedRange[1]} (expected 123-${requiredMigrationId})`,
+        });
       }
     });
   }
