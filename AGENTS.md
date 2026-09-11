@@ -44,10 +44,19 @@ promotes a boundary change.
 - [docs/tech-debt/index.md](./docs/tech-debt/index.md) - known structural debt.
 - [docs/runbooks/project-logbook.md](./docs/runbooks/project-logbook.md) - daily
   human-readable project logbook and agent/worktree review rule.
+- [docs/runbooks/worktrees.md](./docs/runbooks/worktrees.md) - required
+  project-local checkout location and dependency bootstrap procedure.
 - [docs/runbooks](./docs/runbooks) - operational notes for Supabase auth, production debugging, and audio/TTS workflows.
 - [packages/docs/README.md](./packages/docs/README.md) - deeper data-flow and contract docs.
 
 ## Working Rules
+
+- Create every material 2000NL worktree through
+  `scripts/create-worktree.sh <issue-number> <short-slug>` from the reference
+  checkout. It places the checkout in the ignored project-local
+  `.worktrees/` container and installs its own UI dependencies. Do not create
+  new 2000NL worktrees under `/Users/khrustal/adhoc`, and never share or link
+  `node_modules` between worktrees.
 
 - Before substantial code changes, new features, contract changes, or refactors,
   read the platform engineering principles and decide the owning layer/module.
