@@ -93,7 +93,7 @@
     {
       "migrationId": 138,
       "file": "db/migrations/138_shared_meaning_directional_state.sql",
-      "sha256": "0990387e5a15c6a5edffca8652736392a56afa853560499442df7435091e8d55"
+      "sha256": "44dc35c1a38baa34d9ae36c17038e257208e611cec1e3f16511f741584713558"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-138.sql",
