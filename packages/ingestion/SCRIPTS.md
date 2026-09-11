@@ -10,6 +10,7 @@ Timestamps from filesystem (local timezone):
 | `packages/ingestion/scripts/import_word_forms.py` | 2026-07-29 | Rebuild inflected/derived forms by versioned source-entry key; exact manifest/binding coverage is required. |
 | `packages/ingestion/scripts/dictionary_identity_wave0_audit.py` | 2026-07-24 | Generate or verify the deterministic read-only Wave 0 source manifest, collision report, and hashes under `docs/architecture/evidence/dictionary-identity-wave0/`. |
 | `packages/ingestion/scripts/audit_pointer_meanings.py` | 2026-08-13 | Classify exact, resolvable pointer-only meanings separately from ordinary hyphenated content in a bounded source sample. |
+| `packages/ingestion/scripts/audit_vandale_classification.py` | 2026-09-11 | Reparse a checksummed Van Dale manifest and emit a read-only source-shape, artifact, fingerprint, and Platform V2 node diff. |
 
 The Van Dale data directory must contain `_manifest.jsonl` and
 `_manifest.summary.json`. Manifest-free natural-key writes are rejected;

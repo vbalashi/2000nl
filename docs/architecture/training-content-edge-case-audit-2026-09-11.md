@@ -232,3 +232,71 @@ content mutation:
   `voorbeelden`; their exercise treatment must wait for the parser repair
   decision.
 
+## #339 parser rule and dry-run evidence
+
+Issue [#339](https://github.com/vbalashi/2000nl/issues/339) implements the
+source-only correction after scanning every `f0c` block nested in the parsed
+`f3u` meanings of the complete versioned manifest. The parser now classifies a
+block as a meaning example only when the preceding sibling section link says
+`voorbeelden`, the block has a nonblank `f3i` expression, and it has neither an
+`f3n` explanation nor a nested `f2s` example. Explained blocks remain idioms,
+including those under the same `voorbeelden` section. Example-only meanings are
+retained rather than discarded.
+
+The read-only audit is reproducible with:
+
+```sh
+python packages/ingestion/scripts/audit_vandale_classification.py \
+  --data-dir /path/to/versioned/words_content
+```
+
+Against manifest
+`45fc68e1dee018f3e778d88ec22d7805fb90588b1d1dacd226e3ae6024b621ce`,
+the audit reported:
+
+| Measure | Result |
+|---|---:|
+| Artifacts parsed | 18,163 |
+| Parse failures | 0 |
+| Source `f0c` blocks | 5,262 |
+| Blocks with explanations | 5,260 |
+| Blocks with nested examples | 2,884 |
+| Bare blocks under `voorbeelden` | 2 |
+| Bare blocks outside `voorbeelden` | 0 |
+| Changed artifacts | 1 |
+
+The false-positive guard report classified only the 2 bare `voorbeelden`
+blocks. It retained all 5,260 blocks with explanations and all 2,884 blocks
+with nested examples as idiom/expression structures; there were no bare blocks
+outside a `voorbeelden` section in this manifest. The machine-readable audit
+also emits all six observed shape variants so a future layout change cannot be
+hidden by aggregate counts.
+
+The single changed artifact is `003081_a3045_drop_zn_1.json`. Entry identity is
+unchanged:
+
+- provider article: `a3045`;
+- source index: `3081`;
+- sense ordinal: `1`;
+- source entry key:
+  `fnt:vandale-provider-article-v1:6ede8138ab47c0bc35156dea4753f6b0:1`.
+
+Its semantic fingerprint changes from
+`87fb3af13b29792a0ea5d58c7a2c5325a2c8bf386a4910e8007a74896d4621de`
+to
+`9f4726101b026171bb71dff91dd6532949a906980538f38c92475314f88bebe8`.
+The definition node and fingerprint stay unchanged. The two source texts are
+unique within the entry, so the dry run maps their old and new semantic nodes
+without ambiguity:
+
+| Text | Before | After |
+|---|---|---|
+| `zoete en zoute drop` | `idiom`, `raw.meanings[0].idioms[0]`, `476a26a4…` | `example`, `raw.meanings[0].examples[0]`, `3bab6fb7…` |
+| `een dropje nemen` | `idiom`, `raw.meanings[0].idioms[1]`, `86b3c5b6…` | `example`, `raw.meanings[0].examples[1]`, `b1198d06…` |
+
+Those node fingerprints are intentionally different because kind is part of
+the fingerprint. This dry run therefore does not authorize direct import: a
+future data operation must preserve the entry binding and explicitly reconcile
+or retire the two old node identities plus any translations attached to them.
+No artifact, database row, translation, FSRS state, or learner history was
+mutated by this audit.

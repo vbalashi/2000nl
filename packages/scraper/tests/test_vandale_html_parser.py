@@ -8,8 +8,7 @@ sys.path.insert(0, str(SCRAPER_ROOT))
 from vandale_html_parser import parse_vandale_entry_fixed  # noqa: E402
 
 
-def test_characterizes_drop_example_blocks_currently_as_idioms() -> None:
-    """Lock the observed source/parser mismatch before proposing a repair."""
+def test_classifies_bare_voorbeelden_blocks_as_meaning_examples() -> None:
     html = """
     <span id="a3045" class="f1y">
       <span class="f3 f3v">
@@ -37,11 +36,37 @@ def test_characterizes_drop_example_blocks_currently_as_idioms() -> None:
         {
             "definition": "zwart snoep",
             "context": "",
-            "examples": [],
-            "idioms": [
-                {"expression": "zoete en zoute drop"},
-                {"expression": "een dropje nemen"},
-            ],
+            "examples": ["zoete en zoute drop", "een dropje nemen"],
+            "idioms": [],
+        }
+    ]
+
+
+def test_preserves_meaning_with_only_bare_voorbeelden_blocks() -> None:
+    html = """
+    <span id="a5" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2h"><span class="f2e">voorbeeld</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m">
+          <a class="f0h f1i f0c fm"><span class="f1u">▼</span> voorbeelden</a>
+          <span class="fu f0c">
+            <span class="f1f"><span class="f3i">alleen een voorbeeld</span></span>
+          </span>
+        </span>
+      </span>
+    </span>
+    """
+
+    entry = parse_vandale_entry_fixed(html, "voorbeeld")
+
+    assert entry["meanings"] == [
+        {
+            "definition": "",
+            "context": "",
+            "examples": ["alleen een voorbeeld"],
+            "idioms": [],
         }
     ]
 
@@ -116,6 +141,7 @@ def test_keeps_idiom_examples_on_the_idiom() -> None:
       </span>
       <span class="f3 f3u">
         <span class="f1m">
+          <a class="f0h f1i f0c fm"><span class="f1u">▼</span> voorbeelden</a>
           <span class="fu f0c">
             <span class="f1f">
               <span class="f3i">een knots van een …</span>
@@ -144,6 +170,73 @@ def test_keeps_idiom_examples_on_the_idiom() -> None:
                     "examples": ["mijn broer heeft een knots van een huis"],
                 }
             ],
+        }
+    ]
+
+
+def test_keeps_explained_voorbeelden_block_as_idiom_without_example() -> None:
+    html = """
+    <span id="a3" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2h"><span class="f2e">aagje</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m">
+          <a class="f0h f1i f0c fm"><span class="f1u">▼</span> voorbeelden</a>
+          <span class="fu f0c">
+            <span class="f1f">
+              <span class="f3i">een nieuwsgierig aagje</span>
+              <span class="f3n">iemand die erg nieuwsgierig is</span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    """
+
+    entry = parse_vandale_entry_fixed(html, "aagje")
+
+    assert entry["meanings"] == [
+        {
+            "definition": "",
+            "context": "",
+            "examples": [],
+            "idioms": [
+                {
+                    "expression": "een nieuwsgierig aagje",
+                    "explanation": "iemand die erg nieuwsgierig is",
+                }
+            ],
+        }
+    ]
+
+
+def test_keeps_bare_f0c_outside_voorbeelden_as_idiom() -> None:
+    html = """
+    <span id="a4" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2h"><span class="f2e">voorbeeld</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m">
+          <span class="fu f0c">
+            <span class="f1f">
+              <span class="f3i">een toekomstige uitdrukking</span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    """
+
+    entry = parse_vandale_entry_fixed(html, "voorbeeld")
+
+    assert entry["meanings"] == [
+        {
+            "definition": "",
+            "context": "",
+            "examples": [],
+            "idioms": [{"expression": "een toekomstige uitdrukking"}],
         }
     ]
 
