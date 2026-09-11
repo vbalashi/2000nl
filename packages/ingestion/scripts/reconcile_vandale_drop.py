@@ -558,7 +558,8 @@ def _load_locked_state(cursor, source_entry_key: str) -> dict[str, Any]:
         select id::text, kind, binding_state, source_text_fingerprint,
                diagnostic_locator, parent_content_node_id::text,
                first_source_revision, last_source_revision,
-               identity_evidence, reconciliation_decision
+               identity_evidence, reconciliation_decision, source_native_key,
+               canonical_source_text, source_order
         from private.platform_v2_content_nodes
         where entry_id = %s
         order by created_at, id
@@ -804,6 +805,169 @@ def _restore_snapshot_nodes(cursor, snapshot: dict[str, Any]) -> None:
             )
 
 
+def _node_provenance_signature(node: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        node["kind"],
+        node["diagnostic_locator"],
+        node["source_text_fingerprint"],
+    )
+
+
+def _expected_after_signature(node: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        node["kind"],
+        node["sourcePath"],
+        node["sourceTextFingerprint"],
+    )
+
+
+def _node_input_projection(
+    nodes: list[dict[str, Any]],
+) -> dict[tuple[str, str, str], tuple[str, int]]:
+    projection = {
+        _expected_after_signature(node): (node["sourceText"], index)
+        for index, node in enumerate(nodes, start=1)
+    }
+    if len(projection) != len(nodes):
+        raise ReconciliationRefused("rollback snapshot has duplicate node evidence")
+    return projection
+
+
+def _assert_rollback_node_inventory(
+    snapshot: dict[str, Any], state: dict[str, Any]
+) -> None:
+    """Refuse rollback unless the complete #341 post-apply node set is intact."""
+    before_nodes = snapshot["nodes"]
+    current_nodes = state["nodes"]
+    before_payload = deepcopy(snapshot["raw"])
+    before_payload.setdefault(
+        "_source",
+        {
+            "source_entry_key": EXPECTED_SOURCE_ENTRY_KEY,
+            "source_group_key": EXPECTED_SOURCE_GROUP_KEY,
+        },
+    )
+    before_projection = _node_input_projection(
+        platform_v2_content_node_inputs(before_payload)
+    )
+    after_projection = _node_input_projection(snapshot["afterNodeEvidence"])
+    before_ids = {node["id"] for node in before_nodes}
+    current_ids = {node["id"] for node in current_nodes}
+    if len(before_ids) != len(before_nodes) or len(current_ids) != len(current_nodes):
+        raise ReconciliationRefused("rollback node inventory contains duplicate IDs")
+    if not before_ids.issubset(current_ids):
+        raise ReconciliationRefused("rollback original node is missing")
+
+    old_idiom_ids = {
+        node["id"]
+        for node in before_nodes
+        if node["binding_state"] == "active" and node["kind"] == "idiom"
+    }
+    current_by_id = {node["id"]: node for node in current_nodes}
+    provenance_fields = (
+        "kind",
+        "source_text_fingerprint",
+        "diagnostic_locator",
+        "parent_content_node_id",
+        "first_source_revision",
+        "identity_evidence",
+    )
+    for before_node in before_nodes:
+        current_node = current_by_id[before_node["id"]]
+        expected_state = (
+            "retired"
+            if before_node["id"] in old_idiom_ids
+            else before_node["binding_state"]
+        )
+        if current_node["binding_state"] != expected_state:
+            raise ReconciliationRefused(
+                "live original node state differs from the committed #341 result"
+            )
+        if current_node.get("last_source_revision") != EXPECTED_RECONCILED_MANIFEST_SHA256:
+            raise ReconciliationRefused(
+                "live original node revision differs from the committed #341 result"
+            )
+        expected_decision = {
+            "decision": "retire-missing"
+            if before_node["id"] in old_idiom_ids
+            else "preserve-unambiguous-fingerprint"
+        }
+        if current_node.get("reconciliation_decision") != expected_decision:
+            raise ReconciliationRefused(
+                "live original node decision differs from the committed #341 result"
+            )
+        if any(
+            current_node.get(field) != before_node.get(field)
+            for field in provenance_fields
+        ):
+            raise ReconciliationRefused(
+                "live original node provenance differs from the committed #341 result"
+            )
+        signature = _node_provenance_signature(current_node)
+        expected_projection = (
+            before_projection[signature]
+            if before_node["id"] in old_idiom_ids
+            else after_projection[signature]
+        )
+        if (
+            current_node.get("source_native_key") is not None
+            or current_node.get("canonical_source_text") != expected_projection[0]
+            or current_node.get("source_order") != expected_projection[1]
+        ):
+            raise ReconciliationRefused(
+                "live original node projection differs from the committed #341 result"
+            )
+
+    expected_after = set(after_projection)
+    before_active = {
+        _node_provenance_signature(node)
+        for node in before_nodes
+        if node["binding_state"] == "active"
+    }
+    expected_new = expected_after - before_active
+    if len(current_nodes) != len(before_nodes) + len(expected_new):
+        raise ReconciliationRefused(
+            "live node inventory differs from the committed #341 result"
+        )
+
+    new_nodes = [node for node in current_nodes if node["id"] not in before_ids]
+    if len(new_nodes) != len(expected_new):
+        raise ReconciliationRefused(
+            "live rollback node inventory has an unexpected generated node"
+        )
+    if any(node["binding_state"] != "active" for node in new_nodes):
+        raise ReconciliationRefused(
+            "live rollback node inventory has an unexpected retired generated node"
+        )
+    if any(
+        node.get("first_source_revision") != EXPECTED_RECONCILED_MANIFEST_SHA256
+        or node.get("last_source_revision") != EXPECTED_RECONCILED_MANIFEST_SHA256
+        or node.get("parent_content_node_id") is not None
+        or node.get("identity_evidence")
+        != {"sourceTextFingerprint": node["source_text_fingerprint"]}
+        or node.get("reconciliation_decision") != {"decision": "new-unmatched"}
+        for node in new_nodes
+    ):
+        raise ReconciliationRefused(
+            "live generated node provenance differs from the committed #341 result"
+        )
+    if any(
+        node.get("source_native_key") is not None
+        or node.get("canonical_source_text")
+        != after_projection[_node_provenance_signature(node)][0]
+        or node.get("source_order")
+        != after_projection[_node_provenance_signature(node)][1]
+        for node in new_nodes
+    ):
+        raise ReconciliationRefused(
+            "live generated node projection differs from the committed #341 result"
+        )
+    if {_node_provenance_signature(node) for node in new_nodes} != expected_new:
+        raise ReconciliationRefused(
+            "live generated node set differs from the committed #341 result"
+        )
+
+
 def _rollback_snapshot(database_url: str, snapshot_path: Path) -> dict[str, Any]:
     snapshot = _load_snapshot(snapshot_path)
     with psycopg2.connect(database_url) as connection:
@@ -842,40 +1006,24 @@ def _rollback_snapshot(database_url: str, snapshot_path: Path) -> dict[str, Any]
                     raise ReconciliationRefused(
                         f"{field} changed after #341; refusing rollback"
                     )
+            _assert_rollback_node_inventory(snapshot, state)
             expected_after_nodes = {
-                (
-                    node["kind"],
-                    node["sourcePath"],
-                    node["sourceTextFingerprint"],
-                )
+                _expected_after_signature(node)
                 for node in snapshot["afterNodeEvidence"]
             }
+            active_nodes = [
+                node for node in state["nodes"] if node["binding_state"] == "active"
+            ]
             actual_after_nodes = {
-                (
-                    node["kind"],
-                    node["diagnostic_locator"],
-                    node["source_text_fingerprint"],
-                )
-                for node in state["nodes"]
-                if node["binding_state"] == "active"
+                _node_provenance_signature(node) for node in active_nodes
             }
-            if actual_after_nodes != expected_after_nodes:
+            if (
+                len(active_nodes) != len(expected_after_nodes)
+                or actual_after_nodes != expected_after_nodes
+            ):
                 raise ReconciliationRefused(
                     "live content nodes differ from the committed #341 result"
                 )
-            old_idiom_ids = {
-                node["id"]
-                for node in snapshot["nodes"]
-                if node["binding_state"] == "active" and node["kind"] == "idiom"
-            }
-            if any(
-                node["id"] in old_idiom_ids and node["binding_state"] == "active"
-                for node in state["nodes"]
-            ):
-                raise ReconciliationRefused(
-                    "original idiom nodes are still active; refusing rollback"
-                )
-
             cursor.execute(
                 """
                 update public.word_entries
