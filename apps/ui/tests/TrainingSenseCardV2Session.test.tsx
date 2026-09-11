@@ -1131,6 +1131,45 @@ describe("TrainingSenseCardV2Session", () => {
     expect(fetchSingleSense).toHaveBeenCalledTimes(2);
   });
 
+  test.each([false, true])("renders the klaar idiom explanation in reverse mode (prefetched=%s)", async (prefetched) => {
+    // Production #325: the selected sense has an explanation, not a definition.
+    const lookup = {
+      state: "ready" as const,
+      group: singleSenseGroup,
+      entry: {
+        ...singleSenseEntry,
+        contentNodes: [
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-idiom", kind: "idiom" as const, parentContentNodeId: null, order: 0, text: "ergens helemaal klaar mee zijn" },
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-explanation", kind: "idiom-explanation" as const, parentContentNodeId: "klaar-idiom", order: 1, text: "iets helemaal niet meer willen, omdat je het vervelend vindt" },
+          { ...singleSenseEntry.contentNodes[0], contentNodeId: "klaar-example", kind: "example" as const, parentContentNodeId: "klaar-idiom", order: 2, text: "ik ben helemaal klaar met zijn gezeur" },
+        ],
+      },
+    };
+    fetchSingleSense.mockResolvedValue(lookup);
+    if (prefetched) {
+      peekPrefetched.mockReturnValue(lookup);
+      consumePrefetched.mockReturnValue(lookup);
+    }
+    const onLoadFailure = vi.fn();
+    const onProgressActionAccepted = vi.fn();
+    render(<TestTrainingSenseCardV2Session
+      word={{ ...word, mode: "definition-to-word" }}
+      mode="definition-to-word"
+      contentLanguageCode="nl"
+      translationTargetLanguageCode="ru"
+      interfaceLanguage="en"
+      onLoadFailure={onLoadFailure}
+      onProgressActionAccepted={onProgressActionAccepted}
+    />);
+    expect(await screen.findByTestId("reverse-prompt")).toHaveTextContent("iets helemaal niet meer willen, omdat je het vervelend vindt");
+    expect(screen.queryByTestId("training-v2-failure")).not.toBeInTheDocument();
+    expect(onLoadFailure).not.toHaveBeenCalled();
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    expect(await screen.findByText("ergens helemaal klaar mee zijn")).toBeVisible();
+    expect(screen.getByText("ik ben helemaal klaar met zijn gezeur")).toBeVisible();
+  });
+
   test("classifies a structurally invalid card and asks the session owner for a fresh candidate", async () => {
     const onLoadFailure = vi.fn();
     const onRetryAlternative = vi.fn();

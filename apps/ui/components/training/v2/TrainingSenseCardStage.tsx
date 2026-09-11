@@ -1,4 +1,5 @@
 "use client";
+import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 
 import React from "react";
 import {
@@ -77,9 +78,10 @@ export function TrainingSenseCardStage({
     [interfaceLanguage],
   );
   const hint = model.examples[0];
-  const reversePrompt = model.definitions.find(
-    (item) => item.kind === "definition",
-  );
+  const reversePrompt = selectTrainingReversePrompt([
+    ...model.definitions,
+    ...model.examples,
+  ]);
   const translationActionAvailable = Boolean(
     model.requestTranslationCapability,
   );
