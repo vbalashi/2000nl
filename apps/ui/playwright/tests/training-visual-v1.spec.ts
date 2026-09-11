@@ -21,7 +21,7 @@ async function advanceToApprovedPosition(page: import("@playwright/test").Page) 
       await page.getByRole("button", { name: /Goed|Хорошо|Good/i }).click();
     }
     await expect(page.getByTestId("training-session-position")).toHaveText(
-      `${position + 1} / 23`,
+      `${position} / 23`,
     );
   }
 }
