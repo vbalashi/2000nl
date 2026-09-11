@@ -59,10 +59,20 @@ The public settings and completion surface need the scoped visual approval in
 Exact control layout, the full preset list and an extension control are not
 approved here; 10 and 50 are explicit acceptance examples.
 
+Rollout clarification (#355): a public scheduler RPC cannot be removed merely
+because the current repository has no callers. Browser tabs can retain the
+previous JS bundle while a forward-only database migration is already live.
+The immediately preceding public `get_next_card` and filtered signatures remain
+thin adapters to the v2-backed practice-aware forms with practice disabled.
+This is a deployment compatibility boundary, not restoration of private v1 or
+an independent scheduler. Any eventual removal requires a staged client
+deprecation plan that covers cached bundles as well as external callers.
+
 This decision governs session sizing in #334 under #327. ADR 0005 describes an
 earlier navigation slice; its transient-session limitations must not be used to
 undo the subsequently implemented durable session/retry behavior.
 
 References: [#334](https://github.com/vbalashi/2000nl/issues/334),
 [#327](https://github.com/vbalashi/2000nl/issues/327),
-[#331](https://github.com/vbalashi/2000nl/issues/331).
+[#331](https://github.com/vbalashi/2000nl/issues/331),
+[#355](https://github.com/vbalashi/2000nl/issues/355).

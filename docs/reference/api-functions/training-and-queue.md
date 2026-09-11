@@ -30,10 +30,14 @@ get_next_card(
 
 The finite-session contract adds a required `p_allow_practice boolean` as the
 ninth argument. The current pilot sends `false`, so a 5-card, 10-card, or
-all-due-today session cannot silently grow with future practice cards. The old
-eight-argument compatibility overload was removed by migration `137` after
-all application, test, benchmark, and deployment callers moved to this
-explicit contract.
+all-due-today session cannot silently grow with future practice cards.
+
+Migration `141` retains the immediately preceding eight-argument public shape
+as a cached-client adapter. It forwards to this canonical signature with
+`p_allow_practice = false`; it is not a second scheduler implementation and
+does not restore any private v1 candidate function. The analogous filtered
+nine-argument public shape is retained under the same rule. The older
+`*_without_known` bypass names remain retired.
 
 Parameters:
 - `p_user_id`

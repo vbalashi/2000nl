@@ -6,12 +6,13 @@ import test from "node:test";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 
-// The old scheduler entry points remain in historical migrations and in the
-// local contract probe as explicit absence assertions. Neither is a runtime
-// caller. Everything else under the application, package, and operational
-// script trees must use the explicit practice-aware signatures.
+// Cached-client scheduler overloads exist only as public migration adapters.
+// Runtime callers must still use the explicit practice-aware forms; the listed
+// tests are the sole non-migration code allowed to invoke the adapters.
 const allowedLegacyReferences = new Set([
   "apps/ui/tests/fsrs/platformKnownMarkRpc.test.ts",
+  "apps/ui/tests/dbContractDeployment.test.ts",
+  "db/scripts/scheduler_cold_io.integration.test.mjs",
 ]);
 const forbiddenPatterns = [
   /get_next_card_without_known/,
@@ -50,7 +51,7 @@ function oldGenericSchedulerCall(source, functionName, argumentCount) {
   return violations;
 }
 
-test("no active scheduler caller uses retired compatibility entry points", () => {
+test("no active scheduler caller uses cached-client compatibility entry points", () => {
   const trackedFiles = execFileSync(
     "git",
     ["ls-files", "apps", "packages", "db/scripts", "scripts"],
@@ -89,6 +90,6 @@ test("no active scheduler caller uses retired compatibility entry points", () =>
   assert.deepEqual(
     violations,
     [],
-    "retired scheduler compatibility references must remain confined to historical/contract assertions",
+    "cached-client scheduler adapters must remain confined to migration and compatibility tests",
   );
 });

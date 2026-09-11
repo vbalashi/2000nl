@@ -126,7 +126,7 @@ test(
 
       applySqlFile(targetUrl, "db/scripts/plain_postgres_supabase_compat.sql");
       // This test characterizes the 126→128 scheduler transition before
-      // replaying later migrations. A full bootstrap now contains 140, so it
+      // replaying later migrations. A full bootstrap now contains 141, so it
       // would otherwise make historical postflight-128 assertions observe a
       // schema that is deliberately newer than their contract.
       applyBootstrapBefore(targetUrl, "138_shared_meaning_directional_state.sql");
@@ -730,7 +730,24 @@ test(
       applySqlFile(targetUrl, "db/migrations/138_shared_meaning_directional_state.sql");
       applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
+      applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
+
+      const cachedClientCompatibility = psql(
+        targetUrl,
+        `BEGIN READ ONLY;
+         SELECT set_config('request.jwt.claim.sub', '${qaUserId}', true);
+         SELECT * FROM public.get_next_card(
+           '${qaUserId}', ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
+           'curated', 'both', 'auto', ARRAY[]::text[]
+         );
+         SELECT * FROM public.get_next_filtered_card(
+           '${qaUserId}', ARRAY['word-to-definition'], ARRAY[]::uuid[], null,
+           'curated', 'both', 'auto', ARRAY[]::text[], '{}'
+         );
+         ROLLBACK;\n`,
+      );
+      assert.equal(cachedClientCompatibility.status, 0, cachedClientCompatibility.stderr);
 
       const canonicalMetrics = measureComponent(
         `SELECT * FROM private.training_scheduler_candidates_v2(
@@ -762,7 +779,7 @@ test(
       const obsoleteV1DriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-140.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-141.sql")],
       );
       assert.notEqual(obsoleteV1DriftPostflight.status, 0);
       assert.match(
@@ -771,7 +788,8 @@ test(
       );
 
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
+      applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -783,14 +801,15 @@ test(
       const sessionGrantDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-140.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-141.sql")],
       );
       assert.notEqual(sessionGrantDriftPostflight.status, 0);
       assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
 
       applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
+      applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
     } finally {
       const terminate = psql(
         base.toString(),

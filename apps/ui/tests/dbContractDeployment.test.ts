@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 140,
-      coordinationIssue: 353,
+      requiredMigrationId: 141,
+      coordinationIssue: 355,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -62,7 +62,7 @@ describe("NUC database contract deployment", () => {
   });
 
   test("postflight preserves prior scheduler guarantees at the shared selector seam", () => {
-    const postflight = read("db/deploy-contract/postflight-140.sql");
+    const postflight = read("db/deploy-contract/postflight-141.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
@@ -79,6 +79,16 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("constraint_state.confdeltype = 'c'");
     expect(postflight).toContain("word_entries_training_sibling_count_v1_idx");
     expect(postflight).toContain("shared-scheduler-body");
+    expect(postflight).toContain("cached-client-scheduler-compatibility");
+    expect(postflight).toContain(
+      "public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])",
+    );
+    expect(postflight).toContain(
+      "public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)",
+    );
+    expect(postflight).toContain("GET_NEXT_CARD(");
+    expect(postflight).toContain("GET_NEXT_FILTERED_CARD(");
+    expect(postflight).toContain("TRAINING_SCHEDULER_CANDIDATES_V1");
     expect(postflight).toContain("TODAY_NEW_WORDS AS MATERIALIZED");
     expect(postflight).toContain("KNOWN_CARDS AS MATERIALIZED");
     expect(postflight).toContain("user_settings_reading_size_phone_check");
@@ -103,7 +113,7 @@ describe("NUC database contract deployment", () => {
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(postflight).toContain("training_session_members_v1");
     expect(postflight).toContain("requested_total");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-140.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-141.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {
@@ -126,10 +136,15 @@ describe("NUC database contract deployment", () => {
     expect(probeSource).toContain("auth_user.email = 'test@2000nl.test'");
     expect(probeSource).toContain("public.get_training_session_plan");
     expect(probeSource).toContain("public.get_next_card");
+    expect(probeSource).toContain("pre_switch_cached_client_scheduler");
+    expect(probeSource).toContain("public.get_next_filtered_card");
     expect(probeSource).toContain("$pre_switch_session_plan$");
     expect(probeSource).toContain("$pre_switch_next_card$");
-    expect(probeSource.indexOf("public.get_next_card")).toBeGreaterThan(
-      probeSource.indexOf("public.get_training_session_plan"),
+    const canonicalSelectorProbe = read(
+      "db/deploy-contract/pre-switch-read-probe-129.sql",
+    );
+    expect(canonicalSelectorProbe.indexOf("public.get_next_card")).toBeGreaterThan(
+      canonicalSelectorProbe.indexOf("public.get_training_session_plan"),
     );
     expect(probeSource).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
     expect(runner).toContain("BEGIN READ ONLY");
