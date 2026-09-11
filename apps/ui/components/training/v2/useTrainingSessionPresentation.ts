@@ -70,6 +70,8 @@ export function useTrainingSessionPresentation({
     const sessionRestarted =
       previousSessionGenerationRef.current !== sessionGeneration;
     const explicitReset = previousResetKeyRef.current !== resetKey;
+    const acceptedCardCountChanged =
+      previousConsumedCardCountRef.current !== consumedCardCount;
     const lateResumeHydration =
       surface === "session" &&
       previousConsumedCardCountRef.current === 0 &&
@@ -84,16 +86,17 @@ export function useTrainingSessionPresentation({
       previousCardKeyRef.current = null;
       return;
     }
-    if (
-      !enteringSession &&
-      !sessionRestarted &&
-      !explicitReset &&
-      !lateResumeHydration
-    )
+    const sessionStateReset =
+      enteringSession || sessionRestarted || explicitReset || lateResumeHydration;
+    if (sessionStateReset) {
+      setActualCardOrdinal(Math.max(1, consumedCardCount + 1));
+      setAcceptedTotal(normalizePlannedTotal(plannedTotal));
+      previousCardKeyRef.current = presentedCardKey;
       return;
+    }
+    if (surface !== "session" || !acceptedCardCountChanged) return;
 
     setActualCardOrdinal(Math.max(1, consumedCardCount + 1));
-    setAcceptedTotal(normalizePlannedTotal(plannedTotal));
     previousCardKeyRef.current = presentedCardKey;
   }, [
     consumedCardCount,
@@ -112,10 +115,6 @@ export function useTrainingSessionPresentation({
 
   React.useEffect(() => {
     if (surface !== "session" || !presentedCardKey) return;
-    const previousCardKey = previousCardKeyRef.current;
-    if (previousCardKey && previousCardKey !== presentedCardKey) {
-      setActualCardOrdinal((ordinal) => ordinal + 1);
-    }
     previousCardKeyRef.current = presentedCardKey;
   }, [presentedCardKey, surface]);
 

@@ -118,6 +118,7 @@ function renderController(overrides: {
   sessionPlannedTotal?: number | null;
   sessionConsumedCardKeys?: string[];
   trainingSessionId?: string | null;
+  onSessionCardAccepted?: (cardKey: string) => void;
 } = {}) {
   const selectNext = (overrides.selectNext ??
     vi.fn().mockResolvedValue(word2)) as MockedFunction<
@@ -157,6 +158,7 @@ function renderController(overrides: {
       trainingSessionId: overrides.trainingSessionId,
       selection: { selectNext, lookupOverride, markUnavailable },
       refreshAfterAccepted,
+      onSessionCardAccepted: overrides.onSessionCardAccepted,
       }),
     {
       initialProps: {
@@ -386,6 +388,34 @@ describe("useTrainingTurnController transition matrix", () => {
     );
     expect(controller.setCurrentWord).toHaveBeenCalledWith(word2);
     expect(controller.result.current.acceptedTransitionLoadStalled).toBe(false);
+  });
+
+  test("reports an accepted card once when the next-card retry is recovered", async () => {
+    prepared.consume.mockReturnValue(null);
+    const selectNext = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("next_card_offline"))
+      .mockResolvedValueOnce(word2);
+    const onSessionCardAccepted = vi.fn();
+    const controller = renderController({
+      selectNext,
+      onSessionCardAccepted,
+    });
+
+    await act(async () => {
+      await controller.result.current.acceptPlatformProgressAction({} as any);
+    });
+
+    expect(onSessionCardAccepted).toHaveBeenCalledOnce();
+    expect(onSessionCardAccepted).toHaveBeenCalledWith(
+      "word-1:word-to-definition",
+    );
+
+    await act(async () => {
+      await controller.result.current.retryAcceptedTransitionLoad();
+    });
+
+    expect(onSessionCardAccepted).toHaveBeenCalledOnce();
   });
 
   test("a separate authoritative load clears accepted-transition recovery", async () => {

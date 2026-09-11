@@ -23,12 +23,13 @@ const snapshot = (
       };
 
 describe("useTrainingSessionPresentation", () => {
-  test("distinguishes first, subsequent, same-card remount, and re-entry", () => {
+  test("advances only after an accepted card, not after a replacement", () => {
     const view = renderHook(
-      ({ surface, cardKey }) =>
+      ({ surface, cardKey, consumedCardCount }) =>
         useTrainingSessionPresentation({
           surface,
           presentedCardKey: cardKey,
+          consumedCardCount,
           sessionGeneration: 1,
           scopeKey: "default",
           planSnapshot: snapshot(3),
@@ -38,19 +39,30 @@ describe("useTrainingSessionPresentation", () => {
         initialProps: {
           surface: "today" as "today" | "session",
           cardKey: null as string | null,
+          consumedCardCount: 0,
         },
       },
     );
 
-    view.rerender({ surface: "session", cardKey: "entry-1:word-to-definition" });
+    view.rerender({
+      surface: "session",
+      cardKey: "entry-1:word-to-definition",
+      consumedCardCount: 0,
+    });
     expect(view.result.current.isSubsequentCard).toBe(false);
 
-    view.rerender({ surface: "session", cardKey: "entry-2:word-to-definition" });
-    expect(view.result.current.isSubsequentCard).toBe(true);
+    view.rerender({
+      surface: "session",
+      cardKey: "entry-2:word-to-definition",
+      consumedCardCount: 0,
+    });
+    expect(view.result.current.isSubsequentCard).toBe(false);
 
-    // The same card remains the same numbered presentation; the stable session
-    // consumes its transition signal only once when it first becomes ready.
-    view.rerender({ surface: "session", cardKey: "entry-2:word-to-definition" });
+    view.rerender({
+      surface: "session",
+      cardKey: "entry-2:word-to-definition",
+      consumedCardCount: 1,
+    });
     expect(view.result.current.isSubsequentCard).toBe(true);
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
@@ -59,8 +71,18 @@ describe("useTrainingSessionPresentation", () => {
       fraction: 2 / 3,
     });
 
-    act(() => view.rerender({ surface: "today", cardKey: null }));
-    view.rerender({ surface: "session", cardKey: "entry-3:word-to-definition" });
+    act(() =>
+      view.rerender({
+        surface: "today",
+        cardKey: null,
+        consumedCardCount: 0,
+      }),
+    );
+    view.rerender({
+      surface: "session",
+      cardKey: "entry-3:word-to-definition",
+      consumedCardCount: 0,
+    });
     expect(view.result.current.isSubsequentCard).toBe(false);
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
@@ -72,10 +94,11 @@ describe("useTrainingSessionPresentation", () => {
 
   test("keeps actual ordinal while clamping only the exhausted progress fraction", () => {
     const view = renderHook(
-      ({ cardKey, plannedTotal }) =>
+      ({ cardKey, plannedTotal, consumedCardCount }) =>
         useTrainingSessionPresentation({
           surface: "session",
           presentedCardKey: cardKey,
+          consumedCardCount,
           sessionGeneration: 1,
           scopeKey: "default",
           planSnapshot: snapshot(plannedTotal),
@@ -85,6 +108,7 @@ describe("useTrainingSessionPresentation", () => {
         initialProps: {
           cardKey: "entry-1:word-to-definition",
           plannedTotal: 2 as number | null,
+          consumedCardCount: 0,
         },
       },
     );
@@ -92,10 +116,12 @@ describe("useTrainingSessionPresentation", () => {
     view.rerender({
       cardKey: "entry-2:word-to-definition",
       plannedTotal: null,
+      consumedCardCount: 1,
     });
     view.rerender({
       cardKey: "entry-3:word-to-definition",
       plannedTotal: null,
+      consumedCardCount: 2,
     });
 
     expect(view.result.current.presentation).toEqual({
@@ -207,6 +233,7 @@ describe("useTrainingSessionPresentation", () => {
         sessionGeneration,
         plannedTotal,
         cardKey,
+        consumedCardCount,
         resetKey,
       }) =>
         useTrainingSessionPresentation({
@@ -215,6 +242,7 @@ describe("useTrainingSessionPresentation", () => {
           sessionGeneration,
           planSnapshot: snapshot(plannedTotal, sessionGeneration, sessionKey),
           presentedCardKey: cardKey,
+          consumedCardCount,
           resetKey,
         }),
       {
@@ -224,6 +252,7 @@ describe("useTrainingSessionPresentation", () => {
           sessionGeneration: 1,
           plannedTotal: null as number | null,
           cardKey: null as string | null,
+          consumedCardCount: 0,
           resetKey: 0,
         },
       },
@@ -235,6 +264,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 5,
       cardKey: "entry-1:a",
+      consumedCardCount: 0,
       resetKey: 0,
     });
     view.rerender({
@@ -243,6 +273,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 3,
       cardKey: "entry-2:a",
+      consumedCardCount: 1,
       resetKey: 0,
     });
     expect(view.result.current.presentation).toEqual({
@@ -258,6 +289,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: 2,
       cardKey: "entry-3:a",
+      consumedCardCount: 0,
       resetKey: 1,
     });
     expect(view.result.current.presentation).toEqual({
@@ -273,6 +305,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 1,
       plannedTotal: null,
       cardKey: null,
+      consumedCardCount: 0,
       resetKey: 1,
     });
     expect(view.result.current.presentation).toEqual({
@@ -285,6 +318,7 @@ describe("useTrainingSessionPresentation", () => {
       sessionGeneration: 2,
       plannedTotal: 4,
       cardKey: "entry-4:a",
+      consumedCardCount: 0,
       resetKey: 2,
     });
     expect(view.result.current.presentation).toEqual({
@@ -297,10 +331,11 @@ describe("useTrainingSessionPresentation", () => {
 
   test("scope-key hydration only changes progress state", () => {
     const view = renderHook(
-      ({ scopeKey, cardKey, plannedTotal }) =>
+      ({ scopeKey, cardKey, plannedTotal, consumedCardCount }) =>
         useTrainingSessionPresentation({
           surface: "session",
           presentedCardKey: cardKey,
+          consumedCardCount,
           sessionGeneration: 1,
           scopeKey,
           planSnapshot: snapshot(plannedTotal, 1, scopeKey),
@@ -311,6 +346,7 @@ describe("useTrainingSessionPresentation", () => {
           scopeKey: "hydrating",
           cardKey: "entry-1:a",
           plannedTotal: 5,
+          consumedCardCount: 0,
         },
       },
     );
@@ -319,13 +355,14 @@ describe("useTrainingSessionPresentation", () => {
       scopeKey: "hydrated",
       cardKey: "entry-2:a",
       plannedTotal: 5,
+      consumedCardCount: 0,
     });
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 2,
+      position: 1,
       total: 5,
-      fraction: 0.4,
+      fraction: 0.2,
     });
   });
 });
