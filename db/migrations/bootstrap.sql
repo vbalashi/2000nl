@@ -412,3 +412,6 @@
 
 -- Count a training session by completed actions, not by daily scheduler caps
 \i db/migrations/139_session_action_budget.sql
+
+-- Keep direct selection and finite sessions on one candidate implementation
+\i db/migrations/140_consolidate_training_scheduler_candidates.sql

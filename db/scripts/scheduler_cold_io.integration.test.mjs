@@ -79,6 +79,16 @@ function applySqlFile(targetUrl, relativePath) {
   assert.equal(result.status, 0, result.stderr);
 }
 
+function applyBootstrapBefore(targetUrl, firstExcludedMigration) {
+  const bootstrapPath = path.join(repoRoot, "db/migrations/bootstrap.sql");
+  const bootstrapSource = readFileSync(bootstrapPath, "utf8");
+  const marker = `\\i db/migrations/${firstExcludedMigration}`;
+  const markerOffset = bootstrapSource.indexOf(marker);
+  assert.ok(markerOffset >= 0, `bootstrap is missing ${firstExcludedMigration}`);
+  const result = psql(targetUrl, bootstrapSource.slice(0, markerOffset));
+  assert.equal(result.status, 0, result.stderr);
+}
+
 function explainBuffers(plan) {
   const root = plan[0].Plan;
   return {
@@ -115,7 +125,11 @@ test(
       ));
 
       applySqlFile(targetUrl, "db/scripts/plain_postgres_supabase_compat.sql");
-      applySqlFile(targetUrl, "db/migrations/bootstrap.sql");
+      // This test characterizes the 126→128 scheduler transition before
+      // replaying later migrations. A full bootstrap now contains 140, so it
+      // would otherwise make historical postflight-128 assertions observe a
+      // schema that is deliberately newer than their contract.
+      applyBootstrapBefore(targetUrl, "138_shared_meaning_directional_state.sql");
 
       const seed = psql(
         targetUrl,
@@ -709,6 +723,74 @@ test(
 
       applySqlFile(targetUrl, "db/migrations/128_bound_authoritative_next_card_selector.sql");
       applySqlFile(targetUrl, "db/deploy-contract/postflight-128.sql");
+
+      // The current contract has one canonical candidate body and no private
+      // v1 candidate function. Reintroducing that obsolete private API must
+      // fail the active postflight check.
+      applySqlFile(targetUrl, "db/migrations/138_shared_meaning_directional_state.sql");
+      applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
+      applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
+
+      const canonicalMetrics = measureComponent(
+        `SELECT * FROM private.training_scheduler_candidates_v2(
+          '${qaUserId}', ARRAY['word-to-definition'], null, 'curated', 'both',
+          'auto', ARRAY[]::uuid[], ARRAY[]::text[], '{}', false, true
+        ) ORDER BY selection_order LIMIT 1`,
+      );
+      assert.ok(
+        canonicalMetrics.blocks <= 4_000 && canonicalMetrics.ms <= 2_000,
+        `canonical scheduler used ${canonicalMetrics.ms}ms and touched ` +
+          `${canonicalMetrics.blocks} shared blocks; the budgets are 2,000ms and 4,000 blocks`,
+      );
+
+      const obsoleteV1Drift = psql(
+        targetUrl,
+        `CREATE FUNCTION private.training_scheduler_candidates_v1(
+           uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean
+         ) RETURNS TABLE(
+           entry_id uuid, card_type_id text, queue_source text,
+           selection_order bigint, new_today bigint, daily_new_limit bigint,
+           new_pool_size bigint, learning_due_count bigint, review_pool_size bigint
+         ) LANGUAGE sql AS $function$
+           SELECT NULL::uuid, NULL::text, NULL::text, NULL::bigint,
+             NULL::bigint, NULL::bigint, NULL::bigint, NULL::bigint, NULL::bigint
+           WHERE false
+         $function$;\n`,
+      );
+      assert.equal(obsoleteV1Drift.status, 0, obsoleteV1Drift.stderr);
+      const obsoleteV1DriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-140.sql")],
+      );
+      assert.notEqual(obsoleteV1DriftPostflight.status, 0);
+      assert.match(
+        obsoleteV1DriftPostflight.stderr,
+        /obsolete-private-scheduler-v1/,
+      );
+
+      applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
+
+      const sessionGrantDrift = psql(
+        targetUrl,
+        `GRANT EXECUTE ON FUNCTION public.start_training_session(
+           uuid,text[],uuid,text,text,jsonb,text
+         ) TO anon;\n`,
+      );
+      assert.equal(sessionGrantDrift.status, 0, sessionGrantDrift.stderr);
+      const sessionGrantDriftPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-140.sql")],
+      );
+      assert.notEqual(sessionGrantDriftPostflight.status, 0);
+      assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
+
+      applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
+      applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-140.sql");
     } finally {
       const terminate = psql(
         base.toString(),

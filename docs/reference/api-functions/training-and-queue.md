@@ -156,12 +156,14 @@ practice. `plannedTotal` equals the three planned component counts.
 
 The server applies the effective modes, list, card filter, source/date filter,
 dictionary access, Known Marks, pointer-only exclusion, frozen/hidden state,
-and due time. Each `(entry_id, card_type_id)` is counted separately. Direct
-non-session selectors retain `training_scheduler_candidates_v1` and its
-established daily-cap and practice behavior. Session planning, latching, and
-replacement use the private v2 candidate relation with daily caps disabled,
-then apply the session's soft new:review ordering. This keeps a session's
-action budget independent from daily counters without changing non-session
+and due time. Each `(entry_id, card_type_id)` is counted separately. The
+private `training_scheduler_candidates_v2` relation is the one canonical
+candidate implementation. Direct non-session selectors call it with daily caps
+enabled; session planning, latching, and replacement call it with daily caps
+disabled, then apply the session's soft new:review ordering. The public direct-
+selection contract remains unchanged: a filtered review may include future
+practice only when its explicit `p_allow_practice` flag is true. This keeps a
+session's action budget independent from daily counters without copying
 scheduler semantics.
 
 Direct-selector compatibility remains part of this contract: due
