@@ -50,8 +50,20 @@ The learner-facing projection of one Dictionary Entry for one card type, enriche
 _Avoid_: headword group, multi-meaning article
 
 **Known Mark**:
-A reversible user decision that one exact SenseCard does not need training. It is durable current state layered over, rather than encoded as, an FSRS review result. Marking known excludes the card without rewriting its prior scheduling state; `undo-known` atomically clears the current mark and restores that preserved state. The action history remains auditable.
+A reversible user decision that one Dictionary Meaning does not need ordinary meaning training in either recall direction. It preserves prior directional scheduling state and does not mark other meanings, idioms or sentence exercises known.
 _Avoid_: Easy review, hidden card, deleting prior state
+
+**Training Exercise**:
+One opportunity to learn a meaning or recall a target in a chosen direction; Learn, Known or a recall grade completes it. Recall in the other direction is a separate exercise.
+_Avoid_: unique word, unique meaning, displayed-card count
+
+**Session Size**:
+The requested number of completed Training Exercises in one session, across its selected categories. A session may end earlier when eligible material is exhausted.
+_Avoid_: daily limit, new-word quota
+
+**New-to-review Ratio**:
+The preferred alternation of one new exercise with a chosen number of repetitions. Available material can fill a missing category within the selected training mode.
+_Avoid_: hard quota, daily allowance
 
 **Content Node**:
 A durable, Platform-issued semantic element inside one Dictionary Entry, such as a definition, Usage Pattern, example, idiom, or note. Its opaque `contentNodeId` survives harmless source reordering. Translation freshness is checked separately through the node's source-text fingerprint; a diagnostic source path is never identity. New or ambiguous source elements receive new IDs instead of being matched by array position.
