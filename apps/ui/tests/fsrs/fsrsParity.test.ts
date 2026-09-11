@@ -111,10 +111,12 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
     "again-good-same-day": { stability: 0.246689, difficulty: 6.402115 },
   };
 
-  // fsrs-rs v4.1.1 applies a lower bound to interday Again:
+  // fsrs-rs v4.1.1 uses the pre-review difficulty for interday stability
+  // updates and applies a lower bound to interday Again:
   // max(stability_after_failure, last_stability / exp(w17 * w18)). The
-  // current runtime does not apply that bound yet. Keep this vector explicit
-  // so the deviation cannot be mistaken for a reference-parity guarantee.
+  // current runtime still updates difficulty first and does not apply that
+  // Again bound. Keep these vectors explicit so the deviations cannot be
+  // mistaken for a reference-parity guarantee.
   const knownReferenceDeviations: Record<
     string,
     {
@@ -146,6 +148,66 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
         interval: 2.2750099747,
         reps: 3,
         lapses: 1,
+      },
+    },
+    "existing-memory-hard-interday-day1": {
+      reference: { stability: 5.3187927676, difficulty: 4.7528584882 },
+      observedRuntime: {
+        stability: 4.4252164464,
+        difficulty: 4.7528584882,
+        interval: 4.4252164464,
+        reps: 2,
+        lapses: 0,
+      },
+    },
+    "existing-memory-good-interday-day1": {
+      reference: { stability: 7.3153007443, difficulty: 2.1112142353 },
+      observedRuntime: {
+        stability: 7.3191860981,
+        difficulty: 2.1112142353,
+        interval: 7.3191860981,
+        reps: 2,
+        lapses: 0,
+      },
+    },
+    "existing-memory-easy-interday-day1": {
+      reference: { stability: 11.6874829141, difficulty: 1 },
+      observedRuntime: {
+        stability: 12.8684148011,
+        difficulty: 1,
+        interval: 12.8684148011,
+        reps: 2,
+        lapses: 0,
+      },
+    },
+    "existing-memory-hard-interday-day5": {
+      reference: { stability: 11.8455160319, difficulty: 4.7528584882 },
+      observedRuntime: {
+        stability: 9.0158312996,
+        difficulty: 4.7528584882,
+        interval: 9.0158312996,
+        reps: 2,
+        lapses: 0,
+      },
+    },
+    "existing-memory-good-interday-day5": {
+      reference: { stability: 18.1678502359, difficulty: 2.1112142353 },
+      observedRuntime: {
+        stability: 18.1801539708,
+        difficulty: 2.1112142353,
+        interval: 18.1801539708,
+        reps: 2,
+        lapses: 0,
+      },
+    },
+    "existing-memory-easy-interday-day5": {
+      reference: { stability: 32.0132228568, difficulty: 1 },
+      observedRuntime: {
+        stability: 35.7528753645,
+        difficulty: 1,
+        interval: 35.7528753645,
+        reps: 2,
+        lapses: 0,
       },
     },
   };

@@ -42,6 +42,26 @@ The existing memory is retained on the second transition. These labels are
 application history, not a claim that the raw FSRS function itself carries an
 Anki scheduler state label.
 
+## Interday reference observations
+
+The parity corpus now includes all non-`Again` grades after one and five exact
+scheduler days from the same initial `Good` memory. The pinned fsrs-rs values
+use the pre-review difficulty when computing stability. Current SQL and
+TypeScript still update difficulty first, so these are recorded as explicit
+known deviations rather than silently treated as parity:
+
+| Transition | Pinned stability | Current runtime stability |
+| --- | ---: | ---: |
+| `Good → Hard`, day 1 | `5.318793` | `4.425216` |
+| `Good → Good`, day 1 | `7.315301` | `7.319186` |
+| `Good → Easy`, day 1 | `11.687483` | `12.868415` |
+| `Good → Hard`, day 5 | `11.845516` | `9.015831` |
+| `Good → Good`, day 5 | `18.167850` | `18.180154` |
+| `Good → Easy`, day 5 | `32.013223` | `35.752875` |
+
+The values are evidence for a future formula decision only; no scheduler or
+history migration is included in this slice.
+
 The SQL observation was reproduced against the local database after migration
 130 with a first `Good`, followed immediately by a second `Good` using the same
 timestamp. Migration 131 adds the same-day branch and successful-grade clamp to
@@ -54,10 +74,9 @@ with the pinned reference vectors.
 The following remain outside migration 131 and require a separate decision or
 follow-up issue:
 
-1. an interday transition with exact integer `days_elapsed`;
-2. scheduler-day rollover and time-zone/DST boundaries;
-3. short-term threshold and interval rounding around `0.5` days;
-4. the boundary between FSRS short-term scheduling and any product-level
+1. scheduler-day rollover and time-zone/DST boundaries;
+2. short-term threshold and interval rounding around `0.5` days;
+3. the boundary between FSRS short-term scheduling and any product-level
    Learning Steps policy.
 
 The initial `Again/Hard/Good/Easy`, same-day `Good/Hard/Again`, and
