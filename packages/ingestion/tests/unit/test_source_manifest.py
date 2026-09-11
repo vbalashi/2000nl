@@ -195,6 +195,39 @@ def test_builds_semantic_platform_v2_content_node_inputs() -> None:
     assert all("sourceNativeKey" not in node for node in nodes)
 
 
+def test_characterizes_drop_payload_as_idioms_without_explanations() -> None:
+    nodes = platform_v2_content_node_inputs(
+        {
+            "headword": "drop",
+            "meanings": [
+                {
+                    "definition": "zwart snoep",
+                    "examples": [],
+                    "idioms": [
+                        {"expression": "zoete en zoute drop"},
+                        {"expression": "een dropje nemen"},
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert [node["kind"] for node in nodes] == [
+        "definition",
+        "idiom",
+        "idiom",
+    ]
+    assert [node["sourceText"] for node in nodes[1:]] == [
+        "zoete en zoute drop",
+        "een dropje nemen",
+    ]
+    assert all(
+        node["sourcePath"].startswith("raw.meanings[0].idioms[")
+        for node in nodes[1:]
+    )
+    assert all("parentInputKey" not in node for node in nodes[1:])
+
+
 def test_content_node_source_text_is_nfc_canonical() -> None:
     nodes = platform_v2_content_node_inputs(
         {"meanings": [{"definition": " e\u0301e\u0301n voorbeeld "}]}
