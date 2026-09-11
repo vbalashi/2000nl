@@ -60,6 +60,48 @@ export const fsrsCorpus: FsrsCorpusCase[] = [
     ],
   },
   {
+    name: "existing-memory-hard-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-good-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-easy-interday-day1",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 4, elapsedDays: 1 },
+    ],
+  },
+  {
+    name: "existing-memory-hard-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 2, elapsedDays: 5 },
+    ],
+  },
+  {
+    name: "existing-memory-good-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 3, elapsedDays: 5 },
+    ],
+  },
+  {
+    name: "existing-memory-easy-interday-day5",
+    history: [
+      { grade: 3, elapsedDays: 0 },
+      { grade: 4, elapsedDays: 5 },
+    ],
+  },
+  {
     name: "overdue-capped",
     history: [
       { grade: 3, elapsedDays: 0 },

@@ -35,11 +35,14 @@ approval recorded yet.
 - This is a characterization of the current server behavior, not a scheduler
   formula change. The test corpus still keeps New→Again separate from an
   existing-memory Again so later product decisions cannot blur the two paths.
+- Six additional vectors cover `Hard`, `Good`, and `Easy` after exactly one
+  and five elapsed scheduler days. They record the pinned reference values
+  alongside the current runtime observation, making the pre-review-difficulty
+  deviation visible without changing it.
 
 ## Remaining evidence before any formula decision
 
-1. exact integer interday vectors for all grades and representative stability;
-2. scheduler-day rollover at local midnight with explicit timezone/DST cases;
+1. scheduler-day rollover at local midnight with explicit timezone/DST cases;
 3. the `0.5`-day interval boundary, including the layer that rounds the raw
    FSRS interval for display and due scheduling;
 4. a separate product decision on FSRS short-term scheduling versus Anki-style
