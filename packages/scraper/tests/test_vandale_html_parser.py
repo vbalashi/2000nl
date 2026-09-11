@@ -8,6 +8,44 @@ sys.path.insert(0, str(SCRAPER_ROOT))
 from vandale_html_parser import parse_vandale_entry_fixed  # noqa: E402
 
 
+def test_characterizes_drop_example_blocks_currently_as_idioms() -> None:
+    """Lock the observed source/parser mismatch before proposing a repair."""
+    html = """
+    <span id="a3045" class="f1y">
+      <span class="f3 f3v">
+        <span class="f2g"><span class="f2f">de</span></span>
+        <span class="f2h"><span class="f2e">drop</span></span>
+      </span>
+      <span class="f3 f3u">
+        <span class="f1m">
+          <span class="f3i">zwart snoep</span>
+          <a class="f0h f1i f0c fm"><span class="f1u">▼</span> voorbeelden</a>
+          <span id="v130266" class="fu f0c">
+            <span class="f1f"><span class="f3i">zoete en zoute drop</span></span>
+          </span>
+          <span id="v130267" class="fu f0c">
+            <span class="f1f"><span class="f3i">een dropje nemen</span></span>
+          </span>
+        </span>
+      </span>
+    </span>
+    """
+
+    entry = parse_vandale_entry_fixed(html, "drop")
+
+    assert entry["meanings"] == [
+        {
+            "definition": "zwart snoep",
+            "context": "",
+            "examples": [],
+            "idioms": [
+                {"expression": "zoete en zoute drop"},
+                {"expression": "een dropje nemen"},
+            ],
+        }
+    ]
+
+
 def test_preserves_synonym_as_a_meaning_relation() -> None:
     html = """
     <span id="a391" class="f1y">
