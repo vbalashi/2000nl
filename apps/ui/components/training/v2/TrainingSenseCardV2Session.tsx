@@ -37,6 +37,7 @@ import {
 } from "@/lib/feedback/diagnosticReportClient";
 import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
+import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 import {
   rememberPendingKnownUndo,
   type UndoKnownCapability,
@@ -254,7 +255,7 @@ export function TrainingSenseCardV2Session({
         : !model
           ? "model-invalid"
           : mode === "definition-to-word" &&
-              !model.definitions.some((item) => item.kind === "definition")
+              !selectTrainingReversePrompt([...model.definitions, ...model.examples])
             ? "reverse-definition-missing"
             : "ready";
   const handlePresentation =
