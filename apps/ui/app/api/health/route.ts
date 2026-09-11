@@ -58,6 +58,28 @@ function databaseTargetLabel(url: string | undefined) {
   }
 }
 
+function qaSourceDiagnostics() {
+  const mode = process.env.QA_SOURCE_MODE;
+  const commit = process.env.QA_SOURCE_COMMIT;
+  if (!mode || !commit) return undefined;
+  return {
+    mode,
+    workRef: process.env.QA_SOURCE_WORK_REF ?? null,
+    checkoutPath: process.env.QA_SOURCE_CHECKOUT_PATH ?? null,
+    commit,
+    branch: process.env.QA_SOURCE_BRANCH || null,
+    dirty: process.env.QA_SOURCE_DIRTY === "true",
+    upstream: process.env.QA_SOURCE_UPSTREAM || null,
+    ahead: process.env.QA_SOURCE_AHEAD ? Number(process.env.QA_SOURCE_AHEAD) : null,
+    behind: process.env.QA_SOURCE_BEHIND ? Number(process.env.QA_SOURCE_BEHIND) : null,
+    originMain: process.env.QA_SOURCE_ORIGIN_MAIN || null,
+    remoteRefsContainingHead: (process.env.QA_SOURCE_REMOTE_REFS ?? "")
+      .split(",")
+      .filter(Boolean),
+    squashMerged: process.env.QA_SOURCE_SQUASH_MERGED === "true",
+  };
+}
+
 async function checkPlatformRpcContract(): Promise<CheckResult> {
   const supabase = createHealthSupabaseClient();
   if (!supabase) {
@@ -193,6 +215,7 @@ export async function GET(req: Request) {
   const deep = url.searchParams.get("deep") === "1";
   const versionInfo = appVersionInfo();
   const checks: Record<string, CheckResult> = {};
+  const qaSource = qaSourceDiagnostics();
 
   if (deep) {
     checks.platformRpcContract = await checkPlatformRpcContract();
@@ -215,6 +238,7 @@ export async function GET(req: Request) {
       },
     },
     rollout: rolloutProfileDiagnostics(),
+    ...(qaSource ? { qaSource } : null),
     ...(deep ? { checks } : null),
   };
 
