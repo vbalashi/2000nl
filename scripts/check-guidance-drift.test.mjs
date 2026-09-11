@@ -33,3 +33,26 @@ test("does not scan historical SQL migration source", () => {
     rmSync(fixture, { recursive: true, force: true });
   }
 });
+
+test("detects stale managed migration range in an active runbook", () => {
+  const fixture = mkdtempSync(join(tmpdir(), "2000nl-guidance-drift-"));
+  try {
+    mkdirSync(join(fixture, "docs/runbooks"), { recursive: true });
+    mkdirSync(join(fixture, "packages/shared/deployment"), { recursive: true });
+    writeFileSync(
+      join(fixture, "packages/shared/deployment/db-contract.json"),
+      JSON.stringify({ rollout: { requiredMigrationId: 137 } }),
+    );
+    writeFileSync(
+      join(fixture, "docs/runbooks/deploy.md"),
+      "Apply migrations 123 through 131 in order.\n",
+    );
+    assert.deepEqual(findGuidanceDrift(fixture), [{
+      path: "docs/runbooks/deploy.md",
+      line: 1,
+      name: "stale managed migration range 123-131 (expected 123-137)",
+    }]);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
