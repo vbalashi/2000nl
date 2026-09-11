@@ -521,6 +521,11 @@ function TrainingScreenContent({
     },
     [loadStats],
   );
+  const recordSessionCardAccepted = useCallback((cardKey: string) => {
+    setSessionConsumedCardKeys((current) =>
+      current.includes(cardKey) ? current : [...current, cardKey],
+    );
+  }, []);
   const sessionScopeKey = [
     activeScenario,
     currentTrainingLanguage,
@@ -570,6 +575,7 @@ function TrainingScreenContent({
     sessionScopeKey,
     selection: selectionPort,
     refreshAfterAccepted,
+    onSessionCardAccepted: recordSessionCardAccepted,
   });
   const clearResumeAfterCompletedRetry = useCallback(
     (result: unknown) => {

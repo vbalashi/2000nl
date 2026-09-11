@@ -92,6 +92,7 @@ type Inputs = {
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
   refreshAfterAccepted: (input: { statsLabel: string }) => Promise<void>;
+  onSessionCardAccepted?: (cardKey: string) => void;
 };
 
 const EMPTY_SESSION_CARD_KEYS: string[] = [];
@@ -134,6 +135,7 @@ export function useTrainingTurnController(input: Inputs) {
     sessionScopeKey,
     selection,
     refreshAfterAccepted,
+    onSessionCardAccepted,
   } = input;
   const [loadingWord, setLoadingWord] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -670,6 +672,7 @@ export function useTrainingTurnController(input: Inputs) {
     setQueueTurn(queue.queueTurn);
     setReviewCounter(queue.reviewCounter);
     reviewedCardKeysRef.current.add(currentCardKey);
+    onSessionCardAccepted?.(currentCardKey);
     const prefetched = consumePreparedNextTurn(currentCardKey);
     const transitionId =
       prefetched?.transitionId ?? nextTransitionId ?? createTrainingTransitionId();
@@ -702,6 +705,7 @@ export function useTrainingTurnController(input: Inputs) {
     enabledModes,
     newReviewRatio,
     nextTransitionId,
+    onSessionCardAccepted,
     presentPreparedCandidate,
     queueTurn,
     reviewCounter,
