@@ -90,6 +90,31 @@ describeDb("authoritative training session plan RPC", () => {
     });
   });
 
+  test("keeps direct public selection on the shared selector without private v1 compatibility functions", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows } = await client.query(
+        `select
+           to_regprocedure(
+             'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean)'
+           ) as direct_v1,
+           to_regprocedure(
+             'private.training_scheduler_candidates_v1(uuid,text[],uuid,text,text,text,uuid[],text[],jsonb,boolean,boolean)'
+           ) as practice_v1,
+           pg_get_functiondef(
+             'public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)'::regprocedure
+           ) as definition`,
+      );
+      expect(rows[0]?.direct_v1).toBeNull();
+      expect(rows[0]?.practice_v1).toBeNull();
+      expect(rows[0]?.definition).toContain(
+        "private.training_scheduler_candidates_v2",
+      );
+      expect(rows[0]?.definition).not.toContain(
+        "readable_dictionaries AS MATERIALIZED",
+      );
+    });
+  });
+
   test("bounds finite sessions and excludes future practice cards", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -1303,14 +1328,14 @@ describeDb("authoritative training session plan RPC", () => {
       }
       expect(drained).toHaveLength(rows[0].plan.plannedTotal);
       expect(drained.filter((item) => item.source === "new")).toHaveLength(2);
-      const { rows: volatilityRows } = await client.query(
-        `select proc.provolatile
+      const { rows: privateV1Rows } = await client.query(
+        `select proc.oid
          from pg_proc proc
          join pg_namespace namespace on namespace.oid = proc.pronamespace
          where namespace.nspname = 'private'
            and proc.proname = 'training_scheduler_candidates_v1'`,
       );
-      expect(volatilityRows[0].provolatile).toBe("v");
+      expect(privateV1Rows).toEqual([]);
       expect(rows[0].plan.plannedAt).toEqual(expect.any(String));
     }, userId);
   });
@@ -1677,7 +1702,7 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
-  test("counts filtered future-due practice cards with exact card identities", async () => {
+  test("excludes future practice from the finite plan but permits explicit direct practice", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -1712,12 +1737,20 @@ describeDb("authoritative training session plan RPC", () => {
         [userId, reverse],
       );
       expect(rows[0].plan).toEqual(
-        expect.objectContaining({ plannedPractice: 2, plannedTotal: 2 }),
+        expect.objectContaining({ plannedPractice: 0, plannedTotal: 0 }),
       );
       const trainingFilter = JSON.stringify({
         dateWindow: "today",
         timezone: "UTC",
       });
+      const { rows: noPracticeSelection } = await client.query(
+        `select get_next_filtered_card(
+          $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,
+          'curated', 'review', 'auto', ARRAY[]::text[], $3::jsonb, false
+        ) as item`,
+        [userId, reverse, trainingFilter],
+      );
+      expect(noPracticeSelection[0]?.item).toBeUndefined();
       const { rows: firstSelection } = await client.query(
         `select get_next_filtered_card(
           $1, ARRAY['word-to-definition', $2], ARRAY[]::uuid[], NULL,

@@ -36,7 +36,12 @@ server-owned action budget and soft new/review mixing without applying daily
 scheduler caps; the legacy selector keeps its existing capped behavior for
 callers outside a session.
 
-An enabled deployment must apply or verify migrations 123 through 139 in order
+Issue #353 advances the contract to migration 140. It makes the parameterized
+candidate selector the one authoritative implementation; compatible direct
+selector adapters preserve daily-cap and explicit-practice policy without
+duplicating the candidate query.
+
+An enabled deployment must apply or verify migrations 123 through 140 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

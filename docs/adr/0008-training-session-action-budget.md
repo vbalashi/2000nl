@@ -47,6 +47,13 @@ of the complete scheduler is not an accepted design requirement. The agent may
 choose a parameterized shared candidate function or another focused seam after
 characterization. Preserve performance and explicitly audit non-session callers.
 
+Follow-through: migration 140 implements that seam under #353. The parameterized
+private v2 candidate relation is the one eligibility body. Direct public RPCs
+call it with daily limits enabled; finite sessions pass the same relation
+`false` for daily limits. The direct public RPC signatures are deliberately
+retained until an external caller audit supports a separate deprecation, but
+there is no private v1 scheduler implementation or second active scheduler.
+
 The public settings and completion surface need the scoped visual approval in
 #331. The numeric contract does not depend on approving future idiom screens.
 Exact control layout, the full preset list and an extension control are not
