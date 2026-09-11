@@ -415,3 +415,6 @@
 
 -- Keep direct selection and finite sessions on one candidate implementation
 \i db/migrations/140_consolidate_training_scheduler_candidates.sql
+
+-- Keep cached browser clients compatible with the practice-aware RPC contract
+\i db/migrations/141_cached_client_scheduler_compatibility.sql

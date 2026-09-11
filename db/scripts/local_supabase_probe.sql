@@ -33,18 +33,24 @@ begin
     raise exception 'missing public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[],boolean)';
   end if;
 
-  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null
-     or to_regprocedure('public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null then
-    raise exception 'legacy get_next_card overloads still exist';
+  if to_regprocedure('public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])') is null then
+    raise exception 'missing cached-client public.get_next_card adapter';
+  end if;
+
+  if to_regprocedure('public.get_next_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[])') is not null then
+    raise exception 'obsolete get_next_card bypass overload still exists';
   end if;
 
   if to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)') is null then
     raise exception 'missing public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb,boolean)';
   end if;
 
-  if to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is not null
-     or to_regprocedure('public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is not null then
-    raise exception 'legacy get_next_filtered_card overloads still exist';
+  if to_regprocedure('public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is null then
+    raise exception 'missing cached-client public.get_next_filtered_card adapter';
+  end if;
+
+  if to_regprocedure('public.get_next_filtered_card_without_known(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)') is not null then
+    raise exception 'obsolete get_next_filtered_card bypass overload still exists';
   end if;
 
   if exists (

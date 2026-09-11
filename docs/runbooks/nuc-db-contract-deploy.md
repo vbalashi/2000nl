@@ -41,7 +41,12 @@ candidate selector the one authoritative implementation; compatible direct
 selector adapters preserve daily-cap and explicit-practice policy without
 duplicating the candidate query.
 
-An enabled deployment must apply or verify migrations 123 through 140 in order
+Issue #355 advances the contract to migration 141. It restores only the public
+pre-practice-aware scheduler overloads as v2-backed adapters, so a browser
+holding a previous JS bundle cannot fail while the database has already moved
+forward. Private v1 candidate functions and older bypass RPCs remain retired.
+
+An enabled deployment must apply or verify migrations 123 through 141 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -132,7 +137,10 @@ App rollback and DB recovery are deliberately separate:
   fails after switching, it restores the exact previous image automatically.
   If no previous image exists, it stops the incompatible new container.
 - Forward DB migrations remain in place during app-image rollback. Every
-  enabled migration must therefore be compatible with the previous app.
+  enabled migration must therefore be compatible with the previous app and
+  cached browser bundles that may outlive an app switch. Removing a public RPC
+  shape needs an explicit staged-client deprecation plan, not merely a
+  repository caller audit.
 - The migration's owning issue owns DB recovery. Issue #243 owns migration 128;
   issue #238 owns migration 127. Issue #232 retains ownership of migration 126;
   #233 owns gate/ledger/probe machinery.
