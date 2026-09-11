@@ -12,6 +12,22 @@ def _clean_text(value: str) -> str:
     return re.sub(r"\s+([,.;:])", r"\1", value).strip()
 
 
+def is_vandale_meaning_example_block(block) -> bool:
+    """Identify Van Dale example blocks that reuse the idiom container class."""
+    section_link = block.find_previous_sibling("a", class_="f0h")
+    if section_link is None:
+        return False
+    section_label = _clean_text(section_link.get_text(" ", strip=True)).lower()
+    expression = block.find("span", class_="f3i")
+    return (
+        "voorbeelden" in section_label
+        and expression is not None
+        and bool(_clean_text(expression.get_text(" ", strip=True)))
+        and block.find("span", class_="f3n") is None
+        and block.find("span", class_="f2s") is None
+    )
+
+
 def _extract_direct_synonyms(f1m_span):
     marker = next(
         (
@@ -1137,6 +1153,13 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
         # Idioms/expressions (nested in class f0c or f1f)
         idiom_blocks = block.find_all("span", class_="f0c")
         for idiom_block in idiom_blocks:
+            if is_vandale_meaning_example_block(idiom_block):
+                example_span = idiom_block.find("span", class_="f3i")
+                example_text = _clean_text(example_span.get_text(" ", strip=True))
+                if example_text:
+                    meaning["examples"].append(example_text)
+                continue
+
             idiom = {}
             
             # Idiom text
@@ -1160,8 +1183,9 @@ def parse_vandale_entry_fixed(content_html, headword_html=None):
             if idiom:
                 meaning["idioms"].append(idiom)
         
-        # Only add if we have a definition or idioms
-        if meaning["definition"] or meaning["idioms"]:
+        # Keep example-only meanings; Van Dale can place their source text in
+        # bare voorbeelden blocks that reuse the expression container class.
+        if meaning["definition"] or meaning["examples"] or meaning["idioms"]:
             entry["meanings"].append(meaning)
     
     # Audio

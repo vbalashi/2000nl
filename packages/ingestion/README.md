@@ -15,6 +15,9 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `audit_pointer_meanings.py` – audit a bounded, deterministic corpus sample for
   resolvable pointer-only meanings without treating arbitrary hyphens as
   redirects.
+- `audit_vandale_classification.py` – reparse a complete versioned Van Dale
+  manifest in memory and report source-shape, artifact, fingerprint, and
+  Platform V2 node diffs without writing artifacts or database state.
 
 `process_raw_words.py` produces a checksummed `vandale-structured-v2`
 manifest. The supported Van Dale import path requires that manifest and uses
