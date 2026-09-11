@@ -197,7 +197,8 @@ SELECT
     true,
     false,
     NULL
-FROM missing_siblings;
+FROM missing_siblings
+ON CONFLICT (user_id, entry_id, card_type_id) DO NOTHING;
 
 -- Learn remains one accepted action on the requested direction, while making
 -- the other ordinary direction immediately eligible for self-assessed recall.
