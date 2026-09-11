@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 import contract from "../../../../packages/shared/deployment/db-contract.json";
 
@@ -88,6 +88,10 @@ const contractStateFromMock = (options?: {
   });
 
 describe("/api/health", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     vi.resetModules();
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
@@ -106,10 +110,46 @@ describe("/api/health", () => {
     expect(response.status).toBe(200);
     expect(body.status).toBe("ok");
     expect(body.checks).toBeUndefined();
+    expect(body.qaSource).toBeUndefined();
     expect(body.rollout).toEqual({
       profile: "pilot",
       approvedPilot: false,
       flags: expect.any(Object),
+    });
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  test("reports the verified local QA source without probing Supabase", async () => {
+    vi.stubEnv("QA_SOURCE_MODE", "preview");
+    vi.stubEnv("QA_SOURCE_WORK_REF", "247");
+    vi.stubEnv("QA_SOURCE_CHECKOUT_PATH", "/tmp/2000nl-247");
+    vi.stubEnv("QA_SOURCE_COMMIT", "a".repeat(40));
+    vi.stubEnv("QA_SOURCE_BRANCH", "codex/247-qa-source-guard");
+    vi.stubEnv("QA_SOURCE_DIRTY", "true");
+    vi.stubEnv("QA_SOURCE_UPSTREAM", "origin/main");
+    vi.stubEnv("QA_SOURCE_AHEAD", "1");
+    vi.stubEnv("QA_SOURCE_BEHIND", "0");
+    vi.stubEnv("QA_SOURCE_ORIGIN_MAIN", "b".repeat(40));
+    vi.stubEnv("QA_SOURCE_REMOTE_REFS", "refs/remotes/origin/main,refs/remotes/origin/HEAD");
+    vi.stubEnv("QA_SOURCE_SQUASH_MERGED", "false");
+
+    const { GET } = await import("@/app/api/health/route");
+    const response = await GET(request());
+    const body = await response.json();
+
+    expect(body.qaSource).toEqual({
+      mode: "preview",
+      workRef: "247",
+      checkoutPath: "/tmp/2000nl-247",
+      commit: "a".repeat(40),
+      branch: "codex/247-qa-source-guard",
+      dirty: true,
+      upstream: "origin/main",
+      ahead: 1,
+      behind: 0,
+      originMain: "b".repeat(40),
+      remoteRefsContainingHead: ["refs/remotes/origin/main", "refs/remotes/origin/HEAD"],
+      squashMerged: false,
     });
     expect(createClient).not.toHaveBeenCalled();
   });

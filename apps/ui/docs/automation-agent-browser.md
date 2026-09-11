@@ -12,6 +12,23 @@ scripts/ui-local-dev.sh --port 3100
 curl -sS 'http://localhost:3100/api/health?deep=1'
 ```
 
+The wrapper also guards the source being tested. On canonical `main` it fetches
+`origin/main` and refuses a dirty or stale checkout. For an intentional branch
+or worktree preview, pass both a durable work reference and the exact full SHA
+already checked out:
+
+```bash
+scripts/ui-local-dev.sh --port 3101 \
+  --work-ref 247 \
+  --expected-commit "$(git rev-parse HEAD)"
+```
+
+The health response includes `qaSource` with the checkout path, full commit,
+branch, dirty state, upstream and merge signals. Do not use a bare `npm run dev`
+process as QA evidence; it does not identify its source. The worktree inventory
+is read-only and never authorizes deletion, including for ignored files or
+patch-equivalent branches.
+
 Reuse populated data. A failed check requires diagnosis under
 `docs/runbooks/local-supabase-test-env.md`, not a reset. Health alone cannot
 prove migration receipts or that local dictionary content matches production.

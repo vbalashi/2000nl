@@ -9,6 +9,9 @@ describe("local launcher", () => {
       "utf8",
     );
     expect(script).toContain('export APP_ROLLOUT_PROFILE="pilot"');
+    expect(script).toContain("--work-ref REF --expected-commit SHA");
+    expect(script).toContain("scripts/qa-source.mjs");
+    expect(script).toContain("scripts/check-qa-server.mjs");
     expect(script).not.toContain("export PLATFORM_V2_LOOKUP_ENABLED=");
     expect(script).not.toContain("export NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI=");
   });
