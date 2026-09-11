@@ -27,18 +27,22 @@ approval recorded yet.
   pinned reference while requiring SQL↔TypeScript agreement, including the
   observed interval, reps, and lapse counters. These counters describe the
   application model state and are not claimed to be Anki scheduler history.
-- The test corpus still includes New→Again separately, making the difference
-  between initial Again and an existing-memory Again explicit. A true
-  scheduler-history classification remains part of the evidence still needed.
+- `learningClassification.test.ts` directly characterizes the review RPC's
+  application history contract (it is not a V2 HTTP/action-envelope test):
+  the first Again on a card with no FSRS memory is logged as `new` with
+  `reps=1/lapses=1`; an Again after an existing interday memory is logged as
+  `review` with the prior memory retained and `reps=2/lapses=1`.
+- This is a characterization of the current server behavior, not a scheduler
+  formula change. The test corpus still keeps New→Again separate from an
+  existing-memory Again so later product decisions cannot blur the two paths.
 
 ## Remaining evidence before any formula decision
 
 1. exact integer interday vectors for all grades and representative stability;
-2. New→Again versus Review→Again history classification and lapse counters;
-3. scheduler-day rollover at local midnight with explicit timezone/DST cases;
-4. the `0.5`-day interval boundary, including the layer that rounds the raw
+2. scheduler-day rollover at local midnight with explicit timezone/DST cases;
+3. the `0.5`-day interval boundary, including the layer that rounds the raw
    FSRS interval for display and due scheduling;
-5. a separate product decision on FSRS short-term scheduling versus Anki-style
+4. a separate product decision on FSRS short-term scheduling versus Anki-style
    Learning Steps, based on the supplied research and current observability.
 
 These cases need deterministic clocks/timezones at the test boundary. Do not
