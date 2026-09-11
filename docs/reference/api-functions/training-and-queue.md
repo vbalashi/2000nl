@@ -61,7 +61,8 @@ const { data: cards } = await supabase.rpc('get_next_card', {
 ```
 
 Notes:
-- Legacy `get_next_word` overloads are dropped after migration `053_get_next_card_primary.sql`.
+- Legacy word-named scheduler overloads are dropped after the card-oriented
+  scheduler migration sequence; callers must use the current card contract.
 - Selection is filtered through `can_access_dictionary(...)`; inaccessible private dictionaries are not schedulable.
 
 ## `get_next_training_session_card`

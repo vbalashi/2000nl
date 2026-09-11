@@ -421,7 +421,8 @@ Validation:
 - Done: introduce physical `user_card_status` storage keyed by `entry_id +
   card_type_id`.
 - Done: add card-named wrappers for view/review/start-learning/state reads.
-- Done: make `get_next_card` the primary scheduler RPC and drop `get_next_word`.
+- Done: make `get_next_card` the primary scheduler RPC and drop the legacy
+  word-named scheduler contract.
 - Done: move platform API and current training service selection/review calls
   onto card-named RPCs.
 - Done: move card-facing state reads, view tracking, start-learning, and recent

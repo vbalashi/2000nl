@@ -1,280 +1,103 @@
-# db
+# Database runtime map
 
-Holds SQL migrations for the canonical schema. This folder contains consolidated migrations organized by domain.
+`db/` is the source of truth for the Postgres schema, learning state, FSRS
+scheduling, and database-side Platform contracts. Runtime callers should use
+the card-oriented contracts documented in [`packages/docs/data-model.md`](../packages/docs/data-model.md)
+and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api-functions/training-and-queue.md).
 
-## Migration Structure
+## Migration sources of truth
 
-```
-db/migrations/
-├── 001_core_schema.sql       # Tables, indexes, extensions, curated lists
-├── 002_fsrs_engine.sql       # FSRS-6 algorithm, handle_review, handle_click
-├── 003_queue_training.sql    # get_next_word, training stats, scenarios
-├── 004_user_features.sql     # User settings, lists, translations, notes, subscription tiers
-├── 005_security.sql          # RLS policies
-├── 006_fix_omgekeerd_translation_ru.sql
-│                              # Data fix for a cached RU translation overlay
-├── 007_review_idempotency.sql # turn_id review idempotency guard
-├── 008_dictionary_boundary.sql # dictionary registry and Stage 0/1A compatibility boundary
-├── 009_drop_legacy_word_entry_uniqueness.sql
-│                              # dictionary-scoped entry identity
-├── 010_scope_meanings_count_by_dictionary.sql
-│                              # dictionary-scoped training read metadata
-├── 011_record_word_view_rpc.sql
-│                              # explicit RPC for training view tracking
-├── 012_scope_word_forms_by_dictionary.sql
-│                              # dictionary metadata for word form lookup rows
-├── 013_filter_gated_word_reads_by_dictionary.sql
-│                              # dictionary read checks in gated word RPCs
-├── 014_exclude_training_cards_by_identity.sql
-│                              # entry+mode session exclusion for training cards
-├── 015_gated_dictionary_lookup.sql
-│                              # read-only dictionary lookup with access checks
-├── 016_scope_scheduler_by_dictionary_access.sql
-│                              # dictionary read checks in training scheduler
-├── 017_start_learning_card_action.sql
-│                              # explicit start-learning card action
-├── 018_add_entry_to_user_list_action.sql
-│                              # explicit user-list membership action
-├── 019_user_entry_schema_boundary.sql
-│                              # user-entry-v1 schema and private dictionary container
-├── 020_copy_entry_to_user_dictionary_action.sql
-│                              # explicit copy action into user-owned dictionaries
-├── 021_lookup_multiple_dictionary_candidates.sql
-│                              # lookup returns all accessible dictionary candidates
-├── 022_refine_user_dictionary_copy_payload.sql
-│                              # training-safe copy payload for user entries
-├── 023_user_dictionary_entry_crud_actions.sql
-│                              # explicit CRUD actions for user-entry-v1 entries
-├── bootstrap.sql             # Master script that runs all migrations
-└── archive/                  # Historical individual migrations (reference only)
-```
+- `db/migrations/001_*.sql` through the current numbered migration (`137` at
+  the time of writing) are the ordered schema history. Do not renumber or edit
+  an already deployed migration.
+- `db/migrations/bootstrap.sql` includes that complete numbered chain. It is
+  for a fresh, disposable database only; it does not create production
+  deployment receipts or restore production data.
+- `db/deploy-contract/ledger-v1.sql` creates the immutable deployment ledger
+  before the first managed forward migration. The later managed sequence is
+  declared by `packages/shared/deployment/db-contract.json` and currently
+  covers migrations `123` through `137` after baseline `122`.
+- `db/deploy-contract/` contains the checksum-pinned baseline, pre-switch,
+  and postflight probes for the deployment contract.
 
-## Fresh Deploy
-
-For a new database, run the bootstrap script:
+The manifest is the application-owned database contract. It currently declares
+contract `2000nl-db-137`, required migration `137`, and the exact checksums for
+every managed migration and probe. Inspect or validate it without a database:
 
 ```bash
-PGPASSWORD=... psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
+node db/scripts/deploy_db_contract.mjs expected
+node db/scripts/deploy_db_contract.mjs rollout-status
+node db/scripts/deploy_db_contract.mjs validate
 ```
 
-## Local Supabase Test Environment
+## Which workflow to use
 
-For routine QA, reuse the populated local Supabase Docker stack and verify it
-without changing its data (`start` is only needed if the stack is stopped):
+For a populated local, staging, or production-shaped database, use the
+fail-closed contract runner and its documented stop conditions:
+
+- [`db/scripts/README.md`](scripts/README.md) — command reference;
+- [`docs/runbooks/nuc-db-contract-deploy.md`](../docs/runbooks/nuc-db-contract-deploy.md)
+  — reviewed deployment-gate workflow;
+- [`docs/runbooks/local-supabase-test-env.md`](../docs/runbooks/local-supabase-test-env.md)
+  — safe local reuse and disposable-database rules.
+
+Never make manual schema changes in a dashboard or with ad-hoc SQL. A reviewed
+schema change is a new numbered migration, followed by the required contract
+manifest, probes, and validation updates.
+
+For a fresh disposable local database only:
 
 ```bash
 scripts/db-local-supabase.sh start
+scripts/db-local-supabase.sh apply
+scripts/db-local-supabase.sh probe
+```
+
+For the existing populated local stack, start with the read-only check instead:
+
+```bash
 scripts/db-local-supabase.sh check
 ```
 
-Do not run bootstrap (`apply`) on a populated QA database. A failed check needs
-diagnosis, not a reset. For an explicitly disposable database, a full rebuild
-and regression run requires acknowledgement and destroys its existing data:
+Do not apply bootstrap or reset a populated QA database to silence a failed
+check. Preserve the data and follow the local Supabase runbook.
 
-```bash
-scripts/db-local-supabase.sh all --confirm-reset
-```
+## Runtime data model
 
-See [docs/runbooks/local-supabase-test-env.md](../docs/runbooks/local-supabase-test-env.md) for install steps, dictionary import, reset, and staging handoff.
+- `word_entries` stores immutable dictionary content and meaning-level identity.
+- `user_card_status` stores per-user, per-entry, per-card scheduling state.
+- `user_review_log` and `user_card_action_events`/`user_events` preserve review
+  and action history; current state and immutable history are separate models.
+- `training_scenarios` groups supported card modes for Training.
+- `dictionaries`, `dictionary_entitlements`, and gated lookup contracts enforce
+  dictionary access at the database boundary.
+- `word_lists` and user list tables provide the selectable training scope.
+- `word_entry_translations` and `user_word_notes` store shared translation
+  overlays and user-owned notes.
 
-## Adding New Features
+The full table and card identity map lives in
+[`packages/docs/data-model.md`](../packages/docs/data-model.md). Shared payload
+schemas and card IDs live under `packages/shared/`.
 
-When adding new features:
-1. Add schema changes to the appropriate consolidated file (001-008)
-2. Commit the changes
+## Runtime boundaries
 
-For temporary development migrations, you can create delta files (0040_*, etc.) and add them to `bootstrap.sql`, then merge them into the consolidated files before final commit.
+- `apps/ui` calls the authenticated Platform facade; it must not invent
+  scheduler state or mutate learning tables directly.
+- Lookup and selection reads are side-effect free. Review, Learn, Known, and
+  other state changes go through explicit Platform actions.
+- FSRS or review-state changes require database-side validation plus the
+  relevant `apps/ui/tests/fsrs` coverage.
+- Local database checks should use `scripts/db-local-supabase.sh`; direct
+  `psql` access is for reviewed diagnostics and uses `db/scripts/psql_supabase.sh`.
 
-## Migration Workflow
+## Canonical references
 
-### Creating New Migrations
-
-**IMPORTANT:** All schema changes MUST go through migration files. Never make manual changes in Supabase Dashboard or via adhoc SQL.
-
-The sole bootstrap exception is
-`db/deploy-contract/ledger-v1.sql`. It is still an immutable, checksummed
-migration file, but it lives beside the deploy contract because the ledger must
-exist before the first managed numbered migration can be recorded atomically.
-The deploy gate applies it only after the read-only baseline probe. Never edit
-ledger v1 after its first rollout; every later ledger/state schema change must
-use the next ordinary `db/migrations/NNN_*.sql` file.
-
-1. **Create migration file:**
-   ```bash
-   # Use sequential numbering: 006, 007, 008, etc.
-   touch db/migrations/XXX_descriptive_name.sql
-   ```
-
-2. **Make migrations idempotent:**
-   Use `DO $$` blocks or `IF NOT EXISTS` clauses:
-   ```sql
-   -- Good: Idempotent policy creation
-   DO $$
-   BEGIN
-       IF NOT EXISTS (
-           SELECT 1 FROM pg_policies
-           WHERE tablename = 'my_table' AND policyname = 'my_policy'
-       ) THEN
-           CREATE POLICY my_policy ON my_table FOR SELECT USING (true);
-       END IF;
-   END $$;
-
-   -- Good: Idempotent table creation
-   CREATE TABLE IF NOT EXISTS my_table (...);
-
-   -- Good: Idempotent column addition
-   DO $$
-   BEGIN
-       IF NOT EXISTS (
-           SELECT 1 FROM information_schema.columns
-           WHERE table_name = 'my_table' AND column_name = 'my_column'
-       ) THEN
-           ALTER TABLE my_table ADD COLUMN my_column TEXT;
-       END IF;
-   END $$;
-   ```
-
-3. **Test locally/staging:**
-   ```bash
-   db/scripts/psql_supabase.sh -f db/migrations/XXX_descriptive_name.sql
-   ```
-
-4. **Verify migration worked:**
-   ```bash
-   # Check policies
-   db/scripts/psql_supabase.sh -c "SELECT * FROM pg_policies WHERE tablename = 'my_table';"
-
-   # Check columns
-   db/scripts/psql_supabase.sh -c "\d my_table"
-   ```
-
-5. **Commit to git:**
-   ```bash
-   git add db/migrations/XXX_descriptive_name.sql
-   git commit -m "feat: Add migration for <feature>"
-   ```
-
-### ❌ Never Do These
-
-- **Don't** create policies in Supabase Dashboard
-- **Don't** run adhoc SQL in production without a migration file
-- **Don't** modify schema manually and "fix it later"
-- **Don't** skip testing migrations in staging first
-- **Don't** forget to make migrations idempotent
-
-### ✅ Always Do These
-
-- **Always** create migration files for schema changes
-- **Always** test migrations in staging before production
-- **Always** use idempotent patterns (IF NOT EXISTS, DO $$ blocks)
-- **Always** commit migrations to version control
-- **Always** document why the migration was needed
-
-### Checking for Drift
-
-Before starting new work, check if production DB has drifted from migrations:
-
-```bash
-# Export current production schema
-db/scripts/psql_supabase.sh -c "
-SELECT tablename, policyname
-FROM pg_policies
-WHERE schemaname = 'public'
-ORDER BY tablename, policyname;
-" > /tmp/prod_policies.txt
-
-# Compare with what's in migrations
-# If you see policies not in your migrations, capture them!
-```
-
-### RLS Performance Best Practices
-
-When creating RLS policies, follow these patterns for optimal performance:
-
-```sql
--- ❌ SLOW: auth.uid() called per-row
-CREATE POLICY my_policy ON my_table
-FOR SELECT
-USING (auth.uid() = user_id);
-
--- ✅ FAST: auth.uid() cached per-query (99% faster)
-CREATE POLICY my_policy ON my_table
-FOR SELECT
-TO authenticated
-USING ((select auth.uid()) = user_id);
-```
-
-**Key optimizations:**
-1. Wrap `auth.uid()` with subquery: `(select auth.uid())`
-2. Specify role: `TO authenticated` (not `TO public`)
-3. Both changes force query planner to use InitPlan caching
-
-Reference: [Supabase RLS Performance Guide](https://supabase.com/docs/guides/database/database-advisors?lint=0003_auth_rls_initplan)
-
-## Running ad-hoc SQL against Supabase
-
-Use the helper script which reads `SUPABASE_DB_URL` or `DATABASE_URL` from your environment (or falls back to the repo `.env.local`):
-
-- Query: `db/scripts/psql_supabase.sh -c "select now();"`
-- File: `db/scripts/psql_supabase.sh -f db/migrations/001_core_schema.sql`
-
-Related DB URL names:
-
-- `SUPABASE_DB_URL` - preferred explicit Supabase psql URL.
-- `DATABASE_URL` - accepted fallback, including from repo `.env.local`.
-- `FSRS_TEST_DB_URL` - test-specific alias; `apps/ui/tests/fsrs` also falls back to `SUPABASE_DB_URL` and `DATABASE_URL`.
-- `LOCAL_SUPABASE_DB_URL` - overrides the default local Docker Supabase DB URL used by `scripts/db-local-supabase.sh`.
-
-For local migration/RPC validation, prefer `scripts/db-local-supabase.sh test-fsrs`; it exports the correct local `SUPABASE_DB_URL`, `DATABASE_URL`, and `FSRS_TEST_DB_URL` internally.
-
-## Schema Overview
-
-### Core Tables
-
-- `languages` - Supported languages
-- `dictionary_schemas` - Runtime registry for versioned dictionary entry schemas
-- `dictionaries` / `dictionary_entitlements` - Dictionary metadata and access grants
-- `word_entries` - Dictionary entries with raw JSON data
-- `word_lists` / `word_list_items` - Curated word lists (VanDale, VanDale 2k)
-- `word_forms` - Inflections and conjugations, scoped to dictionary entries
-
-### FSRS State
-
-- `user_card_status` - Per-user, per-entry, per-card FSRS scheduling state
-- `user_review_log` - Audit trail of all reviews
-- `user_events` - Generic event log
-
-### User Features
-
-- `user_settings` - User preferences (limits, modes, theme, subscription tier, independently bounded phone/desktop reading sizes)
-- `user_word_lists` / `user_word_list_items` - User-created lists
-- `word_entry_translations` - Shared translations per word
-- `user_word_notes` - Per-user notes on words
-- `training_scenarios` - Grouped card modes for training
-
-## Key Functions
-
-| Function | Description |
-|----------|-------------|
-| `fsrs6_compute()` | Core FSRS-6 algorithm |
-| `handle_review()` | Grade a card (success/fail/hard/easy) |
-| `handle_click()` | "Show answer" click = lapse |
-| `record_word_view()` | Track that a training card was shown |
-| `start_learning_card()` | Explicitly enable a card for learning without a review-log row |
-| `add_entry_to_user_list()` | Explicitly add a readable entry to an owned user list |
-| `ensure_user_dictionary()` | Create or return the user's private editable dictionary |
-| `copy_entry_to_user_dictionary()` | Copy a readable entry into a user-owned dictionary |
-| `create_user_dictionary_entry()` | Create an entry in an owned editable user dictionary |
-| `update_user_dictionary_entry()` | Replace an owned editable user dictionary entry |
-| `delete_user_dictionary_entry()` | Delete an owned editable user dictionary entry |
-| `get_next_word()` | Queue-based card selector |
-| `get_training_stats()` | Basic session statistics |
-| `get_detailed_training_stats()` | Detailed counters for footer |
-| `get_scenario_stats()` | Stats aggregated by scenario |
-| `get_user_tier()` | Get user subscription tier |
-| `search_word_entries_gated()` | Gated word search (free tier limit) |
-| `fetch_words_for_list_gated()` | Gated list fetch (free tier limit) |
-
-## Archive
-
-The `archive/` folder contains the original individual migrations that were consolidated. These are kept for reference and git history but are not used for fresh deploys.
+- [`AGENTS.md`](../AGENTS.md) — repository routing and validation;
+- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — system boundaries and safe changes;
+- [`docs/architecture/post-provenance-review/platform-engineering-principles.md`](../docs/architecture/post-provenance-review/platform-engineering-principles.md)
+  — Platform and learning-state guardrails;
+- [`packages/shared/deployment/db-contract.json`](../packages/shared/deployment/db-contract.json)
+  — commit-owned deployment contract;
+- [`db/scripts/README.md`](scripts/README.md) — database helper and gate scripts;
+- [`docs/reference/api-functions/`](../docs/reference/api-functions/) — current
+  Platform function contracts.
