@@ -25,6 +25,11 @@ scripts/ui-local-dev.sh \
   --expected-commit "$(git rev-parse HEAD)"
 ```
 
+A dirty preview may start on an unused port for inspection, but it is never
+reused on an occupied port: matching a commit cannot prove the current set of
+uncommitted files. Start it on another free port after verifying the intended
+checkout.
+
 The verifier runs before Supabase discovery or Next startup. A missing pair,
 detached/stale canonical checkout, or commit mismatch fails closed. A preview
 may be dirty so an agent can inspect its current work; the response exposes
