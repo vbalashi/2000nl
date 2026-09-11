@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 138,
-      coordinationIssue: 328,
+      requiredMigrationId: 139,
+      coordinationIssue: 334,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -63,7 +63,7 @@ describe("NUC database contract deployment", () => {
 
   test("postflight proves the bounded default scheduler contract", () => {
     const postflight =
-      read("db/deploy-contract/postflight-138.sql") +
+      read("db/deploy-contract/postflight-139.sql") +
       read("db/deploy-contract/postflight-136.sql") +
       read("db/deploy-contract/postflight-134.sql") +
       read("db/deploy-contract/postflight-130.sql") +
@@ -106,7 +106,9 @@ describe("NUC database contract deployment", () => {
       "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
     );
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-138.sql");
+    expect(postflight).toContain("training_session_members_v1");
+    expect(postflight).toContain("requested_total");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-139.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

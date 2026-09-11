@@ -1273,7 +1273,7 @@ test("resumes a still-active server session after refresh without starting anoth
     await screen.findByTestId("mock-training-sense-card-v2"),
   ).toBeInTheDocument();
   expect(await screen.findByTestId("training-session-position")).toHaveTextContent(
-    "4 / 5",
+    "2 / 5",
   );
   expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
     "user-1",
@@ -2312,10 +2312,10 @@ test("V2 card owns scrolling without a second legacy scroll region", async () =>
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toBeInTheDocument();
     expect(screen.getByTestId("training-session-chrome")).toHaveTextContent(
-      /New \+ review1/,
+      /New \+ review0/,
     );
     expect(screen.getByTestId("training-session-position")).toHaveTextContent(
-      "1 / 2",
+      "0 / 2",
     );
     expect(
       screen.getByTestId("training-session-progress-track"),

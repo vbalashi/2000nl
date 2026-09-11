@@ -8,8 +8,7 @@ export type QueueTurn = "new" | "review" | "auto";
 
 /** User-selected bound for one Training session. */
 export type TrainingSessionSize =
-  | 5
-  | 10
+  | number
   | "all-due-today";
 
 export type TrainingDateWindow = "all" | "today" | "yesterday" | "daysAgo";
@@ -36,6 +35,8 @@ export type TrainingFilterSource = {
 
 /** Server-authored snapshot of work planned when a Training session starts. */
 export type TrainingSessionPlan = {
+  /** Requested completed-action budget; old payloads fall back to plannedTotal. */
+  requestedTotal?: number;
   plannedNew: number;
   plannedReview: number;
   plannedPractice: number;

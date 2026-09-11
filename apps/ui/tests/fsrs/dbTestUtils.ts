@@ -160,7 +160,12 @@ export async function withTransaction<T>(
 export async function ensureUserWithSettings(
   client: PoolClient,
   userId: string,
-  settings?: { daily_new_limit?: number; daily_review_limit?: number; target_retention?: number }
+  settings?: {
+    daily_new_limit?: number;
+    daily_review_limit?: number;
+    new_review_ratio?: number;
+    target_retention?: number;
+  }
 ) {
   await client.query(
     `insert into auth.users (id, email) values ($1, $2)
@@ -169,13 +174,22 @@ export async function ensureUserWithSettings(
   );
 
   await client.query(
-    `insert into user_settings (user_id, daily_new_limit, daily_review_limit, target_retention, mix_mode)
-     values ($1, $2, $3, coalesce($4, 0.9), 'mixed')
+    `insert into user_settings (
+       user_id, daily_new_limit, daily_review_limit, new_review_ratio,
+       target_retention, mix_mode
+     ) values ($1, $2, $3, $4, coalesce($5, 0.9), 'mixed')
      on conflict (user_id) do update
        set daily_new_limit = excluded.daily_new_limit,
            daily_review_limit = excluded.daily_review_limit,
+           new_review_ratio = excluded.new_review_ratio,
            target_retention = excluded.target_retention`,
-    [userId, settings?.daily_new_limit ?? 10, settings?.daily_review_limit ?? 40, settings?.target_retention]
+    [
+      userId,
+      settings?.daily_new_limit ?? 10,
+      settings?.daily_review_limit ?? 40,
+      settings?.new_review_ratio ?? 2,
+      settings?.target_retention,
+    ]
   );
 }
 

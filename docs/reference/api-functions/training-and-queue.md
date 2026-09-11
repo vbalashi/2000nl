@@ -132,56 +132,68 @@ get_training_session_plan(
 ```
 
 The finite-session overload adds a required `p_session_size text` as the
-seventh argument. It accepts `5`, `10`, or `all-due-today`; finite values cap
-the unique new/due card targets, while `all-due-today` includes today's new
-budget plus due learning/review work and excludes future practice. FSRS
-calculations and review intervals are unchanged. The current Training pilot
-uses this overload and stops after the planned number of accepted cards.
-For finite sizes, `plannedTotal` is the authoritative stopping value; the
-`plannedNew`/`plannedReview` fields describe the bounded pool rather than a
-promise that the scheduler will present all new cards before all reviews.
-Finite sessions now create a server-owned membership snapshot through
+seventh argument. It accepts any positive integer or `all-due-today`. A finite
+integer is the requested number of accepted exercises across new and due work;
+it is not a daily-new cap. `all-due-today` takes all immediately eligible new,
+learning, and review work and excludes future practice. FSRS calculations and
+review intervals are unchanged.
+
+Finite sessions create a server-owned membership snapshot through
 `start_training_session`; subsequent reads use `get_next_training_session_card`
-and accepted actions consume that snapshot atomically. The plan RPC remains the
-read-only planning contract used before a session starts.
+and accepted actions consume that snapshot atomically. For a finite session,
+`requestedTotal` is the stopping target. `plannedNew`, `plannedReview`, and
+`plannedTotal` describe the membership available when the session is created,
+so `plannedTotal` may be lower than `requestedTotal` when eligible work runs
+out. The plan RPC remains the read-only planning contract used before a session
+starts.
 
-The response contains `plannedNew`, `plannedReview`, `plannedPractice`,
-`plannedTotal`, and `plannedAt`. `plannedReview` includes due learning and
-review cards; `plannedPractice` includes reachable future-due practice cards.
-`plannedTotal` always equals all three component counts. The server
-applies the effective modes, list, card filter, source/date filter, dictionary
-access, Known Marks, pointer-only exclusion, frozen/hidden state, due time, and
-the scheduler's cap/fallback rules. Each `(entry_id, card_type_id)` is counted
-separately. Selection wrappers and planning both use the private
-`training_scheduler_candidates_v1` relation, which owns cap/fallback
-cardinality and queue ordering. The public selectors take their next identity
-directly from that relation; the plan counts the same relation. This avoids a
-second scheduler or a post-selection rejection path.
+The plan response contains `requestedTotal`, `plannedNew`, `plannedReview`,
+`plannedPractice`, `plannedTotal`, and `plannedAt`. A session snapshot adds the
+server-owned `completedActions` and `completionReason` (`completed` or
+`exhausted`). `plannedReview` includes due learning and review cards;
+`plannedPractice` is currently zero because session membership excludes future
+practice. `plannedTotal` equals the three planned component counts.
 
-Scheduler compatibility remains part of this contract: due review/learning
-order is preserved, while new and practice selection keeps the existing
-random-mode-then-random-card policy. The daily-new cap is measured in distinct
-words, so additional unseen modes for a word introduced today do not consume a
-second word slot. Selector diagnostics (`new_pool_size`,
+The server applies the effective modes, list, card filter, source/date filter,
+dictionary access, Known Marks, pointer-only exclusion, frozen/hidden state,
+and due time. Each `(entry_id, card_type_id)` is counted separately. Direct
+non-session selectors retain `training_scheduler_candidates_v1` and its
+established daily-cap and practice behavior. Session planning, latching, and
+replacement use the private v2 candidate relation with daily caps disabled,
+then apply the session's soft new:review ordering. This keeps a session's
+action budget independent from daily counters without changing non-session
+scheduler semantics.
+
+Direct-selector compatibility remains part of this contract: due
+review/learning order is preserved, while new and practice selection keeps the
+existing random-mode-then-random-card policy. Its daily-new cap is measured in
+distinct words, so additional unseen modes for a word introduced today do not
+consume a second word slot. Selector diagnostics (`new_pool_size`,
 `learning_due_count`, `review_pool_size`, and mode-set-wide `new_today`) remain
 present with their established meanings.
 
-When the remaining new-word cap is smaller than the candidate pool, cohort
-membership is stable for the authenticated user and exact modes/list/card/filter
-scope. Plan and subsequent selectors therefore cannot independently choose
-words with different eligible-mode cardinalities. This seed controls only cap
-cohort membership; presentation order inside the selected new/practice work
-remains random on every call and is not a global deterministic queue policy.
+For direct selection, when the remaining new-word cap is smaller than the
+candidate pool, cohort membership is stable for the authenticated user and
+exact modes/list/card/filter scope. Selectors therefore cannot independently
+choose words with different eligible-mode cardinalities. This seed controls
+only cap cohort membership; presentation order inside the selected
+new/practice work remains random on every call and is not a global deterministic
+queue policy. A session instead latches its finite membership once and does not
+apply that daily cap.
 
 Session lifecycle:
 
 - request one plan when a session starts for the exact modes/list/filter scope
   and publish it only as an atomic `(session generation, scope key, plan)`
   snapshot; stale responses from an earlier generation or scope are rejected;
-- latch that accepted total for the session; later counter refreshes must not
-  reduce it;
+- latch the requested action budget and membership for the session; later
+  counter refreshes must not reduce either;
+- only an accepted Learn, Known, or review-grade action advances
+  `completedActions`; retries, hints, answer reveal, unavailable-card handling,
+  and replacement do not;
 - selection retries, skipped/unrenderable candidates, and exhaustion do not
-  create a new plan;
+  create a new plan; an unavailable member may receive one eligible
+  replacement, otherwise the server records `completionReason: exhausted`;
 - a session restart or exact scope/filter/modes change requests a new snapshot;
 - if the RPC is unavailable or returns an invalid contract, show the
   authoritative ordinal only and omit ratio/progress UI.

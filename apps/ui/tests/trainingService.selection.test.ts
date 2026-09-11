@@ -87,6 +87,35 @@ describe("trainingService next-word selection", () => {
     });
   });
 
+  test("preserves the requested action budget when fewer eligible cards are available", async () => {
+    const { fetchTrainingSessionPlan } = await importService();
+    rpc.mockResolvedValueOnce({
+      data: {
+        requestedTotal: 5,
+        plannedNew: 0,
+        plannedReview: 3,
+        plannedPractice: 0,
+        plannedTotal: 3,
+        plannedAt: "2026-09-11T12:00:00.000Z",
+      },
+      error: null,
+    });
+
+    await expect(
+      fetchTrainingSessionPlan("user-1", ["word-to-definition"], {
+        cardFilter: "both",
+        sessionSize: 5,
+      }),
+    ).resolves.toEqual({
+      requestedTotal: 5,
+      plannedNew: 0,
+      plannedReview: 3,
+      plannedPractice: 0,
+      plannedTotal: 3,
+      plannedAt: "2026-09-11T12:00:00.000Z",
+    });
+  });
+
   test("creates an exact stable plan key from user, modes, list, and filter", async () => {
     const { createTrainingSessionPlanKey } = await importService();
     const scope = {
@@ -197,6 +226,8 @@ describe("trainingService next-word selection", () => {
         plannedReview: 3,
         plannedPractice: 0,
         plannedTotal: 5,
+        completedActions: 1,
+        completionReason: null,
         plannedAt: "2026-09-10T12:00:00.000Z",
         members: [
           {
@@ -227,6 +258,8 @@ describe("trainingService next-word selection", () => {
       plannedReview: 3,
       plannedPractice: 0,
       plannedTotal: 5,
+      completedActions: 1,
+      completionReason: null,
       plannedAt: "2026-09-10T12:00:00.000Z",
       members: [
         {

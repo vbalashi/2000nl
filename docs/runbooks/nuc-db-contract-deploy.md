@@ -31,7 +31,12 @@ storage on `user_settings`. Issue #278 advances it to migration 130 for the
 observable Learn/enrollment and graded-history projections. Issue #279 advances
 it to migration 131 for the pinned FSRS same-day short-term parity correction.
 
-An enabled deployment must apply or verify migrations 123 through 138 in order
+Issue #334 advances the contract to migration 139. It gives sessions a
+server-owned action budget and soft new/review mixing without applying daily
+scheduler caps; the legacy selector keeps its existing capped behavior for
+callers outside a session.
+
+An enabled deployment must apply or verify migrations 123 through 139 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

@@ -169,7 +169,9 @@ export function useTrainingTurnSelectionPort(input: Inputs): TrainingTurnSelecti
       );
       return (
         result.status === "unavailable" ||
-        result.status === "unavailable-complete"
+        result.status === "unavailable-complete" ||
+        result.status === "unavailable-replaced" ||
+        result.status === "unavailable-exhausted"
       );
     },
     [activeTrainingSessionId, userId],

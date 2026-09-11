@@ -409,3 +409,6 @@
 
 -- Share ordinary-meaning Learn and Known across the two recall directions
 \i db/migrations/138_shared_meaning_directional_state.sql
+
+-- Count a training session by completed actions, not by daily scheduler caps
+\i db/migrations/139_session_action_budget.sql

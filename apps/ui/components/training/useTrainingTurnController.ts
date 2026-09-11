@@ -88,6 +88,7 @@ type Inputs = {
   focusFilter: TrainingFocusFilter;
   sessionPlannedTotal?: number | null;
   sessionConsumedCardKeys?: string[];
+  sessionCompletedActions?: number;
   trainingSessionId?: string | null;
   sessionScopeKey: string;
   selection: TrainingTurnSelectionPort;
@@ -131,6 +132,7 @@ export function useTrainingTurnController(input: Inputs) {
     focusFilter,
     sessionPlannedTotal = null,
     sessionConsumedCardKeys = EMPTY_SESSION_CARD_KEYS,
+    sessionCompletedActions,
     trainingSessionId = null,
     sessionScopeKey,
     selection,
@@ -163,6 +165,9 @@ export function useTrainingTurnController(input: Inputs) {
   const sessionScopeKeyRef = useRef(sessionScopeKey);
   const currentTurnIdRef = useRef<string | null>(null);
   const reviewedCardKeysRef = useRef<Set<string>>(new Set());
+  const completedActionCountRef = useRef(
+    sessionCompletedActions ?? sessionConsumedCardKeys.length,
+  );
   const rejectedCardKeysRef = useRef<Set<string>>(new Set());
   const cardFailureRef = useRef<{
     cardKey: string;
@@ -177,7 +182,9 @@ export function useTrainingTurnController(input: Inputs) {
 
   useEffect(() => {
     reviewedCardKeysRef.current = new Set(sessionConsumedCardKeys);
-  }, [sessionConsumedCardKeys, sessionScopeKey]);
+    completedActionCountRef.current =
+      sessionCompletedActions ?? sessionConsumedCardKeys.length;
+  }, [sessionCompletedActions, sessionConsumedCardKeys, sessionScopeKey]);
 
   const clearAcceptedTransitionRecovery = useCallback(() => {
     acceptedTransitionRetryRef.current = null;
@@ -671,8 +678,11 @@ export function useTrainingTurnController(input: Inputs) {
     });
     setQueueTurn(queue.queueTurn);
     setReviewCounter(queue.reviewCounter);
-    reviewedCardKeysRef.current.add(currentCardKey);
-    onSessionCardAccepted?.(currentCardKey);
+    if (!reviewedCardKeysRef.current.has(currentCardKey)) {
+      reviewedCardKeysRef.current.add(currentCardKey);
+      completedActionCountRef.current += 1;
+      onSessionCardAccepted?.(currentCardKey);
+    }
     const prefetched = consumePreparedNextTurn(currentCardKey);
     const transitionId =
       prefetched?.transitionId ?? nextTransitionId ?? createTrainingTransitionId();
@@ -736,7 +746,7 @@ export function useTrainingTurnController(input: Inputs) {
 
       const reachedSessionLimit =
         sessionPlannedTotal !== null &&
-        reviewedCardKeysRef.current.size >= sessionPlannedTotal;
+        completedActionCountRef.current >= sessionPlannedTotal;
       if (reachedSessionLimit) {
         presentWord(null);
         acceptedTransitionRetryRef.current = null;

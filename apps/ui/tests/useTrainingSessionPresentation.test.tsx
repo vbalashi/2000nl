@@ -23,6 +23,37 @@ const snapshot = (
       };
 
 describe("useTrainingSessionPresentation", () => {
+  test("starts at zero completed actions and advances only after acceptance", () => {
+    const view = renderHook(
+      ({ consumedCardCount }) =>
+        useTrainingSessionPresentation({
+          surface: "session",
+          presentedCardKey: "entry-1:word-to-definition",
+          consumedCardCount,
+          sessionGeneration: 1,
+          scopeKey: "default",
+          planSnapshot: snapshot(3),
+          resetKey: 0,
+        }),
+      { initialProps: { consumedCardCount: 0 } },
+    );
+
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 0,
+      total: 3,
+      fraction: 0,
+    });
+
+    view.rerender({ consumedCardCount: 1 });
+    expect(view.result.current.presentation).toEqual({
+      kind: "planned",
+      position: 1,
+      total: 3,
+      fraction: 1 / 3,
+    });
+  });
+
   test("advances only after an accepted card, not after a replacement", () => {
     const view = renderHook(
       ({ surface, cardKey, consumedCardCount }) =>
@@ -66,9 +97,9 @@ describe("useTrainingSessionPresentation", () => {
     expect(view.result.current.isSubsequentCard).toBe(true);
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 2,
+      position: 1,
       total: 3,
-      fraction: 2 / 3,
+      fraction: 1 / 3,
     });
 
     act(() =>
@@ -86,13 +117,13 @@ describe("useTrainingSessionPresentation", () => {
     expect(view.result.current.isSubsequentCard).toBe(false);
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 1,
+      position: 0,
       total: 3,
-      fraction: 1 / 3,
+      fraction: 0,
     });
   });
 
-  test("keeps actual ordinal while clamping only the exhausted progress fraction", () => {
+  test("keeps completed-action count while clamping only exhausted progress", () => {
     const view = renderHook(
       ({ cardKey, plannedTotal, consumedCardCount }) =>
         useTrainingSessionPresentation({
@@ -126,7 +157,7 @@ describe("useTrainingSessionPresentation", () => {
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 3,
+      position: 2,
       total: 2,
       fraction: 1,
     });
@@ -154,13 +185,13 @@ describe("useTrainingSessionPresentation", () => {
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 1,
+      position: 0,
       total: 5,
-      fraction: 1 / 5,
+      fraction: 0,
     });
   });
 
-  test("starts resumed sessions at the first unconsumed ordinal", () => {
+  test("starts resumed sessions at their completed-action count", () => {
     const view = renderHook(
       ({ consumedCardCount, cardKey }) =>
         useTrainingSessionPresentation({
@@ -187,13 +218,13 @@ describe("useTrainingSessionPresentation", () => {
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 4,
+      position: 3,
       total: 5,
-      fraction: 4 / 5,
+      fraction: 3 / 5,
     });
   });
 
-  test("hydrates a resumed ordinal when the snapshot arrives after the session surface", () => {
+  test("hydrates completed action count when the snapshot arrives after the session surface", () => {
     const view = renderHook(
       ({ consumedCardCount, cardKey }: { consumedCardCount: number; cardKey: string | null }) =>
         useTrainingSessionPresentation({
@@ -219,9 +250,9 @@ describe("useTrainingSessionPresentation", () => {
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 4,
+      position: 3,
       total: 5,
-      fraction: 4 / 5,
+      fraction: 3 / 5,
     });
   });
 
@@ -278,9 +309,9 @@ describe("useTrainingSessionPresentation", () => {
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 2,
+      position: 1,
       total: 5,
-      fraction: 0.4,
+      fraction: 0.2,
     });
 
     view.rerender({
@@ -294,9 +325,9 @@ describe("useTrainingSessionPresentation", () => {
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 1,
+      position: 0,
       total: 2,
-      fraction: 0.5,
+      fraction: 0,
     });
 
     view.rerender({
@@ -310,7 +341,7 @@ describe("useTrainingSessionPresentation", () => {
     });
     expect(view.result.current.presentation).toEqual({
       kind: "ordinal",
-      position: 1,
+      position: 0,
     });
     view.rerender({
       surface: "session",
@@ -323,9 +354,9 @@ describe("useTrainingSessionPresentation", () => {
     });
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 1,
+      position: 0,
       total: 4,
-      fraction: 0.25,
+      fraction: 0,
     });
   });
 
@@ -360,9 +391,9 @@ describe("useTrainingSessionPresentation", () => {
 
     expect(view.result.current.presentation).toEqual({
       kind: "planned",
-      position: 1,
+      position: 0,
       total: 5,
-      fraction: 0.2,
+      fraction: 0,
     });
   });
 });
