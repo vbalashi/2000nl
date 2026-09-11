@@ -406,3 +406,6 @@
 
 -- Remove the retired scheduler compatibility overloads after caller migration
 \i db/migrations/137_retire_legacy_scheduler_overloads.sql
+
+-- Share ordinary-meaning Learn and Known across the two recall directions
+\i db/migrations/138_shared_meaning_directional_state.sql

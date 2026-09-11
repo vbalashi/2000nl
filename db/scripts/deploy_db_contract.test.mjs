@@ -373,7 +373,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 250 transition contract", () => {
+test("the repository contract enables the issue 328 shared-meaning contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +386,7 @@ test("the repository contract enables the issue 250 transition contract", () => 
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 137 250");
+  assert.equal(result.stdout.trim(), "enabled 138 328");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

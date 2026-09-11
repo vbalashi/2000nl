@@ -147,6 +147,137 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     );
   });
 
+  test("shares Known and its undo across directions without copying FSRS history", async () => {
+    const userId = randomUUID();
+    const directMarkEventId = randomUUID();
+    const undoEventId = randomUUID();
+
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(
+        client,
+        `platform-shared-known-${Date.now()}`,
+      );
+
+      const marked = await client.query(
+        `select perform_platform_v2_card_action(
+           $1::uuid, 'mark-known', $2::uuid, 'word-to-definition', 'untracked',
+           null, null, null, $3::uuid, null, 'first_party', null
+         ) as result`,
+        [userId, entryId, directMarkEventId],
+      );
+      expect(marked.rows[0].result.card.knownMark).toEqual(
+        expect.objectContaining({ markId: expect.any(String) }),
+      );
+
+      const bothDirections = await client.query(
+        `select card_type_id, known_mark_id, known_mark_revision, state_revision
+           from get_platform_v2_card_states_for_entries(
+             $1, ARRAY[$2]::uuid[],
+             ARRAY['word-to-definition', 'definition-to-word']::text[]
+           )
+          order by card_type_id`,
+        [userId, entryId],
+      );
+      expect(bothDirections.rows).toHaveLength(2);
+      expect(bothDirections.rows.map((row) => row.card_type_id)).toEqual([
+        'definition-to-word',
+        'word-to-definition',
+      ]);
+      expect(bothDirections.rows.every((row) => row.known_mark_id)).toBe(true);
+
+      const markHistory = await client.query(
+        `select card_type_id, mark_event_id
+           from user_card_known_marks
+          where user_id = $1 and entry_id = $2 and cleared_at is null
+          order by card_type_id`,
+        [userId, entryId],
+      );
+      expect(markHistory.rows).toHaveLength(2);
+      expect(markHistory.rows.map((row) => row.card_type_id)).toEqual([
+        'definition-to-word',
+        'word-to-definition',
+      ]);
+      expect(markHistory.rows[0].mark_event_id).toBe(markHistory.rows[1].mark_event_id);
+
+      const reverse = bothDirections.rows.find(
+        (row) => row.card_type_id === 'definition-to-word',
+      )!;
+      const undone = await client.query(
+        `select perform_platform_v2_card_action(
+           $1::uuid, 'undo-known', $2::uuid, 'definition-to-word', 'untracked',
+           $3::uuid, $4::text, null, $5::uuid, null, 'first_party', null
+         ) as result`,
+        [
+          userId,
+          entryId,
+          reverse.known_mark_id,
+          reverse.known_mark_revision,
+          undoEventId,
+        ],
+      );
+      expect(undone.rows[0].result).toEqual(
+        expect.objectContaining({ status: 'accepted', actionId: 'undo-known' }),
+      );
+
+      const cleared = await client.query(
+        `select count(*) filter (where cleared_at is null)::int as active_marks,
+                count(*) filter (where undo_event_id is not null)::int as undo_rows
+           from user_card_known_marks
+          where user_id = $1 and entry_id = $2`,
+        [userId, entryId],
+      );
+      expect(cleared.rows[0]).toEqual({ active_marks: 0, undo_rows: 2 });
+
+      const allMarks = await client.query(
+        `select count(*)::int as mark_rows,
+                count(distinct undo_event_id)::int as undo_events
+           from user_card_known_marks
+          where user_id = $1 and entry_id = $2`,
+        [userId, entryId],
+      );
+      expect(allMarks.rows[0]).toEqual({ mark_rows: 2, undo_events: 1 });
+
+      const directState = await client.query(
+        `select state_revision
+           from user_card_status
+          where user_id = $1 and entry_id = $2 and card_type_id = 'word-to-definition'`,
+        [userId, entryId],
+      );
+      const learned = await client.query(
+        `select perform_platform_v2_card_action(
+           $1::uuid, 'start-learning', $2::uuid, 'word-to-definition', $3::text,
+           null, null, null, $4::uuid, null, 'first_party', null
+         ) as result`,
+        [userId, entryId, directState.rows[0].state_revision, randomUUID()],
+      );
+      expect(learned.rows[0].result.status).toBe('accepted');
+
+      const directionalFsrs = await client.query(
+        `select card_type_id, fsrs_reps, seen_count, in_learning
+           from user_card_status
+          where user_id = $1 and entry_id = $2
+            and card_type_id in ('word-to-definition', 'definition-to-word')
+          order by card_type_id`,
+        [userId, entryId],
+      );
+      expect(directionalFsrs.rows).toEqual([
+        {
+          card_type_id: 'definition-to-word',
+          fsrs_reps: 0,
+          seen_count: 0,
+          in_learning: true,
+        },
+        {
+          card_type_id: 'word-to-definition',
+          fsrs_reps: 0,
+          seen_count: 1,
+          in_learning: true,
+        },
+      ]);
+    }, userId);
+  });
+
   test("executes through the service-role-only production RPC path", async () => {
     const userId = randomUUID();
 
@@ -1202,7 +1333,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
                where user_id = $1 and entry_id = $3) as marks`,
           [userId, clientEventId, entryId],
         );
-        expect(counts.rows).toEqual([{ events: 1, marks: 1 }]);
+        expect(counts.rows).toEqual([{ events: 1, marks: 2 }]);
       },
       userId,
     );
