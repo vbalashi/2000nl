@@ -1,9 +1,9 @@
 # FSRS-6 parity baseline
 
-Status: implementation candidate in PR #282. Migration 131 aligns the
-same-scheduler-day stability update in TypeScript and SQL with the pinned
-reference vectors. The online system remains on contract 130 until review and
-rollout are complete.
+Status: evidence slice for issue #279 after migration 131 and the #294 session
+membership rollout. Migration 131 aligns the same-scheduler-day stability
+update in TypeScript and SQL with the pinned reference vectors. The online
+system is on contract 137; no new FSRS formula change is included here.
 
 ## Pinned reference
 
@@ -23,6 +23,7 @@ The initial state uses the default 21 parameters already present in
 | New → Good, first grade | `S=2.306500`, `D≈2.118104` | `S=2.306500`, `D=2.118104` | same initial values |
 | Good → Good, same scheduler day | `S=2.306500` (short-term result clamped not below prior `S`) | `S=2.293814`, `D=2.111214` before migration 131 | `S=2.306500`, `D=2.111214` after the parity branch |
 | New → Again, first grade | `S=0.212000`, `D≈6.413300`; not a mature lapse | initial values are available through `fsrs6_compute` | initial values are available through `fsrsCompute` |
+| Existing FSRS memory → Again after 1 day | `S=2.195161` (interday failure lower bound), `D≈7.394503` | `S≈0.529085`, `D≈7.394503` | same observed deviation |
 
 The SQL observation was reproduced against the local database after migration
 130 with a first `Good`, followed immediately by a second `Good` using the same
@@ -44,7 +45,17 @@ follow-up issue:
    Learning Steps policy.
 
 The initial `Again/Hard/Good/Easy`, same-day `Good/Hard/Again`, and
-`Again → Good` vectors are covered by migration 131's parity suite.
+`Again → Good` vectors are covered by migration 131's parity suite. Additional
+interday transitions remain to be measured.
+
+The corpus now also includes an existing FSRS memory state followed by Again
+after one interday day and the following recovery. The raw FSRS function does
+not carry the scheduler's New/Review label; this vector therefore characterizes
+model state rather than proving a UI history classification. fsrs-rs v4.1.1
+applies a lower bound to interday Again, which the current SQL and TypeScript
+paths do not yet apply. The tests keep this as an explicit known deviation
+while requiring SQL↔TypeScript agreement; no runtime alignment is authorized
+by #279's evidence slice.
 
 Migration 131 intentionally does not change scheduler-day rollover/time-zone
 calculation, Learning Steps, or review-history storage. It also does not

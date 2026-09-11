@@ -111,6 +111,45 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
     "again-good-same-day": { stability: 0.246689, difficulty: 6.402115 },
   };
 
+  // fsrs-rs v4.1.1 applies a lower bound to interday Again:
+  // max(stability_after_failure, last_stability / exp(w17 * w18)). The
+  // current runtime does not apply that bound yet. Keep this vector explicit
+  // so the deviation cannot be mistaken for a reference-parity guarantee.
+  const knownReferenceDeviations: Record<
+    string,
+    {
+      reference: { stability: number; difficulty: number };
+      observedRuntime: {
+        stability: number;
+        difficulty: number;
+        interval: number;
+        reps: number;
+        lapses: number;
+      };
+    }
+  > = {
+    "existing-memory-again-interday": {
+      reference: { stability: 2.195161, difficulty: 7.394503 },
+      observedRuntime: {
+        stability: 0.5290853688,
+        difficulty: 7.3945027413,
+        interval: 0.5290853688,
+        reps: 2,
+        lapses: 1,
+      },
+    },
+    "existing-memory-again-interday-recover": {
+      reference: { stability: 4.235313, difficulty: 7.382337 },
+      observedRuntime: {
+        stability: 2.2750099747,
+        difficulty: 7.3823366078,
+        interval: 2.2750099747,
+        reps: 3,
+        lapses: 1,
+      },
+    },
+  };
+
   test.each(Object.entries(referenceVectors))(
     "matches pinned fsrs-rs v4.1.1 vector for %s",
     async (name, expected) => {
@@ -122,6 +161,40 @@ describeIfDb("FSRS parity (TS vs SQL)", () => {
       expect(dbResult.stability!).toBeCloseTo(expected.stability, 5);
       expect(tsResult.difficulty).toBeCloseTo(expected.difficulty, 5);
       expect(dbResult.difficulty!).toBeCloseTo(expected.difficulty, 5);
+    },
+  );
+
+  test.each(Object.entries(knownReferenceDeviations))(
+    "characterizes the documented runtime deviation for %s",
+    async (name, expected) => {
+      const history = fsrsCorpus.find((candidate) => candidate.name === name)?.history;
+      if (!history) throw new Error(`Missing corpus case: ${name}`);
+      const tsResult = runTs(history);
+      const dbResult = await runDb(history);
+
+      // SQL and TypeScript must continue to agree with each other while both
+      // remain visibly different from the pinned reference. This is evidence
+      // of a pending product/algorithm decision, not permission to change
+      // scheduling semantics in this issue.
+      // PostgreSQL returns the JSON state rounded to six decimal places;
+      // compare that boundary at five decimal digits while keeping the
+      // TypeScript observation pinned more precisely below.
+      expect(dbResult.stability!).toBeCloseTo(tsResult.stability!, 5);
+      expect(dbResult.difficulty!).toBeCloseTo(tsResult.difficulty!, 5);
+      expect(dbResult.interval!).toBeCloseTo(tsResult.interval!, 5);
+      expect(dbResult.reps).toBe(tsResult.reps);
+      expect(dbResult.lapses).toBe(tsResult.lapses);
+      expect(tsResult.stability).toBeCloseTo(expected.observedRuntime.stability, 8);
+      expect(tsResult.difficulty).toBeCloseTo(expected.observedRuntime.difficulty, 8);
+      expect(tsResult.interval).toBeCloseTo(expected.observedRuntime.interval, 8);
+      expect(tsResult.reps).toBe(expected.observedRuntime.reps);
+      expect(tsResult.lapses).toBe(expected.observedRuntime.lapses);
+      expect(tsResult.stability).not.toBeCloseTo(expected.reference.stability, 5);
+      // Difficulty follows the pinned reference; only stability is the
+      // observed lower-bound mismatch under characterization.
+      expect(tsResult.difficulty).toBeCloseTo(expected.reference.difficulty, 5);
+      expect(dbResult.stability).not.toBeCloseTo(expected.reference.stability, 5);
+      expect(dbResult.difficulty).toBeCloseTo(expected.reference.difficulty, 5);
     },
   );
 });
