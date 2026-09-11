@@ -18,6 +18,11 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `audit_vandale_classification.py` – reparse a complete versioned Van Dale
   manifest in memory and report source-shape, artifact, fingerprint, and
   Platform V2 node diffs without writing artifacts or database state.
+- `reconcile_vandale_drop.py` – apply the separately approved, fail-closed
+  single-entry #341 repair only after the exact source audit, released
+  production baseline, entry, node set, and pre-operation snapshot checks pass;
+  the same snapshot can be supplied to `--rollback-snapshot` for a guarded
+  single-entry restore.
 
 `process_raw_words.py` produces a checksummed `vandale-structured-v2`
 manifest. The supported Van Dale import path requires that manifest and uses
