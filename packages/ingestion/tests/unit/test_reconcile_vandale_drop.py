@@ -23,6 +23,7 @@ from reconcile_vandale_drop import (
     EXPECTED_SOURCE_ENTRY_KEY,
     EXPECTED_SOURCE_GROUP_KEY,
     ReconciliationRefused,
+    _assert_rollback_node_inventory,
     _load_snapshot,
     _write_snapshot,
     build_reconciliation_plan,
@@ -248,3 +249,158 @@ def test_snapshot_is_provenanced_atomic_and_non_overwriting(tmp_path: Path) -> N
     )
     with pytest.raises(ReconciliationRefused, match="snapshot is incomplete"):
         _load_snapshot(incomplete_path)
+
+
+def _rollback_node_inventory_fixture() -> tuple[dict, dict]:
+    before_raw = {
+        "meanings": [
+            {
+                "definition": "definition",
+                "examples": [],
+                "idioms": ["idiom a", "idiom b"],
+            }
+        ]
+    }
+    after_raw = {
+        "meanings": [
+            {
+                "definition": "definition",
+                "examples": ["example a", "example b"],
+                "idioms": [],
+            }
+        ]
+    }
+    before_inputs = platform_v2_content_node_inputs(before_raw)
+    after_inputs = platform_v2_content_node_inputs(after_raw)
+
+    def stored_node(
+        node_id: str, node: dict, source_order: int, *, binding_state: str
+    ) -> dict:
+        return {
+            "id": node_id,
+            "kind": node["kind"],
+            "binding_state": binding_state,
+            "source_text_fingerprint": node["sourceTextFingerprint"],
+            "diagnostic_locator": node["sourcePath"],
+            "parent_content_node_id": None,
+            "first_source_revision": "baseline",
+            "last_source_revision": "baseline",
+            "identity_evidence": {
+                "sourceTextFingerprint": node["sourceTextFingerprint"]
+            },
+            "reconciliation_decision": {"decision": "new-unmatched"},
+            "source_native_key": None,
+            "canonical_source_text": node["sourceText"],
+            "source_order": source_order,
+        }
+
+    before_nodes = [
+        stored_node("definition", before_inputs[0], 1, binding_state="active"),
+        stored_node("old-idiom-a", before_inputs[1], 2, binding_state="active"),
+        stored_node("old-idiom-b", before_inputs[2], 3, binding_state="active"),
+    ]
+    snapshot = {
+        "raw": before_raw,
+        "nodes": before_nodes,
+        "afterNodeEvidence": after_inputs,
+    }
+    state = {
+        "nodes": [
+            {
+                **before_nodes[0],
+                "last_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+                "reconciliation_decision": {
+                    "decision": "preserve-unambiguous-fingerprint"
+                },
+            },
+            {
+                **before_nodes[1],
+                "binding_state": "retired",
+                "last_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+                "reconciliation_decision": {"decision": "retire-missing"},
+            },
+            {
+                **before_nodes[2],
+                "binding_state": "retired",
+                "last_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+                "reconciliation_decision": {"decision": "retire-missing"},
+            },
+            {
+                **stored_node(
+                    "new-example-a", after_inputs[1], 2, binding_state="active"
+                ),
+                "first_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+                "last_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+            },
+            {
+                **stored_node(
+                    "new-example-b", after_inputs[2], 3, binding_state="active"
+                ),
+                "first_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+                "last_source_revision": EXPECTED_RECONCILED_MANIFEST_SHA256,
+            },
+        ]
+    }
+    return snapshot, state
+
+
+def test_rollback_inventory_accepts_exact_committed_post_apply_nodes() -> None:
+    snapshot, state = _rollback_node_inventory_fixture()
+
+    _assert_rollback_node_inventory(snapshot, state)
+
+
+def test_rollback_inventory_refuses_unexpected_retired_node() -> None:
+    snapshot, state = _rollback_node_inventory_fixture()
+    state["nodes"].append(
+        {
+            "id": "later-retired-node",
+            "kind": "example",
+            "binding_state": "retired",
+            "source_text_fingerprint": "later-fingerprint",
+            "diagnostic_locator": "meanings/0/examples/2",
+        }
+    )
+
+    with pytest.raises(ReconciliationRefused, match="inventory differs"):
+        _assert_rollback_node_inventory(snapshot, state)
+
+
+def test_rollback_inventory_refuses_changed_retired_node_provenance() -> None:
+    snapshot, state = _rollback_node_inventory_fixture()
+    state["nodes"][1]["diagnostic_locator"] = "meanings/0/idioms/changed"
+
+    with pytest.raises(ReconciliationRefused, match="original node provenance"):
+        _assert_rollback_node_inventory(snapshot, state)
+
+
+def test_rollback_inventory_refuses_changed_retired_node_revision_or_decision() -> None:
+    snapshot, state = _rollback_node_inventory_fixture()
+    state["nodes"][1]["last_source_revision"] = "later-revision"
+
+    with pytest.raises(ReconciliationRefused, match="original node revision"):
+        _assert_rollback_node_inventory(snapshot, state)
+
+    snapshot, state = _rollback_node_inventory_fixture()
+    state["nodes"][1]["reconciliation_decision"] = {"decision": "later-change"}
+
+    with pytest.raises(ReconciliationRefused, match="original node decision"):
+        _assert_rollback_node_inventory(snapshot, state)
+
+
+@pytest.mark.parametrize(
+    ("node_index", "field", "value", "message"),
+    [
+        (1, "source_native_key", "later-native-key", "original node projection"),
+        (1, "canonical_source_text", "later text", "original node projection"),
+        (3, "source_order", 99, "generated node projection"),
+    ],
+)
+def test_rollback_inventory_refuses_changed_persisted_node_projection(
+    node_index: int, field: str, value: object, message: str
+) -> None:
+    snapshot, state = _rollback_node_inventory_fixture()
+    state["nodes"][node_index][field] = value
+
+    with pytest.raises(ReconciliationRefused, match=message):
+        _assert_rollback_node_inventory(snapshot, state)
