@@ -138,7 +138,7 @@
     {
       "migrationId": 147,
       "file": "db/migrations/147_local_study_day_authority.sql",
-      "sha256": "f97e39484ea418bd3acdf8faf9cbcf8dc62aeb304863a739520c4739337282ad"
+      "sha256": "e933680263de2b0c64b9b3df8bc49d158c4ad8f9fc5786912d2101b92d60d5d3"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-147.sql",

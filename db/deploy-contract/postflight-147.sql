@@ -48,6 +48,10 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed local-study-day-authority-signatures';
   END IF;
 
+  IF (SELECT proc.prorows FROM pg_proc proc WHERE proc.oid = study_day_bounds_fn) <> 1 THEN
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed study-day-bounds-row-estimate';
+  END IF;
+
   filter_local_date_definition := upper(pg_get_functiondef(filter_local_date_fn));
   study_day_bounds_definition := upper(pg_get_functiondef(study_day_bounds_fn));
   authoritative_timezone_definition := upper(pg_get_functiondef(authoritative_timezone_fn));

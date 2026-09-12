@@ -212,6 +212,7 @@ ALTER FUNCTION private.training_calendar_local_date_v1(timestamptz, text) OWNER 
 ALTER FUNCTION private.training_authoritative_timezone_v1(uuid, text) OWNER TO postgres;
 ALTER FUNCTION private.training_filter_local_date(timestamptz, text) OWNER TO postgres;
 ALTER FUNCTION private.training_study_day_bounds_v1(timestamptz, text) OWNER TO postgres;
+ALTER FUNCTION private.training_study_day_bounds_v1(timestamptz, text) ROWS 1;
 ALTER FUNCTION private.training_filter_target_date_at(jsonb, timestamptz) OWNER TO postgres;
 ALTER FUNCTION private.training_filter_target_date(jsonb) OWNER TO postgres;
 ALTER FUNCTION private.next_ordinary_meaning_available_at_v1(timestamptz, text) OWNER TO postgres;
