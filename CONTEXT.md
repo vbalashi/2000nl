@@ -73,6 +73,14 @@ the displayed Translation Artifact, not the Exercise Target.
 _Avoid_: meaning-level translation exercise, one progress record per meaning,
 translation language as identity
 
+**Attached Idiom**:
+An idiom Content Node attached to a Dictionary Meaning and shown as supporting
+content on an ordinary SenseCard. It is visible in ordinary meaning mode but is
+not a Training Exercise there: it receives no Learn/Known action, FSRS state,
+action history, or session count. It becomes an Exercise Target only when the
+idiom exercise family is selected.
+_Avoid_: hidden idiom, ordinary-mode idiom exercise, idiom as a new meaning
+
 **Session Size**:
 The requested number of completed Training Exercises in one session, across its selected categories. A session may end earlier when eligible material is exhausted.
 _Avoid_: daily limit, new-word quota
