@@ -419,6 +419,7 @@ test("runs the exact bounded read-only probe after migrations and before compati
   assert.ok(probeBody > readOnlyProbe);
   assert.ok(compatible > probeBody);
   assert.match(sql, /SET LOCAL statement_timeout = '50ms'/);
+  assert.match(sql, /SET LOCAL jit = off/);
   assert.match(sql, /db-contract-gate: pre-switch-read-probe passed/);
 });
 
