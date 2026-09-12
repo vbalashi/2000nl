@@ -31,11 +31,13 @@ describeIfDb("content-bound training exercise database contract", () => {
       const idiomA = randomUUID();
       const idiomB = randomUUID();
       const sentence = randomUUID();
+      const sentenceTwo = randomUUID();
 
       for (const [contentNodeId, kind, fingerprint] of [
         [idiomA, "idiom", "idiom-a-fingerprint"],
         [idiomB, "idiom", "idiom-b-fingerprint"],
         [sentence, "example", "sentence-fingerprint"],
+        [sentenceTwo, "example", "sentence-two-fingerprint"],
       ] as const) {
         await client.query(
           `insert into private.platform_v2_content_nodes (
@@ -92,29 +94,57 @@ describeIfDb("content-bound training exercise database contract", () => {
         "recall",
         "sentence-fingerprint",
       );
+      const translationTwo = await register(
+        sentenceTwo,
+        "translation",
+        "recall",
+        "sentence-two-fingerprint",
+      );
 
       const { rows: targets } = await client.query(
         `select target_key, family, direction, content_node_id
            from private.platform_v2_training_exercise_targets
           where id = any($1::uuid[])
           order by target_key`,
-        [[idiomADirect, idiomAReverse, idiomBDirect, idiomBReverse, translation]],
+        [[
+          idiomADirect,
+          idiomAReverse,
+          idiomBDirect,
+          idiomBReverse,
+          translation,
+          translationTwo,
+        ]],
       );
-      expect(targets).toHaveLength(5);
-      expect(new Set(targets.map((row) => row.target_key)).size).toBe(5);
+      expect(targets).toHaveLength(6);
+      expect(new Set(targets.map((row) => row.target_key)).size).toBe(6);
       expect(targets.filter((row) => row.family === "idiom")).toHaveLength(4);
-      expect(targets.find((row) => row.family === "translation")).toMatchObject({
-        direction: "recall",
-        content_node_id: sentence,
-      });
+      const translationTargets = targets.filter((row) => row.family === "translation");
+      expect(translationTargets).toHaveLength(2);
+      expect(translationTargets.map((row) => row.content_node_id)).toEqual(
+        expect.arrayContaining([sentence, sentenceTwo]),
+      );
 
       await client.query(
         `insert into public.user_training_exercise_state (
            user_id, target_id, fsrs_stability, fsrs_difficulty, fsrs_reps,
            fsrs_enabled, next_review_at
          ) values ($1, $2, 2.5, 6, 1, true, now()),
-                  ($1, $3, 3.5, 5, 2, true, now())`,
-        [userId, idiomADirect, idiomBDirect],
+                  ($1, $3, 3.5, 5, 2, true, now()),
+                  ($1, $4, 4.5, 4, 3, true, now()),
+                  ($1, $5, 5.5, 3, 4, true, now())`,
+        [userId, idiomADirect, idiomBDirect, translation, translationTwo],
+      );
+
+      const { rows: translationStates } = await client.query(
+        `select target_id, fsrs_reps
+           from public.user_training_exercise_state
+          where user_id = $1 and target_id = any($2::uuid[])
+          order by target_id`,
+        [userId, [translation, translationTwo]],
+      );
+      expect(translationStates).toHaveLength(2);
+      expect(translationStates.map((row) => row.fsrs_reps)).toEqual(
+        expect.arrayContaining([3, 4]),
       );
 
       const clientEventId = randomUUID();

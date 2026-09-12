@@ -11,10 +11,11 @@ Ordinary meaning exercises currently use the durable identity
 Dictionary Meaning and must remain compatible with existing learner state.
 
 Idioms and sentence translations are different Training Exercise families. A
-Dictionary Meaning may contain several idioms, and one sentence may have
-different generated Translation Artifacts over time. Giving these exercises
-only a new string `card_type_id` would make every idiom under one entry share
-one FSRS state, Known/action target, receipt, and session member.
+Dictionary Meaning may contain several idioms and several example Content
+Nodes, and one sentence may have different generated Translation Artifacts over
+time. Giving these exercises only a new string `card_type_id` would make every
+idiom or example under one entry share one FSRS state, Known/action target,
+receipt, and session member.
 
 ## Decision
 
@@ -30,6 +31,8 @@ training-exercise-v1:<family>:<direction>:<entry-id>:<content-node-id>
   `direct` and `reverse` exercises;
 - `family=translation` requires the exact source sentence Content Node and
   uses one `recall` direction in v1;
+- every source `example` Content Node is a separate translation target, even
+  when several examples belong to the same Dictionary Meaning;
 - translation language is presentation/configuration, not identity;
 - each direction is a separate exercise, while changing the presentation
   language does not create a new Translation Exercise;
@@ -46,8 +49,10 @@ multiple idiom targets or delete the old history.
 ## Consequences
 
 Two idioms under one meaning can have four independent targets (direct and
-reverse for each idiom). #332 owns idiom eligibility, presentation, and any
-legacy ordinary-mode transition. #333 owns sentence selection and translation
+reverse for each idiom). Two examples under one meaning produce two independent
+translation targets, each with its own FSRS state, action history, and session
+membership. #332 owns idiom eligibility, presentation, and any legacy
+ordinary-mode transition. #333 owns sentence selection and translation
 presentation. Both consumers share this identity and must not introduce
 competing card registries or FSRS tables.
 
@@ -82,6 +87,7 @@ requires an explicit new node mapping; it never silently rebinds old FSRS data.
 
 The first implementation slice publishes the type/helper contract and tests
 for ordinary compatibility, multi-idiom collision freedom, independent
-directions, and language-independent translation identity. Migration 152 adds
-the idiom candidate/action preservation fixture. Sentence translation remains
-owned by #333; launch visuals remain owned by #331.
+directions, multiple examples under one meaning, and language-independent
+translation identity. Migration 152 adds the idiom candidate/action
+preservation fixture. Sentence translation remains owned by #333; launch
+visuals remain owned by #331.

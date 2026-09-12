@@ -14,10 +14,17 @@ Functions in this group validate that `p_user_id` matches `auth.uid()`.
 
 Idioms and sentence-translation exercises use the shared `training-exercise-v1`
 identity. An idiom target names its exact Platform V2 `content_node_id` and
-direction; a translation target names its source sentence node and uses one
-`recall` direction. Translation language is presentation configuration, not a
-progress key. Existing ordinary meaning state remains on `entry_id +
-card_type_id`.
+direction; a translation target names one exact source `example` node and uses
+one `recall` direction. Every example node is a separate translation exercise,
+including multiple examples belonging to one Dictionary Meaning. Translation
+language is presentation configuration, not a progress key. Existing ordinary
+meaning state remains on `entry_id + card_type_id`.
+
+The translation consumer must not collapse examples by visible sentence text,
+meaning, array position, or generated translation. `content_node_id` plus the
+source-text fingerprint is authoritative. If the translation pool later
+includes examples nested under idiom nodes, the same one-node/one-exercise rule
+applies; whether that pool is included is a separate #333 eligibility decision.
 
 `read_platform_v2_training_exercise_target_v1(p_user_id, p_target_key)` is a
 service-role-only read boundary for the target projection and that learner's
