@@ -39,6 +39,12 @@ approval recorded yet.
   and five elapsed scheduler days. They record the pinned reference values
   alongside the current runtime observation, making the pre-review-difficulty
   deviation visible without changing it.
+- `trainingCalendarBoundaries.test.ts` pins the existing named-timezone date
+  conversion helper at local midnight before and after both Europe/Amsterdam
+  DST transitions. This is a lower-level calendar evidence slice: it does not
+  claim to prove the FSRS `same_day` or full scheduler rollover path, which
+  still needs a deterministic clock seam. Scheduler formula and persisted card
+  state remain unchanged.
 
 ## Remaining evidence before any formula decision
 
