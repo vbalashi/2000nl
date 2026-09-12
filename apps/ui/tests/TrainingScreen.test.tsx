@@ -1340,6 +1340,67 @@ test("superseded saved session clears its queue and returns to a deliberate loca
   expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBeNull();
 });
 
+test("visibility return fences a queue superseded on another device before it can be answered", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-visibility",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    }),
+  );
+  const activeSnapshot = {
+    sessionId: "session-visibility",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5,
+    plannedNew: 3,
+    plannedReview: 2,
+    plannedPractice: 0,
+    plannedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(activeSnapshot)
+    .mockResolvedValueOnce({
+      ...activeSnapshot,
+      runStatus: "superseded",
+      runGeneration: null,
+    });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+
+  act(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  expect(
+    await screen.findByRole("button", { name: "Start training here" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+});
+
 test("pilot Start persists the complete selection in one scope update", async () => {
   fetchTrainingScenarios.mockResolvedValueOnce([
     {

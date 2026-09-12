@@ -231,8 +231,11 @@ function TrainingScreenContent({
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
     useState(false);
+  const [sessionAuthorityChecking, setSessionAuthorityChecking] =
+    useState(false);
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
+  const sessionAuthorityValidationRef = useRef(0);
   const componentMountedRef = useRef(true);
   useEffect(() => {
     componentMountedRef.current = true;
@@ -1466,6 +1469,7 @@ function TrainingScreenContent({
     trainingPilot.continueSession();
   }, [currentWord, resetFocusQueueState, trainingPilot]);
   const handleTrainingSessionSuperseded = useCallback(() => {
+    sessionAuthorityValidationRef.current += 1;
     sessionResumeGenerationRef.current += 1;
     if (user?.id) clearTrainingSessionResume(user.id);
     resetFocusQueueState();
@@ -1475,9 +1479,69 @@ function TrainingScreenContent({
     setSessionPlannedTotal(null);
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
+    setSessionAuthorityChecking(false);
     setSessionReplacementWarning(true);
     trainingPilot.returnToToday();
   }, [resetFocusQueueState, trainingPilot, user?.id]);
+  const validateTrainingSessionAuthority = useCallback(async () => {
+    if (!user?.id || !trainingSessionId) return;
+    const validation = sessionAuthorityValidationRef.current + 1;
+    sessionAuthorityValidationRef.current = validation;
+    // Do not allow a visible card to accept a grade while the server checks
+    // whether another device deliberately replaced its queue.
+    setSessionAuthorityChecking(true);
+    try {
+      const snapshot = await fetchTrainingSessionSnapshot(
+        user.id,
+        trainingSessionId,
+      );
+      if (
+        !componentMountedRef.current ||
+        sessionAuthorityValidationRef.current !== validation
+      ) {
+        return;
+      }
+      if (!snapshot || snapshot.runStatus === "superseded") {
+        handleTrainingSessionSuperseded();
+        return;
+      }
+      setSessionAuthorityChecking(false);
+    } catch {
+      // No offline grade queue in this slice. Keep the card non-actionable
+      // until a later focus/reconnect check reaches the server.
+      if (
+        componentMountedRef.current &&
+        sessionAuthorityValidationRef.current === validation
+      ) {
+        setSessionAuthorityChecking(true);
+      }
+    }
+  }, [
+    componentMountedRef,
+    handleTrainingSessionSuperseded,
+    trainingSessionId,
+    user?.id,
+  ]);
+  useEffect(() => {
+    if (!trainingSessionId) {
+      setSessionAuthorityChecking(false);
+      return;
+    }
+    const onReturn = () => void validateTrainingSessionAuthority();
+    const onVisibilityChange = () => {
+      if (!document.hidden) onReturn();
+    };
+    window.addEventListener("focus", onReturn);
+    window.addEventListener("online", onReturn);
+    window.addEventListener("pageshow", onReturn);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", onReturn);
+      window.removeEventListener("online", onReturn);
+      window.removeEventListener("pageshow", onReturn);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [trainingSessionId, validateTrainingSessionAuthority]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     trainingPilot.returnToToday();
@@ -1650,7 +1714,9 @@ function TrainingScreenContent({
             sessionFooter={trainingSessionFooter}
             sessionNotice={trainingSessionNotice}
             interactionDisabled={
-              navigationBlocked || acceptedTransitionLoadStalled
+              navigationBlocked ||
+              acceptedTransitionLoadStalled ||
+              sessionAuthorityChecking
             }
             focusOnPresentation={isSubsequentSessionCard}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
