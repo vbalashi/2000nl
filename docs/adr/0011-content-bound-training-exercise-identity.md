@@ -1,6 +1,6 @@
 # ADR-0011: Give content exercises their own stable target identity
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-12
 - Decision owner: 2000NL product owner, recorded in #385
 
@@ -58,11 +58,20 @@ preservation tests, and visual approval are ready.
 ## Database realization
 
 Migration `151_content_bound_training_exercise_contract.sql` realizes the
-contract additively through `private.platform_v2_training_exercise_targets`,
+storage contract additively through `private.platform_v2_training_exercise_targets`,
 `user_training_exercise_state`, `training_session_exercise_members`, and
 target-bound action/receipt tables. The target read boundary is
 `read_platform_v2_training_exercise_target_v1`; it is service-role-only until a
 consumer vertical slice supplies the action and scheduler behavior.
+
+Migration `152_idiom_training_exercise_runtime.sql` adds the idiom candidate
+and self-assessed action boundaries. Candidate selection requires an ordinary
+meaning in the same headword group to be enrolled or Known, requires an active
+idiom explanation, and returns source locators for the normal V2 content read.
+Each idiom direction has independent additive FSRS state; action retries are
+idempotent and do not mutate ordinary meaning state, Known marks, or ordinary
+review history. The wrappers are service-principal-only until the application
+consumer and launch UI are enabled.
 
 When a source Content Node is retired, associated targets become invisible but
 remain present, and their learner state/history remains protected by
@@ -73,6 +82,6 @@ requires an explicit new node mapping; it never silently rebinds old FSRS data.
 
 The first implementation slice publishes the type/helper contract and tests
 for ordinary compatibility, multi-idiom collision freedom, independent
-directions, and language-independent translation identity. Database status,
-action, and session integration require a separate additive migration with a
-disposable preservation fixture before #332 or #333 is enabled.
+directions, and language-independent translation identity. Migration 152 adds
+the idiom candidate/action preservation fixture. Sentence translation remains
+owned by #333; launch visuals remain owned by #331.

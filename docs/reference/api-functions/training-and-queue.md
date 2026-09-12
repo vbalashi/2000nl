@@ -10,7 +10,7 @@ const { data, error } = await supabase.rpc('function_name', { params });
 
 Functions in this group validate that `p_user_id` matches `auth.uid()`.
 
-## Content-bound Exercise Target contract (migration 151)
+## Content-bound Exercise Target contract (migrations 151–152)
 
 Idioms and sentence-translation exercises use the shared `training-exercise-v1`
 identity. An idiom target names its exact Platform V2 `content_node_id` and
@@ -23,8 +23,25 @@ card_type_id`.
 service-role-only read boundary for the target projection and that learner's
 additive state. It returns retired targets with their visibility status so a
 consumer can stop showing them without deleting FSRS state or action history.
-No idiom or translation runtime mode is enabled by migration 151; #332 and
-#333 must consume this contract rather than create competing card registries.
+
+Migration 152 adds the first idiom runtime boundary. The service-role-only
+`read_platform_v2_idiom_exercise_candidates_as_principal_v1` wrapper returns
+only active idiom nodes that have an active explanation and whose headword
+group contains an ordinary meaning the learner has enrolled or marked Known.
+It supports `direct` and `reverse` independently. The response includes
+content-node diagnostic locators for the expression, explanation, and optional
+examples; the application resolves those locators through the normal gated V2
+content read before rendering, so the database contract does not treat a
+locator as user-visible text.
+
+`perform_platform_v2_idiom_exercise_action_as_principal_v1` accepts only
+self-assessed `fail`, `hard`, `success`, or `easy` results. It uses the shared
+FSRS engine in additive `user_training_exercise_state`, records a
+target-bound action event and idempotency receipt, and never writes ordinary
+word state, Learn/Known marks, or ordinary review history. A repeated client
+event is a safe duplicate; the same event ID with a changed payload fails
+closed. The wrapper remains service-role-only until the application consumer
+and launch UI are enabled by #332/#331.
 
 ## `get_next_card`
 

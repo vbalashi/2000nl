@@ -229,4 +229,171 @@ describeIfDb("content-bound training exercise database contract", () => {
       service_target_wrapper: true,
     });
   });
+
+  test("selects only eligible explained idioms and grades each direction independently", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      await ensureUserWithSettings(client, userId);
+      const dictionaryId = randomUUID();
+      await client.query(
+        `insert into public.dictionaries (
+           id, language_code, slug, name, kind, visibility, owner_user_id,
+           is_editable
+         ) values ($1, 'nl', $2, 'Exercise user dictionary', 'user', 'private', $3, true)`,
+        [dictionaryId, `exercise-user-${userId}`, userId],
+      );
+      const { rows: entryRows } = await client.query(
+        `insert into public.word_entries (
+           dictionary_id, language_code, headword, raw
+         ) values ($1, 'nl', 'drop', '{"meanings":[{"definition":"candy"}]}'::jsonb)
+         returning id`,
+        [dictionaryId],
+      );
+      const entryId = entryRows[0].id as string;
+      const idiomOne = randomUUID();
+      const idiomTwo = randomUUID();
+      const unexplained = randomUUID();
+      const explanationOne = randomUUID();
+      const explanationTwo = randomUUID();
+      const exampleOne = randomUUID();
+
+      for (const [id, kind, parent] of [
+        [idiomOne, "idiom", null],
+        [idiomTwo, "idiom", null],
+        [unexplained, "idiom", null],
+        [explanationOne, "idiom-explanation", idiomOne],
+        [explanationTwo, "idiom-explanation", idiomTwo],
+        [exampleOne, "example", idiomOne],
+      ] as const) {
+        await client.query(
+          `insert into private.platform_v2_content_nodes (
+             id, entry_id, parent_content_node_id, kind, binding_state,
+             first_source_revision, last_source_revision,
+             source_text_fingerprint, diagnostic_locator
+           ) values ($1, $2, $3, $4, 'active', 'test-revision', 'test-revision', $5, $6)`,
+          [id, entryId, parent, kind, `${kind}-fingerprint-${id}`, `test.${kind}.${id}`],
+        );
+      }
+
+      await client.query(
+        `insert into public.user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, in_learning,
+           next_review_at
+         ) values ($1, $2, 'word-to-definition', true, true, now())`,
+        [userId, entryId],
+      );
+
+      const readCandidates = async (direction: "direct" | "reverse") => {
+        await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+        await client.query("set local role service_role");
+        const { rows } = await client.query(
+          `select public.read_platform_v2_idiom_exercise_candidates_as_principal_v1(
+             $1, $2, 20, 0
+           ) result`,
+          [userId, direction],
+        );
+        await client.query("reset role");
+        return rows[0].result as {
+          family: string;
+          direction: string;
+          items: Array<Record<string, unknown>>;
+        };
+      };
+
+      const direct = await readCandidates("direct");
+      expect(direct.family).toBe("idiom");
+      expect(direct.direction).toBe("direct");
+      expect(direct.items).toHaveLength(2);
+      expect(direct.items.map((item) => item.expressionSourcePath)).toEqual(
+        expect.arrayContaining([
+          `test.idiom.${idiomOne}`,
+          `test.idiom.${idiomTwo}`,
+        ]),
+      );
+      expect(direct.items.every((item) => item.queueSource === "new")).toBe(true);
+      const directOne = direct.items.find((item) => item.contentNodeId === idiomOne);
+      expect(directOne).toMatchObject({
+        explanationSourcePath: `test.idiom-explanation.${explanationOne}`,
+        exampleSourcePaths: [`test.example.${exampleOne}`],
+      });
+
+      const reverse = await readCandidates("reverse");
+      expect(reverse.items).toHaveLength(2);
+      expect(reverse.items.map((item) => item.contentNodeId)).not.toEqual(
+        expect.arrayContaining([unexplained]),
+      );
+
+      const reverseOne = reverse.items.find((item) => item.contentNodeId === idiomOne);
+      if (!directOne || !reverseOne) {
+        throw new Error("idiomOne candidates were not returned in both directions");
+      }
+      const directTarget = directOne;
+      const reverseTarget = reverseOne;
+      const action = async (
+        target: Record<string, unknown>,
+        result: "fail" | "hard" | "success" | "easy",
+        clientEventId: string,
+        stateRevision = "untracked",
+      ) => {
+        await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+        await client.query("set local role service_role");
+        const { rows } = await client.query(
+          `select public.perform_platform_v2_idiom_exercise_action_as_principal_v1(
+             $1, $2::uuid, $3, $4, $5::uuid, null, null
+           ) result`,
+          [userId, target.targetId, stateRevision, result, clientEventId],
+        );
+        await client.query("reset role");
+        return rows[0].result as Record<string, unknown>;
+      };
+
+      const directActionId = randomUUID();
+      const directAccepted = await action(
+        directTarget,
+        "success",
+        directActionId,
+      );
+      expect(directAccepted).toMatchObject({
+        status: "accepted",
+        actionId: "review-exercise",
+        family: "idiom",
+        direction: "direct",
+        state: { fsrsReps: 1, fsrsLastGrade: 3, successCount: 1 },
+      });
+
+      const directDuplicate = await action(
+        directTarget,
+        "success",
+        directActionId,
+      );
+      expect(directDuplicate).toMatchObject({
+        status: "duplicate",
+        state: { fsrsReps: 1 },
+      });
+
+      const reverseAccepted = await action(
+        reverseTarget,
+        "fail",
+        randomUUID(),
+      );
+      expect(reverseAccepted).toMatchObject({
+        status: "accepted",
+        direction: "reverse",
+        state: { fsrsReps: 1, fsrsLapses: 1, fsrsLastGrade: 1 },
+      });
+
+      const { rows: states } = await client.query(
+        `select target_id, fsrs_reps, fsrs_lapses
+           from public.user_training_exercise_state
+          where user_id = $1
+          order by target_id`,
+        [userId],
+      );
+      expect(states).toHaveLength(2);
+      expect(states.every((row) => row.fsrs_reps === 1)).toBe(true);
+      expect(states.some((row) => row.fsrs_lapses === 1)).toBe(true);
+
+      await client.query("reset role");
+    });
+  });
 });
