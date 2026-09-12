@@ -82,6 +82,14 @@ check_ui_toolchain() {
     return 1
   fi
 
+  for binary in "${required_bins[@]}"; do
+    if ! "$modules_dir/.bin/$binary" --version >/dev/null 2>&1; then
+      printf 'UI toolchain command is not runnable for %s: %s. Run scripts/bootstrap-worktree.sh %s.\n' \
+        "$repo_root" "$binary" "$install_hint" >&2
+      return 1
+    fi
+  done
+
   (
     cd "$ui_dir"
     npm ls --depth=0 >/dev/null
