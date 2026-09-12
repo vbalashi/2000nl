@@ -1439,6 +1439,7 @@ describe("TrainingSenseCardV2Session", () => {
         <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
+          trainingSessionId="session-undo"
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
@@ -1465,6 +1466,7 @@ describe("TrainingSenseCardV2Session", () => {
         <TestTrainingSenseCardV2Session
           word={word}
           mode="word-to-definition"
+          trainingSessionId="session-undo"
           contentLanguageCode="nl"
           translationTargetLanguageCode="en"
           interfaceLanguage="nl"
@@ -1492,6 +1494,9 @@ describe("TrainingSenseCardV2Session", () => {
 
     await waitFor(() => expect(performAction).toHaveBeenCalledTimes(2));
     expect(performAction.mock.calls[1][0]).toEqual(undoKnown);
+    expect(performAction.mock.calls[1][1]).toEqual({
+      trainingSessionId: "session-undo",
+    });
     await waitFor(() =>
       expect(
         screen.queryByRole("button", { name: "Markering ongedaan maken" }),

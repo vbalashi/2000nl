@@ -10,6 +10,7 @@ DECLARE
   v_role text;
   v_privilege text;
   v_rls_enabled boolean;
+  v_non_session_definition text;
 BEGIN
   IF to_regclass('public.training_active_runs') IS NULL THEN
     v_missing := v_missing || 'active-run-table';
@@ -29,6 +30,15 @@ BEGIN
   IF to_regprocedure('public.perform_platform_v2_card_action_as_principal(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text)') IS NULL THEN
     v_missing := v_missing || 'guarded-non-session-action';
   END IF;
+  IF to_regprocedure('public.perform_platform_v2_card_action_as_principal(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text,uuid)') IS NULL THEN
+    v_missing := v_missing || 'session-aware-action';
+  END IF;
+  IF to_regprocedure('public.handle_card_review(uuid,uuid,text,text,uuid)') IS NULL THEN
+    v_missing := v_missing || 'internal-legacy-review';
+  END IF;
+  IF to_regprocedure('public.start_learning_entry_card(uuid,uuid,text)') IS NULL THEN
+    v_missing := v_missing || 'internal-legacy-learn';
+  END IF;
   IF cardinality(v_missing) > 0 THEN
     RAISE EXCEPTION
       'db-contract-gate: postflight-failed active-training-run %',
@@ -40,6 +50,36 @@ BEGIN
     'execute'
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed active-training-run-guard-grant';
+  END IF;
+
+  IF to_regprocedure('public.handle_review(uuid,uuid,text,text,uuid)') IS NOT NULL
+     OR to_regprocedure('public.start_learning_card(uuid,uuid,text)') IS NOT NULL THEN
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed retired-legacy-training-alias';
+  END IF;
+
+  FOREACH v_role IN ARRAY ARRAY['anon', 'authenticated', 'service_role'] LOOP
+    IF has_function_privilege(
+      v_role,
+      'public.handle_card_review(uuid,uuid,text,text,uuid)',
+      'execute'
+    ) OR has_function_privilege(
+      v_role,
+      'public.start_learning_entry_card(uuid,uuid,text)',
+      'execute'
+    ) THEN
+      RAISE EXCEPTION
+        'db-contract-gate: postflight-failed direct-legacy-training-grant-%',
+        v_role;
+    END IF;
+  END LOOP;
+
+  SELECT pg_get_functiondef(
+           'public.perform_platform_v2_card_action_as_principal(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text)'::regprocedure
+         )
+    INTO v_non_session_definition;
+  IF v_non_session_definition !~* $$p_auth_kind\s+is\s+distinct\s+from\s+'connected_client'$$
+     OR v_non_session_definition ~* 'training_session_members' THEN
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed ambiguous-non-session-action-routing';
   END IF;
 
   FOREACH v_table IN ARRAY ARRAY[
