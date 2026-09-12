@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       samples:
-        description: "Number of fresh-connection read-only samples"
+        description: "Number of fresh-connection read-only samples per component"
         required: false
         default: "5"
         type: string

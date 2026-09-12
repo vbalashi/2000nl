@@ -89,12 +89,36 @@ async function databaseUrl(options) {
   return fromFile;
 }
 
-function diagnosticSql(options) {
-  const samples = [];
-  for (let sample = 1; sample <= options.samples; sample += 1) {
-    samples.push(`
-\\echo scheduler-readiness-sample-${sample}
-DISCARD PLANS;
+function componentStatement(component) {
+  if (component === "public") {
+    return `SELECT public.get_training_session_plan(
+      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+      ARRAY['word-to-definition']::text[],
+      NULL,
+      'curated',
+      'both',
+      '{}'::jsonb
+    )`;
+  }
+  return `SELECT count(*)
+    FROM private.training_scheduler_candidates_v2(
+      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+      ARRAY['word-to-definition']::text[],
+      NULL,
+      'curated',
+      'both',
+      'auto',
+      ARRAY[]::uuid[],
+      ARRAY[]::text[],
+      '{}'::jsonb,
+      false,
+      true
+    )`;
+}
+
+function diagnosticSql(options, component) {
+  return `\\set ON_ERROR_STOP on
+\\set QUIET on
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '${options.statementTimeoutMs}ms';
 DO $qa_identity$
@@ -109,20 +133,9 @@ BEGIN
 END
 $qa_identity$;
 EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
-SELECT public.get_training_session_plan(
-  (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
-  ARRAY['word-to-definition']::text[],
-  NULL,
-  'curated',
-  'both',
-  '{}'::jsonb
-);
+${componentStatement(component)};
 COMMIT;
-`);
-  }
-  return `\\set ON_ERROR_STOP on
-\\set QUIET on
-${samples.join("\n")}`;
+`;
 }
 
 function redact(message) {
@@ -132,18 +145,37 @@ function redact(message) {
     .replaceAll(/[A-Za-z0-9_-]{80,}/g, "[redacted-token]");
 }
 
-async function main() {
-  const options = parseArgs(process.argv.slice(2));
-  if (options.psqlContainerImage) preflightPostgresClient(options, redact);
-  const url = await databaseUrl(options);
-  const childEnv = { ...process.env, ...databaseEnvironment(url), PGCONNECT_TIMEOUT: "10" };
-  delete childEnv.SUPABASE_DB_URL;
-  delete childEnv.DATABASE_URL;
+function explainMetrics(output, component, sample) {
+  const jsonStart = output.indexOf("[");
+  const jsonEnd = output.lastIndexOf("]");
+  if (jsonStart < 0 || jsonEnd <= jsonStart) {
+    throw new Error(`scheduler-readiness-diagnostic: ${component} sample ${sample} returned no EXPLAIN JSON`);
+  }
+  const plan = JSON.parse(output.slice(jsonStart, jsonEnd + 1));
+  const root = plan[0]?.Plan ?? {};
+  const executionMs = plan[0]?.["Execution Time"];
+  if (!Number.isFinite(executionMs)) {
+    throw new Error(`scheduler-readiness-diagnostic: ${component} sample ${sample} has no execution time`);
+  }
+  return {
+    executionMs,
+    sharedHit: root["Shared Hit Blocks"] ?? 0,
+    sharedRead: root["Shared Read Blocks"] ?? 0,
+    tempRead: root["Temp Read Blocks"] ?? 0,
+    tempWritten: root["Temp Written Blocks"] ?? 0,
+  };
+}
+
+function runSample(options, childEnv, component, sample) {
+  // A separate client process makes each observation independent of the
+  // previous session's PostgreSQL plan cache. Shared buffers remain shared on
+  // purpose: the readiness failure is about the production cold path, not a
+  // synthetic attempt to evict the database cache.
   const result = spawnPostgresClient(
     options,
     ["-X", "--no-psqlrc", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1"],
     {
-      input: diagnosticSql(options),
+      input: diagnosticSql(options, component),
       encoding: "utf8",
       env: childEnv,
       maxBuffer: 4 * 1024 * 1024,
@@ -151,10 +183,37 @@ async function main() {
     },
   );
   const output = redact(`${result.stdout ?? ""}${result.stderr ?? ""}`);
-  if (output.trim()) process.stdout.write(output);
   if (result.error) throw new Error(`PostgreSQL client runtime failed: ${result.error.message}`);
   if (result.signal) throw new Error(`psql stopped by ${result.signal}`);
-  if (result.status !== 0) process.exitCode = result.status ?? 1;
+  if (result.status !== 0) {
+    throw new Error(`${component} sample ${sample} failed${output.trim() ? `: ${output.trim()}` : ""}`);
+  }
+  return explainMetrics(output, component, sample);
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+  if (options.psqlContainerImage) preflightPostgresClient(options, redact);
+  const url = await databaseUrl(options);
+  const childEnv = { ...process.env, ...databaseEnvironment(url), PGCONNECT_TIMEOUT: "10" };
+  delete childEnv.SUPABASE_DB_URL;
+  delete childEnv.DATABASE_URL;
+  // Run the public contract first so its timing remains directly comparable
+  // with the deployment gate. The candidate pass then attributes the same
+  // scheduler work without exposing the full EXPLAIN plan in CI logs.
+  for (const component of ["public", "candidate"]) {
+    for (let sample = 1; sample <= options.samples; sample += 1) {
+      const metrics = runSample(options, childEnv, component, sample);
+      process.stdout.write(
+        `scheduler-readiness-${component}-sample-${sample}` +
+        ` execution_ms=${metrics.executionMs.toFixed(3)}` +
+        ` shared_hit=${metrics.sharedHit}` +
+        ` shared_read=${metrics.sharedRead}` +
+        ` temp_read=${metrics.tempRead}` +
+        ` temp_written=${metrics.tempWritten}\n`,
+      );
+    }
+  }
 }
 
 main().catch((error) => {
