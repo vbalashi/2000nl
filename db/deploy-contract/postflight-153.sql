@@ -11,6 +11,7 @@ DECLARE
   v_privilege text;
   v_rls_enabled boolean;
   v_non_session_definition text;
+  v_session_definition text;
 BEGIN
   IF to_regclass('public.training_active_runs') IS NULL THEN
     v_missing := v_missing || 'active-run-table';
@@ -57,7 +58,7 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed retired-legacy-training-alias';
   END IF;
 
-  FOREACH v_role IN ARRAY ARRAY['anon', 'authenticated', 'service_role'] LOOP
+  FOREACH v_role IN ARRAY ARRAY['anon', 'service_role'] LOOP
     IF has_function_privilege(
       v_role,
       'public.handle_card_review(uuid,uuid,text,text,uuid)',
@@ -72,14 +73,36 @@ BEGIN
         v_role;
     END IF;
   END LOOP;
+  IF NOT has_function_privilege(
+    'authenticated',
+    'public.handle_card_review(uuid,uuid,text,text,uuid)',
+    'execute'
+  ) OR NOT has_function_privilege(
+    'authenticated',
+    'public.start_learning_entry_card(uuid,uuid,text)',
+    'execute'
+  ) THEN
+    RAISE EXCEPTION
+      'db-contract-gate: postflight-failed legacy-first-party-rollback-grant';
+  END IF;
 
   SELECT pg_get_functiondef(
            'public.perform_platform_v2_card_action_as_principal(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text)'::regprocedure
          )
     INTO v_non_session_definition;
-  IF v_non_session_definition !~* $$p_auth_kind\s+is\s+distinct\s+from\s+'connected_client'$$
-     OR v_non_session_definition ~* 'training_session_members' THEN
+  IF v_non_session_definition !~* $$p_auth_kind\s+not\s+in\s+\('first_party',\s*'connected_client'\)$$
+     OR v_non_session_definition ~* 'training_session_members'
+     OR v_non_session_definition ~* 'training_active_runs' THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed ambiguous-non-session-action-routing';
+  END IF;
+
+  SELECT pg_get_functiondef(
+           'public.perform_platform_v2_card_action_as_principal(uuid,text,uuid,text,text,uuid,text,text,uuid,jsonb,text,text,uuid)'::regprocedure
+         )
+    INTO v_session_definition;
+  IF v_session_definition !~* 'require_active_training_session_v1'
+     OR v_session_definition !~* 'p_training_session_id\s+is\s+null' THEN
+    RAISE EXCEPTION 'db-contract-gate: postflight-failed explicit-training-library-routing';
   END IF;
 
   FOREACH v_table IN ARRAY ARRAY[

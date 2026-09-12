@@ -46,6 +46,8 @@ async function fixture() {
         status: "enabled",
         requiredMigrationId: 123,
         coordinationIssue: 233,
+        compatibilityPhase: "legacy-first-party-compatible",
+        strictEnforcementIssue: 399,
       },
       baseline: {
         migrationId: 122,
@@ -250,6 +252,23 @@ test("rejects a pre-switch read probe above the rollout budget", async () => {
   assert.match(result.stderr, /Invalid pre-switch read probe contract/);
 });
 
+test("rejects an unknown staged compatibility phase", async () => {
+  const root = await fixture();
+  const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.rollout.compatibilityPhase = "pretend-strict";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+
+  const result = spawnSync(
+    process.execPath,
+    [runner, "validate", "--repo-root", root],
+    { encoding: "utf8" },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Invalid staged compatibility phase/);
+});
+
 test("client preflight fails before database URL lookup when runtime is missing", async () => {
   const root = await fixture();
   const result = spawnSync(
@@ -373,7 +392,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 279 FSRS contract", () => {
+test("the repository contract enables the issue 393 Training authority contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +405,10 @@ test("the repository contract enables the issue 279 FSRS contract", () => {
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 153 279");
+  assert.equal(
+    result.stdout.trim(),
+    "enabled 153 393",
+  );
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

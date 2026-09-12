@@ -80,7 +80,21 @@ describe("/api/platform/v2/actions", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  test("rejects a first-party Training mutation without a session identity", async () => {
+  test("keeps the cached first-party action route compatible during rollout phase 1", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "learning" },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
     const { POST } = await import("@/app/api/platform/v2/actions/route");
 
     const response = await POST(
@@ -96,11 +110,52 @@ describe("/api/platform/v2/actions", () => {
       }),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: "missing_training_session_id",
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_card_action_as_principal",
+      expect.not.objectContaining({ p_training_session_id: expect.anything() }),
+    );
+  });
+
+  test("keeps cached first-party Library Known compatible during rollout phase 1", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "mark-known",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "not-started" },
+          knownMark: {
+            markId: "00000000-0000-4000-8000-000000000013",
+            revision: "00000000-0000-4000-8000-000000000014",
+            markedAt: "2026-09-13T00:00:00.000Z",
+          },
+          stateRevision: "00000000-0000-4000-8000-000000000015",
+        },
+      },
+      error: null,
     });
-    expect(rpc).not.toHaveBeenCalled();
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "mark-known",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "untracked",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_card_action_as_principal",
+      expect.not.objectContaining({ p_training_session_id: expect.anything() }),
+    );
   });
 
   test("routes a first-party Library action through the explicit non-session RPC path", async () => {

@@ -8,6 +8,21 @@ for the schema, migrations, or tests.
 
 ## Entry Points
 
+Platform V2 now separates current first-party mutation surfaces at HTTP:
+
+- Training uses `/api/platform/v2/actions` with a concrete server-issued
+  `trainingSessionId`;
+- Library uses `/api/platform/v2/actions/library` without a session;
+- Connected Client keeps `/api/platform/v2/actions` with its server-derived
+  client principal and `platform:write` scope.
+
+The server maps those trusted routes to the session-aware or non-session
+`perform_platform_v2_card_action_as_principal(...)` overload. Migration 153
+temporarily retains the old no-session first-party shape and the exact direct
+legacy RPC grants for app rollback and cached Library compatibility. That phase
+cannot distinguish stale old Training; #399 removes it after the compatibility
+window. Queue membership is never used to guess the caller surface.
+
 The HTTP Platform action route calls `perform_platform_card_action(...)` only
 when a request carries `clientEventId`. Requests without `clientEventId` keep
 using the older direct mutation RPCs:

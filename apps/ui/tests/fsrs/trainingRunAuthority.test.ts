@@ -3,14 +3,12 @@ import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   ensureUserWithSettings,
+  getDbUrl,
   insertWord,
   runMigrations,
 } from "./dbTestUtils";
 
-const databaseUrl =
-  process.env.FSRS_TEST_DB_URL ??
-  process.env.SUPABASE_DB_URL ??
-  process.env.DATABASE_URL;
+const databaseUrl = getDbUrl();
 const describeDb = databaseUrl ? describe : describe.skip;
 
 type TrainingRun = {
@@ -176,6 +174,7 @@ async function cleanupRunFixture(
       );
     }
     await client.query(`delete from training_sessions where user_id = $1`, [userId]);
+    await client.query(`delete from user_card_known_marks where user_id = $1`, [userId]);
     await client.query(`delete from user_card_action_events where user_id = $1`, [userId]);
     await client.query(`delete from user_card_status where user_id = $1`, [userId]);
     await client.query(`delete from user_settings where user_id = $1`, [userId]);
@@ -228,7 +227,7 @@ describeDb("active Training run authority", () => {
     ]);
   });
 
-  test("separates ambiguous Training calls from explicit Library and Connected Client paths", async () => {
+  test("keeps the old first-party wire path during rollback while explicit Training remains fenced", async () => {
     const { userId, entryIds } = await createRunFixture(pool, 4);
     try {
       const first = await committed(pool, userId, (client) =>
@@ -242,30 +241,72 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId, "1"),
       );
       expect(takeover.sessionId).not.toBe(first.sessionId);
-      const unrelatedEntryId = entryIds.find((entryId) => entryId !== card.id);
-      if (!unrelatedEntryId) throw new Error("expected an unrelated entry");
+      const nonCardEntries = entryIds.filter((entryId) => entryId !== card.id);
+      const legacyLibraryEntryId = nonCardEntries[0];
+      const connectedClientEntryId = nonCardEntries[1];
+      const legacyKnownEntryId = nonCardEntries[2];
+      if (
+        !legacyLibraryEntryId ||
+        !connectedClientEntryId ||
+        !legacyKnownEntryId
+      ) {
+        throw new Error("expected separate compatibility entries");
+      }
 
-      await expect(
-        committed(
-          pool,
-          userId,
-          (client) =>
-            client.query(
-              `select perform_platform_v2_card_action_as_principal(
-                 $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
-                 null, null, null, $5::uuid, null, 'first_party', null
-               )`,
-              [
-                userId,
-                unrelatedEntryId,
-                card.mode,
-                "untracked",
-                randomUUID(),
-              ],
-            ),
-          "service_role",
-        ),
-      ).rejects.toThrow("missing_training_session_id");
+      const rollbackLibrary = await committed(
+        pool,
+        userId,
+        async (client) => {
+          const { rows } = await client.query(
+            `select perform_platform_v2_card_action_as_principal(
+               $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+               null, null, null, $5::uuid, null, 'first_party', null
+             ) as result`,
+            [
+              userId,
+              legacyLibraryEntryId,
+              card.mode,
+              "untracked",
+              randomUUID(),
+            ],
+          );
+          return rows[0].result;
+        },
+        "service_role",
+      );
+      expect(rollbackLibrary).toEqual(
+        expect.objectContaining({ status: "accepted" }),
+      );
+
+      const rollbackKnown = await committed(
+        pool,
+        userId,
+        async (client) => {
+          const { rows } = await client.query(
+            `select perform_platform_v2_card_action_as_principal(
+               $1::uuid, 'mark-known', $2::uuid, $3::text, $4::text,
+               null, null, null, $5::uuid, null, 'first_party', null
+             ) as result`,
+            [
+              userId,
+              legacyKnownEntryId,
+              card.mode,
+              "untracked",
+              randomUUID(),
+            ],
+          );
+          return rows[0].result;
+        },
+        "service_role",
+      );
+      expect(rollbackKnown).toEqual(
+        expect.objectContaining({
+          status: "accepted",
+          card: expect.objectContaining({
+            knownMark: expect.objectContaining({ markId: expect.any(String) }),
+          }),
+        }),
+      );
 
       const library = await committed(
         pool,
@@ -316,7 +357,7 @@ describeDb("active Training run authority", () => {
              ) as result`,
             [
               userId,
-              unrelatedEntryId,
+              connectedClientEntryId,
               card.mode,
               "untracked",
               randomUUID(),
@@ -335,7 +376,7 @@ describeDb("active Training run authority", () => {
     }
   });
 
-  test("removes every direct authenticated legacy Training mutation overload", async () => {
+  test("retains only the exact legacy RPC shapes needed by the app rollback window", async () => {
     const { rows } = await pool.query(
       `select p.oid::regprocedure::text as signature,
               p.pronargdefaults as default_count,
@@ -355,12 +396,12 @@ describeDb("active Training run authority", () => {
       {
         signature: "handle_card_review(uuid,uuid,text,text,uuid)",
         default_count: 1,
-        authenticated_execute: false,
+        authenticated_execute: true,
       },
       {
         signature: "start_learning_entry_card(uuid,uuid,text)",
         default_count: 0,
-        authenticated_execute: false,
+        authenticated_execute: true,
       },
     ]);
   });
@@ -369,12 +410,20 @@ describeDb("active Training run authority", () => {
     {
       name: "review",
       signature: "handle_card_review(uuid,uuid,text,text,uuid)",
+      sql: `select handle_card_review($1::uuid, $2::uuid, $3::text, 'easy', $4::uuid)`,
+      expectedReviews: 1,
     },
     {
-      name: "learn",
+      name: "Learn",
       signature: "start_learning_entry_card(uuid,uuid,text)",
+      sql: `select start_learning_entry_card($1::uuid, $2::uuid, $3::text)`,
+      expectedReviews: 0,
     },
-  ])("rejects a stale direct legacy $name after takeover without effects", async ({ signature }) => {
+  ])("keeps previous-app legacy $name working during the rollback window", async ({
+    signature,
+    sql,
+    expectedReviews,
+  }) => {
     const { userId, entryIds } = await createRunFixture(pool, 2);
     try {
       await committed(pool, userId, (client) =>
@@ -384,25 +433,30 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId, "1"),
       );
 
-      const canExecute = await committed(pool, userId, async (client) => {
+      await committed(pool, userId, async (client) => {
         await client.query("set local role authenticated");
         const { rows } = await client.query(
           `select has_function_privilege(current_user, $1::regprocedure, 'execute') as allowed`,
           [signature],
         );
-        return rows[0].allowed as boolean;
+        expect(rows[0].allowed).toBe(true);
+        const parameters = [userId, entryIds[1], "word-to-definition"];
+        await client.query(
+          sql,
+          expectedReviews === 1 ? [...parameters, randomUUID()] : parameters,
+        );
       });
-      expect(canExecute).toBe(false);
 
       const { rows } = await pool.query(
         `select
            (select count(*)::integer from user_review_log
-             where user_id = $1::uuid) as reviews,
+             where user_id = $1::uuid and word_id = $2::uuid) as reviews,
            (select count(*)::integer from user_card_status
-             where user_id = $1::uuid) as statuses`,
-        [userId],
+             where user_id = $1::uuid and entry_id = $2::uuid) as statuses`,
+        [userId, entryIds[1]],
       );
-      expect(rows[0]).toEqual({ reviews: 0, statuses: 0 });
+      expect(rows[0].reviews).toBe(expectedReviews);
+      expect(rows[0].statuses).toBeGreaterThan(0);
     } finally {
       await cleanupRunFixture(pool, userId, entryIds);
     }
