@@ -1480,6 +1480,91 @@ test("a foreign tab start promptly invalidates this tab's superseded card", asyn
   );
 });
 
+test("visible authority polling invalidates a cross-device takeover without starting a queue", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const hiddenDescriptor = Object.getOwnPropertyDescriptor(document, "hidden");
+  let documentHidden = false;
+  Object.defineProperty(document, "hidden", {
+    configurable: true,
+    get: () => documentHidden,
+  });
+
+  try {
+    writeTrainingSessionResume({
+      sessionId: "session-phone",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const activeSnapshot = {
+      sessionId: "session-phone",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5 as const,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot
+      .mockResolvedValueOnce(activeSnapshot)
+      .mockResolvedValueOnce({
+        ...activeSnapshot,
+        runStatus: "superseded",
+        runGeneration: null,
+      });
+
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByTestId("mock-training-sense-card-v2");
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(1);
+
+    documentHidden = true;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(1);
+
+    documentHidden = false;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Start training here" }),
+    ).toBeInTheDocument();
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2);
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+  } finally {
+    if (hiddenDescriptor) {
+      Object.defineProperty(document, "hidden", hiddenDescriptor);
+    } else {
+      Reflect.deleteProperty(document, "hidden");
+    }
+    vi.useRealTimers();
+  }
+});
+
 test("a fresh tab does not adopt another tab's resumable session", async () => {
   writeTrainingSessionResume({
     sessionId: "session-tab-a",

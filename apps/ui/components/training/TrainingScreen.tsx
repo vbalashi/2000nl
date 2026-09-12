@@ -120,6 +120,8 @@ const LazyTrainingHistoryDestination = dynamic(
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
 
+const TRAINING_SESSION_AUTHORITY_POLL_MS = 20_000;
+
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
   dateWindow: "all",
 };
@@ -1578,6 +1580,14 @@ function TrainingScreenContent({
       unsubscribeInvalidation();
     };
   }, [trainingSessionId, user.id, validateTrainingSessionAuthority]);
+  useEffect(() => {
+    if (!trainingSessionId || destination !== "training") return;
+    const pollId = window.setInterval(() => {
+      if (document.hidden) return;
+      void validateTrainingSessionAuthority();
+    }, TRAINING_SESSION_AUTHORITY_POLL_MS);
+    return () => window.clearInterval(pollId);
+  }, [destination, trainingSessionId, validateTrainingSessionAuthority]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     trainingPilot.returnToToday();
