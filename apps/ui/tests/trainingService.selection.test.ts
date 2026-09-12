@@ -83,7 +83,9 @@ describe("trainingService next-word selection", () => {
       p_list_type: "user",
       p_card_filter: "both",
       p_session_size: 10,
-      p_training_filter: {},
+      p_training_filter: {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      },
     });
   });
 
@@ -185,7 +187,9 @@ describe("trainingService next-word selection", () => {
       p_list_id: "list-1",
       p_list_type: "user",
       p_card_filter: "both",
-      p_training_filter: {},
+      p_training_filter: {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      },
       p_session_size: "5",
     });
   });

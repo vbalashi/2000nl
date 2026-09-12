@@ -115,13 +115,13 @@ test(
     const first = apply(containerTarget.toString());
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /pre-switch-read-probe passed/);
-    assert.match(first.stdout, /compatible 2000nl-db-142/);
+    assert.match(first.stdout, /compatible 2000nl-db-143/);
 
     const replay = apply(containerTarget.toString());
     assert.equal(replay.status, 0, replay.stderr);
-    assert.match(replay.stdout, /no-op 142/);
+    assert.match(replay.stdout, /no-op 143/);
     assert.match(replay.stdout, /pre-switch-read-probe passed/);
-    assert.match(replay.stdout, /compatible 2000nl-db-142/);
+    assert.match(replay.stdout, /compatible 2000nl-db-143/);
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
   },

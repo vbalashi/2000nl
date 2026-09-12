@@ -51,7 +51,11 @@ ordinary direct-recall directions lacking an owned root example before session
 membership is latched. The content-derived exclusion is reversible and uses
 the existing unavailable/replacement path for an older latched member.
 
-An enabled deployment must apply or verify migrations 123 through 142 in order
+Issue #329 advances the contract to migration 143. It introduces source-bound
+ordinary meanings headword-first, unlocks later renderable meanings at the next
+local midnight after Learn/Known, and preserves all existing learner progress.
+
+An enabled deployment must apply or verify migrations 123 through 143 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

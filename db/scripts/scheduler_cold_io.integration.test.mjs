@@ -732,7 +732,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
+      applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -780,7 +781,7 @@ test(
       const obsoleteV1DriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-142.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-143.sql")],
       );
       assert.notEqual(obsoleteV1DriftPostflight.status, 0);
       assert.match(
@@ -791,7 +792,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
+      applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -803,7 +805,7 @@ test(
       const sessionGrantDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-142.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-143.sql")],
       );
       assert.notEqual(sessionGrantDriftPostflight.status, 0);
       assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
@@ -812,7 +814,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
+      applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
     } finally {
       const terminate = psql(
         base.toString(),
