@@ -21,7 +21,10 @@ import type { TrainingSessionNoticeInput } from "@/components/training/v2/Traini
 import type { TrainingSessionChromeProps } from "@/components/training/v2/TrainingSessionChrome";
 import type { FooterStatsProps } from "@/components/training/FooterStats";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
-import { writeTrainingSessionResume } from "@/lib/training/sessionResumeStore";
+import {
+  releaseTrainingSessionOwner,
+  writeTrainingSessionResume,
+} from "@/lib/training/sessionResumeStore";
 
 // Screen integration tests exercise the real V2 transition owner. The card
 // stub models asynchronous acceptance; actual capabilities, keys, swipe and
@@ -554,6 +557,7 @@ vi.mock("@/lib/platform/platformV2TrainingPreparationClient", () => ({
 vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
   TrainingSenseCardV2Session: ({
     word,
+    trainingSessionId,
     presentationIdentity,
     focusOnPresentation,
     onOpenDetails,
@@ -567,6 +571,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
     interactionDisabled,
   }: {
     word: { headword: string };
+    trainingSessionId?: string | null;
     presentationIdentity: string | null;
     focusOnPresentation?: boolean;
     onOpenDetails?: () => void;
@@ -643,6 +648,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
           ref={stageRef}
           tabIndex={-1}
           data-testid="mock-training-sense-card-v2"
+          data-training-session-id={trainingSessionId ?? ""}
           data-presentation-identity={presentationIdentity ?? ""}
         >
           <span aria-live="polite">
@@ -738,6 +744,7 @@ const user: User = { id: "user-1", email: "user@test.com" } as User;
 const defaultMatchMedia = window.matchMedia;
 beforeEach(() => {
   vi.clearAllMocks();
+  releaseTrainingSessionOwner();
   window.localStorage.clear();
   window.sessionStorage.clear();
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
@@ -1197,7 +1204,7 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
 });
 
 test("resumes a still-active server session after refresh without starting another session", async () => {
-  writeTrainingSessionResume({
+  await writeTrainingSessionResume({
     sessionId: "session-resume",
     userId: "user-1",
     languageCode: "nl",
@@ -1287,7 +1294,7 @@ test("resumes a still-active server session after refresh without starting anoth
 });
 
 test("superseded saved session clears its queue and returns to a deliberate local start", async () => {
-  writeTrainingSessionResume({
+  await writeTrainingSessionResume({
     sessionId: "session-superseded",
     userId: "user-1",
     languageCode: "nl",
@@ -1339,7 +1346,7 @@ test("superseded saved session clears its queue and returns to a deliberate loca
 test.each(["focus", "visibilitychange"] as const)(
   "%s fallback fences a superseded queue when the cross-tab notification was lost",
   async (returnEvent) => {
-    writeTrainingSessionResume({
+    await writeTrainingSessionResume({
       sessionId: "session-visibility",
       userId: "user-1",
       languageCode: "nl",
@@ -1402,7 +1409,7 @@ test.each(["focus", "visibilitychange"] as const)(
 );
 
 test("a foreign tab start promptly invalidates this tab's superseded card", async () => {
-  writeTrainingSessionResume({
+  await writeTrainingSessionResume({
     sessionId: "session-tab-a",
     userId: "user-1",
     languageCode: "nl",
@@ -1490,7 +1497,7 @@ test("visible authority polling invalidates a cross-device takeover without star
   });
 
   try {
-    writeTrainingSessionResume({
+    await writeTrainingSessionResume({
       sessionId: "session-phone",
       userId: "user-1",
       languageCode: "nl",
@@ -1565,8 +1572,121 @@ test("visible authority polling invalidates a cross-device takeover without star
   }
 });
 
+test("a deferred authority result for session A cannot reset newly started session B", async () => {
+  let resolveSessionAValidation!: (snapshot: {
+    sessionId: string;
+    runStatus: "superseded";
+    runGeneration: null;
+    sessionSize: 5;
+    plannedNew: number;
+    plannedReview: number;
+    plannedPractice: number;
+    plannedTotal: number;
+    plannedAt: string;
+    members: Array<{
+      ordinal: number;
+      entryId: string;
+      cardTypeId: string;
+      queueSource: string;
+      consumedAt: null;
+      unavailableAt: null;
+    }>;
+  }) => void;
+  const deferredSessionAValidation = new Promise<Parameters<
+    typeof resolveSessionAValidation
+  >[0]>((resolve) => {
+    resolveSessionAValidation = resolve;
+  });
+  const sessionASnapshot = {
+    sessionId: "session-a",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  await writeTrainingSessionResume({
+    sessionId: "session-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(sessionASnapshot)
+    .mockReturnValueOnce(deferredSessionAValidation);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const sessionACard = await screen.findByTestId(
+    "mock-training-sense-card-v2",
+  );
+  expect(sessionACard).toHaveAttribute("data-training-session-id", "session-a");
+
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Sessie sluiten|Close session|Закрыть сессию/,
+    }),
+  );
+  await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ });
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: /Start current setup|Start huidige instelling/,
+    }),
+  );
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  const sessionBCard = await screen.findByTestId(
+    "mock-training-sense-card-v2",
+  );
+  expect(sessionBCard).toHaveAttribute(
+    "data-training-session-id",
+    "00000000-0000-4000-8000-000000000901",
+  );
+
+  await act(async () => {
+    resolveSessionAValidation({
+      ...sessionASnapshot,
+      runStatus: "superseded",
+      runGeneration: null,
+    });
+    await deferredSessionAValidation;
+  });
+
+  expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveAttribute(
+    "data-training-session-id",
+    "00000000-0000-4000-8000-000000000901",
+  );
+  expect(
+    screen.queryByRole("button", { name: "Start training here" }),
+  ).not.toBeInTheDocument();
+  expect(startTrainingSession).toHaveBeenCalledTimes(1);
+});
+
 test("a fresh tab does not adopt another tab's resumable session", async () => {
-  writeTrainingSessionResume({
+  await writeTrainingSessionResume({
     sessionId: "session-tab-a",
     userId: "user-1",
     languageCode: "nl",
@@ -1579,6 +1699,7 @@ test("a fresh tab does not adopt another tab's resumable session", async () => {
     focusFilter: { dateWindow: "all" },
     sessionSize: 5,
   });
+  releaseTrainingSessionOwner();
   window.sessionStorage.clear();
 
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);

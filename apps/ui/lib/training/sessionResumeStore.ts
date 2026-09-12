@@ -22,7 +22,21 @@ export type TrainingSessionResumeRecord = {
 
 const storageKey = (userId: string) => `2000nl:training-session:${userId}`;
 const ownerStorageKey = "2000nl:training-session-owner";
+const ownerLockKey = (ownerId: string) =>
+  `2000nl:training-session-owner:${ownerId}`;
 let memoryOwnerId: string | null = null;
+
+type TrainingSessionOwnerStorage = Pick<Storage, "getItem" | "setItem">;
+type TrainingSessionOwnerClaim = "acquired" | "occupied" | "unavailable";
+type TrainingSessionOwnerLockRequester = (
+  name: string,
+  hold: (claim: TrainingSessionOwnerClaim) => Promise<void>,
+) => void;
+
+type TrainingSessionOwnerCoordinator = {
+  resolveOwnerId: () => Promise<string>;
+  dispose: () => void;
+};
 
 type StoredTrainingSessionResumeRecord = TrainingSessionResumeRecord & {
   ownerId: string;
@@ -34,17 +48,123 @@ const createOwnerId = (): string => {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 };
 
-const getTrainingSessionOwnerId = (): string => {
+export function createTrainingSessionOwnerCoordinator({
+  storage,
+  requestLock,
+  createOwnerId: createId = createOwnerId,
+}: {
+  storage: TrainingSessionOwnerStorage;
+  requestLock?: TrainingSessionOwnerLockRequester;
+  createOwnerId?: () => string;
+}): TrainingSessionOwnerCoordinator {
+  let candidate = storage.getItem(ownerStorageKey) ?? createId();
+  storage.setItem(ownerStorageKey, candidate);
+  let ownerPromise: Promise<string> | null = null;
+  let releaseLease: (() => void) | null = null;
+  let disposed = false;
+
+  const claimCandidate = (ownerId: string) =>
+    new Promise<TrainingSessionOwnerClaim>((resolve) => {
+      if (!requestLock) {
+        resolve("acquired");
+        return;
+      }
+      let settled = false;
+      let release!: () => void;
+      const held = new Promise<void>((resolveHeld) => {
+        release = resolveHeld;
+      });
+      const settle = (claim: TrainingSessionOwnerClaim) => {
+        if (settled) return;
+        settled = true;
+        resolve(claim);
+      };
+      try {
+        requestLock(ownerLockKey(ownerId), async (claim) => {
+          settle(claim);
+          if (claim !== "acquired") return;
+          releaseLease = release;
+          if (disposed) release();
+          await held;
+        });
+      } catch {
+        settle("unavailable");
+      }
+    });
+
+  const resolveOwnerId = () => {
+    ownerPromise ??= (async () => {
+      while (!disposed) {
+        const claim = await claimCandidate(candidate);
+        if (claim === "acquired" && !disposed) {
+          storage.setItem(ownerStorageKey, candidate);
+          return candidate;
+        }
+        candidate = createId();
+        storage.setItem(ownerStorageKey, candidate);
+        if (claim === "unavailable") return candidate;
+      }
+      throw new Error("Training session owner coordinator was disposed");
+    })();
+    return ownerPromise;
+  };
+
+  return {
+    resolveOwnerId,
+    dispose: () => {
+      disposed = true;
+      releaseLease?.();
+      releaseLease = null;
+    },
+  };
+}
+
+let browserOwnerCoordinator: TrainingSessionOwnerCoordinator | null = null;
+let browserOwnerLifecycleInstalled = false;
+
+const createBrowserLockRequester = (): TrainingSessionOwnerLockRequester => {
+  if (typeof navigator === "undefined" || !navigator.locks) {
+    // Without an exclusive presence primitive, keep ownership collision-safe
+    // by rotating instead of trusting a possibly cloned sessionStorage value.
+    // Supported browsers retain reload ownership through the Web Locks lease.
+    return (_name, hold) => void hold("unavailable");
+  }
+  return (name, hold) => {
+    let callbackStarted = false;
+    void navigator.locks
+      .request(name, { mode: "exclusive", ifAvailable: true }, async (lock) => {
+        callbackStarted = true;
+        await hold(lock ? "acquired" : "occupied");
+      })
+      .catch(() => {
+        if (!callbackStarted) void hold("unavailable");
+      });
+  };
+};
+
+export function releaseTrainingSessionOwner(): void {
+  browserOwnerCoordinator?.dispose();
+  browserOwnerCoordinator = null;
+}
+
+const getTrainingSessionOwnerId = async (): Promise<string> => {
   if (typeof window === "undefined") {
     memoryOwnerId ??= createOwnerId();
     return memoryOwnerId;
   }
+  if (!browserOwnerLifecycleInstalled) {
+    browserOwnerLifecycleInstalled = true;
+    window.addEventListener("pagehide", releaseTrainingSessionOwner);
+    window.addEventListener("pageshow", () => {
+      void getTrainingSessionOwnerId();
+    });
+  }
   try {
-    const stored = window.sessionStorage.getItem(ownerStorageKey);
-    if (stored) return stored;
-    const created = createOwnerId();
-    window.sessionStorage.setItem(ownerStorageKey, created);
-    return created;
+    browserOwnerCoordinator ??= createTrainingSessionOwnerCoordinator({
+      storage: window.sessionStorage,
+      requestLock: createBrowserLockRequester(),
+    });
+    return await browserOwnerCoordinator.resolveOwnerId();
   } catch {
     memoryOwnerId ??= createOwnerId();
     return memoryOwnerId;
@@ -108,17 +228,19 @@ const parseResumeRecord = (
   };
 };
 
-export function readTrainingSessionResume(
+export async function readTrainingSessionResume(
   userId: string,
-): TrainingSessionResumeRecord | null {
+): Promise<TrainingSessionResumeRecord | null> {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(storageKey(userId));
     if (!raw) return null;
     const record = parseResumeRecord(JSON.parse(raw));
+    const ownerId = await getTrainingSessionOwnerId();
     if (
       record?.userId !== userId ||
-      record.ownerId !== getTrainingSessionOwnerId()
+      record.ownerId !== ownerId ||
+      window.localStorage.getItem(storageKey(userId)) !== raw
     ) {
       return null;
     }
@@ -129,14 +251,14 @@ export function readTrainingSessionResume(
   }
 }
 
-export function writeTrainingSessionResume(
+export async function writeTrainingSessionResume(
   record: TrainingSessionResumeRecord,
-): void {
+): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const stored: StoredTrainingSessionResumeRecord = {
       ...record,
-      ownerId: getTrainingSessionOwnerId(),
+      ownerId: await getTrainingSessionOwnerId(),
     };
     window.localStorage.setItem(
       storageKey(record.userId),
@@ -147,16 +269,18 @@ export function writeTrainingSessionResume(
   }
 }
 
-export function clearTrainingSessionResume(userId: string): void {
+export async function clearTrainingSessionResume(userId: string): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const raw = window.localStorage.getItem(storageKey(userId));
     if (!raw) return;
     const record = parseResumeRecord(JSON.parse(raw));
+    const ownerId = await getTrainingSessionOwnerId();
     if (
       !record ||
       record.userId !== userId ||
-      record.ownerId !== getTrainingSessionOwnerId()
+      record.ownerId !== ownerId ||
+      window.localStorage.getItem(storageKey(userId)) !== raw
     ) {
       return;
     }
@@ -171,19 +295,27 @@ export function subscribeTrainingSessionInvalidation(
   onInvalidate: () => void,
 ): () => void {
   if (typeof window === "undefined") return () => undefined;
-  const ownerId = getTrainingSessionOwnerId();
   const key = storageKey(userId);
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== key || !event.newValue) return;
-    try {
-      const record = parseResumeRecord(JSON.parse(event.newValue));
-      if (record?.userId === userId && record.ownerId !== ownerId) {
-        onInvalidate();
+  let disposed = false;
+  let removeListener: () => void = () => undefined;
+  void getTrainingSessionOwnerId().then((ownerId) => {
+    if (disposed) return;
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key || !event.newValue) return;
+      try {
+        const record = parseResumeRecord(JSON.parse(event.newValue));
+        if (record?.userId === userId && record.ownerId !== ownerId) {
+          onInvalidate();
+        }
+      } catch {
+        // Ignore unrelated or malformed same-origin storage traffic.
       }
-    } catch {
-      // Ignore unrelated or malformed same-origin storage traffic.
-    }
+    };
+    window.addEventListener("storage", onStorage);
+    removeListener = () => window.removeEventListener("storage", onStorage);
+  });
+  return () => {
+    disposed = true;
+    removeListener();
   };
-  window.addEventListener("storage", onStorage);
-  return () => window.removeEventListener("storage", onStorage);
 }

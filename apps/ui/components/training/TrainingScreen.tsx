@@ -227,9 +227,7 @@ function TrainingScreenContent({
   // missing or stale resume record is resolved immediately and preserves the
   // ordinary first-use flow.
   const [sessionResumeResolved, setSessionResumeResolved] = useState(
-    () =>
-      !trainingTodaySetupEnabled ||
-      !readTrainingSessionResume(user.id),
+    () => !trainingTodaySetupEnabled,
   );
   const [sessionResumeError, setSessionResumeError] = useState(false);
   const [sessionReplacementWarning, setSessionReplacementWarning] =
@@ -241,6 +239,15 @@ function TrainingScreenContent({
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
   const sessionAuthorityValidationRef = useRef(0);
+  const sessionAuthorityGenerationRef = useRef(0);
+  const trainingSessionIdRef = useRef<string | null>(null);
+  const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
+    sessionAuthorityGenerationRef.current += 1;
+    sessionAuthorityValidationRef.current += 1;
+    trainingSessionIdRef.current = sessionId;
+    setSessionAuthorityChecking(false);
+    setTrainingSessionId(sessionId);
+  }, []);
   const platformProgressActionTokenRef = useRef<object | null>(null);
   const handlePlatformProgressActionPendingChange = useCallback(
     (pending: boolean, token: object) => {
@@ -264,6 +271,9 @@ function TrainingScreenContent({
     componentMountedRef.current = true;
     return () => {
       componentMountedRef.current = false;
+      sessionAuthorityGenerationRef.current += 1;
+      sessionAuthorityValidationRef.current += 1;
+      trainingSessionIdRef.current = null;
     };
   }, []);
   const {
@@ -613,7 +623,7 @@ function TrainingScreenContent({
       if (result === "session-complete" && user?.id) {
         // A confirmed empty session is terminal. Transient retry outcomes
         // keep the resumable record intact for the next attempt.
-        clearTrainingSessionResume(user.id);
+        void clearTrainingSessionResume(user.id);
       }
     },
     [user?.id],
@@ -639,9 +649,9 @@ function TrainingScreenContent({
     resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
-    if (user?.id) clearTrainingSessionResume(user.id);
+    if (user?.id) void clearTrainingSessionResume(user.id);
     setPresentationResetKey((key) => key + 1);
-    setTrainingSessionId(null);
+    replaceTrainingSessionId(null);
     setLatchedSessionPlan(null);
     setSessionPlannedTotal(null);
     setSessionConsumedCardKeys([]);
@@ -649,6 +659,7 @@ function TrainingScreenContent({
   }, [
     beginTrainingTurnScopeChange,
     resetPlatformProgressActionPending,
+    replaceTrainingSessionId,
     trainingScenarioCatalog,
     user?.id,
   ]);
@@ -1173,7 +1184,7 @@ function TrainingScreenContent({
       setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
-      setTrainingSessionId(session.sessionId);
+      replaceTrainingSessionId(session.sessionId);
       setLatchedSessionPlan(session);
       // The explicit session-start load below owns this filter. Mark it as
       // already applied so the focus-filter observer does not issue a
@@ -1181,7 +1192,7 @@ function TrainingScreenContent({
       lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
         context.focusFilter,
       );
-      writeTrainingSessionResume({
+      void writeTrainingSessionResume({
         sessionId: session.sessionId,
         userId: user.id,
         languageCode: context.languageCode,
@@ -1288,7 +1299,13 @@ function TrainingScreenContent({
     sessionResumeAttemptedRef.current = true;
     const resumeGeneration = sessionResumeGenerationRef.current;
     const resolveResume = async () => {
-      const record = readTrainingSessionResume(user.id);
+      const record = await readTrainingSessionResume(user.id);
+      if (
+        !componentMountedRef.current ||
+        sessionResumeGenerationRef.current !== resumeGeneration
+      ) {
+        return;
+      }
       // An ordinary first visit has no resumable session. Resolve immediately
       // instead of waiting for optional list hydration that may not be
       // available on an empty or fixture-backed setup surface.
@@ -1309,7 +1326,7 @@ function TrainingScreenContent({
             (list) => list.id === record.listId && list.type === record.listType,
           ))
       ) {
-        if (record) clearTrainingSessionResume(user.id);
+        if (record) await clearTrainingSessionResume(user.id);
         if (componentMountedRef.current) setSessionResumeResolved(true);
         return;
       }
@@ -1342,15 +1359,15 @@ function TrainingScreenContent({
         ),
       );
       if (!snapshot || !hasRemainingMember) {
-        clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
         return;
       }
 
       if (snapshot.runStatus === "superseded") {
-        clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         setCurrentWord(null);
-        setTrainingSessionId(null);
+        replaceTrainingSessionId(null);
         setLatchedSessionPlan(null);
         setSessionPlannedTotal(null);
         setSessionConsumedCardKeys([]);
@@ -1378,7 +1395,7 @@ function TrainingScreenContent({
       setNewReviewRatio(record.newReviewRatio, { persist: false });
       setSessionSize(record.sessionSize);
       setTrainingFocusFilter(record.focusFilter);
-      setTrainingSessionId(snapshot.sessionId);
+      replaceTrainingSessionId(snapshot.sessionId);
       setLatchedSessionPlan(snapshot);
       setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
       setSessionConsumedCardKeys(
@@ -1430,7 +1447,7 @@ function TrainingScreenContent({
         setSessionResumeError(true);
         setTrainingLoadError("training_resume_failed");
       } else {
-        clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
       }
     };
@@ -1452,6 +1469,7 @@ function TrainingScreenContent({
     setTrainingLoadError,
     setTrainingFocusFilter,
     resumeSession,
+    replaceTrainingSessionId,
     sessionResumeError,
     trainingTodaySetupEnabled,
     user?.id,
@@ -1495,29 +1513,42 @@ function TrainingScreenContent({
     }
     trainingPilot.continueSession();
   }, [currentWord, resetFocusQueueState, trainingPilot]);
-  const handleTrainingSessionSuperseded = useCallback(() => {
-    sessionAuthorityValidationRef.current += 1;
-    sessionResumeGenerationRef.current += 1;
-    if (user?.id) clearTrainingSessionResume(user.id);
-    resetFocusQueueState();
-    setCurrentWord(null);
-    setTrainingSessionId(null);
-    setLatchedSessionPlan(null);
-    setSessionPlannedTotal(null);
-    setSessionConsumedCardKeys([]);
-    setSessionCompletedActions(0);
-    setSessionAuthorityChecking(false);
-    resetPlatformProgressActionPending();
-    setSessionReplacementWarning(true);
-    trainingPilot.returnToToday();
-  }, [
-    resetFocusQueueState,
-    resetPlatformProgressActionPending,
-    trainingPilot,
-    user?.id,
-  ]);
+  const handleTrainingSessionSuperseded = useCallback(
+    (expected?: { sessionId: string; authorityGeneration: number }) => {
+      if (
+        expected &&
+        (trainingSessionIdRef.current !== expected.sessionId ||
+          sessionAuthorityGenerationRef.current !==
+            expected.authorityGeneration)
+      ) {
+        return;
+      }
+      sessionResumeGenerationRef.current += 1;
+      if (user?.id) void clearTrainingSessionResume(user.id);
+      resetFocusQueueState();
+      setCurrentWord(null);
+      replaceTrainingSessionId(null);
+      setLatchedSessionPlan(null);
+      setSessionPlannedTotal(null);
+      setSessionConsumedCardKeys([]);
+      setSessionCompletedActions(0);
+      setSessionAuthorityChecking(false);
+      resetPlatformProgressActionPending();
+      setSessionReplacementWarning(true);
+      trainingPilot.returnToToday();
+    },
+    [
+      resetFocusQueueState,
+      resetPlatformProgressActionPending,
+      replaceTrainingSessionId,
+      trainingPilot,
+      user?.id,
+    ],
+  );
   const validateTrainingSessionAuthority = useCallback(async () => {
-    if (!user?.id || !trainingSessionId) return;
+    const sessionId = trainingSessionIdRef.current;
+    if (!user?.id || !sessionId) return;
+    const authorityGeneration = sessionAuthorityGenerationRef.current;
     const validation = sessionAuthorityValidationRef.current + 1;
     sessionAuthorityValidationRef.current = validation;
     // Do not allow a visible card to accept a grade while the server checks
@@ -1526,16 +1557,18 @@ function TrainingScreenContent({
     try {
       const snapshot = await fetchTrainingSessionSnapshot(
         user.id,
-        trainingSessionId,
+        sessionId,
       );
       if (
         !componentMountedRef.current ||
-        sessionAuthorityValidationRef.current !== validation
+        sessionAuthorityValidationRef.current !== validation ||
+        sessionAuthorityGenerationRef.current !== authorityGeneration ||
+        trainingSessionIdRef.current !== sessionId
       ) {
         return;
       }
       if (!snapshot || snapshot.runStatus === "superseded") {
-        handleTrainingSessionSuperseded();
+        handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
         return;
       }
       setSessionAuthorityChecking(false);
@@ -1544,7 +1577,9 @@ function TrainingScreenContent({
       // until a later focus/reconnect check reaches the server.
       if (
         componentMountedRef.current &&
-        sessionAuthorityValidationRef.current === validation
+        sessionAuthorityValidationRef.current === validation &&
+        sessionAuthorityGenerationRef.current === authorityGeneration &&
+        trainingSessionIdRef.current === sessionId
       ) {
         setSessionAuthorityChecking(true);
       }
@@ -1552,7 +1587,6 @@ function TrainingScreenContent({
   }, [
     componentMountedRef,
     handleTrainingSessionSuperseded,
-    trainingSessionId,
     user?.id,
   ]);
   useEffect(() => {
