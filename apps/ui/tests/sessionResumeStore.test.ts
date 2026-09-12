@@ -99,6 +99,50 @@ describe("training session resume store", () => {
     reloadedFirstPage.dispose();
   });
 
+  test("reports an owner change when another tab takes the released BFCache lease", async () => {
+    const locks = new DeterministicOwnerLocks();
+    const firstPageStorage = new MemorySessionStorage();
+    const firstPage = createTrainingSessionOwnerCoordinator({
+      storage: firstPageStorage,
+      requestLock: locks.request,
+      createOwnerId: () => "owner-first-page",
+    });
+
+    expect(await firstPage.resolveOwnerId()).toBe("owner-first-page");
+    firstPage.dispose();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const secondPage = createTrainingSessionOwnerCoordinator({
+      storage: firstPageStorage.clone(),
+      requestLock: locks.request,
+      createOwnerId: () => "owner-second-page",
+    });
+    expect(await secondPage.resolveOwnerId()).toBe("owner-first-page");
+
+    const ownerChanges: Array<{ previousOwnerId: string; ownerId: string }> = [];
+    const restoredFirstPage = createTrainingSessionOwnerCoordinator({
+      storage: firstPageStorage,
+      requestLock: locks.request,
+      createOwnerId: () => "owner-restored-page",
+      previousOwnerId: "owner-first-page",
+      onOwnerIdChanged: (change) => ownerChanges.push(change),
+    });
+
+    expect(await restoredFirstPage.resolveOwnerId()).toBe(
+      "owner-restored-page",
+    );
+    expect(ownerChanges).toEqual([
+      {
+        previousOwnerId: "owner-first-page",
+        ownerId: "owner-restored-page",
+      },
+    ]);
+
+    secondPage.dispose();
+    restoredFirstPage.dispose();
+  });
+
   test("round-trips the exact session context per user", async () => {
     await writeTrainingSessionResume(record);
     expect(await readTrainingSessionResume("user-1")).toEqual(record);

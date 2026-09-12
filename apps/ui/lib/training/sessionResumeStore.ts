@@ -38,6 +38,11 @@ type TrainingSessionOwnerCoordinator = {
   dispose: () => void;
 };
 
+type TrainingSessionOwnerChange = {
+  previousOwnerId: string;
+  ownerId: string;
+};
+
 type StoredTrainingSessionResumeRecord = TrainingSessionResumeRecord & {
   ownerId: string;
 };
@@ -52,16 +57,31 @@ export function createTrainingSessionOwnerCoordinator({
   storage,
   requestLock,
   createOwnerId: createId = createOwnerId,
+  previousOwnerId = null,
+  onOwnerIdChanged,
 }: {
   storage: TrainingSessionOwnerStorage;
   requestLock?: TrainingSessionOwnerLockRequester;
   createOwnerId?: () => string;
+  previousOwnerId?: string | null;
+  onOwnerIdChanged?: (change: TrainingSessionOwnerChange) => void;
 }): TrainingSessionOwnerCoordinator {
   let candidate = storage.getItem(ownerStorageKey) ?? createId();
   storage.setItem(ownerStorageKey, candidate);
   let ownerPromise: Promise<string> | null = null;
   let releaseLease: (() => void) | null = null;
   let disposed = false;
+
+  const resolveCandidate = () => {
+    storage.setItem(ownerStorageKey, candidate);
+    if (previousOwnerId && previousOwnerId !== candidate) {
+      onOwnerIdChanged?.({
+        previousOwnerId,
+        ownerId: candidate,
+      });
+    }
+    return candidate;
+  };
 
   const claimCandidate = (ownerId: string) =>
     new Promise<TrainingSessionOwnerClaim>((resolve) => {
@@ -97,12 +117,11 @@ export function createTrainingSessionOwnerCoordinator({
       while (!disposed) {
         const claim = await claimCandidate(candidate);
         if (claim === "acquired" && !disposed) {
-          storage.setItem(ownerStorageKey, candidate);
-          return candidate;
+          return resolveCandidate();
         }
         candidate = createId();
         storage.setItem(ownerStorageKey, candidate);
-        if (claim === "unavailable") return candidate;
+        if (claim === "unavailable") return resolveCandidate();
       }
       throw new Error("Training session owner coordinator was disposed");
     })();
@@ -121,6 +140,8 @@ export function createTrainingSessionOwnerCoordinator({
 
 let browserOwnerCoordinator: TrainingSessionOwnerCoordinator | null = null;
 let browserOwnerLifecycleInstalled = false;
+let browserResolvedOwnerId: string | null = null;
+const browserOwnerInvalidationSubscribers = new Set<() => void>();
 
 const createBrowserLockRequester = (): TrainingSessionOwnerLockRequester => {
   if (typeof navigator === "undefined" || !navigator.locks) {
@@ -142,9 +163,22 @@ const createBrowserLockRequester = (): TrainingSessionOwnerLockRequester => {
   };
 };
 
-export function releaseTrainingSessionOwner(): void {
+const suspendTrainingSessionOwner = (): void => {
   browserOwnerCoordinator?.dispose();
   browserOwnerCoordinator = null;
+};
+
+export function releaseTrainingSessionOwner(): void {
+  suspendTrainingSessionOwner();
+  browserResolvedOwnerId = null;
+  memoryOwnerId = null;
+}
+
+export function subscribeTrainingSessionOwnerInvalidation(
+  onInvalidate: () => void,
+): () => void {
+  browserOwnerInvalidationSubscribers.add(onInvalidate);
+  return () => browserOwnerInvalidationSubscribers.delete(onInvalidate);
 }
 
 const getTrainingSessionOwnerId = async (): Promise<string> => {
@@ -154,17 +188,28 @@ const getTrainingSessionOwnerId = async (): Promise<string> => {
   }
   if (!browserOwnerLifecycleInstalled) {
     browserOwnerLifecycleInstalled = true;
-    window.addEventListener("pagehide", releaseTrainingSessionOwner);
+    // BFCache freezes the page but preserves its JavaScript heap. Release the
+    // live lease while hidden, retaining the last identity so pageshow can
+    // detect whether another tab claimed it in the meantime.
+    window.addEventListener("pagehide", suspendTrainingSessionOwner);
     window.addEventListener("pageshow", () => {
-      void getTrainingSessionOwnerId();
+      void getTrainingSessionOwnerId().catch(() => undefined);
     });
   }
   try {
     browserOwnerCoordinator ??= createTrainingSessionOwnerCoordinator({
       storage: window.sessionStorage,
       requestLock: createBrowserLockRequester(),
+      previousOwnerId: browserResolvedOwnerId,
+      onOwnerIdChanged: () => {
+        browserOwnerInvalidationSubscribers.forEach((onInvalidate) =>
+          onInvalidate(),
+        );
+      },
     });
-    return await browserOwnerCoordinator.resolveOwnerId();
+    const ownerId = await browserOwnerCoordinator.resolveOwnerId();
+    browserResolvedOwnerId = ownerId;
+    return ownerId;
   } catch {
     memoryOwnerId ??= createOwnerId();
     return memoryOwnerId;
