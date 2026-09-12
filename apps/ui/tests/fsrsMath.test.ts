@@ -43,4 +43,28 @@ describe("fsrsCompute", () => {
     expect(result.stability).toBeCloseTo(0.246689, 6);
     expect(result.difficulty).toBeCloseTo(6.402115, 6);
   });
+
+  test.each([
+    ["again after one day", 1, 1, 2.195161, 7.394503],
+    ["hard after one day", 2, 1, 5.318793, 4.752858],
+    ["good after one day", 3, 1, 7.315301, 2.111214],
+    ["easy after one day", 4, 1, 11.687483, 1],
+    ["hard after five days", 2, 5, 11.845517, 4.752858],
+    ["good after five days", 3, 5, 18.167851, 2.111214],
+    ["easy after five days", 4, 5, 32.013223, 1],
+  ])(
+    "matches the pinned fsrs-rs v4.1.1 vector for %s",
+    (_name, grade, elapsedDays, stability, difficulty) => {
+      const first = fsrsCompute(3, { stability: null, difficulty: null });
+      const result = fsrsCompute(grade as 1 | 2 | 3 | 4, {
+        ...first,
+        lastReview: elapsedDays as number,
+        reps: 1,
+        lapses: 0,
+      });
+
+      expect(result.stability).toBeCloseTo(stability as number, 5);
+      expect(result.difficulty).toBeCloseTo(difficulty as number, 5);
+    },
+  );
 });

@@ -73,7 +73,7 @@ creation/expiry, accepted action timestamps, consumed/completed member state,
 and action history/receipt timestamps through the same private seam. It keeps
 the public action signatures and scheduler policy unchanged.
 
-An enabled deployment must apply or verify migrations 123 through 149 in order
+An enabled deployment must apply or verify migrations 123 through 150 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
