@@ -1,0 +1,40 @@
+name: Scheduler readiness diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: "Number of fresh-connection read-only samples"
+        required: false
+        default: "5"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduler-readiness-diagnostic
+  cancel-in-progress: true
+
+jobs:
+  diagnostic:
+    runs-on: self-hosted
+    env:
+      DB_PSQL_IMAGE: postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+      DIAGNOSTIC_SAMPLES: ${{ inputs.samples }}
+    steps:
+      - name: Run bounded read-only scheduler diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /srv/2000nl-ui
+          git fetch origin main --quiet
+          git reset --hard origin/main
+          case "${DIAGNOSTIC_SAMPLES}" in
+            1|2|3|4|5|6|7|8|9|10) ;;
+            *) echo "samples must be an integer from 1 to 10" >&2; exit 64 ;;
+          esac
+          sg docker -c "node db/scripts/scheduler_readiness_diagnostic.mjs \\
+            --psql-container-image '${DB_PSQL_IMAGE}' \\
+            --env-file .env \\
+            --samples '${DIAGNOSTIC_SAMPLES}'"
