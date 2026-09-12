@@ -15,6 +15,7 @@ import type {
   DictionaryEntry,
   TrainingScenario,
 } from "@/lib/types";
+import type { TrainingSessionSnapshot } from "@/lib/trainingService";
 import type { AppDestination } from "@/components/navigation/appDestination";
 import { TrainingSessionSurface } from "@/components/training/v2/TrainingSessionSurface";
 import type { TrainingSessionNoticeInput } from "@/components/training/v2/TrainingSessionSurface";
@@ -742,6 +743,31 @@ function TrainingScreen(
 const user: User = { id: "user-1", email: "user@test.com" } as User;
 
 const defaultMatchMedia = window.matchMedia;
+
+class DeterministicBrowserLocks {
+  private readonly held = new Set<string>();
+
+  request = <T,>(
+    name: string,
+    _options: LockOptions,
+    callback: (lock: Lock | null) => Promise<T> | T,
+  ): Promise<T> => {
+    if (this.held.has(name)) return Promise.resolve(callback(null));
+    this.held.add(name);
+    return Promise.resolve(
+      callback({ name, mode: "exclusive" } as Lock),
+    ).finally(() => this.held.delete(name));
+  };
+
+  holdExternally(name: string) {
+    this.held.add(name);
+  }
+
+  releaseExternal(name: string) {
+    this.held.delete(name);
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   releaseTrainingSessionOwner();
@@ -1711,6 +1737,296 @@ test("a fresh tab does not adopt another tab's resumable session", async () => {
   expect(
     window.localStorage.getItem("2000nl:training-session:user-1"),
   ).not.toBeNull();
+});
+
+test("BFCache restore drops the active queue when another tab acquired its owner lease", async () => {
+  const locksDescriptor = Object.getOwnPropertyDescriptor(navigator, "locks");
+  const locks = new DeterministicBrowserLocks();
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: { request: locks.request },
+  });
+  let externallyHeldLock: string | null = null;
+
+  try {
+    await writeTrainingSessionResume({
+      sessionId: "session-bfcache",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    });
+    const ownerId = window.sessionStorage.getItem(
+      "2000nl:training-session-owner",
+    );
+    expect(ownerId).not.toBeNull();
+    externallyHeldLock = `2000nl:training-session-owner:${ownerId}`;
+    const activeSnapshot = {
+      sessionId: "session-bfcache",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5 as const,
+      plannedNew: 1,
+      plannedReview: 0,
+      plannedPractice: 0,
+      plannedTotal: 1,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot.mockResolvedValue(activeSnapshot);
+
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    await act(async () => {
+      const event = new Event("pagehide");
+      Object.defineProperty(event, "persisted", { value: true });
+      window.dispatchEvent(event);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    locks.holdExternally(externallyHeldLock);
+
+    await act(async () => {
+      const event = new Event("pageshow");
+      Object.defineProperty(event, "persisted", { value: true });
+      window.dispatchEvent(event);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Start training here" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+    expect(startTrainingSession).not.toHaveBeenCalled();
+    expect(
+      window.localStorage.getItem("2000nl:training-session:user-1"),
+    ).not.toBeNull();
+  } finally {
+    if (externallyHeldLock) locks.releaseExternal(externallyHeldLock);
+    releaseTrainingSessionOwner();
+    if (locksDescriptor) {
+      Object.defineProperty(navigator, "locks", locksDescriptor);
+    } else {
+      Reflect.deleteProperty(navigator, "locks");
+    }
+  }
+});
+
+test("offline disables answers until reconnect authority validation succeeds", async () => {
+  let resolveReconnect!: (snapshot: TrainingSessionSnapshot) => void;
+  const reconnectSnapshot = new Promise<TrainingSessionSnapshot>((resolve) => {
+    resolveReconnect = resolve;
+  });
+  const activeSnapshot = {
+    sessionId: "session-offline",
+    runStatus: "active" as const,
+    runGeneration: 1,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
+    plannedPractice: 0,
+    plannedTotal: 1,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  };
+  await writeTrainingSessionResume({
+    sessionId: "session-offline",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  fetchTrainingSessionSnapshot
+    .mockResolvedValueOnce(activeSnapshot)
+    .mockReturnValueOnce(reconnectSnapshot);
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  const answer = await screen.findByRole("button", { name: "Mock V2 grade" });
+  expect(answer).toBeEnabled();
+
+  act(() => window.dispatchEvent(new Event("offline")));
+  expect(answer).toBeDisabled();
+
+  act(() => window.dispatchEvent(new Event("online")));
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2),
+  );
+  expect(answer).toBeDisabled();
+
+  await act(async () => {
+    resolveReconnect(activeSnapshot);
+    await reconnectSnapshot;
+  });
+  expect(answer).toBeEnabled();
+  expect(startTrainingSession).not.toHaveBeenCalled();
+});
+
+test("superseded resume restores every still-permitted setup setting before Start here", async () => {
+  fetchTrainingScenarios.mockResolvedValueOnce([
+    {
+      id: "understanding",
+      enabled: true,
+      nameNl: "Begrip",
+      nameEn: "Understanding",
+      description: null,
+      cardModes: ["word-to-definition", "definition-to-word"],
+      graduationThreshold: 0,
+      sortOrder: 0,
+    },
+  ]);
+  fetchAvailableLists.mockImplementation(
+    async (_userId: string, languageCode: string) =>
+      languageCode === "en" ? [userOwnedList] : [defaultAvailableList],
+  );
+  await writeTrainingSessionResume({
+    sessionId: "session-superseded-settings",
+    userId: "user-1",
+    languageCode: "en",
+    listId: userOwnedList.id,
+    listType: userOwnedList.type,
+    scenarioId: "understanding",
+    modes: ["word-to-definition", "definition-to-word"],
+    cardFilter: "review",
+    newReviewRatio: 5,
+    focusFilter: {
+      dateWindow: "daysAgo",
+      daysAgo: 14,
+      sourceId: "source-youtube-1",
+    },
+    sessionSize: "all-due-today",
+  });
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-superseded-settings",
+    runStatus: "superseded",
+    runGeneration: null,
+    sessionSize: "all-due-today",
+    plannedNew: 0,
+    plannedReview: 10,
+    plannedPractice: 0,
+    plannedTotal: 10,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "definition-to-word",
+        queueSource: "review",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  await waitFor(() =>
+    expect(fetchAvailableLists).toHaveBeenCalledWith("user-1", "en"),
+  );
+  await waitFor(() =>
+    expect(fetchTrainingSessionSnapshot).toHaveBeenCalledWith(
+      "user-1",
+      "session-superseded-settings",
+    ),
+  );
+  const startHere = await screen.findByRole("button", {
+    name: "Start training here",
+  });
+  expect(screen.getByRole("button", { name: "Meaning" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "Reverse" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "New" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  expect(screen.getByRole("button", { name: "Reviews" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByLabelText("Word list")).toHaveValue(
+    `user:${userOwnedList.id}`,
+  );
+  expect(screen.getByLabelText("Source")).toHaveValue(
+    "source:source-youtube-1",
+  );
+  expect(screen.getByLabelText("Time window")).toHaveValue("daysAgo");
+  expect(screen.getByLabelText("Days ago")).toHaveValue(14);
+  expect(screen.getByRole("button", { name: "All due today" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  updateActiveTrainingScope.mockClear();
+  startTrainingSession.mockClear();
+  fireEvent.click(startHere);
+
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(updateActiveTrainingScope).toHaveBeenCalledWith(
+    expect.objectContaining({
+      userId: "user-1",
+      languageCode: "en",
+      listId: userOwnedList.id,
+      listType: userOwnedList.type,
+      activeScenario: "understanding",
+      cardFilter: "review",
+      modesEnabled: ["word-to-definition", "definition-to-word"],
+      newReviewRatio: 5,
+    }),
+  );
+  expect(startTrainingSession).toHaveBeenCalledWith(
+    "user-1",
+    ["word-to-definition", "definition-to-word"],
+    expect.objectContaining({
+      listId: userOwnedList.id,
+      listType: userOwnedList.type,
+      cardFilter: "review",
+      trainingFilter: {
+        dateWindow: "daysAgo",
+        daysAgo: 14,
+        sourceId: "source-youtube-1",
+      },
+      sessionSize: "all-due-today",
+    }),
+    expect.any(String),
+  );
 });
 
 test("pilot Start persists the complete selection in one scope update", async () => {

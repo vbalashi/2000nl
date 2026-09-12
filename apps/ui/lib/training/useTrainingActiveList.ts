@@ -45,6 +45,7 @@ export function useTrainingActiveList(params: {
     useState<ActiveTrainingScope | null>(null);
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
   const [listHydrated, setListHydrated] = useState(false);
+  const [hydratedLanguage, setHydratedLanguage] = useState<string | null>(null);
   const currentLanguageRef = useRef(language);
   const listRequestIdRef = useRef(0);
   const scopeRefreshIdRef = useRef(0);
@@ -72,6 +73,7 @@ export function useTrainingActiveList(params: {
     languageGenerationRef.current += 1;
     setAvailableLists([]);
     setListHydrated(false);
+    setHydratedLanguage(null);
     setActiveTrainingScope(null);
     clearList();
   }, [clearList, language]);
@@ -95,6 +97,7 @@ export function useTrainingActiveList(params: {
     let cancelled = false;
     const hydrateActiveList = async () => {
       setListHydrated(false);
+      setHydratedLanguage(null);
       const active = await fetchActiveTrainingScope({
         userId,
         languageCode: language,
@@ -122,6 +125,7 @@ export function useTrainingActiveList(params: {
             current ? { ...current, activeListId: null, activeListType: null } : current,
           );
           clearList();
+          setHydratedLanguage(language);
           setListHydrated(true);
           return;
         }
@@ -137,6 +141,7 @@ export function useTrainingActiveList(params: {
             current ? { ...current, activeListId: null, activeListType: null } : current,
           );
           clearList();
+          setHydratedLanguage(language);
           setListHydrated(true);
           return;
         }
@@ -145,6 +150,7 @@ export function useTrainingActiveList(params: {
       } else {
         clearList();
       }
+      setHydratedLanguage(language);
       setListHydrated(true);
     };
     const hydrationTransitionId = initialHydrationTransitionIdRef.current;
@@ -291,6 +297,7 @@ export function useTrainingActiveList(params: {
     activeListValue,
     availableLists,
     handleListsUpdated,
+    hydratedLanguage,
     listHydrated,
     listOptions,
     persistListChange,

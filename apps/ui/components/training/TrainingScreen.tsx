@@ -82,6 +82,7 @@ import {
   clearTrainingSessionResume,
   readTrainingSessionResume,
   subscribeTrainingSessionInvalidation,
+  subscribeTrainingSessionOwnerInvalidation,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
 import {
@@ -297,6 +298,8 @@ function TrainingScreenContent({
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
     DEFAULT_LANGUAGE_OPTIONS,
   );
+  const [trainingLanguagesResolved, setTrainingLanguagesResolved] =
+    useState(false);
   const trainingLanguageManuallyChangedRef = useRef(false);
   const languageHydrationPendingRef = useRef(false);
   const languageHydrationObservedNotReadyRef = useRef(false);
@@ -304,29 +307,34 @@ function TrainingScreenContent({
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
+    setTrainingLanguagesResolved(false);
 
     const loadTrainingLanguages = async () => {
-      const languages = await fetchAvailableLearningLanguages(user.id);
-      if (cancelled) return;
+      try {
+        const languages = await fetchAvailableLearningLanguages(user.id);
+        if (cancelled) return;
 
-      const options = languages.map((item) => ({
-        value: item.code,
-        label: item.label || fallbackLanguageLabel(item.code),
-      }));
-      const withCurrent = options.some(
-        (option) => option.value === currentTrainingLanguage,
-      )
-        ? options
-        : [
-            ...options,
-            {
-              value: currentTrainingLanguage,
-              label: fallbackLanguageLabel(currentTrainingLanguage),
-            },
-          ];
-      setTrainingLanguageOptions(
-        withCurrent.length ? withCurrent : DEFAULT_LANGUAGE_OPTIONS,
-      );
+        const options = languages.map((item) => ({
+          value: item.code,
+          label: item.label || fallbackLanguageLabel(item.code),
+        }));
+        const withCurrent = options.some(
+          (option) => option.value === currentTrainingLanguage,
+        )
+          ? options
+          : [
+              ...options,
+              {
+                value: currentTrainingLanguage,
+                label: fallbackLanguageLabel(currentTrainingLanguage),
+              },
+            ];
+        setTrainingLanguageOptions(
+          withCurrent.length ? withCurrent : DEFAULT_LANGUAGE_OPTIONS,
+        );
+      } finally {
+        if (!cancelled) setTrainingLanguagesResolved(true);
+      }
     };
 
     void loadTrainingLanguages();
@@ -420,6 +428,7 @@ function TrainingScreenContent({
     availableLists,
     handleListsUpdated: refreshListsAfterUpdate,
     activeTrainingScope,
+    hydratedLanguage,
     listHydrated,
     listOptions,
     persistListChange,
@@ -1313,20 +1322,44 @@ function TrainingScreenContent({
         if (componentMountedRef.current) setSessionResumeResolved(true);
         return;
       }
-      // A saved session must still validate its list against the hydrated
-      // catalogue before it can be resumed.
-      if (!listHydrated) {
+      if (!trainingLanguagesResolved) {
         sessionResumeAttemptedRef.current = false;
         return;
       }
+      const savedLanguagePermitted = trainingLanguageOptions.some(
+        (option) => option.value === record.languageCode,
+      );
+      if (!savedLanguagePermitted) {
+        await clearTrainingSessionResume(user.id);
+        if (componentMountedRef.current) setSessionResumeResolved(true);
+        return;
+      }
+      if (record.languageCode !== currentTrainingLanguage) {
+        // Rehydrate the list catalogue in the saved language before deciding
+        // whether that saved list is still permitted. Keep the record intact
+        // across this internal language transition.
+        trainingLanguageManuallyChangedRef.current = true;
+        languageHydrationPendingRef.current = true;
+        languageHydrationObservedNotReadyRef.current = false;
+        setCurrentTrainingLanguage(record.languageCode);
+        sessionResumeAttemptedRef.current = false;
+        return;
+      }
+      // A saved session must still validate its list against the hydrated
+      // catalogue before it can be resumed.
+      if (!listHydrated || hydratedLanguage !== record.languageCode) {
+        sessionResumeAttemptedRef.current = false;
+        return;
+      }
+      languageHydrationPendingRef.current = false;
+      languageHydrationObservedNotReadyRef.current = false;
       if (
-        record.languageCode !== currentTrainingLanguage ||
-        (record.listId !== null &&
+        record.listId !== null &&
           !availableLists.some(
             (list) => list.id === record.listId && list.type === record.listType,
-          ))
+          )
       ) {
-        if (record) await clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         if (componentMountedRef.current) setSessionResumeResolved(true);
         return;
       }
@@ -1353,18 +1386,28 @@ function TrainingScreenContent({
       ) {
         return;
       }
-      const hasRemainingMember = Boolean(
-        snapshot?.members.some(
-          (member) => !member.consumedAt && !member.unavailableAt,
-        ),
-      );
-      if (!snapshot || !hasRemainingMember) {
+      if (!snapshot) {
         await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
         return;
       }
-
       if (snapshot.runStatus === "superseded") {
+        const savedList = record.listId
+          ? availableLists.find(
+              (list) =>
+                list.id === record.listId && list.type === record.listType,
+            )
+          : null;
+        if (savedList) applyListLocal(savedList);
+        if (activeTrainingScope) {
+          lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+        }
+        setActiveScenario(record.scenarioId, { persist: false });
+        setEnabledModes(record.modes, { persist: false });
+        setCardFilterPreference(record.cardFilter, { persist: false });
+        setNewReviewRatio(record.newReviewRatio, { persist: false });
+        setSessionSize(record.sessionSize);
+        setTrainingFocusFilter(record.focusFilter);
         await clearTrainingSessionResume(user.id);
         setCurrentWord(null);
         replaceTrainingSessionId(null);
@@ -1373,6 +1416,17 @@ function TrainingScreenContent({
         setSessionConsumedCardKeys([]);
         setSessionCompletedActions(0);
         setSessionReplacementWarning(true);
+        setSessionResumeResolved(true);
+        return;
+      }
+
+      const hasRemainingMember = Boolean(
+        snapshot?.members.some(
+          (member) => !member.consumedAt && !member.unavailableAt,
+        ),
+      );
+      if (!hasRemainingMember) {
+        await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
         return;
       }
@@ -1459,6 +1513,7 @@ function TrainingScreenContent({
     availableLists,
     componentMountedRef,
     currentTrainingLanguage,
+    hydratedLanguage,
     listHydrated,
     loadNextWord,
     sessionResumeResolved,
@@ -1472,6 +1527,8 @@ function TrainingScreenContent({
     replaceTrainingSessionId,
     sessionResumeError,
     trainingTodaySetupEnabled,
+    trainingLanguageOptions,
+    trainingLanguagesResolved,
     user?.id,
   ]);
   const previousTrainingSurfaceRef = useRef(trainingPilot.surface);
@@ -1600,20 +1657,42 @@ function TrainingScreenContent({
     };
     window.addEventListener("focus", onReturn);
     window.addEventListener("online", onReturn);
+    const onOffline = () => {
+      // Invalidate any in-flight positive authority result. Answers remain
+      // fenced until a later online validation succeeds.
+      sessionAuthorityValidationRef.current += 1;
+      setSessionAuthorityChecking(true);
+    };
+    window.addEventListener("offline", onOffline);
     window.addEventListener("pageshow", onReturn);
     document.addEventListener("visibilitychange", onVisibilityChange);
     const unsubscribeInvalidation = subscribeTrainingSessionInvalidation(
       user.id,
       () => void validateTrainingSessionAuthority(),
     );
+    const authorityGeneration = sessionAuthorityGenerationRef.current;
+    const unsubscribeOwnerInvalidation =
+      subscribeTrainingSessionOwnerInvalidation(() =>
+        handleTrainingSessionSuperseded({
+          sessionId: trainingSessionId,
+          authorityGeneration,
+        }),
+      );
     return () => {
       window.removeEventListener("focus", onReturn);
       window.removeEventListener("online", onReturn);
+      window.removeEventListener("offline", onOffline);
       window.removeEventListener("pageshow", onReturn);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       unsubscribeInvalidation();
+      unsubscribeOwnerInvalidation();
     };
-  }, [trainingSessionId, user.id, validateTrainingSessionAuthority]);
+  }, [
+    handleTrainingSessionSuperseded,
+    trainingSessionId,
+    user.id,
+    validateTrainingSessionAuthority,
+  ]);
   useEffect(() => {
     if (!trainingSessionId || destination !== "training") return;
     const pollId = window.setInterval(() => {
