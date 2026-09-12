@@ -12,6 +12,13 @@ Scripts (see `packages/ingestion/SCRIPTS.md` for timestamps and details):
 - `process_raw_words.py` – parse Vandale HTML (`data/word_list.json`) into structured `data/words_content/` when run from a source-data directory such as `packages/ingestion/nl/vandale-nt2/`.
 - `import_words_db.py` – load structured entries into a dictionary in Postgres and seed the NT2 list.
 - `import_word_forms.py` – populate `word_forms` lookup from structured entries.
+- `lexicography_eval.py` – run the local clean-room prompt benchmark and blind
+  review workflow described in `lexicography_eval/README.md`. Its CLI parser is
+  intentionally thin; command orchestration lives in
+  `lexicography_eval/command_handlers.py`. Pilot selection and preflight policy
+  live in `lexicography_eval/release_policy.py`, tournament state in
+  `lexicography_eval/tournament_policy.py`, and sealed-release/finalist binding
+  in `lexicography_eval/holdout_policy.py`.
 - `audit_pointer_meanings.py` – audit a bounded, deterministic corpus sample for
   resolvable pointer-only meanings without treating arbitrary hyphens as
   redirects.
