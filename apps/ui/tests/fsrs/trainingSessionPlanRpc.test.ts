@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   ensureUserWithSettings,
@@ -13,6 +13,61 @@ const databaseUrl =
   process.env.SUPABASE_DB_URL ??
   process.env.DATABASE_URL;
 const describeDb = databaseUrl ? describe : describe.skip;
+
+async function bindSourceMeaningGroup(
+  client: PoolClient,
+  entryIds: string[],
+  groupKey = `sequential-meaning-group-${randomUUID()}`,
+) {
+  const { rows: dictionaryRows } = await client.query(
+    `select dictionary_id from word_entries where id = $1`,
+    [entryIds[0]],
+  );
+  const dictionaryId = dictionaryRows[0]?.dictionary_id as string;
+  const identitySchemeVersion = `sequential-meanings-v1-${randomUUID()}`;
+  const { rows: runRows } = await client.query(
+    `insert into private.dictionary_import_runs (
+       dictionary_id, identity_scheme_version, artifact_format_version,
+       manifest_checksum, input_checksum, source_record_count, artifact_count,
+       status
+     ) values ($1, $2, 'test-v1', $3, $4, $5, $5, 'completed')
+     returning id`,
+    [
+      dictionaryId,
+      identitySchemeVersion,
+      randomUUID(),
+      randomUUID(),
+      entryIds.length,
+    ],
+  );
+  const importRunId = runRows[0]?.id as string;
+
+  for (const [index, entryId] of entryIds.entries()) {
+    await client.query(
+      `insert into private.source_entry_bindings (
+         dictionary_id, identity_scheme_version, source_entry_key,
+         source_group_key, sense_ordinal, word_entry_id, binding_state,
+         first_seen_run_id, last_seen_run_id, manifest_checksum,
+         content_fingerprint_version, content_fingerprint, identity_evidence,
+         reconciliation_decision
+       ) values (
+         $1, $2, $3, $4, $5, $6, 'active', $7, $7, 'test-manifest',
+         'test-v1', $8, '{"kind":"test"}'::jsonb,
+         '{"decision":"create"}'::jsonb
+       )`,
+      [
+        dictionaryId,
+        identitySchemeVersion,
+        `sequential-meaning-${index + 1}-${randomUUID()}`,
+        groupKey,
+        index + 1,
+        entryId,
+        importRunId,
+        `sequential-fingerprint-${index + 1}`,
+      ],
+    );
+  }
+}
 
 describeDb("authoritative training session plan RPC", () => {
   const pool = new Pool({ connectionString: databaseUrl });
@@ -358,14 +413,9 @@ describeDb("authoritative training session plan RPC", () => {
          where session_id = $1 order by ordinal`,
         [reverseOnly.sessionId],
       );
-      expect(reverseMembers).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            entry_id: sparseOrdinary,
-            card_type_id: "definition-to-word",
-          }),
-        ]),
-      );
+      // A reverse-only run is recall-only: it never introduces an unseen
+      // meaning.  The sparse reverse becomes eligible after explicit Learn.
+      expect(reverseMembers).toEqual([]);
 
       await reconcileContent(sparseOrdinary, [
         {
@@ -393,6 +443,271 @@ describeDb("authoritative training session plan RPC", () => {
       );
       expect(repairedMembers.map((row) => row.entry_id)).toContain(sparseOrdinary);
     }, userId);
+  });
+
+  test("introduces source meanings headword-first and unlocks later ordinary meanings on the following local day", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+      });
+      const { rows: dictionaryRows } = await client.query(
+        `insert into dictionaries (
+           language_code, slug, name, kind, visibility, owner_user_id,
+           minimum_subscription_tier, schema_key, schema_version
+         ) values (
+           'nl', $1, 'Sequential meaning fixture', 'curated', 'private', null,
+           'free', 'nl-vandale-v1', 1
+         ) returning id`,
+        [`sequential-meanings-${userId}`],
+      );
+      const dictionaryId = dictionaryRows[0]?.id as string;
+      await client.query(
+        `insert into dictionary_entitlements (
+           dictionary_id, subject_type, subject_key, permission
+         ) values ($1, 'user', $2, 'read')`,
+        [dictionaryId, userId],
+      );
+
+      const insertMeaning = async (meaningId: number) => {
+        const { rows } = await client.query(
+          `insert into word_entries (
+             dictionary_id, language_code, headword, meaning_id,
+             part_of_speech, gender, is_nt2_2000, raw
+           ) values ($1, 'nl', $2, $3, 'noun', 'n', true, '{}'::jsonb)
+           returning id`,
+          [dictionaryId, `sequential-${userId}`, meaningId],
+        );
+        return rows[0]?.id as string;
+      };
+
+      const first = await insertMeaning(1);
+      const second = await insertMeaning(2);
+      const idiomOnly = await insertMeaning(3);
+      const fourth = await insertMeaning(4);
+      await bindSourceMeaningGroup(client, [first, second, idiomOnly, fourth]);
+
+      const reconcile = async (
+        entryId: string,
+        nodes: Array<Record<string, string>>,
+      ) => {
+        await client.query(
+          `select private.reconcile_platform_v2_content_nodes(
+             $1::uuid, $2::text, $3::jsonb
+           )`,
+          [entryId, `sequential-${entryId}`, JSON.stringify(nodes)],
+        );
+      };
+      const definition = (key: string, text: string) => ({
+        inputKey: key,
+        kind: "definition",
+        sourcePath: `raw.meanings[0].${key}`,
+        sourceNativeKey: key,
+        sourceTextFingerprint: `${key}-${text}`,
+        sourceText: text,
+      });
+      const example = (key: string, text: string) => ({
+        inputKey: key,
+        kind: "example",
+        sourcePath: `raw.meanings[0].examples[0]`,
+        sourceNativeKey: key,
+        sourceTextFingerprint: `${key}-${text}`,
+        sourceText: text,
+      });
+      await reconcile(first, [definition("first-definition", "first ordinary meaning")]);
+      await reconcile(second, [
+        definition("second-definition", "second ordinary meaning"),
+        example("second-example", "second ordinary example"),
+      ]);
+      await reconcile(idiomOnly, [
+        {
+          inputKey: "idiom",
+          kind: "idiom",
+          sourcePath: "raw.meanings[0].idioms[0]",
+          sourceNativeKey: "idiom",
+          sourceTextFingerprint: "idiom-only-expression",
+          sourceText: "idiom-only expression",
+        },
+        {
+          inputKey: "idiom-explanation",
+          kind: "idiom-explanation",
+          sourcePath: "raw.meanings[0].idioms[0].explanation",
+          sourceNativeKey: "idiom-explanation",
+          sourceTextFingerprint: "idiom-only-explanation",
+          parentInputKey: "idiom",
+          sourceText: "idiom-only explanation",
+        },
+      ]);
+      await reconcile(fourth, [
+        definition("fourth-definition", "fourth ordinary meaning"),
+        example("fourth-example", "fourth ordinary example"),
+      ]);
+
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (
+           user_id, language_code, primary_language_code, name
+         ) values ($1, 'nl', 'nl', $2) returning id`,
+        [userId, `Sequential meanings ${userId}`],
+      );
+      const listId = listRows[0]?.id as string;
+      for (const entryId of [first, second, idiomOnly, fourth]) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+
+      const start = async (modes: string[], cardFilter = "new") => {
+        const { rows } = await client.query(
+          `select start_training_session(
+             $1::uuid, $2::text[], $3::uuid, 'user', $4,
+             jsonb_build_object('timezone', 'Europe/Amsterdam'), '10'
+           ) as session`,
+          [userId, modes, listId, cardFilter],
+        );
+        return rows[0]?.session as { sessionId: string; plannedTotal: number };
+      };
+      const memberEntryIds = async (sessionId: string) => {
+        const { rows } = await client.query(
+          `select entry_id from training_session_members
+           where session_id = $1 order by ordinal`,
+          [sessionId],
+        );
+        return rows.map((row) => row.entry_id as string);
+      };
+      const memberCards = async (sessionId: string) => {
+        const { rows } = await client.query(
+          `select entry_id, card_type_id from training_session_members
+           where session_id = $1 order by ordinal`,
+          [sessionId],
+        );
+        return rows;
+      };
+
+      const firstIntroduction = await start([
+        "definition-to-word",
+        "word-to-definition",
+      ]);
+      expect(firstIntroduction.plannedTotal).toBe(1);
+      expect(await memberEntryIds(firstIntroduction.sessionId)).toEqual([first]);
+      expect(await memberCards(firstIntroduction.sessionId)).toEqual([
+        { entry_id: first, card_type_id: "word-to-definition" },
+      ]);
+
+      const reverseOnly = await start(["definition-to-word"]);
+      expect(reverseOnly.plannedTotal).toBe(0);
+
+      await client.query(
+        `select start_learning_entry_card($1::uuid, $2::uuid, 'word-to-definition')`,
+        [userId, first],
+      );
+      const { rows: timezoneRows } = await client.query(
+        `select training_schedule_timezone from user_settings where user_id = $1`,
+        [userId],
+      );
+      expect(timezoneRows).toEqual([{ training_schedule_timezone: "Europe/Amsterdam" }]);
+      const { rows: unlockRows } = await client.query(
+        `select activation_timezone
+           from private.ordinary_meaning_introduction_unlocks_v1
+          where user_id = $1 and entry_id = $2`,
+        [userId, first],
+      );
+      expect(unlockRows).toEqual([{ activation_timezone: "Europe/Amsterdam" }]);
+      const sameDay = await start(["word-to-definition"]);
+      expect(sameDay.plannedTotal).toBe(0);
+
+      await client.query(
+        `update private.ordinary_meaning_introduction_unlocks_v1
+            set available_at = now() - interval '1 second'
+          where user_id = $1 and entry_id = $2`,
+        [userId, first],
+      );
+      const secondIntroduction = await start(["word-to-definition"]);
+      expect(secondIntroduction.plannedTotal).toBe(1);
+      expect(await memberEntryIds(secondIntroduction.sessionId)).toEqual([second]);
+
+      await client.query(
+        `select set_config('request.jwt.claim.role', 'service_role', true)`,
+      );
+      await client.query("set local role service_role");
+      const { rows: knownRows } = await client.query(
+        `select perform_platform_v2_card_action_as_principal(
+           $1::uuid, 'mark-known', $2::uuid, 'word-to-definition',
+           'untracked', null::uuid, null::text, null::text, $3::uuid,
+           null::jsonb, 'first_party', null::text, null::uuid
+         ) as result`,
+        [userId, second, randomUUID()],
+      );
+      expect(knownRows[0]?.result).toEqual(
+        expect.objectContaining({ status: "accepted", actionId: "mark-known" }),
+      );
+      await client.query("reset role");
+      await client.query(
+        `update private.ordinary_meaning_introduction_unlocks_v1
+            set available_at = now() - interval '1 second'
+          where user_id = $1 and entry_id = $2`,
+        [userId, second],
+      );
+      const fourthIntroduction = await start(["word-to-definition"]);
+      expect(fourthIntroduction.plannedTotal).toBe(1);
+      expect(await memberEntryIds(fourthIntroduction.sessionId)).toEqual([fourth]);
+
+      const { rows: legacyRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id,
+           part_of_speech, gender, is_nt2_2000, raw
+         ) values
+           ($1, 'nl', $2, 1, 'noun', 'n', true, '{}'::jsonb),
+           ($1, 'nl', $2, 2, 'noun', 'n', true, '{}'::jsonb)
+         returning id, meaning_id`,
+        [dictionaryId, `legacy-sequential-${userId}`],
+      );
+      const legacyFirst = legacyRows.find((row) => row.meaning_id === 1)?.id as string;
+      const legacyLater = legacyRows.find((row) => row.meaning_id === 2)?.id as string;
+      await bindSourceMeaningGroup(client, [legacyFirst, legacyLater]);
+      await reconcile(legacyFirst, [definition("legacy-first", "legacy first")]);
+      await reconcile(legacyLater, [
+        definition("legacy-later", "legacy later"),
+        example("legacy-later-example", "legacy later example"),
+      ]);
+      for (const entryId of [legacyFirst, legacyLater]) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, in_learning,
+           fsrs_last_interval, next_review_at, hidden
+         ) values ($1, $2, 'word-to-definition', true, true, 2,
+           now() - interval '1 minute', false)`,
+        [userId, legacyLater],
+      );
+      const legacyReview = await start(["word-to-definition"], "review");
+      expect(await memberEntryIds(legacyReview.sessionId)).toContain(legacyLater);
+    }, userId);
+  });
+
+  test("calculates the following local midnight across daylight-saving changes", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows } = await client.query(
+        `select
+           private.next_ordinary_meaning_available_at_v1(
+             '2026-03-29T00:30:00+01'::timestamptz, 'Europe/Amsterdam'
+           ) as spring,
+           private.next_ordinary_meaning_available_at_v1(
+             '2026-10-25T00:30:00+02'::timestamptz, 'Europe/Amsterdam'
+           ) as autumn`,
+      );
+      expect(rows[0]).toEqual({
+        spring: new Date("2026-03-29T22:00:00.000Z"),
+        autumn: new Date("2026-10-25T23:00:00.000Z"),
+      });
+    });
   });
 
   test("keeps the requested action budget distinct from a scarce soft-mixed pool", async () => {
@@ -1685,7 +2000,7 @@ describeDb("authoritative training session plan RPC", () => {
         [userId, modes, listId],
       );
       expect(planRows[0].plan).toEqual(
-        expect.objectContaining({ plannedNew: 3, plannedTotal: 3 }),
+        expect.objectContaining({ plannedNew: 2, plannedTotal: 2 }),
       );
 
       const excluded: string[] = [];
@@ -1739,7 +2054,6 @@ describeDb("authoritative training session plan RPC", () => {
       }
       expect(excluded).toHaveLength(planRows[0].plan.plannedTotal);
       expect(excluded).toContain(`${wordA}:word-to-definition`);
-      expect(excluded).toContain(`${wordA}:${reverse}`);
       expect(excluded).toContain(`${wordB}:word-to-definition`);
     }, userId);
   });
@@ -1976,8 +2290,8 @@ describeDb("authoritative training session plan RPC", () => {
         expect.objectContaining({
           plannedNew: 0,
           plannedReview: 0,
-          plannedPractice: 4,
-          plannedTotal: 4,
+          plannedPractice: 3,
+          plannedTotal: 3,
         }),
       );
       const practiceKeys: string[] = [];

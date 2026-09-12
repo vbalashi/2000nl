@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 142,
-      coordinationIssue: 330,
+      requiredMigrationId: 143,
+      coordinationIssue: 329,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -61,64 +61,30 @@ describe("NUC database contract deployment", () => {
     expect(compose).toContain("image: 2000nl-ui:${UI_IMAGE_TAG:-local}");
   });
 
-  test("postflight preserves prior scheduler guarantees at the shared selector seam", () => {
-    const postflight =
-      read("db/deploy-contract/postflight-142.sql") +
-      read("db/deploy-contract/postflight-141.sql");
+  test("postflight protects the current canonical scheduler and sequential-introduction seam", () => {
+    const postflight = read("db/deploy-contract/postflight-143.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
-    expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
-    expect(postflight).toContain('"Relation Name": "default_training_scope_entries_v1"');
-    expect(postflight).toContain("word_entries_pointer_only_scheduler_exclusion_v1_idx");
-    expect(postflight).toContain("READABLE_DICTIONARIES AS MATERIALIZED");
-    expect(postflight).toContain("CAN_ACCESS_DICTIONARY(");
-    expect(postflight).toContain("LIMITS AS MATERIALIZED");
-    expect(postflight).toContain("trigger_state.tgfoid = sync_oid::oid");
-    expect(postflight).toContain("trigger_state.tgtype = 21");
     expect(postflight).toContain("procedure_state.prosecdef");
     expect(postflight).toContain("search_path=public, private, pg_temp");
-    expect(postflight).toContain("retained-scope-sync-function");
-    expect(postflight).toContain("constraint_state.confdeltype = 'c'");
-    expect(postflight).toContain("word_entries_training_sibling_count_v1_idx");
-    expect(postflight).toContain("shared-scheduler-body");
-    expect(postflight).toContain("cached-client-scheduler-compatibility");
+    expect(postflight).toContain("current-scheduler-boundary");
+    expect(postflight).toContain("obsolete-private-scheduler-v1");
+    expect(postflight).toContain("public-scheduler-grants");
+    expect(postflight).toContain("retained-session-grants");
     expect(postflight).toContain(
       "public.get_next_card(uuid,text[],uuid[],uuid,text,text,text,text[])",
     );
     expect(postflight).toContain(
       "public.get_next_filtered_card(uuid,text[],uuid[],uuid,text,text,text,text[],jsonb)",
     );
-    expect(postflight).toContain("GET_NEXT_CARD(");
-    expect(postflight).toContain("GET_NEXT_FILTERED_CARD(");
-    expect(postflight).toContain("TRAINING_SCHEDULER_CANDIDATES_V1");
-    expect(postflight).toContain("TODAY_NEW_WORDS AS MATERIALIZED");
-    expect(postflight).toContain("KNOWN_CARDS AS MATERIALIZED");
-    expect(postflight).toContain("user_settings_reading_size_phone_check");
-    expect(postflight).toContain("user_settings_reading_size_desktop_check");
-    expect(postflight).toContain("reading_size_phone");
-    expect(postflight).toContain("reading_size_desktop");
-    expect(postflight).toContain("phone_default IS DISTINCT FROM '''normal''::text'");
-    expect(postflight).toContain("desktop_default IS DISTINCT FROM '''normal''::text'");
-    expect(postflight).toContain("retained-observability-or-fsrs");
-    expect(postflight).toContain("LEARNINGSTARTEDTODAY");
-    expect(postflight).toContain("GRADUATEDNEWWORDSTODAY");
-    expect(postflight).toContain("phone_constraint_validated IS DISTINCT FROM true");
-    expect(postflight).toContain("desktop_constraint_validated IS DISTINCT FROM true");
-    expect(postflight).toContain("mark_training_session_member_unavailable");
-    expect(postflight).toContain("retained-session-contract");
-    expect(postflight).toContain(
-      "'CHECK ((reading_size_phone = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
-    );
-    expect(postflight).toContain(
-      "'CHECK ((reading_size_desktop = ANY (ARRAY[''normal''::text, ''large''::text, ''largest''::text])))'",
-    );
-    expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
+    expect(postflight).toContain("training_scheduler_candidates_v1");
     expect(postflight).toContain("training_session_members_v1");
-    expect(postflight).toContain("requested_total");
-    expect(postflight).toContain("renderable-ordinary-routing");
-    expect(postflight).toContain("platform_v2_content_nodes_active_root_kind_entry_idx");
+    expect(postflight).toContain("training_schedule_timezone");
+    expect(postflight).toContain("ordinary_meaning_introduction_unlocks_v1");
+    expect(postflight).toContain("ORDINARY_SOURCE_INTRODUCTIONS AS MATERIALIZED");
+    expect(postflight).toContain("sequential-ordinary-routing");
     expect(postflight).toContain("unrenderable_ordinary_direct_entries_v1");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-142.sql");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-143.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

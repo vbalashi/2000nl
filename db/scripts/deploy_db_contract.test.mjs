@@ -373,7 +373,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 330 renderability contract", () => {
+test("the repository contract enables the issue 329 sequential-introduction contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +386,7 @@ test("the repository contract enables the issue 330 renderability contract", () 
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 142 330");
+  assert.equal(result.stdout.trim(), "enabled 143 329");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

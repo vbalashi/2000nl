@@ -421,3 +421,6 @@
 
 -- Exclude unrenderable later ordinary meanings before a session is latched
 \i db/migrations/142_renderable_ordinary_training_candidates.sql
+
+-- Offer source-bound ordinary meanings sequentially after the next local day
+\i db/migrations/143_sequential_ordinary_meaning_introductions.sql

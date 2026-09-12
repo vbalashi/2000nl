@@ -160,13 +160,19 @@ practice. `plannedTotal` equals the three planned component counts.
 
 The server applies the effective modes, list, card filter, source/date filter,
 dictionary access, Known Marks, pointer-only exclusion, frozen/hidden state,
-and due time. A direct `word-to-definition` exercise for a second or later
-ordinary meaning is eligible only when that meaning has an active root example
-owned by the meaning. The rule does not mutate learner state: a repaired
-content projection makes the exercise eligible again. First meanings and the
-legacy idiom-only path retain their existing behavior pending the separate
-idiom exercise family. Each `(entry_id, card_type_id)` is counted separately. The
-private `training_scheduler_candidates_v2` relation is the one canonical
+and due time. For an active source-bound headword group, ordinary meanings are
+introduced in `sense_ordinal` order: the first renderable ordinary meaning is
+headword-first, while later renderable meanings become new-card eligible at the
+next local midnight after an accepted Learn or Known on the preceding ordinary
+meaning. A `definition-to-word` direction is recall-only and cannot introduce
+an unseen meaning. Idiom-only meanings are outside this exercise family. A
+direct `word-to-definition` exercise for a later ordinary meaning is eligible
+only when that meaning has an active root example owned by the meaning; a
+sparse direct meaning is skipped without blocking the following renderable
+meaning. This rule does not mutate learner state: a repaired content projection
+makes the exercise eligible again. Existing enrolled/reviewed/Known meanings
+are never re-gated by this policy. Each `(entry_id, card_type_id)` is counted
+separately. The private `training_scheduler_candidates_v2` relation is the one canonical
 candidate implementation. Direct non-session selectors call it with daily caps
 enabled; session planning, latching, and replacement call it with daily caps
 disabled, then apply the session's soft new:review ordering. The public direct-
@@ -191,6 +197,12 @@ only cap cohort membership; presentation order inside the selected
 new/practice work remains random on every call and is not a global deterministic
 queue policy. A session instead latches its finite membership once and does not
 apply that daily cap.
+
+Session creation carries the browser-resolved IANA timezone in
+`p_training_filter.timezone`, even when no source/date focus is selected. It is
+captured for the next-local-day introduction rule; the resulting availability
+instant is immutable, including across a later timezone change or DST
+transition. Legacy callers without a timezone use `UTC`.
 
 Session lifecycle:
 

@@ -282,6 +282,14 @@ const trainingSessionPlanScopePayload = (
   input: TrainingSessionPlanScope,
 ) => {
   const uniqueModes = [...new Set(modes)].sort();
+  // A session freezes the learner's current IANA timezone even without a
+  // date/source focus filter.  Sequential ordinary-meaning introduction uses
+  // that persisted preference to calculate the next local calendar day.
+  const trainingFilter = input.trainingFilter
+    ? normalizeTrainingFocusFilter(input.trainingFilter)
+    : {
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    };
   return {
     p_user_id: userId,
     p_card_type_ids:
@@ -290,9 +298,7 @@ const trainingSessionPlanScopePayload = (
     p_list_type: input.listId ? input.listType ?? "curated" : "curated",
     p_card_filter: input.cardFilter,
     p_session_size: input.sessionSize ?? DEFAULT_TRAINING_SESSION_SIZE,
-    p_training_filter: isTrainingFocusFilterActive(input.trainingFilter)
-      ? normalizeTrainingFocusFilter(input.trainingFilter)
-      : {},
+    p_training_filter: trainingFilter,
   };
 };
 
