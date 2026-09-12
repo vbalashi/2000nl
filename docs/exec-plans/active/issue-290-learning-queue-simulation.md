@@ -65,11 +65,17 @@ into one ambiguous "current time" value:
 Migration 148 adds `private.training_reference_now_v1()`. It uses a
 transaction-local `training.test_reference_now` override only in disposable
 tests and falls back to `statement_timestamp()` for normal requests. The
-public RPC signatures remain unchanged. The first temporal slice now proves
-the seam itself, FSRS same-day classification, and a just-before/at due
-boundary through the real selector. Session lifecycle timestamps and the
-full action-write path remain a later bounded slice because they require their
-own characterization before being routed through the same clock.
+public RPC signatures remain unchanged. The first temporal slice proves the
+seam itself, FSRS same-day classification, and a just-before/at due boundary
+through the real selector.
+
+Migration 149 extends that same seam through session creation/expiry, accepted
+action timestamps, consumed/completed member state, and action history/receipt
+timestamps. The current action boundary remains the production path; no
+second scheduler or public clock parameter was added. The lifecycle slice
+proves one instant across independent committed requests and exact session
+expiry. The full morning/evening, DST, and multi-day corpus remains evidence to
+be collected after this seam.
 
 `random()` is a separate reproducibility concern, not a clock. Temporal tests
 must either use a deterministic ordering input or assert membership and
@@ -96,7 +102,9 @@ DST, and 0.5-day corpus.
    a deliberately smaller daily new setting, proving that the finite session
    budget is not truncated by the daily setting and that all ten Learn actions
    have independent receipts, history, and new-card statistics.
-5. **Controlled time:** morning/evening, 1/3/7-day gaps, day rollover and DST;
+5. **Controlled time:** migration 149 now covers the accepted-action and
+   session-lifecycle clock boundary. Add morning/evening, 1/3/7-day gaps, day
+   rollover and DST;
    include the `<0.5`-day short-term boundary and the display/due rounding
    layer. These scenarios remain evidence until #279/#248 decisions are made.
 6. **Limits and known marks:** 50/100 new with daily limits, known mark and

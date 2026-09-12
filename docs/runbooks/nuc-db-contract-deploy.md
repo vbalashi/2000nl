@@ -68,7 +68,12 @@ The temporal evidence slice for #290 adds migration 148. It routes the
 authoritative FSRS, selector, filter, and session-plan reads through one
 private deterministic clock seam without changing public RPC signatures.
 
-An enabled deployment must apply or verify migrations 123 through 148 in order
+The follow-up #290 action/lifecycle slice adds migration 149. It routes session
+creation/expiry, accepted action timestamps, consumed/completed member state,
+and action history/receipt timestamps through the same private seam. It keeps
+the public action signatures and scheduler policy unchanged.
+
+An enabled deployment must apply or verify migrations 123 through 149 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-148",
+  "contractId": "2000nl-db-149",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 148,
+    "requiredMigrationId": 149,
     "coordinationIssue": 378
   },
   "baseline": {
@@ -144,12 +144,17 @@
       "migrationId": 148,
       "file": "db/migrations/148_training_reference_clock_seam.sql",
       "sha256": "1ba85a4d460d00ec436ef337384eefcb489c6ac95f4e31195cfa5d43f35a4458"
+    },
+    {
+      "migrationId": 149,
+      "file": "db/migrations/149_training_action_lifecycle_clock.sql",
+      "sha256": "58200bd508ef754648df4707cc452d42db45ba6de59e51b403ce10484d9f7e67"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-148.sql",
+  "postflightProbe": "db/deploy-contract/postflight-149.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-148.sql",
-    "sha256": "aba9444b068fea25a8a203fac23fb286a6b2e02f57fdb1bf5b4309c14849a5d5",
+    "file": "db/deploy-contract/pre-switch-read-probe-149.sql",
+    "sha256": "58e173d0e296c0d048d9dc086ae5e7e00d24cd7a9d539ef67417750cc890d21f",
     "statementTimeoutMs": 2000
   }
 }

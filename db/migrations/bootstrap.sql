@@ -439,3 +439,7 @@
 
 -- Route temporal evidence through one private deterministic clock seam
 \i db/migrations/148_training_reference_clock_seam.sql
+
+-- Route accepted actions and session lifecycle timestamps through the same
+-- private deterministic clock seam
+\i db/migrations/149_training_action_lifecycle_clock.sql
