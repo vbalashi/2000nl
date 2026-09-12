@@ -86,7 +86,13 @@ translation and ordinary-word scheduling unchanged, and exposes the new
 boundary only through service-principal adapters until its application consumer
 is enabled.
 
-An enabled deployment must apply or verify migrations 123 through 152 in order
+Migration 153 adds one active first-party Training run per learner. It preserves
+ordinary queue membership and durable FSRS/history, but makes a superseded
+queue non-actionable before its next card can be projected or graded. It also
+stores an idempotent start receipt so a lost start response does not create a
+second run.
+
+An enabled deployment must apply or verify migrations 123 through 153 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
