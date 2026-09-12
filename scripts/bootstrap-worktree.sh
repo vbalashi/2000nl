@@ -59,7 +59,9 @@ fi
 
 lock_hash="$(git hash-object "$lockfile")"
 expected_marker="$(printf 'root=%s\nlockfile=%s' "$repo_root" "$lock_hash")"
-expected_e2e_marker="$(printf 'root=%s\nlockfile=%s' "$repo_root" "$lock_hash")"
+# Keep a separate marker so base dependency readiness and browser readiness can
+# be invalidated independently when the Playwright cache changes.
+expected_e2e_marker="$expected_marker"
 
 install_hint="--install"
 if [[ "$mode" == "--check-e2e" ]]; then
