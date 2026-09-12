@@ -69,6 +69,19 @@ DECLARE
     probe_user_id constant uuid := '00000000-0000-4000-8000-000000000396';
     plan jsonb;
 BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM public.word_entries AS entry
+        JOIN public.dictionaries AS dictionary
+          ON dictionary.id = entry.dictionary_id
+        WHERE dictionary.source_provider = 'local-fixture'
+          AND entry.raw #>> '{_metadata,fixture}' = 'true'
+          AND entry.id::text !~
+              '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+    ) THEN
+        RAISE EXCEPTION 'training fixture generated a non-RFC UUID';
+    END IF;
+
     PERFORM set_config('request.jwt.claim.sub', probe_user_id::text, true);
     SELECT public.get_training_session_plan(
         probe_user_id,

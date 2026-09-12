@@ -103,11 +103,15 @@ SELECT
               AND existing.raw #>> '{_metadata,index}' =
                   fixture.metadata_index::text
         ),
-        md5(
-            '2000nl:search-multisource:'
-            || fixture.dictionary_slug
-            || ':'
-            || fixture.metadata_index::text
+        overlay(
+            overlay(
+                md5(
+                    '2000nl:search-multisource:'
+                    || fixture.dictionary_slug
+                    || ':'
+                    || fixture.metadata_index::text
+                ) placing '4' from 13 for 1
+            ) placing '8' from 17 for 1
         )::uuid
     ) AS word_entry_id,
     dictionary.id AS dictionary_id,
@@ -177,11 +181,15 @@ WITH fixture_manifests AS (
     GROUP BY dictionary_id
 )
 SELECT
-    md5(
-        '2000nl:search-multisource-run:'
-        || dictionary_id::text
-        || ':'
-        || manifest_checksum
+    overlay(
+        overlay(
+            md5(
+                '2000nl:search-multisource-run:'
+                || dictionary_id::text
+                || ':'
+                || manifest_checksum
+            ) placing '4' from 13 for 1
+        ) placing '8' from 17 for 1
     )::uuid AS run_id,
     dictionary_id,
     manifest_checksum,
