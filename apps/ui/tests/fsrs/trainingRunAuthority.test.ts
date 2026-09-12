@@ -77,11 +77,29 @@ describeDb("active Training run authority", () => {
           return rows[0].session;
         });
 
-      const first = await start(randomUUID());
+      const firstRequestId = randomUUID();
+      const first = await start(firstRequestId);
       firstSessionId = first.sessionId;
       expect(first).toEqual(
         expect.objectContaining({ runStatus: "active", sessionId: expect.any(String) }),
       );
+
+      const retriedFirst = await start(firstRequestId);
+      expect(retriedFirst).toEqual(
+        expect.objectContaining({
+          sessionId: firstSessionId,
+          runStatus: "active",
+          runGeneration: first.runGeneration,
+        }),
+      );
+      const sessionsAfterRetry = await committed(pool, userId, async (client) => {
+        const { rows } = await client.query(
+          `select count(*) as sessions from training_sessions where user_id = $1::uuid`,
+          [userId],
+        );
+        return rows[0].sessions;
+      });
+      expect(sessionsAfterRetry).toBe("1");
 
       const second = await start(randomUUID());
       secondSessionId = second.sessionId;
