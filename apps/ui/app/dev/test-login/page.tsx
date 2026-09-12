@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type DevSessionResponse = {
@@ -8,6 +8,26 @@ type DevSessionResponse = {
   session?: any;
   error?: string;
 };
+
+type DevSessionResult = {
+  ok: boolean;
+  payload: DevSessionResponse;
+};
+
+// React Strict Mode remounts the page in development. Keep the one-shot OTP
+// exchange single-flight across those mounts so both effects cannot rotate the
+// same QA account's refresh token concurrently.
+let devSessionRequest: Promise<DevSessionResult> | null = null;
+
+function requestDevSession() {
+  devSessionRequest ??= fetch("/api/dev/test-session", {
+    cache: "no-store",
+  }).then(async (response) => ({
+    ok: response.ok,
+    payload: (await response.json()) as DevSessionResponse,
+  }));
+  return devSessionRequest;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +72,10 @@ export default function DevTestLoginPage() {
           ? new URL(window.location.href).searchParams.get("redirectTo")
           : null) ?? "/";
 
-      const res = await fetch("/api/dev/test-session", { cache: "no-store" });
-      const json = (await res.json()) as DevSessionResponse;
+      const { ok, payload: json } = await requestDevSession();
       if (cancelled) return;
 
-      if (!res.ok || json.error || !json.session) {
+      if (!ok || json.error || !json.session) {
         setStatus("error");
         setMessage(json.error ?? "Failed to create a dev session.");
         return;
