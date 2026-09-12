@@ -22,6 +22,17 @@ CREATE TABLE IF NOT EXISTS public.training_run_start_receipts (
   PRIMARY KEY (user_id, request_id)
 );
 
+-- These are authority internals, not client-readable user state. Supabase
+-- grants new public tables to API roles by default, so protect them with both
+-- RLS (no policies) and explicit privilege revocation. Security-definer RPCs
+-- owned by postgres remain the only supported access path.
+ALTER TABLE public.training_active_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.training_run_start_receipts ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.training_active_runs
+  FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON TABLE public.training_run_start_receipts
+  FROM PUBLIC, anon, authenticated, service_role;
+
 ALTER TABLE public.training_sessions
   ADD COLUMN IF NOT EXISTS superseded_at timestamptz,
   ADD COLUMN IF NOT EXISTS superseded_by_session_id uuid
@@ -467,6 +478,177 @@ REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) FROM PUBLIC, anon, authenticated, service_role;
 
+-- Keep the established non-session action implementation available to the
+-- session-aware wrapper without routing back through the public compatibility
+-- guard below.
+ALTER FUNCTION public.perform_platform_v2_card_action_as_principal(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) RENAME TO perform_platform_v2_card_action_non_session_latch_v1;
+ALTER FUNCTION public.perform_platform_v2_card_action_non_session_latch_v1(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) SET SCHEMA private;
+REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_non_session_latch_v1(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
+  p_user_id uuid,
+  p_action_id text,
+  p_entry_id uuid,
+  p_card_type_id text,
+  p_state_revision text,
+  p_active_known_mark_id uuid,
+  p_known_mark_revision text,
+  p_review_result text,
+  p_client_event_id uuid,
+  p_source_context jsonb,
+  p_auth_kind text,
+  p_connected_client_id text,
+  p_training_session_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, extensions, pg_temp
+AS $$
+DECLARE
+  v_jwt_role text := COALESCE(
+    NULLIF(current_setting('request.jwt.claim.role', true), ''),
+    (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb)->>'role'
+  );
+  v_response jsonb;
+  v_consumption jsonb;
+  v_binding public.training_session_action_bindings%rowtype;
+BEGIN
+  IF v_jwt_role IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+  IF p_user_id IS NULL THEN RAISE EXCEPTION 'missing_user_id'; END IF;
+  PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
+
+  v_response := private.perform_platform_v2_card_action_non_session_latch_v1(
+    p_user_id, p_action_id, p_entry_id, p_card_type_id, p_state_revision,
+    p_active_known_mark_id, p_known_mark_revision, p_review_result,
+    p_client_event_id, p_source_context, p_auth_kind, p_connected_client_id
+  );
+
+  IF p_training_session_id IS NOT NULL
+     AND p_action_id IN ('start-learning', 'mark-known', 'review-card')
+     AND v_response->>'status' IN ('accepted', 'duplicate') THEN
+    IF v_response->>'status' = 'accepted' THEN
+      INSERT INTO public.training_session_action_bindings (
+        user_id, client_event_id, session_id, entry_id, card_type_id
+      ) VALUES (
+        p_user_id, p_client_event_id, p_training_session_id,
+        p_entry_id, p_card_type_id
+      ) ON CONFLICT (user_id, client_event_id) DO NOTHING;
+    END IF;
+
+    SELECT * INTO v_binding
+    FROM public.training_session_action_bindings AS binding
+    WHERE binding.user_id = p_user_id
+      AND binding.client_event_id = p_client_event_id
+    FOR UPDATE;
+    IF NOT FOUND
+       OR v_binding.session_id IS DISTINCT FROM p_training_session_id
+       OR v_binding.entry_id IS DISTINCT FROM p_entry_id
+       OR v_binding.card_type_id IS DISTINCT FROM p_card_type_id THEN
+      RAISE EXCEPTION 'training_session_action_binding_conflict';
+    END IF;
+
+    v_consumption := private.consume_training_session_member(
+      p_user_id, p_training_session_id, p_entry_id, p_card_type_id
+    );
+    IF v_consumption->>'status' NOT IN (
+      'consumed', 'consumed-complete', 'duplicate'
+    ) THEN
+      RAISE EXCEPTION 'training_session_member_not_available';
+    END IF;
+  END IF;
+
+  RETURN v_response;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
+) FROM PUBLIC, anon, authenticated, service_role;
+
+-- Legacy/non-session callers keep the established contract unless the server
+-- can prove that this is a first-party action for a still-pending Training
+-- member. That narrow case must use the session-aware overload; Connected
+-- Clients and unrelated first-party dictionary actions remain supported.
+CREATE OR REPLACE FUNCTION public.perform_platform_v2_card_action_as_principal(
+  p_user_id uuid,
+  p_action_id text,
+  p_entry_id uuid,
+  p_card_type_id text,
+  p_state_revision text,
+  p_active_known_mark_id uuid,
+  p_known_mark_revision text,
+  p_review_result text,
+  p_client_event_id uuid,
+  p_source_context jsonb,
+  p_auth_kind text,
+  p_connected_client_id text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, extensions, pg_temp
+AS $$
+DECLARE
+  v_jwt_role text := COALESCE(
+    NULLIF(current_setting('request.jwt.claim.role', true), ''),
+    (NULLIF(current_setting('request.jwt.claims', true), '')::jsonb)->>'role'
+  );
+BEGIN
+  IF v_jwt_role IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+  IF p_user_id IS NULL THEN RAISE EXCEPTION 'missing_user_id'; END IF;
+  PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
+
+  IF p_auth_kind = 'first_party'
+     AND p_action_id IN ('start-learning', 'mark-known', 'review-card') THEN
+    PERFORM pg_advisory_xact_lock(
+      hashtext('training-active-run:' || p_user_id::text)
+    );
+    IF EXISTS (
+      SELECT 1
+      FROM public.training_sessions AS session
+      JOIN public.training_session_members AS member
+        ON member.session_id = session.id
+      WHERE session.user_id = p_user_id
+        AND session.completed_at IS NULL
+        AND session.expires_at > private.training_reference_now_v1()
+        AND member.entry_id = p_entry_id
+        AND member.card_type_id = p_card_type_id
+        AND member.consumed_at IS NULL
+        AND member.unavailable_at IS NULL
+    ) THEN
+      RAISE EXCEPTION 'missing_training_session_id';
+    END IF;
+  END IF;
+
+  RETURN private.perform_platform_v2_card_action_non_session_latch_v1(
+    p_user_id, p_action_id, p_entry_id, p_card_type_id, p_state_revision,
+    p_active_known_mark_id, p_known_mark_revision, p_review_result,
+    p_client_event_id, p_source_context, p_auth_kind, p_connected_client_id
+  );
+END;
+$$;
+
+ALTER FUNCTION public.perform_platform_v2_card_action_as_principal(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.perform_platform_v2_card_action_as_principal(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.perform_platform_v2_card_action_as_principal(
+  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
+) TO service_role;
+
 CREATE OR REPLACE FUNCTION public.perform_platform_v2_card_action_as_principal(
   p_user_id uuid,
   p_action_id text,
@@ -500,11 +682,11 @@ BEGIN
   PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
 
   -- The 13-argument overload is also used by compatibility callers that pass
-  -- an explicit null. Those are ordinary non-session actions and retain the
-  -- established 12-argument path; only a supplied queue identity is subject
-  -- to Training-run ownership.
+  -- an explicit null to identify an ordinary non-session action. Preserve that
+  -- explicit contract without routing it through the guarded legacy
+  -- 12-argument overload used by clients that omit Training identity entirely.
   IF p_training_session_id IS NULL THEN
-    RETURN public.perform_platform_v2_card_action_as_principal(
+    RETURN private.perform_platform_v2_card_action_non_session_latch_v1(
       p_user_id, p_action_id, p_entry_id, p_card_type_id, p_state_revision,
       p_active_known_mark_id, p_known_mark_revision, p_review_result,
       p_client_event_id, p_source_context, p_auth_kind, p_connected_client_id

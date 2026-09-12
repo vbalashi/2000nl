@@ -168,7 +168,7 @@
     {
       "migrationId": 153,
       "file": "db/migrations/153_single_active_training_run.sql",
-      "sha256": "985f8c5980ee41dd063a193105a89b90bbc24fd736ae640ec6db115efb1aa156"
+      "sha256": "b57290bd4182e87cc31f016f31db50735a2eeabe1f8d0e76326a922e3aa10861"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-153.sql",
