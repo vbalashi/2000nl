@@ -85,11 +85,16 @@ Results:
 
 Follow-up B5 validation after mixed-list grouping:
 
+The commands below are retained as historical evidence. Do not reuse the direct
+FSRS database command; current work must run
+`scripts/db-local-supabase.sh test-fsrs` against a disposable database.
+
 ```bash
 cd apps/ui && npm run typecheck
 cd apps/ui && npm test -- tests/useTrainingActiveList.test.tsx tests/TrainingScreen.test.tsx tests/trainingService.listsPreferences.test.ts tests/trainingService.mappers.test.ts
 psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f db/migrations/064_multilanguage_scope_rpcs.sql
-cd apps/ui && FSRS_TEST_DB_URL='postgresql://postgres:postgres@127.0.0.1:54322/postgres' npm test -- tests/fsrs/*.test.ts
+# Current safe equivalent of the historical direct-DB run:
+scripts/db-local-supabase.sh test-fsrs
 ```
 
 Results:

@@ -1,37 +1,37 @@
 # 2000NL Training UI
 
-Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase for data, auth, and event tracking. Training now uses the FSRS-6 scheduler exposed via Supabase RPCs with a 4-grade flow (Again/Hard/Good/Easy), defaulting to 10 new cards per day and 40 reviews per day on fresh settings rows.
+Next.js + Tailwind frontend for the NT2 training experience, wired to Supabase for data, auth, and event tracking. Training uses the FSRS-6 scheduler exposed via Supabase RPCs with a 4-grade flow (Again/Hard/Good/Easy) and a user-selected action budget for each session.
 
 ## Setup
 
-Requires Node 20+.
+Requires Node 20+, Docker, the Supabase CLI, and PostgreSQL client tools.
 
-1. Copy Supabase credentials into `.env.local` (or set environment variables):
+1. Create the project worktree with the repository wrapper. It installs the
+   locked UI dependencies automatically. For an existing worktree:
    ```
-   NEXT_PUBLIC_SUPABASE_URL=your-project-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   scripts/bootstrap-worktree.sh --install --ingestion
    ```
-2. Install dependencies:
+2. Prepare the disposable local QA database:
    ```
-   npm install
+   scripts/db-local-supabase.sh all --confirm-reset
    ```
-3. Run the dev server:
+3. Start the UI with local Supabase values injected for that process:
    ```
-   npm run dev
+   scripts/ui-local-dev.sh --port 3100 \
+     --work-ref "#123" \
+     --expected-commit "$(git rev-parse HEAD)"
    ```
 
-For migration/platform work, prefer the repo-level local Supabase wrapper instead
-of plain `npm run dev`:
+   Replace `#123` with the owning issue or plan reference. From a clean
+   canonical `main` checkout, omit both preview arguments.
 
-```
-cd ../..
-scripts/db-local-supabase.sh check
-scripts/ui-local-dev.sh --port 3100
-```
+Use `.env.local` only when intentionally connecting to a nonlocal environment;
+never copy it from another worktree.
 
-Reuse the existing populated local database. If `check` fails, follow
-`docs/runbooks/local-supabase-test-env.md`; never use a reset as a routine repair.
+The database command above rebuilds canonical local QA state, runs DB suites in
+separate temporary databases, and loads a small deterministic dictionary
+fixture. Use `check` only for an intentionally retained environment with
+deployment receipts.
 
 Plain `npm run dev` uses `.env.local` as-is. If that file points at an older
 Supabase project, platform routes can fail with missing-RPC errors such as
@@ -116,17 +116,22 @@ Notes:
 - For `agent-browser` examples (desktop + mobile) and how to persist sessions across runs, see `apps/ui/docs/automation-agent-browser.md`.
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed client-side.
 
-- FSRS parity + RPC tests (need a Postgres URL; runs DB migrations, so point at a disposable/non-prod DB):
+- FSRS parity + RPC tests:
   ```
-  # preferred: Supabase psql URL in env or repo .env.local
-  # SUPABASE_DB_URL=postgresql://USER:PASSWORD@HOST:PORT/postgres?sslmode=require
-  FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts
+  cd ../..
+  scripts/db-local-supabase.sh test-fsrs
   ```
-  - DB URL lookup order is `FSRS_TEST_DB_URL`, then `SUPABASE_DB_URL`, then `DATABASE_URL`.
-  - `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from the environment, then falls back to repo `.env.local`.
-  - For local Supabase, prefer `scripts/db-local-supabase.sh test-fsrs`; it points tests at `LOCAL_SUPABASE_DB_URL` or the default `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
-  - If none of `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, or `DATABASE_URL` is present, tests are skipped locally. CI provides Postgres.
-  - Uses migrations in `db/migrations`, so avoid pointing at production.
+  The wrapper creates a unique local database, runs the migration-driven suite,
+  and removes that database afterward. Never point this suite at staging or
+  production.
+
+- Scraper and ingestion tests:
+  ```
+  cd ../..
+  scripts/bootstrap-worktree.sh --install --ingestion
+  scripts/db-local-supabase.sh test-ingestion
+  ```
+  These tests use a separate temporary local database too.
 
 ## Supabase integration
 

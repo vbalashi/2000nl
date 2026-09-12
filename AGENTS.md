@@ -80,7 +80,8 @@ Run the narrowest relevant checks for the files you touched.
 - UI lint: `cd apps/ui && npm run lint`
 - UI unit/component tests: `cd apps/ui && npm test`
 - UI e2e tests: `cd apps/ui && npm run test:e2e`
-- FSRS parity/RPC tests: `cd apps/ui && FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts`
+- FSRS parity/RPC tests: `scripts/db-local-supabase.sh test-fsrs` (creates and removes a disposable local database)
+- Scraper/ingestion tests: `scripts/bootstrap-worktree.sh --install --ingestion`, then `scripts/db-local-supabase.sh test-ingestion`
 - Docker image build for UI: `docker compose build ui`
 - Supabase psql access: `psql "$SUPABASE_DB_URL"`
 
