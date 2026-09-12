@@ -74,8 +74,10 @@ action timestamps, consumed/completed member state, and action history/receipt
 timestamps. The current action boundary remains the production path; no
 second scheduler or public clock parameter was added. The lifecycle slice
 proves one instant across independent committed requests and exact session
-expiry. The full morning/evening, DST, and multi-day corpus remains evidence to
-be collected after this seam.
+expiry. The controlled temporal corpus now characterizes the exact 0.5-day
+short-term boundary, 1/3/7-day review due membership, and Amsterdam 04:00
+boundaries on both DST transitions. Product-facing display rounding remains
+open and is intentionally not inferred from these database-level timings.
 
 `random()` is a separate reproducibility concern, not a clock. Temporal tests
 must either use a deterministic ordering input or assert membership and
@@ -102,11 +104,13 @@ DST, and 0.5-day corpus.
    a deliberately smaller daily new setting, proving that the finite session
    budget is not truncated by the daily setting and that all ten Learn actions
    have independent receipts, history, and new-card statistics.
-5. **Controlled time:** migration 149 now covers the accepted-action and
-   session-lifecycle clock boundary. Add morning/evening, 1/3/7-day gaps, day
-   rollover and DST;
-   include the `<0.5`-day short-term boundary and the display/due rounding
-   layer. These scenarios remain evidence until #279/#248 decisions are made.
+5. **Controlled time (corpus added):** migration 149 covers the accepted-action
+   and session-lifecycle clock boundary. The temporal test corpus now covers
+   morning/evening-equivalent elapsed values around `0.5`, exact `1/3/7`-day
+   review due transitions, and learner-local 04:00 rollover across Amsterdam
+   spring/autumn DST. Display/due rounding remains a separate product-facing
+   follow-up; these scenarios remain evidence until #279/#248 decisions are
+   made.
 6. **Limits and known marks:** 50/100 new with daily limits, known mark and
    undo in new and previously scheduled states, and two meanings/directions.
 7. **Failure recovery:** accepted action followed by a failed next-card load;
