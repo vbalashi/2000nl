@@ -122,7 +122,7 @@ COMMIT;
   }
   return `\\set ON_ERROR_STOP on
 \\set QUIET on
-${samples.join("\\n")}`;
+${samples.join("\n")}`;
 }
 
 function redact(message) {
