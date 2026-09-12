@@ -109,6 +109,9 @@ export function useCommitTrainingPilotDraft({
   onPlanReady,
   onSessionReady,
 }: CommitPilotDraftParams) {
+  const startRequestRef = useRef<{ key: string; requestId: string } | null>(
+    null,
+  );
   return useCallback(
     async (draft: TrainingSetupDraft) => {
       if (!userId) return false;
@@ -143,17 +146,36 @@ export function useCommitTrainingPilotDraft({
         return false;
       }
 
+      const startKey = JSON.stringify({
+        scope,
+        modes: draft.modes,
+        cardFilter: draft.cardFilter,
+        focusFilter,
+        sessionSize: draft.sessionSize,
+      });
+      if (startRequestRef.current?.key !== startKey) {
+        startRequestRef.current = {
+          key: startKey,
+          requestId: crypto.randomUUID(),
+        };
+      }
       const session = await startTrainingSession(userId, draft.modes, {
         listId: scope.listId,
         listType: scope.listType ?? undefined,
         cardFilter: draft.cardFilter,
         trainingFilter: focusFilter,
         sessionSize: draft.sessionSize,
-      });
+      }, startRequestRef.current.requestId);
       if (!session) {
         reportError("training_plan_unavailable");
         return false;
       }
+      if (session.runStatus === "superseded") {
+        startRequestRef.current = null;
+        reportError("training_session_superseded");
+        return false;
+      }
+      startRequestRef.current = null;
       onSessionReady?.(session, {
         languageCode,
         scope,

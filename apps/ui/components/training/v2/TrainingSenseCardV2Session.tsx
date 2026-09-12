@@ -95,6 +95,8 @@ type Props = {
   >;
   onProgressActionStarting?: () => void;
   onProgressActionPendingChange?: (pending: boolean) => void;
+  /** Ownership changed while this card was visible; its queue is no longer usable. */
+  onTrainingSessionSuperseded?: () => void;
 };
 
 type TrainingV2SessionState =
@@ -131,6 +133,7 @@ export function TrainingSenseCardV2Session({
   onProgressActionAccepted,
   onProgressActionStarting,
   onProgressActionPendingChange,
+  onTrainingSessionSuperseded,
 }: Props) {
   const lookupInput = React.useMemo(
     () => ({
@@ -429,6 +432,10 @@ export function TrainingSenseCardV2Session({
     } catch (cause) {
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
+      if (code === "training_session_superseded") {
+        onTrainingSessionSuperseded?.();
+        return "rejected";
+      }
       if (frozenRequest) {
         setReportOperation({
           request: frozenRequest,

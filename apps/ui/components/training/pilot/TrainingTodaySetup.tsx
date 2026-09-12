@@ -70,6 +70,8 @@ type Props = {
   sources: TrainingSetupOption[];
   startPending?: boolean;
   scenarioLoading?: boolean;
+  /** A saved local queue was superseded by a deliberate start elsewhere. */
+  replacementWarning?: boolean;
   activeSessionLabel?: string;
   onContinue: () => void;
   onStart: (
@@ -113,6 +115,8 @@ const copy = {
     allSources: "All sources",
     youtube: "YouTube",
     start: "Start training",
+    startHere: "Start training here",
+    replacementWarning: "This will reset training on another device.",
     starting: "Starting…",
     ratio: "New / review rhythm",
     ratioOption: (value: number) => `1 new · ${value} review`,
@@ -158,6 +162,8 @@ const copy = {
     allSources: "Alle bronnen",
     youtube: "YouTube",
     start: "Training starten",
+    startHere: "Training hier starten",
+    replacementWarning: "Hiermee wordt de training op een ander apparaat gereset.",
     starting: "Starten…",
     ratio: "Ritme nieuw / herhaling",
     ratioOption: (value: number) => `1 nieuw · ${value} herhaling`,
@@ -203,6 +209,8 @@ const copy = {
     allSources: "Все источники",
     youtube: "YouTube",
     start: "Начать тренировку",
+    startHere: "Начать тренировку здесь",
+    replacementWarning: "Это сбросит тренировку на другом устройстве.",
     starting: "Запускаем…",
     ratio: "Ритм новых / повторений",
     ratioOption: (value: number) => `1 новая · ${value} повторений`,
@@ -257,6 +265,7 @@ export function TrainingTodaySetup({
   sources,
   startPending = false,
   scenarioLoading = false,
+  replacementWarning = false,
   activeSessionLabel,
   onContinue,
   onStart,
@@ -277,6 +286,10 @@ export function TrainingTodaySetup({
       });
     }
   }, [initialDraft, screen]);
+
+  useEffect(() => {
+    if (replacementWarning) setScreen("setup");
+  }, [replacementWarning]);
 
   useEffect(() => {
     if (screen !== "setup" || scenarioLoading || scenarios.length === 0) return;
@@ -710,22 +723,31 @@ export function TrainingTodaySetup({
               ))}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => void requestStart(draft)}
-            disabled={
-              startPending || scenarioLoading || !draftScenarioSupported
-            }
-            className={`${actionClass} w-full border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60 dark:text-slate-950 sm:w-auto sm:min-w-56`}
-          >
-            {startPending
-              ? t.starting
-              : scenarioLoading
-                ? t.loading
-                : draftScenarioSupported
-                  ? t.start
-                  : t.chooseGoal}
-          </button>
+          <div className="w-full sm:w-auto sm:min-w-56">
+            <button
+              type="button"
+              onClick={() => void requestStart(draft)}
+              disabled={
+                startPending || scenarioLoading || !draftScenarioSupported
+              }
+              className={`${actionClass} w-full border-indigo-500 bg-indigo-500 text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60 dark:text-slate-950`}
+            >
+              {startPending
+                ? t.starting
+                : scenarioLoading
+                  ? t.loading
+                  : draftScenarioSupported
+                    ? replacementWarning
+                      ? t.startHere
+                      : t.start
+                    : t.chooseGoal}
+            </button>
+            {replacementWarning ? (
+              <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                {t.replacementWarning}
+              </p>
+            ) : null}
+          </div>
         </section>
       </div>
     </div>

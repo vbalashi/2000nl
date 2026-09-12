@@ -229,6 +229,8 @@ function TrainingScreenContent({
       !readTrainingSessionResume(user.id),
   );
   const [sessionResumeError, setSessionResumeError] = useState(false);
+  const [sessionReplacementWarning, setSessionReplacementWarning] =
+    useState(false);
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
   const componentMountedRef = useRef(true);
@@ -1138,6 +1140,7 @@ function TrainingScreenContent({
     loadWord: loadNextWord,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
       setTrainingSessionId(session.sessionId);
@@ -1314,6 +1317,19 @@ function TrainingScreenContent({
         return;
       }
 
+      if (snapshot.runStatus === "superseded") {
+        clearTrainingSessionResume(user.id);
+        setCurrentWord(null);
+        setTrainingSessionId(null);
+        setLatchedSessionPlan(null);
+        setSessionPlannedTotal(null);
+        setSessionConsumedCardKeys([]);
+        setSessionCompletedActions(0);
+        setSessionReplacementWarning(true);
+        setSessionResumeResolved(true);
+        return;
+      }
+
       const activeList = record.listId
         ? availableLists.find(
             (list) => list.id === record.listId && list.type === record.listType,
@@ -1449,6 +1465,19 @@ function TrainingScreenContent({
     }
     trainingPilot.continueSession();
   }, [currentWord, resetFocusQueueState, trainingPilot]);
+  const handleTrainingSessionSuperseded = useCallback(() => {
+    sessionResumeGenerationRef.current += 1;
+    if (user?.id) clearTrainingSessionResume(user.id);
+    resetFocusQueueState();
+    setCurrentWord(null);
+    setTrainingSessionId(null);
+    setLatchedSessionPlan(null);
+    setSessionPlannedTotal(null);
+    setSessionConsumedCardKeys([]);
+    setSessionCompletedActions(0);
+    setSessionReplacementWarning(true);
+    trainingPilot.returnToToday();
+  }, [resetFocusQueueState, trainingPilot, user?.id]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     trainingPilot.returnToToday();
@@ -1594,6 +1623,7 @@ function TrainingScreenContent({
             sources={trainingPilot.sourceOptions}
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
+            replacementWarning={sessionReplacementWarning}
             activeSessionLabel={wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -1628,6 +1658,7 @@ function TrainingScreenContent({
             onProgressActionAccepted={handleV2ProgressActionAccepted}
             onProgressActionStarting={prepareV2ProgressAction}
             onProgressActionPendingChange={setPlatformProgressActionPending}
+            onTrainingSessionSuperseded={handleTrainingSessionSuperseded}
             onLoadFailure={(failure) => {
               reportCardLoadFailure(currentWord, failure);
             }}

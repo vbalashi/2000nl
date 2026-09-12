@@ -44,7 +44,13 @@ export type TrainingSessionPlanScope = {
 
 export type TrainingSession = TrainingSessionPlan & {
   sessionId: string;
+  /** Present for queues created under the single-active-run contract. */
+  runStatus?: TrainingRunStatus;
+  /** Present with runStatus; null means this queue was superseded. */
+  runGeneration?: number | null;
 };
+
+export type TrainingRunStatus = "active" | "superseded";
 
 export type TrainingSessionSnapshotMember = {
   ordinal: number;
@@ -186,7 +192,35 @@ const mapTrainingSession = (value: unknown): TrainingSession | null => {
     return null;
   }
   const plan = mapTrainingSessionPlan(candidate);
-  return plan ? { sessionId: candidate.sessionId, ...plan } : null;
+  const runStatus = candidate.runStatus;
+  const runGeneration = candidate.runGeneration;
+  const hasRunAuthority =
+    runStatus !== undefined || runGeneration !== undefined;
+  if (
+    hasRunAuthority &&
+    (runStatus !== "active" && runStatus !== "superseded")
+  ) {
+    return null;
+  }
+  if (
+    runStatus === "active" &&
+    (!isNonNegativeInteger(runGeneration) || runGeneration < 1)
+  ) {
+    return null;
+  }
+  if (runStatus === "superseded" && runGeneration !== null) return null;
+  return plan
+    ? {
+        sessionId: candidate.sessionId,
+        ...plan,
+        ...(hasRunAuthority
+          ? {
+              runStatus: runStatus as TrainingRunStatus,
+              runGeneration: runGeneration as number | null,
+            }
+          : {}),
+      }
+    : null;
 };
 
 const mapTrainingSessionSnapshot = (
@@ -342,6 +376,7 @@ export async function startTrainingSession(
   userId: string,
   modes: TrainingMode[],
   input: TrainingSessionPlanScope,
+  requestId: string,
 ): Promise<TrainingSession | null> {
   const scope = trainingSessionPlanScopePayload(userId, modes, input, true);
   const { data, error } = await supabase.rpc("start_training_session", {
@@ -352,6 +387,7 @@ export async function startTrainingSession(
     p_card_filter: scope.p_card_filter,
     p_training_filter: scope.p_training_filter,
     p_session_size: String(scope.p_session_size),
+    p_request_id: requestId,
   });
   if (error) {
     console.error("Error starting training session:", error);

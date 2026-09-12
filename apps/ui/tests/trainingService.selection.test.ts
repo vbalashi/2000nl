@@ -154,6 +154,8 @@ describe("trainingService next-word selection", () => {
     rpc.mockResolvedValueOnce({
       data: {
         sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+        runStatus: "active",
+        runGeneration: 7,
         sessionSize: "5",
         plannedNew: 3,
         plannedReview: 2,
@@ -170,9 +172,11 @@ describe("trainingService next-word selection", () => {
         listType: "user",
         cardFilter: "both",
         sessionSize: 5,
-      }),
+      }, "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001"),
     ).resolves.toEqual({
       sessionId: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d",
+      runStatus: "active",
+      runGeneration: 7,
       plannedNew: 3,
       plannedReview: 2,
       plannedPractice: 0,
@@ -189,6 +193,7 @@ describe("trainingService next-word selection", () => {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       },
       p_session_size: "5",
+      p_request_id: "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed001",
     });
   });
 
@@ -223,6 +228,8 @@ describe("trainingService next-word selection", () => {
     rpc.mockResolvedValueOnce({
       data: {
         sessionId: "session-1",
+        runStatus: "superseded",
+        runGeneration: null,
         sessionSize: "5",
         plannedNew: 2,
         plannedReview: 3,
@@ -255,6 +262,8 @@ describe("trainingService next-word selection", () => {
 
     await expect(fetchTrainingSessionSnapshot("user-1", "session-1")).resolves.toEqual({
       sessionId: "session-1",
+      runStatus: "superseded",
+      runGeneration: null,
       sessionSize: 5,
       plannedNew: 2,
       plannedReview: 3,

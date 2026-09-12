@@ -1287,6 +1287,59 @@ test("resumes a still-active server session after refresh without starting anoth
   ).toBe(true);
 });
 
+test("superseded saved session clears its queue and returns to a deliberate local start", async () => {
+  window.localStorage.setItem(
+    "2000nl:training-session:user-1",
+    JSON.stringify({
+      sessionId: "session-superseded",
+      userId: "user-1",
+      languageCode: "nl",
+      listId: "list-1",
+      listType: "curated",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      newReviewRatio: 2,
+      focusFilter: { dateWindow: "all" },
+      sessionSize: 5,
+    }),
+  );
+  fetchTrainingSessionSnapshot.mockResolvedValueOnce({
+    sessionId: "session-superseded",
+    runStatus: "superseded",
+    runGeneration: null,
+    sessionSize: 5,
+    plannedNew: 3,
+    plannedReview: 2,
+    plannedPractice: 0,
+    plannedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00.000Z",
+    members: [
+      {
+        ordinal: 1,
+        entryId: "word-1",
+        cardTypeId: "word-to-definition",
+        queueSource: "new",
+        consumedAt: null,
+        unavailableAt: null,
+      },
+    ],
+  });
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
+  expect(
+    await screen.findByRole("button", { name: "Start training here" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("This will reset training on another device."),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByTestId("mock-training-sense-card-v2"),
+  ).not.toBeInTheDocument();
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBeNull();
+});
+
 test("pilot Start persists the complete selection in one scope update", async () => {
   fetchTrainingScenarios.mockResolvedValueOnce([
     {

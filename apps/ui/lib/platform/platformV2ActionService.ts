@@ -132,6 +132,9 @@ function platformActionId(
 
 function actionError(error: unknown): PlatformV2ActionOperationResult {
   const message = errorMessage(error);
+  if (message.includes("training_session_superseded")) {
+    return { payload: { error: "training_session_superseded" }, status: 409 };
+  }
   if (message.includes("platform_action_idempotency_conflict")) {
     return { payload: { error: "idempotency_conflict" }, status: 409 };
   }

@@ -167,6 +167,34 @@ describe("/api/platform/v2/actions", () => {
     });
   });
 
+  test("rejects a superseded training queue as a typed conflict", async () => {
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "training_session_superseded" },
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000007",
+        trainingSessionId: "00000000-0000-4000-8000-000000000009",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+        reviewResult: "success",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "training_session_superseded",
+    });
+  });
+
   test("returns a typed conflict when an action is not available in the current phase", async () => {
     rpc.mockResolvedValueOnce({
       data: null,

@@ -2096,6 +2096,30 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionAccepted).not.toHaveBeenCalled();
   });
 
+  test("hands off a superseded queue without leaving an actionable stale card", async () => {
+    performAction.mockRejectedValueOnce(new Error("training_session_superseded"));
+    const onTrainingSessionSuperseded = vi.fn();
+
+    render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        onProgressActionAccepted={vi.fn()}
+        onTrainingSessionSuperseded={onTrainingSessionSuperseded}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+
+    await waitFor(() => expect(onTrainingSessionSuperseded).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {
     performAction.mockRejectedValueOnce(new Error("state_conflict"));
     fetchSingleSense
