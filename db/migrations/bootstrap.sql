@@ -427,3 +427,6 @@
 
 -- Retire the superseded count-only planner helper
 \i db/migrations/144_retire_count_only_training_plan_helper.sql
+
+-- Attribute training counters to each learner's local 04:00 study day
+\i db/migrations/145_local_study_day_counters.sql

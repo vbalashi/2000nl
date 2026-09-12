@@ -82,9 +82,9 @@ const copy = {
   en: {
     eyebrowToday: "TRAINING · TODAY",
     greeting: "Good morning",
-    completed: (count: number) => `${count} cards completed today`,
+    completed: (count: number) => `${count} cards completed this study day`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `${reviews} reviews due · ${introduced}/${limit} new today`,
+      `${reviews} reviews due · ${introduced}/${limit} new this study day`,
     active: "ACTIVE SESSION",
     activeFallback: "Current training",
     continue: "Continue session",
@@ -127,9 +127,9 @@ const copy = {
   nl: {
     eyebrowToday: "TRAINING · VANDAAG",
     greeting: "Goedemorgen",
-    completed: (count: number) => `${count} kaarten vandaag afgerond`,
+    completed: (count: number) => `${count} kaarten deze studiedag afgerond`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `${reviews} herhalingen klaar · ${introduced}/${limit} nieuw vandaag`,
+      `${reviews} herhalingen klaar · ${introduced}/${limit} nieuw deze studiedag`,
     active: "ACTIEVE SESSIE",
     activeFallback: "Huidige training",
     continue: "Sessie doorgaan",
@@ -172,9 +172,9 @@ const copy = {
   ru: {
     eyebrowToday: "ТРЕНИРОВКА · СЕГОДНЯ",
     greeting: "Доброе утро",
-    completed: (count: number) => `Сегодня завершено карточек: ${count}`,
+    completed: (count: number) => `За учебный день завершено карточек: ${count}`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `Повторений к выполнению: ${reviews} · новых сегодня: ${introduced}/${limit}`,
+      `Повторений к выполнению: ${reviews} · новых за учебный день: ${introduced}/${limit}`,
     active: "АКТИВНАЯ СЕССИЯ",
     activeFallback: "Текущая тренировка",
     continue: "Продолжить сессию",

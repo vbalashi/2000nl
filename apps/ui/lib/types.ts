@@ -264,16 +264,16 @@ export type WordEntrySearchResult = {
 };
 
 export type DetailedStats = {
-  // New cards introduced today (Learn action or first new grade).
-  newWordsToday: number;      // Distinct entries introduced today
-  newCardsToday: number;      // Distinct entry + card-type pairs introduced today
-  learningStartedToday: number; // Distinct entry + card-type pairs with an accepted Learn action
-  graduatedNewWordsToday: number; // Introduced entries whose new review reached an interday interval
+  // New cards introduced during the learner's local 04:00 study day.
+  newWordsToday: number;      // Distinct entries introduced in the study day
+  newCardsToday: number;      // Distinct entry + card-type pairs in the study day
+  learningStartedToday: number; // Distinct pairs with an accepted Learn action in the study day
+  graduatedNewWordsToday: number; // Introduced entries whose new review graduated in the study day
   dailyNewLimit: number;      // Target (default 10)
   
-  // Review progress today (done/scheduled format)
-  reviewWordsDone: number;    // Distinct words reviewed (non-new) today
-  reviewCardsDone: number;    // Review card count today
+  // Review progress during the local study day (done/scheduled format)
+  reviewWordsDone: number;    // Distinct words reviewed (non-new) in the study day
+  reviewCardsDone: number;    // Review card count in the study day
   reviewWordsDue: number;     // Words due for review (including learning)
   reviewCardsDue: number;     // Cards due for review (including learning)
   

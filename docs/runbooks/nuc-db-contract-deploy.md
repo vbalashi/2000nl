@@ -59,7 +59,11 @@ Issue #358 advances the contract to migration 144. It removes the unreachable
 count-only planning helper after the public plan had already moved to the
 canonical v2 candidate relation.
 
-An enabled deployment must apply or verify migrations 123 through 144 in order
+Issue #378 advances the contract to migration 145. It attributes training
+counters to the learner's local 04:00 study day using an IANA timezone, while
+preserving FSRS timestamps, finite-session budgets, and learner progress.
+
+An enabled deployment must apply or verify migrations 123 through 145 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

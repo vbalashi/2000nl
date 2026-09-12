@@ -59,9 +59,9 @@ test("Today keeps the mounted session behind an explicit Continue action", () =>
   expect(
     screen.getByRole("heading", { name: "Good morning" }),
   ).toBeInTheDocument();
-  expect(screen.getByText("12 cards completed today")).toBeInTheDocument();
+  expect(screen.getByText("12 cards completed this study day")).toBeInTheDocument();
   expect(
-    screen.getByText("9 reviews due · 4/10 new today"),
+    screen.getByText("9 reviews due · 4/10 new this study day"),
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Continue session" }));
   expect(onContinue).toHaveBeenCalledOnce();

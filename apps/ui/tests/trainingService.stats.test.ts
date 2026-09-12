@@ -54,6 +54,7 @@ describe("trainingService stats", () => {
     expect(rpc).toHaveBeenCalledWith("get_detailed_training_stats", {
       p_user_id: "user-1",
       p_modes: ["word-to-definition", "definition-to-word"],
+      p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
       p_list_id: "list-1",
       p_list_type: "user",
     });
