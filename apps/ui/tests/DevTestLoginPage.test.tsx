@@ -76,4 +76,21 @@ describe("DevTestLoginPage", () => {
     await screen.findByText("Retry reached the server.");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  test("allows a fresh request after the server rejected the previous request", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(failedResponse("First response failed."))
+      .mockResolvedValueOnce(failedResponse("Retry reached the server."));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const firstVisit = render(<DevTestLoginPage />);
+    await screen.findByText("First response failed.");
+    firstVisit.unmount();
+
+    render(<DevTestLoginPage />);
+
+    await screen.findByText("Retry reached the server.");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

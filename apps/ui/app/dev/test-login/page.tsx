@@ -69,11 +69,13 @@ export default function DevTestLoginPage() {
       let result: DevSessionResult;
       try {
         result = await requestDevSession();
-      } catch (err: any) {
+      } catch (error) {
         if (cancelled) return;
         setStatus("error");
         setMessage(
-          String(err?.message ?? err ?? "Failed to create a dev session."),
+          error instanceof Error
+            ? error.message
+            : "Failed to create a dev session.",
         );
         return;
       }
