@@ -17,9 +17,15 @@ brew install colima docker docker-compose
 colima start --cpu 4 --memory 8
 ```
 
-## Reuse the existing database first
+## Choose the database by purpose
 
-For routine QA, run the read-only check before starting or replacing the UI:
+The canonical local Supabase database is disposable app/browser QA state. SQL,
+FSRS, and ingestion suites use unique temporary local databases. Staging and
+production are only for explicit deployment gates and bounded postflight smoke;
+never run migration-driven tests there.
+
+Use the read-only check only when intentionally retaining a populated local or
+production-shaped environment with managed deployment receipts:
 
 ```bash
 scripts/db-local-supabase.sh check
@@ -37,15 +43,13 @@ ledger entries require the reviewed migration gate described in
 local database. That gate also requires its dedicated QA principal for the read
 probe. Never manually insert a contract version or receipt to make health green.
 
-A fresh `bootstrap.sql` rebuild intentionally has no deployment receipts, because
-bootstrap is not a production deployment. For that disposable state, use
-`scripts/db-local-supabase.sh probe` as the schema/data gate; `check` is for a
-populated environment whose managed receipts are expected to exist.
+A fresh `bootstrap.sql` database intentionally has no deployment receipts. Use
+`probe` for that state; failure of `check` is not evidence that the bootstrap is
+invalid.
 
-If `check` fails, preserve a populated environment when its data is intentional
-or needed for comparison, and diagnose the reported condition. A disposable
-local QA database may instead be rebuilt from the checked-in migrations; its
-nonzero row counts do not make it authoritative.
+If `check` fails, preserve data only when it is intentional or needed for a
+comparison. The canonical local QA database may be rebuilt from checked-in
+migrations instead.
 Bootstrap includes all numbered migrations (CI checks coverage), but is not a
 production snapshot and does not create verified deployment receipts. Dictionary
 JSON import restores source content, not user histories, generated entries,
@@ -63,43 +67,56 @@ scripts/db-local-supabase.sh apply
 scripts/db-local-supabase.sh probe
 ```
 
-If local dictionary data exists under `db/data/words_content`, import it and re-run probes:
+For fast browser QA, load the committed small fixture and re-run probes:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r packages/ingestion/requirements.txt
-scripts/db-local-supabase.sh import
-scripts/db-local-supabase.sh probe
+scripts/db-local-supabase.sh fixture
 ```
 
-Run the FSRS RPC/parity suite against the local Supabase database:
+Run migration-driven suites in their own disposable databases:
 
 ```bash
 scripts/db-local-supabase.sh test-fsrs
+scripts/bootstrap-worktree.sh --install --ingestion
+scripts/db-local-supabase.sh test-ingestion
 ```
 
-The wrapper links the common DB URL names for the test process:
+The `env` command exposes the canonical local app/QA database without making it
+the default FSRS test target:
 
 - `LOCAL_SUPABASE_DB_URL` optionally overrides the local Docker Supabase DB URL.
-- `SUPABASE_DB_URL`, `DATABASE_URL`, and `FSRS_TEST_DB_URL` are exported to the selected local DB URL.
-- `apps/ui/tests/fsrs` resolves DB URLs in this order: `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, `DATABASE_URL`.
-- `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from env, then falls back to repo `.env.local`.
+- `SUPABASE_DB_URL` and `DATABASE_URL` are exported to the selected local DB URL.
+- `FSRS_TEST_DB_URL` is deliberately not exported; `test-fsrs` supplies its
+  unique disposable database directly to the test process.
+- `apps/ui/tests/fsrs` accepts only the explicit `FSRS_TEST_DB_URL`; use the
+  wrapper for the normal migration-driven suite.
+- `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from
+  env, then falls back to repo `.env.local`.
 
-When the canonical local QA database is disposable and no local state needs to
-be retained, run the whole rebuild harness:
+For the disposable canonical QA database, run the whole local harness:
 
 ```bash
 scripts/db-local-supabase.sh all --confirm-reset
 ```
 
-`all` resets the local Supabase database, applies bootstrap, runs probes, runs
-FSRS tests in a separate temporary database (the suite owns its migration
-ledger), imports dictionary data when present, and runs probes again. The
-temporary test database is removed after the suite, including on a failed test
-run. The default directory is imported automatically when it exists; an
-explicit directory is optional. Wait for command completion before using the
-database. Do not insert ad-hoc source rows while import is running: source rows
-must have exact coverage by the importer's source bindings.
+`all` resets the canonical local Supabase database, applies bootstrap, runs
+probes, runs FSRS and ingestion tests in separate temporary databases, loads the
+small deterministic QA fixture, and probes again. Temporary databases are
+removed after pass, failure, or interruption. It never starts a full dictionary
+import.
+
+Full dictionary import is an explicit operation. In a worktree, the default
+source directory is discovered from the reference checkout when ignored source
+data is not present locally:
+
+```bash
+scripts/bootstrap-worktree.sh --install --ingestion
+scripts/db-local-supabase.sh import
+scripts/db-local-supabase.sh probe
+```
+
+Full-corpus import performance is tracked in #397; it is not required for the
+small #393 browser acceptance fixture.
 
 Unacknowledged `all` and `reset` stop before any service/database command.
 Local wrapper commands accept only loopback PostgreSQL URIs with an explicit port and without connection
@@ -136,6 +153,21 @@ The wrapper reads `supabase status -o env`, exports local `NEXT_PUBLIC_SUPABASE_
 and server-side `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` values for
 that UI process only, and leaves `.env.local` unchanged.
 
+The same runtime injection can be used for a local production build without
+copying an env file into the worktree:
+
+```bash
+(
+  eval "$(scripts/db-local-supabase.sh env)"
+  unset LOCAL_SUPABASE_DB_URL SUPABASE_DB_URL DATABASE_URL FSRS_TEST_DB_URL
+  cd apps/ui
+  npm run build
+)
+```
+
+The subshell and explicit unsets keep database test variables out of the build
+and the caller's shell.
+
 After the UI starts, verify the runtime is connected to a database with the
 current platform RPC contract:
 
@@ -154,11 +186,9 @@ Expected high-level result:
 
 If the response is `"status": "warning"` and mentions a missing RPC such as
 `fetch_dictionary_entry_by_id_gated`, the UI is connected to an old or wrong
-Supabase database. For a populated environment whose data matters, preserve
-existing data, inspect the checkout and migration receipts with `check`, then
-plan the necessary forward migrations. For the disposable canonical local QA
-database, an explicit `all --confirm-reset` rebuild is the correct recovery path;
-do not reset staging or production-shaped data.
+Supabase database. Preserve an intentionally retained environment and inspect
+its receipts with `check`. Rebuild the disposable canonical QA database with
+`all --confirm-reset`.
 
 Manual alternative: copy the exports from `scripts/db-local-supabase.sh env` into
 your shell, including the local anon/service keys printed by `supabase status -o env`.

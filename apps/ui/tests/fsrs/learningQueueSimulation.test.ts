@@ -7,10 +7,7 @@ import {
   runMigrations,
 } from "./dbTestUtils";
 
-const databaseUrl =
-  process.env.FSRS_TEST_DB_URL ??
-  process.env.SUPABASE_DB_URL ??
-  process.env.DATABASE_URL;
+const databaseUrl = process.env.FSRS_TEST_DB_URL;
 const describeDb = databaseUrl ? describe : describe.skip;
 
 type SessionCard = {
