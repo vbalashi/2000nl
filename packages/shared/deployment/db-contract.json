@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-143",
+  "contractId": "2000nl-db-144",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 143,
-    "coordinationIssue": 329
+    "requiredMigrationId": 144,
+    "coordinationIssue": 358
   },
   "baseline": {
     "migrationId": 122,
@@ -119,12 +119,17 @@
       "migrationId": 143,
       "file": "db/migrations/143_sequential_ordinary_meaning_introductions.sql",
       "sha256": "e637315bccf26f1a34db190885020aae06548830b70702f967d8cc885e2ba650"
+    },
+    {
+      "migrationId": 144,
+      "file": "db/migrations/144_retire_count_only_training_plan_helper.sql",
+      "sha256": "a265276ba3564f86e9e5608f444395cbd326d6340e155d9925a2c7c10151ccb0"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-143.sql",
+  "postflightProbe": "db/deploy-contract/postflight-144.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-143.sql",
-    "sha256": "69df192edfebf3e70fcdc7df27836c62db16c474fe130e1b4d7a8cc03ba12d1e",
+    "file": "db/deploy-contract/pre-switch-read-probe-144.sql",
+    "sha256": "a5a03de708563dbedd34b93d9491519149a18fab0f6580c3078875e5012dda16",
     "statementTimeoutMs": 2000
   }
 }

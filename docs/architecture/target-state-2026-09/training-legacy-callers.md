@@ -82,6 +82,13 @@ policy input; the practice-aware public RPC preserves its documented
 completed #353 state for #255 and the scheduler prerequisite for #327/#330/#329,
 not a second permanent scheduler stack.
 
+Migration 144 completes the follow-up cleanup in #358: the former private
+count-only session-plan helper is removed after migration 143 had already
+routed the public session planner directly to the canonical v2 candidate
+relation. Historical migration and evidence files retain their dated text, but
+the helper is not a current runtime or compatibility surface. Postflight now
+fails if it is reintroduced.
+
 ## Start Learning remains current
 
 The label `Learn` still invokes `start-learning` in V2. There was no migration

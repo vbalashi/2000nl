@@ -55,7 +55,11 @@ Issue #329 advances the contract to migration 143. It introduces source-bound
 ordinary meanings headword-first, unlocks later renderable meanings at the next
 local midnight after Learn/Known, and preserves all existing learner progress.
 
-An enabled deployment must apply or verify migrations 123 through 143 in order
+Issue #358 advances the contract to migration 144. It removes the unreachable
+count-only planning helper after the public plan had already moved to the
+canonical v2 candidate relation.
+
+An enabled deployment must apply or verify migrations 123 through 144 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

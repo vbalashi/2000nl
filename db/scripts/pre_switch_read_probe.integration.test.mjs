@@ -85,7 +85,7 @@ test(
     const localTarget = new URL(baseDatabaseUrl);
     if (
       !["127.0.0.1", "localhost", "::1"].includes(localTarget.hostname) ||
-      !/(contract_test|issue238|issue243|issue330|issue353|issue355)/i.test(localTarget.pathname)
+      !/(contract_test|issue238|issue243|issue330|issue353|issue355|issue358)/i.test(localTarget.pathname)
     ) {
       throw new Error("Pre-switch probe integration accepts only a scoped loopback database");
     }
@@ -115,13 +115,13 @@ test(
     const first = apply(containerTarget.toString());
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /pre-switch-read-probe passed/);
-    assert.match(first.stdout, /compatible 2000nl-db-143/);
+    assert.match(first.stdout, /compatible 2000nl-db-144/);
 
     const replay = apply(containerTarget.toString());
     assert.equal(replay.status, 0, replay.stderr);
-    assert.match(replay.stdout, /no-op 143/);
+    assert.match(replay.stdout, /no-op 144/);
     assert.match(replay.stdout, /pre-switch-read-probe passed/);
-    assert.match(replay.stdout, /compatible 2000nl-db-143/);
+    assert.match(replay.stdout, /compatible 2000nl-db-144/);
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
   },
