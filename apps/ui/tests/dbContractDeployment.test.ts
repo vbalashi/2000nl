@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 145,
+      requiredMigrationId: 146,
       coordinationIssue: 378,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -63,6 +63,7 @@ describe("NUC database contract deployment", () => {
 
   test("postflight protects the current canonical scheduler and sequential-introduction seam", () => {
     const postflight =
+      read("db/deploy-contract/postflight-146.sql") +
       read("db/deploy-contract/postflight-145.sql") +
       read("db/deploy-contract/postflight-144.sql") +
       read("db/deploy-contract/postflight-143.sql");
@@ -90,7 +91,8 @@ describe("NUC database contract deployment", () => {
     expect(postflight).toContain("obsolete-count-only-plan-helper");
     expect(postflight).toContain("training_study_day_bounds_v1");
     expect(postflight).toContain("local-study-day-signatures");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-145.sql");
+    expect(postflight).toContain("local-study-day-scheduler-routing");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-146.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {

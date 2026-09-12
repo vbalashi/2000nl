@@ -695,7 +695,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
       applySqlFile(targetUrl, "db/migrations/145_local_study_day_counters.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/migrations/146_local_study_day_scheduler_alignment.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-146.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -739,7 +740,7 @@ test(
       const obsoleteCountHelperPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-145.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-146.sql")],
       );
       assert.notEqual(obsoleteCountHelperPostflight.status, 0);
       assert.match(
@@ -748,7 +749,8 @@ test(
       );
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
       applySqlFile(targetUrl, "db/migrations/145_local_study_day_counters.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/migrations/146_local_study_day_scheduler_alignment.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-146.sql");
 
       const obsoleteV1Drift = psql(
         targetUrl,
@@ -768,7 +770,7 @@ test(
       const obsoleteV1DriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-145.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-146.sql")],
       );
       assert.notEqual(obsoleteV1DriftPostflight.status, 0);
       assert.match(
@@ -782,7 +784,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
       applySqlFile(targetUrl, "db/migrations/145_local_study_day_counters.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/migrations/146_local_study_day_scheduler_alignment.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-146.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -794,7 +797,7 @@ test(
       const sessionGrantDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-145.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-146.sql")],
       );
       assert.notEqual(sessionGrantDriftPostflight.status, 0);
       assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
@@ -806,7 +809,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
       applySqlFile(targetUrl, "db/migrations/145_local_study_day_counters.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/migrations/146_local_study_day_scheduler_alignment.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-146.sql");
     } finally {
       const terminate = psql(
         base.toString(),

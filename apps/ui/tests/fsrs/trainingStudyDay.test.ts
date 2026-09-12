@@ -159,4 +159,47 @@ describeDb("local training study day", () => {
       });
     }, userId);
   });
+
+  test("does not turn the legacy selector flag into a daily quota", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, { daily_new_limit: 1 });
+      const entryIds = await Promise.all(
+        Array.from({ length: 3 }, (_, index) =>
+          insertWord(client, `study-day-budget-${index}-${randomUUID()}`),
+        ),
+      );
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (
+           user_id, language_code, primary_language_code, name
+         ) values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Study day budget ${randomUUID()}`],
+      );
+      await client.query(
+        `insert into user_word_list_items (list_id, word_id)
+         select $1, unnest($2::uuid[])`,
+        [listRows[0].id, entryIds],
+      );
+
+      const { rows } = await client.query(
+        `select count(*)::int as count,
+                min(new_today)::int as new_today,
+                max(daily_new_limit)::int as daily_new_limit
+         from private.training_scheduler_candidates_v2(
+           $1, ARRAY['word-to-definition']::text[], $2::uuid,
+           'user', 'new', 'auto', ARRAY[]::uuid[], ARRAY[]::text[], '{}'::jsonb,
+           false, true
+         )
+         where queue_source = 'new'`,
+        [userId, listRows[0].id],
+      );
+
+      expect(rows[0]).toEqual({
+        count: 3,
+        new_today: 0,
+        daily_new_limit: 1,
+      });
+    }, userId);
+  });
 });

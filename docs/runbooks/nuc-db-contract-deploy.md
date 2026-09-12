@@ -33,8 +33,7 @@ it to migration 131 for the pinned FSRS same-day short-term parity correction.
 
 Issue #334 advances the contract to migration 139. It gives sessions a
 server-owned action budget and soft new/review mixing without applying daily
-scheduler caps; the legacy selector keeps its existing capped behavior for
-callers outside a session.
+scheduler caps.
 
 Issue #353 advances the contract to migration 140. It makes the parameterized
 candidate selector the one authoritative implementation; compatible direct
@@ -59,11 +58,13 @@ Issue #358 advances the contract to migration 144. It removes the unreachable
 count-only planning helper after the public plan had already moved to the
 canonical v2 candidate relation.
 
-Issue #378 advances the contract to migration 145. It attributes training
+Issue #378 advances the contract to migration 146. It attributes training
 counters to the learner's local 04:00 study day using an IANA timezone, while
-preserving FSRS timestamps, finite-session budgets, and learner progress.
+preserving FSRS timestamps, finite-session budgets, and learner progress. The
+scheduler diagnostics and fallback selector use the same local boundary and
+do not enforce a daily quota.
 
-An enabled deployment must apply or verify migrations 123 through 145 in order
+An enabled deployment must apply or verify migrations 123 through 146 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

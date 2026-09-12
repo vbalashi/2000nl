@@ -430,3 +430,6 @@
 
 -- Attribute training counters to each learner's local 04:00 study day
 \i db/migrations/145_local_study_day_counters.sql
+
+-- Align scheduler diagnostics and selection with the local study day
+\i db/migrations/146_local_study_day_scheduler_alignment.sql
