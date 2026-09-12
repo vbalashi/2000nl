@@ -418,3 +418,6 @@
 
 -- Keep cached browser clients compatible with the practice-aware RPC contract
 \i db/migrations/141_cached_client_scheduler_compatibility.sql
+
+-- Exclude unrenderable later ordinary meanings before a session is latched
+\i db/migrations/142_renderable_ordinary_training_candidates.sql

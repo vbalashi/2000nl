@@ -12,6 +12,7 @@ import {
   recordTrainingTransitionTiming,
 } from "@/lib/training/trainingTransitionTiming";
 import { predictNextQueueTurn } from "@/lib/training/trainingQueue";
+import { evaluateTrainingCardRenderability } from "@/lib/training/trainingCardRenderability";
 import type {
   CardFilter,
   QueueTurn,
@@ -93,7 +94,12 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
         void preparePlatformV2TrainingEntry(preparation).catch(() => undefined);
         const lookup = await lookupRequest;
         if (signal?.aborted) return false;
-        if (lookup.state === "ready") return true;
+        if (lookup.state === "ready") {
+          const renderability = evaluateTrainingCardRenderability(lookup.entry, mode);
+          return renderability.renderable
+            ? true
+            : { ready: false, unavailableReason: renderability.reason } as const;
+        }
         if (lookup.state === "entry-not-found") {
           return {
             ready: false,
@@ -195,7 +201,15 @@ export function usePreparedNextTrainingTurn(input: Inputs) {
       ).then((lookup) => {
         const warmResult: TrainingWarmResult =
           lookup.state === "ready"
-            ? true
+            ? (() => {
+                const renderability = evaluateTrainingCardRenderability(
+                  lookup.entry,
+                  mode,
+                );
+                return renderability.renderable
+                  ? true
+                  : { ready: false, unavailableReason: renderability.reason } as const;
+              })()
             : lookup.state === "entry-not-found"
               ? { ready: false, unavailableReason: "entry-not-found" }
               : lookup.state === "projection-missing"

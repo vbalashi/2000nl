@@ -160,7 +160,12 @@ practice. `plannedTotal` equals the three planned component counts.
 
 The server applies the effective modes, list, card filter, source/date filter,
 dictionary access, Known Marks, pointer-only exclusion, frozen/hidden state,
-and due time. Each `(entry_id, card_type_id)` is counted separately. The
+and due time. A direct `word-to-definition` exercise for a second or later
+ordinary meaning is eligible only when that meaning has an active root example
+owned by the meaning. The rule does not mutate learner state: a repaired
+content projection makes the exercise eligible again. First meanings and the
+legacy idiom-only path retain their existing behavior pending the separate
+idiom exercise family. Each `(entry_id, card_type_id)` is counted separately. The
 private `training_scheduler_candidates_v2` relation is the one canonical
 candidate implementation. Direct non-session selectors call it with daily caps
 enabled; session planning, latching, and replacement call it with daily caps

@@ -126,7 +126,7 @@ test(
 
       applySqlFile(targetUrl, "db/scripts/plain_postgres_supabase_compat.sql");
       // This test characterizes the 126→128 scheduler transition before
-      // replaying later migrations. A full bootstrap now contains 141, so it
+      // replaying later migrations. A full bootstrap now contains 142, so it
       // would otherwise make historical postflight-128 assertions observe a
       // schema that is deliberately newer than their contract.
       applyBootstrapBefore(targetUrl, "138_shared_meaning_directional_state.sql");
@@ -731,7 +731,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
+      applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -779,7 +780,7 @@ test(
       const obsoleteV1DriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-141.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-142.sql")],
       );
       assert.notEqual(obsoleteV1DriftPostflight.status, 0);
       assert.match(
@@ -789,7 +790,8 @@ test(
 
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
+      applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -801,7 +803,7 @@ test(
       const sessionGrantDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-141.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-142.sql")],
       );
       assert.notEqual(sessionGrantDriftPostflight.status, 0);
       assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
@@ -809,7 +811,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/139_session_action_budget.sql");
       applySqlFile(targetUrl, "db/migrations/140_consolidate_training_scheduler_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-141.sql");
+      applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-142.sql");
     } finally {
       const terminate = psql(
         base.toString(),

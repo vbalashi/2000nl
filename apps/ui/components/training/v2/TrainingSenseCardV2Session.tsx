@@ -37,6 +37,7 @@ import {
 } from "@/lib/feedback/diagnosticReportClient";
 import { TransientNotice } from "@/components/system/TransientNotice";
 import { buildTrainingSenseCardModel } from "./trainingSenseCardModel";
+import { evaluateTrainingCardRenderability } from "@/lib/training/trainingCardRenderability";
 import { selectTrainingReversePrompt } from "@/lib/training/trainingReversePrompt";
 import {
   rememberPendingKnownUndo,
@@ -104,6 +105,7 @@ type TrainingV2SessionState =
   | "contract-mismatch"
   | "entry-not-found"
   | "model-invalid"
+  | "direct-example-missing"
   | "reverse-definition-missing";
 
 export function TrainingSenseCardV2Session({
@@ -247,6 +249,10 @@ export function TrainingSenseCardV2Session({
         : null,
     [interfaceLanguage, result],
   );
+  const renderability = React.useMemo(
+    () => (result ? evaluateTrainingCardRenderability(result.entry, mode) : null),
+    [mode, result],
+  );
 
   const sessionState: TrainingV2SessionState = !lookup
       ? "loading"
@@ -254,6 +260,8 @@ export function TrainingSenseCardV2Session({
         ? lookup.state
         : !model
           ? "model-invalid"
+          : renderability && !renderability.renderable
+            ? renderability.reason
           : mode === "definition-to-word" &&
               !selectTrainingReversePrompt([...model.definitions, ...model.examples])
             ? "reverse-definition-missing"

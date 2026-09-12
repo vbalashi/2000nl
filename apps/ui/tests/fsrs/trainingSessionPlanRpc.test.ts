@@ -203,6 +203,198 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
+  test("selects only renderable ordinary directions before latching a session", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+
+      const insertMeaning = async (
+        headword: string,
+        raw: Record<string, unknown>,
+      ) => {
+        const { rows } = await client.query(
+          `insert into word_entries (
+             language_code, headword, meaning_id, part_of_speech, gender,
+             is_nt2_2000, raw
+           ) values ('nl', $1, 2, 'noun', 'n', true, $2::jsonb)
+           returning id`,
+          [headword, JSON.stringify(raw)],
+        );
+        return rows[0].id as string;
+      };
+
+      const sparseOrdinary = await insertMeaning(`sparse-${userId}`, {
+        meanings: [{ definition: "ordinary definition", examples: [], idioms: [] }],
+      });
+      const contextualOrdinary = await insertMeaning(`contextual-${userId}`, {
+        meanings: [{
+          definition: "ordinary definition with context",
+          examples: [{ source: "an owned ordinary example" }],
+          idioms: [],
+        }],
+      });
+      const idiomOnly = await insertMeaning(`legacy-idiom-${userId}`, {
+        meanings: [{
+          examples: [],
+          idioms: [{ expression: "legacy idiom", explanation: "legacy explanation" }],
+        }],
+      });
+      const reconcileContent = async (
+        entryId: string,
+        nodes: Array<Record<string, string>>,
+      ) => {
+        await client.query(
+          `select private.reconcile_platform_v2_content_nodes(
+             $1::uuid, $2::text, $3::jsonb
+           )`,
+          [entryId, `renderable-directions-${entryId}`, JSON.stringify(nodes)],
+        );
+      };
+      await reconcileContent(sparseOrdinary, [{
+        inputKey: "definition",
+        kind: "definition",
+        sourcePath: "raw.meanings[0].definition",
+        sourceNativeKey: "definition",
+        sourceTextFingerprint: "sparse-definition",
+        sourceText: "ordinary definition",
+      }]);
+      await reconcileContent(contextualOrdinary, [
+        {
+          inputKey: "definition",
+          kind: "definition",
+          sourcePath: "raw.meanings[0].definition",
+          sourceNativeKey: "definition",
+          sourceTextFingerprint: "contextual-definition",
+          sourceText: "ordinary definition with context",
+        },
+        {
+          inputKey: "example",
+          kind: "example",
+          sourcePath: "raw.meanings[0].examples[0]",
+          sourceNativeKey: "example",
+          sourceTextFingerprint: "contextual-example",
+          sourceText: "an owned ordinary example",
+        },
+      ]);
+      await reconcileContent(idiomOnly, [
+        {
+          inputKey: "idiom",
+          kind: "idiom",
+          sourcePath: "raw.meanings[0].idioms[0]",
+          sourceNativeKey: "idiom",
+          sourceTextFingerprint: "legacy-idiom",
+          sourceText: "legacy idiom",
+        },
+        {
+          inputKey: "idiom-explanation",
+          kind: "idiom-explanation",
+          sourcePath: "raw.meanings[0].idioms[0].explanation",
+          sourceNativeKey: "idiom-explanation",
+          sourceTextFingerprint: "legacy-explanation",
+          parentInputKey: "idiom",
+          sourceText: "legacy explanation",
+        },
+      ]);
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Renderable directions ${userId}`],
+      );
+      const listId = listRows[0].id as string;
+      for (const entryId of [sparseOrdinary, contextualOrdinary, idiomOnly]) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+      const { rows: eligibilityRows } = await client.query(
+        `select entry.id as entry_id, private.training_ordinary_direct_recall_renderable_v1(
+           entry.id, entry.meaning_id, 'word-to-definition'
+         ) as renderable
+         from word_entries entry
+         where id = any($1::uuid[])
+         order by entry_id`,
+        [[sparseOrdinary, contextualOrdinary, idiomOnly]],
+      );
+      expect(eligibilityRows).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ entry_id: sparseOrdinary, renderable: false }),
+          expect.objectContaining({ entry_id: contextualOrdinary, renderable: true }),
+          expect.objectContaining({ entry_id: idiomOnly, renderable: true }),
+        ]),
+      );
+
+      const plan = async (modes: string[]) => {
+        const { rows } = await client.query(
+          `select start_training_session(
+             $1::uuid, $2::text[], $3::uuid, 'user', 'new', '{}'::jsonb, '10'
+           ) as session`,
+          [userId, modes, listId],
+        );
+        return rows[0].session;
+      };
+
+      const directOnly = await plan(["word-to-definition"]);
+      expect(directOnly.plannedTotal).toBe(2);
+
+      const { rows: directMembers } = await client.query(
+        `select entry_id from training_session_members
+         where session_id = $1 order by ordinal`,
+        [directOnly.sessionId],
+      );
+      expect(directMembers.map((row) => row.entry_id)).toEqual(
+        expect.arrayContaining([contextualOrdinary, idiomOnly]),
+      );
+      expect(directMembers.map((row) => row.entry_id)).not.toContain(sparseOrdinary);
+
+      const reverseOnly = await plan(["definition-to-word"]);
+      const { rows: reverseMembers } = await client.query(
+        `select entry_id, card_type_id from training_session_members
+         where session_id = $1 order by ordinal`,
+        [reverseOnly.sessionId],
+      );
+      expect(reverseMembers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            entry_id: sparseOrdinary,
+            card_type_id: "definition-to-word",
+          }),
+        ]),
+      );
+
+      await reconcileContent(sparseOrdinary, [
+        {
+          inputKey: "definition",
+          kind: "definition",
+          sourcePath: "raw.meanings[0].definition",
+          sourceNativeKey: "definition",
+          sourceTextFingerprint: "sparse-definition",
+          sourceText: "ordinary definition",
+        },
+        {
+          inputKey: "example",
+          kind: "example",
+          sourcePath: "raw.meanings[0].examples[0]",
+          sourceNativeKey: "example",
+          sourceTextFingerprint: "sparse-repaired-example",
+          sourceText: "a repaired owned ordinary example",
+        },
+      ]);
+      const directAfterRepair = await plan(["word-to-definition"]);
+      const { rows: repairedMembers } = await client.query(
+        `select entry_id from training_session_members
+         where session_id = $1 order by ordinal`,
+        [directAfterRepair.sessionId],
+      );
+      expect(repairedMembers.map((row) => row.entry_id)).toContain(sparseOrdinary);
+    }, userId);
+  });
+
   test("keeps the requested action budget distinct from a scarce soft-mixed pool", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
@@ -1101,6 +1293,112 @@ describeDb("authoritative training session plan RPC", () => {
           completionReason: 'exhausted',
         }),
       );
+    }, userId);
+  });
+
+  test("retires a pre-existing sparse direct member without grading it", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 20,
+        daily_review_limit: 20,
+      });
+      const replacementEntryId = await insertWord(
+        client,
+        `sparse-direct-replacement-${userId}`,
+      );
+      const { rows: sparseRows } = await client.query(
+        `insert into word_entries (
+           language_code, headword, meaning_id, part_of_speech, gender,
+           is_nt2_2000, raw
+         ) values (
+           'nl', $1, 2, 'noun', 'n', true,
+           '{"meanings":[{"definition":"a sparse later meaning","examples":[]}]}'::jsonb
+         ) returning id`,
+        [`sparse-direct-${userId}`],
+      );
+      const sparseEntryId = sparseRows[0].id as string;
+      await client.query(
+        `select private.reconcile_platform_v2_content_nodes(
+           $1::uuid, $2::text, $3::jsonb
+         )`,
+        [
+          sparseEntryId,
+          `sparse-direct-${sparseEntryId}`,
+          JSON.stringify([{
+            inputKey: "definition",
+            kind: "definition",
+            sourcePath: "raw.meanings[0].definition",
+            sourceNativeKey: "definition",
+            sourceTextFingerprint: "sparse-direct-definition",
+            sourceText: "a sparse later meaning",
+          }]),
+        ],
+      );
+      const { rows: listRows } = await client.query(
+        `insert into user_word_lists (user_id, language_code, primary_language_code, name)
+         values ($1, 'nl', 'nl', $2)
+         returning id`,
+        [userId, `Sparse direct replacement ${userId}`],
+      );
+      const listId = listRows[0].id as string;
+      for (const entryId of [sparseEntryId, replacementEntryId]) {
+        await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+          userId,
+          listId,
+          entryId,
+        ]);
+      }
+      const { rows: sessionRows } = await client.query(
+        `insert into training_sessions (
+           user_id, session_size, card_type_ids, list_type, card_filter,
+           training_filter, list_id, requested_total, planned_new, planned_review, planned_total
+         ) values (
+           $1, '2', ARRAY['word-to-definition']::text[], 'user', 'both',
+           '{}'::jsonb, $2, 2, 1, 0, 1
+         ) returning id`,
+        [userId, listId],
+      );
+      const sessionId = sessionRows[0].id as string;
+      await client.query(
+        `insert into training_session_members (
+           session_id, ordinal, entry_id, card_type_id, queue_source
+         ) values ($1, 1, $2, 'word-to-definition', 'new')`,
+        [sessionId, sparseEntryId],
+      );
+
+      const { rows: unavailableRows } = await client.query(
+        `select mark_training_session_member_unavailable(
+           $1::uuid, $2::uuid, $3::uuid, 'word-to-definition',
+           'direct-example-missing'
+         ) as result`,
+        [userId, sessionId, sparseEntryId],
+      );
+      expect(unavailableRows[0].result).toEqual(
+        expect.objectContaining({ status: "unavailable-replaced", replacementOrdinal: 2 }),
+      );
+
+      const { rows: snapshotRows } = await client.query(
+        `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+        [userId, sessionId],
+      );
+      expect(snapshotRows[0].snapshot).toEqual(
+        expect.objectContaining({ completedActions: 0, plannedTotal: 1 }),
+      );
+      expect(snapshotRows[0].snapshot.members).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            entryId: sparseEntryId,
+            unavailableReason: "direct-example-missing",
+          }),
+          expect.objectContaining({ entryId: replacementEntryId, ordinal: 2 }),
+        ]),
+      );
+      const { rows: reviewLogRows } = await client.query(
+        `select count(*)::integer as count from user_review_log where user_id = $1`,
+        [userId],
+      );
+      expect(reviewLogRows[0].count).toBe(0);
     }, userId);
   });
 

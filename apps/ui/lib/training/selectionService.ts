@@ -61,6 +61,7 @@ export type TrainingSessionUnavailableReason =
   | "projection-missing"
   | "entry-not-found"
   | "model-invalid"
+  | "direct-example-missing"
   | "reverse-definition-missing";
 
 export type TrainingSessionUnavailableResult = {
@@ -272,6 +273,7 @@ const isTrainingSessionUnavailableReason = (
   value === "projection-missing" ||
   value === "entry-not-found" ||
   value === "model-invalid" ||
+  value === "direct-example-missing" ||
   value === "reverse-definition-missing";
 
 const trainingSessionPlanScopePayload = (
