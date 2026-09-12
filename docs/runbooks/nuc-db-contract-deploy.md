@@ -46,7 +46,12 @@ pre-practice-aware scheduler overloads as v2-backed adapters, so a browser
 holding a previous JS bundle cannot fail while the database has already moved
 forward. Private v1 candidate functions and older bypass RPCs remain retired.
 
-An enabled deployment must apply or verify migrations 123 through 141 in order
+Issue #330 advances the contract to migration 142. It excludes only later
+ordinary direct-recall directions lacking an owned root example before session
+membership is latched. The content-derived exclusion is reversible and uses
+the existing unavailable/replacement path for an older latched member.
+
+An enabled deployment must apply or verify migrations 123 through 142 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

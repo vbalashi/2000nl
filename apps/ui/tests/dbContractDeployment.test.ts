@@ -16,11 +16,11 @@ describe("NUC database contract deployment", () => {
     expect(contract.ledger.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(contract.rollout).toEqual({
       status: "enabled",
-      requiredMigrationId: 141,
-      coordinationIssue: 355,
+      requiredMigrationId: 142,
+      coordinationIssue: 330,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
-      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141,
+      123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
     ]);
     for (const migration of contract.migrations) {
       expect(migration.file).toMatch(
@@ -62,7 +62,9 @@ describe("NUC database contract deployment", () => {
   });
 
   test("postflight preserves prior scheduler guarantees at the shared selector seam", () => {
-    const postflight = read("db/deploy-contract/postflight-141.sql");
+    const postflight =
+      read("db/deploy-contract/postflight-142.sql") +
+      read("db/deploy-contract/postflight-141.sql");
     const workflow = read(".github/workflows/db-drift-check.yml");
 
     expect(postflight).toContain("EXPLAIN (FORMAT JSON, COSTS OFF)");
@@ -113,13 +115,17 @@ describe("NUC database contract deployment", () => {
     expect(workflow).toContain("-f db/deploy-contract/ledger-v1.sql");
     expect(postflight).toContain("training_session_members_v1");
     expect(postflight).toContain("requested_total");
-    expect(workflow).toContain("-f db/deploy-contract/postflight-141.sql");
+    expect(postflight).toContain("renderable-ordinary-routing");
+    expect(postflight).toContain("platform_v2_content_nodes_active_root_kind_entry_idx");
+    expect(postflight).toContain("unrenderable_ordinary_direct_entries_v1");
+    expect(workflow).toContain("-f db/deploy-contract/postflight-142.sql");
   });
 
   test("pins a bounded read-only QA selector before every compatible app switch", () => {
     const probe = read(contract.preSwitchReadProbe.file);
     const probeSource =
       probe +
+      read("db/deploy-contract/pre-switch-read-probe-141.sql") +
       read("db/deploy-contract/pre-switch-read-probe-131.sql") +
       read("db/deploy-contract/pre-switch-read-probe-130.sql") +
       read("db/deploy-contract/pre-switch-read-probe-129.sql");

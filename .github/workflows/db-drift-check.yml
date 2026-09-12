@@ -215,7 +215,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/ledger-v1.sql
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-141.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-142.sql
 
       - name: Test exact bounded pre-switch scheduler read
         env:

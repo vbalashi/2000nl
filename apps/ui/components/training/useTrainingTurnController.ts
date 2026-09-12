@@ -105,6 +105,7 @@ const unavailableReasonForFailure = (
     case "entry-not-found":
     case "projection-missing":
     case "model-invalid":
+    case "direct-example-missing":
     case "reverse-definition-missing":
       return failure;
     default:
