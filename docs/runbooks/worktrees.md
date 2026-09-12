@@ -22,7 +22,26 @@ scripts/create-worktree.sh 123 concise-scope
 
 The command fetches `origin/main`, creates
 `codex/123-concise-scope`, adds the checkout under `.worktrees`, then runs a
-clean `npm ci --prefer-offline` inside that checkout's `apps/ui`.
+clean `npm ci --include=dev --prefer-offline` inside that checkout's `apps/ui`.
+This installs the local `next`, `tsc`, `vitest`, and `playwright` commands from
+the committed lockfile.
+
+For work that will run browser e2e tests, request the Playwright browser too:
+
+```bash
+scripts/create-worktree.sh 123 concise-scope --e2e
+```
+
+The Chromium binary is installed in Playwright's normal user cache, not copied
+into the checkout. This is safe to reuse across worktrees because it is tied to
+the installed Playwright version, while the JavaScript dependency tree remains
+local to each checkout.
+
+To verify that browser e2e prerequisites are ready, run:
+
+```bash
+scripts/bootstrap-worktree.sh --check-e2e
+```
 
 For a documentation-only task, use `--no-install`. Before running UI checks in
 such a checkout, run:
@@ -32,10 +51,10 @@ scripts/bootstrap-worktree.sh --install
 ```
 
 Use `scripts/bootstrap-worktree.sh --check` before starting a UI server or
-reporting UI validation. It rejects a linked or copied `node_modules` directory
-and verifies the local top-level dependency tree. The bootstrap records the
-absolute checkout path after a successful clean install, so a copied dependency
-directory fails the check in another worktree.
+reporting UI validation. It rejects a linked or copied `node_modules` directory,
+verifies all required UI commands, and checks both the absolute checkout path
+and the `package-lock.json` hash recorded after installation. A changed lockfile
+therefore forces a clean install instead of silently reusing stale dependencies.
 
 ## Why dependencies stay local
 
@@ -47,6 +66,11 @@ the clean install reuse already downloaded package archives where possible.
 
 Secrets and local runtime state are deliberately not copied. Set them up via
 the existing local QA and environment runbooks only when that task needs them.
+
+`--no-install` is an explicit opt-out, not a way to prepare a test-capable
+worktree. Run the bootstrap install before using Vitest, typecheck, lint, Next,
+or Playwright in that checkout. For e2e, use `--install-e2e` and verify with
+`--check-e2e`.
 
 ## Existing worktrees and cleanup
 

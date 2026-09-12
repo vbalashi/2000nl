@@ -3,13 +3,22 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/create-worktree.sh <issue-number> <short-slug> [--no-install]
+Usage: scripts/create-worktree.sh <issue-number> <short-slug> [--no-install | --e2e]
 
 Creates a 2000NL checkout at .worktrees/<issue-number>-<short-slug> from the
 current origin/main, creates branch codex/<issue-number>-<short-slug>, and by
-default installs the UI dependencies for that checkout.
+default installs the UI toolchain for that checkout.
+
+Options:
+  --no-install   Skip dependency installation for documentation-only work.
+  --e2e          Also install the Playwright Chromium browser.
 EOF
 }
+
+if [[ $# -eq 1 && ( "$1" == "--help" || "$1" == "-h" ) ]]; then
+  usage
+  exit 0
+fi
 
 if [[ $# -lt 2 || $# -gt 3 ]]; then
   usage >&2
@@ -18,14 +27,21 @@ fi
 
 issue="$1"
 slug="$2"
-install_dependencies=true
+bootstrap_mode="--install"
 
 if [[ $# -eq 3 ]]; then
-  if [[ "$3" != "--no-install" ]]; then
-    usage >&2
-    exit 64
-  fi
-  install_dependencies=false
+  case "$3" in
+    --no-install)
+      bootstrap_mode="--no-install"
+      ;;
+    --e2e)
+      bootstrap_mode="--install-e2e"
+      ;;
+    *)
+      usage >&2
+      exit 64
+      ;;
+  esac
 fi
 
 if [[ ! "$issue" =~ ^[1-9][0-9]*$ ]]; then
@@ -81,8 +97,8 @@ git fetch origin main
 git worktree add -b "$branch" "$target" origin/main
 created=true
 
-if [[ "$install_dependencies" == true ]]; then
-  "$target/scripts/bootstrap-worktree.sh" --install
+if [[ "$bootstrap_mode" != "--no-install" ]]; then
+  "$target/scripts/bootstrap-worktree.sh" "$bootstrap_mode"
 fi
 
 trap - ERR
