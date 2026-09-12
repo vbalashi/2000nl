@@ -89,6 +89,22 @@ async function databaseUrl(options) {
   return fromFile;
 }
 
+function candidateRelation() {
+  return `private.training_scheduler_candidates_v2(
+    (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+    ARRAY['word-to-definition']::text[],
+    NULL,
+    'curated',
+    'both',
+    'auto',
+    ARRAY[]::uuid[],
+    ARRAY[]::text[],
+    '{}'::jsonb,
+    false,
+    true
+  )`;
+}
+
 function componentStatement(component) {
   if (component === "public") {
     return `SELECT public.get_training_session_plan(
@@ -100,20 +116,13 @@ function componentStatement(component) {
       '{}'::jsonb
     )`;
   }
-  return `SELECT count(*)
-    FROM private.training_scheduler_candidates_v2(
-      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
-      ARRAY['word-to-definition']::text[],
-      NULL,
-      'curated',
-      'both',
-      'auto',
-      ARRAY[]::uuid[],
-      ARRAY[]::text[],
-      '{}'::jsonb,
-      false,
-      true
-    )`;
+  if (component === "aggregate") {
+    return `SELECT count(*) FILTER (WHERE queue_source = 'new'),
+      count(*) FILTER (WHERE queue_source IN ('learning', 'review')),
+      count(*) FILTER (WHERE queue_source = 'practice')
+    FROM ${candidateRelation()}`;
+  }
+  return `SELECT count(*) FROM ${candidateRelation()}`;
 }
 
 function diagnosticSql(options, component) {
@@ -199,9 +208,10 @@ async function main() {
   delete childEnv.SUPABASE_DB_URL;
   delete childEnv.DATABASE_URL;
   // Run the public contract first so its timing remains directly comparable
-  // with the deployment gate. The candidate pass then attributes the same
-  // scheduler work without exposing the full EXPLAIN plan in CI logs.
-  for (const component of ["public", "candidate"]) {
+  // with the deployment gate. The aggregate and candidate passes then
+  // attribute the same scheduler work without exposing the full EXPLAIN plan
+  // in CI logs.
+  for (const component of ["public", "aggregate", "candidate"]) {
     for (let sample = 1; sample <= options.samples; sample += 1) {
       const metrics = runSample(options, childEnv, component, sample);
       process.stdout.write(
