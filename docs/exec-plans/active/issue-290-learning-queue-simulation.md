@@ -35,9 +35,10 @@ receipt, durable event, history/counter changes, computed due time, next
 presentation, and an exclusion/delay reason. The first slice records a
 deterministic normalized trace with card ordinal/identity, action, accepted vs
 duplicate receipt, event key, and remaining members. It also asserts the
-durable event/receipt/history/statistics totals. A failed next-card lookup must
-be recoverable without sending a second grade; that failure path is a later
-slice.
+durable event/receipt/history/statistics totals. The failure-recovery slice now
+proves that a failed next-card lookup can retire only the unavailable member,
+replace it without spending an accepted action, and retry the same replacement
+identity without sending a second grade.
 
 ## Dependency and clock boundary
 
@@ -113,9 +114,10 @@ DST, and 0.5-day corpus.
    made.
 6. **Limits and known marks:** 50/100 new with daily limits, known mark and
    undo in new and previously scheduled states, and two meanings/directions.
-7. **Failure recovery:** accepted action followed by a failed next-card load;
-   restore only loading, keep the accepted action durable, and show the same
-   card identity exactly once.
+7. **Failure recovery (characterized):** accepted action followed by a failed
+   next-card load; restore only loading, keep the accepted action durable,
+   replace only the unavailable member, and show the same replacement identity
+   on retry exactly once.
 
 ## Non-goals and safety gates
 
