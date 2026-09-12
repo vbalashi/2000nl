@@ -17,7 +17,7 @@ describeIfDb("training calendar boundaries", () => {
   });
 
   test("keeps local midnight stable across Europe/Amsterdam DST transitions", async () => {
-    const cases = [
+    const calendarBoundaryCases = [
       ["2026-03-28T22:59:59Z", "2026-03-28"],
       ["2026-03-28T23:00:00Z", "2026-03-29"],
       ["2026-03-29T21:59:59Z", "2026-03-29"],
@@ -28,9 +28,8 @@ describeIfDb("training calendar boundaries", () => {
       ["2026-10-25T23:00:00Z", "2026-10-26"],
     ] as const;
 
-    const localDates = await withTransaction(pool, async (client) => {
-      const dates: string[] = [];
-      for (const [timestamp, expectedDate] of cases) {
+    await withTransaction(pool, async (client) => {
+      for (const [timestamp, expectedDate] of calendarBoundaryCases) {
         const { rows } = await client.query(
           `select to_char(private.training_filter_local_date(
              $1::timestamptz, 'Europe/Amsterdam'
@@ -38,11 +37,7 @@ describeIfDb("training calendar boundaries", () => {
           [timestamp],
         );
         expect(rows[0]?.local_date).toBe(expectedDate);
-        dates.push(rows[0]?.local_date as string);
       }
-      return dates;
     });
-
-    expect(localDates).toEqual(cases.map(([, expectedDate]) => expectedDate));
   });
 });
