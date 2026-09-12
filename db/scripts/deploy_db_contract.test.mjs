@@ -373,7 +373,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 358 scheduler-cleanup contract", () => {
+test("the repository contract enables the issue 369 finite-session repair contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +386,7 @@ test("the repository contract enables the issue 358 scheduler-cleanup contract",
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 144 358");
+  assert.equal(result.stdout.trim(), "enabled 145 369");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

@@ -59,7 +59,12 @@ Issue #358 advances the contract to migration 144. It removes the unreachable
 count-only planning helper after the public plan had already moved to the
 canonical v2 candidate relation.
 
-An enabled deployment must apply or verify migrations 123 through 144 in order
+Issue #369 advances the contract to migration 145. It repairs finite-session
+creation after migration 140 retired the private v1 candidate relation. The
+repair only changes future session creation; it does not rewrite existing
+session membership, learner progress, FSRS state, or review history.
+
+An enabled deployment must apply or verify migrations 123 through 145 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

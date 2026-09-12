@@ -46,9 +46,9 @@ BEGIN
     min(s.fsrs_last_interval),
     private.platform_v2_card_state_json(p_user,(SELECT id FROM fixture_cards WHERE ordinal=1),'word-to-definition')#>>'{scheduler,phase}',
     selected#>>'{stats,source}',
-    (SELECT queue_source FROM private.training_scheduler_candidates_v1(
+    (SELECT queue_source FROM private.training_scheduler_candidates_v2(
       p_user,ARRAY['word-to-definition'],p_list,'curated','both','review',
-      ARRAY[]::uuid[],ARRAY[]::text[],'{}',false
+      ARRAY[]::uuid[],ARRAY[]::text[],'{}',false,true
     ) ORDER BY selection_order LIMIT 1)
   FROM user_card_status s WHERE s.user_id=p_user;
 END $$;
