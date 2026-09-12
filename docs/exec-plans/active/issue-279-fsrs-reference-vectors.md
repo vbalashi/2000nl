@@ -39,6 +39,10 @@ approval recorded yet.
   and five elapsed scheduler days. They record the pinned reference values
   alongside the current runtime observation, making the pre-review-difficulty
   deviation visible without changing it.
+- `trainingCalendarBoundaries.test.ts` pins the existing named-timezone date
+  conversion at local midnight before and after both Europe/Amsterdam DST
+  transitions. It proves the conversion is independent of the host timezone;
+  scheduler formula and persisted card state remain unchanged.
 
 ## Remaining evidence before any formula decision
 
