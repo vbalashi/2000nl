@@ -316,7 +316,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
     });
   });
 
-  test("lets the service boundary start and review for an authorized principal", async () => {
+  test("lets the explicit Library boundary start and review for an authorized principal", async () => {
     const userId = randomUUID();
 
     await withTransaction(pool, async (client) => {
@@ -335,7 +335,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
       const started = await client.query(
         `select perform_platform_v2_card_action_as_principal(
            $1::uuid, 'start-learning', $2::uuid, $3::text, 'untracked',
-           null, null, null, $4::uuid, null, 'first_party', null
+           null, null, null, $4::uuid, null, 'first_party', null, null
          ) as result`,
         [userId, entryId, cardTypeId, randomUUID()],
       );
@@ -344,7 +344,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
       const reviewed = await client.query(
         `select perform_platform_v2_card_action_as_principal(
            $1::uuid, 'review-card', $2::uuid, $3::text, $4::text,
-           null, null, 'success', $5::uuid, null, 'first_party', null
+           null, null, 'success', $5::uuid, null, 'first_party', null, null
          ) as result`,
         [
           userId,

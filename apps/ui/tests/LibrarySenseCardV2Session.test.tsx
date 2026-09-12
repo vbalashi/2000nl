@@ -134,7 +134,7 @@ vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
 }));
 
 vi.mock("@/lib/platform/platformV2TrainingActionClient", () => ({
-  performPlatformV2TrainingAction: (...args: unknown[]) =>
+  performPlatformV2LibraryAction: (...args: unknown[]) =>
     performAction(...args),
 }));
 

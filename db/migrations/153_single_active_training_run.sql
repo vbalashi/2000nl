@@ -574,10 +574,11 @@ REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) FROM PUBLIC, anon, authenticated, service_role;
 
--- Legacy/non-session callers keep the established contract unless the server
--- can prove that this is a first-party action for a still-pending Training
--- member. That narrow case must use the session-aware overload; Connected
--- Clients and unrelated first-party dictionary actions remain supported.
+-- The 12-argument overload is the compatibility boundary for Connected
+-- Clients only. A first-party caller that omits explicit server-selected
+-- context is ambiguous with a stale Training client and must fail closed.
+-- First-party Library actions use the service-role-only 13-argument overload
+-- with an explicit null session; Training supplies a concrete session id.
 CREATE OR REPLACE FUNCTION public.perform_platform_v2_card_action_as_principal(
   p_user_id uuid,
   p_action_id text,
@@ -609,26 +610,8 @@ BEGIN
   IF p_user_id IS NULL THEN RAISE EXCEPTION 'missing_user_id'; END IF;
   PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
 
-  IF p_auth_kind = 'first_party'
-     AND p_action_id IN ('start-learning', 'mark-known', 'review-card') THEN
-    PERFORM pg_advisory_xact_lock(
-      hashtext('training-active-run:' || p_user_id::text)
-    );
-    IF EXISTS (
-      SELECT 1
-      FROM public.training_sessions AS session
-      JOIN public.training_session_members AS member
-        ON member.session_id = session.id
-      WHERE session.user_id = p_user_id
-        AND session.completed_at IS NULL
-        AND session.expires_at > private.training_reference_now_v1()
-        AND member.entry_id = p_entry_id
-        AND member.card_type_id = p_card_type_id
-        AND member.consumed_at IS NULL
-        AND member.unavailable_at IS NULL
-    ) THEN
-      RAISE EXCEPTION 'missing_training_session_id';
-    END IF;
+  IF p_auth_kind IS DISTINCT FROM 'connected_client' THEN
+    RAISE EXCEPTION 'missing_training_session_id';
   END IF;
 
   RETURN private.perform_platform_v2_card_action_non_session_latch_v1(
@@ -681,10 +664,9 @@ BEGIN
   IF p_user_id IS NULL THEN RAISE EXCEPTION 'missing_user_id'; END IF;
   PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
 
-  -- The 13-argument overload is also used by compatibility callers that pass
-  -- an explicit null to identify an ordinary non-session action. Preserve that
-  -- explicit contract without routing it through the guarded legacy
-  -- 12-argument overload used by clients that omit Training identity entirely.
+  -- The dedicated first-party Library server route passes an explicit null to
+  -- identify an ordinary non-session action. Keep that trusted call path out
+  -- of the 12-argument Connected Client compatibility overload.
   IF p_training_session_id IS NULL THEN
     RETURN private.perform_platform_v2_card_action_non_session_latch_v1(
       p_user_id, p_action_id, p_entry_id, p_card_type_id, p_state_revision,
@@ -726,5 +708,14 @@ REVOKE ALL ON FUNCTION public.perform_platform_v2_card_action_as_principal(
 GRANT EXECUTE ON FUNCTION public.perform_platform_v2_card_action_as_principal(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) TO service_role;
+
+-- These historical browser RPCs cannot carry Training run identity. Keep the
+-- functions for postgres-owned internal action implementations, but remove
+-- every direct API-role entry point. Their retired aliases handle_review and
+-- start_learning_card were already removed by the canonical migration chain.
+REVOKE ALL ON FUNCTION public.handle_card_review(uuid, uuid, text, text, uuid)
+  FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.start_learning_entry_card(uuid, uuid, text)
+  FROM PUBLIC, anon, authenticated, service_role;
 
 COMMIT;

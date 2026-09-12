@@ -228,16 +228,20 @@ describeDb("active Training run authority", () => {
     ]);
   });
 
-  test("rejects a first-party Training action without a run while preserving other callers", async () => {
-    const { userId, entryIds } = await createRunFixture(pool, 3);
+  test("separates ambiguous Training calls from explicit Library and Connected Client paths", async () => {
+    const { userId, entryIds } = await createRunFixture(pool, 4);
     try {
-      const session = await committed(pool, userId, (client) =>
+      const first = await committed(pool, userId, (client) =>
         startTrainingRun(client, userId, "1"),
       );
       const card = await committed(pool, userId, (client) =>
-        nextTrainingCard(client, userId, session.sessionId),
+        nextTrainingCard(client, userId, first.sessionId),
       );
       if (!card) throw new Error("expected one Training card");
+      const takeover = await committed(pool, userId, (client) =>
+        startTrainingRun(client, userId, "1"),
+      );
+      expect(takeover.sessionId).not.toBe(first.sessionId);
       const unrelatedEntryId = entryIds.find((entryId) => entryId !== card.id);
       if (!unrelatedEntryId) throw new Error("expected an unrelated entry");
 
@@ -251,29 +255,35 @@ describeDb("active Training run authority", () => {
                  $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
                  null, null, null, $5::uuid, null, 'first_party', null
                )`,
-              [userId, card.id, card.mode, card.stateRevision, randomUUID()],
+              [
+                userId,
+                unrelatedEntryId,
+                card.mode,
+                "untracked",
+                randomUUID(),
+              ],
             ),
           "service_role",
         ),
       ).rejects.toThrow("missing_training_session_id");
 
-      const unrelated = await committed(
+      const library = await committed(
         pool,
         userId,
         async (client) => {
           const { rows } = await client.query(
             `select perform_platform_v2_card_action_as_principal(
-               $1::uuid, 'start-learning', $2::uuid, 'word-to-definition',
-               'untracked', null, null, null, $3::uuid, null,
-               'first_party', null
+               $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+               null, null, null, $5::uuid, null,
+               'first_party', null, null
              ) as result`,
-            [userId, unrelatedEntryId, randomUUID()],
+            [userId, card.id, card.mode, card.stateRevision, randomUUID()],
           );
           return rows[0].result;
         },
         "service_role",
       );
-      expect(unrelated).toEqual(expect.objectContaining({ status: "accepted" }));
+      expect(library).toEqual(expect.objectContaining({ status: "accepted" }));
 
       const connectedClientId = `run-authority-${userId}`;
       await committed(pool, userId, async (client) => {
@@ -306,9 +316,9 @@ describeDb("active Training run authority", () => {
              ) as result`,
             [
               userId,
-              card.id,
+              unrelatedEntryId,
               card.mode,
-              card.stateRevision,
+              "untracked",
               randomUUID(),
               connectedClientId,
             ],
@@ -320,6 +330,79 @@ describeDb("active Training run authority", () => {
       expect(connectedClient).toEqual(
         expect.objectContaining({ status: "accepted" }),
       );
+    } finally {
+      await cleanupRunFixture(pool, userId, entryIds);
+    }
+  });
+
+  test("removes every direct authenticated legacy Training mutation overload", async () => {
+    const { rows } = await pool.query(
+      `select p.oid::regprocedure::text as signature,
+              p.pronargdefaults as default_count,
+              has_function_privilege('authenticated', p.oid, 'execute') as authenticated_execute
+         from pg_proc p
+         join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public'
+          and p.proname in (
+            'handle_card_review',
+            'handle_review',
+            'start_learning_entry_card',
+            'start_learning_card'
+          )
+        order by p.proname, p.oid::regprocedure::text`,
+    );
+    expect(rows).toEqual([
+      {
+        signature: "handle_card_review(uuid,uuid,text,text,uuid)",
+        default_count: 1,
+        authenticated_execute: false,
+      },
+      {
+        signature: "start_learning_entry_card(uuid,uuid,text)",
+        default_count: 0,
+        authenticated_execute: false,
+      },
+    ]);
+  });
+
+  test.each([
+    {
+      name: "review",
+      signature: "handle_card_review(uuid,uuid,text,text,uuid)",
+    },
+    {
+      name: "learn",
+      signature: "start_learning_entry_card(uuid,uuid,text)",
+    },
+  ])("rejects a stale direct legacy $name after takeover without effects", async ({ signature }) => {
+    const { userId, entryIds } = await createRunFixture(pool, 2);
+    try {
+      await committed(pool, userId, (client) =>
+        startTrainingRun(client, userId, "1"),
+      );
+      await committed(pool, userId, (client) =>
+        startTrainingRun(client, userId, "1"),
+      );
+
+      const canExecute = await committed(pool, userId, async (client) => {
+        await client.query("set local role authenticated");
+        const { rows } = await client.query(
+          `select has_function_privilege(current_user, $1::regprocedure, 'execute') as allowed`,
+          [signature],
+        );
+        return rows[0].allowed as boolean;
+      });
+      expect(canExecute).toBe(false);
+
+      const { rows } = await pool.query(
+        `select
+           (select count(*)::integer from user_review_log
+             where user_id = $1::uuid) as reviews,
+           (select count(*)::integer from user_card_status
+             where user_id = $1::uuid) as statuses`,
+        [userId],
+      );
+      expect(rows[0]).toEqual({ reviews: 0, statuses: 0 });
     } finally {
       await cleanupRunFixture(pool, userId, entryIds);
     }

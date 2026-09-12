@@ -442,7 +442,11 @@ export function TrainingSenseCardV2Session({
             : null;
           rememberPendingKnownUndo(
             undoKnown && presentationIdentity
-              ? { capability: undoKnown, presentationIdentity }
+              ? {
+                  capability: undoKnown,
+                  presentationIdentity,
+                  trainingSessionId: trainingSessionId ?? undefined,
+                }
               : null,
           );
         } else {

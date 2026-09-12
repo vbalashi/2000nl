@@ -386,7 +386,7 @@ test("the repository contract enables the issue 279 FSRS contract", () => {
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 152 279");
+  assert.equal(result.stdout.trim(), "enabled 153 279");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

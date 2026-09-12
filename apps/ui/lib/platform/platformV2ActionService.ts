@@ -14,32 +14,59 @@ export type PlatformV2ActionOperationResult = {
   receiptStatus?: "accepted" | "duplicate";
 };
 
+export type PlatformV2ActionCallPath =
+  | "training"
+  | "library"
+  | "connected_client";
+
 export async function performPlatformV2Action(
   auth: AuthenticatedSupabase,
   service: ServiceSupabase,
   request: PlatformActionV2Request,
+  callPath: PlatformV2ActionCallPath,
 ): Promise<PlatformV2ActionOperationResult> {
+  if (callPath === "training" && !request.trainingSessionId) {
+    return {
+      payload: { error: "missing_training_session_id" },
+      status: 400,
+    };
+  }
+  if (callPath === "library" && request.trainingSessionId) {
+    return {
+      payload: { error: "unexpected_training_session_id" },
+      status: 400,
+    };
+  }
+  if (
+    (callPath === "connected_client") !==
+    (auth.principal.authKind === "connected_client")
+  ) {
+    return { payload: { error: "invalid_action_call_path" }, status: 403 };
+  }
+
   const undoTarget =
     request.actionId === "undo-known" ? request.target : null;
   const reviewResult =
     request.actionId === "review-card" ? request.reviewResult : null;
   const actionPayload = {
-      p_user_id: auth.user.id,
-      p_action_id: request.actionId,
-      p_entry_id: request.target.entryId,
-      p_card_type_id: request.target.cardTypeId,
-      p_state_revision: request.target.stateRevision,
-      p_active_known_mark_id: undoTarget?.activeKnownMarkId ?? null,
-      p_known_mark_revision: undoTarget?.knownMarkRevision ?? null,
-      p_review_result: reviewResult,
-      p_client_event_id: request.clientEventId,
-      p_source_context: request.sourceContext ?? null,
-      p_auth_kind: auth.principal.authKind,
-      p_connected_client_id: auth.principal.connectedClientId,
-      ...(request.trainingSessionId
-        ? { p_training_session_id: request.trainingSessionId }
+    p_user_id: auth.user.id,
+    p_action_id: request.actionId,
+    p_entry_id: request.target.entryId,
+    p_card_type_id: request.target.cardTypeId,
+    p_state_revision: request.target.stateRevision,
+    p_active_known_mark_id: undoTarget?.activeKnownMarkId ?? null,
+    p_known_mark_revision: undoTarget?.knownMarkRevision ?? null,
+    p_review_result: reviewResult,
+    p_client_event_id: request.clientEventId,
+    p_source_context: request.sourceContext ?? null,
+    p_auth_kind: auth.principal.authKind,
+    p_connected_client_id: auth.principal.connectedClientId,
+    ...(callPath === "training"
+      ? { p_training_session_id: request.trainingSessionId }
+      : callPath === "library"
+        ? { p_training_session_id: null }
         : {}),
-    };
+  };
   const { data, error } = await service.supabase.rpc(
     "perform_platform_v2_card_action_as_principal",
     actionPayload,

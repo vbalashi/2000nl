@@ -81,6 +81,38 @@ export async function performPlatformV2TrainingAction(
     onRequestFrozen?: (request: PlatformActionV2Request) => void;
   } = {},
 ): Promise<PlatformActionV2Response> {
+  return performPlatformV2Action(
+    capability,
+    "/api/platform/v2/actions",
+    context,
+  );
+}
+
+export async function performPlatformV2LibraryAction(
+  capability: PlatformV2TrainingActionCapability,
+  context: {
+    transitionId?: string;
+    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+  } = {},
+): Promise<PlatformActionV2Response> {
+  return performPlatformV2Action(
+    capability,
+    "/api/platform/v2/actions/library",
+    context,
+  );
+}
+
+async function performPlatformV2Action(
+  capability: PlatformV2TrainingActionCapability,
+  actionEndpoint:
+    | "/api/platform/v2/actions"
+    | "/api/platform/v2/actions/library",
+  context: {
+    transitionId?: string;
+    trainingSessionId?: string;
+    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+  },
+): Promise<PlatformActionV2Response> {
   const request = buildPlatformV2TrainingActionRequest(
     capability,
     crypto.randomUUID(),
@@ -91,6 +123,7 @@ export async function performPlatformV2TrainingAction(
   let response: Response;
   try {
     response = await submitPlatformV2TrainingAction(
+      actionEndpoint,
       request,
       headers,
       context.transitionId,
@@ -122,6 +155,9 @@ export async function performPlatformV2TrainingAction(
 }
 
 function submitPlatformV2TrainingAction(
+  actionEndpoint:
+    | "/api/platform/v2/actions"
+    | "/api/platform/v2/actions/library",
   request: PlatformActionV2Request,
   headers: HeadersInit,
   transitionId?: string,
@@ -132,7 +168,7 @@ function submitPlatformV2TrainingAction(
     "review.mutation.request",
     "attempt-1",
     () =>
-      platformFetchWithTimeout("/api/platform/v2/actions", {
+      platformFetchWithTimeout(actionEndpoint, {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
