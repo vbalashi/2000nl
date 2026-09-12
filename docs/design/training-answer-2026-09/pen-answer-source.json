@@ -1,0 +1,1406 @@
+{
+  "captured": "2026-09-06",
+  "source": "/Users/khrustal/dev/pens/2000nl-audiofilms.pen",
+  "node": "twUIm",
+  "units": "Pen logical pixels; bounds parent-relative; root x/y is canvas position, not screen inset",
+  "rows": [
+    {
+      "id": "twUIm",
+      "name": "30.95.08 · Answer Runtime Reference · Screen",
+      "type": "frame",
+      "b": {
+        "x": 16,
+        "y": 16,
+        "width": 402,
+        "height": 874
+      },
+      "gap": 10,
+      "padding": 10,
+      "fill": "#11141A"
+    },
+    {
+      "id": "GW6V5",
+      "name": "30.95.08 · INSTANCE · Mobile App Header",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 10,
+        "width": 382,
+        "height": 58
+      },
+      "parent": "twUIm",
+      "padding": [
+        0,
+        18
+      ],
+      "fill": "#111827"
+    },
+    {
+      "id": "GW6V5/T1ZTDl",
+      "name": "30.10.02 · Mobile Brand",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 13.5,
+        "width": 90,
+        "height": 31
+      },
+      "parent": "GW6V5",
+      "gap": 2
+    },
+    {
+      "id": "GW6V5/vuP7H",
+      "name": "30.10.02 · Mobile Brand Main",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 66,
+        "height": 31
+      },
+      "parent": "GW6V5/T1ZTDl",
+      "size": 26,
+      "family": "Inter",
+      "weight": "750",
+      "fill": "#f3f5f9"
+    },
+    {
+      "id": "GW6V5/gVsIR",
+      "name": "30.10.02 · Mobile Brand Accent",
+      "type": "text",
+      "b": {
+        "x": 68,
+        "y": 0,
+        "width": 22,
+        "height": 31
+      },
+      "parent": "GW6V5/T1ZTDl",
+      "size": 26,
+      "family": "Inter",
+      "weight": "750",
+      "fill": "#aab0ff"
+    },
+    {
+      "id": "GW6V5/OB9Sd",
+      "name": "30.10.02 · Mobile Header Actions",
+      "type": "frame",
+      "b": {
+        "x": 293,
+        "y": 13,
+        "width": 71,
+        "height": 32
+      },
+      "parent": "GW6V5",
+      "gap": 7
+    },
+    {
+      "id": "GW6V5/Fgj6X",
+      "name": "30.10.02 · History",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
+      "parent": "GW6V5/OB9Sd",
+      "fill": "#171d29"
+    },
+    {
+      "id": "GW6V5/GDNKw",
+      "name": "30.10.02 · History Icon",
+      "type": "icon",
+      "b": {
+        "x": 8.5,
+        "y": 8.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "GW6V5/Fgj6X",
+      "fill": "#b4bdcc",
+      "icon": "history"
+    },
+    {
+      "id": "GW6V5/HXNbA",
+      "name": "30.10.02 · Close Session",
+      "type": "frame",
+      "b": {
+        "x": 39,
+        "y": 0,
+        "width": 32,
+        "height": 32
+      },
+      "parent": "GW6V5/OB9Sd",
+      "fill": "#171d29"
+    },
+    {
+      "id": "GW6V5/GkauG",
+      "name": "30.10.02 · Close Session Icon",
+      "type": "icon",
+      "b": {
+        "x": 8.5,
+        "y": 8.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "GW6V5/HXNbA",
+      "fill": "#b4bdcc",
+      "icon": "x"
+    },
+    {
+      "id": "v7BQfE",
+      "name": "30.95.08 · INSTANCE · Training Session · Answer",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 78,
+        "width": 382,
+        "height": 732
+      },
+      "parent": "twUIm",
+      "gap": 10
+    },
+    {
+      "id": "v7BQfE/O0Qfv",
+      "name": "30.95.08 · INSTANCE · Mobile Session Header",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 52
+      },
+      "parent": "v7BQfE",
+      "gap": 14
+    },
+    {
+      "id": "v7BQfE/O0Qfv/i7urp",
+      "name": "30.10.02 · Mobile Session Meta",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 34
+      },
+      "parent": "v7BQfE/O0Qfv"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/gagsI",
+      "name": "30.10.02 · Mobile Session Identity",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 143,
+        "height": 34
+      },
+      "parent": "v7BQfE/O0Qfv/i7urp",
+      "gap": 3
+    },
+    {
+      "id": "v7BQfE/O0Qfv/I6VqH8",
+      "name": "30.10.02 · Mobile Session Eyebrow",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 55,
+        "height": 12
+      },
+      "parent": "v7BQfE/O0Qfv/gagsI",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "650",
+      "fill": "#aab0ff"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/L0LsFJ",
+      "name": "30.10.02 · Mobile Session Name",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 15,
+        "width": 143,
+        "height": 19
+      },
+      "parent": "v7BQfE/O0Qfv/gagsI",
+      "size": 16,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#f3f5f9"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/Fe5AJ",
+      "name": "30.10.02 · Mobile Progress Count",
+      "type": "frame",
+      "b": {
+        "x": 321,
+        "y": 8,
+        "width": 61,
+        "height": 26
+      },
+      "parent": "v7BQfE/O0Qfv/i7urp",
+      "gap": 4,
+      "padding": [
+        6,
+        9
+      ],
+      "fill": "#171d29"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/W3kC2",
+      "name": "30.10.02 · Mobile Current Count",
+      "type": "text",
+      "b": {
+        "x": 9,
+        "y": 6,
+        "width": 14,
+        "height": 14
+      },
+      "parent": "v7BQfE/O0Qfv/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "650",
+      "fill": "#f3f5f9"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/Dlh9c",
+      "name": "30.10.02 · Mobile Count Separator",
+      "type": "text",
+      "b": {
+        "x": 27,
+        "y": 6,
+        "width": 7,
+        "height": 14
+      },
+      "parent": "v7BQfE/O0Qfv/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "normal",
+      "fill": "#858f9f"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/um0TK",
+      "name": "30.10.02 · Mobile Total Count",
+      "type": "text",
+      "b": {
+        "x": 38,
+        "y": 6,
+        "width": 14,
+        "height": 14
+      },
+      "parent": "v7BQfE/O0Qfv/Fe5AJ",
+      "size": 11,
+      "family": "Geist Mono",
+      "weight": "normal",
+      "fill": "#858f9f"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/JDjFG",
+      "name": "30.10.02 · Mobile Progress Track",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 48,
+        "width": 382,
+        "height": 4
+      },
+      "parent": "v7BQfE/O0Qfv",
+      "fill": "#232a38"
+    },
+    {
+      "id": "v7BQfE/O0Qfv/zERBE",
+      "name": "30.10.02 · Mobile Progress Fill",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 156,
+        "height": 4
+      },
+      "parent": "v7BQfE/O0Qfv/JDjFG",
+      "fill": "#8b89f6"
+    },
+    {
+      "id": "v7BQfE/LpGoI",
+      "name": "30.95.08 · Answer Card",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 62,
+        "width": 382,
+        "height": 540
+      },
+      "parent": "v7BQfE",
+      "gap": 6,
+      "padding": 18,
+      "fill": "#20252D"
+    },
+    {
+      "id": "v7BQfE/HSVVI",
+      "name": "30.95.08 · INSTANCE · Training Mobile Answer Header",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 18,
+        "width": 346,
+        "height": 102
+      },
+      "parent": "v7BQfE/LpGoI",
+      "gap": 8
+    },
+    {
+      "id": "v7BQfE/HSVVI/wUn8R",
+      "name": "Metadata Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 346,
+        "height": 30
+      },
+      "parent": "v7BQfE/HSVVI"
+    },
+    {
+      "id": "v7BQfE/HSVVI/YQFJB",
+      "name": "POS, Core Vocabulary And Exposure",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 5,
+        "width": 106,
+        "height": 20
+      },
+      "parent": "v7BQfE/HSVVI/wUn8R",
+      "gap": 7
+    },
+    {
+      "id": "v7BQfE/HSVVI/lhbYl",
+      "name": "POS Dot",
+      "type": "ellipse",
+      "b": {
+        "x": 0,
+        "y": 6.5,
+        "width": 7,
+        "height": 7
+      },
+      "parent": "v7BQfE/HSVVI/YQFJB",
+      "fill": "#37D99B"
+    },
+    {
+      "id": "v7BQfE/HSVVI/X9UbiN",
+      "name": "POS Label",
+      "type": "text",
+      "b": {
+        "x": 14,
+        "y": 2.5,
+        "width": 18,
+        "height": 15
+      },
+      "parent": "v7BQfE/HSVVI/YQFJB",
+      "size": 12,
+      "family": "Inter",
+      "weight": "600",
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "v7BQfE/HSVVI/dJZ98",
+      "name": "Core Vocabulary Chip",
+      "type": "frame",
+      "b": {
+        "x": 39,
+        "y": 0,
+        "width": 23,
+        "height": 20
+      },
+      "parent": "v7BQfE/HSVVI/YQFJB",
+      "padding": [
+        2,
+        6
+      ],
+      "fill": "#262648"
+    },
+    {
+      "id": "v7BQfE/HSVVI/bURYh",
+      "name": "Core Vocabulary Chip · Label",
+      "type": "text",
+      "b": {
+        "x": 6,
+        "y": 4,
+        "width": 11,
+        "height": 12
+      },
+      "parent": "v7BQfE/HSVVI/dJZ98",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#aab0ff"
+    },
+    {
+      "id": "v7BQfE/HSVVI/OhsFK",
+      "name": "Exposure Badge",
+      "type": "frame",
+      "b": {
+        "x": 69,
+        "y": 0,
+        "width": 37,
+        "height": 20
+      },
+      "parent": "v7BQfE/HSVVI/YQFJB",
+      "gap": 4,
+      "padding": [
+        2,
+        6
+      ],
+      "fill": "#171B22"
+    },
+    {
+      "id": "v7BQfE/HSVVI/DkgyH",
+      "name": "Exposure Badge · Icon",
+      "type": "icon",
+      "b": {
+        "x": 6,
+        "y": 5,
+        "width": 10,
+        "height": 10
+      },
+      "parent": "v7BQfE/HSVVI/OhsFK",
+      "fill": "#BFC7D4",
+      "icon": "repeat"
+    },
+    {
+      "id": "v7BQfE/HSVVI/BXinF",
+      "name": "Exposure Badge · Label",
+      "type": "text",
+      "b": {
+        "x": 20,
+        "y": 4,
+        "width": 11,
+        "height": 12
+      },
+      "parent": "v7BQfE/HSVVI/OhsFK",
+      "size": 9,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "v7BQfE/HSVVI/iOksJ",
+      "name": "Audio, Translate And More",
+      "type": "frame",
+      "b": {
+        "x": 242,
+        "y": 0,
+        "width": 104,
+        "height": 30
+      },
+      "parent": "v7BQfE/HSVVI/wUn8R",
+      "gap": 7
+    },
+    {
+      "id": "v7BQfE/HSVVI/hxJMr",
+      "name": "Audio Button",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 30,
+        "height": 30
+      },
+      "parent": "v7BQfE/HSVVI/iOksJ",
+      "fill": "#171B22"
+    },
+    {
+      "id": "v7BQfE/HSVVI/odsJd",
+      "name": "Audio Button · Icon",
+      "type": "icon",
+      "b": {
+        "x": 7.5,
+        "y": 7.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "v7BQfE/HSVVI/hxJMr",
+      "fill": "#BFC7D4",
+      "icon": "volume-2"
+    },
+    {
+      "id": "v7BQfE/HSVVI/MTJLG",
+      "name": "Translate Button",
+      "type": "frame",
+      "b": {
+        "x": 37,
+        "y": 0,
+        "width": 30,
+        "height": 30
+      },
+      "parent": "v7BQfE/HSVVI/iOksJ",
+      "fill": "#171B22"
+    },
+    {
+      "id": "v7BQfE/HSVVI/k9cP5",
+      "name": "Translate Button · Icon",
+      "type": "icon",
+      "b": {
+        "x": 7.5,
+        "y": 7.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "v7BQfE/HSVVI/MTJLG",
+      "fill": "#BFC7D4",
+      "icon": "languages"
+    },
+    {
+      "id": "v7BQfE/HSVVI/BZWpx",
+      "name": "More Button",
+      "type": "frame",
+      "b": {
+        "x": 74,
+        "y": 0,
+        "width": 30,
+        "height": 30
+      },
+      "parent": "v7BQfE/HSVVI/iOksJ",
+      "fill": "#171B22"
+    },
+    {
+      "id": "v7BQfE/HSVVI/xoGTS",
+      "name": "More Button · Icon",
+      "type": "icon",
+      "b": {
+        "x": 7.5,
+        "y": 7.5,
+        "width": 15,
+        "height": 15
+      },
+      "parent": "v7BQfE/HSVVI/BZWpx",
+      "fill": "#BFC7D4",
+      "icon": "ellipsis"
+    },
+    {
+      "id": "v7BQfE/HSVVI/h5iuu8",
+      "name": "Headword And Translation",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 38,
+        "width": 346,
+        "height": 64
+      },
+      "parent": "v7BQfE/HSVVI",
+      "gap": 2
+    },
+    {
+      "id": "v7BQfE/HSVVI/BuMqy",
+      "name": "Headword Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 346,
+        "height": 44
+      },
+      "parent": "v7BQfE/HSVVI/h5iuu8",
+      "gap": 10
+    },
+    {
+      "id": "v7BQfE/HSVVI/SEaCF",
+      "name": "Article Baseline Wrapper",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 20,
+        "height": 44
+      },
+      "parent": "v7BQfE/HSVVI/BuMqy",
+      "padding": [
+        0,
+        0,
+        6.36,
+        0
+      ]
+    },
+    {
+      "id": "v7BQfE/HSVVI/Y8gk7Y",
+      "name": "Article",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 17.64,
+        "width": 20,
+        "height": 20
+      },
+      "parent": "v7BQfE/HSVVI/SEaCF",
+      "size": 20,
+      "family": "Newsreader",
+      "weight": "500",
+      "line": 1,
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "v7BQfE/HSVVI/s2hap4",
+      "name": "Headword",
+      "type": "text",
+      "b": {
+        "x": 30,
+        "y": 0,
+        "width": 92,
+        "height": 44
+      },
+      "parent": "v7BQfE/HSVVI/BuMqy",
+      "size": 44,
+      "family": "Newsreader",
+      "weight": "500",
+      "line": 1,
+      "fill": "#F4F6FA"
+    },
+    {
+      "id": "v7BQfE/HSVVI/bvHxP",
+      "name": "Translation",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 46,
+        "width": 90,
+        "height": 18
+      },
+      "parent": "v7BQfE/HSVVI/h5iuu8",
+      "size": 15,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#E9C46A"
+    },
+    {
+      "id": "v7BQfE/Un3AL",
+      "name": "30.95.08 · INSTANCE · Headword And Meaning",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 126,
+        "width": 346,
+        "height": 71
+      },
+      "parent": "v7BQfE/LpGoI",
+      "gap": 10,
+      "padding": [
+        14,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "v7BQfE/Un3AL/dlaTs",
+      "name": "Meaning Group",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 14,
+        "width": 346,
+        "height": 57
+      },
+      "parent": "v7BQfE/Un3AL",
+      "gap": 3
+    },
+    {
+      "id": "v7BQfE/Un3AL/I8bum",
+      "name": "Definition",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 346,
+        "height": 36
+      },
+      "parent": "v7BQfE/Un3AL/dlaTs",
+      "size": 16,
+      "family": "Newsreader",
+      "weight": "normal",
+      "line": 1.15,
+      "fill": "#F4F6FA"
+    },
+    {
+      "id": "v7BQfE/Un3AL/dvCTv",
+      "name": "Definition Translation",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 39,
+        "width": 340,
+        "height": 18
+      },
+      "parent": "v7BQfE/Un3AL/dlaTs",
+      "size": 13,
+      "family": "Inter",
+      "weight": "normal",
+      "line": 1.35,
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "v7BQfE/GS2Mc",
+      "name": "30.95.08 · Examples Header",
+      "type": "frame",
+      "b": {
+        "x": 18,
+        "y": 203,
+        "width": 346,
+        "height": 21
+      },
+      "parent": "v7BQfE/LpGoI",
+      "gap": 8,
+      "padding": [
+        8,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "v7BQfE/cR1io",
+      "name": "30.95.08 · Examples Header · Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 8,
+        "width": 66,
+        "height": 13
+      },
+      "parent": "v7BQfE/GS2Mc",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "v7BQfE/wCBHp",
+      "name": "30.95.08 · Examples Header · Rule",
+      "type": "rectangle",
+      "b": {
+        "x": 74,
+        "y": 14,
+        "width": 258,
+        "height": 1
+      },
+      "parent": "v7BQfE/GS2Mc",
+      "fill": "#394150"
+    },
+    {
+      "id": "v7BQfE/EmaJe",
+      "name": "30.95.08 · Examples Header · Count",
+      "type": "text",
+      "b": {
+        "x": 340,
+        "y": 8,
+        "width": 6,
+        "height": 13
+      },
+      "parent": "v7BQfE/GS2Mc",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "normal",
+      "fill": "#858F9F"
+    },
+    {
+      "id": "v7BQfE/ttOGq",
+      "name": "30.95.08 · Example",
+      "type": "text",
+      "b": {
+        "x": 18,
+        "y": 230,
+        "width": 346,
+        "height": 22
+      },
+      "parent": "v7BQfE/LpGoI",
+      "size": 16,
+      "family": "Newsreader",
+      "weight": "normal",
+      "line": 1.4,
+      "fill": "#F4F6FA"
+    },
+    {
+      "id": "v7BQfE/BPV1P",
+      "name": "30.95.08 · INSTANCE · Training Mobile Review Dock",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 612,
+        "width": 382,
+        "height": 120
+      },
+      "parent": "v7BQfE",
+      "gap": 6
+    },
+    {
+      "id": "v7BQfE/BPV1P/M0E9hA",
+      "name": "30.95.08 · Review Row 1",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 382,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P",
+      "gap": 6
+    },
+    {
+      "id": "v7BQfE/BPV1P/LlXt8",
+      "name": "30.95.08 · Again",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/M0E9hA",
+      "fill": "#11141A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/fNg6j",
+      "name": "30.95.08 · Again · Label",
+      "type": "text",
+      "b": {
+        "x": 77,
+        "y": 13.5,
+        "width": 34,
+        "height": 15
+      },
+      "parent": "v7BQfE/BPV1P/LlXt8",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#FF8A93"
+    },
+    {
+      "id": "v7BQfE/BPV1P/gVEaO",
+      "name": "Current Review Accent",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/LlXt8",
+      "fill": "#FF8A93"
+    },
+    {
+      "id": "v7BQfE/BPV1P/DFCgC",
+      "name": "30.95.08 · Hard",
+      "type": "frame",
+      "b": {
+        "x": 194,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/M0E9hA",
+      "fill": "#11141A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/N3WaJH",
+      "name": "30.95.08 · Hard · Label",
+      "type": "text",
+      "b": {
+        "x": 79.5,
+        "y": 13.5,
+        "width": 29,
+        "height": 15
+      },
+      "parent": "v7BQfE/BPV1P/DFCgC",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#FDE68A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/LG3AD",
+      "name": "Current Review Accent",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/DFCgC",
+      "fill": "#FDE68A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/tGLfY",
+      "name": "30.95.08 · Review Row 2",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 48,
+        "width": 382,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P",
+      "gap": 6
+    },
+    {
+      "id": "v7BQfE/BPV1P/XakHG",
+      "name": "30.95.08 · Good",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/tGLfY",
+      "fill": "#11141A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/TRju2",
+      "name": "30.95.08 · Good · Label",
+      "type": "text",
+      "b": {
+        "x": 78,
+        "y": 13.5,
+        "width": 32,
+        "height": 15
+      },
+      "parent": "v7BQfE/BPV1P/XakHG",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#37D99B"
+    },
+    {
+      "id": "v7BQfE/BPV1P/ivDn2",
+      "name": "Current Review Accent",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/XakHG",
+      "fill": "#37D99B"
+    },
+    {
+      "id": "v7BQfE/BPV1P/T8IGF",
+      "name": "30.95.08 · Easy",
+      "type": "frame",
+      "b": {
+        "x": 194,
+        "y": 0,
+        "width": 188,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/tGLfY",
+      "fill": "#11141A"
+    },
+    {
+      "id": "v7BQfE/BPV1P/NIETo",
+      "name": "30.95.08 · Easy · Label",
+      "type": "text",
+      "b": {
+        "x": 79.5,
+        "y": 13.5,
+        "width": 29,
+        "height": 15
+      },
+      "parent": "v7BQfE/BPV1P/T8IGF",
+      "size": 12,
+      "family": "Inter",
+      "weight": "700",
+      "fill": "#BBF7D0"
+    },
+    {
+      "id": "v7BQfE/BPV1P/o8UyI",
+      "name": "Current Review Accent",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 42
+      },
+      "parent": "v7BQfE/BPV1P/T8IGF",
+      "fill": "#BBF7D0"
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl",
+      "name": "Secondary Actions",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 96,
+        "width": 382,
+        "height": 24
+      },
+      "parent": "v7BQfE/BPV1P",
+      "padding": [
+        10,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/jg5Np",
+      "name": "Report Current Meaning · action.report",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 10,
+        "width": 59,
+        "height": 14
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl",
+      "gap": 6
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/Bluwy",
+      "name": "Report Icon",
+      "type": "icon",
+      "b": {
+        "x": 0,
+        "y": 1,
+        "width": 12,
+        "height": 12
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl/jg5Np",
+      "fill": "#7b8694",
+      "icon": "flag"
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/VI434",
+      "name": "Report Label · action.report",
+      "type": "text",
+      "b": {
+        "x": 18,
+        "y": 0,
+        "width": 41,
+        "height": 14
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl/jg5Np",
+      "size": 11.5,
+      "family": "Inter",
+      "weight": "500",
+      "fill": "#7b8694"
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/mnEcA",
+      "name": "Mark Current Meaning Known · action.markKnown",
+      "type": "frame",
+      "b": {
+        "x": 255,
+        "y": 10,
+        "width": 127,
+        "height": 14
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl",
+      "gap": 6
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/YuR9U",
+      "name": "Known Icon",
+      "type": "icon",
+      "b": {
+        "x": 0,
+        "y": 1,
+        "width": 12,
+        "height": 12
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl/mnEcA",
+      "fill": "#7b8694",
+      "icon": "check"
+    },
+    {
+      "id": "v7BQfE/BPV1P/m5LQl/h2y7k",
+      "name": "Known Label · action.markKnown",
+      "type": "text",
+      "b": {
+        "x": 18,
+        "y": 0,
+        "width": 109,
+        "height": 14
+      },
+      "parent": "v7BQfE/BPV1P/m5LQl/mnEcA",
+      "size": 11.5,
+      "family": "Inter",
+      "weight": "500",
+      "fill": "#7b8694"
+    },
+    {
+      "id": "iaBL3",
+      "name": "30.95.08 · INSTANCE · Session Footer",
+      "type": "frame",
+      "b": {
+        "x": 10,
+        "y": 820,
+        "width": 382,
+        "height": 44
+      },
+      "parent": "twUIm",
+      "padding": [
+        0,
+        16,
+        4,
+        16
+      ],
+      "fill": "#11141A"
+    },
+    {
+      "id": "iaBL3/W1iuF5",
+      "name": "Progress Stats",
+      "type": "frame",
+      "b": {
+        "x": 28,
+        "y": 7,
+        "width": 326,
+        "height": 33
+      },
+      "parent": "iaBL3",
+      "gap": 7
+    },
+    {
+      "id": "iaBL3/X2kSo",
+      "name": "NIEUW",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "iaBL3/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "iaBL3/H03Ok",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 10
+      },
+      "parent": "iaBL3/X2kSo",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#9D94FF"
+    },
+    {
+      "id": "iaBL3/oGQLj",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "iaBL3/X2kSo",
+      "gap": 6
+    },
+    {
+      "id": "iaBL3/LGRGf",
+      "name": "Progress Track",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 5,
+        "width": 52,
+        "height": 4
+      },
+      "parent": "iaBL3/oGQLj",
+      "fill": "#4B5360"
+    },
+    {
+      "id": "iaBL3/uz1Fr",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "iaBL3/oGQLj",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600",
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "iaBL3/morMy",
+      "name": "HERHALING",
+      "type": "frame",
+      "b": {
+        "x": 111,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "iaBL3/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "iaBL3/FwGbE",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 44,
+        "height": 10
+      },
+      "parent": "iaBL3/morMy",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#E9C46A"
+    },
+    {
+      "id": "iaBL3/cVafm",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "iaBL3/morMy",
+      "gap": 6
+    },
+    {
+      "id": "iaBL3/q2cPj0",
+      "name": "Progress Track",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 5,
+        "width": 52,
+        "height": 4
+      },
+      "parent": "iaBL3/cVafm",
+      "fill": "#4B5360"
+    },
+    {
+      "id": "iaBL3/fqat5",
+      "name": "Progress Fill",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 16,
+        "height": 4
+      },
+      "parent": "iaBL3/q2cPj0",
+      "fill": "#E9C46A"
+    },
+    {
+      "id": "iaBL3/kaDgZ",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "iaBL3/cVafm",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600",
+      "fill": "#BFC7D4"
+    },
+    {
+      "id": "iaBL3/j0l71K",
+      "name": "TOTAAL",
+      "type": "frame",
+      "b": {
+        "x": 222,
+        "y": 0,
+        "width": 104,
+        "height": 33
+      },
+      "parent": "iaBL3/W1iuF5",
+      "gap": 3
+    },
+    {
+      "id": "iaBL3/xC03m",
+      "name": "Label",
+      "type": "text",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 29,
+        "height": 10
+      },
+      "parent": "iaBL3/j0l71K",
+      "size": 8,
+      "family": "Geist Mono",
+      "weight": "700",
+      "fill": "#37D99B"
+    },
+    {
+      "id": "iaBL3/ees8C",
+      "name": "Progress Row",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 13,
+        "width": 104,
+        "height": 14
+      },
+      "parent": "iaBL3/j0l71K",
+      "gap": 6
+    },
+    {
+      "id": "iaBL3/e8sTx",
+      "name": "Progress Track",
+      "type": "frame",
+      "b": {
+        "x": 0,
+        "y": 5,
+        "width": 52,
+        "height": 4
+      },
+      "parent": "iaBL3/ees8C",
+      "fill": "#4B5360"
+    },
+    {
+      "id": "iaBL3/WN3fT",
+      "name": "Progress Fill",
+      "type": "rectangle",
+      "b": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 4
+      },
+      "parent": "iaBL3/e8sTx",
+      "fill": "#37D99B"
+    },
+    {
+      "id": "iaBL3/JCqNU",
+      "name": "Value",
+      "type": "text",
+      "b": {
+        "x": 58,
+        "y": 0.5,
+        "width": 36,
+        "height": 13
+      },
+      "parent": "iaBL3/ees8C",
+      "size": 10,
+      "family": "Geist Mono",
+      "weight": "600",
+      "fill": "#BFC7D4"
+    }
+  ]
+}
