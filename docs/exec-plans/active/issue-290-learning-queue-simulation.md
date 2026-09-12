@@ -50,6 +50,26 @@ boundaries; do not set the host clock, mutate the populated QA database, or
 write a simplified scheduler just for tests. TypeScript and SQL observations
 must continue to be compared against the same inputs.
 
+### Clock audit — 2026-09-12
+
+The active contract has four distinct time concerns. They must not be collapsed
+into one ambiguous "current time" value:
+
+| Concern | Current source | Risk to temporal evidence | Required seam |
+| --- | --- | --- | --- |
+| FSRS elapsed/same-day math | `fsrs6_compute` reads SQL `now()` and compares `timestamptz::date` in the database session timezone; `fsrsMath.ts` receives only numeric elapsed days | A fixed UTC instant can cross a local scheduler day differently from the database session, while SQL and TypeScript are not driven by the same timestamp | Pass one explicit reference instant and scheduler timezone through the lower-level computation boundary; keep the public wrapper's production default as the real clock |
+| Due/frozen candidate eligibility | `training_scheduler_candidates_v2` uses `now()` for `next_review_at` and `frozen_until` | Tests cannot prove just-before/at/just-after due transitions deterministically | Inject the same reference instant into the candidate boundary used by the real selector |
+| Session lifetime and terminal timestamps | session start/read and member consumption use `now()` for expiry and completion/exhaustion writes | A temporal test can accidentally depend on wall-clock timing and cannot model a day gap without sleeps | Keep lifecycle timestamps on one captured instant per request; expose a test-only injection at the server-owned boundary, never a host clock change |
+| Calendar-day counters and filters | legacy/current candidate paths still use `current_date` for daily review/new counters; `training_filter_local_date` explicitly converts with the requested timezone | The v2 action-budget path does not enforce the daily cap, but counters and legacy callers can still disagree with the learner's timezone | Treat daily counters as a separate policy decision; reuse the explicit named-timezone helper and do not silently reinterpret historical counters |
+
+`random()` is a separate reproducibility concern, not a clock. Temporal tests
+must either use a deterministic ordering input or assert membership and
+identity without depending on a random presentation order. The next
+implementation slice should therefore introduce the smallest shared clock
+seam for the real SQL boundaries, then add one boundary test through the
+existing action/selection contract before attempting the full morning/evening,
+DST, and 0.5-day corpus.
+
 ## Bounded implementation order
 
 1. **Trace fixture and identity:** disposable local database, one card
