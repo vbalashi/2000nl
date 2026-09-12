@@ -706,4 +706,221 @@ describeDb("learning queue simulation", () => {
       });
     }
   });
+
+  test("traces a ten-card new-only session beyond the daily new setting", async () => {
+    const userId = randomUUID();
+    let sessionId = "";
+    const entryIds: string[] = [];
+
+    try {
+      await withCommittedTransaction(pool, userId, async (client) => {
+        await ensureUserWithSettings(client, userId, {
+          daily_new_limit: 1,
+          daily_review_limit: 1,
+        });
+
+        for (let index = 0; index < 10; index += 1) {
+          entryIds.push(await insertWord(client, `new-only-${userId}-${index}`));
+        }
+
+        const { rows: startRows } = await client.query(
+          `select start_training_session(
+            $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid,
+            'curated', 'new', '{}'::jsonb, '10'
+          ) as session`,
+          [userId],
+        );
+        const session = startRows[0]?.session;
+        expect(session).toEqual(
+          expect.objectContaining({
+            sessionSize: "10",
+            requestedTotal: 10,
+            plannedNew: 10,
+            plannedReview: 0,
+            plannedTotal: 10,
+          }),
+        );
+        sessionId = session.sessionId as string;
+
+        const { rows: snapshotRows } = await client.query(
+          `select get_training_session_snapshot($1::uuid, $2::uuid) as snapshot`,
+          [userId, sessionId],
+        );
+        const members = snapshotRows[0]?.snapshot.members as Array<{
+          ordinal: number;
+          entryId: string;
+          queueSource: string;
+        }>;
+        expect(members).toHaveLength(10);
+        expect(members.map((member) => member.ordinal)).toEqual(
+          Array.from({ length: 10 }, (_, index) => index + 1),
+        );
+        expect(members.map((member) => member.queueSource)).toEqual(
+          Array.from({ length: 10 }, () => "new"),
+        );
+        expect(new Set(members.map((member) => member.entryId))).toHaveLength(10);
+      });
+
+      expect(sessionId).not.toBe("");
+      expect(entryIds).toHaveLength(10);
+
+      const memberByOrdinal = await withCommittedTransaction(pool, userId, async (client) => {
+        const { rows } = await client.query(
+          `select ordinal, entry_id as "entryId", card_type_id as "cardTypeId"
+             from training_session_members
+            where session_id = $1::uuid
+            order by ordinal`,
+          [sessionId],
+        );
+        return new Map<number, { entryId: string; cardTypeId: string }>(
+          rows.map((row) => [row.ordinal, row]),
+        );
+      });
+
+      const nextCard = async (): Promise<SessionCard | undefined> =>
+        withCommittedTransaction(pool, userId, async (client) => {
+          const { rows } = await client.query(
+            `select get_next_training_session_card(
+              $1::uuid, $2::uuid, ARRAY[]::text[]
+            ) as card`,
+            [userId, sessionId],
+          );
+          return rows[0]?.card as SessionCard | undefined;
+        });
+
+      const readStateRevision = async (entryId: string, mode: string) =>
+        withCommittedTransaction(pool, userId, async (client) => {
+          const { rows } = await client.query(
+            `select state_revision
+               from get_platform_v2_card_states_for_entries(
+                 $1::uuid, ARRAY[$2::uuid], ARRAY[$3::text]
+               )`,
+            [userId, entryId, mode],
+          );
+          return rows[0]?.state_revision as string | undefined;
+        });
+
+      const performLearn = async (card: SessionCard, stateRevision: string) =>
+        withCommittedTransaction(
+          pool,
+          userId,
+          async (client) => {
+            const { rows } = await client.query(
+              `select perform_platform_v2_card_action_as_principal(
+                $1::uuid, 'start-learning', $2::uuid, $3::text, $4::text,
+                null, null, null, $5::uuid, null, 'first_party', null, $6::uuid
+              ) as result`,
+              [userId, card.id, card.mode, stateRevision, randomUUID(), sessionId],
+            );
+            return rows[0]?.result;
+          },
+          "service_role",
+        );
+
+      for (let ordinal = 1; ordinal <= 10; ordinal += 1) {
+        const card = await nextCard();
+        expect(card).toEqual(
+          expect.objectContaining({
+            trainingSessionId: sessionId,
+            trainingSessionOrdinal: ordinal,
+          }),
+        );
+        if (!card) throw new Error(`new-only simulation did not return ordinal ${ordinal}`);
+        const member = memberByOrdinal.get(ordinal);
+        expect(member?.entryId).toBe(card.id);
+        expect(member?.cardTypeId).toBe(card.mode);
+        expect(
+          await performLearn(card, (await readStateRevision(card.id, card.mode)) ?? "untracked"),
+        ).toEqual(
+          expect.objectContaining({
+            status: "accepted",
+            actionId: "start-learning",
+            eventId: expect.any(String),
+          }),
+        );
+      }
+      expect(await nextCard()).toBeUndefined();
+
+      const durableRows = await withCommittedTransaction(pool, userId, async (client) => {
+        const { rows } = await client.query(
+          `select
+             (select count(*) from user_card_action_events
+               where user_id = $1 and action = 'start-learning') as learning_events,
+             (select count(*) from user_card_action_events
+               where user_id = $1 and action = 'review-card') as review_events,
+             (select count(*) from platform_v2_action_receipts
+               where user_id = $1) as receipts,
+             (select count(*) from user_review_log
+               where user_id = $1 and review_type = 'new') as new_reviews,
+             (select count(*) from user_review_log
+               where user_id = $1 and review_type <> 'new') as graded_reviews,
+             (select count(*) from training_session_members
+               where session_id = $2 and consumed_at is not null) as consumed,
+             (select completion_reason from training_sessions where id = $2) as completion_reason`,
+          [userId, sessionId],
+        );
+        return rows[0];
+      });
+      expect(durableRows).toEqual({
+        learning_events: "10",
+        review_events: "0",
+        receipts: "10",
+        new_reviews: "0",
+        graded_reviews: "0",
+        consumed: "10",
+        completion_reason: "completed",
+      });
+
+      const { stats } = await withCommittedTransaction(pool, userId, async (client) => {
+        const { rows } = await client.query(
+          `select get_detailed_training_stats(
+             $1::uuid, ARRAY['word-to-definition']::text[], NULL::uuid, 'curated'
+           ) as stats`,
+          [userId],
+        );
+        return rows[0];
+      });
+      expect(stats).toEqual(
+        expect.objectContaining({
+          newWordsToday: 10,
+          newCardsToday: 10,
+          learningStartedToday: 10,
+          reviewWordsDone: 0,
+          reviewCardsDone: 0,
+        }),
+      );
+
+      const historyRows = await withCommittedTransaction(pool, userId, async (client) => {
+        const { rows } = await client.query(
+          `select review_result from get_recent_training_review_history(50)`,
+        );
+        return rows;
+      });
+      expect(historyRows).toHaveLength(10);
+      expect(historyRows.every((row) => row.review_result === "learning_started")).toBe(true);
+    } finally {
+      await withCommittedTransaction(pool, userId, async (client) => {
+        if (sessionId) {
+          await client.query(
+            `alter table training_session_members
+               disable trigger training_session_members_identity_immutable`,
+          );
+          await client.query(
+            `delete from training_session_members where session_id = $1::uuid`,
+            [sessionId],
+          );
+          await client.query(`delete from training_sessions where id = $1::uuid`, [sessionId]);
+          await client.query(
+            `alter table training_session_members
+               enable trigger training_session_members_identity_immutable`,
+          );
+        }
+        await client.query(`delete from user_settings where user_id = $1::uuid`, [userId]);
+        await client.query(`delete from auth.users where id = $1::uuid`, [userId]);
+        if (entryIds.length > 0) {
+          await client.query(`delete from word_entries where id = any($1::uuid[])`, [entryIds]);
+        }
+      });
+    }
+  });
 });

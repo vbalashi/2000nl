@@ -1,6 +1,6 @@
 # Issue #290 — simulate real learning queue behavior
 
-Status: execution plan, 2026-09-12. The first two bounded DB-contract slices
+Status: execution plan, 2026-09-12. The first three bounded DB-contract slices
 are implemented as characterization tests; they do not change queue, FSRS, or
 user-history behavior.
 
@@ -63,13 +63,16 @@ must continue to be compared against the same inputs.
 3. **Mixed queue (implemented slice):** `5 new + 10 review` through the real
    V2 action boundary, with soft `1:5` ordering, exact member identity,
    separate Learn/review receipts and history, and independent footer counters.
-   The `10 new only` variant remains a follow-up characterization.
-4. **Controlled time:** morning/evening, 1/3/7-day gaps, day rollover and DST;
+4. **New-only budget (implemented slice):** a `10`-card new-only session with
+   a deliberately smaller daily new setting, proving that the finite session
+   budget is not truncated by the daily setting and that all ten Learn actions
+   have independent receipts, history, and new-card statistics.
+5. **Controlled time:** morning/evening, 1/3/7-day gaps, day rollover and DST;
    include the `<0.5`-day short-term boundary and the display/due rounding
    layer. These scenarios remain evidence until #279/#248 decisions are made.
-5. **Limits and known marks:** 50/100 new with daily limits, known mark and
+6. **Limits and known marks:** 50/100 new with daily limits, known mark and
    undo in new and previously scheduled states, and two meanings/directions.
-6. **Failure recovery:** accepted action followed by a failed next-card load;
+7. **Failure recovery:** accepted action followed by a failed next-card load;
    restore only loading, keep the accepted action durable, and show the same
    card identity exactly once.
 
