@@ -255,7 +255,10 @@ describe("TrainingSenseCardV2Session", () => {
     });
     let resolveAction!: (value: unknown) => void;
     performAction.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveAction = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveAction = resolve;
+        }),
     );
 
     try {
@@ -831,8 +834,16 @@ describe("TrainingSenseCardV2Session", () => {
     expect(onProgressActionStarting.mock.invocationCallOrder[0]).toBeLessThan(
       performAction.mock.invocationCallOrder[0]!,
     );
-    expect(onProgressActionPendingChange).toHaveBeenNthCalledWith(1, true);
-    expect(onProgressActionPendingChange).toHaveBeenLastCalledWith(false);
+    expect(onProgressActionPendingChange).toHaveBeenNthCalledWith(
+      1,
+      true,
+      expect.any(Object),
+    );
+    const pendingToken = onProgressActionPendingChange.mock.calls[0]?.[1];
+    expect(onProgressActionPendingChange).toHaveBeenLastCalledWith(
+      false,
+      pendingToken,
+    );
     expect(onProgressActionAccepted).toHaveBeenCalledWith(capability);
   });
 
@@ -2118,6 +2129,138 @@ describe("TrainingSenseCardV2Session", () => {
 
     await waitFor(() => expect(onTrainingSessionSuperseded).toHaveBeenCalledOnce());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  test("ignores a late accepted action after the card generation changes", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () => new Promise((resolve) => { resolveAction = resolve; }),
+    );
+    const onProgressActionAccepted = vi.fn();
+    const onTrainingSessionSuperseded = vi.fn();
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const,
+      onProgressActionAccepted,
+      onTrainingSessionSuperseded,
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-old"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-new"
+      />,
+    );
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-late",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+  });
+
+  test("ignores a late superseded error after the card generation changes", async () => {
+    let rejectAction!: (reason: unknown) => void;
+    performAction.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectAction = reject;
+        }),
+    );
+    const onTrainingSessionSuperseded = vi.fn();
+    const props = {
+      word,
+      mode: "word-to-definition" as const,
+      contentLanguageCode: "nl",
+      translationTargetLanguageCode: "en",
+      interfaceLanguage: "en" as const,
+      onProgressActionAccepted: vi.fn(),
+      onTrainingSessionSuperseded,
+    };
+    const { rerender } = render(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-old"
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+
+    rerender(
+      <TestTrainingSenseCardV2Session
+        {...props}
+        trainingSessionId="session-new"
+      />,
+    );
+    await act(async () => {
+      rejectAction(new Error("training_session_superseded"));
+    });
+
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  test("does not publish late action callbacks after unmount", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveAction = resolve;
+        }),
+    );
+    const onProgressActionAccepted = vi.fn();
+    const onTrainingSessionSuperseded = vi.fn();
+    const { unmount } = render(
+      <TestTrainingSenseCardV2Session
+        word={word}
+        mode="word-to-definition"
+        contentLanguageCode="nl"
+        translationTargetLanguageCode="en"
+        interfaceLanguage="en"
+        trainingSessionId="session-old"
+        onProgressActionAccepted={onProgressActionAccepted}
+        onTrainingSessionSuperseded={onTrainingSessionSuperseded}
+      />,
+    );
+    await screen.findByRole("heading", { name: "hand" });
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Good" }));
+    await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+    unmount();
+
+    await act(async () => {
+      resolveAction({
+        contractVersion: "platform-action-v2",
+        actionId: "review-card",
+        clientEventId: "event-unmounted",
+        accepted: true,
+        card: singleSenseEntry.card,
+      });
+    });
+
+    expect(onProgressActionAccepted).not.toHaveBeenCalled();
+    expect(onTrainingSessionSuperseded).not.toHaveBeenCalled();
   });
 
   test("keeps the card and reports a temporary failure when conflict refresh fails", async () => {

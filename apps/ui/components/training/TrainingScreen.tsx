@@ -81,6 +81,7 @@ import {
 import {
   clearTrainingSessionResume,
   readTrainingSessionResume,
+  subscribeTrainingSessionInvalidation,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
 import {
@@ -233,9 +234,29 @@ function TrainingScreenContent({
     useState(false);
   const [sessionAuthorityChecking, setSessionAuthorityChecking] =
     useState(false);
+  const [platformProgressActionPending, setPlatformProgressActionPending] =
+    useState(false);
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
   const sessionAuthorityValidationRef = useRef(0);
+  const platformProgressActionTokenRef = useRef<object | null>(null);
+  const handlePlatformProgressActionPendingChange = useCallback(
+    (pending: boolean, token: object) => {
+      if (pending) {
+        platformProgressActionTokenRef.current = token;
+        setPlatformProgressActionPending(true);
+        return;
+      }
+      if (platformProgressActionTokenRef.current !== token) return;
+      platformProgressActionTokenRef.current = null;
+      setPlatformProgressActionPending(false);
+    },
+    [],
+  );
+  const resetPlatformProgressActionPending = useCallback(() => {
+    platformProgressActionTokenRef.current = null;
+    setPlatformProgressActionPending(false);
+  }, []);
   const componentMountedRef = useRef(true);
   useEffect(() => {
     componentMountedRef.current = true;
@@ -605,8 +626,6 @@ function TrainingScreenContent({
     clearResumeAfterCompletedRetry(result);
     return result;
   }, [clearResumeAfterCompletedRetry, retryAcceptedTransitionLoad]);
-  const [platformProgressActionPending, setPlatformProgressActionPending] =
-    useState(false);
   const [presentationResetKey, setPresentationResetKey] = useState(0);
   const navigationBlocked = actionLoading || platformProgressActionPending;
   const currentPresentationIdentity =
@@ -615,6 +634,7 @@ function TrainingScreenContent({
       : null;
   const beginSessionScopeChange = useCallback(() => {
     sessionResumeGenerationRef.current += 1;
+    resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
     if (user?.id) clearTrainingSessionResume(user.id);
@@ -624,7 +644,12 @@ function TrainingScreenContent({
     setSessionPlannedTotal(null);
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
-  }, [beginTrainingTurnScopeChange, trainingScenarioCatalog, user?.id]);
+  }, [
+    beginTrainingTurnScopeChange,
+    resetPlatformProgressActionPending,
+    trainingScenarioCatalog,
+    user?.id,
+  ]);
 
   useEffect(() => {
     if (
@@ -1480,9 +1505,15 @@ function TrainingScreenContent({
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
     setSessionAuthorityChecking(false);
+    resetPlatformProgressActionPending();
     setSessionReplacementWarning(true);
     trainingPilot.returnToToday();
-  }, [resetFocusQueueState, trainingPilot, user?.id]);
+  }, [
+    resetFocusQueueState,
+    resetPlatformProgressActionPending,
+    trainingPilot,
+    user?.id,
+  ]);
   const validateTrainingSessionAuthority = useCallback(async () => {
     if (!user?.id || !trainingSessionId) return;
     const validation = sessionAuthorityValidationRef.current + 1;
@@ -1535,13 +1566,18 @@ function TrainingScreenContent({
     window.addEventListener("online", onReturn);
     window.addEventListener("pageshow", onReturn);
     document.addEventListener("visibilitychange", onVisibilityChange);
+    const unsubscribeInvalidation = subscribeTrainingSessionInvalidation(
+      user.id,
+      () => void validateTrainingSessionAuthority(),
+    );
     return () => {
       window.removeEventListener("focus", onReturn);
       window.removeEventListener("online", onReturn);
       window.removeEventListener("pageshow", onReturn);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      unsubscribeInvalidation();
     };
-  }, [trainingSessionId, validateTrainingSessionAuthority]);
+  }, [trainingSessionId, user.id, validateTrainingSessionAuthority]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
     trainingPilot.returnToToday();
@@ -1723,7 +1759,9 @@ function TrainingScreenContent({
             onOpenDetails={handleShowCurrentWordDetails}
             onProgressActionAccepted={handleV2ProgressActionAccepted}
             onProgressActionStarting={prepareV2ProgressAction}
-            onProgressActionPendingChange={setPlatformProgressActionPending}
+            onProgressActionPendingChange={
+              handlePlatformProgressActionPendingChange
+            }
             onTrainingSessionSuperseded={handleTrainingSessionSuperseded}
             onLoadFailure={(failure) => {
               reportCardLoadFailure(currentWord, failure);
