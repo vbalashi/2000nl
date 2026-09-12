@@ -116,6 +116,31 @@ function componentStatement(component) {
       '{}'::jsonb
     )`;
   }
+  if (component === "next") {
+    return `SELECT * FROM public.get_next_card(
+      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+      ARRAY['word-to-definition']::text[],
+      ARRAY[]::uuid[],
+      NULL,
+      'curated',
+      'both',
+      'auto',
+      ARRAY[]::text[]
+    )`;
+  }
+  if (component === "filtered") {
+    return `SELECT * FROM public.get_next_filtered_card(
+      (SELECT id FROM auth.users WHERE email = 'test@2000nl.test'),
+      ARRAY['word-to-definition']::text[],
+      ARRAY[]::uuid[],
+      NULL,
+      'curated',
+      'both',
+      'auto',
+      ARRAY[]::text[],
+      '{}'::jsonb
+    )`;
+  }
   if (component === "aggregate") {
     return `SELECT count(*) FILTER (WHERE queue_source = 'new'),
       count(*) FILTER (WHERE queue_source IN ('learning', 'review')),
@@ -208,10 +233,10 @@ async function main() {
   delete childEnv.SUPABASE_DB_URL;
   delete childEnv.DATABASE_URL;
   // Run the public contract first so its timing remains directly comparable
-  // with the deployment gate. The aggregate and candidate passes then
-  // attribute the same scheduler work without exposing the full EXPLAIN plan
-  // in CI logs.
-  for (const component of ["public", "aggregate", "candidate"]) {
+  // with the deployment gate. The selector, aggregate, and candidate passes
+  // then attribute the same scheduler work without exposing the full EXPLAIN
+  // plan in CI logs.
+  for (const component of ["public", "next", "filtered", "aggregate", "candidate"]) {
     for (let sample = 1; sample <= options.samples; sample += 1) {
       const metrics = runSample(options, childEnv, component, sample);
       process.stdout.write(
