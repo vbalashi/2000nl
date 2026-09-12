@@ -155,6 +155,7 @@ function diagnosticSql(options, component) {
 \\set QUIET on
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '${options.statementTimeoutMs}ms';
+SET LOCAL jit = off;
 DO $qa_identity$
 DECLARE qa_user_id uuid;
 BEGIN

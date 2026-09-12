@@ -99,6 +99,7 @@ describe("NUC database contract deployment", () => {
       read("db/deploy-contract/pre-switch-read-probe-130.sql") +
       read("db/deploy-contract/pre-switch-read-probe-129.sql");
     const runner = read("db/scripts/deploy_db_contract.mjs");
+    const readinessDiagnostic = read("db/scripts/scheduler_readiness_diagnostic.mjs");
     const workflow = read(".github/workflows/deploy-nuc.yml");
     const driftWorkflow = read(".github/workflows/db-drift-check.yml");
     const gate = workflow.indexOf("deploy_db_contract.mjs apply");
@@ -124,6 +125,8 @@ describe("NUC database contract deployment", () => {
     expect(probeSource).not.toMatch(/\b(?:INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i);
     expect(runner).toContain("BEGIN READ ONLY");
     expect(runner).toContain("pre-switch-read-probe passed");
+    expect(runner).toContain("SET LOCAL jit = off");
+    expect(readinessDiagnostic).toContain("SET LOCAL jit = off");
     expect(driftWorkflow).toContain("pre_switch_read_probe.integration.test.mjs");
     expect(gate).toBeGreaterThan(0);
     expect(switchApp).toBeGreaterThan(gate);

@@ -301,12 +301,14 @@ ${migrationSql}
 ${postflight}
 
 -- A scheduler DDL change may leave its first real read paying one-time shared
--- cache and plan setup. Exercise the exact QA selector before every app switch.
+-- cache, plan setup, or JIT compilation. Keep this readiness smoke focused on
+-- scheduler I/O and contract execution rather than compiler startup.
 -- Re-running the bounded read is intentional: a timed-out first attempt must
 -- not be bypassed merely because its forward migrations already committed.
 DISCARD PLANS;
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '${manifest.preSwitchReadProbe.statementTimeoutMs}ms';
+SET LOCAL jit = off;
 ${preSwitchReadProbe}
 COMMIT;
 \\echo db-contract-gate: pre-switch-read-probe passed
