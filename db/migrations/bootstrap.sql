@@ -443,3 +443,6 @@
 -- Route accepted actions and session lifecycle timestamps through the same
 -- private deterministic clock seam
 \i db/migrations/149_training_action_lifecycle_clock.sql
+
+-- Align interday FSRS stability updates with the pinned fsrs-rs reference
+\i db/migrations/150_fsrs_interday_reference_parity.sql

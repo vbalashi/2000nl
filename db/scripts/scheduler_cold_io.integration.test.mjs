@@ -126,7 +126,7 @@ test(
 
       applySqlFile(targetUrl, "db/scripts/plain_postgres_supabase_compat.sql");
       // This test characterizes the 126→128 scheduler transition before
-      // replaying later migrations. A full bootstrap now contains 149, so it
+      // replaying later migrations. A full bootstrap now contains 150, so it
       // would otherwise make historical postflight-128 assertions observe a
       // schema that is deliberately newer than their contract.
       applyBootstrapBefore(targetUrl, "138_shared_meaning_directional_state.sql");
@@ -699,7 +699,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/147_local_study_day_authority.sql");
       applySqlFile(targetUrl, "db/migrations/148_training_reference_clock_seam.sql");
       applySqlFile(targetUrl, "db/migrations/149_training_action_lifecycle_clock.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-149.sql");
+      applySqlFile(targetUrl, "db/migrations/150_fsrs_interday_reference_parity.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-150.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -756,7 +757,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/147_local_study_day_authority.sql");
       applySqlFile(targetUrl, "db/migrations/148_training_reference_clock_seam.sql");
       applySqlFile(targetUrl, "db/migrations/149_training_action_lifecycle_clock.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-149.sql");
+      applySqlFile(targetUrl, "db/migrations/150_fsrs_interday_reference_parity.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-150.sql");
 
       const obsoleteV1Drift = psql(
         targetUrl,
@@ -794,7 +796,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/147_local_study_day_authority.sql");
       applySqlFile(targetUrl, "db/migrations/148_training_reference_clock_seam.sql");
       applySqlFile(targetUrl, "db/migrations/149_training_action_lifecycle_clock.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-149.sql");
+      applySqlFile(targetUrl, "db/migrations/150_fsrs_interday_reference_parity.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-150.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -822,7 +825,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/147_local_study_day_authority.sql");
       applySqlFile(targetUrl, "db/migrations/148_training_reference_clock_seam.sql");
       applySqlFile(targetUrl, "db/migrations/149_training_action_lifecycle_clock.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-149.sql");
+      applySqlFile(targetUrl, "db/migrations/150_fsrs_interday_reference_parity.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-150.sql");
     } finally {
       const terminate = psql(
         base.toString(),

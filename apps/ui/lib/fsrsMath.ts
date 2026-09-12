@@ -84,8 +84,10 @@ export function fsrsCompute(
   const retrievability =
     Math.pow(1 + (Math.pow(0.9, -1 / w20) - 1) * elapsed / Math.max(state.stability, 1e-4), -w20);
 
-  // Difficulty update
-  const tmpD = state.difficulty + (-w6 * (grade - 3)) * (10 - state.difficulty) / 9;
+  // Keep the previous difficulty for stability calculations. FSRS updates
+  // difficulty and stability from the same pre-review state.
+  const previousDifficulty = state.difficulty;
+  const tmpD = previousDifficulty + (-w6 * (grade - 3)) * (10 - previousDifficulty) / 9;
   const d0Easy = w4 - Math.exp(w5 * 3) + 1;
   const difficulty = clamp(w7 * d0Easy + (1 - w7) * tmpD, 1, 10);
 
@@ -100,16 +102,20 @@ export function fsrsCompute(
       ? Math.max(state.stability, shortTermStability)
       : shortTermStability;
   } else if (grade === 1) {
-    stability =
+    const stabilityAfterFailure =
       w11 *
-      Math.pow(difficulty, -w12) *
+      Math.pow(previousDifficulty, -w12) *
       (Math.pow(state.stability + 1, w13) - 1) *
       Math.exp(w14 * (1 - retrievability));
+    stability = Math.max(
+      stabilityAfterFailure,
+      state.stability / Math.exp(w17 * w18),
+    );
   } else {
     stability =
       state.stability *
       (Math.exp(w8) *
-        (11 - difficulty) *
+        (11 - previousDifficulty) *
         Math.pow(state.stability, -w9) *
         (Math.exp(w10 * (1 - retrievability)) - 1) *
         (grade === 2 ? w15 : 1) *

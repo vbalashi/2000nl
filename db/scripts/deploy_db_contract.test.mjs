@@ -373,7 +373,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 378 local-study-day contract", () => {
+test("the repository contract enables the issue 279 FSRS contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +386,7 @@ test("the repository contract enables the issue 378 local-study-day contract", (
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 149 378");
+  assert.equal(result.stdout.trim(), "enabled 150 279");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {
