@@ -17,7 +17,6 @@ export async function fetchStats(
     p_modes: modes,
     p_list_id: null,
     p_list_type: "curated",
-    p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   };
 
   if (listScope?.listId) {
@@ -66,7 +65,7 @@ export async function fetchStats(
     trainingDebug.log(
       `%c 📊 Stats [${logContext}]:`,
       "color: #8b5cf6; font-weight: bold;",
-      `NIEUW: ${stats.newCardsToday}/${stats.dailyNewLimit}`,
+      `NIEUW: ${stats.newCardsToday} (study day)`,
       `| HERHALING: ${stats.reviewCardsDone}/${
         stats.reviewCardsDone + stats.reviewCardsDue
       }`,

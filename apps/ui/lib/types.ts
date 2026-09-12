@@ -89,9 +89,9 @@ export type DebugStats = {
   clicks?: number;
   overdue_count?: number;
   reason?: string;
-  /** Number of new cards introduced today */
+  /** Number of new cards introduced during the learner's study day */
   new_today?: number;
-  /** Daily limit for new cards */
+  /** Legacy settings metadata; no longer a selection limit */
   daily_new_limit?: number;
   /** Number of unseen words available */
   new_pool_size?: number;
@@ -269,7 +269,8 @@ export type DetailedStats = {
   newCardsToday: number;      // Distinct entry + card-type pairs in the study day
   learningStartedToday: number; // Distinct pairs with an accepted Learn action in the study day
   graduatedNewWordsToday: number; // Introduced entries whose new review graduated in the study day
-  dailyNewLimit: number;      // Target (default 10)
+  /** Deprecated compatibility field; it is not a daily quota. */
+  dailyNewLimit: number;
   
   // Review progress during the local study day (done/scheduled format)
   reviewWordsDone: number;    // Distinct words reviewed (non-new) in the study day

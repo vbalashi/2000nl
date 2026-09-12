@@ -83,9 +83,7 @@ describe("trainingService next-word selection", () => {
       p_list_type: "user",
       p_card_filter: "both",
       p_session_size: 10,
-      p_training_filter: {
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-      },
+      p_training_filter: {},
     });
   });
 

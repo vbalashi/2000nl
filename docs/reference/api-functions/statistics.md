@@ -30,9 +30,11 @@ diagnostics:
   interday interval. This is separate from the New counter and is not inferred
   from an enrollment-only event.
 
-The five-argument form accepts the browser-resolved IANA timezone, such as
-`Europe/Amsterdam`. The four-argument compatibility form uses the timezone
-stored for the learner and falls back to UTC. The study-day boundary is for
+The five-argument form retains its timezone parameter for cached-client
+compatibility, but the server deliberately ignores that request hint and uses
+the validated IANA timezone stored for the learner. The four-argument
+compatibility form does the same and falls back to UTC. This keeps one
+learner's counters stable across devices. The study-day boundary is for
 counter attribution only; it is not a daily quota and does not change FSRS
 `next_review_at` instants.
 

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-146",
+  "contractId": "2000nl-db-147",
   "rollout": {
     "status": "enabled",
-    "requiredMigrationId": 146,
+    "requiredMigrationId": 147,
     "coordinationIssue": 378
   },
   "baseline": {
@@ -134,12 +134,17 @@
       "migrationId": 146,
       "file": "db/migrations/146_local_study_day_scheduler_alignment.sql",
       "sha256": "85369c68056b6864464ba9be23067cc4f0462b7b78fa20b77ab1b1aa5b7800eb"
+    },
+    {
+      "migrationId": 147,
+      "file": "db/migrations/147_local_study_day_authority.sql",
+      "sha256": "f97e39484ea418bd3acdf8faf9cbcf8dc62aeb304863a739520c4739337282ad"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-146.sql",
+  "postflightProbe": "db/deploy-contract/postflight-147.sql",
   "preSwitchReadProbe": {
-    "file": "db/deploy-contract/pre-switch-read-probe-146.sql",
-    "sha256": "2ccdf674dcd552ec70340b568ef416b149d2fd072dccb9f2749edbab990e29a9",
+    "file": "db/deploy-contract/pre-switch-read-probe-147.sql",
+    "sha256": "749b055c211aef339dd8ce2f0b4953ebbadc689784e21fa72ce73f019459e770",
     "statementTimeoutMs": 2000
   }
 }

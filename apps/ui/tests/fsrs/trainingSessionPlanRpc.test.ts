@@ -94,7 +94,7 @@ describeDb("authoritative training session plan RPC", () => {
         "FROM private.default_training_scope_entries_v1 scope_entry",
       );
       expect(functionRows[0]?.definition).toContain(
-        "today_new_words AS MATERIALIZED",
+        "study_day_new_words AS MATERIALIZED",
       );
       expect(functionRows[0]?.definition).toContain(
         "known_cards AS MATERIALIZED",
@@ -1912,10 +1912,10 @@ describeDb("authoritative training session plan RPC", () => {
 
       expect(rows[0].plan).toEqual(
         expect.objectContaining({
-          plannedNew: 2,
+          plannedNew: 3,
           plannedReview: 2,
           plannedPractice: 0,
-          plannedTotal: 4,
+          plannedTotal: 5,
         }),
       );
       const excluded: string[] = [];
@@ -1940,7 +1940,7 @@ describeDb("authoritative training session plan RPC", () => {
         );
       }
       expect(drained).toHaveLength(rows[0].plan.plannedTotal);
-      expect(drained.filter((item) => item.source === "new")).toHaveLength(2);
+      expect(drained.filter((item) => item.source === "new")).toHaveLength(3);
       const { rows: privateV1Rows } = await client.query(
         `select proc.oid
          from pg_proc proc
@@ -1953,7 +1953,7 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
-  test("uses distinct new words as the multi-mode daily cap unit and preserves diagnostics", async () => {
+  test("keeps new introductions word-scoped across modes and preserves diagnostics", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -2020,7 +2020,6 @@ describeDb("authoritative training session plan RPC", () => {
           expect.objectContaining({
             new_today: distinctReviewedWords,
             daily_new_limit: 2,
-            new_pool_size: 1,
             learning_due_count: 0,
             review_pool_size: 0,
           }),
@@ -2240,7 +2239,75 @@ describeDb("authoritative training session plan RPC", () => {
     }, userId);
   });
 
-  test("matches unfiltered selection for exhausted caps, learning, future-due practice, and multi-mode identity", async () => {
+  test("keeps session planning on the stored timezone when a browser sends another one", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 1,
+      });
+      const { rows: clockRows } = await client.query(`select clock_timestamp() as now_at`);
+      const nowAt = clockRows[0].now_at as Date;
+      const { rows: timezoneRows } = await client.query(
+        `select candidate as timezone
+         from unnest($1::text[]) candidate
+         where private.training_study_day_date_v1($2::timestamptz, candidate)
+             <> private.training_study_day_date_v1($2::timestamptz, 'UTC')
+         limit 1`,
+        [
+          [
+            "Pacific/Pago_Pago",
+            "Pacific/Kiritimati",
+            "America/Adak",
+            "Pacific/Honolulu",
+            "Pacific/Auckland",
+          ],
+          nowAt,
+        ],
+      );
+      expect(timezoneRows).toHaveLength(1);
+      const storedTimezone = timezoneRows[0].timezone as string;
+      await client.query(
+        `update user_settings
+         set training_schedule_timezone = $2
+         where user_id = $1`,
+        [userId, storedTimezone],
+      );
+
+      const wordId = await insertWord(client, `stored-planner-zone-${randomUUID()}`);
+      await client.query(
+        `insert into user_card_status (
+           user_id, entry_id, card_type_id, fsrs_enabled, hidden,
+           fsrs_last_interval, next_review_at
+         ) values ($1, $2, 'word-to-definition', true, false, 2,
+                   clock_timestamp() - interval '1 minute')`,
+        [userId, wordId],
+      );
+      await client.query(
+        `insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action, client_event_id,
+           action_payload_hash, created_at
+         ) values ($1, $2, 'word-to-definition', 'record-view', $3,
+                   'stored-planner-zone', clock_timestamp() - interval '1 minute')`,
+        [userId, wordId, randomUUID()],
+      );
+
+      const { rows } = await client.query(
+        `select get_training_session_plan(
+           $1, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'review',
+           jsonb_build_object('dateWindow', 'today', 'timezone', 'UTC')
+         ) as plan`,
+        [userId],
+      );
+
+      expect(rows[0].plan).toEqual(
+        expect.objectContaining({ plannedReview: 1, plannedTotal: 1 }),
+      );
+    }, userId);
+  });
+
+  test("matches unfiltered selection for learning, future-due practice, and multi-mode identity", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
       await ensureUserWithSettings(client, userId, {
@@ -2274,7 +2341,7 @@ describeDb("authoritative training session plan RPC", () => {
         ) as item`,
         [userId],
       );
-      expect(learningPlanRows[0].plan.plannedTotal).toBe(1);
+      expect(learningPlanRows[0].plan.plannedTotal).toBe(2);
       expect(learningSelectionRows[0].item).toEqual(
         expect.objectContaining({ id: learning, mode: "word-to-definition" }),
       );

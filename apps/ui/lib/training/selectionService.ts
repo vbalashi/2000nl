@@ -280,16 +280,18 @@ const trainingSessionPlanScopePayload = (
   userId: string,
   modes: TrainingMode[],
   input: TrainingSessionPlanScope,
+  includeBrowserTimezone = false,
 ) => {
   const uniqueModes = [...new Set(modes)].sort();
-  // A session freezes the learner's current IANA timezone even without a
-  // date/source focus filter.  Sequential ordinary-meaning introduction uses
-  // that persisted preference to calculate the next local calendar day.
+  // The server owns the persisted learner timezone for planning. A browser
+  // hint is sent only when starting a session so the existing session trigger
+  // can initialize/update that persisted preference; scheduler boundaries do
+  // not use it as a competing timezone.
   const trainingFilter = input.trainingFilter
-    ? normalizeTrainingFocusFilter(input.trainingFilter)
-    : {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    };
+    ? normalizeTrainingFocusFilter(input.trainingFilter, includeBrowserTimezone)
+    : includeBrowserTimezone
+      ? { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }
+      : {};
   return {
     p_user_id: userId,
     p_card_type_ids:
@@ -341,7 +343,7 @@ export async function startTrainingSession(
   modes: TrainingMode[],
   input: TrainingSessionPlanScope,
 ): Promise<TrainingSession | null> {
-  const scope = trainingSessionPlanScopePayload(userId, modes, input);
+  const scope = trainingSessionPlanScopePayload(userId, modes, input, true);
   const { data, error } = await supabase.rpc("start_training_session", {
     p_user_id: scope.p_user_id,
     p_card_type_ids: scope.p_card_type_ids,
@@ -567,7 +569,7 @@ export const fetchNextTrainingWord = async (
     trainingDebug.log(
       `%c New Pool:`,
       "font-weight: bold",
-      `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} today, ${stats.new_pool_size ?? "?"} available`,
+      `${stats.new_today ?? "?"} this study day, ${stats.new_pool_size ?? "?"} available`,
     );
     trainingDebug.log(
       `%c Learning Due:`,
@@ -826,7 +828,7 @@ export const fetchNextTrainingWordByScenario = async (
     trainingDebug.log(
       `%c New Cards Today:`,
       "font-weight: bold",
-      `${stats.new_today ?? "?"}/${stats.daily_new_limit ?? "?"} (${stats.new_pool_size ?? "?"} unseen words available)`,
+      `${stats.new_today ?? "?"} this study day (${stats.new_pool_size ?? "?"} unseen words available)`,
     );
     trainingDebug.log(
       `%c Learning Due:`,
@@ -871,11 +873,16 @@ export const fetchNextTrainingWordByScenario = async (
   return null;
 };
 
-function normalizeTrainingFocusFilter(filter: TrainingFocusFilter) {
+function normalizeTrainingFocusFilter(
+  filter: TrainingFocusFilter,
+  includeBrowserTimezone = false,
+) {
   return {
     dateWindow: filter.dateWindow,
     ...(filter.daysAgo !== undefined ? { daysAgo: filter.daysAgo } : {}),
-    timezone: filter.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    ...(includeBrowserTimezone
+      ? { timezone: filter.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }
+      : {}),
     ...(filter.sourceKind ? { sourceKind: filter.sourceKind } : {}),
     ...(filter.sourceId ? { sourceId: filter.sourceId } : {}),
     ...(filter.externalId ? { externalId: filter.externalId } : {}),

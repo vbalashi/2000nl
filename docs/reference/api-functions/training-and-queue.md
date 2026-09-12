@@ -185,17 +185,21 @@ review/learning order is preserved, while new and practice selection keeps the
 existing random-mode-then-random-card policy. Selector diagnostics
 (`new_pool_size`, `learning_due_count`, `review_pool_size`, and mode-set-wide
 `new_today`) remain present; `new_today` is attributed to the learner-local
-04:00 study day and is informational rather than a quota.
+04:00 study day and is informational rather than a quota. The
+`daily_new_limit` compatibility field may still be returned for cached
+clients, but it no longer gates selection.
 
 Presentation order inside the selected new/practice work remains random on
 every call and is not a global deterministic queue policy. A session latches
 its finite membership once and does not apply a daily cap.
 
-Session creation carries the browser-resolved IANA timezone in
-`p_training_filter.timezone`, even when no source/date focus is selected. It is
-captured for the next-local-day introduction rule; the resulting availability
-instant is immutable, including across a later timezone change or DST
-transition. Legacy callers without a timezone use `UTC`.
+Session start may carry the browser-resolved IANA timezone in
+`p_training_filter.timezone` so the existing trigger can initialize/update the
+learner preference. Date-window and study-day boundaries use the stored learner
+timezone; the request hint is not a competing scheduler boundary. The stored
+zone is captured for the next-local-day introduction rule, and the resulting
+availability instant is immutable, including across a later timezone change or
+DST transition. Legacy callers without a timezone use `UTC`.
 
 Session lifecycle:
 

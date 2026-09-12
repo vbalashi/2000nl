@@ -56,6 +56,70 @@ describeDb("local training study day", () => {
     });
   });
 
+  test("keeps summer-time filtering and invalid-zone fallback deterministic", async () => {
+    await withTransaction(pool, async (client) => {
+      const { rows } = await client.query(`
+        SELECT
+          private.training_filter_local_date(
+            '2026-07-15T01:59:59Z'::timestamptz,
+            'Europe/Amsterdam'
+          )::text AS summer_before,
+          private.training_filter_local_date(
+            '2026-07-15T02:00:00Z'::timestamptz,
+            'Europe/Amsterdam'
+          )::text AS summer_after,
+          private.training_study_day_date_v1(
+            '2026-01-15T03:59:59Z'::timestamptz,
+            'Not/AZone'
+          )::text AS invalid_zone_fallback
+      `);
+
+      expect(rows[0]).toEqual({
+        summer_before: "2026-07-14",
+        summer_after: "2026-07-15",
+        invalid_zone_fallback: "2026-01-14",
+      });
+    });
+  });
+
+  test("uses the stored learner timezone for omitted date-window timezones", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await client.query(
+        `update user_settings
+         set training_schedule_timezone = 'Pacific/Kiritimati'
+         where user_id = $1`,
+        [userId],
+      );
+
+      const { rows } = await client.query(
+        `select
+           private.training_filter_target_date_at(
+             '{"dateWindow":"today"}'::jsonb,
+             '2026-01-15T13:59:59Z'::timestamptz
+           )::text as before_rollover,
+           private.training_filter_target_date_at(
+             '{"dateWindow":"today"}'::jsonb,
+             '2026-01-15T14:00:00Z'::timestamptz
+           )::text as after_rollover,
+           private.training_filter_target_date(
+             '{"dateWindow":"today"}'::jsonb
+           )::text as implicit_current,
+           private.training_study_day_date_v1(
+             clock_timestamp(), 'Pacific/Kiritimati'
+           )::text as expected_current`,
+      );
+
+      expect(rows[0]).toEqual({
+        before_rollover: "2026-01-15",
+        after_rollover: "2026-01-16",
+        implicit_current: rows[0].expected_current,
+        expected_current: rows[0].expected_current,
+      });
+    }, userId);
+  });
+
   test("keeps the local study-day window DST-safe", async () => {
     await withTransaction(pool, async (client) => {
       const { rows } = await client.query(`
@@ -145,7 +209,7 @@ describeDb("local training study day", () => {
       const { rows } = await client.query(
         `select public.get_detailed_training_stats(
            $1, ARRAY['word-to-definition']::text[], NULL::uuid,
-           'curated', 'Europe/Amsterdam'
+           'curated', 'UTC'
          ) as stats`,
         [userId],
       );
@@ -156,6 +220,37 @@ describeDb("local training study day", () => {
         learningStartedToday: 1,
         reviewWordsDone: 1,
         reviewCardsDone: 1,
+      });
+    }, userId);
+  });
+
+  test("keeps graduation meaning-scoped while new cards stay directional", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      const entryId = await insertWord(client, `study-day-graduated-${randomUUID()}`);
+      await client.query(
+        `insert into user_review_log (
+           user_id, word_id, mode, grade, review_type,
+           reviewed_at, interval_after
+         ) values
+           ($1, $2, 'word-to-definition', 3, 'new', now(), 1.5),
+           ($1, $2, 'definition-to-word', 3, 'new', now(), 1.5)`,
+        [userId, entryId],
+      );
+
+      const { rows } = await client.query(
+        `select public.get_detailed_training_stats(
+           $1, ARRAY['word-to-definition', 'definition-to-word']::text[],
+           NULL::uuid, 'curated', 'UTC'
+         ) as stats`,
+        [userId],
+      );
+
+      expect(rows[0].stats).toMatchObject({
+        newWordsToday: 1,
+        newCardsToday: 2,
+        graduatedNewWordsToday: 1,
       });
     }, userId);
   });

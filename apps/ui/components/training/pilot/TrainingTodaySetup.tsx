@@ -83,8 +83,8 @@ const copy = {
     eyebrowToday: "TRAINING · STUDY DAY",
     greeting: "Good morning",
     completed: (count: number) => `${count} cards completed this study day`,
-    queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `${reviews} reviews due · ${introduced}/${limit} new this study day`,
+    queueSummary: (reviews: number, introduced: number) =>
+      `${reviews} reviews due · ${introduced} new this study day`,
     active: "ACTIVE SESSION",
     activeFallback: "Current training",
     continue: "Continue session",
@@ -128,8 +128,8 @@ const copy = {
     eyebrowToday: "TRAINING · STUDIEDAG",
     greeting: "Goedemorgen",
     completed: (count: number) => `${count} kaarten deze studiedag afgerond`,
-    queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `${reviews} herhalingen klaar · ${introduced}/${limit} nieuw deze studiedag`,
+    queueSummary: (reviews: number, introduced: number) =>
+      `${reviews} herhalingen klaar · ${introduced} nieuw deze studiedag`,
     active: "ACTIEVE SESSIE",
     activeFallback: "Huidige training",
     continue: "Sessie doorgaan",
@@ -173,8 +173,8 @@ const copy = {
     eyebrowToday: "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ",
     greeting: "Доброе утро",
     completed: (count: number) => `За учебный день завершено карточек: ${count}`,
-    queueSummary: (reviews: number, introduced: number, limit: number) =>
-      `Повторений к выполнению: ${reviews} · новых за учебный день: ${introduced}/${limit}`,
+    queueSummary: (reviews: number, introduced: number) =>
+      `Повторений к выполнению: ${reviews} · новых за учебный день: ${introduced}`,
     active: "АКТИВНАЯ СЕССИЯ",
     activeFallback: "Текущая тренировка",
     continue: "Продолжить сессию",
@@ -423,7 +423,6 @@ export function TrainingTodaySetup({
                 {t.queueSummary(
                   stats.reviewCardsDue,
                   stats.newWordsToday,
-                  stats.dailyNewLimit,
                 )}
               </p>
             </div>

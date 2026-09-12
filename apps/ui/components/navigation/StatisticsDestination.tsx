@@ -59,7 +59,7 @@ export function StatisticsDestination({
   const metrics = [
     {
       label: text.newToday,
-      value: `${stats.newWordsToday} / ${stats.dailyNewLimit}`,
+      value: String(stats.newWordsToday),
     },
     { label: text.reviewedToday, value: String(stats.reviewCardsDone) },
     { label: text.dueNow, value: String(stats.reviewCardsDue) },

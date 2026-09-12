@@ -433,3 +433,6 @@
 
 -- Align scheduler diagnostics and selection with the local study day
 \i db/migrations/146_local_study_day_scheduler_alignment.sql
+
+-- Make date filters and statistics use the stored learner-local study day
+\i db/migrations/147_local_study_day_authority.sql

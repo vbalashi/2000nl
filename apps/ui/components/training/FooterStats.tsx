@@ -67,11 +67,11 @@ function ProgressStat({
 }: {
   label: string;
   value: number;
-  total: number;
+  total?: number;
   colorClass: string;
   barColorClass: string;
 }) {
-  const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
+  const progress = total && total > 0 ? Math.min((value / total) * 100, 100) : 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -80,15 +80,17 @@ function ProgressStat({
       >
         {label}
       </span>
-      <div className="h-1.5 w-8 md:w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-        <div
-          className={`h-full rounded-full transition-all ${barColorClass}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {total !== undefined && (
+        <div className="h-1.5 w-8 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700 md:w-16">
+          <div
+            className={`h-full rounded-full transition-all ${barColorClass}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
       <span className="text-slate-800 dark:text-slate-100">
         {value}
-        <span className="opacity-50">/{total}</span>
+        {total !== undefined && <span className="opacity-50">/{total}</span>}
       </span>
     </div>
   );
@@ -102,23 +104,26 @@ function CompactProgressStat({
 }: {
   label: string;
   value: number;
-  total: number;
+  total?: number;
   barColorClass: string;
 }) {
-  const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
+  const progress = total && total > 0 ? Math.min((value / total) * 100, 100) : 0;
   return (
     <div className={sessionStyles.stat}>
       <span className={sessionStyles.statLabel} title={label}>
         {label}
       </span>
-      <div className={sessionStyles.statBar} aria-hidden="true">
-        <div
-          className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {total !== undefined && (
+        <div className={sessionStyles.statBar} aria-hidden="true">
+          <div
+            className={`h-full rounded-sm transition-[width] motion-reduce:transition-none ${barColorClass}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
       <span className={sessionStyles.statValue}>
-        {value}/{total}
+        {value}
+        {total !== undefined && `/${total}`}
       </span>
     </div>
   );
@@ -148,7 +153,6 @@ export function FooterStats({
   const text = footerCopy[interfaceLanguage];
   const {
     newCardsToday,
-    dailyNewLimit,
     reviewCardsDone,
     totalWordsLearned,
     totalWordsInList,
@@ -171,7 +175,6 @@ export function FooterStats({
       <ProgressStat
         label={text.new}
         value={newCardsToday}
-        total={dailyNewLimit}
         colorClass="text-blue-500 dark:text-blue-400"
         barColorClass="bg-blue-500 dark:bg-blue-400"
       />
@@ -206,7 +209,6 @@ export function FooterStats({
           <CompactProgressStat
             label={text.new}
             value={newCardsToday}
-            total={dailyNewLimit}
             barColorClass="bg-blue-400"
           />
           <CompactProgressStat
