@@ -26,6 +26,7 @@ describe("DevTestLoginPage", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith("/api/dev/test-session", {
+      method: "POST",
       cache: "no-store",
     });
   });

@@ -14,7 +14,7 @@ function devOnlyGuard(): NextResponse | null {
   return null;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function POST(): Promise<NextResponse> {
   const guard = devOnlyGuard();
   if (guard) return guard;
 

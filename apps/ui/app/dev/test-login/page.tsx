@@ -21,6 +21,7 @@ let devSessionRequest: Promise<DevSessionResult> | null = null;
 
 function requestDevSession() {
   devSessionRequest ??= fetch("/api/dev/test-session", {
+    method: "POST",
     cache: "no-store",
   }).then(async (response) => ({
     ok: response.ok,

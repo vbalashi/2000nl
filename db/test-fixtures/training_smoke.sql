@@ -77,7 +77,6 @@ BEGIN
                     'sourcePath', 'raw.meanings[0].examples[' || example_item.index || ']',
                     'sourceNativeKey', 'fixture:meaning-0:example-' || example_item.index,
                     'sourceTextFingerprint', encode(digest(example_text, 'sha256'), 'hex'),
-                    'parentInputKey', 'definition-0',
                     'sourceText', example_text
                 ));
             END IF;
@@ -179,6 +178,30 @@ BEGIN
               '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
     ) THEN
         RAISE EXCEPTION 'training fixture generated a non-RFC UUID';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.word_entries AS entry
+        JOIN public.dictionaries AS dictionary
+          ON dictionary.id = entry.dictionary_id
+        WHERE dictionary.source_provider = 'local-fixture'
+          AND dictionary.language_code = 'nl'
+          AND dictionary.slug = 'nl-test-lexicon'
+          AND entry.raw #>> '{_metadata,fixture}' = 'true'
+          AND jsonb_array_length(
+              COALESCE(entry.raw #> '{meanings,0,examples}', '[]'::jsonb)
+          ) <> (
+              SELECT count(*)
+              FROM private.platform_v2_content_nodes AS node
+              WHERE node.entry_id = entry.id
+                AND node.binding_state = 'active'
+                AND node.parent_content_node_id IS NULL
+                AND node.kind = 'example'
+                AND node.diagnostic_locator LIKE 'raw.meanings[0].examples[%'
+          )
+    ) THEN
+        RAISE EXCEPTION 'training fixture did not preserve ordinary examples as root content nodes';
     END IF;
 
     PERFORM set_config('request.jwt.claim.sub', probe_user_id::text, true);
