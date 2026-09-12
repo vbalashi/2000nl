@@ -64,6 +64,15 @@ content-bound exercises additionally name their exact Content Node and family.
 Changing a translation's display language does not change its Exercise Target.
 _Avoid_: visible text, array position, translation language as identity
 
+**Translation Exercise**:
+A Training Exercise that asks the learner to recall a translation for one exact
+example Content Node. Every example node is its own exercise, even when several
+examples belong to one Dictionary Meaning; sibling examples do not share FSRS,
+action history, or session membership. The selected translation language changes
+the displayed Translation Artifact, not the Exercise Target.
+_Avoid_: meaning-level translation exercise, one progress record per meaning,
+translation language as identity
+
 **Session Size**:
 The requested number of completed Training Exercises in one session, across its selected categories. A session may end earlier when eligible material is exhausted.
 _Avoid_: daily limit, new-word quota
