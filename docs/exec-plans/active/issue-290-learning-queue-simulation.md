@@ -1,7 +1,7 @@
 # Issue #290 — simulate real learning queue behavior
 
-Status: execution plan, 2026-09-11. The first bounded DB-contract slice is
-implemented as a characterization test; it does not change queue, FSRS, or
+Status: execution plan, 2026-09-12. The first two bounded DB-contract slices
+are implemented as characterization tests; they do not change queue, FSRS, or
 user-history behavior.
 
 ## Why this is the next slice
@@ -60,8 +60,10 @@ must continue to be compared against the same inputs.
    no lost member, and durable action/receipt/history/statistics counts.
    This is a DB-contract characterization, not yet an HTTP route or browser
    end-to-end test.
-3. **Mixed queue:** `5 new + 10 review` and `10 new only`; record queue source,
-   `new/review/learning` state, History rows, and footer counters separately.
+3. **Mixed queue (implemented slice):** `5 new + 10 review` through the real
+   V2 action boundary, with soft `1:5` ordering, exact member identity,
+   separate Learn/review receipts and history, and independent footer counters.
+   The `10 new only` variant remains a follow-up characterization.
 4. **Controlled time:** morning/evening, 1/3/7-day gaps, day rollover and DST;
    include the `<0.5`-day short-term boundary and the display/due rounding
    layer. These scenarios remain evidence until #279/#248 decisions are made.
