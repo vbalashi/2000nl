@@ -54,10 +54,11 @@ approval recorded yet.
 4. a separate product decision on FSRS short-term scheduling versus Anki-style
    Learning Steps, based on the supplied research and current observability.
 
-These cases need deterministic clocks/timezones at the test boundary. Do not
-set the host clock or duplicate the scheduler in a test helper. Until the
-remaining vectors and product decision are complete, do not modify migration
-131 or the TypeScript FSRS formula.
+Migration 148, delivered from the #290 temporal slice, now provides a
+transaction-local deterministic clock at the real SQL test boundary. Use it
+for these cases; do not set the host clock or duplicate the scheduler in a
+test helper. Until the remaining vectors and product decision are complete,
+do not modify migration 131 or the TypeScript FSRS formula.
 
 ## Gates
 
