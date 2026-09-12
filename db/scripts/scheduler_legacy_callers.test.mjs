@@ -13,6 +13,9 @@ const allowedLegacyReferences = new Set([
   "apps/ui/tests/fsrs/platformKnownMarkRpc.test.ts",
   "apps/ui/tests/dbContractDeployment.test.ts",
   "db/scripts/scheduler_cold_io.integration.test.mjs",
+  // This read-only diagnostic intentionally mirrors the deployment gate's
+  // cached-client selector calls so their cold path remains observable.
+  "db/scripts/scheduler_readiness_diagnostic.mjs",
 ]);
 const forbiddenPatterns = [
   /get_next_card_without_known/,
