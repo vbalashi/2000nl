@@ -32,9 +32,9 @@ describeIfDb("training calendar boundaries", () => {
       const dates: string[] = [];
       for (const [timestamp, expectedDate] of cases) {
         const { rows } = await client.query(
-          `select private.training_filter_local_date(
+          `select to_char(private.training_filter_local_date(
              $1::timestamptz, 'Europe/Amsterdam'
-           ) as local_date`,
+           ), 'YYYY-MM-DD') as local_date`,
           [timestamp],
         );
         expect(rows[0]?.local_date).toBe(expectedDate);
