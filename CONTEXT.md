@@ -85,6 +85,16 @@ _Avoid_: hidden idiom, ordinary-mode idiom exercise, idiom as a new meaning
 The requested number of completed Training Exercises in one session, across its selected categories. A session may end earlier when eligible material is exhausted.
 _Avoid_: daily limit, new-word quota
 
+**Active Training Run**:
+The learner's one current first-party training activity across devices and tabs.
+Starting a different run supersedes it without erasing completed learning.
+_Avoid_: login session, daily allowance, shared cross-device queue
+
+**Superseded Training Run**:
+A former Training run replaced by another run. Its remaining exercises are no
+longer actionable; continuing here starts a fresh queue from current progress.
+_Avoid_: forgotten progress, expired account, failed recall
+
 **New-to-review Ratio**:
 The preferred alternation of one new exercise with a chosen number of repetitions. Available material can fill a missing category within the selected training mode.
 _Avoid_: hard quota, daily allowance
