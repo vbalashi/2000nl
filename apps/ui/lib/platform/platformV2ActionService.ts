@@ -17,6 +17,7 @@ export type PlatformV2ActionOperationResult = {
 export type PlatformV2ActionCallPath =
   | "training"
   | "library"
+  | "legacy_first_party"
   | "connected_client";
 
 export async function performPlatformV2Action(
@@ -32,6 +33,12 @@ export async function performPlatformV2Action(
     };
   }
   if (callPath === "library" && request.trainingSessionId) {
+    return {
+      payload: { error: "unexpected_training_session_id" },
+      status: 400,
+    };
+  }
+  if (callPath === "legacy_first_party" && request.trainingSessionId) {
     return {
       payload: { error: "unexpected_training_session_id" },
       status: 400,

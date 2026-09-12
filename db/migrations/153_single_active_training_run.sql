@@ -574,11 +574,14 @@ REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) FROM PUBLIC, anon, authenticated, service_role;
 
--- The 12-argument overload is the compatibility boundary for Connected
--- Clients only. A first-party caller that omits explicit server-selected
--- context is ambiguous with a stale Training client and must fail closed.
--- First-party Library actions use the service-role-only 13-argument overload
--- with an explicit null session; Training supplies a concrete session id.
+-- Rollout phase 1 keeps the previous app image and cached first-party Library
+-- bundles working. Their 12-argument first-party wire format is identical to
+-- stale old Training, so this compatibility overload cannot fence that caller
+-- without also breaking Library. Do not infer the surface from queue/member
+-- state: Library is allowed to act on a queued entry. Current first-party
+-- Library uses the 13-argument overload with explicit null; current Training
+-- supplies a concrete session id and is fenced below. Issue #399 owns phase 2,
+-- after the rollback/cache window, which will reject first_party here.
 CREATE OR REPLACE FUNCTION public.perform_platform_v2_card_action_as_principal(
   p_user_id uuid,
   p_action_id text,
@@ -610,8 +613,8 @@ BEGIN
   IF p_user_id IS NULL THEN RAISE EXCEPTION 'missing_user_id'; END IF;
   PERFORM set_config('request.jwt.claim.sub', p_user_id::text, true);
 
-  IF p_auth_kind IS DISTINCT FROM 'connected_client' THEN
-    RAISE EXCEPTION 'missing_training_session_id';
+  IF p_auth_kind NOT IN ('first_party', 'connected_client') THEN
+    RAISE EXCEPTION 'invalid_auth_kind';
   END IF;
 
   RETURN private.perform_platform_v2_card_action_non_session_latch_v1(
@@ -709,13 +712,19 @@ GRANT EXECUTE ON FUNCTION public.perform_platform_v2_card_action_as_principal(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) TO service_role;
 
--- These historical browser RPCs cannot carry Training run identity. Keep the
--- functions for postgres-owned internal action implementations, but remove
--- every direct API-role entry point. Their retired aliases handle_review and
--- start_learning_card were already removed by the canonical migration chain.
+-- The immediately previous app image still reaches these exact RPCs as the
+-- authenticated learner. Keep only those existing signatures executable for
+-- the phase-1 rollback window. They are ambiguous with stale old Training and
+-- therefore cannot be fenced honestly. Issue #399 removes this grant together
+-- with first-party access to the 12-argument Platform V2 overload. Retired
+-- aliases handle_review and start_learning_card remain absent.
 REVOKE ALL ON FUNCTION public.handle_card_review(uuid, uuid, text, text, uuid)
   FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.start_learning_entry_card(uuid, uuid, text)
   FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.handle_card_review(uuid, uuid, text, text, uuid)
+  TO authenticated;
+GRANT EXECUTE ON FUNCTION public.start_learning_entry_card(uuid, uuid, text)
+  TO authenticated;
 
 COMMIT;

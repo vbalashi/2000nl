@@ -92,7 +92,13 @@ END $$;
     JSON.stringify({
       schemaVersion: 1,
       contractId: "integration-123",
-      rollout: { status: "enabled", requiredMigrationId: 123, coordinationIssue: 233 },
+      rollout: {
+        status: "enabled",
+        requiredMigrationId: 123,
+        coordinationIssue: 233,
+        compatibilityPhase: "legacy-first-party-compatible",
+        strictEnforcementIssue: 399,
+      },
       baseline: { migrationId: 122, probe: "db/deploy-contract/baseline-122.sql" },
       ledger: { file: "db/deploy-contract/ledger-v1.sql", sha256: sha256(ledgerSource) },
       migrations: [

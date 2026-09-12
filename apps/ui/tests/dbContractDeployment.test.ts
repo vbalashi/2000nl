@@ -17,7 +17,9 @@ describe("NUC database contract deployment", () => {
     expect(contract.rollout).toEqual({
       status: "enabled",
       requiredMigrationId: 153,
-      coordinationIssue: 279,
+      coordinationIssue: 393,
+      compatibilityPhase: "legacy-first-party-compatible",
+      strictEnforcementIssue: 399,
     });
     expect(contract.migrations.map((migration) => migration.migrationId)).toEqual([
       123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
@@ -28,6 +30,28 @@ describe("NUC database contract deployment", () => {
       );
       expect(migration.sha256).toMatch(/^[0-9a-f]{64}$/);
     }
+  });
+
+  test("keeps migration 153 rollback-compatible and names the phase-2 cutoff", () => {
+    const migration = read("db/migrations/153_single_active_training_run.sql");
+    const postflight = read("db/deploy-contract/postflight-153.sql");
+    const runbook = read("docs/runbooks/nuc-db-contract-deploy.md");
+    const apiContract = read("docs/reference/platform-api.md");
+
+    expect(migration).toContain("Issue #399 owns phase 2");
+    expect(migration).toContain(
+      "p_auth_kind NOT IN ('first_party', 'connected_client')",
+    );
+    expect(migration).toContain(
+      "GRANT EXECUTE ON FUNCTION public.handle_card_review(uuid, uuid, text, text, uuid)",
+    );
+    expect(postflight).toContain("legacy-first-party-rollback-grant");
+    expect(postflight).toContain("explicit-training-library-routing");
+    expect(runbook).toContain("Phase 1 — rollback-compatible");
+    expect(runbook).toContain("Phase 2 — strict enforcement (#399)");
+    expect(apiContract).toContain("POST /api/platform/v2/actions/library");
+    expect(apiContract).toContain("missing_training_session_id");
+    expect(apiContract).toContain("legacy first-party compatibility window");
   });
 
   test("builds before migration, gates before switch, and verifies exact health", () => {

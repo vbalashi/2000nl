@@ -95,6 +95,16 @@ async function readManifest(repoRoot, manifestPath) {
   ) {
     throw new Error("Invalid DB contract rollout gate");
   }
+  if (
+    ![
+      "legacy-first-party-compatible",
+      "strict-first-party-fenced",
+    ].includes(manifest.rollout?.compatibilityPhase) ||
+    !Number.isSafeInteger(manifest.rollout?.strictEnforcementIssue) ||
+    manifest.rollout.strictEnforcementIssue <= 0
+  ) {
+    throw new Error("Invalid staged compatibility phase");
+  }
   let previous = manifest.baseline.migrationId;
   for (const migration of manifest.migrations) {
     if (!Number.isSafeInteger(migration.migrationId) || migration.migrationId !== previous + 1) {

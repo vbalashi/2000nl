@@ -58,7 +58,11 @@ export async function handlePlatformV2ActionRoute(
     );
   }
 
-  const callPath = resolveCallPath(auth.principal.authKind, firstPartySurface);
+  const callPath = resolveCallPath(
+    auth.principal.authKind,
+    firstPartySurface,
+    Boolean(parsed.request.trainingSessionId),
+  );
   if (callPath === null) {
     return appendPlatformRouteHeaders(
       reply({ error: "library_actions_first_party_only" }, 403),
@@ -119,11 +123,17 @@ export async function handlePlatformV2ActionRoute(
 function resolveCallPath(
   authKind: "first_party" | "connected_client",
   firstPartySurface: FirstPartyPlatformV2ActionSurface,
+  hasTrainingSessionId: boolean,
 ): PlatformV2ActionCallPath | null {
   if (authKind === "connected_client") {
     return firstPartySurface === "training" ? "connected_client" : null;
   }
-  return firstPartySurface;
+  if (firstPartySurface === "library") return "library";
+  // Phase 1 keeps the formerly shared first-party endpoint compatible with the
+  // previous app image and cached Library bundles. Their no-session request is
+  // indistinguishable from stale old Training; issue #399 removes this branch
+  // only after the rollback/cache window closes.
+  return hasTrainingSessionId ? "training" : "legacy_first_party";
 }
 
 async function readJson(request: NextRequest): Promise<unknown> {
