@@ -57,6 +57,13 @@ _Avoid_: Easy review, hidden card, deleting prior state
 One opportunity to learn a meaning or recall a target in a chosen direction; Learn, Known or a recall grade completes it. Recall in the other direction is a separate exercise.
 _Avoid_: unique word, unique meaning, displayed-card count
 
+**Exercise Target**:
+The stable identity of one Training Exercise. Ordinary meaning exercises remain
+identified at the Dictionary Entry plus direction level for compatibility;
+content-bound exercises additionally name their exact Content Node and family.
+Changing a translation's display language does not change its Exercise Target.
+_Avoid_: visible text, array position, translation language as identity
+
 **Session Size**:
 The requested number of completed Training Exercises in one session, across its selected categories. A session may end earlier when eligible material is exhausted.
 _Avoid_: daily limit, new-word quota

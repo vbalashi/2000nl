@@ -149,3 +149,4 @@ export type {
 } from "./platform";
 
 export type * from "./platformV2";
+export type * from "./trainingExercise";
