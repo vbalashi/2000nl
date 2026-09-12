@@ -7,7 +7,7 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 
 ## Migration sources of truth
 
-- `db/migrations/001_*.sql` through the current numbered migration (`152` at
+- `db/migrations/001_*.sql` through the current numbered migration (`153` at
   the time of writing) are the ordered schema history. Do not renumber or edit
   an already deployed migration.
 - `db/migrations/bootstrap.sql` includes that complete numbered chain. It is
@@ -16,12 +16,12 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 - `db/deploy-contract/ledger-v1.sql` creates the immutable deployment ledger
   before the first managed forward migration. The later managed sequence is
   declared by `packages/shared/deployment/db-contract.json` and currently
-  covers migrations `123` through `152` after baseline `122`.
+  covers migrations `123` through `153` after baseline `122`.
 - `db/deploy-contract/` contains the checksum-pinned baseline, pre-switch,
   and postflight probes for the deployment contract.
 
 The manifest is the application-owned database contract. It currently declares
-contract `2000nl-db-152`, required migration `152`, and the exact checksums for
+contract `2000nl-db-153`, required migration `153`, and the exact checksums for
 every managed migration and probe. Inspect or validate it without a database:
 
 ```bash
@@ -53,14 +53,19 @@ scripts/db-local-supabase.sh apply
 scripts/db-local-supabase.sh probe
 ```
 
-For the existing populated local stack, start with the read-only check instead:
+For an existing local stack whose data may matter, start with the read-only
+check instead:
 
 ```bash
 scripts/db-local-supabase.sh check
 ```
 
-Do not apply bootstrap or reset a populated QA database to silence a failed
-check. Preserve the data and follow the local Supabase runbook.
+Do not apply bootstrap or reset a populated staging or production-shaped QA
+database merely to silence a failed check. Preserve intentional data and follow
+the local Supabase runbook. When the canonical local QA database is explicitly
+disposable, rebuilding it with `scripts/db-local-supabase.sh all --confirm-reset`
+is the supported path; the harness runs FSRS migrations in a separate temporary
+database so the app database and migration-driven tests do not interfere.
 
 ## Runtime data model
 

@@ -12,7 +12,7 @@ function fixture(t) {
   const dir = mkdtempSync(path.join(os.tmpdir(), "2000nl-local-wrapper-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const log = path.join(dir, "calls");
-  for (const tool of ["psql", "supabase", "docker", "npm"]) {
+  for (const tool of ["psql", "supabase", "docker", "npm", "createdb", "dropdb"]) {
     const file = path.join(dir, tool);
     writeFileSync(file, `#!/bin/bash
 printf '%s %s PGOPTIONS=%s PGHOSTADDR=%s PGSERVICE=%s\\n' '${tool}' "$*" "$PGOPTIONS" "$PGHOSTADDR" "$PGSERVICE" >> "$QA_CALL_LOG"
@@ -79,7 +79,9 @@ test("confirmed all strips acknowledgement before passing the optional data dire
   assert.equal(result.status, 0, result.stderr);
   assert.match(f.calls(), /supabase start/);
   assert.match(f.calls(), /supabase db reset/);
+  assert.match(f.calls(), /createdb/);
   assert.match(f.calls(), /npm test/);
+  assert.match(f.calls(), /dropdb/);
   assert.match(result.stdout, /Skipping dictionary import/);
 });
 

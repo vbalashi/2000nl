@@ -23,7 +23,8 @@ Commands:
   import [data-dir]     Import dictionary JSON files (default: db/data/words_content).
   test-fsrs             Run apps/ui FSRS tests against local Supabase.
   all --confirm-reset [data-dir]
-                        Erase DB, bootstrap, test, import if present, then probe.
+                        Erase DB, bootstrap, test in a disposable DB, import if
+                        present, then probe.
 
 Environment:
   LOCAL_SUPABASE_DB_URL Override the local Postgres URL.
@@ -105,8 +106,27 @@ import_dictionary() {
 }
 
 run_fsrs_tests() {
+  ensure_psql
   need_cmd npm
-  (cd "$repo_root/apps/ui" && FSRS_TEST_DB_URL="$local_db_url" npm test -- tests/fsrs/*.test.ts)
+  need_cmd createdb
+  need_cmd dropdb
+
+  # FSRS tests own their migration ledger and apply numbered migrations through
+  # the Node pg driver. They must not run against the canonical app DB, which
+  # has already received bootstrap.sql. Keep this database disposable.
+  local test_db_name="2000nl_fsrs_${BASHPID}_${RANDOM}"
+  local test_db_url="${local_db_url%/*}/$test_db_name"
+  createdb --maintenance-db="$local_db_url" "$test_db_name"
+
+  local test_status=0
+  if (cd "$repo_root/apps/ui" && FSRS_TEST_DB_URL="$test_db_url" npm test -- tests/fsrs/*.test.ts); then
+    test_status=0
+  else
+    test_status=$?
+  fi
+
+  dropdb --if-exists --maintenance-db="$local_db_url" "$test_db_name"
+  return "$test_status"
 }
 
 cmd="${1:-}"

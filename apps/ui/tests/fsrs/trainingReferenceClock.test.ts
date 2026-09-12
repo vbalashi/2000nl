@@ -368,6 +368,10 @@ describeDb("training reference clock seam", () => {
             `delete from user_card_action_events where user_id = $1::uuid`,
             [userId],
           );
+          await client.query(
+            `delete from training_run_start_receipts where user_id = $1::uuid`,
+            [userId],
+          );
           if (sessionId) {
             await client.query(
               `delete from training_session_members where session_id = $1::uuid`,

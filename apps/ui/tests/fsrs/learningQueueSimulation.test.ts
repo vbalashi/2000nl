@@ -426,6 +426,10 @@ describeDb("learning queue simulation", () => {
           `delete from user_card_action_events where user_id = $1::uuid`,
           [userId],
         );
+        await client.query(
+          `delete from training_run_start_receipts where user_id = $1::uuid`,
+          [userId],
+        );
         if (sessionId) {
           await client.query(
             `delete from training_session_members where session_id = $1::uuid`,
@@ -683,6 +687,10 @@ describeDb("learning queue simulation", () => {
         .toHaveLength(10);
     } finally {
       await withCommittedTransaction(pool, userId, async (client) => {
+        await client.query(
+          `delete from training_run_start_receipts where user_id = $1::uuid`,
+          [userId],
+        );
         if (sessionId) {
           await client.query(
             `alter table training_session_members
@@ -899,6 +907,10 @@ describeDb("learning queue simulation", () => {
       expect(historyRows.every((row) => row.review_result === "learning_started")).toBe(true);
     } finally {
       await withCommittedTransaction(pool, userId, async (client) => {
+        await client.query(
+          `delete from training_run_start_receipts where user_id = $1::uuid`,
+          [userId],
+        );
         if (sessionId) {
           await client.query(
             `alter table training_session_members

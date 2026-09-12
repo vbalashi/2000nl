@@ -37,7 +37,15 @@ ledger entries require the reviewed migration gate described in
 local database. That gate also requires its dedicated QA principal for the read
 probe. Never manually insert a contract version or receipt to make health green.
 
-If `check` fails, preserve the database and diagnose the reported condition.
+A fresh `bootstrap.sql` rebuild intentionally has no deployment receipts, because
+bootstrap is not a production deployment. For that disposable state, use
+`scripts/db-local-supabase.sh probe` as the schema/data gate; `check` is for a
+populated environment whose managed receipts are expected to exist.
+
+If `check` fails, preserve a populated environment when its data is intentional
+or needed for comparison, and diagnose the reported condition. A disposable
+local QA database may instead be rebuilt from the checked-in migrations; its
+nonzero row counts do not make it authoritative.
 Bootstrap includes all numbered migrations (CI checks coverage), but is not a
 production snapshot and does not create verified deployment receipts. Dictionary
 JSON import restores source content, not user histories, generated entries,
@@ -77,16 +85,18 @@ The wrapper links the common DB URL names for the test process:
 - `apps/ui/tests/fsrs` resolves DB URLs in this order: `FSRS_TEST_DB_URL`, `SUPABASE_DB_URL`, `DATABASE_URL`.
 - `db/scripts/psql_supabase.sh` reads `SUPABASE_DB_URL` or `DATABASE_URL` from env, then falls back to repo `.env.local`.
 
-For an intentional rebuild after preserving any needed data, run the whole
-local DB harness:
+When the canonical local QA database is disposable and no local state needs to
+be retained, run the whole rebuild harness:
 
 ```bash
 scripts/db-local-supabase.sh all --confirm-reset
 ```
 
 `all` resets the local Supabase database, applies bootstrap, runs probes, runs
-FSRS tests on the clean DB, imports dictionary data when present, and runs probes
-again. The default directory is imported automatically when it exists; an
+FSRS tests in a separate temporary database (the suite owns its migration
+ledger), imports dictionary data when present, and runs probes again. The
+temporary test database is removed after the suite, including on a failed test
+run. The default directory is imported automatically when it exists; an
 explicit directory is optional. Wait for command completion before using the
 database. Do not insert ad-hoc source rows while import is running: source rows
 must have exact coverage by the importer's source bindings.
@@ -144,9 +154,11 @@ Expected high-level result:
 
 If the response is `"status": "warning"` and mentions a missing RPC such as
 `fetch_dictionary_entry_by_id_gated`, the UI is connected to an old or wrong
-Supabase database. Preserve existing data, inspect the checkout and migration
-receipts with `check`, then plan the necessary forward migrations. Do not reset
-a populated environment to silence a missing-RPC or index warning.
+Supabase database. For a populated environment whose data matters, preserve
+existing data, inspect the checkout and migration receipts with `check`, then
+plan the necessary forward migrations. For the disposable canonical local QA
+database, an explicit `all --confirm-reset` rebuild is the correct recovery path;
+do not reset staging or production-shaped data.
 
 Manual alternative: copy the exports from `scripts/db-local-supabase.sh env` into
 your shell, including the local anon/service keys printed by `supabase status -o env`.
