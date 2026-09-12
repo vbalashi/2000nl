@@ -1,6 +1,9 @@
 import { Pool } from "pg";
+import { randomUUID } from "crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
+  ensureUserWithSettings,
+  insertWord,
   runMigrations,
   withTransaction,
 } from "./dbTestUtils";
@@ -78,5 +81,82 @@ describeDb("local training study day", () => {
       expect(Number(rows[0].spring_hours)).toBe(23);
       expect(Number(rows[0].autumn_hours)).toBe(25);
     });
+  });
+
+  test("attributes public stats to the selected local study day", async () => {
+    const userId = randomUUID();
+    await withTransaction(pool, async (client) => {
+      await ensureUserWithSettings(client, userId);
+      await client.query(
+        `update user_settings
+         set training_schedule_timezone = 'Europe/Amsterdam'
+         where user_id = $1`,
+        [userId],
+      );
+      const beforeEntryId = await insertWord(
+        client,
+        `study-day-before-${randomUUID()}`,
+      );
+      const currentEntryId = await insertWord(
+        client,
+        `study-day-current-${randomUUID()}`,
+      );
+
+      await client.query(
+        `with bounds as (
+           select *
+           from private.training_study_day_bounds_v1(
+             clock_timestamp(), 'Europe/Amsterdam'
+           )
+         )
+         insert into user_card_action_events (
+           user_id, entry_id, card_type_id, action,
+           action_payload_hash, created_at
+         )
+         select $1::uuid, $2::uuid, 'word-to-definition', 'start-learning',
+           'study-day-before', bounds.start_at - interval '1 second'
+         from bounds
+         union all
+         select $1::uuid, $3::uuid, 'word-to-definition', 'start-learning',
+           'study-day-current',
+           least(bounds.start_at + interval '1 hour',
+                 clock_timestamp() - interval '1 second')
+         from bounds`,
+        [userId, beforeEntryId, currentEntryId],
+      );
+      await client.query(
+        `with bounds as (
+           select *
+           from private.training_study_day_bounds_v1(
+             clock_timestamp(), 'Europe/Amsterdam'
+           )
+         )
+         insert into user_review_log (
+           user_id, word_id, mode, grade, review_type,
+           reviewed_at, interval_after
+         )
+         select $1::uuid, $2::uuid, 'word-to-definition', 1, 'review',
+           least(bounds.start_at + interval '1 hour',
+                 clock_timestamp() - interval '1 second'), 0.0
+         from bounds`,
+        [userId, currentEntryId],
+      );
+
+      const { rows } = await client.query(
+        `select public.get_detailed_training_stats(
+           $1, ARRAY['word-to-definition']::text[], NULL::uuid,
+           'curated', 'Europe/Amsterdam'
+         ) as stats`,
+        [userId],
+      );
+
+      expect(rows[0].stats).toMatchObject({
+        newWordsToday: 1,
+        newCardsToday: 1,
+        learningStartedToday: 1,
+        reviewWordsDone: 1,
+        reviewCardsDone: 1,
+      });
+    }, userId);
   });
 });

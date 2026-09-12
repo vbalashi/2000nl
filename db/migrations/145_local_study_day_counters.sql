@@ -96,6 +96,7 @@ DECLARE
   v_modes text[] := p_modes;
   v_list_type text := COALESCE(p_list_type, 'curated');
   v_timezone text;
+  v_now timestamptz := clock_timestamp();
   v_study_day_start timestamptz;
   v_study_day_end timestamptz;
 BEGIN
@@ -113,7 +114,7 @@ BEGIN
 
   SELECT bounds.start_at, bounds.end_at
   INTO v_study_day_start, v_study_day_end
-  FROM private.training_study_day_bounds_v1(clock_timestamp(), v_timezone) bounds;
+  FROM private.training_study_day_bounds_v1(v_now, v_timezone) bounds;
 
   RETURN (
     WITH accessible_entries AS (
@@ -189,7 +190,6 @@ BEGIN
         AND rl.review_type = 'review'
         AND rl.reviewed_at >= v_study_day_start
         AND rl.reviewed_at < v_study_day_end
-        AND rl.interval_after >= 1.0
     ), due_metrics AS (
       SELECT
         COUNT(DISTINCT s.entry_id)::int AS review_words_due,
@@ -199,7 +199,7 @@ BEGIN
       WHERE s.user_id = p_user_id
         AND s.card_type_id = ANY(v_modes)
         AND s.next_review_at < v_study_day_end
-        AND (s.frozen_until IS NULL OR s.frozen_until <= now())
+        AND (s.frozen_until IS NULL OR s.frozen_until <= v_now)
         AND s.hidden = false
         AND s.fsrs_enabled = true
         AND NOT EXISTS (

@@ -82,5 +82,12 @@ describe("trainingService stats", () => {
         totalWordsInList: 2000,
       },
     );
+    expect(rpc).toHaveBeenCalledWith("get_detailed_training_stats", {
+      p_user_id: "user-1",
+      p_modes: ["word-to-definition"],
+      p_list_id: null,
+      p_list_type: "curated",
+      p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    });
   });
 });

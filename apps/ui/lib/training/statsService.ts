@@ -15,6 +15,8 @@ export async function fetchStats(
   const payload: Record<string, any> = {
     p_user_id: userId,
     p_modes: modes,
+    p_list_id: null,
+    p_list_type: "curated",
     p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   };
 

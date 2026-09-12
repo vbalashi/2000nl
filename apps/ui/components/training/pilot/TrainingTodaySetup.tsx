@@ -80,7 +80,7 @@ type Props = {
 
 const copy = {
   en: {
-    eyebrowToday: "TRAINING · TODAY",
+    eyebrowToday: "TRAINING · STUDY DAY",
     greeting: "Good morning",
     completed: (count: number) => `${count} cards completed this study day`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>
@@ -125,7 +125,7 @@ const copy = {
     chooseGoal: "Choose a training goal",
   },
   nl: {
-    eyebrowToday: "TRAINING · VANDAAG",
+    eyebrowToday: "TRAINING · STUDIEDAG",
     greeting: "Goedemorgen",
     completed: (count: number) => `${count} kaarten deze studiedag afgerond`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>
@@ -170,7 +170,7 @@ const copy = {
     chooseGoal: "Kies een trainingsdoel",
   },
   ru: {
-    eyebrowToday: "ТРЕНИРОВКА · СЕГОДНЯ",
+    eyebrowToday: "ТРЕНИРОВКА · УЧЕБНЫЙ ДЕНЬ",
     greeting: "Доброе утро",
     completed: (count: number) => `За учебный день завершено карточек: ${count}`,
     queueSummary: (reviews: number, introduced: number, limit: number) =>

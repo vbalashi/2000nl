@@ -128,7 +128,7 @@
     {
       "migrationId": 145,
       "file": "db/migrations/145_local_study_day_counters.sql",
-      "sha256": "9b535405906a263afd6cd0b331ac97afa85ecf5a73151b10128bfafbdb34ee3d"
+      "sha256": "ae15efc984089bcf1fdc6d5e2feb2da5d93d3d7eff9e4ed6093d95cd010816d4"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-145.sql",
