@@ -50,6 +50,13 @@ event is a safe duplicate; the same event ID with a changed payload fails
 closed. The wrapper remains service-role-only until the application consumer
 and launch UI are enabled by #332/#331.
 
+This idiom runtime boundary does not require ordinary SenseCard projection to
+hide attached idiom Content Nodes. An ordinary meaning card may render an
+attached idiom as supporting dictionary content, but that render is not an
+idiom exercise: it does not create or update idiom FSRS state, action history,
+or session membership. The idiom becomes actionable only in an explicit idiom
+exercise-family session.
+
 ## `get_next_card`
 
 Get the next card for training. The current fresh-deploy function accepts explicit card modes; callers that work from a scenario must resolve that scenario to its `card_modes` first.

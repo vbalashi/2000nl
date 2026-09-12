@@ -17,6 +17,11 @@ time. Giving these exercises only a new string `card_type_id` would make every
 idiom or example under one entry share one FSRS state, Known/action target,
 receipt, and session member.
 
+An idiom may also be attached to an ordinary Dictionary Meaning that is shown
+in the ordinary SenseCard. Hiding that source content would lose useful context,
+but treating its presence as an exercise would incorrectly create progress and
+session work.
+
 ## Decision
 
 Use one shared identity vocabulary for content-bound exercises:
@@ -29,6 +34,9 @@ training-exercise-v1:<family>:<direction>:<entry-id>:<content-node-id>
   `content-node-id=entry` in the canonical key for compatibility;
 - `family=idiom` requires the exact `idiom` Content Node and supports
   `direct` and `reverse` exercises;
+- an attached idiom may remain visible as supporting content in an ordinary
+  SenseCard, but rendering it does not register, grade, schedule, or count an
+  idiom Exercise Target;
 - `family=translation` requires the exact source sentence Content Node and
   uses one `recall` direction in v1;
 - every source `example` Content Node is a separate translation target, even
@@ -55,6 +63,11 @@ membership. #332 owns idiom eligibility, presentation, and any legacy
 ordinary-mode transition. #333 owns sentence selection and translation
 presentation. Both consumers share this identity and must not introduce
 competing card registries or FSRS tables.
+
+An ordinary meaning card may show its attached idioms for context. Only an
+explicit idiom-family session turns those idiom Content Nodes into exercises;
+ordinary Learn/Known, ordinary FSRS, and ordinary session accounting never
+propagate to them.
 
 This ADR intentionally does not add idiom/translation launch UI or change the
 current ordinary scheduler. Those changes follow after the identity contract,
