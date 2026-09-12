@@ -364,50 +364,10 @@ test(
       const optimizedCandidates = parityCases.map((parityCase) => candidateSnapshot(...parityCase));
       assert.deepEqual(optimizedCandidates, legacyCandidates);
 
-      const parity = psql(
-        targetUrl,
-        `BEGIN READ ONLY;
-         SET LOCAL "request.jwt.claim.sub" = '${qaUserId}';
-         WITH cases(label, modes, card_filter) AS (VALUES
-           ('single-both', ARRAY['word-to-definition']::text[], 'both'),
-           ('single-new', ARRAY['word-to-definition']::text[], 'new'),
-           ('single-review', ARRAY['word-to-definition']::text[], 'review'),
-           ('multi-both', ARRAY['word-to-definition', 'definition-to-word']::text[], 'both')
-         ), compared AS (
-           SELECT cases.label,
-             optimized.planned_new AS optimized_new,
-             optimized.planned_review AS optimized_review,
-             optimized.planned_practice AS optimized_practice,
-             COALESCE(legacy.planned_new, 0) AS legacy_new,
-             COALESCE(legacy.planned_review, 0) AS legacy_review,
-             COALESCE(legacy.planned_practice, 0) AS legacy_practice
-           FROM cases
-           CROSS JOIN LATERAL private.default_training_session_plan_counts_v1(
-             '${qaUserId}', cases.modes, 'curated', cases.card_filter, '{}'
-           ) optimized
-           CROSS JOIN LATERAL (
-             SELECT count(*) FILTER (WHERE queue_source = 'new') AS planned_new,
-               count(*) FILTER (WHERE queue_source IN ('learning', 'review')) AS planned_review,
-               count(*) FILTER (WHERE queue_source = 'practice') AS planned_practice
-             FROM private.training_scheduler_candidates_v1(
-               '${qaUserId}', cases.modes, null, 'curated', cases.card_filter,
-               'auto', ARRAY[]::uuid[], ARRAY[]::text[], '{}', false
-             )
-           ) legacy
-         )
-         SELECT row_to_json(compared)
-         FROM compared
-         WHERE (optimized_new, optimized_review, optimized_practice)
-           IS DISTINCT FROM (legacy_new, legacy_review, legacy_practice);
-         ROLLBACK;\n`,
-        ["--quiet"],
-      );
-      assert.equal(parity.status, 0, parity.stderr);
-      assert.equal(parity.stdout.trim(), "", `optimized/legacy parity mismatch: ${parity.stdout}`);
-
       // Production imports can leave recently changed heap pages outside the
-      // visibility map. Dirty every distributed NT2 row after the parity read
-      // so the budget cannot depend on a just-VACUUMed ideal index-only scan.
+      // visibility map. Dirty every distributed NT2 row after the canonical
+      // candidate parity read so the budget cannot depend on a just-VACUUMed
+      // ideal index-only scan.
       const dirtyVisibility = psql(
         targetUrl,
         `UPDATE public.word_entries
@@ -733,7 +693,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
+      applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -763,6 +724,30 @@ test(
           `${canonicalMetrics.blocks} shared blocks; the budgets are 2,000ms and 4,000 blocks`,
       );
 
+      const obsoleteCountHelperDrift = psql(
+        targetUrl,
+        `CREATE FUNCTION private.default_training_session_plan_counts_v1(
+           uuid,text[],text,text,jsonb
+         ) RETURNS TABLE(
+           planned_new bigint, planned_review bigint, planned_practice bigint
+         ) LANGUAGE sql AS $function$
+           SELECT 0::bigint, 0::bigint, 0::bigint
+         $function$;\n`,
+      );
+      assert.equal(obsoleteCountHelperDrift.status, 0, obsoleteCountHelperDrift.stderr);
+      const obsoleteCountHelperPostflight = psql(
+        targetUrl,
+        "",
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-144.sql")],
+      );
+      assert.notEqual(obsoleteCountHelperPostflight.status, 0);
+      assert.match(
+        obsoleteCountHelperPostflight.stderr,
+        /obsolete-count-only-plan-helper/,
+      );
+      applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
+
       const obsoleteV1Drift = psql(
         targetUrl,
         `CREATE FUNCTION private.training_scheduler_candidates_v1(
@@ -781,7 +766,7 @@ test(
       const obsoleteV1DriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-143.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-144.sql")],
       );
       assert.notEqual(obsoleteV1DriftPostflight.status, 0);
       assert.match(
@@ -793,7 +778,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
+      applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -805,7 +791,7 @@ test(
       const sessionGrantDriftPostflight = psql(
         targetUrl,
         "",
-        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-143.sql")],
+        ["--file", path.join(repoRoot, "db/deploy-contract/postflight-144.sql")],
       );
       assert.notEqual(sessionGrantDriftPostflight.status, 0);
       assert.match(sessionGrantDriftPostflight.stderr, /retained-session-grants/);
@@ -815,7 +801,8 @@ test(
       applySqlFile(targetUrl, "db/migrations/141_cached_client_scheduler_compatibility.sql");
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-143.sql");
+      applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
     } finally {
       const terminate = psql(
         base.toString(),

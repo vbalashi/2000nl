@@ -424,3 +424,6 @@
 
 -- Offer source-bound ordinary meanings sequentially after the next local day
 \i db/migrations/143_sequential_ordinary_meaning_introductions.sql
+
+-- Retire the superseded count-only planner helper
+\i db/migrations/144_retire_count_only_training_plan_helper.sql
