@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/create-worktree.sh <issue-number> <short-slug> [--no-install | --e2e]
+Usage: scripts/create-worktree.sh <issue-number> <short-slug> [--no-install] [--e2e] [--ingestion]
 
 Creates a 2000NL checkout at .worktrees/<issue-number>-<short-slug> from the
 current origin/main, creates branch codex/<issue-number>-<short-slug>, and by
@@ -12,6 +12,7 @@ default installs the UI toolchain for that checkout.
 Options:
   --no-install   Skip dependency installation for documentation-only work.
   --e2e          Also install the Playwright Chromium browser.
+  --ingestion    Also install the Python dictionary ingestion environment.
 EOF
 }
 
@@ -20,28 +21,30 @@ if [[ $# -eq 1 && ( "$1" == "--help" || "$1" == "-h" ) ]]; then
   exit 0
 fi
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
+if [[ $# -lt 2 ]]; then
   usage >&2
   exit 64
 fi
 
 issue="$1"
 slug="$2"
-bootstrap_mode="--install"
+skip_install=false
+want_e2e=false
+want_ingestion=false
 
-if [[ $# -eq 3 ]]; then
-  case "$3" in
-    --no-install)
-      bootstrap_mode="--no-install"
-      ;;
-    --e2e)
-      bootstrap_mode="--install-e2e"
-      ;;
-    *)
-      usage >&2
-      exit 64
-      ;;
+shift 2
+for option in "$@"; do
+  case "$option" in
+    --no-install) skip_install=true ;;
+    --e2e) want_e2e=true ;;
+    --ingestion) want_ingestion=true ;;
+    *) usage >&2; exit 64 ;;
   esac
+done
+
+if [[ "$skip_install" == true && ( "$want_e2e" == true || "$want_ingestion" == true ) ]]; then
+  printf '%s\n' '--no-install cannot be combined with --e2e or --ingestion.' >&2
+  exit 64
 fi
 
 if [[ ! "$issue" =~ ^[1-9][0-9]*$ ]]; then
@@ -97,8 +100,11 @@ git fetch origin main
 git worktree add -b "$branch" "$target" origin/main
 created=true
 
-if [[ "$bootstrap_mode" != "--no-install" ]]; then
-  "$target/scripts/bootstrap-worktree.sh" "$bootstrap_mode"
+if [[ "$skip_install" == false ]]; then
+  bootstrap_args=(--install)
+  [[ "$want_e2e" == true ]] && bootstrap_args+=(--e2e)
+  [[ "$want_ingestion" == true ]] && bootstrap_args+=(--ingestion)
+  "$target/scripts/bootstrap-worktree.sh" "${bootstrap_args[@]}"
 fi
 
 trap - ERR

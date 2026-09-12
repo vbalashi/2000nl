@@ -32,6 +32,19 @@ For work that will run browser e2e tests, request the Playwright browser too:
 scripts/create-worktree.sh 123 concise-scope --e2e
 ```
 
+For dictionary import, scraper, or ingestion tests, request the Python
+environment too:
+
+```bash
+scripts/create-worktree.sh 123 concise-scope --ingestion
+```
+
+The flags compose when a task needs both toolchains:
+
+```bash
+scripts/create-worktree.sh 123 concise-scope --e2e --ingestion
+```
+
 The Chromium binary is installed in Playwright's normal user cache, not copied
 into the checkout. This is safe to reuse across worktrees because it is tied to
 the installed Playwright version, while the JavaScript dependency tree remains
@@ -41,6 +54,13 @@ To verify that browser e2e prerequisites are ready, run:
 
 ```bash
 scripts/bootstrap-worktree.sh --check-e2e
+```
+
+To prepare or verify ingestion prerequisites in an existing worktree, run:
+
+```bash
+scripts/bootstrap-worktree.sh --install --ingestion
+scripts/bootstrap-worktree.sh --check --ingestion
 ```
 
 For a documentation-only task, use `--no-install`. Before running UI checks in
@@ -58,8 +78,8 @@ therefore forces a clean install instead of silently reusing stale dependencies.
 
 ## Why dependencies stay local
 
-Every worktree has its own `node_modules` and build output. Never copy or
-symlink `node_modules`, `.next`, `.next-dev`, `.env*`, or local Supabase state
+Every worktree has its own `node_modules`, `.venv`, and build output. Never copy
+or symlink `node_modules`, `.venv`, `.next`, `.next-dev`, `.env*`, or local Supabase state
 between checkout directories: mutable caches and native packages would make a
 test result belong to the wrong source tree. npm's shared content cache makes
 the clean install reuse already downloaded package archives where possible.
@@ -69,8 +89,9 @@ the existing local QA and environment runbooks only when that task needs them.
 
 `--no-install` is an explicit opt-out, not a way to prepare a test-capable
 worktree. Run the bootstrap install before using Vitest, typecheck, lint, Next,
-or Playwright in that checkout. For e2e, use `--install-e2e` and verify with
-`--check-e2e`.
+or Playwright in that checkout. Add `--ingestion` when Python import tooling is
+needed. For e2e, use `--e2e`; the older `--install-e2e` and `--check-e2e`
+aliases remain supported.
 
 ## Existing worktrees and cleanup
 

@@ -239,9 +239,9 @@ Run the narrowest relevant checks after implementation:
 - `cd apps/ui && npm run lint`
 
 If a DB/RPC migration changes membership behavior, also run the relevant RPC
-tests against a Supabase DB:
+tests against a disposable local database:
 
-- `cd apps/ui && FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts`
+- `scripts/db-local-supabase.sh test-fsrs`
 
 If visible layout changes are non-trivial, start the UI and smoke test search
 and list detail with the browser:

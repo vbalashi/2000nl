@@ -53,14 +53,17 @@ scripts/db-local-supabase.sh apply
 scripts/db-local-supabase.sh probe
 ```
 
-For the existing populated local stack, start with the read-only check instead:
+For an intentionally retained local stack with managed deployment receipts,
+start with the read-only check instead:
 
 ```bash
 scripts/db-local-supabase.sh check
 ```
 
-Do not apply bootstrap or reset a populated QA database to silence a failed
-check. Preserve the data and follow the local Supabase runbook.
+Do not apply bootstrap or reset staging or production-shaped data to silence a
+failed check. The canonical local app/browser QA database is disposable and may
+be rebuilt with `scripts/db-local-supabase.sh all --confirm-reset`; tests that
+apply migrations use separate temporary databases.
 
 ## Runtime data model
 

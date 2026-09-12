@@ -501,7 +501,7 @@ Validation commands:
 - `scripts/db-local-supabase.sh probe`
 - `cd apps/ui && npm run typecheck`
 - `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx tests/trainingService.listsPreferences.test.ts tests/trainingService.mappers.test.ts`
-- `cd apps/ui && FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts`
+- `scripts/db-local-supabase.sh test-fsrs`
 - Browser smoke through `nl-local-ui-qa` / `2000nl-local-ui-qa`.
 
 ### Recommended Build Order For B-Track

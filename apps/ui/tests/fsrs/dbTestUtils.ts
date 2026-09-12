@@ -4,8 +4,7 @@ import { Pool, PoolClient } from "pg";
 
 export const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export const getDbUrl = () =>
-  process.env.FSRS_TEST_DB_URL || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+export const getDbUrl = () => process.env.FSRS_TEST_DB_URL;
 
 export async function ensureAuthSchema(pool: Pool) {
   const { rowCount: hasSupabaseAuth } = await pool.query(`

@@ -558,8 +558,8 @@ Protected by:
 - `apps/ui/tests/useTrainingTurnController.test.tsx` transition matrix.
 - `cd apps/ui && npm test -- tests/TrainingScreen.test.tsx`
 - `cd apps/ui && npm run lint`
-- FSRS DB-backed tests when DB access is available:
-  `cd apps/ui && FSRS_TEST_DB_URL="$SUPABASE_DB_URL" npm test -- tests/fsrs/*.test.ts`
+- FSRS DB-backed tests in a disposable local database:
+  `scripts/db-local-supabase.sh test-fsrs`
 
 Risks:
 
