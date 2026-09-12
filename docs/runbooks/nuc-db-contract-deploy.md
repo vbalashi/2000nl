@@ -78,7 +78,15 @@ The shared content-bound Training Exercise contract for #385 adds migration
 session membership additively; ordinary card state and history remain on their
 existing contracts, and no new exercise mode is enabled by the migration.
 
-An enabled deployment must apply or verify migrations 123 through 151 in order
+The first idiom runtime slice adds migration 152. It selects explained idiom
+nodes for learners who already study or know an ordinary meaning, creates
+direction-specific idiom targets, and records self-assessed FSRS actions in
+additive exercise state. It excludes example-only/unexplained idioms, keeps
+translation and ordinary-word scheduling unchanged, and exposes the new
+boundary only through service-principal adapters until its application consumer
+is enabled.
+
+An enabled deployment must apply or verify migrations 123 through 152 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

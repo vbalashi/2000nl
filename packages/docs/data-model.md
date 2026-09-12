@@ -38,7 +38,7 @@ Guidelines:
 - Treat `word_entries.raw` as the current fidelity layer for dictionary-specific structure.
 - Dictionary lookup/search/training RPCs must enforce `can_access_dictionary(...)`; ordinary lookup is read-only and must not mutate FSRS state.
 - Runtime code should use card-oriented RPCs (`get_next_card`, `get_user_card_state`, `record_card_view`, `start_learning_entry_card`, `handle_card_review`). Legacy word-named training contracts are removed by the current migration sequence.
-- Content-bound exercise consumers must use `training-exercise-v1` targets and the migration-151 target read boundary; they must not encode an idiom or translation as a new string-only `card_type_id`.
+- Content-bound exercise consumers must use `training-exercise-v1` targets and the migration-151/152 target and idiom-runtime boundaries; they must not encode an idiom or translation as a new string-only `card_type_id`.
 - App routes that generate translation overlays may use server credentials for cache writes, but source entry reads must still go through authenticated gated entry RPCs.
 - Do not design new work around the older aspirational `headwords`/`meanings`/`notes`/`user_progress` model unless you are explicitly planning a schema migration.
 - For scheduler changes, update migrations and the FSRS tests in `apps/ui/tests/fsrs`.
