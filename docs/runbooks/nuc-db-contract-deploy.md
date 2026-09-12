@@ -58,13 +58,17 @@ Issue #358 advances the contract to migration 144. It removes the unreachable
 count-only planning helper after the public plan had already moved to the
 canonical v2 candidate relation.
 
-Issue #378 advances the contract to migration 147. It attributes training
+Issue #378 advanced the contract through migration 147. It attributes training
 counters to the learner's local 04:00 study day using an IANA timezone, while
 preserving FSRS timestamps, finite-session budgets, and learner progress. The
 scheduler diagnostics and fallback selector use the same local boundary and
 do not enforce a daily quota.
 
-An enabled deployment must apply or verify migrations 123 through 147 in order
+The temporal evidence slice for #290 adds migration 148. It routes the
+authoritative FSRS, selector, filter, and session-plan reads through one
+private deterministic clock seam without changing public RPC signatures.
+
+An enabled deployment must apply or verify migrations 123 through 148 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

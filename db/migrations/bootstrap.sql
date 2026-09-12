@@ -436,3 +436,6 @@
 
 -- Make date filters and statistics use the stored learner-local study day
 \i db/migrations/147_local_study_day_authority.sql
+
+-- Route temporal evidence through one private deterministic clock seam
+\i db/migrations/148_training_reference_clock_seam.sql

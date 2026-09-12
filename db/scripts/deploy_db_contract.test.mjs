@@ -386,7 +386,7 @@ test("the repository contract enables the issue 378 local-study-day contract", (
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 147 378");
+  assert.equal(result.stdout.trim(), "enabled 148 378");
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {

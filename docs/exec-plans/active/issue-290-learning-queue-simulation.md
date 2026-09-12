@@ -62,6 +62,15 @@ into one ambiguous "current time" value:
 | Session lifetime and terminal timestamps | session start/read and member consumption use `now()` for expiry and completion/exhaustion writes | A temporal test can accidentally depend on wall-clock timing and cannot model a day gap without sleeps | Keep lifecycle timestamps on one captured instant per request; expose a test-only injection at the server-owned boundary, never a host clock change |
 | Calendar-day counters and filters | legacy/current candidate paths still use `current_date` for daily review/new counters; `training_filter_local_date` explicitly converts with the requested timezone | The v2 action-budget path does not enforce the daily cap, but counters and legacy callers can still disagree with the learner's timezone | Treat daily counters as a separate policy decision; reuse the explicit named-timezone helper and do not silently reinterpret historical counters |
 
+Migration 148 adds `private.training_reference_now_v1()`. It uses a
+transaction-local `training.test_reference_now` override only in disposable
+tests and falls back to `statement_timestamp()` for normal requests. The
+public RPC signatures remain unchanged. The first temporal slice now proves
+the seam itself, FSRS same-day classification, and a just-before/at due
+boundary through the real selector. Session lifecycle timestamps and the
+full action-write path remain a later bounded slice because they require their
+own characterization before being routed through the same clock.
+
 `random()` is a separate reproducibility concern, not a clock. Temporal tests
 must either use a deterministic ordering input or assert membership and
 identity without depending on a random presentation order. The next
