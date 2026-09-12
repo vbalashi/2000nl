@@ -16,6 +16,10 @@ Content and lists:
 Training and events:
 - `training_scenarios(id, name_en, name_nl, description, card_modes, graduation_threshold, enabled, sort_order)` – user-facing scenario grouping over internal card modes.
 - `user_card_status(user_id, entry_id, card_type_id, fsrs_*, next_review_at, last_seen_at, last_reviewed_at, click_count, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – primary per-user, per-entry, per-card scheduling state.
+- `private.platform_v2_training_exercise_targets(id, target_key, entry_id, content_node_id, family, direction, source_revision, source_text_fingerprint, visibility_state, retired_at, retirement_reason)` – canonical identity registry for content-bound idiom and sentence exercises, plus the compatible ordinary-meaning identity shape. Retiring a source Content Node retires visibility, not state or history.
+- `user_training_exercise_state(user_id, target_id, fsrs_*, state_revision, next_review_at, last_seen_at, last_reviewed_at, seen_count, success_count, hidden, frozen_until, in_learning, learning_due_at)` – additive per-user FSRS state for a content-bound Exercise Target. It does not replace `user_card_status`.
+- `training_session_exercise_members(session_id, target_id, ordinal, queue_source, consumed_at, unavailable_at, unavailable_reason)` – additive latched session membership for content-bound targets; the existing `training_session_members` contract remains authoritative for ordinary cards.
+- `user_training_exercise_action_events` and `platform_v2_training_exercise_action_receipts` – target-bound action history and idempotency storage. They intentionally do not include translation language in the identity.
 - `user_review_log(id, user_id, word_id, mode, turn_id, grade, review_type, scheduled_at, reviewed_at, stability_before, difficulty_before, stability_after, difficulty_after, interval_after, params_version, metadata)` – review audit trail.
 - `user_events(id, user_id, word_id, mode, event_type, created_at, meta)` – generic event log.
 
@@ -34,6 +38,7 @@ Guidelines:
 - Treat `word_entries.raw` as the current fidelity layer for dictionary-specific structure.
 - Dictionary lookup/search/training RPCs must enforce `can_access_dictionary(...)`; ordinary lookup is read-only and must not mutate FSRS state.
 - Runtime code should use card-oriented RPCs (`get_next_card`, `get_user_card_state`, `record_card_view`, `start_learning_entry_card`, `handle_card_review`). Legacy word-named training contracts are removed by the current migration sequence.
+- Content-bound exercise consumers must use `training-exercise-v1` targets and the migration-151 target read boundary; they must not encode an idiom or translation as a new string-only `card_type_id`.
 - App routes that generate translation overlays may use server credentials for cache writes, but source entry reads must still go through authenticated gated entry RPCs.
 - Do not design new work around the older aspirational `headwords`/`meanings`/`notes`/`user_progress` model unless you are explicitly planning a schema migration.
 - For scheduler changes, update migrations and the FSRS tests in `apps/ui/tests/fsrs`.

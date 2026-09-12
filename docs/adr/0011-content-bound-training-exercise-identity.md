@@ -55,6 +55,20 @@ This ADR intentionally does not add idiom/translation launch UI or change the
 current ordinary scheduler. Those changes follow after the identity contract,
 preservation tests, and visual approval are ready.
 
+## Database realization
+
+Migration `151_content_bound_training_exercise_contract.sql` realizes the
+contract additively through `private.platform_v2_training_exercise_targets`,
+`user_training_exercise_state`, `training_session_exercise_members`, and
+target-bound action/receipt tables. The target read boundary is
+`read_platform_v2_training_exercise_target_v1`; it is service-role-only until a
+consumer vertical slice supplies the action and scheduler behavior.
+
+When a source Content Node is retired, associated targets become invisible but
+remain present, and their learner state/history remains protected by
+`ON DELETE RESTRICT`. A changed source fingerprint retires the old target and
+requires an explicit new node mapping; it never silently rebinds old FSRS data.
+
 ## Verification boundary
 
 The first implementation slice publishes the type/helper contract and tests

@@ -446,3 +446,6 @@
 
 -- Align interday FSRS stability updates with the pinned fsrs-rs reference
 \i db/migrations/150_fsrs_interday_reference_parity.sql
+
+-- Additive identity/state/action/session contract for content-bound exercises
+\i db/migrations/151_content_bound_training_exercise_contract.sql
