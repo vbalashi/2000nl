@@ -78,7 +78,7 @@ test("Statistics uses real available counters and returns to Training", () => {
   expect(
     screen.getByRole("heading", { name: "Statistics" }),
   ).toBeInTheDocument();
-  expect(screen.getByText("4 / 10")).toBeInTheDocument();
+  expect(screen.getByText("4")).toBeInTheDocument();
   expect(screen.getByText("7")).toBeInTheDocument();
   expect(screen.getByText("9")).toBeInTheDocument();
   expect(screen.getByText("120 / 2000")).toBeInTheDocument();

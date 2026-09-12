@@ -31,7 +31,7 @@ describeIfDb("training calendar boundaries", () => {
     await withTransaction(pool, async (client) => {
       for (const [timestamp, expectedDate] of calendarBoundaryCases) {
         const { rows } = await client.query(
-          `select to_char(private.training_filter_local_date(
+          `select to_char(private.training_calendar_local_date_v1(
              $1::timestamptz, 'Europe/Amsterdam'
            ), 'YYYY-MM-DD') as local_date`,
           [timestamp],

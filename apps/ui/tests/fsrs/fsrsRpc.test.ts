@@ -2995,12 +2995,16 @@ describeIfDb("FSRS RPC integration", () => {
     }, userId);
   });
 
-  test("get_next_card honors overdue order and daily caps", async () => {
+  test("get_next_card keeps overdue order without daily caps", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
-      await ensureUserWithSettings(client, userId, { daily_new_limit: 1, daily_review_limit: 2 });
+      await ensureUserWithSettings(client, userId, {
+        daily_new_limit: 1,
+        daily_review_limit: 2,
+      });
 
       const overdueId = await insertWord(client, `fsrs-overdue-${Date.now()}`);
+      const secondOverdueId = await insertWord(client, `fsrs-overdue-${Date.now() + 1}`);
       const newId = await insertWord(client, `fsrs-new-${Date.now() + 1}`);
       const { rows: listRows } = await client.query(
         `insert into user_word_lists (user_id, language_code, primary_language_code, name)
@@ -3017,10 +3021,15 @@ describeIfDb("FSRS RPC integration", () => {
       await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
         userId,
         listId,
+        secondOverdueId,
+      ]);
+      await client.query(`select add_entry_to_user_list($1, $2, $3)`, [
+        userId,
+        listId,
         newId,
       ]);
 
-      const getNextFromList = async () => {
+      const getNextFromList = async (excluded: string[] = []) => {
         const { rows } = await client.query(
           `select get_next_card(
             $1::uuid,
@@ -3030,10 +3039,10 @@ describeIfDb("FSRS RPC integration", () => {
             'user',
             'both',
             'auto',
-            ARRAY[]::text[],
+            $4::text[],
             false
           ) as item`,
-          [userId, mode, listId],
+          [userId, mode, listId, excluded],
         );
         return rows[0]?.item as any | undefined;
       };
@@ -3046,31 +3055,37 @@ describeIfDb("FSRS RPC integration", () => {
         ) values ($1, $2, $3, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
         [userId, overdueId, mode]
       );
+      await client.query(
+        `insert into user_card_status (
+          user_id, entry_id, card_type_id,
+          fsrs_stability, fsrs_difficulty, fsrs_reps, fsrs_lapses,
+          fsrs_last_interval, fsrs_last_grade, fsrs_enabled, next_review_at, last_seen_at
+        ) values ($1, $2, $3, 1.0, 5.0, 1, 0, 1.0, 3, true, now() - interval '1 day', now() - interval '1 day')`,
+        [userId, secondOverdueId, mode]
+      );
 
       const first = await getNextFromList();
-      expect(first?.id).toBe(overdueId);
+      expect([overdueId, secondOverdueId]).toContain(first?.id);
       expect(first?.stats?.source).toBe("review");
 
-      // Hit the review cap for today.
+      // A low legacy setting must not stop another due review.
       await client.query(
         `insert into user_review_log (user_id, word_id, mode, grade, review_type, reviewed_at)
          values ($1, $2, $3, 3, 'review', now()), ($1, $2, $3, 3, 'review', now())`,
         [userId, overdueId, mode]
       );
 
-      const second = await getNextFromList();
-      expect(second?.id).toBe(newId);
-      expect(second?.stats?.source).toBe("new");
+      const second = await getNextFromList([`${first.id}:${mode}`]);
+      expect([overdueId, secondOverdueId]).toContain(second?.id);
+      expect(second?.id).not.toBe(first?.id);
+      expect(second?.stats?.source).toBe("review");
 
-      // Hit the new cap as well.
-      await client.query(
-        `insert into user_review_log (user_id, word_id, mode, grade, review_type, reviewed_at)
-         values ($1, $2, $3, 3, 'new', now())`,
-        [userId, newId, mode]
-      );
-
-      const none = await getNextFromList();
-      expect(none).toBeUndefined();
+      const third = await getNextFromList([
+        `${first.id}:${mode}`,
+        `${second?.id}:${mode}`,
+      ]);
+      expect(third?.id).toBe(newId);
+      expect(third?.stats?.source).toBe("new");
     }, userId);
   });
 

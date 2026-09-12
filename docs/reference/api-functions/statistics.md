@@ -7,23 +7,36 @@ Get detailed training statistics for the current session footer.
 ```sql
 get_detailed_training_stats(
     p_user_id uuid,
-    p_modes text[] DEFAULT NULL,
-    p_list_id uuid DEFAULT NULL,
-    p_list_type text DEFAULT 'curated'
+    p_modes text[],
+    p_list_id uuid,
+    p_list_type text,
+    p_timezone text
 ) RETURNS jsonb
 ```
+
+The four-argument compatibility form retains defaults for `p_modes`,
+`p_list_id`, and `p_list_type` and derives the timezone from the learner's
+settings.
 
 The JSON projection distinguishes the historical facts used by the footer and
 diagnostics:
 
 - `newWordsToday` / `newCardsToday`: entries and exact entry + card-type pairs
-  introduced today by an accepted `Learn` action, with a first new review as a
-  compatibility fallback;
+  introduced during the learner's current local study day (04:00–04:00) by an
+  accepted `Learn` action, with a first new review as a compatibility fallback;
 - `learningStartedToday`: exact entry + card-type pairs with an accepted
-  `Learn` action today;
+  `Learn` action during the current local study day;
 - `graduatedNewWordsToday`: introduced entries whose new review has reached an
   interday interval. This is separate from the New counter and is not inferred
   from an enrollment-only event.
+
+The five-argument form retains its timezone parameter for cached-client
+compatibility, but the server deliberately ignores that request hint and uses
+the validated IANA timezone stored for the learner. The four-argument
+compatibility form does the same and falls back to UTC. This keeps one
+learner's counters stable across devices. The study-day boundary is for
+counter attribution only; it is not a daily quota and does not change FSRS
+`next_review_at` instants.
 
 The projection is read-only. It does not create an FSRS grade or change queue
 selection.

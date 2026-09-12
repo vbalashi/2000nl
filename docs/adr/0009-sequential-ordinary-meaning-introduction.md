@@ -34,12 +34,17 @@ families and are not introduced by this policy.
 - A later direct meaning without its own active root example remains excluded
   by the renderability policy. It does not block the following renderable
   ordinary meaning. Manual meaning selection remains an explicit product path.
-- Every session sends the browser-resolved IANA timezone, even when no focus
-  filter is active. The database stores that timezone per learner at session
-  creation and writes an immutable `available_at` timestamp when Learn/Known
-  is accepted. Existing timestamps are never shifted if the browser timezone
-  later changes. Invalid or unavailable legacy timezone data falls back to
-  `UTC`.
+- A session-start request may carry the browser-resolved IANA timezone so the
+  existing session trigger can initialize or update the learner preference. The
+  database stores that timezone per learner and writes an immutable
+  `available_at` timestamp when Learn/Known is accepted. Existing timestamps
+  are never shifted if the browser timezone later changes. Invalid or
+  unavailable legacy timezone data falls back to `UTC`.
+- Study-day counters and date-window filters use the validated timezone stored
+  for the learner. A request-provided timezone remains accepted only for
+  session-initialization/cached-client compatibility; scheduler and reporting
+  boundaries resolve the stored learner timezone and cannot vary merely because
+  a caller sends another hint.
 - Existing enrolled, reviewed, or Known meanings are backfilled as immediately
   unlocked predecessors. This migration does not reset FSRS state, history, or
   any learner's already-enrolled later meanings.

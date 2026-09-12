@@ -7,7 +7,7 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 
 ## Migration sources of truth
 
-- `db/migrations/001_*.sql` through the current numbered migration (`144` at
+- `db/migrations/001_*.sql` through the current numbered migration (`147` at
   the time of writing) are the ordered schema history. Do not renumber or edit
   an already deployed migration.
 - `db/migrations/bootstrap.sql` includes that complete numbered chain. It is
@@ -16,12 +16,12 @@ and [`docs/reference/api-functions/training-and-queue.md`](../docs/reference/api
 - `db/deploy-contract/ledger-v1.sql` creates the immutable deployment ledger
   before the first managed forward migration. The later managed sequence is
   declared by `packages/shared/deployment/db-contract.json` and currently
-  covers migrations `123` through `144` after baseline `122`.
+  covers migrations `123` through `147` after baseline `122`.
 - `db/deploy-contract/` contains the checksum-pinned baseline, pre-switch,
   and postflight probes for the deployment contract.
 
 The manifest is the application-owned database contract. It currently declares
-contract `2000nl-db-144`, required migration `144`, and the exact checksums for
+contract `2000nl-db-147`, required migration `147`, and the exact checksums for
 every managed migration and probe. Inspect or validate it without a database:
 
 ```bash
