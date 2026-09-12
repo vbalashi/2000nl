@@ -37,21 +37,9 @@ export type FooterStatsProps = {
 };
 
 const footerCopy = {
-  nl: {
-    new: "Nieuw · studiedag",
-    review: "Herhaling · studiedag",
-    total: "Totaal",
-  },
-  en: {
-    new: "New · study day",
-    review: "Review · study day",
-    total: "Total",
-  },
-  ru: {
-    new: "Новые · учебный день",
-    review: "Повторение · учебный день",
-    total: "Всего",
-  },
+  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal" },
+  en: { new: "New", review: "Review", total: "Total" },
+  ru: { new: "Новые", review: "Повторение", total: "Всего" },
 } satisfies Record<
   OnboardingLanguage,
   { new: string; review: string; total: string }
