@@ -94,7 +94,7 @@ type Props = {
     >
   >;
   onProgressActionStarting?: () => void;
-  onProgressActionPendingChange?: (pending: boolean) => void;
+  onProgressActionPendingChange?: (pending: boolean, token: object) => void;
   /** Ownership changed while this card was visible; its queue is no longer usable. */
   onTrainingSessionSuperseded?: () => void;
 };
@@ -175,6 +175,32 @@ export function TrainingSenseCardV2Session({
   const loadGenerationRef = React.useRef(0);
   const presentationHandledRef = React.useRef(false);
   const autoPlayedCardRef = React.useRef<string | null>(null);
+  const actionScopeKey = `${cardIdentity}:${trainingSessionId ?? "unscoped"}`;
+  const actionScopeRef = React.useRef({ key: actionScopeKey, generation: 0 });
+  if (actionScopeRef.current.key !== actionScopeKey) {
+    actionScopeRef.current = {
+      key: actionScopeKey,
+      generation: actionScopeRef.current.generation + 1,
+    };
+    interactionBusyRef.current = false;
+  }
+  const mountedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      actionScopeRef.current.generation += 1;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    interactionBusyRef.current = false;
+    setBusy(false);
+    setError(null);
+    setReportOperation(null);
+    setAcceptedActionRecoveryPending(false);
+  }, [actionScopeKey]);
 
   const load = React.useCallback(
     async (
@@ -312,15 +338,22 @@ export function TrainingSenseCardV2Session({
     interactionBusyRef.current = true;
     setBusy(true);
     setError(null);
+    const actionGeneration = actionScopeRef.current.generation;
+    const actionIsCurrent = () =>
+      mountedRef.current &&
+      actionScopeRef.current.generation === actionGeneration;
+    const pendingToken = {};
     let frozenRequest: PlatformActionV2Request | null = null;
     let progressActionPending = false;
     try {
       if (capability.actionId === "request-translation") {
         await requestPlatformV2Translation(capability);
+        if (!actionIsCurrent()) return "rejected";
         const refreshed = await load(undefined, {
           preserveCard: true,
           usePrefetch: false,
         });
+        if (!actionIsCurrent()) return "rejected";
         if (refreshed?.state !== "ready") {
           setNoticeTone("error");
           setError(temporaryFailureMessage(interfaceLanguage));
@@ -353,11 +386,12 @@ export function TrainingSenseCardV2Session({
         capability.actionId === "review-card"
       ) {
         progressActionPending = true;
-        onProgressActionPendingChange?.(true);
+        onProgressActionPendingChange?.(true, pendingToken);
         onProgressActionStarting?.();
       }
       setNoticeTone("error");
       const onRequestFrozen = (request: PlatformActionV2Request) => {
+        if (!actionIsCurrent()) return;
         frozenRequest = request;
         setReportOperation({ request, observedOutcome: "unknown" });
       };
@@ -377,6 +411,7 @@ export function TrainingSenseCardV2Session({
             trainingSessionId: trainingSessionId ?? undefined,
             onRequestFrozen,
           });
+      if (!actionIsCurrent()) return "rejected";
       if (frozenRequest) {
         setReportOperation({
           request: frozenRequest,
@@ -386,6 +421,7 @@ export function TrainingSenseCardV2Session({
       if (capability.actionId === "undo-known") {
         rememberPendingKnownUndo(null);
         if (result?.entry.entryId === capability.target.entryId) await load();
+        if (!actionIsCurrent()) return "rejected";
       } else {
         if (capability.actionId === "mark-known") {
           const knownMark = response.card.knownMark;
@@ -413,8 +449,10 @@ export function TrainingSenseCardV2Session({
           rememberPendingKnownUndo(null);
         }
         try {
-          return await onProgressActionAccepted(capability);
+          const outcome = await onProgressActionAccepted(capability);
+          return actionIsCurrent() ? outcome : "rejected";
         } catch (cause) {
+          if (!actionIsCurrent()) return "rejected";
           setAcceptedActionRecoveryPending(true);
           setError(
             cause instanceof Error
@@ -430,6 +468,7 @@ export function TrainingSenseCardV2Session({
       }
       return "accepted";
     } catch (cause) {
+      if (!actionIsCurrent()) return "rejected";
       setNoticeTone("error");
       const code = cause instanceof Error ? cause.message : "action_failed";
       if (code === "training_session_superseded") {
@@ -447,6 +486,7 @@ export function TrainingSenseCardV2Session({
           preserveCard: true,
           usePrefetch: false,
         }).catch(() => null);
+        if (!actionIsCurrent()) return "rejected";
         setError(
           refreshed?.state === "ready"
             ? platformV2Message(
@@ -466,9 +506,13 @@ export function TrainingSenseCardV2Session({
       }
       return "rejected";
     } finally {
-      if (progressActionPending) onProgressActionPendingChange?.(false);
-      interactionBusyRef.current = false;
-      setBusy(false);
+      if (progressActionPending) {
+        onProgressActionPendingChange?.(false, pendingToken);
+      }
+      if (actionIsCurrent()) {
+        interactionBusyRef.current = false;
+        setBusy(false);
+      }
     }
   };
 

@@ -21,6 +21,7 @@ import type { TrainingSessionNoticeInput } from "@/components/training/v2/Traini
 import type { TrainingSessionChromeProps } from "@/components/training/v2/TrainingSessionChrome";
 import type { FooterStatsProps } from "@/components/training/FooterStats";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
+import { writeTrainingSessionResume } from "@/lib/training/sessionResumeStore";
 
 // Screen integration tests exercise the real V2 transition owner. The card
 // stub models asynchronous acceptance; actual capabilities, keys, swipe and
@@ -738,6 +739,7 @@ const defaultMatchMedia = window.matchMedia;
 beforeEach(() => {
   vi.clearAllMocks();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
   mockV2SessionState = "ready";
   mockV2AcceptanceGate = null;
@@ -1195,22 +1197,19 @@ test("delayed first card keeps the Today shell until Continue can reveal it", as
 });
 
 test("resumes a still-active server session after refresh without starting another session", async () => {
-  window.localStorage.setItem(
-    "2000nl:training-session:user-1",
-    JSON.stringify({
-      sessionId: "session-resume",
-      userId: "user-1",
-      languageCode: "nl",
-      listId: "list-1",
-      listType: "curated",
-      scenarioId: "understanding",
-      modes: ["word-to-definition"],
-      cardFilter: "both",
-      newReviewRatio: 2,
-      focusFilter: { dateWindow: "all" },
-      sessionSize: 5,
-    }),
-  );
+  writeTrainingSessionResume({
+    sessionId: "session-resume",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
   fetchTrainingSessionSnapshot.mockResolvedValueOnce({
     sessionId: "session-resume",
     sessionSize: 5,
@@ -1288,22 +1287,19 @@ test("resumes a still-active server session after refresh without starting anoth
 });
 
 test("superseded saved session clears its queue and returns to a deliberate local start", async () => {
-  window.localStorage.setItem(
-    "2000nl:training-session:user-1",
-    JSON.stringify({
-      sessionId: "session-superseded",
-      userId: "user-1",
-      languageCode: "nl",
-      listId: "list-1",
-      listType: "curated",
-      scenarioId: "understanding",
-      modes: ["word-to-definition"],
-      cardFilter: "both",
-      newReviewRatio: 2,
-      focusFilter: { dateWindow: "all" },
-      sessionSize: 5,
-    }),
-  );
+  writeTrainingSessionResume({
+    sessionId: "session-superseded",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
   fetchTrainingSessionSnapshot.mockResolvedValueOnce({
     sessionId: "session-superseded",
     runStatus: "superseded",
@@ -1340,10 +1336,10 @@ test("superseded saved session clears its queue and returns to a deliberate loca
   expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBeNull();
 });
 
-test("visibility return fences a queue superseded on another device before it can be answered", async () => {
-  window.localStorage.setItem(
-    "2000nl:training-session:user-1",
-    JSON.stringify({
+test.each(["focus", "visibilitychange"] as const)(
+  "%s fallback fences a superseded queue when the cross-tab notification was lost",
+  async (returnEvent) => {
+    writeTrainingSessionResume({
       sessionId: "session-visibility",
       userId: "user-1",
       languageCode: "nl",
@@ -1355,17 +1351,79 @@ test("visibility return fences a queue superseded on another device before it ca
       newReviewRatio: 2,
       focusFilter: { dateWindow: "all" },
       sessionSize: 5,
-    }),
-  );
+    });
+    const activeSnapshot = {
+      sessionId: "session-visibility",
+      runStatus: "active" as const,
+      runGeneration: 1,
+      sessionSize: 5,
+      plannedNew: 3,
+      plannedReview: 2,
+      plannedPractice: 0,
+      plannedTotal: 5,
+      plannedAt: "2026-09-10T12:00:00.000Z",
+      members: [
+        {
+          ordinal: 1,
+          entryId: "word-1",
+          cardTypeId: "word-to-definition",
+          queueSource: "new",
+          consumedAt: null,
+          unavailableAt: null,
+        },
+      ],
+    };
+    fetchTrainingSessionSnapshot
+      .mockResolvedValueOnce(activeSnapshot)
+      .mockResolvedValueOnce({
+        ...activeSnapshot,
+        runStatus: "superseded",
+        runGeneration: null,
+      });
+
+    render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+    await screen.findByTestId("mock-training-sense-card-v2");
+
+    act(() => {
+      if (returnEvent === "focus") {
+        window.dispatchEvent(new Event("focus"));
+      } else {
+        document.dispatchEvent(new Event("visibilitychange"));
+      }
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Start training here" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-training-sense-card-v2"),
+    ).not.toBeInTheDocument();
+  },
+);
+
+test("a foreign tab start promptly invalidates this tab's superseded card", async () => {
+  writeTrainingSessionResume({
+    sessionId: "session-tab-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
   const activeSnapshot = {
-    sessionId: "session-visibility",
+    sessionId: "session-tab-a",
     runStatus: "active" as const,
     runGeneration: 1,
-    sessionSize: 5,
-    plannedNew: 3,
-    plannedReview: 2,
+    sessionSize: 5 as const,
+    plannedNew: 1,
+    plannedReview: 0,
     plannedPractice: 0,
-    plannedTotal: 5,
+    plannedTotal: 1,
     plannedAt: "2026-09-10T12:00:00.000Z",
     members: [
       {
@@ -1389,16 +1447,64 @@ test("visibility return fences a queue superseded on another device before it ca
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByTestId("mock-training-sense-card-v2");
 
+  const foreignRecord = JSON.stringify({
+    sessionId: "session-tab-b",
+    userId: "user-1",
+    ownerId: "tab-b",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  window.localStorage.setItem("2000nl:training-session:user-1", foreignRecord);
   act(() => {
-    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "2000nl:training-session:user-1",
+        newValue: foreignRecord,
+      }),
+    );
   });
 
   expect(
     await screen.findByRole("button", { name: "Start training here" }),
   ).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(2);
+  expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBe(
+    foreignRecord,
+  );
+});
+
+test("a fresh tab does not adopt another tab's resumable session", async () => {
+  writeTrainingSessionResume({
+    sessionId: "session-tab-a",
+    userId: "user-1",
+    languageCode: "nl",
+    listId: "list-1",
+    listType: "curated",
+    scenarioId: "understanding",
+    modes: ["word-to-definition"],
+    cardFilter: "both",
+    newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" },
+    sessionSize: 5,
+  });
+  window.sessionStorage.clear();
+
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+
   expect(
-    screen.queryByTestId("mock-training-sense-card-v2"),
-  ).not.toBeInTheDocument();
+    await screen.findByRole("heading", { name: /Good morning|Goedemorgen/ }),
+  ).toBeInTheDocument();
+  expect(fetchTrainingSessionSnapshot).not.toHaveBeenCalled();
+  expect(
+    window.localStorage.getItem("2000nl:training-session:user-1"),
+  ).not.toBeNull();
 });
 
 test("pilot Start persists the complete selection in one scope update", async () => {

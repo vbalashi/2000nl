@@ -22,6 +22,7 @@ const record: TrainingSessionResumeRecord = {
 
 afterEach(() => {
   window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 describe("training session resume store", () => {
@@ -29,6 +30,23 @@ describe("training session resume store", () => {
     writeTrainingSessionResume(record);
     expect(readTrainingSessionResume("user-1")).toEqual(record);
     expect(readTrainingSessionResume("another-user")).toBeNull();
+  });
+
+  test("does not let another tab adopt a shared resume record", () => {
+    writeTrainingSessionResume(record);
+    const persisted = window.localStorage.getItem(
+      "2000nl:training-session:user-1",
+    );
+    expect(persisted).not.toBeNull();
+
+    // A new tab has the same localStorage but its own sessionStorage owner.
+    window.sessionStorage.clear();
+
+    expect(readTrainingSessionResume("user-1")).toBeNull();
+    clearTrainingSessionResume("user-1");
+    expect(window.localStorage.getItem("2000nl:training-session:user-1")).toBe(
+      persisted,
+    );
   });
 
   test("rejects malformed or stale records", () => {
