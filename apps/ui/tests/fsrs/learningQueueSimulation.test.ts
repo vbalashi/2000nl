@@ -706,7 +706,6 @@ describeDb("learning queue simulation", () => {
       });
     }
   });
-
   test("traces a ten-card new-only session beyond the daily new setting", async () => {
     const userId = randomUUID();
     let sessionId = "";
