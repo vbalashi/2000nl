@@ -427,6 +427,3 @@
 
 -- Retire the superseded count-only planner helper
 \i db/migrations/144_retire_count_only_training_plan_helper.sql
-
--- Repair finite-session creation after the private v1 candidate retirement
-\i db/migrations/145_repair_finite_session_scheduler_dependency.sql

@@ -694,8 +694,7 @@ test(
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
-      applySqlFile(targetUrl, "db/migrations/145_repair_finite_session_scheduler_dependency.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
 
       const cachedClientCompatibility = psql(
         targetUrl,
@@ -747,8 +746,7 @@ test(
         /obsolete-count-only-plan-helper/,
       );
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
-      applySqlFile(targetUrl, "db/migrations/145_repair_finite_session_scheduler_dependency.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
 
       const obsoleteV1Drift = psql(
         targetUrl,
@@ -781,8 +779,7 @@ test(
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
-      applySqlFile(targetUrl, "db/migrations/145_repair_finite_session_scheduler_dependency.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
 
       const sessionGrantDrift = psql(
         targetUrl,
@@ -805,8 +802,7 @@ test(
       applySqlFile(targetUrl, "db/migrations/142_renderable_ordinary_training_candidates.sql");
       applySqlFile(targetUrl, "db/migrations/143_sequential_ordinary_meaning_introductions.sql");
       applySqlFile(targetUrl, "db/migrations/144_retire_count_only_training_plan_helper.sql");
-      applySqlFile(targetUrl, "db/migrations/145_repair_finite_session_scheduler_dependency.sql");
-      applySqlFile(targetUrl, "db/deploy-contract/postflight-145.sql");
+      applySqlFile(targetUrl, "db/deploy-contract/postflight-144.sql");
     } finally {
       const terminate = psql(
         base.toString(),

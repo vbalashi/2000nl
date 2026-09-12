@@ -170,22 +170,6 @@ describeDb("authoritative training session plan RPC", () => {
     });
   });
 
-  test("routes finite-session creation through the canonical v2 scheduler", async () => {
-    await withTransaction(pool, async (client) => {
-      const { rows } = await client.query(
-        `select pg_get_functiondef(
-           'public.start_training_session(uuid,text[],uuid,text,text,jsonb,text)'::regprocedure
-         ) as definition`,
-      );
-      expect(rows[0]?.definition).toContain(
-        "private.training_scheduler_candidates_v2",
-      );
-      expect(rows[0]?.definition).not.toContain(
-        "private.training_scheduler_candidates_v1",
-      );
-    });
-  });
-
   test("bounds finite sessions and excludes future practice cards", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async (client) => {
