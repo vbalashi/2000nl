@@ -73,7 +73,12 @@ creation/expiry, accepted action timestamps, consumed/completed member state,
 and action history/receipt timestamps through the same private seam. It keeps
 the public action signatures and scheduler policy unchanged.
 
-An enabled deployment must apply or verify migrations 123 through 150 in order
+The shared content-bound Training Exercise contract for #385 adds migration
+151. It stores idiom and sentence-exercise targets, state, action receipts, and
+session membership additively; ordinary card state and history remain on their
+existing contracts, and no new exercise mode is enabled by the migration.
+
+An enabled deployment must apply or verify migrations 123 through 151 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 

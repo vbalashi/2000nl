@@ -10,6 +10,22 @@ const { data, error } = await supabase.rpc('function_name', { params });
 
 Functions in this group validate that `p_user_id` matches `auth.uid()`.
 
+## Content-bound Exercise Target contract (migration 151)
+
+Idioms and sentence-translation exercises use the shared `training-exercise-v1`
+identity. An idiom target names its exact Platform V2 `content_node_id` and
+direction; a translation target names its source sentence node and uses one
+`recall` direction. Translation language is presentation configuration, not a
+progress key. Existing ordinary meaning state remains on `entry_id +
+card_type_id`.
+
+`read_platform_v2_training_exercise_target_v1(p_user_id, p_target_key)` is a
+service-role-only read boundary for the target projection and that learner's
+additive state. It returns retired targets with their visibility status so a
+consumer can stop showing them without deleting FSRS state or action history.
+No idiom or translation runtime mode is enabled by migration 151; #332 and
+#333 must consume this contract rather than create competing card registries.
+
 ## `get_next_card`
 
 Get the next card for training. The current fresh-deploy function accepts explicit card modes; callers that work from a scenario must resolve that scenario to its `card_modes` first.
