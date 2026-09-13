@@ -173,6 +173,7 @@ describe("/api/health", () => {
         platformV2Lookup: true,
         platformV2Actions: true,
         platformV2IdiomExercises: true,
+        platformV2TranslationExercises: false,
         platformV2TrainingUi: true,
         trainingTodaySetupV1: true,
       },

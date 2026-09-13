@@ -147,7 +147,7 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 155 in order
+An enabled deployment must apply or verify migrations 123 through 156 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -162,6 +162,14 @@ Migration 155 is additive idiom-session consumption on top of migration 154.
 It does not copy or delete existing FSRS/history, and it preserves attached
 idioms as supporting ordinary-card content. Its migration owner is #332; the
 launch and visual review remain in #331.
+
+Migration 156 is the bounded translation-exercise consumer on top of migration
+155. It selects ordinary meaning examples for learners who already study or
+know the source meaning, keeps each source example as an independent
+translation exercise, and uses the existing single-active-run and self-assessed
+FSRS boundaries. Translation language is presentation-only, missing cached
+translations do not exclude a candidate, and the launch UI remains gated by
+#331.
 
 ## What the gate guarantees
 
@@ -254,8 +262,9 @@ App rollback and DB recovery are deliberately separate:
   cached browser bundles that may outlive an app switch. Removing a public RPC
   shape needs an explicit staged-client deprecation plan, not merely a
   repository caller audit.
-- The migration's owning issue owns DB recovery. Issue #332 owns migration 155
-  idiom-session consumption; issue #394 owns migration 154 exercise hardening;
+- The migration's owning issue owns DB recovery. Issue #333 owns migration 156
+  translation-exercise consumption; issue #332 owns migration 155 idiom-session
+  consumption; issue #394 owns migration 154 exercise hardening;
   issue #393 owns migration 153 phase 1 and #399 owns its
   strict phase-2 cutoff. Issue #243 owns migration 128;
   issue #238 owns migration 127. Issue #232 retains ownership of migration 126;

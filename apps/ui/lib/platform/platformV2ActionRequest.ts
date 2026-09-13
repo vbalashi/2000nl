@@ -20,7 +20,6 @@ export function parsePlatformV2ActionRequest(
   ) {
     return { ok: false, error: "unsupported_action", status: 400 };
   }
-
   const clientEventId = asUuid(body.clientEventId);
   if (!clientEventId) {
     return { ok: false, error: "invalid_client_event_id", status: 400 };
@@ -34,7 +33,7 @@ export function parsePlatformV2ActionRequest(
   }
 
   if (actionId === "review-exercise") {
-    return parsePlatformV2IdiomExerciseActionRequest(
+    return parsePlatformV2ExerciseActionRequest(
       auth,
       body,
       trainingSessionId ?? undefined,
@@ -60,7 +59,6 @@ export function parsePlatformV2ActionRequest(
   ) {
     return { ok: false, error: "invalid_state_revision", status: 400 };
   }
-
   const parsedSourceContext = parseSourceContext(
     body.sourceContext,
     auth.user.id,
@@ -185,7 +183,7 @@ export function parsePlatformV2ActionRequest(
   };
 }
 
-function parsePlatformV2IdiomExerciseActionRequest(
+function parsePlatformV2ExerciseActionRequest(
   auth: AuthenticatedSupabase,
   body: Record<string, unknown>,
   trainingSessionId: string | undefined,
@@ -209,18 +207,45 @@ function parsePlatformV2IdiomExerciseActionRequest(
   if (!targetId) {
     return { ok: false, error: "invalid_training_exercise_target_id", status: 400 };
   }
-  if (target.family !== "idiom") {
+  if (target.family !== "idiom" && target.family !== "translation") {
     return { ok: false, error: "unsupported_training_exercise_family", status: 400 };
   }
-  if (target.direction !== "direct" && target.direction !== "reverse") {
+  if (
+    (target.family === "idiom" &&
+      target.direction !== "direct" &&
+      target.direction !== "reverse") ||
+    (target.family === "translation" && target.direction !== "recall")
+  ) {
     return { ok: false, error: "invalid_training_exercise_direction", status: 400 };
   }
+  const family = target.family === "idiom" ? "idiom" : "translation";
+  const direction =
+    family === "idiom"
+      ? (target.direction as "direct" | "reverse")
+      : "recall";
   if (
     !stateRevision ||
     (stateRevision !== "untracked" && !asUuid(stateRevision))
   ) {
     return { ok: false, error: "invalid_state_revision", status: 400 };
   }
+  const exerciseStateRevision = stateRevision as string;
+  const exerciseTarget =
+    family === "idiom"
+      ? {
+          kind: "training-exercise" as const,
+          targetId,
+          family: "idiom" as const,
+          direction: direction as "direct" | "reverse",
+          stateRevision: exerciseStateRevision,
+        }
+      : {
+          kind: "training-exercise" as const,
+          targetId,
+          family: "translation" as const,
+          direction: "recall" as const,
+          stateRevision: exerciseStateRevision,
+        };
   const reviewResult = asString(body.reviewResult);
   if (
     reviewResult !== "fail" &&
@@ -267,13 +292,7 @@ function parsePlatformV2IdiomExerciseActionRequest(
       actionId: "review-exercise",
       clientEventId,
       trainingSessionId,
-      target: {
-        kind: "training-exercise",
-        targetId,
-        family: "idiom",
-        direction: target.direction,
-        stateRevision,
-      },
+      target: exerciseTarget,
       reviewResult,
       ...(parsedSourceContext.value
         ? {
@@ -285,12 +304,16 @@ function parsePlatformV2IdiomExerciseActionRequest(
 }
 
 export function parsePlatformV2ActionReceiptRequest(value: unknown):
-  | { ok: true; clientEventId: string; actionFamily?: "idiom" }
+  | { ok: true; clientEventId: string; actionFamily?: "idiom" | "translation" }
   | { ok: false; error: string; status: number } {
   const body = asRecord(value);
   const clientEventId = asUuid(body.clientEventId);
   const actionFamily = body.actionFamily;
-  if (actionFamily !== undefined && actionFamily !== "idiom") {
+  if (
+    actionFamily !== undefined &&
+    actionFamily !== "idiom" &&
+    actionFamily !== "translation"
+  ) {
     return { ok: false, error: "unsupported_action_family", status: 400 };
   }
   return clientEventId
