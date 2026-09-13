@@ -28,6 +28,13 @@ The idiom exercise consumer has an additional server flag,
 `review-exercise` action, and receipt reconciliation remain dark until the
 idiom launch surface is approved.
 
+The sentence-translation exercise consumer is independently gated by
+`PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED`. Its source candidate is one exact
+example Content Node with direction `recall`; the selected translation language
+is presentation data and does not create another FSRS identity. A missing or
+not-yet-generated translation therefore does not exclude the source sentence
+from the queue.
+
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
 Smoke check:
