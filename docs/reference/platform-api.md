@@ -23,6 +23,11 @@ V2 mutations are independently dark by default. `POST
 capabilities only while this action flag is enabled, so a consumer is never
 given a mutation that the server has darkened.
 
+The idiom exercise consumer has an additional server flag,
+`PLATFORM_V2_IDIOM_EXERCISES_ENABLED`. Its candidate endpoint, Training
+`review-exercise` action, and receipt reconciliation remain dark until the
+idiom launch surface is approved.
+
 These routes are the external client boundary for browser extensions and other companion apps. Connected Clients should obtain bearer tokens through [2000NL Connect](./connect-api.md) and keep ordinary lookup read-only.
 
 Smoke check:
@@ -257,7 +262,8 @@ boundary.
 
 The request must be one of the discriminated mutation variants in
 `packages/shared/types/platformV2.ts`: `start-learning`, `mark-known`,
-`undo-known`, or `review-card`. Every request carries a UUID
+`undo-known`, or `review-card`; idiom Training additionally accepts the
+Training-only `review-exercise` variant described below. Every request carries a UUID
 `clientEventId` and the exact `target` returned by lookup, including
 `stateRevision`. Undo additionally carries the current `activeKnownMarkId`
 and `knownMarkRevision`.
@@ -268,6 +274,13 @@ Reusing an event ID with another canonical payload, submitting a stale state
 revision, or undoing a non-current Known Mark returns HTTP 409 without writes.
 When normalized `source-context-v2` is present, card mutation, immutable action
 history, source, artifact, and location commit atomically.
+
+The idiom exercise consumer adds `review-exercise` as a Training-only mutation.
+Its target is `{kind:"training-exercise", family:"idiom", direction:"direct"|"reverse", targetId, stateRevision}`;
+the server validates that the target's stored direction matches the request
+before changing FSRS state, history, or session membership. Transport retries
+use the same `clientEventId` and reconcile through
+`reconcile_platform_v2_idiom_receipt_as_principal`.
 
 The HTTP endpoints are the only consumer-facing action boundary. Their server
 authenticates the caller, derives the principal and user ID, enforces the

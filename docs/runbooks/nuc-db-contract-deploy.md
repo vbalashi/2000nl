@@ -86,6 +86,13 @@ translation and ordinary-word scheduling unchanged, and exposes the new
 boundary only through service-principal adapters until its application consumer
 is enabled.
 
+Migration 155 adds the application consumer for idiom exercises. It creates
+idiom-family Training sessions in the existing one-active-run authority,
+reuses the finite session size and soft new/review ordering, and consumes
+idiom members atomically through the migration-154 action boundary. It keeps
+ordinary Training responses unchanged and exposes no exercise-family launch UI;
+that visual decision remains gated by #331.
+
 Migration 153 adds one active first-party Training run per learner. It preserves
 ordinary queue membership and durable FSRS/history, but makes a superseded
 queue non-actionable before its next card can be projected or graded. It also
@@ -140,7 +147,7 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 154 in order
+An enabled deployment must apply or verify migrations 123 through 155 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -150,6 +157,11 @@ session validation, consumes a latched exercise member atomically, and fails
 closed after source or dictionary access is lost. It does not change ordinary
 word progress, FSRS history, or the phase-1 compatibility policy owned by
 issues #393 and #399.
+
+Migration 155 is additive idiom-session consumption on top of migration 154.
+It does not copy or delete existing FSRS/history, and it preserves attached
+idioms as supporting ordinary-card content. Its migration owner is #332; the
+launch and visual review remain in #331.
 
 ## What the gate guarantees
 
@@ -242,8 +254,9 @@ App rollback and DB recovery are deliberately separate:
   cached browser bundles that may outlive an app switch. Removing a public RPC
   shape needs an explicit staged-client deprecation plan, not merely a
   repository caller audit.
-- The migration's owning issue owns DB recovery. Issue #394 owns migration 154
-  exercise hardening; issue #393 owns migration 153 phase 1 and #399 owns its
+- The migration's owning issue owns DB recovery. Issue #332 owns migration 155
+  idiom-session consumption; issue #394 owns migration 154 exercise hardening;
+  issue #393 owns migration 153 phase 1 and #399 owns its
   strict phase-2 cutoff. Issue #243 owns migration 128;
   issue #238 owns migration 127. Issue #232 retains ownership of migration 126;
   #233 owns gate/ledger/probe machinery.

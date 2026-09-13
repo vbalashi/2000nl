@@ -26,7 +26,7 @@ import {
 } from "@/lib/platform/platformV2TrainingActionClient";
 import type { TrainingWord } from "@/lib/types";
 import type {
-  PlatformActionV2Request,
+  PlatformOrdinaryActionRequest,
   PlatformSenseCardCapabilityV2,
 } from "../../../../../packages/shared/types/platformV2";
 import { TrainingSenseCardStage } from "./TrainingSenseCardStage";
@@ -343,7 +343,7 @@ export function TrainingSenseCardV2Session({
       mountedRef.current &&
       actionScopeRef.current.generation === actionGeneration;
     const pendingToken = {};
-    let frozenRequest: PlatformActionV2Request | null = null;
+    let frozenRequest: PlatformOrdinaryActionRequest | null = null;
     let progressActionPending = false;
     try {
       if (capability.actionId === "request-translation") {
@@ -390,7 +390,7 @@ export function TrainingSenseCardV2Session({
         onProgressActionStarting?.();
       }
       setNoticeTone("error");
-      const onRequestFrozen = (request: PlatformActionV2Request) => {
+      const onRequestFrozen = (request: PlatformOrdinaryActionRequest) => {
         if (!actionIsCurrent()) return;
         frozenRequest = request;
         setReportOperation({ request, observedOutcome: "unknown" });

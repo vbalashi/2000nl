@@ -57,6 +57,25 @@ idiom exercise: it does not create or update idiom FSRS state, action history,
 or session membership. The idiom becomes actionable only in an explicit idiom
 exercise-family session.
 
+Migration 155 adds the application-facing idiom session boundary. An
+authenticated client may call `start_platform_v2_idiom_training_session` with
+`direct` or `reverse`, a positive session size, and an idempotency request ID.
+The returned session is a finite snapshot in the existing one-active-run
+authority. `read_platform_v2_idiom_training_session_next` returns the next
+latched idiom target, or an explicit `unavailable` result when its projection
+can no longer be rendered. The client records that member as unavailable and
+continues; this is not a review answer and does not advance FSRS. Successful
+idiom self-assessment is sent through the existing action boundary with the
+session ID, so retries remain idempotent and a newly started run supersedes an
+older idiom or ordinary run.
+
+The session consumer uses the requested size as the total number of exercises.
+The existing new/review ratio is only a soft ordering preference: it starts
+with a new idiom when one is available, then takes up to the configured number
+of reviews before the next new idiom, with fallbacks when one queue is empty.
+No daily cap is introduced. The launch selector and exercise-family UI are
+intentionally not part of this boundary and remain gated by #331.
+
 ## `get_next_card`
 
 Get the next card for training. The current fresh-deploy function accepts explicit card modes; callers that work from a scenario must resolve that scenario to its `card_modes` first.

@@ -31,6 +31,15 @@ export {
 } from "./platformV2TrainingActionClient";
 export type { PlatformV2TrainingActionCapability } from "./platformV2TrainingActionClient";
 
+export {
+  fetchPlatformV2IdiomExerciseCandidates,
+  startPlatformV2IdiomTrainingSession,
+  fetchPlatformV2IdiomTrainingSessionSnapshot,
+  fetchNextPlatformV2IdiomTrainingSessionExercise,
+  markPlatformV2IdiomTrainingSessionMemberUnavailable,
+  performPlatformV2IdiomExerciseAction,
+} from "./platformV2IdiomExerciseClient";
+
 export type PlatformV2TrainingEntryResult = {
   state: "ready";
   group: PlatformHeadwordGroupV2;
