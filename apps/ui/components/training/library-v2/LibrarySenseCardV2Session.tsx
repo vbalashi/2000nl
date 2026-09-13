@@ -9,7 +9,7 @@ import {
   requestPlatformV2LibraryTranslation,
 } from "@/lib/platform/platformV2LibraryClient";
 import { resolvePlatformV2Audio } from "@/lib/platform/platformV2TrainingClient";
-import { performPlatformV2TrainingAction } from "@/lib/platform/platformV2TrainingActionClient";
+import { performPlatformV2LibraryAction } from "@/lib/platform/platformV2TrainingActionClient";
 import {
   addWordsToUserList,
   createUserList,
@@ -372,7 +372,7 @@ function SenseCardV2Session({
     );
     setError(null);
     try {
-      await performPlatformV2TrainingAction(capability);
+      await performPlatformV2LibraryAction(capability);
       if (!isCurrentAction()) return;
       await load(undefined, undefined, expectedDetailIdentity);
     } catch (cause) {

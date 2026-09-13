@@ -59,7 +59,9 @@ export function usePendingKnownUndo(
     setBusy(true);
     setErrorCode(null);
     try {
-      await performPlatformV2TrainingAction(visibleUndoKnown);
+      await performPlatformV2TrainingAction(visibleUndoKnown, {
+        trainingSessionId: pendingUndo?.trainingSessionId,
+      });
       if (
         undoAttemptRef.current !== attempt ||
         presentationIdentityRef.current !== attemptPresentationIdentity
@@ -79,7 +81,7 @@ export function usePendingKnownUndo(
     } finally {
       if (undoAttemptRef.current === attempt) setBusy(false);
     }
-  }, [currentPresentationIdentity, visibleUndoKnown]);
+  }, [currentPresentationIdentity, pendingUndo?.trainingSessionId, visibleUndoKnown]);
 
   const dismiss = React.useCallback(() => {
     rememberPendingKnownUndo(null);

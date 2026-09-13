@@ -8,6 +8,7 @@ export type UndoKnownCapability = Extract<
 export type PendingKnownUndo = {
   capability: UndoKnownCapability;
   presentationIdentity: string;
+  trainingSessionId?: string;
 };
 
 const STORAGE_KEY = "2000nl.training.pendingKnownUndo.v2";
@@ -66,6 +67,8 @@ function parsePendingKnownUndo(raw: string): PendingKnownUndo | null {
     const pending = JSON.parse(raw) as PendingKnownUndo;
     return typeof pending.presentationIdentity === "string" &&
       pending.presentationIdentity &&
+      (pending.trainingSessionId === undefined ||
+        typeof pending.trainingSessionId === "string") &&
       pending.capability?.actionId === "undo-known"
       ? pending
       : null;

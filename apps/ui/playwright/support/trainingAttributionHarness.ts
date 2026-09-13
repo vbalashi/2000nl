@@ -453,6 +453,49 @@ export async function setupAuthenticatedTrainingAttributionPage(
       return;
     }
 
+    if (pathname.endsWith("/rpc/get_training_session_snapshot")) {
+      const plan = visualFixture
+        ? visualFixture.plan
+        : {
+            plannedNew: 30,
+            plannedReview: 20,
+            plannedPractice: 0,
+            plannedTotal: 50,
+            plannedAt: new Date(0).toISOString(),
+          };
+      await fulfillJson(
+        route,
+        {
+          sessionId: "training-session-fixture",
+          runStatus: "active",
+          runGeneration: 1,
+          sessionSize: plan.plannedTotal,
+          ...plan,
+          completedActions: consumedSessionEntryIds.size,
+          completionReason: null,
+          members: sessionMembers
+            .slice(0, plan.plannedTotal)
+            .map((entry, index) => ({
+              ordinal: index + 1,
+              entryId: entry.id,
+              cardTypeId: "word-to-definition",
+              queueSource: index < plan.plannedNew ? "new" : "review",
+              consumedAt: consumedSessionEntryIds.has(entry.id)
+                ? new Date(0).toISOString()
+                : null,
+              unavailableAt: unavailableSessionEntryIds.has(entry.id)
+                ? new Date(0).toISOString()
+                : null,
+              unavailableReason: unavailableSessionEntryIds.has(entry.id)
+                ? "model-invalid"
+                : null,
+            })),
+        },
+        "session-snapshot",
+      );
+      return;
+    }
+
     if (pathname.endsWith("/rpc/get_next_card")) {
       schedulerRequests.push({ ...body });
       await wait(options.schedulerDelayMs ?? 0);

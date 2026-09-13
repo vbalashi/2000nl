@@ -18,6 +18,7 @@ import { requestPlatformV2Translation } from "@/lib/platform/platformV2TrainingM
 import {
   PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS,
   PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS,
+  performPlatformV2LibraryAction,
 } from "@/lib/platform/platformV2TrainingActionClient";
 import { DEFAULT_PLATFORM_FETCH_TIMEOUT_MS } from "@/lib/platform/platformFetchWithTimeout";
 import type { PlatformSenseCardCapabilityV2 } from "../../../packages/shared/types/platformV2";
@@ -126,6 +127,64 @@ describe("performPlatformV2TrainingAction", () => {
         PLATFORM_V2_PROGRESS_ACTION_LEASE_SAFETY_MARGIN_MS,
     );
     expect(PLATFORM_V2_PROGRESS_ACTION_LEASE_WINDOW_MS).toBeLessThan(30_000);
+  });
+
+  test("uses the authoritative Training route when a session identity is supplied", async () => {
+    const capability = startLearningCapability();
+    const eventId = "0b4cd99b-0cc5-4dd4-aa6d-223963f5d0ee";
+    const sessionId = "b7b1a7b8-4a5e-4b9f-88a3-8b5a8c7ed88d";
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(eventId);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          contractVersion: "platform-action-v2",
+          actionId: "start-learning",
+          clientEventId: eventId,
+          accepted: true,
+          card: singleSenseEntry.card,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await performPlatformV2TrainingAction(capability, {
+      trainingSessionId: sessionId,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v2/actions",
+      expect.objectContaining({
+        body: expect.stringContaining(sessionId),
+      }),
+    );
+  });
+
+  test("uses the explicit Library route only through the Library action function", async () => {
+    const capability = startLearningCapability();
+    vi.spyOn(crypto, "randomUUID").mockReturnValue(
+      "0b4cd99b-0cc5-4dd4-aa6d-223963f5d0ee",
+    );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          contractVersion: "platform-action-v2",
+          actionId: "start-learning",
+          clientEventId: "0b4cd99b-0cc5-4dd4-aa6d-223963f5d0ee",
+          accepted: true,
+          card: singleSenseEntry.card,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await performPlatformV2LibraryAction(capability);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/platform/v2/actions/library",
+      expect.any(Object),
+    );
   });
 
   test("reconciles an ambiguous Learn response without repeating the mutation", async () => {

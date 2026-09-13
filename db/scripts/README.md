@@ -34,6 +34,11 @@ The repository contract can intentionally hold deployment before any database
 access. Follow `docs/runbooks/nuc-db-contract-deploy.md`; never bypass a hold or
 run the gate manually against production.
 
+The manifest also pins the staged compatibility phase and the issue that owns
+its strict cutoff. `rollout-status` intentionally retains its established
+three-field output for deployment-script compatibility; inspect the manifest
+when auditing `compatibilityPhase` and `strictEnforcementIssue`.
+
 NUC intentionally has no host `psql`. Its workflow uses the official
 PostgreSQL 17.6 Alpine image pinned by digest above. `client-preflight` pulls the
 exact image if missing and checks the client major inside a read-only,

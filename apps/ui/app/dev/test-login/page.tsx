@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 type DevSessionResponse = {
   // Supabase session (shape can evolve; treat as opaque).
@@ -9,11 +8,40 @@ type DevSessionResponse = {
   error?: string;
 };
 
+type DevSessionResult = {
+  ok: boolean;
+  payload: DevSessionResponse;
+};
+
+// React Strict Mode remounts the page in development. Share only the in-flight
+// OTP exchange so concurrent effects cannot rotate the same QA account's
+// refresh token. A later page visit must always be able to request a fresh
+// session, especially after a local database reset.
+let devSessionRequest: Promise<DevSessionResult> | null = null;
+
+function requestDevSession() {
+  if (devSessionRequest) return devSessionRequest;
+
+  const request = fetch("/api/dev/test-session", {
+    method: "POST",
+    cache: "no-store",
+  }).then(async (response) => ({
+    ok: response.ok,
+    payload: (await response.json()) as DevSessionResponse,
+  }));
+  devSessionRequest = request;
+
+  const clearRequest = () => {
+    if (devSessionRequest === request) devSessionRequest = null;
+  };
+  void request.then(clearRequest, clearRequest);
+
+  return request;
+}
+
 export const dynamic = "force-dynamic";
 
 export default function DevTestLoginPage() {
-  const router = useRouter();
-
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -33,30 +61,28 @@ export default function DevTestLoginPage() {
       setStatus("loading");
       setMessage("Creating a dev session...");
 
-      // In React Strict Mode, effects can run twice in dev.
-      // Make this helper idempotent within a tab: if we've already completed once,
-      // just redirect.
-      const markerKey = "__dev_test_login_done_v1";
-      try {
-        if (window.sessionStorage?.getItem(markerKey) === "1") {
-          router.replace("/");
-          router.refresh();
-          return;
-        }
-      } catch {
-        // ignore
-      }
-
       const redirectTo =
         (typeof window !== "undefined"
           ? new URL(window.location.href).searchParams.get("redirectTo")
           : null) ?? "/";
 
-      const res = await fetch("/api/dev/test-session", { cache: "no-store" });
-      const json = (await res.json()) as DevSessionResponse;
+      let result: DevSessionResult;
+      try {
+        result = await requestDevSession();
+      } catch (error) {
+        if (cancelled) return;
+        setStatus("error");
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Failed to create a dev session.",
+        );
+        return;
+      }
       if (cancelled) return;
 
-      if (!res.ok || json.error || !json.session) {
+      const { ok, payload: json } = result;
+      if (!ok || json.error || !json.session) {
         setStatus("error");
         setMessage(json.error ?? "Failed to create a dev session.");
         return;
@@ -81,7 +107,6 @@ export default function DevTestLoginPage() {
           if (k.startsWith("sb-")) localStorage.removeItem(k);
         }
         localStorage.setItem(storageKey, JSON.stringify(json.session));
-        window.sessionStorage?.setItem(markerKey, "1");
       } catch (err: any) {
         setStatus("error");
         setMessage(String(err?.message ?? err ?? "Failed to write localStorage."));
@@ -100,7 +125,7 @@ export default function DevTestLoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-xl flex-col justify-center gap-4 px-6">

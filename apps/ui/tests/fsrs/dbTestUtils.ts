@@ -4,7 +4,37 @@ import { Pool, PoolClient } from "pg";
 
 export const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export const getDbUrl = () => process.env.FSRS_TEST_DB_URL;
+export function getDbUrl() {
+  const value = process.env.FSRS_TEST_DB_URL?.trim();
+  if (!value) return undefined;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("unsafe_fsrs_test_database_url");
+  }
+  const database = decodeURIComponent(url.pathname.replace(/^\//, ""));
+  const loopback = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+  const scopedDatabase =
+    database === "fsrs_test" || /^2000nl_fsrs_[a-z0-9_]+$/.test(database);
+  // node-postgres lets URI query parameters override the authority and
+  // database parsed above. Keep the test target contract explicit: only the
+  // non-routing SSL mode option is allowed through.
+  const allowedQueryParameters = new Set(["sslmode"]);
+  const hasUnsafeQueryParameter = [...url.searchParams.keys()].some(
+    (key) => !allowedQueryParameters.has(key.toLowerCase()),
+  );
+  if (
+    !["postgres:", "postgresql:"].includes(url.protocol) ||
+    !loopback.has(url.hostname) ||
+    !scopedDatabase ||
+    hasUnsafeQueryParameter
+  ) {
+    throw new Error("unsafe_fsrs_test_database_url");
+  }
+  return value;
+}
 
 export async function ensureAuthSchema(pool: Pool) {
   const { rowCount: hasSupabaseAuth } = await pool.query(`

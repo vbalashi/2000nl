@@ -86,7 +86,61 @@ translation and ordinary-word scheduling unchanged, and exposes the new
 boundary only through service-principal adapters until its application consumer
 is enabled.
 
-An enabled deployment must apply or verify migrations 123 through 152 in order
+Migration 153 adds one active first-party Training run per learner. It preserves
+ordinary queue membership and durable FSRS/history, but makes a superseded
+queue non-actionable before its next card can be projected or graded. It also
+stores an idempotent start receipt so a lost start response does not create a
+second run.
+
+### Migration 153 action rollout
+
+#### Phase 1 — rollback-compatible
+
+Apply migration 153 before switching to the session-aware app. Current Training
+uses the explicit 13-argument action RPC with a concrete `trainingSessionId`;
+that path is fenced in the same transaction as the mutation. Current Library
+uses its dedicated HTTP endpoint and the same RPC with an explicit null session.
+Connected Client keeps its established 12-argument path and scopes.
+
+The immediately previous app image and cached Library bundles both use the old
+first-party 12-argument action shape. The previous app also has authenticated
+legacy Learn/Known callers. These calls are byte-for-byte indistinguishable from
+stale old Training, so phase 1 deliberately retains them. Do not infer intent
+from whether an entry belongs to any queue: a legitimate Library action may
+target an entry in an active or superseded queue.
+
+The deployment manifest identifies this boundary as
+`legacy-first-party-compatible` and pins issue #399 as its strict-enforcement
+owner. The gate rejects unknown phases or a missing cutoff owner before database
+access.
+
+This is an explicit, temporary residual risk: stale old Training can still
+write through the compatibility paths during phase 1. In exchange, automatic
+app-image rollback and cached Library remain functional. Postflight and FSRS
+tests pin this exact boundary so it cannot be mistaken for strict enforcement.
+
+Deployment order:
+
+1. Apply/verify contract 153 and its postflight while the previous app remains
+   live.
+2. Switch to the current app, then smoke current Training takeover rejection,
+   current Library Learn/Known on a queued entry, and Connected Client actions.
+3. If app health fails, restore the previous image without reversing migration
+   153; its old first-party and exact legacy RPC shapes remain usable.
+4. Keep phase 1 until the previous image is retired as a rollback target and the
+   accepted cached-bundle window has elapsed or old bundles are invalidated.
+
+#### Phase 2 — strict enforcement (#399)
+
+Issue #399 owns the next immutable migration. It will reject the ambiguous
+12-argument `first_party` action path and revoke authenticated legacy Learn/Known
+RPC execution while leaving Connected Client unchanged. Enabling that migration
+is the declaration that rollback to the pre-session-aware app is no longer
+supported. Do not implement the cutoff as mutable operator SQL or edit migration
+153 after deployment; advance the contract, checksum, postflight and rollback
+runbook together.
+
+An enabled deployment must apply or verify migrations 123 through 153 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
 
@@ -181,7 +235,8 @@ App rollback and DB recovery are deliberately separate:
   cached browser bundles that may outlive an app switch. Removing a public RPC
   shape needs an explicit staged-client deprecation plan, not merely a
   repository caller audit.
-- The migration's owning issue owns DB recovery. Issue #243 owns migration 128;
+- The migration's owning issue owns DB recovery. Issue #393 owns migration 153
+  phase 1 and #399 owns its strict phase-2 cutoff. Issue #243 owns migration 128;
   issue #238 owns migration 127. Issue #232 retains ownership of migration 126;
   #233 owns gate/ledger/probe machinery.
 - Any explicit DB rollback must be reviewed as a complete contract transition:

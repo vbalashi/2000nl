@@ -11,6 +11,19 @@ const containerNetwork = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETW
 const containerDatabaseHost = process.env.DB_CONTRACT_INTEGRATION_PSQL_HOST;
 const qaUserId = "23800000-0000-0000-0000-000000000001";
 const appCommit = "2430000000000000000000000000000000000000";
+const scopedIntegrationDatabasePattern =
+  /(contract_test|issue238|issue243|issue290|issue330|issue353|issue355|issue358|issue378)/i;
+
+function assertScopedLoopbackDatabase(urlString, label) {
+  const target = new URL(urlString);
+  if (
+    !["127.0.0.1", "localhost", "::1"].includes(target.hostname) ||
+    !scopedIntegrationDatabasePattern.test(target.pathname)
+  ) {
+    throw new Error(`${label} accepts only a scoped loopback database`);
+  }
+  return target;
+}
 
 function postgresEnvironment(urlString) {
   const url = new URL(urlString);
@@ -31,6 +44,14 @@ function psql(urlString, sql) {
     encoding: "utf8",
     env: postgresEnvironment(urlString),
   });
+}
+
+function applySqlFile(urlString, relativePath) {
+  return spawnSync(
+    "psql",
+    ["-X", "--no-psqlrc", "-At", "--set=ON_ERROR_STOP=1", "--file", path.join(repoRoot, relativePath)],
+    { encoding: "utf8", cwd: repoRoot, env: postgresEnvironment(urlString) },
+  );
 }
 
 function apply(databaseUrl) {
@@ -82,13 +103,7 @@ test(
   "the exact production-shaped probe uses only the QA identity and preserves learner state",
   { skip: !baseDatabaseUrl },
   () => {
-    const localTarget = new URL(baseDatabaseUrl);
-    if (
-      !["127.0.0.1", "localhost", "::1"].includes(localTarget.hostname) ||
-      !/(contract_test|issue238|issue243|issue290|issue330|issue353|issue355|issue358|issue378)/i.test(localTarget.pathname)
-    ) {
-      throw new Error("Pre-switch probe integration accepts only a scoped loopback database");
-    }
+    assertScopedLoopbackDatabase(baseDatabaseUrl, "Pre-switch probe integration");
 
     const seed = psql(
       baseDatabaseUrl,
@@ -115,14 +130,47 @@ test(
     const first = apply(containerTarget.toString());
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /pre-switch-read-probe passed/);
-    assert.match(first.stdout, /compatible 2000nl-db-152/);
+    assert.match(first.stdout, /compatible 2000nl-db-153/);
 
     const replay = apply(containerTarget.toString());
     assert.equal(replay.status, 0, replay.stderr);
-    assert.match(replay.stdout, /no-op 152/);
+    assert.match(replay.stdout, /no-op 153/);
     assert.match(replay.stdout, /pre-switch-read-probe passed/);
-    assert.match(replay.stdout, /compatible 2000nl-db-152/);
+    assert.match(replay.stdout, /compatible 2000nl-db-153/);
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
+  },
+);
+
+test("bootstrap replay rejects an unscoped application database before writes", () => {
+  assert.throws(
+    () =>
+      assertScopedLoopbackDatabase(
+        "postgresql://postgres:postgres@localhost:5432/postgres",
+        "Bootstrap replay integration",
+      ),
+    /accepts only a scoped loopback database/,
+  );
+});
+
+test(
+  "replays migration 153 after the database is already populated",
+  { skip: !baseDatabaseUrl, timeout: 120_000 },
+  () => {
+    assertScopedLoopbackDatabase(baseDatabaseUrl, "Bootstrap replay integration");
+
+    const seed = psql(
+      baseDatabaseUrl,
+      `INSERT INTO auth.users (id, email)
+       VALUES ('${qaUserId}', 'test@2000nl.test')
+       ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;\n`,
+    );
+    assert.equal(seed.status, 0, seed.stderr);
+
+    const replay = applySqlFile(
+      baseDatabaseUrl,
+      "db/migrations/153_single_active_training_run.sql",
+    );
+    assert.equal(replay.status, 0, replay.stderr);
   },
 );

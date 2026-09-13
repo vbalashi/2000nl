@@ -24,6 +24,8 @@ type ListUpdatedCallbacks = {
   ) => void;
 };
 
+export type TrainingListCatalogStatus = "loading" | "ready" | "error";
+
 const isDictionarySourceList = (list: WordListSummary | null | undefined) =>
   Boolean(list && list.type === "curated" && /^vandale$/i.test(list.name.trim()));
 
@@ -44,7 +46,10 @@ export function useTrainingActiveList(params: {
   const [activeTrainingScope, setActiveTrainingScope] =
     useState<ActiveTrainingScope | null>(null);
   const [availableLists, setAvailableLists] = useState<WordListSummary[]>([]);
+  const [listCatalogStatus, setListCatalogStatus] =
+    useState<TrainingListCatalogStatus>("loading");
   const [listHydrated, setListHydrated] = useState(false);
+  const [hydratedLanguage, setHydratedLanguage] = useState<string | null>(null);
   const currentLanguageRef = useRef(language);
   const listRequestIdRef = useRef(0);
   const scopeRefreshIdRef = useRef(0);
@@ -71,7 +76,9 @@ export function useTrainingActiveList(params: {
     scopeRefreshIdRef.current += 1;
     languageGenerationRef.current += 1;
     setAvailableLists([]);
+    setListCatalogStatus("loading");
     setListHydrated(false);
+    setHydratedLanguage(null);
     setActiveTrainingScope(null);
     clearList();
   }, [clearList, language]);
@@ -80,14 +87,29 @@ export function useTrainingActiveList(params: {
     if (!userId) return [];
     const requestId = ++listRequestIdRef.current;
     const requestedLanguage = language;
-    const lists = await fetchAvailableLists(userId, language);
-    if (
-      requestId === listRequestIdRef.current &&
-      requestedLanguage === currentLanguageRef.current
-    ) {
-      setAvailableLists(lists);
+    setListCatalogStatus("loading");
+    try {
+      const lists = await fetchAvailableLists(userId, language);
+      if (
+        requestId === listRequestIdRef.current &&
+        requestedLanguage === currentLanguageRef.current
+      ) {
+        setAvailableLists(lists);
+        setListCatalogStatus("ready");
+      }
+      return lists;
+    } catch {
+      if (
+        requestId === listRequestIdRef.current &&
+        requestedLanguage === currentLanguageRef.current
+      ) {
+        // An unavailable catalog is not an empty catalog. Keep the last
+        // successful snapshot so callers cannot revoke a saved run because
+        // a transient request failed.
+        setListCatalogStatus("error");
+      }
+      return [];
     }
-    return lists;
   }, [language, userId]);
 
   useEffect(() => {
@@ -95,6 +117,7 @@ export function useTrainingActiveList(params: {
     let cancelled = false;
     const hydrateActiveList = async () => {
       setListHydrated(false);
+      setHydratedLanguage(null);
       const active = await fetchActiveTrainingScope({
         userId,
         languageCode: language,
@@ -122,6 +145,7 @@ export function useTrainingActiveList(params: {
             current ? { ...current, activeListId: null, activeListType: null } : current,
           );
           clearList();
+          setHydratedLanguage(language);
           setListHydrated(true);
           return;
         }
@@ -137,6 +161,7 @@ export function useTrainingActiveList(params: {
             current ? { ...current, activeListId: null, activeListType: null } : current,
           );
           clearList();
+          setHydratedLanguage(language);
           setListHydrated(true);
           return;
         }
@@ -145,6 +170,7 @@ export function useTrainingActiveList(params: {
       } else {
         clearList();
       }
+      setHydratedLanguage(language);
       setListHydrated(true);
     };
     const hydrationTransitionId = initialHydrationTransitionIdRef.current;
@@ -232,9 +258,16 @@ export function useTrainingActiveList(params: {
         languageGeneration === languageGenerationRef.current &&
         requestedLanguage === currentLanguageRef.current;
 
-      const lists = await fetchAvailableLists(userId, language);
+      let lists: WordListSummary[];
+      try {
+        lists = await fetchAvailableLists(userId, language);
+      } catch {
+        if (isCurrentRequest()) setListCatalogStatus("error");
+        return null;
+      }
       if (!isCurrentRequest()) return null;
       setAvailableLists(lists);
+      setListCatalogStatus("ready");
 
       const active = await fetchActiveTrainingScope({
         userId,
@@ -291,6 +324,8 @@ export function useTrainingActiveList(params: {
     activeListValue,
     availableLists,
     handleListsUpdated,
+    hydratedLanguage,
+    listCatalogStatus,
     listHydrated,
     listOptions,
     persistListChange,

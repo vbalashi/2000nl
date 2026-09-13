@@ -423,9 +423,11 @@ export function DictionarySearchTab({
     if (!open) return;
     let cancelled = false;
     const loadSearchScope = async () => {
-      const languages = await fetchAvailableLearningLanguages(userId);
-      if (!cancelled) {
-        setAvailableLanguages(languages);
+      try {
+        const languages = await fetchAvailableLearningLanguages(userId);
+        if (!cancelled) setAvailableLanguages(languages);
+      } catch {
+        if (!cancelled) setAvailableLanguages([]);
       }
     };
     void loadSearchScope();

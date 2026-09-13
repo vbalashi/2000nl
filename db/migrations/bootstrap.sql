@@ -450,3 +450,4 @@
 -- Additive identity/state/action/session contract for content-bound exercises
 \i db/migrations/151_content_bound_training_exercise_contract.sql
 \i db/migrations/152_idiom_training_exercise_runtime.sql
+\i db/migrations/153_single_active_training_run.sql

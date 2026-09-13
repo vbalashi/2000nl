@@ -81,6 +81,9 @@ import {
 import {
   clearTrainingSessionResume,
   readTrainingSessionResume,
+  subscribeTrainingSessionInvalidation,
+  subscribeTrainingSessionOwnerInvalidation,
+  type TrainingSessionResumeRecord,
   writeTrainingSessionResume,
 } from "@/lib/training/sessionResumeStore";
 import {
@@ -118,6 +121,8 @@ const LazyTrainingHistoryDestination = dynamic(
 );
 
 const DEFAULT_LANGUAGE_OPTIONS = [{ value: "nl", label: "Nederlands" }];
+
+const TRAINING_SESSION_AUTHORITY_POLL_MS = 20_000;
 
 const DEFAULT_TRAINING_FOCUS_FILTER: TrainingFocusFilter = {
   dateWindow: "all",
@@ -181,6 +186,8 @@ function TrainingScreenContent({
   } = startupSnapshot;
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const previousDestinationRef = useRef(destination);
+  const returnedToTraining =
+    destination === "training" && previousDestinationRef.current !== "training";
 
   useEffect(() => {
     const previousDestination = previousDestinationRef.current;
@@ -224,18 +231,56 @@ function TrainingScreenContent({
   // missing or stale resume record is resolved immediately and preserves the
   // ordinary first-use flow.
   const [sessionResumeResolved, setSessionResumeResolved] = useState(
-    () =>
-      !trainingTodaySetupEnabled ||
-      !readTrainingSessionResume(user.id),
+    () => !trainingTodaySetupEnabled,
   );
+  const [sessionResumeRecord, setSessionResumeRecord] = useState<
+    TrainingSessionResumeRecord | null | undefined
+  >(() => (trainingTodaySetupEnabled ? undefined : null));
   const [sessionResumeError, setSessionResumeError] = useState(false);
+  const [sessionReplacementWarning, setSessionReplacementWarning] =
+    useState(false);
+  const [sessionAuthorityChecking, setSessionAuthorityChecking] =
+    useState(false);
+  const [platformProgressActionPending, setPlatformProgressActionPending] =
+    useState(false);
   const sessionResumeAttemptedRef = useRef(false);
   const sessionResumeGenerationRef = useRef(0);
+  const sessionAuthorityValidationRef = useRef(0);
+  const sessionAuthorityGenerationRef = useRef(0);
+  const trainingSessionIdRef = useRef<string | null>(null);
+  const replaceTrainingSessionId = useCallback((sessionId: string | null) => {
+    sessionAuthorityGenerationRef.current += 1;
+    sessionAuthorityValidationRef.current += 1;
+    trainingSessionIdRef.current = sessionId;
+    setSessionAuthorityChecking(false);
+    setTrainingSessionId(sessionId);
+  }, []);
+  const platformProgressActionTokenRef = useRef<object | null>(null);
+  const handlePlatformProgressActionPendingChange = useCallback(
+    (pending: boolean, token: object) => {
+      if (pending) {
+        platformProgressActionTokenRef.current = token;
+        setPlatformProgressActionPending(true);
+        return;
+      }
+      if (platformProgressActionTokenRef.current !== token) return;
+      platformProgressActionTokenRef.current = null;
+      setPlatformProgressActionPending(false);
+    },
+    [],
+  );
+  const resetPlatformProgressActionPending = useCallback(() => {
+    platformProgressActionTokenRef.current = null;
+    setPlatformProgressActionPending(false);
+  }, []);
   const componentMountedRef = useRef(true);
   useEffect(() => {
     componentMountedRef.current = true;
     return () => {
       componentMountedRef.current = false;
+      sessionAuthorityGenerationRef.current += 1;
+      sessionAuthorityValidationRef.current += 1;
+      trainingSessionIdRef.current = null;
     };
   }, []);
   const {
@@ -259,6 +304,15 @@ function TrainingScreenContent({
   const [trainingLanguageOptions, setTrainingLanguageOptions] = useState(
     DEFAULT_LANGUAGE_OPTIONS,
   );
+  const [trainingLanguageCodes, setTrainingLanguageCodes] = useState<string[]>(
+    [],
+  );
+  const [trainingLanguagesResolved, setTrainingLanguagesResolved] =
+    useState(false);
+  const [trainingLanguagesCatalogError, setTrainingLanguagesCatalogError] =
+    useState(false);
+  const [trainingLanguagesRetryGeneration, setTrainingLanguagesRetryGeneration] =
+    useState(0);
   const trainingLanguageManuallyChangedRef = useRef(false);
   const languageHydrationPendingRef = useRef(false);
   const languageHydrationObservedNotReadyRef = useRef(false);
@@ -266,36 +320,45 @@ function TrainingScreenContent({
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
+    setTrainingLanguagesResolved(false);
+    setTrainingLanguagesCatalogError(false);
 
     const loadTrainingLanguages = async () => {
-      const languages = await fetchAvailableLearningLanguages(user.id);
-      if (cancelled) return;
+      try {
+        const languages = await fetchAvailableLearningLanguages(user.id);
+        if (cancelled) return;
 
-      const options = languages.map((item) => ({
-        value: item.code,
-        label: item.label || fallbackLanguageLabel(item.code),
-      }));
-      const withCurrent = options.some(
-        (option) => option.value === currentTrainingLanguage,
-      )
-        ? options
-        : [
-            ...options,
-            {
-              value: currentTrainingLanguage,
-              label: fallbackLanguageLabel(currentTrainingLanguage),
-            },
-          ];
-      setTrainingLanguageOptions(
-        withCurrent.length ? withCurrent : DEFAULT_LANGUAGE_OPTIONS,
-      );
+        const options = languages.map((item) => ({
+          value: item.code,
+          label: item.label || fallbackLanguageLabel(item.code),
+        }));
+        setTrainingLanguageCodes(languages.map((item) => item.code));
+        const withCurrent = options.some(
+          (option) => option.value === currentTrainingLanguage,
+        )
+          ? options
+          : [
+              ...options,
+              {
+                value: currentTrainingLanguage,
+                label: fallbackLanguageLabel(currentTrainingLanguage),
+              },
+            ];
+        setTrainingLanguageOptions(
+          withCurrent.length ? withCurrent : DEFAULT_LANGUAGE_OPTIONS,
+        );
+      } catch {
+        if (!cancelled) setTrainingLanguagesCatalogError(true);
+      } finally {
+        if (!cancelled) setTrainingLanguagesResolved(true);
+      }
     };
 
     void loadTrainingLanguages();
     return () => {
       cancelled = true;
     };
-  }, [currentTrainingLanguage, user?.id]);
+  }, [currentTrainingLanguage, trainingLanguagesRetryGeneration, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -382,9 +445,12 @@ function TrainingScreenContent({
     availableLists,
     handleListsUpdated: refreshListsAfterUpdate,
     activeTrainingScope,
+    hydratedLanguage,
+    listCatalogStatus,
     listHydrated,
     listOptions,
     persistListChange,
+    refreshAvailableLists,
     resolveListValue,
     wordListId,
     wordListLabel,
@@ -585,7 +651,7 @@ function TrainingScreenContent({
       if (result === "session-complete" && user?.id) {
         // A confirmed empty session is terminal. Transient retry outcomes
         // keep the resumable record intact for the next attempt.
-        clearTrainingSessionResume(user.id);
+        void clearTrainingSessionResume(user.id);
       }
     },
     [user?.id],
@@ -600,8 +666,6 @@ function TrainingScreenContent({
     clearResumeAfterCompletedRetry(result);
     return result;
   }, [clearResumeAfterCompletedRetry, retryAcceptedTransitionLoad]);
-  const [platformProgressActionPending, setPlatformProgressActionPending] =
-    useState(false);
   const [presentationResetKey, setPresentationResetKey] = useState(0);
   const navigationBlocked = actionLoading || platformProgressActionPending;
   const currentPresentationIdentity =
@@ -610,16 +674,23 @@ function TrainingScreenContent({
       : null;
   const beginSessionScopeChange = useCallback(() => {
     sessionResumeGenerationRef.current += 1;
+    resetPlatformProgressActionPending();
     trainingScenarioCatalog.invalidate();
     beginTrainingTurnScopeChange();
-    if (user?.id) clearTrainingSessionResume(user.id);
+    if (user?.id) void clearTrainingSessionResume(user.id);
     setPresentationResetKey((key) => key + 1);
-    setTrainingSessionId(null);
+    replaceTrainingSessionId(null);
     setLatchedSessionPlan(null);
     setSessionPlannedTotal(null);
     setSessionConsumedCardKeys([]);
     setSessionCompletedActions(0);
-  }, [beginTrainingTurnScopeChange, trainingScenarioCatalog, user?.id]);
+  }, [
+    beginTrainingTurnScopeChange,
+    resetPlatformProgressActionPending,
+    replaceTrainingSessionId,
+    trainingScenarioCatalog,
+    user?.id,
+  ]);
 
   useEffect(() => {
     if (
@@ -1138,9 +1209,10 @@ function TrainingScreenContent({
     loadWord: loadNextWord,
     reportError: setTrainingLoadError,
     onSessionReady: (session, context) => {
+      setSessionReplacementWarning(false);
       setSessionConsumedCardKeys([]);
       setSessionCompletedActions(0);
-      setTrainingSessionId(session.sessionId);
+      replaceTrainingSessionId(session.sessionId);
       setLatchedSessionPlan(session);
       // The explicit session-start load below owns this filter. Mark it as
       // already applied so the focus-filter observer does not issue a
@@ -1148,7 +1220,7 @@ function TrainingScreenContent({
       lastAppliedTrainingFocusFilterKey.current = trainingFilterKey(
         context.focusFilter,
       );
-      writeTrainingSessionResume({
+      void writeTrainingSessionResume({
         sessionId: session.sessionId,
         userId: user.id,
         languageCode: context.languageCode,
@@ -1231,52 +1303,139 @@ function TrainingScreenContent({
     loadTrainingScenarios: trainingScenarioCatalog.fetch,
     onCommitDraft: commitPilotSessionDraft,
     onRetry: async () => {
-      if (sessionResumeError) {
+      if (
+        trainingTodaySetupEnabled &&
+        (!sessionResumeResolved ||
+          sessionResumeError ||
+          trainingLanguagesCatalogError ||
+          listCatalogStatus === "error")
+      ) {
         setTrainingLoadError(null);
         setSessionResumeError(false);
         sessionResumeAttemptedRef.current = false;
+        setSessionResumeRecord(undefined);
+        setTrainingLanguagesResolved(false);
+        setTrainingLanguagesCatalogError(false);
+        setTrainingLanguagesRetryGeneration((generation) => generation + 1);
+        void refreshAvailableLists();
         return;
       }
       const recovery = await retryCardLoadFailureAndPersist();
       if (recovery === "skipped") await loadNextWord();
     },
   });
-  const { resumeSession } = trainingPilot;
+  const { continueSession, resumeSession, returnToToday } = trainingPilot;
 
   useEffect(() => {
     if (
       !trainingTodaySetupEnabled ||
       !user?.id ||
       sessionResumeResolved ||
+      sessionResumeRecord !== undefined
+    ) {
+      return;
+    }
+    let cancelled = false;
+    const resumeGeneration = sessionResumeGenerationRef.current;
+    void readTrainingSessionResume(user.id).then((record) => {
+      if (
+        cancelled ||
+        !componentMountedRef.current ||
+        sessionResumeGenerationRef.current !== resumeGeneration
+      ) {
+        return;
+      }
+      setSessionResumeRecord(record);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sessionResumeRecord,
+    sessionResumeResolved,
+    trainingTodaySetupEnabled,
+    user?.id,
+  ]);
+
+  useEffect(() => {
+    if (
+      !trainingTodaySetupEnabled ||
+      !user?.id ||
+      sessionResumeResolved ||
+      sessionResumeRecord === undefined ||
       sessionResumeAttemptedRef.current
     ) {
       return;
     }
+    // An ordinary first visit has no resumable session. Resolve immediately
+    // instead of waiting for optional list hydration that may not be
+    // available on an empty or fixture-backed setup surface.
+    if (!sessionResumeRecord) {
+      setSessionResumeResolved(true);
+      return;
+    }
+    if (!trainingLanguagesResolved) return;
+    if (trainingLanguagesCatalogError) {
+      sessionResumeAttemptedRef.current = true;
+      setSessionResumeError(true);
+      setTrainingLoadError("training_resume_failed");
+      return;
+    }
+    const record = sessionResumeRecord;
+    const savedLanguagePermitted = trainingLanguageCodes.includes(
+      record.languageCode,
+    );
+    if (!savedLanguagePermitted) {
+      sessionResumeAttemptedRef.current = true;
+      const resumeGeneration = sessionResumeGenerationRef.current;
+      void clearTrainingSessionResume(user.id).then(() => {
+        if (
+          componentMountedRef.current &&
+          sessionResumeGenerationRef.current === resumeGeneration
+        ) {
+          setSessionResumeResolved(true);
+        }
+      });
+      return;
+    }
+    if (record.languageCode !== currentTrainingLanguage) {
+      // Rehydrate the list catalogue in the saved language before deciding
+      // whether that saved list is still permitted. Keep the record intact
+      // across this internal language transition.
+      trainingLanguageManuallyChangedRef.current = true;
+      languageHydrationPendingRef.current = true;
+      languageHydrationObservedNotReadyRef.current = false;
+      setCurrentTrainingLanguage(record.languageCode);
+      return;
+    }
+    // A saved session must still validate its list against the hydrated
+    // catalogue before it can be resumed.
+    if (
+      !listHydrated ||
+      hydratedLanguage !== record.languageCode ||
+      listCatalogStatus === "loading"
+    ) {
+      return;
+    }
+    if (listCatalogStatus === "error") {
+      sessionResumeAttemptedRef.current = true;
+      setSessionResumeError(true);
+      setTrainingLoadError("training_resume_failed");
+      return;
+    }
+
     sessionResumeAttemptedRef.current = true;
     const resumeGeneration = sessionResumeGenerationRef.current;
     const resolveResume = async () => {
-      const record = readTrainingSessionResume(user.id);
-      // An ordinary first visit has no resumable session. Resolve immediately
-      // instead of waiting for optional list hydration that may not be
-      // available on an empty or fixture-backed setup surface.
-      if (!record) {
-        if (componentMountedRef.current) setSessionResumeResolved(true);
-        return;
-      }
-      // A saved session must still validate its list against the hydrated
-      // catalogue before it can be resumed.
-      if (!listHydrated) {
-        sessionResumeAttemptedRef.current = false;
-        return;
-      }
+      languageHydrationPendingRef.current = false;
+      languageHydrationObservedNotReadyRef.current = false;
       if (
-        record.languageCode !== currentTrainingLanguage ||
-        (record.listId !== null &&
+        record.listId !== null &&
           !availableLists.some(
             (list) => list.id === record.listId && list.type === record.listType,
-          ))
+          )
       ) {
-        if (record) clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         if (componentMountedRef.current) setSessionResumeResolved(true);
         return;
       }
@@ -1303,13 +1462,47 @@ function TrainingScreenContent({
       ) {
         return;
       }
+      if (!snapshot) {
+        await clearTrainingSessionResume(user.id);
+        setSessionResumeResolved(true);
+        return;
+      }
+      if (snapshot.runStatus === "superseded") {
+        const savedList = record.listId
+          ? availableLists.find(
+              (list) =>
+                list.id === record.listId && list.type === record.listType,
+            )
+          : null;
+        if (savedList) applyListLocal(savedList);
+        if (activeTrainingScope) {
+          lastAppliedActiveTrainingScopeRef.current = activeTrainingScope;
+        }
+        setActiveScenario(record.scenarioId, { persist: false });
+        setEnabledModes(record.modes, { persist: false });
+        setCardFilterPreference(record.cardFilter, { persist: false });
+        setNewReviewRatio(record.newReviewRatio, { persist: false });
+        setSessionSize(record.sessionSize);
+        setTrainingFocusFilter(record.focusFilter);
+        await clearTrainingSessionResume(user.id);
+        setCurrentWord(null);
+        replaceTrainingSessionId(null);
+        setLatchedSessionPlan(null);
+        setSessionPlannedTotal(null);
+        setSessionConsumedCardKeys([]);
+        setSessionCompletedActions(0);
+        setSessionReplacementWarning(true);
+        setSessionResumeResolved(true);
+        return;
+      }
+
       const hasRemainingMember = Boolean(
         snapshot?.members.some(
           (member) => !member.consumedAt && !member.unavailableAt,
         ),
       );
-      if (!snapshot || !hasRemainingMember) {
-        clearTrainingSessionResume(user.id);
+      if (!hasRemainingMember) {
+        await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
         return;
       }
@@ -1332,7 +1525,7 @@ function TrainingScreenContent({
       setNewReviewRatio(record.newReviewRatio, { persist: false });
       setSessionSize(record.sessionSize);
       setTrainingFocusFilter(record.focusFilter);
-      setTrainingSessionId(snapshot.sessionId);
+      replaceTrainingSessionId(snapshot.sessionId);
       setLatchedSessionPlan(snapshot);
       setSessionPlannedTotal(snapshot.requestedTotal ?? snapshot.plannedTotal);
       setSessionConsumedCardKeys(
@@ -1384,7 +1577,7 @@ function TrainingScreenContent({
         setSessionResumeError(true);
         setTrainingLoadError("training_resume_failed");
       } else {
-        clearTrainingSessionResume(user.id);
+        await clearTrainingSessionResume(user.id);
         setSessionResumeResolved(true);
       }
     };
@@ -1396,8 +1589,11 @@ function TrainingScreenContent({
     availableLists,
     componentMountedRef,
     currentTrainingLanguage,
+    hydratedLanguage,
     listHydrated,
+    listCatalogStatus,
     loadNextWord,
+    sessionResumeRecord,
     sessionResumeResolved,
     setActiveScenario,
     setCardFilterPreference,
@@ -1406,8 +1602,13 @@ function TrainingScreenContent({
     setTrainingLoadError,
     setTrainingFocusFilter,
     resumeSession,
+    replaceTrainingSessionId,
     sessionResumeError,
+    trainingLanguagesCatalogError,
+    trainingLanguagesRetryGeneration,
     trainingTodaySetupEnabled,
+    trainingLanguageCodes,
+    trainingLanguagesResolved,
     user?.id,
   ]);
   const previousTrainingSurfaceRef = useRef(trainingPilot.surface);
@@ -1438,21 +1639,176 @@ function TrainingScreenContent({
     trainingPilot.sessionGeneration,
     trainingPilot.surface,
   ]);
-  const handleContinueTrainingSession = useCallback(() => {
-    resetFocusQueueState();
-    setPresentationResetKey((key) => key + 1);
-    if (currentWord) {
-      const transitionId = createTrainingTransitionId();
-      beginTrainingUserTransition(transitionId, "continue");
-      registerTrainingEntryTransition(currentWord.id, transitionId);
-      markTrainingEntryPresentationStarted(currentWord.id);
+  const handleTrainingSessionSuperseded = useCallback(
+    (expected?: { sessionId: string; authorityGeneration: number }) => {
+      if (
+        expected &&
+        (trainingSessionIdRef.current !== expected.sessionId ||
+          sessionAuthorityGenerationRef.current !==
+            expected.authorityGeneration)
+      ) {
+        return;
+      }
+      sessionResumeGenerationRef.current += 1;
+      if (user?.id) void clearTrainingSessionResume(user.id);
+      resetFocusQueueState();
+      setCurrentWord(null);
+      replaceTrainingSessionId(null);
+      setLatchedSessionPlan(null);
+      setSessionPlannedTotal(null);
+      setSessionConsumedCardKeys([]);
+      setSessionCompletedActions(0);
+      setSessionAuthorityChecking(false);
+      resetPlatformProgressActionPending();
+      setSessionReplacementWarning(true);
+      returnToToday();
+    },
+    [
+      resetFocusQueueState,
+      resetPlatformProgressActionPending,
+      replaceTrainingSessionId,
+      returnToToday,
+      user?.id,
+    ],
+  );
+  const validateTrainingSessionAuthority = useCallback(async () => {
+    const sessionId = trainingSessionIdRef.current;
+    if (!user?.id || !sessionId) return true;
+    const authorityGeneration = sessionAuthorityGenerationRef.current;
+    const validation = sessionAuthorityValidationRef.current + 1;
+    sessionAuthorityValidationRef.current = validation;
+    // Do not allow a visible card to accept a grade while the server checks
+    // whether another device deliberately replaced its queue.
+    setSessionAuthorityChecking(true);
+    try {
+      const snapshot = await fetchTrainingSessionSnapshot(
+        user.id,
+        sessionId,
+      );
+      if (
+        !componentMountedRef.current ||
+        sessionAuthorityValidationRef.current !== validation ||
+        sessionAuthorityGenerationRef.current !== authorityGeneration ||
+        trainingSessionIdRef.current !== sessionId
+      ) {
+        return false;
+      }
+      if (!snapshot || snapshot.runStatus === "superseded") {
+        handleTrainingSessionSuperseded({ sessionId, authorityGeneration });
+        return false;
+      }
+      setSessionAuthorityChecking(false);
+      return true;
+    } catch {
+      // No offline grade queue in this slice. Keep the card non-actionable
+      // until a later focus/reconnect check reaches the server.
+      if (
+        componentMountedRef.current &&
+        sessionAuthorityValidationRef.current === validation &&
+        sessionAuthorityGenerationRef.current === authorityGeneration &&
+        trainingSessionIdRef.current === sessionId
+      ) {
+        setSessionAuthorityChecking(true);
+      }
+      return false;
     }
-    trainingPilot.continueSession();
-  }, [currentWord, resetFocusQueueState, trainingPilot]);
+  }, [
+    componentMountedRef,
+    handleTrainingSessionSuperseded,
+    user?.id,
+  ]);
+  const handleContinueTrainingSession = useCallback(() => {
+    const continueCurrentSession = () => {
+      resetFocusQueueState();
+      setPresentationResetKey((key) => key + 1);
+      if (currentWord) {
+        const transitionId = createTrainingTransitionId();
+        beginTrainingUserTransition(transitionId, "continue");
+        registerTrainingEntryTransition(currentWord.id, transitionId);
+        markTrainingEntryPresentationStarted(currentWord.id);
+      }
+      continueSession();
+    };
+    const sessionId = trainingSessionIdRef.current;
+    if (!sessionId || !user?.id) {
+      continueCurrentSession();
+      return;
+    }
+    void validateTrainingSessionAuthority().then((authorized) => {
+      if (authorized && trainingSessionIdRef.current === sessionId) {
+        continueCurrentSession();
+      }
+    });
+  }, [
+    currentWord,
+    resetFocusQueueState,
+    continueSession,
+    user?.id,
+    validateTrainingSessionAuthority,
+  ]);
+  useEffect(() => {
+    if (!trainingSessionId) {
+      setSessionAuthorityChecking(false);
+      return;
+    }
+    const onReturn = () => void validateTrainingSessionAuthority();
+    const onVisibilityChange = () => {
+      if (!document.hidden) onReturn();
+    };
+    window.addEventListener("focus", onReturn);
+    window.addEventListener("online", onReturn);
+    const onOffline = () => {
+      // Invalidate any in-flight positive authority result. Answers remain
+      // fenced until a later online validation succeeds.
+      sessionAuthorityValidationRef.current += 1;
+      setSessionAuthorityChecking(true);
+    };
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("pageshow", onReturn);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const unsubscribeInvalidation = subscribeTrainingSessionInvalidation(
+      user.id,
+      () => void validateTrainingSessionAuthority(),
+    );
+    const authorityGeneration = sessionAuthorityGenerationRef.current;
+    const unsubscribeOwnerInvalidation =
+      subscribeTrainingSessionOwnerInvalidation(() =>
+        handleTrainingSessionSuperseded({
+          sessionId: trainingSessionId,
+          authorityGeneration,
+        }),
+      );
+    return () => {
+      window.removeEventListener("focus", onReturn);
+      window.removeEventListener("online", onReturn);
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("pageshow", onReturn);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      unsubscribeInvalidation();
+      unsubscribeOwnerInvalidation();
+    };
+  }, [
+    handleTrainingSessionSuperseded,
+    trainingSessionId,
+    user.id,
+    validateTrainingSessionAuthority,
+  ]);
+  useEffect(() => {
+    if (!trainingSessionId || destination !== "training") return;
+    const pollId = window.setInterval(() => {
+      if (document.hidden) return;
+      void validateTrainingSessionAuthority();
+    }, TRAINING_SESSION_AUTHORITY_POLL_MS);
+    return () => window.clearInterval(pollId);
+  }, [destination, trainingSessionId, validateTrainingSessionAuthority]);
+  useEffect(() => {
+    if (!trainingSessionId || !returnedToTraining) return;
+    void validateTrainingSessionAuthority();
+  }, [returnedToTraining, trainingSessionId, validateTrainingSessionAuthority]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
-    trainingPilot.returnToToday();
-  }, [trainingPilot]);
+    returnToToday();
+  }, [returnToToday]);
   const trainingSessionPlanScope = React.useMemo(
     () => ({
       listId: wordListId,
@@ -1594,6 +1950,7 @@ function TrainingScreenContent({
             sources={trainingPilot.sourceOptions}
             startPending={trainingPilot.startPending}
             scenarioLoading={trainingPilot.scenarioLoading}
+            replacementWarning={sessionReplacementWarning}
             activeSessionLabel={wordListLabel || undefined}
             onContinue={handleContinueTrainingSession}
             onStart={trainingPilot.startSession}
@@ -1620,14 +1977,20 @@ function TrainingScreenContent({
             sessionFooter={trainingSessionFooter}
             sessionNotice={trainingSessionNotice}
             interactionDisabled={
-              navigationBlocked || acceptedTransitionLoadStalled
+              navigationBlocked ||
+              acceptedTransitionLoadStalled ||
+              sessionAuthorityChecking ||
+              returnedToTraining
             }
             focusOnPresentation={isSubsequentSessionCard}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails}
             onProgressActionAccepted={handleV2ProgressActionAccepted}
             onProgressActionStarting={prepareV2ProgressAction}
-            onProgressActionPendingChange={setPlatformProgressActionPending}
+            onProgressActionPendingChange={
+              handlePlatformProgressActionPendingChange
+            }
+            onTrainingSessionSuperseded={handleTrainingSessionSuperseded}
             onLoadFailure={(failure) => {
               reportCardLoadFailure(currentWord, failure);
             }}

@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const rpc = vi.fn();
 const authenticatedRpc = vi.fn();
+const trainingSessionId = "00000000-0000-4000-8000-000000000009";
 const getUser = vi.fn();
 const createClient = vi.fn((_url: string, key: string) =>
   key === "service-key"
@@ -22,6 +23,17 @@ const request = (body: unknown, extraHeaders: Record<string, string> = {}) =>
       "content-type": "application/json",
       origin: "chrome-extension://abc",
       ...extraHeaders,
+    },
+    body: JSON.stringify(body),
+  });
+
+const libraryRequest = (body: unknown) =>
+  new NextRequest("http://localhost/api/platform/v2/actions/library", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer user-token",
+      "content-type": "application/json",
+      origin: "chrome-extension://abc",
     },
     body: JSON.stringify(body),
   });
@@ -66,6 +78,126 @@ describe("/api/platform/v2/actions", () => {
       error: "platform_v2_actions_not_enabled",
     });
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  test("keeps the cached first-party action route compatible during rollout phase 1", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "learning" },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "untracked",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_card_action_as_principal",
+      expect.not.objectContaining({ p_training_session_id: expect.anything() }),
+    );
+  });
+
+  test("keeps cached first-party Library Known compatible during rollout phase 1", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "mark-known",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "not-started" },
+          knownMark: {
+            markId: "00000000-0000-4000-8000-000000000013",
+            revision: "00000000-0000-4000-8000-000000000014",
+            markedAt: "2026-09-13T00:00:00.000Z",
+          },
+          stateRevision: "00000000-0000-4000-8000-000000000015",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "mark-known",
+        clientEventId: "00000000-0000-4000-8000-000000000012",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "untracked",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_card_action_as_principal",
+      expect.not.objectContaining({ p_training_session_id: expect.anything() }),
+    );
+  });
+
+  test("routes a first-party Library action through the explicit non-session RPC path", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        card: {
+          cardTypeId: "word-to-definition",
+          scheduler: { phase: "learning" },
+          knownMark: null,
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import(
+      "@/app/api/platform/v2/actions/library/route"
+    );
+
+    const response = await POST(
+      libraryRequest({
+        actionId: "start-learning",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "untracked",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_card_action_as_principal",
+      expect.objectContaining({
+        p_auth_kind: "first_party",
+        p_training_session_id: null,
+      }),
+    );
   });
 
   test("accepts Mark Known through the exact revision-checked RPC", async () => {
@@ -150,6 +282,7 @@ describe("/api/platform/v2/actions", () => {
       request({
         actionId: "undo-known",
         clientEventId: "00000000-0000-4000-8000-000000000007",
+        trainingSessionId,
         target: {
           kind: "sense-card",
           entryId: "00000000-0000-4000-8000-000000000003",
@@ -167,6 +300,34 @@ describe("/api/platform/v2/actions", () => {
     });
   });
 
+  test("rejects a superseded training queue as a typed conflict", async () => {
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: "training_session_superseded" },
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "review-card",
+        clientEventId: "00000000-0000-4000-8000-000000000007",
+        trainingSessionId: "00000000-0000-4000-8000-000000000009",
+        target: {
+          kind: "sense-card",
+          entryId: "00000000-0000-4000-8000-000000000003",
+          cardTypeId: "word-to-definition",
+          stateRevision: "00000000-0000-4000-8000-000000000006",
+        },
+        reviewResult: "success",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "training_session_superseded",
+    });
+  });
+
   test("returns a typed conflict when an action is not available in the current phase", async () => {
     rpc.mockResolvedValueOnce({
       data: null,
@@ -178,6 +339,7 @@ describe("/api/platform/v2/actions", () => {
       request({
         actionId: "start-learning",
         clientEventId: "00000000-0000-4000-8000-000000000008",
+        trainingSessionId,
         target: {
           kind: "sense-card",
           entryId: "00000000-0000-4000-8000-000000000003",
@@ -239,6 +401,7 @@ describe("/api/platform/v2/actions", () => {
         {
           actionId: "review-card",
           clientEventId: "00000000-0000-4000-8000-000000000002",
+          trainingSessionId,
           target: {
             kind: "sense-card",
             entryId: "00000000-0000-4000-8000-000000000003",
@@ -279,6 +442,7 @@ describe("/api/platform/v2/actions", () => {
         {
           actionId: "review-card",
           clientEventId: "00000000-0000-4000-8000-000000000002",
+          trainingSessionId,
           target: {
             kind: "sense-card",
             entryId: "00000000-0000-4000-8000-000000000003",
@@ -341,6 +505,7 @@ describe("/api/platform/v2/actions", () => {
         {
           actionId: "review-card",
           clientEventId: "00000000-0000-4000-8000-000000000002",
+          trainingSessionId,
           target: {
             kind: "sense-card",
             entryId: "00000000-0000-4000-8000-000000000003",

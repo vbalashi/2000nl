@@ -82,10 +82,15 @@ an alternate port, open that same origin:
 - `http://localhost:<port>/dev/test-login?redirectTo=/`
 
 What it does:
-- `GET /api/dev/test-session` (dev-only) uses the local wrapper's exact allowlisted QA identity and requires its server-read QA marker before generating an OTP.
+- `POST /api/dev/test-session` (dev-only) uses the local wrapper's exact allowlisted QA identity and requires its server-read QA marker before generating an OTP. It is intentionally a mutation endpoint so the minted session cannot be reused from an HTTP or framework cache after a local database reset.
 - It then exchanges the OTP for a real Supabase session and stores the session JSON in `localStorage` (Supabase format).
+- Opening `/dev/test-login` always requests a fresh session. A stale tab marker is
+  never trusted after a local database reset. Development Strict Mode mounts
+  share one in-flight request, and a failed request is released so a reload can
+  retry it.
 
-If this flow is flaky in headless automation (token rotation / Strict Mode timing), use the deterministic injection flow below.
+If the endpoint reports an auth or environment error, fix the local wrapper and
+reload this page; do not inject or reuse raw session JSON.
 
 ## Persistent Profile (Recommended)
 

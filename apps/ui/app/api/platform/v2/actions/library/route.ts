@@ -11,5 +11,5 @@ export function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return handlePlatformV2ActionRoute(request, "training");
+  return handlePlatformV2ActionRoute(request, "library");
 }

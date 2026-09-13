@@ -224,6 +224,37 @@ POST /api/platform/v2/actions
 Authorization: Bearer <access_token>
 ```
 
+The two first-party surfaces are explicit:
+
+| Endpoint | Caller | Session contract |
+| --- | --- | --- |
+| `POST /api/platform/v2/actions` | Current first-party Training; Connected Client | Current Training sends a server-issued `trainingSessionId`. Connected Client remains sessionless and requires `platform:write`. |
+| `POST /api/platform/v2/actions/library` | First-party Library only | Must not send `trainingSessionId`; the server selects the trusted Library call path. Connected Client is rejected on this endpoint. |
+
+Both endpoints authenticate the bearer token, derive user/principal identity on
+the server, and invoke service-role-only Platform RPCs. A body field, browser
+origin, card identity, or queue membership never selects Training versus
+Library. Library Learn/Known remains valid when the entry is also queued in an
+active or superseded Training run.
+
+Current Training treats the session ID as opaque. A superseded session returns
+`409 {"error":"training_session_superseded"}` without changing FSRS, Known,
+history, receipts-as-new-actions, or session consumption. Library rejects a
+session ID with `400 {"error":"unexpected_training_session_id"}`; its endpoint
+rejects Connected Client with `403 {"error":"library_actions_first_party_only"}`.
+The strict phase owned by #399 will reject a missing current Training session as
+`400 {"error":"missing_training_session_id"}`.
+
+Migration 153 has a temporary legacy first-party compatibility window. The old
+shared `/api/platform/v2/actions` request without `trainingSessionId` remains
+accepted so the previous app image and cached Library bundle survive rollout and
+automatic app rollback. That old wire format cannot identify its UI surface and
+therefore cannot be fenced honestly from stale old Training. New code must not
+use it. Issue #399 closes it only after the previous image and cached bundles are
+retired; Connected Client remains supported throughout. See
+`docs/runbooks/nuc-db-contract-deploy.md` for the ordered rollout and rollback
+boundary.
+
 The request must be one of the discriminated mutation variants in
 `packages/shared/types/platformV2.ts`: `start-learning`, `mark-known`,
 `undo-known`, or `review-card`. Every request carries a UUID
@@ -238,11 +269,16 @@ revision, or undoing a non-current Known Mark returns HTTP 409 without writes.
 When normalized `source-context-v2` is present, card mutation, immutable action
 history, source, artifact, and location commit atomically.
 
-The HTTP endpoint is the only consumer-facing action boundary. Its server
+The HTTP endpoints are the only consumer-facing action boundary. Their server
 authenticates the caller, derives the principal and user ID, enforces the
 connected-client scope, and then invokes the service-role-only database RPC.
 Browser and extension clients must never call
 `perform_platform_v2_card_action` directly.
+
+Transport retries reuse the original `clientEventId`. If the mutation response
+is ambiguous, call `/api/platform/v2/actions/reconcile` before any new mutation;
+an accepted receipt is replayed exactly once even after Training takeover. A
+definitive 4xx response is not a transport retry condition.
 
 Known is an overlay, not an FSRS result. Marking Known preserves scheduler
 state and excludes the exact card from shared training selection. Undo clears

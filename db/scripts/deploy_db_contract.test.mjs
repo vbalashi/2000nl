@@ -46,6 +46,8 @@ async function fixture() {
         status: "enabled",
         requiredMigrationId: 123,
         coordinationIssue: 233,
+        compatibilityPhase: "legacy-first-party-compatible",
+        strictEnforcementIssue: 399,
       },
       baseline: {
         migrationId: 122,
@@ -88,6 +90,12 @@ case "\${FAKE_PSQL_MODE:-success}" in
     ;;
   noop)
     printf '%s\n' 'db-contract-gate: no-op 123' 'db-contract-gate: compatible fixture-123'
+    ;;
+  noisy-success)
+    for index in {1..300}; do
+      printf 'NOTICE: populated bootstrap replay line %s\n' "$index" >&2
+    done
+    printf '%s\n' 'db-contract-gate: applied 123' 'db-contract-gate: pre-switch-read-probe passed' 'db-contract-gate: compatible fixture-123'
     ;;
   migration-failure)
     printf '%s\n' 'ERROR: db-contract-gate: migration-failed 123 postgresql://user:leaked@db.invalid/prod' >&2
@@ -233,6 +241,15 @@ test("inlines chained postflight and pre-switch probes for stdin clients", async
   assert.doesNotMatch(sql, /BEGIN;\nSELECT 'included-postflight';\nCOMMIT;/);
 });
 
+test("keeps final contract receipts when populated replay emits many notices", async () => {
+  const { result } = await applyFixture("noisy-success");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /pre-switch-read-probe passed/);
+  assert.match(result.stdout, /compatible fixture-123/);
+  assert.ok(result.stdout.length <= 4000);
+});
+
 test("rejects a pre-switch read probe above the rollout budget", async () => {
   const root = await fixture();
   const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
@@ -248,6 +265,23 @@ test("rejects a pre-switch read probe above the rollout budget", async () => {
 
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Invalid pre-switch read probe contract/);
+});
+
+test("rejects an unknown staged compatibility phase", async () => {
+  const root = await fixture();
+  const manifestPath = path.join(root, "packages/shared/deployment/db-contract.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.rollout.compatibilityPhase = "pretend-strict";
+  await writeFile(manifestPath, JSON.stringify(manifest));
+
+  const result = spawnSync(
+    process.execPath,
+    [runner, "validate", "--repo-root", root],
+    { encoding: "utf8" },
+  );
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Invalid staged compatibility phase/);
 });
 
 test("client preflight fails before database URL lookup when runtime is missing", async () => {
@@ -373,7 +407,7 @@ test("container client requires a digest and forwards DB settings by name, never
   assert.doesNotMatch(args, /topsecret|postgresql:\/\/|db\.example/);
 });
 
-test("the repository contract enables the issue 279 FSRS contract", () => {
+test("the repository contract enables the issue 393 Training authority contract", () => {
   const result = spawnSync(
     process.execPath,
     [
@@ -386,7 +420,10 @@ test("the repository contract enables the issue 279 FSRS contract", () => {
   );
 
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stdout.trim(), "enabled 152 279");
+  assert.equal(
+    result.stdout.trim(),
+    "enabled 153 393",
+  );
 });
 
 test("applies a missing migration and its ledger row in one transaction", async () => {
