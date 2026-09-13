@@ -17,7 +17,7 @@ type TrainingRun = {
   runStatus: "active" | "superseded";
 };
 
-type TrainingCard = {
+type RunAuthorityCard = {
   id: string;
   mode: string;
   stateRevision: string;
@@ -92,7 +92,7 @@ async function startTrainingRun(
   return rows[0].session as TrainingRun;
 }
 
-async function nextTrainingCard(
+async function nextRunAuthorityCard(
   client: PoolClient,
   userId: string,
   sessionId: string,
@@ -103,13 +103,13 @@ async function nextTrainingCard(
      ) as card`,
     [userId, sessionId],
   );
-  return rows[0]?.card as TrainingCard | undefined;
+  return rows[0]?.card as RunAuthorityCard | undefined;
 }
 
-async function gradeTrainingCard(
+async function gradeRunAuthorityCard(
   client: PoolClient,
   userId: string,
-  card: TrainingCard,
+  card: RunAuthorityCard,
   sessionId: string,
   clientEventId = randomUUID(),
 ) {
@@ -234,7 +234,7 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId, "1"),
       );
       const card = await committed(pool, userId, (client) =>
-        nextTrainingCard(client, userId, first.sessionId),
+        nextRunAuthorityCard(client, userId, first.sessionId),
       );
       if (!card) throw new Error("expected one Training card");
       const takeover = await committed(pool, userId, (client) =>
@@ -624,12 +624,12 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId),
       );
       const card = await committed(pool, userId, (client) =>
-        nextTrainingCard(client, userId, first.sessionId),
+        nextRunAuthorityCard(client, userId, first.sessionId),
       );
       if (!card) throw new Error("expected a Training card");
 
       ({ client: gradeClient } = await beginAs(pool, userId, "service_role"));
-      const grade = await gradeTrainingCard(
+      const grade = await gradeRunAuthorityCard(
         gradeClient,
         userId,
         card,
@@ -683,7 +683,7 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId),
       );
       const card = await committed(pool, userId, (client) =>
-        nextTrainingCard(client, userId, first.sessionId),
+        nextRunAuthorityCard(client, userId, first.sessionId),
       );
       if (!card) throw new Error("expected a Training card");
 
@@ -692,7 +692,7 @@ describeDb("active Training run authority", () => {
 
       const grade = await beginAs(pool, userId, "service_role");
       gradeClient = grade.client;
-      const staleGradePromise = gradeTrainingCard(
+      const staleGradePromise = gradeRunAuthorityCard(
         gradeClient,
         userId,
         card,
@@ -741,7 +741,7 @@ describeDb("active Training run authority", () => {
         startTrainingRun(client, userId),
       );
       const card = await committed(pool, userId, (client) =>
-        nextTrainingCard(client, userId, first.sessionId),
+        nextRunAuthorityCard(client, userId, first.sessionId),
       );
       if (!card) throw new Error("expected a Training card");
       const clientEventId = randomUUID();
@@ -750,7 +750,7 @@ describeDb("active Training run authority", () => {
         pool,
         userId,
         (client) =>
-          gradeTrainingCard(
+          gradeRunAuthorityCard(
             client,
             userId,
             card,
@@ -768,7 +768,7 @@ describeDb("active Training run authority", () => {
         pool,
         userId,
         (client) =>
-          gradeTrainingCard(
+          gradeRunAuthorityCard(
             client,
             userId,
             card,

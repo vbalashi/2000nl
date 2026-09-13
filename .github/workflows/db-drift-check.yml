@@ -241,7 +241,7 @@ jobs:
           ISSUE_238_BENCHMARK_BASE_DB_URL: postgres://postgres:postgres@localhost:5432/contract_test?sslmode=disable
         run: node --test db/scripts/scheduler_cold_io.integration.test.mjs
 
-      - name: Test versioned importer and populated bootstrap replay
+      - name: Test versioned importer and idempotent local fixture
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
           INGESTION_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/contract_test
@@ -297,7 +297,8 @@ jobs:
             -f db/test-fixtures/training_smoke.sql
           second_fixture_digest="$(fixture_ledger_digest)"
           test "$first_fixture_digest" = "$second_fixture_digest"
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/bootstrap.sql
+          # bootstrap.sql is the immutable historical chain for a fresh,
+          # disposable database. Do not replay it over populated fixture data.
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/scripts/local_supabase_probe.sql
 
       - name: Verify database connection (optional)
