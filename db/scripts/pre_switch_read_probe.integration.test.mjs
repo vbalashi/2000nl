@@ -33,6 +33,14 @@ function psql(urlString, sql) {
   });
 }
 
+function applySqlFile(urlString, relativePath) {
+  return spawnSync(
+    "psql",
+    ["-X", "--no-psqlrc", "-At", "--set=ON_ERROR_STOP=1", "--file", path.join(repoRoot, relativePath)],
+    { encoding: "utf8", cwd: repoRoot, env: postgresEnvironment(urlString) },
+  );
+}
+
 function apply(databaseUrl) {
   const clientArgs = containerImage
     ? [
@@ -124,5 +132,30 @@ test(
     assert.match(replay.stdout, /compatible 2000nl-db-153/);
 
     assert.equal(learnerSnapshot(baseDatabaseUrl), before);
+  },
+);
+
+test(
+  "replays migration 153 after the database is already populated",
+  { skip: !baseDatabaseUrl, timeout: 120_000 },
+  () => {
+    const target = new URL(baseDatabaseUrl);
+    if (!["127.0.0.1", "localhost", "::1"].includes(target.hostname)) {
+      throw new Error("Bootstrap replay integration accepts only a loopback PostgreSQL server");
+    }
+
+    const seed = psql(
+      baseDatabaseUrl,
+      `INSERT INTO auth.users (id, email)
+       VALUES ('${qaUserId}', 'test@2000nl.test')
+       ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;\n`,
+    );
+    assert.equal(seed.status, 0, seed.stderr);
+
+    const replay = applySqlFile(
+      baseDatabaseUrl,
+      "db/migrations/153_single_active_training_run.sql",
+    );
+    assert.equal(replay.status, 0, replay.stderr);
   },
 );

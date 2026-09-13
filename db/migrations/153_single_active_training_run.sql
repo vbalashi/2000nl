@@ -196,10 +196,59 @@ REVOKE ALL ON FUNCTION private.training_session_run_response_v1(uuid, uuid)
 
 -- Preserve the working queue-latching implementation behind a private name,
 -- then make both old and new public start shapes claim a run before returning.
-ALTER FUNCTION public.start_training_session(uuid, text[], uuid, text, text, jsonb, text)
-  RENAME TO start_training_session_latch_v1;
-ALTER FUNCTION public.start_training_session_latch_v1(uuid, text[], uuid, text, text, jsonb, text)
-  SET SCHEMA private;
+--
+-- Bootstrap can be replayed against a populated database. On the first pass
+-- each source function is moved to its private latch name; on a replay the
+-- public wrapper and private latch already exist. Guard both the source and
+-- destination so the replay does not try to move a second function into an
+-- occupied private signature.
+DO $$
+DECLARE
+  v_function record;
+  v_source text;
+  v_target text;
+BEGIN
+  FOR v_function IN
+    SELECT * FROM (VALUES
+      ('start_training_session',
+       'uuid, text[], uuid, text, text, jsonb, text',
+       'start_training_session_latch_v1'),
+      ('get_next_training_session_card',
+       'uuid, uuid, text[]',
+       'get_next_training_session_card_latch_v1'),
+      ('get_training_session_snapshot',
+       'uuid, uuid',
+       'get_training_session_snapshot_latch_v1'),
+      ('mark_training_session_member_unavailable',
+       'uuid, uuid, uuid, text, text',
+       'mark_training_session_member_unavailable_latch_v1'),
+      ('perform_platform_v2_card_action_as_principal',
+       'uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid',
+       'perform_platform_v2_card_action_session_latch_v1'),
+      ('perform_platform_v2_card_action_as_principal',
+       'uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text',
+       'perform_platform_v2_card_action_non_session_latch_v1')
+    ) AS functions(name, arguments, target_name)
+  LOOP
+    v_source := format('public.%I(%s)', v_function.name, v_function.arguments);
+    v_target := format('private.%I(%s)', v_function.target_name, v_function.arguments);
+    IF to_regprocedure(v_source) IS NOT NULL
+       AND to_regprocedure(v_target) IS NULL THEN
+      EXECUTE format(
+        'ALTER FUNCTION %s RENAME TO %I',
+        v_source,
+        v_function.target_name
+      );
+      EXECUTE format(
+        'ALTER FUNCTION public.%I(%s) SET SCHEMA private',
+        v_function.target_name,
+        v_function.arguments
+      );
+    END IF;
+  END LOOP;
+END;
+$$;
+
 REVOKE ALL ON FUNCTION private.start_training_session_latch_v1(uuid, text[], uuid, text, text, jsonb, text)
   FROM PUBLIC, anon, authenticated, service_role;
 
@@ -350,10 +399,6 @@ GRANT EXECUTE ON FUNCTION public.start_training_session(uuid, text[], uuid, text
 -- Wrap the established selectors/mutators rather than duplicating their
 -- scheduler policy. Stale queues become non-actionable before card projection
 -- or unavailable-member mutation.
-ALTER FUNCTION public.get_next_training_session_card(uuid, uuid, text[])
-  RENAME TO get_next_training_session_card_latch_v1;
-ALTER FUNCTION public.get_next_training_session_card_latch_v1(uuid, uuid, text[])
-  SET SCHEMA private;
 REVOKE ALL ON FUNCTION private.get_next_training_session_card_latch_v1(uuid, uuid, text[])
   FROM PUBLIC, anon, authenticated, service_role;
 
@@ -393,10 +438,6 @@ REVOKE ALL ON FUNCTION public.get_next_training_session_card(uuid, uuid, text[])
 GRANT EXECUTE ON FUNCTION public.get_next_training_session_card(uuid, uuid, text[])
   TO authenticated;
 
-ALTER FUNCTION public.get_training_session_snapshot(uuid, uuid)
-  RENAME TO get_training_session_snapshot_latch_v1;
-ALTER FUNCTION public.get_training_session_snapshot_latch_v1(uuid, uuid)
-  SET SCHEMA private;
 REVOKE ALL ON FUNCTION private.get_training_session_snapshot_latch_v1(uuid, uuid)
   FROM PUBLIC, anon, authenticated, service_role;
 
@@ -433,10 +474,6 @@ REVOKE ALL ON FUNCTION public.get_training_session_snapshot(uuid, uuid)
 GRANT EXECUTE ON FUNCTION public.get_training_session_snapshot(uuid, uuid)
   TO authenticated;
 
-ALTER FUNCTION public.mark_training_session_member_unavailable(uuid, uuid, uuid, text, text)
-  RENAME TO mark_training_session_member_unavailable_latch_v1;
-ALTER FUNCTION public.mark_training_session_member_unavailable_latch_v1(uuid, uuid, uuid, text, text)
-  SET SCHEMA private;
 REVOKE ALL ON FUNCTION private.mark_training_session_member_unavailable_latch_v1(uuid, uuid, uuid, text, text)
   FROM PUBLIC, anon, authenticated, service_role;
 
@@ -468,12 +505,6 @@ REVOKE ALL ON FUNCTION public.mark_training_session_member_unavailable(uuid, uui
 GRANT EXECUTE ON FUNCTION public.mark_training_session_member_unavailable(uuid, uuid, uuid, text, text)
   TO authenticated;
 
-ALTER FUNCTION public.perform_platform_v2_card_action_as_principal(
-  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
-) RENAME TO perform_platform_v2_card_action_session_latch_v1;
-ALTER FUNCTION public.perform_platform_v2_card_action_session_latch_v1(
-  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
-) SET SCHEMA private;
 REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text, uuid
 ) FROM PUBLIC, anon, authenticated, service_role;
@@ -481,12 +512,6 @@ REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_session_latch_v1(
 -- Keep the established non-session action implementation available to the
 -- session-aware wrapper without routing back through the public compatibility
 -- guard below.
-ALTER FUNCTION public.perform_platform_v2_card_action_as_principal(
-  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
-) RENAME TO perform_platform_v2_card_action_non_session_latch_v1;
-ALTER FUNCTION public.perform_platform_v2_card_action_non_session_latch_v1(
-  uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
-) SET SCHEMA private;
 REVOKE ALL ON FUNCTION private.perform_platform_v2_card_action_non_session_latch_v1(
   uuid, text, uuid, text, text, uuid, text, text, uuid, jsonb, text, text
 ) FROM PUBLIC, anon, authenticated, service_role;

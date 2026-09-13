@@ -23,6 +23,11 @@ describe("getDbUrl", () => {
   test.each([
     "postgresql://postgres:postgres@db.example/fsrs_test",
     "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?host=db.example.com",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?hostaddr=203.0.113.10",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?service=production",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?port=6432",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?dbname=production",
   ])("rejects an unsafe explicit FSRS target before a Pool can connect: %s", (url) => {
     vi.stubEnv("FSRS_TEST_DB_URL", url);
 
@@ -32,6 +37,7 @@ describe("getDbUrl", () => {
   test.each([
     "postgresql://postgres:postgres@localhost:5432/fsrs_test",
     "postgresql://postgres:postgres@127.0.0.1:54322/2000nl_fsrs_12345",
+    "postgresql://postgres:postgres@localhost:5432/fsrs_test?sslmode=disable",
   ])("accepts a scoped loopback FSRS test database: %s", (url) => {
     vi.stubEnv("FSRS_TEST_DB_URL", url);
 
