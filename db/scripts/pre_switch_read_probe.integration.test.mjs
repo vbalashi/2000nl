@@ -11,6 +11,19 @@ const containerNetwork = process.env.DB_CONTRACT_INTEGRATION_PSQL_CONTAINER_NETW
 const containerDatabaseHost = process.env.DB_CONTRACT_INTEGRATION_PSQL_HOST;
 const qaUserId = "23800000-0000-0000-0000-000000000001";
 const appCommit = "2430000000000000000000000000000000000000";
+const scopedIntegrationDatabasePattern =
+  /(contract_test|issue238|issue243|issue290|issue330|issue353|issue355|issue358|issue378)/i;
+
+function assertScopedLoopbackDatabase(urlString, label) {
+  const target = new URL(urlString);
+  if (
+    !["127.0.0.1", "localhost", "::1"].includes(target.hostname) ||
+    !scopedIntegrationDatabasePattern.test(target.pathname)
+  ) {
+    throw new Error(`${label} accepts only a scoped loopback database`);
+  }
+  return target;
+}
 
 function postgresEnvironment(urlString) {
   const url = new URL(urlString);
@@ -90,13 +103,7 @@ test(
   "the exact production-shaped probe uses only the QA identity and preserves learner state",
   { skip: !baseDatabaseUrl },
   () => {
-    const localTarget = new URL(baseDatabaseUrl);
-    if (
-      !["127.0.0.1", "localhost", "::1"].includes(localTarget.hostname) ||
-      !/(contract_test|issue238|issue243|issue290|issue330|issue353|issue355|issue358|issue378)/i.test(localTarget.pathname)
-    ) {
-      throw new Error("Pre-switch probe integration accepts only a scoped loopback database");
-    }
+    assertScopedLoopbackDatabase(baseDatabaseUrl, "Pre-switch probe integration");
 
     const seed = psql(
       baseDatabaseUrl,
@@ -135,14 +142,22 @@ test(
   },
 );
 
+test("bootstrap replay rejects an unscoped application database before writes", () => {
+  assert.throws(
+    () =>
+      assertScopedLoopbackDatabase(
+        "postgresql://postgres:postgres@localhost:5432/postgres",
+        "Bootstrap replay integration",
+      ),
+    /accepts only a scoped loopback database/,
+  );
+});
+
 test(
   "replays migration 153 after the database is already populated",
   { skip: !baseDatabaseUrl, timeout: 120_000 },
   () => {
-    const target = new URL(baseDatabaseUrl);
-    if (!["127.0.0.1", "localhost", "::1"].includes(target.hostname)) {
-      throw new Error("Bootstrap replay integration accepts only a loopback PostgreSQL server");
-    }
+    assertScopedLoopbackDatabase(baseDatabaseUrl, "Bootstrap replay integration");
 
     const seed = psql(
       baseDatabaseUrl,
