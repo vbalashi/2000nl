@@ -91,6 +91,12 @@ case "\${FAKE_PSQL_MODE:-success}" in
   noop)
     printf '%s\n' 'db-contract-gate: no-op 123' 'db-contract-gate: compatible fixture-123'
     ;;
+  noisy-success)
+    for index in {1..300}; do
+      printf 'NOTICE: populated bootstrap replay line %s\n' "$index" >&2
+    done
+    printf '%s\n' 'db-contract-gate: applied 123' 'db-contract-gate: pre-switch-read-probe passed' 'db-contract-gate: compatible fixture-123'
+    ;;
   migration-failure)
     printf '%s\n' 'ERROR: db-contract-gate: migration-failed 123 postgresql://user:leaked@db.invalid/prod' >&2
     exit 7
@@ -233,6 +239,15 @@ test("inlines chained postflight and pre-switch probes for stdin clients", async
   assert.doesNotMatch(sql, /\\i db\/deploy-contract\/postflight-122\.sql/);
   assert.doesNotMatch(sql, /\\i db\/deploy-contract\/pre-switch-read-probe-122\.sql/);
   assert.doesNotMatch(sql, /BEGIN;\nSELECT 'included-postflight';\nCOMMIT;/);
+});
+
+test("keeps final contract receipts when populated replay emits many notices", async () => {
+  const { result } = await applyFixture("noisy-success");
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /pre-switch-read-probe passed/);
+  assert.match(result.stdout, /compatible fixture-123/);
+  assert.ok(result.stdout.length <= 4000);
 });
 
 test("rejects a pre-switch read probe above the rollout budget", async () => {

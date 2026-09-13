@@ -420,7 +420,15 @@ function runPsql(options, sql, url) {
       timeout: 15 * 60 * 1000,
     },
   );
-  const safeOutput = redact(`${result.stdout ?? ""}${result.stderr ?? ""}`);
+  // Keep both control receipts (stdout) and PostgreSQL diagnostics (stderr)
+  // visible inside the bounded log. A populated bootstrap can emit enough
+  // NOTICE lines on stderr to otherwise push the final success receipts out
+  // of a simple concatenated tail.
+  const safeStdout = redact(result.stdout ?? "").slice(-2000);
+  const safeStderr = redact(result.stderr ?? "").slice(-2000);
+  const safeOutput = result.status === 0
+    ? `${safeStderr}${safeStdout}`
+    : `${safeStdout}${safeStderr}`;
   if (safeOutput.trim()) process[result.status === 0 ? "stdout" : "stderr"].write(safeOutput);
   if (result.error) throw new Error(`PostgreSQL client runtime failed: ${result.error.message}`);
   if (result.signal) throw new Error(`psql stopped by ${result.signal}`);
