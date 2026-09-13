@@ -3,11 +3,12 @@ import { Pool, PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   ensureUserWithSettings,
+  getDbUrl,
   insertWord,
   runMigrations,
 } from "./dbTestUtils";
 
-const databaseUrl = process.env.FSRS_TEST_DB_URL;
+const databaseUrl = getDbUrl();
 const describeDb = databaseUrl ? describe : describe.skip;
 
 type SessionCard = {
