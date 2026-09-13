@@ -191,8 +191,7 @@ const mockV2ProgressAction = vi.fn();
 const mockV2ProgressActionCompleted = vi.fn();
 let mockV2AcceptanceGate: Promise<void> | null = null;
 let mockV2SessionState: "ready" | "loading" = "ready";
-const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
-const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
+const defaultAvailableLearningLanguages = [
   {
     code: "nl",
     label: "Nederlands",
@@ -209,7 +208,11 @@ const fetchAvailableLearningLanguages = vi.fn().mockResolvedValue([
     userListCount: 0,
     hasTrainingEligibleLists: true,
   },
-]);
+];
+const fetchAvailableLists = vi.fn().mockResolvedValue([defaultAvailableList]);
+const fetchAvailableLearningLanguages = vi
+  .fn()
+  .mockResolvedValue(defaultAvailableLearningLanguages);
 const fetchAvailableDictionarySources = vi.fn().mockResolvedValue([
   {
     id: "dict-vandale",
@@ -773,6 +776,10 @@ beforeEach(() => {
   releaseTrainingSessionOwner();
   window.localStorage.clear();
   window.sessionStorage.clear();
+  fetchAvailableLists.mockReset().mockResolvedValue([defaultAvailableList]);
+  fetchAvailableLearningLanguages
+    .mockReset()
+    .mockResolvedValue(defaultAvailableLearningLanguages);
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
   mockV2SessionState = "ready";
   mockV2AcceptanceGate = null;
