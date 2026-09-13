@@ -1324,8 +1324,10 @@ describe("TrainingSenseCardV2Session", () => {
     );
 
     await screen.findByRole("heading", { name: "bank" });
-    expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
-      "Volgende trainingskaart",
+    await waitFor(() =>
+      expect(view.container.querySelector('[aria-live="polite"]')).toHaveTextContent(
+        "Volgende trainingskaart",
+      ),
     );
     expect(screen.getByText("Volgende trainingskaart")).toBeInTheDocument();
     await waitFor(() =>

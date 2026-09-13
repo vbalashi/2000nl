@@ -422,7 +422,7 @@ test("the repository contract enables the issue 393 Training authority contract"
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     result.stdout.trim(),
-    "enabled 153 393",
+    "enabled 154 393",
   );
 });
 
