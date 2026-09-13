@@ -1,12 +1,16 @@
 import type {
+  PlatformIdiomExerciseActionResponseV2,
   PlatformActionV2Request,
+  PlatformOrdinaryActionId,
   PlatformActionV2Response,
   PlatformSenseCardStateV2,
+  PlatformTrainingExerciseStateV2,
 } from "../../../../packages/shared/types/platformV2";
 import type {
   AuthenticatedSupabase,
   ServiceSupabase,
 } from "./serverSupabase";
+import { platformV2IdiomExercisesEnabled } from "./platformV2Rollout";
 
 export type PlatformV2ActionOperationResult = {
   payload: unknown;
@@ -26,6 +30,21 @@ export async function performPlatformV2Action(
   request: PlatformActionV2Request,
   callPath: PlatformV2ActionCallPath,
 ): Promise<PlatformV2ActionOperationResult> {
+  if (request.actionId === "review-exercise") {
+    if (callPath !== "training") {
+      return {
+        payload: { error: "training_exercise_actions_training_only" },
+        status: 403,
+      };
+    }
+    if (!platformV2IdiomExercisesEnabled()) {
+      return {
+        payload: { error: "platform_v2_idiom_exercises_not_enabled" },
+        status: 503,
+      };
+    }
+    return performPlatformV2IdiomExerciseAction(auth, service, request);
+  }
   if (callPath === "training" && !request.trainingSessionId) {
     return {
       payload: { error: "missing_training_session_id" },
@@ -108,6 +127,65 @@ export async function performPlatformV2Action(
   };
 }
 
+async function performPlatformV2IdiomExerciseAction(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  request: Extract<PlatformActionV2Request, { actionId: "review-exercise" }>,
+): Promise<PlatformV2ActionOperationResult> {
+  const { data, error } = await service.supabase.rpc(
+    "perform_platform_v2_idiom_exercise_action_as_principal_v1",
+    {
+      p_user_id: auth.user.id,
+      p_target_id: request.target.targetId,
+      p_state_revision: request.target.stateRevision,
+      p_review_result: request.reviewResult,
+      p_client_event_id: request.clientEventId,
+      p_direction: request.target.direction,
+      p_training_session_id: request.trainingSessionId,
+      p_source_context: request.sourceContext ?? null,
+    },
+  );
+  if (error) return idiomExerciseActionError(error);
+
+  const result = asRecord(data);
+  const state = platformTrainingExerciseState(result.state);
+  if (
+    (result.status !== "accepted" && result.status !== "duplicate") ||
+    result.actionId !== "review-exercise" ||
+    result.clientEventId !== request.clientEventId ||
+    result.family !== "idiom" ||
+    result.targetId !== request.target.targetId ||
+    result.direction !== request.target.direction ||
+    !state ||
+    typeof result.targetKey !== "string" ||
+    !result.targetKey
+  ) {
+    return {
+      payload: { error: "invalid_platform_v2_exercise_action_response" },
+      status: 500,
+    };
+  }
+
+  const payload: PlatformIdiomExerciseActionResponseV2 = {
+    contractVersion: "platform-action-v2",
+    actionId: "review-exercise",
+    clientEventId: request.clientEventId,
+    accepted: true,
+    exercise: {
+      targetId: request.target.targetId,
+      targetKey: result.targetKey,
+      family: "idiom",
+      direction: request.target.direction,
+      state,
+    },
+  };
+  return {
+    payload,
+    status: 200,
+    receiptStatus: result.status as "accepted" | "duplicate",
+  };
+}
+
 export async function reconcilePlatformV2ActionReceipt(
   auth: AuthenticatedSupabase,
   service: ServiceSupabase,
@@ -153,9 +231,60 @@ export async function reconcilePlatformV2ActionReceipt(
   return { payload, status: 200, receiptStatus: "duplicate" };
 }
 
+export async function reconcilePlatformV2IdiomExerciseActionReceipt(
+  auth: AuthenticatedSupabase,
+  service: ServiceSupabase,
+  clientEventId: string,
+): Promise<PlatformV2ActionOperationResult> {
+  const { data, error } = await service.supabase.rpc(
+    "reconcile_platform_v2_idiom_receipt_as_principal",
+    {
+      p_user_id: auth.user.id,
+      p_client_event_id: clientEventId,
+    },
+  );
+  if (error) return idiomExerciseActionError(error);
+  if (data === null) {
+    return { payload: { error: "action_receipt_not_found" }, status: 404 };
+  }
+
+  const result = asRecord(data);
+  const state = platformTrainingExerciseState(result.state);
+  if (
+    result.status !== "duplicate" ||
+    result.actionId !== "review-exercise" ||
+    result.clientEventId !== clientEventId ||
+    result.family !== "idiom" ||
+    typeof result.targetId !== "string" ||
+    typeof result.targetKey !== "string" ||
+    (result.direction !== "direct" && result.direction !== "reverse") ||
+    !state
+  ) {
+    return {
+      payload: { error: "invalid_platform_v2_exercise_action_receipt" },
+      status: 500,
+    };
+  }
+
+  const payload: PlatformIdiomExerciseActionResponseV2 = {
+    contractVersion: "platform-action-v2",
+    actionId: "review-exercise",
+    clientEventId,
+    accepted: true,
+    exercise: {
+      targetId: result.targetId,
+      targetKey: result.targetKey,
+      family: "idiom",
+      direction: result.direction,
+      state,
+    },
+  };
+  return { payload, status: 200, receiptStatus: "duplicate" };
+}
+
 function platformActionId(
   value: unknown,
-): PlatformActionV2Request["actionId"] | null {
+): PlatformOrdinaryActionId | null {
   return value === "start-learning" ||
     value === "mark-known" ||
     value === "undo-known" ||
@@ -203,6 +332,25 @@ function actionError(error: unknown): PlatformV2ActionOperationResult {
     payload: { error: "platform_v2_action_failed" },
     status: 500,
   };
+}
+
+function idiomExerciseActionError(error: unknown): PlatformV2ActionOperationResult {
+  const message = errorMessage(error);
+  if (
+    message.includes("training_session_superseded") ||
+    message.includes("training_exercise_session_") ||
+    message.includes("training_exercise_target_unavailable") ||
+    message.includes("training_exercise_source_not_eligible")
+  ) {
+    return { payload: { error: "training_exercise_not_available" }, status: 409 };
+  }
+  if (message.includes("training_exercise_state_conflict")) {
+    return { payload: { error: "state_conflict" }, status: 409 };
+  }
+  if (message.includes("training_exercise_action_idempotency_conflict")) {
+    return { payload: { error: "idempotency_conflict" }, status: 409 };
+  }
+  return { payload: { error: "platform_v2_exercise_action_failed" }, status: 500 };
 }
 
 function platformCardState(
@@ -262,6 +410,69 @@ function platformKnownMark(
     : null;
 }
 
+function platformTrainingExerciseState(
+  value: unknown,
+): PlatformTrainingExerciseStateV2 | null {
+  const state = asRecord(value);
+  const stateRevision = asString(state.stateRevision);
+  const fsrsReps = state.fsrsReps;
+  const fsrsLapses = state.fsrsLapses;
+  const seenCount = state.seenCount;
+  const successCount = state.successCount;
+  if (
+    !stateRevision ||
+    typeof fsrsReps !== "number" ||
+    !Number.isInteger(fsrsReps) ||
+    fsrsReps < 0 ||
+    typeof fsrsLapses !== "number" ||
+    !Number.isInteger(fsrsLapses) ||
+    fsrsLapses < 0 ||
+    typeof seenCount !== "number" ||
+    !Number.isInteger(seenCount) ||
+    seenCount < 0 ||
+    typeof successCount !== "number" ||
+    !Number.isInteger(successCount) ||
+    successCount < 0 ||
+    typeof state.fsrsEnabled !== "boolean" ||
+    typeof state.hidden !== "boolean" ||
+    typeof state.inLearning !== "boolean"
+  ) {
+    return null;
+  }
+  const reviewResult = state.lastResult;
+  if (
+    reviewResult !== null &&
+    reviewResult !== "fail" &&
+    reviewResult !== "hard" &&
+    reviewResult !== "success" &&
+    reviewResult !== "easy"
+  ) {
+    return null;
+  }
+  return {
+    stateRevision,
+    fsrsStability: nullableFiniteNumber(state.fsrsStability),
+    fsrsDifficulty: nullableFiniteNumber(state.fsrsDifficulty),
+    fsrsReps,
+    fsrsLapses,
+    fsrsLastGrade: nullableFiniteNumber(state.fsrsLastGrade),
+    fsrsLastInterval: nullableFiniteNumber(state.fsrsLastInterval),
+    fsrsTargetRetention: nullableFiniteNumber(state.fsrsTargetRetention),
+    fsrsParamsVersion: nullableString(state.fsrsParamsVersion),
+    fsrsEnabled: state.fsrsEnabled,
+    nextReviewAt: nullableString(state.nextReviewAt),
+    lastSeenAt: nullableString(state.lastSeenAt),
+    lastReviewedAt: nullableString(state.lastReviewedAt),
+    seenCount,
+    successCount,
+    lastResult: reviewResult,
+    hidden: state.hidden,
+    frozenUntil: nullableString(state.frozenUntil),
+    inLearning: state.inLearning,
+    learningDueAt: nullableString(state.learningDueAt),
+  };
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -270,6 +481,22 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
+}
+
+function nullableString(value: unknown): string | null {
+  return value === null || value === undefined
+    ? null
+    : typeof value === "string" && value.trim()
+      ? value
+      : null;
+}
+
+function nullableFiniteNumber(value: unknown): number | null {
+  return value === null || value === undefined
+    ? null
+    : typeof value === "number" && Number.isFinite(value)
+      ? value
+      : null;
 }
 
 function errorMessage(value: unknown) {

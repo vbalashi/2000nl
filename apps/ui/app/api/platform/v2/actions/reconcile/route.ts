@@ -13,8 +13,14 @@ import {
   withPlatformCors,
 } from "@/lib/platform/serverSupabase";
 import { parsePlatformV2ActionReceiptRequest } from "@/lib/platform/platformV2ActionRequest";
-import { reconcilePlatformV2ActionReceipt } from "@/lib/platform/platformV2ActionService";
-import { platformV2ActionsEnabled } from "@/lib/platform/platformV2Rollout";
+import {
+  reconcilePlatformV2ActionReceipt,
+  reconcilePlatformV2IdiomExerciseActionReceipt,
+} from "@/lib/platform/platformV2ActionService";
+import {
+  platformV2ActionsEnabled,
+  platformV2IdiomExercisesEnabled,
+} from "@/lib/platform/platformV2Rollout";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +64,12 @@ export async function POST(request: NextRequest) {
       instrumentation,
     );
   }
+  if (parsed.actionFamily === "idiom" && !platformV2IdiomExercisesEnabled()) {
+    return appendPlatformRouteHeaders(
+      reply({ error: "platform_v2_idiom_exercises_not_enabled" }, 503),
+      instrumentation,
+    );
+  }
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) {
     return appendPlatformRouteHeaders(
@@ -69,7 +81,14 @@ export async function POST(request: NextRequest) {
   const result = await measureRouteTiming(
     instrumentation,
     "route.operation",
-    () => reconcilePlatformV2ActionReceipt(auth, service, parsed.clientEventId),
+    () =>
+      parsed.actionFamily === "idiom"
+        ? reconcilePlatformV2IdiomExerciseActionReceipt(
+            auth,
+            service,
+            parsed.clientEventId,
+          )
+        : reconcilePlatformV2ActionReceipt(auth, service, parsed.clientEventId),
   );
   const response = reply(result.payload, result.status);
   const outcome = result.status === 200

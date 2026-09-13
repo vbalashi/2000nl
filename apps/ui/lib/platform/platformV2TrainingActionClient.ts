@@ -8,7 +8,7 @@ import {
   recordTrainingTransitionTiming,
 } from "../training/trainingTransitionTiming";
 import type {
-  PlatformActionV2Request,
+  PlatformOrdinaryActionRequest,
   PlatformActionV2Response,
   PlatformSenseCardCapabilityV2,
 } from "../../../../packages/shared/types/platformV2";
@@ -46,7 +46,7 @@ export function buildPlatformV2TrainingActionRequest(
   capability: PlatformV2TrainingActionCapability,
   clientEventId: string,
   trainingSessionId?: string,
-): PlatformActionV2Request {
+): PlatformOrdinaryActionRequest {
   const session = trainingSessionId ? { trainingSessionId } : {};
   if (capability.actionId === "review-card") {
     return {
@@ -78,7 +78,7 @@ export async function performPlatformV2TrainingAction(
   context: {
     transitionId?: string;
     trainingSessionId?: string;
-    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+    onRequestFrozen?: (request: PlatformOrdinaryActionRequest) => void;
   } = {},
 ): Promise<PlatformActionV2Response> {
   return performPlatformV2Action(
@@ -92,7 +92,7 @@ export async function performPlatformV2LibraryAction(
   capability: PlatformV2TrainingActionCapability,
   context: {
     transitionId?: string;
-    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+    onRequestFrozen?: (request: PlatformOrdinaryActionRequest) => void;
   } = {},
 ): Promise<PlatformActionV2Response> {
   return performPlatformV2Action(
@@ -110,7 +110,7 @@ async function performPlatformV2Action(
   context: {
     transitionId?: string;
     trainingSessionId?: string;
-    onRequestFrozen?: (request: PlatformActionV2Request) => void;
+    onRequestFrozen?: (request: PlatformOrdinaryActionRequest) => void;
   },
 ): Promise<PlatformActionV2Response> {
   const request = buildPlatformV2TrainingActionRequest(
@@ -158,7 +158,7 @@ function submitPlatformV2TrainingAction(
   actionEndpoint:
     | "/api/platform/v2/actions"
     | "/api/platform/v2/actions/library",
-  request: PlatformActionV2Request,
+  request: PlatformOrdinaryActionRequest,
   headers: HeadersInit,
   transitionId?: string,
 ) {

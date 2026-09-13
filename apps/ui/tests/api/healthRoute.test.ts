@@ -158,6 +158,7 @@ describe("/api/health", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_ROLLOUT_PROFILE", "pilot");
     vi.stubEnv("PLATFORM_V2_LOOKUP_ENABLED", "true");
     vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "true");
+    vi.stubEnv("PLATFORM_V2_IDIOM_EXERCISES_ENABLED", "true");
     vi.stubEnv("NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI", "true");
     vi.stubEnv("NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1", "true");
 
@@ -171,6 +172,7 @@ describe("/api/health", () => {
       flags: {
         platformV2Lookup: true,
         platformV2Actions: true,
+        platformV2IdiomExercises: true,
         platformV2TrainingUi: true,
         trainingTodaySetupV1: true,
       },

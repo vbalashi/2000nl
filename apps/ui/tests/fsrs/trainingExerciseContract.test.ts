@@ -8,6 +8,7 @@ import {
   runMigrations,
   withTransaction,
 } from "./dbTestUtils";
+import type { PlatformIdiomExerciseSessionV2 } from "../../../../packages/shared/types/platformV2";
 
 const dbUrl = getDbUrl();
 const describeIfDb = dbUrl ? describe : describe.skip;
@@ -28,10 +29,10 @@ async function createIdiomFixture(
 
   await client.query(
     `insert into private.platform_v2_content_nodes (
-       id, entry_id, kind, binding_state, first_source_revision,
+       id, entry_id, parent_content_node_id, kind, binding_state, first_source_revision,
        last_source_revision, source_text_fingerprint, diagnostic_locator
-     ) values ($1, $2, 'idiom', 'active', 'test-revision', 'test-revision', $3, $4),
-              ($5, $2, 'idiom-explanation', 'active', 'test-revision',
+     ) values ($1, $2, null, 'idiom', 'active', 'test-revision', 'test-revision', $3, $4),
+              ($5, $2, $1, 'idiom-explanation', 'active', 'test-revision',
                'test-revision', $6, $7)`,
     [
       idiomNodeId,
@@ -83,28 +84,137 @@ async function performIdiomAction(
   options: {
     result?: "fail" | "hard" | "success" | "easy";
     stateRevision?: string;
+    direction?: "direct" | "reverse";
     sessionId?: string | null;
     sourceContext?: Record<string, unknown> | null;
   } = {},
 ) {
   await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
   await client.query("set local role service_role");
-  const { rows } = await client.query(
-    `select public.perform_platform_v2_idiom_exercise_action_as_principal_v1(
-       $1, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7::jsonb
-     ) result`,
-    [
-      userId,
-      targetId,
-      options.stateRevision ?? "untracked",
-      options.result ?? "success",
-      clientEventId,
-      options.sessionId ?? null,
-      options.sourceContext ?? null,
-    ],
-  );
-  await client.query("reset role");
-  return rows[0].result as Record<string, unknown>;
+  try {
+    const { rows } = await client.query(
+      `select public.perform_platform_v2_idiom_exercise_action_as_principal_v1(
+         $1, $2::uuid, $3, $4, $5::uuid, $6, $7::uuid, $8::jsonb
+       ) result`,
+      [
+        userId,
+        targetId,
+        options.stateRevision ?? "untracked",
+        options.result ?? "success",
+        clientEventId,
+        options.direction ?? "direct",
+        options.sessionId ?? null,
+        options.sourceContext ?? null,
+      ],
+    );
+    return rows[0].result as Record<string, unknown>;
+  } finally {
+    await client.query("reset role").catch(() => undefined);
+  }
+}
+
+async function asAuthenticated<T>(client: PoolClient, fn: () => Promise<T>) {
+  await client.query("select set_config('request.jwt.claim.role', 'authenticated', true)");
+  await client.query("set local role authenticated");
+  try {
+    return await fn();
+  } finally {
+    await client.query("reset role").catch(() => undefined);
+  }
+}
+
+async function asServiceRole<T>(client: PoolClient, fn: () => Promise<T>) {
+  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+  await client.query("set local role service_role");
+  try {
+    return await fn();
+  } finally {
+    await client.query("reset role").catch(() => undefined);
+  }
+}
+
+async function startIdiomSession(
+  client: PoolClient,
+  userId: string,
+  direction: "direct" | "reverse",
+  sessionSize: number,
+  requestId: string,
+): Promise<PlatformIdiomExerciseSessionV2> {
+  return asAuthenticated(client, async () => {
+    const { rows } = await client.query(
+      `select public.start_platform_v2_idiom_training_session(
+         $1, $2, $3, $4::uuid
+       ) result`,
+      [userId, direction, String(sessionSize), requestId],
+    );
+    return rows[0].result as PlatformIdiomExerciseSessionV2;
+  });
+}
+
+async function readIdiomCandidates(
+  client: PoolClient,
+  userId: string,
+  direction: "direct" | "reverse",
+) {
+  return asServiceRole(client, async () => {
+    const { rows } = await client.query(
+      `select public.read_platform_v2_idiom_exercise_candidates_as_principal_v1(
+         $1, $2, 20, 0
+       ) result`,
+      [userId, direction],
+    );
+    return rows[0].result as Record<string, unknown>;
+  });
+}
+
+async function readIdiomSessionNext(
+  client: PoolClient,
+  userId: string,
+  sessionId: string,
+) {
+  return asAuthenticated(client, async () => {
+    const { rows } = await client.query(
+      `select public.read_platform_v2_idiom_training_session_next(
+         $1, $2::uuid
+       ) result`,
+      [userId, sessionId],
+    );
+    return rows[0].result as Record<string, unknown>;
+  });
+}
+
+async function readIdiomSessionSnapshot(
+  client: PoolClient,
+  userId: string,
+  sessionId: string,
+) {
+  return asAuthenticated(client, async () => {
+    const { rows } = await client.query(
+      `select public.read_platform_v2_idiom_training_session_snapshot(
+         $1, $2::uuid
+       ) result`,
+      [userId, sessionId],
+    );
+    return rows[0].result as Record<string, unknown>;
+  });
+}
+
+async function markIdiomSessionMemberUnavailable(
+  client: PoolClient,
+  userId: string,
+  sessionId: string,
+  targetId: string,
+  reason: string,
+) {
+  return asAuthenticated(client, async () => {
+    const { rows } = await client.query(
+      `select public.mark_platform_v2_idiom_training_session_member_unavailable(
+         $1, $2::uuid, $3::uuid, $4
+       ) result`,
+      [userId, sessionId, targetId, reason],
+    );
+    return rows[0].result as Record<string, unknown>;
+  });
 }
 
 async function readExerciseTarget(
@@ -482,13 +592,26 @@ describeIfDb("content-bound training exercise database contract", () => {
         await client.query("set local role service_role");
         const { rows } = await client.query(
           `select public.perform_platform_v2_idiom_exercise_action_as_principal_v1(
-             $1, $2::uuid, $3, $4, $5::uuid, null, null
+             $1, $2::uuid, $3, $4, $5::uuid, $6, null, null
            ) result`,
-          [userId, target.targetId, stateRevision, result, clientEventId],
+          [userId, target.targetId, stateRevision, result, clientEventId, target.direction],
         );
         await client.query("reset role");
         return rows[0].result as Record<string, unknown>;
       };
+
+      await client.query("savepoint direction_mismatch");
+      await expect(
+        performIdiomAction(
+          client,
+          userId,
+          directTarget.targetId as string,
+          randomUUID(),
+          { direction: "reverse" },
+        ),
+      ).rejects.toThrow("training_exercise_target_direction_mismatch");
+      await client.query("rollback to savepoint direction_mismatch");
+      await client.query("release savepoint direction_mismatch");
 
       const directActionId = randomUUID();
       const directAccepted = await action(
@@ -742,9 +865,9 @@ describeIfDb("content-bound training exercise database contract", () => {
 
       await client.query(
         `insert into public.training_sessions (
-           id, user_id, session_size, card_type_ids, list_type,
+           id, user_id, exercise_family, session_size, card_type_ids, list_type,
            card_filter, training_filter, requested_total
-         ) values ($1, $2, '2', ARRAY['idiom']::text[], 'curated',
+         ) values ($1, $2, 'idiom', '2', ARRAY['idiom:direct']::text[], 'curated',
                    'both', '{}'::jsonb, 2)`,
         [firstSessionId, userId],
       );
@@ -815,9 +938,9 @@ describeIfDb("content-bound training exercise database contract", () => {
 
       await client.query(
         `insert into public.training_sessions (
-           id, user_id, session_size, card_type_ids, list_type,
+           id, user_id, exercise_family, session_size, card_type_ids, list_type,
            card_filter, training_filter, requested_total
-         ) values ($1, $2, '2', ARRAY['idiom']::text[], 'curated',
+         ) values ($1, $2, 'idiom', '2', ARRAY['idiom:direct']::text[], 'curated',
                    'both', '{}'::jsonb, 2)`,
         [secondSessionId, userId],
       );
@@ -846,5 +969,193 @@ describeIfDb("content-bound training exercise database contract", () => {
       );
       expect(rejectedRows[0]).toEqual({ events: 2, states: 2, consumed: 2 });
     });
+  });
+
+  test("starts an ordered idiom session, retries it idempotently, and supersedes it", async () => {
+    const userId = randomUUID();
+    await withTransaction(
+      pool,
+      async (client) => {
+        await createIdiomFixture(client, userId);
+        await createIdiomFixture(client, userId);
+        const requestId = randomUUID();
+
+        const candidateResult = await readIdiomCandidates(client, userId, "direct");
+        const candidateItems = candidateResult.items as Array<{ targetId: string }>;
+        expect(candidateItems).toHaveLength(2);
+
+        const started = await startIdiomSession(
+          client,
+          userId,
+          "direct",
+          2,
+          requestId,
+        );
+        expect(started).toMatchObject({
+          contractVersion: "platform-idiom-exercise-session-v2",
+          exerciseFamily: "idiom",
+          direction: "direct",
+          requestedTotal: 2,
+          plannedTotal: 2,
+          runStatus: "active",
+        });
+        expect(started.members).toHaveLength(2);
+        expect(started.members.map((member) => member.targetId)).toEqual(
+          candidateItems.map((candidate) => candidate.targetId),
+        );
+
+        const [firstMember, secondMember] = started.members;
+
+        const replay = await startIdiomSession(
+          client,
+          userId,
+          "direct",
+          2,
+          requestId,
+        );
+        expect(replay.sessionId).toBe(started.sessionId);
+        expect(replay.members).toEqual(started.members);
+
+        const firstNext = await readIdiomSessionNext(
+          client,
+          userId,
+          started.sessionId as string,
+        );
+        expect(firstNext).toMatchObject({
+          status: "ready",
+          targetId: firstMember.targetId,
+          direction: "direct",
+          ordinal: 1,
+        });
+        await performIdiomAction(
+          client,
+          userId,
+          firstMember.targetId,
+          randomUUID(),
+          { sessionId: started.sessionId as string },
+        );
+
+        const secondNext = await readIdiomSessionNext(
+          client,
+          userId,
+          started.sessionId as string,
+        );
+        expect(secondNext).toMatchObject({
+          status: "ready",
+          targetId: secondMember.targetId,
+          ordinal: 2,
+        });
+        await performIdiomAction(
+          client,
+          userId,
+          secondMember.targetId,
+          randomUUID(),
+          { sessionId: started.sessionId as string },
+        );
+
+        expect(
+          await readIdiomSessionNext(
+            client,
+            userId,
+            started.sessionId as string,
+          ),
+        ).toMatchObject({ status: "completed", completedActions: 2 });
+        expect(
+          await readIdiomSessionSnapshot(
+            client,
+            userId,
+            started.sessionId as string,
+          ),
+        ).toMatchObject({ completedActions: 2, completionReason: "completed" });
+
+        const replacement = await startIdiomSession(
+          client,
+          userId,
+          "reverse",
+          1,
+          randomUUID(),
+        );
+        expect(replacement).toMatchObject({
+          direction: "reverse",
+          runStatus: "active",
+        });
+        expect(
+          await readIdiomSessionNext(
+            client,
+            userId,
+            started.sessionId as string,
+          ),
+        ).toMatchObject({ status: "superseded" });
+      },
+      userId,
+    );
+  });
+
+  test("returns an explicit unavailable diagnostic before skipping a missing projection", async () => {
+    const userId = randomUUID();
+    await withTransaction(
+      pool,
+      async (client) => {
+        await createIdiomFixture(client, userId);
+        await createIdiomFixture(client, userId);
+        const started = await startIdiomSession(
+          client,
+          userId,
+          "direct",
+          2,
+          randomUUID(),
+        );
+        const firstMember = started.members[0] as Record<string, unknown>;
+        const secondMember = started.members[1] as Record<string, unknown>;
+        const { rows: targetRows } = await client.query(
+          `select content_node_id
+             from private.platform_v2_training_exercise_targets
+            where id = $1::uuid`,
+          [firstMember.targetId],
+        );
+
+        await client.query(
+          `update private.platform_v2_content_nodes
+              set binding_state = 'retired'
+            where id = $1`,
+          [targetRows[0].content_node_id],
+        );
+
+        const unavailable = await readIdiomSessionNext(
+          client,
+          userId,
+          started.sessionId as string,
+        );
+        expect(unavailable).toMatchObject({
+          status: "unavailable",
+          targetId: firstMember.targetId,
+          reason: "projection-missing",
+          remaining: 2,
+        });
+
+        expect(
+          await markIdiomSessionMemberUnavailable(
+            client,
+            userId,
+            started.sessionId as string,
+            firstMember.targetId as string,
+            "projection-missing",
+          ),
+        ).toMatchObject({ status: "unavailable", remaining: 1 });
+
+        expect(
+          await readIdiomSessionNext(
+            client,
+            userId,
+            started.sessionId as string,
+          ),
+        ).toMatchObject({
+          status: "ready",
+          targetId: secondMember.targetId,
+          ordinal: 2,
+        });
+      },
+      userId,
+    );
   });
 });

@@ -8,7 +8,7 @@ import {
   type FeedbackProblemType,
 } from "../../../../packages/shared/diagnostic-report/v1";
 import type {
-  PlatformActionV2Request,
+  PlatformOrdinaryActionRequest,
   PlatformContentNodeV2,
   PlatformHeadwordGroupV2,
   PlatformSenseCardEntryV2,
@@ -22,7 +22,7 @@ const RETRY_CAP_MS = 60 * 60 * 1000;
 const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 export type SenseCardTrainingOperation = Readonly<{
-  request: PlatformActionV2Request;
+  request: PlatformOrdinaryActionRequest;
   observedOutcome:
     | "accepted"
     | "duplicate"
@@ -141,7 +141,7 @@ export async function buildSenseCardDiagnosticReport(input: {
 }
 
 function trainingActionTarget(
-  request: PlatformActionV2Request,
+  request: PlatformOrdinaryActionRequest,
   contentRevision: string,
 ) {
   return {

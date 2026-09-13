@@ -949,6 +949,21 @@ describeIfDb("Platform V2 presentation identity read boundary", () => {
       await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [
         ownerId,
       ]);
+      const catalogHeadword = `platform-v2-catalog-index-${randomUUID()}`;
+      const { rows: catalogRows } = await client.query(
+        `insert into word_entries (
+           dictionary_id, language_code, headword, meaning_id, part_of_speech, raw
+         ) values (
+           (select id from dictionaries where slug = 'nl-vandale' limit 1),
+           'nl', $1, 1, 'noun', jsonb_build_object('definition', 'catalog fixture')
+         )
+         returning id`,
+        [catalogHeadword],
+      );
+      await client.query(
+        `select refresh_dictionary_search_document($1, 2)`,
+        [catalogRows[0].id],
+      );
       const headword = `platform-v2-public-user-${randomUUID()}`;
       const { rows: createRows } = await client.query(
         `select create_user_dictionary_entry(

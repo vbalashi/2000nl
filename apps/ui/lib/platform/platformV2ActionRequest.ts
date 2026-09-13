@@ -15,7 +15,8 @@ export function parsePlatformV2ActionRequest(
     actionId !== "start-learning" &&
     actionId !== "mark-known" &&
     actionId !== "undo-known" &&
-    actionId !== "review-card"
+    actionId !== "review-card" &&
+    actionId !== "review-exercise"
   ) {
     return { ok: false, error: "unsupported_action", status: 400 };
   }
@@ -30,6 +31,14 @@ export function parsePlatformV2ActionRequest(
       : asUuid(body.trainingSessionId);
   if (body.trainingSessionId !== undefined && !trainingSessionId) {
     return { ok: false, error: "invalid_training_session_id", status: 400 };
+  }
+
+  if (actionId === "review-exercise") {
+    return parsePlatformV2IdiomExerciseActionRequest(
+      auth,
+      body,
+      trainingSessionId ?? undefined,
+    );
   }
 
   const target = asRecord(body.target);
@@ -176,12 +185,116 @@ export function parsePlatformV2ActionRequest(
   };
 }
 
-export function parsePlatformV2ActionReceiptRequest(value: unknown):
-  | { ok: true; clientEventId: string }
+function parsePlatformV2IdiomExerciseActionRequest(
+  auth: AuthenticatedSupabase,
+  body: Record<string, unknown>,
+  trainingSessionId: string | undefined,
+):
+  | { ok: true; request: PlatformActionV2Request }
   | { ok: false; error: string; status: number } {
-  const clientEventId = asUuid(asRecord(value).clientEventId);
+  if (!trainingSessionId) {
+    return { ok: false, error: "missing_training_session_id", status: 400 };
+  }
+
+  const clientEventId = asUuid(body.clientEventId);
+  if (!clientEventId) {
+    return { ok: false, error: "invalid_client_event_id", status: 400 };
+  }
+  const target = asRecord(body.target);
+  if (target.kind !== "training-exercise") {
+    return { ok: false, error: "invalid_action_target", status: 400 };
+  }
+  const targetId = asUuid(target.targetId);
+  const stateRevision = asString(target.stateRevision);
+  if (!targetId) {
+    return { ok: false, error: "invalid_training_exercise_target_id", status: 400 };
+  }
+  if (target.family !== "idiom") {
+    return { ok: false, error: "unsupported_training_exercise_family", status: 400 };
+  }
+  if (target.direction !== "direct" && target.direction !== "reverse") {
+    return { ok: false, error: "invalid_training_exercise_direction", status: 400 };
+  }
+  if (
+    !stateRevision ||
+    (stateRevision !== "untracked" && !asUuid(stateRevision))
+  ) {
+    return { ok: false, error: "invalid_state_revision", status: 400 };
+  }
+  const reviewResult = asString(body.reviewResult);
+  if (
+    reviewResult !== "fail" &&
+    reviewResult !== "hard" &&
+    reviewResult !== "success" &&
+    reviewResult !== "easy"
+  ) {
+    return { ok: false, error: "invalid_review_result", status: 400 };
+  }
+  const parsedSourceContext = parseSourceContext(
+    body.sourceContext,
+    auth.user.id,
+  );
+  if (!parsedSourceContext.ok) return parsedSourceContext;
+  if (parsedSourceContext.version === "v1") {
+    return {
+      ok: false,
+      error: "invalid_source_context_version",
+      status: 400,
+    };
+  }
+  if (auth.principal.authKind === "connected_client") {
+    const rawClientId = asString(
+      asRecord(asRecord(body.sourceContext).client).id,
+    );
+    if (rawClientId && rawClientId !== auth.principal.connectedClientId) {
+      return { ok: false, error: "client_identity_mismatch", status: 403 };
+    }
+  }
+  if (body.target && typeof body.target === "object") {
+    const targetRecord = asRecord(body.target);
+    if (targetRecord.targetKey !== undefined) {
+      return {
+        ok: false,
+        error: "unexpected_training_exercise_target_key",
+        status: 400,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    request: {
+      actionId: "review-exercise",
+      clientEventId,
+      trainingSessionId,
+      target: {
+        kind: "training-exercise",
+        targetId,
+        family: "idiom",
+        direction: target.direction,
+        stateRevision,
+      },
+      reviewResult,
+      ...(parsedSourceContext.value
+        ? {
+            sourceContext: parsedSourceContext.value as PlatformActionV2Request["sourceContext"],
+          }
+        : {}),
+    },
+  };
+}
+
+export function parsePlatformV2ActionReceiptRequest(value: unknown):
+  | { ok: true; clientEventId: string; actionFamily?: "idiom" }
+  | { ok: false; error: string; status: number } {
+  const body = asRecord(value);
+  const clientEventId = asUuid(body.clientEventId);
+  const actionFamily = body.actionFamily;
+  if (actionFamily !== undefined && actionFamily !== "idiom") {
+    return { ok: false, error: "unsupported_action_family", status: 400 };
+  }
   return clientEventId
-    ? { ok: true, clientEventId }
+    ? { ok: true, clientEventId, ...(actionFamily ? { actionFamily } : {}) }
     : { ok: false, error: "invalid_client_event_id", status: 400 };
 }
 

@@ -46,6 +46,7 @@ describe("/api/platform/v2/actions", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_V2_ACTIONS_ENABLED = "1";
+    process.env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED = "1";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
     getUser.mockReset();
     rpc.mockReset();
@@ -269,6 +270,114 @@ describe("/api/platform/v2/actions", () => {
         }),
       }),
     );
+  });
+
+  test("routes idiom exercise reviews to the content-bound exercise RPC", async () => {
+    rpc.mockResolvedValueOnce({
+      data: {
+        status: "accepted",
+        actionId: "review-exercise",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        family: "idiom",
+        targetId: "00000000-0000-4000-8000-000000000010",
+        targetKey: "idiom:entry-1:node-1:direct",
+        direction: "direct",
+        state: {
+          stateRevision: "00000000-0000-4000-8000-000000000011",
+          fsrsStability: 2,
+          fsrsDifficulty: 5,
+          fsrsReps: 1,
+          fsrsLapses: 0,
+          fsrsLastGrade: 3,
+          fsrsLastInterval: 1,
+          fsrsTargetRetention: 0.9,
+          fsrsParamsVersion: "fsrs-v1",
+          fsrsEnabled: true,
+          nextReviewAt: "2026-09-14T08:00:00.000Z",
+          lastSeenAt: "2026-09-13T08:00:00.000Z",
+          lastReviewedAt: "2026-09-13T08:00:00.000Z",
+          seenCount: 1,
+          successCount: 1,
+          lastResult: "success",
+          hidden: false,
+          frozenUntil: null,
+          inLearning: false,
+          learningDueAt: null,
+        },
+      },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "review-exercise",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        trainingSessionId: "00000000-0000-4000-8000-000000000012",
+        target: {
+          kind: "training-exercise",
+          targetId: "00000000-0000-4000-8000-000000000010",
+          family: "idiom",
+          direction: "direct",
+          stateRevision: "untracked",
+        },
+        reviewResult: "success",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith(
+      "perform_platform_v2_idiom_exercise_action_as_principal_v1",
+      {
+        p_user_id: "00000000-0000-4000-8000-000000000001",
+        p_target_id: "00000000-0000-4000-8000-000000000010",
+        p_state_revision: "untracked",
+        p_review_result: "success",
+        p_client_event_id: "00000000-0000-4000-8000-000000000002",
+        p_direction: "direct",
+        p_training_session_id: "00000000-0000-4000-8000-000000000012",
+        p_source_context: null,
+      },
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        contractVersion: "platform-action-v2",
+        actionId: "review-exercise",
+        accepted: true,
+        exercise: expect.objectContaining({
+          targetId: "00000000-0000-4000-8000-000000000010",
+          family: "idiom",
+          direction: "direct",
+        }),
+      }),
+    );
+  });
+
+  test("keeps idiom exercise actions dark with their own rollout flag", async () => {
+    delete process.env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED;
+    const { POST } = await import("@/app/api/platform/v2/actions/route");
+
+    const response = await POST(
+      request({
+        actionId: "review-exercise",
+        clientEventId: "00000000-0000-4000-8000-000000000002",
+        trainingSessionId,
+        target: {
+          kind: "training-exercise",
+          targetId: "00000000-0000-4000-8000-000000000010",
+          family: "idiom",
+          direction: "direct",
+          stateRevision: "untracked",
+        },
+        reviewResult: "success",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "platform_v2_idiom_exercises_not_enabled",
+    });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   test("rejects a stale Undo as a typed conflict", async () => {

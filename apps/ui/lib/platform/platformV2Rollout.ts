@@ -8,6 +8,13 @@ export function platformV2ActionsEnabled() {
   return value === "1" || value === "true";
 }
 
+export function platformV2IdiomExercisesEnabled() {
+  const value = process.env.PLATFORM_V2_IDIOM_EXERCISES_ENABLED
+    ?.trim()
+    .toLowerCase();
+  return value === "1" || value === "true";
+}
+
 export function platformV2TrainingUiEnabled() {
   const value = process.env.NEXT_PUBLIC_PLATFORM_V2_TRAINING_UI
     ?.trim()
@@ -25,6 +32,7 @@ export function rolloutProfileDiagnostics() {
   const flags = {
     platformV2Lookup: platformV2LookupEnabled(),
     platformV2Actions: platformV2ActionsEnabled(),
+    platformV2IdiomExercises: platformV2IdiomExercisesEnabled(),
     platformV2TrainingUi: platformV2TrainingUiEnabled(),
     trainingTodaySetupV1: envFlagEnabled(
       process.env.NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1,
