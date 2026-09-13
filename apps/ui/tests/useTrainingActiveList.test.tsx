@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useTrainingActiveList } from "@/lib/training/useTrainingActiveList";
 import type { WordListSummary } from "@/lib/types";
@@ -115,6 +115,29 @@ describe("useTrainingActiveList", () => {
         outcome: "ready",
       }),
     );
+  });
+
+  test("preserves the last successful catalog when a refresh fails", async () => {
+    fetchAvailableLists.mockResolvedValue([userList]);
+
+    const { result } = renderHook(() =>
+      useTrainingActiveList({
+        userId: "user-1",
+        language: "nl",
+        showSettings: false,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.listCatalogStatus).toBe("ready"));
+    expect(result.current.availableLists).toEqual([userList]);
+
+    fetchAvailableLists.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => {
+      await result.current.refreshAvailableLists();
+    });
+
+    expect(result.current.availableLists).toEqual([userList]);
+    expect(result.current.listCatalogStatus).toBe("error");
   });
 
   test("restores the saved active list when switching nl -> en -> nl", async () => {

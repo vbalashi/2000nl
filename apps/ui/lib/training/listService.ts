@@ -141,7 +141,7 @@ export async function fetchCuratedLists(
       "Error resolving user before fetching curated lists",
       userError ?? { message: "not_authenticated" },
     );
-    return [];
+    throw userError ?? new Error("not_authenticated");
   }
 
   const { data, error } = await supabase.rpc("get_available_word_lists", {
@@ -152,7 +152,7 @@ export async function fetchCuratedLists(
 
   if (error || !Array.isArray(data)) {
     if (error) console.error("Error fetching curated lists", error);
-    return [];
+    throw error ?? new Error("curated_lists_unavailable");
   }
 
   return data.map(mapCuratedListSummary);
@@ -167,7 +167,9 @@ export async function fetchUserLists(
     p_language_code: languageCode ?? null,
     p_list_type: "user",
   });
-  if (error || !Array.isArray(data)) return [];
+  if (error || !Array.isArray(data)) {
+    throw error ?? new Error("user_lists_unavailable");
+  }
   return data.map(mapUserListSummary);
 }
 
@@ -180,7 +182,7 @@ export async function fetchAvailableLearningLanguages(
 
   if (error || !Array.isArray(data)) {
     if (error) console.error("Error fetching available learning languages", error);
-    return [];
+    throw error ?? new Error("learning_languages_unavailable");
   }
 
   return data.map(mapAvailableLearningLanguage);
