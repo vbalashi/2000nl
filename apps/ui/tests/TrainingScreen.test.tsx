@@ -471,14 +471,17 @@ const fetchTrainingSessionPlan = vi.fn().mockResolvedValue({
   plannedTotal: 2,
   plannedAt: "2026-08-21T12:00:00.000Z",
 });
-const startTrainingSession = vi.fn().mockResolvedValue({
+const defaultStartedTrainingSession = {
   sessionId: "00000000-0000-4000-8000-000000000901",
   plannedNew: 1,
   plannedReview: 1,
   plannedPractice: 0,
   plannedTotal: 2,
   plannedAt: "2026-08-21T12:00:00.000Z",
-});
+};
+const startTrainingSession = vi
+  .fn()
+  .mockResolvedValue(defaultStartedTrainingSession);
 const fetchRecentTrainingHistory = vi.fn().mockResolvedValue({
   items: [],
   hasMore: false,
@@ -776,6 +779,10 @@ beforeEach(() => {
   releaseTrainingSessionOwner();
   window.localStorage.clear();
   window.sessionStorage.clear();
+  fetchTrainingSessionSnapshot.mockReset().mockResolvedValue(null);
+  startTrainingSession
+    .mockReset()
+    .mockResolvedValue(defaultStartedTrainingSession);
   fetchAvailableLists.mockReset().mockResolvedValue([defaultAvailableList]);
   fetchAvailableLearningLanguages
     .mockReset()

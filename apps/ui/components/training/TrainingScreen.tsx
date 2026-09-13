@@ -1315,7 +1315,7 @@ function TrainingScreenContent({
       if (recovery === "skipped") await loadNextWord();
     },
   });
-  const { resumeSession } = trainingPilot;
+  const { continueSession, resumeSession, returnToToday } = trainingPilot;
 
   useEffect(() => {
     if (
@@ -1619,13 +1619,13 @@ function TrainingScreenContent({
       setSessionAuthorityChecking(false);
       resetPlatformProgressActionPending();
       setSessionReplacementWarning(true);
-      trainingPilot.returnToToday();
+      returnToToday();
     },
     [
       resetFocusQueueState,
       resetPlatformProgressActionPending,
       replaceTrainingSessionId,
-      trainingPilot,
+      returnToToday,
       user?.id,
     ],
   );
@@ -1676,7 +1676,7 @@ function TrainingScreenContent({
     user?.id,
   ]);
   const handleContinueTrainingSession = useCallback(() => {
-    const continueSession = () => {
+    const continueCurrentSession = () => {
       resetFocusQueueState();
       setPresentationResetKey((key) => key + 1);
       if (currentWord) {
@@ -1685,22 +1685,22 @@ function TrainingScreenContent({
         registerTrainingEntryTransition(currentWord.id, transitionId);
         markTrainingEntryPresentationStarted(currentWord.id);
       }
-      trainingPilot.continueSession();
+      continueSession();
     };
     const sessionId = trainingSessionIdRef.current;
     if (!sessionId || !user?.id) {
-      continueSession();
+      continueCurrentSession();
       return;
     }
     void validateTrainingSessionAuthority().then((authorized) => {
       if (authorized && trainingSessionIdRef.current === sessionId) {
-        continueSession();
+        continueCurrentSession();
       }
     });
   }, [
     currentWord,
     resetFocusQueueState,
-    trainingPilot,
+    continueSession,
     user?.id,
     validateTrainingSessionAuthority,
   ]);
@@ -1765,8 +1765,8 @@ function TrainingScreenContent({
   }, [returnedToTraining, trainingSessionId, validateTrainingSessionAuthority]);
   const exitUnsupportedTrainingMode = useCallback(() => {
     setCurrentWord(null);
-    trainingPilot.returnToToday();
-  }, [trainingPilot]);
+    returnToToday();
+  }, [returnToToday]);
   const trainingSessionPlanScope = React.useMemo(
     () => ({
       listId: wordListId,
