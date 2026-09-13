@@ -140,9 +140,16 @@ supported. Do not implement the cutoff as mutable operator SQL or edit migration
 153 after deployment; advance the contract, checksum, postflight and rollback
 runbook together.
 
-An enabled deployment must apply or verify migrations 123 through 153 in order
+An enabled deployment must apply or verify migrations 123 through 154 in order
 before it advertises compatibility. The runner rejects an enabled manifest
 whose last migration is below the required migration.
+
+Migration 154 is additive exercise-boundary hardening on top of migration 153.
+It canonicalizes retry identity, checks the receipt before mutable target and
+session validation, consumes a latched exercise member atomically, and fails
+closed after source or dictionary access is lost. It does not change ordinary
+word progress, FSRS history, or the phase-1 compatibility policy owned by
+issues #393 and #399.
 
 ## What the gate guarantees
 
@@ -235,8 +242,9 @@ App rollback and DB recovery are deliberately separate:
   cached browser bundles that may outlive an app switch. Removing a public RPC
   shape needs an explicit staged-client deprecation plan, not merely a
   repository caller audit.
-- The migration's owning issue owns DB recovery. Issue #393 owns migration 153
-  phase 1 and #399 owns its strict phase-2 cutoff. Issue #243 owns migration 128;
+- The migration's owning issue owns DB recovery. Issue #394 owns migration 154
+  exercise hardening; issue #393 owns migration 153 phase 1 and #399 owns its
+  strict phase-2 cutoff. Issue #243 owns migration 128;
   issue #238 owns migration 127. Issue #232 retains ownership of migration 126;
   #233 owns gate/ledger/probe machinery.
 - Any explicit DB rollback must be reviewed as a complete contract transition:

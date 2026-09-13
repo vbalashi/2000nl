@@ -775,12 +775,12 @@ describeDb("authoritative training session plan RPC", () => {
         new_review_ratio: 5,
       });
       const newEntryIds = await Promise.all(
-        Array.from({ length: 2 }, (_, index) =>
+        Array.from({ length: 20 }, (_, index) =>
           insertWord(client, `session-ratio-new-${userId}-${index}`),
         ),
       );
       const reviewEntryIds = await Promise.all(
-        Array.from({ length: 8 }, (_, index) =>
+        Array.from({ length: 20 }, (_, index) =>
           insertWord(client, `session-ratio-review-${userId}-${index}`),
         ),
       );
@@ -833,7 +833,7 @@ describeDb("authoritative training session plan RPC", () => {
         'review',
         'review',
       ]);
-      expect(new Set(newEntryIds)).toHaveLength(2);
+      expect(new Set(newEntryIds)).toHaveLength(20);
     }, userId);
   });
 

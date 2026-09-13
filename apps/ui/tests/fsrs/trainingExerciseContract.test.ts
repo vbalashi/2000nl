@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import {
   ensureUserWithSettings,
   getDbUrl,
@@ -11,6 +11,119 @@ import {
 
 const dbUrl = getDbUrl();
 const describeIfDb = dbUrl ? describe : describe.skip;
+
+async function createIdiomFixture(
+  client: PoolClient,
+  userId: string,
+  options: { isNt2?: boolean } = {},
+) {
+  await ensureUserWithSettings(client, userId);
+  const entryId = await insertWord(
+    client,
+    `exercise-hardening-${randomUUID()}`,
+    { is_nt2_2000: options.isNt2 ?? true },
+  );
+  const idiomNodeId = randomUUID();
+  const explanationNodeId = randomUUID();
+
+  await client.query(
+    `insert into private.platform_v2_content_nodes (
+       id, entry_id, kind, binding_state, first_source_revision,
+       last_source_revision, source_text_fingerprint, diagnostic_locator
+     ) values ($1, $2, 'idiom', 'active', 'test-revision', 'test-revision', $3, $4),
+              ($5, $2, 'idiom-explanation', 'active', 'test-revision',
+               'test-revision', $6, $7)`,
+    [
+      idiomNodeId,
+      entryId,
+      `idiom-fingerprint-${idiomNodeId}`,
+      `test.idiom.${idiomNodeId}`,
+      explanationNodeId,
+      `explanation-fingerprint-${explanationNodeId}`,
+      `test.explanation.${explanationNodeId}`,
+    ],
+  );
+  await client.query(
+    `insert into public.user_card_status (
+       user_id, entry_id, card_type_id, fsrs_enabled, in_learning,
+       next_review_at
+     ) values ($1, $2, 'word-to-definition', true, true, now())`,
+    [userId, entryId],
+  );
+
+  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+  await client.query("set local role service_role");
+  const { rows } = await client.query(
+    `select public.ensure_platform_v2_training_exercise_target_as_principal_v1(
+       $1, $2, 'idiom', 'direct', $3, $4
+     ) target_id`,
+    [
+      entryId,
+      idiomNodeId,
+      `source-revision-${idiomNodeId}`,
+      `idiom-fingerprint-${idiomNodeId}`,
+    ],
+  );
+  const targetId = rows[0].target_id as string;
+  await client.query("reset role");
+
+  return {
+    entryId,
+    idiomNodeId,
+    targetId,
+    targetKey: `training-exercise-v1:idiom:direct:${entryId}:${idiomNodeId}`,
+  };
+}
+
+async function performIdiomAction(
+  client: PoolClient,
+  userId: string,
+  targetId: string,
+  clientEventId: string,
+  options: {
+    result?: "fail" | "hard" | "success" | "easy";
+    stateRevision?: string;
+    sessionId?: string | null;
+    sourceContext?: Record<string, unknown> | null;
+  } = {},
+) {
+  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+  await client.query("set local role service_role");
+  const { rows } = await client.query(
+    `select public.perform_platform_v2_idiom_exercise_action_as_principal_v1(
+       $1, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7::jsonb
+     ) result`,
+    [
+      userId,
+      targetId,
+      options.stateRevision ?? "untracked",
+      options.result ?? "success",
+      clientEventId,
+      options.sessionId ?? null,
+      options.sourceContext ?? null,
+    ],
+  );
+  await client.query("reset role");
+  return rows[0].result as Record<string, unknown>;
+}
+
+async function readExerciseTarget(
+  client: PoolClient,
+  userId: string,
+  targetKey: string,
+) {
+  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
+  await client.query("set local role service_role");
+  try {
+    const { rows } = await client.query(
+      `select public.read_platform_v2_training_exercise_target_v1($1, $2) result`,
+      [userId, targetKey],
+    );
+    return rows[0].result as Record<string, unknown>;
+  } finally {
+    await client.query("reset role");
+  }
+}
 
 describeIfDb("content-bound training exercise database contract", () => {
   const pool = new Pool({ connectionString: dbUrl });
@@ -423,7 +536,315 @@ describeIfDb("content-bound training exercise database contract", () => {
       expect(states.every((row) => row.fsrs_reps === 1)).toBe(true);
       expect(states.some((row) => row.fsrs_lapses === 1)).toBe(true);
 
+      const otherUserId = randomUUID();
+      await client.query(
+        `insert into auth.users (id, email) values ($1, $2)`,
+        [otherUserId, `${otherUserId}@test.local`],
+      );
+      await client.query(
+        `update public.dictionaries
+            set owner_user_id = $2
+          where id = $1`,
+        [dictionaryId, otherUserId],
+      );
+
+      const revokedCandidates = await readCandidates("direct");
+      expect(revokedCandidates.items).toEqual([]);
+      expect(
+        await readExerciseTarget(
+          client,
+          userId,
+          directTarget.targetKey as string,
+        ),
+      ).toEqual({ error: "training_exercise_target_not_found" });
+
+      await client.query("savepoint revoked_action");
+      await expect(
+        performIdiomAction(
+          client,
+          userId,
+          directTarget.targetId as string,
+          randomUUID(),
+        ),
+      ).rejects.toThrow("training_exercise_source_not_eligible");
+      await client.query("rollback to savepoint revoked_action");
+
       await client.query("reset role");
+    });
+  });
+
+  test("treats volatile diagnostics as retry context and fails closed after retirement", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createIdiomFixture(client, userId);
+      const clientEventId = randomUUID();
+      const sourceContext = {
+        contractVersion: "source-context-v2",
+        source: "dictionary",
+        artifact: "fixture",
+        location: { path: "entry.meanings[0]" },
+        selection: { meaningIndex: 0 },
+        context: { locale: "nl" },
+        observation: { latencyMs: 12, tabId: "tab-a" },
+        diagnostics: { requestId: "request-a" },
+      };
+
+      const accepted = await performIdiomAction(
+        client,
+        userId,
+        fixture.targetId,
+        clientEventId,
+        { sourceContext },
+      );
+      expect(accepted).toMatchObject({
+        status: "accepted",
+        state: { fsrsReps: 1, fsrsLastGrade: 3 },
+      });
+
+      const duplicate = await performIdiomAction(
+        client,
+        userId,
+        fixture.targetId,
+        clientEventId,
+        {
+          stateRevision: "stale-after-reload",
+          sourceContext: {
+            ...sourceContext,
+            observation: { latencyMs: 900, tabId: "tab-b" },
+            diagnostics: { requestId: "request-b", retry: true },
+          },
+        },
+      );
+      expect(duplicate).toMatchObject({
+        status: "duplicate",
+        state: { fsrsReps: 1 },
+      });
+
+      await client.query("savepoint changed_retry");
+      await expect(
+        performIdiomAction(
+          client,
+          userId,
+          fixture.targetId,
+          clientEventId,
+          { result: "fail", sourceContext },
+        ),
+      ).rejects.toThrow("training_exercise_action_idempotency_conflict");
+      await client.query("rollback to savepoint changed_retry");
+
+      await client.query(
+        `update private.platform_v2_content_nodes
+            set binding_state = 'retired'
+          where id = $1`,
+        [fixture.idiomNodeId],
+      );
+      expect(
+        await readExerciseTarget(client, userId, fixture.targetKey),
+      ).toEqual({ error: "training_exercise_target_not_found" });
+
+      const duplicateAfterRetirement = await performIdiomAction(
+        client,
+        userId,
+        fixture.targetId,
+        clientEventId,
+        { stateRevision: "another-stale-revision", sourceContext },
+      );
+      expect(duplicateAfterRetirement).toMatchObject({
+        status: "duplicate",
+        state: { fsrsReps: 1 },
+      });
+
+      const { rows } = await client.query(
+        `select
+           (select count(*)::integer from user_training_exercise_action_events
+             where user_id = $1) as events,
+           (select count(*)::integer from platform_v2_training_exercise_action_receipts
+             where user_id = $1) as receipts,
+           (select fsrs_reps from user_training_exercise_state
+             where user_id = $1 and target_id = $2) as reps`,
+        [userId, fixture.targetId],
+      );
+      expect(rows[0]).toEqual({ events: 1, receipts: 1, reps: 1 });
+    });
+  });
+
+  test("serializes concurrent retries into one committed exercise action", async () => {
+    const userId = randomUUID();
+    const setup = await pool.connect();
+    let fixture: Awaited<ReturnType<typeof createIdiomFixture>>;
+    try {
+      await setup.query("begin");
+      fixture = await createIdiomFixture(setup, userId, { isNt2: false });
+      await setup.query("commit");
+    } catch (error) {
+      await setup.query("rollback");
+      throw error;
+    } finally {
+      setup.release();
+    }
+
+    const clientEventId = randomUUID();
+    const attempt = async () => {
+      const client = await pool.connect();
+      try {
+        await client.query("begin");
+        const result = await performIdiomAction(
+          client,
+          userId,
+          fixture.targetId,
+          clientEventId,
+        );
+        await client.query("commit");
+        return result;
+      } catch (error) {
+        await client.query("rollback");
+        throw error;
+      } finally {
+        client.release();
+      }
+    };
+
+    try {
+      const outcomes = await Promise.allSettled([attempt(), attempt()]);
+      const fulfilled = outcomes.filter(
+        (outcome): outcome is PromiseFulfilledResult<Record<string, unknown>> =>
+          outcome.status === "fulfilled",
+      );
+      expect(fulfilled).toHaveLength(2);
+      expect(fulfilled.map((outcome) => outcome.value.status).sort()).toEqual([
+        "accepted",
+        "duplicate",
+      ]);
+
+      const { rows } = await pool.query(
+        `select
+           (select count(*)::integer from user_training_exercise_action_events
+             where user_id = $1 and client_event_id = $2) as events,
+           (select count(*)::integer from platform_v2_training_exercise_action_receipts
+             where user_id = $1 and client_event_id = $2) as receipts,
+           (select fsrs_reps from user_training_exercise_state
+             where user_id = $1 and target_id = $3) as reps`,
+        [userId, clientEventId, fixture.targetId],
+      );
+      expect(rows[0]).toEqual({ events: 1, receipts: 1, reps: 1 });
+    } finally {
+      await pool.query(`delete from auth.users where id = $1`, [userId]);
+    }
+  });
+
+  test("requires the active run and consumes an exercise member once", async () => {
+    await withTransaction(pool, async (client) => {
+      const userId = randomUUID();
+      const fixture = await createIdiomFixture(client, userId);
+      const secondFixture = await createIdiomFixture(client, userId);
+      const firstSessionId = randomUUID();
+      const secondSessionId = randomUUID();
+
+      await client.query(
+        `insert into public.training_sessions (
+           id, user_id, session_size, card_type_ids, list_type,
+           card_filter, training_filter, requested_total
+         ) values ($1, $2, '2', ARRAY['idiom']::text[], 'curated',
+                   'both', '{}'::jsonb, 2)`,
+        [firstSessionId, userId],
+      );
+      await client.query(
+        `insert into public.training_session_exercise_members (
+         session_id, target_id, ordinal, queue_source
+         ) values ($1, $2, 1, 'new')`,
+        [firstSessionId, fixture.targetId],
+      );
+      await client.query(
+        `insert into public.training_session_exercise_members (
+           session_id, target_id, ordinal, queue_source
+         ) values ($1, $2, 2, 'new')`,
+        [firstSessionId, secondFixture.targetId],
+      );
+
+      const eventId = randomUUID();
+      const accepted = await performIdiomAction(
+        client,
+        userId,
+        fixture.targetId,
+        eventId,
+        { sessionId: firstSessionId },
+      );
+      expect(accepted).toMatchObject({ status: "accepted" });
+
+      const { rows: consumedRows } = await client.query(
+        `select consumed_at, unavailable_at
+           from training_session_exercise_members
+          where session_id = $1 and target_id = $2`,
+        [firstSessionId, fixture.targetId],
+      );
+      expect(consumedRows).toEqual([
+        expect.objectContaining({ consumed_at: expect.any(Date), unavailable_at: null }),
+      ]);
+
+      const duplicate = await performIdiomAction(
+        client,
+        userId,
+        fixture.targetId,
+        eventId,
+        { sessionId: firstSessionId, stateRevision: "stale" },
+      );
+      expect(duplicate).toMatchObject({ status: "duplicate" });
+
+      const secondAccepted = await performIdiomAction(
+        client,
+        userId,
+        secondFixture.targetId,
+        randomUUID(),
+        { sessionId: firstSessionId },
+      );
+      expect(secondAccepted).toMatchObject({ status: "accepted" });
+
+      const { rows: completedRows } = await client.query(
+        `select completed_at, exhausted_at, completion_reason
+           from training_sessions
+          where id = $1`,
+        [firstSessionId],
+      );
+      expect(completedRows).toEqual([
+        expect.objectContaining({
+          completed_at: expect.any(Date),
+          exhausted_at: null,
+          completion_reason: "completed",
+        }),
+      ]);
+
+      await client.query(
+        `insert into public.training_sessions (
+           id, user_id, session_size, card_type_ids, list_type,
+           card_filter, training_filter, requested_total
+         ) values ($1, $2, '2', ARRAY['idiom']::text[], 'curated',
+                   'both', '{}'::jsonb, 2)`,
+        [secondSessionId, userId],
+      );
+
+      await client.query("savepoint stale_exercise_action");
+      await expect(
+        performIdiomAction(
+          client,
+          userId,
+          fixture.targetId,
+          randomUUID(),
+          { sessionId: firstSessionId },
+        ),
+      ).rejects.toThrow("training_session_superseded");
+      await client.query("rollback to savepoint stale_exercise_action");
+
+      const { rows: rejectedRows } = await client.query(
+        `select
+           (select count(*)::integer from user_training_exercise_action_events
+             where user_id = $1) as events,
+           (select count(*)::integer from user_training_exercise_state
+             where user_id = $1 and fsrs_reps = 1) as states,
+           (select count(*)::integer from training_session_exercise_members
+             where session_id = $2 and consumed_at is not null) as consumed`,
+        [userId, firstSessionId],
+      );
+      expect(rejectedRows[0]).toEqual({ events: 2, states: 2, consumed: 2 });
     });
   });
 });
